@@ -55,3 +55,4 @@ nunit-*.xml
 
 # Local Docker environment (contains SA password)
 .env
+SPEC/.DS_Store
