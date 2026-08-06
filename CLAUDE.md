@@ -139,3 +139,20 @@ After build and tests pass on a feature branch:
 # Source Control
   * Use feature branches for each work item, named `feature/<NNN>-<short-description>`. Once complete merge it into `dev`.
   * Commit work at logical checkpoints such as the completion of a feature and or slice.
+
+## Multi-Agent Worktree Workflow
+
+For epic-level work, split execution across role-based subagents, each in its own isolated git worktree:
+
+- **Backend Developer** — Domain/Application/Infrastructure/API work for the epic's backend tasks.
+- **QA Developer** — test harnesses and coverage for the same slice (unit + integration per `SPEC/40-test-strategy.md`).
+- **UI/UX Developer** — for epics with client-facing scope, builds Blazor components. When a page/flow hasn't had its layout settled yet, first produce throwaway HTML comps (like `SPEC/mockups/`) for review rather than writing production Blazor code against an undecided design — this avoids rework.
+- **Code Reviewer** — reviews each finished branch (diff, build, tests, spec conformance) before it merges. Not a parallel implementer; it gates the other three.
+
+Rules:
+- Each implementer agent runs in its own worktree (branch off `dev`) so they don't collide on files mid-flight.
+- A role sits out a round if the epic's backlog has no task for it (e.g. Epic 1 has no client-facing task — check `SPEC/70-delivery-backlog.md` before assigning UI/UX work, and don't parallelize downstream-epic UI work early).
+- Code Reviewer must approve a branch before it merges.
+- Once a branch is reviewed and merged into `dev`, delete both the worktree and the branch. Don't leave merged worktrees around.
+- This merges directly into `dev` per finished slice — it does not go through the per-feature-branch PR-to-`main` step above. That step still happens once per epic, when the epic's exit criteria are fully met.
+- Update `SPEC/implementation-agent-tracker.md` as slices start/finish so the next session (or agent) knows the state.
