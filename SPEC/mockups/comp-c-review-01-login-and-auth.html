@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp C Review 1: Login &amp; Authentication</title>
+<style>
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#797672;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;color:var(--accent)}
+  input[type=text],input[type=email],input[type=password]{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink);width:100%}
+  input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  input.invalid{border-color:var(--err)}
+  input:disabled{background:#f3f2f1;color:var(--ink-3)}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
+  .field{margin-bottom:15px}
+  .field .errtext{font-size:12px;color:var(--err);margin-top:5px}
+  .authwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:24px}
+  .authcard{width:430px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.10);padding:40px 44px}
+  .authcard.wide{width:480px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+  .brand .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;font-family:Georgia,serif}
+  .brand .name{font-family:Georgia,serif;font-size:19px;font-weight:600}
+  .sub{font-size:13px;color:var(--ink-3);margin-bottom:20px;line-height:1.5}
+  .msg{border-radius:4px;padding:10px 13px;font-size:12.5px;margin-bottom:15px;border-left:3px solid}
+  .msg.err{background:#fbe5e7;color:var(--err);border-color:var(--err)}
+  .msg.info{background:var(--accent-soft);color:var(--accent-deep);border-color:var(--accent)}
+  .checklist{list-style:none;font-size:12.5px;margin:8px 0 15px}
+  .checklist li{padding:2px 0;color:var(--ink-3)}
+  .checklist li.ok{color:var(--ok)}
+  .checklist li::before{content:"○ "}.checklist li.ok::before{content:"✓ "}
+  .footnote{font-size:12px;color:var(--ink-3);text-align:center;margin-top:16px;line-height:1.5}
+  .footnote a{color:var(--accent-deep);font-weight:600}
+  .code{font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:8px 11px;font-size:14px;letter-spacing:.02em;display:flex;justify-content:space-between;align-items:center}
+  .kv{font-size:12.5px;color:var(--ink-2);display:grid;gap:6px;margin-top:12px}
+  hr{border:none;border-top:1px solid var(--line);margin:18px 0}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>COMP C REVIEW 1 · LOGIN &amp; AUTH</strong>
+  <nav id="tabs">
+    <button data-s="signin" class="on">Sign in</button>
+    <button data-s="invalid">Invalid credentials</button>
+    <button data-s="locked">Locked out</button>
+    <button data-s="inactive">Inactive account</button>
+    <button data-s="firstlogin">First-login change</button>
+    <button data-s="tempissued">Temp password issued</button>
+    <button data-s="changepw">Self-service change</button>
+  </nav>
+</div>
+
+<section class="screen on" id="s-signin">
+  <div class="authwrap"><div class="authcard">
+    <div class="brand"><span class="mark">CG</span><span class="name">Collega</span></div>
+    <h1 style="font-size:22px;margin-bottom:6px">Sign in</h1>
+    <p class="sub">One email, one account. We'll take you straight to your organization — no picker needed.</p>
+    <div class="field"><label>Email</label><input type="email" value="jordan.reyes@acme.com"></div>
+    <div class="field"><label>Password</label><input type="password" value="••••••••••••"></div>
+    <button class="btn primary" style="width:100%;padding:10px">Sign in</button>
+    <p class="footnote">Forgot your password? <a href="#">Contact your organization admin</a>.</p>
+  </div></div>
+</section>
+
+<section class="screen" id="s-invalid">
+  <div class="authwrap"><div class="authcard">
+    <div class="brand"><span class="mark">CG</span><span class="name">Collega</span></div>
+    <h1 style="font-size:22px;margin-bottom:6px">Sign in</h1>
+    <p class="sub">One email, one account. We'll take you straight to your organization — no picker needed.</p>
+    <div class="msg err">Incorrect email or password. 2 attempts remaining before a temporary lock.</div>
+    <div class="field"><label>Email</label><input type="email" value="jordan.reyes@acme.com" class="invalid"></div>
+    <div class="field"><label>Password</label><input type="password" value="wrongpass" class="invalid"></div>
+    <button class="btn primary" style="width:100%;padding:10px">Sign in</button>
+    <p class="footnote">Forgot your password? <a href="#">Contact your organization admin</a>.</p>
+  </div></div>
+</section>
+
+<section class="screen" id="s-locked">
+  <div class="authwrap"><div class="authcard">
+    <div class="brand"><span class="mark">CG</span><span class="name">Collega</span></div>
+    <h1 style="font-size:22px;margin-bottom:6px">Sign in</h1>
+    <p class="sub">One email, one account. We'll take you straight to your organization — no picker needed.</p>
+    <div class="msg err"><strong>Account locked.</strong> Five failed attempts within 15 minutes locks the account for 15 minutes — 12:41 remaining, or your admin can issue a one-time temporary password.</div>
+    <div class="field"><label>Email</label><input type="email" value="jordan.reyes@acme.com"></div>
+    <div class="field"><label>Password</label><input type="password" disabled></div>
+    <button class="btn primary" style="width:100%;padding:10px" disabled>Sign in</button>
+  </div></div>
+</section>
+
+<section class="screen" id="s-inactive">
+  <div class="authwrap"><div class="authcard">
+    <div class="brand"><span class="mark">CG</span><span class="name">Collega</span></div>
+    <h1 style="font-size:22px;margin-bottom:6px">Sign in</h1>
+    <p class="sub">One email, one account. We'll take you straight to your organization — no picker needed.</p>
+    <div class="msg err">This account is inactive. Contact your organization admin to restore access.</div>
+    <div class="field"><label>Email</label><input type="email" value="ana.liu@acme.com"></div>
+    <div class="field"><label>Password</label><input type="password" disabled></div>
+    <button class="btn primary" style="width:100%;padding:10px" disabled>Sign in</button>
+  </div></div>
+</section>
+
+<section class="screen" id="s-firstlogin">
+  <div class="authwrap"><div class="authcard">
+    <h1 style="font-size:22px;margin-bottom:6px">Choose your own password</h1>
+    <p class="sub">You signed in with a temporary password issued by an administrator. It works exactly once — set your own to continue.</p>
+    <div class="msg info">Temporary passwords are shown once, to the issuing admin, and expire immediately after this step.</div>
+    <div class="field"><label>Temporary password</label><input type="password" value="Tmp-8f2Kd1"></div>
+    <div class="field"><label>New password</label><input type="password" value="Quiet&amp;Steady42"></div>
+    <ul class="checklist">
+      <li class="ok">At least 12 characters</li>
+      <li class="ok">Upper &amp; lower case letters</li>
+      <li class="ok">At least one number</li>
+      <li>At least one symbol</li>
+    </ul>
+    <div class="field"><label>Confirm new password</label><input type="password" value="Quiet&amp;Steady4"></div>
+    <div class="field errtext" style="margin-top:-11px">Passwords do not match.</div>
+    <button class="btn primary" style="width:100%;padding:10px">Save and continue</button>
+  </div></div>
+</section>
+
+<section class="screen" id="s-tempissued">
+  <div class="authwrap"><div class="authcard wide">
+    <h1 style="font-size:20px;margin-bottom:6px">Temporary password issued</h1>
+    <p class="sub">For <strong>mia.park@acme.com</strong>. Share this through a secure channel — it will not be shown again.</p>
+    <div class="code"><span>Tmp-8f2Kd1</span><button class="btn subtle">Copy</button></div>
+    <div class="msg info" style="margin-top:16px">The user must replace this password at their next sign-in. It has no timed expiry, but it can only be used once.</div>
+    <div class="kv">
+      <div>Issued by <strong>jordan.reyes@acme.com</strong> (Org Admin)</div>
+      <div>Issued just now · recorded in the audit log</div>
+    </div>
+    <hr>
+    <button class="btn primary" style="width:100%;padding:10px">Done</button>
+  </div></div>
+</section>
+
+<section class="screen" id="s-changepw">
+  <div class="authwrap"><div class="authcard">
+    <h1 style="font-size:20px;margin-bottom:6px">Change password</h1>
+    <p class="sub">Choose something strong that you don't use anywhere else. You'll stay signed in on this device.</p>
+    <div class="field"><label>Current password</label><input type="password"></div>
+    <div class="msg err" style="margin-top:-6px">Current password is incorrect.</div>
+    <div class="field"><label>New password</label><input type="password" value="Quiet&amp;Steady43"></div>
+    <ul class="checklist">
+      <li class="ok">At least 12 characters</li>
+      <li class="ok">Upper &amp; lower case letters</li>
+      <li class="ok">At least one number</li>
+      <li class="ok">At least one symbol</li>
+    </ul>
+    <div class="field"><label>Confirm new password</label><input type="password" value="Quiet&amp;Steady43"></div>
+    <div style="display:flex;gap:10px"><button class="btn primary">Update password</button><button class="btn">Cancel</button></div>
+  </div></div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+</script>
+</body>
+</html>

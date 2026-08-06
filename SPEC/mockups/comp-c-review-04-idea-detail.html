@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp C Review 4: Idea Detail</title>
+<style>
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#797672;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:100vh}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
+  .rail .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
+  .rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .avatar.s{width:24px;height:24px;font-size:9.5px}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.subtle{border-color:transparent;color:var(--accent)}
+  input[type=text],select,textarea{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  input:disabled,select:disabled,textarea:disabled{background:#f3f2f1;color:var(--ink-2)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
+  .pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .up{border:1px solid var(--line);border-radius:4px;padding:2px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:52px;text-align:center}
+  .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+  .ideahd{border-bottom:1px solid var(--line);background:var(--surface);padding:26px 40px}
+  .ideahd .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:12px}
+  .ideahd .crumbs a{color:var(--ink-3);text-decoration:none}
+  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;font-family:"Segoe UI",sans-serif}
+  .ideahd h1{font-size:30px;max-width:760px}
+  .ideahd .byline{font-size:13px;color:var(--ink-3);margin:8px 0 4px}
+  .ideabody{display:grid;grid-template-columns:minmax(0,720px) 300px;gap:44px;padding:30px 40px}
+  .prose{font-size:15px;line-height:1.7;color:var(--ink-2)}
+  .charlim{font-size:11px;color:var(--ink-3);font-weight:400}
+  .facts{border-left:1px solid var(--line);padding-left:28px}
+  .fact{margin-bottom:18px}
+  .fact .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:5px}
+  .fact .v{font-size:14px;font-weight:600}
+  .fact select,.fact input{width:100%}
+  .comment{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f0efed}
+  .comment .byline{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+  .comment .who{font-size:13px;font-weight:700}
+  .comment .when{font-size:12px;color:var(--ink-3)}
+  .comment p{font-size:14.5px;line-height:1.65;color:var(--ink-2)}
+  .mention{color:var(--accent-deep);font-weight:700;border-bottom:1.5px solid var(--accent)}
+  .charcount{font-size:11.5px;color:var(--ink-3);text-align:right;margin-top:4px}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin:18px 0;line-height:1.5}
+  .taglist{display:flex;gap:6px;flex-wrap:wrap;font-weight:400}
+  .popover{position:relative}
+  .pop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);z-index:5}
+  .pop .opt{padding:8px 10px;font-size:12.5px;cursor:pointer;display:flex;justify-content:space-between}
+  .pop .opt:hover,.pop .opt.hi{background:var(--accent-soft)}
+  .pop .opt .em{color:var(--ink-3);font-size:11px}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>COMP C REVIEW 4 · IDEA DETAIL</strong>
+  <nav id="tabs">
+    <button data-s="user" class="on">Full detail — User</button>
+    <button data-s="readonly">Read Only view</button>
+    <button data-s="newidea">New idea (create mode)</button>
+    <button data-s="mention">Mention autocomplete</button>
+    <button data-s="tagpick">Tag autocomplete</button>
+    <button data-s="done">Completed idea</button>
+  </nav>
+</div>
+
+<!-- FULL DETAIL — USER -->
+<section class="screen on" id="s-user">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a class="on" href="#">📋<span>Boards</span></a><span class="push"></span><span class="avatar">JR</span></aside>
+    <div>
+      <div class="ideahd">
+        <div class="crumbs"><a href="#">Boards</a> / <a href="#">Product Ideas</a> / IDEA-128</div>
+        <div class="kicker">In Progress · Medium priority</div>
+        <div style="display:flex;align-items:flex-start;gap:20px">
+          <h1 style="flex:1">Dark mode support</h1>
+          <button class="up mine" style="font-size:13px;padding:6px 16px;margin-top:8px">▲ Upvoted · 24</button>
+          <button class="btn" style="margin-top:8px">Close</button>
+        </div>
+        <p class="byline">Proposed by <strong>Tom Diaz</strong> on July 2 · updated 20 minutes ago</p>
+      </div>
+      <div class="ideabody">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--ink-3)">Title <span class="charlim">18 / 150</span></label>
+          <input type="text" style="width:100%;margin:6px 0 20px;font-size:18px;padding:10px 12px" value="Dark mode support">
+          <label style="font-size:12px;font-weight:600;color:var(--ink-3)">Description <span class="charlim">142 / 4000</span></label>
+          <textarea style="width:100%;min-height:100px;margin-top:6px" class="prose">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu.</textarea>
+          <h2 style="font-size:19px;margin:30px 0 16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif;font-weight:600">4 comments</span></h2>
+          <div class="comment">
+            <div class="byline"><span class="avatar s">MP</span><span class="who">Mia Park</span><span class="when">2 hours ago</span></div>
+            <p><span class="mention">@Jordan Reyes</span> can we scope this to the board view first? Full app theming is a bigger lift.</p>
+          </div>
+          <div class="comment">
+            <div class="byline"><span class="avatar s">TD</span><span class="who">Tom Diaz</span><span class="when">1 hour ago</span></div>
+            <p>+1 — the Fluent design tokens should make this straightforward.</p>
+          </div>
+          <div style="display:flex;gap:12px">
+            <span class="avatar s">JR</span>
+            <div style="flex:1">
+              <textarea style="width:100%;min-height:70px" placeholder="Join the discussion… type @ to mention someone in Acme Corp">Agreed — </textarea>
+              <div class="charcount">9 / 2000</div>
+              <button class="btn primary" style="margin-top:6px">Post comment</button>
+            </div>
+          </div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Status</div><div class="v"><select><option>New</option><option selected>In Progress</option><option>Blocked</option><option>Done</option></select></div></div>
+          <div class="fact"><div class="k">Priority</div><div class="v"><select><option>High</option><option selected>Medium</option><option>Low</option></select></div></div>
+          <div class="fact"><div class="k">Assignee</div><div class="v"><select><option>Unassigned</option><option selected>Mia Park</option><option>Jordan Reyes</option><option>Tom Diaz</option></select></div></div>
+          <div class="fact"><div class="k">Due date <span style="text-transform:none;font-weight:400">(optional)</span></div><div class="v"><input type="text" value="Aug 15, 2026"></div></div>
+          <div class="fact"><div class="k">Tags <span style="text-transform:none;font-weight:400">2 / 10</span></div><div class="v taglist"><span class="pill neutral">ui</span><span class="pill neutral">theme</span><button class="btn subtle" style="padding:1px 8px">+ add</button></div></div>
+          <div class="fact"><div class="k">Upvotes</div><div class="v">24 people</div></div>
+          <div class="fact"><div class="k">Board</div><div class="v">Product Ideas</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- READ ONLY VIEW -->
+<section class="screen" id="s-readonly">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a class="on" href="#">📋<span>Boards</span></a><span class="push"></span><span class="avatar">TD</span></aside>
+    <div>
+      <div class="ideahd">
+        <div class="crumbs"><a href="#">Boards</a> / <a href="#">Product Ideas</a> / IDEA-128</div>
+        <div class="kicker">In Progress · Medium priority</div>
+        <div style="display:flex;align-items:flex-start;gap:20px">
+          <h1 style="flex:1">Dark mode support</h1>
+          <span class="up" style="font-size:13px;padding:6px 16px;margin-top:8px;cursor:default;color:var(--ink-3)" title="Read Only cannot upvote">▲ 24</span>
+          <button class="btn" style="margin-top:8px">Close</button>
+        </div>
+        <p class="byline">Proposed by <strong>Tom Diaz</strong> on July 2 · updated 20 minutes ago</p>
+      </div>
+      <div class="ideabody">
+        <div>
+          <p class="prose">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu.</p>
+          <div class="note">Read Only can view all fields and comments but cannot comment, upvote, edit, or move this idea.</div>
+          <h2 style="font-size:19px;margin-bottom:16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif;font-weight:600">4 comments</span></h2>
+          <div class="comment"><div class="byline"><span class="avatar s">MP</span><span class="who">Mia Park</span><span class="when">2 hours ago</span></div><p><span class="mention">@Jordan Reyes</span> can we scope this to the board view first?</p></div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Status</div><div class="v"><select disabled><option selected>In Progress</option></select></div></div>
+          <div class="fact"><div class="k">Priority</div><div class="v"><select disabled><option selected>Medium</option></select></div></div>
+          <div class="fact"><div class="k">Assignee</div><div class="v"><select disabled><option selected>Mia Park</option></select></div></div>
+          <div class="fact"><div class="k">Tags</div><div class="v taglist"><span class="pill neutral">ui</span><span class="pill neutral">theme</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NEW IDEA -->
+<section class="screen" id="s-newidea">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a class="on" href="#">📋<span>Boards</span></a><span class="push"></span><span class="avatar">JR</span></aside>
+    <div>
+      <div class="ideahd">
+        <div class="crumbs"><a href="#">Boards</a> / <a href="#">Product Ideas</a> / New idea</div>
+        <div class="kicker">New idea</div>
+        <div style="display:flex;align-items:flex-start;gap:20px"><h1 style="flex:1;color:var(--ink-3)">Untitled idea</h1><button class="btn" style="margin-top:8px">Cancel</button></div>
+      </div>
+      <div class="ideabody">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--ink-3)">Title <span class="charlim">0 / 150</span></label>
+          <input type="text" style="width:100%;margin:6px 0 20px;font-size:18px;padding:10px 12px" placeholder="What's the idea?">
+          <label style="font-size:12px;font-weight:600;color:var(--ink-3)">Description <span class="charlim">0 / 4000</span></label>
+          <textarea style="width:100%;min-height:100px;margin-top:6px" placeholder="Add context, motivation, or details…"></textarea>
+          <div class="note">Comments and tags can be added once the idea is saved.</div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Status</div><div class="v"><select><option selected>New (left-most section)</option><option>In Progress</option><option>Blocked</option><option>Done</option></select></div></div>
+          <div class="fact"><div class="k">Priority</div><div class="v"><select><option>High</option><option selected>Medium</option><option>Low</option></select></div></div>
+          <div class="fact"><div class="k">Assignee</div><div class="v"><select><option selected>Unassigned</option></select></div></div>
+          <div class="fact"><div class="k">Due date <span style="text-transform:none;font-weight:400">(optional)</span></div><div class="v"><input type="text" placeholder="Aug 15, 2026"></div></div>
+          <button class="btn primary" style="width:100%;margin-top:6px">Create idea</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MENTION AUTOCOMPLETE -->
+<section class="screen" id="s-mention">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><span class="push"></span><span class="avatar">JR</span></aside>
+    <div>
+      <div class="ideahd"><div class="crumbs"><a href="#">Boards</a> / <a href="#">Product Ideas</a> / IDEA-128</div><h1 style="font-size:24px">Dark mode support</h1></div>
+      <div class="ideabody">
+        <div>
+          <h2 style="font-size:17px;margin-bottom:14px">Discussion</h2>
+          <div style="display:flex;gap:12px">
+            <span class="avatar s">JR</span>
+            <div style="flex:1" class="popover">
+              <textarea style="width:100%;min-height:70px">Great point @mi</textarea>
+              <div class="pop" style="top:auto;bottom:calc(100% + 4px)">
+                <div class="opt hi"><span><strong>Mia Park</strong> — mia.park@acme.com</span><span class="em">User</span></div>
+                <div class="opt"><span><strong>Michael Torres</strong> — michael.torres@acme.com</span><span class="em">Org Admin</span></div>
+              </div>
+              <div class="note">Mentions resolve by email, scoped to this organization. Site Admin has no organization and cannot be mentioned.</div>
+            </div>
+          </div>
+        </div>
+        <div class="facts"><div class="note" style="margin:0">Type <code>@</code> then part of a name or email to search organization members.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TAG AUTOCOMPLETE -->
+<section class="screen" id="s-tagpick">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><span class="push"></span><span class="avatar">JR</span></aside>
+    <div>
+      <div class="ideahd"><div class="crumbs"><a href="#">Boards</a> / <a href="#">Product Ideas</a> / IDEA-128</div><h1 style="font-size:24px">Dark mode support</h1></div>
+      <div class="ideabody">
+        <div><p class="prose" style="color:var(--ink-3)">(idea fields — see other tabs)</p></div>
+        <div class="facts">
+          <div class="fact popover">
+            <div class="k">Tags <span style="text-transform:none;font-weight:400">2 / 10</span></div>
+            <div class="v taglist" style="margin-bottom:8px"><span class="pill neutral">ui</span><span class="pill neutral">theme</span></div>
+            <input type="text" style="width:100%" value="th">
+            <div class="pop">
+              <div class="opt hi"><span>theme</span><span class="em">existing</span></div>
+              <div class="opt"><span>theming-engine</span><span class="em">existing</span></div>
+              <div class="opt"><span>+ Create "th"</span><span class="em">new tag</span></div>
+            </div>
+          </div>
+          <div class="note">Autocomplete starts after 2 characters. Matching is case-insensitive within this organization.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPLETED IDEA -->
+<section class="screen" id="s-done">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><span class="push"></span><span class="avatar">JR</span></aside>
+    <div>
+      <div class="ideahd">
+        <div class="crumbs"><a href="#">Boards</a> / <a href="#">Product Ideas</a> / IDEA-104</div>
+        <div class="kicker">Done</div>
+        <div style="display:flex;align-items:flex-start;gap:20px"><h1 style="flex:1">Org-scoped user search</h1><button class="up" style="font-size:13px;padding:6px 16px;margin-top:8px">▲ 14</button></div>
+        <p class="byline">Proposed by <strong>Ana Liu</strong> · shipped in the 2026.3 release</p>
+      </div>
+      <div class="ideabody">
+        <div>
+          <p class="prose">Admins can search users within their own organization by name or email from the Users list.</p>
+          <div class="note">Ideas in <strong>Done</strong> stay fully editable — comments, mentions, and upvotes remain open, this is not a locked/archived state.</div>
+          <h2 style="font-size:17px;margin-bottom:14px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif;font-weight:600">1 comment</span></h2>
+          <div class="comment"><div class="byline"><span class="avatar s">AL</span><span class="who">Ana Liu</span><span class="when">3 weeks ago</span></div><p>Shipped in the 2026.3 release. Closing this out.</p></div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Status</div><div class="v"><select><option>New</option><option>In Progress</option><option>Blocked</option><option selected>Done</option></select></div></div>
+          <div class="fact"><div class="k">Priority</div><div class="v"><select><option>High</option><option selected>Medium</option><option>Low</option></select></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+</script>
+</body>
+</html>

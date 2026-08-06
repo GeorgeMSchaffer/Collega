@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp C Review 3: Board &amp; Swimlanes</title>
+<style>
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#797672;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
+  .rail .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
+  .rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .avatar.s{width:24px;height:24px;font-size:9.5px}
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
+  .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .pagehead .sub{color:var(--ink-3);font-size:13.5px;max-width:640px;line-height:1.5}
+  .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .pagehead .row .grow{flex:1}
+  .ptabs{display:flex;gap:4px;margin-top:18px}
+  .ptabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent}
+  .ptabs a.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .body{padding:26px 40px;max-width:1200px}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.subtle{border-color:transparent;color:var(--accent)}
+  .btn.danger{border-color:transparent;color:var(--err)}
+  input[type=text],select{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
+  .pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:640px;line-height:1.5}
+  .lanesec{margin-bottom:26px}
+  .lanesec>h2{font-size:17px;display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+  .lanesec>h2 .cnt{font-size:12px;color:var(--ink-3);font-family:"Segoe UI",sans-serif;font-weight:600}
+  .rowcard{display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid #f0efed;cursor:pointer}
+  .rowcard:hover{background:var(--accent-soft)}
+  .rowcard:last-child{border-bottom:none}
+  .rowcard .t{font-weight:600;font-size:14px;flex:1;color:var(--ink)}
+  .rowcard .t:hover{color:var(--accent-deep)}
+  .rowcard .tag{font-size:11px;color:var(--ink-3);background:#f3f2f1;border-radius:3px;padding:1px 7px}
+  .prio{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .prio.high{background:var(--err)}.prio.med{background:var(--warn)}.prio.low{background:var(--ok)}
+  .up{border:1px solid var(--line);border-radius:4px;padding:2px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:52px;text-align:center}
+  .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+  .swrow{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 16px;margin-bottom:8px}
+  .swrow .grip{cursor:grab;color:var(--ink-3)}
+  .swrow .spacer{flex:1}
+  .warnbanner{border-left:3px solid var(--warn);background:#f7ecdc;color:#6b4200;border-radius:0 4px 4px 0;padding:11px 15px;font-size:12.5px;margin-bottom:16px;max-width:680px;line-height:1.5}
+  .empty{padding:64px 24px;text-align:center}
+  .empty .art{font-size:40px;margin-bottom:10px}
+  .empty h2{font-size:19px;margin-bottom:8px}
+  .empty p{color:var(--ink-3);font-size:13.5px;margin-bottom:18px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>COMP C REVIEW 3 · BOARD &amp; SWIMLANES</strong>
+  <nav id="tabs">
+    <button data-s="board" class="on">Board — User</button>
+    <button data-s="boardro">Board — Read Only</button>
+    <button data-s="config">Configure swimlanes</button>
+    <button data-s="empty">Empty state / guided setup</button>
+  </nav>
+</div>
+
+<!-- BOARD — USER -->
+<section class="screen on" id="s-board">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a class="on" href="#">📋<span>Boards</span></a><a href="#">🔔<span>Alerts</span></a><span class="push"></span><span class="avatar">JR</span></aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Boards</a> / Product Ideas</div>
+        <div class="row"><div class="grow"><h1>Product Ideas</h1><p class="sub">48 ideas · sorted by upvotes within each status. Role: <strong>User</strong> — can create ideas and move any idea here.</p></div><button class="btn" style="margin-bottom:14px">⚙ Configure</button><button class="btn primary" style="margin-bottom:14px">+ New idea</button></div>
+        <div class="ptabs"><a class="on" href="#">List</a><a href="#">Report</a></div>
+      </div>
+      <div class="body">
+        <div class="cmdbar"><input type="text" placeholder="Filter ideas…" style="width:240px"><select><option>Priority: All</option></select><select><option>Tag: All</option></select></div>
+        <div class="lanesec">
+          <h2>New <span class="cnt">4 ideas</span></h2>
+          <div class="card">
+            <div class="rowcard"><span class="prio high"></span><span class="t">Dark mode support</span><span class="tag">ui</span><span class="tag">theme</span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div>
+            <div class="rowcard"><span class="prio med"></span><span class="t">Bulk import from CSV</span><span class="tag">data</span><span class="avatar s">TD</span><button class="up">▲ 17</button></div>
+            <div class="rowcard"><span class="prio low"></span><span class="t">Keyboard shortcuts cheat sheet</span><span class="tag">docs</span><span class="avatar s" style="background:#c8c6c4">—</span><button class="up">▲ 6</button></div>
+            <div class="rowcard"><span class="prio med"></span><span class="t">Export board to PDF</span><span class="tag">reporting</span><span class="avatar s">JR</span><button class="up">▲ 5</button></div>
+          </div>
+        </div>
+        <div class="lanesec">
+          <h2>In Progress <span class="cnt">3 ideas</span></h2>
+          <div class="card">
+            <div class="rowcard"><span class="prio high"></span><span class="t">SSO via SAML</span><span class="tag">auth</span><span class="avatar s">AL</span><button class="up">▲ 31</button></div>
+            <div class="rowcard"><span class="prio med"></span><span class="t">Notification digest email</span><span class="tag">notify</span><span class="avatar s">JR</span><button class="up mine">▲ 12</button></div>
+            <div class="rowcard"><span class="prio med"></span><span class="t">Mention autocomplete</span><span class="tag">ui</span><span class="avatar s">MP</span><button class="up">▲ 9</button></div>
+          </div>
+        </div>
+        <div class="lanesec">
+          <h2>Blocked <span class="cnt">1 idea</span></h2>
+          <div class="card"><div class="rowcard"><span class="prio high"></span><span class="t">Mobile responsive board</span><span class="tag">ui</span><span class="avatar s">TD</span><button class="up">▲ 20</button></div></div>
+        </div>
+        <div class="lanesec">
+          <h2>Done <span class="cnt">2 ideas</span></h2>
+          <div class="card" style="opacity:.8">
+            <div class="rowcard"><span class="prio med"></span><span class="t">Org-scoped user search</span><span class="avatar s">AL</span><button class="up">▲ 14</button></div>
+            <div class="rowcard"><span class="prio low"></span><span class="t">Audit log for admin actions</span><span class="avatar s">JR</span><button class="up">▲ 8</button></div>
+          </div>
+        </div>
+        <div class="note">Rows are draggable between status sections for this role. Reordering within a section is not persisted — only the status (section) change is.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOARD — READ ONLY -->
+<section class="screen" id="s-boardro">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a class="on" href="#">📋<span>Boards</span></a><span class="push"></span><span class="avatar">TD</span></aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Boards</a> / Product Ideas</div>
+        <h1>Product Ideas</h1><p class="sub" style="margin-bottom:20px">Role: <strong>Read Only</strong> — viewing only. No "New idea" action, and rows are not draggable.</p>
+      </div>
+      <div class="body">
+        <div class="cmdbar"><input type="text" placeholder="Filter ideas…" style="width:240px"></div>
+        <div class="lanesec">
+          <h2>New <span class="cnt">4 ideas</span></h2>
+          <div class="card">
+            <div class="rowcard" style="cursor:default"><span class="prio high"></span><span class="t">Dark mode support</span><span class="tag">ui</span><span class="avatar s">MP</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 24</span></div>
+            <div class="rowcard" style="cursor:default"><span class="prio med"></span><span class="t">Bulk import from CSV</span><span class="tag">data</span><span class="avatar s">TD</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 17</span></div>
+          </div>
+        </div>
+        <div class="lanesec">
+          <h2>In Progress <span class="cnt">3 ideas</span></h2>
+          <div class="card"><div class="rowcard" style="cursor:default"><span class="prio high"></span><span class="t">SSO via SAML</span><span class="tag">auth</span><span class="avatar s">AL</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 31</span></div></div>
+        </div>
+        <div class="note">Read Only can open an idea to read full content, but cannot move ideas, comment, upvote, or create new ones.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONFIGURE SWIMLANES -->
+<section class="screen" id="s-config">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><span class="push"></span><span class="avatar">JR</span></aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Product Ideas</a> / Board settings</div><h1>Board settings — Product Ideas</h1><p class="sub" style="margin-bottom:20px">Choose which of this organization's statuses appear as sections here, and their order.</p></div>
+      <div class="body">
+        <div class="warnbanner">A board must have at least 2 swimlanes. Removing "Blocked" below would leave only 1 — the remove action is disabled until 2+ remain.</div>
+        <div class="card" style="padding:18px;max-width:560px">
+          <div class="swrow"><span class="grip">⠿</span><span>New</span><span class="spacer"></span><span class="pill neutral">22 ideas</span><button class="btn subtle">Remove</button></div>
+          <div class="swrow"><span class="grip">⠿</span><span>In Progress</span><span class="spacer"></span><span class="pill neutral">15 ideas</span><button class="btn subtle">Remove</button></div>
+          <div class="swrow" style="opacity:.5"><span class="grip">⠿</span><span>Blocked</span><span class="spacer"></span><span class="pill neutral">4 ideas</span><button class="btn subtle" disabled title="Would leave fewer than 2 swimlanes">Remove</button></div>
+          <div class="swrow"><span class="grip">⠿</span><span>Done</span><span class="spacer"></span><span class="pill neutral">61 ideas</span><button class="btn subtle">Remove</button></div>
+          <div class="cmdbar" style="margin-bottom:0"><select style="flex:1"><option>+ Add existing status as swimlane…</option><option>Won't Do</option></select><button class="btn">Add</button></div>
+        </div>
+        <div class="note">Drag the ⠿ handle to reorder sections — order saves immediately on drop.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EMPTY STATE -->
+<section class="screen" id="s-empty">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a class="on" href="#">📋<span>Boards</span></a><span class="push"></span><span class="avatar">JR</span></aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Acme Corp</a> / Boards</div><h1>Boards</h1><p class="sub" style="margin-bottom:20px">Acme Corp has no boards yet.</p></div>
+      <div class="body">
+        <div class="card empty">
+          <div class="art">🗂️</div>
+          <h2>Create your first board</h2>
+          <p>A board organizes ideas into sections by status. You'll need at least 2 statuses selected as swimlanes to finish setup.</p>
+          <button class="btn primary">+ New board</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+</script>
+</body>
+</html>
