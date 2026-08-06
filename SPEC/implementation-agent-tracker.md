@@ -15,17 +15,17 @@ Track the implementation work that should be executed from the reset baseline, w
 - Last updated: 2026-08-06
 
 ## In Progress
-- T002 Add the EF Core DbContext, migrations, and audit storage foundations. (Backend Developer)
-- T003 Implement shared `/api/v1` routing conventions and problem-details error handling. (Backend Developer)
-- T004 Implement API validation plumbing and OpenAPI scaffolding. (Backend Developer)
-- Baseline smoke-test harness for boot and error-envelope behavior. (QA Developer)
-- Four HTML review comps for key feature pages, per Comp A style. (UI/UX Developer, design-review artifact, not production code)
+- T002 Add the EF Core DbContext, migrations, and audit storage foundations. (Backend Developer — not yet relaunched)
+- T003 Implement shared `/api/v1` routing conventions and problem-details error handling. (Backend Developer — not yet relaunched)
+- T004 Implement API validation plumbing and OpenAPI scaffolding. (Backend Developer — not yet relaunched)
+- Baseline smoke-test harness for boot and error-envelope behavior. (QA Developer — not yet relaunched)
 
 ## Ready Next
-- (T002-T004 in progress above)
+- (T002-T004 above — the first attempt at these three agents was interrupted by a process restart before any of them did work; worktrees were empty and have been cleaned up. Relaunch Backend Developer and QA Developer fresh off current `dev`.)
 
 ## Completed
 - T001 Create the solution structure and project references.
+- UI/UX Developer: 4 HTML review comps for design sign-off before any Blazor work starts, built directly (not via a background agent, after the first attempt was interrupted). See `SPEC/mockups/comp-a-review-01-login-and-auth.html`, `-02-admin-orgs-users.html`, `-03-board-kanban.html`, `-04-idea-detail.html`. Awaiting user review before Client Agent tasks (T040-T045) begin.
 
 ## Progress Notes
 - Restart baseline established on 2026-08-06.

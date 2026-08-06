@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Review Comp 2: Admin — Organizations &amp; Users</title>
+<style>
+  :root{
+    --accent:#1d4ed8; --accent-hover:#1e3a8a; --accent-soft:#dbeafe;
+    --ink:#0f172a; --ink-2:#334155; --ink-3:#64748b;
+    --bg:#f8fafc; --surface:#ffffff; --line:#d0d7de;
+    --ok:#166534; --warn:#9a3412; --err:#7f1d1d;
+    --radius:6px; --shadow:0 1px 2px rgba(15,23,42,.12),0 0 1px rgba(15,23,42,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  .comp-bar{background:#1e3a8a;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#cbd5e1;border:1px solid #475569;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}
+  .screen.on{display:block}
+  .shell{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 46px)}
+  .topbar{grid-column:1 / -1;height:48px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 16px}
+  .logo{display:flex;align-items:center;gap:8px;font-weight:600}
+  .logo .mark{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#1d4ed8,#1e3a8a);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+  .search{flex:1;max-width:420px;position:relative}
+  .search input{width:100%;padding:6px 10px 6px 30px;border:1px solid var(--line);border-radius:4px;background:var(--bg);font-size:13px}
+  .search::before{content:"⌕";position:absolute;left:9px;top:5px;color:var(--ink-3)}
+  .topbar .spacer{flex:1}
+  .avatar{width:28px;height:28px;border-radius:50%;background:#1e3a8a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .avatar.s{width:22px;height:22px;font-size:9px}
+  .iconbtn{border:none;background:none;font-size:16px;color:var(--ink-2);cursor:pointer;position:relative}
+  .nav{background:var(--surface);border-right:1px solid var(--line);padding:12px 8px}
+  .nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);padding:14px 12px 6px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:4px;color:var(--ink-2);text-decoration:none;font-size:13.5px}
+  .nav a.on{background:#eff6ff;color:var(--accent);font-weight:600;box-shadow:inset 2px 0 0 var(--accent)}
+  .nav a:hover{background:#f1f5f9}
+  .nav .em{font-size:15px;width:18px;text-align:center}
+  main{padding:20px 28px;overflow:auto}
+  .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:6px}
+  .crumbs a{color:var(--ink-3);text-decoration:none}
+  h1{font-size:20px;font-weight:600;margin-bottom:4px}
+  .sub{color:var(--ink-3);font-size:13px;margin-bottom:18px}
+  .cmdbar{display:flex;gap:8px;align-items:center;margin:14px 0;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
+  .btn:hover{background:#f1f5f9}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.primary:hover{background:var(--accent-hover)}
+  .btn.subtle{border-color:transparent;color:var(--ink-2)}
+  .btn.danger-text{border-color:transparent;color:var(--err)}
+  input[type=text],input[type=email],input[type=password],select,textarea{border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  label{font-size:12px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:4px}
+  .field{margin-bottom:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3);padding:10px 14px;border-bottom:2px solid var(--line);background:#f8fafc}
+  td{padding:10px 14px;border-bottom:1px solid #e2e8f0;vertical-align:middle}
+  tr:hover td{background:#f1f5f9}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+  .pill.ok{background:#dcfce7;color:#166534}.pill.warn{background:#fff7ed;color:#9a3412}
+  .pill.err{background:#fef2f2;color:#7f1d1d}.pill.neutral{background:#f1f5f9;color:var(--ink-2)}
+  .pill.info{background:var(--accent-soft);color:var(--accent)}
+  .note{font-size:11px;color:var(--ink-3);background:#fff8e6;border:1px solid #f5d90a33;padding:6px 10px;border-radius:4px;margin-top:16px;display:inline-block}
+  .code{font-family:ui-monospace,Consolas,monospace;background:#f1f5f9;border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:13px;letter-spacing:.03em;display:inline-flex;gap:10px;align-items:center}
+  .panelform{max-width:480px}
+  .panelform .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .drop{border:2px dashed var(--line);border-radius:8px;padding:28px;text-align:center;color:var(--ink-3);font-size:13px}
+  .csverr{background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:12px 14px;font-size:12.5px;color:#7f1d1d;margin-top:12px}
+  .csverr li{margin-left:18px}
+  .hint{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>REVIEW COMP 2 · ADMIN — ORGS &amp; USERS</strong>
+  <nav id="tabs">
+    <button data-s="orglist" class="on">Organizations</button>
+    <button data-s="orgnew">New organization</button>
+    <button data-s="orgdetail">Org detail</button>
+    <button data-s="userlist">Users</button>
+    <button data-s="usernew">Invite / create user</button>
+    <button data-s="csv">CSV import</button>
+  </nav>
+</div>
+
+<!-- ORGANIZATIONS LIST -->
+<section class="screen on" id="s-orglist">
+  <div class="shell">
+    <div class="topbar"><span class="logo"><span class="mark">CG</span> Collega</span><div class="search"><input placeholder="Search…"></div><span class="spacer"></span><button class="iconbtn">🔔</button><span class="avatar">SA</span></div>
+    <aside class="nav">
+      <div class="grp">Administration</div>
+      <a href="#"><span class="em">⚙️</span> Admin</a>
+      <a class="on" href="#" style="padding-left:34px">Organizations</a>
+      <a href="#" style="padding-left:34px">Users</a>
+      <a href="#" style="padding-left:34px">Statuses</a>
+    </aside>
+    <main>
+      <div class="crumbs"><a href="#">Admin</a> / Organizations</div>
+      <h1>Organizations</h1>
+      <p class="sub">Site Admin only. Users and boards are always scoped to exactly one organization.</p>
+      <div class="cmdbar">
+        <button class="btn primary">+ New organization</button>
+        <input type="text" placeholder="Filter by name…" style="width:220px">
+        <select><option>Status: All</option><option>Active</option><option>Archived</option></select>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Organization</th><th>Invite code</th><th>Users</th><th>Boards</th><th>Status</th><th>Created</th><th style="width:200px">Actions</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Acme Corp</strong></td><td class="code" style="font-size:11.5px;padding:2px 6px">ACME-7F2K</td><td>42</td><td>3</td><td><span class="pill ok">Active</span></td><td>2026-01-12</td><td><button class="btn subtle">Edit</button> <button class="btn subtle">Users</button> <button class="btn danger-text">Archive</button></td></tr>
+            <tr><td><strong>Initech</strong></td><td class="code" style="font-size:11.5px;padding:2px 6px">INIT-93QX</td><td>18</td><td>2</td><td><span class="pill ok">Active</span></td><td>2026-02-03</td><td><button class="btn subtle">Edit</button> <button class="btn subtle">Users</button> <button class="btn danger-text">Archive</button></td></tr>
+            <tr style="opacity:.6"><td><strong>Globex Ltd</strong></td><td class="code" style="font-size:11.5px;padding:2px 6px">GLBX-11AA</td><td>7</td><td>1</td><td><span class="pill err">Archived</span></td><td>2026-03-20</td><td><button class="btn subtle">View</button> <button class="btn subtle">Reactivate</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">💡 Archiving an organization invalidates its invite code and rejects new self-registration; existing data is retained and hidden from list results by default.</div>
+    </main>
+  </div>
+</section>
+
+<!-- NEW ORGANIZATION -->
+<section class="screen" id="s-orgnew">
+  <div class="shell">
+    <div class="topbar"><span class="logo"><span class="mark">CG</span> Collega</span><span class="spacer"></span><span class="avatar">SA</span></div>
+    <aside class="nav"><div class="grp">Administration</div><a href="#">⚙️ Admin</a><a class="on" href="#" style="padding-left:34px">Organizations</a></aside>
+    <main>
+      <div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / New</div>
+      <h1>New organization</h1>
+      <p class="sub">Keep it simple — a title, description, and optional logo. An invite code is generated automatically once saved.</p>
+      <div class="card panelform" style="padding:22px">
+        <div class="field"><label>Title <span style="color:var(--ink-3);font-weight:400">(required)</span></label><input type="text" style="width:100%" value="Umbrella Analytics"></div>
+        <div class="field"><label>Description</label><textarea style="width:100%;min-height:70px">Small internal tools team piloting Collega for feature requests.</textarea></div>
+        <div class="field"><label>Logo address <span style="color:var(--ink-3);font-weight:400">(optional)</span></label><input type="text" style="width:100%" placeholder="https://…"></div>
+        <div class="note" style="display:block">An Invite Code will be generated automatically and shown on the organization's detail page — Org Admins can regenerate it later, which invalidates the old one.</div>
+        <div style="display:flex;gap:8px;margin-top:18px"><button class="btn primary">Create organization</button><button class="btn">Cancel</button></div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- ORG DETAIL -->
+<section class="screen" id="s-orgdetail">
+  <div class="shell">
+    <div class="topbar"><span class="logo"><span class="mark">CG</span> Collega</span><span class="spacer"></span><span class="avatar">SA</span></div>
+    <aside class="nav"><div class="grp">Administration</div><a href="#">⚙️ Admin</a><a class="on" href="#" style="padding-left:34px">Organizations</a></aside>
+    <main>
+      <div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp</div>
+      <h1>Acme Corp</h1>
+      <p class="sub">Created 2026-01-12 · <span class="pill ok">Active</span></p>
+      <div class="card panelform" style="padding:22px;margin-bottom:18px">
+        <div class="field"><label>Title</label><input type="text" style="width:100%" value="Acme Corp"></div>
+        <div class="field"><label>Description</label><textarea style="width:100%;min-height:60px">Manufacturing and logistics — primary Collega tenant.</textarea></div>
+        <div class="field"><label>Logo address</label><input type="text" style="width:100%" value="https://cdn.acme.example/logo.png"></div>
+        <div style="display:flex;gap:8px;margin-top:6px"><button class="btn primary">Save changes</button><button class="btn danger-text">Archive organization</button></div>
+      </div>
+      <div class="card" style="padding:18px;max-width:480px">
+        <label style="margin-bottom:8px">Invite code</label>
+        <div class="code" style="justify-content:space-between;width:100%"><span>ACME-7F2K</span><span style="display:flex;gap:6px"><button class="btn subtle">📋 Copy</button><button class="btn subtle">↻ Regenerate</button></span></div>
+        <p class="hint">Regenerating immediately invalidates the current code — anyone with the old code can no longer self-register.</p>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- USERS LIST -->
+<section class="screen" id="s-userlist">
+  <div class="shell">
+    <div class="topbar"><span class="logo"><span class="mark">CG</span> Collega</span><div class="search"><input placeholder="Search…"></div><span class="spacer"></span><button class="iconbtn">🔔</button><span class="avatar">SA</span></div>
+    <aside class="nav">
+      <div class="grp">Administration</div>
+      <a href="#">⚙️ Admin</a>
+      <a href="#" style="padding-left:34px">Organizations</a>
+      <a class="on" href="#" style="padding-left:34px">Users</a>
+      <a href="#" style="padding-left:34px">Statuses</a>
+    </aside>
+    <main>
+      <div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / Users</div>
+      <h1>Users — Acme Corp</h1>
+      <p class="sub">Email is globally unique across the platform. Each user has exactly one role within this organization.</p>
+      <div class="cmdbar">
+        <button class="btn primary">+ Invite / create user</button>
+        <button class="btn">Import CSV</button>
+        <input type="text" placeholder="Filter by name or email…" style="width:240px">
+        <select><option>Role: All</option><option>Org Admin</option><option>User</option><option>Read Only</option></select>
+        <select><option>Status: All</option><option>Active</option><option>Inactive</option></select>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th style="width:34px"><input type="checkbox"></th><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Last sign-in</th><th style="width:170px">Actions</th></tr></thead>
+          <tbody>
+            <tr><td><input type="checkbox"></td><td><span class="avatar s">JR</span> Jordan Reyes</td><td>jordan.reyes@acme.com</td><td><span class="pill info">Org Admin</span></td><td><span class="pill ok">Active</span></td><td>Today 11:02</td><td><button class="btn subtle">Edit</button> <button class="btn subtle">Reset pw</button></td></tr>
+            <tr><td><input type="checkbox"></td><td><span class="avatar s">MP</span> Mia Park</td><td>mia.park@acme.com</td><td><span class="pill neutral">User</span></td><td><span class="pill warn">Locked</span></td><td>Today 08:47</td><td><button class="btn subtle">Edit</button> <button class="btn subtle">Unlock</button></td></tr>
+            <tr><td><input type="checkbox"></td><td><span class="avatar s">TD</span> Tom Diaz</td><td>tom.diaz@acme.com</td><td><span class="pill neutral">Read Only</span></td><td><span class="pill ok">Active</span></td><td>Yesterday</td><td><button class="btn subtle">Edit</button> <button class="btn subtle">Reset pw</button></td></tr>
+            <tr><td><input type="checkbox"></td><td><span class="avatar s">AL</span> Ana Liu</td><td>ana.liu@acme.com</td><td><span class="pill neutral">User</span></td><td><span class="pill err">Inactive</span></td><td>—</td><td><button class="btn subtle">Reactivate</button></td></tr>
+            <tr><td><input type="checkbox"></td><td><span class="avatar s" style="background:#ccc;color:#666">?</span> Last remaining Org Admin</td><td>sam.rios@acme.com</td><td><span class="pill info">Org Admin</span></td><td><span class="pill ok">Active</span></td><td>3 days ago</td><td><button class="btn subtle" disabled title="Cannot remove the last Org Admin's own access">Edit role</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">🔒 The last Org Admin in an organization cannot remove their own admin access or deactivate themselves.</div>
+    </main>
+  </div>
+</section>
+
+<!-- INVITE / CREATE USER -->
+<section class="screen" id="s-usernew">
+  <div class="shell">
+    <div class="topbar"><span class="logo"><span class="mark">CG</span> Collega</span><span class="spacer"></span><span class="avatar">SA</span></div>
+    <aside class="nav"><div class="grp">Administration</div><a href="#">⚙️ Admin</a><a href="#" style="padding-left:34px">Organizations</a><a class="on" href="#" style="padding-left:34px">Users</a></aside>
+    <main>
+      <div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / <a href="#">Users</a> / New</div>
+      <h1>Create user</h1>
+      <p class="sub">Admin-created users don't need an invite code — you choose the role and issue an initial password directly.</p>
+      <div class="card panelform" style="padding:22px">
+        <div class="row">
+          <div class="field"><label>First name</label><input type="text" style="width:100%" value="Priya"></div>
+          <div class="field"><label>Last name</label><input type="text" style="width:100%" value="Nair"></div>
+        </div>
+        <div class="field"><label>Email <span style="color:var(--ink-3);font-weight:400">(must be unique platform-wide)</span></label><input type="email" style="width:100%" value="priya.nair@acme.com"></div>
+        <div class="field"><label>Role</label>
+          <select style="width:100%"><option>Org Admin</option><option selected>User</option><option>Read Only</option></select>
+          <p class="hint">Site Admin is a global role and cannot be assigned here.</p>
+        </div>
+        <div class="field"><label>Initial password</label><input type="text" style="width:100%" value="Tmp-4qL9zR"><p class="hint">Shown once. The user must change it on first sign-in.</p></div>
+        <div style="display:flex;gap:8px;margin-top:6px"><button class="btn primary">Create user</button><button class="btn">Cancel</button></div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<!-- CSV IMPORT -->
+<section class="screen" id="s-csv">
+  <div class="shell">
+    <div class="topbar"><span class="logo"><span class="mark">CG</span> Collega</span><span class="spacer"></span><span class="avatar">SA</span></div>
+    <aside class="nav"><div class="grp">Administration</div><a href="#">⚙️ Admin</a><a href="#" style="padding-left:34px">Organizations</a><a class="on" href="#" style="padding-left:34px">Users</a></aside>
+    <main>
+      <div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / <a href="#">Users</a> / Import CSV</div>
+      <h1>Import users from CSV</h1>
+      <p class="sub">Every row is created in <strong>Acme Corp</strong>. An invite code is not required for CSV-imported users.</p>
+      <div class="card" style="padding:20px;max-width:640px">
+        <div class="cmdbar" style="margin-top:0"><button class="btn subtle">⬇ Download CSV template</button></div>
+        <p class="hint">Columns, in order: <strong>First Name, Last Name, Email, Role</strong> (Role optional — defaults to User).</p>
+        <div class="drop" style="margin-top:14px">Drag a .csv file here, or <a href="#" style="color:var(--accent)">browse</a><div class="hint">Max file size and row-count limits apply — oversized files are rejected with no rows created.</div></div>
+        <div class="csverr">
+          <strong>4 of 12 rows failed validation — no users were created.</strong>
+          <ul style="margin-top:6px">
+            <li>Row 3: Email "mia.park@acme.com" already exists on this platform.</li>
+            <li>Row 5: Email is required.</li>
+            <li>Row 8: Role "Site Admin" is not permitted for CSV import.</li>
+            <li>Row 8: duplicate email within this file (also row 11).</li>
+          </ul>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px"><button class="btn primary">Re-upload corrected file</button><button class="btn">Cancel</button></div>
+      </div>
+      <div class="note">⚠ Import is all-or-nothing: if any row is invalid, no rows are persisted. Fix and re-upload the full file.</div>
+    </main>
+  </div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+</script>
+</body>
+</html>

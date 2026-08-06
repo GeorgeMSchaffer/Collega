@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Review Comp 3: Board &amp; Swimlanes</title>
+<style>
+  :root{
+    --accent:#1d4ed8; --accent-hover:#1e3a8a; --accent-soft:#dbeafe;
+    --ink:#0f172a; --ink-2:#334155; --ink-3:#64748b;
+    --bg:#f8fafc; --surface:#ffffff; --line:#d0d7de;
+    --ok:#166534; --warn:#9a3412; --err:#7f1d1d;
+    --radius:6px; --shadow:0 1px 2px rgba(15,23,42,.12),0 0 1px rgba(15,23,42,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  .comp-bar{background:#1e3a8a;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#cbd5e1;border:1px solid #475569;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .comp-bar .rolegrp{display:flex;gap:6px;margin-left:auto;align-items:center}
+  .comp-bar .rolegrp span{font-size:11px;color:#93a5c9;text-transform:uppercase;letter-spacing:.05em}
+  .screen{display:none}
+  .screen.on{display:block}
+  .shell{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 46px)}
+  .topbar{grid-column:1 / -1;height:48px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 16px}
+  .logo{display:flex;align-items:center;gap:8px;font-weight:600}
+  .logo .mark{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#1d4ed8,#1e3a8a);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+  .search{flex:1;max-width:420px;position:relative}
+  .search input{width:100%;padding:6px 10px 6px 30px;border:1px solid var(--line);border-radius:4px;background:var(--bg);font-size:13px}
+  .search::before{content:"⌕";position:absolute;left:9px;top:5px;color:var(--ink-3)}
+  .topbar .spacer{flex:1}
+  .avatar{width:28px;height:28px;border-radius:50%;background:#1e3a8a;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .avatar.s{width:22px;height:22px;font-size:9px}
+  .iconbtn{border:none;background:none;font-size:16px;color:var(--ink-2);cursor:pointer;position:relative}
+  .dot{position:absolute;top:-2px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--err)}
+  .nav{background:var(--surface);border-right:1px solid var(--line);padding:12px 8px}
+  .nav .grp{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);padding:14px 12px 6px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:4px;color:var(--ink-2);text-decoration:none;font-size:13.5px}
+  .nav a.on{background:#eff6ff;color:var(--accent);font-weight:600;box-shadow:inset 2px 0 0 var(--accent)}
+  .nav a:hover{background:#f1f5f9}
+  .nav .em{font-size:15px;width:18px;text-align:center}
+  main{padding:20px 28px;overflow:auto}
+  .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:6px}
+  .crumbs a{color:var(--ink-3);text-decoration:none}
+  h1{font-size:20px;font-weight:600;margin-bottom:4px}
+  .sub{color:var(--ink-3);font-size:13px;margin-bottom:18px}
+  .cmdbar{display:flex;gap:8px;align-items:center;margin:14px 0;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
+  .btn:hover{background:#f1f5f9}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.subtle{border-color:transparent;color:var(--ink-2)}
+  .btn.danger-text{border-color:transparent;color:var(--err)}
+  input[type=text],select{border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+  .pill.ok{background:#dcfce7;color:#166534}.pill.warn{background:#fff7ed;color:#9a3412}
+  .pill.err{background:#fef2f2;color:#7f1d1d}.pill.neutral{background:#f1f5f9;color:var(--ink-2)}
+  .prio{font-weight:700;font-size:11px}
+  .prio.high{color:var(--err)}.prio.med{color:var(--warn)}.prio.low{color:var(--ok)}
+  .lanes{display:grid;grid-auto-flow:column;grid-auto-columns:280px;gap:14px;overflow-x:auto;padding-bottom:12px;align-items:start}
+  .lane{background:#f1f5f9;border-radius:8px;padding:10px}
+  .lane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);display:flex;justify-content:space-between;padding:2px 6px 10px}
+  .lane .cnt{background:#cbd5e1;border-radius:10px;padding:0 8px;font-size:11px}
+  .icard{background:var(--surface);border-radius:6px;box-shadow:var(--shadow);padding:10px 12px;margin-bottom:8px;cursor:pointer;border-left:3px solid transparent}
+  .icard:hover{background:#eff6ff;outline:1px solid var(--accent)}
+  .icard .t{font-weight:600;font-size:13px;margin-bottom:8px;color:var(--accent)}
+  .icard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
+  .icard .meta .spacer{flex:1}
+  .up{border:1px solid var(--line);border-radius:4px;padding:1px 7px;font-size:11px;background:var(--surface);cursor:pointer}
+  .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+  .tag{background:#f1f5f9;border-radius:3px;padding:1px 6px;font-size:10.5px;color:var(--ink-2)}
+  .note{font-size:11px;color:var(--ink-3);background:#fff8e6;border:1px solid #f5d90a33;padding:6px 10px;border-radius:4px;margin-top:16px;display:inline-block}
+  .swrow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:8px}
+  .swrow .grip{cursor:grab;color:var(--ink-3)}
+  .swrow .spacer{flex:1}
+  .warnbanner{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:6px;padding:10px 14px;font-size:12.5px;margin-bottom:14px}
+  .empty{padding:56px 24px;text-align:center}
+  .empty .art{font-size:40px;margin-bottom:10px}
+  .empty h2{font-size:16px;margin-bottom:6px}
+  .empty p{color:var(--ink-3);font-size:13px;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>REVIEW COMP 3 · BOARD &amp; SWIMLANES</strong>
+  <nav id="tabs">
+    <button data-s="board" class="on">Board — User</button>
+    <button data-s="boardro">Board — Read Only</button>
+    <button data-s="config">Configure swimlanes</button>
+    <button data-s="empty">Empty state / guided setup</button>
+  </nav>
+</div>
+
+<!-- BOARD — USER ROLE -->
+<section class="screen on" id="s-board">
+  <div class="shell">
+    <div class="topbar">
+      <span class="logo"><span class="mark">CG</span> Collega</span>
+      <div class="search"><input placeholder="Filter this board…"></div>
+      <span class="spacer"></span>
+      <button class="btn primary">+ New idea</button>
+      <button class="iconbtn">🔔<span class="dot"></span></button><span class="avatar">JR</span>
+    </div>
+    <aside class="nav">
+      <div class="grp">Workspace</div>
+      <a href="#"><span class="em">🏠</span> Home</a>
+      <a href="#"><span class="em">📋</span> Boards</a>
+      <div class="grp">Boards — Acme Corp</div>
+      <a class="on" href="#"><span class="em">🚀</span> Product Ideas</a>
+      <a href="#"><span class="em">🛠</span> Platform Backlog</a>
+    </aside>
+    <main>
+      <div class="crumbs"><a href="#">Acme Corp</a> / <a href="#">Boards</a> / Product Ideas</div>
+      <h1 style="display:flex;align-items:center;gap:10px">Product Ideas <button class="btn subtle" title="Board settings">⚙</button></h1>
+      <p class="sub">Role: <strong>User</strong> — can create ideas and move any idea on this board.</p>
+      <div class="cmdbar">
+        <input type="text" placeholder="Filter cards…" style="width:200px">
+        <select><option>Priority: All</option><option>High</option><option>Medium</option><option>Low</option></select>
+        <select><option>Tag: All</option></select>
+        <span style="flex:1"></span>
+        <span style="font-size:12px;color:var(--ink-3)">48 ideas · sorted by upvotes</span>
+      </div>
+      <div class="lanes">
+        <div class="lane"><h3>New <span class="cnt">4</span></h3>
+          <div class="icard" style="border-left-color:var(--err)"><div class="t">Dark mode support</div><div class="meta"><span class="prio high">HIGH</span><span class="tag">ui</span><span class="tag">theme</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div></div>
+          <div class="icard" style="border-left-color:var(--warn)"><div class="t">Bulk import from CSV</div><div class="meta"><span class="prio med">MED</span><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 17</button></div></div>
+          <div class="icard" style="border-left-color:var(--ok)"><div class="t">Keyboard shortcuts cheat sheet</div><div class="meta"><span class="prio low">LOW</span><span class="spacer"></span><span class="avatar s" style="background:#ccc;color:#666">?</span><button class="up">▲ 6</button></div></div>
+          <div class="icard" style="border-left-color:var(--warn)"><div class="t">Export board to PDF</div><div class="meta"><span class="prio med">MED</span><span class="tag">reporting</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up">▲ 5</button></div></div>
+          <button class="btn subtle" style="width:100%">+ Add idea</button>
+        </div>
+        <div class="lane"><h3>In Progress <span class="cnt">3</span></h3>
+          <div class="icard" style="border-left-color:var(--err)"><div class="t">SSO via SAML</div><div class="meta"><span class="prio high">HIGH</span><span class="tag">auth</span><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 31</button></div></div>
+          <div class="icard" style="border-left-color:var(--warn)"><div class="t">Notification digest email</div><div class="meta"><span class="prio med">MED</span><span class="tag">notify</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up mine">▲ 12</button></div></div>
+          <div class="icard" style="border-left-color:var(--warn)"><div class="t">Mention autocomplete</div><div class="meta"><span class="prio med">MED</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up">▲ 9</button></div></div>
+        </div>
+        <div class="lane"><h3>Blocked <span class="cnt">1</span></h3>
+          <div class="icard" style="border-left-color:var(--err)"><div class="t">Mobile responsive board</div><div class="meta"><span class="prio high">HIGH</span><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 20</button></div></div>
+        </div>
+        <div class="lane"><h3>Done <span class="cnt">2</span></h3>
+          <div class="icard" style="opacity:.8"><div class="t">Org-scoped user search</div><div class="meta"><span class="prio med">MED</span><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 14</button></div></div>
+          <div class="icard" style="opacity:.8"><div class="t">Audit log for admin actions</div><div class="meta"><span class="prio low">LOW</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up">▲ 8</button></div></div>
+        </div>
+      </div>
+      <div class="note">💡 Cards are draggable between lanes for this role. Reorder within a lane is not persisted — only lane (status) changes.</div>
+    </main>
+  </div>
+</section>
+
+<!-- BOARD — READ ONLY ROLE -->
+<section class="screen" id="s-boardro">
+  <div class="shell">
+    <div class="topbar">
+      <span class="logo"><span class="mark">CG</span> Collega</span>
+      <div class="search"><input placeholder="Filter this board…"></div>
+      <span class="spacer"></span>
+      <button class="iconbtn">🔔</button><span class="avatar">TD</span>
+    </div>
+    <aside class="nav">
+      <div class="grp">Workspace</div>
+      <a href="#"><span class="em">🏠</span> Home</a>
+      <a href="#"><span class="em">📋</span> Boards</a>
+      <div class="grp">Boards — Acme Corp</div>
+      <a class="on" href="#"><span class="em">🚀</span> Product Ideas</a>
+    </aside>
+    <main>
+      <div class="crumbs"><a href="#">Acme Corp</a> / <a href="#">Boards</a> / Product Ideas</div>
+      <h1>Product Ideas</h1>
+      <p class="sub">Role: <strong>Read Only</strong> — viewing only. No "New idea" action, and cards are not draggable.</p>
+      <div class="cmdbar">
+        <input type="text" placeholder="Filter cards…" style="width:200px">
+        <select><option>Priority: All</option></select>
+        <span style="flex:1"></span>
+        <span style="font-size:12px;color:var(--ink-3)">48 ideas · sorted by upvotes</span>
+      </div>
+      <div class="lanes">
+        <div class="lane"><h3>New <span class="cnt">4</span></h3>
+          <div class="icard" style="border-left-color:var(--err);cursor:default" onmouseover="" ><div class="t">Dark mode support</div><div class="meta"><span class="prio high">HIGH</span><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up" disabled>▲ 24</button></div></div>
+          <div class="icard" style="border-left-color:var(--warn);cursor:default"><div class="t">Bulk import from CSV</div><div class="meta"><span class="prio med">MED</span><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up" disabled>▲ 17</button></div></div>
+        </div>
+        <div class="lane"><h3>In Progress <span class="cnt">3</span></h3>
+          <div class="icard" style="border-left-color:var(--err);cursor:default"><div class="t">SSO via SAML</div><div class="meta"><span class="prio high">HIGH</span><span class="tag">auth</span><span class="spacer"></span><span class="avatar s">AL</span><button class="up" disabled>▲ 31</button></div></div>
+        </div>
+        <div class="lane"><h3>Blocked <span class="cnt">1</span></h3>
+          <div class="icard" style="border-left-color:var(--err);cursor:default"><div class="t">Mobile responsive board</div><div class="meta"><span class="prio high">HIGH</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up" disabled>▲ 20</button></div></div>
+        </div>
+        <div class="lane"><h3>Done <span class="cnt">2</span></h3>
+          <div class="icard" style="opacity:.8;cursor:default"><div class="t">Org-scoped user search</div><div class="meta"><span class="prio med">MED</span><span class="spacer"></span><span class="avatar s">AL</span><button class="up" disabled>▲ 14</button></div></div>
+        </div>
+      </div>
+      <div class="note">🔒 Read Only can open Idea Detail to read full content, but cannot move cards, comment, upvote, or create ideas.</div>
+    </main>
+  </div>
+</section>
+
+<!-- CONFIGURE SWIMLANES -->
+<section class="screen" id="s-config">
+  <div class="shell">
+    <div class="topbar"><span class="logo"><span class="mark">CG</span> Collega</span><span class="spacer"></span><span class="avatar">JR</span></div>
+    <aside class="nav"><div class="grp">Boards — Acme Corp</div><a class="on" href="#">🚀 Product Ideas</a></aside>
+    <main>
+      <div class="crumbs"><a href="#">Product Ideas</a> / Board settings</div>
+      <h1>Board settings — Product Ideas</h1>
+      <p class="sub">Choose which of this organization's statuses appear as swimlanes here, and their left-to-right order.</p>
+      <div class="warnbanner">⚠ A board must have at least 2 swimlanes. Removing "Blocked" below would leave only 1 — the save action is disabled until 2+ remain.</div>
+      <div class="card" style="padding:16px;max-width:520px">
+        <div class="swrow"><span class="grip">⠿</span><span>New</span><span class="spacer"></span><span class="pill neutral">22 ideas</span><button class="btn subtle">Remove</button></div>
+        <div class="swrow"><span class="grip">⠿</span><span>In Progress</span><span class="spacer"></span><span class="pill neutral">15 ideas</span><button class="btn subtle">Remove</button></div>
+        <div class="swrow" style="opacity:.5"><span class="grip">⠿</span><span>Blocked</span><span class="spacer"></span><span class="pill neutral">4 ideas</span><button class="btn subtle" disabled title="Would leave fewer than 2 swimlanes">Remove</button></div>
+        <div class="swrow"><span class="grip">⠿</span><span>Done</span><span class="spacer"></span><span class="pill neutral">61 ideas</span><button class="btn subtle">Remove</button></div>
+        <div class="cmdbar" style="margin-bottom:0">
+          <select style="flex:1"><option>+ Add existing status as swimlane…</option><option>Won't Do</option></select>
+          <button class="btn">Add</button>
+        </div>
+      </div>
+      <div class="note">💡 Drag the ⠿ handle to reorder — order saves immediately on drop, no separate Save step for reordering.</div>
+    </main>
+  </div>
+</section>
+
+<!-- EMPTY STATE / GUIDED SETUP -->
+<section class="screen" id="s-empty">
+  <div class="shell">
+    <div class="topbar"><span class="logo"><span class="mark">CG</span> Collega</span><span class="spacer"></span><span class="avatar">JR</span></div>
+    <aside class="nav"><div class="grp">Workspace</div><a href="#">🏠 Home</a><a class="on" href="#">📋 Boards</a></aside>
+    <main>
+      <div class="crumbs"><a href="#">Acme Corp</a> / Boards</div>
+      <h1>Boards</h1>
+      <p class="sub">Acme Corp has no boards yet.</p>
+      <div class="card empty">
+        <div class="art">🗂️</div>
+        <h2>Create your first board</h2>
+        <p>A board organizes ideas into swimlanes by status. You'll need at least 2 statuses selected as swimlanes to finish setup.</p>
+        <button class="btn primary">+ New board</button>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+</script>
+</body>
+</html>
