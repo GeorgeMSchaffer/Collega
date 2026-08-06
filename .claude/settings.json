@@ -18,7 +18,25 @@
       "Bash(echo \"exit=$?\")",
       "Bash(dotnet package *)",
       "Bash(dotnet build *)",
-      "Bash(dotnet test *)"
+      "Bash(dotnet test *)",
+      "Bash(dotnet run *)",
+      "Bash(dotnet ef *)",
+      "Bash(dotnet restore *)",
+      "Bash(dotnet publish *)",
+      "Bash(docker compose *)",
+      "Bash(docker ps *)",
+      "Bash(docker logs *)",
+      "Bash(docker rm *)",
+      "Bash(docker stop *)",
+      "Bash(docker inspect *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git merge *)",
+      "Bash(git branch -d *)",
+      "Bash(git branch -D *)",
+      "Bash(git worktree add *)",
+      "Bash(git worktree remove *)",
+      "Bash(curl *)"
     ]
   }
 }
