@@ -766,9 +766,9 @@ Request body:
 
 UI behavior contract:
 - board cards remain compact and show `title`, `priority`, Business Impact chip, the first three alphabetical `tagNames` plus tag overflow count, the first three ordered `assignees` plus assignee overflow count, viewer-local age derived from `createdAtUtc`, current-user upvote state/count, and comment count.
-- selecting the card title opens a detail overlay for full idea editing in context.
-- full idea editing in the overlay supports all editable idea fields and collaboration fields.
-- selecting the card comment action opens the detail overlay and focuses the comment composer.
+- selecting the card title navigates to the full-page Idea Detail view (`/ideas/{ideaId}/edit`) for full idea editing.
+- Idea Detail supports all editable idea fields and collaboration fields.
+- selecting the card comment action navigates to Idea Detail and focuses the comment composer.
 - description updates are accepted only from the idea author, an in-scope Org Admin, or Site Admin; unauthorized description changes return `403 Forbidden`.
 - assignee updates replace the complete collection atomically and are accepted only from the idea author, an in-scope Org Admin, or Site Admin; unauthorized assignment changes return `403 Forbidden`.
 - duplicate assignee IDs, more than five assignee IDs, inactive newly selected users, cross-organization users, or more than 10 distinct tags return `400 Bad Request`.
@@ -973,7 +973,7 @@ Success response `200`:
 - `actorUserId` GUID string
 - `recipientUserId` GUID string
 - `occurredAtUtc` UTC timestamp
-- `ideaLink` string using `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}`
+- `ideaLink` string using `/ideas/{ideaId}/edit` (superseded from the earlier `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}` pattern; see `SPEC/20-feature-notifications.md`)
 - `message` human-readable event summary string
 - `metadata` object for event-specific context
 

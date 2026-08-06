@@ -46,8 +46,8 @@ Users can create, discuss, organize, and support ideas within their organization
    - Submission age in viewer-local calendar days
    - Upvote icon button and count
    - Add Comment icon button and comment count
-4. Clicking the idea title from a board card opens a detail overlay for full idea review and editing without leaving the board page.
-5. The detail overlay must support all editable idea fields and collaboration fields, including tags, mentions, due date, assignment, comments, and upvote state.
+4. Clicking the idea title from a board card navigates to the full-page Idea Detail view for full idea review and editing (`/ideas/{ideaId}/edit`; see `SPEC/20-feature-client-ui.md`). This is the same Idea Detail view reached from the Ideas list, not a separate surface.
+5. Idea Detail must support all editable idea fields and collaboration fields, including tags, mentions, due date, assignment, comments, and upvote state.
 6. Ideas in the `Complete` status remain editable and continue to allow comments, mentions, and upvotes.
 7. When a `statusId` is provided on idea create or status update, it must correspond to an active swimlane on the idea's target board; providing a status that is not on the board is a validation error.
 8. Idea creation, edits, status changes, comments, upvote toggles, and deletions must generate audit events.
@@ -81,7 +81,7 @@ Users can create, discuss, organize, and support ideas within their organization
 ## Permissions
 - Site Admin, Org Admin, and User can create and edit ideas.
 - Site Admin and Org Admin can soft-delete ideas within their authorized scope; soft-deleted ideas are excluded from board views and list queries.
-- The Delete action is visible in Idea Detail only to an authorized Site Admin or Org Admin, requires confirmation, closes the overlay after success, and removes the card from the board immediately.
+- The Delete action is visible in Idea Detail only to an authorized Site Admin or Org Admin, requires confirmation, returns to the board after success, and removes the card from the board immediately.
 - Only the creating author, an in-scope Org Admin, or Site Admin can edit an idea description or change its assignee collection. Other editable fields retain the general idea-edit permission unless a narrower rule is specified.
 - Idea deletion generates an audit event.
 - Read Only cannot edit or delete idea content.
@@ -223,8 +223,8 @@ When this feature is implemented it must address:
 - [ ] Submission age uses viewer-local calendar dates, displays `0 days ago`, singular `1 day ago`, or plural `{N} days ago`, and clamps future values to zero
 - [ ] Card upvote state reflects whether the current user has upvoted and toggles with optimistic rollback on failure
 - [ ] Clicking the card comment control opens Idea Detail and focuses the comment composer
-- [ ] Clicking an idea title from a board card opens a detail overlay instead of navigating away
-- [ ] The detail overlay supports all idea edit fields including tags, mentions, assignment, and optional due date
+- [ ] Clicking an idea title from a board card navigates to the full-page Idea Detail view (`/ideas/{ideaId}/edit`)
+- [ ] Idea Detail supports all idea edit fields including tags, mentions, assignment, and optional due date
 - [ ] Mentions are restricted to users in the same organization
 - [ ] Comment authors can edit and delete their own comments
 - [ ] Site Admin and Org Admin can delete comments in their authorized scope

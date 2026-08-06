@@ -90,7 +90,7 @@ Key rule: all tenant-owned data is organization-scoped; Site Admin is global and
 - Limits: title 150, description 4000, comment body 2000, tag name 100.
 - Default status is the left-most swimlane when omitted at create time.
 - Board cards remain compact: title, priority, assignee display, upvote state.
-- Clicking card title opens in-context detail overlay for full edit workflow.
+- Clicking card title navigates to the full-page Idea Detail view (`/ideas/{ideaId}/edit`) for full edit workflow; the same view is reached from the Ideas list.
 - Ideas in `Complete` remain editable and collaborative.
 - Mentions resolve by same-organization email only.
 - Unresolved mentions show inline validation and block save.

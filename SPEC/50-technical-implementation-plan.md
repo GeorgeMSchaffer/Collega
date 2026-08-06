@@ -225,7 +225,7 @@ Validation gate:
 8. Replace user-facing Workflow terminology with Board terminology. Make `/boards` and `/board/{boardId}` canonical; add redirects from `/board`, `/workflow`, `/workflows`, and `/workflow/{boardId}`.
 9. Add **Settings > Idea Fields** at `/settings/organizations/{organizationId}/idea-fields` with separate sortable Idea Type and Business Impact lists, role-aware organization scope, and last-option deletion feedback.
 10. Fix board movement using a dedicated desktop drag handle, optimistic local relocation, one status API call, and rollback/toast behavior.
-11. Apply successful status changes from Idea Detail to the board collection immediately without waiting for overlay close or a full reload.
+11. Apply successful status changes from Idea Detail to the board collection immediately so the card reflects its new status on return to the board, without waiting for a full reload.
 12. Add Business Impact chips, current-user upvote toggle/count, and comment count/action to cards. Prevent card actions from starting drag or opening detail unintentionally.
 13. Open Idea Detail from the comment action, scroll to comments, and focus the composer; use the comments heading as fallback.
 14. Add author/admin description editing and an admin-only confirmed Delete action that closes detail and removes the card after success.
@@ -304,7 +304,7 @@ Dependencies: BE-2 and BE-3.
 
 1. Add a dedicated accessible drag handle to each card and lane drop targets using desktop HTML5 drag events.
 2. On drop, snapshot the source status, move the card locally, invoke the status endpoint once, and restore the snapshot plus show an error toast on failure.
-3. Reuse the same local move helper after Idea Detail status changes so the overlay remains open and lane counts update immediately.
+3. Reuse the same local move helper after Idea Detail status changes so lane counts update immediately once the board is revisited.
 4. Add Business Impact chip color, upvote icon/count, and comment icon/count to cards.
 5. Make upvote optimistic with per-card in-flight disabling and rollback from the pre-click `hasUpvoted`/count snapshot.
 6. Make comment activation open detail with a focus intent; after render, scroll to and focus the composer or comments heading fallback.
@@ -324,7 +324,7 @@ Dependencies: BE-1 through BE-4.
 1. Add Domain/Application tests for field invariants, field scope, description authorization, soft delete, and status movement.
 2. Add Infrastructure migration/seed tests for populated-database backfill and idempotency.
 3. Add API integration and OpenAPI contract tests for option CRUD/reorder/delete, expanded projections, idea delete, and `400`/`403`/`404` behavior.
-4. Add Client/component tests for route redirects, terminology, drag rollback, overlay movement, upvote rollback, comment focus, and role-aware editing/deletion.
+4. Add Client/component tests for route redirects, terminology, drag rollback, Idea Detail status movement, upvote rollback, comment focus, and role-aware editing/deletion.
 5. Add Playwright coverage for the desktop critical path and verify mobile uses the status selector rather than touch drag.
 6. Run `scripts/spec_drift_gate.ps1`, solution build, affected test projects, and browser tests before completion.
 7. Add migration and Application/API tests proving valid singular assignments are preserved, invalid assignee collections are rejected, assignment authorization is enforced, notifications deduplicate recipients, CSV supports pipe-delimited assignees, and tag limits are enforced.
@@ -857,7 +857,7 @@ Add to the Persistence Design / Core Tables:
 | `FieldDefinitionList.razor` | Admin → Org Settings → Custom Fields | List, reorder, edit, archive definitions |
 | `FieldDefinitionEditor.razor` | Admin → Org Settings | Create/edit dialog with type selector and options sub-editor |
 | `FieldOptionEditor.razor` | Embedded in editor | Manage Dropdown/MultiSelect option labels |
-| `IdeaUdfFields.razor` | Idea create dialog + detail overlay | Dynamic rendering of UDF fields by type |
+| `IdeaUdfFields.razor` | Idea create mode + Idea Detail page | Dynamic rendering of UDF fields by type |
 | `UdfFilterPanel.razor` | Ideas list filter panel | Per-type filter controls for UDF fields |
 
 New client service: `IFieldDefinitionApiClient` + `FieldDefinitionCacheService` (scoped, avoids repeated fetches)

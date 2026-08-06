@@ -245,11 +245,11 @@ Tasks:
 - render one column per status on the selected board, ordered by `Status.SortOrder`; horizontal scroll on overflow
 - restyle the Board detail hierarchy, full-height lanes, density, cards, tag rows, persona footers, and age placement from `mockups/sprint-management/idea-board.html`; preserve configured statuses and approved controls, excluding demo-only pivots, conversion actions, duplicate commands, and sprint features
 - render compact idea cards showing title, priority, Business Impact chip, first three alphabetical tags plus `+N`, first three ordered assignee personas plus `+N`, viewer-local submission age, current-user upvote control/count, and comment control/count
-- clicking a card title opens an in-context detail overlay (no page navigation); overlay fields: title, priority, due date, description, zero-to-five assignees, zero-to-10 tags, mentions, comments; overlay actions: Cancel, Save Idea, Move in Board
-- add primary **New Idea** button in board header that opens overlay in create mode (hidden for ReadOnly users)
+- clicking a card title navigates to the full-page Idea Detail view (`/ideas/{ideaId}/edit`, no overlay); fields: title, priority, due date, description, zero-to-five assignees, zero-to-10 tags, mentions, comments; actions: Cancel, Save Idea, Move in Board
+- add primary **New Idea** button in board header that navigates to Idea Detail in create mode (hidden for ReadOnly users)
 - add filter chips (All / Created by me / Assigned to me) and search input (filters by title, tag, or assignee, client-side); filtering is combinable; empty columns remain visible with "No ideas" placeholder
 - implement card drag-and-drop from a dedicated handle: optimistic column move, one status call, revert on failure with error toast
-- immediately relocate a card when status changes in Idea Detail without waiting for overlay close
+- immediately update the idea's status when changed from Idea Detail, reflected in the matching swimlane on return to the board
 - open and focus comments from the card comment action; implement optimistic upvote state/count with rollback
 - add role-aware description editing and confirmed admin-only soft delete
 - implement column reorder drag for SiteAdmin and OrgAdmin: optimistic reorder, saves immediately on drop, call `PUT /api/v1/boards/{boardId}/statuses/{statusId}` per changed status, revert all on failure with error toast
@@ -286,7 +286,7 @@ Exit criteria:
 - all bug fixes from SPEC/20-feature-client-ui-revisions.md verified as resolved
 - header, horizontal menu, gear icon, and Settings area match the approved layout spec
 - Boards page shows only a board list; clicking opens `/board/{boardId}`
-- Board detail is functional: expanded compact cards, title-click overlay, New Idea, search/filter, dedicated-handle drag with rollback, immediate overlay status movement, upvote/comment actions, and admin column reorder
+- Board detail is functional: expanded compact cards, title-click navigation to Idea Detail, New Idea, search/filter, dedicated-handle drag with rollback, immediate status movement from Idea Detail, upvote/comment actions, and admin column reorder
 - all list pages have uniform search bar and server-side pagination with correct page sizes
 - no Admin-labeled routes, titles, or text remain
 
