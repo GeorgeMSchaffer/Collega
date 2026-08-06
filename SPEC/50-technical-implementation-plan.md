@@ -110,7 +110,7 @@ Produce an implementation plan that is detailed enough to drive engineering exec
 3. Add EF Core DbContext, migrations, audit storage design, and base auditing fields.
 4. Implement API conventions for `/api/v1`, problem-details handling, and request validation.
 5. Set up authentication middleware, authorization policy registration, and current-user context resolution.
-6. Seed the global Site Admin using an environment-provided initial credential and mark it for forced password change.
+6. Seed the global Site Admin using an environment-provided initial credential (`SiteAdmin__Email` / `SiteAdmin__Password`, see `SPEC/20-feature-auth.md`) and mark it for forced password change. Fail startup fast if either configuration key is missing.
 
 Validation gate:
 - application boots successfully

@@ -2,7 +2,7 @@
 
 ## Document Metadata
 - Status: Draft
-- Last Updated: 2026-07-30
+- Last Updated: 2026-08-06
 - Audience: Engineering, Product, QA, AI coding agents
 - Purpose: Provide one implementation-ready spec that reduces duplication while preserving canonical rules from `SPEC/*.md`.
 
@@ -20,7 +20,7 @@ Security-sensitive flows include password policy enforcement, lockout handling, 
 
 ## MVP Scope
 ### In Scope
-- Authentication and first-login password change
+- Authentication, first-login password change, and invite-code self-registration
 - Organization and user administration
 - Boards and statuses with swimlane ordering
 - Idea CRUD and status movement
@@ -58,6 +58,7 @@ Key rule: all tenant-owned data is organization-scoped; Site Admin is global and
 ## Feature Behavior
 ### Authentication and Access
 - Login uses email and password.
+- Invited users can self-register from a public `/register` page using a valid organization invite code; the code determines which organization the account joins. A missing or invalid code is rejected with a prompt to provide a correct one.
 - Inactive users are denied authentication.
 - Lockout: 5 failed attempts in 15 minutes trigger a 15-minute lockout window.
 - Seeded Site Admin must change password on first successful login.
@@ -69,6 +70,9 @@ Key rule: all tenant-owned data is organization-scoped; Site Admin is global and
 ### Organizations and Users
 - Only Site Admin can create organizations.
 - Site Admin and Org Admin can edit organizations in authorized scope.
+- Every organization has a system-generated, unique invite code, shown in list and detail views; Site Admin and Org Admin (own org) can regenerate it, which invalidates the previous code.
+- Users join an organization by self-registering with its invite code, by direct admin creation, or by admin CSV import; the latter two do not require an invite code.
+- Archiving an organization invalidates its invite code; self-registration against an archived organization is rejected.
 - Organizations are archived, never hard-deleted.
 - New organizations auto-provision default statuses and one default board.
 - Last Org Admin self-demotion/deactivation is blocked.
@@ -104,6 +108,7 @@ Route and payload authority: `SPEC/30-Contracts.md`.
 | Endpoint | Primary Actors | Request Summary | Success Summary | Key Errors |
 |---|---|---|---|---|
 | `POST /api/v1/auth/login` | Anonymous | `email`, `password` | Auth payload with token/session data and `requiresPasswordChange` | 401, 403, 429 |
+| `POST /api/v1/auth/register` | Anonymous | `inviteCode`, `firstName`, `lastName`, `email`, `password` | `201` with `userId`, `organizationId`, `email`, `role`, `status` | 400, 409 |
 | `GET /api/v1/auth/me` | Authenticated | None | Current user summary | 401 |
 | `POST /api/v1/auth/change-password` | Authenticated | `currentPassword`, `newPassword` | 204 | 400, 401, 403 |
 | `POST /api/v1/users/{userId}/temporary-password` | Site Admin, Org Admin (scope) | Admin-issued reset intent | Temporary password + must-change flag | 401, 403, 404 |
@@ -115,6 +120,7 @@ Route and payload authority: `SPEC/30-Contracts.md`.
 | `PUT /api/v1/organizations/{organizationId}` | Site Admin, Org Admin (scope) | Organization update fields | Updated organization detail | 400, 401, 403, 404 |
 | `PUT /api/v1/organizations/{organizationId}/logo` | Site Admin, Org Admin (scope) | `multipart/form-data` logo file | Logo URL/thumbnail/height metadata | 400, 401, 403, 404 |
 | `POST /api/v1/organizations/{organizationId}/archive` | Site Admin, Org Admin (scope) | None | 204 | 401, 403, 404 |
+| `POST /api/v1/organizations/{organizationId}/invite-code/regenerate` | Site Admin, Org Admin (scope) | None | `inviteCode` | 401, 403, 404 |
 | `GET /api/v1/organizations/{organizationId}/users` | Site Admin, Org Admin (scope) | Paging/filter/sort query | Paged user list | 401, 403, 404 |
 | `POST /api/v1/organizations/{organizationId}/users` | Site Admin, Org Admin (scope) | User create fields | User create summary | 400, 401, 403, 404 |
 | `GET /api/v1/organizations/{organizationId}/users/import-template` | Site Admin, Org Admin (scope) | None | UTF-8 CSV template attachment | 401, 403, 404 |
@@ -248,4 +254,5 @@ Update canonical `SPEC/*.md` first, then align this overview, implementation, an
 - `SPEC/60-spec-q-and-a-backlog.md`
 - `SPEC/70-delivery-backlog.md`
 - `SPEC/80-workstream-roadmap.md`
+- `SPEC/85-implementation-timeline.md`
 - `SPEC/90-definition-of-done.md`

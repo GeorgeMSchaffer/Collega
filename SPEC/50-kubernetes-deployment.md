@@ -54,6 +54,7 @@ flowchart LR
 - Config inputs:
   - `ASPNETCORE_ENVIRONMENT`, `ASPNETCORE_URLS`, and `Swagger__Enabled` from a `ConfigMap`
   - `ConnectionStrings__DefaultConnection` from the SQL Server secret
+  - `SiteAdmin__Email` and `SiteAdmin__Password` from a dedicated Site Admin secret (see `SPEC/20-feature-auth.md`)
 - Health checks:
   - Liveness/readiness: `GET /api/v1/health`
 

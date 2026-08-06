@@ -1,0 +1,67 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: collega-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    ports:
+      - "${MSSQL_HOST_PORT:-1433}:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  # Placeholder — src/Collega.API does not exist yet. Not started by `docker compose up`
+  # (no default profile membership); add real Dockerfile.dev / paths once the project is scaffolded.
+  api:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: src/Collega.API/Dockerfile.dev
+    container_name: collega-api
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Server=sqlserver;Database=Collega;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      SiteAdmin__Email: ${SITE_ADMIN_EMAIL}
+      SiteAdmin__Password: ${SITE_ADMIN_PASSWORD}
+    ports:
+      - "5027:8080"
+    volumes:
+      - ./src/Collega.API:/app
+    command: ["dotnet", "watch", "run", "--no-launch-profile"]
+
+  # Placeholder — src/Collega.Client does not exist yet. Not started by `docker compose up`
+  # (no default profile membership); add real Dockerfile.dev / paths once the project is scaffolded.
+  web:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: src/Collega.Client/Dockerfile.dev
+    container_name: collega-web
+    depends_on:
+      - api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "5173:8080"
+    volumes:
+      - ./src/Collega.Client:/app
+    command: ["dotnet", "watch", "run", "--no-launch-profile"]
+
+volumes:
+  sqlserver-data:

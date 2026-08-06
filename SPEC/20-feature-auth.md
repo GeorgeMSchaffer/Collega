@@ -15,7 +15,7 @@ Users can securely access the application using organization-scoped accounts.
 5. Passwords must be at least 6 characters long and include uppercase, lowercase, numeric, and special characters.
 6. Five failed login attempts within 15 minutes must trigger a 15-minute account lockout.
 7. The seeded Site Admin account is a global platform account and does not belong to an organization.
-8. A seed Site Admin account must be created on first run using an environment-provided initial credential.
+8. A seed Site Admin account must be created on first run using an environment-provided initial credential, read from configuration keys `SiteAdmin__Email` and `SiteAdmin__Password` (bound via standard ASP.NET Core configuration, so either environment variables or `dotnet user-secrets` may supply them locally). Startup must fail fast if either is missing.
 9. The seed Site Admin must be forced to change that initial credential on first login.
 10. In Development only, startup seed must also create demo organization users for each role: Org Admin, User, and Read Only, each initialized with demo password `abc123!`.
 11. Development demo users are not forced to change the demo password on first successful login.
@@ -51,6 +51,7 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Password changes are rejected if they do not satisfy the password complexity policy
 - [ ] Seed Site Admin is created at first run
 - [ ] Seed Site Admin must change the environment-provided initial credential on first login
+- [ ] Startup fails fast with a clear error if `SiteAdmin__Email` or `SiteAdmin__Password` is missing
 - [ ] Development startup seed creates demo Org Admin, User, and Read Only accounts using `abc123!`
 - [ ] Development startup seeded demo users can log in with `abc123!` without a forced password change
 - [ ] Admin-issued temporary password reset is implemented in P1

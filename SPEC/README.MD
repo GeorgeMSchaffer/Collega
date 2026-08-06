@@ -12,6 +12,7 @@ This directory contains the canonical product and delivery specifications for a 
 - `50-technical-implementation-plan.md`
 - `70-delivery-backlog.md`
 - `80-workstream-roadmap.md`
+- `85-implementation-timeline.md` (advisory effort/timeline estimates on top of the above; not canonical behavior)
 - `90-definition-of-done.md`
 
 ## Working Rule

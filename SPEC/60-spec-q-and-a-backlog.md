@@ -50,6 +50,16 @@ Implementation direction:
 - MVP remains plain text for idea descriptions and comments.
 - Rich text, embedded content, and file attachments are deferred to a future phase.
 
+## Decision Log (2026-08-06): Overview Sync Gaps
+
+### 5. `Specs Overview.md` omitted invite-code self-registration
+Found while drafting `SPEC/85-implementation-timeline.md`: `SPEC/Specs Overview.md` — despite being "the preferred AI ingestion entrypoint" — omitted invite-code self-registration, invite-code display/regeneration, and the `POST /api/v1/auth/register` and invite-code-regenerate endpoints, even though `SPEC/10-requirements.md`, `SPEC/20-feature-auth.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/25-client-ui.md`, and `SPEC/30-Contracts.md` all define this behavior as MVP/canonical, and `SPEC/70-delivery-backlog.md` already tasks it under Epic 3.
+Resolved: this was an omission in the overview, not a scope change. Self-registration via invite code remains in MVP scope. `Specs Overview.md` has been updated (Authentication and Access, Organizations and Users, MVP In Scope, and the API Contract Summary Matrix) to match the canonical specs.
+
+### 6. Seed Site Admin credential configuration keys were unnamed
+No spec named the actual configuration key(s) for the "environment-provided initial credential" used to seed the global Site Admin.
+Resolved: use standard ASP.NET Core configuration keys `SiteAdmin__Email` and `SiteAdmin__Password` (settable via environment variables, `dotnet user-secrets`, or a Kubernetes secret), consistent with the existing `ConnectionStrings__DefaultConnection` convention in `SPEC/50-kubernetes-deployment.md`. Startup must fail fast if either key is missing. Recorded in `SPEC/20-feature-auth.md`, `SPEC/50-technical-implementation-plan.md`, and `SPEC/50-kubernetes-deployment.md`.
+
 ## Remaining MVP Clarifications
 None.
 
