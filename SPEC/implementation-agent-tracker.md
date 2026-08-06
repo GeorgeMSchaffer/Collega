@@ -15,17 +15,17 @@ Track the implementation work that should be executed from the reset baseline, w
 - Last updated: 2026-08-06
 
 ## In Progress
-- T002 Add the EF Core DbContext, migrations, and audit storage foundations. (Backend Developer — not yet relaunched)
-- T003 Implement shared `/api/v1` routing conventions and problem-details error handling. (Backend Developer — not yet relaunched)
-- T004 Implement API validation plumbing and OpenAPI scaffolding. (Backend Developer — not yet relaunched)
-- Baseline smoke-test harness for boot and error-envelope behavior. (QA Developer — not yet relaunched)
+- T002 Add the EF Core DbContext, migrations, and audit storage foundations. (Backend Developer)
+- T003 Implement shared `/api/v1` routing conventions and problem-details error handling. (Backend Developer)
+- T004 Implement API validation plumbing and OpenAPI scaffolding. (Backend Developer)
 
 ## Ready Next
-- (T002-T004 above — the first attempt at these three agents was interrupted by a process restart before any of them did work; worktrees were empty and have been cleaned up. Relaunch Backend Developer and QA Developer fresh off current `dev`.)
+- (T002-T004 above)
 
 ## Completed
 - T001 Create the solution structure and project references.
-- UI/UX Developer: 4 HTML review comps for design sign-off before any Blazor work starts, built directly (not via a background agent, after the first attempt was interrupted). See `SPEC/mockups/comp-a-review-01-login-and-auth.html`, `-02-admin-orgs-users.html`, `-03-board-kanban.html`, `-04-idea-detail.html`. Awaiting user review before Client Agent tasks (T040-T045) begin.
+- UI/UX Developer: 4 HTML review comps for design sign-off before any Blazor work starts. See `SPEC/mockups/comp-a-review-01-login-and-auth.html`, `-02-admin-orgs-users.html`, `-03-board-kanban.html`, `-04-idea-detail.html`. `comp-a-review-03-board-kanban.html` is now locked in as the board/swimlane page design; the other three are still open for review.
+- QA Developer: Epic 1 baseline smoke-test harness in `tests/Collega.API.Tests` (`Infrastructure/CollegaApiFactory.cs` + `SmokeTests.cs`), using `Microsoft.AspNetCore.Mvc.Testing`. Added a testing-only `public partial class Program {}` shim to `src/Collega.API/Program.cs`. Result: 1 passed (`Application_Boots_And_Responds_To_Requests`), 1 red as expected (`NonSuccessResponse_UsesProblemDetailsEnvelope` — no problem-details middleware exists yet, that's Backend's T003). Open risk flagged for Backend Developer/reviewer: a problem-details pipeline wired only through `UseExceptionHandler` + explicit `Problem()`/`ValidationProblem()` results will NOT catch a 404 for a completely unmatched route (this test's scenario) — that also needs something like `UseStatusCodePagesWithReExecute`. If T003 only covers the exception path, this test will still be red after merge; that's a real contract-vs-implementation gap to resolve, not a test to loosen.
 
 ## Progress Notes
 - Restart baseline established on 2026-08-06.

@@ -23,3 +23,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Testing-only shim: exposes Program as a public partial class so
+// Microsoft.AspNetCore.Mvc.Testing's WebApplicationFactory<Program> can
+// bootstrap this host from tests/Collega.API.Tests. Not application logic.
+public partial class Program { }
