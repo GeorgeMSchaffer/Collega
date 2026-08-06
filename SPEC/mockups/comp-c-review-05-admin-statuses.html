@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp C Review 5: Admin — Statuses</title>
+<style>
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#797672;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
+  .rail .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
+  .rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
+  .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .pagehead .sub{color:var(--ink-3);font-size:13.5px;max-width:640px;line-height:1.5}
+  .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .pagehead .row .grow{flex:1}
+  .ptabs{display:flex;gap:4px;margin-top:18px}
+  .ptabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent}
+  .ptabs a.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .body{padding:26px 40px;max-width:1200px}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;color:var(--accent)}
+  .btn.danger{border-color:transparent;color:var(--err)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn:disabled:hover{background:var(--surface)}
+  input[type=text],select{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
+  .field{margin-bottom:18px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line)}
+  td{padding:12px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#faf9f8}
+  tr.dragging{opacity:.4}
+  tr.dragover td{border-top:2px solid var(--accent)}
+  .pill{display:inline-block;padding:3px 11px;border-radius:12px;font-size:12px;font-weight:700}
+  .pill.state-ok{background:#e7f2e7;color:var(--ok)}
+  .pill.state-err{background:#fbe5e7;color:var(--err)}
+  .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:680px;line-height:1.5}
+  .hint{font-size:12px;color:var(--ink-3);margin-top:5px}
+  .charlim{font-size:11px;color:var(--ink-3);font-weight:400}
+  .panelform{max-width:480px}
+  .swatch{width:28px;height:28px;border-radius:8px;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+  .swatch.sm{width:16px;height:16px;border-radius:5px}
+  .picker{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .picker .opt{width:30px;height:30px;border-radius:9px;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
+  .picker .opt.sel{border-color:var(--ink)}
+  .picker .opt.custom{background:var(--surface);border:1.5px dashed var(--ink-3);color:var(--ink-3);font-size:15px}
+  .customhex{display:none;align-items:center;gap:8px;margin-top:10px}
+  .customhex.show{display:flex}
+  .customhex input{width:120px;font-family:ui-monospace,Consolas,monospace}
+  .preview{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;background:#faf9f8;border:1px solid var(--line);border-radius:6px}
+  .order-field{display:flex;align-items:center;gap:10px}
+  .order-field .nudge{display:flex;flex-direction:column;gap:2px}
+  .order-field .nudge button{padding:1px 8px;font-size:10px;line-height:1.4}
+  .grip{cursor:grab;color:var(--ink-3);font-size:15px}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>COMP C REVIEW 5 · ADMIN — STATUSES</strong>
+  <nav id="tabs">
+    <button data-s="list" class="on">Status list</button>
+    <button data-s="new">New status</button>
+    <button data-s="edit">Edit status</button>
+    <button data-s="lastguard">Last-status guard (edge case)</button>
+  </nav>
+</div>
+
+<!-- STATUS LIST -->
+<section class="screen on" id="s-list">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a href="#">📋<span>Boards</span></a><a class="on" href="#">⚙️<span>Admin</span></a><span class="push"></span><span class="avatar">SA</span></aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / Statuses</div>
+        <div class="row"><div class="grow"><h1>Statuses</h1><p class="sub">Defined at the organization level. Boards select a subset of these as swimlanes. Drag rows to set sort order — order saves immediately.</p></div><button class="btn primary" style="margin-bottom:14px">+ New status</button></div>
+        <div class="ptabs"><a class="on" href="#">Active · 4</a><a href="#">Retired · 1</a><a href="#">All · 5</a></div>
+      </div>
+      <div class="body">
+        <div class="card" style="max-width:900px">
+          <table>
+            <thead><tr><th style="width:30px"></th><th>Status</th><th>Color</th><th>Boards using it</th><th>Ideas</th><th>State</th><th style="width:170px"></th></tr></thead>
+            <tbody id="statusRows">
+              <tr draggable="true">
+                <td class="grip">⠿</td>
+                <td><span class="pill" style="background:#f1f0ee;color:#57534e">New</span></td>
+                <td><span class="swatch sm" style="background:#57534e"></span></td>
+                <td>3</td><td>22</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle">Edit</button> <button class="btn danger">Delete</button></td>
+              </tr>
+              <tr draggable="true">
+                <td class="grip">⠿</td>
+                <td><span class="pill" style="background:#e6f0fa;color:#2f6fb0">Research In Process</span></td>
+                <td><span class="swatch sm" style="background:#2f6fb0"></span></td>
+                <td>3</td><td>15</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle">Edit</button> <button class="btn danger">Delete</button></td>
+              </tr>
+              <tr draggable="true">
+                <td class="grip">⠿</td>
+                <td><span class="pill" style="background:#f7ecdc;color:#9a5b00">In Review</span></td>
+                <td><span class="swatch sm" style="background:#9a5b00"></span></td>
+                <td>2</td><td>4</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle">Edit</button> <button class="btn danger">Delete</button></td>
+              </tr>
+              <tr draggable="true">
+                <td class="grip">⠿</td>
+                <td><span class="pill" style="background:#e7f2e7;color:#0e700e">Complete</span></td>
+                <td><span class="swatch sm" style="background:#0e700e"></span></td>
+                <td>3</td><td>61</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle">Edit</button> <button class="btn danger">Delete</button></td>
+              </tr>
+              <tr style="opacity:.55">
+                <td></td>
+                <td><span class="pill" style="background:#f1f0ee;color:#57534e">Client Review</span></td>
+                <td><span class="swatch sm" style="background:#797672"></span></td>
+                <td>0</td><td>9</td>
+                <td><span class="pill state-err">Retired</span></td>
+                <td><button class="btn subtle">Restore</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">An organization must always keep at least one active status. When only one remains, its Delete action is disabled with an explanatory tooltip — see the "Last-status guard" tab. Deleting is always a soft delete (Retire): existing board and idea references stay valid, and a status currently used as a swimlane on an active board can't be deleted until that reference is removed.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NEW STATUS -->
+<section class="screen" id="s-new">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><span class="push"></span><span class="avatar">SA</span></aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / <a href="#">Statuses</a> / New</div><h1>New status</h1><p class="sub" style="margin-bottom:20px">Statuses appear as swimlanes on this organization's boards.</p></div>
+      <div class="body">
+        <div class="card panelform" style="padding:24px">
+          <div class="field">
+            <label>Name <span class="charlim">0 / 25</span></label>
+            <input type="text" style="width:100%" placeholder="e.g. Needs Design" maxlength="25">
+          </div>
+          <div class="field">
+            <label>Color</label>
+            <div class="picker" id="picker-new">
+              <div class="opt sel" data-hex="#57534e" style="background:#57534e">✓</div>
+              <div class="opt" data-hex="#2f6fb0" style="background:#2f6fb0"></div>
+              <div class="opt" data-hex="#5b5fc7" style="background:#5b5fc7"></div>
+              <div class="opt" data-hex="#0f7b6c" style="background:#0f7b6c"></div>
+              <div class="opt" data-hex="#0e700e" style="background:#0e700e"></div>
+              <div class="opt" data-hex="#9a5b00" style="background:#9a5b00"></div>
+              <div class="opt" data-hex="#b10e1c" style="background:#b10e1c"></div>
+              <div class="opt" data-hex="#b23a6b" style="background:#b23a6b"></div>
+              <div class="opt" data-hex="#7a3fb8" style="background:#7a3fb8"></div>
+              <div class="opt custom" data-custom="1">✎</div>
+            </div>
+            <div class="customhex" id="customhex-new">
+              <label style="margin:0">Hex</label><input type="text" value="#57534e">
+            </div>
+            <div class="preview">
+              <span class="pill preview-pill" style="background:#f1f0ee;color:#57534e">Needs Design</span>
+              <span class="hint" style="margin:0">Preview — this is how the status will look on cards and swimlane headers.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Sort order</label>
+            <div class="order-field">
+              <span>Will be added at position <strong>5 of 5</strong></span>
+              <div class="nudge"><button class="btn subtle">▲</button><button class="btn subtle">▼</button></div>
+            </div>
+            <p class="hint">New statuses are added at the end. Reorder any time by dragging rows in the status list, or with these arrows.</p>
+          </div>
+          <div style="display:flex;gap:10px"><button class="btn primary">Create status</button><button class="btn">Cancel</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EDIT STATUS -->
+<section class="screen" id="s-edit">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><span class="push"></span><span class="avatar">SA</span></aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / <a href="#">Statuses</a> / Research In Process</div><h1>Edit status</h1><p class="sub" style="margin-bottom:20px">Used as a swimlane on 3 boards, with 15 ideas currently in this status.</p></div>
+      <div class="body">
+        <div class="card panelform" style="padding:24px">
+          <div class="field">
+            <label>Name <span class="charlim">20 / 25</span></label>
+            <input type="text" style="width:100%" value="Research In Process" maxlength="25">
+          </div>
+          <div class="field">
+            <label>Color</label>
+            <div class="picker" id="picker-edit">
+              <div class="opt" data-hex="#57534e" style="background:#57534e"></div>
+              <div class="opt sel" data-hex="#2f6fb0" style="background:#2f6fb0">✓</div>
+              <div class="opt" data-hex="#5b5fc7" style="background:#5b5fc7"></div>
+              <div class="opt" data-hex="#0f7b6c" style="background:#0f7b6c"></div>
+              <div class="opt" data-hex="#0e700e" style="background:#0e700e"></div>
+              <div class="opt" data-hex="#9a5b00" style="background:#9a5b00"></div>
+              <div class="opt" data-hex="#b10e1c" style="background:#b10e1c"></div>
+              <div class="opt" data-hex="#b23a6b" style="background:#b23a6b"></div>
+              <div class="opt" data-hex="#7a3fb8" style="background:#7a3fb8"></div>
+              <div class="opt custom" data-custom="1">✎</div>
+            </div>
+            <div class="customhex" id="customhex-edit">
+              <label style="margin:0">Hex</label><input type="text" value="#2f6fb0">
+            </div>
+            <div class="preview">
+              <span class="pill preview-pill" style="background:#e6f0fa;color:#2f6fb0">Research In Process</span>
+              <span class="hint" style="margin:0">Preview — this is how the status will look on cards and swimlane headers.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Sort order</label>
+            <div class="order-field">
+              <span>Position <strong>2 of 4</strong> active statuses</span>
+              <div class="nudge"><button class="btn subtle">▲</button><button class="btn subtle">▼</button></div>
+            </div>
+            <p class="hint">Drag this row in the status list to reorder, or use the arrows above.</p>
+          </div>
+          <div style="display:flex;gap:10px"><button class="btn primary">Save changes</button><button class="btn danger">Delete status</button><button class="btn">Cancel</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LAST-STATUS GUARD EDGE CASE -->
+<section class="screen" id="s-lastguard">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><span class="push"></span><span class="avatar">SA</span></aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Umbrella Analytics / Statuses</div><h1>Statuses</h1><p class="sub" style="margin-bottom:20px">Edge case: this organization has been reduced to a single active status.</p></div>
+      <div class="body">
+        <div class="card" style="max-width:900px">
+          <table>
+            <thead><tr><th style="width:30px"></th><th>Status</th><th>Color</th><th>Boards using it</th><th>Ideas</th><th>State</th><th style="width:170px"></th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="grip">⠿</td>
+                <td><span class="pill" style="background:#f1f0ee;color:#57534e">New</span></td>
+                <td><span class="swatch sm" style="background:#57534e"></span></td>
+                <td>1</td><td>6</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle">Edit</button> <button class="btn danger" disabled title="Cannot delete the last remaining status — every organization must keep at least one.">Delete</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">Delete is disabled and shows a tooltip: "Cannot delete the last remaining status — every organization must keep at least one." Note this also means no board in this organization can be created or maintained, since a board needs at least 2 swimlanes — reaching this state should be rare in practice (it requires retiring down from the defaults), but the guard rail on Delete holds regardless.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+
+  // Color picker: select a swatch, or reveal a hex input for a custom color
+  document.querySelectorAll('.picker').forEach(picker=>{
+    const suffix = picker.id.split('-')[1];
+    const customBox = document.getElementById('customhex-'+suffix);
+    const hexInput = customBox.querySelector('input');
+    const previewPill = picker.closest('.field').querySelector('.preview-pill');
+    function tint(hex){ return hex + '22'; } // cheap 13%-alpha tint for the preview background
+    picker.querySelectorAll('.opt').forEach(opt=>{
+      opt.addEventListener('click', ()=>{
+        picker.querySelectorAll('.opt').forEach(o=>{o.classList.remove('sel');o.textContent='';});
+        opt.classList.add('sel');
+        if (opt.dataset.custom){
+          opt.textContent='✎';
+          customBox.classList.add('show');
+          previewPill.style.color = hexInput.value;
+          previewPill.style.background = tint(hexInput.value);
+        } else {
+          opt.textContent='✓';
+          customBox.classList.remove('show');
+          previewPill.style.color = opt.dataset.hex;
+          previewPill.style.background = tint(opt.dataset.hex);
+        }
+      });
+    });
+    hexInput.addEventListener('input', ()=>{
+      previewPill.style.color = hexInput.value;
+      previewPill.style.background = tint(hexInput.value);
+    });
+  });
+
+  // Drag-to-reorder rows in the status list
+  let dragRow = null;
+  document.querySelectorAll('#statusRows tr[draggable="true"]').forEach(row=>{
+    row.addEventListener('dragstart', ()=>{ dragRow = row; setTimeout(()=>row.classList.add('dragging'),0); });
+    row.addEventListener('dragend', ()=>{ row.classList.remove('dragging'); dragRow=null; document.querySelectorAll('#statusRows tr').forEach(r=>r.classList.remove('dragover')); });
+    row.addEventListener('dragover', e=>{ e.preventDefault(); row.classList.add('dragover'); });
+    row.addEventListener('dragleave', ()=>row.classList.remove('dragover'));
+    row.addEventListener('drop', e=>{
+      e.preventDefault();
+      row.classList.remove('dragover');
+      if (dragRow && dragRow!==row) row.parentNode.insertBefore(dragRow, row);
+    });
+  });
+</script>
+</body>
+</html>
