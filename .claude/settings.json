@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(command -v jq python3)",
+      "Bash(python3 /private/tmp/claude-501/-Users-gms-Documents-code-Collega/151a08a3-2d88-4c17-8918-c4823719351d/scratchpad/scan_perms.py)",
+      "Bash(dotnet --list-sdks)",
+      "Bash(dotnet --version)",
+      "Bash(git checkout *)",
+      "Bash(dotnet new *)",
+      "Bash(set -e)",
+      "Bash(mv src/Collega.API.Tests tests/)",
+      "Bash(mv src/Collega.Application.Tests tests/)",
+      "Bash(mv src/Collega.Domain.Tests tests/)",
+      "Bash(mv src/Collega.Infrastructure.Tests tests/)",
+      "Bash(dotnet sln *)",
+      "Bash(dotnet add *)",
+      "Bash(dotnet tool *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(dotnet package *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet test *)"
+    ]
+  }
+}

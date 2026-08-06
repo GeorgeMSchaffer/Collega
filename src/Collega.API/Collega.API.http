@@ -1,0 +1,6 @@
+@Collega.API_HostAddress = http://localhost:5103
+
+GET {{Collega.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -36,6 +36,7 @@ If behavior is ambiguous or specs conflict, ask before implementing.
 Collega is an organization-scoped collaboration/idea-tracking tool, conceptually similar to Trello/Jira: organizations contain users, boards, statuses, and ideas; boards organize ideas by status using swimlanes.
 
 - Roles, most to least privileged scope: **Site Admin** (global, not organization-owned) → **Org Admin** (own org only) → **User** → **Read Only**.
+  - Open question: how the first Site Admin account gets bootstrapped (seed data, migration, manual script) is not yet decided — ask before implementing.
 - Non-Site Admin users belong to exactly one organization and one role. Email is globally unique across the whole system.
 - Each organization gets a system-generated, regenerable invite code; users join via invite-code self-registration, direct admin creation, or admin CSV import (no invite code needed for the latter two).
 - MVP scope: auth + forced first-login password change, org/user administration, boards/statuses with swimlanes, idea CRUD + status movement, tags/mentions/comments/upvotes, audit events, notification events persisted (not delivered).
@@ -77,10 +78,12 @@ Chosen client UI direction is **Comp A "Command Center"** (`SPEC/mockups/comp-a-
 
 ## Local SQL Server (Docker)
 
-First set your password for the `sa` user in `.env` (copied from `.env.example`) you can run
-`rm -f ~/code/Collega/.env; ls ~/code/Collega/.env 2>/dev/null || echo "removed"`
-then run the SQL Server container:
-`docker-compose.yml` at repo root defines a SQL Server 2022 container with persistent local storage (named volume `sqlserver-data`). Copy `.env.example` to `.env` (gitignored) and set a real `MSSQL_SA_PASSWORD` before running.
+`docker-compose.yml` at repo root defines a SQL Server 2022 container with persistent local storage (named volume `sqlserver-data`). Before running it, copy `.env.example` to `.env` (gitignored) and set a real `MSSQL_SA_PASSWORD`:
+
+```bash
+cp .env.example .env
+# then edit .env and set MSSQL_SA_PASSWORD to a real password
+```
 
 
 ```powershell
@@ -132,3 +135,7 @@ After build and tests pass on a feature branch:
    - `SPEC/` and `src/Collega.Client/`: prefer the feature branch
 4. Push `dev`.
 5. Report the merge commit hash in your completion message.
+
+# Source Control
+  * Use feature branches for each work item, named `feature/<NNN>-<short-description>`. Once complete merge it into `dev`.
+  * Commit work at logical checkpoints such as the completion of a feature and or slice.

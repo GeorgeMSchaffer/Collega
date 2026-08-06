@@ -9,22 +9,23 @@ Track the implementation work that should be executed from the reset baseline, w
 - Prior implementation history has been cleared from this document on purpose.
 
 ## Current Status
-- Current implementation slice: None
-- Current owner: Unassigned
-- Current state: Not Started
+- Current implementation slice: Epic 1 Foundation
+- Current owner: Multi-agent team (Backend Developer, QA Developer, UI/UX Developer, Code Reviewer) in isolated worktrees
+- Current state: In Progress
 - Last updated: 2026-08-06
 
 ## In Progress
-- None
+- T002 Add the EF Core DbContext, migrations, and audit storage foundations. (Backend Developer)
+- T003 Implement shared `/api/v1` routing conventions and problem-details error handling. (Backend Developer)
+- T004 Implement API validation plumbing and OpenAPI scaffolding. (Backend Developer)
+- Baseline smoke-test harness for boot and error-envelope behavior. (QA Developer)
+- Four HTML review comps for key feature pages, per Comp A style. (UI/UX Developer, design-review artifact, not production code)
 
 ## Ready Next
-- T001 Create the solution structure and project references.
-- T002 Add the EF Core DbContext, migrations, and audit storage foundations.
-- T003 Implement shared `/api/v1` routing conventions and problem-details error handling.
-- T004 Implement API validation plumbing and OpenAPI scaffolding.
+- (T002-T004 in progress above)
 
 ## Completed
-- None
+- T001 Create the solution structure and project references.
 
 ## Progress Notes
 - Restart baseline established on 2026-08-06.
