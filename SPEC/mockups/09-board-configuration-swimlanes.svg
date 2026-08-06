@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1760" height="1024" viewBox="0 0 1760 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SargentNexus board configuration final direction</title>
+  <desc id="desc">Final board configuration screen in a hybrid Jira and Trello visual-lane mapping style with immediate-save reorder cues.</desc>
+
+  <rect width="1760" height="1024" fill="#e8edf5"/>
+  <rect x="20" y="20" width="1720" height="984" rx="18" fill="#f8fafc" stroke="#cbd5e1"/>
+
+  <text x="44" y="58" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a">Final Direction - Visual Lane Mapping (B)</text>
+
+  <g>
+    <rect x="40" y="82" width="1680" height="58" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="60" y="106" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#64748b">Board settings</text>
+    <text x="60" y="124" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#111827">Default Board</text>
+    <rect x="1598" y="95" width="104" height="32" rx="8" fill="#0f6cbd"/>
+    <text x="1650" y="116" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#ffffff">Preview</text>
+
+    <rect x="40" y="154" width="430" height="820" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="60" y="188" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0f172a">Statuses</text>
+
+    <rect x="60" y="220" width="390" height="52" rx="10" fill="#f8fafc" stroke="#d0d7de"/>
+    <text x="74" y="251" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#0f172a">New / Pending</text>
+    <text x="434" y="251" text-anchor="end" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#0f6cbd">+</text>
+
+    <rect x="60" y="280" width="390" height="52" rx="10" fill="#f8fafc" stroke="#d0d7de"/>
+    <text x="74" y="311" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#0f172a">In Review</text>
+
+    <rect x="60" y="340" width="390" height="52" rx="10" fill="#f8fafc" stroke="#d0d7de"/>
+    <text x="74" y="371" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#0f172a">In Progress</text>
+
+    <rect x="60" y="400" width="390" height="52" rx="10" fill="#f8fafc" stroke="#d0d7de"/>
+    <text x="74" y="431" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Client Review</text>
+
+    <rect x="60" y="460" width="390" height="52" rx="10" fill="#f8fafc" stroke="#d0d7de"/>
+    <text x="74" y="491" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Complete</text>
+
+    <rect x="60" y="540" width="390" height="112" rx="10" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="76" y="568" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#9a3412">Validation</text>
+    <text x="76" y="588" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#9a3412">Board cannot be saved with fewer than two lanes.</text>
+    <text x="76" y="606" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#9a3412">Show guardrail before reorder confirmation.</text>
+
+    <rect x="486" y="154" width="1234" height="820" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="506" y="188" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#0f172a">Swimlane map</text>
+    <text x="506" y="210" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#64748b">Columns preview matches board view and lane order. Drag and drop saves immediately.</text>
+
+    <rect x="506" y="228" width="224" height="530" rx="10" fill="#eef2ff" stroke="#c7d2fe"/>
+    <rect x="741" y="228" width="224" height="530" rx="10" fill="#f8fafc" stroke="#d0d7de"/>
+    <rect x="976" y="228" width="224" height="530" rx="10" fill="#eef2ff" stroke="#c7d2fe"/>
+    <rect x="1211" y="228" width="224" height="530" rx="10" fill="#f8fafc" stroke="#d0d7de"/>
+    <rect x="1446" y="228" width="254" height="530" rx="10" fill="#eef2ff" stroke="#c7d2fe"/>
+
+    <text x="618" y="254" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a">1 New / Pending</text>
+    <text x="853" y="254" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="700" fill="#334155">2 In Review</text>
+    <text x="1088" y="254" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a">3 In Progress</text>
+    <text x="1323" y="254" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="700" fill="#334155">4 Client Review</text>
+    <text x="1573" y="254" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a">5 Complete</text>
+
+    <rect x="506" y="772" width="1194" height="104" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="526" y="800" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1d4ed8">Reorder confirmation</text>
+    <text x="526" y="820" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#1e3a8a">Moved In Progress before In Review</text>
+    <text x="526" y="838" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#1e3a8a">Saved immediately after drop</text>
+    <text x="526" y="856" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#1e3a8a">Idea status derives from target swimlane</text>
+  </g>
+</svg>

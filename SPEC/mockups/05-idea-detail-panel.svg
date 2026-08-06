@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">SargentNexus idea detail overlay mockup</title>
+  <desc id="desc">Detail overlay for full idea editing opened from board card title, including priority, optional due date, tags, mentions, comments, and upvotes.</desc>
+
+  <rect width="1600" height="1000" fill="#0f172a" opacity="0.3"/>
+  <rect x="100" y="70" width="1400" height="860" rx="20" fill="#ffffff" stroke="#d0d7de"/>
+
+  <text x="140" y="120" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#64748b">Default Board / In Progress / Overlay Edit Mode</text>
+  <text x="140" y="165" font-family="Segoe UI, Arial, sans-serif" font-size="32" font-weight="700" fill="#0f172a">Automate downtime alerting</text>
+
+  <text x="140" y="220" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155">Priority</text>
+  <rect x="140" y="232" width="180" height="40" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="158" y="257" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#111827">Critical</text>
+
+  <text x="340" y="220" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155">Due Date (optional)</text>
+  <rect x="340" y="232" width="170" height="40" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="358" y="257" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#111827">2026-10-01</text>
+
+  <text x="530" y="220" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155">Assigned To</text>
+  <rect x="530" y="232" width="230" height="40" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="548" y="257" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#111827">Chris Singh</text>
+
+  <text x="140" y="306" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155">Description</text>
+  <rect x="140" y="318" width="920" height="170" rx="10" fill="#f8fafc" stroke="#d0d7de"/>
+  <text x="160" y="350" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#0f172a">Create a system that detects repeating machine downtime patterns and alerts shift leads.</text>
+  <text x="160" y="376" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#0f172a">Track root-cause context and preserve discussion history for audit and collaboration.</text>
+
+  <text x="140" y="520" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155">Tags</text>
+  <rect x="140" y="532" width="440" height="40" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="158" y="557" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#64748b">downtime, alerts, telemetry</text>
+
+  <text x="600" y="520" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155">Mentions</text>
+  <rect x="600" y="532" width="460" height="40" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="618" y="557" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#64748b">@jamie.flores@northwind.com</text>
+
+  <text x="140" y="606" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155">Comments</text>
+  <rect x="140" y="618" width="920" height="200" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="160" y="648" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#0f172a">Jamie Flores: Can we trigger after three repeat events in one week?</text>
+  <text x="160" y="672" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#0f172a">Chris Singh: Yes, and include machine ID for audits.</text>
+
+  <rect x="140" y="834" width="640" height="44" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="158" y="861" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#64748b">Add a comment (plain text, up to 2000 chars)</text>
+  <rect x="792" y="834" width="120" height="44" rx="8" fill="#0f6cbd"/>
+  <text x="852" y="861" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#ffffff">Post</text>
+
+  <rect x="1090" y="232" width="360" height="586" rx="14" fill="#f8fafc" stroke="#d0d7de"/>
+  <text x="1120" y="270" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#334155">Engagement</text>
+  <rect x="1120" y="284" width="160" height="42" rx="8" fill="#0f6cbd"/>
+  <text x="1200" y="310" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#ffffff">Upvote ^ 18</text>
+
+  <rect x="1120" y="346" width="300" height="120" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="1140" y="376" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1d4ed8">Overlay behavior</text>
+  <text x="1140" y="398" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#1e3a8a">Opened from board card title.</text>
+  <text x="1140" y="416" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#1e3a8a">Save updates board without route change.</text>
+
+  <rect x="1120" y="760" width="120" height="42" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="1180" y="786" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#0f172a">Cancel</text>
+  <rect x="1250" y="760" width="170" height="42" rx="8" fill="#0f6cbd"/>
+  <text x="1335" y="786" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#ffffff">Save Changes</text>
+</svg>

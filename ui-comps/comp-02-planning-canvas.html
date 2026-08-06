@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comp 02 - Planning Canvas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #fef9ef;
+      --ink: #2b2d31;
+      --muted: #5f646d;
+      --line: #e4dac5;
+      --card: #fffdf8;
+      --cobalt: #1f4aa8;
+      --amber: #bc6b15;
+      --leaf: #2e6e46;
+      --rose: #b0443f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Public Sans", "Segoe UI", sans-serif;
+      background:
+        linear-gradient(120deg, rgba(31, 74, 168, 0.07), transparent 35%),
+        linear-gradient(300deg, rgba(188, 107, 21, 0.08), transparent 28%),
+        var(--paper);
+    }
+    .layout {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+      animation: fadeSlide 450ms ease;
+    }
+    .header {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--card) 95%, white);
+      padding: 22px;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 16px;
+      box-shadow: 0 14px 30px rgba(43, 45, 49, 0.08);
+    }
+    h1 {
+      margin: 0;
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.7rem, 3.6vw, 2.8rem);
+      line-height: 1.08;
+    }
+    .sub { margin-top: 10px; color: var(--muted); max-width: 58ch; }
+    .goal {
+      margin-top: 14px;
+      border-left: 4px solid var(--cobalt);
+      padding-left: 12px;
+      color: #2a3f67;
+      font-weight: 600;
+    }
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .tile {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+      animation: tileIn 500ms ease both;
+    }
+    .tile:nth-child(2) { animation-delay: 70ms; }
+    .tile:nth-child(3) { animation-delay: 140ms; }
+    .tile:nth-child(4) { animation-delay: 210ms; }
+    .tile b { display: block; font-size: 1.5rem; margin-top: 4px; }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(220px, 1fr));
+      gap: 12px;
+      overflow: auto;
+      padding-bottom: 4px;
+    }
+    .col {
+      border: 1px solid var(--line);
+      background: color-mix(in srgb, #fff 92%, #f5efdf);
+      border-radius: 14px;
+      min-height: 430px;
+      padding: 10px;
+    }
+    .col h2 {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #4d5561;
+    }
+    .card {
+      border: 1px solid #ddd4c4;
+      border-left: 4px solid var(--cobalt);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 8px;
+      box-shadow: 0 6px 14px rgba(43, 45, 49, 0.06);
+      animation: cardRise 380ms ease both;
+    }
+    .card.bug { border-left-color: var(--rose); }
+    .card.task { border-left-color: var(--amber); }
+    .meta {
+      margin-top: 7px;
+      font-size: 0.78rem;
+      color: #58606d;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      border: 1px solid;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+    }
+    .chip.blocked { color: #8d2b22; background: #fff0ed; border-color: #e9b7af; }
+    .chip.scope { color: #7a4b12; background: #fff4e5; border-color: #ebca99; }
+    .chip.good { color: #295b39; background: #edf7ef; border-color: #bad8c2; }
+
+    .footer {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .list { margin: 6px 0 0; padding-left: 16px; color: #444c58; }
+
+    @media (max-width: 1020px) {
+      .header { grid-template-columns: 1fr; }
+      .footer { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .layout { padding: 12px; }
+      .scoreboard { grid-template-columns: 1fr 1fr; }
+      .board { grid-template-columns: repeat(4, minmax(250px, 1fr)); }
+    }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes tileIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes cardRise {
+      from { opacity: 0; transform: translateY(8px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <section class="header">
+      <div>
+        <h1>Planning Canvas: Sprint 32</h1>
+        <p class="sub">A board-first composition for teams that want planning, execution, and blocker governance in one visual lane.</p>
+        <div class="goal">Goal: Reduce approval-cycle defects while holding carryover under 15%.</div>
+      </div>
+      <div class="scoreboard">
+        <article class="tile"><span>Reliability</span><b style="color:var(--leaf)">89%</b></article>
+        <article class="tile"><span>Carryover</span><b style="color:var(--amber)">11%</b></article>
+        <article class="tile"><span>Blocked Median</span><b style="color:var(--leaf)">7h</b></article>
+        <article class="tile"><span>Scope Added</span><b style="color:var(--rose)">2</b></article>
+      </div>
+    </section>
+
+    <section class="board" aria-label="Sprint board columns">
+      <article class="col">
+        <h2>To Do</h2>
+        <div class="card task">
+          SP-245 Confirmation email fallback
+          <div class="meta"><span>Task</span><span>2 pts</span><span>Owner: Rae</span></div>
+        </div>
+        <div class="card">
+          SP-248 Approval summary UX
+          <div class="meta"><span>Story</span><span>5 pts</span><span>Owner: Eli</span></div>
+        </div>
+      </article>
+      <article class="col">
+        <h2>In Progress</h2>
+        <div class="card bug">
+          SP-221 Duplicate signer bug
+          <div class="meta"><span>Bug</span><span>3 pts</span><span>Owner: T. Ho</span><span class="chip blocked">Blocked</span></div>
+        </div>
+      </article>
+      <article class="col">
+        <h2>In Review</h2>
+        <div class="card">
+          SP-218 API approval route
+          <div class="meta"><span>Story</span><span>8 pts</span><span>Owner: A. King</span><span class="chip scope">scope-added</span></div>
+        </div>
+      </article>
+      <article class="col">
+        <h2>Done</h2>
+        <div class="card">
+          SP-240 PDF rejection rule
+          <div class="meta"><span>Story</span><span>5 pts</span><span>Owner: P. Long</span><span class="chip good">Client signoff</span></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="footer">
+      <article>
+        <h3>Closure Checklist</h3>
+        <ul class="list">
+          <li>Commitment lock snapshot captured at sprint start</li>
+          <li>Scope-added issues labeled and excluded from denominator</li>
+          <li>Carryover, reliability, and velocity published within 24h</li>
+        </ul>
+      </article>
+      <article>
+        <h3>Blocker SLA</h3>
+        <ul class="list">
+          <li>Flag or label can trigger blocked state</li>
+          <li>Automation syncs flag and blocker label both ways</li>
+          <li>Owner assignment SLA: 4 business hours in project timezone</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

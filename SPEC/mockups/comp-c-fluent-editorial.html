@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SargentNexus — Comp C: Fluent Editorial</title>
+<style>
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#797672;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2,.display{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  /* comp chrome */
+  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+  /* shell: slim icon rail + content */
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
+  .rail .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
+  .rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail a:hover{background:#f3f2f1}
+  .rail .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .avatar.s{width:24px;height:24px;font-size:9.5px}
+  .content{padding:0}
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
+  .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
+  .pagehead .crumbs a:hover{color:var(--accent)}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .pagehead .sub{color:var(--ink-3);font-size:13.5px;max-width:640px;line-height:1.5}
+  .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .pagehead .row .grow{flex:1}
+  .ptabs{display:flex;gap:4px;margin-top:18px}
+  .ptabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent}
+  .ptabs a.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .body{padding:26px 40px;max-width:1200px}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;color:var(--accent)}
+  .btn.danger{border-color:transparent;color:var(--err)}
+  input[type=text],input[type=email],input[type=password],select,textarea{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line)}
+  td{padding:12px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#faf9f8}
+  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
+  .pill.ok{background:#e7f2e7;color:var(--ok)}.pill.warn{background:#f7ecdc;color:var(--warn)}
+  .pill.err{background:#fbe5e7;color:var(--err)}.pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
+  .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:640px;line-height:1.5}
+  /* auth */
+  .authwrap{min-height:calc(100vh - 46px);display:flex;align-items:center;justify-content:center;background:var(--bg)}
+  .authcard{width:420px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.10);padding:40px 44px}
+  .authcard .field{margin-bottom:15px}
+  .authcard input{width:100%}
+  .msg{border-radius:4px;padding:10px 13px;font-size:12.5px;margin-bottom:15px;border-left:3px solid}
+  .msg.err{background:#fbe5e7;color:var(--err);border-color:var(--err)}
+  .msg.info{background:var(--accent-soft);color:var(--accent-deep);border-color:var(--accent)}
+  .checklist{list-style:none;font-size:12.5px;margin:8px 0 15px}
+  .checklist li{padding:2px 0;color:var(--ink-3)}
+  .checklist li.ok{color:var(--ok)}
+  .checklist li::before{content:"○ "}.checklist li.ok::before{content:"✓ "}
+  /* board list-style lanes (editorial: rows within sections, less color) */
+  .lanesec{margin-bottom:26px}
+  .lanesec>h2{font-size:17px;display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+  .lanesec>h2 .cnt{font-size:12px;color:var(--ink-3);font-family:"Segoe UI",sans-serif;font-weight:600}
+  .rowcard{display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid #f0efed;cursor:pointer}
+  .rowcard:hover{background:var(--accent-soft)}
+  .rowcard:last-child{border-bottom:none}
+  .rowcard .t{font-weight:600;font-size:14px;flex:1;color:var(--ink)}
+  .rowcard .t:hover{color:var(--accent)}
+  .rowcard .tag{font-size:11px;color:var(--ink-3);background:#f3f2f1;border-radius:3px;padding:1px 7px}
+  .rowcard .due{font-size:12px;color:var(--ink-3)}
+  .prio{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .prio.high{background:var(--err)}.prio.med{background:var(--warn)}.prio.low{background:var(--ok)}
+  .up{border:1px solid var(--line);border-radius:4px;padding:2px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:52px;text-align:center}
+  .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+  /* idea detail: full page editorial two-column */
+  .ideahd{border-bottom:1px solid var(--line);background:var(--surface);padding:26px 40px}
+  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;font-family:"Segoe UI",sans-serif}
+  .ideahd h1{font-size:30px;max-width:760px}
+  .ideabody{display:grid;grid-template-columns:minmax(0,720px) 300px;gap:44px;padding:30px 40px}
+  .prose{font-size:15px;line-height:1.7;color:var(--ink-2)}
+  .facts{border-left:1px solid var(--line);padding-left:28px}
+  .fact{margin-bottom:18px}
+  .fact .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:3px}
+  .fact .v{font-size:14px;font-weight:600}
+  .comment{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f0efed}
+  .comment .byline{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+  .comment .who{font-size:13px;font-weight:700}
+  .comment .when{font-size:12px;color:var(--ink-3)}
+  .comment p{font-size:14.5px;line-height:1.65;color:var(--ink-2)}
+  .mention{color:var(--accent-deep);font-weight:700;border-bottom:1.5px solid var(--accent)}
+  .charcount{font-size:11.5px;color:var(--ink-3);text-align:right;margin-top:4px}
+  .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;margin-bottom:28px}
+  .stat{padding:18px 22px;border-right:1px solid var(--line)}
+  .stat:last-child{border-right:none}
+  .stat .n{font-size:28px;font-family:Georgia,serif}
+  .stat .l{font-size:12px;color:var(--ink-3);margin-top:2px}
+  .hublist{max-width:760px}
+  .hubrow{display:flex;gap:18px;padding:20px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+  .hubrow .em{width:40px;height:40px;border-radius:8px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+  .hubrow h3{font-size:16px;font-family:Georgia,serif;margin-bottom:3px}
+  .hubrow p{font-size:13px;color:var(--ink-3);line-height:1.55;max-width:480px}
+  .hubrow .go{margin-left:auto;align-self:center}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>COMP C · FLUENT EDITORIAL</strong>
+  <nav id="tabs">
+    <button data-s="login" class="on">Login</button>
+    <button data-s="firstlogin">First Login</button>
+    <button data-s="home">Home</button>
+    <button data-s="admin">Admin Hub</button>
+    <button data-s="orgs">Organizations</button>
+    <button data-s="users">Users</button>
+    <button data-s="statuses">Statuses</button>
+    <button data-s="board">Board</button>
+    <button data-s="idea">Idea Detail</button>
+    <button data-s="changepw">Change Password</button>
+  </nav>
+</div>
+
+<!-- LOGIN -->
+<section class="screen on" id="s-login">
+  <div class="authwrap">
+    <div class="authcard">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px">
+        <span class="rail" style="all:unset"><span class="avatar" style="border-radius:8px;font-family:Georgia,serif">SN</span></span>
+        <span class="display" style="font-size:19px">SargentNexus</span>
+      </div>
+      <h1 style="font-size:22px;margin-bottom:6px">Sign in</h1>
+      <p style="font-size:13px;color:var(--ink-3);margin-bottom:20px;line-height:1.5">One email, one account. We'll take you straight to your organization.</p>
+      <div class="field"><label for="c-em">Email</label><input id="c-em" type="email" placeholder="you@company.com"></div>
+      <div class="field"><label for="c-pw">Password</label><input id="c-pw" type="password"></div>
+      <button class="btn primary" style="width:100%;padding:10px;margin-top:4px">Sign in</button>
+      <div class="msg info" style="margin-top:16px;margin-bottom:0">Five failed attempts within 15 minutes locks the account temporarily. Your admin can issue a one-time temporary password.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FIRST LOGIN -->
+<section class="screen" id="s-firstlogin">
+  <div class="authwrap">
+    <div class="authcard">
+      <h1 style="font-size:22px;margin-bottom:6px">Choose your own password</h1>
+      <p style="font-size:13px;color:var(--ink-3);margin-bottom:18px;line-height:1.5">You signed in with a temporary password issued by an administrator. It works exactly once — set your own to continue.</p>
+      <div class="field"><label>New password</label><input type="password" value="Quiet&Steady42"></div>
+      <ul class="checklist">
+        <li class="ok">At least 12 characters</li>
+        <li class="ok">Upper &amp; lower case letters</li>
+        <li class="ok">At least one number</li>
+        <li class="ok">At least one symbol</li>
+      </ul>
+      <div class="field"><label>Confirm new password</label><input type="password" value="Quiet&Steady42"></div>
+      <button class="btn primary" style="width:100%;padding:10px;margin-top:4px">Save and continue</button>
+    </div>
+  </div>
+</section>
+
+<!-- HOME -->
+<section class="screen" id="s-home">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">SN</span>
+      <a class="on" href="#">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">🔔<span>Alerts</span></a>
+      <a href="#">⚙️<span>Admin</span></a>
+      <span class="push"></span>
+      <span class="avatar">JR</span>
+    </aside>
+    <div class="content">
+      <div class="pagehead">
+        <div class="row">
+          <div class="grow">
+            <h1>Wednesday, July 30</h1>
+            <p class="sub">Welcome back, Jordan. Three boards are waiting, and two conversations mention you.</p>
+          </div>
+          <button class="btn primary" style="margin-bottom:14px">+ New idea</button>
+        </div>
+        <div class="ptabs"><a class="on" href="#">Overview</a><a href="#">My work</a><a href="#">Mentions</a></div>
+      </div>
+      <div class="body">
+        <div class="statgrid">
+          <div class="stat"><div class="n">14</div><div class="l">Ideas assigned to you</div></div>
+          <div class="stat"><div class="n">6</div><div class="l">Mentions this week</div></div>
+          <div class="stat"><div class="n">32</div><div class="l">Upvotes received</div></div>
+          <div class="stat"><div class="n">3</div><div class="l">Moved to Done</div></div>
+        </div>
+        <h2 style="font-size:18px;margin-bottom:12px">Boards</h2>
+        <div class="card" style="margin-bottom:28px">
+          <div class="rowcard"><span class="prio high"></span><span class="t">Product Ideas</span><span class="tag">48 open</span><span class="due">9 yours · active 12 min ago</span><button class="btn subtle">Open</button></div>
+          <div class="rowcard"><span class="prio med"></span><span class="t">Platform Backlog</span><span class="tag">31 open</span><span class="due">5 yours · active 2 h ago</span><button class="btn subtle">Open</button></div>
+          <div class="rowcard"><span class="prio low"></span><span class="t">Customer Feedback</span><span class="tag">17 open</span><span class="due">active yesterday</span><button class="btn subtle">Open</button></div>
+        </div>
+        <h2 style="font-size:18px;margin-bottom:12px">While you were away</h2>
+        <div class="card" style="padding:4px 0">
+          <div class="rowcard"><span class="avatar s">MP</span><span class="t" style="font-weight:400"><strong>Mia Park</strong> mentioned you in <em>Dark mode support</em></span><span class="due">20 min ago</span></div>
+          <div class="rowcard"><span class="avatar s">TD</span><span class="t" style="font-weight:400"><strong>Tom Diaz</strong> upvoted <em>Bulk import CSV</em></span><span class="due">1 h ago</span></div>
+          <div class="rowcard"><span class="avatar s">AL</span><span class="t" style="font-weight:400"><strong>Ana Liu</strong> moved <em>SSO via SAML</em> to In Progress</span><span class="due">3 h ago</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADMIN HUB -->
+<section class="screen" id="s-admin">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">SN</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">🔔<span>Alerts</span></a>
+      <a class="on" href="#">⚙️<span>Admin</span></a>
+      <span class="push"></span><span class="avatar">SA</span>
+    </aside>
+    <div class="content">
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Home</a> / Admin</div>
+        <h1>Administration</h1>
+        <p class="sub">Site-level controls. Every change here is recorded in the audit log with actor, action, and timestamp.</p>
+        <div class="ptabs"><a class="on" href="#">Tools</a><a href="#">Audit log</a></div>
+      </div>
+      <div class="body">
+        <div class="hublist">
+          <div class="hubrow">
+            <span class="em">🏢</span>
+            <div><h3>Organizations</h3><p>Create organizations and control their lifecycle. Deactivation suspends every member's sign-in while preserving all data.</p></div>
+            <button class="btn go">Manage</button>
+          </div>
+          <div class="hubrow">
+            <span class="em">👥</span>
+            <div><h3>Users</h3><p>Invite people by globally unique email, set their role within the organization, unlock accounts, and issue one-time temporary passwords.</p></div>
+            <button class="btn go">Manage</button>
+          </div>
+          <div class="hubrow">
+            <span class="em">🏷️</span>
+            <div><h3>Statuses</h3><p>Define each organization's workflow vocabulary. Statuses appear as swimlanes on boards; retiring one is always a reversible soft delete.</p></div>
+            <button class="btn go">Manage</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ORGANIZATIONS -->
+<section class="screen" id="s-orgs">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">SN</span>
+      <a href="#">🏠<span>Home</span></a><a href="#">📋<span>Boards</span></a><a href="#">🔔<span>Alerts</span></a><a class="on" href="#">⚙️<span>Admin</span></a>
+      <span class="push"></span><span class="avatar">SA</span>
+    </aside>
+    <div class="content">
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Admin</a> / Organizations</div>
+        <div class="row">
+          <div class="grow"><h1>Organizations</h1><p class="sub">Every user, board, and status lives inside exactly one organization.</p></div>
+          <button class="btn primary" style="margin-bottom:14px">+ New organization</button>
+        </div>
+        <div class="ptabs"><a class="on" href="#">Active · 2</a><a href="#">Inactive · 1</a><a href="#">All · 3</a></div>
+      </div>
+      <div class="body">
+        <div class="cmdbar"><input type="text" placeholder="Filter by name…" style="width:240px"></div>
+        <div class="card" style="max-width:900px">
+          <table>
+            <thead><tr><th>Organization</th><th>Users</th><th>Boards</th><th>Statuses</th><th>Created</th><th style="width:220px"></th></tr></thead>
+            <tbody>
+              <tr><td><strong>Acme Corp</strong></td><td>42</td><td>3</td><td>4</td><td>Jan 12, 2026</td><td><button class="btn subtle">Users</button><button class="btn subtle">Statuses</button><button class="btn danger">Deactivate</button></td></tr>
+              <tr><td><strong>Initech</strong></td><td>18</td><td>2</td><td>5</td><td>Feb 3, 2026</td><td><button class="btn subtle">Users</button><button class="btn subtle">Statuses</button><button class="btn danger">Deactivate</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">Deactivating an organization suspends sign-in for all of its members. Boards, ideas, and history remain intact and reactivation is instant.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USERS -->
+<section class="screen" id="s-users">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">SN</span>
+      <a href="#">🏠<span>Home</span></a><a href="#">📋<span>Boards</span></a><a href="#">🔔<span>Alerts</span></a><a class="on" href="#">⚙️<span>Admin</span></a>
+      <span class="push"></span><span class="avatar">SA</span>
+    </aside>
+    <div class="content">
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / Users</div>
+        <div class="row">
+          <div class="grow"><h1>Users of Acme Corp</h1><p class="sub">42 members. Email addresses are unique across the entire platform, so no organization picker is ever needed at sign-in.</p></div>
+          <button class="btn primary" style="margin-bottom:14px">+ Invite user</button>
+        </div>
+        <div class="ptabs"><a class="on" href="#">All · 42</a><a href="#">Admins · 3</a><a href="#">Locked · 1</a><a href="#">Invited · 2</a></div>
+      </div>
+      <div class="body">
+        <div class="cmdbar">
+          <input type="text" placeholder="Find by name or email…" style="width:260px">
+          <select><option>Role: All</option><option>Org Admin</option><option>Member</option></select>
+        </div>
+        <div class="card" style="max-width:960px">
+          <table>
+            <thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Last sign-in</th><th style="width:230px"></th></tr></thead>
+            <tbody>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar s">JR</span><div><strong>Jordan Reyes</strong><div style="font-size:12px;color:var(--ink-3)">jordan.reyes@acme.com</div></div></div></td><td><span class="pill info">Org Admin</span></td><td><span class="pill ok">Active</span></td><td>Today 11:02</td><td><button class="btn subtle">Edit</button><button class="btn subtle">Temp password</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar s">MP</span><div><strong>Mia Park</strong><div style="font-size:12px;color:var(--ink-3)">mia.park@acme.com</div></div></div></td><td><span class="pill neutral">Member</span></td><td><span class="pill warn">Locked · 12 min</span></td><td>Today 08:47</td><td><button class="btn subtle">Edit</button><button class="btn">Unlock</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar s">TD</span><div><strong>Tom Diaz</strong><div style="font-size:12px;color:var(--ink-3)">tom.diaz@acme.com</div></div></div></td><td><span class="pill neutral">Member</span></td><td><span class="pill ok">Active</span></td><td>Yesterday</td><td><button class="btn subtle">Edit</button><button class="btn subtle">Temp password</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar s">AL</span><div><strong>Ana Liu</strong><div style="font-size:12px;color:var(--ink-3)">ana.liu@acme.com</div></div></div></td><td><span class="pill neutral">Member</span></td><td><span class="pill neutral">Invited</span></td><td>—</td><td><button class="btn subtle">Resend invite</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">Issuing a temporary password reveals it exactly once, in a dialog, immediately after creation. The user must replace it at next sign-in.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATUSES -->
+<section class="screen" id="s-statuses">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">SN</span>
+      <a href="#">🏠<span>Home</span></a><a href="#">📋<span>Boards</span></a><a href="#">🔔<span>Alerts</span></a><a class="on" href="#">⚙️<span>Admin</span></a>
+      <span class="push"></span><span class="avatar">SA</span>
+    </aside>
+    <div class="content">
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / Statuses</div>
+        <div class="row">
+          <div class="grow"><h1>Workflow statuses</h1><p class="sub">The vocabulary of Acme Corp's boards. Reordering saves immediately; retiring is a soft delete that preserves history.</p></div>
+          <button class="btn primary" style="margin-bottom:14px">+ New status</button>
+        </div>
+        <div class="ptabs"><a class="on" href="#">Active · 4</a><a href="#">Retired · 1</a></div>
+      </div>
+      <div class="body">
+        <div class="card" style="max-width:760px">
+          <table>
+            <thead><tr><th style="width:30px"></th><th>Status</th><th>Boards using it</th><th>Ideas</th><th style="width:190px"></th></tr></thead>
+            <tbody>
+              <tr><td style="cursor:grab;color:var(--ink-3)">⠿</td><td><span class="pill neutral">New</span></td><td>3</td><td>22</td><td><button class="btn subtle">Rename</button><button class="btn danger">Retire</button></td></tr>
+              <tr><td style="cursor:grab;color:var(--ink-3)">⠿</td><td><span class="pill info">In Progress</span></td><td>3</td><td>15</td><td><button class="btn subtle">Rename</button><button class="btn danger">Retire</button></td></tr>
+              <tr><td style="cursor:grab;color:var(--ink-3)">⠿</td><td><span class="pill warn">Blocked</span></td><td>1</td><td>4</td><td><button class="btn subtle">Rename</button><button class="btn danger">Retire</button></td></tr>
+              <tr><td style="cursor:grab;color:var(--ink-3)">⠿</td><td><span class="pill ok">Done</span></td><td>3</td><td>61</td><td><button class="btn subtle">Rename</button><button class="btn danger">Retire</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">Boards must always keep at least two active swimlanes, so the last two statuses in use cannot be retired. Retired statuses stay visible on historical ideas.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOARD : editorial list-lanes -->
+<section class="screen" id="s-board">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">SN</span>
+      <a href="#">🏠<span>Home</span></a><a class="on" href="#">📋<span>Boards</span></a><a href="#">🔔<span>Alerts</span></a><a href="#">⚙️<span>Admin</span></a>
+      <span class="push"></span><span class="avatar">JR</span>
+    </aside>
+    <div class="content">
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Boards</a> / Product Ideas</div>
+        <div class="row">
+          <div class="grow"><h1>Product Ideas</h1><p class="sub">48 ideas · sorted by upvotes within each status</p></div>
+          <button class="btn" style="margin-bottom:14px">⚙ Configure</button>
+          <button class="btn primary" style="margin-bottom:14px">+ New idea</button>
+        </div>
+        <div class="ptabs"><a class="on" href="#">List</a><a href="#">Swimlanes</a><a href="#">Report</a></div>
+      </div>
+      <div class="body">
+        <div class="cmdbar">
+          <input type="text" placeholder="Filter ideas…" style="width:240px">
+          <select><option>Priority: All</option></select>
+          <select><option>Assignee: Anyone</option></select>
+          <select><option>Tag: All</option></select>
+        </div>
+        <div class="lanesec">
+          <h2>New <span class="cnt">4 ideas</span></h2>
+          <div class="card">
+            <div class="rowcard"><span class="prio high"></span><span class="t">Dark mode support</span><span class="tag">ui</span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div>
+            <div class="rowcard"><span class="prio med"></span><span class="t">Bulk import from CSV</span><span class="tag">data</span><span class="avatar s">TD</span><button class="up">▲ 17</button></div>
+            <div class="rowcard"><span class="prio low"></span><span class="t">Keyboard shortcuts cheat sheet</span><span class="tag">docs</span><span class="avatar s" style="background:#c8c6c4">—</span><button class="up">▲ 6</button></div>
+            <div class="rowcard"><span class="prio med"></span><span class="t">Export board to PDF</span><span class="tag">reporting</span><span class="avatar s">JR</span><button class="up">▲ 5</button></div>
+          </div>
+        </div>
+        <div class="lanesec">
+          <h2>In Progress <span class="cnt">3 ideas</span></h2>
+          <div class="card">
+            <div class="rowcard"><span class="prio high"></span><span class="t">SSO via SAML</span><span class="tag">auth</span><span class="due">due Aug 15</span><span class="avatar s">AL</span><button class="up">▲ 31</button></div>
+            <div class="rowcard"><span class="prio med"></span><span class="t">Notification digest email</span><span class="tag">notify</span><span class="avatar s">JR</span><button class="up mine">▲ 12</button></div>
+            <div class="rowcard"><span class="prio med"></span><span class="t">Mention autocomplete</span><span class="tag">ui</span><span class="avatar s">MP</span><button class="up">▲ 9</button></div>
+          </div>
+        </div>
+        <div class="lanesec">
+          <h2>Blocked <span class="cnt">1 idea</span></h2>
+          <div class="card">
+            <div class="rowcard"><span class="prio high"></span><span class="t">Mobile responsive board</span><span class="tag">ui</span><span class="avatar s">TD</span><button class="up">▲ 20</button></div>
+          </div>
+        </div>
+        <div class="lanesec">
+          <h2>Done <span class="cnt">2 ideas</span></h2>
+          <div class="card" style="opacity:.8">
+            <div class="rowcard"><span class="prio med"></span><span class="t">Org-scoped user search</span><span class="avatar s">AL</span><button class="up">▲ 14</button></div>
+            <div class="rowcard"><span class="prio low"></span><span class="t">Audit log for admin actions</span><span class="avatar s">JR</span><button class="up">▲ 8</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IDEA DETAIL : full-page editorial article layout -->
+<section class="screen" id="s-idea">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">SN</span>
+      <a href="#">🏠<span>Home</span></a><a class="on" href="#">📋<span>Boards</span></a><a href="#">🔔<span>Alerts</span></a><a href="#">⚙️<span>Admin</span></a>
+      <span class="push"></span><span class="avatar">JR</span>
+    </aside>
+    <div class="content">
+      <div class="ideahd">
+        <div class="crumbs" style="font-size:12px;color:var(--ink-3);margin-bottom:12px"><a href="#" style="color:var(--ink-3)">Boards</a> / <a href="#" style="color:var(--ink-3)">Product Ideas</a> / IDEA-128</div>
+        <div class="kicker">In Progress · Medium priority</div>
+        <div style="display:flex;align-items:flex-start;gap:20px">
+          <h1 style="flex:1">Dark mode support</h1>
+          <button class="up mine" style="font-size:13px;padding:6px 16px;margin-top:8px">▲ Upvoted · 24</button>
+          <button class="btn" style="margin-top:8px">Edit</button>
+        </div>
+        <p style="font-size:13px;color:var(--ink-3);margin:8px 0 20px">Proposed by <strong>Tom Diaz</strong> on July 2 · updated 20 minutes ago</p>
+      </div>
+      <div class="ideabody">
+        <div>
+          <p class="prose" style="margin-bottom:30px">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu. Scope for the first pass is the board and idea views; admin surfaces can follow.</p>
+          <h2 style="font-size:19px;margin-bottom:16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif">4 comments</span></h2>
+          <div class="comment">
+            <div class="byline"><span class="avatar s">MP</span><span class="who">Mia Park</span><span class="when">2 hours ago</span></div>
+            <p><span class="mention">@Jordan Reyes</span> can we scope this to the board view first? Full app theming is a bigger lift and I'd rather ship the high-traffic surface early.</p>
+          </div>
+          <div class="comment">
+            <div class="byline"><span class="avatar s">TD</span><span class="who">Tom Diaz</span><span class="when">1 hour ago</span></div>
+            <p>+1 — the Fluent design tokens should make this straightforward. Happy to prototype the token switch this week.</p>
+          </div>
+          <div style="display:flex;gap:12px">
+            <span class="avatar s">JR</span>
+            <div style="flex:1">
+              <textarea style="width:100%;min-height:70px" placeholder="Join the discussion… type @ to mention someone in Acme Corp"></textarea>
+              <div class="charcount">0 / 500</div>
+              <button class="btn primary" style="margin-top:6px">Post comment</button>
+            </div>
+          </div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Status</div><div class="v"><select style="width:100%"><option>New</option><option selected>In Progress</option><option>Blocked</option><option>Done</option></select></div></div>
+          <div class="fact"><div class="k">Priority</div><div class="v"><select style="width:100%"><option>High</option><option selected>Medium</option><option>Low</option></select></div></div>
+          <div class="fact"><div class="k">Assignee</div><div class="v"><select style="width:100%"><option>Unassigned</option><option selected>Mia Park</option><option>Jordan Reyes</option></select></div></div>
+          <div class="fact"><div class="k">Due date</div><div class="v"><input type="text" value="Aug 15, 2026" style="width:100%"></div></div>
+          <div class="fact"><div class="k">Tags</div><div class="v" style="display:flex;gap:6px;flex-wrap:wrap;font-weight:400"><span class="pill neutral">ui</span><span class="pill neutral">theme</span><button class="btn subtle" style="padding:1px 8px">+ add</button></div></div>
+          <div class="fact"><div class="k">Upvotes</div><div class="v">24 people</div></div>
+          <div class="fact"><div class="k">Board</div><div class="v">Product Ideas</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHANGE PASSWORD -->
+<section class="screen" id="s-changepw">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">SN</span>
+      <a href="#">🏠<span>Home</span></a><a href="#">📋<span>Boards</span></a><a href="#">🔔<span>Alerts</span></a>
+      <span class="push"></span><span class="avatar">JR</span>
+    </aside>
+    <div class="content">
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Account</a> / Change password</div>
+        <h1>Change password</h1>
+        <p class="sub">Choose something strong that you don't use anywhere else. You'll stay signed in on this device.</p>
+        <div style="height:18px"></div>
+      </div>
+      <div class="body">
+        <div class="card" style="max-width:440px;padding:26px">
+          <div class="field" style="margin-bottom:15px"><label>Current password</label><input type="password" style="width:100%"></div>
+          <div class="field" style="margin-bottom:6px"><label>New password</label><input type="password" style="width:100%" value="Quiet&Steady42"></div>
+          <ul class="checklist">
+            <li class="ok">At least 12 characters</li>
+            <li class="ok">Upper &amp; lower case letters</li>
+            <li class="ok">At least one number</li>
+            <li class="ok">At least one symbol</li>
+          </ul>
+          <div class="field" style="margin-bottom:18px"><label>Confirm new password</label><input type="password" style="width:100%"></div>
+          <div style="display:flex;gap:10px"><button class="btn primary">Update password</button><button class="btn">Cancel</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+</script>
+</body>
+</html>

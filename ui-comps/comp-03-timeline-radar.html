@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comp 03 - Timeline Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Chivo+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f1f7fb;
+      --panel: #ffffff;
+      --ink: #112238;
+      --muted: #4f637c;
+      --line: #c6d7e6;
+      --blue: #005f99;
+      --lime: #4c8a11;
+      --gold: #b37815;
+      --brick: #b53d24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(850px 500px at 0% 0%, #dcefff 0%, transparent 60%),
+        radial-gradient(800px 560px at 100% 10%, #f5f6d8 0%, transparent 62%),
+        var(--bg);
+      min-height: 100vh;
+    }
+    .grid {
+      width: min(1220px, 100%);
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1.1fr 0.9fr;
+      animation: enter 420ms ease;
+    }
+    .panel {
+      background: color-mix(in srgb, var(--panel) 94%, #f9fcff);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 14px 26px rgba(17, 34, 56, 0.08);
+      padding: 16px;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3.1vw, 2.3rem);
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+    }
+    .mono {
+      margin-top: 10px;
+      display: inline-block;
+      font-family: "Chivo Mono", monospace;
+      font-size: 0.82rem;
+      border: 1px solid #c8d9e8;
+      border-radius: 999px;
+      background: #eef6fd;
+      color: #164870;
+      padding: 6px 10px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      animation: appear 520ms ease both;
+    }
+    .metric:nth-child(2) { animation-delay: 80ms; }
+    .metric:nth-child(3) { animation-delay: 160ms; }
+    .metric:nth-child(4) { animation-delay: 240ms; }
+    .v { font-size: 1.7rem; font-weight: 800; }
+
+    .timeline {
+      position: relative;
+      padding-left: 18px;
+      margin-top: 10px;
+      display: grid;
+      gap: 10px;
+    }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 5px;
+      bottom: 5px;
+      width: 2px;
+      background: linear-gradient(#78a8cc, #89b77a);
+    }
+    .event {
+      position: relative;
+      border: 1px solid #d4e0ea;
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+    }
+    .event::before {
+      content: "";
+      position: absolute;
+      left: -17px;
+      top: 14px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 0 3px #def0ff;
+    }
+    .event small { color: var(--muted); }
+
+    .radar {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .bar {
+      background: #e8f0f7;
+      border-radius: 999px;
+      height: 12px;
+      overflow: hidden;
+      border: 1px solid #c7d8e8;
+    }
+    .bar > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      animation: grow 900ms ease both;
+    }
+    .ok span { width: 88%; background: linear-gradient(90deg, #2f7f3d, #5eb16e); }
+    .warn span { width: 74%; background: linear-gradient(90deg, #915d10, #ca8d24); }
+    .risk span { width: 42%; background: linear-gradient(90deg, #8f2f1a, #cc4a2c); }
+    .row {
+      display: grid;
+      grid-template-columns: 130px 1fr 55px;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .metrics { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 108px 1fr 50px; }
+      .grid { padding: 12px; }
+    }
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(7px) scale(0.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes grow {
+      from { width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="grid">
+    <section class="panel hero">
+      <h1>Timeline Radar for Sprint 32</h1>
+      <p>A risk-forward comp that emphasizes sequence and governance gates from sprint start to closure reporting.</p>
+      <span class="mono">Commitment lock: Jul 29 09:00 | Reporting SLA: within 24h</span>
+
+      <div class="timeline">
+        <article class="event"><strong>Planning complete</strong><br><small>All Stories and Bugs estimated; customer-facing Tasks tagged</small></article>
+        <article class="event"><strong>Execution watch</strong><br><small>Daily standup and status transitions; burndown reviewed each day</small></article>
+        <article class="event"><strong>Blocker protocol</strong><br><small>Flag or label marks blocked; owner assigned within 4 business hours</small></article>
+        <article class="event"><strong>Closure package</strong><br><small>Reliability, carryover, velocity, completed and incomplete scope</small></article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="metrics">
+        <article class="metric"><div>Reliability</div><div class="v" style="color:var(--lime)">87%</div><small>target >= 85%</small></article>
+        <article class="metric"><div>Carryover</div><div class="v" style="color:var(--gold)">13%</div><small>target <= 15%</small></article>
+        <article class="metric"><div>Blocked Median</div><div class="v" style="color:var(--lime)">0.8 day</div><small>target <= 1 day</small></article>
+        <article class="metric"><div>Scope Added</div><div class="v" style="color:var(--brick)">3</div><small>excluded from denominator</small></article>
+      </div>
+
+      <h3 style="margin:14px 0 8px;">Delivery Radar</h3>
+      <div class="radar">
+        <div class="row ok"><span>Predictability</span><div class="bar"><span></span></div><b>88</b></div>
+        <div class="row warn"><span>Flow Health</span><div class="bar"><span></span></div><b>74</b></div>
+        <div class="row risk"><span>Blocker Risk</span><div class="bar"><span></span></div><b>42</b></div>
+      </div>
+
+      <h3 style="margin:16px 0 8px;">Top Blockers</h3>
+      <ul style="margin:0; padding-left:18px; color:#3b4d63;">
+        <li>SP-229 Certificate dependency - owner set in 1h</li>
+        <li>SP-235 Client signoff lag - PO exception pending</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

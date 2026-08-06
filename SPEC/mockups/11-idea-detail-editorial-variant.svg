@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">SargentNexus idea detail editorial variant mockup</title>
+  <desc id="desc">An Editorial style variant of idea detail that emphasizes readability, collaboration signals, and status action clarity.</desc>
+  <rect width="1600" height="1000" fill="#f5f7fb"/>
+  <rect x="0" y="0" width="1600" height="78" fill="#ffffff"/>
+  <text x="34" y="50" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700" fill="#0f172a">SargentNexus</text>
+  <text x="34" y="72" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#475569">Idea collaboration - Editorial direction</text>
+
+  <rect x="88" y="118" width="1424" height="824" rx="24" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="136" y="164" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#64748b">Default Board / In Review / Last updated 13 minutes ago</text>
+  <text x="136" y="214" font-family="Georgia, Times New Roman, serif" font-size="40" font-weight="700" fill="#0f172a">Standardize vendor intake for urgent orders</text>
+
+  <rect x="136" y="240" width="860" height="112" rx="14" fill="#f8fafc" stroke="#d0d7de"/>
+  <text x="166" y="280" font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#0f172a">Create a single intake path that captures priority, material class, and requester context</text>
+  <text x="166" y="308" font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#0f172a">before routing to procurement. Keep detail concise for faster board triage.</text>
+
+  <text x="136" y="396" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a">Discussion</text>
+  <rect x="136" y="414" width="860" height="428" rx="16" fill="#ffffff" stroke="#d0d7de"/>
+
+  <rect x="166" y="448" width="800" height="94" rx="12" fill="#f8fafc" stroke="#d0d7de"/>
+  <text x="190" y="480" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a">Jamie Flores</text>
+  <text x="292" y="480" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#64748b">Today at 09:12</text>
+  <text x="190" y="508" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#0f172a">Can we tag this with routing and supplier-risk so similar ideas are easier to find?</text>
+
+  <rect x="166" y="558" width="800" height="94" rx="12" fill="#f8fafc" stroke="#d0d7de"/>
+  <text x="190" y="590" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a">Chris Singh</text>
+  <text x="278" y="590" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#64748b">Today at 09:27</text>
+  <text x="190" y="618" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#0f172a">Yes, and mention @jamie.flores@northwind.com in the rollout checklist comment.</text>
+
+  <rect x="166" y="682" width="640" height="48" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="184" y="712" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#64748b">Write a plain-text comment (max 2000 characters)</text>
+  <rect x="820" y="682" width="146" height="48" rx="8" fill="#0f6cbd"/>
+  <text x="893" y="712" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">Post</text>
+
+  <rect x="1040" y="240" width="432" height="602" rx="16" fill="#f8fafc" stroke="#d0d7de"/>
+  <text x="1070" y="286" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a">Activity rail</text>
+
+  <text x="1070" y="330" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#334155">Status</text>
+  <rect x="1070" y="344" width="188" height="42" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="1088" y="370" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#0f172a">In Review</text>
+
+  <text x="1070" y="424" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#334155">Tags</text>
+  <rect x="1070" y="438" width="102" height="28" rx="14" fill="#e0f2fe"/>
+  <text x="1121" y="457" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="700" fill="#1d4ed8">routing</text>
+  <rect x="1180" y="438" width="128" height="28" rx="14" fill="#dcfce7"/>
+  <text x="1244" y="457" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="12" font-weight="700" fill="#166534">supplier-risk</text>
+
+  <text x="1070" y="506" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#334155">Engagement</text>
+  <rect x="1070" y="520" width="148" height="42" rx="8" fill="#0f6cbd"/>
+  <text x="1144" y="547" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">Upvote 11</text>
+
+  <rect x="1070" y="590" width="372" height="154" rx="12" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="1090" y="622" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#1d4ed8">Spec-backed collaboration cues</text>
+  <text x="1090" y="648" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e3a8a">- Mentions resolve users by email in this organization.</text>
+  <text x="1090" y="670" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e3a8a">- Read Only users can comment and upvote.</text>
+  <text x="1090" y="692" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e3a8a">- Status changes and comments generate events.</text>
+
+  <rect x="136" y="866" width="1336" height="56" rx="12" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="164" y="901" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#475569">Editorial variant emphasizes reading flow while preserving Fluent-style actions and service-driven dialog/toast behavior in implementation.</text>
+</svg>

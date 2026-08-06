@@ -1,0 +1,987 @@
+# Contracts
+
+## Purpose
+Defines the system contracts that implementations must follow.
+
+## Contract Authorship Rule
+- Canonical contract behavior is authored in this file and related canonical `SPEC/20-feature-*.md` docs.
+- Contract tests verify the API surface directly against the canonical documents under `SPEC`.
+- Do not introduce API behavior without corresponding canonical updates in `SPEC`.
+
+## Route Conventions
+- HTTP APIs use path versioning under `/api/v1`.
+- Resource routes use plural nouns.
+- Nested routes are allowed when needed to express parent-child ownership clearly.
+
+## MVP Boundary For External Auth
+- MVP contract conformance does not require OAuth or SAML endpoints.
+- OAuth/OIDC endpoints are planned for post-MVP Phase 2.
+- SAML endpoints are planned for a post-OAuth phase.
+- Until those phases begin, `/api/v1/auth/*` contracts are limited to local credential and password-management flows defined in this document.
+
+## Error Envelope
+- All non-2xx responses use a problem-details-style payload.
+- Standard fields are `type`, `title`, `status`, `detail`, and `instance`.
+- Validation failures may include an additional `errors` object keyed by field name.
+
+## Standard Error Responses
+- `400 Bad Request`: request JSON is malformed, required fields are missing, field values violate contract constraints, or the request shape is otherwise invalid.
+- `401 Unauthorized`: the caller is not authenticated or the authentication token is missing, expired, or invalid.
+- `403 Forbidden`: the caller is authenticated but not permitted to perform the requested action in the current scope.
+- `404 Not Found`: the targeted resource does not exist or is not visible within the caller's authorized scope.
+
+## Collection Conventions
+- Organization, user, idea, and comment list endpoints support pagination in MVP.
+- Smaller configuration collections such as statuses, boards, and tags may return full result sets unless a feature-specific contract says otherwise.
+- Paginated collections support basic filtering plus one explicit sort field and sort direction.
+- Archived organizations are hidden from list results by default unless explicitly filtered with `isArchived=true` or an equivalent include-archived flag.
+
+## Update Conventions
+- MVP update operations use last-write-wins behavior unless a feature-specific contract defines a stronger rule.
+
+## Validation Ownership
+- The API contract validates request shape, required fields, and basic field constraints.
+- The Application and Domain layers enforce business rules, authorization rules, and cross-entity invariants.
+
+## Validation Message Conventions
+- API validation messages follow these canonical templates:
+	- Required: `<FieldName> is required.`
+	- Max length: `<FieldName> must be <N> characters or fewer.`
+	- Min length: `<FieldName> must be at least <N> characters.`
+	- Invalid format: `<FieldName> must be a valid <FormatName>.`
+	- Invalid enum value: `<FieldName> must be one of: <Value1>, <Value2>, <Value3>.`
+	- Numeric or date range: `<FieldName> must be between <Min> and <Max>.`
+	- Mention resolution: `Mention '<Value>' could not be resolved to a user in your organization.`
+- Validation failures use the `errors` object keyed by request field names.
+- UI should mirror API validation wording where practical to reduce interpretation drift.
+
+## Shared Data Rules
+- Identifiers are GUID strings.
+- Timestamps are UTC ISO-8601 strings.
+- Enum values are serialized as strings.
+- Paginated responses use:
+	- `items`
+	- `page`
+	- `pageSize`
+	- `totalCount`
+	- `sortBy`
+	- `sortDirection`
+- User and organization text fields are trimmed before validation and persistence.
+- First and last name maximum length is 100 characters.
+- Company name maximum length is 200 characters.
+- Address maximum length is 200 characters.
+- City maximum length is 100 characters.
+- State maximum length is 50 characters.
+- Zip maximum length is 20 characters.
+- Phone maximum length is 25 characters.
+- Comment body maximum length is 2000 characters and supports plain text with line breaks only.
+
+## Authentication Contracts
+
+### `POST /api/v1/auth/login`
+Purpose: Authenticate a user with globally unique email credentials.
+
+Request body:
+- `email` required string
+- `password` required string
+
+Success response `200` authenticated:
+- `accessToken` string
+- `expiresInSeconds` integer
+- `requiresPasswordChange` boolean
+- `user`
+	- `userId` GUID string
+	- `organizationId` GUID string or `null` for Site Admin
+	- `role` string
+	- `firstName` string
+	- `lastName` string
+	- `email` string
+	- `status` string
+
+Error responses:
+- `401` invalid credentials
+- `403` inactive account
+- `429` locked out after 5 failed attempts within 15 minutes
+
+### `GET /api/v1/auth/me`
+Purpose: Return the currently authenticated user summary.
+
+Success response `200`:
+- `userId`
+- `organizationId`
+- `role`
+- `firstName`
+- `lastName`
+- `email`
+- `status`
+
+Error responses:
+- `401` caller is not authenticated
+
+### `PUT /api/v1/auth/me`
+Purpose: Update the currently authenticated user's editable profile fields.
+
+Request body:
+- `firstName` required string, max 100 characters
+- `lastName` required string, max 100 characters
+
+Both fields are trimmed before persistence. Email, role, organization, and status cannot be changed through this endpoint.
+
+Success response `200`:
+- updated authenticated user summary using the same shape as `GET /api/v1/auth/me`
+
+Error responses:
+- `400` missing or invalid name fields
+- `401` caller is not authenticated or the authenticated user cannot be resolved
+
+### `POST /api/v1/auth/change-password`
+Purpose: Change the current user's password, including the first-login Site Admin password change.
+
+Request body:
+- `currentPassword` required string
+- `newPassword` required string
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `400` invalid password policy
+- `401` invalid current password
+- `403` caller is authenticated but not allowed to change the password in the current state
+
+### `POST /api/v1/users/{userId}/temporary-password`
+Purpose: MVP/P1 admin-issued temporary password reset.
+
+Request body:
+- empty body or implementation-defined admin note
+
+Success response `200`:
+- `temporaryPassword` string
+- `mustChangePassword` boolean
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to issue a temporary password for the target user
+- `404` target user does not exist or is outside caller scope
+
+Behavior rules:
+- the temporary password is displayed one time only
+- the temporary password expires after 24 hours if unused
+- the user must change the password on first successful use
+
+### `POST /api/v1/auth/password-reset/request`
+Purpose: Post-MVP anonymous request for a self-service password-reset email.
+
+Request body:
+- `email` required string, valid email format
+
+Success response `202 Accepted`:
+- `message` string with the same generic wording for every syntactically valid request
+
+Behavior rules:
+- only active accounts with local-password credentials are eligible, including Site Admin and organization users
+- unknown, inactive, external-only, throttled, and eligible emails receive the same response
+- eligible requests send an unlinked anonymous reset-page URL containing a cryptographically random bearer token
+- issuing a new token invalidates every prior token for the account
+- the token expires after 24 hours and is single-use
+- delivery is limited to 3 requests per normalized email and 10 requests per source IP in a rolling 15-minute window
+- requests above either limit return the generic success response without sending an email
+- token values are not persisted in plaintext or included in logs, audit metadata, analytics, or responses
+
+Error responses:
+- `400` malformed request body, missing email, or invalid email format
+
+### `POST /api/v1/auth/password-reset/confirm`
+Purpose: Post-MVP anonymous completion of a self-service password reset using the emailed token.
+
+Request body:
+- `token` required string
+- `newPassword` required string
+- `confirmPassword` required string
+
+Success response:
+- `204 No Content`
+
+Behavior rules:
+- `newPassword` and `confirmPassword` must match
+- the new password must satisfy the existing authentication complexity policy
+- invalid, expired, superseded, and used tokens return the same invalid-link failure
+- a successful reset consumes the token and revokes all existing sessions for the account
+- the response does not authenticate the user; the client shows confirmation and returns to Login
+- token and plaintext password values are not persisted or included in logs, audit metadata, analytics, or error responses
+
+Error responses:
+- `400` malformed request, password mismatch, password-policy failure, or invalid-link failure
+
+## Organization Contracts
+
+### `GET /api/v1/organizations`
+Purpose: List organizations for Site Admin with pagination.
+
+Query parameters:
+- `page`
+- `pageSize`
+- `search` optional
+- `isArchived` optional boolean
+- `sortBy` optional `companyName` or `createdAt`
+- `sortDirection` optional `asc` or `desc`
+
+Success response `200` paged item shape:
+- `organizationId`
+- `title`
+- `description`
+- `inviteCode`
+- `city`
+- `state`
+- `phone`
+- `logoThumbnailUrl` nullable string
+- `isArchived`
+
+Default list behavior:
+- archived organizations are excluded unless explicitly filtered in
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to list organizations
+
+### `POST /api/v1/organizations`
+Purpose: Create an organization, generate its invite code, and provision default statuses plus one default board.
+
+Request body:
+- `title` required string
+- `description` required string
+- `logoUrl` optional string
+
+Optional profile fields:
+- `address` optional string
+- `city` optional string
+- `state` optional string
+- `zip` optional string
+- `phone` optional string
+- `primaryContactFirstName` optional string
+- `primaryContactLastName` optional string
+
+Success response `201`:
+- `organizationId`
+- `inviteCode`
+- `defaultBoardId`
+- `defaultStatusCount`
+
+Error responses:
+- `400` request body is malformed or violates field constraints
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to create organizations
+
+### `GET /api/v1/organizations/{organizationId}`
+Purpose: Return organization detail.
+
+Response fields also include:
+- `inviteCode`
+- `logoUrl` nullable string
+- `logoThumbnailUrl` nullable string
+- `logoHeightPx` nullable integer, max rendered value `150`
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to view this organization
+- `404` organization does not exist or is outside caller scope
+
+### `PUT /api/v1/organizations/{organizationId}`
+Purpose: Update organization detail.
+
+Request body:
+- same fields as organization create
+
+Success response:
+- `200` updated organization detail
+
+Error responses:
+- `400` request body is malformed or violates field constraints
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to update this organization
+- `404` organization does not exist or is outside caller scope
+
+### `PUT /api/v1/organizations/{organizationId}/logo`
+Purpose: Upload or replace an organization logo.
+
+Request body:
+- `multipart/form-data`
+- field `logoFile` required
+
+Behavior rules:
+- exactly one active logo per organization
+- new upload replaces previous logo atomically
+- return thumbnail metadata for immediate preview
+- rendered usage in UI is constrained to max height `150px` while preserving aspect ratio
+
+Success response `200`:
+- `logoUrl`
+- `logoThumbnailUrl`
+- `logoHeightPx`
+
+Error responses:
+- `400` request body is malformed or violates file constraints
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to update this organization
+- `404` organization does not exist or is outside caller scope
+
+### `POST /api/v1/organizations/{organizationId}/invite-code/regenerate`
+Purpose: Regenerate the organization invite code, invalidating the previous code.
+
+Success response `200`:
+- `inviteCode`
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to administer this organization
+- `404` organization does not exist or is outside caller scope
+
+### `POST /api/v1/organizations/{organizationId}/archive`
+Purpose: Archive an organization without hard deletion.
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to archive this organization
+- `404` organization does not exist or is outside caller scope
+
+## User Contracts
+
+### `POST /api/v1/auth/register`
+Purpose: Self-register a new user account using an organization invite code. Anonymous endpoint.
+
+Request body:
+- `inviteCode` required string
+- `firstName` required string
+- `lastName` required string
+- `email` required string
+- `password` required string, must satisfy the authentication complexity policy
+
+Behavior rules:
+- the invite code determines the organization the user is associated with
+- the created user receives role `User` and status `Active`
+- registration against an archived organization is rejected as an invalid invite code
+
+Success response `201`:
+- `userId`
+- `organizationId`
+- `email`
+- `role`
+- `status`
+
+Error responses:
+- `400` request body is malformed or violates field constraints
+- `400` invite code is missing or invalid; response prompts the user to provide a correct invite code
+- `409` email is already in use
+
+### `GET /api/v1/organizations/{organizationId}/users`
+Purpose: List users within an organization with pagination.
+
+Query parameters:
+- `page`
+- `pageSize`
+- `search` optional
+- `role` optional
+- `status` optional `Active` or `Inactive`
+- `sortBy` optional `lastName`, `email`, or `createdAt`
+- `sortDirection` optional `asc` or `desc`
+
+Success response `200` paged item shape:
+- `userId`
+- `organizationId`
+- `firstName`
+- `lastName`
+- `email`
+- `role`
+- `status`
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to list users in this organization
+- `404` organization does not exist or is outside caller scope
+
+### `POST /api/v1/organizations/{organizationId}/users`
+Purpose: Create a user within an organization.
+
+Request body:
+- `firstName` required string
+- `lastName` required string
+- `email` required string
+- `role` required string
+- `initialPassword` required string
+- `status` optional, defaults to `Active`
+
+Success response `201`:
+- `userId`
+- `organizationId`
+- `email`
+- `role`
+- `status`
+
+Error responses:
+- `400` request body is malformed or violates field constraints
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to create users in this organization
+- `404` organization does not exist or is outside caller scope
+
+### `POST /api/v1/organizations/{organizationId}/users/import`
+Purpose: Bulk-create users in an organization from an uploaded CSV file. Site Admin may import into any organization; Org Admin only into their own.
+
+Request body:
+- `multipart/form-data`
+- field `csvFile` required
+
+CSV columns:
+- `firstName` required
+- `lastName` required
+- `email` required
+- `role` optional, defaults to `User`
+- no invite code column; every created user is associated with the organization in the route
+
+Behavior rules:
+- each created user receives a system-generated temporary password and must change it on first login
+- rows with invalid data or duplicate emails are rejected individually without failing the whole import
+
+Success response `200`:
+- `createdCount`
+- `rejectedCount`
+- `rows` per-row outcome list with `rowNumber`, `email`, `outcome`, `error` nullable, and `temporaryPassword` for created rows
+
+Error responses:
+- `400` file is missing, malformed, or not a valid CSV
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to create users in this organization
+- `404` organization does not exist or is outside caller scope
+
+### `GET /api/v1/users/{userId}`
+Purpose: Return user detail.
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to view this user
+- `404` user does not exist or is outside caller scope
+
+### `PUT /api/v1/users/{userId}`
+Purpose: Update user profile, role, or status within the caller's authorized scope.
+
+Request body:
+- `firstName` required string
+- `lastName` required string
+- `email` required string
+- `role` required string
+- `status` required string
+
+Success response:
+- `200` updated user detail
+
+Error responses:
+- `400` request body is malformed or violates field constraints
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to update this user
+- `404` user does not exist or is outside caller scope
+
+## Status Contracts
+
+### `GET /api/v1/organizations/{organizationId}/statuses`
+Purpose: List all active and visible statuses for an organization.
+
+Success response `200` item shape:
+- `statusId`
+- `organizationId`
+- `name`
+- `isDeleted`
+
+Historical display behavior:
+- when a soft-deleted status is surfaced through related entities, the prior name remains visible with an archived or deleted label
+
+### `POST /api/v1/organizations/{organizationId}/statuses`
+Purpose: Create a new organization status.
+
+Request body:
+- `name` required string
+
+Success response `201`:
+- `statusId`
+- `name`
+
+### `PUT /api/v1/statuses/{statusId}`
+Purpose: Rename or update a status.
+
+Request body:
+- `name` required string
+
+### `DELETE /api/v1/statuses/{statusId}`
+Purpose: Soft-delete a status while preserving existing references.
+
+Success response:
+- `204 No Content`
+
+## Idea Field Option Contracts
+
+Idea Type and Business Impact collections include active and archived options ordered by `sortOrder`, then `name`.
+Site Admin may manage any target organization supplied by route context. Org Admin may manage only their own organization. User and Read Only callers receive `403 Forbidden`.
+
+### `GET /api/v1/organizations/{organizationId}/idea-types`
+Purpose: List all Idea Type options for an organization, including archived options.
+
+Success response `200` item shape:
+- `ideaTypeId`
+- `organizationId`
+- `name`
+- `sortOrder`
+- `isDeleted`
+
+### `POST /api/v1/organizations/{organizationId}/idea-types`
+Purpose: Create an active Idea Type at the end of the organization's current option order.
+
+Request body:
+- `name` required string, max 100 characters
+
+Success response `201`: Idea Type item shape.
+
+### `PUT /api/v1/idea-types/{ideaTypeId}`
+Purpose: Rename an active Idea Type.
+
+Request body:
+- `name` required string, max 100 characters
+
+Success response `200`: updated Idea Type item shape.
+
+### `POST /api/v1/organizations/{organizationId}/idea-types/reorder`
+Purpose: Replace the complete Idea Type order atomically.
+
+Request body:
+- `orderedIdeaTypeIds` required array containing every organization Idea Type ID exactly once, including archived options
+
+Success response:
+- `204 No Content`
+
+### `DELETE /api/v1/idea-types/{ideaTypeId}`
+Purpose: Soft-delete an Idea Type while preserving existing idea references.
+
+Success response:
+- `204 No Content`
+
+Deletion is rejected with `400 Bad Request` when the option is the organization's last active Idea Type.
+
+### `GET /api/v1/organizations/{organizationId}/business-impacts`
+Purpose: List all Business Impact options for an organization, including archived options.
+
+Success response `200` item shape:
+- `businessImpactId`
+- `organizationId`
+- `name`
+- `color` required `#RRGGBB` string
+- `sortOrder`
+- `isDeleted`
+
+### `POST /api/v1/organizations/{organizationId}/business-impacts`
+Purpose: Create an active Business Impact at the end of the organization's current option order.
+
+Request body:
+- `name` required string, max 100 characters
+- `color` required string in `#RRGGBB` format
+
+Success response `201`: Business Impact item shape.
+
+### `PUT /api/v1/business-impacts/{businessImpactId}`
+Purpose: Rename or recolor an active Business Impact.
+
+Request body:
+- `name` required string, max 100 characters
+- `color` required string in `#RRGGBB` format
+
+Success response `200`: updated Business Impact item shape.
+
+### `POST /api/v1/organizations/{organizationId}/business-impacts/reorder`
+Purpose: Replace the complete Business Impact order atomically.
+
+Request body:
+- `orderedBusinessImpactIds` required array containing every organization Business Impact ID exactly once, including archived options
+
+Success response:
+- `204 No Content`
+
+### `DELETE /api/v1/business-impacts/{businessImpactId}`
+Purpose: Soft-delete a Business Impact while preserving existing idea references.
+
+Success response:
+- `204 No Content`
+
+Deletion is rejected with `400 Bad Request` when the option is the organization's last active Business Impact.
+
+For both option types, labels are trimmed before persistence and active labels are unique case-insensitively within the same organization and option type. Missing resources return `404 Not Found`; cross-organization access returns `403 Forbidden`.
+
+## Board Contracts
+
+### `GET /api/v1/organizations/{organizationId}/boards`
+Purpose: List boards for an organization.
+
+Success response `200` item shape:
+- `boardId`
+- `organizationId`
+- `name`
+- `allowUserStatusUpdate` boolean
+- `swimlaneCount`
+
+### `POST /api/v1/organizations/{organizationId}/boards`
+Purpose: Create a board with at least two swimlanes.
+
+Request body:
+- `name` required string
+- `allowUserStatusUpdate` required boolean
+- `swimlanes` required array of
+	- `statusId` GUID string
+	- `order` integer
+
+Success response `201`:
+- `boardId`
+- `name`
+- `swimlanes`
+
+### `GET /api/v1/boards/{boardId}`
+Purpose: Return board detail including swimlanes.
+
+### `PUT /api/v1/boards/{boardId}`
+Purpose: Update board name or selected statuses.
+
+Request body:
+- `name` required string
+- `allowUserStatusUpdate` required boolean
+- `swimlanes` required array of `statusId` and `order`
+
+### `POST /api/v1/boards/{boardId}/swimlanes/reorder`
+Purpose: Persist swimlane reorder immediately after drag-and-drop.
+
+Request body:
+- `swimlanes` required array of
+	- `statusId`
+	- `order`
+
+Success response:
+- `204 No Content`
+
+## Idea Contracts
+
+### `GET /api/v1/boards/{boardId}/ideas`
+Purpose: List ideas on a board with pagination.
+
+Query parameters:
+- `page`
+- `pageSize`
+- `search` optional
+- `statusId` optional
+- `tag` optional
+- `priority` optional `Low`, `Medium`, `High`, or `Critical`
+- `dueBefore` optional date string (`YYYY-MM-DD`)
+- `sortBy` optional `createdAt`, `updatedAt`, `upvoteCount`, `priority`, or `dueDate`
+- `sortDirection` optional `asc` or `desc`
+
+Success response `200` paged item shape:
+- `ideaId`
+- `boardId`
+- `title`
+- `priority` string
+- `ideaTypeId` GUID string
+- `ideaTypeName` string
+- `businessImpactId` GUID string
+- `businessImpactName` string
+- `businessImpactColor` string
+- `dueDate` date string (`YYYY-MM-DD`) or `null`
+- `assignees` array with at most five items, ordered by `firstName`, then `lastName`; each item contains `userId`, `firstName`, `lastName`, `displayName`, and `isActive`; clients derive persona initials from the name fields
+- `tagNames` string array, ordered alphabetically
+- `statusId`
+- `statusName`
+- `upvoteCount`
+- `hasUpvoted` boolean for the current caller
+- `commentCount` integer
+- `authorUserId`
+- `createdAtUtc`
+
+### `POST /api/v1/boards/{boardId}/ideas`
+Purpose: Create a new idea on a board.
+
+Request body:
+- `title` required string, max 150 characters
+- `description` required string, max 4000 characters
+- `priority` required string: `Low`, `Medium`, `High`, or `Critical`
+- `ideaTypeId` required GUID string referencing an active Idea Type in the board's organization
+- `businessImpactId` required GUID string referencing an active Business Impact in the board's organization
+- `dueDate` optional date string (`YYYY-MM-DD`)
+- `assigneeUserIds` optional array of zero to five distinct GUID strings; every user must be active and belong to the board's organization
+- `statusId` optional GUID string, defaults to the left-most swimlane when omitted
+- `tagNames` optional string array
+- `mentionEmails` optional string array
+
+Success response `201`:
+- `ideaId`
+- `boardId`
+- `statusId`
+- `title`
+- `priority`
+- `ideaTypeId`
+- `businessImpactId`
+- `dueDate`
+
+### `GET /api/v1/ideas/{ideaId}`
+Purpose: Return full idea detail.
+
+Success response `200`:
+- `ideaId`
+- `boardId`
+- `title`
+- `description`
+- `priority`
+- `ideaTypeId`
+- `ideaTypeName`
+- `businessImpactId`
+- `businessImpactName`
+- `businessImpactColor`
+- `dueDate`
+- `assignees` array using the board-list assignee item shape
+- `statusId`
+- `statusName`
+- `tagNames`
+- `mentions`
+- `comments`
+- `upvoteCount`
+- `hasUpvoted` boolean for the current caller
+- `commentCount` integer
+
+### `PUT /api/v1/ideas/{ideaId}`
+Purpose: Update idea content.
+
+Request body:
+- `title` required string, max 150 characters
+- `description` required string, max 4000 characters
+- `priority` required string: `Low`, `Medium`, `High`, or `Critical`
+- `ideaTypeId` required GUID string referencing an active Idea Type in the idea's organization
+- `businessImpactId` required GUID string referencing an active Business Impact in the idea's organization
+- `dueDate` optional date string (`YYYY-MM-DD`)
+- `assigneeUserIds` optional array of zero to five distinct GUID strings; every newly selected user must be active and belong to the idea's organization
+- `tagNames` optional array of no more than 10 distinct normalized tag names
+- `mentionEmails` optional string array
+
+UI behavior contract:
+- board cards remain compact and show `title`, `priority`, Business Impact chip, the first three alphabetical `tagNames` plus tag overflow count, the first three ordered `assignees` plus assignee overflow count, viewer-local age derived from `createdAtUtc`, current-user upvote state/count, and comment count.
+- selecting the card title opens a detail overlay for full idea editing in context.
+- full idea editing in the overlay supports all editable idea fields and collaboration fields.
+- selecting the card comment action opens the detail overlay and focuses the comment composer.
+- description updates are accepted only from the idea author, an in-scope Org Admin, or Site Admin; unauthorized description changes return `403 Forbidden`.
+- assignee updates replace the complete collection atomically and are accepted only from the idea author, an in-scope Org Admin, or Site Admin; unauthorized assignment changes return `403 Forbidden`.
+- duplicate assignee IDs, more than five assignee IDs, inactive newly selected users, cross-organization users, or more than 10 distinct tags return `400 Bad Request`.
+
+### `POST /api/v1/ideas/{ideaId}/status`
+Purpose: Move an idea to another board status.
+
+Request body:
+- `statusId` required GUID string
+
+Success response:
+- `204 No Content`
+
+### `DELETE /api/v1/ideas/{ideaId}`
+Purpose: Soft-delete an idea while preserving its row and audit history.
+
+Authorization:
+- Site Admin within the target resource context
+- Org Admin within their own organization
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is not an authorized in-scope admin
+- `404` idea does not exist, is already deleted, or is outside caller scope
+
+Query behavior:
+- normal board, list, and detail endpoints exclude soft-deleted ideas
+- no restore endpoint is exposed in this release
+
+## Idea Field Option Contracts
+
+Idea Type and Business Impact are dedicated organization-scoped option collections. Active labels are trimmed, case-insensitively unique within their field and organization, and returned in ascending `sortOrder`. The first active option is the default. Every organization must retain at least one active option in each collection.
+
+### `GET /api/v1/organizations/{organizationId}/idea-types`
+Purpose: List active Idea Type options. Authorized admins may pass `includeDeleted=true` to include archived options.
+
+Success response `200` item shape:
+- `ideaTypeId` GUID string
+- `organizationId` GUID string
+- `name` string, max 100 characters
+- `sortOrder` integer
+- `isDeleted` boolean
+
+### `POST /api/v1/organizations/{organizationId}/idea-types`
+Purpose: Create an Idea Type option. Site Admin and in-scope Org Admin only.
+
+Request body:
+- `name` required string, max 100 characters
+- `sortOrder` required integer, zero or greater
+
+Success response: `201` Idea Type item
+
+### `PUT /api/v1/idea-types/{ideaTypeId}`
+Purpose: Rename or reorder an Idea Type option. Site Admin and in-scope Org Admin only.
+
+Request body:
+- `name` required string, max 100 characters
+- `sortOrder` required integer, zero or greater
+
+### `DELETE /api/v1/idea-types/{ideaTypeId}`
+Purpose: Soft-delete an Idea Type option. Reject deletion with `400` when it is the last active Idea Type in the organization.
+
+### `PUT /api/v1/organizations/{organizationId}/idea-types/reorder`
+Purpose: Atomically set the complete active Idea Type order. The first identifier becomes the default for future ideas.
+
+Request body:
+- `orderedIdeaTypeIds` required non-empty array of all active Idea Type GUIDs in the organization
+
+### `GET /api/v1/organizations/{organizationId}/business-impacts`
+Purpose: List active Business Impact options. Authorized admins may pass `includeDeleted=true` to include archived options.
+
+Success response `200` item shape:
+- `businessImpactId` GUID string
+- `organizationId` GUID string
+- `name` string, max 100 characters
+- `color` required string, CSS hex color in `#RRGGBB` format
+- `sortOrder` integer
+- `isDeleted` boolean
+
+### `POST /api/v1/organizations/{organizationId}/business-impacts`
+Purpose: Create a Business Impact option. Site Admin and in-scope Org Admin only.
+
+Request body:
+- `name` required string, max 100 characters
+- `color` required string in `#RRGGBB` format
+- `sortOrder` required integer, zero or greater
+
+Success response: `201` Business Impact item
+
+### `PUT /api/v1/business-impacts/{businessImpactId}`
+Purpose: Rename, recolor, or reorder a Business Impact option. Site Admin and in-scope Org Admin only.
+
+Request body:
+- `name` required string, max 100 characters
+- `color` required string in `#RRGGBB` format
+- `sortOrder` required integer, zero or greater
+
+### `DELETE /api/v1/business-impacts/{businessImpactId}`
+Purpose: Soft-delete a Business Impact option. Reject deletion with `400` when it is the last active Business Impact in the organization.
+
+### `PUT /api/v1/organizations/{organizationId}/business-impacts/reorder`
+Purpose: Atomically set the complete active Business Impact order. The first identifier becomes the default for future ideas.
+
+Request body:
+- `orderedBusinessImpactIds` required non-empty array of all active Business Impact GUIDs in the organization
+
+Option deletion behavior:
+- soft deletion preserves existing idea references and their prior labels
+- archived options cannot be assigned on create or update
+- existing ideas return archived option labels with an archived indicator
+
+## Tag Contracts
+
+### `GET /api/v1/organizations/{organizationId}/tags`
+Purpose: Return tag autocomplete suggestions within an organization.
+
+Query parameters:
+- `search` required string, minimum 2 characters
+- `limit` optional integer, defaults to `10`, maximum `50`
+
+Success response `200`:
+- string array of matching tag names
+
+Rules:
+- matching is case-insensitive by normalized tag prefix
+- suggestions are organization-scoped
+
+## Comment Contracts
+
+### `GET /api/v1/ideas/{ideaId}/comments`
+Purpose: List comments for an idea with pagination and chronological ordering.
+
+Query parameters:
+- `page`
+- `pageSize`
+- `sortBy` fixed to chronological order
+- `sortDirection` optional `asc` or `desc`
+
+Success response `200` paged item shape:
+- `commentId`
+- `ideaId`
+- `authorUserId`
+- `body`
+- `createdAtUtc`
+- `updatedAtUtc`
+
+### `POST /api/v1/ideas/{ideaId}/comments`
+Purpose: Add a comment to an idea.
+
+Request body:
+- `body` required string, max 2000 characters, plain text with line breaks
+
+UX rules:
+- clients should show a live character counter and inline overflow validation
+
+Success response `201`:
+- `commentId`
+- `ideaId`
+
+### `PUT /api/v1/comments/{commentId}`
+Purpose: Edit a comment authored by the caller.
+
+Request body:
+- `body` required string, max 2000 characters, plain text with line breaks
+
+UX rules:
+- clients should show a live character counter and inline overflow validation
+
+### `DELETE /api/v1/comments/{commentId}`
+Purpose: Delete a comment authored by the caller or by an authorized admin.
+
+Success response:
+- `204 No Content`
+
+## Upvote Contracts
+
+### `POST /api/v1/ideas/{ideaId}/upvote/toggle`
+Purpose: Toggle the caller's upvote on an idea.
+
+Success response `200`:
+- `ideaId`
+- `hasUpvoted` boolean
+- `upvoteCount` integer
+
+## Notification Event Contract
+
+### Internal notification event types
+- `IdeaMentioned`
+- `CommentMentioned`
+- `IdeaCommented`
+- `IdeaStatusChanged`
+
+### Internal notification event payload
+- `eventId` GUID string
+- `eventType` string
+- `organizationId` GUID string
+- `boardId` GUID string
+- `ideaId` GUID string
+- `actorUserId` GUID string
+- `recipientUserId` GUID string
+- `occurredAtUtc` UTC timestamp
+- `ideaLink` string using `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}`
+- `message` human-readable event summary string
+- `metadata` object for event-specific context
+
+MVP event query scope:
+- audit and notification events must be persisted for internal processing and verification
+- read or query endpoints for those events are not required in MVP
+- verification should be provided through tests and internal diagnostics outside the public API surface
+
+## Notes
+- API routes, request/response schemas, and validation rules should be defined here.
+- Contract tests should stay aligned with this file.

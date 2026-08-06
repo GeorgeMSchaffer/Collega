@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">SargentNexus auth lockout and temporary reset mockup</title>
+  <desc id="desc">A Fluent-inspired auth screen showing lockout feedback and admin-issued temporary password flow with one-time reveal guidance.</desc>
+  <rect width="1600" height="1000" fill="#f3f2f1"/>
+  <rect x="0" y="0" width="1600" height="80" fill="#ffffff"/>
+  <text x="36" y="50" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700" fill="#0f172a">SargentNexus</text>
+  <text x="36" y="72" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#475569">Authentication - Command Center direction</text>
+
+  <rect x="96" y="128" width="700" height="790" rx="20" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="136" y="184" font-family="Segoe UI, Arial, sans-serif" font-size="32" font-weight="700" fill="#0f172a">Sign in</text>
+  <text x="136" y="214" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#475569">Email is globally unique. Enter credentials to continue.</text>
+
+  <text x="136" y="278" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#334155">Email</text>
+  <rect x="136" y="292" width="620" height="50" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="154" y="324" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#111827">alex.parker@northwind.com</text>
+
+  <text x="136" y="382" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#334155">Password</text>
+  <rect x="136" y="396" width="620" height="50" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="154" y="428" font-family="Segoe UI, Arial, sans-serif" font-size="18" letter-spacing="2" fill="#111827">.............</text>
+
+  <rect x="136" y="474" width="620" height="112" rx="12" fill="#fee2e2" stroke="#fca5a5"/>
+  <text x="158" y="508" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#991b1b">Account temporarily locked</text>
+  <text x="158" y="536" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#7f1d1d">Five failed attempts were detected within 15 minutes.</text>
+  <text x="158" y="560" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#7f1d1d">Try again in 15 minutes or ask an administrator for a temporary password.</text>
+
+  <rect x="136" y="614" width="190" height="46" rx="8" fill="#0f6cbd"/>
+  <text x="231" y="643" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">Retry sign in</text>
+  <rect x="342" y="614" width="240" height="46" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="462" y="643" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#0f172a">Request admin reset</text>
+
+  <rect x="840" y="128" width="664" height="790" rx="20" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="880" y="184" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#0f172a">Admin-issued temporary password</text>
+  <text x="880" y="214" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#475569">Org Admin or Site Admin can issue a temporary password in P1.</text>
+
+  <rect x="880" y="252" width="584" height="76" rx="12" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="900" y="282" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#1d4ed8">Security guardrails</text>
+  <text x="900" y="306" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e3a8a">Temporary passwords are one-time display, expire in 24 hours, and force password change.</text>
+
+  <text x="880" y="368" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#334155">Target user</text>
+  <rect x="880" y="382" width="584" height="46" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="898" y="412" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#111827">chris.singh@northwind.com</text>
+
+  <text x="880" y="468" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#334155">Generated temporary password</text>
+  <rect x="880" y="482" width="420" height="46" rx="8" fill="#111827"/>
+  <text x="900" y="512" font-family="Consolas, Courier New, monospace" font-size="16" fill="#f8fafc">G8#zL4!Qn2$pM7</text>
+  <rect x="1314" y="482" width="150" height="46" rx="8" fill="#0f6cbd"/>
+  <text x="1389" y="512" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#ffffff">Copy once</text>
+
+  <rect x="880" y="552" width="584" height="92" rx="12" fill="#fff7ed" stroke="#fdba74"/>
+  <text x="900" y="584" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#9a3412">One-time view warning</text>
+  <text x="900" y="608" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#9a3412">After this dialog is closed, the temporary password cannot be displayed again.</text>
+  <text x="900" y="630" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#9a3412">Share securely with the user before leaving this screen.</text>
+
+  <rect x="1158" y="852" width="146" height="44" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="1231" y="880" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#0f172a">Cancel</text>
+  <rect x="1318" y="852" width="146" height="44" rx="8" fill="#0f6cbd"/>
+  <text x="1391" y="880" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">Issue reset</text>
+</svg>

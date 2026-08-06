@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sprint UI Comps</title>
+  <style>
+    :root {
+      --bg: #f4f1e8;
+      --ink: #1a1f1d;
+      --card: #ffffff;
+      --line: #d8d2c6;
+      --accent: #0f766e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 10% 0%, #fff7da, var(--bg) 45%);
+      color: var(--ink);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .wrap {
+      width: min(900px, 100%);
+      background: color-mix(in srgb, var(--card) 92%, #fff);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 24px 60px rgba(26, 31, 29, 0.12);
+    }
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 4vw, 2.6rem); }
+    p { margin: 0 0 18px; color: #404843; }
+    ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+    a {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      transition: transform 160ms ease, border-color 160ms ease;
+    }
+    a:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+    .tag {
+      font-size: 0.78rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #e6f4f1;
+      color: #0b5d56;
+      border: 1px solid #b5e0da;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Sprint Planning UI Comps</h1>
+    <p>Three alternative visual directions based on SK-JIRA-SPRINT-001.</p>
+    <ul>
+      <li><a href="comp-01-command-center.html"><span>Comp 01: Command Center</span><span class="tag">Operational</span></a></li>
+      <li><a href="comp-02-planning-canvas.html"><span>Comp 02: Planning Canvas</span><span class="tag">Editorial</span></a></li>
+      <li><a href="comp-03-timeline-radar.html"><span>Comp 03: Timeline Radar</span><span class="tag">Analytical</span></a></li>
+    </ul>
+  </main>
+</body>
+</html>

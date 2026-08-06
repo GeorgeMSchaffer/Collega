@@ -1,0 +1,75 @@
+@page "/version-one"
+
+<PageTitle>Version One</PageTitle>
+
+<div style="display: grid; gap: 16px;">
+    <FluentCard Style="padding: 20px; background: linear-gradient(135deg, #f2fbf8, #ffffff);">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div>
+                <h2 style="margin: 0 0 6px;">Operational Command Center</h2>
+                <p style="margin: 0; color: #50657a;">Metric-first view for sprint health, blocker response, and delivery confidence.</p>
+            </div>
+            <FluentBadge>Sprint 32</FluentBadge>
+        </div>
+    </FluentCard>
+
+    <div style="display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <FluentCard Style="padding: 16px;">
+            <div style="font-size: 0.86rem; color: #50657a;">Reliability</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #137333;">88%</div>
+            <div style="color: #50657a;">Target ≥ 85%</div>
+        </FluentCard>
+        <FluentCard Style="padding: 16px;">
+            <div style="font-size: 0.86rem; color: #50657a;">Carryover</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #8a5a00;">12%</div>
+            <div style="color: #50657a;">Target ≤ 15%</div>
+        </FluentCard>
+        <FluentCard Style="padding: 16px;">
+            <div style="font-size: 0.86rem; color: #50657a;">Blocked median</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #137333;">6h</div>
+            <div style="color: #50657a;">Target ≤ 1 business day</div>
+        </FluentCard>
+        <FluentCard Style="padding: 16px;">
+            <div style="font-size: 0.86rem; color: #50657a;">Estimate coverage</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #137333;">100%</div>
+            <div style="color: #50657a;">Stories and bugs at lock</div>
+        </FluentCard>
+    </div>
+
+    <div style="display: grid; gap: 16px; grid-template-columns: 1.2fr 0.8fr;">
+        <FluentCard Style="padding: 16px;">
+            <h3 style="margin-top: 0;">Committed backlog</h3>
+            <FluentDataGrid Items="@items" TGridItem="BacklogItem" GenerateHeader="GenerateHeaderOption.Sticky" Style="height: 280px;">
+                <PropertyColumn Property="@(i => i.Title)" Title="Issue" />
+                <PropertyColumn Property="@(i => i.Type)" Title="Type" />
+                <PropertyColumn Property="@(i => i.Status)" Title="Status" />
+                <PropertyColumn Property="@(i => i.Points)" Title="Points" />
+                <PropertyColumn Property="@(i => i.Owner)" Title="Owner" />
+            </FluentDataGrid>
+        </FluentCard>
+        <FluentCard Style="padding: 16px;">
+            <h3 style="margin-top: 0;">Blockers and next actions</h3>
+            <div style="display: grid; gap: 8px;">
+                <FluentCard Style="padding: 10px; border-left: 3px solid #d13438;">
+                    <strong>SP-229</strong><br />Sandbox certificate pending
+                    <div style="color: #50657a; font-size: 0.9rem; margin-top: 4px;">Owner: Scrum Master • ETA: today 16:00</div>
+                </FluentCard>
+                <FluentCard Style="padding: 10px; border-left: 3px solid #ff8c00;">
+                    <strong>SP-235</strong><br />Client signoff delayed
+                    <div style="color: #50657a; font-size: 0.9rem; margin-top: 4px;">Owner: Product Owner • ETA: tomorrow</div>
+                </FluentCard>
+            </div>
+        </FluentCard>
+    </div>
+</div>
+
+@code {
+    private record BacklogItem(string Title, string Type, string Status, int Points, string Owner);
+    private IQueryable<BacklogItem> items = new[]
+    {
+        new BacklogItem("SP-218 API approval route", "Story", "In Progress", 8, "A. King"),
+        new BacklogItem("SP-221 Duplicate signer bug", "Bug", "In Review", 3, "T. Ho"),
+        new BacklogItem("SP-233 Audit logging patch", "Task", "To Do", 2, "E. Diaz"),
+        new BacklogItem("SP-240 PDF rejection rule", "Story", "Done", 5, "P. Long")
+    }.AsQueryable();
+}

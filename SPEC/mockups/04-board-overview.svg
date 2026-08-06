@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1024" viewBox="0 0 1680 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SargentNexus board overview compact cards</title>
+  <desc id="desc">Board overview with compact lane cards showing title, priority, assigned to, and upvote; title click opens detail overlay.</desc>
+
+  <rect width="1680" height="1024" fill="#e9edf4"/>
+  <rect x="24" y="24" width="1632" height="976" rx="18" fill="#f8fafc" stroke="#cbd5e1"/>
+
+  <rect x="48" y="54" width="1584" height="60" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="72" y="90" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#0f172a">Default Board</text>
+  <rect x="246" y="68" width="220" height="34" rx="8" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="264" y="90" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#64748b">Search title, tag, assignee</text>
+  <rect x="1490" y="68" width="118" height="34" rx="8" fill="#0f6cbd"/>
+  <text x="1549" y="90" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#ffffff">New Idea</text>
+
+  <rect x="72" y="138" width="280" height="834" rx="14" fill="#eef2ff" stroke="#c7d2fe"/>
+  <rect x="368" y="138" width="280" height="834" rx="14" fill="#f8fafc" stroke="#d0d7de"/>
+  <rect x="664" y="138" width="280" height="834" rx="14" fill="#eef2ff" stroke="#c7d2fe"/>
+  <rect x="960" y="138" width="280" height="834" rx="14" fill="#f8fafc" stroke="#d0d7de"/>
+  <rect x="1256" y="138" width="280" height="834" rx="14" fill="#eef2ff" stroke="#c7d2fe"/>
+
+  <text x="212" y="170" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1e3a8a">New / Pending</text>
+  <text x="508" y="170" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155">In Review</text>
+  <text x="804" y="170" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1e3a8a">In Progress</text>
+  <text x="1100" y="170" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#334155">Client Review</text>
+  <text x="1396" y="170" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1e3a8a">Complete</text>
+
+  <rect x="92" y="190" width="240" height="116" rx="10" fill="#ffffff" stroke="#93c5fd"/>
+  <text x="108" y="214" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1d4ed8">Title: Reduce approval lag</text>
+  <text x="108" y="236" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Priority: High</text>
+  <text x="108" y="254" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Assigned To: Chris Singh</text>
+  <text x="108" y="272" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Upvote: ^ 18</text>
+
+  <rect x="388" y="190" width="240" height="116" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="404" y="214" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1d4ed8">Title: Vendor intake form</text>
+  <text x="404" y="236" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Priority: Medium</text>
+  <text x="404" y="254" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Assigned To: Jamie Flores</text>
+  <text x="404" y="272" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Upvote: ^ 11</text>
+
+  <rect x="684" y="190" width="240" height="116" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="700" y="214" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1d4ed8">Title: Downtime alerting</text>
+  <text x="700" y="236" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Priority: Critical</text>
+  <text x="700" y="254" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Assigned To: Alex Parker</text>
+  <text x="700" y="272" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Upvote: ^ 22</text>
+
+  <rect x="980" y="190" width="240" height="116" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="996" y="214" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1d4ed8">Title: Change order flow</text>
+  <text x="996" y="236" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Priority: Low</text>
+  <text x="996" y="254" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Assigned To: Unassigned</text>
+  <text x="996" y="272" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Upvote: ^ 5</text>
+
+  <rect x="1276" y="190" width="240" height="116" rx="10" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="1292" y="214" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#1d4ed8">Title: Barcode rollout</text>
+  <text x="1292" y="236" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Priority: Medium</text>
+  <text x="1292" y="254" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Assigned To: Priya Shah</text>
+  <text x="1292" y="272" font-family="Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">Upvote: ^ 8</text>
+
+  <rect x="72" y="912" width="1464" height="46" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="94" y="940" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e3a8a">Interaction rule: clicking the card title opens an in-context detail overlay for full edits (description, tags, mentions, due date, assignment, comments).</text>
+</svg>

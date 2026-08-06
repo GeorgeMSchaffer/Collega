@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="980" viewBox="0 0 1560 980" role="img" aria-labelledby="title desc">
+  <title id="title">SargentNexus status management mockup</title>
+  <desc id="desc">A status management screen showing active statuses, soft-deleted history labeling, and board swimlane assignment.</desc>
+  <rect width="1560" height="980" fill="#f3f2f1"/>
+  <rect width="1560" height="72" fill="#ffffff"/>
+  <text x="28" y="46" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#0f172a">SargentNexus</text>
+  <text x="72" y="132" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="700" fill="#0f172a">Statuses</text>
+  <text x="72" y="160" font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#475569">Organization-scoped status management with soft-delete safety and historical labeling.</text>
+  <rect x="72" y="190" width="1416" height="64" rx="16" fill="#ffffff" stroke="#d0d7de"/>
+  <rect x="1308" y="202" width="156" height="40" rx="8" fill="#0f6cbd"/>
+  <text x="1386" y="228" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffffff">Add status</text>
+  <rect x="72" y="278" width="860" height="620" rx="18" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="104" y="326" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#64748b">STATUS NAME</text>
+  <text x="534" y="326" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#64748b">USED BY</text>
+  <text x="720" y="326" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#64748b">STATE</text>
+  <line x1="96" y1="342" x2="908" y2="342" stroke="#e2e8f0"/>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="104" y="392" font-size="16" font-weight="700" fill="#0f172a">New / Pending</text>
+    <text x="534" y="392" font-size="14" fill="#0f172a">Default Board, Kaizen Board</text>
+    <rect x="704" y="368" width="86" height="28" rx="14" fill="#dcfce7"/>
+    <text x="747" y="387" text-anchor="middle" font-size="13" font-weight="700" fill="#166534">Active</text>
+  </g>
+  <line x1="96" y1="428" x2="908" y2="428" stroke="#e2e8f0"/>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="104" y="478" font-size="16" font-weight="700" fill="#0f172a">Blocked</text>
+    <text x="534" y="478" font-size="14" fill="#0f172a">Quality Board</text>
+    <rect x="684" y="454" width="106" height="28" rx="14" fill="#fef3c7"/>
+    <text x="737" y="473" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">Soft Deleted</text>
+  </g>
+  <text x="104" y="505" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#64748b">Still shown in historical idea detail as “Blocked (Archived)”</text>
+  <rect x="970" y="278" width="518" height="620" rx="18" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="1002" y="326" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#0f172a">Board mapping preview</text>
+  <text x="1002" y="356" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#475569">Admins can see how statuses map into swimlanes before making changes.</text>
+  <rect x="1002" y="388" width="450" height="94" rx="14" fill="#f8fafc" stroke="#d0d7de"/>
+  <text x="1024" y="420" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="700" fill="#0f172a">Default Board</text>
+  <text x="1024" y="446" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#475569">New / Pending  •  In Review  •  In Progress  •  Client Review  •  Complete</text>
+  <rect x="1002" y="506" width="450" height="110" rx="14" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="1024" y="540" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#1d4ed8">Usability rationale</text>
+  <text x="1024" y="566" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e3a8a">• Destructive actions keep context visible.</text>
+  <text x="1024" y="589" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e3a8a">• Historical labeling avoids ambiguous old records.</text>
+  <text x="1024" y="612" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#1e3a8a">• Board preview reduces accidental workflow breakage.</text>
+</svg>
