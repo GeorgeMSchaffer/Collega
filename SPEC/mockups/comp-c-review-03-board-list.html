@@ -77,11 +77,18 @@
   .kcard:hover{background:var(--accent-soft);outline:1px solid var(--accent)}
   .kcard:active{cursor:grabbing;box-shadow:0 4px 10px rgba(0,0,0,.18)}
   .klane.dragover{outline:2px dashed var(--accent);outline-offset:-4px;background:var(--accent-soft)}
-  .kcard .t{font-weight:600;font-size:13.5px;margin-bottom:10px;color:var(--ink)}
+  .kcard .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .kcard .t{font-weight:600;font-size:13.5px;color:var(--ink);flex:1;min-width:0}
   .kcard:hover .t{color:var(--accent-deep)}
+  .kcard .desc{font-size:11.5px;color:var(--ink-3);line-height:1.45;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .kcard .due{font-size:11px;color:var(--ink-3);margin-bottom:8px;display:flex;align-items:center;gap:4px}
   .kcard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
   .kcard .meta .spacer{flex:1}
   .kcard .tag{background:#f3f2f1;border-radius:3px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap}
+  .prio-chip.high{background:#fbe5e7;color:var(--err)}
+  .prio-chip.med{background:#f7ecdc;color:var(--warn)}
+  .prio-chip.low{background:#e7f2e7;color:var(--ok)}
   .swrow{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 16px;margin-bottom:8px}
   .swrow .grip{cursor:grab;color:var(--ink-3)}
   .swrow .spacer{flex:1}
@@ -113,14 +120,14 @@
         <div class="crumbs"><a href="#">Boards</a> / Product Ideas</div>
         <div class="row"><div class="grow"><h1>Product Ideas</h1><p class="sub">48 ideas · sorted by upvotes within each status. Role: <strong>User</strong> — can create ideas and move any idea here.</p></div><button class="btn" style="margin-bottom:14px">⚙ Configure</button><button class="btn primary" style="margin-bottom:14px">+ New idea</button></div>
         <div class="viewswitch" id="switch-user">
-          <a class="on" data-view="list-user">List</a>
-          <a data-view="swim-user">Swim Lanes</a>
+          <a data-view="list-user">List</a>
+          <a class="on" data-view="swim-user">Swim Lanes</a>
         </div>
       </div>
       <div class="body">
         <div class="cmdbar"><input type="text" placeholder="Filter ideas…" style="width:240px"><select><option>Priority: All</option></select><select><option>Tag: All</option></select></div>
 
-        <div class="kview on" id="view-list-user">
+        <div class="kview" id="view-list-user">
           <div class="lanesec">
             <h2>New <span class="cnt">4 ideas</span></h2>
             <div class="card">
@@ -152,32 +159,74 @@
           <div class="note">Rows are draggable between status sections for this role. Reordering within a section is not persisted — only the status (section) change is.</div>
         </div>
 
-        <div class="kview" id="view-swim-user">
+        <div class="kview on" id="view-swim-user">
           <div class="klanes">
             <div class="klane" data-lane="New">
               <h3>New <span class="cnt">4</span></h3>
-              <div class="kcard" draggable="true" style="border-left-color:var(--err)"><div class="t">Dark mode support</div><div class="meta"><span class="tag">ui</span><span class="tag">theme</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div></div>
-              <div class="kcard" draggable="true" style="border-left-color:var(--warn)"><div class="t">Bulk import from CSV</div><div class="meta"><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 17</button></div></div>
-              <div class="kcard" draggable="true" style="border-left-color:var(--ok)"><div class="t">Keyboard shortcuts cheat sheet</div><div class="meta"><span class="tag">docs</span><span class="spacer"></span><span class="avatar s" style="background:#c8c6c4">—</span><button class="up">▲ 6</button></div></div>
-              <div class="kcard" draggable="true" style="border-left-color:var(--warn)"><div class="t">Export board to PDF</div><div class="meta"><span class="tag">reporting</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up">▲ 5</button></div></div>
+              <div class="kcard" draggable="true">
+                <div class="top"><span class="t">Dark mode support</span><span class="prio-chip high">High</span></div>
+                <p class="desc">Users working late hours want a dark theme that respects OS preference by default.</p>
+                <div class="due">📅 Due Aug 15</div>
+                <div class="meta"><span class="tag">ui</span><span class="tag">theme</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div>
+              </div>
+              <div class="kcard" draggable="true">
+                <div class="top"><span class="t">Bulk import from CSV</span><span class="prio-chip med">Medium</span></div>
+                <p class="desc">Let admins bulk-create records by uploading a CSV file instead of one at a time.</p>
+                <div class="meta"><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 17</button></div>
+              </div>
+              <div class="kcard" draggable="true">
+                <div class="top"><span class="t">Keyboard shortcuts cheat sheet</span><span class="prio-chip low">Low</span></div>
+                <p class="desc">A printable reference card listing every keyboard shortcut in the app.</p>
+                <div class="meta"><span class="tag">docs</span><span class="spacer"></span><span class="avatar s" style="background:#c8c6c4">—</span><button class="up">▲ 6</button></div>
+              </div>
+              <div class="kcard" draggable="true">
+                <div class="top"><span class="t">Export board to PDF</span><span class="prio-chip med">Medium</span></div>
+                <p class="desc">One-click export of the current board view to a shareable PDF file.</p>
+                <div class="meta"><span class="tag">reporting</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up">▲ 5</button></div>
+              </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
             <div class="klane" data-lane="In Progress">
               <h3>In Progress <span class="cnt">3</span></h3>
-              <div class="kcard" draggable="true" style="border-left-color:var(--err)"><div class="t">SSO via SAML</div><div class="meta"><span class="tag">auth</span><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 31</button></div></div>
-              <div class="kcard" draggable="true" style="border-left-color:var(--warn)"><div class="t">Notification digest email</div><div class="meta"><span class="tag">notify</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up mine">▲ 12</button></div></div>
-              <div class="kcard" draggable="true" style="border-left-color:var(--warn)"><div class="t">Mention autocomplete</div><div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up">▲ 9</button></div></div>
+              <div class="kcard" draggable="true">
+                <div class="top"><span class="t">SSO via SAML</span><span class="prio-chip high">High</span></div>
+                <p class="desc">Let enterprise customers sign in through their own identity provider.</p>
+                <div class="due">📅 Due Aug 15</div>
+                <div class="meta"><span class="tag">auth</span><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 31</button></div>
+              </div>
+              <div class="kcard" draggable="true">
+                <div class="top"><span class="t">Notification digest email</span><span class="prio-chip med">Medium</span></div>
+                <p class="desc">A daily summary email instead of one email per notification event.</p>
+                <div class="meta"><span class="tag">notify</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up mine">▲ 12</button></div>
+              </div>
+              <div class="kcard" draggable="true">
+                <div class="top"><span class="t">Mention autocomplete</span><span class="prio-chip med">Medium</span></div>
+                <p class="desc">Suggest matching organization members as soon as two characters follow @.</p>
+                <div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up">▲ 9</button></div>
+              </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
             <div class="klane" data-lane="Blocked">
               <h3>Blocked <span class="cnt">1</span></h3>
-              <div class="kcard" draggable="true" style="border-left-color:var(--err)"><div class="t">Mobile responsive board</div><div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 20</button></div></div>
+              <div class="kcard" draggable="true">
+                <div class="top"><span class="t">Mobile responsive board</span><span class="prio-chip high">High</span></div>
+                <p class="desc">Board columns overflow badly below 768px — needs a responsive layout pass.</p>
+                <div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 20</button></div>
+              </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
             <div class="klane" data-lane="Done">
               <h3>Done <span class="cnt">2</span></h3>
-              <div class="kcard" draggable="true" style="opacity:.75"><div class="t">Org-scoped user search</div><div class="meta"><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 14</button></div></div>
-              <div class="kcard" draggable="true" style="opacity:.75"><div class="t">Audit log for admin actions</div><div class="meta"><span class="spacer"></span><span class="avatar s">JR</span><button class="up">▲ 8</button></div></div>
+              <div class="kcard" draggable="true" style="opacity:.75">
+                <div class="top"><span class="t">Org-scoped user search</span><span class="prio-chip med">Medium</span></div>
+                <p class="desc">Admins can search users within their own organization by name or email.</p>
+                <div class="meta"><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 14</button></div>
+              </div>
+              <div class="kcard" draggable="true" style="opacity:.75">
+                <div class="top"><span class="t">Audit log for admin actions</span><span class="prio-chip low">Low</span></div>
+                <p class="desc">A chronological log of every admin action, filterable by actor and date.</p>
+                <div class="meta"><span class="spacer"></span><span class="avatar s">JR</span><button class="up">▲ 8</button></div>
+              </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
           </div>
@@ -197,14 +246,14 @@
         <div class="crumbs"><a href="#">Boards</a> / Product Ideas</div>
         <h1>Product Ideas</h1><p class="sub" style="margin-bottom:14px">Role: <strong>Read Only</strong> — viewing only. No "New idea" action, and cards/rows are not draggable.</p>
         <div class="viewswitch" id="switch-ro">
-          <a class="on" data-view="list-ro">List</a>
-          <a data-view="swim-ro">Swim Lanes</a>
+          <a data-view="list-ro">List</a>
+          <a class="on" data-view="swim-ro">Swim Lanes</a>
         </div>
       </div>
       <div class="body">
         <div class="cmdbar"><input type="text" placeholder="Filter ideas…" style="width:240px"></div>
 
-        <div class="kview on" id="view-list-ro">
+        <div class="kview" id="view-list-ro">
           <div class="lanesec">
             <h2>New <span class="cnt">4 ideas</span></h2>
             <div class="card">
@@ -219,16 +268,30 @@
           <div class="note">Read Only can open an idea to read full content, but cannot move ideas, comment, upvote, or create new ones.</div>
         </div>
 
-        <div class="kview" id="view-swim-ro">
+        <div class="kview on" id="view-swim-ro">
           <div class="klanes">
             <div class="klane">
               <h3>New <span class="cnt">4</span></h3>
-              <div class="kcard" style="border-left-color:var(--err);cursor:default"><div class="t">Dark mode support</div><div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">MP</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 24</span></div></div>
-              <div class="kcard" style="border-left-color:var(--warn);cursor:default"><div class="t">Bulk import from CSV</div><div class="meta"><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 17</span></div></div>
+              <div class="kcard" style="cursor:default">
+                <div class="top"><span class="t">Dark mode support</span><span class="prio-chip high">High</span></div>
+                <p class="desc">Users working late hours want a dark theme that respects OS preference by default.</p>
+                <div class="due">📅 Due Aug 15</div>
+                <div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">MP</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 24</span></div>
+              </div>
+              <div class="kcard" style="cursor:default">
+                <div class="top"><span class="t">Bulk import from CSV</span><span class="prio-chip med">Medium</span></div>
+                <p class="desc">Let admins bulk-create records by uploading a CSV file instead of one at a time.</p>
+                <div class="meta"><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 17</span></div>
+              </div>
             </div>
             <div class="klane">
               <h3>In Progress <span class="cnt">3</span></h3>
-              <div class="kcard" style="border-left-color:var(--err);cursor:default"><div class="t">SSO via SAML</div><div class="meta"><span class="tag">auth</span><span class="spacer"></span><span class="avatar s">AL</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 31</span></div></div>
+              <div class="kcard" style="cursor:default">
+                <div class="top"><span class="t">SSO via SAML</span><span class="prio-chip high">High</span></div>
+                <p class="desc">Let enterprise customers sign in through their own identity provider.</p>
+                <div class="due">📅 Due Aug 15</div>
+                <div class="meta"><span class="tag">auth</span><span class="spacer"></span><span class="avatar s">AL</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 31</span></div>
+              </div>
             </div>
           </div>
           <div class="note">Read Only sees the same columns as User but cards are not draggable and upvotes are disabled.</div>
