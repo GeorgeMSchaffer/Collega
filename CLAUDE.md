@@ -59,6 +59,8 @@ Stack: .NET 8, ASP.NET Core API, Blazor (Fluent UI Blazor), EF Core, SQL Server 
 
 Chosen client UI direction is **Comp A "Command Center"** (`SPEC/mockups/comp-a-command-center.html`, spec in `SPEC/20-feature-client-ui.md`): left nav rail with grouped sections, breadcrumbs, dense tables with command bars, and a two-pane idea detail overlay. Comps B ("Board First") and C ("Fluent Editorial") in `SPEC/mockups/` are retained as rejected alternatives, not implementation targets.
 
+Within that direction, page-level designs are being locked in one feature area at a time via throwaway HTML review comps in `SPEC/mockups/comp-a-review-*.html` (see the Multi-Agent Worktree Workflow section below). **Locked so far:** the board/swimlane page — `SPEC/mockups/comp-a-review-03-board-kanban.html` is the reference for the Client Agent's board and swimlane work (T043-T044), covering the board view for User vs. Read Only roles, swimlane configuration with the 2-swimlane minimum guard, and the empty-state guided setup. The other three review comps (`-01-login-and-auth`, `-02-admin-orgs-users`, `-04-idea-detail`) are still open for review and not yet locked.
+
 ## Working Rules
 
 - Treat `SPEC/*.md` as the source of truth. If implementation changes behavior, update the canonical spec first, then align tests and implementation.
