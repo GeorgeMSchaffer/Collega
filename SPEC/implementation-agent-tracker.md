@@ -1,4 +1,4 @@
-# SargentNexus Implementation Agent Tracker
+# Collega Implementation Agent Tracker
 
 ## Purpose
 Track the implementation work that should be executed from the reset baseline, what is currently active, and what is ready next.

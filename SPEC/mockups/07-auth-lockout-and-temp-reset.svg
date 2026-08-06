@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
-  <title id="title">SargentNexus auth lockout and temporary reset mockup</title>
+  <title id="title">Collega auth lockout and temporary reset mockup</title>
   <desc id="desc">A Fluent-inspired auth screen showing lockout feedback and admin-issued temporary password flow with one-time reveal guidance.</desc>
   <rect width="1600" height="1000" fill="#f3f2f1"/>
   <rect x="0" y="0" width="1600" height="80" fill="#ffffff"/>
-  <text x="36" y="50" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700" fill="#0f172a">SargentNexus</text>
+  <text x="36" y="50" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700" fill="#0f172a">Collega</text>
   <text x="36" y="72" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#475569">Authentication - Command Center direction</text>
 
   <rect x="96" y="128" width="700" height="790" rx="20" fill="#ffffff" stroke="#d0d7de"/>

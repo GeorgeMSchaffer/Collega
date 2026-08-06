@@ -1,7 +1,7 @@
 # Feature: User Login
 
 ## Outcome
-Users can securely access SargentNexus using organization-scoped credentials.
+Users can securely access Collega using organization-scoped credentials.
 
 ## Scope
 - In: credential validation, protected session/token issue, first-login password change for seeded Site Admin

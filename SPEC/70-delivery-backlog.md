@@ -253,7 +253,7 @@ Tasks:
 - open and focus comments from the card comment action; implement optimistic upvote state/count with rollback
 - add role-aware description editing and confirmed admin-only soft delete
 - implement column reorder drag for SiteAdmin and OrgAdmin: optimistic reorder, saves immediately on drop, call `PUT /api/v1/boards/{boardId}/statuses/{statusId}` per changed status, revert all on failure with error toast
-- implement components in `src/SargentNexus.Client/Shared/Kanban/`: `IdeaKanbanBoard.razor`, `KanbanColumn.razor`, `IdeaCard.razor`
+- implement components in `src/Collega.Client/Shared/Kanban/`: `IdeaKanbanBoard.razor`, `KanbanColumn.razor`, `IdeaCard.razor`
 - add `IdeaAssignee` persistence and migrate every valid singular assignment before dropping the old `AssigneeUserId` relationship
 - replace singular assignee contracts with bounded collections; validate distinct active same-organization users, enforce author/admin assignment permission, update notifications/audit/CSV, and make Assigned to me use collection membership
 - implement searchable tag selection/creation with organization-scoped normalization and a 10-tag limit

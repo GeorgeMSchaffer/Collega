@@ -1,7 +1,7 @@
-# Requirements: SargentNexus
+# Requirements: Collega
 
 ## Overview
-SargentNexus is a collaboration and project management tool for submitting, tracking, and improving process ideas.
+Collega is a collaboration and project management tool for submitting, tracking, and improving process ideas.
 
 ## Global Rules
 - All data is scoped to an organization.

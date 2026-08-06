@@ -72,7 +72,7 @@ Ideas.razor                    ← page shell
        └─ KanbanColumn.razor   ← column header, drop zone, card list
             └─ IdeaCard.razor  ← card, drag source
 ```
-New components live in `src/SargentNexus.Client/Shared/Kanban/`.
+New components live in `src/Collega.Client/Shared/Kanban/`.
 
 ### DnD Technology
 HTML5 drag-and-drop (desktop only) with a dedicated handle and visible drop targets. Touch/mobile drag is deferred; mobile view is scrollable and status movement remains available through Idea Detail.

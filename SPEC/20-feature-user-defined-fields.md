@@ -294,7 +294,7 @@ Filter semantics per type:
 
 ### New Interface: `IFieldDefinitionService`
 
-Located in `SargentNexus.Application/FieldDefinitions/`
+Located in `Collega.Application/FieldDefinitions/`
 
 ```csharp
 public interface IFieldDefinitionService
@@ -424,7 +424,7 @@ public sealed class IdeaFieldValueModel
 
 ## New API Controller
 
-`SargentNexus.API/Controllers/FieldDefinitionsController.cs`
+`Collega.API/Controllers/FieldDefinitionsController.cs`
 
 Follows the same `ApiControllerBase` pattern. Delegates all logic to `IFieldDefinitionService`. No business logic in the controller.
 
@@ -499,7 +499,7 @@ Applied filters serialize to `fieldFilters[<id>]=<value>` in the query string.
 
 ### New Client API Client
 
-`SargentNexus.Client/FieldDefinitions/FieldDefinitionApiClient.cs`
+`Collega.Client/FieldDefinitions/FieldDefinitionApiClient.cs`
 
 ```csharp
 public interface IFieldDefinitionApiClient

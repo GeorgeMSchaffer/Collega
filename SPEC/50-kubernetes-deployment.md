@@ -1,4 +1,4 @@
-# SargentNexus Kubernetes deployment plan
+# Collega Kubernetes deployment plan
 
 ## Decision log
 
@@ -34,7 +34,7 @@ flowchart LR
 
 ### Client pod
 
-- Image source: `src/SargentNexus.Client/Dockerfile`
+- Image source: `src/Collega.Client/Dockerfile`
 - Runtime: `nginx:alpine`
 - Replicas: 2
 - Purpose: Serve the Blazor WebAssembly static assets and SPA fallback routing
@@ -46,7 +46,7 @@ flowchart LR
 
 ### API pod
 
-- Image source: `src/SargentNexus.API/Dockerfile`
+- Image source: `src/Collega.API/Dockerfile`
 - Runtime: `mcr.microsoft.com/dotnet/aspnet:8.0`
 - Replicas: 2
 - Container port: 8080
@@ -62,7 +62,7 @@ flowchart LR
 - Image: `mcr.microsoft.com/mssql/server:2022-latest`
 - Runtime shape: single replica, `Recreate` strategy
 - Container port: 1433
-- Purpose: Local-cluster database for SargentNexus
+- Purpose: Local-cluster database for Collega
 - Config inputs:
   - `ACCEPT_EULA=Y`
   - `MSSQL_PID=Developer`
@@ -79,7 +79,7 @@ flowchart LR
   - `sargent-nexus-client`
   - `sargent-nexus-api`
   - `sargent-nexus-sqlserver`
-- The Nginx ingress exposes a single host: `sargentnexus.localdev.me`.
+- The Nginx ingress exposes a single host: `Collega.localdev.me`.
 - Recommended route layout:
   - `/` -> client service
   - `/api` -> API service
@@ -105,7 +105,7 @@ Create the real secret directly in the cluster at deploy time:
 kubectl create secret generic sqlserver-secret `
   --namespace sargent-nexus `
   --from-literal=sa-password='<SA_PASSWORD>' `
-  --from-literal=connection-string='Server=sargent-nexus-sqlserver;Database=SargentNexus;User Id=sa;Password=<SA_PASSWORD>;TrustServerCertificate=True'
+  --from-literal=connection-string='Server=sargent-nexus-sqlserver;Database=Collega;User Id=sa;Password=<SA_PASSWORD>;TrustServerCertificate=True'
 ```
 
 Recommendations:
@@ -173,7 +173,7 @@ This keeps one set of templates while allowing local-dev and production-oriented
    ```
 
 6. Verify pods, services, PVCs, and ingress.
-7. Browse to `http://sargentnexus.localdev.me/`.
+7. Browse to `http://Collega.localdev.me/`.
 
 ## Known limitations
 

@@ -1,7 +1,7 @@
-# Project Brief: SargentNexus
+# Project Brief: Collega
 
 ## Purpose
-SargentNexus is a collaboration and project management tool for submitting, tracking, and improving process ideas.
+Collega is a collaboration and project management tool for submitting, tracking, and improving process ideas.
 
 ## Product Model
 The product is conceptually similar to Trello/Jira:
@@ -17,11 +17,11 @@ The product is conceptually similar to Trello/Jira:
 - SQL Server 2022
 
 ## Solution Structure
-- `SargentNexus.API` — HTTP API host
-- `SargentNexus.Application` — business logic and use-case orchestration
-- `SargentNexus.Domain` — entities, enums, value objects, shared contracts
-- `SargentNexus.Infrastructure` — persistence and external integrations
-- `SargentNexus.Client` — Blazor UI
+- `Collega.API` — HTTP API host
+- `Collega.Application` — business logic and use-case orchestration
+- `Collega.Domain` — entities, enums, value objects, shared contracts
+- `Collega.Infrastructure` — persistence and external integrations
+- `Collega.Client` — Blazor UI
 
 ## Architecture Rules
 - API depends on Application.

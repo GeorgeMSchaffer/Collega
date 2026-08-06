@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
-  <title id="title">SargentNexus organizations admin mockup</title>
+  <title id="title">Collega organizations admin mockup</title>
   <desc id="desc">A Fluent UI inspired Site Admin organizations screen with command bar, search, filter, list, and create organization panel.</desc>
   <rect width="1600" height="1000" fill="#f3f2f1"/>
   <rect width="1600" height="72" fill="#0f6cbd"/>
   <rect x="0" y="0" width="150" height="72" fill="#0b5cab"/>
   <rect x="16" y="16" width="44" height="40" rx="8" fill="#dbeafe" stroke="#bfdbfe"/>
   <text x="38" y="41" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a">LOGO</text>
-  <text x="68" y="46" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#ffffff">SargentNexus</text>
+  <text x="68" y="46" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#ffffff">Collega</text>
   <text x="1513" y="38" text-anchor="middle" font-family="Segoe MDL2 Assets, Segoe UI Symbol, Arial, sans-serif" font-size="16" fill="#ffffff">&#xEFD2;</text>
   <text x="1557" y="38" text-anchor="middle" font-family="Segoe MDL2 Assets, Segoe UI Symbol, Arial, sans-serif" font-size="16" fill="#ffffff">&#xF3B1;</text>
   <text x="1478" y="62" font-family="Segoe UI, Arial, sans-serif" font-size="10" fill="#dbeafe">CRMServices=Admin</text>

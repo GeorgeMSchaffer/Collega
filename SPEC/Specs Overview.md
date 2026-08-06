@@ -1,4 +1,4 @@
-# SargentNexus MVP Single Source Specification
+# Collega MVP Single Source Specification
 
 ## Document Metadata
 - Status: Draft
@@ -7,7 +7,7 @@
 - Purpose: Provide one implementation-ready spec that reduces duplication while preserving canonical rules from `SPEC/*.md`.
 
 ## Product Intent
-SargentNexus is a tenant-scoped collaboration platform for capturing, refining, and advancing process ideas.
+Collega is a tenant-scoped collaboration platform for capturing, refining, and advancing process ideas.
 The MVP emphasizes strict role boundaries, predictable lifecycle behavior, and contract-first API implementation.
 
 The system supports organization administration, board workflow configuration, and idea collaboration through tags, mentions, comments, and upvotes.

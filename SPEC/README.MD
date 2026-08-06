@@ -1,4 +1,4 @@
-# SargentNexus Specifications
+# Collega Specifications
 
 This directory contains the canonical product and delivery specifications for a fresh MVP implementation start.
 

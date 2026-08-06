@@ -1,6 +1,6 @@
 # UI Mockups
 
-These mockups are static SVG artifacts based on the current SargentNexus specs and shaped around Fluent UI component patterns and usability best practices.
+These mockups are static SVG artifacts based on the current Collega specs and shaped around Fluent UI component patterns and usability best practices.
 
 ## Screens
 - `01-login-and-org-selection.svg`: legacy sign-in and organization-selection concept; retain as historical artifact and replace in implementation with globally unique email flow

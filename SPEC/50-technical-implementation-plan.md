@@ -1,7 +1,7 @@
 # Technical Implementation Plan
 
 ## Goal
-Deliver the SargentNexus MVP as a layered ASP.NET Core application with a Blazor client, SQL Server persistence, organization-scoped authorization, audit coverage, and contract-aligned API behavior.
+Deliver the Collega MVP as a layered ASP.NET Core application with a Blazor client, SQL Server persistence, organization-scoped authorization, audit coverage, and contract-aligned API behavior.
 
 ## Restart Baseline
 - This plan assumes implementation is restarting from the beginning.
@@ -26,11 +26,11 @@ Produce an implementation plan that is detailed enough to drive engineering exec
 
 ## Architecture Plan
 ### Solution Layers
-- `SargentNexus.Domain`: entities, enums, value objects, and invariants.
-- `SargentNexus.Application`: use cases, authorization rules, validation, audit orchestration, and tenant-aware workflows.
-- `SargentNexus.Infrastructure`: EF Core persistence, seeding, auditing persistence, and later-phase notification delivery integrations.
-- `SargentNexus.API`: HTTP endpoints, request/response mapping, auth middleware, contract validation, and OpenAPI.
-- `SargentNexus.Client`: Blazor UI, forms, boards, and collaboration interactions.
+- `Collega.Domain`: entities, enums, value objects, and invariants.
+- `Collega.Application`: use cases, authorization rules, validation, audit orchestration, and tenant-aware workflows.
+- `Collega.Infrastructure`: EF Core persistence, seeding, auditing persistence, and later-phase notification delivery integrations.
+- `Collega.API`: HTTP endpoints, request/response mapping, auth middleware, contract validation, and OpenAPI.
+- `Collega.Client`: Blazor UI, forms, boards, and collaboration interactions.
 
 ### Layer Responsibilities
 #### Domain
@@ -744,7 +744,7 @@ Organization admins can define custom fields (UDFs) on ideas. Field definitions 
 
 ### Domain Model Changes
 
-New entities added to `SargentNexus.Domain`:
+New entities added to `Collega.Domain`:
 
 | Entity | Base Class | Purpose |
 |---|---|---|
@@ -825,7 +825,7 @@ PUT    .../ideas/{id} (extended)       → IdeaService (calls UdfValidationServi
 
 ### Application Services
 
-New service: `IFieldDefinitionService` (in `SargentNexus.Application/FieldDefinitions/`)
+New service: `IFieldDefinitionService` (in `Collega.Application/FieldDefinitions/`)
 - CRUD for field definitions including soft-delete and reorder
 - Authorization enforced: OrgAdmin and SiteAdmin only for writes
 
