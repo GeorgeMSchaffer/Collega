@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Review 08: Mobile / Narrow Viewport</title>
+<style>
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
+    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
+    --im-low-deep:#7d6270; --im-low-soft:#f2ecf0;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+    --radius-card:6px; --radius-btn:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .comp-bar .hint{font-size:11.5px;color:#c8c6c4}
+  .screen{display:none}.screen.on{display:block}
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;position:relative}
+  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
+  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail a:hover{background:#f3f2f1}
+  .rail .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .avatar.s{width:24px;height:24px;font-size:9.5px}
+  .avatar.more{background:#e4e2df;color:var(--ink-2);font-weight:700}
+  .avatarwrap{position:relative}
+  .avatarbtn{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;line-height:0}
+  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
+  .avatarmenu.show{display:block}
+  .avatarmenu .who{padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.5}
+  .avatarmenu .who strong{color:var(--ink);font-size:13px;display:block}
+  .avatarmenu .item{display:block;padding:9px 14px;font-size:13px;color:var(--ink);text-decoration:none;cursor:pointer}
+  .avatarmenu .item:hover{background:#f3f2f1}
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
+  .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .pagehead .sub{color:var(--ink-3);font-size:13.5px;max-width:640px;line-height:1.5}
+  .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .pagehead .row .grow{flex:1}
+  .body{padding:26px 40px;max-width:1200px}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;color:var(--accent)}
+  .btn.danger{border-color:transparent;color:var(--err)}
+  input[type=text],input[type=email],input[type=password],select,textarea{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
+  .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
+  .pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:680px;line-height:1.5}
+  .code{font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:2px 6px;font-size:11.5px}
+  /* focus-visible: every interactive control gets a visible keyboard focus ring */
+  .btn:focus-visible,.rail a:focus-visible,.rowcard:focus-visible,.kcard:focus-visible,
+  .up:focus-visible,.cmt:focus-visible,.chip:focus-visible,.avatarbtn:focus-visible,
+  .avatarmenu .item:focus-visible,.movepop .opt:focus-visible,.tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  /* filter chips */
+  .chipbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip:hover{background:#f3f2f1}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .chip.on:hover{background:var(--accent-deep)}
+  /* home dashboard */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:30px}
+  .tile{border-radius:var(--radius-card);overflow:hidden;cursor:pointer;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line)}
+  .tile .band{height:5px}
+  .tile .bd{padding:14px 16px}
+  .tile h3{font-family:Georgia,serif;font-size:15px;margin-bottom:4px}
+  .tile p{font-size:12px;color:var(--ink-3)}
+  .tile.newt{display:flex;align-items:center;justify-content:center;min-height:96px;border:1.5px dashed var(--line);box-shadow:none;color:var(--ink-3);font-weight:600;background:transparent}
+  .feedrow{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #f0efed;font-size:13px}
+  .feedrow:last-child{border-bottom:none}
+  .feedrow .when{margin-left:auto;color:var(--ink-3);font-size:12px}
+  .feedrow a{color:var(--accent-deep);font-weight:600;text-decoration:none}
+  .statgrid{display:flex;gap:28px;margin:4px 0 26px}
+  .stat .n{font-family:Georgia,serif;font-size:26px;color:var(--accent-deep)}
+  .stat .l{font-size:12px;color:var(--ink-3)}
+  /* swimlanes — Flat treatment (locked) */
+  .klanes{display:grid;grid-auto-flow:column;grid-auto-columns:280px;gap:16px;overflow-x:auto;padding-bottom:12px;align-items:start}
+  .klane{background:#f3f2f1;border-radius:var(--radius-card);padding:12px}
+  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;font-family:"Segoe UI",sans-serif;color:var(--ink-2);padding:2px 6px 12px}
+  .klane h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--lc-deep,var(--ink-3));flex-shrink:0}
+  .klane h3 .grow{flex:1}
+  .klane .cnt{border-radius:10px;padding:0 8px;font-size:11px;background:#e4e2df}
+  .kcard{background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;cursor:grab;border-left:3px solid var(--lc-deep,transparent)}
+  .kcard:hover{outline:1px solid var(--accent)}
+  .kcard .top{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
+  .kcard .grip{cursor:grab;color:var(--ink-3);flex-shrink:0;font-size:13px;line-height:1.4;padding-top:1px}
+  .kcard .t{font-weight:600;font-size:13.5px;color:var(--ink);flex:1;min-width:0}
+  .kcard .meta2{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .kcard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
+  .kcard .meta .spacer{flex:1}
+  .kcard .tag{background:#f3f2f1;border-radius:3px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+  .impact.high{background:var(--im-high-soft);color:var(--im-high-deep)}
+  .impact.med{background:var(--im-med-soft);color:var(--im-med-deep)}
+  .impact.low{background:var(--im-low-soft);color:var(--im-low-deep)}
+  .age{font-size:11px;color:var(--ink-3);flex-shrink:0}
+  .avatarstack{display:inline-flex;align-items:center;flex-shrink:0}
+  .avatarstack .avatar{margin-left:-6px;border:2px solid var(--surface)}
+  .avatarstack .avatar:first-child{margin-left:0}
+  .cmt{border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:600;color:var(--ink-2);flex-shrink:0}
+  .cmt:hover{background:#f3f2f1}
+  .up{border:1px solid var(--line);border-radius:4px;padding:6px 13px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:56px;text-align:center;flex-shrink:0}
+  .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+  .viewswitch{display:flex;gap:4px;margin-top:18px;flex-wrap:wrap}
+  .viewswitch a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent;cursor:pointer}
+  .viewswitch a.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap}
+  .prio-chip.high{background:#fbe5e7;color:var(--err)}
+  .prio-chip.med{background:#f7ecdc;color:var(--warn)}
+  .prio-chip.low{background:#e7f2e7;color:var(--ok)}
+  .emptylane{color:var(--ink-3);font-size:12px;text-align:center;padding:22px 8px;font-style:italic}
+  /* idea detail */
+  .ideahd{border-bottom:1px solid var(--line);background:var(--surface);padding:26px 40px}
+  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;font-family:"Segoe UI",sans-serif}
+  .ideahd h1{font-size:30px;max-width:760px}
+  .ideahd .byline{font-size:13px;color:var(--ink-3);margin:8px 0 4px}
+  .actionbar{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .movewrap,.delwrap{position:relative}
+  .movepop{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);min-width:170px;z-index:10}
+  .movepop.show{display:block}
+  .movepop .opt{padding:9px 12px;font-size:13px;cursor:pointer}
+  .movepop .opt:hover,.movepop .opt.hi{background:var(--accent-soft)}
+  .delconfirm{display:none;align-items:center;gap:8px;position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--err);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:10px 12px;font-size:12.5px;white-space:nowrap;z-index:10}
+  .delconfirm.show{display:flex}
+  .ideabody{display:grid;grid-template-columns:minmax(0,720px) 300px;gap:44px;padding:30px 40px}
+  .prose{font-size:15px;line-height:1.7;color:var(--ink-2)}
+  .facts{border-left:1px solid var(--line);padding-left:28px}
+  .fact{margin-bottom:18px}
+  .fact .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:5px}
+  .fact .v{font-size:14px;font-weight:600}
+  .fact select,.fact input{width:100%}
+  .comment{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f0efed}
+  .comment .byline{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+  .comment .who{font-size:13px;font-weight:700}
+  .comment .when{font-size:12px;color:var(--ink-3)}
+  .comment p{font-size:14.5px;line-height:1.65;color:var(--ink-2)}
+  .mention{color:var(--accent-deep);font-weight:700;border-bottom:1.5px solid var(--accent)}
+  .charcount{font-size:11.5px;color:var(--ink-3);text-align:right;margin-top:4px}
+  .taglist{display:flex;gap:6px;flex-wrap:wrap;font-weight:400}
+
+  /* ============ MOBILE / NARROW-VIEWPORT PASS (this comp) ============ */
+  .pagehead,.ideahd{position:relative}
+  .avatarwrap.mobile-avatar{display:none;position:absolute;top:16px;right:16px}
+  .avatarmenu.mobile{left:auto;right:0;bottom:auto;top:calc(100% + 8px)}
+  .titlerow{display:flex;align-items:flex-start;gap:20px}
+  .searchinput{width:260px}
+  .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:40;padding:6px 4px;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
+  .tabbar-inner{display:flex;justify-content:space-around;align-items:center;max-width:520px;margin:0 auto}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink-3);text-decoration:none;font-size:9.5px;font-weight:600;padding:5px 4px;border-radius:8px;flex:1;text-align:center}
+  .tabbar a .ic{font-size:19px;line-height:1}
+  .tabbar a.on{color:var(--accent);background:var(--accent-soft)}
+  .tabbar a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  @media (max-width:640px){
+    .rail{display:none}
+    .shell{grid-template-columns:1fr;padding-bottom:76px}
+    .tabbar{display:block}
+    .avatarwrap.mobile-avatar{display:block}
+    .pagehead{padding:18px 60px 0 16px}
+    .ideahd{padding:18px 60px 16px 16px}
+    .pagehead h1{font-size:20px}
+    .ideahd h1{font-size:22px}
+    .body{padding:16px}
+    .titlerow{flex-direction:column;gap:10px}
+    .statgrid{gap:16px;flex-wrap:wrap}
+    .searchinput{width:100%}
+    .actionbar{gap:8px}
+    .ideabody{grid-template-columns:1fr;gap:0;padding:18px 16px}
+    .facts{border-left:none;border-top:1px solid var(--line);padding-left:0;padding-top:20px;margin-top:22px}
+  }
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>REVIEW-08 · MOBILE / NARROW VIEWPORT</strong>
+  <nav id="tabs">
+    <button data-s="home" class="on">Home</button>
+    <button data-s="swim">Board — Swim Lanes</button>
+    <button data-s="idea">Idea Detail</button>
+  </nav>
+  <span class="hint">Resize the window (or open dev tools device toolbar) below 640px to see the mobile treatment.</span>
+</div>
+
+<!-- HOME DASHBOARD -->
+<section class="screen on" id="s-home">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a class="on" href="#" aria-current="page">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="push"></span>
+      <span class="avatarwrap">
+        <button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>jordan.reyes@acme.com</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div>
+      </span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <span class="avatarwrap mobile-avatar">
+          <button class="avatarbtn"><span class="avatar">JR</span></button>
+          <div class="avatarmenu mobile"><div class="who"><strong>Jordan Reyes</strong>jordan.reyes@acme.com</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div>
+        </span>
+        <h1>Welcome back, Jordan</h1>
+        <p class="sub" style="margin-bottom:18px">Acme Corp · here's what's happening across your boards.</p>
+      </div>
+      <div class="body">
+        <div class="note" style="margin-top:0;margin-bottom:22px;max-width:100%">
+          <strong>Mobile pass (comp-c-review-08):</strong> at ≤640px the 64px icon rail collapses to a fixed bottom tab bar — same four destinations (Home, Boards, Ideas, Settings), same active-state color language, just relaid horizontally. A bottom bar keeps every destination one tap away and frees the full width for the already-dense board/list content, unlike a hamburger drawer that hides nav behind an extra gesture. The rail's avatar/Sign-Out affordance moves to a small button top-right of the page header (reusing the exact popover component) so "always-reachable sign out" survives the rail's disappearance. Addresses the "Mobile / narrow-viewport pass" row in <span class="code" style="background:transparent;border:none;padding:0">comp-c-review-06-critique-tracker.md</span> and CLAUDE.md's "Still open" note.
+        </div>
+        <div class="statgrid">
+          <div class="stat"><div class="n">3</div><div class="l">Boards</div></div>
+          <div class="stat"><div class="n">9</div><div class="l">Your ideas</div></div>
+          <div class="stat"><div class="n">14</div><div class="l">Assigned to you</div></div>
+        </div>
+        <h2 style="font-size:16px;margin-bottom:10px">Your boards</h2>
+        <div class="tiles">
+          <div class="tile" tabindex="0"><div class="band" style="background:var(--accent)"></div><div class="bd"><h3>Product Ideas</h3><p>48 open · 9 assigned to you · active 12m ago</p></div></div>
+          <div class="tile" tabindex="0"><div class="band" style="background:#9a5b00"></div><div class="bd"><h3>Platform Backlog</h3><p>31 open · 5 assigned to you · active 2h ago</p></div></div>
+          <div class="tile" tabindex="0"><div class="band" style="background:#7a3fb8"></div><div class="bd"><h3>Customer Feedback</h3><p>17 open · none assigned · active yesterday</p></div></div>
+          <div class="tile newt" tabindex="0">+ Request a new board</div>
+        </div>
+        <h2 style="font-size:16px;margin-bottom:10px">Catching you up</h2>
+        <div class="card">
+          <div class="feedrow"><span class="avatar s">MP</span><span><strong>Mia Park</strong> mentioned you in <a href="#">Dark mode support</a></span><span class="when">20m</span></div>
+          <div class="feedrow"><span class="avatar s">TD</span><span><strong>Tom Diaz</strong> upvoted your idea <a href="#">Bulk import CSV</a></span><span class="when">1h</span></div>
+          <div class="feedrow"><span class="avatar s">AL</span><span><strong>Ana Liu</strong> moved <a href="#">SSO via SAML</a> to <span class="pill info">In Progress</span></span><span class="when">3h</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <nav class="tabbar"><div class="tabbar-inner">
+    <a class="on" href="#" aria-current="page"><span class="ic">🏠</span>Home</a>
+    <a href="#"><span class="ic">📋</span>Boards</a>
+    <a href="#"><span class="ic">💡</span>Ideas</a>
+    <a href="#"><span class="ic">⚙️</span>Settings</a>
+  </div></nav>
+</section>
+
+<!-- BOARD — SWIM LANES (Flat, the locked treatment) -->
+<section class="screen" id="s-swim">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a class="on" href="#" aria-current="page">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="push"></span>
+      <span class="avatarwrap">
+        <button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>jordan.reyes@acme.com</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div>
+      </span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <span class="avatarwrap mobile-avatar">
+          <button class="avatarbtn"><span class="avatar">JR</span></button>
+          <div class="avatarmenu mobile"><div class="who"><strong>Jordan Reyes</strong>jordan.reyes@acme.com</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div>
+        </span>
+        <div class="crumbs"><a href="#">Boards</a> / Product Ideas</div>
+        <div class="row"><div class="grow"><h1>Product Ideas</h1><p class="sub">Flat lane treatment (locked) — pale lane, left-border status accent per card, priority-colored chip.</p></div><button class="btn primary" style="margin-bottom:14px">+ New idea</button></div>
+        <div class="viewswitch"><a>List</a><a class="on">Swim Lanes</a></div>
+      </div>
+      <div class="body">
+        <div class="chipbar">
+          <button class="chip on">All</button>
+          <button class="chip">Created by me</button>
+          <button class="chip">Assigned to me</button>
+        </div>
+        <div class="cmdbar"><input class="searchinput" type="text" placeholder="Search title, tag, assignee…"></div>
+        <div class="klanes">
+          <div class="klane" style="--lc-deep:#57534e">
+            <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Dark mode support</span><span class="prio-chip high">High</span></div>
+              <div class="meta2"><span class="impact high">High impact</span><span class="tag">accessibility</span><span class="tag">mobile</span><span class="tag more">+2</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">MP</span><span class="avatar s">JR</span><span class="avatar s">TD</span><span class="avatar s more">+1</span></span><span class="age">3d</span><span class="spacer"></span><button class="cmt">💬 4</button><button class="up mine">▲ 24</button></div>
+            </div>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Bulk import from CSV</span><span class="prio-chip med">Medium</span></div>
+              <div class="meta2"><span class="impact med">Medium impact</span><span class="tag">data</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">TD</span></span><span class="age">1d</span><span class="spacer"></span><button class="cmt">💬 2</button><button class="up">▲ 17</button></div>
+            </div>
+            <button class="btn subtle" style="width:100%">+ Add idea</button>
+          </div>
+          <div class="klane" style="--lc-deep:#9a5b00">
+            <h3><span class="dot"></span><span class="grow">In Review</span><span class="cnt">1</span></h3>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Mobile responsive board</span><span class="prio-chip high">High</span></div>
+              <div class="meta2"><span class="impact high">High impact</span><span class="tag">ui</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">TD</span></span><span class="age">5d</span><span class="spacer"></span><button class="cmt">💬 1</button><button class="up">▲ 20</button></div>
+            </div>
+            <button class="btn subtle" style="width:100%">+ Add idea</button>
+          </div>
+          <div class="klane" style="--lc-deep:#2f6fb0">
+            <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">3</span></h3>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">SSO via SAML</span><span class="prio-chip high">High</span></div>
+              <div class="meta2"><span class="impact high">High impact</span><span class="tag">auth</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">AL</span></span><span class="age">9d</span><span class="spacer"></span><button class="cmt">💬 3</button><button class="up">▲ 31</button></div>
+            </div>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Notification digest email</span><span class="prio-chip med">Medium</span></div>
+              <div class="meta2"><span class="impact med">Medium impact</span><span class="tag">notify</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">JR</span></span><span class="age">4d</span><span class="spacer"></span><button class="cmt">💬 0</button><button class="up mine">▲ 12</button></div>
+            </div>
+            <button class="btn subtle" style="width:100%">+ Add idea</button>
+          </div>
+          <div class="klane" style="--lc-deep:#7a3fb8">
+            <h3><span class="dot"></span><span class="grow">Client Review</span><span class="cnt">1</span></h3>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Org-scoped user search</span><span class="prio-chip med">Medium</span></div>
+              <div class="meta2"><span class="impact med">Medium impact</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">AL</span></span><span class="age">6d</span><span class="spacer"></span><button class="cmt">💬 0</button><button class="up">▲ 14</button></div>
+            </div>
+            <button class="btn subtle" style="width:100%">+ Add idea</button>
+          </div>
+          <div class="klane" style="--lc-deep:#b10e1c">
+            <h3><span class="dot"></span><span class="grow">Blocked</span><span class="cnt">0</span></h3>
+            <div class="emptylane">No ideas</div>
+            <button class="btn subtle" style="width:100%">+ Add idea</button>
+          </div>
+          <div class="klane" style="--lc-deep:#0e700e">
+            <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">1</span></h3>
+            <div class="kcard" style="opacity:.75" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Audit log for admin actions</span><span class="prio-chip low">Low</span></div>
+              <div class="meta2"><span class="impact low">Low impact</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">JR</span></span><span class="age">30d</span><span class="spacer"></span><button class="cmt">💬 2</button><button class="up">▲ 8</button></div>
+            </div>
+            <button class="btn subtle" style="width:100%">+ Add idea</button>
+          </div>
+        </div>
+        <div class="note">Swimlane horizontal scroll needs no change here — <span class="code" style="background:transparent;border:none;padding:0">SPEC/20-feature-client-ui.md</span> already requires columns to scroll when they overflow the viewport, and that still works unmodified once the shell goes single-column. Board List's dense row layout (title/impact/tags/avatars/upvote packed into one flex row) has its own overflow problem at this width, but it isn't one of the two gaps CLAUDE.md names (icon rail, Idea Detail grid) — flagged here as a follow-up rather than redesigned in this pass.</div>
+      </div>
+    </div>
+  </div>
+  <nav class="tabbar"><div class="tabbar-inner">
+    <a href="#"><span class="ic">🏠</span>Home</a>
+    <a class="on" href="#" aria-current="page"><span class="ic">📋</span>Boards</a>
+    <a href="#"><span class="ic">💡</span>Ideas</a>
+    <a href="#"><span class="ic">⚙️</span>Settings</a>
+  </div></nav>
+</section>
+
+<!-- IDEA DETAIL -->
+<section class="screen" id="s-idea">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a class="on" href="#" aria-current="page">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="push"></span>
+      <span class="avatarwrap">
+        <button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>jordan.reyes@acme.com</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div>
+      </span>
+    </aside>
+    <div>
+      <div class="ideahd">
+        <span class="avatarwrap mobile-avatar">
+          <button class="avatarbtn"><span class="avatar">JR</span></button>
+          <div class="avatarmenu mobile"><div class="who"><strong>Jordan Reyes</strong>jordan.reyes@acme.com</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div>
+        </span>
+        <div class="crumbs"><a href="#">Boards</a> / <a href="#">Product Ideas</a> / IDEA-128</div>
+        <div class="kicker">In Progress · Medium priority</div>
+        <div class="titlerow">
+          <h1 style="flex:1">Dark mode support</h1>
+          <button class="up mine" style="font-size:13px;padding:6px 16px;margin-top:8px">▲ Upvoted · 24</button>
+        </div>
+        <p class="byline">Proposed by <strong>Tom Diaz</strong> on July 2 · updated 20 minutes ago</p>
+        <div class="actionbar">
+          <button class="btn primary">Save Idea</button>
+          <div class="movewrap">
+            <button class="btn" id="moveBtn" aria-haspopup="true">Move in Board ▾</button>
+            <div class="movepop" id="movePop">
+              <div class="opt">New / Pending</div>
+              <div class="opt hi">In Progress</div>
+              <div class="opt">Client Review</div>
+              <div class="opt">Complete</div>
+            </div>
+          </div>
+          <button class="btn">Cancel</button>
+          <span style="flex:1"></span>
+          <div class="delwrap">
+            <button class="btn danger" id="delBtn">Delete Idea</button>
+            <div class="delconfirm" id="delConfirm">
+              <span>Delete this idea permanently?</span>
+              <button class="btn danger" style="padding:4px 10px">Confirm delete</button>
+              <button class="btn" style="padding:4px 10px" id="delCancelBtn">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ideabody">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--ink-3)">Title</label>
+          <input type="text" style="width:100%;margin:6px 0 20px;font-size:18px;padding:10px 12px" value="Dark mode support">
+          <label style="font-size:12px;font-weight:600;color:var(--ink-3)">Description</label>
+          <textarea style="width:100%;min-height:100px;margin-top:6px" class="prose">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu.</textarea>
+          <h2 style="font-size:19px;margin:30px 0 16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif;font-weight:600">4 comments</span></h2>
+          <div class="comment"><div class="byline"><span class="avatar s">MP</span><span class="who">Mia Park</span><span class="when">2 hours ago</span></div><p><span class="mention">@Jordan Reyes</span> can we scope this to the board view first? Full app theming is a bigger lift.</p></div>
+          <div class="comment"><div class="byline"><span class="avatar s">TD</span><span class="who">Tom Diaz</span><span class="when">1 hour ago</span></div><p>+1 — the Fluent design tokens should make this straightforward.</p></div>
+          <div style="display:flex;gap:12px">
+            <span class="avatar s">JR</span>
+            <div style="flex:1"><textarea style="width:100%;min-height:70px" placeholder="Join the discussion…">Agreed — </textarea><div class="charcount">9 / 2000</div><button class="btn primary" style="margin-top:6px">Post comment</button></div>
+          </div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Status</div><div class="v"><select><option>New</option><option selected>In Progress</option><option>Blocked</option><option>Done</option></select></div></div>
+          <div class="fact"><div class="k">Priority</div><div class="v"><select><option>High</option><option selected>Medium</option><option>Low</option></select></div></div>
+          <div class="fact"><div class="k">Idea Type</div><div class="v"><select><option selected>Continuous Improvement</option><option>Feature</option><option>Bug Fix</option><option>Research</option></select></div></div>
+          <div class="fact"><div class="k">Business Impact</div><div class="v"><select><option>High</option><option selected>Medium</option><option>Low</option></select></div></div>
+          <div class="fact"><div class="k">Due date <span style="text-transform:none;font-weight:400">(optional)</span></div><div class="v"><input type="text" value="Aug 15, 2026"></div></div>
+          <div class="fact"><div class="k">Assignees <span style="text-transform:none;font-weight:400">2 / 5</span></div><div class="v taglist"><span class="pill neutral">Mia Park</span><span class="pill neutral">Jordan Reyes</span><button class="btn subtle" style="padding:1px 8px">+ add</button></div></div>
+          <div class="fact"><div class="k">Tags <span style="text-transform:none;font-weight:400">2 / 10</span></div><div class="v taglist"><span class="pill neutral">ui</span><span class="pill neutral">theme</span><button class="btn subtle" style="padding:1px 8px">+ add</button></div></div>
+          <div class="fact"><div class="k">Upvotes</div><div class="v">24 people</div></div>
+          <div class="fact"><div class="k">Board</div><div class="v">Product Ideas</div></div>
+        </div>
+      </div>
+      <div class="body" style="max-width:1020px;padding-top:0">
+        <div class="note">At ≤640px the two-column body (<span class="code" style="background:transparent;border:none;padding:0">.ideabody</span>) stacks to one column: Facts renders as a full-width block after the description/Discussion instead of beside it, with its left border-rule becoming a top rule. DOM order is unchanged — no reordering risk when this becomes Blazor markup. The kicker line above the title ("In Progress · Medium priority") already surfaces the two most time-critical facts above the fold, so nothing critical is hidden by deferring the full facts list below the prose — it reads naturally as "article, then its metadata."</div>
+      </div>
+    </div>
+  </div>
+  <nav class="tabbar"><div class="tabbar-inner">
+    <a href="#"><span class="ic">🏠</span>Home</a>
+    <a class="on" href="#" aria-current="page"><span class="ic">📋</span>Boards</a>
+    <a href="#"><span class="ic">💡</span>Ideas</a>
+    <a href="#"><span class="ic">⚙️</span>Settings</a>
+  </div></nav>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+
+  // Rail / mobile-header avatar → popover menu (Profile / Sign Out)
+  document.querySelectorAll('.avatarbtn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const menu = btn.nextElementSibling;
+      document.querySelectorAll('.avatarmenu.show,.movepop.show,.delconfirm.show').forEach(m=>{ if(m!==menu) m.classList.remove('show'); });
+      menu.classList.toggle('show');
+    });
+  });
+
+  // Idea Detail: Move in Board popover
+  document.querySelectorAll('#moveBtn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const pop = document.getElementById('movePop');
+      document.querySelectorAll('.avatarmenu.show,.delconfirm.show').forEach(m=>m.classList.remove('show'));
+      pop.classList.toggle('show');
+    });
+  });
+  document.querySelectorAll('#movePop .opt').forEach(opt=>{
+    opt.addEventListener('click', ()=>document.getElementById('movePop').classList.remove('show'));
+  });
+
+  // Idea Detail: Delete Idea inline confirmation
+  document.querySelectorAll('#delBtn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const confirm = document.getElementById('delConfirm');
+      document.querySelectorAll('.avatarmenu.show,.movepop.show').forEach(m=>m.classList.remove('show'));
+      confirm.classList.toggle('show');
+    });
+  });
+  document.querySelectorAll('#delCancelBtn').forEach(btn=>btn.addEventListener('click', e=>{ e.stopPropagation(); document.getElementById('delConfirm').classList.remove('show'); }));
+
+  document.addEventListener('click', ()=>{
+    document.querySelectorAll('.avatarmenu.show,.movepop.show,.delconfirm.show').forEach(m=>m.classList.remove('show'));
+  });
+</script>
+</body>
+</html>
