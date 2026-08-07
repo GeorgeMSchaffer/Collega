@@ -46,7 +46,19 @@
       "Bash(ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS='http://localhost:5027' dotnet run --project src/Collega.API/Collega.API.csproj --no-build > /tmp/collega-api.log 2>&1)",
       "Bash(git diff *)",
       "Bash(echo \"=== design tokens ===\")",
-      "Bash(grep -oE '\\\\-\\\\-[a-z0-9-]+:' SPEC/mockups/comp-c-review-06-lockin-v5-final.html)"
+      "Bash(grep -oE '\\\\-\\\\-[a-z0-9-]+:' SPEC/mockups/comp-c-review-06-lockin-v5-final.html)",
+      "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a43f1d140d5cde3f1 merge --ff-only dev)",
+      "Read(//Users/gms/.nuget/packages/**)",
+      "Bash(dotnet nuget *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a57fb817bc3ca57dc status --short)",
+      "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a57fb817bc3ca57dc branch --show-current)",
+      "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a57fb817bc3ca57dc log --oneline -3)",
+      "Bash(python3 -c ' *)",
+      "Bash(unzip -o -q f.nupkg -d f)",
+      "Bash(python3 /private/tmp/claude-501/-Users-gms-Documents-code-Collega/2107da47-4272-493d-903c-8a3a5fb9104e/scratchpad/probe.py)",
+      "Bash(python3 /private/tmp/claude-501/-Users-gms-Documents-code-Collega/2107da47-4272-493d-903c-8a3a5fb9104e/scratchpad/probe2.py)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)"
     ],
     "additionalDirectories": [
       "/tmp"
