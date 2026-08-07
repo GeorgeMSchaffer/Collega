@@ -10,13 +10,26 @@ Track the implementation work that should be executed from the reset baseline, w
 
 ## Current Status
 - Current implementation slice: Auth Agent (T005-T011)
-- Current owner: Multi-agent team (Backend Developer, QA Developer) in isolated worktrees; UI/UX Developer is sitting out this round by user direction — another UI comp review pass happens after backend slices land, before any Client Agent work starts.
+- Current owner: Multi-agent team (Backend Developer, QA Developer, UI/UX Developer) in isolated worktrees. UI/UX Developer resumed 2026-08-07 (previously sitting out pending comp sign-off, now signed off — see UI Comp Sign-Off below) and is building the locked `comp-c-review-06-lockin-v4-combined.html` screens against static/mock data, ahead of the Client Agent's real backend dependency chain, by explicit user direction (2026-08-07): real API wiring happens later, per-slice, as Tenant Administration/Workflow Configuration/Collaboration/Events land.
 - Current state: Epic 1 Foundation (T001-T004) merged into `dev`. Auth Agent slice (T005-T011) started 2026-08-07: Backend Developer implementing login/hashing/lockout/seed-Site-Admin/forced-password-change/audit/temp-password-reset; QA Developer writing black-box API contract tests in parallel. Next slices after Auth merges, in dependency order: Tenant Administration Agent (T012-T019) → Workflow Configuration Agent (T020-T024) → Collaboration Agent (T025-T036) → Events Agent (T037-T039). Client Agent (T040-T045, C6-Kanban) stays blocked on UI comp sign-off throughout.
 - Last updated: 2026-08-07
 
+## UI Comp Sign-Off (2026-08-07)
+- User reviewed `comp-c-review-01/02/03/04/05` plus a new comparison round (`comp-c-review-06-lockin-v1-quiet-rail.html`, `-v2-warm-canvas.html`, `-v3-bold-ink.html`) and picked a combined direction: `comp-c-review-06-lockin-v4-combined.html`. This is now the locked chrome/color/spacing reference for Sign in, Home, Admin lists, Board List, and Idea Detail — see `CLAUDE.md`'s "Locked (2026-08-07)" note and `SPEC/20-feature-client-ui.md`/`SPEC/20-feature-client-ui-revisions.md` (Decision D4) for the spec-level updates.
+- Two decisions reopened and re-resolved along the way:
+  1. Nav chrome: user chose to **keep the 64px icon rail** (matching `CLAUDE.md`'s original description and all `comp-c-review-01..05` comps) over `SPEC/20-feature-client-ui.md`'s more recently-locked horizontal top-menu. `SPEC/20-feature-client-ui.md`'s NAVIGATION section and App-shell bullet still describe the horizontal-menu/gear-icon-Settings pattern and have **not yet been rewritten** for the rail — see Open Items below.
+  2. Home dashboard: user chose the **richer** dashboard (board tiles + activity feed, comp-b-influenced) over the simpler MVP version locked as Decision D1. Recorded as Decision D4 in `SPEC/20-feature-client-ui-revisions.md`, and reflected in `SPEC/20-feature-client-ui.md`.
+- Both remaining open items were resolved by the user later in the same session:
+  1. **Swimlane card treatment**: **Flat** (pale lane, left-border priority accent per card, status dot in the lane header). Banded and Tinted were both dropped.
+  2. **Header bar vs. rail avatar**: the separate `rgb(33,37,41)` header bar is dropped entirely; the rail's bottom avatar now owns Sign Out/Profile access.
+- `SPEC/20-feature-client-ui.md` NAVIGATION and `SPEC/20-feature-client-ui-revisions.md` Header/Menu sections have been rewritten to reflect both. One new gap surfaced during that rewrite: the rail comps never included a dedicated `Ideas` icon even though `/ideas` is a required route — flagged inline in `SPEC/20-feature-client-ui.md`, not yet decided, low priority (Client Agent won't reach the `/ideas` screen for a while given the backend dependency chain below).
+
 ## In Progress
 - Backend Developer: Auth Agent slice, T005-T011 (see `SPEC/20-feature-auth.md`). Worktree branched off `dev`.
-- QA Developer: Auth Agent slice, black-box API contract tests against `SPEC/30-Contracts.md`'s auth endpoints. Worktree branched off `dev`. Expected red until Backend Developer's branch merges (same pattern as Epic 1 Foundation).
+- By user direction (2026-08-07): merge directly into `dev` once the Backend Developer finishes and the solution builds — no separate Code Reviewer pass for this slice (explicit deviation from the documented gate in `CLAUDE.md`, chosen knowingly since QA was also skipped this round).
+
+## Ready Next (QA)
+- By user direction (2026-08-07): QA Developer's Auth Agent-slice contract-test pass was stopped mid-work and its worktree/branch discarded (only an uncommitted `FakeClock.cs` scaffold existed, no commits — nothing lost). QA is skipped per-slice for now; a **full QA pass across all merged backend slices** happens later once more of the backend has landed, rather than one QA worktree per slice.
 
 ## Ready Next
 - QA Developer: re-run `tests/Collega.API.Tests/SmokeTests.cs` now that Backend Developer's T002-T004 has merged — `NonSuccessResponse_UsesProblemDetailsEnvelope` was red pending the problem-details pipeline, which now exists (including `UseStatusCodePages()`, which directly addresses the gap QA flagged). Code Reviewer verified this manually during merge (see below); a real QA re-run/extension is still the next step.

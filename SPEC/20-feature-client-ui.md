@@ -1,6 +1,10 @@
 ## NAVIGATION
 
-Primary navigation is a horizontal menu under the main header: Home, Boards, Ideas. The admin area (renamed "Settings") is reached via a gear icon in the header, not the menu. See SPEC/20-feature-client-ui-revisions.md for layout and Settings details.
+Primary navigation is a 64px icon rail on the left edge of the viewport (locked 2026-08-07, supersedes the horizontal-top-menu description below): Home and Boards icons near the top, an Admin/Settings icon lower in the rail (role-scoped, same routes as `/settings/*` below), and a user avatar pinned to the bottom of the rail — clicking the avatar opens a menu with Sign Out and Profile. There is no separate horizontal top menu and no separate header bar (no `rgb(33,37,41)` bar, no header-level gear icon, no header-level Sign Out icon) — those are dropped in favor of the rail. See `SPEC/mockups/comp-c-review-06-lockin-v4-combined.html` for the reference implementation.
+
+**Open gap:** the rail comps only show Home, Boards, and Admin icons plus the avatar — they don't include a dedicated `Ideas` rail entry, even though `/ideas` (the user-focused idea list/search surface, distinct from a board's own view) is still a required route below. Either add an `Ideas` icon to the rail or fold its entry point into Home/Boards before Client Agent work reaches that screen — not yet decided.
+
+The rest of this section (menu items, active-state styling, routes) describes the pre-rail horizontal-menu design and is kept for its still-valid parts (routes, active-state styling detail, role-scoping) — read "menu" below as "rail," not literally.
 
 The active item in the application's primary navigation has a flat rectangular background with stronger text and icon color. It has no border radius and no left-edge active border. The active link exposes `aria-current="page"` and retains a visible keyboard focus outline. Tabs, pivots, filter chips, and segmented controls keep their control-specific selected styles.
 
@@ -109,9 +113,9 @@ Page-level layout for Comp C is being locked incrementally via throwaway review 
 The workspace artifact `mockups/sprint-management/idea-board.html` was the layout and styling authority for `/board/{boardId}` under the Comp A direction. This reference has not yet been reconciled with the Comp C pivot or with `comp-c-review-03-board-list.html` (which introduces a List/Swim Lane view toggle, Swim Lane default, not yet locked). Treat this subsection as stale pending that reconciliation rather than authoritative.
 
 ### Layout (Comp C — Fluent Editorial)
-- App shell: see NAVIGATION above for the locked shell structure (horizontal top menu — Home, Boards, Ideas — with gear-icon access to Settings, no sidebar rail). `CLAUDE.md`'s description of a 64px icon rail has not been reconciled with this already-locked horizontal-menu navigation; treat the icon-rail description as unresolved, not as an instruction to add a rail.
+- App shell: see NAVIGATION above for the locked shell structure — a 64px icon rail (Home, Boards, Admin/Settings, bottom avatar for Sign Out/Profile), no horizontal top menu, no separate header bar.
 - Content pages use breadcrumbs, a page title with short subtitle, and a command bar (primary action, filters) above dense data tables or cards.
-- Home is a dashboard — content scope is locked separately to the simpler MVP summary dashboard in `SPEC/20-feature-client-ui-revisions.md` (Decision D1: welcome + quick links + counts). The richer KPI-card/activity-feed dashboard implied by the original Comp A layout description is not in scope.
+- Home is a dashboard — content scope is locked to the richer dashboard (welcome + counts + board tiles + activity feed) per `SPEC/20-feature-client-ui-revisions.md` Decision D4 (2026-08-07, supersedes D1), matching `SPEC/mockups/comp-c-review-06-lockin-v4-combined.html`'s `Home` tab.
 - Settings hub (formerly "Admin hub") uses link cards per tool (Organizations, Users, Boards & Statuses) scoped per role, per `SPEC/20-feature-client-ui-revisions.md`.
 - Board view: layout (Kanban swimlane columns vs. grouped list sections vs. both via a per-role toggle) is unsettled — see `comp-c-review-03-board-list.html`, not locked. Clicking a card title navigates to the full-page Idea Detail view (below); it does not open an overlay.
 - Idea detail is a full-page, editorial article layout (not an overlay): primary content/comments in the main column with a metadata sidebar (status, priority, assignee, due date, tags, audit info) alongside. Reached at `/ideas/{ideaId}/edit` from both a board card and the Ideas list — one Idea Detail experience, two entry points.

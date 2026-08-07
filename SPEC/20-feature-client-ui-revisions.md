@@ -6,9 +6,13 @@ Defines a batch of client UI bug fixes and structural revisions covering layout,
 
 ## Decision Log Addendum (2026-08-03)
 
-- Decision D1: Home dashboard scope is locked to **MVP summary dashboard** (welcome + quick links + counts) for this implementation slice.
+- Decision D1 (superseded 2026-08-07, see Decision D4): Home dashboard scope was locked to **MVP summary dashboard** (welcome + quick links + counts) for this implementation slice.
 - Decision D2: Logout interaction is route-based (`/logout`) to keep sign-out behavior explicit and testable.
 - Decision D3: Unauthenticated shell is restricted to `Login` and `Register` links only.
+
+## Decision Log Addendum (2026-08-07)
+
+- Decision D4: Home dashboard scope is locked to the **richer dashboard** — welcome message, `Boards` / `Your ideas` / `Assigned to you` counts, a "Your boards" tile grid (one tile per accessible board with an open/assigned/last-active summary, plus a "Request a new board" tile), and a "Catching you up" activity feed (recent mentions, upvotes, and status moves). This supersedes Decision D1's simpler MVP version. Locked via `SPEC/mockups/comp-c-review-06-lockin-v4-combined.html` (`Home` tab), the user-selected outcome of the review-06 lock-in comparison (`comp-c-review-06-lockin-v1/v2/v3`) — see `SPEC/implementation-agent-tracker.md` for the full decision trail.
 
 ## Bug Fixes
 
@@ -24,22 +28,22 @@ Defines a batch of client UI bug fixes and structural revisions covering layout,
 
 ## Layout and Header
 
-### Header
-- Header background color is `rgb(33, 37, 41)` across the entire header bar.
-- The signed-in Username in the header renders in white.
-- Sign Out is an icon button placed immediately to the LEFT of the Username display.
-- A gear icon in the header navigates to the Settings area (see below). The gear is visible to all authenticated users.
-- The Sign Out icon navigates to `/logout`, where logout is executed and the user is returned to `/login`.
-- The header does not display a `Password update required` text link; required-change routing is enforced by the authentication gate.
-- When unauthenticated (or otherwise not authorized for protected UI), the header shows only `Login` and `Register` links. No protected navigation links are shown.
+### Header and Menu (superseded 2026-08-07 — see Rail below)
+The header-bar and horizontal-menu description immediately below predates the rail decision and no longer describes the built shell. Kept for the still-valid parts (routing behavior, role-scoping, what's NOT in primary nav) — read "header gear icon" as "rail Admin icon" and "menu" as "rail":
+- ~~Header background color is `rgb(33, 37, 41)` across the entire header bar.~~ Dropped — no separate header bar.
+- ~~The signed-in Username in the header renders in white.~~ ~~Sign Out is an icon button placed immediately to the LEFT of the Username display.~~ Superseded: the rail's bottom avatar opens a menu with Sign Out and Profile instead.
+- A gear/Admin icon lower in the rail navigates to the Settings area (see below), role-scoped, same as the old header gear.
+- Sign Out navigates to `/logout`, where logout is executed and the user is returned to `/login` (unchanged — see Decision D2).
+- No `Password update required` text link anywhere in the shell; required-change routing is enforced by the authentication gate (unchanged).
+- When unauthenticated (or otherwise not authorized for protected UI), the shell shows only `Login` and `Register` links — no protected rail icons are shown (unchanged — see Decision D3).
+- The primary rail is vertical (not horizontal, not under a header). Rail items: Home, Boards (Ideas rail entry not yet decided — see `SPEC/20-feature-client-ui.md` NAVIGATION open gap).
+- Admin functionality is NOT a top-level rail icon alongside Home/Boards; it's a distinct, lower rail icon, role-scoped the same way the old header gear was.
+- Change Password is NOT in the rail; it is accessible only from Settings → My Profile (unchanged).
+- The protected rail icons are shown only for authenticated users with access to protected routes (unchanged).
+- Rail links navigate to list-entry pages: Home (`/`), Boards (`/boards`), Ideas (`/ideas`, pending the open gap above).
 
-### Menu
-- The primary menu is horizontal and sits directly under the main header (no vertical sidebar nav).
-- Menu items: Home, Boards, Ideas.
-- Admin functionality is NOT in the horizontal menu; it is reached only via the header gear icon.
-- Change Password is NOT in the menu; it is accessible only from Settings → My Profile.
-- The protected menu is shown only for authenticated users with access to protected routes.
-- Menu links navigate to list-entry pages: Home (`/`), Boards (`/boards`), Ideas (`/ideas`).
+### Rail (locked 2026-08-07)
+See `SPEC/20-feature-client-ui.md` NAVIGATION for the authoritative rail description and `SPEC/mockups/comp-c-review-06-lockin-v4-combined.html` for the reference implementation.
 
 ### Unauthenticated and Unauthorized Shell
 - Unauthenticated users can access `/login` and `/register`.
