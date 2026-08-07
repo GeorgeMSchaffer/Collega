@@ -73,17 +73,27 @@ Resolved: `30-Contracts.md`'s internal notification payload used a stale `ideaLi
 ### 9. Default status set
 Resolved: the canonical default status set stays as the existing 5 (`New/Pending`, `In Review`, `In Progress`, `Client Review`, `Complete`) in `20-feature-boards-and-statuses.md`. The comp's proposed 4-status illustrative set (`New`, `Research In Process`, `In Review`, `Complete`) is not adopted; `comp-c-review-05-admin-statuses.html` and `comp-c-review-03-board-list.html` need their illustrative data updated to match before those comps can lock. No canonical spec file needed a text change for this decision, since it confirms the existing value — see `implementation-agent-tracker.md` for the reconciliation task.
 
+## Decision Log (2026-08-07): Follow-Up Interview on Newly Found Items
+
+Resolved via a second structured interview covering the four items flagged open at the end of the 2026-08-06 spec-audit session.
+
+### 10. Status Color/SortOrder fields
+Resolved: adopted into the canonical spec now, not deferred until the comp locks. `20-feature-boards-and-statuses.md` gains `Status.Color` (hex/CSS, max 20 chars) and `Status.SortOrder` (int, organization-level catalog order, distinct from a board's independently-reorderable swimlane order). Default `Color`/`SortOrder` values for the 5 canonical default statuses are still unassigned — that specific sub-item remains open (see Remaining MVP Clarifications below).
+
+### 11. Last-status minimum vs. board's 2-swimlane minimum
+Resolved: the organization-wide active-status minimum is raised to 2, matching a board's own swimlane minimum (rather than reusing the 1-active-option minimum pattern from Idea Type/Business Impact). A status delete that would drop an organization below 2 active statuses is rejected regardless of whether that status is currently referenced as a swimlane. Recorded in `20-feature-boards-and-statuses.md`. Note: `comp-c-review-05-admin-statuses.html`'s "last-status guard" demo still shows the old 1-remaining threshold and needs updating to 2 — tracked in `implementation-agent-tracker.md`.
+
+### 12. `SPEC/25-client-ui.md` stale duplicate
+Resolved: deleted. It had no unique content beyond what `20-feature-client-ui.md`/`20-feature-client-ui-revisions.md` already cover more accurately (it still referenced pre-Settings-rename `/admin/organization/...` routes and Comp A typography).
+
+### 13. C6-Kanban backlog task vs. the `/ideas` list page
+Resolved: keep both. `/ideas` remains a cross-board list/search surface (Created by me / Assigned to me) alongside the per-board Kanban/list view — useful when a user's ideas span multiple boards. `implementation-agent-tracker.md`'s C6-Kanban task wording updated to stop implying `/ideas` gets replaced.
+
 ## Remaining MVP Clarifications
-None.
+- Default `Status.Color` and `Status.SortOrder` values for the 5 canonical default statuses (`New/Pending`, `In Review`, `In Progress`, `Client Review`, `Complete`) have not been chosen yet.
 
 ## Remaining Post-MVP Clarifications
 - None currently blocking planning. New questions should be added here when introduced.
-
-## Newly Identified, Not Yet Resolved (found during 2026-08-06 spec-audit)
-- **Status Color/SortOrder fields**: `comp-c-review-05-admin-statuses.html` introduces `Status.Color` and `Status.SortOrder` as new spec territory not yet in `20-feature-boards-and-statuses.md`. Needs a decision once that comp is reviewed.
-- **Last-status minimum vs. board's 2-swimlane minimum**: if an organization can be left with as few as 1 active status, but every board requires 2 swimlanes, a board could become unable to satisfy its own minimum. Flagged in the comp, not yet resolved in the canonical spec.
-- **`SPEC/25-client-ui.md` is a stale duplicate**: it still describes `/admin/organization/...` routes (superseded — `20-feature-client-ui-revisions.md` says old `/admin` routes now 404) and Comp A/Segoe-UI-only typography (superseded by Comp C). Needs a decision: merge remaining unique content into the canonical files and delete it, or explicitly mark it superseded like the Comp A/B review comps.
-- **C6-Kanban backlog task vs. the `/ideas` list page**: the `implementation-agent-tracker.md` backlog task C6-Kanban was originally framed as "replace `/ideas` list with Kanban board," which predates `20-feature-client-ui-revisions.md`'s separate `/ideas` list page (with its own `Details` link to `/ideas/{id}/edit`). These were written at different times and use `/ideas` for two different things (a list page vs. something to be replaced by a board). Worth confirming the `/ideas` list page is still wanted alongside the board view, now that Idea Detail is unified.
 
 ## Decision Log (2026-08-04): Password Reset
 

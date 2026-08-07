@@ -104,7 +104,7 @@
       <div class="pagehead">
         <div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / Statuses</div>
         <div class="row"><div class="grow"><h1>Statuses</h1><p class="sub">Defined at the organization level. Boards select a subset of these as swimlanes. Drag rows to set sort order — order saves immediately.</p></div><button class="btn primary" style="margin-bottom:14px">+ New status</button></div>
-        <div class="ptabs"><a class="on" href="#">Active · 4</a><a href="#">Retired · 1</a><a href="#">All · 5</a></div>
+        <div class="ptabs"><a class="on" href="#">Active · 5</a><a href="#">Retired · 1</a><a href="#">All · 6</a></div>
       </div>
       <div class="body">
         <div class="card" style="max-width:900px">
@@ -113,17 +113,9 @@
             <tbody id="statusRows">
               <tr draggable="true">
                 <td class="grip">⠿</td>
-                <td><span class="pill" style="background:#f1f0ee;color:#57534e">New</span></td>
+                <td><span class="pill" style="background:#f1f0ee;color:#57534e">New / Pending</span></td>
                 <td><span class="swatch sm" style="background:#57534e"></span></td>
                 <td>3</td><td>22</td>
-                <td><span class="pill state-ok">Active</span></td>
-                <td><button class="btn subtle">Edit</button> <button class="btn danger">Delete</button></td>
-              </tr>
-              <tr draggable="true">
-                <td class="grip">⠿</td>
-                <td><span class="pill" style="background:#e6f0fa;color:#2f6fb0">Research In Process</span></td>
-                <td><span class="swatch sm" style="background:#2f6fb0"></span></td>
-                <td>3</td><td>15</td>
                 <td><span class="pill state-ok">Active</span></td>
                 <td><button class="btn subtle">Edit</button> <button class="btn danger">Delete</button></td>
               </tr>
@@ -137,6 +129,22 @@
               </tr>
               <tr draggable="true">
                 <td class="grip">⠿</td>
+                <td><span class="pill" style="background:#e6f0fa;color:#2f6fb0">In Progress</span></td>
+                <td><span class="swatch sm" style="background:#2f6fb0"></span></td>
+                <td>3</td><td>15</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle">Edit</button> <button class="btn danger">Delete</button></td>
+              </tr>
+              <tr draggable="true">
+                <td class="grip">⠿</td>
+                <td><span class="pill" style="background:#f1e8fb;color:#7a3fb8">Client Review</span></td>
+                <td><span class="swatch sm" style="background:#7a3fb8"></span></td>
+                <td>1</td><td>3</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle">Edit</button> <button class="btn danger">Delete</button></td>
+              </tr>
+              <tr draggable="true">
+                <td class="grip">⠿</td>
                 <td><span class="pill" style="background:#e7f2e7;color:#0e700e">Complete</span></td>
                 <td><span class="swatch sm" style="background:#0e700e"></span></td>
                 <td>3</td><td>61</td>
@@ -145,7 +153,7 @@
               </tr>
               <tr style="opacity:.55">
                 <td></td>
-                <td><span class="pill" style="background:#f1f0ee;color:#57534e">Client Review</span></td>
+                <td><span class="pill" style="background:#f1f0ee;color:#797672">Won't Do</span></td>
                 <td><span class="swatch sm" style="background:#797672"></span></td>
                 <td>0</td><td>9</td>
                 <td><span class="pill state-err">Retired</span></td>
@@ -154,7 +162,7 @@
             </tbody>
           </table>
         </div>
-        <div class="note">An organization must always keep at least one active status. When only one remains, its Delete action is disabled with an explanatory tooltip — see the "Last-status guard" tab. Deleting is always a soft delete (Retire): existing board and idea references stay valid, and a status currently used as a swimlane on an active board can't be deleted until that reference is removed.</div>
+        <div class="note">New / Pending, In Review, In Progress, Client Review, and Complete are the 5 canonical default statuses, provisioned automatically for every new organization (per <code>SPEC/20-feature-boards-and-statuses.md</code>). "Won't Do" here is an example custom status this organization added and later retired — orgs can add, rename, and retire statuses beyond the defaults. An organization must always keep at least one active status. When only one remains, its Delete action is disabled with an explanatory tooltip — see the "Last-status guard" tab. Deleting is always a soft delete (Retire): existing board and idea references stay valid, and a status currently used as a swimlane on an active board can't be deleted until that reference is removed.</div>
       </div>
     </div>
   </div>
@@ -197,7 +205,7 @@
           <div class="field">
             <label>Sort order</label>
             <div class="order-field">
-              <span>Will be added at position <strong>5 of 5</strong></span>
+              <span>Will be added at position <strong>6 of 6</strong></span>
               <div class="nudge"><button class="btn subtle">▲</button><button class="btn subtle">▼</button></div>
             </div>
             <p class="hint">New statuses are added at the end. Reorder any time by dragging rows in the status list, or with these arrows.</p>
@@ -214,12 +222,12 @@
   <div class="shell">
     <aside class="rail"><span class="mark">CG</span><span class="push"></span><span class="avatar">SA</span></aside>
     <div>
-      <div class="pagehead"><div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / <a href="#">Statuses</a> / Research In Process</div><h1>Edit status</h1><p class="sub" style="margin-bottom:20px">Used as a swimlane on 3 boards, with 15 ideas currently in this status.</p></div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Admin</a> / <a href="#">Organizations</a> / Acme Corp / <a href="#">Statuses</a> / In Progress</div><h1>Edit status</h1><p class="sub" style="margin-bottom:20px">Used as a swimlane on 3 boards, with 15 ideas currently in this status.</p></div>
       <div class="body">
         <div class="card panelform" style="padding:24px">
           <div class="field">
-            <label>Name <span class="charlim">20 / 25</span></label>
-            <input type="text" style="width:100%" value="Research In Process" maxlength="25">
+            <label>Name <span class="charlim">11 / 25</span></label>
+            <input type="text" style="width:100%" value="In Progress" maxlength="25">
           </div>
           <div class="field">
             <label>Color</label>
@@ -239,14 +247,14 @@
               <label style="margin:0">Hex</label><input type="text" value="#2f6fb0">
             </div>
             <div class="preview">
-              <span class="pill preview-pill" style="background:#e6f0fa;color:#2f6fb0">Research In Process</span>
+              <span class="pill preview-pill" style="background:#e6f0fa;color:#2f6fb0">In Progress</span>
               <span class="hint" style="margin:0">Preview — this is how the status will look on cards and swimlane headers.</span>
             </div>
           </div>
           <div class="field">
             <label>Sort order</label>
             <div class="order-field">
-              <span>Position <strong>2 of 4</strong> active statuses</span>
+              <span>Position <strong>3 of 5</strong> active statuses</span>
               <div class="nudge"><button class="btn subtle">▲</button><button class="btn subtle">▼</button></div>
             </div>
             <p class="hint">Drag this row in the status list to reorder, or use the arrows above.</p>
@@ -271,7 +279,7 @@
             <tbody>
               <tr>
                 <td class="grip">⠿</td>
-                <td><span class="pill" style="background:#f1f0ee;color:#57534e">New</span></td>
+                <td><span class="pill" style="background:#f1f0ee;color:#57534e">New / Pending</span></td>
                 <td><span class="swatch sm" style="background:#57534e"></span></td>
                 <td>1</td><td>6</td>
                 <td><span class="pill state-ok">Active</span></td>

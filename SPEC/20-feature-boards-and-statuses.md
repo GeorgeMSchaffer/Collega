@@ -12,10 +12,13 @@ Organizations can manage idea boards using configurable status swimlanes.
    - In Progress
    - Client Review
    - Complete
-4. The default statuses are provisioned automatically when a new organization is created.
+4. The default statuses are provisioned automatically when a new organization is created. Default `Color` and `SortOrder` values for these 5 statuses are not yet chosen — open item, see `SPEC/60-spec-q-and-a-backlog.md`.
 5. Status deletion is soft-delete only so existing board and idea references remain valid.
 6. A status that is currently referenced as a swimlane on any active board cannot be soft-deleted; the delete must be rejected with an appropriate error until the swimlane reference is removed.
-7. Historical or detail views that reference a soft-deleted status must continue to show the prior status name with an archived or deleted label.
+7. An organization must retain at least 2 active statuses at all times — matching a board's own 2-swimlane minimum, not the 1-active-option minimum used for Idea Type/Business Impact. Deleting a status that would drop the organization below 2 active statuses is rejected, independent of whether that status is currently referenced as a swimlane on any board. This prevents an organization from being left unable to create a new board.
+8. Historical or detail views that reference a soft-deleted status must continue to show the prior status name with an archived or deleted label.
+9. Each status has an admin-editable `Color` (hex/CSS color, max 20 characters) used for the status's swimlane color dot and, where configured, the idea card's status chip.
+10. Each status has an admin-controlled `SortOrder` (integer) that determines its default position in the organization's status catalog (e.g. the Settings > Statuses list and the default order offered when configuring a new board's swimlanes). This is distinct from a board's own swimlane order, which a board can independently reorder via drag-and-drop without changing the organization-level catalog order.
 
 ## Board Rules
 1. A board is a collection of ideas organized by swimlanes.
@@ -47,7 +50,10 @@ When implemented:
 - [ ] A new organization receives the default status set automatically
 - [ ] Deleting a status performs a soft delete so existing references remain valid
 - [ ] A status referenced as a swimlane on any active board cannot be soft-deleted; the delete is rejected with an error
+- [ ] An organization cannot be reduced below 2 active statuses; a delete that would do so is rejected with an error, even if the status being deleted is not currently referenced as a swimlane
 - [ ] Historical or detail views show soft-deleted status names with an archived or deleted label
+- [ ] Statuses support an admin-editable `Color` used by the swimlane color dot and idea card status chip
+- [ ] Statuses support an admin-controlled `SortOrder` for the organization's default status catalog order, independent of any single board's swimlane order
 - [ ] A board cannot be created with fewer than 2 swimlanes
 - [ ] A new organization receives one default board
 - [ ] Boards can select a subset of org statuses

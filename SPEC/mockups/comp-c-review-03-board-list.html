@@ -129,7 +129,7 @@
 
         <div class="kview" id="view-list-user">
           <div class="lanesec">
-            <h2>New <span class="cnt">4 ideas</span></h2>
+            <h2>New / Pending <span class="cnt">4 ideas</span></h2>
             <div class="card">
               <div class="rowcard"><span class="prio high"></span><span class="t">Dark mode support</span><span class="tag">ui</span><span class="tag">theme</span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div>
               <div class="rowcard"><span class="prio med"></span><span class="t">Bulk import from CSV</span><span class="tag">data</span><span class="avatar s">TD</span><button class="up">▲ 17</button></div>
@@ -138,7 +138,11 @@
             </div>
           </div>
           <div class="lanesec">
-            <h2>Research In Process <span class="cnt">3 ideas</span></h2>
+            <h2>In Review <span class="cnt">1 idea</span></h2>
+            <div class="card"><div class="rowcard"><span class="prio high"></span><span class="t">Mobile responsive board</span><span class="tag">ui</span><span class="avatar s">TD</span><button class="up">▲ 20</button></div></div>
+          </div>
+          <div class="lanesec">
+            <h2>In Progress <span class="cnt">3 ideas</span></h2>
             <div class="card">
               <div class="rowcard"><span class="prio high"></span><span class="t">SSO via SAML</span><span class="tag">auth</span><span class="avatar s">AL</span><button class="up">▲ 31</button></div>
               <div class="rowcard"><span class="prio med"></span><span class="t">Notification digest email</span><span class="tag">notify</span><span class="avatar s">JR</span><button class="up mine">▲ 12</button></div>
@@ -146,13 +150,12 @@
             </div>
           </div>
           <div class="lanesec">
-            <h2>In Review <span class="cnt">1 idea</span></h2>
-            <div class="card"><div class="rowcard"><span class="prio high"></span><span class="t">Mobile responsive board</span><span class="tag">ui</span><span class="avatar s">TD</span><button class="up">▲ 20</button></div></div>
+            <h2>Client Review <span class="cnt">1 idea</span></h2>
+            <div class="card"><div class="rowcard"><span class="prio med"></span><span class="t">Org-scoped user search</span><span class="avatar s">AL</span><button class="up">▲ 14</button></div></div>
           </div>
           <div class="lanesec">
-            <h2>Complete <span class="cnt">2 ideas</span></h2>
+            <h2>Complete <span class="cnt">1 idea</span></h2>
             <div class="card" style="opacity:.8">
-              <div class="rowcard"><span class="prio med"></span><span class="t">Org-scoped user search</span><span class="avatar s">AL</span><button class="up">▲ 14</button></div>
               <div class="rowcard"><span class="prio low"></span><span class="t">Audit log for admin actions</span><span class="avatar s">JR</span><button class="up">▲ 8</button></div>
             </div>
           </div>
@@ -161,8 +164,8 @@
 
         <div class="kview on" id="view-swim-user">
           <div class="klanes">
-            <div class="klane" data-lane="New" style="--lc-deep:#57534e;--lc-soft:#f1f0ee">
-              <h3><span class="dot"></span><span class="grow">New</span><span class="cnt">4</span></h3>
+            <div class="klane" data-lane="New / Pending" style="--lc-deep:#57534e;--lc-soft:#f1f0ee">
+              <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
               <div class="kcard" draggable="true">
                 <div class="top"><span class="t">Dark mode support</span><span class="prio-chip">High</span></div>
                 <p class="desc">Users working late hours want a dark theme that respects OS preference by default.</p>
@@ -186,8 +189,17 @@
               </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
-            <div class="klane" data-lane="Research In Process" style="--lc-deep:#2f6fb0;--lc-soft:#e6f0fa">
-              <h3><span class="dot"></span><span class="grow">Research In Process</span><span class="cnt">3</span></h3>
+            <div class="klane" data-lane="In Review" style="--lc-deep:#9a5b00;--lc-soft:#f7ecdc">
+              <h3><span class="dot"></span><span class="grow">In Review</span><span class="cnt">1</span></h3>
+              <div class="kcard" draggable="true">
+                <div class="top"><span class="t">Mobile responsive board</span><span class="prio-chip">High</span></div>
+                <p class="desc">Board columns overflow badly below 768px — flagged during review, needs a layout pass.</p>
+                <div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 20</button></div>
+              </div>
+              <button class="btn subtle" style="width:100%">+ Add idea</button>
+            </div>
+            <div class="klane" data-lane="In Progress" style="--lc-deep:#2f6fb0;--lc-soft:#e6f0fa">
+              <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">3</span></h3>
               <div class="kcard" draggable="true">
                 <div class="top"><span class="t">SSO via SAML</span><span class="prio-chip">High</span></div>
                 <p class="desc">Let enterprise customers sign in through their own identity provider.</p>
@@ -206,22 +218,17 @@
               </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
-            <div class="klane" data-lane="In Review" style="--lc-deep:#9a5b00;--lc-soft:#f7ecdc">
-              <h3><span class="dot"></span><span class="grow">In Review</span><span class="cnt">1</span></h3>
+            <div class="klane" data-lane="Client Review" style="--lc-deep:#7a3fb8;--lc-soft:#f1e8fb">
+              <h3><span class="dot"></span><span class="grow">Client Review</span><span class="cnt">1</span></h3>
               <div class="kcard" draggable="true">
-                <div class="top"><span class="t">Mobile responsive board</span><span class="prio-chip">High</span></div>
-                <p class="desc">Board columns overflow badly below 768px — flagged during review, needs a layout pass.</p>
-                <div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 20</button></div>
+                <div class="top"><span class="t">Org-scoped user search</span><span class="prio-chip">Medium</span></div>
+                <p class="desc">Feature-complete; awaiting Acme Corp stakeholder sign-off before closing.</p>
+                <div class="meta"><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 14</button></div>
               </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
             <div class="klane" data-lane="Complete" style="--lc-deep:#0e700e;--lc-soft:#e7f2e7">
-              <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">2</span></h3>
-              <div class="kcard" draggable="true" style="opacity:.75">
-                <div class="top"><span class="t">Org-scoped user search</span><span class="prio-chip">Medium</span></div>
-                <p class="desc">Admins can search users within their own organization by name or email.</p>
-                <div class="meta"><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 14</button></div>
-              </div>
+              <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">1</span></h3>
               <div class="kcard" draggable="true" style="opacity:.75">
                 <div class="top"><span class="t">Audit log for admin actions</span><span class="prio-chip">Low</span></div>
                 <p class="desc">A chronological log of every admin action, filterable by actor and date.</p>
@@ -230,7 +237,7 @@
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
           </div>
-          <div class="note">Try it: drag any card to another column to change its status — same interaction model as Trello/Jira boards. The priority chip's color now comes from the status's configured color (set in the Statuses admin screen), not the priority level — the chip text still shows High/Medium/Low. Column counts are illustrative and don't live-update in this static comp. Same 48 ideas as List view; this is a display preference, not a separate data set.</div>
+          <div class="note">Try it: drag any card to another column to change its status — same interaction model as Trello/Jira boards. The priority chip's color now comes from the status's configured color (set in the Statuses admin screen), not the priority level — the chip text still shows High/Medium/Low. Columns reflect the canonical 5 default statuses (New/Pending, In Review, In Progress, Client Review, Complete) in their defined order. Column counts are illustrative and don't live-update in this static comp. Same 48 ideas as List view; this is a display preference, not a separate data set.</div>
         </div>
       </div>
     </div>
@@ -255,14 +262,14 @@
 
         <div class="kview" id="view-list-ro">
           <div class="lanesec">
-            <h2>New <span class="cnt">4 ideas</span></h2>
+            <h2>New / Pending <span class="cnt">4 ideas</span></h2>
             <div class="card">
               <div class="rowcard" style="cursor:default"><span class="prio high"></span><span class="t">Dark mode support</span><span class="tag">ui</span><span class="avatar s">MP</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 24</span></div>
               <div class="rowcard" style="cursor:default"><span class="prio med"></span><span class="t">Bulk import from CSV</span><span class="tag">data</span><span class="avatar s">TD</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 17</span></div>
             </div>
           </div>
           <div class="lanesec">
-            <h2>Research In Process <span class="cnt">3 ideas</span></h2>
+            <h2>In Progress <span class="cnt">3 ideas</span></h2>
             <div class="card"><div class="rowcard" style="cursor:default"><span class="prio high"></span><span class="t">SSO via SAML</span><span class="tag">auth</span><span class="avatar s">AL</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 31</span></div></div>
           </div>
           <div class="note">Read Only can open an idea to read full content, but cannot move ideas, comment, upvote, or create new ones.</div>
@@ -271,7 +278,7 @@
         <div class="kview on" id="view-swim-ro">
           <div class="klanes">
             <div class="klane" style="--lc-deep:#57534e;--lc-soft:#f1f0ee">
-              <h3><span class="dot"></span><span class="grow">New</span><span class="cnt">4</span></h3>
+              <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
               <div class="kcard" style="cursor:default">
                 <div class="top"><span class="t">Dark mode support</span><span class="prio-chip">High</span></div>
                 <p class="desc">Users working late hours want a dark theme that respects OS preference by default.</p>
@@ -285,7 +292,7 @@
               </div>
             </div>
             <div class="klane" style="--lc-deep:#2f6fb0;--lc-soft:#e6f0fa">
-              <h3><span class="dot"></span><span class="grow">Research In Process</span><span class="cnt">3</span></h3>
+              <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">3</span></h3>
               <div class="kcard" style="cursor:default">
                 <div class="top"><span class="t">SSO via SAML</span><span class="prio-chip">High</span></div>
                 <p class="desc">Let enterprise customers sign in through their own identity provider.</p>
@@ -310,18 +317,19 @@
       <div class="body">
         <div class="warnbanner">This board is already at the 2-swimlane minimum — Remove is disabled on both until a third swimlane is added.</div>
         <div class="card" style="padding:18px;max-width:560px">
-          <div class="swrow" style="opacity:.6"><span class="grip">⠿</span><span class="swatch sm" style="background:#57534e"></span><span>New</span><span class="spacer"></span><span class="pill neutral">22 ideas</span><button class="btn subtle" disabled title="A board must have at least 2 swimlanes">Remove</button></div>
+          <div class="swrow" style="opacity:.6"><span class="grip">⠿</span><span class="swatch sm" style="background:#57534e"></span><span>New / Pending</span><span class="spacer"></span><span class="pill neutral">22 ideas</span><button class="btn subtle" disabled title="A board must have at least 2 swimlanes">Remove</button></div>
           <div class="swrow" style="opacity:.6"><span class="grip">⠿</span><span class="swatch sm" style="background:#0e700e"></span><span>Complete</span><span class="spacer"></span><span class="pill neutral">61 ideas</span><button class="btn subtle" disabled title="A board must have at least 2 swimlanes">Remove</button></div>
           <div class="cmdbar" style="margin-bottom:0">
             <select style="flex:1">
               <option>+ Add existing status as swimlane…</option>
-              <option>Research In Process</option>
               <option>In Review</option>
+              <option>In Progress</option>
+              <option>Client Review</option>
             </select>
             <button class="btn">Add</button>
           </div>
         </div>
-        <div class="note">Drag the ⠿ handle to reorder swimlanes — order saves immediately on drop. Adding "Research In Process" or "In Review" above would re-enable Remove on New and Complete.</div>
+        <div class="note">Drag the ⠿ handle to reorder swimlanes — order saves immediately on drop. Adding any status above (In Review, In Progress, or Client Review) would re-enable Remove on New / Pending and Complete.</div>
       </div>
     </div>
   </div>
