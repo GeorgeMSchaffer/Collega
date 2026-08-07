@@ -32,7 +32,7 @@
 - post-MVP successful reset consumes the token, revokes all existing sessions, and does not issue a new session
 - post-MVP reset responses, logs, audit events, and analytics do not expose tokens or plaintext passwords
 - Development startup auto-seeds exactly 3 demo organizations
-- each demo organization includes Org Admin, User, and Read Only accounts initialized to `abc123!` without forced password change
+- each demo organization includes Org Admin, User, and Read Only accounts initialized to `Abc123!` without forced password change
 - each demo organization has one seeded example board with ideas across each default swimlane and example comments
 - organization CRUD follows Site Admin and Org Admin role boundaries
 - user CRUD is limited to the correct organization scope

@@ -4,14 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository State
 
-Collega has **no implementation yet**. There is no `.sln`, no `global.json`, and none of the `src/Collega.*` or `tests/` projects described below exist on disk. This repo currently contains only specs, mockups, and one unrelated scaffold:
+Collega has a working solution scaffold and an initial implementation slice. `Collega.sln`, `global.json` (.NET 8 SDK), all five `src/Collega.*` projects, and their `tests/Collega.*.Tests` counterparts exist and build. Implementation progress is tracked task-by-task in `SPEC/implementation-agent-tracker.md` — **read that file for current status before starting or resuming implementation work**; treat it as authoritative over any summary here, which will drift as tasks complete. As of the last tracker update (2026-08-07): Foundation (T001-T004) and Auth Agent (T005-T011) are merged into `dev`; Tenant Administration Agent (T012-T019) is next and not yet started; the Client Agent (Blazor UI, T040-T045) is no longer blocked on UI comp sign-off — `comp-c-review-06-lockin-v5-final.html` is locked (see "Locked (2026-08-07)" below) — but confirm with the user before spawning a UI/UX Developer implementation pass, since that's still a scoped decision.
 
-- `SPEC/` — canonical specs for Collega (source of truth, see below)
+This repo also contains:
+
+- `SPEC/` — canonical specs for Collega (source of truth, see below), including the implementation tracker and delivery/workstream plans
 - `SPEC/mockups/` — SVG/HTML UI mockups for Collega
 - `SPEC/SPECKIT/specs/<NNN-feature>/spec.md` — spec-kit-style derived specs, synced from canonical `SPEC/*.md` (e.g. `002-authentication-and-access`); edit the canonical file first, these are downstream copies
 - `FluentUiComps/` — **not part of Collega**, see below
 
-Everything under "Target Architecture" and "Build and Run" below describes the intended future state. Verify a file/project actually exists before assuming a command will work.
+Verify a file/project actually exists and check the tracker before assuming a command will work or a slice is unbuilt — don't rely solely on the descriptions below, which describe the target shape rather than tracking live status.
 
 
 ## Source of Truth
@@ -24,8 +26,9 @@ Canonical product behavior lives in `SPEC/*.md`. Read the relevant spec before d
 - `SPEC/30-Contracts.md` — canonical API route/payload contracts
 - `SPEC/40-test-strategy.md`
 - `SPEC/50-technical-implementation-plan.md`, `SPEC/50-kubernetes-deployment.md`
-- `SPEC/70-delivery-backlog.md`, `SPEC/80-workstream-roadmap.md`
+- `SPEC/70-delivery-backlog.md`, `SPEC/80-workstream-roadmap.md`, `SPEC/85-implementation-timeline.md`
 - `SPEC/90-definition-of-done.md`
+- `SPEC/implementation-agent-tracker.md` — **not product behavior, but the authoritative log of what's actually been built, what's in progress, and what's next**; check this before starting, resuming, or describing the state of implementation work
 
 `SPEC/Specs Overview.md` is a single-document aggregate meant as a fast AI entrypoint, but it is not fully in sync with the individual specs — e.g. it omits invite-code self-registration (`POST /register`, invite-code regenerate) that `SPEC/10-requirements.md`, `SPEC/20-feature-organizations-and-users.md`, and `SPEC/30-Contracts.md` describe as canonical. When the overview and a detailed spec disagree, treat it as an open spec conflict and ask rather than silently picking one.
 
@@ -36,13 +39,13 @@ If behavior is ambiguous or specs conflict, ask before implementing.
 Collega is an organization-scoped collaboration/idea-tracking tool, conceptually similar to Trello/Jira: organizations contain users, boards, statuses, and ideas; boards organize ideas by status using swimlanes.
 
 - Roles, most to least privileged scope: **Site Admin** (global, not organization-owned) → **Org Admin** (own org only) → **User** → **Read Only**.
-  - Open question: how the first Site Admin account gets bootstrapped (seed data, migration, manual script) is not yet decided — ask before implementing.
+  - The first Site Admin account is seeded at startup from environment-provided configuration (`SiteAdmin__Email` / `SiteAdmin__Password`); startup fails fast if either is missing, and that account must change its password on first login. See `SPEC/20-feature-auth.md` requirement #8 and `src/Collega.Infrastructure/Seeding/StartupSeeder.cs`.
 - Non-Site Admin users belong to exactly one organization and one role. Email is globally unique across the whole system.
 - Each organization gets a system-generated, regenerable invite code; users join via invite-code self-registration, direct admin creation, or admin CSV import (no invite code needed for the latter two).
 - MVP scope: auth + forced first-login password change, org/user administration, boards/statuses with swimlanes, idea CRUD + status movement, tags/mentions/comments/upvotes, audit events, notification events persisted (not delivered).
 - Explicitly deferred — don't build without an explicit ask: OAuth/SSO, SAML, reporting, guaranteed outbound email delivery, remember-this-device.
 
-## Target Architecture (not yet created)
+## Target Architecture
 
 Layered with strict boundaries — business rules live in Domain and Application, never in controllers or UI components.
 
@@ -76,7 +79,7 @@ Within that direction, page-level designs are being locked in one feature area a
 - Keep business rules in Application/Domain; keep API controllers thin; keep Blazor components focused on rendering and user interaction.
 - Use DbContext + LINQ for data access; async/await for all database and I/O operations; EF Core migrations for schema changes.
 
-## Testing Conventions (once `tests/` exists)
+## Testing Conventions
 
 - Arrange / Act / Assert. Cover happy path, boundary values, null input, invalid state.
 - Unit tests must be hermetic: no network, filesystem, `DateTime.Now`, or randomness.
@@ -100,18 +103,19 @@ docker compose --profile full up -d   # SQL Server + the api/web placeholder ser
 docker compose down                   # stop; add -v to also delete the sqlserver-data volume
 ```
 
-The `api` and `web` services in that file are placeholders wired for `dotnet watch` hot reload against `src/Collega.API` and `src/Collega.Client` — they reference `Dockerfile.dev` paths that don't exist yet and are gated behind the `full` profile so they can't be started (or fail a build) by accident. Fill them in once those projects are scaffolded.
+The `api` and `web` services in that file are placeholders wired for `dotnet watch` hot reload against `src/Collega.API` and `src/Collega.Client` — the projects themselves are now scaffolded, but the services still reference `Dockerfile.dev` paths that don't exist yet, and stay gated behind the `full` profile so they can't be started (or fail a build) by accident. Add real `Dockerfile.dev` files to enable them.
 
-## Build and Run (target state, once the solution exists)
+## Build and Run
 
 ```powershell
 dotnet build Collega.sln
 dotnet test Collega.sln
 dotnet test tests/Collega.Application.Tests/Collega.Application.Tests.csproj
 dotnet run --project .\src\Collega.API\Collega.API.csproj
+dotnet run --project .\src\Collega.Client\Collega.Client.csproj
 ```
 
-If port 5027 is in use:
+The API's default `http` launch profile listens on `http://localhost:5103` (Swagger at `/swagger`); the Client's on `http://localhost:5098` — see each project's `Properties/launchSettings.json`. If a port is in use:
 ```powershell
 $env:ASPNETCORE_URLS='http://localhost:5030'; dotnet run --project .\src\Collega.API\Collega.API.csproj
 ```

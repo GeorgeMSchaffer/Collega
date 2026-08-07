@@ -17,7 +17,7 @@ Users can securely access the application using organization-scoped accounts.
 7. The seeded Site Admin account is a global platform account and does not belong to an organization.
 8. A seed Site Admin account must be created on first run using an environment-provided initial credential, read from configuration keys `SiteAdmin__Email` and `SiteAdmin__Password` (bound via standard ASP.NET Core configuration, so either environment variables or `dotnet user-secrets` may supply them locally). Startup must fail fast if either is missing.
 9. The seed Site Admin must be forced to change that initial credential on first login.
-10. In Development only, startup seed must also create demo organization users for each role: Org Admin, User, and Read Only, each initialized with demo password `abc123!`.
+10. In Development only, startup seed must also create demo organization users for each role: Org Admin, User, and Read Only, each initialized with demo password `Abc123!` (chosen to satisfy the password complexity policy in requirement #5 — the earlier literal `abc123!` from `SPEC/10-requirements.md` had no uppercase character and was changed rather than exempted; see `SPEC/60-spec-q-and-a-backlog.md` decision 16).
 11. Development demo users are not forced to change the demo password on first successful login.
 12. Password reset is required in P1 and uses admin-issued temporary passwords.
 13. Admin-issued temporary passwords are shown one time only, expire after 24 hours, and require password change on first use.
@@ -43,6 +43,10 @@ Users can securely access the application using organization-scoped accounts.
 33. Persisted client authentication data is a cached session candidate and must not establish an authenticated client principal until `GET /api/v1/auth/me` accepts the stored bearer token.
 34. When the API rejects a stored or active bearer token, the client clears its authentication state and redirects to `/login`. Endpoint-specific authorization failures must not clear a token that `GET /api/v1/auth/me` still accepts.
 
+## Session Mechanism (Resolved 2026-08-07)
+35. `accessToken` is a signed JWT embedding the issuing `User.SecurityStamp` value as a claim. Every authenticated request revalidates the embedded `SecurityStamp` against the user's current database value; a mismatch is rejected the same way an expired token is. This is a JWT-plus-server-side-check design, not an opaque session-table design.
+36. "Revoke all existing sessions" (requirement #29 and the self-service reset acceptance criteria) is implemented by regenerating `User.SecurityStamp`. This single write immediately invalidates every previously issued JWT for that user, with no token blocklist or session table required.
+
 ## Acceptance Criteria
 - [ ] Valid credentials allow login
 - [ ] Invalid credentials are rejected
@@ -52,8 +56,8 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Seed Site Admin is created at first run
 - [ ] Seed Site Admin must change the environment-provided initial credential on first login
 - [ ] Startup fails fast with a clear error if `SiteAdmin__Email` or `SiteAdmin__Password` is missing
-- [ ] Development startup seed creates demo Org Admin, User, and Read Only accounts using `abc123!`
-- [ ] Development startup seeded demo users can log in with `abc123!` without a forced password change
+- [ ] Development startup seed creates demo Org Admin, User, and Read Only accounts using `Abc123!`
+- [ ] Development startup seeded demo users can log in with `Abc123!` without a forced password change
 - [ ] Admin-issued temporary password reset is implemented in P1
 - [ ] Temporary passwords are one-time display, expire after 24 hours, and force password change on first use
 - [ ] Authentication outcomes and password-related actions generate audit events
@@ -75,3 +79,5 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Invalid, expired, superseded, and used reset links display the same invalid-link state
 - [ ] A successful post-MVP reset revokes all sessions and returns the user to Login without automatic authentication
 - [ ] Password-reset requests and outcomes are audited without exposing the token or plaintext password
+- [ ] `accessToken` is a JWT carrying the issuing `SecurityStamp` claim; a request whose claim no longer matches the user's current `SecurityStamp` is rejected as unauthenticated
+- [ ] Regenerating a user's `SecurityStamp` (on any "revoke all sessions" action) invalidates every previously issued token for that user on their very next request

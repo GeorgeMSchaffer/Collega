@@ -54,6 +54,7 @@ Defines the system contracts that implementations must follow.
 	- Mention resolution: `Mention '<Value>' could not be resolved to a user in your organization.`
 - Validation failures use the `errors` object keyed by request field names.
 - UI should mirror API validation wording where practical to reduce interpretation drift.
+- **Casing (Resolved 2026-08-07)**: the `errors` object *keys* are camelCase to match wire JSON field names (e.g. `"firstName"`). The `<FieldName>` substituted into message *text* is separate and uses human-readable, spaced Title Case (e.g. `"First Name is required."`, `"Email is required."`), not the raw camelCase or PascalCase property name. This applies to every validation template in this section.
 
 ## Shared Data Rules
 - Identifiers are GUID strings.
@@ -77,6 +78,9 @@ Defines the system contracts that implementations must follow.
 - Comment body maximum length is 2000 characters and supports plain text with line breaks only.
 
 ## Authentication Contracts
+
+### Access Token Format and Session Revocation (Resolved 2026-08-07)
+`accessToken` is a signed JWT, not an opaque server-tracked token. Every `User` has a server-side `SecurityStamp` (a random value regenerated whenever sessions must be invalidated). Each issued JWT embeds the `SecurityStamp` value current at issuance time as a claim. `GET /api/v1/auth/me` and every authenticated request revalidate the JWT's embedded `SecurityStamp` claim against the User's current `SecurityStamp` in the database — a mismatch is treated as an invalid/expired token (`401`), exactly like an expired JWT. "Revoke all existing sessions" (self-service and admin-issued password reset, `SPEC/20-feature-auth.md` requirements #29 and the self-service reset acceptance criteria) is implemented by regenerating `User.SecurityStamp`, which immediately invalidates every previously issued token for that user without needing a token blocklist or session table.
 
 ### `POST /api/v1/auth/login`
 Purpose: Authenticate a user with globally unique email credentials.

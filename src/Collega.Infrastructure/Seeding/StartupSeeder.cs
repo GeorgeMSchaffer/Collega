@@ -12,17 +12,11 @@ namespace Collega.Infrastructure.Seeding;
 /// Idempotent startup seeding (auth requirements #8-11):
 /// 1. The global Site Admin, from environment-provided credentials, on first run only.
 /// 2. Development-only: 3 demo organizations, each with one Org Admin, one User, and one Read
-///    Only account at password `abc123!`, none forced to change it.
-///
-/// Reviewer note: `abc123!` (mandated verbatim by SPEC/20-feature-auth.md #10 and
-/// SPEC/10-requirements.md) has lowercase, digit, and special characters but no uppercase letter —
-/// it does not satisfy Collega.Domain.Users.PasswordPolicy (auth requirement #5). This seeder sets
-/// it directly via the password hasher, bypassing PasswordPolicy validation, which is the only way
-/// to honor the literal spec value. Flagged as an open spec conflict, not silently resolved.
+///    Only account at password `Abc123!`, none forced to change it.
 /// </summary>
 public sealed class StartupSeeder : IStartupSeeder
 {
-    private const string DemoPassword = "abc123!";
+    private const string DemoPassword = "Abc123!";
 
     private static readonly (string Title, string Slug)[] DemoOrganizations =
     {

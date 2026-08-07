@@ -19,7 +19,7 @@ Collega is a collaboration and project management tool for submitting, tracking,
 - Tags are organization-scoped.
 - An idea can have up to 10 distinct organization-scoped tags. Users authorized to edit an idea can select existing tags or create reusable tags inline.
 - Read Only users can comment and upvote, but cannot edit ideas or board configuration.
-- In Development, startup seed creates a demo environment with 3 organizations, each containing Org Admin, User, and Read Only accounts initialized with demo password `abc123!` and no forced password change.
+- In Development, startup seed creates a demo environment with 3 organizations, each containing Org Admin, User, and Read Only accounts initialized with demo password `Abc123!` and no forced password change.
 - In Development, each seeded demo organization includes one example board with ideas across every default swimlane, plus example comments and description-based spec content.
 - Ideas require Priority, an organization-configured Idea Type, and an organization-configured Business Impact; due date remains optional.
 - Every organization retains at least one active Idea Type and one active Business Impact. Admins control option sort order, the first active option is the default, and option deletion is soft-delete only.

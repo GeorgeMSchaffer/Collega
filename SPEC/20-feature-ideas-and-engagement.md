@@ -176,6 +176,67 @@ Users can create, discuss, organize, and support ideas within their organization
 - [ ] A bulk-import audit event is generated for the upload action, including when all rows are skipped
 - [ ] One individual audit event is generated per idea created, matching the manual idea-creation audit event type
 
+## AI-Assisted Idea Creation (Interview-Resolved 2026-08-07)
+
+### Outcome
+Users can start a new idea by describing it in plain English instead of filling every field by hand. The system extracts as many fields as it can confidently determine, asks a single batched round of clarifying questions only for fields it cannot confidently determine, and always presents the result on the same idea form used for manual entry for review before the idea is created.
+
+### Decisions
+| Decision | Resolution |
+|---|---|
+| Entry point | The board's New Idea action opens a plain-English prompt box by default. A visible link/toggle lets the user skip directly to the blank manual field-by-field form instead. |
+| Board context | This flow is launched from within a specific board, the same entry point as the existing manual New Idea action. The board is always known from context and is never inferred or asked about. |
+| Trust model | The extracted result always populates the standard idea form as a pre-filled, fully editable, unsaved draft. No idea is created directly from the prompt; the user must review and submit Create. |
+| Scope of one submission | One prompt submission produces exactly one idea. Detecting and splitting multiple candidate ideas out of a single input (e.g., a pasted meeting-notes dump covering several topics) is out of MVP scope. |
+| Title and Description | Always synthesized/derived; neither is ever blocked on or triggers a clarifying question. Description defaults to a lightly cleaned version of the user's raw input with no generative rewrite, so the mandatory extraction call stays cheap. An explicit opt-in "Polish with AI" action may rewrite the description on request. |
+| Priority, Idea Type, Business Impact | Required fields. Always inferred when the input gives any reasonable signal, and shown on the review form as visually distinguished "inferred, unconfirmed" until the user interacts with the field. A clarifying question is triggered only when there is no usable signal at all for a given field. |
+| Due Date, Assignees, Tags | Optional; only surfaced when mentioned in the input. An ambiguous mention (e.g., a name matching more than one active org user) triggers a disambiguation question; an unmentioned optional field is simply left blank/default. |
+| Clarifying questions | Batched into a single round after the initial extraction pass, not serial back-and-forth. Enum fields (Priority, Idea Type, Business Impact) are presented as multiple-choice sourced from the org's current active options. MVP supports at most one clarification round; any field still unresolved afterward is left blank/default on the review form for manual correction. |
+| Entity resolution | The extraction step never receives the org's full user or tag lists. It returns raw plain-text mentions (person names, tag-like keywords, date phrases); resolving those mentions against actual org users, tags, and dates happens in deterministic backend logic (fuzzy match, date parsing), not inside the model prompt. This keeps prompt size independent of org size and keeps resolution grounded in real data rather than model recall. |
+| Model tier | MVP uses a single fixed, low-cost model tier appropriate to a classification/short-synthesis task. No multi-model escalation/cascade in MVP. |
+| Input guardrails | The client enforces a minimum input length before allowing submission, to avoid wasted calls on trivially empty input. The API enforces a maximum input length aligned to the Description field limit, since multi-idea handling is out of scope. |
+| Relationship to Approval Workflow | Consistent with the deferred Approval Workflow decision that AI-generated content is untrusted until reviewed by a human (below): the always-review-before-create trust model already satisfies that principle for this feature, independent of whether the approval workflow itself is ever built. |
+
+### Flow
+1. From within a board, the user opens New Idea, which opens a prompt box with a link to skip to the manual form.
+2. The user describes the idea in their own words and submits.
+3. The extraction step runs once against the input, constrained to the target org's active Idea Type options and active Business Impact options, and returns: a synthesized title; Priority, Idea Type, and Business Impact each either confidently classified or marked as no-signal; a lightly cleaned description; and any raw mentions of people, dates, or tag-like terms found in the text.
+4. Backend logic resolves raw mentions against the org's active users, tags, and a date parser. Ambiguous or unresolved mentions are queued for the clarifying round; unambiguous matches are pre-filled directly.
+5. If any required field has no signal, or any mention is ambiguous, the user is shown one batched round of clarifying questions (multiple-choice for enum fields, a short picker for name/tag disambiguation). If nothing needs clarifying, this step is skipped.
+6. The standard idea form opens pre-filled with everything extracted and resolved. Inferred-but-unconfirmed fields are visually distinguished from user-confirmed or user-edited fields.
+7. The user reviews, edits any field, and submits Create through the existing idea-creation path, generating the same audit event as manual creation (see Idea Rules).
+
+### Cost Architecture Principles
+1. The model never receives the org's full user or tag list; it only extracts raw mentions, which deterministic backend code resolves. This bounds prompt size independent of org size.
+2. Output is schema/tool-constrained with per-field token limits aligned to existing field length limits (Title 150 characters, Description 4000 characters), not open-ended generation.
+3. Description defaults to cleaned raw input rather than a generated rewrite; generative rewriting is opt-in and separate from the mandatory extraction call.
+4. A single fixed low-cost model is used for MVP. Prompt caching, multi-model escalation, self-hosted model infrastructure, and per-organization usage quotas are deferred until real usage data justifies the added engineering cost (see Out of Scope below).
+
+### Out of Scope (MVP)
+- Detecting or splitting multiple candidate ideas from one input.
+- A global (not board-scoped) entry point, and any board inference/selection question.
+- Multi-model escalation/cascade based on confidence or validation failure.
+- Prompt caching infrastructure and self-hosted model infrastructure.
+- Per-organization AI usage quotas or cost governance.
+- Ambient capture (e.g., email- or Slack-forwarded idea creation).
+
+### Permissions
+Same as manual idea creation: Site Admin, Org Admin, and User can use AI-assisted creation. Read Only cannot create ideas by any path.
+
+### Acceptance Criteria
+- [ ] New Idea on a board opens a plain-English prompt box by default, with a visible option to go directly to the blank manual form
+- [ ] The board context for an AI-assisted idea is always the board the flow was launched from; it is never inferred or asked about
+- [ ] Submitting a prompt never creates an idea directly; the result always populates the standard idea form as an editable, unsaved draft
+- [ ] Title and Description are always populated without triggering a clarifying question; Description defaults to the user's cleaned raw input unless the user explicitly requests an AI rewrite
+- [ ] Priority, Idea Type, and Business Impact are inferred when the input gives any signal and are visually marked as inferred/unconfirmed until the user interacts with them
+- [ ] A clarifying question is shown only when a required field has no usable signal, or an optional mention (assignee, tag) is ambiguous against active org data
+- [ ] All clarifying questions for one submission are presented together in a single round; enum fields use multiple-choice sourced from the org's active options
+- [ ] Any field still unresolved after one clarification round is left blank/default on the review form rather than triggering a second round
+- [ ] The extraction call never includes the org's full user or tag list; name/tag/date resolution happens in backend logic against raw extracted mentions
+- [ ] Client rejects submission below a minimum input length before any extraction call is made
+- [ ] API enforces a maximum input length aligned to the Description field limit
+- [ ] AI-assisted idea creation is available to the same roles as manual idea creation (Site Admin, Org Admin, User) and generates the same audit event as manual creation
+
 ## Approval Workflow Decisions (Post-MVP — Deferred)
 The following decisions are captured for a future post-MVP approval workflow feature. **None of these behaviors are implemented in MVP.** No API contracts, data model fields, background scheduler, or acceptance criteria for approval are required for the MVP release.
 
@@ -244,4 +305,4 @@ When this feature is implemented it must address:
 - [ ] Development startup seed provides example ideas with description-based spec content
 - [ ] Development startup seed provides example comments on seeded ideas
 - [ ] MVP idea and comment content remains plain text only
-- [ ] Rich text, embedded media, and file attachments are excluded from MVP implementation
+- [ ] Rich text, embedded media, and file attachments are excluded from MVP implementation`

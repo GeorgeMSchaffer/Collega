@@ -12,7 +12,7 @@ Defines a batch of client UI bug fixes and structural revisions covering layout,
 
 ## Decision Log Addendum (2026-08-07)
 
-- Decision D4: Home dashboard scope is locked to the **richer dashboard** — welcome message, `Boards` / `Your ideas` / `Assigned to you` counts, a "Your boards" tile grid (one tile per accessible board with an open/assigned/last-active summary, plus a "Request a new board" tile), and a "Catching you up" activity feed (recent mentions, upvotes, and status moves). This supersedes Decision D1's simpler MVP version. Locked via `SPEC/mockups/comp-c-review-06-lockin-v4-combined.html` (`Home` tab), the user-selected outcome of the review-06 lock-in comparison (`comp-c-review-06-lockin-v1/v2/v3`) — see `SPEC/implementation-agent-tracker.md` for the full decision trail.
+- Decision D4: Home dashboard scope is locked to the **richer dashboard** — welcome message, `Boards` / `Your ideas` / `Assigned to you` counts, a "Your boards" tile grid (one tile per accessible board with an open/assigned/last-active summary, plus a "Request a new board" tile), and a "Catching you up" activity feed (recent mentions, upvotes, and status moves). This supersedes Decision D1's simpler MVP version (see "Home Page Dashboard" below, which still describes the superseded D1 scope). Locked via `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` (`Home` screen, superseding the earlier `-v4-combined.html` sign-off) — see `SPEC/implementation-agent-tracker.md` for the full decision trail.
 
 ## Bug Fixes
 
@@ -29,21 +29,21 @@ Defines a batch of client UI bug fixes and structural revisions covering layout,
 ## Layout and Header
 
 ### Header and Menu (superseded 2026-08-07 — see Rail below)
-The header-bar and horizontal-menu description immediately below predates the rail decision and no longer describes the built shell. Kept for the still-valid parts (routing behavior, role-scoping, what's NOT in primary nav) — read "header gear icon" as "rail Admin icon" and "menu" as "rail":
+The header-bar and horizontal-menu description immediately below predates the rail decision and no longer describes the built shell. Kept for the still-valid parts (routing behavior, role-scoping, what's NOT in primary nav) — read "header gear icon" as "rail Settings icon" and "menu" as "rail":
 - ~~Header background color is `rgb(33, 37, 41)` across the entire header bar.~~ Dropped — no separate header bar.
-- ~~The signed-in Username in the header renders in white.~~ ~~Sign Out is an icon button placed immediately to the LEFT of the Username display.~~ Superseded: the rail's bottom avatar opens a menu with Sign Out and Profile instead.
-- A gear/Admin icon lower in the rail navigates to the Settings area (see below), role-scoped, same as the old header gear.
+- ~~The signed-in Username in the header renders in white.~~ ~~Sign Out is an icon button placed immediately to the LEFT of the Username display.~~ Superseded: the rail's bottom avatar opens a click-open popover with Sign Out and Profile instead.
+- A Settings icon (formerly "Admin/gear") lower in the rail navigates to the Settings area (see below), role-scoped, same as the old header gear.
 - Sign Out navigates to `/logout`, where logout is executed and the user is returned to `/login` (unchanged — see Decision D2).
 - No `Password update required` text link anywhere in the shell; required-change routing is enforced by the authentication gate (unchanged).
 - When unauthenticated (or otherwise not authorized for protected UI), the shell shows only `Login` and `Register` links — no protected rail icons are shown (unchanged — see Decision D3).
-- The primary rail is vertical (not horizontal, not under a header). Rail items: Home, Boards (Ideas rail entry not yet decided — see `SPEC/20-feature-client-ui.md` NAVIGATION open gap).
-- Admin functionality is NOT a top-level rail icon alongside Home/Boards; it's a distinct, lower rail icon, role-scoped the same way the old header gear was.
+- The primary rail is vertical (not horizontal, not under a header). Rail items, top to bottom: Home, Boards, Ideas, Settings, then the bottom avatar — identically on every screen (locked 2026-08-07; the earlier "Ideas rail entry not yet decided" gap is resolved).
+- Settings is NOT a top-level rail icon indistinguishable from Home/Boards/Ideas; it's the fourth rail icon, role-scoped the same way the old header gear was.
 - Change Password is NOT in the rail; it is accessible only from Settings → My Profile (unchanged).
 - The protected rail icons are shown only for authenticated users with access to protected routes (unchanged).
-- Rail links navigate to list-entry pages: Home (`/`), Boards (`/boards`), Ideas (`/ideas`, pending the open gap above).
+- Rail links navigate to list-entry pages: Home (`/`), Boards (`/boards`), Ideas (`/ideas`), Settings (`/settings`).
 
 ### Rail (locked 2026-08-07)
-See `SPEC/20-feature-client-ui.md` NAVIGATION for the authoritative rail description and `SPEC/mockups/comp-c-review-06-lockin-v4-combined.html` for the reference implementation.
+See `SPEC/20-feature-client-ui.md` NAVIGATION for the authoritative rail description and `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` for the reference implementation (supersedes `-v4-combined.html`).
 
 ### Unauthenticated and Unauthorized Shell
 - Unauthenticated users can access `/login` and `/register`.
@@ -135,22 +135,24 @@ Applies to Settings pages for Organizations, Users, and Boards & Statuses.
 
 ## Ideas Page (new)
 
-- New "Ideas" page at `/ideas`, reachable from the horizontal menu.
+- New "Ideas" page at `/ideas`, reachable from the rail's `Ideas` icon. No comp exists yet for this page — see `SPEC/20-feature-client-ui.md`'s Visual Design Direction "Still unsettled" note.
 - Displays a combined list of ideas created by OR assigned to the current user.
 - A filter control offers: All (default), Created by me, Assigned to me.
 - List columns: Title, Created By, Assigned To, Status, Created Date (all searchable).
 - Clicking **Details** on a row navigates to `/ideas/{id}/edit` (dedicated route, not inline swap).
 - The Edit Idea form at `/ideas/{id}/edit` has a Back button returning to `/ideas`.
 
-## Home Page Dashboard (authenticated users)
+## Home Page Dashboard (authenticated users) (superseded 2026-08-07 by Decision D4 — see above)
 
-- The Home page becomes a lightweight authenticated dashboard rather than placeholder template content.
-- Initial MVP dashboard sections:
-  - Welcome summary (user name + role).
-  - Quick actions: Boards, Ideas, Settings.
-  - At-a-glance counts: accessible boards, ideas created by me, ideas assigned to me.
+This section describes Decision D1's original MVP scope, kept for history. The locked scope is Decision D4's richer dashboard:
+
+- Welcome message and `Boards` / `Your ideas` / `Assigned to you` at-a-glance counts.
+- A "Your boards" tile grid — one tile per accessible board with an open/assigned/last-active summary, plus a "Request a new board" tile.
+- A "Catching you up" activity feed — recent mentions, upvotes, and status moves.
 - Dashboard data should use existing list/service endpoints where possible and degrade gracefully to zero/empty messaging when data is unavailable.
 - Dashboard follows the same role-aware visibility conventions as the rest of the authenticated shell.
+
+Superseded D1 sections, for reference only: welcome summary (user name + role); quick actions (Boards, Ideas, Settings); at-a-glance counts (accessible boards, ideas created by me, ideas assigned to me) — the counts carry forward into D4 above, the quick-actions row does not (the rail already exposes those routes).
 
 ## Uniform List Conventions (all list pages)
 
@@ -166,12 +168,12 @@ Applies to Organizations, Users, Ideas, Boards, and any future entity list page.
 
 - [ ] Change Password page renders no stray `else {` or `else {}` text.
 - [ ] Weather and Counter pages, links, and code are fully removed.
-- [ ] Header uses `rgb(33, 37, 41)`; Username is white; Sign Out icon sits left of the Username.
-- [ ] Sign Out icon routes through `/logout` and returns the user to `/login`.
-- [ ] Header does not render `Password update required` text.
+- [ ] No separate header bar is rendered (no `rgb(33, 37, 41)` bar); the rail's bottom avatar popover provides Sign Out and Profile.
+- [ ] Sign Out routes through `/logout` and returns the user to `/login`.
+- [ ] Shell does not render `Password update required` text anywhere.
 - [ ] Unauthenticated shell shows only Login and Register links.
 - [ ] Unauthenticated protected routes redirect to `/login`; authenticated Login navigation returns to `/` unless password change is required.
-- [ ] Horizontal menu under the header shows Home, Boards, Ideas only for authenticated users.
+- [ ] The 64px icon rail shows Home, Boards, Ideas, and Settings identically on every screen, only for authenticated users.
 - [ ] Change Password is accessible only from Settings → My Profile (embedded section); no standalone nav link exists.
 - [ ] Gear icon navigates to `/settings`; area is titled "Settings" everywhere; old `/admin` routes return 404.
 - [ ] Settings landing shows My Profile for all users and role-correct admin links (Site Admin: Orgs/Users/Boards & Statuses; Org Admin: Users/Boards & Statuses own-org; Member: none).
@@ -184,4 +186,4 @@ Applies to Organizations, Users, Ideas, Boards, and any future entity list page.
 - [ ] Boards & Statuses Settings page shows boards list (Name/Board Type/Status) and statuses list (Name/Color/Sort Order/Is Default) — pending domain additions for `Board.IsArchived`, `Status.Color`, `Status.SortOrder`, `Status.IsDefault`.
 - [ ] Ideas page (`/ideas`) lists combined created-by/assigned-to ideas with All/Created/Assigned filter and Title/Created By/Assigned To/Status/Created Date columns; Details navigates to `/ideas/{id}/edit`.
 - [ ] All list pages have a uniform search bar and server-side pagination with 25/50/100/250 page sizes (default 25).
-- [ ] Home page is an authenticated dashboard with welcome summary, quick actions, and boards/my-ideas/assigned-ideas counts.
+- [ ] Home page is an authenticated dashboard per Decision D4: welcome message, `Boards`/`Your ideas`/`Assigned to you` counts, a "Your boards" tile grid with a "Request a new board" tile, and a "Catching you up" activity feed.

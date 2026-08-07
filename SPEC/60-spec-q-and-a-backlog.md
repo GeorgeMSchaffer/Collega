@@ -89,6 +89,22 @@ Resolved: deleted. It had no unique content beyond what `20-feature-client-ui.md
 ### 13. C6-Kanban backlog task vs. the `/ideas` list page
 Resolved: keep both. `/ideas` remains a cross-board list/search surface (Created by me / Assigned to me) alongside the per-board Kanban/list view — useful when a user's ideas span multiple boards. `implementation-agent-tracker.md`'s C6-Kanban task wording updated to stop implying `/ideas` gets replaced.
 
+## Decision Log (2026-08-07): Auth Implementation Kickoff Questions
+
+Found while the Auth Agent slice (T005-T011) was actively in progress — two contract ambiguities the Backend Developer agent needed answered to proceed correctly.
+
+### 14. Access token format and session revocation
+Resolved: `accessToken` is a signed JWT embedding the user's current `SecurityStamp` as a claim (not an opaque server-tracked session token). Every authenticated request revalidates the claim against the user's current database `SecurityStamp`. "Revoke all existing sessions" (admin-issued and self-service password reset) regenerates `SecurityStamp`, invalidating every previously issued token at once. Recorded in `20-feature-auth.md` (new requirements #35-36) and `30-Contracts.md` (new "Access Token Format and Session Revocation" subsection).
+
+### 15. Validation message casing
+Resolved: the `errors` object *keys* stay camelCase (matching wire JSON field names); the `<FieldName>` substituted into message *text* uses human-readable, spaced Title Case (e.g. "First Name is required."), independent of the JSON key casing. This closes the judgment call the Epic 1 Foundation agent flagged in `implementation-agent-tracker.md`. Recorded in `30-Contracts.md`'s Validation Message Conventions section.
+
+## Decision Log (2026-08-07): Demo Password Policy Conflict
+
+### 16. Demo password `abc123!` violates the password complexity policy
+Found by the Backend Developer agent implementing the Auth Agent slice: `SPEC/10-requirements.md` specified the Development demo password verbatim as `abc123!`, but `SPEC/20-feature-auth.md` requirement #5 requires uppercase + lowercase + numeric + special characters, and `abc123!` has no uppercase. The agent had bypassed policy validation in the seeder to honor the literal value rather than silently resolving the conflict.
+Resolved: changed the demo password to `Abc123!` (minimal change — capitalizes the first letter) everywhere it's referenced, rather than carving out a policy exception. Updated in `10-requirements.md`, `20-feature-auth.md`, `40-test-strategy.md`, `Specs Overview.md`, `SPEC/SPECKIT/specs/002-authentication-and-access/spec.md`, and `src/Collega.Infrastructure/Seeding/StartupSeeder.cs` (`DemoPassword` constant, bypass-justifying doc comment removed since it's no longer needed).
+
 ## Remaining MVP Clarifications
 - Default `Status.Color` and `Status.SortOrder` values for the 5 canonical default statuses (`New/Pending`, `In Review`, `In Progress`, `Client Review`, `Complete`) have not been chosen yet.
 
