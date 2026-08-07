@@ -36,7 +36,20 @@
       "Bash(git branch -D *)",
       "Bash(git worktree add *)",
       "Bash(git worktree remove *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(docker info *)",
+      "Bash(dotnet user-secrets *)",
+      "Bash(grep -nE '^#{1,3} |^\\\\| *T[0-9]+' SPEC/70-delivery-backlog.md)",
+      "Bash(grep -oE '`\\(GET|POST|PUT|PATCH|DELETE\\) [^`]+`' SPEC/30-Contracts.md)",
+      "Bash(docker volume *)",
+      "Bash(grep -n \"^- \\\\`SPEC/\" CLAUDE.md)",
+      "Bash(ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS='http://localhost:5027' dotnet run --project src/Collega.API/Collega.API.csproj --no-build > /tmp/collega-api.log 2>&1)",
+      "Bash(git diff *)",
+      "Bash(echo \"=== design tokens ===\")",
+      "Bash(grep -oE '\\\\-\\\\-[a-z0-9-]+:' SPEC/mockups/comp-c-review-06-lockin-v5-final.html)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   }
 }
