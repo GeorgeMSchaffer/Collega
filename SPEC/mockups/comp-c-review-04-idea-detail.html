@@ -179,7 +179,10 @@
       <div class="ideahd">
         <div class="crumbs"><a href="#">Boards</a> / <a href="#">Product Ideas</a> / New idea</div>
         <div class="kicker">New idea</div>
-        <div style="display:flex;align-items:flex-start;gap:20px"><h1 style="flex:1;color:var(--ink-3)">Untitled idea</h1><button class="btn" style="margin-top:8px">Cancel</button></div>
+        <div style="display:flex;align-items:flex-start;gap:20px">
+          <h1 style="flex:1;color:var(--ink-3)">Untitled idea</h1>
+          <div style="display:flex;gap:10px;margin-top:8px"><button class="btn primary">Create idea</button><button class="btn">Cancel</button></div>
+        </div>
       </div>
       <div class="ideabody">
         <div>
@@ -192,9 +195,10 @@
         <div class="facts">
           <div class="fact"><div class="k">Status</div><div class="v"><select><option selected>New (left-most section)</option><option>In Progress</option><option>Blocked</option><option>Done</option></select></div></div>
           <div class="fact"><div class="k">Priority</div><div class="v"><select><option>High</option><option selected>Medium</option><option>Low</option></select></div></div>
+          <div class="fact"><div class="k">Idea Type</div><div class="v"><select><option selected>Continuous Improvement</option><option>Feature</option><option>Bug Fix</option><option>Research</option></select></div></div>
+          <div class="fact"><div class="k">Business Impact</div><div class="v"><select><option>High</option><option selected>Medium</option><option>Low</option></select></div></div>
           <div class="fact"><div class="k">Assignee</div><div class="v"><select><option selected>Unassigned</option></select></div></div>
           <div class="fact"><div class="k">Due date <span style="text-transform:none;font-weight:400">(optional)</span></div><div class="v"><input type="text" placeholder="Aug 15, 2026"></div></div>
-          <button class="btn primary" style="width:100%;margin-top:6px">Create idea</button>
         </div>
       </div>
     </div>

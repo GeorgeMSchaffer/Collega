@@ -77,6 +77,8 @@
   .customhex{display:none;align-items:center;gap:8px;margin-top:10px}
   .customhex.show{display:flex}
   .customhex input{width:120px;font-family:ui-monospace,Consolas,monospace}
+  .contrastwarn{display:none;font-size:12px;color:var(--err);background:#fbe5e7;border-left:3px solid var(--err);padding:8px 12px;border-radius:0 4px 4px 0;margin-top:8px;max-width:480px;line-height:1.45}
+  .contrastwarn.show{display:block}
   .preview{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;background:#faf9f8;border:1px solid var(--line);border-radius:6px}
   .order-field{display:flex;align-items:center;gap:10px}
   .order-field .nudge{display:flex;flex-direction:column;gap:2px}
@@ -201,6 +203,7 @@
               <span class="pill preview-pill" style="background:#f1f0ee;color:#57534e">Needs Design</span>
               <span class="hint" style="margin:0">Preview — this is how the status will look on cards and swimlane headers.</span>
             </div>
+            <div class="contrastwarn" id="contrastwarn-new">⚠ This color is hard to read at pill/text size — contrast against white is below the 4.5:1 accessible minimum. Consider a darker shade before saving.</div>
           </div>
           <div class="field">
             <label>Sort order</label>
@@ -250,6 +253,7 @@
               <span class="pill preview-pill" style="background:#e6f0fa;color:#2f6fb0">In Progress</span>
               <span class="hint" style="margin:0">Preview — this is how the status will look on cards and swimlane headers.</span>
             </div>
+            <div class="contrastwarn" id="contrastwarn-edit">⚠ This color is hard to read at pill/text size — contrast against white is below the 4.5:1 accessible minimum. Consider a darker shade before saving.</div>
           </div>
           <div class="field">
             <label>Sort order</label>
@@ -304,12 +308,29 @@
   }));
 
   // Color picker: select a swatch, or reveal a hex input for a custom color
+  function relLum(hex){
+    const c = hex.replace('#','');
+    if (!/^[0-9a-fA-F]{6}$/.test(c)) return null;
+    const chan = v => { v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4); };
+    const r=chan(parseInt(c.substr(0,2),16)), g=chan(parseInt(c.substr(2,2),16)), b=chan(parseInt(c.substr(4,2),16));
+    return 0.2126*r+0.7152*g+0.0722*b;
+  }
+  function contrastVsWhite(hex){
+    const L = relLum(hex);
+    if (L===null) return null;
+    return (1.05)/(L+0.05); // white luminance is 1
+  }
   document.querySelectorAll('.picker').forEach(picker=>{
     const suffix = picker.id.split('-')[1];
     const customBox = document.getElementById('customhex-'+suffix);
     const hexInput = customBox.querySelector('input');
     const previewPill = picker.closest('.field').querySelector('.preview-pill');
+    const warn = document.getElementById('contrastwarn-'+suffix);
     function tint(hex){ return hex + '22'; } // cheap 13%-alpha tint for the preview background
+    function updateWarn(hex){
+      const ratio = contrastVsWhite(hex);
+      warn.classList.toggle('show', ratio!==null && ratio < 4.5);
+    }
     picker.querySelectorAll('.opt').forEach(opt=>{
       opt.addEventListener('click', ()=>{
         picker.querySelectorAll('.opt').forEach(o=>{o.classList.remove('sel');o.textContent='';});
@@ -319,17 +340,20 @@
           customBox.classList.add('show');
           previewPill.style.color = hexInput.value;
           previewPill.style.background = tint(hexInput.value);
+          updateWarn(hexInput.value);
         } else {
           opt.textContent='✓';
           customBox.classList.remove('show');
           previewPill.style.color = opt.dataset.hex;
           previewPill.style.background = tint(opt.dataset.hex);
+          warn.classList.remove('show'); // preset swatches are pre-vetted for contrast
         }
       });
     });
     hexInput.addEventListener('input', ()=>{
       previewPill.style.color = hexInput.value;
       previewPill.style.background = tint(hexInput.value);
+      updateWarn(hexInput.value);
     });
   });
 
