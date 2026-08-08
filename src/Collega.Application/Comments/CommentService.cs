@@ -7,6 +7,7 @@ using Collega.Domain.Auditing;
 using Collega.Domain.Comments;
 using Collega.Domain.Enums;
 using Collega.Domain.Ideas;
+using Collega.Domain.Notifications;
 
 namespace Collega.Application.Comments;
 
@@ -18,6 +19,7 @@ public sealed class CommentService : ICommentService
     private readonly IMentionResolver _mentionResolver;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditEventWriter _auditEventWriter;
+    private readonly INotificationEventWriter _notificationWriter;
     private readonly ICurrentUserContext _currentUser;
     private readonly IClock _clock;
 
@@ -27,6 +29,7 @@ public sealed class CommentService : ICommentService
         IMentionResolver mentionResolver,
         IUnitOfWork unitOfWork,
         IAuditEventWriter auditEventWriter,
+        INotificationEventWriter notificationWriter,
         ICurrentUserContext currentUser,
         IClock clock)
     {
@@ -35,6 +38,7 @@ public sealed class CommentService : ICommentService
         _mentionResolver = mentionResolver;
         _unitOfWork = unitOfWork;
         _auditEventWriter = auditEventWriter;
+        _notificationWriter = notificationWriter;
         _currentUser = currentUser;
         _clock = clock;
     }
@@ -64,6 +68,10 @@ public sealed class CommentService : ICommentService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await AuditAsync("CommentCreated", idea, comment.Id, authorId, "Comment added to idea.", now, cancellationToken);
+
+        // Notify mentioned users (trigger #2) and the idea author + assignees (trigger #3).
+        // Persisted only, never delivered (SPEC/20-feature-notifications.md, T039).
+        await NotifyCommentAsync(idea, mentionIds, authorId, cancellationToken);
 
         return new CreateCommentResult(comment.Id, idea.Id);
     }
@@ -163,5 +171,35 @@ public sealed class CommentService : ICommentService
         var metadataJson = JsonSerializer.Serialize(new { idea.Id, CommentId = commentId });
         var auditEvent = AuditEvent.Create(eventType, "Comment", message, nowUtc, idea.OrganizationId, actorUserId, commentId, metadataJson);
         await _auditEventWriter.WriteAsync(auditEvent, cancellationToken);
+    }
+
+    /// <summary>
+    /// Emits notification events for a new comment: one <see cref="NotificationEventType.CommentMention"/>
+    /// per mentioned user, and one <see cref="NotificationEventType.CommentAdded"/> per idea author or
+    /// assignee. The two triggers are independent, so a user who is both mentioned and a follower may
+    /// receive both (SPEC/20-feature-notifications.md "Recipients"). Self- and duplicate-recipient
+    /// suppression is applied here and defensively again in the writer.
+    /// </summary>
+    private async Task NotifyCommentAsync(Idea idea, IReadOnlyList<Guid> mentionedUserIds, Guid actorId, CancellationToken cancellationToken)
+    {
+        foreach (var recipientId in mentionedUserIds.Where(id => id != Guid.Empty && id != actorId).Distinct())
+        {
+            await _notificationWriter.WriteAsync(
+                NotificationEventType.CommentMention, idea.OrganizationId, idea.BoardId, idea.Id, idea.Title,
+                actorId, recipientId, cancellationToken);
+        }
+
+        var followers = new HashSet<Guid> { idea.AuthorUserId };
+        foreach (var assignee in idea.Assignees)
+        {
+            followers.Add(assignee.UserId);
+        }
+
+        foreach (var recipientId in followers.Where(id => id != Guid.Empty && id != actorId))
+        {
+            await _notificationWriter.WriteAsync(
+                NotificationEventType.CommentAdded, idea.OrganizationId, idea.BoardId, idea.Id, idea.Title,
+                actorId, recipientId, cancellationToken);
+        }
     }
 }

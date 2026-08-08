@@ -8,6 +8,7 @@ using Collega.Domain.Auditing;
 using Collega.Domain.Comments;
 using Collega.Domain.Enums;
 using Collega.Domain.Ideas;
+using Collega.Domain.Notifications;
 using Collega.Domain.Tags;
 using Collega.Domain.Upvotes;
 using Collega.Domain.Users;
@@ -32,6 +33,7 @@ public sealed class IdeaService : IIdeaService
     private readonly IMentionResolver _mentionResolver;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditEventWriter _auditEventWriter;
+    private readonly INotificationEventWriter _notificationWriter;
     private readonly ICurrentUserContext _currentUser;
     private readonly IClock _clock;
 
@@ -45,6 +47,7 @@ public sealed class IdeaService : IIdeaService
         IMentionResolver mentionResolver,
         IUnitOfWork unitOfWork,
         IAuditEventWriter auditEventWriter,
+        INotificationEventWriter notificationWriter,
         ICurrentUserContext currentUser,
         IClock clock)
     {
@@ -57,6 +60,7 @@ public sealed class IdeaService : IIdeaService
         _mentionResolver = mentionResolver;
         _unitOfWork = unitOfWork;
         _auditEventWriter = auditEventWriter;
+        _notificationWriter = notificationWriter;
         _currentUser = currentUser;
         _clock = clock;
     }
@@ -130,6 +134,9 @@ public sealed class IdeaService : IIdeaService
         await AuditAsync("IdeaCreated", idea, authorId, $"Idea '{idea.Title}' created.", now,
             new { idea.Title, Priority = priority.ToString(), idea.StatusId }, cancellationToken);
 
+        // Notify everyone mentioned in the new idea body (SPEC/20-feature-notifications.md trigger #1).
+        await NotifyMentionsAsync(idea, mentionIds, authorId, cancellationToken);
+
         return new CreateIdeaResult(idea.Id, idea.BoardId, idea.StatusId, idea.Title, priority.ToString(), FormatDate(idea.DueDate));
     }
 
@@ -158,6 +165,7 @@ public sealed class IdeaService : IIdeaService
         var dueDate = ParseDueDate(command.DueDate);
 
         var existingAssignees = idea.Assignees.Select(a => a.UserId).ToList();
+        var existingMentions = idea.Mentions.Select(m => m.MentionedUserId).ToHashSet();
         var requestedAssignees = Distinct(command.AssigneeUserIds);
         var descriptionChanged = !string.Equals((command.Description ?? string.Empty).Trim(), idea.Description, StringComparison.Ordinal);
         var assigneesChanged = !new HashSet<Guid>(existingAssignees).SetEquals(requestedAssignees);
@@ -182,6 +190,11 @@ public sealed class IdeaService : IIdeaService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await AuditAsync("IdeaUpdated", idea, actorId, $"Idea '{idea.Title}' updated.", now, null, cancellationToken);
+
+        // Notify only newly added mentions so an edit does not re-notify people already mentioned
+        // (SPEC/20-feature-notifications.md trigger #1).
+        var newMentions = mentionIds.Where(id => !existingMentions.Contains(id));
+        await NotifyMentionsAsync(idea, newMentions, actorId, cancellationToken);
 
         return await ProjectDetailAsync(idea, cancellationToken);
     }
@@ -218,6 +231,9 @@ public sealed class IdeaService : IIdeaService
 
         await AuditAsync("IdeaStatusChanged", idea, actorId, $"Idea '{idea.Title}' moved to a new status.", now,
             new { FromStatusId = previousStatusId, ToStatusId = command.StatusId }, cancellationToken);
+
+        // Notify the idea author and assignees of the move (SPEC/20-feature-notifications.md trigger #4).
+        await NotifyIdeaFollowersAsync(NotificationEventType.IdeaStatusChanged, idea, actorId, cancellationToken);
     }
 
     public async Task DeleteAsync(Guid ideaId, CancellationToken cancellationToken = default)
@@ -632,5 +648,35 @@ public sealed class IdeaService : IIdeaService
         var metadataJson = metadata is null ? null : JsonSerializer.Serialize(metadata);
         var auditEvent = AuditEvent.Create(eventType, "Idea", message, nowUtc, idea.OrganizationId, actorUserId, idea.Id, metadataJson);
         await _auditEventWriter.WriteAsync(auditEvent, cancellationToken);
+    }
+
+    // Notification emission ----------------------------------------------------------------------
+    // Persisted only (never delivered) — see SPEC/20-feature-notifications.md and T039. Self- and
+    // duplicate-recipient suppression is applied here and defensively again in the writer.
+
+    private async Task NotifyMentionsAsync(Idea idea, IEnumerable<Guid> mentionedUserIds, Guid actorId, CancellationToken cancellationToken)
+    {
+        foreach (var recipientId in mentionedUserIds.Where(id => id != Guid.Empty && id != actorId).Distinct())
+        {
+            await _notificationWriter.WriteAsync(
+                NotificationEventType.IdeaMention, idea.OrganizationId, idea.BoardId, idea.Id, idea.Title,
+                actorId, recipientId, cancellationToken);
+        }
+    }
+
+    private async Task NotifyIdeaFollowersAsync(NotificationEventType eventType, Idea idea, Guid actorId, CancellationToken cancellationToken)
+    {
+        var recipients = new HashSet<Guid> { idea.AuthorUserId };
+        foreach (var assignee in idea.Assignees)
+        {
+            recipients.Add(assignee.UserId);
+        }
+
+        foreach (var recipientId in recipients.Where(id => id != Guid.Empty && id != actorId))
+        {
+            await _notificationWriter.WriteAsync(
+                eventType, idea.OrganizationId, idea.BoardId, idea.Id, idea.Title,
+                actorId, recipientId, cancellationToken);
+        }
     }
 }
