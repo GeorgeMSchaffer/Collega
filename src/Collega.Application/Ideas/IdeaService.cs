@@ -4,9 +4,11 @@ using Collega.Application.Abstractions;
 using Collega.Application.Collaboration;
 using Collega.Application.Common;
 using Collega.Application.Exceptions;
+using Collega.Application.Fields;
 using Collega.Domain.Auditing;
 using Collega.Domain.Comments;
 using Collega.Domain.Enums;
+using Collega.Domain.Fields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Notifications;
 using Collega.Domain.Tags;
@@ -30,6 +32,7 @@ public sealed class IdeaService : IIdeaService
     private readonly IIdeaUpvoteRepository _upvoteRepository;
     private readonly ICommentRepository _commentRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IFieldDefinitionRepository _fieldDefinitionRepository;
     private readonly IMentionResolver _mentionResolver;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditEventWriter _auditEventWriter;
@@ -44,6 +47,7 @@ public sealed class IdeaService : IIdeaService
         IIdeaUpvoteRepository upvoteRepository,
         ICommentRepository commentRepository,
         IUserRepository userRepository,
+        IFieldDefinitionRepository fieldDefinitionRepository,
         IMentionResolver mentionResolver,
         IUnitOfWork unitOfWork,
         IAuditEventWriter auditEventWriter,
@@ -57,6 +61,7 @@ public sealed class IdeaService : IIdeaService
         _upvoteRepository = upvoteRepository;
         _commentRepository = commentRepository;
         _userRepository = userRepository;
+        _fieldDefinitionRepository = fieldDefinitionRepository;
         _mentionResolver = mentionResolver;
         _unitOfWork = unitOfWork;
         _auditEventWriter = auditEventWriter;
@@ -139,6 +144,9 @@ public sealed class IdeaService : IIdeaService
         var tagIds = await ResolveTagsAsync(board.OrganizationId, command.TagNames, now, authorId, cancellationToken);
         var mentionIds = await _mentionResolver.ResolveAsync(board.OrganizationId, command.MentionEmails, "mentionEmails", cancellationToken);
 
+        var fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(board.OrganizationId, includeDeleted: false, cancellationToken);
+        var fieldValues = FieldValueValidator.Validate(fieldDefinitions, command.FieldValues);
+
         var idea = Idea.Create(
             board.OrganizationId,
             boardId,
@@ -153,11 +161,15 @@ public sealed class IdeaService : IIdeaService
             mentionIds,
             now);
 
+        idea.ReplaceFieldValues(fieldValues, now, authorId);
+
         await _ideaRepository.AddAsync(idea, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await AuditAsync("IdeaCreated", idea, authorId, $"Idea '{idea.Title}' created.", now,
             new { idea.Title, Priority = priority.ToString(), idea.StatusId }, cancellationToken);
+
+        await EmitFieldValueAuditAsync(idea, new Dictionary<Guid, string?>(), fieldDefinitions, authorId, now, cancellationToken);
 
         // Notify everyone mentioned in the new idea body (SPEC/20-feature-notifications.md trigger #1).
         await NotifyMentionsAsync(idea, mentionIds, authorId, cancellationToken);
@@ -207,14 +219,20 @@ public sealed class IdeaService : IIdeaService
         var tagIds = await ResolveTagsAsync(idea.OrganizationId, command.TagNames, now, actorId, cancellationToken);
         var mentionIds = await _mentionResolver.ResolveAsync(idea.OrganizationId, command.MentionEmails, "mentionEmails", cancellationToken);
 
+        var fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(idea.OrganizationId, includeDeleted: false, cancellationToken);
+        var previousFieldValues = idea.FieldValues.ToDictionary(v => v.FieldDefinitionId, v => v.Value);
+        var fieldValues = FieldValueValidator.Validate(fieldDefinitions, command.FieldValues);
+
         idea.UpdateContent(command.Title ?? string.Empty, command.Description ?? string.Empty, priority, dueDate, now, actorId);
         idea.ReplaceAssignees(assigneeIds, now, actorId);
         idea.ReplaceTags(tagIds, now, actorId);
         idea.ReplaceMentions(mentionIds, now, actorId);
+        idea.ReplaceFieldValues(fieldValues, now, actorId);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await AuditAsync("IdeaUpdated", idea, actorId, $"Idea '{idea.Title}' updated.", now, null, cancellationToken);
+        await EmitFieldValueAuditAsync(idea, previousFieldValues, fieldDefinitions, actorId, now, cancellationToken);
 
         // Notify only newly added mentions so an edit does not re-notify people already mentioned
         // (SPEC/20-feature-notifications.md trigger #1).
@@ -366,6 +384,19 @@ public sealed class IdeaService : IIdeaService
         var comments = await _commentRepository.ListByIdeaAsync(
             new CommentListFilter(idea.Id, new PageRequest(1, PageRequest.MaxPageSize), SortDirection.Ascending), cancellationToken);
 
+        // Only values for active (non-archived) field definitions are surfaced, ordered by display order.
+        var fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(idea.OrganizationId, includeDeleted: false, cancellationToken);
+        var fieldDefinitionsById = fieldDefinitions.ToDictionary(d => d.Id);
+        var fieldValues = idea.FieldValues
+            .Where(v => fieldDefinitionsById.ContainsKey(v.FieldDefinitionId))
+            .OrderBy(v => fieldDefinitionsById[v.FieldDefinitionId].DisplayOrder)
+            .Select(v =>
+            {
+                var definition = fieldDefinitionsById[v.FieldDefinitionId];
+                return new IdeaFieldValueDto(definition.Id, definition.Name, definition.FieldType.ToString(), v.Value);
+            })
+            .ToList();
+
         var mentions = mentionUserIds
             .Where(userLookup.ContainsKey)
             .Select(id => userLookup[id])
@@ -391,7 +422,8 @@ public sealed class IdeaService : IIdeaService
             commentDtos,
             upvoteCount,
             upvoted.Contains(idea.Id),
-            commentCount);
+            commentCount,
+            fieldValues);
     }
 
     private async Task<IReadOnlyDictionary<Guid, Tag>> LoadTagLookupAsync(IEnumerable<Guid> tagIds, CancellationToken cancellationToken)
@@ -673,6 +705,37 @@ public sealed class IdeaService : IIdeaService
         var metadataJson = metadata is null ? null : JsonSerializer.Serialize(metadata);
         var auditEvent = AuditEvent.Create(eventType, "Idea", message, nowUtc, idea.OrganizationId, actorUserId, idea.Id, metadataJson);
         await _auditEventWriter.WriteAsync(auditEvent, cancellationToken);
+    }
+
+    /// <summary>
+    /// Emits an <c>IdeaFieldValueChanged</c> audit event for each User-Defined Field value that was
+    /// added, changed, or cleared (SPEC/20-feature-user-defined-fields.md "Audit Emission").
+    /// </summary>
+    private async Task EmitFieldValueAuditAsync(
+        Idea idea,
+        IReadOnlyDictionary<Guid, string?> previousValues,
+        IReadOnlyList<FieldDefinition> definitions,
+        Guid actorId,
+        DateTime nowUtc,
+        CancellationToken cancellationToken)
+    {
+        var fieldNames = definitions.ToDictionary(d => d.Id, d => d.Name);
+        var currentValues = idea.FieldValues.ToDictionary(v => v.FieldDefinitionId, v => v.Value);
+
+        foreach (var fieldDefinitionId in previousValues.Keys.Union(currentValues.Keys))
+        {
+            previousValues.TryGetValue(fieldDefinitionId, out var previousValue);
+            currentValues.TryGetValue(fieldDefinitionId, out var newValue);
+            if (string.Equals(previousValue, newValue, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var fieldName = fieldNames.TryGetValue(fieldDefinitionId, out var name) ? name : fieldDefinitionId.ToString();
+            var metadata = new { fieldDefinitionId, fieldName, previousValue, newValue };
+            await AuditAsync("IdeaFieldValueChanged", idea, actorId,
+                $"Custom field '{fieldName}' changed on idea '{idea.Title}'.", nowUtc, metadata, cancellationToken);
+        }
     }
 
     // Notification emission ----------------------------------------------------------------------

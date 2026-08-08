@@ -30,4 +30,7 @@ public sealed class CreateIdeaRequest
 
     /// <summary>Optional same-organization mention email addresses.</summary>
     public List<string>? MentionEmails { get; set; }
+
+    /// <summary>Optional User-Defined Field values; validated against the organization's field schema.</summary>
+    public List<IdeaFieldValueRequest>? FieldValues { get; set; }
 }

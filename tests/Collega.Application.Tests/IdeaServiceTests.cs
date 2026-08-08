@@ -19,6 +19,7 @@ public sealed class IdeaServiceTests
     private readonly FakeIdeaUpvoteRepository _upvotes = new();
     private readonly FakeCommentRepository _comments = new();
     private readonly FakeUserRepository _users = new();
+    private readonly FakeFieldDefinitionRepository _fieldDefs = new();
     private readonly FakeUnitOfWork _uow = new();
     private readonly RecordingAuditEventWriter _audit = new();
     private readonly RecordingNotificationEventWriter _notifications = new();
@@ -58,7 +59,7 @@ public sealed class IdeaServiceTests
     }
 
     private IdeaService CreateSut() =>
-        new(_ideas, _boardReader, _tags, _upvotes, _comments, _users, new MentionResolver(_users), _uow, _audit, _notifications, _currentUser, _clock);
+        new(_ideas, _boardReader, _tags, _upvotes, _comments, _users, _fieldDefs, new MentionResolver(_users), _uow, _audit, _notifications, _currentUser, _clock);
 
     private static CreateIdeaCommand CreateCommand(
         Guid? statusId = null,

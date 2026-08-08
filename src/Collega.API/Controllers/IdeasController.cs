@@ -1,4 +1,5 @@
 using Collega.API.Contracts.Ideas;
+using Collega.Application.Fields;
 using Collega.Application.Ideas;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,7 +68,8 @@ public sealed class IdeasController : ControllerBase
             request.AssigneeUserIds,
             request.StatusId,
             request.TagNames,
-            request.MentionEmails);
+            request.MentionEmails,
+            ToFieldValues(request.FieldValues));
 
         var result = await _ideaService.CreateAsync(boardId, command, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
@@ -90,7 +92,8 @@ public sealed class IdeasController : ControllerBase
             request.DueDate,
             request.AssigneeUserIds,
             request.TagNames,
-            request.MentionEmails);
+            request.MentionEmails,
+            ToFieldValues(request.FieldValues));
 
         var result = await _ideaService.UpdateAsync(ideaId, command, cancellationToken);
         return Ok(result);
@@ -116,4 +119,7 @@ public sealed class IdeasController : ControllerBase
         var result = await _ideaService.ToggleUpvoteAsync(ideaId, cancellationToken);
         return Ok(result);
     }
+
+    private static IReadOnlyList<IdeaFieldValueWrite>? ToFieldValues(List<IdeaFieldValueRequest>? fieldValues) =>
+        fieldValues?.Select(f => new IdeaFieldValueWrite(f.FieldDefinitionId, f.Value)).ToList();
 }

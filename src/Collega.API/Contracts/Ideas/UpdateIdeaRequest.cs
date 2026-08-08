@@ -23,4 +23,7 @@ public sealed class UpdateIdeaRequest
     public List<string>? TagNames { get; set; }
 
     public List<string>? MentionEmails { get; set; }
+
+    /// <summary>Optional User-Defined Field values; validated against the organization's field schema.</summary>
+    public List<IdeaFieldValueRequest>? FieldValues { get; set; }
 }

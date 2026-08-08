@@ -3,6 +3,7 @@ using Collega.Application.Common;
 using Collega.Domain.Boards;
 using Collega.Domain.Comments;
 using Collega.Domain.Enums;
+using Collega.Domain.Fields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
 using Collega.Domain.Statuses;
@@ -466,5 +467,57 @@ internal sealed class FakeTagRepository : ITagRepository
             .Select(t => t.Name)
             .ToList();
         return Task.FromResult(result);
+    }
+}
+
+/// <summary>In-memory <see cref="IFieldDefinitionRepository"/> for User-Defined Field use-case tests.</summary>
+internal sealed class FakeFieldDefinitionRepository : IFieldDefinitionRepository
+{
+    public List<FieldDefinition> Definitions { get; } = new();
+
+    public FakeFieldDefinitionRepository(params FieldDefinition[] definitions) => Definitions.AddRange(definitions);
+
+    public FieldDefinition Add(FieldDefinition definition)
+    {
+        Definitions.Add(definition);
+        return definition;
+    }
+
+    public Task AddAsync(FieldDefinition definition, CancellationToken cancellationToken = default)
+    {
+        Definitions.Add(definition);
+        return Task.CompletedTask;
+    }
+
+    public Task<FieldDefinition?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        Task.FromResult(Definitions.FirstOrDefault(d => d.Id == id));
+
+    public Task<IReadOnlyList<FieldDefinition>> ListByOrganizationAsync(Guid organizationId, bool includeDeleted, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<FieldDefinition> result = Definitions
+            .Where(d => d.OrganizationId == organizationId && (includeDeleted || !d.IsDeleted))
+            .OrderBy(d => d.DisplayOrder)
+            .ThenBy(d => d.Name)
+            .ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<IReadOnlyList<FieldDefinition>> ListActiveTrackedByOrganizationAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<FieldDefinition> result = Definitions
+            .Where(d => d.OrganizationId == organizationId && !d.IsDeleted)
+            .OrderBy(d => d.DisplayOrder)
+            .ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<bool> ExistsActiveByNameAsync(Guid organizationId, string name, Guid? excludeId, CancellationToken cancellationToken = default)
+    {
+        var normalized = name.Trim();
+        return Task.FromResult(Definitions.Any(d =>
+            d.OrganizationId == organizationId
+            && !d.IsDeleted
+            && string.Equals(d.Name, normalized, StringComparison.OrdinalIgnoreCase)
+            && (excludeId == null || d.Id != excludeId)));
     }
 }

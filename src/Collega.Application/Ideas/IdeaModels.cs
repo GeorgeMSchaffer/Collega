@@ -1,3 +1,5 @@
+using Collega.Application.Fields;
+
 namespace Collega.Application.Ideas;
 
 // Commands / queries -----------------------------------------------------------------------------
@@ -10,7 +12,8 @@ public sealed record CreateIdeaCommand(
     IReadOnlyList<Guid>? AssigneeUserIds,
     Guid? StatusId,
     IReadOnlyList<string>? TagNames,
-    IReadOnlyList<string>? MentionEmails);
+    IReadOnlyList<string>? MentionEmails,
+    IReadOnlyList<IdeaFieldValueWrite>? FieldValues = null);
 
 public sealed record UpdateIdeaCommand(
     string Title,
@@ -19,7 +22,8 @@ public sealed record UpdateIdeaCommand(
     string? DueDate,
     IReadOnlyList<Guid>? AssigneeUserIds,
     IReadOnlyList<string>? TagNames,
-    IReadOnlyList<string>? MentionEmails);
+    IReadOnlyList<string>? MentionEmails,
+    IReadOnlyList<IdeaFieldValueWrite>? FieldValues = null);
 
 public sealed record ChangeIdeaStatusCommand(Guid StatusId);
 
@@ -103,7 +107,8 @@ public sealed record IdeaDetail(
     IReadOnlyList<IdeaCommentDto> Comments,
     int UpvoteCount,
     bool HasUpvoted,
-    int CommentCount);
+    int CommentCount,
+    IReadOnlyList<IdeaFieldValueDto> FieldValues);
 
 public sealed record CreateIdeaResult(
     Guid IdeaId,
