@@ -26,19 +26,28 @@
     <span class="push"></span>
 
     <span class="avatarwrap">
-        <button class="avatarbtn"
-                @onclick="ToggleMenu"
-                aria-haspopup="true"
-                aria-expanded="@_menuOpen.ToString().ToLowerInvariant()"
-                title="Account">
+        <FluentButton Id="collega-avatar"
+                      Class="avatarbtn"
+                      Appearance="Appearance.Stealth"
+                      OnClick="ToggleMenu"
+                      aria-haspopup="menu"
+                      aria-expanded="@_menuOpen.ToString().ToLowerInvariant()"
+                      title="Account">
             <span class="avatar">@Initials</span>
-        </button>
+        </FluentButton>
+        @*
+            Account popover. The trigger is a FluentButton; the dropdown itself is a
+            lightweight custom popover rather than FluentMenu — FluentMenu's anchored
+            region renders invisibly (opacity:0, 0-sized) against a 64px left rail and
+            its Class doesn't propagate for theming, so the custom popover is the
+            reliable way to match the locked comp exactly. Closes on outside click.
+        *@
         @if (_menuOpen)
         {
-            <div class="avatarmenu">
+            <div class="avatarmenu" role="menu">
                 <div class="who"><strong>@DisplayName</strong>@AccountSubtitle</div>
-                <a class="item" href="/settings/profile" @onclick="CloseMenu">Profile</a>
-                <a class="item" href="/login" @onclick="CloseMenu">Sign Out</a>
+                <a class="item" role="menuitem" href="/settings/profile" @onclick="CloseMenu">Profile</a>
+                <a class="item" role="menuitem" href="/login" @onclick="CloseMenu">Sign Out</a>
             </div>
         }
     </span>

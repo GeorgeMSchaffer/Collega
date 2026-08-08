@@ -233,7 +233,20 @@ code { color: var(--accent-deep); }
 .avatar.s { width: 24px; height: 24px; font-size: 9.5px; }
 .avatar.more { background: #e4e2df; color: var(--ink-2); font-weight: 700; }
 .avatarwrap { position: relative; }
-.avatarbtn { background: none; border: none; padding: 0; cursor: pointer; border-radius: 50%; line-height: 0; }
+/* The avatar trigger is a stealth FluentButton; strip its chrome so only the
+   circular initials badge shows, matching the comp's bare avatar button. */
+.avatarbtn { line-height: 0; }
+.avatarbtn::part(control) {
+  width: 30px;
+  height: 30px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+}
+/* Account popover — custom dropdown anchored to the FluentButton trigger,
+   positioned to the right of the 64px rail exactly as the locked comp shows. */
 .avatarmenu {
   position: absolute;
   bottom: 0;
@@ -326,6 +339,49 @@ code { color: var(--accent-deep); }
   max-width: 680px;
 }
 .placeholder h3 { font-family: Georgia, serif; font-size: 17px; margin-bottom: 8px; color: var(--ink); }
+
+/* ---- Fluent UI Blazor component theming ----
+   Fluent components are the interactive substrate; these rules pin their look to
+   the locked comp (indigo accent, minimal radius, comp input/border colors)
+   rather than accepting Fluent's stock blue defaults. FluentDesignTheme sets the
+   accent design tokens app-wide; the ::part overrides finish the exact match. */
+
+/* Accent (primary) buttons — exact comp indigo, matching .btn.primary. */
+fluent-button[appearance="accent"]::part(control) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-btn);
+  font-weight: 600;
+  font-size: 13px;
+}
+fluent-button[appearance="accent"]:hover::part(control) { background: var(--accent-deep); border-color: var(--accent-deep); }
+
+/* Neutral/stealth buttons — match the comp's default .btn look. */
+fluent-button[appearance="neutral"]::part(control),
+fluent-button[appearance="outline"]::part(control) {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: var(--radius-btn);
+  font-weight: 600;
+  font-size: 13px;
+}
+fluent-button[appearance="neutral"]:hover::part(control),
+fluent-button[appearance="outline"]:hover::part(control) { background: #f3f2f1; }
+
+/* Full-width sign-in button (comp: 100% width, taller hit area). */
+.authbtn { width: 100%; }
+.authbtn::part(control) { width: 100%; padding: 10px; }
+
+/* Text fields — comp input styling: neutral border, 4px radius, indigo focus. */
+fluent-text-field::part(root) {
+  border: 1px solid #8a8886;
+  border-radius: 4px;
+  background: var(--surface);
+}
+fluent-text-field::part(control) { font-size: 13px; color: var(--ink); padding: 8px 11px; }
+fluent-text-field:focus-within::part(root) { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: -1px; }
 
 /* ---- Focus-visible: every interactive control gets a visible keyboard focus ring ---- */
 .btn:focus-visible,

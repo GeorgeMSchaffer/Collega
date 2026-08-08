@@ -19,18 +19,21 @@
         <p class="sub">One email, one account. We'll take you straight to your organization — no picker needed.</p>
         <div class="field">
             <label for="email">Email</label>
-            <input id="email" type="email" style="width:100%" />
+            <FluentTextField id="email" @bind-Value="_email" TextFieldType="TextFieldType.Email" Style="width:100%" />
         </div>
         <div class="field">
             <label for="password">Password</label>
-            <input id="password" type="password" style="width:100%" />
+            <FluentTextField id="password" @bind-Value="_password" TextFieldType="TextFieldType.Password" Style="width:100%" />
         </div>
-        <button class="btn primary" style="width:100%;padding:10px" @onclick="SignIn">Sign in</button>
+        <FluentButton Appearance="Appearance.Accent" Class="authbtn" OnClick="SignIn">Sign in</FluentButton>
         <p class="footnote">Forgot your password? <a href="#">Contact your organization admin</a>.</p>
     </div>
 </div>
 
 @code {
-    // Placeholder navigation only — real authentication is a later Client task.
+    // Placeholder identity/navigation only — real authentication is a later Client task.
+    private string? _email;
+    private string? _password;
+
     private void SignIn() => Nav.NavigateTo("/");
 }
