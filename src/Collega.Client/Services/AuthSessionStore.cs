@@ -13,6 +13,7 @@ public sealed class AuthSessionStore
 {
     private const string TokenKey = "collega.token";
     private const string UserKey = "collega.user";
+    private const string MustChangeKey = "collega.mustChangePassword";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -29,15 +30,20 @@ public sealed class AuthSessionStore
         return string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<UserSummaryDto>(json, JsonOptions);
     }
 
-    public async Task SaveAsync(string token, UserSummaryDto user)
+    public async Task<bool> GetMustChangePasswordAsync() =>
+        await _js.InvokeAsync<string?>("localStorage.getItem", MustChangeKey) == "true";
+
+    public async Task SaveAsync(string token, UserSummaryDto user, bool mustChangePassword)
     {
         await _js.InvokeVoidAsync("localStorage.setItem", TokenKey, token);
         await _js.InvokeVoidAsync("localStorage.setItem", UserKey, JsonSerializer.Serialize(user, JsonOptions));
+        await _js.InvokeVoidAsync("localStorage.setItem", MustChangeKey, mustChangePassword ? "true" : "false");
     }
 
     public async Task ClearAsync()
     {
         await _js.InvokeVoidAsync("localStorage.removeItem", TokenKey);
         await _js.InvokeVoidAsync("localStorage.removeItem", UserKey);
+        await _js.InvokeVoidAsync("localStorage.removeItem", MustChangeKey);
     }
 }

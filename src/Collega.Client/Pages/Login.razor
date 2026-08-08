@@ -79,7 +79,7 @@
         }
 
         var login = result.Value!;
-        await AuthState.MarkSignedInAsync(login.AccessToken, login.User);
+        await AuthState.MarkSignedInAsync(login.AccessToken, login.User, login.RequiresPasswordChange);
 
         if (login.RequiresPasswordChange)
         {

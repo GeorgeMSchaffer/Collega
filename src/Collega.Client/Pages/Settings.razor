@@ -49,7 +49,10 @@
                                     <span class="pill ok">Active</span>
                                 }
                             </td>
-                            <td><a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}")">Edit</a></td>
+                            <td class="rowactions">
+                                <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}/users")">Users</a>
+                                <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}")">Edit</a>
+                            </td>
                         </tr>
                     }
                 </tbody>

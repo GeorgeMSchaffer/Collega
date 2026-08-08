@@ -14,6 +14,9 @@ public sealed class CollegaAuthStateProvider : AuthenticationStateProvider
 {
     public const string AuthenticationType = "collega";
 
+    /// <summary>Claim marking a session that must complete a forced password change before use.</summary>
+    public const string MustChangePasswordClaim = "mustChangePassword";
+
     private readonly AuthSessionStore _store;
     private AuthenticationState _anonymous = new(new ClaimsPrincipal(new ClaimsIdentity()));
 
@@ -28,13 +31,14 @@ public sealed class CollegaAuthStateProvider : AuthenticationStateProvider
             return _anonymous;
         }
 
-        return new AuthenticationState(BuildPrincipal(user));
+        var mustChange = await _store.GetMustChangePasswordAsync();
+        return new AuthenticationState(BuildPrincipal(user, mustChange));
     }
 
-    public async Task MarkSignedInAsync(string token, UserSummaryDto user)
+    public async Task MarkSignedInAsync(string token, UserSummaryDto user, bool mustChangePassword)
     {
-        await _store.SaveAsync(token, user);
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(BuildPrincipal(user))));
+        await _store.SaveAsync(token, user, mustChangePassword);
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(BuildPrincipal(user, mustChangePassword))));
     }
 
     public async Task MarkSignedOutAsync()
@@ -43,7 +47,7 @@ public sealed class CollegaAuthStateProvider : AuthenticationStateProvider
         NotifyAuthenticationStateChanged(Task.FromResult(_anonymous));
     }
 
-    private static ClaimsPrincipal BuildPrincipal(UserSummaryDto user)
+    private static ClaimsPrincipal BuildPrincipal(UserSummaryDto user, bool mustChangePassword)
     {
         var claims = new List<Claim>
         {
@@ -53,6 +57,11 @@ public sealed class CollegaAuthStateProvider : AuthenticationStateProvider
             new(ClaimTypes.Role, user.Role),
             new("status", user.Status),
         };
+
+        if (mustChangePassword)
+        {
+            claims.Add(new Claim(MustChangePasswordClaim, "true"));
+        }
 
         if (!string.IsNullOrEmpty(user.OrganizationId))
         {

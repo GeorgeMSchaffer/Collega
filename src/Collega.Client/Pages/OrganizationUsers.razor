@@ -1,0 +1,97 @@
+@page "/settings/organizations/{OrganizationId}/users"
+@attribute [Authorize(Roles = "SiteAdmin")]
+@inject ApiClient Api
+
+<PageTitle>Organization users · Collega</PageTitle>
+
+@*
+    Site Admin drill-down: the users belonging to a specific organization, reached from the Settings
+    organization list. Read-only for now (user create/edit is Org Admin-scoped).
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings">Settings</a> / @(_orgName ?? "Organization") / Users</div>
+    <h1>@(_orgName ?? "Organization") · Users</h1>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else if (_error is not null)
+    {
+        <div class="autherror" role="alert">@_error</div>
+    }
+    else
+    {
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in _users)
+                    {
+                        <tr>
+                            <td><strong>@user.FirstName @user.LastName</strong></td>
+                            <td>@user.Email</td>
+                            <td><span class="pill info">@RoleLabel(user.Role)</span></td>
+                            <td>
+                                @if (string.Equals(user.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="pill ok">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="pill neutral">@user.Status</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_users.Count == 0)
+        {
+            <div class="placeholder"><p>No users in this organization yet.</p></div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string OrganizationId { get; set; } = "";
+
+    private string? _orgName;
+    private List<UserListItemDto> _users = new();
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var org = await Api.GetOrganizationAsync(OrganizationId);
+        if (org.Succeeded)
+        {
+            _orgName = org.Value!.Title;
+        }
+
+        var users = await Api.GetOrganizationUsersAsync(OrganizationId);
+        if (users.Succeeded)
+        {
+            _users = users.Value!.Items.ToList();
+        }
+        else
+        {
+            _error = users.Error;
+        }
+
+        _loading = false;
+    }
+
+    private static string RoleLabel(string role) => role switch
+    {
+        "SiteAdmin" => "Site Admin",
+        "OrgAdmin" => "Org Admin",
+        "ReadOnly" => "Read Only",
+        _ => role,
+    };
+}

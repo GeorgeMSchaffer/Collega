@@ -1,4 +1,7 @@
 @inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthState
 
 @* Comp C application shell: 64px icon rail + page content. *@
 <div class="shell">
@@ -7,3 +10,26 @@
         @Body
     </div>
 </div>
+
+@code {
+    // Global forced-password-change gate: any authenticated session flagged mustChangePassword is
+    // bounced to /change-password (which uses AuthLayout, not this one, so it stays reachable).
+    // Backs up the post-login redirect for the case where such a user navigates to an app page directly.
+    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+
+    protected override Task OnInitializedAsync() => EnforcePasswordChangeGateAsync();
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) =>
+        _ = InvokeAsync(EnforcePasswordChangeGateAsync);
+
+    private async Task EnforcePasswordChangeGateAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (state.User.HasClaim(CollegaAuthStateProvider.MustChangePasswordClaim, "true"))
+        {
+            Nav.NavigateTo("/change-password", replace: true);
+        }
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}
