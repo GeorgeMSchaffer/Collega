@@ -10,11 +10,13 @@ using Microsoft.EntityFrameworkCore;
 namespace Collega.Infrastructure.Seeding;
 
 /// <summary>
-/// Idempotent startup seeding (auth requirements #8-11):
+/// Idempotent startup seeding (auth requirements #8-11). Each part runs only when the caller
+/// requests it (see <see cref="SeedAsync"/> parameters), and each is a no-op when its data
+/// already exists:
 /// 1. The global Site Admin, from environment-provided credentials, on first run only.
-/// 2. Development-only: 3 demo organizations, each provisioned with the default statuses and one
-///    default board, plus one Org Admin, one User, and one Read Only account at password `Abc123!`,
-///    none forced to change it.
+/// 2. 3 demo organizations, each provisioned with the default statuses and one default board,
+///    plus one Org Admin, one User, and one Read Only account at password `Abc123!`, none forced
+///    to change it.
 /// </summary>
 public sealed class StartupSeeder : IStartupSeeder
 {
@@ -47,21 +49,25 @@ public sealed class StartupSeeder : IStartupSeeder
     public async Task SeedAsync(
         string siteAdminEmail,
         string siteAdminPassword,
-        bool seedDevelopmentDemoData,
+        bool seedSiteAdmin,
+        bool seedDemoData,
         CancellationToken cancellationToken = default)
     {
         var now = _clock.UtcNow;
 
-        var hasSiteAdmin = await _dbContext.Users.AnyAsync(u => u.Role == Role.SiteAdmin, cancellationToken);
-        if (!hasSiteAdmin)
+        if (seedSiteAdmin)
         {
-            var passwordHash = _passwordHasher.Hash(siteAdminPassword);
-            var siteAdmin = User.CreateSiteAdmin("Site", "Admin", siteAdminEmail, passwordHash, now);
-            await _dbContext.Users.AddAsync(siteAdmin, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            var hasSiteAdmin = await _dbContext.Users.AnyAsync(u => u.Role == Role.SiteAdmin, cancellationToken);
+            if (!hasSiteAdmin)
+            {
+                var passwordHash = _passwordHasher.Hash(siteAdminPassword);
+                var siteAdmin = User.CreateSiteAdmin("Site", "Admin", siteAdminEmail, passwordHash, now);
+                await _dbContext.Users.AddAsync(siteAdmin, cancellationToken);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
         }
 
-        if (!seedDevelopmentDemoData)
+        if (!seedDemoData)
         {
             return;
         }

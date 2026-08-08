@@ -75,9 +75,21 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Seeding control. With no --seed:* flags, keep the historical default: always seed the Site Admin,
+// seed demo data only under the Development environment. Passing either flag switches to explicit
+// mode — only the seeds you name run, regardless of environment. Both parts are idempotent, so the
+// flags are a manual trigger (e.g. `dotnet watch --project ./src/Collega.API -- --seed:auth
+// --seed:demo`), not a one-shot. See src/Collega.API/CLAUDE.md.
+var seedAuthFlag = ReadSeedFlag(args, "seed:auth");
+var seedDemoFlag = ReadSeedFlag(args, "seed:demo");
+var explicitSeeding = seedAuthFlag is not null || seedDemoFlag is not null;
+var seedSiteAdmin = explicitSeeding ? seedAuthFlag ?? false : true;
+var seedDemoData = explicitSeeding ? seedDemoFlag ?? false : app.Environment.IsDevelopment();
+
 // Migrate/create the schema, then run idempotent startup seeding (auth requirements #8-11): the
-// global Site Admin always, plus Development-only demo organizations/users. InMemory-provider test
-// hosts (see tests/Collega.API.Tests) aren't relational, so EnsureCreated substitutes for Migrate.
+// global Site Admin and demo organizations/users, each gated by the flags resolved above.
+// InMemory-provider test hosts (see tests/Collega.API.Tests) aren't relational, so EnsureCreated
+// substitutes for Migrate.
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<CollegaDbContext>();
@@ -91,7 +103,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     var seeder = scope.ServiceProvider.GetRequiredService<IStartupSeeder>();
-    await seeder.SeedAsync(siteAdminEmail, siteAdminPassword, app.Environment.IsDevelopment());
+    await seeder.SeedAsync(siteAdminEmail, siteAdminPassword, seedSiteAdmin, seedDemoData);
 }
 
 // Configure the HTTP request pipeline.
@@ -116,6 +128,32 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Reads a boolean seed switch from the raw command-line args, tolerant of the forms the CLI hands
+// us: `--seed:auth`, `/seed:auth`, or `--seed:auth=false`. Returns null when absent (so the caller
+// can tell "not specified" from an explicit false), true for a bare flag, or the parsed bool value.
+static bool? ReadSeedFlag(string[] args, string name)
+{
+    foreach (var arg in args)
+    {
+        var token = arg.TrimStart('-', '/');
+        var separator = token.IndexOf('=');
+        var key = separator < 0 ? token : token[..separator];
+        if (!string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+
+        if (separator < 0)
+        {
+            return true;
+        }
+
+        return bool.TryParse(token[(separator + 1)..], out var value) ? value : true;
+    }
+
+    return null;
+}
 
 // Testing-only shim: exposes Program as a public partial class so
 // Microsoft.AspNetCore.Mvc.Testing's WebApplicationFactory<Program> can
