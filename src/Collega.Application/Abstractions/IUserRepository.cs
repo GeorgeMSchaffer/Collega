@@ -18,6 +18,12 @@ public interface IUserRepository
     Task<PagedResult<User>> ListByOrganizationAsync(UserListFilter filter, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Loads users by their ids. Used by the Collaboration slice to validate idea assignees and to
+    /// project assignee/mention display names without an N+1 lookup.
+    /// </summary>
+    Task<IReadOnlyList<User>> ListByIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Number of active <see cref="Role.OrgAdmin"/> users in an organization, used to enforce the
     /// last-Org-Admin safeguard (org-and-users requirement #8).
     /// </summary>

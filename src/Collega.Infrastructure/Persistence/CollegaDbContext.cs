@@ -1,7 +1,11 @@
 using Collega.Domain.Auditing;
 using Collega.Domain.Boards;
+using Collega.Domain.Comments;
+using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
 using Collega.Domain.Statuses;
+using Collega.Domain.Tags;
+using Collega.Domain.Upvotes;
 using Collega.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,6 +35,14 @@ public sealed class CollegaDbContext : DbContext
     public DbSet<Board> Boards => Set<Board>();
 
     public DbSet<BoardSwimlane> BoardSwimlanes => Set<BoardSwimlane>();
+
+    public DbSet<Idea> Ideas => Set<Idea>();
+
+    public DbSet<Tag> Tags => Set<Tag>();
+
+    public DbSet<Comment> Comments => Set<Comment>();
+
+    public DbSet<IdeaUpvote> IdeaUpvotes => Set<IdeaUpvote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

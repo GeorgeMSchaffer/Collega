@@ -78,6 +78,20 @@ public sealed class EfUserRepository : IUserRepository
             SortDirection.Normalize(filter.SortDirection));
     }
 
+    public async Task<IReadOnlyList<User>> ListByIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default)
+    {
+        if (userIds.Count == 0)
+        {
+            return Array.Empty<User>();
+        }
+
+        var ids = userIds.ToList();
+        return await _dbContext.Users
+            .AsNoTracking()
+            .Where(u => ids.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<int> CountActiveOrgAdminsAsync(Guid organizationId, Guid? excludingUserId = null, CancellationToken cancellationToken = default) =>
         _dbContext.Users.CountAsync(
             u => u.OrganizationId == organizationId
