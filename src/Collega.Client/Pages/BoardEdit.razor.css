@@ -1,0 +1,52 @@
+/* Swimlane selector: two columns (selected/ordered vs available), each a stack of status rows. */
+.lanes {
+    display: flex;
+    gap: 20px;
+    margin: 8px 0 20px;
+}
+
+.lanecol {
+    flex: 1;
+    min-width: 0;
+}
+
+.lanecol h3 {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    margin-bottom: 8px;
+}
+
+.lane {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    margin-bottom: 6px;
+    background: var(--surface);
+}
+
+.lane-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--ink);
+}
+
+.lane-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.checkline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+}

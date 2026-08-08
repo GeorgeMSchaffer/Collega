@@ -1,0 +1,98 @@
+@page "/settings/boards"
+@attribute [Authorize(Roles = "OrgAdmin")]
+@inject ApiClient Api
+
+<PageTitle>Boards · Collega</PageTitle>
+
+@*
+    Organization board configuration (T043). Org Admin manages the boards that organize ideas into
+    status swimlanes. List here; create/edit (incl. swimlane subset + order) is on BoardEdit.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings">Settings</a> / Boards</div>
+    <h1>Boards</h1>
+    <p class="sub" style="margin-bottom:18px">Configure the boards your organization uses to track ideas.</p>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else if (_error is not null)
+    {
+        <div class="autherror" role="alert">@_error</div>
+    }
+    else
+    {
+        <div class="cmdbar"><a class="btn primary" href="/settings/boards/new">New board</a></div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Board</th><th>Swimlanes</th><th>User status moves</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in _boards)
+                    {
+                        <tr>
+                            <td><strong>@b.Name</strong></td>
+                            <td>@b.SwimlaneCount</td>
+                            <td>
+                                @if (b.AllowUserStatusUpdate)
+                                {
+                                    <span class="pill ok">Allowed</span>
+                                }
+                                else
+                                {
+                                    <span class="pill neutral">Admins only</span>
+                                }
+                            </td>
+                            <td><a class="btn subtle" href="@($"/settings/boards/{b.BoardId}")">Edit</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_boards.Count == 0)
+        {
+            <div class="placeholder"><p>No boards yet.</p></div>
+        }
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private List<BoardListItemDto> _boards = new();
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string? organizationId = null;
+        if (AuthStateTask is not null)
+        {
+            organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+        }
+
+        if (string.IsNullOrEmpty(organizationId))
+        {
+            _error = "Your account isn't associated with an organization.";
+            _loading = false;
+            return;
+        }
+
+        var result = await Api.GetBoardsAsync(organizationId!);
+        if (result.Succeeded)
+        {
+            _boards = result.Value!;
+        }
+        else
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+}

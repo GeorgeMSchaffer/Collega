@@ -112,3 +112,18 @@ public sealed record UpdateUserRequestDto(
     string Email,
     string Role,
     string Status);
+
+/// <summary>A row of <c>GET /organizations/{id}/statuses</c> (plain array, not paged).</summary>
+public sealed record StatusItemDto(
+    string StatusId,
+    string OrganizationId,
+    string Name,
+    string Color,
+    int SortOrder,
+    bool IsDeleted);
+
+/// <summary>Body for both <c>POST .../statuses</c> and <c>PUT /statuses/{id}</c>. Color/SortOrder are optional.</summary>
+public sealed record SaveStatusRequestDto(string Name, string? Color, int? SortOrder);
+
+/// <summary>Response of <c>POST .../statuses</c>.</summary>
+public sealed record CreateStatusResultDto(string StatusId, string Name, string Color, int SortOrder);

@@ -11,9 +11,11 @@ namespace Collega.Client.Services;
 /// into <see cref="ApiResult{T}"/> failures carrying the problem-details message — so pages handle
 /// expected 4xx flows (bad credentials, lockout, validation) without exception handling.
 /// </summary>
-public sealed class ApiClient
+// Partial: shared members + auth/org/user/status methods live here; page-slice API methods are
+// added in sibling ApiClient.<Area>.cs files so parallel work doesn't collide on this file.
+public sealed partial class ApiClient
 {
-    private const string BasePath = "api/v1";
+    internal const string BasePath = "api/v1";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -60,6 +62,25 @@ public sealed class ApiClient
 
     public Task<ApiResult<UserDetailDto>> UpdateUserAsync(string userId, UpdateUserRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<UserDetailDto>(HttpMethod.Put, $"{BasePath}/users/{userId}", body, ct);
+
+    public Task<ApiResult<List<StatusItemDto>>> GetStatusesAsync(string organizationId, CancellationToken ct = default) =>
+        GetAsync<List<StatusItemDto>>($"{BasePath}/organizations/{organizationId}/statuses", ct);
+
+    public Task<ApiResult<CreateStatusResultDto>> CreateStatusAsync(string organizationId, SaveStatusRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<CreateStatusResultDto>(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/statuses", body, ct);
+
+    public Task<ApiResult<StatusItemDto>> UpdateStatusAsync(string statusId, SaveStatusRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<StatusItemDto>(HttpMethod.Put, $"{BasePath}/statuses/{statusId}", body, ct);
+
+    public async Task<ApiResult<bool>> DeleteStatusAsync(string statusId, CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"{BasePath}/statuses/{statusId}");
+        await AttachTokenAsync(request);
+        using var response = await _http.SendAsync(request, ct);
+        return response.IsSuccessStatusCode
+            ? ApiResult<bool>.Success(true, (int)response.StatusCode)
+            : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+    }
 
     public async Task<ApiResult<bool>> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct = default)
     {

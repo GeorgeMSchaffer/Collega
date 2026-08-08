@@ -336,6 +336,9 @@ code { color: var(--accent-deep); }
 .formrow { display: flex; gap: 16px; }
 .formrow .field { flex: 1; }
 .btnrow { display: flex; gap: 10px; align-items: center; }
+/* Status color swatch shown before the name in the statuses table. */
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(0,0,0,.12); }
+.rowactions { display: flex; gap: 6px; }
 /* Inline auth feedback: a red error banner and a neutral success/status note. */
 .autherror { border: 1px solid #d13438; background: #fdf3f4; color: #a4262c; border-radius: 4px; padding: 9px 12px; font-size: 13px; margin-bottom: 16px; line-height: 1.4; }
 .authnote { border: 1px solid var(--line); background: #f3f2f1; color: var(--ink-2); border-radius: 4px; padding: 9px 12px; font-size: 13px; margin-bottom: 16px; line-height: 1.4; }
