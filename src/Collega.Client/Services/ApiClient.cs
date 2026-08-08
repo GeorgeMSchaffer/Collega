@@ -61,6 +61,25 @@ public sealed class ApiClient
     public Task<ApiResult<UserDetailDto>> UpdateUserAsync(string userId, UpdateUserRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<UserDetailDto>(HttpMethod.Put, $"{BasePath}/users/{userId}", body, ct);
 
+    public Task<ApiResult<List<StatusItemDto>>> GetStatusesAsync(string organizationId, CancellationToken ct = default) =>
+        GetAsync<List<StatusItemDto>>($"{BasePath}/organizations/{organizationId}/statuses", ct);
+
+    public Task<ApiResult<CreateStatusResultDto>> CreateStatusAsync(string organizationId, SaveStatusRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<CreateStatusResultDto>(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/statuses", body, ct);
+
+    public Task<ApiResult<StatusItemDto>> UpdateStatusAsync(string statusId, SaveStatusRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<StatusItemDto>(HttpMethod.Put, $"{BasePath}/statuses/{statusId}", body, ct);
+
+    public async Task<ApiResult<bool>> DeleteStatusAsync(string statusId, CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"{BasePath}/statuses/{statusId}");
+        await AttachTokenAsync(request);
+        using var response = await _http.SendAsync(request, ct);
+        return response.IsSuccessStatusCode
+            ? ApiResult<bool>.Success(true, (int)response.StatusCode)
+            : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+    }
+
     public async Task<ApiResult<bool>> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{BasePath}/auth/change-password")

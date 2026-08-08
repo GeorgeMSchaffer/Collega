@@ -1,0 +1,222 @@
+@page "/settings/statuses"
+@attribute [Authorize(Roles = "OrgAdmin")]
+@inject ApiClient Api
+
+<PageTitle>Statuses · Collega</PageTitle>
+
+@*
+    Organization status configuration (T043). Org Admin manages the status catalog used by boards'
+    swimlanes and idea cards: name, color, and catalog sort order. The API enforces the two-active
+    floor and the board-reference delete guard; this page mirrors the floor client-side (Delete is
+    disabled at two active) and surfaces any server rejection inline.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings">Settings</a> / Statuses</div>
+    <h1>Statuses</h1>
+    <p class="sub" style="margin-bottom:18px">Configure the statuses your boards group ideas by.</p>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else
+    {
+        <div class="cmdbar">
+            <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New status</button>
+        </div>
+
+        @if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+
+        @if (_editing)
+        {
+            <div class="card formcard" style="margin-bottom:16px">
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:14px">@(_editId is null ? "New status" : "Edit status")</h3>
+                <div class="field">
+                    <label for="name">Name</label>
+                    <FluentTextField id="name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
+                </div>
+                <div class="formrow">
+                    <div class="field">
+                        <label for="color">Color</label>
+                        <div class="btnrow">
+                            <input type="color" id="color" @bind="_form.Color" disabled="@_busy" style="width:44px;height:32px;padding:0;border:1px solid var(--line);border-radius:4px;background:none" />
+                            <code>@_form.Color</code>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="sort">Sort order</label>
+                        <input type="number" id="sort" @bind="_form.SortOrder" disabled="@_busy" style="width:100px" />
+                    </div>
+                </div>
+                <div class="btnrow">
+                    <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
+                    <button class="btn" @onclick="Cancel" disabled="@_busy">Cancel</button>
+                </div>
+            </div>
+        }
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Status</th><th>Color</th><th>Sort order</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in _statuses)
+                    {
+                        <tr>
+                            <td>
+                                <span class="swatch" style="background:@s.Color"></span>
+                                <strong>@s.Name</strong>
+                            </td>
+                            <td><code>@s.Color</code></td>
+                            <td>@s.SortOrder</td>
+                            <td class="rowactions">
+                                <button class="btn subtle" @onclick="() => StartEdit(s)" disabled="@_editing">Edit</button>
+                                <button class="btn danger" @onclick="() => Delete(s)"
+                                        disabled="@(_editing || _statuses.Count <= 2)"
+                                        title="@(_statuses.Count <= 2 ? "An organization must keep at least two active statuses." : null)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_statuses.Count == 0)
+        {
+            <div class="placeholder"><p>No statuses yet.</p></div>
+        }
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private sealed class FormModel
+    {
+        public string Name { get; set; } = "";
+        public string Color { get; set; } = "#64748B";
+        public int SortOrder { get; set; }
+    }
+
+    private string? _organizationId;
+    private List<StatusItemDto> _statuses = new();
+    private bool _loading = true;
+    private bool _busy;
+    private bool _editing;
+    private string? _editId;
+    private FormModel _form = new();
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        if (string.IsNullOrEmpty(_organizationId))
+        {
+            _error = "Your account isn't associated with an organization.";
+            _loading = false;
+            return;
+        }
+
+        var result = await Api.GetStatusesAsync(_organizationId!);
+        if (result.Succeeded)
+        {
+            _statuses = result.Value!.OrderBy(s => s.SortOrder).ToList();
+        }
+        else
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+
+    private void StartCreate()
+    {
+        _editId = null;
+        var nextSort = _statuses.Count == 0 ? 10 : _statuses.Max(s => s.SortOrder) + 10;
+        _form = new FormModel { SortOrder = nextSort };
+        _error = null;
+        _editing = true;
+    }
+
+    private void StartEdit(StatusItemDto s)
+    {
+        _editId = s.StatusId;
+        _form = new FormModel { Name = s.Name, Color = s.Color, SortOrder = s.SortOrder };
+        _error = null;
+        _editing = true;
+    }
+
+    private void Cancel()
+    {
+        _editing = false;
+        _error = null;
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name))
+        {
+            _error = "A status name is required.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+
+        var body = new SaveStatusRequestDto(_form.Name.Trim(), _form.Color, _form.SortOrder);
+        bool succeeded;
+        string? error;
+        if (_editId is null)
+        {
+            var r = await Api.CreateStatusAsync(_organizationId!, body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+        else
+        {
+            var r = await Api.UpdateStatusAsync(_editId!, body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+
+        _busy = false;
+        if (succeeded)
+        {
+            _editing = false;
+            await LoadAsync();
+            return;
+        }
+
+        _error = error ?? "Save failed.";
+    }
+
+    private async Task Delete(StatusItemDto s)
+    {
+        _error = null;
+        var result = await Api.DeleteStatusAsync(s.StatusId);
+        if (result.Succeeded)
+        {
+            await LoadAsync();
+        }
+        else
+        {
+            _error = result.Error;
+        }
+    }
+}
