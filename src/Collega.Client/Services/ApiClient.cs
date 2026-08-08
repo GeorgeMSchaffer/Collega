@@ -35,6 +35,14 @@ public sealed class ApiClient
         return await SendAsync<LoginResponseDto>(request, ct);
     }
 
+    /// <summary>Site Admin: the organization list. Pulls a large first page (admin lists are small).</summary>
+    public Task<ApiResult<PagedResultDto<OrganizationListItemDto>>> GetOrganizationsAsync(CancellationToken ct = default) =>
+        GetAsync<PagedResultDto<OrganizationListItemDto>>($"{BasePath}/organizations?pageSize=100", ct);
+
+    /// <summary>The users belonging to one organization (Org Admin's own org, or any org for a Site Admin).</summary>
+    public Task<ApiResult<PagedResultDto<UserListItemDto>>> GetOrganizationUsersAsync(string organizationId, CancellationToken ct = default) =>
+        GetAsync<PagedResultDto<UserListItemDto>>($"{BasePath}/organizations/{organizationId}/users?pageSize=100", ct);
+
     public async Task<ApiResult<bool>> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{BasePath}/auth/change-password")
@@ -47,6 +55,12 @@ public sealed class ApiClient
         return response.IsSuccessStatusCode
             ? ApiResult<bool>.Success(true, (int)response.StatusCode)
             : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+    }
+
+    private async Task<ApiResult<T>> GetAsync<T>(string url, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        return await SendAsync<T>(request, ct);
     }
 
     private async Task<ApiResult<T>> SendAsync<T>(HttpRequestMessage request, CancellationToken ct)

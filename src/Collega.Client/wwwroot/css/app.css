@@ -328,6 +328,8 @@ code { color: var(--accent-deep); }
 }
 .brand .name { font-family: Georgia, serif; font-size: 19px; font-weight: 600; }
 .authcard .sub { font-size: 13px; color: var(--ink-3); margin-bottom: 20px; line-height: 1.5; }
+/* Inline loading row: a Fluent progress ring next to a muted label. */
+.loading { display: flex; align-items: center; gap: 10px; color: var(--ink-3); font-size: 13px; padding: 8px 0; }
 /* Inline auth feedback: a red error banner and a neutral success/status note. */
 .autherror { border: 1px solid #d13438; background: #fdf3f4; color: #a4262c; border-radius: 4px; padding: 9px 12px; font-size: 13px; margin-bottom: 16px; line-height: 1.4; }
 .authnote { border: 1px solid var(--line); background: #f3f2f1; color: var(--ink-2); border-radius: 4px; padding: 9px 12px; font-size: 13px; margin-bottom: 16px; line-height: 1.4; }

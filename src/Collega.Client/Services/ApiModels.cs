@@ -27,3 +27,34 @@ public sealed record UserSummaryDto(
 
 /// <summary>RFC 7807 problem-details envelope the API returns for every non-2xx response.</summary>
 public sealed record ProblemDetailsDto(string? Title, int? Status, string? Detail);
+
+/// <summary>Canonical paged-collection envelope (SPEC/30-Contracts.md "Shared Data Rules").</summary>
+public sealed record PagedResultDto<T>(
+    IReadOnlyList<T> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    string? SortBy,
+    string? SortDirection);
+
+/// <summary>A row of <c>GET /organizations</c> (Site Admin org list).</summary>
+public sealed record OrganizationListItemDto(
+    string OrganizationId,
+    string Title,
+    string Description,
+    string InviteCode,
+    string? City,
+    string? State,
+    string? Phone,
+    string? LogoThumbnailUrl,
+    bool IsArchived);
+
+/// <summary>A row of <c>GET /organizations/{id}/users</c> (org-scoped user list).</summary>
+public sealed record UserListItemDto(
+    string UserId,
+    string? OrganizationId,
+    string FirstName,
+    string LastName,
+    string Email,
+    string Role,
+    string Status);
