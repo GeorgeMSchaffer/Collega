@@ -41,7 +41,9 @@ The sign-off below (v4-combined) was provisional pending a further refinement pa
   - **Still to do on the Client track:** Boards/Statuses admin (T043, next — in progress), Home dashboard, Idea Detail (T044), Kanban, and the `/ideas` global list (its comp `-07` isn't locked yet); plus T042 leftovers (org→users drill-down for Site-Admin-managed users, CSV import, list filtering/paging). A "must change password" global gate (currently only enforced via the post-login redirect) and wiring Home's placeholder greeting/org name to the real user are follow-ups. **Test data left in the shared dev DB:** user "Quinn Tester" (Acme) and org "QA Test Org".
 
 ## In Progress
-- **Client Agent — Boards & Statuses admin (T043)**: started 2026-08-08 on a new worktree/branch off `dev` @ `440563a`. Wires the Settings admin to the Workflow Configuration API (status CRUD, board CRUD/swimlanes) for Site/Org Admins.
+- **Client Agent — Boards & Statuses admin (T043)** (`feature/008-client-boards-statuses`, off `dev` @ `440563a`; **committed, not merged**).
+  - `f7866fc` — **Statuses admin done**: `/settings/statuses` (Org Admin) — list (color swatch/hex/sort), inline create/edit, delete against the Workflow Config API (`GET/POST /organizations/{id}/statuses`, `PUT/DELETE /statuses/{id}`); delete disabled client-side at the 2-active floor, server guards surface inline; reached via a "Manage statuses" link on the Org Admin Settings view. New DTOs + `ApiClient` status methods (incl. DELETE helper). Verified live (list 5 canonical, create+delete a test status, edit sort with revert — no test data left).
+  - **Remaining half:** Boards admin (board list + create/edit with swimlane status-subset selection, 2-swimlane minimum, immediate reorder) against `GET/POST /organizations/{id}/boards`, `GET/PUT /boards/{id}`, `POST /boards/{id}/swimlanes/reorder`.
 
 ## Recently Merged (2026-08-08 parallel push)
 - **Tenant Administration (T012-T019)** — merge `80782f4`. Org CRUD, default status+board provisioning, org-scoped user CRUD, one-org/one-role + globally-unique-email enforcement, Active/Inactive states, last-Org-Admin guard, audit events. 8 API integration tests.
