@@ -1,4 +1,5 @@
 using Collega.Domain.Enums;
+using Collega.Domain.Fields;
 using Collega.Domain.Ideas;
 
 namespace Collega.Domain.Tests;
@@ -89,5 +90,56 @@ public sealed class IdeaTests
         var idea = NewIdea();
         var eleven = Enumerable.Range(0, 11).Select(_ => Guid.NewGuid()).ToArray();
         Assert.Throws<ArgumentException>(() => idea.ReplaceTags(eleven, TestClock.Now.AddMinutes(1), AuthorId));
+    }
+
+    // ReplaceFieldValues scoping — regression: reconciling one field must not drop values whose
+    // definitions are out of the reconciled scope (e.g. archived after they were filled in).
+    [Fact]
+    public void ReplaceFieldValues_PreservesValuesForOutOfScopeDefinitions()
+    {
+        var idea = NewIdea();
+        var defA = Guid.NewGuid();
+        var defB = Guid.NewGuid();
+
+        idea.ReplaceFieldValues(
+            new[] { new IdeaFieldValueInput(defA, "a1"), new IdeaFieldValueInput(defB, "b1") },
+            new[] { defA, defB },
+            TestClock.Now,
+            AuthorId);
+
+        // defB is now out of scope (archived); only defA is reconciled, with a changed value.
+        idea.ReplaceFieldValues(
+            new[] { new IdeaFieldValueInput(defA, "a2") },
+            new[] { defA },
+            TestClock.Now.AddMinutes(1),
+            AuthorId);
+
+        var byDef = idea.FieldValues.ToDictionary(v => v.FieldDefinitionId, v => v.Value);
+        Assert.Equal("a2", byDef[defA]);
+        Assert.Equal("b1", byDef[defB]); // out-of-scope value preserved, not wiped
+    }
+
+    [Fact]
+    public void ReplaceFieldValues_ClearsInScopeValueWhenNotResubmitted()
+    {
+        var idea = NewIdea();
+        var defA = Guid.NewGuid();
+        var defB = Guid.NewGuid();
+
+        idea.ReplaceFieldValues(
+            new[] { new IdeaFieldValueInput(defA, "a1"), new IdeaFieldValueInput(defB, "b1") },
+            new[] { defA, defB },
+            TestClock.Now,
+            AuthorId);
+
+        // Both defs remain in scope, but defA is omitted this time — an in-scope omission clears it.
+        idea.ReplaceFieldValues(
+            new[] { new IdeaFieldValueInput(defB, "b1") },
+            new[] { defA, defB },
+            TestClock.Now.AddMinutes(1),
+            AuthorId);
+
+        var value = Assert.Single(idea.FieldValues);
+        Assert.Equal(defB, value.FieldDefinitionId);
     }
 }

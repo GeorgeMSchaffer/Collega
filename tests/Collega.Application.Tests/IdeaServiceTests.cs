@@ -427,6 +427,48 @@ public sealed class IdeaServiceTests
     }
 
     [Fact]
+    public async Task Update_WithNullFieldValues_LeavesExistingValuesUntouched_AndSkipsRequiredValidation()
+    {
+        var def = _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Budget", fieldType: FieldType.Number, isRequired: true));
+        var sut = CreateSut();
+        var created = await sut.CreateAsync(_boardId, FieldValueCommand(new IdeaFieldValueWrite(def.Id, "50000")));
+
+        // An unrelated edit that does not carry field values (null = "not provided") must neither wipe
+        // the stored value nor be blocked by the required-field rule.
+        var detail = await sut.UpdateAsync(created.IdeaId,
+            new UpdateIdeaCommand("New Title", "A brand new description.", "Medium", null, null, null, null));
+
+        Assert.Equal("New Title", detail.Title);
+        var idea = _ideas.Ideas.Single(i => i.Id == created.IdeaId);
+        var value = Assert.Single(idea.FieldValues);
+        Assert.Equal("50000", value.Value);
+    }
+
+    [Fact]
+    public async Task Update_ReconcilingFieldValues_PreservesValueOfArchivedDefinition()
+    {
+        var active = _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Budget", fieldType: FieldType.Number, displayOrder: 10));
+        var archived = _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Legacy", fieldType: FieldType.Text, displayOrder: 20));
+        var sut = CreateSut();
+        var created = await sut.CreateAsync(_boardId, FieldValueCommand(
+            new IdeaFieldValueWrite(active.Id, "50000"),
+            new IdeaFieldValueWrite(archived.Id, "keep-me")));
+
+        archived.SoftDelete(_clock.UtcNow, null);
+
+        // Reconcile the active field only; the archived definition is out of scope and its stored
+        // value must survive the reconcile.
+        await sut.UpdateAsync(created.IdeaId, new UpdateIdeaCommand(
+            "Title", "A valid description.", "Medium", null, null, null, null,
+            new[] { new IdeaFieldValueWrite(active.Id, "60000") }));
+
+        var idea = _ideas.Ideas.Single(i => i.Id == created.IdeaId);
+        var byDef = idea.FieldValues.ToDictionary(v => v.FieldDefinitionId, v => v.Value);
+        Assert.Equal("60000", byDef[active.Id]);
+        Assert.Equal("keep-me", byDef[archived.Id]);
+    }
+
+    [Fact]
     public async Task GetById_ProjectsActiveFieldValues_AndHidesArchived()
     {
         var active = _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Budget", fieldType: FieldType.Number, displayOrder: 10));
