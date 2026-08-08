@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Collega.Application.Abstractions;
 using Collega.Infrastructure.Auditing;
+using Collega.Infrastructure.Notifications;
 using Collega.Infrastructure.Persistence;
 using Collega.Infrastructure.Persistence.Repositories;
 using Collega.Infrastructure.Security;
@@ -22,6 +23,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddDbContext<CollegaDbContext>(options => options.UseSqlServer(connectionString));
 
         services.AddScoped<IAuditEventWriter, EfAuditEventWriter>();
+        services.AddScoped<INotificationEventWriter, EfNotificationEventWriter>();
 
         services.AddScoped<IUserRepository, EfUserRepository>();
         services.AddScoped<IOrganizationRepository, EfOrganizationRepository>();
