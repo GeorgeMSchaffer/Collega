@@ -9,6 +9,12 @@ public static class OrganizationDefaults
     public const string DefaultBoardName = "Ideas";
 
     /// <summary>
+    /// Fallback color applied to a custom status created without an explicit color. Matches the
+    /// slate used for the "New / Pending" default (SPEC/20-feature-boards-and-statuses.md rule #9).
+    /// </summary>
+    public const string DefaultStatusColor = "#64748B";
+
+    /// <summary>
     /// The 5 canonical default statuses in catalog order. Default <c>Color</c>/<c>SortOrder</c>
     /// values are a spec open item (SPEC/60-spec-q-and-a-backlog.md "Remaining MVP Clarifications");
     /// these colors match the locked design comps recorded in the implementation tracker

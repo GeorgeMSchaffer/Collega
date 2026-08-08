@@ -4,7 +4,9 @@ using Collega.API.ErrorHandling;
 using Collega.API.Validation;
 using Collega.Application.Abstractions;
 using Collega.Application.Auth;
+using Collega.Application.Boards;
 using Collega.Application.Organizations;
+using Collega.Application.Statuses;
 using Collega.Application.Users;
 using Collega.Infrastructure.DependencyInjection;
 using Collega.Infrastructure.Persistence;
@@ -46,6 +48,8 @@ builder.Services.AddScoped<ITokenAuthenticationService, TokenAuthenticationServi
 builder.Services.AddScoped<IOrganizationBootstrapService, OrganizationBootstrapService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IStatusService, StatusService>();
+builder.Services.AddScoped<IBoardService, BoardService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();

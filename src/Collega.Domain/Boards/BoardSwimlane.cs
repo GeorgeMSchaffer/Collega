@@ -23,4 +23,6 @@ public sealed class BoardSwimlane : EntityBase
         DisplayOrder = displayOrder;
         BoardId = boardId;
     }
+
+    internal void SetDisplayOrder(int displayOrder) => DisplayOrder = displayOrder;
 }
