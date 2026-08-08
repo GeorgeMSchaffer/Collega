@@ -169,14 +169,24 @@ public sealed class FieldDefinitionService : IFieldDefinitionService
 
         var now = _clock.UtcNow;
         var order = 0;
+        var assigned = new HashSet<Guid>();
         foreach (var definitionId in command.OrderedIds ?? Array.Empty<Guid>())
         {
-            if (!byId.TryGetValue(definitionId, out var definition))
+            // Unknown/archived ids and repeats are ignored (the active set is authoritative).
+            if (!byId.TryGetValue(definitionId, out var definition) || !assigned.Add(definitionId))
             {
-                // Unknown or already-archived ids are ignored (the active set is authoritative).
                 continue;
             }
 
+            order += DisplayOrderStep;
+            definition.SetDisplayOrder(order, now, _currentUser.UserId);
+        }
+
+        // Any active definitions the caller omitted keep their prior relative order, appended after the
+        // explicitly ordered ones — so every active field gets a fresh, collision-free display order
+        // (`definitions` is already sorted by display order).
+        foreach (var definition in definitions.Where(d => !assigned.Contains(d.Id)))
+        {
             order += DisplayOrderStep;
             definition.SetDisplayOrder(order, now, _currentUser.UserId);
         }

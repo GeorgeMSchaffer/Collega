@@ -61,23 +61,33 @@ internal static class FieldValueValidator
                 continue;
             }
 
-            if (TryNormalize(definition, trimmed!, out var normalized, out var error))
-            {
-                // Guard the persisted length here so it surfaces as a 400 rather than an ArgumentException
-                // (HTTP 500) from IdeaFieldValue's constructor — e.g. a MultiSelect with many options.
-                if (normalized is { Length: > IdeaFieldValue.ValueMaxLength })
-                {
-                    AddError(errors, definition.Name, $"{definition.Name} must be {IdeaFieldValue.ValueMaxLength} characters or fewer.");
-                }
-                else
-                {
-                    result.Add(new IdeaFieldValueInput(definition.Id, normalized));
-                }
-            }
-            else
+            if (!TryNormalize(definition, trimmed!, out var normalized, out var error))
             {
                 AddError(errors, definition.Name, error!);
+                continue;
             }
+
+            // A value that normalizes to empty (e.g. a MultiSelect made up only of separators) counts
+            // as no value: it must still satisfy a required field, and is otherwise cleared (no row).
+            if (string.IsNullOrEmpty(normalized))
+            {
+                if (definition.IsRequired)
+                {
+                    AddError(errors, definition.Name, $"{definition.Name} is required.");
+                }
+
+                continue;
+            }
+
+            // Guard the persisted length so an oversized value (e.g. a large MultiSelect) surfaces as a
+            // 400 rather than an ArgumentException (HTTP 500) from IdeaFieldValue's constructor.
+            if (normalized.Length > IdeaFieldValue.ValueMaxLength)
+            {
+                AddError(errors, definition.Name, $"{definition.Name} must be {IdeaFieldValue.ValueMaxLength} characters or fewer.");
+                continue;
+            }
+
+            result.Add(new IdeaFieldValueInput(definition.Id, normalized));
         }
 
         if (errors.Count > 0)
@@ -118,7 +128,10 @@ internal static class FieldValueValidator
                 return true;
 
             case FieldType.Number:
-                if (!decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var number))
+                // Deliberately strict: a sign and a single decimal point only. Group separators are
+                // rejected so "1,5" is not silently coerced to 15 under invariant culture.
+                const NumberStyles numberStyles = NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint;
+                if (!decimal.TryParse(value, numberStyles, CultureInfo.InvariantCulture, out var number))
                 {
                     error = $"{definition.Name} must be a valid number.";
                     return false;

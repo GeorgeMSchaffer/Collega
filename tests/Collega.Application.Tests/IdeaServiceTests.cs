@@ -488,4 +488,29 @@ public sealed class IdeaServiceTests
         Assert.Equal("Number", value.FieldType);
         Assert.Equal("50000", value.Value);
     }
+
+    [Fact]
+    public async Task Create_RequiredMultiSelect_SeparatorsOnlyValue_ThrowsValidation()
+    {
+        // A MultiSelect made up only of separators normalizes to empty; a required field must reject it
+        // instead of silently saving no value.
+        var def = _fieldDefs.Add(Build.FieldDefinition(
+            _org.Id, name: "Tags", fieldType: FieldType.MultiSelect, isRequired: true,
+            options: new[] { new FieldOptionInput(null, "A", 0) }));
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.CreateAsync(_boardId, FieldValueCommand(new IdeaFieldValueWrite(def.Id, ","))));
+    }
+
+    [Fact]
+    public async Task Create_NumberField_WithGroupSeparator_ThrowsValidation()
+    {
+        // "1,5" must not be silently coerced to 15 under invariant culture.
+        var def = _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Budget", fieldType: FieldType.Number));
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.CreateAsync(_boardId, FieldValueCommand(new IdeaFieldValueWrite(def.Id, "1,5"))));
+    }
 }

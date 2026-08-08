@@ -133,6 +133,22 @@ public sealed class FieldDefinitionServiceTests
     }
 
     [Fact]
+    public async Task Reorder_OmittedActiveFields_GetUniqueTrailingOrder()
+    {
+        var a = _repository.Add(Build.FieldDefinition(_org.Id, name: "A", displayOrder: 10));
+        var b = _repository.Add(Build.FieldDefinition(_org.Id, name: "B", displayOrder: 20));
+        var c = _repository.Add(Build.FieldDefinition(_org.Id, name: "C", displayOrder: 30));
+        var sut = CreateSut();
+
+        // Only C and A are listed; B is omitted and must still get a distinct, trailing order.
+        await sut.ReorderAsync(_org.Id, new ReorderFieldDefinitionsCommand(new[] { c.Id, a.Id }));
+
+        Assert.True(c.DisplayOrder < a.DisplayOrder);
+        Assert.True(a.DisplayOrder < b.DisplayOrder);
+        Assert.Equal(3, new[] { a.DisplayOrder, b.DisplayOrder, c.DisplayOrder }.Distinct().Count());
+    }
+
+    [Fact]
     public async Task List_AsMember_ExcludesArchived()
     {
         _repository.Add(Build.FieldDefinition(_org.Id, name: "Active"));
