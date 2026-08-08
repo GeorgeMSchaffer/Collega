@@ -50,10 +50,18 @@ Three page slices built by parallel background worktree agents off `dev` @ `7fd6
 - **B2. Board detail — Kanban + List (C6)** — `Pages/BoardDetail.razor(.css)`, `Pages/Boards.razor` (placeholder replaced with a real board list → `/board/{id}`), `Services/ApiClient.BoardDetail.cs`, `BoardDetailModels.cs`. Swim Lanes (default) + List toggle, priority chips, HTML5 drag-to-move (optimistic + rollback, gated on `allowUserStatusUpdate`/admin, hidden for Read Only), New-idea mini-form, board picker (localStorage), filter. e2e: rendered 5 lanes, created an idea (left-most default), card shown.
 - **B3. Home dashboard** — `Pages/Home.razor(.css)`. Greeting + org name from claims/`GetOrganizationAsync`, board tiles → `/board/{id}`, Site-Admin variant, honest "activity feed coming soon" placeholder (no backend endpoint). e2e: greeting + tiles rendered.
 
-## In Progress / Next — Client wrap-up
-- **`/ideas` global list** — comp `-07` exists but is **not locked**; needs user review/sign-off before building (comp-first per repo rules). Not yet built.
-- **Cross-cutting follow-ups (T045 & polish)**: a global "must change password" gate (currently only enforced by the post-login redirect); wiring board/idea navigation from the rail; Site-Admin→org-users drill-down; user CSV import; broader role-boundary polish.
-- **Test data in the shared dev DB** (harmless demo data; most have no delete endpoint): user "Quinn Tester", org "QA Test Org", board "QA Board". The e2e "E2E Smoke Idea" was deleted.
+## Client wrap-up — DONE (2026-08-08)
+- **Code-review pass** on the client page batch: 8 findings, all fixed (`c78ad6b`, pushed) — status-select revert on rejection, UTC comment timestamps, Critical priority styling, consolidated `ChangeIdeaStatusAsync` (+ transport-error handling), forced-password-change gate path guard, org-user fetch skipped when comment-less, Critical selectable on create.
+- **Forced-password-change gate** (`117f93b`) and **Site-Admin→org-users drill-down** (`/settings/organizations/{id}/users`, `117f93b`) — done, verified live.
+- **`/ideas` global list** (`c84ff78`) — **built and verified live** against the new backend endpoint. Comp `-07` was implemented as-is (design was coherent/spec-aligned; effectively locked by this build).
+  - **New backend endpoint** (was the blocking gap the comp flagged): `GET /api/v1/organizations/{organizationId}/ideas` — paged, org-scoped, `scope`=all/created/assigned, `search` (title, EF.Functions.Like), newest-first default. Application `ListByOrganizationAsync` + `OrganizationIdeaListFilter` + EF/fake repo impls; reuses `ProjectListItemsAsync`. **Added to `SPEC/30-Contracts.md`.**
+  - Client `/ideas` page: filter chips, search, server-side pagination (25/50/100/250), Title/Created By/Assigned To/Status/Created table, Details → Idea Detail; display names/colors resolved from org users/boards/statuses.
+
+## Still open (not built)
+- **T042/T045 leftovers**: user CSV import (needs a backend `POST /organizations/{id}/users/import` endpoint — not built); Site-Admin editing of another org's users (drill-down is read-only); broader role-boundary polish.
+- **Mobile/narrow-viewport pass** for the rail + two-column layouts (undesigned).
+- **Stale remote branches** were deleted this session; `feature/002-ui-canonical-statuses` was deleted too (over-reach) — its tip `f03796d` is merged into `dev`, so no loss; restore the ref with `git push origin f03796d:refs/heads/feature/002-ui-canonical-statuses` if wanted.
+- **Test data in the shared dev DB** (no delete endpoints): user "Quinn Tester", org "QA Test Org", board "QA Board". Test ideas were deleted.
 
 ## Recently Merged (2026-08-08 parallel push)
 - **Tenant Administration (T012-T019)** — merge `80782f4`. Org CRUD, default status+board provisioning, org-scoped user CRUD, one-org/one-role + globally-unique-email enforcement, Active/Inactive states, last-Org-Admin guard, audit events. 8 API integration tests.

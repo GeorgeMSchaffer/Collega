@@ -752,6 +752,19 @@ Success response `200` paged item shape:
 - `authorUserId`
 - `createdAtUtc`
 
+### `GET /api/v1/organizations/{organizationId}/ideas`
+Purpose: Cross-board, organization-scoped idea list for the global `/ideas` page (`SPEC/20-feature-client-ui-revisions.md` "Ideas Page"). Scoped to the caller's organization.
+
+Query parameters:
+- `page`
+- `pageSize`
+- `search` optional (matches idea title)
+- `scope` optional `all` (default), `created` (authored by the caller), or `assigned` (assigned to the caller)
+- `sortBy` optional `createdAt` (default) or `title`
+- `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first)
+
+Success response `200`: same paged item shape as `GET /api/v1/boards/{boardId}/ideas`.
+
 ### `POST /api/v1/boards/{boardId}/ideas`
 Purpose: Create a new idea on a board.
 
