@@ -1,0 +1,225 @@
+@page "/settings/boards/new"
+@page "/settings/boards/{BoardId}"
+@attribute [Authorize(Roles = "OrgAdmin")]
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>@(_isNew ? "New board" : "Edit board") · Collega</PageTitle>
+
+@*
+    Create / edit a board (Org Admin). One component serves /settings/boards/new and /{id}.
+    Swimlanes are a subset of the organization's statuses, in a chosen order; a board must keep at
+    least two. The API also enforces the 2-swimlane minimum and the status-subset rule.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings/boards">Boards</a> / @(_isNew ? "New board" : "Edit board")</div>
+    <h1>@(_isNew ? "New board" : "Edit board")</h1>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else
+    {
+        <div class="card formcard">
+            @if (_error is not null)
+            {
+                <div class="autherror" role="alert">@_error</div>
+            }
+
+            <div class="field">
+                <label for="name">Name</label>
+                <FluentTextField id="name" @bind-Value="_name" Disabled="_busy" Style="width:100%" />
+            </div>
+            <div class="field">
+                <label class="checkline">
+                    <input type="checkbox" @bind="_allowUserStatusUpdate" disabled="@_busy" />
+                    Allow Users to move ideas between statuses on this board
+                </label>
+            </div>
+
+            <div class="lanes">
+                <div class="lanecol">
+                    <h3>Swimlanes (in order)</h3>
+                    @if (_selected.Count == 0)
+                    {
+                        <p class="sub">Add at least two statuses.</p>
+                    }
+                    @for (var i = 0; i < _selected.Count; i++)
+                    {
+                        var index = i;
+                        var s = _selected[index];
+                        <div class="lane">
+                            <span class="swatch" style="background:@s.Color"></span>
+                            <span class="lane-name">@s.Name</span>
+                            <span class="lane-actions">
+                                <button class="btn subtle" @onclick="() => MoveUp(index)" disabled="@(_busy || index == 0)" title="Move up">↑</button>
+                                <button class="btn subtle" @onclick="() => MoveDown(index)" disabled="@(_busy || index == _selected.Count - 1)" title="Move down">↓</button>
+                                <button class="btn danger" @onclick="() => Remove(s)" disabled="@(_busy || _selected.Count <= 2)" title="@(_selected.Count <= 2 ? "A board needs at least two swimlanes." : "Remove")">Remove</button>
+                            </span>
+                        </div>
+                    }
+                </div>
+                <div class="lanecol">
+                    <h3>Available statuses</h3>
+                    @if (Available.Count == 0)
+                    {
+                        <p class="sub">All statuses are on the board.</p>
+                    }
+                    @foreach (var s in Available)
+                    {
+                        <div class="lane">
+                            <span class="swatch" style="background:@s.Color"></span>
+                            <span class="lane-name">@s.Name</span>
+                            <span class="lane-actions">
+                                <button class="btn subtle" @onclick="() => Add(s)" disabled="@_busy">Add</button>
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="btnrow">
+                <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : _isNew ? "Create board" : "Save changes")</button>
+                <a class="btn" href="/settings/boards">Cancel</a>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? BoardId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private string _name = "";
+    private bool _allowUserStatusUpdate = true;
+    private List<StatusItemDto> _allStatuses = new();
+    private readonly List<StatusItemDto> _selected = new();
+    private string? _organizationId;
+    private bool _isNew => string.IsNullOrEmpty(BoardId);
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+
+    private List<StatusItemDto> Available =>
+        _allStatuses.Where(s => _selected.All(x => x.StatusId != s.StatusId)).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+        }
+
+        if (string.IsNullOrEmpty(_organizationId))
+        {
+            _error = "Your account isn't associated with an organization.";
+            _loading = false;
+            return;
+        }
+
+        var statuses = await Api.GetStatusesAsync(_organizationId!);
+        if (!statuses.Succeeded)
+        {
+            _error = statuses.Error;
+            _loading = false;
+            return;
+        }
+        _allStatuses = statuses.Value!.OrderBy(s => s.SortOrder).ToList();
+
+        if (!_isNew)
+        {
+            var board = await Api.GetBoardAsync(BoardId!);
+            if (!board.Succeeded)
+            {
+                _error = board.Error;
+                _loading = false;
+                return;
+            }
+
+            _name = board.Value!.Name;
+            _allowUserStatusUpdate = board.Value!.AllowUserStatusUpdate;
+            foreach (var sw in board.Value!.Swimlanes.OrderBy(s => s.Order))
+            {
+                var match = _allStatuses.FirstOrDefault(s => s.StatusId == sw.StatusId)
+                    ?? new StatusItemDto(sw.StatusId, _organizationId!, sw.StatusName, sw.StatusColor, sw.Order, sw.StatusIsDeleted);
+                _selected.Add(match);
+            }
+        }
+
+        _loading = false;
+    }
+
+    private void Add(StatusItemDto s) => _selected.Add(s);
+
+    private void Remove(StatusItemDto s)
+    {
+        if (_selected.Count > 2)
+        {
+            _selected.Remove(s);
+        }
+    }
+
+    private void MoveUp(int index)
+    {
+        if (index > 0)
+        {
+            (_selected[index - 1], _selected[index]) = (_selected[index], _selected[index - 1]);
+        }
+    }
+
+    private void MoveDown(int index)
+    {
+        if (index < _selected.Count - 1)
+        {
+            (_selected[index + 1], _selected[index]) = (_selected[index], _selected[index + 1]);
+        }
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_name))
+        {
+            _error = "A board name is required.";
+            return;
+        }
+
+        if (_selected.Count < 2)
+        {
+            _error = "A board needs at least two swimlanes.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+
+        var swimlanes = _selected.Select((s, i) => new SwimlaneInputDto(s.StatusId, i)).ToList();
+        var body = new SaveBoardRequestDto(_name.Trim(), _allowUserStatusUpdate, swimlanes);
+
+        bool succeeded;
+        string? error;
+        if (_isNew)
+        {
+            var r = await Api.CreateBoardAsync(_organizationId!, body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+        else
+        {
+            var r = await Api.UpdateBoardAsync(BoardId!, body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+
+        if (succeeded)
+        {
+            Nav.NavigateTo("/settings/boards");
+            return;
+        }
+
+        _error = error ?? "Save failed.";
+        _busy = false;
+    }
+}

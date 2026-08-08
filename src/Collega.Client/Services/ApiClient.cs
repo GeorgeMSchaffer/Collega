@@ -11,9 +11,11 @@ namespace Collega.Client.Services;
 /// into <see cref="ApiResult{T}"/> failures carrying the problem-details message — so pages handle
 /// expected 4xx flows (bad credentials, lockout, validation) without exception handling.
 /// </summary>
-public sealed class ApiClient
+// Partial: shared members + auth/org/user/status methods live here; page-slice API methods are
+// added in sibling ApiClient.<Area>.cs files so parallel work doesn't collide on this file.
+public sealed partial class ApiClient
 {
-    private const string BasePath = "api/v1";
+    internal const string BasePath = "api/v1";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
