@@ -29,6 +29,32 @@ public static class OrganizationDefaults
         new DefaultStatus("Client Review", "#7C3AED", 40),
         new DefaultStatus("Complete", "#16A34A", 50)
     };
+
+    /// <summary>
+    /// Canonical default Idea Types provisioned for every new organization
+    /// (SPEC/50-technical-implementation-plan.md Phase 4 #9). The first by sort order is the default.
+    /// </summary>
+    public static readonly IReadOnlyList<DefaultIdeaType> IdeaTypes = new[]
+    {
+        new DefaultIdeaType("Continuous Improvement", 10),
+        new DefaultIdeaType("Process Revision", 20)
+    };
+
+    /// <summary>
+    /// Canonical default Business Impacts provisioned for every new organization. The first by sort
+    /// order is the default. Colors follow a low→critical green/blue/amber/red progression.
+    /// </summary>
+    public static readonly IReadOnlyList<DefaultBusinessImpact> BusinessImpacts = new[]
+    {
+        new DefaultBusinessImpact("Low", "#16A34A", 10),
+        new DefaultBusinessImpact("Medium", "#2563EB", 20),
+        new DefaultBusinessImpact("High", "#D97706", 30),
+        new DefaultBusinessImpact("Critical", "#DC2626", 40)
+    };
 }
 
 public sealed record DefaultStatus(string Name, string Color, int SortOrder);
+
+public sealed record DefaultIdeaType(string Name, int SortOrder);
+
+public sealed record DefaultBusinessImpact(string Name, string Color, int SortOrder);

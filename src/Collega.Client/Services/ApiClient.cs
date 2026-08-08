@@ -63,6 +63,36 @@ public sealed partial class ApiClient
     public Task<ApiResult<UserDetailDto>> UpdateUserAsync(string userId, UpdateUserRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<UserDetailDto>(HttpMethod.Put, $"{BasePath}/users/{userId}", body, ct);
 
+    /// <summary>Bulk-imports users from a CSV file (multipart, field <c>csvFile</c>).</summary>
+    public async Task<ApiResult<UserImportResultDto>> ImportUsersAsync(string organizationId, Stream fileStream, string fileName, CancellationToken ct = default)
+    {
+        using var content = new MultipartFormDataContent();
+        var fileContent = new StreamContent(fileStream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
+        content.Add(fileContent, "csvFile", fileName);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/users/import") { Content = content };
+        await AttachTokenAsync(request);
+
+        try
+        {
+            using var response = await _http.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                return ApiResult<UserImportResultDto>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+            }
+
+            var value = await response.Content.ReadFromJsonAsync<UserImportResultDto>(JsonOptions, ct);
+            return value is null
+                ? ApiResult<UserImportResultDto>.Failure((int)response.StatusCode, "The server returned an empty response.")
+                : ApiResult<UserImportResultDto>.Success(value, (int)response.StatusCode);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ApiResult<UserImportResultDto>.Failure(0, $"Couldn't reach the server. {ex.Message}");
+        }
+    }
+
     public Task<ApiResult<List<StatusItemDto>>> GetStatusesAsync(string organizationId, CancellationToken ct = default) =>
         GetAsync<List<StatusItemDto>>($"{BasePath}/organizations/{organizationId}/statuses", ct);
 

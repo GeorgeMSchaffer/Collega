@@ -11,6 +11,8 @@ public sealed class OrganizationServiceTests
     private readonly FakeOrganizationRepository _orgs = new();
     private readonly FakeStatusRepository _statuses = new();
     private readonly FakeBoardRepository _boards = new();
+    private readonly FakeIdeaTypeRepository _ideaTypes = new();
+    private readonly FakeBusinessImpactRepository _businessImpacts = new();
     private readonly FakeInviteCodeGenerator _inviteCodes = new();
     private readonly FakeUnitOfWork _uow = new();
     private readonly RecordingAuditEventWriter _audit = new();
@@ -23,7 +25,7 @@ public sealed class OrganizationServiceTests
 
     private OrganizationService CreateSut()
     {
-        var bootstrap = new OrganizationBootstrapService(_statuses, _boards);
+        var bootstrap = new OrganizationBootstrapService(_statuses, _boards, _ideaTypes, _businessImpacts);
         return new OrganizationService(_orgs, bootstrap, _inviteCodes, _uow, _audit, _currentUser, _clock);
     }
 
@@ -58,7 +60,7 @@ public sealed class OrganizationServiceTests
     public async Task Create_WhenUnauthenticated_ThrowsUnauthorized()
     {
         var anon = FakeCurrentUserContext.Anonymous();
-        var sut = new OrganizationService(_orgs, new OrganizationBootstrapService(_statuses, _boards), _inviteCodes, _uow, _audit, anon, _clock);
+        var sut = new OrganizationService(_orgs, new OrganizationBootstrapService(_statuses, _boards, _ideaTypes, _businessImpacts), _inviteCodes, _uow, _audit, anon, _clock);
 
         await Assert.ThrowsAsync<UnauthorizedAppException>(() => sut.CreateAsync(CreateCommand()));
     }

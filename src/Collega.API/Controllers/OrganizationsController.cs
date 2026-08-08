@@ -1,5 +1,7 @@
 using Collega.API.Contracts.Organizations;
 using Collega.API.Contracts.Users;
+using Collega.API.Parsing;
+using Collega.Application.Exceptions;
 using Collega.Application.Organizations;
 using Collega.Application.Users;
 using Microsoft.AspNetCore.Authorization;
@@ -114,6 +116,25 @@ public sealed class OrganizationsController : ControllerBase
         var command = new CreateUserCommand(request.FirstName, request.LastName, request.Email, request.Role, request.InitialPassword, request.Status);
         var result = await _userService.CreateAsync(organizationId, command, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
+    }
+
+    [HttpPost("{organizationId:guid}/users/import")]
+    public async Task<IActionResult> ImportUsers(Guid organizationId, IFormFile? csvFile, CancellationToken cancellationToken)
+    {
+        if (csvFile is null || csvFile.Length == 0)
+        {
+            throw new ValidationAppException("csvFile", new[] { "A CSV file is required." });
+        }
+
+        string content;
+        using (var reader = new StreamReader(csvFile.OpenReadStream()))
+        {
+            content = await reader.ReadToEndAsync(cancellationToken);
+        }
+
+        var rows = CsvUserImportParser.Parse(content);
+        var result = await _userService.ImportAsync(organizationId, rows, cancellationToken);
+        return Ok(result);
     }
 
     private static OrganizationProfileFields ToProfile(

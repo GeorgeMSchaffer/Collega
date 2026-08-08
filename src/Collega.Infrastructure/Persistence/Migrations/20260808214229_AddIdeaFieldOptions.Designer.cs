@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Collega.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CollegaDbContext))]
-    [Migration("20260808215307_AddUserDefinedFields")]
-    partial class AddUserDefinedFields
+    [Migration("20260808214229_AddIdeaFieldOptions")]
+    partial class AddIdeaFieldOptions
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -222,11 +222,17 @@ namespace Collega.Infrastructure.Persistence.Migrations
                     b.ToTable("comment_mentions", (string)null);
                 });
 
-            modelBuilder.Entity("Collega.Domain.Fields.FieldDefinition", b =>
+            modelBuilder.Entity("Collega.Domain.IdeaFields.BusinessImpact", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("color");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2")
@@ -236,34 +242,9 @@ namespace Collega.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by_user_id");
 
-                    b.Property<DateTime?>("DeletedAtUtc")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("deleted_at_utc");
-
-                    b.Property<Guid?>("DeletedByUserId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("deleted_by_user_id");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("description");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("display_order");
-
-                    b.Property<int>("FieldType")
-                        .HasColumnType("int")
-                        .HasColumnName("field_type");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit")
                         .HasColumnName("is_deleted");
-
-                    b.Property<bool>("IsRequired")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_required");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -275,6 +256,10 @@ namespace Collega.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("organization_id");
 
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at_utc");
@@ -285,46 +270,13 @@ namespace Collega.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrganizationId", "DisplayOrder")
-                        .HasDatabaseName("ix_field_definitions_organization_id_display_order");
+                    b.HasIndex("OrganizationId", "SortOrder")
+                        .HasDatabaseName("ix_business_impacts_organization_id_sort_order");
 
-                    b.HasIndex("OrganizationId", "Name")
-                        .IsUnique()
-                        .HasDatabaseName("ux_field_definitions_organization_id_name")
-                        .HasFilter("[is_deleted] = 0");
-
-                    b.ToTable("field_definitions", (string)null);
+                    b.ToTable("business_impacts", (string)null);
                 });
 
-            modelBuilder.Entity("Collega.Domain.Fields.FieldDefinitionOption", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("display_order");
-
-                    b.Property<Guid>("FieldDefinitionId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("field_definition_id");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("label");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FieldDefinitionId", "DisplayOrder")
-                        .HasDatabaseName("ix_field_definition_options_field_definition_id_display_order");
-
-                    b.ToTable("field_definition_options", (string)null);
-                });
-
-            modelBuilder.Entity("Collega.Domain.Fields.IdeaFieldValue", b =>
+            modelBuilder.Entity("Collega.Domain.IdeaFields.IdeaType", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier")
@@ -338,13 +290,23 @@ namespace Collega.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("created_by_user_id");
 
-                    b.Property<Guid>("FieldDefinitionId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("field_definition_id");
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_deleted");
 
-                    b.Property<Guid>("IdeaId")
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("OrganizationId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("idea_id");
+                        .HasColumnName("organization_id");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime2")
@@ -354,23 +316,12 @@ namespace Collega.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("updated_by_user_id");
 
-                    b.Property<string>("Value")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)")
-                        .HasColumnName("value");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("FieldDefinitionId")
-                        .HasDatabaseName("ix_idea_field_values_field_definition_id");
+                    b.HasIndex("OrganizationId", "SortOrder")
+                        .HasDatabaseName("ix_idea_types_organization_id_sort_order");
 
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("FieldDefinitionId"), new[] { "Value" });
-
-                    b.HasIndex("IdeaId", "FieldDefinitionId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_idea_field_values_idea_id_field_definition_id");
-
-                    b.ToTable("idea_field_values", (string)null);
+                    b.ToTable("idea_types", (string)null);
                 });
 
             modelBuilder.Entity("Collega.Domain.Ideas.Idea", b =>
@@ -970,7 +921,7 @@ namespace Collega.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Collega.Domain.Fields.FieldDefinition", b =>
+            modelBuilder.Entity("Collega.Domain.IdeaFields.BusinessImpact", b =>
                 {
                     b.HasOne("Collega.Domain.Organizations.Organization", null)
                         .WithMany()
@@ -979,27 +930,12 @@ namespace Collega.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Collega.Domain.Fields.FieldDefinitionOption", b =>
+            modelBuilder.Entity("Collega.Domain.IdeaFields.IdeaType", b =>
                 {
-                    b.HasOne("Collega.Domain.Fields.FieldDefinition", null)
-                        .WithMany("Options")
-                        .HasForeignKey("FieldDefinitionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Collega.Domain.Fields.IdeaFieldValue", b =>
-                {
-                    b.HasOne("Collega.Domain.Fields.FieldDefinition", null)
+                    b.HasOne("Collega.Domain.Organizations.Organization", null)
                         .WithMany()
-                        .HasForeignKey("FieldDefinitionId")
+                        .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Collega.Domain.Ideas.Idea", null)
-                        .WithMany("FieldValues")
-                        .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
@@ -1108,16 +1044,9 @@ namespace Collega.Infrastructure.Persistence.Migrations
                     b.Navigation("Mentions");
                 });
 
-            modelBuilder.Entity("Collega.Domain.Fields.FieldDefinition", b =>
-                {
-                    b.Navigation("Options");
-                });
-
             modelBuilder.Entity("Collega.Domain.Ideas.Idea", b =>
                 {
                     b.Navigation("Assignees");
-
-                    b.Navigation("FieldValues");
 
                     b.Navigation("Mentions");
 

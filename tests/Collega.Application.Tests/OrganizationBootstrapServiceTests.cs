@@ -7,8 +7,10 @@ public sealed class OrganizationBootstrapServiceTests
 {
     private readonly FakeStatusRepository _statuses = new();
     private readonly FakeBoardRepository _boards = new();
+    private readonly FakeIdeaTypeRepository _ideaTypes = new();
+    private readonly FakeBusinessImpactRepository _businessImpacts = new();
 
-    private OrganizationBootstrapService CreateSut() => new(_statuses, _boards);
+    private OrganizationBootstrapService CreateSut() => new(_statuses, _boards, _ideaTypes, _businessImpacts);
 
     [Fact]
     public async Task Provision_CreatesCanonicalDefaultStatusesInOrder()
