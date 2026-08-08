@@ -1,15 +1,143 @@
 @page "/"
 @attribute [Authorize]
+@inject ApiClient Api
 
 <PageTitle>Home · Collega</PageTitle>
 
+@*
+    Home dashboard (Decision D4, locked comp comp-c-review-06-lockin-v5-final.html "Home").
+    Greeting from the signed-in identity, board tiles for org-scoped users (Site Admin gets an
+    org-management summary instead), and a clearly-labelled placeholder where an activity feed /
+    aggregate stats will go once backend endpoints exist — no numbers are fabricated here.
+*@
 <div class="pagehead">
-    <h1>Welcome back, Jordan</h1>
-    <p class="sub" style="margin-bottom:18px">Acme Corp · here's what's happening across your boards.</p>
+    <h1>Welcome back, @_firstName</h1>
+    <p class="sub" style="margin-bottom:18px">@_subtitle</p>
 </div>
 <div class="body">
+    @if (_isSiteAdmin)
+    {
+        <h2 class="section">Platform administration</h2>
+        <div class="card admincard">
+            <div class="bd">
+                <h3>Manage organizations</h3>
+                <p>As a Site Admin you oversee organizations across the platform rather than a single set of boards.</p>
+                <a class="btn primary" href="/settings">Go to Settings</a>
+            </div>
+        </div>
+    }
+    else if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading your boards…</span></div>
+    }
+    else if (_error is not null)
+    {
+        <div class="autherror" role="alert">@_error</div>
+    }
+    else
+    {
+        <h2 class="section">Your boards</h2>
+        @if (_boards.Count == 0)
+        {
+            <div class="placeholder">
+                <h3>No boards yet</h3>
+                <p>Your organization doesn't have any boards to show. An Org Admin can create boards from Settings.</p>
+            </div>
+        }
+        else
+        {
+            <div class="tiles">
+                @foreach (var b in _boards)
+                {
+                    <a class="tile" href="@($"/board/{b.BoardId}")">
+                        <div class="band" style="background:@BandColor(b.BoardId)"></div>
+                        <div class="bd">
+                            <h3>@b.Name</h3>
+                            <p>@b.SwimlaneCount @(b.SwimlaneCount == 1 ? "swimlane" : "swimlanes")</p>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    }
+
+    <h2 class="section">Catching you up</h2>
     <div class="placeholder">
-        <h3>Home dashboard</h3>
-        <p>The stats, board tiles, and activity feed for the Home dashboard are built in a later Client task. This page confirms the app shell, rail navigation, and page-header chrome render correctly.</p>
+        <h3>Activity feed coming soon</h3>
+        <p>Recent mentions, comments, upvotes, and status moves will appear here once the activity backend is available.</p>
     </div>
 </div>
+
+@code {
+    // A small decorative palette for tile bands — cosmetic only, keyed off the board id so a
+    // given board keeps the same colour between renders. Not tied to any status/priority meaning.
+    private static readonly string[] BandPalette =
+    {
+        "var(--accent)", "#9a5b00", "#7a3fb8", "#0e700e", "#9c1258", "#444791",
+    };
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private List<BoardListItemDto> _boards = new();
+    private bool _loading = true;
+    private bool _isSiteAdmin;
+    private string _firstName = "there";
+    private string _subtitle = "Here's what's happening across your boards.";
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var role = "";
+        string? organizationId = null;
+        if (AuthStateTask is not null)
+        {
+            var user = (await AuthStateTask).User;
+            role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
+            var name = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                _firstName = name!.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
+            }
+
+            organizationId = user.FindFirst("organizationId")?.Value;
+        }
+
+        _isSiteAdmin = string.Equals(role, "SiteAdmin", StringComparison.OrdinalIgnoreCase);
+
+        if (_isSiteAdmin || string.IsNullOrEmpty(organizationId))
+        {
+            // Site Admins (and any account without an organization) get the admin summary, not boards.
+            _isSiteAdmin = true;
+            _subtitle = "Manage organizations across the platform.";
+            _loading = false;
+            return;
+        }
+
+        // Try to enrich the subtitle with the org name; a 403/anything else just falls back silently.
+        var orgResult = await Api.GetOrganizationAsync(organizationId!);
+        if (orgResult.Succeeded && !string.IsNullOrWhiteSpace(orgResult.Value!.Title))
+        {
+            _subtitle = $"{orgResult.Value!.Title} · here's what's happening across your boards.";
+        }
+
+        var boardsResult = await Api.GetBoardsAsync(organizationId!);
+        if (boardsResult.Succeeded)
+        {
+            _boards = boardsResult.Value!;
+        }
+        else
+        {
+            _error = boardsResult.Error;
+        }
+
+        _loading = false;
+    }
+
+    private static string BandColor(string boardId)
+    {
+        var index = (uint)(boardId?.GetHashCode() ?? 0) % (uint)BandPalette.Length;
+        return BandPalette[index];
+    }
+}

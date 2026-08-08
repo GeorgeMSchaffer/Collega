@@ -1,0 +1,85 @@
+/*
+ * Home dashboard — board tile grid + section headings.
+ * Ported from the locked comp (comp-c-review-06-lockin-v5-final.html, "Home" screen):
+ * responsive auto-fill tile grid, coloured top band, compact body. Shared chrome
+ * (.card, .placeholder, .btn, .loading, .autherror) comes from wwwroot/css/app.css.
+ */
+
+.section {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.section + .placeholder,
+.section + .tiles,
+.section + .card {
+    margin-bottom: 30px;
+}
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.tile {
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.tile:hover {
+    border-color: var(--accent);
+}
+
+.tile .band {
+    height: 5px;
+}
+
+.tile .bd {
+    padding: 14px 16px;
+}
+
+.tile h3 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--ink);
+}
+
+.tile p {
+    font-size: 12px;
+    color: var(--ink-3);
+}
+
+/* Site Admin summary card */
+.admincard {
+    max-width: 680px;
+    margin-bottom: 30px;
+}
+
+.admincard .bd {
+    padding: 20px 22px;
+}
+
+.admincard h3 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--ink);
+}
+
+.admincard p {
+    font-size: 13px;
+    color: var(--ink-3);
+    line-height: 1.5;
+    margin-bottom: 16px;
+    max-width: 520px;
+}
