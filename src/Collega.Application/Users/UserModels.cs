@@ -56,3 +56,14 @@ public sealed record CreateUserResult(
     string Email,
     string Role,
     string Status);
+
+/// <summary>One parsed CSV row for bulk user import (SPEC/30-Contracts.md user import). Role is
+/// optional and defaults to <c>User</c>.</summary>
+public sealed record UserImportRow(int RowNumber, string? FirstName, string? LastName, string? Email, string? Role);
+
+/// <summary>Per-row outcome of a bulk import. <c>Outcome</c> is <c>created</c> or <c>rejected</c>;
+/// <c>TemporaryPassword</c> is populated only for created rows, <c>Error</c> only for rejected ones.</summary>
+public sealed record UserImportRowResult(int RowNumber, string? Email, string Outcome, string? Error, string? TemporaryPassword);
+
+/// <summary>Result of <c>POST .../users/import</c>: created/rejected counts plus per-row outcomes.</summary>
+public sealed record UserImportResult(int CreatedCount, int RejectedCount, IReadOnlyList<UserImportRowResult> Rows);

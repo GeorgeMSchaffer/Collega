@@ -113,6 +113,12 @@ public sealed record UpdateUserRequestDto(
     string Role,
     string Status);
 
+/// <summary>Per-row outcome from <c>POST .../users/import</c>.</summary>
+public sealed record UserImportRowResultDto(int RowNumber, string? Email, string Outcome, string? Error, string? TemporaryPassword);
+
+/// <summary>Response of <c>POST .../users/import</c> (bulk CSV user import).</summary>
+public sealed record UserImportResultDto(int CreatedCount, int RejectedCount, IReadOnlyList<UserImportRowResultDto> Rows);
+
 /// <summary>A row of <c>GET /organizations/{id}/statuses</c> (plain array, not paged).</summary>
 public sealed record StatusItemDto(
     string StatusId,

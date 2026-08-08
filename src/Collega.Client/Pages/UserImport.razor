@@ -1,0 +1,154 @@
+@page "/settings/users/import"
+@page "/settings/organizations/{OrganizationId}/users/import"
+@attribute [Authorize(Roles = "OrgAdmin,SiteAdmin")]
+@inject ApiClient Api
+
+<PageTitle>Import users · Collega</PageTitle>
+
+@*
+    Bulk user import from a CSV (POST /organizations/{id}/users/import). Serves the Org Admin route
+    (org from the caller's claim) and the Site-Admin org-scoped route (org from the URL). Each created
+    user gets a system-generated temporary password shown once in the results.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="@BackUrl">Users</a> / Import</div>
+    <h1>Import users</h1>
+    <p class="sub" style="margin-bottom:18px">Upload a CSV with <code>firstName</code>, <code>lastName</code>, <code>email</code>, and optional <code>role</code> columns. Each new user gets a temporary password and must change it on first login.</p>
+</div>
+
+<div class="body">
+    @if (_error is not null)
+    {
+        <div class="autherror" role="alert">@_error</div>
+    }
+
+    <div class="card formcard">
+        <label class="fieldlabel" for="csv">CSV file</label>
+        <InputFile id="csv" OnChange="OnFileSelected" accept=".csv" disabled="@_busy" />
+        @if (_busy)
+        {
+            <div class="loading" style="margin-top:12px"><FluentProgressRing /> <span>Importing…</span></div>
+        }
+        <div class="btnrow" style="margin-top:16px">
+            <a class="btn" href="@BackUrl">Back to users</a>
+        </div>
+    </div>
+
+    @if (_result is not null)
+    {
+        <div class="cmdbar" style="margin-top:18px">
+            <span class="pill ok">@_result.CreatedCount created</span>
+            @if (_result.RejectedCount > 0)
+            {
+                <span class="pill err">@_result.RejectedCount rejected</span>
+            }
+        </div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Row</th><th>Email</th><th>Outcome</th><th>Temporary password / error</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in _result.Rows)
+                    {
+                        <tr>
+                            <td>@row.RowNumber</td>
+                            <td>@row.Email</td>
+                            <td>
+                                @if (string.Equals(row.Outcome, "created", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="pill ok">Created</span>
+                                }
+                                else
+                                {
+                                    <span class="pill err">Rejected</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(row.TemporaryPassword))
+                                {
+                                    <code>@row.TemporaryPassword</code>
+                                }
+                                else
+                                {
+                                    <span class="muted">@row.Error</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="sub" style="margin-top:10px">Temporary passwords are shown only here — copy them now and share each with its user securely.</p>
+    }
+</div>
+
+@code {
+    [Parameter] public string? OrganizationId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private string? _resolvedOrgId;
+    private bool _busy;
+    private string? _error;
+    private UserImportResultDto? _result;
+
+    private string BackUrl => string.IsNullOrEmpty(OrganizationId)
+        ? "/settings"
+        : $"/settings/organizations/{OrganizationId}/users";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(OrganizationId))
+        {
+            _resolvedOrgId = OrganizationId;
+        }
+        else if (AuthStateTask is not null)
+        {
+            _resolvedOrgId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+        }
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _error = null;
+        _result = null;
+
+        if (string.IsNullOrEmpty(_resolvedOrgId))
+        {
+            _error = "No organization context for the import.";
+            return;
+        }
+
+        var file = e.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            // 5 MB cap is ample for a user CSV; the stream is consumed by the multipart upload.
+            using var stream = file.OpenReadStream(5 * 1024 * 1024);
+            var result = await Api.ImportUsersAsync(_resolvedOrgId!, stream, file.Name);
+            if (result.Succeeded)
+            {
+                _result = result.Value;
+            }
+            else
+            {
+                _error = result.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

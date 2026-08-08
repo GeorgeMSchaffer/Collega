@@ -1,6 +1,8 @@
 @page "/settings/users/new"
 @page "/settings/users/{UserId}"
-@attribute [Authorize(Roles = "OrgAdmin")]
+@page "/settings/organizations/{OrganizationId}/users/new"
+@page "/settings/organizations/{OrganizationId}/users/{UserId}"
+@attribute [Authorize(Roles = "OrgAdmin,SiteAdmin")]
 @inject ApiClient Api
 @inject NavigationManager Nav
 
@@ -73,7 +75,7 @@
                     <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Disabled="_busy">
                         @(_busy ? "Saving…" : _isNew ? "Create user" : "Save changes")
                     </FluentButton>
-                    <a class="btn" href="/settings">Cancel</a>
+                    <a class="btn" href="@ReturnUrl">Cancel</a>
                 </div>
             </EditForm>
         </div>
@@ -83,8 +85,17 @@
 @code {
     [Parameter] public string? UserId { get; set; }
 
+    // Present on the Site-Admin org-scoped routes (/settings/organizations/{id}/users/...); absent on
+    // the Org Admin routes, where the target org comes from the caller's own organizationId claim.
+    [Parameter] public string? OrganizationId { get; set; }
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    // Where Cancel / Save returns: the org's user list for the Site-Admin path, else Settings.
+    private string ReturnUrl => string.IsNullOrEmpty(OrganizationId)
+        ? "/settings"
+        : $"/settings/organizations/{OrganizationId}/users";
 
     private sealed class FormModel
     {
@@ -105,7 +116,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (AuthStateTask is not null)
+        // Site-Admin routes carry the target org explicitly; Org Admin routes fall back to the claim.
+        if (!string.IsNullOrEmpty(OrganizationId))
+        {
+            _organizationId = OrganizationId;
+        }
+        else if (AuthStateTask is not null)
         {
             _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
         }
@@ -179,7 +195,7 @@
 
         if (succeeded)
         {
-            Nav.NavigateTo("/settings");
+            Nav.NavigateTo(ReturnUrl);
             return;
         }
 

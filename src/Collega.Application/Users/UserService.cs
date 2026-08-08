@@ -109,6 +109,56 @@ public sealed class UserService : IUserService
         return new CreateUserResult(user.Id, organizationId, user.Email, user.Role.ToString(), user.Status.ToString());
     }
 
+    public async Task<UserImportResult> ImportAsync(Guid organizationId, IReadOnlyList<UserImportRow> rows, CancellationToken cancellationToken = default)
+    {
+        // Authorize once up front so an out-of-scope caller gets 403/404 rather than per-row failures.
+        await AuthorizeOrganizationScopeAsync(organizationId, cancellationToken);
+
+        var results = new List<UserImportRowResult>(rows.Count);
+        var created = 0;
+        var rejected = 0;
+
+        foreach (var row in rows)
+        {
+            if (string.IsNullOrWhiteSpace(row.FirstName) || string.IsNullOrWhiteSpace(row.LastName) || string.IsNullOrWhiteSpace(row.Email))
+            {
+                results.Add(new UserImportRowResult(row.RowNumber, row.Email, "rejected", "First name, last name, and email are required.", null));
+                rejected++;
+                continue;
+            }
+
+            // Each created user gets a policy-valid temporary password and must change it on first login.
+            var temporaryPassword = TemporaryPasswordGenerator.Generate();
+            try
+            {
+                var command = new CreateUserCommand(
+                    row.FirstName!.Trim(),
+                    row.LastName!.Trim(),
+                    row.Email!.Trim(),
+                    string.IsNullOrWhiteSpace(row.Role) ? nameof(Role.User) : row.Role!.Trim(),
+                    temporaryPassword,
+                    null);
+
+                await CreateAsync(organizationId, command, cancellationToken);
+                results.Add(new UserImportRowResult(row.RowNumber, row.Email, "created", null, temporaryPassword));
+                created++;
+            }
+            catch (AppException ex)
+            {
+                results.Add(new UserImportRowResult(row.RowNumber, row.Email, "rejected", DescribeRowError(ex), null));
+                rejected++;
+            }
+        }
+
+        return new UserImportResult(created, rejected, results);
+    }
+
+    private static string DescribeRowError(AppException ex) => ex switch
+    {
+        ValidationAppException v => string.Join(" ", v.Errors.SelectMany(e => e.Value)),
+        _ => ex.Message,
+    };
+
     public async Task<UserDetail> GetByIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await LoadInScopeAsync(userId, cancellationToken);
