@@ -12,6 +12,9 @@ public interface IAuthService
 
     Task<CurrentUserSummary> GetCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    /// <summary>Self-service update of the caller's own first/last name (auth requirement #20).</summary>
+    Task<CurrentUserSummary> UpdateProfileAsync(Guid userId, UpdateProfileCommand command, CancellationToken cancellationToken = default);
+
     Task ChangePasswordAsync(Guid userId, ChangePasswordCommand command, CancellationToken cancellationToken = default);
 
     Task<RegisterResult> RegisterAsync(RegisterCommand command, CancellationToken cancellationToken = default);

@@ -102,6 +102,21 @@ public sealed class AuthService : IAuthService
         return ToSummary(user);
     }
 
+    public async Task<CurrentUserSummary> UpdateProfileAsync(Guid userId, UpdateProfileCommand command, CancellationToken cancellationToken = default)
+    {
+        var now = _clock.UtcNow;
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+            ?? throw new UnauthorizedAppException("Caller identity could not be resolved.");
+
+        // Names are validated for shape at the API boundary; the entity trims and enforces non-empty.
+        user.UpdateName(command.FirstName, command.LastName, now, user.Id);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await AuditAsync("UserProfileUpdated", user.OrganizationId, user.Id, user.Id, "User updated their profile name.", now, null, cancellationToken);
+
+        return ToSummary(user);
+    }
+
     public async Task ChangePasswordAsync(Guid userId, ChangePasswordCommand command, CancellationToken cancellationToken = default)
     {
         var now = _clock.UtcNow;

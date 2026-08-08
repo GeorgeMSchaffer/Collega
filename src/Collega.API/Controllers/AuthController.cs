@@ -38,6 +38,15 @@ public sealed class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateMe([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
+    {
+        var command = new UpdateProfileCommand(request.FirstName, request.LastName);
+        var summary = await _authService.UpdateProfileAsync(User.GetUserId(), command, cancellationToken);
+        return Ok(summary);
+    }
+
+    [Authorize]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
     {

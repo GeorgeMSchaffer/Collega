@@ -1,5 +1,7 @@
 using Collega.Domain.Auditing;
+using Collega.Domain.Boards;
 using Collega.Domain.Organizations;
+using Collega.Domain.Statuses;
 using Collega.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +25,12 @@ public sealed class CollegaDbContext : DbContext
     public DbSet<Organization> Organizations => Set<Organization>();
 
     public DbSet<User> Users => Set<User>();
+
+    public DbSet<Status> Statuses => Set<Status>();
+
+    public DbSet<Board> Boards => Set<Board>();
+
+    public DbSet<BoardSwimlane> BoardSwimlanes => Set<BoardSwimlane>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

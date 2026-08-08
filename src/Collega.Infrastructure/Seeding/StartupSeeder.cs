@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using Collega.Application.Abstractions;
+using Collega.Application.Organizations;
 using Collega.Domain.Enums;
 using Collega.Domain.Organizations;
 using Collega.Domain.Users;
@@ -11,28 +12,35 @@ namespace Collega.Infrastructure.Seeding;
 /// <summary>
 /// Idempotent startup seeding (auth requirements #8-11):
 /// 1. The global Site Admin, from environment-provided credentials, on first run only.
-/// 2. Development-only: 3 demo organizations, each with one Org Admin, one User, and one Read
-///    Only account at password `Abc123!`, none forced to change it.
+/// 2. Development-only: 3 demo organizations, each provisioned with the default statuses and one
+///    default board, plus one Org Admin, one User, and one Read Only account at password `Abc123!`,
+///    none forced to change it.
 /// </summary>
 public sealed class StartupSeeder : IStartupSeeder
 {
     private const string DemoPassword = "Abc123!";
 
-    private static readonly (string Title, string Slug)[] DemoOrganizations =
+    private static readonly (string Title, string Slug, string Description)[] DemoOrganizations =
     {
-        ("Acme Robotics", "acme-robotics"),
-        ("Blue Harbor Logistics", "blue-harbor"),
-        ("Crestline Health Group", "crestline-health")
+        ("Acme Robotics", "acme-robotics", "Industrial robotics and automation manufacturer."),
+        ("Blue Harbor Logistics", "blue-harbor", "Regional freight and warehousing operator."),
+        ("Crestline Health Group", "crestline-health", "Outpatient clinics and specialty care network.")
     };
 
     private readonly CollegaDbContext _dbContext;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IOrganizationBootstrapService _bootstrapService;
     private readonly IClock _clock;
 
-    public StartupSeeder(CollegaDbContext dbContext, IPasswordHasher passwordHasher, IClock clock)
+    public StartupSeeder(
+        CollegaDbContext dbContext,
+        IPasswordHasher passwordHasher,
+        IOrganizationBootstrapService bootstrapService,
+        IClock clock)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
+        _bootstrapService = bootstrapService;
         _clock = clock;
     }
 
@@ -60,7 +68,7 @@ public sealed class StartupSeeder : IStartupSeeder
 
         var demoPasswordHash = _passwordHasher.Hash(DemoPassword);
 
-        foreach (var (title, slug) in DemoOrganizations)
+        foreach (var (title, slug, description) in DemoOrganizations)
         {
             var existing = await _dbContext.Organizations.FirstOrDefaultAsync(o => o.Title == title, cancellationToken);
             if (existing is not null)
@@ -68,8 +76,11 @@ public sealed class StartupSeeder : IStartupSeeder
                 continue;
             }
 
-            var organization = Organization.Create(title, GenerateInviteCode(slug), now);
+            var organization = Organization.Create(title, description, GenerateInviteCode(slug), now);
             await _dbContext.Organizations.AddAsync(organization, cancellationToken);
+
+            // Every organization — demo or real — starts with the default statuses and one board.
+            await _bootstrapService.ProvisionDefaultsAsync(organization.Id, now, actorUserId: null, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
 
             await AddDemoUserAsync(organization.Id, "Olivia", "Administer", $"orgadmin@{slug}.demo.collega.test", demoPasswordHash, Role.OrgAdmin, now, cancellationToken);

@@ -25,10 +25,13 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddScoped<IUserRepository, EfUserRepository>();
         services.AddScoped<IOrganizationRepository, EfOrganizationRepository>();
+        services.AddScoped<IStatusRepository, EfStatusRepository>();
+        services.AddScoped<IBoardRepository, EfBoardRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IStartupSeeder, StartupSeeder>();
 
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+        services.AddSingleton<IInviteCodeGenerator, InviteCodeGenerator>();
 
         services.AddSingleton(sp =>
         {

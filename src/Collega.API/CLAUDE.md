@@ -64,6 +64,14 @@ Optional: `Auth:TokenSigningKey` (base64; a random per-process key is generated 
 
 ## Current routes
 
-`POST /api/v1/auth/login` · `GET /api/v1/auth/me` · `POST /api/v1/auth/change-password` · `POST /api/v1/auth/register` · `POST /api/v1/users/{userId}/temporary-password` · `GET /api/v1/health`
+Auth: `POST /api/v1/auth/login` · `GET /api/v1/auth/me` · `PUT /api/v1/auth/me` · `POST /api/v1/auth/change-password` · `POST /api/v1/auth/register`
+
+Organizations: `GET /api/v1/organizations` · `POST /api/v1/organizations` · `GET /api/v1/organizations/{id}` · `PUT /api/v1/organizations/{id}` · `POST /api/v1/organizations/{id}/invite-code/regenerate` · `POST /api/v1/organizations/{id}/archive`
+
+Users: `GET /api/v1/organizations/{organizationId}/users` · `POST /api/v1/organizations/{organizationId}/users` · `GET /api/v1/users/{userId}` · `PUT /api/v1/users/{userId}` · `POST /api/v1/users/{userId}/temporary-password`
+
+Diagnostics: `GET /api/v1/health`
+
+Not yet built (Tenant Administration follow-ups): organization binary logo upload (`PUT /organizations/{id}/logo`), user CSV import (`POST /organizations/{id}/users/import`), and organization AI-key management. Board/status management endpoints belong to the Workflow Configuration slice.
 
 Canonical contracts (including unbuilt routes) live in `SPEC/30-Contracts.md` — read it before adding an endpoint.
