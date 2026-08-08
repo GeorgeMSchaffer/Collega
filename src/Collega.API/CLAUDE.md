@@ -21,6 +21,19 @@ ASPNETCORE_URLS='http://localhost:5027' \
   dotnet run --project src/Collega.API/Collega.API.csproj --no-launch-profile
 ```
 
+## Seeding flags
+
+Seeding runs inside startup and is idempotent (see [Startup](#conventions) / [`StartupSeeder`](../Collega.Infrastructure/Seeding/StartupSeeder.cs)). Two optional command-line flags let you trigger each part manually instead of relying on the environment:
+
+```bash
+dotnet watch --project ./src/Collega.API -- --seed:auth --seed:demo
+```
+
+- **No flag (default):** the Site Admin is always seeded; demo data is seeded only under the `Development` environment. Unchanged historical behavior.
+- **Any `--seed:*` flag present:** explicit mode — *only* the seeds you name run, regardless of environment. `--seed:auth` seeds the Site Admin; `--seed:demo` seeds the three demo orgs. So `--seed:auth` alone suppresses the demo seed even in Development, and `--seed:demo` seeds demo data even outside Development.
+- Forms accepted per flag: `--seed:demo`, `/seed:demo`, `--seed:demo=false`. Parsed from raw `args` in [`Program.cs`](Program.cs), independent of the config system.
+- The startup fail-fast on `SiteAdmin:Email` / `SiteAdmin:Password` still applies regardless of flags — those keys are a deployment-validity requirement (#8), not a seeding toggle. Note user-secrets only load under `Development`, so a non-Development run needs the keys via environment variables.
+
 Stop any API/watch process you started before finishing a session.
 
 ## Required configuration

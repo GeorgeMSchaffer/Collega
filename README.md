@@ -113,6 +113,14 @@ Seeding is idempotent and runs on every startup ([`StartupSeeder.cs`](src/Colleg
 
 **Site Admin** — always seeded, from your configured credentials. Created with `mustChangePassword: true`, so the first login returns `requiresPasswordChange: true` and you must call `POST /api/v1/auth/change-password` before doing anything else.
 
+**Manually triggering seeds** — by default the Site Admin is always seeded and demo data only under `Development`. Two optional flags override that with explicit control (only the seeds you name run, in any environment):
+
+```bash
+dotnet watch --project ./src/Collega.API -- --seed:auth --seed:demo
+```
+
+`--seed:auth` seeds the Site Admin; `--seed:demo` seeds the demo orgs. See [`src/Collega.API/CLAUDE.md`](src/Collega.API/CLAUDE.md#seeding-flags) for details.
+
 **Demo data** — `Development` environment only. Three organizations, each with an Org Admin, a User, and a Read Only account, all at password `Abc123!` with no forced change:
 
 | Organization | Email pattern |
