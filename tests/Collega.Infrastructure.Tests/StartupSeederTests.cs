@@ -24,7 +24,7 @@ public sealed class StartupSeederTests
     {
         using var ctx = InMemoryContext.Create();
 
-        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedDevelopmentDemoData: false);
+        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false);
 
         var admin = await ctx.Users.SingleAsync(u => u.Role == Role.SiteAdmin);
         Assert.Equal(SiteAdminEmail, admin.Email);
@@ -37,7 +37,7 @@ public sealed class StartupSeederTests
     {
         using var ctx = InMemoryContext.Create();
 
-        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedDevelopmentDemoData: false);
+        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false);
 
         Assert.Empty(ctx.Organizations);
         Assert.Equal(1, await ctx.Users.CountAsync()); // only the site admin
@@ -50,12 +50,12 @@ public sealed class StartupSeederTests
 
         using (var ctx = InMemoryContext.Create(dbName))
         {
-            await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedDevelopmentDemoData: false);
+            await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false);
         }
 
         using (var ctx = InMemoryContext.Create(dbName))
         {
-            await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedDevelopmentDemoData: false);
+            await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false);
         }
 
         using var verify = InMemoryContext.Create(dbName);
@@ -67,7 +67,7 @@ public sealed class StartupSeederTests
     {
         using var ctx = InMemoryContext.Create();
 
-        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedDevelopmentDemoData: true);
+        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: true);
 
         Assert.Equal(3, await ctx.Organizations.CountAsync());
         Assert.Equal(3 * OrganizationDefaults.Statuses.Count, await ctx.Statuses.CountAsync());
@@ -85,7 +85,7 @@ public sealed class StartupSeederTests
     {
         using var ctx = InMemoryContext.Create();
 
-        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedDevelopmentDemoData: true);
+        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: true);
 
         var demoUsers = await ctx.Users.Where(u => u.Role != Role.SiteAdmin).ToListAsync();
         Assert.All(demoUsers, u => Assert.False(u.MustChangePassword));
@@ -98,12 +98,12 @@ public sealed class StartupSeederTests
 
         using (var ctx = InMemoryContext.Create(dbName))
         {
-            await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedDevelopmentDemoData: true);
+            await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: true);
         }
 
         using (var ctx = InMemoryContext.Create(dbName))
         {
-            await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedDevelopmentDemoData: true);
+            await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: true);
         }
 
         using var verify = InMemoryContext.Create(dbName);

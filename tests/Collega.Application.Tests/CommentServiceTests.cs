@@ -18,6 +18,7 @@ public sealed class CommentServiceTests
     private readonly FakeUserRepository _users = new();
     private readonly FakeUnitOfWork _uow = new();
     private readonly RecordingAuditEventWriter _audit = new();
+    private readonly RecordingNotificationEventWriter _notifications = new();
     private readonly FakeCurrentUserContext _currentUser = new();
 
     private readonly Organization _org;
@@ -41,7 +42,7 @@ public sealed class CommentServiceTests
     }
 
     private CommentService CreateSut() =>
-        new(_comments, _ideas, new MentionResolver(_users), _uow, _audit, _currentUser, _clock);
+        new(_comments, _ideas, new MentionResolver(_users), _uow, _audit, _notifications, _currentUser, _clock);
 
     private Comment SeedComment(Guid authorId, string body = "Hello there.") =>
         _comments.Add(Comment.Create(_idea.Id, authorId, body, Array.Empty<Guid>(), _clock.UtcNow));

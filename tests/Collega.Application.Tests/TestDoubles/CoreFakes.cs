@@ -1,6 +1,7 @@
 using Collega.Application.Abstractions;
 using Collega.Domain.Auditing;
 using Collega.Domain.Enums;
+using Collega.Domain.Notifications;
 
 namespace Collega.Application.Tests.TestDoubles;
 
@@ -93,6 +94,36 @@ internal sealed class RecordingAuditEventWriter : IAuditEventWriter
         return Task.CompletedTask;
     }
 }
+
+/// <summary>Records every emitted notification event for assertions (spy; no suppression).</summary>
+internal sealed class RecordingNotificationEventWriter : INotificationEventWriter
+{
+    public List<NotificationWrite> Writes { get; } = new();
+
+    public Task WriteAsync(
+        NotificationEventType eventType,
+        Guid organizationId,
+        Guid boardId,
+        Guid ideaId,
+        string ideaTitle,
+        Guid actorUserId,
+        Guid recipientUserId,
+        CancellationToken cancellationToken = default)
+    {
+        Writes.Add(new NotificationWrite(
+            eventType, organizationId, boardId, ideaId, ideaTitle, actorUserId, recipientUserId));
+        return Task.CompletedTask;
+    }
+}
+
+internal readonly record struct NotificationWrite(
+    NotificationEventType EventType,
+    Guid OrganizationId,
+    Guid BoardId,
+    Guid IdeaId,
+    string IdeaTitle,
+    Guid ActorUserId,
+    Guid RecipientUserId);
 
 /// <summary>Deterministic invite-code generator returning a predictable, unique sequence.</summary>
 internal sealed class FakeInviteCodeGenerator : IInviteCodeGenerator
