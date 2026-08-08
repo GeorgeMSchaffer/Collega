@@ -1,0 +1,114 @@
+@implements IDisposable
+@inject NavigationManager Nav
+
+@*
+    64px icon rail — the app's primary navigation, shown identically on every
+    signed-in screen. Home / Boards / Ideas / Settings, plus a bottom avatar
+    whose click-open popover owns Profile and Sign Out (there is no top header
+    bar). Locked design: SPEC/mockups/comp-c-review-06-lockin-v5-final.html.
+*@
+
+<aside class="rail">
+    <span class="mark">CG</span>
+
+    @foreach (var item in _items)
+    {
+        var on = IsActive(item.Href, item.Match);
+        <a href="@item.Href"
+           class="@(on ? "on" : null)"
+           aria-current="@(on ? "page" : null)"
+           title="@item.Label">
+            <span aria-hidden="true">@item.Icon</span>
+            <span>@item.Label</span>
+        </a>
+    }
+
+    <span class="push"></span>
+
+    <span class="avatarwrap">
+        <button class="avatarbtn"
+                @onclick="ToggleMenu"
+                aria-haspopup="true"
+                aria-expanded="@_menuOpen.ToString().ToLowerInvariant()"
+                title="Account">
+            <span class="avatar">@Initials</span>
+        </button>
+        @if (_menuOpen)
+        {
+            <div class="avatarmenu">
+                <div class="who"><strong>@DisplayName</strong>@AccountSubtitle</div>
+                <a class="item" href="/settings/profile" @onclick="CloseMenu">Profile</a>
+                <a class="item" href="/login" @onclick="CloseMenu">Sign Out</a>
+            </div>
+        }
+    </span>
+</aside>
+
+@if (_menuOpen)
+{
+    <button class="menu-backdrop" @onclick="CloseMenu" aria-label="Close account menu"></button>
+}
+
+@code {
+    // Placeholder identity until an auth/user service exists (later Client task).
+    [Parameter] public string DisplayName { get; set; } = "Jordan Reyes";
+    [Parameter] public string AccountSubtitle { get; set; } = "jordan.reyes@acme.com";
+
+    private bool _menuOpen;
+
+    private string Initials => BuildInitials(DisplayName);
+
+    private readonly RailItem[] _items =
+    {
+        new("🏠", "Home", "/", NavLinkMatch.All),
+        new("📋", "Boards", "/boards", NavLinkMatch.Prefix),
+        new("💡", "Ideas", "/ideas", NavLinkMatch.Prefix),
+        new("⚙️", "Settings", "/settings", NavLinkMatch.Prefix),
+    };
+
+    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    private void ToggleMenu() => _menuOpen = !_menuOpen;
+
+    private void CloseMenu() => _menuOpen = false;
+
+    private bool IsActive(string href, NavLinkMatch match)
+    {
+        var current = "/" + Nav.ToBaseRelativePath(Nav.Uri);
+        var path = current.Split('?', '#')[0].TrimEnd('/');
+        if (path.Length == 0)
+        {
+            path = "/";
+        }
+
+        var target = href.TrimEnd('/');
+        if (target.Length == 0)
+        {
+            target = "/";
+        }
+
+        return match == NavLinkMatch.All
+            ? string.Equals(path, target, StringComparison.OrdinalIgnoreCase)
+            : path.Equals(target, StringComparison.OrdinalIgnoreCase)
+              || path.StartsWith(target + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string BuildInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "?";
+        }
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length == 1
+            ? parts[0][..1].ToUpperInvariant()
+            : (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+
+    private readonly record struct RailItem(string Icon, string Label, string Href, NavLinkMatch Match);
+}
