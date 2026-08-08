@@ -26,10 +26,11 @@
     }
     else if (_view == View.Organizations)
     {
+        <div class="cmdbar"><a class="btn primary" href="/settings/organizations/new">New organization</a></div>
         <div class="card">
             <table>
                 <thead>
-                    <tr><th>Organization</th><th>Location</th><th>Invite code</th><th>Status</th></tr>
+                    <tr><th>Organization</th><th>Location</th><th>Invite code</th><th>Status</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var org in _organizations!)
@@ -48,6 +49,7 @@
                                     <span class="pill ok">Active</span>
                                 }
                             </td>
+                            <td><a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}")">Edit</a></td>
                         </tr>
                     }
                 </tbody>
@@ -60,10 +62,11 @@
     }
     else if (_view == View.Users)
     {
+        <div class="cmdbar"><a class="btn primary" href="/settings/users/new">New user</a></div>
         <div class="card">
             <table>
                 <thead>
-                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th></tr>
+                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var user in _users!)
@@ -82,6 +85,7 @@
                                     <span class="pill neutral">@user.Status</span>
                                 }
                             </td>
+                            <td><a class="btn subtle" href="@($"/settings/users/{user.UserId}")">Edit</a></td>
                         </tr>
                     }
                 </tbody>

@@ -43,6 +43,24 @@ public sealed class ApiClient
     public Task<ApiResult<PagedResultDto<UserListItemDto>>> GetOrganizationUsersAsync(string organizationId, CancellationToken ct = default) =>
         GetAsync<PagedResultDto<UserListItemDto>>($"{BasePath}/organizations/{organizationId}/users?pageSize=100", ct);
 
+    public Task<ApiResult<OrganizationDetailDto>> GetOrganizationAsync(string organizationId, CancellationToken ct = default) =>
+        GetAsync<OrganizationDetailDto>($"{BasePath}/organizations/{organizationId}", ct);
+
+    public Task<ApiResult<OrganizationListItemDto>> CreateOrganizationAsync(SaveOrganizationRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<OrganizationListItemDto>(HttpMethod.Post, $"{BasePath}/organizations", body, ct);
+
+    public Task<ApiResult<OrganizationDetailDto>> UpdateOrganizationAsync(string organizationId, SaveOrganizationRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<OrganizationDetailDto>(HttpMethod.Put, $"{BasePath}/organizations/{organizationId}", body, ct);
+
+    public Task<ApiResult<UserDetailDto>> GetUserAsync(string userId, CancellationToken ct = default) =>
+        GetAsync<UserDetailDto>($"{BasePath}/users/{userId}", ct);
+
+    public Task<ApiResult<UserListItemDto>> CreateUserAsync(string organizationId, CreateUserRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<UserListItemDto>(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/users", body, ct);
+
+    public Task<ApiResult<UserDetailDto>> UpdateUserAsync(string userId, UpdateUserRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<UserDetailDto>(HttpMethod.Put, $"{BasePath}/users/{userId}", body, ct);
+
     public async Task<ApiResult<bool>> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{BasePath}/auth/change-password")
@@ -60,6 +78,12 @@ public sealed class ApiClient
     private async Task<ApiResult<T>> GetAsync<T>(string url, CancellationToken ct)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        return await SendAsync<T>(request, ct);
+    }
+
+    private async Task<ApiResult<T>> SendJsonAsync<T>(HttpMethod method, string url, object body, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(method, url) { Content = JsonContent.Create(body) };
         return await SendAsync<T>(request, ct);
     }
 

@@ -58,3 +58,57 @@ public sealed record UserListItemDto(
     string Email,
     string Role,
     string Status);
+
+/// <summary>Detail for <c>GET /organizations/{id}</c>, used to prefill the edit form.</summary>
+public sealed record OrganizationDetailDto(
+    string OrganizationId,
+    string Title,
+    string Description,
+    string InviteCode,
+    string? Address,
+    string? City,
+    string? State,
+    string? Zip,
+    string? Phone,
+    string? PrimaryContactFirstName,
+    string? PrimaryContactLastName);
+
+/// <summary>Body for both <c>POST /organizations</c> and <c>PUT /organizations/{id}</c> (identical shapes).</summary>
+public sealed record SaveOrganizationRequestDto(
+    string Title,
+    string Description,
+    string? Address,
+    string? City,
+    string? State,
+    string? Zip,
+    string? Phone,
+    string? PrimaryContactFirstName,
+    string? PrimaryContactLastName);
+
+/// <summary>Detail for <c>GET /users/{id}</c>, used to prefill the edit form.</summary>
+public sealed record UserDetailDto(
+    string UserId,
+    string? OrganizationId,
+    string FirstName,
+    string LastName,
+    string Email,
+    string Role,
+    string Status,
+    bool MustChangePassword);
+
+/// <summary>Body for <c>POST /organizations/{id}/users</c>.</summary>
+public sealed record CreateUserRequestDto(
+    string FirstName,
+    string LastName,
+    string Email,
+    string Role,
+    string InitialPassword,
+    string? Status);
+
+/// <summary>Body for <c>PUT /users/{id}</c>.</summary>
+public sealed record UpdateUserRequestDto(
+    string FirstName,
+    string LastName,
+    string Email,
+    string Role,
+    string Status);
