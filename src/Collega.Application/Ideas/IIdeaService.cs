@@ -10,6 +10,9 @@ public interface IIdeaService
 {
     Task<PagedResult<IdeaListItem>> ListByBoardAsync(Guid boardId, IdeaListQuery query, CancellationToken cancellationToken = default);
 
+    /// <summary>Cross-board, organization-scoped idea list for the global <c>/ideas</c> page.</summary>
+    Task<PagedResult<IdeaListItem>> ListByOrganizationAsync(Guid organizationId, OrganizationIdeaListQuery query, CancellationToken cancellationToken = default);
+
     Task<CreateIdeaResult> CreateAsync(Guid boardId, CreateIdeaCommand command, CancellationToken cancellationToken = default);
 
     Task<IdeaDetail> GetByIdAsync(Guid ideaId, CancellationToken cancellationToken = default);

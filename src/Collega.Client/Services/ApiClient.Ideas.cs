@@ -9,6 +9,23 @@ public sealed partial class ApiClient
     public Task<ApiResult<IdeaDetailDto>> GetIdeaAsync(string ideaId, CancellationToken ct = default) =>
         GetAsync<IdeaDetailDto>($"{BasePath}/ideas/{ideaId}", ct);
 
+    /// <summary>The organization-wide idea list for the global /ideas page. <paramref name="scope"/>
+    /// is all/created/assigned; newest-first by default.</summary>
+    public Task<ApiResult<PagedResultDto<IdeaListItemDto>>> GetOrganizationIdeasAsync(
+        string organizationId, string? scope, string? search, int page, int pageSize, CancellationToken ct = default)
+    {
+        var url = $"{BasePath}/organizations/{organizationId}/ideas?page={page}&pageSize={pageSize}&sortDirection=desc";
+        if (!string.IsNullOrWhiteSpace(scope) && scope != "all")
+        {
+            url += $"&scope={Uri.EscapeDataString(scope)}";
+        }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            url += $"&search={Uri.EscapeDataString(search)}";
+        }
+        return GetAsync<PagedResultDto<IdeaListItemDto>>(url, ct);
+    }
+
     public Task<ApiResult<IdeaDetailDto>> UpdateIdeaAsync(string ideaId, UpdateIdeaRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<IdeaDetailDto>(HttpMethod.Put, $"{BasePath}/ideas/{ideaId}", body, ct);
 

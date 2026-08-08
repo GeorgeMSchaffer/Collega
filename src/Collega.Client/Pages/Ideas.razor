@@ -1,16 +1,263 @@
 @page "/ideas"
 @attribute [Authorize]
+@inject ApiClient Api
+@inject NavigationManager Nav
 
 <PageTitle>Ideas · Collega</PageTitle>
 
+@*
+    Global, cross-board idea list (comp-c-review-07-ideas-list.html). Server-side search + paging via
+    GET /organizations/{orgId}/ideas; the All / Created by me / Assigned to me chips map to the scope
+    filter. Created-by name, board name, and status color are resolved from the org's users, boards,
+    and statuses (loaded once), since the list item carries only ids/names.
+*@
 <div class="pagehead">
-    <div class="crumbs">Ideas</div>
     <h1>Ideas</h1>
-    <p class="sub" style="margin-bottom:18px">Search and filter ideas across your boards.</p>
+    <p class="sub" style="margin-bottom:18px">Every idea you created or are assigned to, across all boards.</p>
 </div>
+
 <div class="body">
-    <div class="placeholder">
-        <h3>Ideas list</h3>
-        <p>The global idea search and results table are built in a later Client task (the <code>/ideas</code> comp is still undesigned). This placeholder confirms the Ideas route and active rail highlighting.</p>
-    </div>
+    @if (_noOrg)
+    {
+        <div class="placeholder">
+            <h3>No organization</h3>
+            <p>The global idea list is available to organization members. As a Site Admin, browse ideas from within an organization's boards.</p>
+        </div>
+    }
+    else
+    {
+        <div class="chipbar">
+            <button class="chip @(_scope == "all" ? "on" : null)" @onclick='() => SetScope("all")'>All</button>
+            <button class="chip @(_scope == "created" ? "on" : null)" @onclick='() => SetScope("created")'>Created by me</button>
+            <button class="chip @(_scope == "assigned" ? "on" : null)" @onclick='() => SetScope("assigned")'>Assigned to me</button>
+        </div>
+        <div class="cmdbar">
+            <input type="text" placeholder="Search title…" value="@_search" @onchange="OnSearchChanged" style="width:300px" />
+            @if (!string.IsNullOrWhiteSpace(_search))
+            {
+                <button class="btn subtle" @onclick="ClearSearch">Clear</button>
+            }
+        </div>
+
+        @if (_loading)
+        {
+            <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+        }
+        else if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+        else if (_items.Count == 0)
+        {
+            <div class="emptystate">
+                <h3>No ideas match this filter</h3>
+                <p>Try a different filter, or clear the search.</p>
+            </div>
+        }
+        else
+        {
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr><th>Title</th><th>Created By</th><th>Assigned To</th><th>Status</th><th>Created</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var idea in _items)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="t">@idea.Title</div>
+                                    <div class="board">@BoardName(idea.BoardId)</div>
+                                </td>
+                                <td>@AuthorName(idea.AuthorUserId)</td>
+                                <td>
+                                    @if (idea.Assignees.Count == 0)
+                                    {
+                                        <span class="muted">—</span>
+                                    }
+                                    else
+                                    {
+                                        @string.Join(", ", idea.Assignees.Select(a => a.DisplayName))
+                                    }
+                                </td>
+                                <td><span class="statusdot"><span class="d" style="background:@StatusColor(idea.StatusId)"></span>@idea.StatusName</span></td>
+                                <td>@idea.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy")</td>
+                                <td><a class="btn subtle" href="@($"/ideas/{idea.IdeaId}/edit")">Details</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pager">
+                <span class="info">Showing @RangeStart–@RangeEnd of @_total</span>
+                <span class="sizesel">
+                    Rows per page
+                    <select value="@_pageSize" @onchange="OnPageSizeChanged">
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                    </select>
+                </span>
+                <span class="navbtns">
+                    <button @onclick="PrevPage" disabled="@(_page <= 1)">‹ Previous</button>
+                    <button @onclick="NextPage" disabled="@(_page >= TotalPages)">Next ›</button>
+                </span>
+            </div>
+        }
+    }
 </div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private string? _organizationId;
+    private bool _noOrg;
+
+    private readonly List<IdeaListItemDto> _items = new();
+    private int _total;
+    private int _page = 1;
+    private int _pageSize = 25;
+    private string _scope = "all";
+    private string _search = "";
+
+    private bool _loading = true;
+    private string? _error;
+
+    private readonly Dictionary<string, string> _boardNames = new();
+    private readonly Dictionary<string, string> _authorNames = new();
+    private readonly Dictionary<string, string> _statusColors = new();
+
+    private int TotalPages => _pageSize > 0 ? Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize)) : 1;
+    private int RangeStart => _total == 0 ? 0 : ((_page - 1) * _pageSize) + 1;
+    private int RangeEnd => Math.Min(_page * _pageSize, _total);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+        }
+
+        if (string.IsNullOrEmpty(_organizationId))
+        {
+            _noOrg = true;
+            _loading = false;
+            return;
+        }
+
+        // Load display lookups once (best-effort — a failure just degrades a column, not the list).
+        var boards = await Api.GetBoardsAsync(_organizationId!);
+        if (boards.Succeeded)
+        {
+            foreach (var b in boards.Value!)
+            {
+                _boardNames[b.BoardId] = b.Name;
+            }
+        }
+
+        var statuses = await Api.GetStatusesAsync(_organizationId!);
+        if (statuses.Succeeded)
+        {
+            foreach (var s in statuses.Value!)
+            {
+                _statusColors[s.StatusId] = s.Color;
+            }
+        }
+
+        var users = await Api.GetOrganizationUsersAsync(_organizationId!);
+        if (users.Succeeded)
+        {
+            foreach (var u in users.Value!.Items)
+            {
+                _authorNames[u.UserId] = $"{u.FirstName} {u.LastName}".Trim();
+            }
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        var result = await Api.GetOrganizationIdeasAsync(_organizationId!, _scope, _search, _page, _pageSize);
+        _items.Clear();
+        if (result.Succeeded)
+        {
+            _items.AddRange(result.Value!.Items);
+            _total = result.Value!.TotalCount;
+        }
+        else
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+
+    private async Task SetScope(string scope)
+    {
+        if (_scope == scope)
+        {
+            return;
+        }
+        _scope = scope;
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        _search = e.Value?.ToString() ?? "";
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task ClearSearch()
+    {
+        _search = "";
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
+        {
+            _pageSize = size;
+            _page = 1;
+            await LoadAsync();
+        }
+    }
+
+    private async Task PrevPage()
+    {
+        if (_page > 1)
+        {
+            _page--;
+            await LoadAsync();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (_page < TotalPages)
+        {
+            _page++;
+            await LoadAsync();
+        }
+    }
+
+    private string BoardName(string boardId) =>
+        _boardNames.TryGetValue(boardId, out var name) ? name : "";
+
+    private string AuthorName(string userId) =>
+        _authorNames.TryGetValue(userId, out var name) && !string.IsNullOrWhiteSpace(name) ? name : "Member";
+
+    private string StatusColor(string statusId) =>
+        _statusColors.TryGetValue(statusId, out var color) ? color : "#64748B";
+}

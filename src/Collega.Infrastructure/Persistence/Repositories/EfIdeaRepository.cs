@@ -98,6 +98,53 @@ public sealed class EfIdeaRepository : IIdeaRepository
             SortDirection.Normalize(filter.SortDirection));
     }
 
+    public async Task<PagedResult<Idea>> ListByOrganizationAsync(OrganizationIdeaListFilter filter, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.Ideas
+            .AsNoTracking()
+            .Include(i => i.Assignees)
+            .Include(i => i.Tags)
+            .Where(i => i.OrganizationId == filter.OrganizationId && !i.IsDeleted);
+
+        if (filter.CreatedByUserId is Guid createdBy)
+        {
+            query = query.Where(i => i.AuthorUserId == createdBy);
+        }
+
+        if (filter.AssignedToUserId is Guid assignedTo)
+        {
+            query = query.Where(i => i.Assignees.Any(a => a.UserId == assignedTo));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var search = filter.Search.Trim();
+            query = query.Where(i => EF.Functions.Like(i.Title, $"%{search}%"));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var descending = SortDirection.IsDescending(filter.SortDirection);
+        query = (filter.SortBy?.Trim().ToLowerInvariant()) switch
+        {
+            "title" => descending ? query.OrderByDescending(i => i.Title) : query.OrderBy(i => i.Title),
+            _ => descending ? query.OrderByDescending(i => i.CreatedAtUtc) : query.OrderBy(i => i.CreatedAtUtc)
+        };
+
+        var items = await query
+            .Skip(filter.Page.Skip)
+            .Take(filter.Page.PageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Idea>(
+            items,
+            filter.Page.Page,
+            filter.Page.PageSize,
+            totalCount,
+            filter.SortBy,
+            SortDirection.Normalize(filter.SortDirection));
+    }
+
     public Task<bool> ExistsByTitleOnBoardAsync(Guid boardId, string normalizedTitle, CancellationToken cancellationToken = default) =>
         _dbContext.Ideas.AnyAsync(
             i => i.BoardId == boardId && !i.IsDeleted && i.Title.ToLower() == normalizedTitle,

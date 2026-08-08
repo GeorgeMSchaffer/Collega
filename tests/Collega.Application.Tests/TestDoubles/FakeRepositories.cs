@@ -294,6 +294,35 @@ internal sealed class FakeIdeaRepository : IIdeaRepository
         return Task.FromResult(new PagedResult<Idea>(items, filter.Page.Page, filter.Page.PageSize, all.Count, filter.SortBy, SortDirection.Normalize(filter.SortDirection)));
     }
 
+    public Task<PagedResult<Idea>> ListByOrganizationAsync(OrganizationIdeaListFilter filter, CancellationToken cancellationToken = default)
+    {
+        IEnumerable<Idea> query = Ideas.Where(i => i.OrganizationId == filter.OrganizationId && !i.IsDeleted);
+
+        if (filter.CreatedByUserId is Guid createdBy)
+        {
+            query = query.Where(i => i.AuthorUserId == createdBy);
+        }
+
+        if (filter.AssignedToUserId is Guid assignedTo)
+        {
+            query = query.Where(i => i.Assignees.Any(a => a.UserId == assignedTo));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var s = filter.Search.Trim();
+            query = query.Where(i => i.Title.Contains(s, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var ordered = filter.SortBy?.Trim().ToLowerInvariant() == "title"
+            ? (SortDirection.IsDescending(filter.SortDirection) ? query.OrderByDescending(i => i.Title) : query.OrderBy(i => i.Title))
+            : (SortDirection.IsDescending(filter.SortDirection) ? query.OrderByDescending(i => i.CreatedAtUtc) : query.OrderBy(i => i.CreatedAtUtc));
+
+        var all = ordered.ToList();
+        var items = all.Skip(filter.Page.Skip).Take(filter.Page.PageSize).ToList();
+        return Task.FromResult(new PagedResult<Idea>(items, filter.Page.Page, filter.Page.PageSize, all.Count, filter.SortBy, SortDirection.Normalize(filter.SortDirection)));
+    }
+
     public Task<bool> ExistsByTitleOnBoardAsync(Guid boardId, string normalizedTitle, CancellationToken cancellationToken = default) =>
         Task.FromResult(Ideas.Any(i => i.BoardId == boardId && !i.IsDeleted && i.Title.ToLowerInvariant() == normalizedTitle));
 }

@@ -34,6 +34,19 @@ public sealed record IdeaListQuery(
     string? SortBy,
     string? SortDirection);
 
+/// <summary>
+/// Cross-board, organization-scoped idea list for the global <c>/ideas</c> page. <c>Scope</c> is one
+/// of <c>all</c> / <c>created</c> (authored by the current user) / <c>assigned</c> (assigned to the
+/// current user); anything else is treated as <c>all</c>.
+/// </summary>
+public sealed record OrganizationIdeaListQuery(
+    int? Page,
+    int? PageSize,
+    string? Search,
+    string? Scope,
+    string? SortBy,
+    string? SortDirection);
+
 // Results / DTOs ---------------------------------------------------------------------------------
 
 /// <summary>Assignee persona shape shared by the idea list and detail (SPEC/30-Contracts.md).</summary>

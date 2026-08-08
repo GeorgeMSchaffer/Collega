@@ -40,6 +40,22 @@ public sealed class IdeasController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("organizations/{organizationId:guid}/ideas")]
+    public async Task<IActionResult> ListByOrganization(
+        Guid organizationId,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
+        [FromQuery] string? search,
+        [FromQuery] string? scope,
+        [FromQuery] string? sortBy,
+        [FromQuery] string? sortDirection,
+        CancellationToken cancellationToken)
+    {
+        var query = new OrganizationIdeaListQuery(page, pageSize, search, scope, sortBy, sortDirection);
+        var result = await _ideaService.ListByOrganizationAsync(organizationId, query, cancellationToken);
+        return Ok(result);
+    }
+
     [HttpPost("boards/{boardId:guid}/ideas")]
     public async Task<IActionResult> Create(Guid boardId, [FromBody] CreateIdeaRequest request, CancellationToken cancellationToken)
     {

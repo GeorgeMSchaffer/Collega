@@ -18,6 +18,10 @@ public interface IIdeaRepository
     /// <summary>Paged, filtered idea list for one board, excluding soft-deleted ideas.</summary>
     Task<PagedResult<Idea>> ListByBoardAsync(IdeaListFilter filter, CancellationToken cancellationToken = default);
 
+    /// <summary>Paged, filtered idea list across every board in one organization, excluding
+    /// soft-deleted ideas (SPEC/20-feature-client-ui-revisions.md "Ideas Page").</summary>
+    Task<PagedResult<Idea>> ListByOrganizationAsync(OrganizationIdeaListFilter filter, CancellationToken cancellationToken = default);
+
     /// <summary>True when an active idea with the given normalized title already exists on the board.</summary>
     Task<bool> ExistsByTitleOnBoardAsync(Guid boardId, string normalizedTitle, CancellationToken cancellationToken = default);
 }
@@ -31,5 +35,17 @@ public sealed record IdeaListFilter(
     string? Tag,
     Priority? Priority,
     DateOnly? DueBefore,
+    string? SortBy,
+    string? SortDirection);
+
+/// <summary>Store-facing filter for the organization-wide idea list. When set, <see cref="CreatedByUserId"/>
+/// restricts to ideas the user authored and <see cref="AssignedToUserId"/> to ideas assigned to them;
+/// both null means all ideas in the organization.</summary>
+public sealed record OrganizationIdeaListFilter(
+    Guid OrganizationId,
+    Guid? CreatedByUserId,
+    Guid? AssignedToUserId,
+    PageRequest Page,
+    string? Search,
     string? SortBy,
     string? SortDirection);

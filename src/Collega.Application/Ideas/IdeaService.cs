@@ -90,6 +90,31 @@ public sealed class IdeaService : IIdeaService
         return new PagedResult<IdeaListItem>(items, page.Page, page.PageSize, page.TotalCount, page.SortBy, page.SortDirection);
     }
 
+    public async Task<PagedResult<IdeaListItem>> ListByOrganizationAsync(Guid organizationId, OrganizationIdeaListQuery query, CancellationToken cancellationToken = default)
+    {
+        RequireAuthenticatedRole();
+        EnsureOrganizationScope(organizationId);
+
+        var currentUserId = RequireAuthenticatedUserId();
+        var scope = query.Scope?.Trim().ToLowerInvariant();
+        var createdBy = scope == "created" ? currentUserId : (Guid?)null;
+        var assignedTo = scope == "assigned" ? currentUserId : (Guid?)null;
+
+        var filter = new OrganizationIdeaListFilter(
+            organizationId,
+            createdBy,
+            assignedTo,
+            new PageRequest(query.Page, query.PageSize),
+            query.Search?.Trim(),
+            query.SortBy,
+            query.SortDirection);
+
+        var page = await _ideaRepository.ListByOrganizationAsync(filter, cancellationToken);
+        var items = await ProjectListItemsAsync(organizationId, page.Items, cancellationToken);
+
+        return new PagedResult<IdeaListItem>(items, page.Page, page.PageSize, page.TotalCount, page.SortBy, page.SortDirection);
+    }
+
     public async Task<CreateIdeaResult> CreateAsync(Guid boardId, CreateIdeaCommand command, CancellationToken cancellationToken = default)
     {
         RequireIdeaEditRole();
