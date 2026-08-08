@@ -39,8 +39,9 @@ Epics and dependency rules are as defined in `SPEC/70-delivery-backlog.md`; this
 | 6. Notification Events and Audit Surfaces | Notification events for mentions/comments/status changes, canonical idea links, internal verification persistence | 2–3 | Epics 1–5 | T037–T039 |
 | 7. Blazor Client Experience | Bug fixes, header/nav, Settings rename + list/form-swap, Boards list, full Kanban rebuild (drag/drop, column reorder, full-page Idea Detail navigation, optimistic upvote/status, multi-assignee + tag selectors), primary-nav styling, Idea Fields settings, uniform search/pagination (`BE-3`/`BE-4`) | 10–14 | Epics 2–5 (final polish after all) | T042–T045, `BE-3`, `BE-4` |
 | 8. Hardening and Release Readiness | OpenAPI alignment, unit/integration/contract tests, smoke test, seed + dev-seed idempotency verification, client-ui-revisions regression pass | 5–7 | Epics 1–7 | T046–T052, `BE-5` |
+| 9. User-Defined Fields (pulled into MVP 2026-08-08) | Org-scoped custom-field schema (7 types), value storage on ideas with per-type validation + audit, admin field manager UI, dynamic idea-form rendering, list filtering + search, CSV import/export columns. Phased backend-first: slice 1 = Domain+EF+migration+Application+API; slice 2 = client; slice 3 = filtering + CSV. See `SPEC/20-feature-user-defined-fields.md`. | 12–16 | Epics 4, 5 (ideas/boards backend) | T053–T060 |
 
-**MVP subtotal: 40–57 agent-days** (midpoint ≈ 48).
+**MVP subtotal: 52–73 agent-days** (midpoint ≈ 62). *Epics 1–8 = 40–57; UDF (Epic 9) adds 12–16.*
 
 ## Sequencing for a Solo Agent
 `SPEC/70-delivery-backlog.md` and `SPEC/80-workstream-roadmap.md` describe API/Application/Infrastructure/Client/QA as concurrent lanes — that's team-sequencing advice and doesn't apply directly to a single agent working alone, since one agent can't truly parallelize across lanes. For a solo agent, two sequencing options:
@@ -61,7 +62,7 @@ Either way, the **critical path is effectively the full sum of the epics** above
 | Epic 10: SAML | Org-scoped SAML config/metadata, SP-initiated flow, reuse of Epic 9's linking/provisioning logic, protocol validation | 4–6 | Epic 9 |
 | AI-Assisted Idea Creation | Extraction service behind an Application-layer abstraction, schema-constrained model call, deterministic resolution of person/tag/date mentions against org data, deterministic description cleaning, `ai-draft` + `ai-polish` endpoints, prompt-box entry point, batched clarification round, pre-filled review form with inferred/unconfirmed field state, HTML comp before Blazor, hermetic tests with a mocked model client | 10–14 | MVP ideas (Epic 5), Idea Field Options (Epic 4), client idea form (Epic 7) |
 | Organization AI Credentials | Encrypted-at-rest org key field + migration, key precedence resolver, validation-on-save call, request-time fallback to the deployment default, `PUT`/`DELETE /organizations/{id}/ai-key`, masked admin UI in Settings, audit events for set/rotate/clear/fallback | 2.5–3.5 | AI-Assisted Idea Creation; org admin UI (Epic 3) |
-| User-Defined Fields | Already sized in `SPEC/50-technical-implementation-plan.md` | 12–16 (existing estimate, unchanged) | MVP boards/ideas |
+| ~~User-Defined Fields~~ | **Moved into MVP as Epic 9 (2026-08-08).** See the MVP Epic Estimates table above and `SPEC/implementation-agent-tracker.md`. | — (now in MVP subtotal) | — |
 | Reporting | `SPEC/20-feature-reporting.md` is currently a 36-line scope stub with no phase breakdown in `SPEC/50-technical-implementation-plan.md` — **not sizeable yet**. Needs its own technical-implementation-plan section (report categories, CSV/JSON export design) before an estimate is meaningful. | Not sized | MVP release |
 
 ## Risk Factors That Could Move These Numbers

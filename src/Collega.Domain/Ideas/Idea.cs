@@ -1,5 +1,6 @@
 using Collega.Domain.Common;
 using Collega.Domain.Enums;
+using Collega.Domain.Fields;
 
 namespace Collega.Domain.Ideas;
 
@@ -28,6 +29,7 @@ public sealed class Idea : AuditableEntityBase
     private readonly List<IdeaAssignee> _assignees = new();
     private readonly List<IdeaTag> _tags = new();
     private readonly List<IdeaMention> _mentions = new();
+    private readonly List<IdeaFieldValue> _fieldValues = new();
 
     public Guid OrganizationId { get; private set; }
     public Guid BoardId { get; private set; }
@@ -42,6 +44,13 @@ public sealed class Idea : AuditableEntityBase
     public IReadOnlyList<IdeaAssignee> Assignees => _assignees;
     public IReadOnlyList<IdeaTag> Tags => _tags;
     public IReadOnlyList<IdeaMention> Mentions => _mentions;
+
+    /// <summary>
+    /// User-Defined Field values on this idea (SPEC/20-feature-user-defined-fields.md), one row per
+    /// field definition. Managed through <see cref="ReplaceFieldValues"/>; values are validated and
+    /// serialized by the Application layer before they are set.
+    /// </summary>
+    public IReadOnlyList<IdeaFieldValue> FieldValues => _fieldValues;
 
     private Idea()
     {
@@ -147,6 +156,47 @@ public sealed class Idea : AuditableEntityBase
     {
         SetMentions(mentionUserIds);
         MarkUpdated(nowUtc, actorUserId);
+    }
+
+    /// <summary>
+    /// Reconciles this idea's field values to the submitted set (authoritative): a field with a null
+    /// or empty value is cleared (its row removed), a changed value updates the existing row in place
+    /// (preserving its identity and created stamp), a new value adds a row, and unchanged values are
+    /// left untouched. Values must already be validated/serialized by the Application layer.
+    /// </summary>
+    public void ReplaceFieldValues(IReadOnlyCollection<IdeaFieldValueInput> fieldValues, DateTime nowUtc, Guid? actorUserId)
+    {
+        var desired = new Dictionary<Guid, string?>();
+        foreach (var input in fieldValues ?? Array.Empty<IdeaFieldValueInput>())
+        {
+            if (input.FieldDefinitionId == Guid.Empty)
+            {
+                continue;
+            }
+
+            // Last submission wins if a field id is repeated.
+            desired[input.FieldDefinitionId] = string.IsNullOrWhiteSpace(input.Value) ? null : input.Value;
+        }
+
+        _fieldValues.RemoveAll(v => !desired.TryGetValue(v.FieldDefinitionId, out var value) || value is null);
+
+        foreach (var (fieldDefinitionId, value) in desired)
+        {
+            if (value is null)
+            {
+                continue;
+            }
+
+            var existing = _fieldValues.FirstOrDefault(v => v.FieldDefinitionId == fieldDefinitionId);
+            if (existing is null)
+            {
+                _fieldValues.Add(new IdeaFieldValue(Id, fieldDefinitionId, value, nowUtc, actorUserId));
+            }
+            else if (existing.Value != value)
+            {
+                existing.SetValue(value, nowUtc, actorUserId);
+            }
+        }
     }
 
     public void SoftDelete(DateTime nowUtc, Guid? actorUserId)
