@@ -21,6 +21,7 @@ public sealed class EfIdeaRepository : IIdeaRepository
             .Include(i => i.Assignees)
             .Include(i => i.Tags)
             .Include(i => i.Mentions)
+            .Include(i => i.FieldValues)
             .AsQueryable();
 
         if (!includeDeleted)

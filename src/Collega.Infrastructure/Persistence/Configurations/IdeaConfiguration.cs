@@ -87,8 +87,14 @@ public sealed class IdeaConfiguration : IEntityTypeConfiguration<Idea>
             .HasForeignKey(m => m.IdeaId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasMany(i => i.FieldValues)
+            .WithOne()
+            .HasForeignKey(v => v.IdeaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Metadata.FindNavigation(nameof(Idea.Assignees))!.SetPropertyAccessMode(PropertyAccessMode.Field);
         builder.Metadata.FindNavigation(nameof(Idea.Tags))!.SetPropertyAccessMode(PropertyAccessMode.Field);
         builder.Metadata.FindNavigation(nameof(Idea.Mentions))!.SetPropertyAccessMode(PropertyAccessMode.Field);
+        builder.Metadata.FindNavigation(nameof(Idea.FieldValues))!.SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

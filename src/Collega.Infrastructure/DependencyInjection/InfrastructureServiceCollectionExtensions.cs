@@ -34,6 +34,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<ITagRepository, EfTagRepository>();
         services.AddScoped<ICommentRepository, EfCommentRepository>();
         services.AddScoped<IIdeaUpvoteRepository, EfIdeaUpvoteRepository>();
+        services.AddScoped<IFieldDefinitionRepository, EfFieldDefinitionRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IStartupSeeder, StartupSeeder>();
 

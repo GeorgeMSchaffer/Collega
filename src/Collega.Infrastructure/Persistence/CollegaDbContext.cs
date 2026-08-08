@@ -1,6 +1,7 @@
 using Collega.Domain.Auditing;
 using Collega.Domain.Boards;
 using Collega.Domain.Comments;
+using Collega.Domain.Fields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Notifications;
 using Collega.Domain.Organizations;
@@ -46,6 +47,12 @@ public sealed class CollegaDbContext : DbContext
     public DbSet<IdeaUpvote> IdeaUpvotes => Set<IdeaUpvote>();
 
     public DbSet<NotificationEvent> NotificationEvents => Set<NotificationEvent>();
+
+    public DbSet<FieldDefinition> FieldDefinitions => Set<FieldDefinition>();
+
+    public DbSet<FieldDefinitionOption> FieldDefinitionOptions => Set<FieldDefinitionOption>();
+
+    public DbSet<IdeaFieldValue> IdeaFieldValues => Set<IdeaFieldValue>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
