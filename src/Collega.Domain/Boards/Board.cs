@@ -67,12 +67,93 @@ public sealed class Board : AuditableEntityBase
             AllowUserStatusUpdate = allowUserStatusUpdate
         };
 
-        for (var order = 0; order < orderedStatusIds.Count; order++)
-        {
-            board._swimlanes.Add(new BoardSwimlane(board.Id, orderedStatusIds[order], order));
-        }
-
+        board.SetSwimlanes(orderedStatusIds);
         board.MarkCreated(nowUtc, actorUserId);
         return board;
+    }
+
+    /// <summary>
+    /// Updates the board name, the User-role move permission, and the set/order of swimlanes
+    /// (SPEC/30-Contracts.md <c>PUT /boards/{id}</c>). <paramref name="orderedStatusIds"/> may add
+    /// or remove statuses relative to the current swimlanes but must keep at least
+    /// <see cref="MinimumSwimlanes"/> distinct statuses (rule #3, T022) and may only draw from the
+    /// organization's statuses (subset support, T023 — validated by the Application layer).
+    /// </summary>
+    public void Update(
+        string name,
+        bool allowUserStatusUpdate,
+        IReadOnlyList<Guid> orderedStatusIds,
+        DateTime nowUtc,
+        Guid? actorUserId = null)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Name is required.", nameof(name));
+        }
+
+        ValidateSwimlaneStatusIds(orderedStatusIds);
+
+        Name = name.Trim();
+        AllowUserStatusUpdate = allowUserStatusUpdate;
+        SetSwimlanes(orderedStatusIds);
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
+    /// <summary>
+    /// Reorders the board's existing swimlanes in place (rule #6, T024 — persisted immediately after
+    /// drag-and-drop). Unlike <see cref="Update"/> this never adds or removes a swimlane:
+    /// <paramref name="orderedStatusIds"/> must be exactly the board's current swimlane statuses.
+    /// </summary>
+    public void ReorderSwimlanes(IReadOnlyList<Guid> orderedStatusIds, DateTime nowUtc, Guid? actorUserId = null)
+    {
+        ValidateSwimlaneStatusIds(orderedStatusIds);
+
+        var current = _swimlanes.Select(sl => sl.StatusId).ToHashSet();
+        if (orderedStatusIds.Count != current.Count || !orderedStatusIds.All(current.Contains))
+        {
+            throw new ArgumentException(
+                "A reorder must list exactly the board's current swimlane statuses.",
+                nameof(orderedStatusIds));
+        }
+
+        SetSwimlanes(orderedStatusIds);
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
+    private static void ValidateSwimlaneStatusIds(IReadOnlyList<Guid> orderedStatusIds)
+    {
+        if (orderedStatusIds is null || orderedStatusIds.Count < MinimumSwimlanes)
+        {
+            throw new ArgumentException($"A board must have at least {MinimumSwimlanes} swimlanes.", nameof(orderedStatusIds));
+        }
+
+        if (orderedStatusIds.Distinct().Count() != orderedStatusIds.Count)
+        {
+            throw new ArgumentException("A board cannot list the same status twice.", nameof(orderedStatusIds));
+        }
+    }
+
+    /// <summary>
+    /// Reconciles the swimlane collection to <paramref name="orderedStatusIds"/>: drops swimlanes no
+    /// longer selected, keeps and renumbers those retained, and appends newly selected statuses.
+    /// Existing rows are preserved where the status is retained so a reorder is a pure position update.
+    /// </summary>
+    private void SetSwimlanes(IReadOnlyList<Guid> orderedStatusIds)
+    {
+        _swimlanes.RemoveAll(sl => !orderedStatusIds.Contains(sl.StatusId));
+
+        for (var order = 0; order < orderedStatusIds.Count; order++)
+        {
+            var statusId = orderedStatusIds[order];
+            var existing = _swimlanes.FirstOrDefault(sl => sl.StatusId == statusId);
+            if (existing is null)
+            {
+                _swimlanes.Add(new BoardSwimlane(Id, statusId, order));
+            }
+            else
+            {
+                existing.SetDisplayOrder(order);
+            }
+        }
     }
 }
