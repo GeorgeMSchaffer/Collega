@@ -68,7 +68,7 @@ Three page slices built by parallel background worktree agents off `dev` @ `7fd6
   - Client `/ideas` page: filter chips, search, server-side pagination (25/50/100/250), Title/Created By/Assigned To/Status/Created table, Details → Idea Detail; display names/colors resolved from org users/boards/statuses.
 
 ## Still open (not built)
-- **T042/T045 leftovers**: user CSV import (needs a backend `POST /organizations/{id}/users/import` endpoint — not built); Site-Admin editing of another org's users (drill-down is read-only); broader role-boundary polish.
+- **T042/T045 leftovers**: user CSV import is now **built** (backend `POST /organizations/{id}/users/import` in `OrganizationsController` + `UserService.ImportAsync` + `CsvUserImportParser`; client `UserImport.razor` at `/settings/users/import` and the Site-Admin `/settings/organizations/{id}/users/import` variant) — remaining: Site-Admin editing of another org's users (drill-down is read-only); broader role-boundary polish.
 - **Mobile/narrow-viewport pass** for the rail + two-column layouts (undesigned).
 - **Stale remote branches** were deleted this session; `feature/002-ui-canonical-statuses` was deleted too (over-reach) — its tip `f03796d` is merged into `dev`, so no loss; restore the ref with `git push origin f03796d:refs/heads/feature/002-ui-canonical-statuses` if wanted.
 - **Test data in the shared dev DB** (no delete endpoints): user "Quinn Tester", org "QA Test Org", board "QA Board". Test ideas were deleted.

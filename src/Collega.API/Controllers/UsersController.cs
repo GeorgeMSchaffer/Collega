@@ -9,8 +9,8 @@ namespace Collega.API.Controllers;
 
 /// <summary>
 /// User detail/update by id (SPEC/30-Contracts.md "User Contracts") plus the P1 admin-issued
-/// temporary password reset. Org-scoped user list/create live on <see cref="OrganizationsController"/>
-/// under `/organizations/{organizationId}/users`. CSV import is a separate follow-up.
+/// temporary password reset. Org-scoped user list/create/CSV-import live on <see cref="OrganizationsController"/>
+/// under `/organizations/{organizationId}/users`.
 /// </summary>
 [ApiController]
 [Authorize]
