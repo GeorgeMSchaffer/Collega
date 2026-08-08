@@ -1,0 +1,533 @@
+@page "/ideas/{IdeaId}/edit"
+@attribute [Authorize]
+@using System.Security.Claims
+@using System.Text.RegularExpressions
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>@(_idea?.Title ?? "Idea") · Collega</PageTitle>
+
+@*
+    Full-page, article-style Idea Detail (per the locked comp comp-c-review-06-lockin-v5-final.html /
+    comp-c-review-04-idea-detail.html) — NOT an overlay. Left column: editable title + description and
+    the comment thread. Right column ("facts"): status, priority, assignees, tags, upvotes.
+
+    Role gating (SPEC/20-feature-ideas-and-engagement.md): Read Only can VIEW, comment, and upvote but
+    cannot edit idea content (title/description/status/tags). User / Org Admin / Site Admin can edit.
+    A board's `allowUserStatusUpdate` and role rules are enforced server-side, so a User's rejected
+    status move is reverted and the permission message is surfaced (feature-client-ui #5).
+    Ideas in a Complete status stay editable.
+*@
+
+@if (_loading)
+{
+    <div class="ideahd">
+        <div class="crumbs"><a href="/ideas">Ideas</a> / Idea</div>
+    </div>
+    <div class="body"><div class="loading"><FluentProgressRing /> <span>Loading idea…</span></div></div>
+}
+else if (_idea is null)
+{
+    <div class="ideahd">
+        <div class="crumbs"><a href="/ideas">Ideas</a> / Not found</div>
+        <h1>Idea unavailable</h1>
+    </div>
+    <div class="body">
+        <div class="autherror" role="alert">@(_error ?? "This idea could not be loaded.")</div>
+        <a class="btn" href="/ideas">Back to ideas</a>
+    </div>
+}
+else
+{
+    <div class="ideahd">
+        <div class="crumbs"><a href="/ideas">Ideas</a> / @_idea.Title</div>
+        <div class="kicker">@_idea.StatusName · @_idea.Priority priority</div>
+        <div class="titlerow">
+            <h1>@_idea.Title</h1>
+            <button class="up @(_idea.HasUpvoted ? "mine" : "")"
+                    @onclick="ToggleUpvote" disabled="@_upvoting"
+                    title="@(_idea.HasUpvoted ? "Remove your upvote" : "Upvote this idea")">
+                ▲ @(_idea.HasUpvoted ? "Upvoted" : "Upvote") · @_idea.UpvoteCount
+            </button>
+        </div>
+    </div>
+
+    <div class="ideabody">
+        <div class="maincol">
+            @if (_actionError is not null)
+            {
+                <div class="autherror" role="alert">@_actionError</div>
+            }
+            @if (_saveMessage is not null)
+            {
+                <div class="authnote" role="status">@_saveMessage</div>
+            }
+
+            @if (_canEdit)
+            {
+                <label class="fieldlabel" for="idea-title">Title <span class="charlim">@_title.Length / 150</span></label>
+                <input id="idea-title" type="text" class="titleinput" maxlength="150"
+                       @bind="_title" @bind:event="oninput" disabled="@_savingIdea" />
+
+                <label class="fieldlabel" for="idea-desc">Description <span class="charlim">@_description.Length / 4000</span></label>
+                <textarea id="idea-desc" class="prose descinput" maxlength="4000"
+                          @bind="_description" @bind:event="oninput" disabled="@_savingIdea"></textarea>
+
+                <div class="btnrow savebtnrow">
+                    <button class="btn primary" @onclick="SaveIdea" disabled="@(_savingIdea || !HasIdeaChanges)">
+                        @(_savingIdea ? "Saving…" : "Save changes")
+                    </button>
+                    @if (HasIdeaChanges)
+                    {
+                        <button class="btn subtle" @onclick="ResetIdeaEdits" disabled="@_savingIdea">Discard</button>
+                    }
+                </div>
+            }
+            else
+            {
+                <h1 class="readtitle">@_idea.Title</h1>
+                <p class="prose readdesc">@_idea.Description</p>
+            }
+
+            <h2 class="discussion">Discussion <span class="count">@_comments.Count comment@(_comments.Count == 1 ? "" : "s")</span></h2>
+
+            @if (_commentsError is not null)
+            {
+                <div class="autherror" role="alert">@_commentsError</div>
+            }
+
+            @if (_comments.Count == 0)
+            {
+                <p class="empty">No comments yet. Start the discussion below.</p>
+            }
+            else
+            {
+                @foreach (var c in _comments)
+                {
+                    <div class="comment">
+                        <div class="cbyline">
+                            <span class="avatar s">@Initials(DisplayNameFor(c.AuthorUserId))</span>
+                            <span class="who">@DisplayNameFor(c.AuthorUserId)</span>
+                            <span class="when">@FormatWhen(c.CreatedAtUtc)</span>
+                        </div>
+                        <p class="cbody">@c.Body</p>
+                    </div>
+                }
+            }
+
+            <div class="addcomment">
+                <span class="avatar s">@Initials(_currentUserName)</span>
+                <div class="addbox">
+                    <textarea class="prose" aria-label="Add a comment" maxlength="2000" placeholder="Join the discussion… type someone's email with @@ to notify them"
+                              @bind="_newComment" @bind:event="oninput" disabled="@_postingComment"></textarea>
+                    <div class="charcount @(_newComment.Length > 2000 ? "over" : "")">@_newComment.Length / 2000</div>
+                    <button class="btn primary" @onclick="PostComment"
+                            disabled="@(_postingComment || string.IsNullOrWhiteSpace(_newComment) || _newComment.Length > 2000)">
+                        @(_postingComment ? "Posting…" : "Post comment")
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="facts">
+            <div class="fact">
+                <div class="k">Status</div>
+                <div class="v">
+                    <select aria-label="Idea status" value="@_idea.StatusId" @onchange="OnStatusChanged" disabled="@(!_canEdit || _changingStatus || _statusOptions.Count == 0)">
+                        @if (_statusOptions.Count == 0)
+                        {
+                            <option value="@_idea.StatusId" selected>@_idea.StatusName</option>
+                        }
+                        else
+                        {
+                            @foreach (var s in _statusOptions)
+                            {
+                                <option value="@s.StatusId">@s.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="fact">
+                <div class="k">Priority</div>
+                <div class="v"><span class="pill @PriorityPill(_idea.Priority)">@_idea.Priority</span></div>
+            </div>
+            <div class="fact">
+                <div class="k">Assignees</div>
+                <div class="v">
+                    @if (_idea.Assignees.Count == 0)
+                    {
+                        <span class="muted">Unassigned</span>
+                    }
+                    else
+                    {
+                        <div class="assignees">
+                            @foreach (var a in _idea.Assignees)
+                            {
+                                <span class="assignee"><span class="avatar s">@Initials(a.DisplayName)</span>@a.DisplayName</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_idea.DueDate))
+            {
+                <div class="fact">
+                    <div class="k">Due date</div>
+                    <div class="v">@_idea.DueDate</div>
+                </div>
+            }
+            <div class="fact">
+                <div class="k">Tags</div>
+                <div class="v">
+                    @if (_idea.TagNames.Count == 0)
+                    {
+                        <span class="muted">None</span>
+                    }
+                    else
+                    {
+                        <div class="taglist">
+                            @foreach (var t in _idea.TagNames)
+                            {
+                                <span class="pill neutral">@t</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="fact">
+                <div class="k">Upvotes</div>
+                <div class="v">@_idea.UpvoteCount @(_idea.UpvoteCount == 1 ? "person" : "people")</div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? IdeaId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private IdeaDetailDto? _idea;
+    private readonly List<CommentListItemDto> _comments = new();
+    private List<StatusItemDto> _statusOptions = new();
+    private readonly Dictionary<string, string> _names = new();
+
+    private string _title = "";
+    private string _description = "";
+    private string _newComment = "";
+
+    private string _role = "";
+    private string? _currentUserId;
+    private string _currentUserName = "";
+    private string? _organizationId;
+
+    private bool _loading = true;
+    private bool _savingIdea;
+    private bool _changingStatus;
+    private bool _upvoting;
+    private bool _postingComment;
+
+    private string? _error;
+    private string? _actionError;
+    private string? _commentsError;
+    private string? _saveMessage;
+
+    private string? _loadedId;
+
+    private bool _canEdit => _role != "ReadOnly" && !string.IsNullOrEmpty(_role);
+
+    private bool HasIdeaChanges =>
+        _idea is not null && (_title != _idea.Title || _description != _idea.Description);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Load once per idea id; Blazor may reuse this component when navigating between ideas.
+        if (IdeaId is null || IdeaId == _loadedId)
+        {
+            return;
+        }
+
+        _loadedId = IdeaId;
+        await LoadAsync(IdeaId);
+    }
+
+    private async Task LoadAsync(string ideaId)
+    {
+        _loading = true;
+        _error = null;
+        _actionError = null;
+        _saveMessage = null;
+        _commentsError = null;
+        _comments.Clear();
+        _names.Clear();
+
+        if (AuthStateTask is not null)
+        {
+            var user = (await AuthStateTask).User;
+            _role = user.FindFirst(ClaimTypes.Role)?.Value ?? "";
+            _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            _currentUserName = user.FindFirst(ClaimTypes.Name)?.Value ?? "";
+            _organizationId = user.FindFirst("organizationId")?.Value;
+        }
+
+        var result = await Api.GetIdeaAsync(ideaId);
+        if (!result.Succeeded || result.Value is null)
+        {
+            _error = result.Error ?? "This idea could not be loaded.";
+            _idea = null;
+            _loading = false;
+            return;
+        }
+
+        SetIdea(result.Value);
+
+        // Board detail supplies the status options for the move-status control. Non-fatal on failure:
+        // the select degrades to the current status only.
+        var board = await Api.GetBoardAsync(_idea!.BoardId);
+        if (board.Succeeded && board.Value is not null)
+        {
+            _statusOptions = board.Value.Swimlanes
+                .OrderBy(s => s.Order)
+                .Select(s => new StatusItemDto(s.StatusId, board.Value.OrganizationId, s.StatusName, s.StatusColor, s.Order, s.StatusIsDeleted))
+                .ToList();
+        }
+
+        // Best-effort author name map from the org's users, so comment bylines show real names.
+        if (!string.IsNullOrEmpty(_organizationId))
+        {
+            var users = await Api.GetOrganizationUsersAsync(_organizationId);
+            if (users.Succeeded && users.Value is not null)
+            {
+                foreach (var u in users.Value.Items)
+                {
+                    _names[u.UserId] = $"{u.FirstName} {u.LastName}".Trim();
+                }
+            }
+        }
+
+        await LoadCommentsAsync(ideaId);
+
+        _loading = false;
+    }
+
+    private void SetIdea(IdeaDetailDto idea)
+    {
+        _idea = idea;
+        _title = idea.Title;
+        _description = idea.Description;
+
+        // Seed the name map with personas the idea already carries (assignees + resolved mentions).
+        foreach (var a in idea.Assignees)
+        {
+            _names[a.UserId] = a.DisplayName;
+        }
+        foreach (var m in idea.Mentions)
+        {
+            _names[m.UserId] = m.DisplayName;
+        }
+    }
+
+    private async Task LoadCommentsAsync(string ideaId)
+    {
+        var comments = await Api.GetIdeaCommentsAsync(ideaId);
+        _comments.Clear();
+
+        if (comments.Succeeded && comments.Value is not null)
+        {
+            _comments.AddRange(comments.Value.Items.OrderBy(c => c.CreatedAtUtc));
+        }
+        else if (_idea is not null)
+        {
+            // Fall back to the comments embedded on the idea detail.
+            _comments.AddRange(_idea.Comments
+                .OrderBy(c => c.CreatedAtUtc)
+                .Select(c => new CommentListItemDto(c.CommentId, c.IdeaId, c.AuthorUserId, c.Body, c.CreatedAtUtc, c.UpdatedAtUtc)));
+            if (!comments.Succeeded)
+            {
+                _commentsError = comments.Error;
+            }
+        }
+    }
+
+    private async Task SaveIdea()
+    {
+        if (_idea is null || !_canEdit)
+        {
+            return;
+        }
+
+        var title = _title.Trim();
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            _actionError = "A title is required.";
+            return;
+        }
+
+        _savingIdea = true;
+        _actionError = null;
+        _saveMessage = null;
+
+        // Echo the unchanged fields back so they aren't cleared by the full-replace update.
+        var body = new UpdateIdeaRequestDto(
+            title,
+            _description,
+            _idea.Priority,
+            _idea.DueDate,
+            _idea.Assignees.Select(a => a.UserId).ToList(),
+            _idea.TagNames.ToList(),
+            null);
+
+        var result = await Api.UpdateIdeaAsync(_idea.IdeaId, body);
+        if (result.Succeeded && result.Value is not null)
+        {
+            SetIdea(result.Value);
+            _saveMessage = "Changes saved.";
+        }
+        else
+        {
+            _actionError = result.Error ?? "Save failed.";
+        }
+
+        _savingIdea = false;
+    }
+
+    private void ResetIdeaEdits()
+    {
+        if (_idea is not null)
+        {
+            _title = _idea.Title;
+            _description = _idea.Description;
+            _saveMessage = null;
+            _actionError = null;
+        }
+    }
+
+    private async Task OnStatusChanged(ChangeEventArgs e)
+    {
+        var targetId = e.Value?.ToString();
+        if (_idea is null || string.IsNullOrEmpty(targetId) || targetId == _idea.StatusId)
+        {
+            return;
+        }
+
+        _changingStatus = true;
+        _actionError = null;
+        _saveMessage = null;
+
+        var result = await Api.ChangeIdeaStatusAsync(_idea.IdeaId, targetId);
+        if (result.Succeeded)
+        {
+            var target = _statusOptions.FirstOrDefault(s => s.StatusId == targetId);
+            _idea = _idea with { StatusId = targetId, StatusName = target?.Name ?? _idea.StatusName };
+            _saveMessage = "Status updated.";
+        }
+        else
+        {
+            // Rejected (e.g. board doesn't allow User status moves) — re-render reverts the select
+            // to the unchanged _idea.StatusId and we surface the server's permission message.
+            _actionError = result.Error ?? "Status change failed.";
+        }
+
+        _changingStatus = false;
+    }
+
+    private async Task ToggleUpvote()
+    {
+        if (_idea is null)
+        {
+            return;
+        }
+
+        _upvoting = true;
+        _actionError = null;
+
+        var result = await Api.ToggleUpvoteAsync(_idea.IdeaId);
+        if (result.Succeeded && result.Value is not null)
+        {
+            _idea = _idea with { HasUpvoted = result.Value.HasUpvoted, UpvoteCount = result.Value.UpvoteCount };
+        }
+        else
+        {
+            _actionError = result.Error ?? "Could not update your upvote.";
+        }
+
+        _upvoting = false;
+    }
+
+    private async Task PostComment()
+    {
+        if (_idea is null || string.IsNullOrWhiteSpace(_newComment) || _newComment.Length > 2000)
+        {
+            return;
+        }
+
+        _postingComment = true;
+        _actionError = null;
+
+        var body = new CreateCommentRequestDto(_newComment, ExtractMentionEmails(_newComment));
+        var result = await Api.AddIdeaCommentAsync(_idea.IdeaId, body);
+        if (result.Succeeded)
+        {
+            _newComment = "";
+            await LoadCommentsAsync(_idea.IdeaId);
+        }
+        else
+        {
+            _actionError = result.Error ?? "Could not post your comment.";
+        }
+
+        _postingComment = false;
+    }
+
+    private static readonly Regex EmailPattern =
+        new(@"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", RegexOptions.Compiled);
+
+    /// <summary>Pulls email addresses out of a comment body so they can be sent as @mentions.
+    /// Mentioning is by email (SPEC comment rule #5); anything not a valid email is left as plain text.</summary>
+    private static List<string>? ExtractMentionEmails(string body)
+    {
+        var emails = EmailPattern.Matches(body)
+            .Select(m => m.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return emails.Count > 0 ? emails : null;
+    }
+
+    private string DisplayNameFor(string userId)
+    {
+        if (!string.IsNullOrEmpty(userId) && _names.TryGetValue(userId, out var name) && !string.IsNullOrWhiteSpace(name))
+        {
+            return name;
+        }
+        return string.Equals(userId, _currentUserId, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(_currentUserName)
+            ? _currentUserName
+            : "Member";
+    }
+
+    private static string Initials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "?";
+        }
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+        {
+            return parts[0][..1].ToUpperInvariant();
+        }
+        return (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+    }
+
+    private static string PriorityPill(string priority) => priority switch
+    {
+        "Critical" => "err",
+        "High" => "warn",
+        "Medium" => "info",
+        _ => "neutral",
+    };
+
+    private static string FormatWhen(DateTime utc) =>
+        utc.ToLocalTime().ToString("MMM d, yyyy · h:mm tt");
+}

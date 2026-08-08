@@ -1,0 +1,129 @@
+/*
+ * Idea Detail — full-page, article-style layout ported from the locked comps
+ * (comp-c-review-06-lockin-v5-final.html / comp-c-review-04-idea-detail.html).
+ * Shared chrome (buttons, inputs, pills, .card) comes from wwwroot/css/app.css;
+ * these are the page-specific header, two-column body, facts rail, and comment thread.
+ */
+
+/* ---- Idea header ---- */
+.ideahd {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    padding: 26px 40px;
+}
+.ideahd .crumbs { font-size: 12px; color: var(--ink-3); margin-bottom: 12px; }
+.ideahd .crumbs a { color: var(--ink-3); text-decoration: none; }
+.kicker {
+    font-size: 12px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.titlerow { display: flex; align-items: flex-start; gap: 20px; }
+.ideahd h1 { font-size: 30px; max-width: 760px; flex: 1; }
+
+/* ---- Upvote control ---- */
+.up {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-size: 13px;
+    background: var(--surface);
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--ink-2);
+    margin-top: 8px;
+    white-space: nowrap;
+}
+.up:hover:not(:disabled) { background: #f3f2f1; }
+.up:disabled { opacity: .6; cursor: default; }
+.up.mine { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-deep); }
+
+/* ---- Two-column body ---- */
+.ideabody {
+    display: grid;
+    grid-template-columns: minmax(0, 720px) 300px;
+    gap: 44px;
+    padding: 30px 40px;
+}
+.maincol { min-width: 0; }
+
+.fieldlabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: 6px;
+}
+.charlim { font-size: 11px; color: var(--ink-3); font-weight: 400; }
+.titleinput { width: 100%; margin-bottom: 20px; font-size: 18px; padding: 10px 12px; }
+.descinput { width: 100%; min-height: 120px; margin-bottom: 12px; resize: vertical; }
+.prose { font-size: 15px; line-height: 1.7; color: var(--ink-2); }
+.readtitle { font-size: 30px; margin-bottom: 12px; }
+.readdesc { white-space: pre-wrap; margin-bottom: 12px; }
+.savebtnrow { margin-bottom: 8px; }
+
+/* ---- Discussion / comments ---- */
+.discussion { font-size: 19px; margin: 30px 0 16px; }
+.discussion .count {
+    font-size: 13px;
+    color: var(--ink-3);
+    font-family: "Segoe UI", -apple-system, Roboto, sans-serif;
+    font-weight: 600;
+}
+.empty { color: var(--ink-3); font-size: 13.5px; margin-bottom: 18px; }
+
+.comment { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #f0efed; }
+.cbyline { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; }
+.cbyline .who { font-size: 13px; font-weight: 700; }
+.cbyline .when { font-size: 12px; color: var(--ink-3); }
+.cbody { font-size: 14.5px; line-height: 1.65; color: var(--ink-2); white-space: pre-wrap; }
+
+.addcomment { display: flex; gap: 12px; margin-top: 8px; }
+.addbox { flex: 1; min-width: 0; }
+.addbox textarea { width: 100%; min-height: 80px; resize: vertical; }
+.charcount { font-size: 11.5px; color: var(--ink-3); text-align: right; margin: 4px 0 6px; }
+.charcount.over { color: var(--err); font-weight: 600; }
+
+/* ---- Facts rail ---- */
+.facts { border-left: 1px solid var(--line); padding-left: 28px; }
+.fact { margin-bottom: 18px; }
+.fact .k {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-3);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.fact .v { font-size: 14px; font-weight: 600; }
+.fact .v select { width: 100%; }
+.fact .v .muted { color: var(--ink-3); font-weight: 400; }
+
+.assignees { display: flex; flex-direction: column; gap: 8px; }
+.assignee { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.taglist { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Shared avatar badge (small) — mirrors app.css .avatar.s for elements this component renders. */
+.avatar.s {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent-deep);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9.5px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* ---- Narrow viewport: collapse to a single column ---- */
+@media (max-width: 900px) {
+    .ideabody { grid-template-columns: 1fr; gap: 28px; }
+    .facts { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 20px; }
+    .ideahd, .ideabody { padding-left: 24px; padding-right: 24px; }
+}
