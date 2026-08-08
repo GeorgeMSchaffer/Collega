@@ -284,6 +284,12 @@ Response fields also include:
 - `logoUrl` nullable string
 - `logoThumbnailUrl` nullable string
 - `logoHeightPx` nullable integer, max rendered value `150`
+- `aiKeyConfigured` boolean indicating whether this organization has its own AI API key stored
+- `aiKeyLastFour` nullable string, the last four characters of the stored key, null when `aiKeyConfigured` is false
+- `aiKeyUpdatedAtUtc` nullable timestamp
+- `aiKeyUpdatedByUserId` nullable GUID string
+
+The stored AI API key value itself is never returned by this or any other endpoint. The three `aiKey*` metadata fields are omitted entirely for callers whose role is `User` or `Read Only`.
 
 Error responses:
 - `401` caller is not authenticated
@@ -349,6 +355,48 @@ Success response:
 Error responses:
 - `401` caller is not authenticated
 - `403` caller is authenticated but not allowed to archive this organization
+- `404` organization does not exist or is outside caller scope
+
+### `PUT /api/v1/organizations/{organizationId}/ai-key`
+Purpose: Set or rotate the organization's own AI API key, overriding the deployment default key for all AI calls made in this organization's scope.
+
+Request body:
+- `aiApiKey` required string, max 500 characters, trimmed before validation
+
+Behavior rules:
+- authorized for Site Admin on any organization, and for Org Admin on their own organization only
+- the submitted key is validated with a single low-cost model call before persistence
+- a key that fails validation is rejected and any previously stored key is left untouched
+- the key is encrypted at rest and is never returned by this or any other endpoint
+- replaces any previously stored key for this organization atomically
+- generates an audit event recording the acting user and never the key value
+
+Success response `200`:
+- `aiKeyConfigured` boolean, always `true`
+- `aiKeyLastFour`
+- `aiKeyUpdatedAtUtc`
+- `aiKeyUpdatedByUserId`
+
+Error responses:
+- `400` request body is malformed, violates field constraints, or the key failed provider validation
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to administer this organization
+- `404` organization does not exist or is outside caller scope
+
+### `DELETE /api/v1/organizations/{organizationId}/ai-key`
+Purpose: Clear the organization's own AI API key, returning the organization to the deployment default key.
+
+Behavior rules:
+- authorized for Site Admin on any organization, and for Org Admin on their own organization only
+- succeeds idempotently when no key is currently stored
+- generates an audit event recording the acting user
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to administer this organization
 - `404` organization does not exist or is outside caller scope
 
 ## User Contracts
@@ -728,6 +776,69 @@ Success response `201`:
 - `ideaTypeId`
 - `businessImpactId`
 - `dueDate`
+
+### `POST /api/v1/boards/{boardId}/ideas/ai-draft`
+Purpose: Turn a plain-English description into a pre-filled, unsaved idea draft for review. This endpoint never creates an idea; the client submits the reviewed result to `POST /api/v1/boards/{boardId}/ideas` as normal.
+
+Authorized for the same roles as manual idea creation: Site Admin, Org Admin, and `User`. `Read Only` is rejected with `403`.
+
+Request body:
+- `rawInput` required string, min 20 characters, max 4000 characters, trimmed before validation
+
+Behavior rules:
+- authenticates with the board organization's own AI API key when configured, otherwise the deployment default key; on organization-key failure the call is retried once against the deployment default key
+- the extraction call is constrained to the board organization's active Idea Type and Business Impact options and never receives the organization's user or tag lists
+- `description` is produced by backend cleaning of `rawInput`, not by the model
+- person, tag, and date mentions returned by the model as raw text are resolved in backend code against active organization users, existing tags, and a date parser
+- unambiguous resolutions are returned pre-filled; ambiguous or unresolved mentions and no-signal required fields are returned in `clarifications`
+- at most one clarification round is supported; the client resolves the returned questions locally and does not call this endpoint again for the same input
+
+Success response `200`:
+- `title` string, max 150 characters
+- `description` string, max 4000 characters
+- `priority` nullable string: `Low`, `Medium`, `High`, or `Critical`
+- `ideaTypeId` nullable GUID string
+- `businessImpactId` nullable GUID string
+- `dueDate` nullable date string (`YYYY-MM-DD`)
+- `assigneeUserIds` array of zero to five distinct GUID strings, unambiguous resolutions only
+- `tagNames` string array, unambiguous resolutions only
+- `inferredFields` string array naming every field populated by inference rather than by unambiguous resolution; the client renders these as "inferred, unconfirmed" until the user interacts with them
+- `clarifications` array, empty when nothing needs clarifying
+
+`clarifications` item shape:
+- `field` required string: `priority`, `ideaType`, `businessImpact`, `assignee`, `tag`, or `dueDate`
+- `kind` required string: `choice` when a required field had no usable signal, or `disambiguation` when a mention matched more than one candidate
+- `prompt` required string, the question presented to the user
+- `sourceMention` nullable string, the raw input text that could not be resolved, null for `choice`
+- `options` required array of `{ value, label }`, sourced from the organization's current active options for `choice` and from the matching candidates for `disambiguation`
+
+Error responses:
+- `400` request body is malformed or violates field constraints, including `rawInput` below the minimum length
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to create ideas on this board
+- `404` board does not exist or is outside caller scope
+- `409` AI-assisted creation is not configured: neither an organization key nor a deployment default key is available
+- `503` the provider failed after both the organization key and the deployment default key were attempted
+
+`409` and `503` are feature-specific extensions to the standard error responses. The client treats both as recoverable by falling back to the blank manual idea form.
+
+### `POST /api/v1/boards/{boardId}/ideas/ai-polish`
+Purpose: Rewrite a draft description on explicit user request. This is the opt-in "Polish with AI" action and is never invoked automatically.
+
+Authorized for the same roles as `ai-draft`.
+
+Request body:
+- `description` required string, min 20 characters, max 4000 characters, trimmed before validation
+
+Behavior rules:
+- uses the same key precedence and fallback behavior as `ai-draft`
+- returns rewritten text only; the caller decides whether to accept it, and no idea is created or modified
+
+Success response `200`:
+- `description` string, max 4000 characters
+
+Error responses:
+- same set as `POST /api/v1/boards/{boardId}/ideas/ai-draft`
 
 ### `GET /api/v1/ideas/{ideaId}`
 Purpose: Return full idea detail.

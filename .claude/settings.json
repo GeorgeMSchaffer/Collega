@@ -58,7 +58,12 @@
       "Bash(python3 /private/tmp/claude-501/-Users-gms-Documents-code-Collega/2107da47-4272-493d-903c-8a3a5fb9104e/scratchpad/probe.py)",
       "Bash(python3 /private/tmp/claude-501/-Users-gms-Documents-code-Collega/2107da47-4272-493d-903c-8a3a5fb9104e/scratchpad/probe2.py)",
       "Skill(claude-api)",
-      "Skill(claude-api:*)"
+      "Skill(claude-api:*)",
+      "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-af73d089ccd238df5 status --short)",
+      "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a2f14d99740245d03 status --short)",
+      "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a2f14d99740245d03 branch --show-current)",
+      "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a2f14d99740245d03 log --oneline -3)",
+      "Bash(git -C /Users/gms/Documents/code/Collega diff --stat)"
     ],
     "additionalDirectories": [
       "/tmp"

@@ -193,14 +193,16 @@ Users can start a new idea by describing it in plain English instead of filling 
 | Due Date, Assignees, Tags | Optional; only surfaced when mentioned in the input. An ambiguous mention (e.g., a name matching more than one active org user) triggers a disambiguation question; an unmentioned optional field is simply left blank/default. |
 | Clarifying questions | Batched into a single round after the initial extraction pass, not serial back-and-forth. Enum fields (Priority, Idea Type, Business Impact) are presented as multiple-choice sourced from the org's current active options. MVP supports at most one clarification round; any field still unresolved afterward is left blank/default on the review form for manual correction. |
 | Entity resolution | The extraction step never receives the org's full user or tag lists. It returns raw plain-text mentions (person names, tag-like keywords, date phrases); resolving those mentions against actual org users, tags, and dates happens in deterministic backend logic (fuzzy match, date parsing), not inside the model prompt. This keeps prompt size independent of org size and keeps resolution grounded in real data rather than model recall. |
-| Model tier | MVP uses a single fixed, low-cost model tier appropriate to a classification/short-synthesis task. No multi-model escalation/cascade in MVP. |
+| Model tier | MVP uses a single fixed, low-cost model tier appropriate to a classification/short-synthesis task. The mandatory extraction call uses Claude Haiku 4.5. The opt-in "Polish with AI" action uses Claude Sonnet 5, because rewriting is a generation task rather than a classification one. No multi-model escalation/cascade in MVP. |
+| Provider naming | Configuration keys and API contract fields are deliberately vendor-neutral (`Ai__ApiKey`, `aiApiKey`, `aiKeyConfigured`) rather than naming a provider. Changing providers is then a spec-and-adapter change instead of a breaking contract change. |
+| Credential source | Extraction and polish calls authenticate with the organization's own AI API key when one is configured, and otherwise with the deployment-wide default key. Key management, precedence, and failure behavior are specified in `SPEC/20-feature-organizations-and-users.md` ("Organization AI Credentials"). |
 | Input guardrails | The client enforces a minimum input length before allowing submission, to avoid wasted calls on trivially empty input. The API enforces a maximum input length aligned to the Description field limit, since multi-idea handling is out of scope. |
 | Relationship to Approval Workflow | Consistent with the deferred Approval Workflow decision that AI-generated content is untrusted until reviewed by a human (below): the always-review-before-create trust model already satisfies that principle for this feature, independent of whether the approval workflow itself is ever built. |
 
 ### Flow
 1. From within a board, the user opens New Idea, which opens a prompt box with a link to skip to the manual form.
 2. The user describes the idea in their own words and submits.
-3. The extraction step runs once against the input, constrained to the target org's active Idea Type options and active Business Impact options, and returns: a synthesized title; Priority, Idea Type, and Business Impact each either confidently classified or marked as no-signal; a lightly cleaned description; and any raw mentions of people, dates, or tag-like terms found in the text.
+3. The extraction step runs once against the input, constrained to the target org's active Idea Type options and active Business Impact options, and returns: a synthesized title; Priority, Idea Type, and Business Impact each either confidently classified or marked as no-signal; and any raw mentions of people, dates, or tag-like terms found in the text. The extraction response does not carry a description — because the description is a lightly cleaned copy of the user's own input rather than generated prose, backend code produces it deterministically (trim, collapse whitespace runs, normalize line endings, enforce the 4000-character limit). This preserves the specified behavior exactly while removing the single largest output-token cost in the call.
 4. Backend logic resolves raw mentions against the org's active users, tags, and a date parser. Ambiguous or unresolved mentions are queued for the clarifying round; unambiguous matches are pre-filled directly.
 5. If any required field has no signal, or any mention is ambiguous, the user is shown one batched round of clarifying questions (multiple-choice for enum fields, a short picker for name/tag disambiguation). If nothing needs clarifying, this step is skipped.
 6. The standard idea form opens pre-filled with everything extracted and resolved. Inferred-but-unconfirmed fields are visually distinguished from user-confirmed or user-edited fields.
@@ -209,15 +211,18 @@ Users can start a new idea by describing it in plain English instead of filling 
 ### Cost Architecture Principles
 1. The model never receives the org's full user or tag list; it only extracts raw mentions, which deterministic backend code resolves. This bounds prompt size independent of org size.
 2. Output is schema/tool-constrained with per-field token limits aligned to existing field length limits (Title 150 characters, Description 4000 characters), not open-ended generation.
-3. Description defaults to cleaned raw input rather than a generated rewrite; generative rewriting is opt-in and separate from the mandatory extraction call.
-4. A single fixed low-cost model is used for MVP. Prompt caching, multi-model escalation, self-hosted model infrastructure, and per-organization usage quotas are deferred until real usage data justifies the added engineering cost (see Out of Scope below).
+3. Description defaults to cleaned raw input rather than a generated rewrite, and that cleaning is performed in backend code rather than by the model, so the mandatory call never spends output tokens echoing the user's own text back. Generative rewriting is opt-in and separate from the mandatory extraction call.
+4. A single fixed low-cost model is used for MVP. Multi-model escalation, self-hosted model infrastructure, and per-organization usage quotas are deferred until real usage data justifies the added engineering cost (see Out of Scope below).
+5. Prompt caching is not applicable at this prompt size and is therefore deferred at no cost: the extraction system prompt is well under the minimum cacheable prefix length for the chosen model tier, so a cache entry would never be created even if caching were configured. Revisit only if the system prompt grows substantially.
+6. Because organizations may supply their own API key, per-call cost can fall on either the deployment's account or the organization's own account. Neither the extraction prompt nor the polish prompt changes based on which key is in use — key selection is purely a credential concern and must not alter model behavior or output shape.
 
 ### Out of Scope (MVP)
 - Detecting or splitting multiple candidate ideas from one input.
 - A global (not board-scoped) entry point, and any board inference/selection question.
 - Multi-model escalation/cascade based on confidence or validation failure.
 - Prompt caching infrastructure and self-hosted model infrastructure.
-- Per-organization AI usage quotas or cost governance.
+- Per-organization AI usage quotas, spend caps, and usage reporting. Organization-supplied API keys (see `SPEC/20-feature-organizations-and-users.md`) shift *who pays* but deliberately do not introduce any usage ceiling, per-user rate limit, or consumption dashboard in MVP.
+- Per-organization provider selection. One provider is configured deployment-wide; an organization supplies its own key for that provider, not a key for a different one.
 - Ambient capture (e.g., email- or Slack-forwarded idea creation).
 
 ### Permissions
@@ -236,6 +241,11 @@ Same as manual idea creation: Site Admin, Org Admin, and User can use AI-assiste
 - [ ] Client rejects submission below a minimum input length before any extraction call is made
 - [ ] API enforces a maximum input length aligned to the Description field limit
 - [ ] AI-assisted idea creation is available to the same roles as manual idea creation (Site Admin, Org Admin, User) and generates the same audit event as manual creation
+- [ ] The extraction call authenticates with the organization's own AI API key when one is configured, and with the deployment default key otherwise
+- [ ] The extracted result is identical in shape and behavior regardless of which key authenticated the call
+- [ ] When an organization's own key fails at request time, the call is retried once against the deployment default key and the user's flow completes normally
+- [ ] The description on the review form is produced by backend cleaning of the user's raw input, and no description text is requested from or returned by the extraction call
+- [ ] AI-assisted idea creation is unavailable, with a clear message and a direct path to the manual form, when neither an organization key nor a deployment default key is configured
 
 ## Approval Workflow Decisions (Post-MVP — Deferred)
 The following decisions are captured for a future post-MVP approval workflow feature. **None of these behaviors are implemented in MVP.** No API contracts, data model fields, background scheduler, or acceptance criteria for approval are required for the MVP release.
