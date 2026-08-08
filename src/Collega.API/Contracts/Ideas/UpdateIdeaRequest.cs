@@ -16,6 +16,12 @@ public sealed class UpdateIdeaRequest
     [RequiredField]
     public string Priority { get; set; } = string.Empty;
 
+    /// <summary>Required; must reference an active Idea Type in the idea's organization.</summary>
+    public Guid IdeaTypeId { get; set; }
+
+    /// <summary>Required; must reference an active Business Impact in the idea's organization.</summary>
+    public Guid BusinessImpactId { get; set; }
+
     public string? DueDate { get; set; }
 
     public List<Guid>? AssigneeUserIds { get; set; }

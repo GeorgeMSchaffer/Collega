@@ -6,6 +6,7 @@ using Collega.Application.Ideas;
 using Collega.Application.Tests.TestDoubles;
 using Collega.Domain.Enums;
 using Collega.Domain.Fields;
+using Collega.Domain.IdeaFields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
 using Collega.Domain.Users;
@@ -22,6 +23,8 @@ public sealed class IdeaServiceTests
     private readonly FakeCommentRepository _comments = new();
     private readonly FakeUserRepository _users = new();
     private readonly FakeFieldDefinitionRepository _fieldDefs = new();
+    private readonly FakeIdeaTypeRepository _ideaTypes = new();
+    private readonly FakeBusinessImpactRepository _businessImpacts = new();
     private readonly FakeUnitOfWork _uow = new();
     private readonly RecordingAuditEventWriter _audit = new();
     private readonly RecordingNotificationEventWriter _notifications = new();
@@ -33,11 +36,15 @@ public sealed class IdeaServiceTests
     private readonly Guid _s2 = Guid.NewGuid();
     private readonly Guid _s3 = Guid.NewGuid();
     private readonly User _author;
+    private readonly IdeaType _ideaType;
+    private readonly BusinessImpact _businessImpact;
 
     public IdeaServiceTests()
     {
         _org = Build.Organization();
         _author = _users.Add(Build.User(_org.Id, role: Role.User, email: "author@example.com"));
+        _ideaType = _ideaTypes.Add(IdeaType.Create(_org.Id, "Improvement", 10, _clock.UtcNow));
+        _businessImpact = _businessImpacts.Add(BusinessImpact.Create(_org.Id, "High", "#DC2626", 10, _clock.UtcNow));
 
         _boardReader.AddBoard(new BoardContext(_boardId, _org.Id, "Ideas", AllowUserStatusUpdate: false, new[]
         {
@@ -61,18 +68,18 @@ public sealed class IdeaServiceTests
     }
 
     private IdeaService CreateSut() =>
-        new(_ideas, _boardReader, _tags, _upvotes, _comments, _users, _fieldDefs, new MentionResolver(_users), _uow, _audit, _notifications, _currentUser, _clock);
+        new(_ideas, _boardReader, _tags, _upvotes, _comments, _users, _fieldDefs, _ideaTypes, _businessImpacts, new MentionResolver(_users), _uow, _audit, _notifications, _currentUser, _clock);
 
-    private static CreateIdeaCommand CreateCommand(
+    private CreateIdeaCommand CreateCommand(
         Guid? statusId = null,
         IReadOnlyList<Guid>? assignees = null,
         IReadOnlyList<string>? tags = null,
         IReadOnlyList<string>? mentions = null,
         string priority = "Medium") =>
-        new("Title", "A valid description.", priority, null, assignees, statusId, tags, mentions);
+        new("Title", "A valid description.", priority, _ideaType.Id, _businessImpact.Id, null, assignees, statusId, tags, mentions);
 
     private Idea SeedIdea(Guid statusId) =>
-        _ideas.Add(Build.Idea(_org.Id, _boardId, statusId, _author.Id));
+        _ideas.Add(Build.Idea(_org.Id, _boardId, statusId, _author.Id, ideaTypeId: _ideaType.Id, businessImpactId: _businessImpact.Id));
 
     // Create ------------------------------------------------------------------------------------
 
@@ -234,7 +241,7 @@ public sealed class IdeaServiceTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<ForbiddenAppException>(() =>
-            sut.UpdateAsync(idea.Id, new UpdateIdeaCommand("Title", "Changed description entirely.", "Medium", null, null, null, null)));
+            sut.UpdateAsync(idea.Id, new UpdateIdeaCommand("Title", "Changed description entirely.", "Medium", _ideaType.Id, _businessImpact.Id, null, null, null, null)));
     }
 
     [Fact]
@@ -243,7 +250,7 @@ public sealed class IdeaServiceTests
         var idea = SeedIdea(_s1);
         var sut = CreateSut(); // current user is the author
 
-        var detail = await sut.UpdateAsync(idea.Id, new UpdateIdeaCommand("New Title", "A brand new description.", "High", null, null, null, null));
+        var detail = await sut.UpdateAsync(idea.Id, new UpdateIdeaCommand("New Title", "A brand new description.", "High", _ideaType.Id, _businessImpact.Id, null, null, null, null));
 
         Assert.Equal("New Title", detail.Title);
         Assert.Equal(Priority.High.ToString(), detail.Priority);
@@ -256,7 +263,7 @@ public sealed class IdeaServiceTests
         var idea = SeedIdea(_s3); // "Complete" swimlane
         var sut = CreateSut();
 
-        var detail = await sut.UpdateAsync(idea.Id, new UpdateIdeaCommand("Still editable", "Updated after completion.", "Low", null, null, null, null));
+        var detail = await sut.UpdateAsync(idea.Id, new UpdateIdeaCommand("Still editable", "Updated after completion.", "Low", _ideaType.Id, _businessImpact.Id, null, null, null, null));
 
         Assert.Equal("Still editable", detail.Title);
     }
@@ -270,7 +277,7 @@ public sealed class IdeaServiceTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<NotFoundAppException>(() =>
-            sut.UpdateAsync(idea.Id, new UpdateIdeaCommand("T", "A description.", "Low", null, null, null, null)));
+            sut.UpdateAsync(idea.Id, new UpdateIdeaCommand("T", "A description.", "Low", _ideaType.Id, _businessImpact.Id, null, null, null, null)));
     }
 
     // Delete ------------------------------------------------------------------------------------
@@ -381,7 +388,7 @@ public sealed class IdeaServiceTests
     // User-Defined Field values -----------------------------------------------------------------
 
     private CreateIdeaCommand FieldValueCommand(params IdeaFieldValueWrite[] values) =>
-        new("Title", "A valid description.", "Medium", null, null, _s1, null, null, values);
+        new("Title", "A valid description.", "Medium", _ideaType.Id, _businessImpact.Id, null, null, _s1, null, null, values);
 
     [Fact]
     public async Task Create_MissingRequiredFieldValue_ThrowsValidation()
@@ -436,7 +443,7 @@ public sealed class IdeaServiceTests
         // An unrelated edit that does not carry field values (null = "not provided") must neither wipe
         // the stored value nor be blocked by the required-field rule.
         var detail = await sut.UpdateAsync(created.IdeaId,
-            new UpdateIdeaCommand("New Title", "A brand new description.", "Medium", null, null, null, null));
+            new UpdateIdeaCommand("New Title", "A brand new description.", "Medium", _ideaType.Id, _businessImpact.Id, null, null, null, null));
 
         Assert.Equal("New Title", detail.Title);
         var idea = _ideas.Ideas.Single(i => i.Id == created.IdeaId);
@@ -459,7 +466,7 @@ public sealed class IdeaServiceTests
         // Reconcile the active field only; the archived definition is out of scope and its stored
         // value must survive the reconcile.
         await sut.UpdateAsync(created.IdeaId, new UpdateIdeaCommand(
-            "Title", "A valid description.", "Medium", null, null, null, null,
+            "Title", "A valid description.", "Medium", _ideaType.Id, _businessImpact.Id, null, null, null, null,
             new[] { new IdeaFieldValueWrite(active.Id, "60000") }));
 
         var idea = _ideas.Ideas.Single(i => i.Id == created.IdeaId);

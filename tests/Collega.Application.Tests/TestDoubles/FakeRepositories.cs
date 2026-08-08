@@ -225,6 +225,12 @@ internal sealed class FakeIdeaTypeRepository : IIdeaTypeRepository
 
     public FakeIdeaTypeRepository(params IdeaType[] options) => Options.AddRange(options);
 
+    public IdeaType Add(IdeaType option)
+    {
+        Options.Add(option);
+        return option;
+    }
+
     public Task AddAsync(IdeaType option, CancellationToken cancellationToken = default)
     {
         Options.Add(option);
@@ -259,6 +265,12 @@ internal sealed class FakeBusinessImpactRepository : IBusinessImpactRepository
     public List<BusinessImpact> Options { get; } = new();
 
     public FakeBusinessImpactRepository(params BusinessImpact[] options) => Options.AddRange(options);
+
+    public BusinessImpact Add(BusinessImpact option)
+    {
+        Options.Add(option);
+        return option;
+    }
 
     public Task AddAsync(BusinessImpact option, CancellationToken cancellationToken = default)
     {

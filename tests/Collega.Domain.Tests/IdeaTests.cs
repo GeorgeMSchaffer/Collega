@@ -10,14 +10,19 @@ public sealed class IdeaTests
     private static readonly Guid BoardId = Guid.NewGuid();
     private static readonly Guid StatusId = Guid.NewGuid();
     private static readonly Guid AuthorId = Guid.NewGuid();
+    private static readonly Guid IdeaTypeId = Guid.NewGuid();
+    private static readonly Guid BusinessImpactId = Guid.NewGuid();
 
     private static Idea NewIdea(
         string? title = "Improve onboarding",
         string? description = "We should streamline the first-run flow.",
         IReadOnlyCollection<Guid>? assignees = null,
-        IReadOnlyCollection<Guid>? tags = null) =>
+        IReadOnlyCollection<Guid>? tags = null,
+        Guid? ideaTypeId = null,
+        Guid? businessImpactId = null) =>
         Idea.Create(
-            OrgId, BoardId, StatusId, title!, description!, Priority.Medium, dueDate: null, AuthorId,
+            OrgId, BoardId, StatusId, title!, description!, Priority.Medium,
+            ideaTypeId ?? IdeaTypeId, businessImpactId ?? BusinessImpactId, dueDate: null, AuthorId,
             assignees ?? Array.Empty<Guid>(), tags ?? Array.Empty<Guid>(), Array.Empty<Guid>(), TestClock.Now);
 
     [Fact]
@@ -28,7 +33,34 @@ public sealed class IdeaTests
         Assert.Equal(OrgId, idea.OrganizationId);
         Assert.Equal(StatusId, idea.StatusId);
         Assert.Equal(Priority.Medium, idea.Priority);
+        Assert.Equal(IdeaTypeId, idea.IdeaTypeId);
+        Assert.Equal(BusinessImpactId, idea.BusinessImpactId);
         Assert.False(idea.IsDeleted);
+    }
+
+    [Fact]
+    public void Create_RejectsEmptyIdeaType()
+    {
+        Assert.Throws<ArgumentException>(() => NewIdea(ideaTypeId: Guid.Empty));
+    }
+
+    [Fact]
+    public void Create_RejectsEmptyBusinessImpact()
+    {
+        Assert.Throws<ArgumentException>(() => NewIdea(businessImpactId: Guid.Empty));
+    }
+
+    [Fact]
+    public void UpdateContent_ChangesClassification()
+    {
+        var idea = NewIdea();
+        var newType = Guid.NewGuid();
+        var newImpact = Guid.NewGuid();
+
+        idea.UpdateContent("Retitled", "A revised description.", Priority.High, newType, newImpact, dueDate: null, TestClock.Now.AddMinutes(1), AuthorId);
+
+        Assert.Equal(newType, idea.IdeaTypeId);
+        Assert.Equal(newImpact, idea.BusinessImpactId);
     }
 
     [Fact]

@@ -56,7 +56,9 @@ internal static class Build
         Priority priority = Priority.Medium,
         IReadOnlyCollection<Guid>? assignees = null,
         IReadOnlyCollection<Guid>? tags = null,
-        IReadOnlyCollection<Guid>? mentions = null) =>
+        IReadOnlyCollection<Guid>? mentions = null,
+        Guid? ideaTypeId = null,
+        Guid? businessImpactId = null) =>
         Domain.Ideas.Idea.Create(
             organizationId,
             boardId,
@@ -64,6 +66,8 @@ internal static class Build
             title,
             "A description long enough to pass validation.",
             priority,
+            ideaTypeId ?? Guid.NewGuid(),
+            businessImpactId ?? Guid.NewGuid(),
             null,
             authorUserId,
             assignees ?? Array.Empty<Guid>(),

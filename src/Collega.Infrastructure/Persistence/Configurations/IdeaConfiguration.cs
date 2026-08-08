@@ -1,3 +1,4 @@
+using Collega.Domain.IdeaFields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +45,14 @@ public sealed class IdeaConfiguration : IEntityTypeConfiguration<Idea>
             .HasMaxLength(20)
             .IsRequired();
 
+        builder.Property(i => i.IdeaTypeId)
+            .HasColumnName("idea_type_id")
+            .IsRequired();
+
+        builder.Property(i => i.BusinessImpactId)
+            .HasColumnName("business_impact_id")
+            .IsRequired();
+
         builder.Property(i => i.DueDate)
             .HasColumnName("due_date")
             .HasColumnType("date");
@@ -70,6 +79,17 @@ public sealed class IdeaConfiguration : IEntityTypeConfiguration<Idea>
         builder.HasOne<Organization>()
             .WithMany()
             .HasForeignKey(i => i.OrganizationId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Restrict: options are soft-deleted, never hard-deleted, so existing idea references remain valid.
+        builder.HasOne<IdeaType>()
+            .WithMany()
+            .HasForeignKey(i => i.IdeaTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<BusinessImpact>()
+            .WithMany()
+            .HasForeignKey(i => i.BusinessImpactId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(i => i.Assignees)

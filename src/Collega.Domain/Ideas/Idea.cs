@@ -13,11 +13,11 @@ namespace Collega.Domain.Ideas;
 /// </summary>
 /// <remarks>
 /// Idea Type and Business Impact (idea rules #2) are dedicated required organization-configurable
-/// fields belonging to the "Organization-Managed Idea Fields" feature, which no current backlog
-/// slice owns and which was not provisioned by the Tenant Administration slice. They are therefore
-/// deliberately not modelled here yet; see the Collaboration slice notes in the implementation
-/// tracker. The spec's own "Existing idea migration" decision (assign defaults to pre-existing
-/// ideas) anticipates ideas existing before those fields are introduced.
+/// fields belonging to the "Organization-Managed Idea Fields" feature. Each idea references exactly
+/// one active option of each; the Application layer validates the references against the
+/// organization's active options before they are set. Soft-deleting an option preserves existing idea
+/// references, so a stored id may point at an archived option that clients render with an archived
+/// indicator (SPEC/30-Contracts.md "Idea Field Option Contracts").
 /// </remarks>
 public sealed class Idea : AuditableEntityBase
 {
@@ -37,6 +37,8 @@ public sealed class Idea : AuditableEntityBase
     public string Title { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
     public Priority Priority { get; private set; }
+    public Guid IdeaTypeId { get; private set; }
+    public Guid BusinessImpactId { get; private set; }
     public DateOnly? DueDate { get; private set; }
     public Guid AuthorUserId { get; private set; }
     public bool IsDeleted { get; private set; }
@@ -63,6 +65,8 @@ public sealed class Idea : AuditableEntityBase
         string title,
         string description,
         Priority priority,
+        Guid ideaTypeId,
+        Guid businessImpactId,
         DateOnly? dueDate,
         Guid authorUserId,
         IReadOnlyCollection<Guid> assigneeUserIds,
@@ -101,6 +105,7 @@ public sealed class Idea : AuditableEntityBase
         idea.SetTitle(title);
         idea.SetDescription(description);
         idea.Priority = priority;
+        idea.SetClassification(ideaTypeId, businessImpactId);
         idea.DueDate = dueDate;
         idea.SetAssignees(assigneeUserIds);
         idea.SetTags(tagIds);
@@ -118,6 +123,8 @@ public sealed class Idea : AuditableEntityBase
         string title,
         string description,
         Priority priority,
+        Guid ideaTypeId,
+        Guid businessImpactId,
         DateOnly? dueDate,
         DateTime nowUtc,
         Guid? actorUserId)
@@ -125,6 +132,7 @@ public sealed class Idea : AuditableEntityBase
         SetTitle(title);
         SetDescription(description);
         Priority = priority;
+        SetClassification(ideaTypeId, businessImpactId);
         DueDate = dueDate;
         MarkUpdated(nowUtc, actorUserId);
     }
@@ -249,6 +257,22 @@ public sealed class Idea : AuditableEntityBase
         }
 
         Description = trimmed;
+    }
+
+    private void SetClassification(Guid ideaTypeId, Guid businessImpactId)
+    {
+        if (ideaTypeId == Guid.Empty)
+        {
+            throw new ArgumentException("Idea Type is required.", nameof(ideaTypeId));
+        }
+
+        if (businessImpactId == Guid.Empty)
+        {
+            throw new ArgumentException("Business Impact is required.", nameof(businessImpactId));
+        }
+
+        IdeaTypeId = ideaTypeId;
+        BusinessImpactId = businessImpactId;
     }
 
     private void SetAssignees(IReadOnlyCollection<Guid> assigneeUserIds)

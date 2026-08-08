@@ -9,6 +9,7 @@ using Collega.Domain.Auditing;
 using Collega.Domain.Comments;
 using Collega.Domain.Enums;
 using Collega.Domain.Fields;
+using Collega.Domain.IdeaFields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Notifications;
 using Collega.Domain.Tags;
@@ -33,6 +34,8 @@ public sealed class IdeaService : IIdeaService
     private readonly ICommentRepository _commentRepository;
     private readonly IUserRepository _userRepository;
     private readonly IFieldDefinitionRepository _fieldDefinitionRepository;
+    private readonly IIdeaTypeRepository _ideaTypeRepository;
+    private readonly IBusinessImpactRepository _businessImpactRepository;
     private readonly IMentionResolver _mentionResolver;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditEventWriter _auditEventWriter;
@@ -48,6 +51,8 @@ public sealed class IdeaService : IIdeaService
         ICommentRepository commentRepository,
         IUserRepository userRepository,
         IFieldDefinitionRepository fieldDefinitionRepository,
+        IIdeaTypeRepository ideaTypeRepository,
+        IBusinessImpactRepository businessImpactRepository,
         IMentionResolver mentionResolver,
         IUnitOfWork unitOfWork,
         IAuditEventWriter auditEventWriter,
@@ -62,6 +67,8 @@ public sealed class IdeaService : IIdeaService
         _commentRepository = commentRepository;
         _userRepository = userRepository;
         _fieldDefinitionRepository = fieldDefinitionRepository;
+        _ideaTypeRepository = ideaTypeRepository;
+        _businessImpactRepository = businessImpactRepository;
         _mentionResolver = mentionResolver;
         _unitOfWork = unitOfWork;
         _auditEventWriter = auditEventWriter;
@@ -140,6 +147,9 @@ public sealed class IdeaService : IIdeaService
             throw new ValidationAppException("statusId", new[] { "Status must be an active swimlane on the board." });
         }
 
+        await EnsureActiveIdeaTypeAsync(board.OrganizationId, command.IdeaTypeId, cancellationToken);
+        await EnsureActiveBusinessImpactAsync(board.OrganizationId, command.BusinessImpactId, cancellationToken);
+
         var assigneeIds = await ResolveAssigneesAsync(board.OrganizationId, command.AssigneeUserIds, Array.Empty<Guid>(), cancellationToken);
         var tagIds = await ResolveTagsAsync(board.OrganizationId, command.TagNames, now, authorId, cancellationToken);
         var mentionIds = await _mentionResolver.ResolveAsync(board.OrganizationId, command.MentionEmails, "mentionEmails", cancellationToken);
@@ -154,6 +164,8 @@ public sealed class IdeaService : IIdeaService
             command.Title ?? string.Empty,
             command.Description ?? string.Empty,
             priority,
+            command.IdeaTypeId,
+            command.BusinessImpactId,
             dueDate,
             authorId,
             assigneeIds,
@@ -174,7 +186,7 @@ public sealed class IdeaService : IIdeaService
         // Notify everyone mentioned in the new idea body (SPEC/20-feature-notifications.md trigger #1).
         await NotifyMentionsAsync(idea, mentionIds, authorId, cancellationToken);
 
-        return new CreateIdeaResult(idea.Id, idea.BoardId, idea.StatusId, idea.Title, priority.ToString(), FormatDate(idea.DueDate));
+        return new CreateIdeaResult(idea.Id, idea.BoardId, idea.StatusId, idea.Title, priority.ToString(), idea.IdeaTypeId, idea.BusinessImpactId, FormatDate(idea.DueDate));
     }
 
     public async Task<IdeaDetail> GetByIdAsync(Guid ideaId, CancellationToken cancellationToken = default)
@@ -215,6 +227,18 @@ public sealed class IdeaService : IIdeaService
             throw new ForbiddenAppException("You are not allowed to change this idea's description or assignees.");
         }
 
+        // A changed classification must reference an active option; an unchanged reference is left
+        // alone so an idea already pointing at a since-archived option can still be edited.
+        if (command.IdeaTypeId != idea.IdeaTypeId)
+        {
+            await EnsureActiveIdeaTypeAsync(idea.OrganizationId, command.IdeaTypeId, cancellationToken);
+        }
+
+        if (command.BusinessImpactId != idea.BusinessImpactId)
+        {
+            await EnsureActiveBusinessImpactAsync(idea.OrganizationId, command.BusinessImpactId, cancellationToken);
+        }
+
         var assigneeIds = await ResolveAssigneesAsync(idea.OrganizationId, command.AssigneeUserIds, existingAssignees, cancellationToken);
         var tagIds = await ResolveTagsAsync(idea.OrganizationId, command.TagNames, now, actorId, cancellationToken);
         var mentionIds = await _mentionResolver.ResolveAsync(idea.OrganizationId, command.MentionEmails, "mentionEmails", cancellationToken);
@@ -233,7 +257,7 @@ public sealed class IdeaService : IIdeaService
             fieldValues = FieldValueValidator.Validate(fieldDefinitions, command.FieldValues);
         }
 
-        idea.UpdateContent(command.Title ?? string.Empty, command.Description ?? string.Empty, priority, dueDate, now, actorId);
+        idea.UpdateContent(command.Title ?? string.Empty, command.Description ?? string.Empty, priority, command.IdeaTypeId, command.BusinessImpactId, dueDate, now, actorId);
         idea.ReplaceAssignees(assigneeIds, now, actorId);
         idea.ReplaceTags(tagIds, now, actorId);
         idea.ReplaceMentions(mentionIds, now, actorId);
@@ -366,6 +390,8 @@ public sealed class IdeaService : IIdeaService
         var tagLookup = await LoadTagLookupAsync(ideas.SelectMany(i => i.Tags.Select(t => t.TagId)), cancellationToken);
         var userLookup = await LoadUserLookupAsync(ideas.SelectMany(i => i.Assignees.Select(a => a.UserId)), cancellationToken);
         var statusInfo = await _boardReader.GetStatusInfoAsync(organizationId, cancellationToken);
+        var ideaTypeLookup = await LoadIdeaTypeLookupAsync(organizationId, cancellationToken);
+        var businessImpactLookup = await LoadBusinessImpactLookupAsync(organizationId, cancellationToken);
         var upvoteCounts = await _upvoteRepository.CountByIdeaIdsAsync(ideaIds, cancellationToken);
         var commentCounts = await _commentRepository.CountByIdeaIdsAsync(ideaIds, cancellationToken);
         var upvoted = await _upvoteRepository.GetUpvotedIdeaIdsAsync(RequireAuthenticatedUserId(), ideaIds, cancellationToken);
@@ -375,6 +401,11 @@ public sealed class IdeaService : IIdeaService
             idea.BoardId,
             idea.Title,
             idea.Priority.ToString(),
+            idea.IdeaTypeId,
+            IdeaTypeName(ideaTypeLookup, idea.IdeaTypeId),
+            idea.BusinessImpactId,
+            BusinessImpactName(businessImpactLookup, idea.BusinessImpactId),
+            BusinessImpactColor(businessImpactLookup, idea.BusinessImpactId),
             FormatDate(idea.DueDate),
             ProjectAssignees(idea, userLookup),
             ProjectTagNames(idea, tagLookup),
@@ -393,6 +424,8 @@ public sealed class IdeaService : IIdeaService
         var mentionUserIds = idea.Mentions.Select(m => m.MentionedUserId).ToList();
         var userLookup = await LoadUserLookupAsync(idea.Assignees.Select(a => a.UserId).Concat(mentionUserIds), cancellationToken);
         var statusInfo = await _boardReader.GetStatusInfoAsync(idea.OrganizationId, cancellationToken);
+        var ideaTypeLookup = await LoadIdeaTypeLookupAsync(idea.OrganizationId, cancellationToken);
+        var businessImpactLookup = await LoadBusinessImpactLookupAsync(idea.OrganizationId, cancellationToken);
         var upvoteCount = await _upvoteRepository.CountByIdeaAsync(idea.Id, cancellationToken);
         var upvoted = await _upvoteRepository.GetUpvotedIdeaIdsAsync(RequireAuthenticatedUserId(), new[] { idea.Id }, cancellationToken);
         var commentCount = await _commentRepository.CountByIdeaAsync(idea.Id, cancellationToken);
@@ -429,6 +462,11 @@ public sealed class IdeaService : IIdeaService
             idea.Title,
             idea.Description,
             idea.Priority.ToString(),
+            idea.IdeaTypeId,
+            IdeaTypeName(ideaTypeLookup, idea.IdeaTypeId),
+            idea.BusinessImpactId,
+            BusinessImpactName(businessImpactLookup, idea.BusinessImpactId),
+            BusinessImpactColor(businessImpactLookup, idea.BusinessImpactId),
             FormatDate(idea.DueDate),
             ProjectAssignees(idea, userLookup),
             idea.StatusId,
@@ -465,6 +503,29 @@ public sealed class IdeaService : IIdeaService
         var users = await _userRepository.ListByIdsAsync(ids, cancellationToken);
         return users.ToDictionary(u => u.Id);
     }
+
+    // Include archived options so an idea referencing a since-soft-deleted option still renders a
+    // label (SPEC/30-Contracts.md: archived references stay readable with an archived indicator).
+    private async Task<IReadOnlyDictionary<Guid, IdeaType>> LoadIdeaTypeLookupAsync(Guid organizationId, CancellationToken cancellationToken)
+    {
+        var options = await _ideaTypeRepository.ListByOrganizationAsync(organizationId, includeDeleted: true, cancellationToken);
+        return options.ToDictionary(o => o.Id);
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, BusinessImpact>> LoadBusinessImpactLookupAsync(Guid organizationId, CancellationToken cancellationToken)
+    {
+        var options = await _businessImpactRepository.ListByOrganizationAsync(organizationId, includeDeleted: true, cancellationToken);
+        return options.ToDictionary(o => o.Id);
+    }
+
+    private static string IdeaTypeName(IReadOnlyDictionary<Guid, IdeaType> lookup, Guid id) =>
+        lookup.TryGetValue(id, out var option) ? option.Name : string.Empty;
+
+    private static string BusinessImpactName(IReadOnlyDictionary<Guid, BusinessImpact> lookup, Guid id) =>
+        lookup.TryGetValue(id, out var option) ? option.Name : string.Empty;
+
+    private static string BusinessImpactColor(IReadOnlyDictionary<Guid, BusinessImpact> lookup, Guid id) =>
+        lookup.TryGetValue(id, out var option) ? option.Color : string.Empty;
 
     private static IReadOnlyList<IdeaAssigneeDto> ProjectAssignees(Idea idea, IReadOnlyDictionary<Guid, User> userLookup) =>
         idea.Assignees
@@ -572,6 +633,24 @@ public sealed class IdeaService : IIdeaService
 
         var tags = await _tagRepository.GetOrCreateAsync(organizationId, distinctNormalized, nowUtc, actorUserId, cancellationToken);
         return tags.Select(t => t.Id).ToList();
+    }
+
+    private async Task EnsureActiveIdeaTypeAsync(Guid organizationId, Guid ideaTypeId, CancellationToken cancellationToken)
+    {
+        var option = ideaTypeId == Guid.Empty ? null : await _ideaTypeRepository.GetByIdAsync(ideaTypeId, cancellationToken);
+        if (option is null || option.OrganizationId != organizationId || option.IsDeleted)
+        {
+            throw new ValidationAppException("ideaTypeId", new[] { "Idea Type must reference an active option in the organization." });
+        }
+    }
+
+    private async Task EnsureActiveBusinessImpactAsync(Guid organizationId, Guid businessImpactId, CancellationToken cancellationToken)
+    {
+        var option = businessImpactId == Guid.Empty ? null : await _businessImpactRepository.GetByIdAsync(businessImpactId, cancellationToken);
+        if (option is null || option.OrganizationId != organizationId || option.IsDeleted)
+        {
+            throw new ValidationAppException("businessImpactId", new[] { "Business Impact must reference an active option in the organization." });
+        }
     }
 
     // Authorization / scoping --------------------------------------------------------------------

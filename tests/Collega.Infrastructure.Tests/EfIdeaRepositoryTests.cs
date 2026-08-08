@@ -108,9 +108,9 @@ public sealed class EfIdeaRepositoryTests
         using var ctx = InMemoryContext.Create();
         var repo = new EfIdeaRepository(ctx);
         var early = Domain.Ideas.Idea.Create(_orgId, _boardId, _statusA, "Early", "desc that is long enough", Priority.Medium,
-            new DateOnly(2026, 1, 1), _author, Array.Empty<Guid>(), Array.Empty<Guid>(), Array.Empty<Guid>(), TestClock.Default);
+            Guid.NewGuid(), Guid.NewGuid(), new DateOnly(2026, 1, 1), _author, Array.Empty<Guid>(), Array.Empty<Guid>(), Array.Empty<Guid>(), TestClock.Default);
         var late = Domain.Ideas.Idea.Create(_orgId, _boardId, _statusA, "Late", "desc that is long enough", Priority.Medium,
-            new DateOnly(2026, 12, 31), _author, Array.Empty<Guid>(), Array.Empty<Guid>(), Array.Empty<Guid>(), TestClock.Default);
+            Guid.NewGuid(), Guid.NewGuid(), new DateOnly(2026, 12, 31), _author, Array.Empty<Guid>(), Array.Empty<Guid>(), Array.Empty<Guid>(), TestClock.Default);
         ctx.Ideas.AddRange(early, late);
         await ctx.SaveChangesAsync();
 

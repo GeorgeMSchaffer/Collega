@@ -16,6 +16,12 @@ public sealed class CreateIdeaRequest
     [RequiredField]
     public string Priority { get; set; } = string.Empty;
 
+    /// <summary>Required; must reference an active Idea Type in the board's organization.</summary>
+    public Guid IdeaTypeId { get; set; }
+
+    /// <summary>Required; must reference an active Business Impact in the board's organization.</summary>
+    public Guid BusinessImpactId { get; set; }
+
     /// <summary>Optional ISO date (YYYY-MM-DD).</summary>
     public string? DueDate { get; set; }
 

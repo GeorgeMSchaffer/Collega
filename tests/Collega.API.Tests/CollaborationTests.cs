@@ -140,7 +140,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         var member = await CreateUserAsync(admin, org.OrganizationId, "User");
 
         var resolved = await admin.PostAsJsonAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas",
-            new { title = "Mentioned", description = "d", priority = "Low", mentionEmails = new[] { member.Email } });
+            WithClassification(new { title = "Mentioned", description = "d", priority = "Low", mentionEmails = new[] { member.Email } }, org.OrganizationId));
         Assert.Equal(HttpStatusCode.Created, resolved.StatusCode);
 
         var unresolved = await admin.PostAsJsonAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas",
@@ -290,7 +290,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         Assert.Equal(HttpStatusCode.NoContent, move.StatusCode);
 
         var update = await admin.PutAsJsonAsync($"/api/v1/ideas/{idea.IdeaId}",
-            new { title = "Shipping (revised)", description = "revised", priority = "Medium" });
+            WithClassification(new { title = "Shipping (revised)", description = "revised", priority = "Medium" }, org.OrganizationId));
         Assert.Equal(HttpStatusCode.OK, update.StatusCode);
 
         var comment = await admin.PostAsJsonAsync($"/api/v1/ideas/{idea.IdeaId}/comments", new { body = "Still discussing." });
@@ -344,7 +344,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
 
         // A non-author User can edit non-restricted fields as long as description is unchanged.
         var titleOnly = await otherClient.PutAsJsonAsync($"/api/v1/ideas/{idea.IdeaId}",
-            new { title = "Owned (retitled)", description = "original", priority = "High" });
+            WithClassification(new { title = "Owned (retitled)", description = "original", priority = "High" }, org.OrganizationId));
         Assert.Equal(HttpStatusCode.OK, titleOnly.StatusCode);
 
         // But changing the description is restricted to the author or an in-scope admin.
@@ -354,7 +354,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
 
         // The author may change the description.
         var authorChange = await authorClient.PutAsJsonAsync($"/api/v1/ideas/{idea.IdeaId}",
-            new { title = "Owned (retitled)", description = "rewritten by author", priority = "High" });
+            WithClassification(new { title = "Owned (retitled)", description = "rewritten by author", priority = "High" }, org.OrganizationId));
         Assert.Equal(HttpStatusCode.OK, authorChange.StatusCode);
     }
 
@@ -432,9 +432,43 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
 
     private async Task<IdeaCreatedResponse> CreateIdeaAsync(HttpClient client, Guid boardId, object body)
     {
-        var response = await client.PostAsJsonAsync($"/api/v1/boards/{boardId}/ideas", body);
+        var payload = WithClassification(body, OrganizationIdForBoard(boardId));
+        var response = await client.PostAsJsonAsync($"/api/v1/boards/{boardId}/ideas", payload);
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<IdeaCreatedResponse>(Json))!;
+    }
+
+    /// <summary>
+    /// Idea create/update now require an active Idea Type and Business Impact reference. This merges the
+    /// organization's canonical defaults into an idea request body unless the test supplied its own.
+    /// </summary>
+    private Dictionary<string, object?> WithClassification(object body, Guid organizationId)
+    {
+        var (ideaTypeId, businessImpactId) = DefaultClassification(organizationId);
+        var dict = JsonSerializer
+            .Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(body, Json), Json)!
+            .ToDictionary(kv => kv.Key, kv => (object?)kv.Value);
+        dict.TryAdd("ideaTypeId", ideaTypeId);
+        dict.TryAdd("businessImpactId", businessImpactId);
+        return dict;
+    }
+
+    private (Guid IdeaTypeId, Guid BusinessImpactId) DefaultClassification(Guid organizationId)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<CollegaDbContext>();
+        var ideaTypeId = db.IdeaTypes.Where(t => t.OrganizationId == organizationId && !t.IsDeleted)
+            .OrderBy(t => t.SortOrder).Select(t => t.Id).First();
+        var businessImpactId = db.BusinessImpacts.Where(b => b.OrganizationId == organizationId && !b.IsDeleted)
+            .OrderBy(b => b.SortOrder).Select(b => b.Id).First();
+        return (ideaTypeId, businessImpactId);
+    }
+
+    private Guid OrganizationIdForBoard(Guid boardId)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<CollegaDbContext>();
+        return db.Boards.Where(b => b.Id == boardId).Select(b => b.OrganizationId).First();
     }
 
     private async Task<CommentCreatedResponse> CreateCommentAsync(HttpClient client, Guid ideaId, string commentBody)
