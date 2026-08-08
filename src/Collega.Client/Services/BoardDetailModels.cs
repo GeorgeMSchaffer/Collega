@@ -2,15 +2,8 @@ namespace Collega.Client.Services;
 
 // Wire DTOs for the board detail view (B2): the board's idea list plus create/status-move payloads
 // (SPEC/30-Contracts.md "Idea Contracts"). Kept in their own file per the client's per-area DTO
-// convention. Board/swimlane shapes are reused from BoardModels.cs; paging from ApiModels.cs.
-
-/// <summary>An assignee persona carried on an idea list row.</summary>
-public sealed record IdeaAssigneeDto(
-    string UserId,
-    string FirstName,
-    string LastName,
-    string DisplayName,
-    bool IsActive);
+// convention. Board/swimlane shapes are reused from BoardModels.cs; paging from ApiModels.cs;
+// IdeaAssigneeDto and ChangeIdeaStatusRequestDto are shared with the Idea Detail slice (IdeaModels.cs).
 
 /// <summary>A row of <c>GET /boards/{id}/ideas</c> (canonical paged envelope).</summary>
 public sealed record IdeaListItemDto(
@@ -45,6 +38,3 @@ public sealed record CreateIdeaResultDto(
     string Title,
     string Priority,
     string? DueDate);
-
-/// <summary>Body for <c>POST /ideas/{id}/status</c>.</summary>
-public sealed record ChangeIdeaStatusRequestDto(string StatusId);
