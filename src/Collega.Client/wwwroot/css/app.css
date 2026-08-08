@@ -184,6 +184,9 @@ code { color: var(--accent-deep); }
   position: sticky;
   top: 0;
   height: 100vh;
+  /* Above the account-popover backdrop (z-index 20) so the popover's own items — nested in the
+     rail's sticky stacking context — remain clickable rather than being covered by the backdrop. */
+  z-index: 40;
 }
 .rail .mark {
   width: 34px;
@@ -261,7 +264,7 @@ code { color: var(--accent-deep); }
 }
 .avatarmenu .who { padding: 11px 14px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--ink-3); line-height: 1.5; }
 .avatarmenu .who strong { color: var(--ink); font-size: 13px; display: block; }
-.avatarmenu .item { display: block; padding: 9px 14px; font-size: 13px; color: var(--ink); text-decoration: none; cursor: pointer; }
+.avatarmenu .item { display: block; width: 100%; box-sizing: border-box; text-align: left; background: none; border: none; font: inherit; padding: 9px 14px; font-size: 13px; color: var(--ink); text-decoration: none; cursor: pointer; }
 .avatarmenu .item:hover { background: #f3f2f1; }
 /* transparent full-screen backdrop that closes the popover on outside click */
 .menu-backdrop { position: fixed; inset: 0; z-index: 20; background: transparent; border: none; }
@@ -325,6 +328,9 @@ code { color: var(--accent-deep); }
 }
 .brand .name { font-family: Georgia, serif; font-size: 19px; font-weight: 600; }
 .authcard .sub { font-size: 13px; color: var(--ink-3); margin-bottom: 20px; line-height: 1.5; }
+/* Inline auth feedback: a red error banner and a neutral success/status note. */
+.autherror { border: 1px solid #d13438; background: #fdf3f4; color: #a4262c; border-radius: 4px; padding: 9px 12px; font-size: 13px; margin-bottom: 16px; line-height: 1.4; }
+.authnote { border: 1px solid var(--line); background: #f3f2f1; color: var(--ink-2); border-radius: 4px; padding: 9px 12px; font-size: 13px; margin-bottom: 16px; line-height: 1.4; }
 .footnote { font-size: 12px; color: var(--ink-3); text-align: center; margin-top: 16px; line-height: 1.5; }
 .footnote a { color: var(--accent-deep); font-weight: 600; }
 

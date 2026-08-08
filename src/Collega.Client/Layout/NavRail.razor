@@ -1,5 +1,6 @@
 @implements IDisposable
 @inject NavigationManager Nav
+@inject CollegaAuthStateProvider AuthState
 
 @*
     64px icon rail — the app's primary navigation, shown identically on every
@@ -47,7 +48,7 @@
             <div class="avatarmenu" role="menu">
                 <div class="who"><strong>@DisplayName</strong>@AccountSubtitle</div>
                 <a class="item" role="menuitem" href="/settings/profile" @onclick="CloseMenu">Profile</a>
-                <a class="item" role="menuitem" href="/login" @onclick="CloseMenu">Sign Out</a>
+                <button class="item" role="menuitem" type="button" @onclick="SignOut">Sign Out</button>
             </div>
         }
     </span>
@@ -59,9 +60,10 @@
 }
 
 @code {
-    // Placeholder identity until an auth/user service exists (later Client task).
-    [Parameter] public string DisplayName { get; set; } = "Jordan Reyes";
-    [Parameter] public string AccountSubtitle { get; set; } = "jordan.reyes@acme.com";
+    // Identity is read from the signed-in principal (see CollegaAuthStateProvider); these hold the
+    // resolved display name / email for the account popover.
+    private string DisplayName = "";
+    private string AccountSubtitle = "";
 
     private bool _menuOpen;
 
@@ -75,13 +77,28 @@
         new("⚙️", "Settings", "/settings", NavLinkMatch.Prefix),
     };
 
-    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+    protected override async Task OnInitializedAsync()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+        var user = state.User;
+        DisplayName = user.Identity?.Name is { Length: > 0 } name ? name : "Account";
+        AccountSubtitle = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+    }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
 
     private void ToggleMenu() => _menuOpen = !_menuOpen;
 
     private void CloseMenu() => _menuOpen = false;
+
+    private async Task SignOut()
+    {
+        CloseMenu();
+        await AuthState.MarkSignedOutAsync();
+        Nav.NavigateTo("/login");
+    }
 
     private bool IsActive(string href, NavLinkMatch match)
     {

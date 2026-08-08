@@ -58,6 +58,16 @@ builder.Services.AddAuthentication(BearerTokenAuthenticationHandler.SchemeName)
     .AddScheme<AuthenticationSchemeOptions, BearerTokenAuthenticationHandler>(BearerTokenAuthenticationHandler.SchemeName, options => { });
 builder.Services.AddAuthorization();
 
+// The Blazor WASM client is a separate origin, so it needs CORS to call the API. Auth is via a
+// bearer token (not cookies), so no credentials support is required. Allowed origins come from
+// configuration (Cors:AllowedOrigins) and default to the client's dev URLs.
+const string ClientCorsPolicy = "CollegaClient";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:5098", "https://localhost:5098" };
+builder.Services.AddCors(options =>
+    options.AddPolicy(ClientCorsPolicy, policy =>
+        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -101,6 +111,8 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 
 app.UseHttpsRedirection();
+
+app.UseCors(ClientCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
