@@ -27,6 +27,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IOrganizationRepository, EfOrganizationRepository>();
         services.AddScoped<IStatusRepository, EfStatusRepository>();
         services.AddScoped<IBoardRepository, EfBoardRepository>();
+        services.AddScoped<IBoardReader, EfBoardReader>();
+        services.AddScoped<IIdeaRepository, EfIdeaRepository>();
+        services.AddScoped<ITagRepository, EfTagRepository>();
+        services.AddScoped<ICommentRepository, EfCommentRepository>();
+        services.AddScoped<IIdeaUpvoteRepository, EfIdeaUpvoteRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IStartupSeeder, StartupSeeder>();
 

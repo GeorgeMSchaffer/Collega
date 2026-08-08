@@ -4,7 +4,11 @@ using Collega.API.ErrorHandling;
 using Collega.API.Validation;
 using Collega.Application.Abstractions;
 using Collega.Application.Auth;
+using Collega.Application.Collaboration;
+using Collega.Application.Comments;
+using Collega.Application.Ideas;
 using Collega.Application.Organizations;
+using Collega.Application.Tags;
 using Collega.Application.Users;
 using Collega.Infrastructure.DependencyInjection;
 using Collega.Infrastructure.Persistence;
@@ -46,6 +50,10 @@ builder.Services.AddScoped<ITokenAuthenticationService, TokenAuthenticationServi
 builder.Services.AddScoped<IOrganizationBootstrapService, OrganizationBootstrapService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IMentionResolver, MentionResolver>();
+builder.Services.AddScoped<IIdeaService, IdeaService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<ITagService, TagService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();
