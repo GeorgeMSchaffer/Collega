@@ -1,0 +1,547 @@
+@page "/board/{BoardId}"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>@(_board?.Name ?? "Board") · Collega</PageTitle>
+
+@*
+    Board detail (B2). Two views over one board's ideas — Swim Lanes (Kanban columns, one per
+    status swimlane, default) and List (status-grouped rows) — per the locked Comp C "Flat" comp
+    (SPEC/mockups/comp-c-review-06-lockin-v5-final.html). Drag-to-move between lanes posts a status
+    change (optimistic, rolled back on failure) when the board allows user moves or the viewer is an
+    admin. Business rules live in the API; this component only renders and dispatches calls.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/boards">Boards</a> / @(_board?.Name ?? "…")</div>
+    <div class="row">
+        <div class="grow">
+            <h1>@(_board?.Name ?? "Board")</h1>
+            <p class="sub" style="margin-bottom:6px">Ideas organized by status. Drag cards between lanes to move them@(_canMove ? "." : " (moves are restricted to admins on this board).")</p>
+        </div>
+        @if (_boards.Count > 1)
+        {
+            <div class="field" style="margin-bottom:14px;min-width:220px">
+                <label for="boardpick">Board</label>
+                <select id="boardpick" value="@BoardId" @onchange="OnBoardPicked" style="width:100%">
+                    @foreach (var b in _boards)
+                    {
+                        <option value="@b.BoardId">@b.Name</option>
+                    }
+                </select>
+            </div>
+        }
+        @if (!_isReadOnly)
+        {
+            <button class="btn primary" style="margin-bottom:14px" @onclick="() => OpenNew(null)">+ New idea</button>
+        }
+    </div>
+    <div class="viewswitch">
+        <a class="@(_view == View.List ? "on" : null)" @onclick="() => _view = View.List" role="button" tabindex="0">List</a>
+        <a class="@(_view == View.Swim ? "on" : null)" @onclick="() => _view = View.Swim" role="button" tabindex="0">Swim Lanes</a>
+    </div>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else if (_error is not null)
+    {
+        <div class="autherror" role="alert">@_error</div>
+    }
+    else if (_board is null)
+    {
+        <div class="placeholder"><p>Board not found.</p></div>
+    }
+    else
+    {
+        @if (_moveError is not null)
+        {
+            <div class="autherror" role="alert">@_moveError</div>
+        }
+
+        <div class="cmdbar">
+            <input type="text" placeholder="Search title, tag, assignee…" value="@_filter" @oninput="OnFilterInput" style="width:260px" />
+            @if (!string.IsNullOrWhiteSpace(_filter))
+            {
+                <button class="btn subtle" @onclick="() => _filter = string.Empty">Clear</button>
+            }
+        </div>
+
+        @if (_showNew)
+        {
+            <div class="card formcard newidea">
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:12px">New idea</h3>
+                @if (_newError is not null)
+                {
+                    <div class="autherror" role="alert">@_newError</div>
+                }
+                <div class="field">
+                    <label for="ni-title">Title</label>
+                    <input id="ni-title" type="text" @bind="_newTitle" disabled="@_creating" style="width:100%" />
+                </div>
+                <div class="field">
+                    <label for="ni-desc">Description</label>
+                    <textarea id="ni-desc" @bind="_newDescription" disabled="@_creating" rows="3" style="width:100%"></textarea>
+                </div>
+                <div class="formrow">
+                    <div class="field">
+                        <label for="ni-prio">Priority</label>
+                        <select id="ni-prio" @bind="_newPriority" disabled="@_creating">
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="ni-status">Status</label>
+                        <select id="ni-status" @bind="_newStatusId" disabled="@_creating">
+                            @foreach (var sw in OrderedLanes)
+                            {
+                                <option value="@sw.StatusId">@sw.StatusName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="btnrow">
+                    <button class="btn primary" @onclick="CreateIdea" disabled="@_creating">@(_creating ? "Creating…" : "Create idea")</button>
+                    <button class="btn" @onclick="() => _showNew = false" disabled="@_creating">Cancel</button>
+                </div>
+            </div>
+        }
+
+        @if (OrderedLanes.Count == 0)
+        {
+            <div class="placeholder"><p>This board has no swimlanes yet.</p></div>
+        }
+        else if (_view == View.Swim)
+        {
+            <div class="klanes">
+                @foreach (var sw in OrderedLanes)
+                {
+                    var lane = sw;
+                    var laneIdeas = IdeasFor(lane.StatusId);
+                    <div class="klane @(_dragOverStatusId == lane.StatusId ? "dragover" : null)"
+                         style="@LaneStyle(lane)"
+                         @ondragover:preventDefault="true"
+                         @ondragover="() => _dragOverStatusId = lane.StatusId"
+                         @ondragleave="() => _dragOverStatusId = null"
+                         @ondrop="() => OnDrop(lane.StatusId)">
+                        <h3><span class="dot" style="background:@lane.StatusColor"></span><span class="grow">@lane.StatusName</span><span class="cnt">@laneIdeas.Count</span></h3>
+                        @if (laneIdeas.Count == 0)
+                        {
+                            <div class="emptylane">No ideas</div>
+                        }
+                        else
+                        {
+                            @foreach (var idea in laneIdeas)
+                            {
+                                var i = idea;
+                                <div class="kcard @(_draggedIdeaId == i.IdeaId ? "dragging" : null)"
+                                     style="@CardStyle(lane)"
+                                     draggable="@(_canMove ? "true" : "false")"
+                                     @ondragstart="() => _draggedIdeaId = i.IdeaId"
+                                     @ondragend="() => { _draggedIdeaId = null; _dragOverStatusId = null; }">
+                                    <div class="top">
+                                        @if (_canMove)
+                                        {
+                                            <span class="grip" title="Drag to move">⠿</span>
+                                        }
+                                        <span class="t" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">@i.Title</span>
+                                        <span class="prio-chip @PrioClass(i.Priority)">@PrioLabel(i.Priority)</span>
+                                    </div>
+                                    @if (i.TagNames.Count > 0)
+                                    {
+                                        <div class="meta2">
+                                            @foreach (var tag in i.TagNames.Take(3))
+                                            {
+                                                <span class="tag">@tag</span>
+                                            }
+                                            @if (i.TagNames.Count > 3)
+                                            {
+                                                <span class="tag more">+@(i.TagNames.Count - 3)</span>
+                                            }
+                                        </div>
+                                    }
+                                    <div class="meta">
+                                        @if (i.Assignees.Count > 0)
+                                        {
+                                            <span class="avatarstack">
+                                                @foreach (var a in i.Assignees.Take(3))
+                                                {
+                                                    <span class="avatar s" title="@a.DisplayName">@Initials(a)</span>
+                                                }
+                                                @if (i.Assignees.Count > 3)
+                                                {
+                                                    <span class="avatar s more">+@(i.Assignees.Count - 3)</span>
+                                                }
+                                            </span>
+                                        }
+                                        <span class="age">@Age(i.CreatedAtUtc)</span>
+                                        <span class="spacer"></span>
+                                        @if (i.CommentCount > 0)
+                                        {
+                                            <span class="cmt-inline">💬 @i.CommentCount</span>
+                                        }
+                                        <span class="up @(i.HasUpvoted ? "mine" : null)">▲ @i.UpvoteCount</span>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        @if (!_isReadOnly)
+                        {
+                            <button class="btn subtle" style="width:100%" @onclick="() => OpenNew(lane.StatusId)">+ Add idea</button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            @foreach (var sw in OrderedLanes)
+            {
+                var lane = sw;
+                var laneIdeas = IdeasFor(lane.StatusId);
+                <div class="lanesec">
+                    <h2><span class="dot" style="background:@lane.StatusColor"></span>@lane.StatusName <span class="cnt">@laneIdeas.Count @(laneIdeas.Count == 1 ? "idea" : "ideas")</span></h2>
+                    @if (laneIdeas.Count == 0)
+                    {
+                        <div class="placeholder" style="padding:20px"><p style="margin:0">No ideas in this status.</p></div>
+                    }
+                    else
+                    {
+                        <div class="card">
+                            @foreach (var idea in laneIdeas)
+                            {
+                                var i = idea;
+                                <div class="rowcard" style="@CardStyle(lane)" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">
+                                    <span class="prio @PrioClass(i.Priority)" title="@PrioLabel(i.Priority) priority"></span>
+                                    <span class="t">@i.Title</span>
+                                    @foreach (var tag in i.TagNames.Take(2))
+                                    {
+                                        <span class="tag">@tag</span>
+                                    }
+                                    @if (i.TagNames.Count > 2)
+                                    {
+                                        <span class="tag more">+@(i.TagNames.Count - 2)</span>
+                                    }
+                                    @if (i.Assignees.Count > 0)
+                                    {
+                                        <span class="avatarstack">
+                                            @foreach (var a in i.Assignees.Take(3))
+                                            {
+                                                <span class="avatar s" title="@a.DisplayName">@Initials(a)</span>
+                                            }
+                                            @if (i.Assignees.Count > 3)
+                                            {
+                                                <span class="avatar s more">+@(i.Assignees.Count - 3)</span>
+                                            }
+                                        </span>
+                                    }
+                                    <span class="age">@Age(i.CreatedAtUtc)</span>
+                                    @if (i.CommentCount > 0)
+                                    {
+                                        <span class="cmt-inline">💬 @i.CommentCount</span>
+                                    }
+                                    <span class="up @(i.HasUpvoted ? "mine" : null)">▲ @i.UpvoteCount</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        }
+
+        @if (_ideas.Count == 0)
+        {
+            <div class="placeholder"><p>No ideas on this board yet.@(_isReadOnly ? "" : " Use “New idea” to add the first one.")</p></div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string BoardId { get; set; } = string.Empty;
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private enum View { Swim, List }
+
+    private BoardDetailDto? _board;
+    private List<IdeaListItemDto> _ideas = new();
+    private List<BoardListItemDto> _boards = new();
+    private View _view = View.Swim;
+    private string _filter = string.Empty;
+
+    private string? _organizationId;
+    private string _role = string.Empty;
+    private bool _isAdmin => string.Equals(_role, "OrgAdmin", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(_role, "SiteAdmin", StringComparison.OrdinalIgnoreCase);
+    private bool _isReadOnly => string.Equals(_role, "ReadOnly", StringComparison.OrdinalIgnoreCase);
+    private bool _canMove => _board is not null && (_board.AllowUserStatusUpdate || _isAdmin) && !_isReadOnly;
+
+    private bool _loading = true;
+    private string? _error;
+    private string? _moveError;
+    private string? _loadedBoardId;
+
+    // New-idea mini form
+    private bool _showNew;
+    private string _newTitle = string.Empty;
+    private string _newDescription = string.Empty;
+    private string _newPriority = "Medium";
+    private string _newStatusId = string.Empty;
+    private bool _creating;
+    private string? _newError;
+
+    // Drag state
+    private string? _draggedIdeaId;
+    private string? _dragOverStatusId;
+
+    private IReadOnlyList<SwimlaneDetailDto> OrderedLanes =>
+        _board is null ? Array.Empty<SwimlaneDetailDto>() : _board.Swimlanes.OrderBy(s => s.Order).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            var user = (await AuthStateTask).User;
+            _organizationId = user.FindFirst("organizationId")?.Value;
+            _role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrEmpty(BoardId) || BoardId == _loadedBoardId)
+        {
+            return;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _moveError = null;
+        _showNew = false;
+        StateHasChanged();
+
+        var boardResult = await Api.GetBoardAsync(BoardId);
+        if (!boardResult.Succeeded)
+        {
+            _error = boardResult.Error;
+            _board = null;
+            _loading = false;
+            _loadedBoardId = BoardId;
+            return;
+        }
+        _board = boardResult.Value;
+
+        var ideasResult = await Api.GetBoardIdeasAsync(BoardId);
+        if (ideasResult.Succeeded)
+        {
+            _ideas = ideasResult.Value!.Items.ToList();
+        }
+        else
+        {
+            _error = ideasResult.Error;
+        }
+
+        // Board picker options (best-effort; a failure here just hides the picker).
+        if (_boards.Count == 0 && !string.IsNullOrEmpty(_organizationId))
+        {
+            var boardsResult = await Api.GetBoardsAsync(_organizationId!);
+            if (boardsResult.Succeeded)
+            {
+                _boards = boardsResult.Value!.OrderBy(b => b.Name).ToList();
+            }
+        }
+
+        _loadedBoardId = BoardId;
+        _loading = false;
+
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "collega.lastBoardId", BoardId);
+        }
+        catch (JSException)
+        {
+            // Persisting the last board is a convenience only; ignore storage failures.
+        }
+    }
+
+    private void OnBoardPicked(ChangeEventArgs e)
+    {
+        var id = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(id) && id != BoardId)
+        {
+            Nav.NavigateTo($"/board/{id}");
+        }
+    }
+
+    private void OnFilterInput(ChangeEventArgs e) => _filter = e.Value?.ToString() ?? string.Empty;
+
+    private List<IdeaListItemDto> IdeasFor(string statusId)
+    {
+        var f = _filter?.Trim();
+        return _ideas
+            .Where(i => i.StatusId == statusId)
+            .Where(i => string.IsNullOrEmpty(f) || Matches(i, f!))
+            .OrderByDescending(i => i.UpvoteCount)
+            .ToList();
+    }
+
+    private static bool Matches(IdeaListItemDto i, string f)
+    {
+        if (i.Title.Contains(f, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        if (i.TagNames.Any(t => t.Contains(f, StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+        return i.Assignees.Any(a => a.DisplayName.Contains(f, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void OpenIdea(string ideaId) => Nav.NavigateTo($"/ideas/{ideaId}/edit");
+
+    private void OpenNew(string? statusId)
+    {
+        _newTitle = string.Empty;
+        _newDescription = string.Empty;
+        _newPriority = "Medium";
+        _newStatusId = statusId ?? OrderedLanes.FirstOrDefault()?.StatusId ?? string.Empty;
+        _newError = null;
+        _showNew = true;
+    }
+
+    private async Task CreateIdea()
+    {
+        if (string.IsNullOrWhiteSpace(_newTitle))
+        {
+            _newError = "A title is required.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_newDescription))
+        {
+            _newError = "A description is required.";
+            return;
+        }
+
+        _creating = true;
+        _newError = null;
+
+        var body = new CreateIdeaRequestDto(
+            _newTitle.Trim(),
+            _newDescription.Trim(),
+            _newPriority,
+            string.IsNullOrEmpty(_newStatusId) ? null : _newStatusId);
+
+        var result = await Api.CreateIdeaAsync(BoardId, body);
+        _creating = false;
+
+        if (!result.Succeeded)
+        {
+            _newError = result.Error ?? "Creating the idea failed.";
+            return;
+        }
+
+        _showNew = false;
+
+        // Reload ideas so the new card appears with server-resolved fields (status, upvotes, etc.).
+        var ideasResult = await Api.GetBoardIdeasAsync(BoardId);
+        if (ideasResult.Succeeded)
+        {
+            _ideas = ideasResult.Value!.Items.ToList();
+        }
+    }
+
+    private async Task OnDrop(string targetStatusId)
+    {
+        var draggedId = _draggedIdeaId;
+        _dragOverStatusId = null;
+        _draggedIdeaId = null;
+
+        if (!_canMove || string.IsNullOrEmpty(draggedId))
+        {
+            return;
+        }
+
+        var idea = _ideas.FirstOrDefault(i => i.IdeaId == draggedId);
+        if (idea is null || idea.StatusId == targetStatusId)
+        {
+            return;
+        }
+
+        var targetLane = OrderedLanes.FirstOrDefault(s => s.StatusId == targetStatusId);
+        if (targetLane is null)
+        {
+            return;
+        }
+
+        // Optimistic move: swap the record in place, then reconcile with the server.
+        var previous = idea;
+        var index = _ideas.IndexOf(idea);
+        _ideas[index] = idea with { StatusId = targetLane.StatusId, StatusName = targetLane.StatusName };
+        _moveError = null;
+        StateHasChanged();
+
+        var result = await Api.ChangeIdeaStatusAsync(draggedId, new ChangeIdeaStatusRequestDto(targetStatusId));
+        if (!result.Succeeded)
+        {
+            _ideas[index] = previous; // rollback
+            _moveError = result.Error ?? "Moving the idea failed.";
+        }
+    }
+
+    private static string PrioClass(string priority) => (priority ?? string.Empty).Trim().ToLowerInvariant() switch
+    {
+        "high" => "high",
+        "medium" or "med" => "med",
+        "low" => "low",
+        _ => "med",
+    };
+
+    private static string PrioLabel(string priority)
+    {
+        if (string.IsNullOrWhiteSpace(priority))
+        {
+            return "—";
+        }
+        var p = priority.Trim();
+        return char.ToUpperInvariant(p[0]) + p[1..].ToLowerInvariant();
+    }
+
+    private static string Initials(IdeaAssigneeDto a)
+    {
+        var first = string.IsNullOrEmpty(a.FirstName) ? "" : a.FirstName[..1];
+        var last = string.IsNullOrEmpty(a.LastName) ? "" : a.LastName[..1];
+        var combined = (first + last).ToUpperInvariant();
+        if (!string.IsNullOrEmpty(combined))
+        {
+            return combined;
+        }
+        return string.IsNullOrEmpty(a.DisplayName) ? "?" : a.DisplayName[..1].ToUpperInvariant();
+    }
+
+    private static string Age(DateTime createdUtc)
+    {
+        var days = (int)Math.Floor((DateTime.UtcNow - createdUtc).TotalDays);
+        if (days <= 0)
+        {
+            return "today";
+        }
+        return days == 1 ? "1d" : $"{days}d";
+    }
+
+    private static string LaneStyle(SwimlaneDetailDto lane) => $"--lc-deep:{lane.StatusColor}";
+
+    private static string CardStyle(SwimlaneDetailDto lane) => $"--lc-deep:{lane.StatusColor}";
+}
