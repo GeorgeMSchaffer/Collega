@@ -21,6 +21,7 @@
 .tag { font-size: 11px; color: var(--ink-3); background: #f3f2f1; border-radius: 4px; padding: 2px 8px; }
 .tag.more { background: transparent; color: var(--accent-deep); font-weight: 700; padding: 2px 2px; }
 .prio { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.prio.critical { background: #7a0d17; }
 .prio.high { background: var(--err); }
 .prio.med { background: var(--warn); }
 .prio.low { background: var(--ok); }
@@ -120,6 +121,7 @@
   flex-shrink: 0;
   white-space: nowrap;
 }
+.prio-chip.critical { background: var(--err); color: #fff; }
 .prio-chip.high { background: #fbe5e7; color: var(--err); }
 .prio-chip.med { background: #f7ecdc; color: var(--warn); }
 .prio-chip.low { background: #e7f2e7; color: var(--ok); }

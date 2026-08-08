@@ -12,19 +12,28 @@ public sealed partial class ApiClient
     public Task<ApiResult<IdeaDetailDto>> UpdateIdeaAsync(string ideaId, UpdateIdeaRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<IdeaDetailDto>(HttpMethod.Put, $"{BasePath}/ideas/{ideaId}", body, ct);
 
-    /// <summary>Moves the idea to a new status. Returns 204 with no body, so it can't use the
-    /// JSON-reading <c>SendAsync</c> helper (mirrors <c>DeleteStatusAsync</c>).</summary>
-    public async Task<ApiResult<bool>> ChangeIdeaStatusAsync(string ideaId, string statusId, CancellationToken ct = default)
+    /// <summary>Moves the idea to a new status. Returns 204 with no body, so it's built by hand
+    /// rather than via the JSON-reading <c>SendAsync</c> helper (mirrors <c>DeleteStatusAsync</c>).
+    /// This is the single status-move method shared by Idea Detail and Board detail.</summary>
+    public async Task<ApiResult<bool>> ChangeIdeaStatusAsync(string ideaId, ChangeIdeaStatusRequestDto body, CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{BasePath}/ideas/{ideaId}/status")
         {
-            Content = JsonContent.Create(new ChangeIdeaStatusRequestDto(statusId)),
+            Content = JsonContent.Create(body),
         };
         await AttachTokenAsync(request);
-        using var response = await _http.SendAsync(request, ct);
-        return response.IsSuccessStatusCode
-            ? ApiResult<bool>.Success(true, (int)response.StatusCode)
-            : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+
+        try
+        {
+            using var response = await _http.SendAsync(request, ct);
+            return response.IsSuccessStatusCode
+                ? ApiResult<bool>.Success(true, (int)response.StatusCode)
+                : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+        }
+        catch (HttpRequestException ex)
+        {
+            return ApiResult<bool>.Failure(0, $"Couldn't reach the server. {ex.Message}");
+        }
     }
 
     /// <summary>Toggles the current user's upvote (POST with no body, returns the new count/state).</summary>

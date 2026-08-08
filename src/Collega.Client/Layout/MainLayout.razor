@@ -24,6 +24,12 @@
 
     private async Task EnforcePasswordChangeGateAsync()
     {
+        var path = Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0].Trim('/');
+        if (string.Equals(path, "change-password", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
         var state = await AuthState.GetAuthenticationStateAsync();
         if (state.User.HasClaim(CollegaAuthStateProvider.MustChangePasswordClaim, "true"))
         {

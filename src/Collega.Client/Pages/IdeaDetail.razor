@@ -133,7 +133,7 @@ else
             <div class="fact">
                 <div class="k">Status</div>
                 <div class="v">
-                    <select aria-label="Idea status" value="@_idea.StatusId" @onchange="OnStatusChanged" disabled="@(!_canEdit || _changingStatus || _statusOptions.Count == 0)">
+                    <select aria-label="Idea status" @key="_statusSelectNonce" value="@_idea.StatusId" @onchange="OnStatusChanged" disabled="@(!_canEdit || _changingStatus || _statusOptions.Count == 0)">
                         @if (_statusOptions.Count == 0)
                         {
                             <option value="@_idea.StatusId" selected>@_idea.StatusName</option>
@@ -229,6 +229,9 @@ else
     private bool _upvoting;
     private bool _postingComment;
 
+    // Bumped when a status change is rejected, to force the <select> to rebuild from _idea.StatusId.
+    private int _statusSelectNonce;
+
     private string? _error;
     private string? _actionError;
     private string? _commentsError;
@@ -295,7 +298,8 @@ else
         }
 
         // Best-effort author name map from the org's users, so comment bylines show real names.
-        if (!string.IsNullOrEmpty(_organizationId))
+        // Only needed when the idea actually has comments — skip the fetch otherwise.
+        if (!string.IsNullOrEmpty(_organizationId) && _idea!.CommentCount > 0)
         {
             var users = await Api.GetOrganizationUsersAsync(_organizationId);
             if (users.Succeeded && users.Value is not null)
@@ -416,7 +420,7 @@ else
         _actionError = null;
         _saveMessage = null;
 
-        var result = await Api.ChangeIdeaStatusAsync(_idea.IdeaId, targetId);
+        var result = await Api.ChangeIdeaStatusAsync(_idea.IdeaId, new ChangeIdeaStatusRequestDto(targetId));
         if (result.Succeeded)
         {
             var target = _statusOptions.FirstOrDefault(s => s.StatusId == targetId);
@@ -425,8 +429,10 @@ else
         }
         else
         {
-            // Rejected (e.g. board doesn't allow User status moves) — re-render reverts the select
-            // to the unchanged _idea.StatusId and we surface the server's permission message.
+            // Rejected (e.g. board doesn't allow User status moves). Bump the select's @key so Blazor
+            // rebuilds it from the unchanged _idea.StatusId — a plain re-render leaves the browser on
+            // the rejected option because the bound value attribute didn't change. Surface the message.
+            _statusSelectNonce++;
             _actionError = result.Error ?? "Status change failed.";
         }
 
@@ -529,5 +535,6 @@ else
     };
 
     private static string FormatWhen(DateTime utc) =>
-        utc.ToLocalTime().ToString("MMM d, yyyy · h:mm tt");
+        // API datetimes arrive Kind=Unspecified (EF/SQL Server), so pin them to UTC before converting.
+        DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime().ToString("MMM d, yyyy · h:mm tt");
 }
