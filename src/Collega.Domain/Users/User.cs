@@ -131,6 +131,72 @@ public sealed class User : AuditableEntityBase
 
     private static string GenerateSecurityStamp() => Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
 
+    /// <summary>
+    /// Self-service profile edit (auth requirement #20): first and last name only. Email, role,
+    /// organization, and status are administrator-controlled and never change here.
+    /// </summary>
+    public void UpdateName(string firstName, string lastName, DateTime nowUtc, Guid? actorUserId)
+    {
+        if (string.IsNullOrWhiteSpace(firstName))
+        {
+            throw new ArgumentException("First name is required.", nameof(firstName));
+        }
+
+        if (string.IsNullOrWhiteSpace(lastName))
+        {
+            throw new ArgumentException("Last name is required.", nameof(lastName));
+        }
+
+        FirstName = firstName.Trim();
+        LastName = lastName.Trim();
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
+    /// <summary>
+    /// Administrator edit of a user's profile, role, and status (org-and-users "User Rules").
+    /// A non-Site-Admin account can never be moved to the Site Admin role. Organization membership
+    /// is immutable here — a non-Site-Admin user belongs to exactly one organization.
+    /// </summary>
+    public void Administer(
+        string firstName,
+        string lastName,
+        string email,
+        Role role,
+        UserStatus status,
+        DateTime nowUtc,
+        Guid? actorUserId)
+    {
+        if (string.IsNullOrWhiteSpace(firstName))
+        {
+            throw new ArgumentException("First name is required.", nameof(firstName));
+        }
+
+        if (string.IsNullOrWhiteSpace(lastName))
+        {
+            throw new ArgumentException("Last name is required.", nameof(lastName));
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email is required.", nameof(email));
+        }
+
+        if (OrganizationId is not null && role == Role.SiteAdmin)
+        {
+            throw new ArgumentException("Organization users cannot be assigned the Site Admin role.", nameof(role));
+        }
+
+        var trimmedEmail = email.Trim();
+
+        FirstName = firstName.Trim();
+        LastName = lastName.Trim();
+        Email = trimmedEmail;
+        NormalizedEmail = EmailNormalizer.Normalize(trimmedEmail);
+        Role = role;
+        Status = status;
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
     public bool IsLockedOut(DateTime nowUtc) => LockedUntilUtc.HasValue && LockedUntilUtc.Value > nowUtc;
 
     public bool IsTemporaryPasswordExpired(DateTime nowUtc) =>

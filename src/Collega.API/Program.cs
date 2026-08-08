@@ -4,6 +4,8 @@ using Collega.API.ErrorHandling;
 using Collega.API.Validation;
 using Collega.Application.Abstractions;
 using Collega.Application.Auth;
+using Collega.Application.Organizations;
+using Collega.Application.Users;
 using Collega.Infrastructure.DependencyInjection;
 using Collega.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication;
@@ -41,6 +43,9 @@ builder.Services.AddSingleton<IClock, Collega.Application.Abstractions.SystemClo
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenAuthenticationService, TokenAuthenticationService>();
+builder.Services.AddScoped<IOrganizationBootstrapService, OrganizationBootstrapService>();
+builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserContext, HttpContextCurrentUserContext>();

@@ -6,6 +6,8 @@ public sealed record LoginCommand(string Email, string Password);
 
 public sealed record ChangePasswordCommand(string CurrentPassword, string NewPassword);
 
+public sealed record UpdateProfileCommand(string FirstName, string LastName);
+
 public sealed record RegisterCommand(string InviteCode, string FirstName, string LastName, string Email, string Password);
 
 /// <summary>Shape matches `GET /api/v1/auth/me` (SPEC/30-Contracts.md) property-for-property.</summary>
