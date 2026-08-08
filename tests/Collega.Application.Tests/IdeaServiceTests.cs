@@ -1,9 +1,11 @@
 using Collega.Application.Abstractions;
 using Collega.Application.Collaboration;
 using Collega.Application.Exceptions;
+using Collega.Application.Fields;
 using Collega.Application.Ideas;
 using Collega.Application.Tests.TestDoubles;
 using Collega.Domain.Enums;
+using Collega.Domain.Fields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
 using Collega.Domain.Users;
@@ -374,5 +376,74 @@ public sealed class IdeaServiceTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<NotFoundAppException>(() => sut.GetByIdAsync(idea.Id));
+    }
+
+    // User-Defined Field values -----------------------------------------------------------------
+
+    private CreateIdeaCommand FieldValueCommand(params IdeaFieldValueWrite[] values) =>
+        new("Title", "A valid description.", "Medium", null, null, _s1, null, null, values);
+
+    [Fact]
+    public async Task Create_MissingRequiredFieldValue_ThrowsValidation()
+    {
+        _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Budget", fieldType: FieldType.Number, isRequired: true));
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => sut.CreateAsync(_boardId, FieldValueCommand()));
+    }
+
+    [Fact]
+    public async Task Create_InvalidNumberFieldValue_ThrowsValidation()
+    {
+        var def = _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Budget", fieldType: FieldType.Number));
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.CreateAsync(_boardId, FieldValueCommand(new IdeaFieldValueWrite(def.Id, "not-a-number"))));
+    }
+
+    [Fact]
+    public async Task Create_ValidFieldValue_PersistsAndEmitsFieldValueAudit()
+    {
+        var def = _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Budget", fieldType: FieldType.Number));
+        var sut = CreateSut();
+
+        var result = await sut.CreateAsync(_boardId, FieldValueCommand(new IdeaFieldValueWrite(def.Id, "50000")));
+
+        var idea = _ideas.Ideas.Single(i => i.Id == result.IdeaId);
+        var value = Assert.Single(idea.FieldValues);
+        Assert.Equal(def.Id, value.FieldDefinitionId);
+        Assert.Equal("50000", value.Value);
+        Assert.Contains(_audit.Events, e => e.EventType == "IdeaFieldValueChanged");
+    }
+
+    [Fact]
+    public async Task Create_UnknownFieldDefinition_ThrowsValidation()
+    {
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.CreateAsync(_boardId, FieldValueCommand(new IdeaFieldValueWrite(Guid.NewGuid(), "x"))));
+    }
+
+    [Fact]
+    public async Task GetById_ProjectsActiveFieldValues_AndHidesArchived()
+    {
+        var active = _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Budget", fieldType: FieldType.Number, displayOrder: 10));
+        var archived = _fieldDefs.Add(Build.FieldDefinition(_org.Id, name: "Legacy", fieldType: FieldType.Text, displayOrder: 20));
+        var sut = CreateSut();
+
+        var created = await sut.CreateAsync(_boardId, FieldValueCommand(
+            new IdeaFieldValueWrite(active.Id, "50000"),
+            new IdeaFieldValueWrite(archived.Id, "old")));
+
+        archived.SoftDelete(_clock.UtcNow, null);
+
+        var detail = await sut.GetByIdAsync(created.IdeaId);
+
+        var value = Assert.Single(detail.FieldValues);
+        Assert.Equal("Budget", value.FieldName);
+        Assert.Equal("Number", value.FieldType);
+        Assert.Equal("50000", value.Value);
     }
 }

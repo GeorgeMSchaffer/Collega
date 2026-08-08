@@ -1,5 +1,6 @@
 using Collega.Domain.Boards;
 using Collega.Domain.Enums;
+using Collega.Domain.Fields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
 using Collega.Domain.Statuses;
@@ -58,6 +59,24 @@ internal static class Build
         string name = "Ideas",
         bool allowUserStatusUpdate = true) =>
         Domain.Boards.Board.Create(organizationId, name, allowUserStatusUpdate, orderedStatusIds, Now);
+
+    public static FieldDefinition FieldDefinition(
+        Guid organizationId,
+        string name = "Budget",
+        FieldType fieldType = FieldType.Text,
+        bool isRequired = false,
+        int displayOrder = 10,
+        string? description = null,
+        IReadOnlyList<FieldOptionInput>? options = null) =>
+        Domain.Fields.FieldDefinition.Create(
+            organizationId,
+            name,
+            description,
+            fieldType,
+            isRequired,
+            displayOrder,
+            options ?? Array.Empty<FieldOptionInput>(),
+            Now);
 
     public static Idea Idea(
         Guid organizationId,
