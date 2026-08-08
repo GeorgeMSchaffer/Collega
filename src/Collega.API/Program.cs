@@ -9,6 +9,7 @@ using Collega.Application.Collaboration;
 using Collega.Application.Comments;
 using Collega.Application.Ideas;
 using Collega.Application.Organizations;
+using Collega.Application.Fields;
 using Collega.Application.Statuses;
 using Collega.Application.Tags;
 using Collega.Application.Users;
@@ -53,6 +54,7 @@ builder.Services.AddScoped<IOrganizationBootstrapService, OrganizationBootstrapS
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStatusService, StatusService>();
+builder.Services.AddScoped<IFieldDefinitionService, FieldDefinitionService>();
 builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<IMentionResolver, MentionResolver>();
 builder.Services.AddScoped<IIdeaService, IdeaService>();
