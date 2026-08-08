@@ -1,13 +1,15 @@
 @page "/login"
 @layout AuthLayout
 @inject NavigationManager Nav
+@inject ApiClient Api
+@inject CollegaAuthStateProvider AuthState
 
 <PageTitle>Sign in · Collega</PageTitle>
 
 @*
-    Static sign-in shell (no real authentication yet — that is the Auth Client
-    task). Included so Sign Out from the rail popover has a destination and the
-    pre-auth chrome is established. Design: comp-c-review-06-lockin-v5-final.html.
+    Sign-in against POST /api/v1/auth/login. On success the session is persisted and the user is
+    routed to their forced password change (first login) or their intended destination.
+    Design: comp-c-review-06-lockin-v5-final.html.
 *@
 <div class="authwrap">
     <div class="authcard">
@@ -17,20 +19,74 @@
         </div>
         <h1 style="font-size:22px;margin-bottom:6px">Sign in</h1>
         <p class="sub">One email, one account. We'll take you straight to your organization — no picker needed.</p>
-        <div class="field">
-            <label for="email">Email</label>
-            <input id="email" type="email" style="width:100%" />
-        </div>
-        <div class="field">
-            <label for="password">Password</label>
-            <input id="password" type="password" style="width:100%" />
-        </div>
-        <button class="btn primary" style="width:100%;padding:10px" @onclick="SignIn">Sign in</button>
+
+        @if (PasswordChanged && _error is null)
+        {
+            <div class="authnote" role="status">Your password was changed. Please sign in with your new password.</div>
+        }
+        @if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+
+        <EditForm Model="this" OnValidSubmit="SignIn">
+            <div class="field">
+                <label for="email">Email</label>
+                <FluentTextField id="email" @bind-Value="_email" TextFieldType="TextFieldType.Email" Disabled="_busy" Style="width:100%" />
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <FluentTextField id="password" @bind-Value="_password" TextFieldType="TextFieldType.Password" Disabled="_busy" Style="width:100%" />
+            </div>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Class="authbtn" Disabled="_busy">
+                @(_busy ? "Signing in…" : "Sign in")
+            </FluentButton>
+        </EditForm>
+
         <p class="footnote">Forgot your password? <a href="#">Contact your organization admin</a>.</p>
     </div>
 </div>
 
 @code {
-    // Placeholder navigation only — real authentication is a later Client task.
-    private void SignIn() => Nav.NavigateTo("/");
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery]
+    private bool PasswordChanged { get; set; }
+
+    private string? _email;
+    private string? _password;
+    private string? _error;
+    private bool _busy;
+
+    private async Task SignIn()
+    {
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "Enter your email and password.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+
+        var result = await Api.LoginAsync(_email!.Trim(), _password!);
+        if (!result.Succeeded)
+        {
+            _error = result.StatusCode == 401 ? "Incorrect email or password." : result.Error;
+            _busy = false;
+            return;
+        }
+
+        var login = result.Value!;
+        await AuthState.MarkSignedInAsync(login.AccessToken, login.User);
+
+        if (login.RequiresPasswordChange)
+        {
+            Nav.NavigateTo("/change-password");
+            return;
+        }
+
+        Nav.NavigateTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
+    }
 }

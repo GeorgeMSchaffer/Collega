@@ -1,0 +1,17 @@
+@inject NavigationManager Nav
+
+@*
+    Sends an unauthenticated visitor to the sign-in page, preserving where they were headed in a
+    returnUrl query param so Login can bounce them back after a successful sign-in.
+*@
+
+@code {
+    protected override void OnInitialized()
+    {
+        var returnUrl = Nav.ToBaseRelativePath(Nav.Uri);
+        var target = string.IsNullOrEmpty(returnUrl) || returnUrl.StartsWith("login")
+            ? "login"
+            : $"login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        Nav.NavigateTo(target, forceLoad: false, replace: true);
+    }
+}

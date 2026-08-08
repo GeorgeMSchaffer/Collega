@@ -1,15 +1,179 @@
 @page "/settings"
+@attribute [Authorize]
+@inject ApiClient Api
 
 <PageTitle>Settings · Collega</PageTitle>
 
+@*
+    Settings landing. Role-scoped: a Site Admin manages organizations; an Org Admin manages the
+    users in their own organization. Users / Read Only see only their profile (reachable from the
+    rail avatar). Create/edit forms and the org→users drill-down are later Client tasks.
+*@
 <div class="pagehead">
     <div class="crumbs">Settings</div>
     <h1>Settings</h1>
-    <p class="sub" style="margin-bottom:18px">Your profile and, for admins, organization / user / status administration.</p>
+    <p class="sub" style="margin-bottom:18px">@_subtitle</p>
 </div>
+
 <div class="body">
-    <div class="placeholder">
-        <h3>Settings</h3>
-        <p>The settings landing, profile editor, and role-scoped admin pages (organizations, users, statuses, idea fields) are built in later Client tasks. This placeholder confirms the Settings route and active rail highlighting.</p>
-    </div>
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else if (_error is not null)
+    {
+        <div class="autherror" role="alert">@_error</div>
+    }
+    else if (_view == View.Organizations)
+    {
+        <div class="cmdbar"><a class="btn primary" href="/settings/organizations/new">New organization</a></div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Organization</th><th>Location</th><th>Invite code</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var org in _organizations!)
+                    {
+                        <tr>
+                            <td><strong>@org.Title</strong></td>
+                            <td>@Location(org.City, org.State)</td>
+                            <td><code>@org.InviteCode</code></td>
+                            <td>
+                                @if (org.IsArchived)
+                                {
+                                    <span class="pill neutral">Archived</span>
+                                }
+                                else
+                                {
+                                    <span class="pill ok">Active</span>
+                                }
+                            </td>
+                            <td><a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}")">Edit</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_organizations!.Count == 0)
+        {
+            <div class="placeholder"><p>No organizations yet.</p></div>
+        }
+    }
+    else if (_view == View.Users)
+    {
+        <div class="cmdbar"><a class="btn primary" href="/settings/users/new">New user</a></div>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in _users!)
+                    {
+                        <tr>
+                            <td><strong>@user.FirstName @user.LastName</strong></td>
+                            <td>@user.Email</td>
+                            <td><span class="pill info">@RoleLabel(user.Role)</span></td>
+                            <td>
+                                @if (string.Equals(user.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <span class="pill ok">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="pill neutral">@user.Status</span>
+                                }
+                            </td>
+                            <td><a class="btn subtle" href="@($"/settings/users/{user.UserId}")">Edit</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_users!.Count == 0)
+        {
+            <div class="placeholder"><p>No users yet.</p></div>
+        }
+    }
+    else
+    {
+        <div class="placeholder">
+            <h3>Nothing to manage here</h3>
+            <p>Organization and user administration is available to admins. You can update your own details from the account menu in the rail.</p>
+        </div>
+    }
 </div>
+
+@code {
+    private enum View { None, Organizations, Users }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private View _view = View.None;
+    private string _subtitle = "";
+    private bool _loading = true;
+    private string? _error;
+    private IReadOnlyList<OrganizationListItemDto>? _organizations;
+    private IReadOnlyList<UserListItemDto>? _users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var role = "";
+        string? organizationId = null;
+        if (AuthStateTask is not null)
+        {
+            var user = (await AuthStateTask).User;
+            role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+            organizationId = user.FindFirst("organizationId")?.Value;
+        }
+
+        if (string.Equals(role, "SiteAdmin", StringComparison.OrdinalIgnoreCase))
+        {
+            _view = View.Organizations;
+            _subtitle = "Manage organizations across the platform.";
+            var result = await Api.GetOrganizationsAsync();
+            if (result.Succeeded)
+            {
+                _organizations = result.Value!.Items;
+            }
+            else
+            {
+                _error = result.Error;
+            }
+        }
+        else if (string.Equals(role, "OrgAdmin", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(organizationId))
+        {
+            _view = View.Users;
+            _subtitle = "Manage the users in your organization.";
+            var result = await Api.GetOrganizationUsersAsync(organizationId!);
+            if (result.Succeeded)
+            {
+                _users = result.Value!.Items;
+            }
+            else
+            {
+                _error = result.Error;
+            }
+        }
+        else
+        {
+            _view = View.None;
+            _subtitle = "Your account settings.";
+        }
+
+        _loading = false;
+    }
+
+    private static string Location(string? city, string? state) =>
+        string.Join(", ", new[] { city, state }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private static string RoleLabel(string role) => role switch
+    {
+        "SiteAdmin" => "Site Admin",
+        "OrgAdmin" => "Org Admin",
+        "ReadOnly" => "Read Only",
+        _ => role,
+    };
+}

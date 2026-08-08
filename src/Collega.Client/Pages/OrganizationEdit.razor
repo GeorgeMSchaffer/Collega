@@ -1,0 +1,168 @@
+@page "/settings/organizations/new"
+@page "/settings/organizations/{OrganizationId}"
+@attribute [Authorize(Roles = "SiteAdmin")]
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>@(_isNew ? "New organization" : "Edit organization") · Collega</PageTitle>
+
+@*
+    Create / edit an organization (Site Admin only — enforced by [Authorize(Roles)] and by the API).
+    One component serves both routes: /settings/organizations/new and /settings/organizations/{id}.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings">Settings</a> / @(_isNew ? "New organization" : "Edit organization")</div>
+    <h1>@(_isNew ? "New organization" : "Edit organization")</h1>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else
+    {
+        <div class="card formcard">
+            @if (_error is not null)
+            {
+                <div class="autherror" role="alert">@_error</div>
+            }
+
+            <EditForm Model="_model" OnValidSubmit="Save">
+                <div class="field">
+                    <label for="title">Title</label>
+                    <FluentTextField id="title" @bind-Value="_model.Title" Disabled="_busy" Style="width:100%" />
+                </div>
+                <div class="field">
+                    <label for="description">Description</label>
+                    <FluentTextArea id="description" @bind-Value="_model.Description" Disabled="_busy" Rows="3" Style="width:100%" />
+                </div>
+                <div class="formrow">
+                    <div class="field">
+                        <label for="city">City</label>
+                        <FluentTextField id="city" @bind-Value="_model.City" Disabled="_busy" Style="width:100%" />
+                    </div>
+                    <div class="field">
+                        <label for="state">State</label>
+                        <FluentTextField id="state" @bind-Value="_model.State" Disabled="_busy" Style="width:100%" />
+                    </div>
+                    <div class="field">
+                        <label for="phone">Phone</label>
+                        <FluentTextField id="phone" @bind-Value="_model.Phone" Disabled="_busy" Style="width:100%" />
+                    </div>
+                </div>
+                <div class="formrow">
+                    <div class="field">
+                        <label for="contactfirst">Primary contact first name</label>
+                        <FluentTextField id="contactfirst" @bind-Value="_model.PrimaryContactFirstName" Disabled="_busy" Style="width:100%" />
+                    </div>
+                    <div class="field">
+                        <label for="contactlast">Primary contact last name</label>
+                        <FluentTextField id="contactlast" @bind-Value="_model.PrimaryContactLastName" Disabled="_busy" Style="width:100%" />
+                    </div>
+                </div>
+
+                <div class="btnrow">
+                    <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Disabled="_busy">
+                        @(_busy ? "Saving…" : _isNew ? "Create organization" : "Save changes")
+                    </FluentButton>
+                    <a class="btn" href="/settings">Cancel</a>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? OrganizationId { get; set; }
+
+    private sealed class FormModel
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? Phone { get; set; }
+        public string? PrimaryContactFirstName { get; set; }
+        public string? PrimaryContactLastName { get; set; }
+    }
+
+    private readonly FormModel _model = new();
+    private bool _isNew => string.IsNullOrEmpty(OrganizationId);
+    private bool _loading;
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_isNew)
+        {
+            return;
+        }
+
+        _loading = true;
+        var result = await Api.GetOrganizationAsync(OrganizationId!);
+        if (result.Succeeded)
+        {
+            var o = result.Value!;
+            _model.Title = o.Title;
+            _model.Description = o.Description;
+            _model.City = o.City;
+            _model.State = o.State;
+            _model.Phone = o.Phone;
+            _model.PrimaryContactFirstName = o.PrimaryContactFirstName;
+            _model.PrimaryContactLastName = o.PrimaryContactLastName;
+        }
+        else
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_model.Title) || string.IsNullOrWhiteSpace(_model.Description))
+        {
+            _error = "Title and description are required.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+
+        var body = new SaveOrganizationRequestDto(
+            Title: _model.Title.Trim(),
+            Description: _model.Description.Trim(),
+            Address: null,
+            City: _model.City,
+            State: _model.State,
+            Zip: null,
+            Phone: _model.Phone,
+            PrimaryContactFirstName: _model.PrimaryContactFirstName,
+            PrimaryContactLastName: _model.PrimaryContactLastName);
+
+        bool succeeded;
+        string? error;
+        if (_isNew)
+        {
+            var r = await Api.CreateOrganizationAsync(body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+        else
+        {
+            var r = await Api.UpdateOrganizationAsync(OrganizationId!, body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+
+        if (succeeded)
+        {
+            Nav.NavigateTo("/settings");
+            return;
+        }
+
+        _error = error ?? "Save failed.";
+        _busy = false;
+    }
+}
