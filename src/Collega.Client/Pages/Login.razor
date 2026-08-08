@@ -1,0 +1,36 @@
+@page "/login"
+@layout AuthLayout
+@inject NavigationManager Nav
+
+<PageTitle>Sign in · Collega</PageTitle>
+
+@*
+    Static sign-in shell (no real authentication yet — that is the Auth Client
+    task). Included so Sign Out from the rail popover has a destination and the
+    pre-auth chrome is established. Design: comp-c-review-06-lockin-v5-final.html.
+*@
+<div class="authwrap">
+    <div class="authcard">
+        <div class="brand">
+            <span class="mark">CG</span>
+            <span class="name">Collega</span>
+        </div>
+        <h1 style="font-size:22px;margin-bottom:6px">Sign in</h1>
+        <p class="sub">One email, one account. We'll take you straight to your organization — no picker needed.</p>
+        <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" style="width:100%" />
+        </div>
+        <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password" style="width:100%" />
+        </div>
+        <button class="btn primary" style="width:100%;padding:10px" @onclick="SignIn">Sign in</button>
+        <p class="footnote">Forgot your password? <a href="#">Contact your organization admin</a>.</p>
+    </div>
+</div>
+
+@code {
+    // Placeholder navigation only — real authentication is a later Client task.
+    private void SignIn() => Nav.NavigateTo("/");
+}
