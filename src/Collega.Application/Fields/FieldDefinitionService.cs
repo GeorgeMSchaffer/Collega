@@ -178,7 +178,7 @@ public sealed class FieldDefinitionService : IFieldDefinitionService
             }
 
             order += DisplayOrderStep;
-            definition.Update(definition.Name, definition.Description, definition.IsRequired, order, now, _currentUser.UserId);
+            definition.SetDisplayOrder(order, now, _currentUser.UserId);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

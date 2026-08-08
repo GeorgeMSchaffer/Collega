@@ -63,7 +63,16 @@ internal static class FieldValueValidator
 
             if (TryNormalize(definition, trimmed!, out var normalized, out var error))
             {
-                result.Add(new IdeaFieldValueInput(definition.Id, normalized));
+                // Guard the persisted length here so it surfaces as a 400 rather than an ArgumentException
+                // (HTTP 500) from IdeaFieldValue's constructor — e.g. a MultiSelect with many options.
+                if (normalized is { Length: > IdeaFieldValue.ValueMaxLength })
+                {
+                    AddError(errors, definition.Name, $"{definition.Name} must be {IdeaFieldValue.ValueMaxLength} characters or fewer.");
+                }
+                else
+                {
+                    result.Add(new IdeaFieldValueInput(definition.Id, normalized));
+                }
             }
             else
             {

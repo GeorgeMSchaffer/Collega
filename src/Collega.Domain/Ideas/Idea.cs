@@ -164,8 +164,20 @@ public sealed class Idea : AuditableEntityBase
     /// (preserving its identity and created stamp), a new value adds a row, and unchanged values are
     /// left untouched. Values must already be validated/serialized by the Application layer.
     /// </summary>
-    public void ReplaceFieldValues(IReadOnlyCollection<IdeaFieldValueInput> fieldValues, DateTime nowUtc, Guid? actorUserId)
+    /// <param name="reconciledFieldDefinitionIds">
+    /// The field definitions this reconcile is authoritative over — the caller's active-definition set.
+    /// Only values for these fields may be cleared; values for out-of-scope definitions (e.g. ones that
+    /// were soft-deleted after they were filled in) are preserved untouched so historical data is not
+    /// lost (SPEC/20-feature-user-defined-fields.md: archived-definition values are retained).
+    /// </param>
+    public void ReplaceFieldValues(
+        IReadOnlyCollection<IdeaFieldValueInput> fieldValues,
+        IReadOnlyCollection<Guid> reconciledFieldDefinitionIds,
+        DateTime nowUtc,
+        Guid? actorUserId)
     {
+        var scoped = reconciledFieldDefinitionIds as ISet<Guid> ?? reconciledFieldDefinitionIds.ToHashSet();
+
         var desired = new Dictionary<Guid, string?>();
         foreach (var input in fieldValues ?? Array.Empty<IdeaFieldValueInput>())
         {
@@ -178,7 +190,9 @@ public sealed class Idea : AuditableEntityBase
             desired[input.FieldDefinitionId] = string.IsNullOrWhiteSpace(input.Value) ? null : input.Value;
         }
 
-        _fieldValues.RemoveAll(v => !desired.TryGetValue(v.FieldDefinitionId, out var value) || value is null);
+        // Only clear values for in-scope definitions; leave out-of-scope (archived) values in place.
+        _fieldValues.RemoveAll(v => scoped.Contains(v.FieldDefinitionId)
+            && (!desired.TryGetValue(v.FieldDefinitionId, out var value) || value is null));
 
         foreach (var (fieldDefinitionId, value) in desired)
         {

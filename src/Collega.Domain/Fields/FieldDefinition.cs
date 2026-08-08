@@ -90,6 +90,14 @@ public sealed class FieldDefinition : AuditableEntityBase
         MarkUpdated(nowUtc, actorUserId);
     }
 
+    /// <summary>Sets only the display order (used by reorder), leaving all other attributes intact.</summary>
+    public void SetDisplayOrder(int displayOrder, DateTime nowUtc, Guid? actorUserId = null)
+    {
+        EnsureNotDeleted();
+        DisplayOrder = displayOrder;
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
     /// <summary>
     /// Reconciles this field's options to <paramref name="options"/>: existing options are matched by
     /// <see cref="FieldOptionInput.Id"/> and updated in place (preserving identity for idea values that

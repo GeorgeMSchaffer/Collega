@@ -161,7 +161,7 @@ public sealed class IdeaService : IIdeaService
             mentionIds,
             now);
 
-        idea.ReplaceFieldValues(fieldValues, now, authorId);
+        idea.ReplaceFieldValues(fieldValues, fieldDefinitions.Select(d => d.Id).ToList(), now, authorId);
 
         await _ideaRepository.AddAsync(idea, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -219,20 +219,36 @@ public sealed class IdeaService : IIdeaService
         var tagIds = await ResolveTagsAsync(idea.OrganizationId, command.TagNames, now, actorId, cancellationToken);
         var mentionIds = await _mentionResolver.ResolveAsync(idea.OrganizationId, command.MentionEmails, "mentionEmails", cancellationToken);
 
-        var fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(idea.OrganizationId, includeDeleted: false, cancellationToken);
-        var previousFieldValues = idea.FieldValues.ToDictionary(v => v.FieldDefinitionId, v => v.Value);
-        var fieldValues = FieldValueValidator.Validate(fieldDefinitions, command.FieldValues);
+        // A null FieldValues means "not provided" — leave existing UDF values untouched. Only an
+        // explicit (possibly empty) list reconciles them, so an unrelated edit (e.g. a title change)
+        // neither wipes stored values nor is blocked by required-field validation.
+        var reconcileFieldValues = command.FieldValues is not null;
+        IReadOnlyList<FieldDefinition> fieldDefinitions = Array.Empty<FieldDefinition>();
+        IReadOnlyDictionary<Guid, string?> previousFieldValues = new Dictionary<Guid, string?>();
+        IReadOnlyList<IdeaFieldValueInput> fieldValues = Array.Empty<IdeaFieldValueInput>();
+        if (reconcileFieldValues)
+        {
+            fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(idea.OrganizationId, includeDeleted: false, cancellationToken);
+            previousFieldValues = idea.FieldValues.ToDictionary(v => v.FieldDefinitionId, v => v.Value);
+            fieldValues = FieldValueValidator.Validate(fieldDefinitions, command.FieldValues);
+        }
 
         idea.UpdateContent(command.Title ?? string.Empty, command.Description ?? string.Empty, priority, dueDate, now, actorId);
         idea.ReplaceAssignees(assigneeIds, now, actorId);
         idea.ReplaceTags(tagIds, now, actorId);
         idea.ReplaceMentions(mentionIds, now, actorId);
-        idea.ReplaceFieldValues(fieldValues, now, actorId);
+        if (reconcileFieldValues)
+        {
+            idea.ReplaceFieldValues(fieldValues, fieldDefinitions.Select(d => d.Id).ToList(), now, actorId);
+        }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await AuditAsync("IdeaUpdated", idea, actorId, $"Idea '{idea.Title}' updated.", now, null, cancellationToken);
-        await EmitFieldValueAuditAsync(idea, previousFieldValues, fieldDefinitions, actorId, now, cancellationToken);
+        if (reconcileFieldValues)
+        {
+            await EmitFieldValueAuditAsync(idea, previousFieldValues, fieldDefinitions, actorId, now, cancellationToken);
+        }
 
         // Notify only newly added mentions so an edit does not re-notify people already mentioned
         // (SPEC/20-feature-notifications.md trigger #1).
