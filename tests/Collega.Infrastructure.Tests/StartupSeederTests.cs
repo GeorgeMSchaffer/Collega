@@ -15,7 +15,7 @@ public sealed class StartupSeederTests
 
     private static StartupSeeder CreateSeeder(CollegaDbContext ctx)
     {
-        var bootstrap = new OrganizationBootstrapService(new EfStatusRepository(ctx), new EfBoardRepository(ctx));
+        var bootstrap = new OrganizationBootstrapService(new EfStatusRepository(ctx), new EfBoardRepository(ctx), new EfIdeaTypeRepository(ctx), new EfBusinessImpactRepository(ctx));
         return new StartupSeeder(ctx, new FakePasswordHasher(), bootstrap, new TestClock());
     }
 

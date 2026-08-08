@@ -1,6 +1,7 @@
 using Collega.Domain.Auditing;
 using Collega.Domain.Boards;
 using Collega.Domain.Comments;
+using Collega.Domain.IdeaFields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Notifications;
 using Collega.Domain.Organizations;
@@ -32,6 +33,10 @@ public sealed class CollegaDbContext : DbContext
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Status> Statuses => Set<Status>();
+
+    public DbSet<IdeaType> IdeaTypes => Set<IdeaType>();
+
+    public DbSet<BusinessImpact> BusinessImpacts => Set<BusinessImpact>();
 
     public DbSet<Board> Boards => Set<Board>();
 

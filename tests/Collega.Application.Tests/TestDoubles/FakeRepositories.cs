@@ -3,6 +3,7 @@ using Collega.Application.Common;
 using Collega.Domain.Boards;
 using Collega.Domain.Comments;
 using Collega.Domain.Enums;
+using Collega.Domain.IdeaFields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
 using Collega.Domain.Statuses;
@@ -215,6 +216,76 @@ internal sealed class FakeBoardRepository : IBoardRepository
 
     public Task<bool> IsStatusReferencedAsync(Guid statusId, CancellationToken cancellationToken = default) =>
         Task.FromResult(Boards.Any(b => b.Swimlanes.Any(sl => sl.StatusId == statusId)));
+}
+
+internal sealed class FakeIdeaTypeRepository : IIdeaTypeRepository
+{
+    public List<IdeaType> Options { get; } = new();
+
+    public FakeIdeaTypeRepository(params IdeaType[] options) => Options.AddRange(options);
+
+    public Task AddAsync(IdeaType option, CancellationToken cancellationToken = default)
+    {
+        Options.Add(option);
+        return Task.CompletedTask;
+    }
+
+    public Task AddRangeAsync(IEnumerable<IdeaType> options, CancellationToken cancellationToken = default)
+    {
+        Options.AddRange(options);
+        return Task.CompletedTask;
+    }
+
+    public Task<IdeaType?> GetByIdAsync(Guid ideaTypeId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(Options.FirstOrDefault(o => o.Id == ideaTypeId));
+
+    public Task<IReadOnlyList<IdeaType>> ListByOrganizationAsync(Guid organizationId, bool includeDeleted, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<IdeaType> result = Options
+            .Where(o => o.OrganizationId == organizationId && (includeDeleted || !o.IsDeleted))
+            .OrderBy(o => o.SortOrder)
+            .ThenBy(o => o.Name)
+            .ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<int> CountActiveByOrganizationAsync(Guid organizationId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(Options.Count(o => o.OrganizationId == organizationId && !o.IsDeleted));
+}
+
+internal sealed class FakeBusinessImpactRepository : IBusinessImpactRepository
+{
+    public List<BusinessImpact> Options { get; } = new();
+
+    public FakeBusinessImpactRepository(params BusinessImpact[] options) => Options.AddRange(options);
+
+    public Task AddAsync(BusinessImpact option, CancellationToken cancellationToken = default)
+    {
+        Options.Add(option);
+        return Task.CompletedTask;
+    }
+
+    public Task AddRangeAsync(IEnumerable<BusinessImpact> options, CancellationToken cancellationToken = default)
+    {
+        Options.AddRange(options);
+        return Task.CompletedTask;
+    }
+
+    public Task<BusinessImpact?> GetByIdAsync(Guid businessImpactId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(Options.FirstOrDefault(o => o.Id == businessImpactId));
+
+    public Task<IReadOnlyList<BusinessImpact>> ListByOrganizationAsync(Guid organizationId, bool includeDeleted, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<BusinessImpact> result = Options
+            .Where(o => o.OrganizationId == organizationId && (includeDeleted || !o.IsDeleted))
+            .OrderBy(o => o.SortOrder)
+            .ThenBy(o => o.Name)
+            .ToList();
+        return Task.FromResult(result);
+    }
+
+    public Task<int> CountActiveByOrganizationAsync(Guid organizationId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(Options.Count(o => o.OrganizationId == organizationId && !o.IsDeleted));
 }
 
 /// <summary>Configurable <see cref="IBoardReader"/> backed by explicit board contexts and status info.</summary>
