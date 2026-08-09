@@ -58,6 +58,35 @@ public sealed partial class ApiClient
     public Task<ApiResult<RegenerateInviteCodeResultDto>> RegenerateInviteCodeAsync(string organizationId, CancellationToken ct = default) =>
         SendJsonAsync<RegenerateInviteCodeResultDto>(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/invite-code/regenerate", new { }, ct);
 
+    /// <summary>Archives an organization (Site Admin). Returns 204.</summary>
+    public async Task<ApiResult<bool>> ArchiveOrganizationAsync(string organizationId, CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/archive");
+        await AttachTokenAsync(request);
+        try
+        {
+            using var response = await _http.SendAsync(request, ct);
+            return response.IsSuccessStatusCode
+                ? ApiResult<bool>.Success(true, (int)response.StatusCode)
+                : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+        }
+        catch (HttpRequestException ex)
+        {
+            return ApiResult<bool>.Failure(0, $"Couldn't reach the server. {ex.Message}");
+        }
+    }
+
+    /// <summary>Stores a client-resized logo (image data URI) for the org; returns the updated detail.</summary>
+    public Task<ApiResult<OrganizationDetailDto>> SetOrganizationLogoAsync(string organizationId, SetLogoRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<OrganizationDetailDto>(HttpMethod.Put, $"{BasePath}/organizations/{organizationId}/logo", body, ct);
+
+    /// <summary>Removes the org's uploaded logo; returns the updated detail.</summary>
+    public async Task<ApiResult<OrganizationDetailDto>> ClearOrganizationLogoAsync(string organizationId, CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"{BasePath}/organizations/{organizationId}/logo");
+        return await SendAsync<OrganizationDetailDto>(request, ct);
+    }
+
     public Task<ApiResult<UserDetailDto>> GetUserAsync(string userId, CancellationToken ct = default) =>
         GetAsync<UserDetailDto>($"{BasePath}/users/{userId}", ct);
 

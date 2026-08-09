@@ -36,7 +36,15 @@
                     @foreach (var org in _organizations!)
                     {
                         <tr>
-                            <td><strong>@org.Title</strong></td>
+                            <td>
+                                <div class="row" style="align-items:center;gap:8px">
+                                    @if (!string.IsNullOrEmpty(org.LogoThumbnailUrl))
+                                    {
+                                        <img src="@org.LogoThumbnailUrl" alt="" style="height:24px;max-height:24px" />
+                                    }
+                                    <strong>@org.Title</strong>
+                                </div>
+                            </td>
                             <td>@Location(org.City, org.State)</td>
                             <td><code>@org.InviteCode</code></td>
                             <td>

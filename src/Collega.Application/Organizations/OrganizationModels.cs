@@ -72,3 +72,6 @@ public sealed record CreateOrganizationResult(
 
 /// <summary>Shape matches the invite-code regenerate response.</summary>
 public sealed record RegenerateInviteCodeResult(string InviteCode);
+
+/// <summary>A resized logo (image data URI) and its rendered height, produced client-side.</summary>
+public sealed record SetLogoCommand(string? ThumbnailDataUri, int HeightPx);

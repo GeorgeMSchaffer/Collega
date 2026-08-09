@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "SiteAdmin")]
 @inject ApiClient Api
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>@(_isNew ? "New organization" : "Edit organization") · Collega</PageTitle>
 
@@ -37,6 +38,10 @@
                     <label for="description">Description</label>
                     <FluentTextArea id="description" @bind-Value="_model.Description" Disabled="_busy" Rows="3" Style="width:100%" />
                 </div>
+                <div class="field">
+                    <label for="address">Address</label>
+                    <FluentTextField id="address" @bind-Value="_model.Address" Disabled="_busy" Style="width:100%" />
+                </div>
                 <div class="formrow">
                     <div class="field">
                         <label for="city">City</label>
@@ -45,6 +50,10 @@
                     <div class="field">
                         <label for="state">State</label>
                         <FluentTextField id="state" @bind-Value="_model.State" Disabled="_busy" Style="width:100%" />
+                    </div>
+                    <div class="field">
+                        <label for="zip">Zip</label>
+                        <FluentTextField id="zip" @bind-Value="_model.Zip" Disabled="_busy" Style="width:100%" />
                     </div>
                     <div class="field">
                         <label for="phone">Phone</label>
@@ -85,6 +94,51 @@
                     <button class="btn subtle" @onclick="RegenerateCode" disabled="@_regenerating">@(_regenerating ? "Regenerating…" : "Regenerate")</button>
                 </div>
             </div>
+
+            <div class="card formcard" style="margin-top:16px">
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:6px">Logo</h3>
+                <p class="sub" style="margin-bottom:10px">Upload a logo (resized to 150px tall). Shown on the organization list.</p>
+                @if (_logoError is not null)
+                {
+                    <div class="autherror" role="alert">@_logoError</div>
+                }
+                <div class="row" style="align-items:center;gap:14px">
+                    @if (!string.IsNullOrEmpty(_logoThumbnail))
+                    {
+                        <img src="@_logoThumbnail" alt="Organization logo" style="height:@(_logoHeight ?? 48)px;max-height:150px;border:1px solid var(--line);border-radius:var(--radius-btn)" />
+                    }
+                    else
+                    {
+                        <span class="sub">No logo yet.</span>
+                    }
+                    <InputFile OnChange="OnLogoSelected" accept="image/*" disabled="@_logoBusy" />
+                    @if (!string.IsNullOrEmpty(_logoThumbnail))
+                    {
+                        <button class="btn subtle" @onclick="RemoveLogo" disabled="@_logoBusy">Remove</button>
+                    }
+                </div>
+            </div>
+
+            <div class="card formcard" style="margin-top:16px">
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:6px">Archive organization</h3>
+                <p class="sub" style="margin-bottom:10px">Archiving hides the organization without deleting its data.</p>
+                @if (_archiveError is not null)
+                {
+                    <div class="autherror" role="alert">@_archiveError</div>
+                }
+                @if (_confirmArchive)
+                {
+                    <div class="row" style="align-items:center;gap:10px">
+                        <span>Archive this organization?</span>
+                        <button class="btn danger" @onclick="ArchiveOrg" disabled="@_archiving">@(_archiving ? "Archiving…" : "Yes, archive")</button>
+                        <button class="btn subtle" @onclick="() => _confirmArchive = false" disabled="@_archiving">Cancel</button>
+                    </div>
+                }
+                else
+                {
+                    <button class="btn danger" @onclick="() => _confirmArchive = true">Archive</button>
+                }
+            </div>
         }
     }
 </div>
@@ -96,8 +150,10 @@
     {
         public string Title { get; set; } = "";
         public string Description { get; set; } = "";
+        public string? Address { get; set; }
         public string? City { get; set; }
         public string? State { get; set; }
+        public string? Zip { get; set; }
         public string? Phone { get; set; }
         public string? PrimaryContactFirstName { get; set; }
         public string? PrimaryContactLastName { get; set; }
@@ -111,6 +167,15 @@
     private string? _inviteCode;
     private bool _regenerating;
     private string? _regenError;
+    private string? _logoThumbnail;
+    private int? _logoHeight;
+    private bool _logoBusy;
+    private string? _logoError;
+    private bool _confirmArchive;
+    private bool _archiving;
+    private string? _archiveError;
+
+    private sealed record LogoResizeResult(string DataUri, int Height);
 
     protected override async Task OnInitializedAsync()
     {
@@ -126,12 +191,16 @@
             var o = result.Value!;
             _model.Title = o.Title;
             _model.Description = o.Description;
+            _model.Address = o.Address;
             _model.City = o.City;
             _model.State = o.State;
+            _model.Zip = o.Zip;
             _model.Phone = o.Phone;
             _model.PrimaryContactFirstName = o.PrimaryContactFirstName;
             _model.PrimaryContactLastName = o.PrimaryContactLastName;
             _inviteCode = o.InviteCode;
+            _logoThumbnail = o.LogoThumbnailUrl;
+            _logoHeight = o.LogoHeightPx;
         }
         else
         {
@@ -172,10 +241,10 @@
         var body = new SaveOrganizationRequestDto(
             Title: _model.Title.Trim(),
             Description: _model.Description.Trim(),
-            Address: null,
+            Address: _model.Address,
             City: _model.City,
             State: _model.State,
-            Zip: null,
+            Zip: _model.Zip,
             Phone: _model.Phone,
             PrimaryContactFirstName: _model.PrimaryContactFirstName,
             PrimaryContactLastName: _model.PrimaryContactLastName);
@@ -201,5 +270,77 @@
 
         _error = error ?? "Save failed.";
         _busy = false;
+    }
+
+    private async Task OnLogoSelected(InputFileChangeEventArgs e)
+    {
+        _logoBusy = true;
+        _logoError = null;
+
+        try
+        {
+            var file = e.File;
+            // Cap the raw upload (resizing happens client-side; a small thumbnail is stored).
+            await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            var sourceUri = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer.ToArray())}";
+
+            var resized = await JS.InvokeAsync<LogoResizeResult>("collegaResizeImage", sourceUri, 150);
+            var result = await Api.SetOrganizationLogoAsync(OrganizationId!, new SetLogoRequestDto(resized.DataUri, resized.Height));
+            if (result.Succeeded && result.Value is not null)
+            {
+                _logoThumbnail = result.Value.LogoThumbnailUrl;
+                _logoHeight = result.Value.LogoHeightPx;
+            }
+            else
+            {
+                _logoError = result.Error ?? "Couldn't save the logo.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logoError = $"Couldn't process the image. {ex.Message}";
+        }
+        finally
+        {
+            _logoBusy = false;
+        }
+    }
+
+    private async Task RemoveLogo()
+    {
+        _logoBusy = true;
+        _logoError = null;
+        var result = await Api.ClearOrganizationLogoAsync(OrganizationId!);
+        _logoBusy = false;
+
+        if (result.Succeeded)
+        {
+            _logoThumbnail = null;
+            _logoHeight = null;
+        }
+        else
+        {
+            _logoError = result.Error ?? "Couldn't remove the logo.";
+        }
+    }
+
+    private async Task ArchiveOrg()
+    {
+        _archiving = true;
+        _archiveError = null;
+        var result = await Api.ArchiveOrganizationAsync(OrganizationId!);
+        _archiving = false;
+
+        if (result.Succeeded)
+        {
+            Nav.NavigateTo("/settings");
+        }
+        else
+        {
+            _archiveError = result.Error ?? "Couldn't archive the organization.";
+            _confirmArchive = false;
+        }
     }
 }

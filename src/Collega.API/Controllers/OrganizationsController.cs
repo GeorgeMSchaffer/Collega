@@ -122,6 +122,31 @@ public sealed class OrganizationsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Set the organization's logo from a client-resized image data URI.</summary>
+    [HttpPut("{organizationId:guid}/logo")]
+    [ProducesResponseType(typeof(OrganizationDetail), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetLogo(Guid organizationId, [FromBody] SetLogoRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _organizationService.SetLogoAsync(organizationId, new SetLogoCommand(request.ThumbnailDataUri, request.HeightPx), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>Remove the organization's uploaded logo.</summary>
+    [HttpDelete("{organizationId:guid}/logo")]
+    [ProducesResponseType(typeof(OrganizationDetail), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ClearLogo(Guid organizationId, CancellationToken cancellationToken)
+    {
+        var result = await _organizationService.ClearLogoAsync(organizationId, cancellationToken);
+        return Ok(result);
+    }
+
     /// <summary>List users within an organization with pagination.</summary>
     [HttpGet("{organizationId:guid}/users")]
     [ProducesResponseType(typeof(PagedResult<UserListItem>), StatusCodes.Status200OK)]

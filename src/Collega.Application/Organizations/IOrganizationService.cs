@@ -15,4 +15,10 @@ public interface IOrganizationService
     Task<RegenerateInviteCodeResult> RegenerateInviteCodeAsync(Guid organizationId, CancellationToken cancellationToken = default);
 
     Task ArchiveAsync(Guid organizationId, CancellationToken cancellationToken = default);
+
+    /// <summary>Stores a resized logo (image data URI + rendered height) for the organization.</summary>
+    Task<OrganizationDetail> SetLogoAsync(Guid organizationId, SetLogoCommand command, CancellationToken cancellationToken = default);
+
+    /// <summary>Removes the organization's uploaded logo.</summary>
+    Task<OrganizationDetail> ClearLogoAsync(Guid organizationId, CancellationToken cancellationToken = default);
 }

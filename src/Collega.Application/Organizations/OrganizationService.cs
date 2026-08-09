@@ -129,6 +129,45 @@ public sealed class OrganizationService : IOrganizationService
         return new RegenerateInviteCodeResult(organization.InviteCode);
     }
 
+    public async Task<OrganizationDetail> SetLogoAsync(Guid organizationId, SetLogoCommand command, CancellationToken cancellationToken = default)
+    {
+        var organization = await LoadForAdministrationAsync(organizationId, cancellationToken);
+
+        // Validate here so bad client input is a 400 rather than a 500 from the domain guard.
+        var dataUri = command.ThumbnailDataUri;
+        if (string.IsNullOrWhiteSpace(dataUri) || !dataUri.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ValidationAppException("thumbnailDataUri", new[] { "Logo must be an image." });
+        }
+
+        if (dataUri.Length > Organization.LogoThumbnailMaxLength)
+        {
+            throw new ValidationAppException("thumbnailDataUri", new[] { "Logo image is too large." });
+        }
+
+        var now = _clock.UtcNow;
+
+        organization.SetLogo(dataUri, command.HeightPx, now, _currentUser.UserId);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await AuditAsync("OrganizationLogoUpdated", organization.Id, _currentUser.UserId, $"Organization '{organization.Title}' logo updated.", now, null, cancellationToken);
+
+        return ToDetail(organization);
+    }
+
+    public async Task<OrganizationDetail> ClearLogoAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        var organization = await LoadForAdministrationAsync(organizationId, cancellationToken);
+        var now = _clock.UtcNow;
+
+        organization.ClearLogo(now, _currentUser.UserId);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await AuditAsync("OrganizationLogoCleared", organization.Id, _currentUser.UserId, $"Organization '{organization.Title}' logo removed.", now, null, cancellationToken);
+
+        return ToDetail(organization);
+    }
+
     public async Task ArchiveAsync(Guid organizationId, CancellationToken cancellationToken = default)
     {
         // Only Site Admin can archive an organization (org-and-users requirement #8).

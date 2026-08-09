@@ -38,9 +38,9 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
             .HasColumnName("logo_url")
             .HasMaxLength(Organization.LogoUrlMaxLength);
 
+        // Holds a resized-image data URI (client-side thumbnail), so it needs nvarchar(max).
         builder.Property(o => o.LogoThumbnailUrl)
-            .HasColumnName("logo_thumbnail_url")
-            .HasMaxLength(Organization.LogoUrlMaxLength);
+            .HasColumnName("logo_thumbnail_url");
 
         builder.Property(o => o.LogoHeightPx)
             .HasColumnName("logo_height_px");

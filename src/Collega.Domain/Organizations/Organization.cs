@@ -14,6 +14,12 @@ public sealed class Organization : AuditableEntityBase
     public const int TitleMaxLength = 200;
     public const int DescriptionMaxLength = 1000;
     public const int LogoUrlMaxLength = 500;
+
+    /// <summary>Max length of the stored logo thumbnail data URI (~a small resized PNG in base64).</summary>
+    public const int LogoThumbnailMaxLength = 300_000;
+
+    /// <summary>The uploaded logo is rendered at most this tall.</summary>
+    public const int LogoMaxHeightPx = 150;
     public const int AddressMaxLength = 200;
     public const int CityMaxLength = 100;
     public const int StateMaxLength = 50;
@@ -110,6 +116,41 @@ public sealed class Organization : AuditableEntityBase
         Description = description.Trim();
         LogoUrl = Normalize(logoUrl);
         ApplyProfile(profile);
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
+    /// <summary>
+    /// Stores an uploaded logo as a resized image data URI plus its rendered height (org-and-users
+    /// binary-logo feature). The image is resized client-side to at most <see cref="LogoMaxHeightPx"/>;
+    /// this validates the payload is an image data URI within the size cap and clamps the height.
+    /// </summary>
+    public void SetLogo(string thumbnailDataUri, int heightPx, DateTime nowUtc, Guid? actorUserId)
+    {
+        if (string.IsNullOrWhiteSpace(thumbnailDataUri))
+        {
+            throw new ArgumentException("A logo image is required.", nameof(thumbnailDataUri));
+        }
+
+        if (!thumbnailDataUri.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("Logo must be an image.", nameof(thumbnailDataUri));
+        }
+
+        if (thumbnailDataUri.Length > LogoThumbnailMaxLength)
+        {
+            throw new ArgumentException("Logo image is too large.", nameof(thumbnailDataUri));
+        }
+
+        LogoThumbnailUrl = thumbnailDataUri;
+        LogoHeightPx = Math.Clamp(heightPx, 1, LogoMaxHeightPx);
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
+    /// <summary>Removes the uploaded logo. Idempotent.</summary>
+    public void ClearLogo(DateTime nowUtc, Guid? actorUserId)
+    {
+        LogoThumbnailUrl = null;
+        LogoHeightPx = null;
         MarkUpdated(nowUtc, actorUserId);
     }
 

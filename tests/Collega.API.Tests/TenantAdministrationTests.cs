@@ -248,6 +248,34 @@ public sealed class TenantAdministrationTests : IClassFixture<CollegaApiFactory>
         Assert.Equal("OrgAdmin", fetched!.Role);
     }
 
+    [Fact]
+    public async Task SiteAdmin_Can_Set_And_Clear_Organization_Logo()
+    {
+        using var client = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(client);
+        var org = await CreateOrganizationAsync(client, "Logo Co", "Logo test.");
+
+        const string dataUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        var set = await client.PutAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/logo",
+            new { thumbnailDataUri = dataUri, heightPx = 120 });
+        Assert.Equal(HttpStatusCode.OK, set.StatusCode);
+        var detail = await set.Content.ReadFromJsonAsync<OrgLogoResponse>(Json);
+        Assert.Equal(dataUri, detail!.LogoThumbnailUrl);
+        Assert.Equal(120, detail.LogoHeightPx);
+
+        // A non-image payload is rejected as a 400 (not a 500).
+        var bad = await client.PutAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/logo",
+            new { thumbnailDataUri = "not-an-image", heightPx = 100 });
+        Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
+
+        // Clearing removes it.
+        var clear = await client.DeleteAsync($"/api/v1/organizations/{org.OrganizationId}/logo");
+        Assert.Equal(HttpStatusCode.OK, clear.StatusCode);
+        var cleared = await clear.Content.ReadFromJsonAsync<OrgLogoResponse>(Json);
+        Assert.Null(cleared!.LogoThumbnailUrl);
+        Assert.Null(cleared.LogoHeightPx);
+    }
+
     private async Task<CreateOrgResponse> CreateOrganizationAsync(HttpClient client, string title, string description)
     {
         var response = await client.PostAsJsonAsync("/api/v1/organizations", new { title, description });
@@ -276,5 +304,6 @@ public sealed class TenantAdministrationTests : IClassFixture<CollegaApiFactory>
     private sealed record RegenerateResponse(string InviteCode);
     private sealed record CreateUserResponse(Guid UserId, Guid OrganizationId, string Email, string Role, string Status);
     private sealed record UserDetailResp(string Role, string Status);
+    private sealed record OrgLogoResponse(string? LogoThumbnailUrl, int? LogoHeightPx);
     private sealed record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);
 }

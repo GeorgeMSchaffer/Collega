@@ -74,7 +74,12 @@ public sealed record OrganizationDetailDto(
     string? Zip,
     string? Phone,
     string? PrimaryContactFirstName,
-    string? PrimaryContactLastName);
+    string? PrimaryContactLastName,
+    string? LogoThumbnailUrl = null,
+    int? LogoHeightPx = null);
+
+/// <summary>Body for <c>PUT /organizations/{id}/logo</c> — a client-resized image data URI + height.</summary>
+public sealed record SetLogoRequestDto(string ThumbnailDataUri, int HeightPx);
 
 /// <summary>Body for both <c>POST /organizations</c> and <c>PUT /organizations/{id}</c> (identical shapes).</summary>
 public sealed record SaveOrganizationRequestDto(
