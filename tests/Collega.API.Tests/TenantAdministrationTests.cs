@@ -211,6 +211,43 @@ public sealed class TenantAdministrationTests : IClassFixture<CollegaApiFactory>
         Assert.Equal(HttpStatusCode.Forbidden, create.StatusCode);
     }
 
+    [Fact]
+    public async Task SiteAdmin_Can_Edit_User_In_Another_Organization()
+    {
+        using var client = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(client);
+
+        var org = await CreateOrganizationAsync(client, "Contoso", "Cross-org edit test.");
+        var email = $"user-{Guid.NewGuid():N}@contoso.test";
+        var create = await client.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/users", new
+        {
+            firstName = "Sam",
+            lastName = "Lee",
+            email,
+            role = "User",
+            initialPassword = "Str0ng!Pass"
+        });
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+        var user = await create.Content.ReadFromJsonAsync<CreateUserResponse>(Json);
+
+        // The Site Admin (not a member of Contoso) promotes the user — cross-org management is allowed.
+        var update = await client.PutAsJsonAsync($"/api/v1/users/{user!.UserId}", new
+        {
+            firstName = "Sam",
+            lastName = "Lee",
+            email,
+            role = "OrgAdmin",
+            status = "Active"
+        });
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var updated = await update.Content.ReadFromJsonAsync<UserDetailResp>(Json);
+        Assert.Equal("OrgAdmin", updated!.Role);
+
+        // And can read that user back by id.
+        var fetched = await client.GetFromJsonAsync<UserDetailResp>($"/api/v1/users/{user.UserId}", Json);
+        Assert.Equal("OrgAdmin", fetched!.Role);
+    }
+
     private async Task<CreateOrgResponse> CreateOrganizationAsync(HttpClient client, string title, string description)
     {
         var response = await client.PostAsJsonAsync("/api/v1/organizations", new { title, description });
@@ -238,5 +275,6 @@ public sealed class TenantAdministrationTests : IClassFixture<CollegaApiFactory>
     private sealed record OrgListItem(Guid OrganizationId, string Title, bool IsArchived);
     private sealed record RegenerateResponse(string InviteCode);
     private sealed record CreateUserResponse(Guid UserId, Guid OrganizationId, string Email, string Role, string Status);
+    private sealed record UserDetailResp(string Role, string Status);
     private sealed record PagedResponse<T>(IReadOnlyList<T> Items, int Page, int PageSize, int TotalCount);
 }
