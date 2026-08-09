@@ -70,6 +70,22 @@
                 </div>
             </EditForm>
         </div>
+
+        @if (!_isNew)
+        {
+            <div class="card formcard" style="margin-top:16px">
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:6px">Invite code</h3>
+                <p class="sub" style="margin-bottom:10px">New members join this organization by self-registering with this code. Regenerating it invalidates the old one.</p>
+                @if (_regenError is not null)
+                {
+                    <div class="autherror" role="alert">@_regenError</div>
+                }
+                <div class="row" style="align-items:center;gap:10px">
+                    <code style="font-size:16px;letter-spacing:.08em;background:#f3f2f1;padding:6px 12px;border-radius:var(--radius-btn)">@_inviteCode</code>
+                    <button class="btn subtle" @onclick="RegenerateCode" disabled="@_regenerating">@(_regenerating ? "Regenerating…" : "Regenerate")</button>
+                </div>
+            </div>
+        }
     }
 </div>
 
@@ -92,6 +108,9 @@
     private bool _loading;
     private bool _busy;
     private string? _error;
+    private string? _inviteCode;
+    private bool _regenerating;
+    private string? _regenError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,6 +131,7 @@
             _model.Phone = o.Phone;
             _model.PrimaryContactFirstName = o.PrimaryContactFirstName;
             _model.PrimaryContactLastName = o.PrimaryContactLastName;
+            _inviteCode = o.InviteCode;
         }
         else
         {
@@ -119,6 +139,23 @@
         }
 
         _loading = false;
+    }
+
+    private async Task RegenerateCode()
+    {
+        _regenerating = true;
+        _regenError = null;
+        var result = await Api.RegenerateInviteCodeAsync(OrganizationId!);
+        _regenerating = false;
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _inviteCode = result.Value.InviteCode;
+        }
+        else
+        {
+            _regenError = result.Error ?? "Couldn't regenerate the invite code.";
+        }
     }
 
     private async Task Save()

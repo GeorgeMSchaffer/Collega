@@ -65,6 +65,21 @@
     }
     else if (_view == View.Users)
     {
+        @if (_inviteCode is not null)
+        {
+            <div class="card formcard" style="margin-bottom:14px">
+                <h3 style="font-family:Georgia,serif;font-size:15px;margin-bottom:4px">Invite code</h3>
+                <p class="sub" style="margin-bottom:8px">Share this code so new members can self-register into your organization.</p>
+                @if (_regenError is not null)
+                {
+                    <div class="autherror" role="alert">@_regenError</div>
+                }
+                <div class="row" style="align-items:center;gap:10px">
+                    <code style="font-size:16px;letter-spacing:.08em;background:#f3f2f1;padding:6px 12px;border-radius:var(--radius-btn)">@_inviteCode</code>
+                    <button class="btn subtle" @onclick="RegenerateCode" disabled="@_regenerating">@(_regenerating ? "Regenerating…" : "Regenerate")</button>
+                </div>
+            </div>
+        }
         <div class="cmdbar">
             <a class="btn primary" href="/settings/users/new">New user</a>
             <a class="btn" href="/settings/users/import">Import CSV</a>
@@ -126,6 +141,10 @@
     private string? _error;
     private IReadOnlyList<OrganizationListItemDto>? _organizations;
     private IReadOnlyList<UserListItemDto>? _users;
+    private string? _organizationId;
+    private string? _inviteCode;
+    private bool _regenerating;
+    private string? _regenError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -156,6 +175,7 @@
         {
             _view = View.Users;
             _subtitle = "Manage the users in your organization.";
+            _organizationId = organizationId;
             var result = await Api.GetOrganizationUsersAsync(organizationId!);
             if (result.Succeeded)
             {
@@ -165,6 +185,13 @@
             {
                 _error = result.Error;
             }
+
+            // Surface the org's invite code so an Org Admin can share/regenerate it (requirement #11).
+            var org = await Api.GetOrganizationAsync(organizationId!);
+            if (org.Succeeded)
+            {
+                _inviteCode = org.Value!.InviteCode;
+            }
         }
         else
         {
@@ -173,6 +200,28 @@
         }
 
         _loading = false;
+    }
+
+    private async Task RegenerateCode()
+    {
+        if (string.IsNullOrEmpty(_organizationId))
+        {
+            return;
+        }
+
+        _regenerating = true;
+        _regenError = null;
+        var result = await Api.RegenerateInviteCodeAsync(_organizationId);
+        _regenerating = false;
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _inviteCode = result.Value.InviteCode;
+        }
+        else
+        {
+            _regenError = result.Error ?? "Couldn't regenerate the invite code.";
+        }
     }
 
     private static string Location(string? city, string? state) =>

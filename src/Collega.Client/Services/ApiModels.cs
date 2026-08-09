@@ -59,6 +59,9 @@ public sealed record UserListItemDto(
     string Role,
     string Status);
 
+/// <summary>Response of <c>POST /organizations/{id}/invite-code/regenerate</c>.</summary>
+public sealed record RegenerateInviteCodeResultDto(string InviteCode);
+
 /// <summary>Detail for <c>GET /organizations/{id}</c>, used to prefill the edit form.</summary>
 public sealed record OrganizationDetailDto(
     string OrganizationId,
@@ -112,6 +115,20 @@ public sealed record UpdateUserRequestDto(
     string Email,
     string Role,
     string Status);
+
+/// <summary>Response of <c>POST /users/{id}/temporary-password</c>.</summary>
+public sealed record TemporaryPasswordResultDto(string TemporaryPassword, bool MustChangePassword);
+
+/// <summary>Body for <c>POST /auth/register</c> (invite-code self-registration).</summary>
+public sealed record RegisterRequestDto(
+    string InviteCode,
+    string FirstName,
+    string LastName,
+    string Email,
+    string Password);
+
+/// <summary>Response of <c>POST /auth/register</c>.</summary>
+public sealed record RegisterResultDto(string UserId, string OrganizationId, string Email, string Role, string Status);
 
 /// <summary>Per-row outcome from <c>POST .../users/import</c>.</summary>
 public sealed record UserImportRowResultDto(int RowNumber, string? Email, string Outcome, string? Error, string? TemporaryPassword);

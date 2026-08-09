@@ -24,6 +24,10 @@
         {
             <div class="authnote" role="status">Your password was changed. Please sign in with your new password.</div>
         }
+        @if (Registered && _error is null)
+        {
+            <div class="authnote" role="status">Your account was created. Sign in to get started.</div>
+        }
         @if (_error is not null)
         {
             <div class="autherror" role="alert">@_error</div>
@@ -43,6 +47,7 @@
             </FluentButton>
         </EditForm>
 
+        <p class="footnote">Have an invite code? <a href="/register">Create an account</a>.</p>
         <p class="footnote">Forgot your password? <a href="#">Contact your organization admin</a>.</p>
     </div>
 </div>
@@ -53,6 +58,9 @@
 
     [SupplyParameterFromQuery]
     private bool PasswordChanged { get; set; }
+
+    [SupplyParameterFromQuery]
+    private bool Registered { get; set; }
 
     private string? _email;
     private string? _password;

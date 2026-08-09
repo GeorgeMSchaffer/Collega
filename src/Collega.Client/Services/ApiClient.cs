@@ -54,6 +54,10 @@ public sealed partial class ApiClient
     public Task<ApiResult<OrganizationDetailDto>> UpdateOrganizationAsync(string organizationId, SaveOrganizationRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<OrganizationDetailDto>(HttpMethod.Put, $"{BasePath}/organizations/{organizationId}", body, ct);
 
+    /// <summary>Regenerates the org's invite code, invalidating the previous one; returns the new code.</summary>
+    public Task<ApiResult<RegenerateInviteCodeResultDto>> RegenerateInviteCodeAsync(string organizationId, CancellationToken ct = default) =>
+        SendJsonAsync<RegenerateInviteCodeResultDto>(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/invite-code/regenerate", new { }, ct);
+
     public Task<ApiResult<UserDetailDto>> GetUserAsync(string userId, CancellationToken ct = default) =>
         GetAsync<UserDetailDto>($"{BasePath}/users/{userId}", ct);
 
@@ -62,6 +66,14 @@ public sealed partial class ApiClient
 
     public Task<ApiResult<UserDetailDto>> UpdateUserAsync(string userId, UpdateUserRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<UserDetailDto>(HttpMethod.Put, $"{BasePath}/users/{userId}", body, ct);
+
+    /// <summary>Issues a one-time admin-generated temporary password for the user (forces a change on next login).</summary>
+    public Task<ApiResult<TemporaryPasswordResultDto>> IssueTemporaryPasswordAsync(string userId, CancellationToken ct = default) =>
+        SendJsonAsync<TemporaryPasswordResultDto>(HttpMethod.Post, $"{BasePath}/users/{userId}/temporary-password", new { }, ct);
+
+    /// <summary>Self-registers a new user with an organization invite code (anonymous).</summary>
+    public Task<ApiResult<RegisterResultDto>> RegisterAsync(RegisterRequestDto body, CancellationToken ct = default) =>
+        SendJsonAsync<RegisterResultDto>(HttpMethod.Post, $"{BasePath}/auth/register", body, ct);
 
     /// <summary>Bulk-imports users from a CSV file (multipart, field <c>csvFile</c>).</summary>
     public async Task<ApiResult<UserImportResultDto>> ImportUsersAsync(string organizationId, Stream fileStream, string fileName, CancellationToken ct = default)

@@ -79,6 +79,26 @@
                 </div>
             </EditForm>
         </div>
+
+        @if (!_isNew)
+        {
+            <div class="card formcard" style="margin-top:16px">
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:6px">Reset password</h3>
+                <p class="sub" style="margin-bottom:10px">Generates a one-time temporary password. Give it to the user; they'll be required to set a new password at their next sign-in.</p>
+                @if (_resetError is not null)
+                {
+                    <div class="autherror" role="alert">@_resetError</div>
+                }
+                @if (_tempPassword is not null)
+                {
+                    <div class="authnote" role="status" style="margin-bottom:10px">
+                        Temporary password: <code style="font-size:15px;background:#f3f2f1;padding:4px 10px;border-radius:var(--radius-btn)">@_tempPassword</code>
+                        <div class="sub" style="margin-top:4px">Copy it now — it isn't shown again.</div>
+                    </div>
+                }
+                <button class="btn subtle" @onclick="ResetPassword" disabled="@_resetting">@(_resetting ? "Generating…" : "Generate temporary password")</button>
+            </div>
+        }
     }
 </div>
 
@@ -113,6 +133,9 @@
     private bool _loading;
     private bool _busy;
     private string? _error;
+    private bool _resetting;
+    private string? _tempPassword;
+    private string? _resetError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -201,5 +224,24 @@
 
         _error = error ?? "Save failed.";
         _busy = false;
+    }
+
+    private async Task ResetPassword()
+    {
+        _resetting = true;
+        _resetError = null;
+        _tempPassword = null;
+
+        var result = await Api.IssueTemporaryPasswordAsync(UserId!);
+        _resetting = false;
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _tempPassword = result.Value.TemporaryPassword;
+        }
+        else
+        {
+            _resetError = result.Error ?? "Couldn't reset the password.";
+        }
     }
 }

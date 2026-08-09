@@ -1,0 +1,92 @@
+@page "/register"
+@layout AuthLayout
+@inject NavigationManager Nav
+@inject ApiClient Api
+
+<PageTitle>Create account · Collega</PageTitle>
+
+@*
+    Invite-code self-registration (SPEC/10-requirements.md #12) against POST /api/v1/auth/register.
+    The invite code determines the organization. Registration doesn't issue a token, so on success the
+    user is sent to sign in. Anonymous page (no [Authorize]) so it renders without a login redirect.
+*@
+<div class="authwrap">
+    <div class="authcard">
+        <div class="brand">
+            <span class="mark">CG</span>
+            <span class="name">Collega</span>
+        </div>
+        <h1 style="font-size:22px;margin-bottom:6px">Create your account</h1>
+        <p class="sub">Enter the invite code from your organization admin. It decides which organization you join.</p>
+
+        @if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+
+        <EditForm Model="this" OnValidSubmit="SubmitRegistration">
+            <div class="field">
+                <label for="invite">Invite code</label>
+                <FluentTextField id="invite" @bind-Value="_inviteCode" Disabled="_busy" Style="width:100%" />
+            </div>
+            <div class="formrow">
+                <div class="field">
+                    <label for="first">First name</label>
+                    <FluentTextField id="first" @bind-Value="_firstName" Disabled="_busy" Style="width:100%" />
+                </div>
+                <div class="field">
+                    <label for="last">Last name</label>
+                    <FluentTextField id="last" @bind-Value="_lastName" Disabled="_busy" Style="width:100%" />
+                </div>
+            </div>
+            <div class="field">
+                <label for="email">Email</label>
+                <FluentTextField id="email" @bind-Value="_email" TextFieldType="TextFieldType.Email" Disabled="_busy" Style="width:100%" />
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <FluentTextField id="password" @bind-Value="_password" TextFieldType="TextFieldType.Password" Disabled="_busy" Style="width:100%" />
+            </div>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Class="authbtn" Disabled="_busy">
+                @(_busy ? "Creating account…" : "Create account")
+            </FluentButton>
+        </EditForm>
+
+        <p class="footnote">Already have an account? <a href="/login">Sign in</a>.</p>
+    </div>
+</div>
+
+@code {
+    private string? _inviteCode;
+    private string? _firstName;
+    private string? _lastName;
+    private string? _email;
+    private string? _password;
+    private string? _error;
+    private bool _busy;
+
+    private async Task SubmitRegistration()
+    {
+        if (string.IsNullOrWhiteSpace(_inviteCode) || string.IsNullOrWhiteSpace(_firstName)
+            || string.IsNullOrWhiteSpace(_lastName) || string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "All fields are required.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+
+        var body = new RegisterRequestDto(_inviteCode!.Trim(), _firstName!.Trim(), _lastName!.Trim(), _email!.Trim(), _password!);
+        var result = await Api.RegisterAsync(body);
+        if (!result.Succeeded)
+        {
+            _error = result.Error ?? "Registration failed. Check your invite code and try again.";
+            _busy = false;
+            return;
+        }
+
+        // Registration doesn't return a token — send the new user to sign in.
+        Nav.NavigateTo("/login?registered=true");
+    }
+}
