@@ -28,7 +28,8 @@ public sealed record CreateIdeaRequestDto(
     string Title,
     string Description,
     string Priority,
-    string? StatusId = null);
+    string? StatusId = null,
+    IReadOnlyList<IdeaFieldValueWriteDto>? FieldValues = null);
 
 /// <summary>Response of <c>POST /boards/{id}/ideas</c>.</summary>
 public sealed record CreateIdeaResultDto(

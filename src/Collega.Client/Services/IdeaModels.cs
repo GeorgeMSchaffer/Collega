@@ -29,6 +29,19 @@ public sealed record IdeaCommentDto(
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc);
 
+/// <summary>A User-Defined Field value on an idea create/update payload
+/// (SPEC/20-feature-user-defined-fields.md). <c>Value</c> is the raw string interpreted per the field's
+/// type; null or empty clears the value. Shared by the new-idea create form and the idea-detail edit.</summary>
+public sealed record IdeaFieldValueWriteDto(string FieldDefinitionId, string? Value);
+
+/// <summary>A resolved User-Defined Field value returned on the idea detail. Only active
+/// (non-archived) field definitions are surfaced by the server.</summary>
+public sealed record IdeaFieldValueDetailDto(
+    string FieldDefinitionId,
+    string FieldName,
+    string FieldType,
+    string? Value);
+
 /// <summary>Detail for <c>GET /ideas/{ideaId}</c> (and the body echoed by <c>PUT /ideas/{ideaId}</c>).</summary>
 public sealed record IdeaDetailDto(
     string IdeaId,
@@ -45,7 +58,8 @@ public sealed record IdeaDetailDto(
     IReadOnlyList<IdeaCommentDto> Comments,
     int UpvoteCount,
     bool HasUpvoted,
-    int CommentCount);
+    int CommentCount,
+    IReadOnlyList<IdeaFieldValueDetailDto> FieldValues);
 
 /// <summary>Body for <c>PUT /ideas/{ideaId}</c>. Sends the full editable field set, so unchanged
 /// fields (priority, due date, assignees, tags) must be echoed back to avoid clearing them.</summary>
@@ -56,7 +70,8 @@ public sealed record UpdateIdeaRequestDto(
     string? DueDate,
     IReadOnlyList<string>? AssigneeUserIds,
     IReadOnlyList<string>? TagNames,
-    IReadOnlyList<string>? MentionEmails);
+    IReadOnlyList<string>? MentionEmails,
+    IReadOnlyList<IdeaFieldValueWriteDto>? FieldValues = null);
 
 /// <summary>Body for <c>POST /ideas/{ideaId}/status</c>.</summary>
 public sealed record ChangeIdeaStatusRequestDto(string StatusId);

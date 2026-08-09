@@ -1,0 +1,31 @@
+.udf-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.udf-desc {
+    font-size: 11px;
+    color: var(--ink-3);
+    margin: 0 0 4px;
+}
+
+.udf-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.udf-multi {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.req {
+    color: var(--err);
+    margin-left: 2px;
+}

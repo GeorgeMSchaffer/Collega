@@ -1,0 +1,43 @@
+/* Option sub-editor: one row per selectable option (label + move/remove controls). */
+.opts {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.optrow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.checkline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.hint {
+    font-size: 11px;
+    color: var(--ink-3);
+    margin-top: 4px;
+}
+
+.fddesc {
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 2px;
+}
+
+.confirm {
+    font-size: 12px;
+    color: var(--ink-2);
+    margin-right: 4px;
+}
+
+tr.archived td {
+    opacity: .7;
+}

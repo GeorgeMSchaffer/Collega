@@ -73,6 +73,12 @@ else
                 <textarea id="idea-desc" class="prose descinput" maxlength="4000"
                           @bind="_description" @bind:event="oninput" disabled="@_savingIdea"></textarea>
 
+                @if (_fieldDefs.Count > 0)
+                {
+                    <h2 class="fieldlabel" style="margin-top:20px">Custom fields</h2>
+                    <IdeaFieldInputs Fields="_fieldDefs" Values="_fieldValues" Disabled="_savingIdea" OnChanged="StateHasChanged" />
+                }
+
                 <div class="btnrow savebtnrow">
                     <button class="btn primary" @onclick="SaveIdea" disabled="@(_savingIdea || !HasIdeaChanges)">
                         @(_savingIdea ? "Saving…" : "Save changes")
@@ -195,6 +201,20 @@ else
                     }
                 </div>
             </div>
+            @if (!_canEdit)
+            {
+                @foreach (var f in _fieldDefs)
+                {
+                    var display = DisplayFieldValue(f);
+                    @if (!string.IsNullOrEmpty(display))
+                    {
+                        <div class="fact">
+                            <div class="k">@f.Name</div>
+                            <div class="v">@display</div>
+                        </div>
+                    }
+                }
+            }
             <div class="fact">
                 <div class="k">Upvotes</div>
                 <div class="v">@_idea.UpvoteCount @(_idea.UpvoteCount == 1 ? "person" : "people")</div>
@@ -213,6 +233,12 @@ else
     private readonly List<CommentListItemDto> _comments = new();
     private List<StatusItemDto> _statusOptions = new();
     private readonly Dictionary<string, string> _names = new();
+
+    // Org User-Defined Fields (UDFs). _fieldValues is the editable working copy keyed by field
+    // definition id; _originalFieldValues snapshots the loaded values for change detection / discard.
+    private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
+    private Dictionary<string, string?> _fieldValues = new();
+    private Dictionary<string, string?> _originalFieldValues = new();
 
     private string _title = "";
     private string _description = "";
@@ -242,7 +268,13 @@ else
     private bool _canEdit => _role != "ReadOnly" && !string.IsNullOrEmpty(_role);
 
     private bool HasIdeaChanges =>
-        _idea is not null && (_title != _idea.Title || _description != _idea.Description);
+        _idea is not null && (_title != _idea.Title || _description != _idea.Description || FieldValuesChanged);
+
+    private bool FieldValuesChanged => _fieldDefs.Any(f =>
+        NormFieldValue(_fieldValues.GetValueOrDefault(f.FieldDefinitionId))
+        != NormFieldValue(_originalFieldValues.GetValueOrDefault(f.FieldDefinitionId)));
+
+    private static string NormFieldValue(string? v) => string.IsNullOrWhiteSpace(v) ? "" : v;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -297,6 +329,18 @@ else
                 .ToList();
         }
 
+        // Org custom-field schema (best-effort; cached in the ApiClient). Available to any member so
+        // read-only viewers still see values. Seed the editable working copy from the idea's values.
+        if (!string.IsNullOrEmpty(_organizationId))
+        {
+            var fieldsResult = await Api.GetActiveFieldDefinitionsAsync(_organizationId);
+            if (fieldsResult.Succeeded)
+            {
+                _fieldDefs = fieldsResult.Value!;
+            }
+        }
+        SeedFieldValues();
+
         // Best-effort author name map from the org's users, so comment bylines show real names.
         // Only needed when the idea actually has comments — skip the fetch otherwise.
         if (!string.IsNullOrEmpty(_organizationId) && _idea!.CommentCount > 0)
@@ -330,6 +374,25 @@ else
         foreach (var m in idea.Mentions)
         {
             _names[m.UserId] = m.DisplayName;
+        }
+    }
+
+    // Rebuilds the editable UDF working copy (and its change-detection snapshot) from the current
+    // idea's resolved field values. Called after load and after each successful save.
+    private void SeedFieldValues()
+    {
+        _fieldValues = new Dictionary<string, string?>();
+        _originalFieldValues = new Dictionary<string, string?>();
+        if (_idea is null)
+        {
+            return;
+        }
+
+        foreach (var f in _fieldDefs)
+        {
+            var value = _idea.FieldValues?.FirstOrDefault(v => v.FieldDefinitionId == f.FieldDefinitionId)?.Value;
+            _fieldValues[f.FieldDefinitionId] = value;
+            _originalFieldValues[f.FieldDefinitionId] = value;
         }
     }
 
@@ -369,9 +432,23 @@ else
             return;
         }
 
+        // Mirror the server's required-field guardrail so the user sees it before the round-trip.
+        var missing = _fieldDefs.FirstOrDefault(f => f.IsRequired && string.IsNullOrWhiteSpace(_fieldValues.GetValueOrDefault(f.FieldDefinitionId)));
+        if (missing is not null)
+        {
+            _actionError = $"{missing.Name} is required.";
+            return;
+        }
+
         _savingIdea = true;
         _actionError = null;
         _saveMessage = null;
+
+        // Field values are full-replace on the server, so every active field must be sent every save —
+        // omitting one clears it. A field left blank is sent as null, which correctly clears it.
+        var fieldValues = _fieldDefs
+            .Select(f => new IdeaFieldValueWriteDto(f.FieldDefinitionId, _fieldValues.GetValueOrDefault(f.FieldDefinitionId)))
+            .ToList();
 
         // Echo the unchanged fields back so they aren't cleared by the full-replace update.
         var body = new UpdateIdeaRequestDto(
@@ -381,12 +458,14 @@ else
             _idea.DueDate,
             _idea.Assignees.Select(a => a.UserId).ToList(),
             _idea.TagNames.ToList(),
-            null);
+            null,
+            _fieldDefs.Count > 0 ? fieldValues : null);
 
         var result = await Api.UpdateIdeaAsync(_idea.IdeaId, body);
         if (result.Succeeded && result.Value is not null)
         {
             SetIdea(result.Value);
+            SeedFieldValues();
             _saveMessage = "Changes saved.";
         }
         else
@@ -403,6 +482,7 @@ else
         {
             _title = _idea.Title;
             _description = _idea.Description;
+            _fieldValues = new Dictionary<string, string?>(_originalFieldValues);
             _saveMessage = null;
             _actionError = null;
         }
@@ -524,6 +604,31 @@ else
             return parts[0][..1].ToUpperInvariant();
         }
         return (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+    }
+
+    // Resolves a UDF value to human-readable text for the read-only facts panel. Dropdown/MultiSelect
+    // values are stored as option ids, so they're mapped back to labels via the field's option list.
+    private string? DisplayFieldValue(FieldDefinitionDto f)
+    {
+        var raw = _fieldValues.GetValueOrDefault(f.FieldDefinitionId);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return null;
+        }
+
+        switch (f.FieldType)
+        {
+            case "Boolean":
+                return string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase) ? "Yes" : "No";
+            case "Dropdown":
+                return f.Options.FirstOrDefault(o => o.OptionId == raw)?.Label ?? raw;
+            case "MultiSelect":
+                var ids = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var labels = ids.Select(idv => f.Options.FirstOrDefault(o => o.OptionId == idv)?.Label ?? idv);
+                return string.Join(", ", labels);
+            default:
+                return raw;
+        }
     }
 
     private static string PriorityPill(string priority) => priority switch

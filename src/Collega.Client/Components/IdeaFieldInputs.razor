@@ -1,0 +1,146 @@
+@*
+    Dynamic User-Defined Field inputs for the idea forms (T058, SPEC/20-feature-user-defined-fields.md
+    "Idea Form UDF Fields"). Renders one type-appropriate control per active field definition, ordered
+    by the caller. Values are held in the caller-owned <see cref="Values"/> dictionary keyed by field
+    definition id and mutated in place, so the parent can read them straight back when building its
+    create/update payload. Serialization format per type mirrors the server contract:
+      Text / Url  → raw string     Number → decimal string   Date → yyyy-MM-dd
+      Boolean     → "true"/"false" Dropdown → option id       MultiSelect → comma-joined option ids
+*@
+@if (Fields.Count > 0)
+{
+    <div class="udf-fields">
+        @foreach (var f in Fields)
+        {
+            var id = f.FieldDefinitionId;
+            <div class="field udf-field">
+                <label for="@($"udf-{id}")">
+                    @f.Name
+                    @if (f.IsRequired)
+                    {
+                        <span class="req" title="Required">*</span>
+                    }
+                </label>
+                @if (!string.IsNullOrWhiteSpace(f.Description))
+                {
+                    <p class="udf-desc">@f.Description</p>
+                }
+
+                @switch (f.FieldType)
+                {
+                    case "Number":
+                        <input id="@($"udf-{id}")" type="number" step="any" value="@GetValue(id)"
+                               @oninput="e => SetValue(id, e.Value?.ToString())" disabled="@Disabled" style="width:100%" />
+                        break;
+
+                    case "Date":
+                        <input id="@($"udf-{id}")" type="date" value="@GetValue(id)"
+                               @oninput="e => SetValue(id, e.Value?.ToString())" disabled="@Disabled" style="width:100%" />
+                        break;
+
+                    case "Url":
+                        <input id="@($"udf-{id}")" type="url" placeholder="https://…" value="@GetValue(id)"
+                               @oninput="e => SetValue(id, e.Value?.ToString())" disabled="@Disabled" style="width:100%" />
+                        break;
+
+                    case "Boolean":
+                        <label class="udf-check">
+                            <input id="@($"udf-{id}")" type="checkbox" checked="@IsTrue(id)"
+                                   @onchange="e => OnBoolChanged(id, e)" disabled="@Disabled" />
+                            Yes
+                        </label>
+                        break;
+
+                    case "Dropdown":
+                        <select id="@($"udf-{id}")" value="@GetValue(id)"
+                                @onchange="e => SetValue(id, e.Value?.ToString())" disabled="@Disabled" style="width:100%">
+                            <option value="">— Select —</option>
+                            @foreach (var o in Ordered(f))
+                            {
+                                <option value="@o.OptionId">@o.Label</option>
+                            }
+                        </select>
+                        break;
+
+                    case "MultiSelect":
+                        <div class="udf-multi">
+                            @foreach (var o in Ordered(f))
+                            {
+                                var optId = o.OptionId;
+                                <label class="udf-check">
+                                    <input type="checkbox" checked="@IsSelected(id, optId)"
+                                           @onchange="e => ToggleOption(id, optId, (bool)(e.Value ?? false))" disabled="@Disabled" />
+                                    @o.Label
+                                </label>
+                            }
+                        </div>
+                        break;
+
+                    default: // Text
+                        <input id="@($"udf-{id}")" type="text" maxlength="2000" value="@GetValue(id)"
+                               @oninput="e => SetValue(id, e.Value?.ToString())" disabled="@Disabled" style="width:100%" />
+                        break;
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>Active field definitions to render, in the order they should appear.</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<FieldDefinitionDto> Fields { get; set; } = Array.Empty<FieldDefinitionDto>();
+
+    /// <summary>Caller-owned value store keyed by field definition id; mutated in place.</summary>
+    [Parameter, EditorRequired] public Dictionary<string, string?> Values { get; set; } = new();
+
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Raised after any value changes. Lets the parent re-render (e.g. to re-evaluate a
+    /// change-gated Save button), since edits happen inside this child component.</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private static IEnumerable<FieldOptionDto> Ordered(FieldDefinitionDto f) => f.Options.OrderBy(o => o.DisplayOrder);
+
+    private string GetValue(string id) => Values.TryGetValue(id, out var v) ? v ?? string.Empty : string.Empty;
+
+    private async Task SetValue(string id, string? value)
+    {
+        Values[id] = string.IsNullOrEmpty(value) ? null : value;
+        await OnChanged.InvokeAsync();
+    }
+
+    private bool IsTrue(string id) => string.Equals(GetValue(id), "true", StringComparison.OrdinalIgnoreCase);
+
+    private Task OnBoolChanged(string id, ChangeEventArgs e) => SetValue(id, (bool)(e.Value ?? false) ? "true" : "false");
+
+    private bool IsSelected(string id, string optionId) => SelectedIds(id).Contains(optionId);
+
+    private async Task ToggleOption(string id, string optionId, bool on)
+    {
+        var set = SelectedIds(id);
+        if (on)
+        {
+            set.Add(optionId);
+        }
+        else
+        {
+            set.Remove(optionId);
+        }
+        // Preserve option display order so the joined value is stable.
+        var ordered = Fields.FirstOrDefault(f => f.FieldDefinitionId == id)?.Options
+            .OrderBy(o => o.DisplayOrder)
+            .Select(o => o.OptionId)
+            .Where(set.Contains)
+            .ToList() ?? set.ToList();
+        Values[id] = ordered.Count == 0 ? null : string.Join(",", ordered);
+        await OnChanged.InvokeAsync();
+    }
+
+    private HashSet<string> SelectedIds(string id)
+    {
+        var raw = GetValue(id);
+        return string.IsNullOrEmpty(raw)
+            ? new HashSet<string>()
+            : raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet();
+    }
+}

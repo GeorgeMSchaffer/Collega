@@ -107,6 +107,11 @@
                         </select>
                     </div>
                 </div>
+                @if (_fieldDefs.Count > 0)
+                {
+                    <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);margin:6px 0 8px">Custom fields</h4>
+                    <IdeaFieldInputs Fields="_fieldDefs" Values="_newFieldValues" Disabled="_creating" />
+                }
                 <div class="btnrow">
                     <button class="btn primary" @onclick="CreateIdea" disabled="@_creating">@(_creating ? "Creating…" : "Create idea")</button>
                     <button class="btn" @onclick="() => _showNew = false" disabled="@_creating">Cancel</button>
@@ -298,6 +303,11 @@
     private bool _creating;
     private string? _newError;
 
+    // Org User-Defined Fields (UDFs) rendered on the new-idea form. Loaded once per org from the
+    // ApiClient's cache; _newFieldValues holds the in-progress values keyed by field definition id.
+    private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
+    private Dictionary<string, string?> _newFieldValues = new();
+
     // Drag state
     private string? _draggedIdeaId;
     private string? _dragOverStatusId;
@@ -364,6 +374,16 @@
             }
         }
 
+        // Org custom-field schema for the new-idea form (best-effort; cached in the ApiClient).
+        if (_fieldDefs.Count == 0 && !string.IsNullOrEmpty(_organizationId))
+        {
+            var fieldsResult = await Api.GetActiveFieldDefinitionsAsync(_organizationId!);
+            if (fieldsResult.Succeeded)
+            {
+                _fieldDefs = fieldsResult.Value!;
+            }
+        }
+
         _loadedBoardId = BoardId;
         _loading = false;
 
@@ -387,6 +407,9 @@
     }
 
     private void OnFilterInput(ChangeEventArgs e) => _filter = e.Value?.ToString() ?? string.Empty;
+
+    private string? FieldValue(string fieldDefinitionId) =>
+        _newFieldValues.TryGetValue(fieldDefinitionId, out var v) ? v : null;
 
     private List<IdeaListItemDto> IdeasFor(string statusId)
     {
@@ -419,6 +442,7 @@
         _newDescription = string.Empty;
         _newPriority = "Medium";
         _newStatusId = statusId ?? OrderedLanes.FirstOrDefault()?.StatusId ?? string.Empty;
+        _newFieldValues = new Dictionary<string, string?>();
         _newError = null;
         _showNew = true;
     }
@@ -436,14 +460,28 @@
             return;
         }
 
+        // Mirror the server's required-field guardrail so the user sees it before the round-trip.
+        var missing = _fieldDefs.FirstOrDefault(f => f.IsRequired && string.IsNullOrWhiteSpace(FieldValue(f.FieldDefinitionId)));
+        if (missing is not null)
+        {
+            _newError = $"{missing.Name} is required.";
+            return;
+        }
+
         _creating = true;
         _newError = null;
+
+        var fieldValues = _fieldDefs
+            .Select(f => new IdeaFieldValueWriteDto(f.FieldDefinitionId, FieldValue(f.FieldDefinitionId)))
+            .Where(v => !string.IsNullOrWhiteSpace(v.Value))
+            .ToList();
 
         var body = new CreateIdeaRequestDto(
             _newTitle.Trim(),
             _newDescription.Trim(),
             _newPriority,
-            string.IsNullOrEmpty(_newStatusId) ? null : _newStatusId);
+            string.IsNullOrEmpty(_newStatusId) ? null : _newStatusId,
+            fieldValues.Count > 0 ? fieldValues : null);
 
         var result = await Api.CreateIdeaAsync(BoardId, body);
         _creating = false;
