@@ -421,8 +421,10 @@ public sealed class IdeaService : IIdeaService
         var impacts = await LoadBusinessImpactLookupAsync(board.OrganizationId, cancellationToken);
         var tagLookup = await LoadTagLookupAsync(ideas.SelectMany(i => i.Tags.Select(t => t.TagId)), cancellationToken);
 
-        // One extra column per active User-Defined Field, in display order (T060).
+        // One extra column per active User-Defined Field, in display order (T060). Fields whose name
+        // collides with a core column are excluded so the header isn't duplicated (see IsReservedColumn).
         var fieldDefinitions = (await _fieldDefinitionRepository.ListByOrganizationAsync(board.OrganizationId, includeDeleted: false, cancellationToken))
+            .Where(d => !IdeaCsvColumns.IsReservedColumn(d.Name))
             .OrderBy(d => d.DisplayOrder)
             .ToList();
         var fieldValueSnapshots = await _ideaRepository.GetFieldValuesByIdeaIdsAsync(ideas.Select(i => i.Id).ToList(), cancellationToken);
@@ -490,8 +492,12 @@ public sealed class IdeaService : IIdeaService
             }
         }
 
-        // Active UDF schema (with options) so per-field columns can be read by name (T060).
-        var fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(org, includeDeleted: false, cancellationToken);
+        // Active UDF schema (with options) so per-field columns can be read by name (T060). Fields whose
+        // name collides with a core column are excluded from CSV handling (see IsReservedColumn) so the
+        // core column isn't misread as the field value (or vice versa) and isn't spuriously required.
+        var fieldDefinitions = (await _fieldDefinitionRepository.ListByOrganizationAsync(org, includeDeleted: false, cancellationToken))
+            .Where(d => !IdeaCsvColumns.IsReservedColumn(d.Name))
+            .ToList();
         var allFieldDefinitionIds = fieldDefinitions.Select(d => d.Id).ToList();
 
         var leftMost = board.LeftMostStatusId;

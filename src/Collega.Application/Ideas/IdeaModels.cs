@@ -185,4 +185,13 @@ public static class IdeaCsvColumns
     {
         Title, Description, Priority, IdeaType, BusinessImpact,
     };
+
+    private static readonly HashSet<string> CoreKeySet = Core
+        .Select(c => c.Key)
+        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>True when a User-Defined Field name collides with a core column header. Such fields are
+    /// excluded from CSV export/import so the core column isn't duplicated or overwritten (T060).</summary>
+    public static bool IsReservedColumn(string? fieldName) =>
+        !string.IsNullOrWhiteSpace(fieldName) && CoreKeySet.Contains(fieldName.Trim());
 }

@@ -560,6 +560,33 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         Assert.Contains("Area idea", csv);
     }
 
+    [Fact]
+    public async Task Idea_Csv_Excludes_Udf_Named_Like_A_Core_Column()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+
+        // A UDF whose name collides with the core "Priority" column.
+        var field = await admin.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/field-definitions",
+            new { name = "Priority", fieldType = "Text", isRequired = false, displayOrder = 10, options = Array.Empty<object>() });
+        Assert.Equal(HttpStatusCode.Created, field.StatusCode);
+
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Seed", description = "d", priority = "Low" });
+
+        // Export must not duplicate the core Priority column with the collided UDF.
+        using var export = await admin.GetAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas/export");
+        var csv = await export.Content.ReadAsStringAsync();
+        var headerLine = csv.Replace("﻿", string.Empty).Split('\n')[0].TrimEnd('\r');
+        Assert.Equal(1, headerLine.Split(',').Count(c => c == "Priority"));
+
+        // Import with a Priority column still creates, using it as the core priority (UDF ignored).
+        var result = await ImportIdeasAsync(admin, org.DefaultBoardId,
+            "Title,Description,Priority,Idea Type,Business Impact\nImported,d,Low,Continuous Improvement,High\n");
+        Assert.Equal(1, result.CreatedCount);
+        Assert.Equal(0, result.RejectedCount);
+    }
+
     private async Task<ImportResult> ImportIdeasAsync(HttpClient client, Guid boardId, string csvContent)
     {
         using var content = new MultipartFormDataContent();
