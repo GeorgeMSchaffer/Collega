@@ -17,8 +17,8 @@
 *@
 <div class="pagehead">
     <div class="crumbs"><a href="/settings">Settings</a> / Custom fields</div>
-    <h1>Custom fields</h1>
-    <p class="sub" style="margin-bottom:18px">Define the custom fields your organization captures on ideas.</p>
+    <h1>@(_siteAdminGlobal ? "All custom fields" : "Custom fields")</h1>
+    <p class="sub" style="margin-bottom:18px">@(_siteAdminGlobal ? "Custom fields across every organization." : "Define the custom fields your organization captures on ideas.")</p>
 </div>
 
 <div class="body">
@@ -29,7 +29,10 @@
     else
     {
         <div class="cmdbar">
-            <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New field</button>
+            @if (!_siteAdminGlobal)
+            {
+                <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New field</button>
+            }
             <label class="checkline" style="margin-left:auto">
                 <input type="checkbox" checked="@_showArchived" @onchange="OnToggleArchived" disabled="@_editing" />
                 Show archived
@@ -92,8 +95,8 @@
                                            value="@_form.Options[i].Label"
                                            @oninput="e => _form.Options[i].Label = e.Value?.ToString() ?? string.Empty"
                                            disabled="@_busy" style="flex:1" />
-                                    <button class="btn subtle" type="button" @onclick="() => MoveOption(i, -1)" disabled="@(_busy || i == 0)" title="Move up">↑</button>
-                                    <button class="btn subtle" type="button" @onclick="() => MoveOption(i, 1)" disabled="@(_busy || i == _form.Options.Count - 1)" title="Move down">↓</button>
+                                    <button class="btn subtle iconbtn" type="button" @onclick="() => MoveOption(i, -1)" disabled="@(_busy || i == 0)" title="Move up" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
+                                    <button class="btn subtle iconbtn" type="button" @onclick="() => MoveOption(i, 1)" disabled="@(_busy || i == _form.Options.Count - 1)" title="Move down" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
                                     <button class="btn danger" type="button" @onclick="() => RemoveOption(i)" disabled="@_busy">Remove</button>
                                 </div>
                             }
@@ -112,7 +115,7 @@
         <div class="card">
             <table>
                 <thead>
-                    <tr><th>Field</th><th>Type</th><th>Required</th><th>Options</th><th></th></tr>
+                    <tr><th>Field</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Type</th><th>Required</th><th>Options</th><th></th></tr>
                 </thead>
                 <tbody>
                     @for (var idx = 0; idx < _fields.Count; idx++)
@@ -131,14 +134,22 @@
                                     <div class="fddesc">@f.Description</div>
                                 }
                             </td>
+                            @if (_siteAdminGlobal)
+                            {
+                                <td>@OrganizationName(f.OrganizationId)</td>
+                            }
                             <td>@TypeLabel(f.FieldType)</td>
                             <td>@(f.IsRequired ? "Yes" : "No")</td>
                             <td>@(IsOptionBacked(f.FieldType) ? $"{f.Options.Count}" : "—")</td>
                             <td class="rowactions">
-                                @if (!f.IsDeleted)
+                                @if (_siteAdminGlobal)
                                 {
-                                    <button class="btn subtle" @onclick="() => MoveField(i, -1)" disabled="@(_editing || _busy || !CanMoveUp(i))" title="Move up">↑</button>
-                                    <button class="btn subtle" @onclick="() => MoveField(i, 1)" disabled="@(_editing || _busy || !CanMoveDown(i))" title="Move down">↓</button>
+                                    <a class="btn subtle" href="@($"/settings/organizations/{f.OrganizationId}/fields")">Manage</a>
+                                }
+                                else if (!f.IsDeleted)
+                                {
+                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(i, -1)" disabled="@(_editing || _busy || !CanMoveUp(i))" title="Move up" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
+                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(i, 1)" disabled="@(_editing || _busy || !CanMoveDown(i))" title="Move down" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
                                     <button class="btn subtle" @onclick="() => StartEdit(f)" disabled="@_editing">Edit</button>
                                     @if (_confirmDeleteId == f.FieldDefinitionId)
                                     {
@@ -200,6 +211,8 @@
     }
 
     private string? _organizationId;
+    private bool _siteAdminGlobal;
+    private readonly Dictionary<string, string> _organizationNames = new();
     private List<FieldDefinitionDto> _fields = new();
     private bool _loading = true;
     private bool _busy;
@@ -218,7 +231,9 @@
         }
         else if (AuthStateTask is not null)
         {
-            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+            var user = (await AuthStateTask).User;
+            _organizationId = user.FindFirst("organizationId")?.Value;
+            _siteAdminGlobal = user.IsInRole("SiteAdmin") && string.IsNullOrEmpty(OrganizationId);
         }
 
         await LoadAsync();
@@ -229,6 +244,13 @@
         _loading = true;
         _error = null;
         _confirmDeleteId = null;
+        if (_siteAdminGlobal)
+        {
+            await LoadGlobalAsync();
+            _loading = false;
+            return;
+        }
+
         if (string.IsNullOrEmpty(_organizationId))
         {
             _error = "Your account isn't associated with an organization.";
@@ -253,6 +275,32 @@
         _loading = false;
     }
 
+    private async Task LoadGlobalAsync()
+    {
+        var organizations = await Api.GetAllOrganizationsAsync();
+        if (!organizations.Succeeded)
+        {
+            _error = organizations.Error;
+            return;
+        }
+
+        var activeOrganizations = organizations.Value!.Where(organization => !organization.IsArchived).ToList();
+        foreach (var organization in activeOrganizations)
+        {
+            _organizationNames[organization.OrganizationId] = organization.Title;
+        }
+
+        var results = await Task.WhenAll(activeOrganizations.Select(organization => Api.GetFieldDefinitionsAsync(organization.OrganizationId, _showArchived)));
+        var failure = results.FirstOrDefault(result => !result.Succeeded);
+        if (failure is not null)
+        {
+            _error = failure.Error;
+            return;
+        }
+
+        _fields = results.SelectMany(result => result.Value!).OrderBy(field => OrganizationName(field.OrganizationId)).ThenBy(field => field.IsDeleted).ThenBy(field => field.DisplayOrder).ToList();
+    }
+
     private async Task OnToggleArchived(ChangeEventArgs e)
     {
         _showArchived = (bool)(e.Value ?? false);
@@ -269,6 +317,9 @@
         _error = null;
         _editing = true;
     }
+
+    private string OrganizationName(string organizationId) =>
+        _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 
     private void StartEdit(FieldDefinitionDto f)
     {

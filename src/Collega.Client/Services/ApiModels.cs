@@ -8,6 +8,8 @@ public sealed record LoginRequestDto(string Email, string Password);
 
 public sealed record ChangePasswordRequestDto(string CurrentPassword, string NewPassword);
 
+public sealed record UpdateCurrentUserRequestDto(string FirstName, string LastName);
+
 /// <summary>Response body of <c>POST /auth/login</c>.</summary>
 public sealed record LoginResponseDto(
     string AccessToken,

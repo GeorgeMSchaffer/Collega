@@ -69,6 +69,9 @@ See `SPEC/20-feature-client-ui.md` NAVIGATION for the authoritative rail descrip
     - Site Admin: Organizations, Users, Boards & Statuses.
     - Org Admin: Users and Boards & Statuses, scoped to their own organization only.
     - Member: My Profile only; no admin links are rendered.
+- Site Admin is not organization-owned. Its Boards, Ideas, Users, Statuses, and User-Defined Fields list views
+  aggregate all organizations and identify each row's owning organization; no synthetic or selected
+  organization membership is required for read access. Mutations remain target-organization scoped.
 - Link visibility is a UI convenience only; the API remains the authority for authorization.
 
 ## Admin-Style Pages: List/Form Pattern
@@ -187,3 +190,9 @@ Applies to Organizations, Users, Ideas, Boards, and any future entity list page.
 - [ ] Ideas page (`/ideas`) lists combined created-by/assigned-to ideas with All/Created/Assigned filter and Title/Created By/Assigned To/Status/Created Date columns; Details navigates to `/ideas/{id}/edit`.
 - [ ] All list pages have a uniform search bar and server-side pagination with 25/50/100/250 page sizes (default 25).
 - [ ] Home page is an authenticated dashboard per Decision D4: welcome message, `Boards`/`Your ideas`/`Assigned to you` counts, a "Your boards" tile grid with a "Request a new board" tile, and a "Catching you up" activity feed.
+- [ ] My Profile edits first and last name with immediate shell refresh, keeps email/role read-only, and provides voluntary password change.
+- [ ] Successful required and voluntary password changes clear authentication, return to Login with confirmation, and re-login lands on Dashboard.
+- [ ] The 28-minute idle warning, 30-minute expiry, Stay signed in action, absolute expiry, and cross-tab activity/logout behavior match the canonical authentication spec.
+- [ ] Native and Fluent text-like controls render at a stable 36px height with vertically centered content; textareas retain independent content-sized geometry.
+- [ ] Rail and reorder/drag actions use Fluent System Icons with stable dimensions, accessible labels/tooltips, visible focus, and disabled states instead of emoji or Unicode glyphs.
+- [ ] Session, password redirect, control geometry, and icon behavior receive user manual acceptance on desktop and narrow layouts before their Bug Triage items move to COMPLETED.

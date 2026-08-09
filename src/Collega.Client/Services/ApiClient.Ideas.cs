@@ -38,6 +38,26 @@ public sealed partial class ApiClient
         return GetAsync<PagedResultDto<IdeaListItemDto>>(url, ct);
     }
 
+    public async Task<ApiResult<List<IdeaListItemDto>>> GetAllOrganizationIdeasAsync(
+        string organizationId, string? search, CancellationToken ct = default)
+    {
+        var items = new List<IdeaListItemDto>();
+        for (var page = 1; ; page++)
+        {
+            var result = await GetOrganizationIdeasAsync(organizationId, "all", search, page, 250, null, ct);
+            if (!result.Succeeded)
+            {
+                return ApiResult<List<IdeaListItemDto>>.Failure(result.StatusCode, result.Error ?? "Couldn't load ideas.");
+            }
+
+            items.AddRange(result.Value!.Items);
+            if (items.Count >= result.Value.TotalCount || result.Value.Items.Count == 0)
+            {
+                return ApiResult<List<IdeaListItemDto>>.Success(items, result.StatusCode);
+            }
+        }
+    }
+
     public Task<ApiResult<IdeaDetailDto>> UpdateIdeaAsync(string ideaId, UpdateIdeaRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<IdeaDetailDto>(HttpMethod.Put, $"{BasePath}/ideas/{ideaId}", body, ct);
 
@@ -57,7 +77,7 @@ public sealed partial class ApiClient
             using var response = await _http.SendAsync(request, ct);
             return response.IsSuccessStatusCode
                 ? ApiResult<bool>.Success(true, (int)response.StatusCode)
-                : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+                : ApiResult<bool>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
         }
         catch (HttpRequestException ex)
         {

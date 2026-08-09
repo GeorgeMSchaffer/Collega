@@ -62,7 +62,7 @@ public sealed partial class ApiClient
             using var response = await _http.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode)
             {
-                return ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+                return ApiResult<bool>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
             }
 
             InvalidateFieldDefinitions(organizationId);
@@ -87,7 +87,7 @@ public sealed partial class ApiClient
             using var response = await _http.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode)
             {
-                return ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+                return ApiResult<bool>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
             }
 
             InvalidateFieldDefinitions(organizationId);

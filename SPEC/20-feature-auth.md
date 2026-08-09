@@ -46,6 +46,12 @@ Users can securely access the application using organization-scoped accounts.
 ## Session Mechanism (Resolved 2026-08-07)
 35. `accessToken` is a signed JWT embedding the issuing `User.SecurityStamp` value as a claim. Every authenticated request revalidates the embedded `SecurityStamp` against the user's current database value; a mismatch is rejected the same way an expired token is. This is a JWT-plus-server-side-check design, not an opaque session-table design.
 36. "Revoke all existing sessions" (requirement #29 and the self-service reset acceptance criteria) is implemented by regenerating `User.SecurityStamp`. This single write immediately invalidates every previously issued JWT for that user, with no token blocklist or session table required.
+37. Access tokens have an absolute lifetime of 480 minutes (8 hours). Client activity can never extend this server-enforced JWT expiry.
+38. An authenticated browser session expires after 30 minutes without user activity. The client warns at 28 minutes and displays a live two-minute countdown with actions to stay signed in or sign out.
+39. Pointer, keyboard, touch, scroll, and document-visibility activity reset the browser idle deadline. Activity timestamps and logout/expiry signals synchronize across tabs for the same browser profile.
+40. "Stay signed in" records browser activity and dismisses the idle warning but does not refresh, replace, or extend the JWT.
+41. Idle expiry, absolute JWT expiry, and API rejection of an expired token clear client authentication state and return the user to Login with the message "Your session expired. Sign in again to continue."
+42. Explicit logout and logout after a successful required or voluntary password change return to Login without the session-expired message.
 
 ## Acceptance Criteria
 - [ ] Valid credentials allow login
@@ -81,3 +87,8 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Password-reset requests and outcomes are audited without exposing the token or plaintext password
 - [ ] `accessToken` is a JWT carrying the issuing `SecurityStamp` claim; a request whose claim no longer matches the user's current `SecurityStamp` is rejected as unauthenticated
 - [ ] Regenerating a user's `SecurityStamp` (on any "revoke all sessions" action) invalidates every previously issued token for that user on their very next request
+- [ ] Issued access tokens expire exactly 480 minutes after issuance and browser activity never extends that absolute deadline
+- [ ] At 28 minutes without activity, the browser displays an accessible warning with a live two-minute countdown and Stay signed in / Sign out actions
+- [ ] Pointer, keyboard, touch, scroll, and visibility activity reset the 30-minute idle deadline and synchronize across open tabs
+- [ ] Staying signed in resets only the browser idle deadline; idle or absolute expiry clears all tabs and returns to Login with the session-expired message
+- [ ] Explicit logout and successful required or voluntary password changes return to Login without showing the session-expired message

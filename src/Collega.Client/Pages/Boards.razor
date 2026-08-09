@@ -33,13 +33,17 @@
         <div class="card">
             <table>
                 <thead>
-                    <tr><th>Board</th><th>Swimlanes</th><th>User status moves</th><th></th></tr>
+                    <tr><th>Board</th>@if (_isSiteAdmin) { <th>Organization</th> }<th>Swimlanes</th><th>User status moves</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var b in _boards)
                     {
                         <tr>
                             <td><a href="@($"/board/{b.BoardId}")"><strong>@b.Name</strong></a></td>
+                            @if (_isSiteAdmin)
+                            {
+                                <td>@OrganizationName(b.OrganizationId)</td>
+                            }
                             <td>@b.SwimlaneCount</td>
                             <td>
                                 @if (b.AllowUserStatusUpdate)
@@ -65,6 +69,8 @@
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
     private List<BoardListItemDto> _boards = new();
+    private readonly Dictionary<string, string> _organizationNames = new();
+    private bool _isSiteAdmin;
     private bool _loading = true;
     private string? _error;
 
@@ -73,7 +79,40 @@
         string? organizationId = null;
         if (AuthStateTask is not null)
         {
-            organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+            var user = (await AuthStateTask).User;
+            organizationId = user.FindFirst("organizationId")?.Value;
+            _isSiteAdmin = user.IsInRole("SiteAdmin");
+        }
+
+        if (_isSiteAdmin)
+        {
+            var organizations = await Api.GetAllOrganizationsAsync();
+            if (!organizations.Succeeded)
+            {
+                _error = organizations.Error;
+                _loading = false;
+                return;
+            }
+
+            var activeOrganizations = organizations.Value!.Where(organization => !organization.IsArchived).ToList();
+            foreach (var organization in activeOrganizations)
+            {
+                _organizationNames[organization.OrganizationId] = organization.Title;
+            }
+
+            var boardResults = await Task.WhenAll(activeOrganizations.Select(organization => Api.GetBoardsAsync(organization.OrganizationId)));
+            var failure = boardResults.FirstOrDefault(result => !result.Succeeded);
+            if (failure is not null)
+            {
+                _error = failure.Error;
+            }
+            else
+            {
+                _boards = boardResults.SelectMany(result => result.Value!).OrderBy(board => OrganizationName(board.OrganizationId)).ThenBy(board => board.Name).ToList();
+            }
+
+            _loading = false;
+            return;
         }
 
         if (string.IsNullOrEmpty(organizationId))
@@ -95,4 +134,7 @@
 
         _loading = false;
     }
+
+    private string OrganizationName(string organizationId) =>
+        _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 }

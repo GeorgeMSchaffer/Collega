@@ -57,8 +57,8 @@
                             <span class="swatch" style="background:@s.Color"></span>
                             <span class="lane-name">@s.Name</span>
                             <span class="lane-actions">
-                                <button class="btn subtle" @onclick="() => MoveUp(index)" disabled="@(_busy || index == 0)" title="Move up">↑</button>
-                                <button class="btn subtle" @onclick="() => MoveDown(index)" disabled="@(_busy || index == _selected.Count - 1)" title="Move down">↓</button>
+                                <button class="btn subtle iconbtn" @onclick="() => MoveUp(index)" disabled="@(_busy || index == 0)" title="Move up" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
+                                <button class="btn subtle iconbtn" @onclick="() => MoveDown(index)" disabled="@(_busy || index == _selected.Count - 1)" title="Move down" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
                                 <button class="btn danger" @onclick="() => Remove(s)" disabled="@(_busy || _selected.Count <= 2)" title="@(_selected.Count <= 2 ? "A board needs at least two swimlanes." : "Remove")">Remove</button>
                             </span>
                         </div>

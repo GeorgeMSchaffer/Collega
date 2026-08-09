@@ -17,6 +17,16 @@ The active item in the application's primary navigation has a flat rectangular b
     /settings/organizations/{orgId}/statuses:  Create and manage statuses for the org
     /settings/organizations/{orgId}/idea-fields: Create and manage Idea Type and Business Impact options for the org
 
+  Site Admin is a global account and never requires an organization membership or `organizationId`
+  claim to browse platform data. Home, Boards, Ideas, Users, Statuses, and User-Defined Fields aggregate records
+  from every organization and display the owning organization where needed. Create and edit operations
+  remain explicitly scoped to the selected resource's organization; Site Admin chooses an organization
+  before creating an organization-owned resource.
+
+  When an authenticated API request returns `401` because the persisted token is expired or its
+  security stamp is no longer valid, the client clears the persisted session and returns to Login with
+  the expired-session message instead of leaving the current page in an error state.
+
   - Compatibility redirects: `/board` → `/boards`; `/workflow` and `/workflows` → `/boards`; `/workflow/{boardId}` → `/board/{boardId}`
 
   ## `/board/{boardId}` — Kanban Board
@@ -119,6 +129,14 @@ The workspace artifact `mockups/sprint-management/idea-board.html` was the layou
 - Idea detail is a full-page, editorial article layout (not an overlay): primary content/comments in the main column with a metadata sidebar (status, priority, assignee, due date, tags, audit info) alongside. Reached at `/ideas/{ideaId}/edit` from both a board card and the Ideas list — one Idea Detail experience, two entry points.
 - Auth screens (login, first-login password change) are centered cards using Comp C's warm neutral palette, locked via `comp-c-review-06-lockin-v5-final.html`'s Sign in screen (general edge-case detail remains in `comp-c-review-01-login-and-auth.html`).
 - Implement with Fluent UI Blazor components per `SPEC/mockups/README.md` implementation notes (providers, dialog/toast services, no manual asset tags).
+
+### Session, Profile, Controls, and Icons (locked 2026-08-08)
+- My Profile contains an editable first/last-name section and a voluntary password-change section; email and role are read-only. A successful name update refreshes shell identity immediately.
+- Successful required and voluntary password changes clear client authentication and return to Login with confirmation. Re-login lands on Dashboard unless a separate normal return URL applies.
+- After 28 minutes without activity, an accessible Fluent dialog shows a live two-minute countdown with Stay signed in and Sign out actions. Staying signed in resets browser inactivity only; idle or absolute expiry returns to Login with the specific session-expired message.
+- Native and Fluent text-like inputs and selects use stable 36px geometry with vertically centered single-line content. Textareas retain content-sized height and independent padding.
+- Navigation and action glyphs use Fluent System Icons rather than emoji or Unicode characters. Icon-only buttons have stable dimensions, accessible names, hover tooltips, visible keyboard focus, and correct disabled behavior; decorative icons adjacent to visible text are hidden from assistive technology.
+- Session timing, cross-tab behavior, password redirects, control geometry, and icon accessibility require user manual acceptance on desktop and narrow layouts until the parallel browser-automation work is integrated.
 
 ### Typography
 - Font family: `"Segoe UI", -apple-system, Roboto, sans-serif` for body text; `Georgia, "Times New Roman", serif` for headings and display text (`h1`, `h2`, stat figures) — per `SPEC/mockups/comp-c-fluent-editorial.html`. This replaces the prior single-family IBM Plex Sans / Inter direction from Comp A.

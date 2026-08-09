@@ -30,7 +30,7 @@ dotnet watch --project ./src/Collega.API -- --seed:auth --seed:demo
 ```
 
 - **No flag (default):** the Site Admin is always seeded; demo data is seeded only under the `Development` environment. Unchanged historical behavior.
-- **Any `--seed:*` flag present:** explicit mode — *only* the seeds you name run, regardless of environment. `--seed:auth` seeds the Site Admin; `--seed:demo` seeds the three demo orgs. So `--seed:auth` alone suppresses the demo seed even in Development, and `--seed:demo` seeds demo data even outside Development.
+- **Any `--seed:*` flag present:** explicit mode — *only* the seeds you name run, regardless of environment. `--seed:auth` seeds the Site Admin; `--seed:demo` seeds the two demo organizations. So `--seed:auth` alone suppresses the demo seed even in Development, and `--seed:demo` seeds demo data even outside Development.
 - Forms accepted per flag: `--seed:demo`, `/seed:demo`, `--seed:demo=false`. Parsed from raw `args` in [`Program.cs`](Program.cs), independent of the config system.
 - The startup fail-fast on `SiteAdmin:Email` / `SiteAdmin:Password` still applies regardless of flags — those keys are a deployment-validity requirement (#8), not a seeding toggle. Note user-secrets only load under `Development`, so a non-Development run needs the keys via environment variables.
 
@@ -48,7 +48,7 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
   "Server=localhost,1433;Database=Collega;User Id=sa;Password=<your-password>;TrustServerCertificate=True;"
 ```
 
-Environment variables work too, with a **double** underscore: `SiteAdmin__Email`, `ConnectionStrings__DefaultConnection`.
+Environment variables work too, with a **double** underscore: `SiteAdmin__Email`, `ConnectionStrings__DefaultConnection`, `Auth__AccessTokenLifetimeMinutes`.
 
 Optional: `Auth:TokenSigningKey` (base64; a random per-process key is generated if unset, so tokens don't survive a restart) and `Auth:AccessTokenLifetimeMinutes` (default 480).
 

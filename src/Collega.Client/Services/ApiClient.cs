@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Configuration;
 
 namespace Collega.Client.Services;
@@ -21,11 +22,14 @@ public sealed partial class ApiClient
 
     private readonly HttpClient _http;
     private readonly AuthSessionStore _store;
+    private readonly NavigationManager _navigation;
+    private bool _validatingUnauthorizedSession;
 
-    public ApiClient(HttpClient http, AuthSessionStore store)
+    public ApiClient(HttpClient http, AuthSessionStore store, NavigationManager navigation)
     {
         _http = http;
         _store = store;
+        _navigation = navigation;
     }
 
     public async Task<ApiResult<LoginResponseDto>> LoginAsync(string email, string password, CancellationToken ct = default)
@@ -37,13 +41,57 @@ public sealed partial class ApiClient
         return await SendAsync<LoginResponseDto>(request, ct);
     }
 
-    /// <summary>Site Admin: the organization list. Pulls a large first page (admin lists are small).</summary>
-    public Task<ApiResult<PagedResultDto<OrganizationListItemDto>>> GetOrganizationsAsync(CancellationToken ct = default) =>
-        GetAsync<PagedResultDto<OrganizationListItemDto>>($"{BasePath}/organizations?pageSize=100", ct);
+    public Task<ApiResult<UserSummaryDto>> GetCurrentUserAsync(CancellationToken ct = default) =>
+        GetAsync<UserSummaryDto>($"{BasePath}/auth/me", ct);
+
+    public Task<ApiResult<UserSummaryDto>> UpdateCurrentUserAsync(string firstName, string lastName, CancellationToken ct = default) =>
+        SendJsonAsync<UserSummaryDto>(HttpMethod.Put, $"{BasePath}/auth/me", new UpdateCurrentUserRequestDto(firstName, lastName), ct);
+
+    /// <summary>Site Admin: one page of organizations.</summary>
+    public Task<ApiResult<PagedResultDto<OrganizationListItemDto>>> GetOrganizationsAsync(int page = 1, int pageSize = 100, CancellationToken ct = default) =>
+        GetAsync<PagedResultDto<OrganizationListItemDto>>($"{BasePath}/organizations?page={page}&pageSize={pageSize}", ct);
+
+    public async Task<ApiResult<List<OrganizationListItemDto>>> GetAllOrganizationsAsync(CancellationToken ct = default)
+    {
+        var items = new List<OrganizationListItemDto>();
+        for (var page = 1; ; page++)
+        {
+            var result = await GetOrganizationsAsync(page, 100, ct);
+            if (!result.Succeeded)
+            {
+                return ApiResult<List<OrganizationListItemDto>>.Failure(result.StatusCode, result.Error ?? "Couldn't load organizations.");
+            }
+
+            items.AddRange(result.Value!.Items);
+            if (items.Count >= result.Value.TotalCount || result.Value.Items.Count == 0)
+            {
+                return ApiResult<List<OrganizationListItemDto>>.Success(items, result.StatusCode);
+            }
+        }
+    }
 
     /// <summary>The users belonging to one organization (Org Admin's own org, or any org for a Site Admin).</summary>
-    public Task<ApiResult<PagedResultDto<UserListItemDto>>> GetOrganizationUsersAsync(string organizationId, CancellationToken ct = default) =>
-        GetAsync<PagedResultDto<UserListItemDto>>($"{BasePath}/organizations/{organizationId}/users?pageSize=100", ct);
+    public Task<ApiResult<PagedResultDto<UserListItemDto>>> GetOrganizationUsersAsync(string organizationId, int page = 1, int pageSize = 100, CancellationToken ct = default) =>
+        GetAsync<PagedResultDto<UserListItemDto>>($"{BasePath}/organizations/{organizationId}/users?page={page}&pageSize={pageSize}", ct);
+
+    public async Task<ApiResult<List<UserListItemDto>>> GetAllOrganizationUsersAsync(string organizationId, CancellationToken ct = default)
+    {
+        var items = new List<UserListItemDto>();
+        for (var page = 1; ; page++)
+        {
+            var result = await GetOrganizationUsersAsync(organizationId, page, 100, ct);
+            if (!result.Succeeded)
+            {
+                return ApiResult<List<UserListItemDto>>.Failure(result.StatusCode, result.Error ?? "Couldn't load users.");
+            }
+
+            items.AddRange(result.Value!.Items);
+            if (items.Count >= result.Value.TotalCount || result.Value.Items.Count == 0)
+            {
+                return ApiResult<List<UserListItemDto>>.Success(items, result.StatusCode);
+            }
+        }
+    }
 
     public Task<ApiResult<OrganizationDetailDto>> GetOrganizationAsync(string organizationId, CancellationToken ct = default) =>
         GetAsync<OrganizationDetailDto>($"{BasePath}/organizations/{organizationId}", ct);
@@ -68,7 +116,7 @@ public sealed partial class ApiClient
             using var response = await _http.SendAsync(request, ct);
             return response.IsSuccessStatusCode
                 ? ApiResult<bool>.Success(true, (int)response.StatusCode)
-                : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+                : ApiResult<bool>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
         }
         catch (HttpRequestException ex)
         {
@@ -120,7 +168,7 @@ public sealed partial class ApiClient
             using var response = await _http.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode)
             {
-                return ApiResult<UserImportResultDto>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+                return ApiResult<UserImportResultDto>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
             }
 
             var value = await response.Content.ReadFromJsonAsync<UserImportResultDto>(JsonOptions, ct);
@@ -150,7 +198,7 @@ public sealed partial class ApiClient
         using var response = await _http.SendAsync(request, ct);
         return response.IsSuccessStatusCode
             ? ApiResult<bool>.Success(true, (int)response.StatusCode)
-            : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+            : ApiResult<bool>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
     }
 
     public async Task<ApiResult<bool>> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken ct = default)
@@ -164,7 +212,7 @@ public sealed partial class ApiClient
         using var response = await _http.SendAsync(request, ct);
         return response.IsSuccessStatusCode
             ? ApiResult<bool>.Success(true, (int)response.StatusCode)
-            : ApiResult<bool>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+            : ApiResult<bool>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
     }
 
     private async Task<ApiResult<T>> GetAsync<T>(string url, CancellationToken ct)
@@ -197,7 +245,7 @@ public sealed partial class ApiClient
         {
             if (!response.IsSuccessStatusCode)
             {
-                return ApiResult<T>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+                return ApiResult<T>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
             }
 
             var value = await response.Content.ReadFromJsonAsync<T>(JsonOptions, ct);
@@ -214,6 +262,50 @@ public sealed partial class ApiClient
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
+    }
+
+    private async Task HandleUnauthorizedAsync(HttpRequestMessage request, HttpResponseMessage response)
+    {
+        if (response.StatusCode != System.Net.HttpStatusCode.Unauthorized
+            || request.Headers.Authorization is null
+            || request.RequestUri?.ToString().Contains("/auth/login", StringComparison.OrdinalIgnoreCase) == true
+            || _validatingUnauthorizedSession)
+        {
+            return;
+        }
+
+        var isCurrentUserRequest = request.RequestUri?.ToString().Contains("/auth/me", StringComparison.OrdinalIgnoreCase) == true;
+        if (!isCurrentUserRequest)
+        {
+            _validatingUnauthorizedSession = true;
+            try
+            {
+                using var validationRequest = new HttpRequestMessage(HttpMethod.Get, $"{BasePath}/auth/me");
+                validationRequest.Headers.Authorization = request.Headers.Authorization;
+                using var validationResponse = await _http.SendAsync(validationRequest);
+                if (validationResponse.StatusCode != System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return;
+                }
+            }
+            catch (HttpRequestException)
+            {
+                return;
+            }
+            finally
+            {
+                _validatingUnauthorizedSession = false;
+            }
+        }
+
+        await _store.ClearAsync("expired");
+        _navigation.NavigateTo("/login?sessionExpired=true", forceLoad: true, replace: true);
+    }
+
+    private async Task<string> ReadFailureAsync(HttpRequestMessage request, HttpResponseMessage response, CancellationToken ct)
+    {
+        await HandleUnauthorizedAsync(request, response);
+        return await ReadErrorAsync(response, ct);
     }
 
     private static async Task<string> ReadErrorAsync(HttpResponseMessage response, CancellationToken ct)

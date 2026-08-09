@@ -220,7 +220,7 @@
                                     <div class="top">
                                         @if (_canMove)
                                         {
-                                            <span class="grip" title="Drag to move">⠿</span>
+                                            <span class="grip" title="Drag to move" role="img" aria-label="Drag to move idea"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" /></span>
                                         }
                                         <span class="t" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">@i.Title</span>
                                         <span class="prio-chip @PrioClass(i.Priority)">@PrioLabel(i.Priority)</span>
@@ -433,6 +433,14 @@
             return;
         }
         _board = boardResult.Value;
+        if (!string.Equals(_organizationId, _board.OrganizationId, StringComparison.OrdinalIgnoreCase))
+        {
+            _boards.Clear();
+            _fieldDefs = Array.Empty<FieldDefinitionDto>();
+            _ideaTypes = Array.Empty<IdeaFieldOptionDto>();
+            _businessImpacts = Array.Empty<IdeaFieldOptionDto>();
+        }
+        _organizationId = _board.OrganizationId;
 
         var ideasResult = await Api.GetBoardIdeasAsync(BoardId);
         if (ideasResult.Succeeded)

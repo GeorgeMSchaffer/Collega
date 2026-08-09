@@ -19,7 +19,7 @@
            class="@(on ? "on" : null)"
            aria-current="@(on ? "page" : null)"
            title="@item.Label">
-            <span class="ico" aria-hidden="true">@item.Icon</span>
+            <span class="ico" aria-hidden="true"><FluentIcon Value="@item.Icon" /></span>
             <span>@item.Label</span>
         </a>
     }
@@ -27,7 +27,7 @@
     <span class="push"></span>
 
     <a href="/logout" title="Log out">
-        <span class="ico" aria-hidden="true">🚪</span>
+        <span class="ico" aria-hidden="true"><FluentIcon Value="@(new Icons.Regular.Size20.SignOut())" /></span>
         <span>Log out</span>
     </a>
 
@@ -76,10 +76,10 @@
 
     private readonly RailItem[] _items =
     {
-        new("🏠", "Home", "/", NavLinkMatch.All),
-        new("📋", "Boards", "/boards", NavLinkMatch.Prefix),
-        new("💡", "Ideas", "/ideas", NavLinkMatch.Prefix),
-        new("⚙️", "Settings", "/settings", NavLinkMatch.Prefix),
+        new(new Icons.Regular.Size20.Home(), "Home", "/", NavLinkMatch.All),
+        new(new Icons.Regular.Size20.Board(), "Boards", "/boards", NavLinkMatch.Prefix),
+        new(new Icons.Regular.Size20.Lightbulb(), "Ideas", "/ideas", NavLinkMatch.Prefix),
+        new(new Icons.Regular.Size20.Settings(), "Settings", "/settings", NavLinkMatch.Prefix),
     };
 
     protected override async Task OnInitializedAsync()
@@ -141,5 +141,5 @@
 
     public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
 
-    private readonly record struct RailItem(string Icon, string Label, string Href, NavLinkMatch Match);
+    private readonly record struct RailItem(Icon Icon, string Label, string Href, NavLinkMatch Match);
 }

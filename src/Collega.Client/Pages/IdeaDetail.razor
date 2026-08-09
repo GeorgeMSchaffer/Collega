@@ -337,6 +337,7 @@ else
         var board = await Api.GetBoardAsync(_idea!.BoardId);
         if (board.Succeeded && board.Value is not null)
         {
+            _organizationId = board.Value.OrganizationId;
             _statusOptions = board.Value.Swimlanes
                 .OrderBy(s => s.Order)
                 .Select(s => new StatusItemDto(s.StatusId, board.Value.OrganizationId, s.StatusName, s.StatusColor, s.Order, s.StatusIsDeleted))
@@ -359,10 +360,10 @@ else
         // Only needed when the idea actually has comments — skip the fetch otherwise.
         if (!string.IsNullOrEmpty(_organizationId) && _idea!.CommentCount > 0)
         {
-            var users = await Api.GetOrganizationUsersAsync(_organizationId);
+            var users = await Api.GetAllOrganizationUsersAsync(_organizationId);
             if (users.Succeeded && users.Value is not null)
             {
-                foreach (var u in users.Value.Items)
+                foreach (var u in users.Value)
                 {
                     _names[u.UserId] = $"{u.FirstName} {u.LastName}".Trim();
                 }

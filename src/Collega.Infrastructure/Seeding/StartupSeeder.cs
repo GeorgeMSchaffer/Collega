@@ -6,6 +6,8 @@ using Collega.Domain.Comments;
 using Collega.Domain.Enums;
 using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
+using Collega.Domain.Tags;
+using Collega.Domain.Upvotes;
 using Collega.Domain.Users;
 using Collega.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -19,17 +21,50 @@ namespace Collega.Infrastructure.Seeding;
 /// 1. The global Site Admin, from environment-provided credentials, on first run only.
 /// 2. 2 demo organizations, each provisioned with the default statuses and two demo boards,
 ///    plus one Org Admin and two User accounts at password `Abc123!`, none forced to change it.
-///    Every demo board is populated with one idea per swimlane plus a few example comments.
+///    Every demo board is populated with 11 ideas distributed 3/2/2/1/3 across its swimlanes.
 /// </summary>
 public sealed class StartupSeeder : IStartupSeeder
 {
     private const string DemoPassword = "Abc123!";
     private const string SecondDemoBoardName = "Opportunities";
 
-    private static readonly (string Title, string Slug, string Description)[] DemoOrganizations =
+    private static readonly int[] IdeasPerStatus = { 3, 2, 2, 1, 3 };
+
+    private static readonly DemoIdeaScenario[] IdeaScenarios =
     {
-        ("Acme Robotics", "acme-robotics", "Industrial robotics and automation manufacturer."),
-        ("Blue Harbor Logistics", "blue-harbor", "Regional freight and warehousing operator.")
+        new("Reduce manual handoffs", "Map the current handoffs and automate the highest-friction transition."),
+        new("Add proactive alerts", "Notify the responsible team before a preventable delay becomes customer-visible."),
+        new("Standardize the intake checklist", "Use one concise checklist so requests arrive complete and ready for action."),
+        new("Pilot a faster review path", "Trial a lightweight review path for low-risk changes and measure cycle time."),
+        new("Improve exception visibility", "Surface recurring exceptions with enough context for rapid ownership."),
+        new("Automate weekly reporting", "Generate the weekly operating summary from source data instead of spreadsheets."),
+        new("Create a shared playbook", "Capture the approved response steps and escalation points in one maintained playbook."),
+        new("Validate the customer feedback loop", "Close the loop with requesters and record whether the change solved the problem."),
+        new("Roll out the proven workflow", "Extend the successful pilot to the remaining teams with clear adoption measures."),
+        new("Measure time saved", "Compare the new workflow with the baseline and publish the verified time savings."),
+        new("Retire the legacy step", "Remove the superseded process step after confirming all dependencies have moved."),
+    };
+
+    private static readonly DemoOrganizationScenario[] DemoOrganizations =
+    {
+        new(
+            "Acme Robotics",
+            "acme-robotics",
+            "Industrial robotics and automation manufacturer.",
+            new[]
+            {
+                new DemoBoardScenario(OrganizationDefaults.DefaultBoardName, "Assembly cell reliability", new[] { "automation", "safety", "quality", "cycle-time" }),
+                new DemoBoardScenario(SecondDemoBoardName, "Field service enablement", new[] { "service", "diagnostics", "customer-impact", "parts" }),
+            }),
+        new(
+            "Blue Harbor Logistics",
+            "blue-harbor",
+            "Regional freight and warehousing operator.",
+            new[]
+            {
+                new DemoBoardScenario(OrganizationDefaults.DefaultBoardName, "Warehouse throughput", new[] { "warehouse", "safety", "inventory", "cycle-time" }),
+                new DemoBoardScenario(SecondDemoBoardName, "Route and delivery performance", new[] { "routing", "fleet", "customer-impact", "scheduling" }),
+            }),
     };
 
     private readonly CollegaDbContext _dbContext;
@@ -77,27 +112,27 @@ public sealed class StartupSeeder : IStartupSeeder
 
         var demoPasswordHash = _passwordHasher.Hash(DemoPassword);
 
-        foreach (var (title, slug, description) in DemoOrganizations)
+        foreach (var scenario in DemoOrganizations)
         {
-            var organization = await _dbContext.Organizations.FirstOrDefaultAsync(o => o.Title == title, cancellationToken);
+            var organization = await _dbContext.Organizations.FirstOrDefaultAsync(o => o.Title == scenario.Title, cancellationToken);
             if (organization is null)
             {
-                organization = Organization.Create(title, description, GenerateInviteCode(slug), now);
+                organization = Organization.Create(scenario.Title, scenario.Description, GenerateInviteCode(scenario.Slug), now);
                 await _dbContext.Organizations.AddAsync(organization, cancellationToken);
 
                 // Every organization — demo or real — starts with the default statuses and one board.
                 await _bootstrapService.ProvisionDefaultsAsync(organization.Id, now, actorUserId: null, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
-                await AddDemoUserAsync(organization.Id, "Olivia", "Administer", $"orgadmin@{slug}.demo.collega.test", demoPasswordHash, Role.OrgAdmin, now, cancellationToken);
-                await AddDemoUserAsync(organization.Id, "Noah", "Contributor", $"user@{slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
-                await AddDemoUserAsync(organization.Id, "Maya", "Collaborator", $"user2@{slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
+                await AddDemoUserAsync(organization.Id, "Olivia", "Administer", $"orgadmin@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.OrgAdmin, now, cancellationToken);
+                await AddDemoUserAsync(organization.Id, "Noah", "Contributor", $"user@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
+                await AddDemoUserAsync(organization.Id, "Maya", "Collaborator", $"user2@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
             }
 
             await EnsureSecondDemoBoardAsync(organization.Id, now, cancellationToken);
-            await SeedDemoBoardContentAsync(organization.Id, now, cancellationToken);
+            await SeedDemoBoardContentAsync(organization.Id, scenario, now, cancellationToken);
         }
     }
 
@@ -142,10 +177,14 @@ public sealed class StartupSeeder : IStartupSeeder
     }
 
     /// <summary>
-    /// Fills every demo board with one example idea in each swimlane (spread across priorities) plus
-    /// a handful of comments. Skips boards that already hold ideas so reruns remain idempotent.
+    /// Fills every empty demo board from the fixed scenario catalog. Boards that already hold ideas
+    /// are left untouched so reruns remain idempotent and never replace user data.
     /// </summary>
-    private async Task SeedDemoBoardContentAsync(Guid organizationId, DateTime nowUtc, CancellationToken cancellationToken)
+    private async Task SeedDemoBoardContentAsync(
+        Guid organizationId,
+        DemoOrganizationScenario organizationScenario,
+        DateTime nowUtc,
+        CancellationToken cancellationToken)
     {
         var boards = await _dbContext.Boards
             .Where(b => b.OrganizationId == organizationId)
@@ -161,76 +200,123 @@ public sealed class StartupSeeder : IStartupSeeder
             .OrderBy(s => s.SortOrder)
             .ToListAsync(cancellationToken);
 
-        var ideaType = await _dbContext.IdeaTypes
+        var ideaTypes = await _dbContext.IdeaTypes
             .Where(t => t.OrganizationId == organizationId && !t.IsDeleted)
             .OrderBy(t => t.SortOrder)
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        var businessImpact = await _dbContext.BusinessImpacts
+        var businessImpacts = await _dbContext.BusinessImpacts
             .Where(b => b.OrganizationId == organizationId && !b.IsDeleted)
             .OrderBy(b => b.SortOrder)
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        var orgAdmin = await _dbContext.Users
-            .FirstOrDefaultAsync(u => u.OrganizationId == organizationId && u.Role == Role.OrgAdmin, cancellationToken);
-        var contributor = await _dbContext.Users
-            .FirstOrDefaultAsync(u => u.OrganizationId == organizationId && u.Role == Role.User, cancellationToken);
-        var secondContributor = await _dbContext.Users
-            .Where(u => u.OrganizationId == organizationId && u.Role == Role.User)
-            .OrderBy(u => u.Email)
-            .Skip(1)
-            .FirstOrDefaultAsync(cancellationToken);
+        var users = await _dbContext.Users
+            .Where(u => u.OrganizationId == organizationId)
+            .OrderBy(u => u.Role == Role.OrgAdmin ? 0 : 1)
+            .ThenBy(u => u.Email)
+            .ToListAsync(cancellationToken);
 
         // Nothing to hang ideas off if the org's provisioned defaults are incomplete.
-        if (statuses.Count == 0 || ideaType is null || businessImpact is null || orgAdmin is null || contributor is null || secondContributor is null)
+        if (statuses.Count != IdeasPerStatus.Length || ideaTypes.Count == 0 || businessImpacts.Count == 0 || users.Count != 3)
         {
             return;
         }
 
         var priorities = new[] { Priority.Low, Priority.Medium, Priority.High, Priority.Critical };
         var noIds = Array.Empty<Guid>();
+        var seededBoardIds = await _dbContext.Ideas
+            .Where(i => i.OrganizationId == organizationId)
+            .Select(i => i.BoardId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        if (boards.All(board => seededBoardIds.Contains(board.Id)))
+        {
+            return;
+        }
+
+        var tagNames = organizationScenario.Boards.SelectMany(board => board.TagNames).Distinct().ToList();
+        var tags = await _dbContext.Tags
+            .Where(tag => tag.OrganizationId == organizationId)
+            .ToListAsync(cancellationToken);
+        var existingTagNames = tags.Select(tag => tag.NormalizedName).ToHashSet();
+        foreach (var tagName in tagNames.Where(name => !existingTagNames.Contains(Tag.Normalize(name))))
+        {
+            var tag = Tag.Create(organizationId, tagName, nowUtc);
+            tags.Add(tag);
+            await _dbContext.Tags.AddAsync(tag, cancellationToken);
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         foreach (var board in boards)
         {
-            var alreadySeeded = await _dbContext.Ideas.AnyAsync(i => i.BoardId == board.Id, cancellationToken);
-            if (alreadySeeded)
+            if (seededBoardIds.Contains(board.Id))
             {
                 continue;
             }
 
-            var ideas = new List<Idea>(statuses.Count);
-            for (var i = 0; i < statuses.Count; i++)
+            var boardScenario = organizationScenario.Boards.SingleOrDefault(candidate => candidate.Name == board.Name);
+            if (boardScenario is null)
             {
-                var status = statuses[i];
-                var author = (i % 2 == 0 ? orgAdmin : contributor).Id;
-                var assignees = new[] { secondContributor.Id };
+                continue;
+            }
+
+            var boardTags = tags.Where(tag => boardScenario.TagNames.Contains(tag.Name)).ToList();
+            var ideas = new List<Idea>(IdeaScenarios.Length);
+            var statusIndex = 0;
+            var ideasInStatus = 0;
+
+            for (var i = 0; i < IdeaScenarios.Length; i++)
+            {
+                if (ideasInStatus == IdeasPerStatus[statusIndex])
+                {
+                    statusIndex++;
+                    ideasInStatus = 0;
+                }
+
+                var ideaScenario = IdeaScenarios[i];
+                var assigneeCount = i % 3;
+                var tagCount = i % 3;
+                var assigneeIds = Enumerable.Range(1, assigneeCount)
+                    .Select(offset => users[(i + offset) % users.Count].Id)
+                    .ToArray();
+                var tagIds = Enumerable.Range(0, tagCount)
+                    .Select(offset => boardTags[(i + offset) % boardTags.Count].Id)
+                    .ToArray();
 
                 var idea = Idea.Create(
                     organizationId,
                     board.Id,
-                    status.Id,
-                    title: $"[{status.Name}] {board.Name} idea {i + 1}",
-                    description: $"Sample idea seeded in the \"{status.Name}\" swimlane on the \"{board.Name}\" board.",
+                    statuses[statusIndex].Id,
+                    title: $"{boardScenario.Focus}: {ideaScenario.Title}",
+                    description: $"{ideaScenario.Description} This scenario supports {boardScenario.Focus.ToLowerInvariant()} at {organizationScenario.Title}.",
                     priority: priorities[i % priorities.Length],
-                    ideaTypeId: ideaType.Id,
-                    businessImpactId: businessImpact.Id,
-                    dueDate: null,
-                    authorUserId: author,
-                    assigneeUserIds: assignees,
-                    tagIds: noIds,
-                    mentionUserIds: noIds,
+                    ideaTypeId: ideaTypes[i % ideaTypes.Count].Id,
+                    businessImpactId: businessImpacts[i % businessImpacts.Count].Id,
+                    dueDate: i % 3 == 0 ? null : DateOnly.FromDateTime(nowUtc).AddDays(7 + i),
+                    authorUserId: users[i % users.Count].Id,
+                    assigneeUserIds: assigneeIds,
+                    tagIds,
+                    mentionUserIds: i % 4 == 0 ? new[] { users[(i + 1) % users.Count].Id } : noIds,
                     nowUtc);
 
                 ideas.Add(idea);
                 await _dbContext.Ideas.AddAsync(idea, cancellationToken);
+
+                for (var upvoteIndex = 0; upvoteIndex < i % 3; upvoteIndex++)
+                {
+                    await _dbContext.IdeaUpvotes.AddAsync(
+                        IdeaUpvote.Create(idea.Id, users[(i + upvoteIndex + 1) % users.Count].Id, nowUtc),
+                        cancellationToken);
+                }
+
+                ideasInStatus++;
             }
 
-            await AddDemoCommentAsync(ideas[0].Id, contributor.Id, "Thanks for raising this — I'll take a first look.", nowUtc, cancellationToken);
-            await AddDemoCommentAsync(ideas[0].Id, orgAdmin.Id, "Agreed, let's prioritize it for the next review.", nowUtc, cancellationToken);
-            if (ideas.Count > 1)
-            {
-                await AddDemoCommentAsync(ideas[1].Id, secondContributor.Id, "Following along — this would help my team too.", nowUtc, cancellationToken);
-            }
+            await AddDemoCommentAsync(ideas[0].Id, users[1].Id, "Thanks for raising this - I'll take a first look.", nowUtc, cancellationToken);
+            await AddDemoCommentAsync(ideas[0].Id, users[0].Id, "Agreed, let's prioritize it for the next review.", nowUtc, cancellationToken);
+            await AddDemoCommentAsync(ideas[1].Id, users[2].Id, "Following along - this would help my team too.", nowUtc, cancellationToken);
 
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
@@ -252,4 +338,14 @@ public sealed class StartupSeeder : IStartupSeeder
         var suffix = Convert.ToHexString(RandomNumberGenerator.GetBytes(4));
         return $"{slug}-{suffix}".ToUpperInvariant();
     }
+
+    private sealed record DemoOrganizationScenario(
+        string Title,
+        string Slug,
+        string Description,
+        IReadOnlyList<DemoBoardScenario> Boards);
+
+    private sealed record DemoBoardScenario(string Name, string Focus, IReadOnlyList<string> TagNames);
+
+    private sealed record DemoIdeaScenario(string Title, string Description);
 }

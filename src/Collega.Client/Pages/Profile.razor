@@ -1,5 +1,8 @@
 @page "/settings/profile"
 @attribute [Authorize]
+@inject NavigationManager Nav
+@inject ApiClient Api
+@inject CollegaAuthStateProvider AuthState
 
 <PageTitle>Profile · Collega</PageTitle>
 
@@ -9,8 +12,168 @@
     <p class="sub" style="margin-bottom:18px">Edit your name and change your password. Email and role are read-only.</p>
 </div>
 <div class="body">
-    <div class="placeholder">
-        <h3>Profile</h3>
-        <p>The profile form (name edit, password change) is built in a later Client task. This placeholder confirms the profile route reached from the rail avatar popover.</p>
-    </div>
+    @if (_loading)
+    {
+        <p class="sub">Loading profile...</p>
+    }
+    else
+    {
+        <section class="settings-section" aria-labelledby="profile-details-heading">
+            <h2 id="profile-details-heading">Profile details</h2>
+            <p class="sub">Your name appears throughout Collega.</p>
+
+            @if (_profileMessage is not null)
+            {
+                <div class="@(_profileSucceeded ? "authnote" : "autherror")" role="@(_profileSucceeded ? "status" : "alert")">@_profileMessage</div>
+            }
+
+            <EditForm Model="this" OnValidSubmit="SaveProfileAsync" class="settings-form">
+                <div class="field-row">
+                    <div class="field">
+                        <label for="first-name">First name</label>
+                        <FluentTextField id="first-name" @bind-Value="_firstName" Disabled="_savingProfile" Style="width:100%" />
+                    </div>
+                    <div class="field">
+                        <label for="last-name">Last name</label>
+                        <FluentTextField id="last-name" @bind-Value="_lastName" Disabled="_savingProfile" Style="width:100%" />
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="profile-email">Email</label>
+                        <FluentTextField id="profile-email" Value="@_email" ReadOnly="true" Style="width:100%" />
+                    </div>
+                    <div class="field">
+                        <label for="profile-role">Role</label>
+                        <FluentTextField id="profile-role" Value="@_role" ReadOnly="true" Style="width:100%" />
+                    </div>
+                </div>
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Disabled="_savingProfile">
+                    @(_savingProfile ? "Saving..." : "Save profile")
+                </FluentButton>
+            </EditForm>
+        </section>
+
+        <section class="settings-section" aria-labelledby="change-password-heading">
+            <h2 id="change-password-heading">Change password</h2>
+            <p class="sub">After changing your password, sign in again with the new one.</p>
+
+            @if (_passwordError is not null)
+            {
+                <div class="autherror" role="alert">@_passwordError</div>
+            }
+
+            <EditForm Model="this" OnValidSubmit="ChangePasswordAsync" class="settings-form">
+                <div class="field">
+                    <label for="current-password">Current password</label>
+                    <FluentTextField id="current-password" @bind-Value="_currentPassword" TextFieldType="TextFieldType.Password" Disabled="_savingPassword" Style="width:100%" />
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="new-password">New password</label>
+                        <FluentTextField id="new-password" @bind-Value="_newPassword" TextFieldType="TextFieldType.Password" Disabled="_savingPassword" Style="width:100%" />
+                    </div>
+                    <div class="field">
+                        <label for="confirm-password">Confirm new password</label>
+                        <FluentTextField id="confirm-password" @bind-Value="_confirmPassword" TextFieldType="TextFieldType.Password" Disabled="_savingPassword" Style="width:100%" />
+                    </div>
+                </div>
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Disabled="_savingPassword">
+                    @(_savingPassword ? "Changing..." : "Change password")
+                </FluentButton>
+            </EditForm>
+        </section>
+    }
 </div>
+
+@code {
+    private bool _loading = true;
+    private bool _savingProfile;
+    private bool _savingPassword;
+    private bool _profileSucceeded;
+    private string? _firstName;
+    private string? _lastName;
+    private string? _email;
+    private string? _role;
+    private string? _profileMessage;
+    private string? _currentPassword;
+    private string? _newPassword;
+    private string? _confirmPassword;
+    private string? _passwordError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Api.GetCurrentUserAsync();
+        if (!result.Succeeded)
+        {
+            _profileMessage = result.Error;
+            _loading = false;
+            return;
+        }
+
+        ApplyUser(result.Value!);
+        _loading = false;
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_firstName) || string.IsNullOrWhiteSpace(_lastName))
+        {
+            _profileSucceeded = false;
+            _profileMessage = "Enter your first and last name.";
+            return;
+        }
+
+        _savingProfile = true;
+        _profileMessage = null;
+        var result = await Api.UpdateCurrentUserAsync(_firstName.Trim(), _lastName.Trim());
+        _savingProfile = false;
+        if (!result.Succeeded)
+        {
+            _profileSucceeded = false;
+            _profileMessage = result.Error;
+            return;
+        }
+
+        ApplyUser(result.Value!);
+        await AuthState.RefreshUserAsync(result.Value!);
+        _profileSucceeded = true;
+        _profileMessage = "Your profile was updated.";
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_currentPassword) || string.IsNullOrWhiteSpace(_newPassword))
+        {
+            _passwordError = "Enter your current and new password.";
+            return;
+        }
+
+        if (_newPassword != _confirmPassword)
+        {
+            _passwordError = "The new password and confirmation don't match.";
+            return;
+        }
+
+        _savingPassword = true;
+        _passwordError = null;
+        var result = await Api.ChangePasswordAsync(_currentPassword, _newPassword);
+        if (!result.Succeeded)
+        {
+            _passwordError = result.StatusCode == 401 ? "Your current password is incorrect." : result.Error;
+            _savingPassword = false;
+            return;
+        }
+
+        await AuthState.MarkSignedOutAsync();
+        Nav.NavigateTo("/login?passwordChanged=true", replace: true);
+    }
+
+    private void ApplyUser(UserSummaryDto user)
+    {
+        _firstName = user.FirstName;
+        _lastName = user.LastName;
+        _email = user.Email;
+        _role = user.Role;
+    }
+}

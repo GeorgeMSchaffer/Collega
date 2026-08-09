@@ -223,3 +223,9 @@ See [`CLAUDE.md`](CLAUDE.md) for the full working rules, coding standards, and t
 ## License
 
 See [LICENSE](LICENSE).
+
+## Settings administration
+
+`/settings` is a role-scoped hub. Site Admins manage organizations at `/settings/organizations` and open organization-scoped Users, Statuses, and User-Defined Fields from that list. Org Admins manage their own organization through `/settings/users`, `/settings/statuses`, and `/settings/fields`.
+Canonical role visibility and route behavior are defined in [`SPEC/20-feature-client-ui.md`](SPEC/20-feature-client-ui.md).
+

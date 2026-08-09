@@ -1,17 +1,17 @@
 @page "/settings/organizations/{OrganizationId}/users"
-@attribute [Authorize(Roles = "SiteAdmin")]
+@page "/settings/users"
+@attribute [Authorize(Roles = "OrgAdmin,SiteAdmin")]
 @inject ApiClient Api
 
 <PageTitle>Organization users · Collega</PageTitle>
 
 @*
-    Site Admin drill-down: the users belonging to a specific organization, reached from the Settings
-    organization list. Supports create/edit via the org-scoped UserEdit routes (the API already
-    authorizes Site Admin to manage users in any organization).
+    User administration list. Site Admin reaches an organization-scoped route from the organization
+    list; Org Admin reaches /settings/users and is scoped to the organization in their claims.
 *@
 <div class="pagehead">
-    <div class="crumbs"><a href="/settings">Settings</a> / @(_orgName ?? "Organization") / Users</div>
-    <h1>@(_orgName ?? "Organization") · Users</h1>
+    <div class="crumbs"><a href="/settings">Settings</a> / Users</div>
+    <h1>@(_siteAdminGlobal ? "All users" : $"{_orgName ?? "Organization"} · Users")</h1>
 </div>
 
 <div class="body">
@@ -25,17 +25,35 @@
     }
     else
     {
-        <div class="cmdbar">
-            <a class="btn primary" href="@($"/settings/organizations/{OrganizationId}/users/new")">New user</a>
-            <a class="btn" href="@($"/settings/organizations/{OrganizationId}/users/import")">Import CSV</a>
-            <a class="btn" href="@($"/settings/organizations/{OrganizationId}/statuses")">Manage statuses</a>
-            <a class="btn" href="@($"/settings/organizations/{OrganizationId}/boards")">Manage boards</a>
-            <a class="btn" href="@($"/settings/organizations/{OrganizationId}/fields")">Manage fields</a>
-        </div>
+        @if (!_siteAdminGlobal && _inviteCode is not null)
+        {
+            <div class="card formcard" style="margin-bottom:14px">
+                <h2 style="font-family:Georgia,serif;font-size:15px;margin-bottom:4px">Invite code</h2>
+                <p class="sub" style="margin-bottom:8px">Share this code so new members can self-register into your organization.</p>
+                @if (_regenError is not null)
+                {
+                    <div class="autherror" role="alert">@_regenError</div>
+                }
+                <div class="row" style="align-items:center;gap:10px">
+                    <code style="font-size:16px;letter-spacing:.08em;background:#f3f2f1;padding:6px 12px;border-radius:var(--radius-btn)">@_inviteCode</code>
+                    <button class="btn subtle" @onclick="RegenerateCodeAsync" disabled="@_regenerating">@(_regenerating ? "Regenerating…" : "Regenerate")</button>
+                </div>
+            </div>
+        }
+        @if (!_siteAdminGlobal)
+        {
+            <div class="cmdbar">
+                <a class="btn primary" href="@($"{RouteBase}/new")">New user</a>
+                <a class="btn" href="@($"{RouteBase}/import")">Import CSV</a>
+                <a class="btn" href="@($"{OrganizationRouteBase}/statuses")">Manage statuses</a>
+                <a class="btn" href="@($"{OrganizationRouteBase}/boards")">Manage boards</a>
+                <a class="btn" href="@($"{OrganizationRouteBase}/fields")">Manage fields</a>
+            </div>
+        }
         <div class="card">
             <table>
                 <thead>
-                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
+                    <tr><th>Name</th><th>Email</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Role</th><th>Status</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var user in _users)
@@ -43,6 +61,10 @@
                         <tr>
                             <td><strong>@user.FirstName @user.LastName</strong></td>
                             <td>@user.Email</td>
+                            @if (_siteAdminGlobal)
+                            {
+                                <td>@OrganizationName(user.OrganizationId)</td>
+                            }
                             <td><span class="pill info">@RoleLabel(user.Role)</span></td>
                             <td>
                                 @if (string.Equals(user.Status, "Active", StringComparison.OrdinalIgnoreCase))
@@ -54,7 +76,7 @@
                                     <span class="pill neutral">@user.Status</span>
                                 }
                             </td>
-                            <td><a class="btn subtle" href="@($"/settings/organizations/{OrganizationId}/users/{user.UserId}")">Edit</a></td>
+                            <td><a class="btn subtle" href="@UserEditRoute(user)">Edit</a></td>
                         </tr>
                     }
                 </tbody>
@@ -68,25 +90,56 @@
 </div>
 
 @code {
-    [Parameter] public string OrganizationId { get; set; } = "";
+    [Parameter] public string? OrganizationId { get; set; }
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
 
     private string? _orgName;
+    private string _resolvedOrganizationId = "";
+    private bool _siteAdmin;
+    private bool _siteAdminGlobal;
+    private readonly Dictionary<string, string> _organizationNames = new();
     private List<UserListItemDto> _users = new();
     private bool _loading = true;
     private string? _error;
+    private string? _inviteCode;
+    private string? _regenError;
+    private bool _regenerating;
 
     protected override async Task OnInitializedAsync()
     {
-        var org = await Api.GetOrganizationAsync(OrganizationId);
+        var principal = AuthStateTask is null ? null : (await AuthStateTask).User;
+        _siteAdmin = principal?.IsInRole("SiteAdmin") == true;
+        _siteAdminGlobal = _siteAdmin && string.IsNullOrEmpty(OrganizationId);
+        _resolvedOrganizationId = OrganizationId
+            ?? principal?.FindFirst("organizationId")?.Value
+            ?? "";
+
+        if (_siteAdminGlobal)
+        {
+            await LoadGlobalUsersAsync();
+            _loading = false;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_resolvedOrganizationId))
+        {
+            _error = "Choose an organization from the Organizations settings page.";
+            _loading = false;
+            return;
+        }
+
+        var org = await Api.GetOrganizationAsync(_resolvedOrganizationId);
         if (org.Succeeded)
         {
             _orgName = org.Value!.Title;
+            _inviteCode = org.Value.InviteCode;
         }
 
-        var users = await Api.GetOrganizationUsersAsync(OrganizationId);
+        var users = await Api.GetAllOrganizationUsersAsync(_resolvedOrganizationId);
         if (users.Succeeded)
         {
-            _users = users.Value!.Items.ToList();
+            _users = users.Value!;
         }
         else
         {
@@ -95,6 +148,64 @@
 
         _loading = false;
     }
+
+    private async Task LoadGlobalUsersAsync()
+    {
+        var organizations = await Api.GetAllOrganizationsAsync();
+        if (!organizations.Succeeded)
+        {
+            _error = organizations.Error;
+            return;
+        }
+
+        var activeOrganizations = organizations.Value!.Where(organization => !organization.IsArchived).ToList();
+        foreach (var organization in activeOrganizations)
+        {
+            _organizationNames[organization.OrganizationId] = organization.Title;
+        }
+
+        var results = await Task.WhenAll(activeOrganizations.Select(organization => Api.GetAllOrganizationUsersAsync(organization.OrganizationId)));
+        var failure = results.FirstOrDefault(result => !result.Succeeded);
+        if (failure is not null)
+        {
+            _error = failure.Error;
+            return;
+        }
+
+        _users = results.SelectMany(result => result.Value!).OrderBy(user => OrganizationName(user.OrganizationId)).ThenBy(user => user.LastName).ThenBy(user => user.FirstName).ToList();
+    }
+
+    private async Task RegenerateCodeAsync()
+    {
+        _regenerating = true;
+        _regenError = null;
+        var result = await Api.RegenerateInviteCodeAsync(_resolvedOrganizationId);
+        _regenerating = false;
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _inviteCode = result.Value.InviteCode;
+        }
+        else
+        {
+            _regenError = result.Error ?? "Couldn't regenerate the invite code.";
+        }
+    }
+
+    private string RouteBase => _siteAdmin
+        ? $"/settings/organizations/{_resolvedOrganizationId}/users"
+        : "/settings/users";
+
+    private string OrganizationRouteBase => _siteAdmin
+        ? $"/settings/organizations/{_resolvedOrganizationId}"
+        : "/settings";
+
+    private string OrganizationName(string? organizationId) =>
+        organizationId is not null && _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
+
+    private string UserEditRoute(UserListItemDto user) => _siteAdminGlobal
+        ? $"/settings/organizations/{user.OrganizationId}/users/{user.UserId}"
+        : $"{RouteBase}/{user.UserId}";
 
     private static string RoleLabel(string role) => role switch
     {

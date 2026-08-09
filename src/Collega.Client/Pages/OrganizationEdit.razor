@@ -75,7 +75,7 @@
                     <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Disabled="_busy">
                         @(_busy ? "Saving…" : _isNew ? "Create organization" : "Save changes")
                     </FluentButton>
-                    <a class="btn" href="/settings">Cancel</a>
+                    <a class="btn" href="/settings/organizations">Cancel</a>
                 </div>
             </EditForm>
         </div>
@@ -264,7 +264,7 @@
 
         if (succeeded)
         {
-            Nav.NavigateTo("/settings");
+            Nav.NavigateTo("/settings/organizations");
             return;
         }
 
@@ -335,7 +335,7 @@
 
         if (result.Succeeded)
         {
-            Nav.NavigateTo("/settings");
+            Nav.NavigateTo("/settings/organizations");
         }
         else
         {

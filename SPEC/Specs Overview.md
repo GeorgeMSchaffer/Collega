@@ -62,8 +62,9 @@ Key rule: all tenant-owned data is organization-scoped; Site Admin is global and
 - Inactive users are denied authentication.
 - Lockout: 5 failed attempts in 15 minutes trigger a 15-minute lockout window.
 - Seeded Site Admin must change password on first successful login.
-- Development-only seed creates exactly 2 demo organizations, each with two boards populated across every default status.
+- Development-only seed creates exactly 2 demo organizations, each with two boards containing 11 deterministic ideas distributed `3/2/2/1/3` in canonical status order.
 - Each demo organization includes one Org Admin and two User accounts initialized with `Abc123!` without a forced password change; the global Site Admin remains organization-independent.
+- Access tokens expire absolutely after 480 minutes. Browser inactivity expires after 30 minutes with a synchronized cross-tab warning beginning at minute 28; staying signed in does not extend the token.
 - Admin-issued temporary password reset is one-time display, expires in 24 hours, and forces password change on first use.
 - Post-MVP self-service reset uses a private single-use email link that expires after 24 hours, returns generic request and invalid-link responses, and revokes all sessions after success.
 

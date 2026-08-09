@@ -1,0 +1,177 @@
+@implements IAsyncDisposable
+@inject SessionActivityService Activity
+@inject AuthSessionStore Store
+@inject CollegaAuthStateProvider AuthState
+@inject SessionTimeoutOptions Options
+@inject NavigationManager Nav
+
+<FluentDialog Hidden="@(!_warningVisible)"
+              Modal="true"
+              TrapFocus="true"
+              PreventScroll="true"
+              AriaLabelledby="session-warning-title"
+              AriaDescribedby="session-warning-description"
+              Class="session-warning-dialog">
+    <div class="session-warning-content">
+        <h2 id="session-warning-title">Your session is about to expire</h2>
+        <p id="session-warning-description">You will be signed out in <strong aria-live="polite">@CountdownText</strong> due to inactivity.</p>
+        <div class="session-warning-actions">
+            <FluentButton Appearance="Appearance.Accent" OnClick="StaySignedInAsync">Stay signed in</FluentButton>
+            <FluentButton Appearance="Appearance.Neutral" OnClick="SignOutAsync">Sign out</FluentButton>
+        </div>
+    </div>
+</FluentDialog>
+
+@code {
+    private readonly CancellationTokenSource _cancellation = new();
+    private Task? _timerTask;
+    private DateTimeOffset? _expiresAtUtc;
+    private DateTimeOffset? _lastActivityUtc;
+    private bool _authenticated;
+    private bool _warningVisible;
+    private bool _expiring;
+    private int _secondsRemaining;
+
+    private string CountdownText => $"{_secondsRemaining / 60}:{_secondsRemaining % 60:00}";
+
+    protected override void OnInitialized()
+    {
+        AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        Activity.ActivityRecorded += OnActivityRecorded;
+        Activity.LogoutReceived += OnLogoutReceived;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        await Activity.InitializeAsync();
+        await RefreshAuthenticationAsync(await AuthState.GetAuthenticationStateAsync());
+        _timerTask = RunTimerAsync(_cancellation.Token);
+    }
+
+    private async Task RunTimerAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                await InvokeAsync(CheckDeadlinesAsync);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    private async Task CheckDeadlinesAsync()
+    {
+        if (!_authenticated || _expiring)
+        {
+            return;
+        }
+
+        _expiresAtUtc ??= await Store.GetExpiresAtUtcAsync();
+        _lastActivityUtc ??= await Store.GetLastActivityUtcAsync();
+        if (_expiresAtUtc is null || _lastActivityUtc is null)
+        {
+            await ExpireAsync();
+            return;
+        }
+
+        var nowUtc = DateTimeOffset.UtcNow;
+        var idleDeadline = _lastActivityUtc.Value.Add(Options.IdleTimeout);
+        var deadline = idleDeadline < _expiresAtUtc.Value ? idleDeadline : _expiresAtUtc.Value;
+        if (nowUtc >= deadline)
+        {
+            await ExpireAsync();
+            return;
+        }
+
+        var warningWindow = Options.IdleTimeout - Options.WarningAfter;
+        var shouldWarn = nowUtc >= _lastActivityUtc.Value.Add(Options.WarningAfter)
+            || _expiresAtUtc.Value - nowUtc <= warningWindow;
+        _secondsRemaining = Math.Max(0, (int)Math.Ceiling((deadline - nowUtc).TotalSeconds));
+        if (_warningVisible != shouldWarn)
+        {
+            _warningVisible = shouldWarn;
+            StateHasChanged();
+        }
+        else if (_warningVisible)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task StaySignedInAsync()
+    {
+        await Activity.RecordActivityAsync();
+        _warningVisible = false;
+    }
+
+    private async Task SignOutAsync()
+    {
+        await AuthState.MarkSignedOutAsync();
+        Nav.NavigateTo("/login", replace: true);
+    }
+
+    private async Task ExpireAsync()
+    {
+        if (_expiring)
+        {
+            return;
+        }
+
+        _expiring = true;
+        _warningVisible = false;
+        await AuthState.MarkSignedOutAsync("expired");
+        Nav.NavigateTo("/login?sessionExpired=true", replace: true);
+    }
+
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> stateTask) =>
+        _ = InvokeAsync(async () => await RefreshAuthenticationAsync(await stateTask));
+
+    private async Task RefreshAuthenticationAsync(AuthenticationState state)
+    {
+        _authenticated = state.User.Identity?.IsAuthenticated == true;
+        _expiring = false;
+        _warningVisible = false;
+        _expiresAtUtc = _authenticated ? await Store.GetExpiresAtUtcAsync() : null;
+        _lastActivityUtc = _authenticated ? await Store.GetLastActivityUtcAsync() : null;
+        StateHasChanged();
+    }
+
+    private void OnActivityRecorded(DateTimeOffset activityUtc) =>
+        _ = InvokeAsync(() =>
+        {
+            _lastActivityUtc = activityUtc;
+            _warningVisible = false;
+            StateHasChanged();
+        });
+
+    private void OnLogoutReceived(string reason) =>
+        _ = InvokeAsync(async () =>
+        {
+            await AuthState.MarkSignedOutAsync(reason, broadcast: false);
+            Nav.NavigateTo(reason == "expired" ? "/login?sessionExpired=true" : "/login", replace: true);
+        });
+
+    public async ValueTask DisposeAsync()
+    {
+        AuthState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        Activity.ActivityRecorded -= OnActivityRecorded;
+        Activity.LogoutReceived -= OnLogoutReceived;
+        _cancellation.Cancel();
+        if (_timerTask is not null)
+        {
+            await _timerTask;
+        }
+
+        _cancellation.Dispose();
+        await Activity.DisposeAsync();
+    }
+}

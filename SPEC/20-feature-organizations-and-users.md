@@ -23,6 +23,7 @@ Administrators can manage organizations and users with clear role boundaries wit
 17. The header exposes a logout icon, and admin-authorized users also see a gear icon that navigates to the Admin homepage.
 18. Breadcrumb navigation is shown directly below the header.
 19. In Development, startup seed creates exactly 2 demo organizations with realistic profile data for walkthrough and validation.
+20. Each demo organization owns exactly one Org Admin and two User accounts. The single global Site Admin remains organization-independent and no Read Only account is included in the demo seed.
 
 ## Organization Fields
 - Title (required, max 200 characters)

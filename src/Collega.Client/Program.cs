@@ -16,10 +16,17 @@ var apiBaseUrl = builder.Configuration["Api:BaseUrl"] ?? builder.HostEnvironment
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
 
 builder.Services.AddScoped<AuthSessionStore>();
+builder.Services.AddScoped<SessionActivityService>();
 builder.Services.AddScoped<ApiClient>();
 builder.Services.AddScoped<CollegaAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CollegaAuthStateProvider>());
 builder.Services.AddAuthorizationCore();
+
+builder.Services.AddSingleton(new SessionTimeoutOptions
+{
+	IdleTimeout = TimeSpan.FromMinutes(builder.Configuration.GetValue<int?>("Session:IdleTimeoutMinutes") ?? 30),
+	WarningAfter = TimeSpan.FromMinutes(builder.Configuration.GetValue<int?>("Session:WarningAfterMinutes") ?? 28)
+});
 
 builder.Services.AddFluentUIComponents();
 

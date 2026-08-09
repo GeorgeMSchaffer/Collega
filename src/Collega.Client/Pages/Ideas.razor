@@ -21,16 +21,19 @@
     {
         <div class="placeholder">
             <h3>No organization</h3>
-            <p>The global idea list is available to organization members. As a Site Admin, browse ideas from within an organization's boards.</p>
+            <p>Your account isn't associated with an organization.</p>
         </div>
     }
     else
     {
-        <div class="chipbar">
-            <button class="chip @(_scope == "all" ? "on" : null)" @onclick='() => SetScope("all")'>All</button>
-            <button class="chip @(_scope == "created" ? "on" : null)" @onclick='() => SetScope("created")'>Created by me</button>
-            <button class="chip @(_scope == "assigned" ? "on" : null)" @onclick='() => SetScope("assigned")'>Assigned to me</button>
-        </div>
+        @if (!_isSiteAdmin)
+        {
+            <div class="chipbar">
+                <button class="chip @(_scope == "all" ? "on" : null)" @onclick='() => SetScope("all")'>All</button>
+                <button class="chip @(_scope == "created" ? "on" : null)" @onclick='() => SetScope("created")'>Created by me</button>
+                <button class="chip @(_scope == "assigned" ? "on" : null)" @onclick='() => SetScope("assigned")'>Assigned to me</button>
+            </div>
+        }
         <div class="cmdbar">
             <input type="text" placeholder="Search title & text fields…" value="@_search" @onchange="OnSearchChanged" style="width:300px" />
             @if (!string.IsNullOrWhiteSpace(_search))
@@ -124,7 +127,7 @@
             <div class="card">
                 <table>
                     <thead>
-                        <tr><th>Title</th><th>Created By</th><th>Assigned To</th><th>Status</th><th>Created</th><th></th></tr>
+                        <tr><th>Title</th>@if (_isSiteAdmin) { <th>Organization</th> }<th>Created By</th><th>Assigned To</th><th>Status</th><th>Created</th><th></th></tr>
                     </thead>
                     <tbody>
                         @foreach (var idea in _items)
@@ -134,6 +137,10 @@
                                     <div class="t">@idea.Title</div>
                                     <div class="board">@BoardName(idea.BoardId)</div>
                                 </td>
+                                @if (_isSiteAdmin)
+                                {
+                                    <td>@OrganizationName(idea.BoardId)</td>
+                                }
                                 <td>@AuthorName(idea.AuthorUserId)</td>
                                 <td>
                                     @if (idea.Assignees.Count == 0)
@@ -180,6 +187,8 @@
 
     private string? _organizationId;
     private bool _noOrg;
+    private bool _isSiteAdmin;
+    private readonly List<string> _siteAdminOrganizationIds = new();
 
     private readonly List<IdeaListItemDto> _items = new();
     private int _total;
@@ -209,6 +218,8 @@
     }
 
     private readonly Dictionary<string, string> _boardNames = new();
+    private readonly Dictionary<string, string> _boardOrganizationIds = new();
+    private readonly Dictionary<string, string> _organizationNames = new();
     private readonly Dictionary<string, string> _authorNames = new();
     private readonly Dictionary<string, string> _statusColors = new();
 
@@ -220,7 +231,15 @@
     {
         if (AuthStateTask is not null)
         {
-            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+            var user = (await AuthStateTask).User;
+            _organizationId = user.FindFirst("organizationId")?.Value;
+            _isSiteAdmin = user.IsInRole("SiteAdmin");
+        }
+
+        if (_isSiteAdmin)
+        {
+            await InitializeSiteAdminAsync();
+            return;
         }
 
         if (string.IsNullOrEmpty(_organizationId))
@@ -266,6 +285,53 @@
             foreach (var f in _fieldDefs)
             {
                 _fieldFilters[f.FieldDefinitionId] = new FieldFilterState();
+            }
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task InitializeSiteAdminAsync()
+    {
+        var organizations = await Api.GetAllOrganizationsAsync();
+        if (!organizations.Succeeded)
+        {
+            _error = organizations.Error;
+            _loading = false;
+            return;
+        }
+
+        foreach (var organization in organizations.Value!.Where(organization => !organization.IsArchived))
+        {
+            _siteAdminOrganizationIds.Add(organization.OrganizationId);
+            _organizationNames[organization.OrganizationId] = organization.Title;
+
+            var boards = await Api.GetBoardsAsync(organization.OrganizationId);
+            if (boards.Succeeded)
+            {
+                foreach (var board in boards.Value!)
+                {
+                    _boardNames[board.BoardId] = board.Name;
+                    _boardOrganizationIds[board.BoardId] = organization.OrganizationId;
+                }
+            }
+
+            var statuses = await Api.GetStatusesAsync(organization.OrganizationId);
+            if (statuses.Succeeded)
+            {
+                foreach (var status in statuses.Value!)
+                {
+                    _statusColors[status.StatusId] = status.Color;
+                }
+            }
+
+            var users = await Api.GetAllOrganizationUsersAsync(organization.OrganizationId);
+            if (users.Succeeded)
+            {
+                foreach (var user in users.Value!)
+                {
+                    _authorNames[user.UserId] = $"{user.FirstName} {user.LastName}".Trim();
+                }
             }
         }
 
@@ -325,8 +391,27 @@
         _loading = true;
         _error = null;
 
-        var result = await Api.GetOrganizationIdeasAsync(_organizationId!, _scope, _search, _page, _pageSize, BuildFieldFilters());
         _items.Clear();
+        if (_isSiteAdmin)
+        {
+            var results = await Task.WhenAll(_siteAdminOrganizationIds.Select(organizationId => Api.GetAllOrganizationIdeasAsync(organizationId, _search)));
+            var failure = results.FirstOrDefault(result => !result.Succeeded);
+            if (failure is not null)
+            {
+                _error = failure.Error;
+            }
+            else
+            {
+                var allItems = results.SelectMany(result => result.Value!).OrderByDescending(idea => idea.CreatedAtUtc).ToList();
+                _total = allItems.Count;
+                _items.AddRange(allItems.Skip((_page - 1) * _pageSize).Take(_pageSize));
+            }
+
+            _loading = false;
+            return;
+        }
+
+        var result = await Api.GetOrganizationIdeasAsync(_organizationId!, _scope, _search, _page, _pageSize, BuildFieldFilters());
         if (result.Succeeded)
         {
             _items.AddRange(result.Value!.Items);
@@ -401,4 +486,8 @@
 
     private string StatusColor(string statusId) =>
         _statusColors.TryGetValue(statusId, out var color) ? color : "#64748B";
+
+    private string OrganizationName(string boardId) =>
+        _boardOrganizationIds.TryGetValue(boardId, out var organizationId)
+            && _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 }

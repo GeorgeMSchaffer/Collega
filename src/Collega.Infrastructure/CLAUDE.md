@@ -38,13 +38,12 @@ The API applies migrations on startup, so a fresh clone needs no manual `databas
 [`StartupSeeder`](Seeding/StartupSeeder.cs) runs on every boot and is idempotent.
 
 1. **Site Admin** — always, from the configured `SiteAdmin:Email` / `SiteAdmin:Password`. Created with `MustChangePassword: true`, so first login returns `requiresPasswordChange: true`.
-2. **Demo data** — `Development` only. Three organizations, each with an Org Admin, a User, and a Read Only account at password `Abc123!` with no forced change:
+2. **Demo data** — `Development` only. Two organizations, each with one Org Admin and two User accounts at password `Abc123!` with no forced change. Each organization has two boards, and every board has 11 deterministic ideas distributed `3/2/2/1/3` in canonical status order. The global Site Admin remains outside every organization.
 
 | Organization | Email pattern |
 |---|---|
-| Acme Robotics | `{orgadmin,user,readonly}@acme-robotics.demo.collega.test` |
-| Blue Harbor Logistics | `{orgadmin,user,readonly}@blue-harbor.demo.collega.test` |
-| Crestline Health Group | `{orgadmin,user,readonly}@crestline-health.demo.collega.test` |
+| Acme Robotics | `{orgadmin,user,user2}@acme-robotics.demo.collega.test` |
+| Blue Harbor Logistics | `{orgadmin,user,user2}@blue-harbor.demo.collega.test` |
 
 Non-Development startup must never apply the demo seed — `SPEC/40-test-strategy.md` gates this.
 

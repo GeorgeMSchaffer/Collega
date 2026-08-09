@@ -72,9 +72,30 @@ a {
 .btn.primary:hover { background: var(--accent-deep); }
 .btn.subtle { border-color: transparent; color: var(--accent); }
 .btn.danger { border-color: transparent; color: var(--err); }
+.iconbtn {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* ---- Form controls ---- */
-input[type=text], input[type=email], input[type=password], select, textarea {
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=url], input[type=search], select {
+  border: 1px solid #8a8886;
+  border-radius: 4px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 11px;
+  line-height: 34px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--ink);
+}
+textarea {
   border: 1px solid #8a8886;
   border-radius: 4px;
   padding: 8px 11px;
@@ -217,7 +238,7 @@ code { color: var(--accent-deep); }
 }
 .rail a span { font-size: 8.5px; font-weight: 600; letter-spacing: .02em; }
 /* Icon glyph sized on its own so it reads clearly (~2x the label), independent of the label text. */
-.rail a .ico { font-size: 20px; line-height: 1; }
+.rail a .ico { width: 20px; height: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
 .rail a.on { background: var(--accent-soft); color: var(--accent); }
 .rail a:hover { background: #f3f2f1; }
 .rail .push { flex: 1; }
@@ -347,6 +368,19 @@ code { color: var(--accent-deep); }
 .footnote { font-size: 12px; color: var(--ink-3); text-align: center; margin-top: 16px; line-height: 1.5; }
 .footnote a { color: var(--accent-deep); font-weight: 600; }
 
+/* ---- Profile and session warning ---- */
+.settings-section { max-width: 760px; padding: 22px 0 28px; border-bottom: 1px solid var(--line); }
+.settings-section:first-child { padding-top: 0; }
+.settings-section h2 { font-size: 19px; margin-bottom: 5px; }
+.settings-section > .sub { margin-bottom: 18px; }
+.settings-form { max-width: 620px; }
+.field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.session-warning-dialog::part(control) { width: min(420px, calc(100vw - 32px)); border-radius: 6px; }
+.session-warning-content { padding: 8px; }
+.session-warning-content h2 { font-size: 21px; margin-bottom: 10px; }
+.session-warning-content p { color: var(--ink-2); line-height: 1.5; }
+.session-warning-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+
 /* ---- Placeholder scaffold marker (temporary, for un-built feature pages) ---- */
 .placeholder {
   border: 1.5px dashed var(--line);
@@ -398,8 +432,10 @@ fluent-text-field::part(root) {
   border: 1px solid #8a8886;
   border-radius: 4px;
   background: var(--surface);
+  height: 36px;
+  min-height: 36px;
 }
-fluent-text-field::part(control) { font-size: 13px; color: var(--ink); padding: 8px 11px; }
+fluent-text-field::part(control) { height: 34px; min-height: 34px; font-size: 13px; line-height: 34px; color: var(--ink); padding: 0 11px; }
 fluent-text-field:focus-within::part(root) { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: -1px; }
 
 /* ---- Focus-visible: every interactive control gets a visible keyboard focus ring ---- */
@@ -412,6 +448,12 @@ fluent-text-field:focus-within::part(root) { border-color: var(--accent); outlin
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 3px;
+}
+
+@media (max-width: 640px) {
+  .field-row { grid-template-columns: 1fr; gap: 0; }
+  .session-warning-actions { flex-direction: column; }
+  .session-warning-actions fluent-button::part(control) { width: 100%; }
 }
 
 /* ---- Blazor framework UI ---- */

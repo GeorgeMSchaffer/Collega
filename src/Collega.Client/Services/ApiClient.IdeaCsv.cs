@@ -18,7 +18,7 @@ public sealed partial class ApiClient
             using var response = await _http.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode)
             {
-                return ApiResult<byte[]>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+                return ApiResult<byte[]>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
             }
 
             var bytes = await response.Content.ReadAsByteArrayAsync(ct);
@@ -45,7 +45,7 @@ public sealed partial class ApiClient
             using var response = await _http.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode)
             {
-                return ApiResult<IdeaImportResultDto>.Failure((int)response.StatusCode, await ReadErrorAsync(response, ct));
+                return ApiResult<IdeaImportResultDto>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
             }
 
             var value = await response.Content.ReadFromJsonAsync<IdeaImportResultDto>(JsonOptions, ct);

@@ -21,10 +21,35 @@
         <div class="card admincard">
             <div class="bd">
                 <h3>Manage organizations</h3>
-                <p>As a Site Admin you oversee organizations across the platform rather than a single set of boards.</p>
-                <a class="btn primary" href="/settings">Go to Settings</a>
+                <p>As a Site Admin you oversee every organization and its boards.</p>
+                <a class="btn primary" href="/settings/organizations">Manage organizations</a>
             </div>
         </div>
+
+        <h2 class="section">All boards</h2>
+        @if (_loading)
+        {
+            <div class="loading"><FluentProgressRing /> <span>Loading boards…</span></div>
+        }
+        else if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+        else
+        {
+            <div class="tiles">
+                @foreach (var b in _boards)
+                {
+                    <a class="tile" href="@($"/board/{b.BoardId}")">
+                        <div class="band" style="background:@BandColor(b.BoardId)"></div>
+                        <div class="bd">
+                            <h3>@b.Name</h3>
+                            <p>@OrganizationName(b.OrganizationId) · @b.SwimlaneCount swimlanes</p>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
     }
     else if (_loading)
     {
@@ -80,6 +105,7 @@
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
     private List<BoardListItemDto> _boards = new();
+    private readonly Dictionary<string, string> _organizationNames = new();
     private bool _loading = true;
     private bool _isSiteAdmin;
     private string _firstName = "there";
@@ -106,11 +132,41 @@
 
         _isSiteAdmin = string.Equals(role, "SiteAdmin", StringComparison.OrdinalIgnoreCase);
 
-        if (_isSiteAdmin || string.IsNullOrEmpty(organizationId))
+        if (_isSiteAdmin)
         {
-            // Site Admins (and any account without an organization) get the admin summary, not boards.
-            _isSiteAdmin = true;
-            _subtitle = "Manage organizations across the platform.";
+            _subtitle = "Platform-wide activity across every organization.";
+            var organizations = await Api.GetAllOrganizationsAsync();
+            if (!organizations.Succeeded)
+            {
+                _error = organizations.Error;
+                _loading = false;
+                return;
+            }
+
+            var activeOrganizations = organizations.Value!.Where(organization => !organization.IsArchived).ToList();
+            foreach (var organization in activeOrganizations)
+            {
+                _organizationNames[organization.OrganizationId] = organization.Title;
+            }
+
+            var boardResults = await Task.WhenAll(activeOrganizations.Select(organization => Api.GetBoardsAsync(organization.OrganizationId)));
+            var failure = boardResults.FirstOrDefault(result => !result.Succeeded);
+            if (failure is not null)
+            {
+                _error = failure.Error;
+            }
+            else
+            {
+                _boards = boardResults.SelectMany(result => result.Value!).OrderBy(board => OrganizationName(board.OrganizationId)).ThenBy(board => board.Name).ToList();
+            }
+
+            _loading = false;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(organizationId))
+        {
+            _error = "Your account isn't associated with an organization.";
             _loading = false;
             return;
         }
@@ -140,4 +196,7 @@
         var index = (uint)(boardId?.GetHashCode() ?? 0) % (uint)BandPalette.Length;
         return BandPalette[index];
     }
+
+    private string OrganizationName(string organizationId) =>
+        _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 }

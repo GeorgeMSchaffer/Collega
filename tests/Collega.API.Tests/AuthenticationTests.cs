@@ -48,7 +48,7 @@ public sealed class AuthenticationTests : IClassFixture<CollegaApiFactory>
         var body = await response.Content.ReadFromJsonAsync<LoginResponse>(Json);
         Assert.NotNull(body);
         Assert.False(string.IsNullOrWhiteSpace(body!.AccessToken));
-        Assert.True(body.ExpiresInSeconds > 0);
+        Assert.Equal(28_800, body.ExpiresInSeconds);
         // The seeded Site Admin is flagged to change its password on first login (auth requirement #8).
         Assert.True(body.RequiresPasswordChange);
 

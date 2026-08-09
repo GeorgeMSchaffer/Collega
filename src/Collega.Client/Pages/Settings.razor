@@ -1,17 +1,16 @@
-@page "/settings"
-@attribute [Authorize]
+@page "/settings/organizations"
+@attribute [Authorize(Roles = "SiteAdmin")]
 @inject ApiClient Api
 
-<PageTitle>Settings · Collega</PageTitle>
+<PageTitle>Organizations · Collega</PageTitle>
 
 @*
-    Settings landing. Role-scoped: a Site Admin manages organizations; an Org Admin manages the
-    users in their own organization. Users / Read Only see only their profile (reachable from the
-    rail avatar). Create/edit forms and the org→users drill-down are later Client tasks.
+    Dedicated Site Admin organization list. Organization-specific management routes are reached
+    from each row; the Settings landing page is owned by SettingsHub.
 *@
 <div class="pagehead">
-    <div class="crumbs">Settings</div>
-    <h1>Settings</h1>
+    <div class="crumbs"><a href="/settings">Settings</a> / Organizations</div>
+    <h1>Organizations</h1>
     <p class="sub" style="margin-bottom:18px">@_subtitle</p>
 </div>
 
@@ -24,7 +23,7 @@
     {
         <div class="autherror" role="alert">@_error</div>
     }
-    else if (_view == View.Organizations)
+    else
     {
         <div class="cmdbar"><a class="btn primary" href="/settings/organizations/new">New organization</a></div>
         <div class="card">
@@ -33,7 +32,7 @@
                     <tr><th>Organization</th><th>Location</th><th>Invite code</th><th>Status</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @foreach (var org in _organizations!)
+                    @foreach (var org in _organizations)
                     {
                         <tr>
                             <td>
@@ -59,6 +58,8 @@
                             </td>
                             <td class="rowactions">
                                 <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}/users")">Users</a>
+                                <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}/statuses")">Statuses</a>
+                                <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}/fields")">Fields</a>
                                 <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}")">Edit</a>
                             </td>
                         </tr>
@@ -66,180 +67,35 @@
                 </tbody>
             </table>
         </div>
-        @if (_organizations!.Count == 0)
+        @if (_organizations.Count == 0)
         {
             <div class="placeholder"><p>No organizations yet.</p></div>
         }
     }
-    else if (_view == View.Users)
-    {
-        @if (_inviteCode is not null)
-        {
-            <div class="card formcard" style="margin-bottom:14px">
-                <h3 style="font-family:Georgia,serif;font-size:15px;margin-bottom:4px">Invite code</h3>
-                <p class="sub" style="margin-bottom:8px">Share this code so new members can self-register into your organization.</p>
-                @if (_regenError is not null)
-                {
-                    <div class="autherror" role="alert">@_regenError</div>
-                }
-                <div class="row" style="align-items:center;gap:10px">
-                    <code style="font-size:16px;letter-spacing:.08em;background:#f3f2f1;padding:6px 12px;border-radius:var(--radius-btn)">@_inviteCode</code>
-                    <button class="btn subtle" @onclick="RegenerateCode" disabled="@_regenerating">@(_regenerating ? "Regenerating…" : "Regenerate")</button>
-                </div>
-            </div>
-        }
-        <div class="cmdbar">
-            <a class="btn primary" href="/settings/users/new">New user</a>
-            <a class="btn" href="/settings/users/import">Import CSV</a>
-            <a class="btn" href="/settings/statuses">Manage statuses</a>
-            <a class="btn" href="/settings/boards">Manage boards</a>
-            <a class="btn" href="/settings/fields">Manage fields</a>
-        </div>
-        <div class="card">
-            <table>
-                <thead>
-                    <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in _users!)
-                    {
-                        <tr>
-                            <td><strong>@user.FirstName @user.LastName</strong></td>
-                            <td>@user.Email</td>
-                            <td><span class="pill info">@RoleLabel(user.Role)</span></td>
-                            <td>
-                                @if (string.Equals(user.Status, "Active", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    <span class="pill ok">Active</span>
-                                }
-                                else
-                                {
-                                    <span class="pill neutral">@user.Status</span>
-                                }
-                            </td>
-                            <td><a class="btn subtle" href="@($"/settings/users/{user.UserId}")">Edit</a></td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-        @if (_users!.Count == 0)
-        {
-            <div class="placeholder"><p>No users yet.</p></div>
-        }
-    }
-    else
-    {
-        <div class="placeholder">
-            <h3>Nothing to manage here</h3>
-            <p>Organization and user administration is available to admins. You can update your own details from the account menu in the rail.</p>
-        </div>
-    }
 </div>
 
 @code {
-    private enum View { None, Organizations, Users }
-
-    [CascadingParameter]
-    private Task<AuthenticationState>? AuthStateTask { get; set; }
-
-    private View _view = View.None;
     private string _subtitle = "";
     private bool _loading = true;
     private string? _error;
-    private IReadOnlyList<OrganizationListItemDto>? _organizations;
-    private IReadOnlyList<UserListItemDto>? _users;
-    private string? _organizationId;
-    private string? _inviteCode;
-    private bool _regenerating;
-    private string? _regenError;
+    private IReadOnlyList<OrganizationListItemDto> _organizations = Array.Empty<OrganizationListItemDto>();
 
     protected override async Task OnInitializedAsync()
     {
-        var role = "";
-        string? organizationId = null;
-        if (AuthStateTask is not null)
+        _subtitle = "Manage organizations across the platform.";
+        var result = await Api.GetAllOrganizationsAsync();
+        if (result.Succeeded)
         {
-            var user = (await AuthStateTask).User;
-            role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
-            organizationId = user.FindFirst("organizationId")?.Value;
-        }
-
-        if (string.Equals(role, "SiteAdmin", StringComparison.OrdinalIgnoreCase))
-        {
-            _view = View.Organizations;
-            _subtitle = "Manage organizations across the platform.";
-            var result = await Api.GetOrganizationsAsync();
-            if (result.Succeeded)
-            {
-                _organizations = result.Value!.Items;
-            }
-            else
-            {
-                _error = result.Error;
-            }
-        }
-        else if (string.Equals(role, "OrgAdmin", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(organizationId))
-        {
-            _view = View.Users;
-            _subtitle = "Manage the users in your organization.";
-            _organizationId = organizationId;
-            var result = await Api.GetOrganizationUsersAsync(organizationId!);
-            if (result.Succeeded)
-            {
-                _users = result.Value!.Items;
-            }
-            else
-            {
-                _error = result.Error;
-            }
-
-            // Surface the org's invite code so an Org Admin can share/regenerate it (requirement #11).
-            var org = await Api.GetOrganizationAsync(organizationId!);
-            if (org.Succeeded)
-            {
-                _inviteCode = org.Value!.InviteCode;
-            }
+            _organizations = result.Value!;
         }
         else
         {
-            _view = View.None;
-            _subtitle = "Your account settings.";
+            _error = result.Error;
         }
 
         _loading = false;
     }
 
-    private async Task RegenerateCode()
-    {
-        if (string.IsNullOrEmpty(_organizationId))
-        {
-            return;
-        }
-
-        _regenerating = true;
-        _regenError = null;
-        var result = await Api.RegenerateInviteCodeAsync(_organizationId);
-        _regenerating = false;
-
-        if (result.Succeeded && result.Value is not null)
-        {
-            _inviteCode = result.Value.InviteCode;
-        }
-        else
-        {
-            _regenError = result.Error ?? "Couldn't regenerate the invite code.";
-        }
-    }
-
     private static string Location(string? city, string? state) =>
         string.Join(", ", new[] { city, state }.Where(s => !string.IsNullOrWhiteSpace(s)));
-
-    private static string RoleLabel(string role) => role switch
-    {
-        "SiteAdmin" => "Site Admin",
-        "OrgAdmin" => "Org Admin",
-        "ReadOnly" => "Read Only",
-        _ => role,
-    };
 }

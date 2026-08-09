@@ -118,10 +118,14 @@ public sealed class StartupSeederTests
         Assert.Equal(2 * OrganizationDefaults.Statuses.Count, await verify.Statuses.CountAsync());
         Assert.Equal(4, await verify.Boards.CountAsync());
         Assert.Equal(7, await verify.Users.CountAsync()); // 1 global Site Admin + 6 organization users
+        Assert.Equal(44, await verify.Ideas.CountAsync());
+        Assert.Equal(16, await verify.Tags.CountAsync());
+        Assert.Equal(12, await verify.Comments.CountAsync());
+        Assert.Equal(40, await verify.IdeaUpvotes.CountAsync());
     }
 
     [Fact]
-    public async Task Seed_Development_PopulatesEachBoardWithIdeasAcrossEverySwimlane()
+    public async Task Seed_Development_PopulatesEachBoardWithExpectedStatusDistributionAndVariation()
     {
         using var ctx = InMemoryContext.Create();
 
@@ -136,39 +140,69 @@ public sealed class StartupSeederTests
 
         foreach (var board in boards)
         {
-            var ideas = await ctx.Ideas.Where(i => i.BoardId == board.Id).ToListAsync();
+            var ideas = await ctx.Ideas
+                .Include(i => i.Assignees)
+                .Include(i => i.Tags)
+                .Where(i => i.BoardId == board.Id)
+                .ToListAsync();
 
-            // One idea per default swimlane (status), each carrying a required Idea Type / Business Impact.
-            Assert.Equal(OrganizationDefaults.Statuses.Count, ideas.Count);
+            Assert.Equal(11, ideas.Count);
             Assert.All(ideas, i => Assert.NotEqual(Guid.Empty, i.IdeaTypeId));
             Assert.All(ideas, i => Assert.NotEqual(Guid.Empty, i.BusinessImpactId));
 
-            var boardStatusIds = await ctx.Statuses
+            var boardStatuses = await ctx.Statuses
                 .Where(s => s.OrganizationId == board.OrganizationId)
-                .Select(s => s.Id)
+                .OrderBy(s => s.SortOrder)
                 .ToListAsync();
-            var ideaStatusIds = ideas.Select(i => i.StatusId).Distinct().ToList();
 
-            // Every swimlane is represented exactly once.
-            Assert.Equal(boardStatusIds.Count, ideaStatusIds.Count);
-            Assert.All(ideaStatusIds, id => Assert.Contains(id, boardStatusIds));
+            Assert.Equal(new[] { 3, 2, 2, 1, 3 }, boardStatuses.Select(status => ideas.Count(idea => idea.StatusId == status.Id)));
+            Assert.True(ideas.Select(idea => idea.AuthorUserId).Distinct().Count() >= 3);
+            Assert.True(ideas.Select(idea => idea.Priority).Distinct().Count() >= 4);
+            Assert.True(ideas.Select(idea => idea.IdeaTypeId).Distinct().Count() >= 2);
+            Assert.True(ideas.Select(idea => idea.BusinessImpactId).Distinct().Count() >= 4);
+            Assert.Contains(ideas, idea => idea.DueDate is null);
+            Assert.Contains(ideas, idea => idea.DueDate is not null);
+            Assert.Equal(new[] { 0, 1, 2 }, ideas.Select(idea => idea.Assignees.Count).Distinct().OrderBy(count => count));
+            Assert.Equal(new[] { 0, 1, 2 }, ideas.Select(idea => idea.Tags.Count).Distinct().OrderBy(count => count));
         }
     }
 
     [Fact]
-    public async Task Seed_Development_AddsExampleCommentsToDemoBoards()
+    public async Task Seed_Development_RelationshipsRemainInsideEachOrganization()
     {
         using var ctx = InMemoryContext.Create();
 
         await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: true);
 
-        // 3 comments per demo board (see StartupSeeder.SeedDemoBoardContentAsync).
-        Assert.Equal(12, await ctx.Comments.CountAsync());
+        var ideas = await ctx.Ideas
+            .Include(idea => idea.Assignees)
+            .Include(idea => idea.Tags)
+            .ToListAsync();
+        var boards = await ctx.Boards.ToDictionaryAsync(board => board.Id);
+        var users = await ctx.Users.Where(user => user.OrganizationId != null).ToDictionaryAsync(user => user.Id);
+        var tags = await ctx.Tags.ToDictionaryAsync(tag => tag.Id);
+        var ideasById = ideas.ToDictionary(idea => idea.Id);
 
-        // Every comment hangs off a seeded idea.
-        var ideaIds = await ctx.Ideas.Select(i => i.Id).ToListAsync();
+        Assert.All(ideas, idea =>
+        {
+            Assert.Equal(idea.OrganizationId, boards[idea.BoardId].OrganizationId);
+            Assert.Equal(idea.OrganizationId, users[idea.AuthorUserId].OrganizationId);
+            Assert.All(idea.Assignees, assignee => Assert.Equal(idea.OrganizationId, users[assignee.UserId].OrganizationId));
+            Assert.All(idea.Tags, ideaTag => Assert.Equal(idea.OrganizationId, tags[ideaTag.TagId].OrganizationId));
+        });
+
+        Assert.Equal(12, await ctx.Comments.CountAsync());
         var comments = await ctx.Comments.ToListAsync();
-        Assert.All(comments, c => Assert.Contains(c.IdeaId, ideaIds));
+        Assert.All(comments, comment => Assert.Equal(
+            ideasById[comment.IdeaId].OrganizationId,
+            users[comment.AuthorUserId].OrganizationId));
+
+        Assert.Equal(40, await ctx.IdeaUpvotes.CountAsync());
+        var upvotes = await ctx.IdeaUpvotes.ToListAsync();
+        Assert.Equal(upvotes.Count, upvotes.Select(upvote => new { upvote.IdeaId, upvote.UserId }).Distinct().Count());
+        Assert.All(upvotes, upvote => Assert.Equal(
+            ideasById[upvote.IdeaId].OrganizationId,
+            users[upvote.UserId].OrganizationId));
     }
 
     [Fact]
@@ -180,6 +214,8 @@ public sealed class StartupSeederTests
 
         Assert.Equal(0, await ctx.Ideas.CountAsync());
         Assert.Equal(0, await ctx.Comments.CountAsync());
+        Assert.Equal(0, await ctx.Tags.CountAsync());
+        Assert.Equal(0, await ctx.IdeaUpvotes.CountAsync());
     }
 
     [Fact]
@@ -199,8 +235,9 @@ public sealed class StartupSeederTests
 
         using var verify = InMemoryContext.Create(dbName);
 
-        // 2 orgs x 2 boards x 5 swimlanes = 20 ideas; 4 boards x 3 comments = 12 comments.
-        Assert.Equal(4 * OrganizationDefaults.Statuses.Count, await verify.Ideas.CountAsync());
+        Assert.Equal(44, await verify.Ideas.CountAsync());
+        Assert.Equal(16, await verify.Tags.CountAsync());
         Assert.Equal(12, await verify.Comments.CountAsync());
+        Assert.Equal(40, await verify.IdeaUpvotes.CountAsync());
     }
 }

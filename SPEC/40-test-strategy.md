@@ -5,6 +5,7 @@
 - Seed Site Admin first-login password change rule
 - Development demo seed creates expected organizations, users by role without forced password change, boards, swimlanes, ideas, and comments
 - Development demo seed is idempotent across repeated startup execution
+- JWT issuance reports 28,800 seconds, validates immediately and immediately before the 480-minute boundary, and fails exactly at expiry
 - Organization-scoped authorization checks
 - User CSV parsing, trimming, default status, allowed role, row-count, and file-size validation
 - User CSV import rejects duplicate emails within the file and performs no persistence when any row is invalid
@@ -33,7 +34,7 @@
 - post-MVP reset responses, logs, audit events, and analytics do not expose tokens or plaintext passwords
 - Development startup auto-seeds exactly 2 demo organizations
 - each demo organization includes one Org Admin and two User accounts initialized to `Abc123!` without forced password change; the global Site Admin remains organization-independent
-- each demo organization has two seeded example boards, each with ideas across every default swimlane and example comments
+- each demo organization has exactly two seeded boards; every board has 11 ideas distributed `3/2/2/1/3` in canonical status order, with organization-consistent authors, assignees, tags, comments, and upvotes
 - organization CRUD follows Site Admin and Org Admin role boundaries
 - user CRUD is limited to the correct organization scope
 - user CSV template downloads with the canonical content type, filename, header order, and example row
@@ -69,6 +70,14 @@
 - Active-session authentication verifies a protected-request `401` signs the user out only when `/api/v1/auth/me` also rejects the token; an incorrect-current-password `401` preserves a token that `/api/v1/auth/me` accepts.
 - Password-change authentication verifies a successful required password change remains authenticated after browser reload while the issuing API process remains available.
 - Board navigation verifies `/boards` lists boards, `/board/{boardId}` opens detail, legacy routes redirect to canonical routes, and no user-facing Workflow terminology remains.
+
+## Manual Client Acceptance
+- Browser acceptance verifies the warning appears after 28 minutes of inactivity, its countdown reaches the 30-minute idle deadline, and Stay signed in resets only the idle deadline.
+- Activity from pointer, keyboard, touch, scroll, and document visibility plus logout/expiry signals synchronize across tabs.
+- Idle and absolute expiry clear authentication in every tab and show the specific session-expired Login message; explicit logout and password-change logout do not.
+- My Profile updates the displayed first/last name immediately, keeps email and role read-only, and voluntary and required password changes both return to Login with confirmation before re-login lands on Dashboard.
+- Text-like controls render at a stable 36px height with vertically centered content, and Fluent icon actions expose accessible names, tooltips, keyboard focus, and disabled states on desktop and narrow layouts.
+- Client unit-test and Playwright infrastructure is intentionally excluded from this batch because a parallel branch owns browser automation; these items remain pending until user manual acceptance.
 
 ## Startup Safety
 - Demo environment seed runs only in Development

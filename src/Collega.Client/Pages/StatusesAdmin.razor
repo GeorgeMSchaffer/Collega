@@ -13,8 +13,8 @@
 *@
 <div class="pagehead">
     <div class="crumbs"><a href="/settings">Settings</a> / Statuses</div>
-    <h1>Statuses</h1>
-    <p class="sub" style="margin-bottom:18px">Configure the statuses your boards group ideas by.</p>
+    <h1>@(_siteAdminGlobal ? "All statuses" : "Statuses")</h1>
+    <p class="sub" style="margin-bottom:18px">@(_siteAdminGlobal ? "Workflow statuses across every organization." : "Configure the statuses your boards group ideas by.")</p>
 </div>
 
 <div class="body">
@@ -25,7 +25,10 @@
     else
     {
         <div class="cmdbar">
-            <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New status</button>
+            @if (!_siteAdminGlobal)
+            {
+                <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New status</button>
+            }
         </div>
 
         @if (_error is not null)
@@ -64,7 +67,7 @@
         <div class="card">
             <table>
                 <thead>
-                    <tr><th>Status</th><th>Color</th><th>Sort order</th><th></th></tr>
+                    <tr><th>Status</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Color</th><th>Sort order</th><th></th></tr>
                 </thead>
                 <tbody>
                     @foreach (var s in _statuses)
@@ -74,13 +77,24 @@
                                 <span class="swatch" style="background:@s.Color"></span>
                                 <strong>@s.Name</strong>
                             </td>
+                            @if (_siteAdminGlobal)
+                            {
+                                <td>@OrganizationName(s.OrganizationId)</td>
+                            }
                             <td><code>@s.Color</code></td>
                             <td>@s.SortOrder</td>
                             <td class="rowactions">
-                                <button class="btn subtle" @onclick="() => StartEdit(s)" disabled="@_editing">Edit</button>
-                                <button class="btn danger" @onclick="() => Delete(s)"
-                                        disabled="@(_editing || _statuses.Count <= 2)"
-                                        title="@(_statuses.Count <= 2 ? "An organization must keep at least two active statuses." : null)">Delete</button>
+                                @if (_siteAdminGlobal)
+                                {
+                                    <a class="btn subtle" href="@($"/settings/organizations/{s.OrganizationId}/statuses")">Manage</a>
+                                }
+                                else
+                                {
+                                    <button class="btn subtle" @onclick="() => StartEdit(s)" disabled="@_editing">Edit</button>
+                                    <button class="btn danger" @onclick="() => Delete(s)"
+                                            disabled="@(_editing || _statuses.Count <= 2)"
+                                            title="@(_statuses.Count <= 2 ? "An organization must keep at least two active statuses." : null)">Delete</button>
+                                }
                             </td>
                         </tr>
                     }
@@ -109,6 +123,8 @@
     }
 
     private string? _organizationId;
+    private bool _siteAdminGlobal;
+    private readonly Dictionary<string, string> _organizationNames = new();
     private List<StatusItemDto> _statuses = new();
     private bool _loading = true;
     private bool _busy;
@@ -125,7 +141,9 @@
         }
         else if (AuthStateTask is not null)
         {
-            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+            var user = (await AuthStateTask).User;
+            _organizationId = user.FindFirst("organizationId")?.Value;
+            _siteAdminGlobal = user.IsInRole("SiteAdmin") && string.IsNullOrEmpty(OrganizationId);
         }
 
         await LoadAsync();
@@ -135,6 +153,13 @@
     {
         _loading = true;
         _error = null;
+        if (_siteAdminGlobal)
+        {
+            await LoadGlobalAsync();
+            _loading = false;
+            return;
+        }
+
         if (string.IsNullOrEmpty(_organizationId))
         {
             _error = "Your account isn't associated with an organization.";
@@ -154,6 +179,35 @@
 
         _loading = false;
     }
+
+    private async Task LoadGlobalAsync()
+    {
+        var organizations = await Api.GetAllOrganizationsAsync();
+        if (!organizations.Succeeded)
+        {
+            _error = organizations.Error;
+            return;
+        }
+
+        var activeOrganizations = organizations.Value!.Where(organization => !organization.IsArchived).ToList();
+        foreach (var organization in activeOrganizations)
+        {
+            _organizationNames[organization.OrganizationId] = organization.Title;
+        }
+
+        var results = await Task.WhenAll(activeOrganizations.Select(organization => Api.GetStatusesAsync(organization.OrganizationId)));
+        var failure = results.FirstOrDefault(result => !result.Succeeded);
+        if (failure is not null)
+        {
+            _error = failure.Error;
+            return;
+        }
+
+        _statuses = results.SelectMany(result => result.Value!).OrderBy(status => OrganizationName(status.OrganizationId)).ThenBy(status => status.SortOrder).ToList();
+    }
+
+    private string OrganizationName(string organizationId) =>
+        _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 
     private void StartCreate()
     {

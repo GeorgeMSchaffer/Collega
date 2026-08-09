@@ -19,8 +19,7 @@ Collega is a collaboration and project management tool for submitting, tracking,
 - Tags are organization-scoped.
 - An idea can have up to 10 distinct organization-scoped tags. Users authorized to edit an idea can select existing tags or create reusable tags inline.
 - Read Only users can comment and upvote, but cannot edit ideas or board configuration.
-- In Development, startup seed creates a demo environment with exactly 2 organizations, each containing one Org Admin and two User accounts initialized with demo password `Abc123!` and no forced password change.
-- In Development, seed exactly two demo organizations. Each includes one Org Admin and two User accounts, plus two example boards with ideas across every default swimlane, example comments, and description-based spec content. The global Site Admin remains outside all organizations.
+- In Development, startup seed creates exactly 2 demo organizations. Each owns one Org Admin and two User accounts initialized with demo password `Abc123!` and no forced password change, plus two example boards. Every board contains 11 deterministic ideas distributed `3/2/2/1/3` in canonical status order, with organization-consistent authors, assignees, tags, comments, and upvotes. The single global Site Admin remains outside all organizations.
 - Ideas require Priority, an organization-configured Idea Type, and an organization-configured Business Impact; due date remains optional.
 - Every organization retains at least one active Idea Type and one active Business Impact. Admins control option sort order, the first active option is the default, and option deletion is soft-delete only.
 - Idea assignment is optional and supports up to five distinct users. Newly selected assignees must be active users in the idea's organization; inactive historical assignees remain visible but cannot be newly selected. The idea author and in-scope admins can change assignments.
@@ -28,6 +27,8 @@ Collega is a collaboration and project management tool for submitting, tracking,
 - `/boards` is the canonical board list and `/board/{boardId}` is the canonical swimlane view. User-facing copy uses Board terminology; singular-list and legacy Workflow routes redirect to canonical routes.
 - Unauthenticated users may access `/login` and `/register`; attempts to access protected client routes redirect to `/login`.
 - Authenticated users without a required password change land on the Dashboard at `/` after login. The standalone `/change-password` route is limited to accounts marked `MustChangePassword`; voluntary password changes remain available from `/settings/profile`.
+- Access tokens expire absolutely after 480 minutes. Authenticated browser sessions also expire after 30 minutes without synchronized cross-tab activity, with a warning and two-minute countdown beginning at minute 28; staying signed in resets only the idle deadline.
+- Successful required and voluntary password changes revoke the current token, clear client authentication state, and return to Login with confirmation. Re-authentication then lands on the Dashboard unless a separate normal return URL applies.
 - Desktop card drag uses a dedicated handle, moves the idea optimistically, and reverts on failure. Changing status in Idea Detail moves the visible card immediately. Keyboard and touch users use the Idea Detail status selector.
 - Idea authors and in-scope admins can edit descriptions. Only in-scope Org Admins and Site Admins can soft-delete ideas; deleted ideas are excluded from normal queries and restore is deferred.
 - OAuth implementation is scheduled for post-MVP Phase 2, with SAML scheduled in a subsequent post-OAuth phase.

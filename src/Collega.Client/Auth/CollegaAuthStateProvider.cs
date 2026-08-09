@@ -35,15 +35,22 @@ public sealed class CollegaAuthStateProvider : AuthenticationStateProvider
         return new AuthenticationState(BuildPrincipal(user, mustChange));
     }
 
-    public async Task MarkSignedInAsync(string token, UserSummaryDto user, bool mustChangePassword)
+    public async Task MarkSignedInAsync(string token, UserSummaryDto user, bool mustChangePassword, int expiresInSeconds)
     {
-        await _store.SaveAsync(token, user, mustChangePassword);
+        await _store.SaveAsync(token, user, mustChangePassword, expiresInSeconds);
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(BuildPrincipal(user, mustChangePassword))));
     }
 
-    public async Task MarkSignedOutAsync()
+    public async Task RefreshUserAsync(UserSummaryDto user)
     {
-        await _store.ClearAsync();
+        var mustChangePassword = await _store.GetMustChangePasswordAsync();
+        await _store.SaveUserAsync(user);
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(BuildPrincipal(user, mustChangePassword))));
+    }
+
+    public async Task MarkSignedOutAsync(string reason = "logout", bool broadcast = true)
+    {
+        await _store.ClearAsync(reason, broadcast);
         NotifyAuthenticationStateChanged(Task.FromResult(_anonymous));
     }
 

@@ -1,0 +1,65 @@
+@page "/settings"
+@attribute [Authorize]
+
+<PageTitle>Settings · Collega</PageTitle>
+
+<div class="pagehead">
+    <div class="crumbs">Settings</div>
+    <h1>Settings</h1>
+    <p class="sub" style="margin-bottom:18px">Manage your profile and organization configuration.</p>
+</div>
+
+<div class="body">
+    <nav class="settings-links" aria-label="Settings sections">
+        <a class="settings-link" href="/settings/profile">
+            <strong>My profile</strong>
+            <span>Update your name and password.</span>
+        </a>
+
+        <AuthorizeView Roles="SiteAdmin">
+            <Authorized>
+                <a class="settings-link" href="/settings/organizations">
+                    <strong>Organizations</strong>
+                    <span>Create organizations and manage each organization's configuration.</span>
+                </a>
+                <a class="settings-link" href="/settings/users">
+                    <strong>Manage users</strong>
+                    <span>View users across every organization, then open one to manage it.</span>
+                </a>
+                <a class="settings-link" href="/boards">
+                    <strong>Boards</strong>
+                    <span>View boards across every organization, then open one to work with it.</span>
+                </a>
+                <a class="settings-link" href="/settings/statuses">
+                    <strong>Manage statuses</strong>
+                    <span>View statuses across every organization, then open one to manage it.</span>
+                </a>
+                <a class="settings-link" href="/settings/fields">
+                    <strong>Manage user-defined fields</strong>
+                    <span>View fields across every organization, then open one to manage it.</span>
+                </a>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="OrgAdmin">
+            <Authorized>
+                <a class="settings-link" href="/settings/users">
+                    <strong>Manage users</strong>
+                    <span>Create, edit, and import users in your organization.</span>
+                </a>
+                <a class="settings-link" href="/settings/boards">
+                    <strong>Manage boards</strong>
+                    <span>Create and configure boards in your organization.</span>
+                </a>
+                <a class="settings-link" href="/settings/statuses">
+                    <strong>Manage statuses</strong>
+                    <span>Configure the statuses used by your organization's boards.</span>
+                </a>
+                <a class="settings-link" href="/settings/fields">
+                    <strong>Manage user-defined fields</strong>
+                    <span>Configure the fields your organization captures on ideas.</span>
+                </a>
+            </Authorized>
+        </AuthorizeView>
+    </nav>
+</div>

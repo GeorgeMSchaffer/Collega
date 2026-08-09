@@ -28,6 +28,10 @@
         {
             <div class="authnote" role="status">Your account was created. Sign in to get started.</div>
         }
+        @if (SessionExpired && _error is null)
+        {
+            <div class="authnote" role="status">Your session expired. Sign in again to continue.</div>
+        }
         @if (_error is not null)
         {
             <div class="autherror" role="alert">@_error</div>
@@ -62,6 +66,9 @@
     [SupplyParameterFromQuery]
     private bool Registered { get; set; }
 
+    [SupplyParameterFromQuery]
+    private bool SessionExpired { get; set; }
+
     private string? _email;
     private string? _password;
     private string? _error;
@@ -87,7 +94,7 @@
         }
 
         var login = result.Value!;
-        await AuthState.MarkSignedInAsync(login.AccessToken, login.User, login.RequiresPasswordChange);
+        await AuthState.MarkSignedInAsync(login.AccessToken, login.User, login.RequiresPasswordChange, login.ExpiresInSeconds);
 
         if (login.RequiresPasswordChange)
         {
