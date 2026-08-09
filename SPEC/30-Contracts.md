@@ -553,16 +553,22 @@ Purpose: Create a new organization status.
 
 Request body:
 - `name` required string
+- `color` optional CSS/hex color string (max 20 chars); defaults to `#64748B` when omitted — drives the swimlane color dot and idea-card status chip
+- `sortOrder` optional integer (organization-level catalog order); appended after the current maximum when omitted
 
 Success response `201`:
 - `statusId`
 - `name`
+- `color`
+- `sortOrder`
 
 ### `PUT /api/v1/statuses/{statusId}`
 Purpose: Rename or update a status.
 
 Request body:
 - `name` required string
+- `color` optional CSS/hex color string (max 20 chars)
+- `sortOrder` optional integer
 
 ### `DELETE /api/v1/statuses/{statusId}`
 Purpose: Soft-delete a status while preserving existing references.
@@ -758,12 +764,36 @@ Purpose: Cross-board, organization-scoped idea list for the global `/ideas` page
 Query parameters:
 - `page`
 - `pageSize`
-- `search` optional (matches idea title)
+- `search` optional (matches the idea title and the values of Text/Url User-Defined Fields)
 - `scope` optional `all` (default), `created` (authored by the caller), or `assigned` (assigned to the caller)
 - `sortBy` optional `createdAt` (default) or `title`
 - `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first)
+- `fieldFilters[<fieldDefinitionId>]=<value>` optional, repeatable — filter by User-Defined Field value (T059). Semantics per field type: `Text`/`Url` contains; `Number` range `<min>:<max>` (either side omittable); `Date` range `<from>:<to>` (ISO-8601, either side omittable); `Boolean` `true`/`false`; `Dropdown` exact option id; `MultiSelect` any-of (matches when the stored option ids include the value). Unknown/invalid `fieldDefinitionId` keys and unparseable values are silently ignored.
 
 Success response `200`: same paged item shape as `GET /api/v1/boards/{boardId}/ideas`.
+
+### `GET /api/v1/boards/{boardId}/ideas/export`
+Purpose: Export a board's active ideas as CSV (T059/T060).
+
+Success response `200`:
+- `Content-Type: text/csv` (UTF-8 with BOM), attachment `ideas.csv`
+- Columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`, `Status`, `Due Date`, `Tags`, then one column per active User-Defined Field (header = field name). Dropdown/MultiSelect values render as option labels.
+
+### `POST /api/v1/boards/{boardId}/ideas/import`
+Purpose: Create-only CSV import of ideas onto a board (T059/T060). Multipart form field `csvFile`.
+
+Behavior:
+- Each data row creates a new idea. Required columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`. `Status` is optional (must name a board swimlane; defaults to the left-most swimlane); `Due Date`, `Tags`, and per-UDF-field columns are optional.
+- `Idea Type` and `Business Impact` are matched by name (case-insensitive) against active options; a missing or unknown value rejects that row. Dropdown/MultiSelect UDF columns are matched by option label; Boolean accepts `Yes`/`No` or `true`/`false`.
+- Invalid rows are rejected individually with a per-row message; valid rows still import.
+
+Success response `200`:
+- `createdCount` integer
+- `rejectedCount` integer
+- `rows` array of `{ rowNumber, title, outcome (`Created`/`Rejected`), error }`
+
+Error responses:
+- `400` the file is missing/empty or its header lacks the required columns
 
 ### `POST /api/v1/boards/{boardId}/ideas`
 Purpose: Create a new idea on a board.
@@ -1051,6 +1081,7 @@ Purpose: Add a comment to an idea.
 
 Request body:
 - `body` required string, max 2000 characters, plain text with line breaks
+- `mentionEmails` optional string array — same organization-scoped, email-based mention resolution as ideas (`SPEC/20-feature-ideas-and-engagement.md` "Comments" #5); unresolved addresses are ignored
 
 UX rules:
 - clients should show a live character counter and inline overflow validation
