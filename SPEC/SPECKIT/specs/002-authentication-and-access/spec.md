@@ -20,7 +20,7 @@ Implement authentication with globally unique email credentials, seeded global S
 - Five failed login attempts within 15 minutes cause a 15-minute lockout.
 - Inactive accounts cannot log in.
 - The global Site Admin is seeded from an environment-provided initial credential and must change it on first login.
-- In Development only, startup seed creates demo Org Admin, User, and Read Only accounts in each demo organization using demo password `Abc123!` without a forced password change.
+- In Development only, startup seed creates exactly two demo organizations with one Org Admin and two User accounts in each, using demo password `Abc123!` without a forced password change. The global Site Admin remains organization-independent.
 - Admin-issued temporary password reset is an MVP/P1 capability and uses one-time display temporary passwords that expire after 24 hours and force password change on first use.
 - `User.MustChangePassword` gates the standalone required-change route for seeded Site Admin and admin-provided initial or temporary credentials. Authenticated users without the flag use My Profile for voluntary password changes.
 - Unauthenticated protected client routes redirect to `/login`; authenticated users without a required password change land on the Dashboard at `/`; `/logout` clears the session and returns to `/login`.

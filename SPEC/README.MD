@@ -27,6 +27,6 @@ This directory contains the canonical product and delivery specifications for a 
 
 ## AI Usage
 
-- Start implementation work by reading `Specs Overview.md` for product behavior and `implementation-agent-tracker.md` for the reset execution baseline.
+- Start implementation work by reading `Bug Triage.md`, `Specs Overview.md`, and `implementation-agent-tracker.md`. Unresolved Bug Triage `TODO` items take priority over new features unless the user explicitly approves an exception.
 - For endpoint and payload details, use `30-Contracts.md` as the canonical source.
 - For new client layout/interaction specs, start from `ui-ux-spec-template.md`.

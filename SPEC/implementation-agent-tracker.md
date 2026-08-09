@@ -3,17 +3,25 @@
 ## Purpose
 Track the implementation work that should be executed from the reset baseline, what is currently active, and what is ready next.
 
+## Pre-Feature Triage Gate
+- Before starting or resuming implementation, read `SPEC/Bug Triage.md`.
+- Unresolved items in its `TODO` section take priority over new feature work. Do not start a new feature until those items are cleared unless the user explicitly approves an exception.
+- After a fix is complete and focused validation passes, move the item from `TODO` to `COMPLETED` with its completion date and verification note; do not retain it in both sections.
+
 ## Reset Notice
 - Implementation progress has been intentionally reset.
 - Treat this tracker as the authoritative execution baseline for starting over.
 - Prior implementation history has been cleared from this document on purpose.
+
+## Demo seed topology revised (2026-08-09)
+- Development seeding now creates exactly 2 demo organizations. Each has one Org Admin, two User accounts, and two boards; every board contains one idea in every default status plus example comments. The global Site Admin remains organization-independent. `StartupSeederTests` verifies exact counts, ownership, status coverage on all four boards, and rerun idempotency (10/10 green).
 
 ## Parallel hardening + UDF-client batch — MERGED (2026-08-08)
 Four independent units built in isolated worktree agents off `dev`, merged centrally (build 0/0 + full suite green after each). `dev` after this batch: **Domain 95 / Application 157 / Infrastructure 67 / API 84 = 403 tests green.**
 - **U1 — UDF client, slice 2 (T057-T058)** — `feature/008-udf-client`. `Pages/FieldDefinitionsAdmin.razor` (OrgAdmin, `/settings/fields`: list/create/edit/soft-delete/reorder + Dropdown/MultiSelect option sub-editor + "show archived"), `Services/ApiClient.FieldDefinitions.cs` (6 endpoints + cached `GetActiveFieldDefinitionsAsync`), `Services/FieldDefinitionModels.cs`, and a shared `Components/IdeaFieldInputs.razor` rendering per-type inputs (Text/Number/Date/Url/Boolean/Dropdown/MultiSelect). Wired UDF values into the new-idea form (`BoardDetail.razor`) and idea detail (`IdeaDetail.razor`) with `FieldValues` on the client create/update/detail DTOs.
 - **U2 — OpenAPI alignment & docs (T046)** — `feature/046-openapi-alignment`. `GenerateDocumentationFile` + `IncludeXmlComments`; `[ProducesResponseType]` on all 12 controllers with per-status problem-details types. No behavior change. Confirmed lockout maps to **429** (not 423).
 - **U3 — auth + CSV + contract tests (T047-T049)** — `feature/047-hardening-tests`. New `AuthenticationTests`, `UserCsvImportTests`, `CsvUserImportParserTests`, `ContractTests` (envelope per 400/401/403/404/409/429 + camelCase `errors`). Surfaced a real bug (below).
-- **U4 — richer demo seed + seed tests (T050-T052)** — `feature/050-demo-seed`. Demo seed now populates each demo org's board with one idea per swimlane + example comments, idempotently; extended `StartupSeederTests`.
+- **U4 — richer demo seed + seed tests (T050-T052)** — `feature/050-demo-seed`. Originally populated each demo org's single board; superseded by the 2026-08-09 topology revision above (two orgs, two populated boards each); extended `StartupSeederTests`.
 - **Coordinator fix (`dff34ff`):** `AppExceptionHandler` was omitting the `type` member on 401/403/404/409/429 envelopes (contract violation U3 pinned); now sets a `type` URI per status, contract-test helper strengthened, characterization test flipped. Also fixed CLAUDE.md's stale 423→429 lockout mapping.
 - **Gap surfaced by U1 — RESOLVED 2026-08-08:** the client idea forms now send the required `IdeaTypeId`/`BusinessImpactId`. Added `GetIdeaTypesAsync`/`GetBusinessImpactsAsync` + option DTOs; the board new-idea form has required Idea Type + Business Impact selectors (default to first active); Idea Detail shows them in the facts panel and echoes them on save. Fields added to `CreateIdeaRequestDto`/`UpdateIdeaRequestDto`/`IdeaDetailDto`.
 - **Live browser pass — PASSED 2026-08-08** (API on :5103 + Blazor client on :5098 + real SQL `collega-sqlserver`, against a throwaway `CollegaE2E` DB that was migrated fresh and dropped afterward; the user's `Collega` DB was untouched). Verified as demo Org Admin: sign-in + org/board resolution; U4's demo seed rendered (5 swimlanes each with a seeded idea + comments); U1's `/settings/fields` manager created a Text field "Team"; created an idea with Idea Type=Continuous Improvement, Business Impact=High, and the custom field — **save succeeded** (the flow that previously 400'd) — and Idea Detail's facts panel showed Idea Type, Business Impact=High, and the custom field. This exercised U1, U4, and the classification wiring end-to-end on real SQL.

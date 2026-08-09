@@ -17,7 +17,7 @@ Users can securely access the application using organization-scoped accounts.
 7. The seeded Site Admin account is a global platform account and does not belong to an organization.
 8. A seed Site Admin account must be created on first run using an environment-provided initial credential, read from configuration keys `SiteAdmin__Email` and `SiteAdmin__Password` (bound via standard ASP.NET Core configuration, so either environment variables or `dotnet user-secrets` may supply them locally). Startup must fail fast if either is missing.
 9. The seed Site Admin must be forced to change that initial credential on first login.
-10. In Development only, startup seed must also create demo organization users for each role: Org Admin, User, and Read Only, each initialized with demo password `Abc123!` (chosen to satisfy the password complexity policy in requirement #5 — the earlier literal `abc123!` from `SPEC/10-requirements.md` had no uppercase character and was changed rather than exempted; see `SPEC/60-spec-q-and-a-backlog.md` decision 16).
+10. In Development only, startup seed must also create one Org Admin and two User accounts in each demo organization, each initialized with demo password `Abc123!` (chosen to satisfy the password complexity policy in requirement #5 — the earlier literal `abc123!` from `SPEC/10-requirements.md` had no uppercase character and was changed rather than exempted; see `SPEC/60-spec-q-and-a-backlog.md` decision 16). The global Site Admin remains outside all organizations.
 11. Development demo users are not forced to change the demo password on first successful login.
 12. Password reset is required in P1 and uses admin-issued temporary passwords.
 13. Admin-issued temporary passwords are shown one time only, expire after 24 hours, and require password change on first use.
@@ -56,7 +56,7 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Seed Site Admin is created at first run
 - [ ] Seed Site Admin must change the environment-provided initial credential on first login
 - [ ] Startup fails fast with a clear error if `SiteAdmin__Email` or `SiteAdmin__Password` is missing
-- [ ] Development startup seed creates demo Org Admin, User, and Read Only accounts using `Abc123!`
+- [ ] Development startup seed creates one Org Admin and two User accounts per demo organization using `Abc123!`
 - [ ] Development startup seeded demo users can log in with `Abc123!` without a forced password change
 - [ ] Admin-issued temporary password reset is implemented in P1
 - [ ] Temporary passwords are one-time display, expire after 24 hours, and force password change on first use

@@ -31,7 +31,7 @@ Organizations can manage idea boards using configurable status swimlanes.
    - bulk-import ideas from a CSV file
 6. Swimlane order changes are saved immediately when the drag-and-drop action completes.
 7. Board views must provide guided empty states with a primary action and short explanatory text when no ideas exist.
-8. In Development, each seeded demo organization includes one example board with at least one idea in each default swimlane.
+8. In Development, each seeded demo organization includes two example boards, each with at least one idea in every default swimlane.
 9. User-facing copy uses `Board` or `Boards`, never `Workflow` or `Workflows`.
 10. The canonical client routes are `/boards` for the board list and `/board/{boardId}` for board detail. `/board`, `/workflow`, `/workflows`, and `/workflow/{boardId}` redirect to the corresponding canonical route.
 11. Internal application service and namespace names may retain `Workflow` where they are not user-visible.
@@ -59,7 +59,7 @@ When implemented:
 - [ ] Boards can select a subset of org statuses
 - [ ] Swimlane order can be changed and is saved immediately
 - [ ] Board screens provide guided empty states with a primary action and short explanatory text when no ideas exist
-- [ ] Development startup seed includes one example board per demo organization
+- [ ] Development startup seed includes two example boards per demo organization, with every default swimlane populated on both boards
 - [ ] Each seeded example board includes ideas across every default swimlane
 - [ ] Site Admin and Org Admin can bulk-import ideas from a CSV file
 - [ ] User-facing navigation, headings, actions, and messages use Board terminology

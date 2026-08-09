@@ -6,6 +6,7 @@ Translate the implementation plan into milestone-oriented workstreams grouped by
 ## Restart Baseline
 - This roadmap is sequencing guidance for a new implementation start.
 - No milestone is currently in progress or complete.
+- Before beginning a milestone or feature, read `Bug Triage.md`. Resolve its `TODO` items first unless the user explicitly approves an exception.
 - Begin with Milestone 1 and update execution state in `implementation-agent-tracker.md` as work resumes.
 
 ## Milestone 1: Platform Foundation

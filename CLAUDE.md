@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository State
 
-Collega has a working solution scaffold and an initial implementation slice. `Collega.sln`, `global.json` (.NET 8 SDK), all five `src/Collega.*` projects, and their `tests/Collega.*.Tests` counterparts exist and build. Implementation progress is tracked task-by-task in `SPEC/implementation-agent-tracker.md` — **read that file for current status before starting or resuming implementation work**; treat it as authoritative over any summary here, which will drift as tasks complete. As of the last tracker update (2026-08-07): Foundation (T001-T004) and Auth Agent (T005-T011) are merged into `dev`; Tenant Administration Agent (T012-T019) is next and not yet started; the Client Agent (Blazor UI, T040-T045) is no longer blocked on UI comp sign-off — `comp-c-review-06-lockin-v5-final.html` is locked (see "Locked (2026-08-07)" below) — but confirm with the user before spawning a UI/UX Developer implementation pass, since that's still a scoped decision.
+Collega has a working solution scaffold and an initial implementation slice. `Collega.sln`, `global.json` (.NET 8 SDK), all five `src/Collega.*` projects, and their `tests/Collega.*.Tests` counterparts exist and build. Before starting or resuming implementation, read `SPEC/Bug Triage.md` and `SPEC/implementation-agent-tracker.md`. Bug Triage is the authoritative pre-feature queue; unresolved `TODO` items take priority and block new feature starts unless the user explicitly approves an exception. The tracker remains authoritative for implementation status over any summary here, which will drift as tasks complete. As of the last tracker update (2026-08-07): Foundation (T001-T004) and Auth Agent (T005-T011) are merged into `dev`; Tenant Administration Agent (T012-T019) is next and not yet started; the Client Agent (Blazor UI, T040-T045) is no longer blocked on UI comp sign-off — `comp-c-review-06-lockin-v5-final.html` is locked (see "Locked (2026-08-07)" below) — but confirm with the user before spawning a UI/UX Developer implementation pass, since that's still a scoped decision.
 
 This repo also contains:
 
@@ -28,6 +28,7 @@ Canonical product behavior lives in `SPEC/*.md`. Read the relevant spec before d
 - `SPEC/50-technical-implementation-plan.md`, `SPEC/50-kubernetes-deployment.md`
 - `SPEC/70-delivery-backlog.md`, `SPEC/80-workstream-roadmap.md`, `SPEC/85-implementation-timeline.md`
 - `SPEC/90-definition-of-done.md`
+- `SPEC/Bug Triage.md` — authoritative pre-feature bug/minor-tweak queue; clear its `TODO` section before starting new features unless the user explicitly approves an exception
 - `SPEC/implementation-agent-tracker.md` — **not product behavior, but the authoritative log of what's actually been built, what's in progress, and what's next**; check this before starting, resuming, or describing the state of implementation work
 
 `SPEC/Specs Overview.md` is a single-document aggregate meant as a fast AI entrypoint, but it is not fully in sync with the individual specs — e.g. it omits invite-code self-registration (`POST /register`, invite-code regenerate) that `SPEC/10-requirements.md`, `SPEC/20-feature-organizations-and-users.md`, and `SPEC/30-Contracts.md` describe as canonical. When the overview and a detailed spec disagree, treat it as an open spec conflict and ask rather than silently picking one.
@@ -72,6 +73,8 @@ Within that direction, page-level designs are being locked in one feature area a
 
 ## Working Rules
 
+- Before starting or resuming implementation, read `SPEC/Bug Triage.md`. Resolve its `TODO` items before starting new features unless the user explicitly approves an exception.
+- After a triage item is fixed and focused validation passes, move it from `TODO` to `COMPLETED` with the completion date and verification note. Never leave the same item in both sections.
 - Treat `SPEC/*.md` as the source of truth. If implementation changes behavior, update the canonical spec first, then align tests and implementation.
 - Always seek clarification before implementing ambiguous or conflicting behavior.
 - Make surgical changes; avoid unrelated refactors.

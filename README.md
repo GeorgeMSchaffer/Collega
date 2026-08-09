@@ -4,7 +4,7 @@ Organization-scoped collaboration and idea-tracking tool. Organizations contain 
 
 **Stack:** .NET 8 · ASP.NET Core Web API · Blazor WebAssembly (Fluent UI Blazor) · EF Core · SQL Server 2022 · xUnit
 
-> **Status:** implementation is in progress. Epic 1 (Foundation) and the Epic 2 Auth slice are merged; org/user administration, boards, statuses, and ideas are not built yet. `src/Collega.Client` is still the stock Blazor template. See `SPEC/implementation-agent-tracker.md` for the live picture.
+> **Implementation gate:** check [`SPEC/Bug Triage.md`](SPEC/Bug%20Triage.md) before starting feature work. Unresolved `TODO` items take priority unless the user explicitly approves an exception. See [`SPEC/implementation-agent-tracker.md`](SPEC/implementation-agent-tracker.md) for implementation status.
 
 ---
 
@@ -49,8 +49,7 @@ cd src/Collega.API
 dotnet user-secrets init
 dotnet user-secrets set "SiteAdmin:Email" "admin@collega.local"
 dotnet user-secrets set "SiteAdmin:Password" "<your-password>"
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
-  "Server=localhost,1433;Database=Collega;User Id=sa;Password=<your-password>;TrustServerCertificate=True;"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=Collega;User Id=sa;Password=<your-password>;TrustServerCertificate=True;"
 ```
 
 The connection-string secret overrides the placeholder in `appsettings.Development.json`, which is committed and must never hold a real password.

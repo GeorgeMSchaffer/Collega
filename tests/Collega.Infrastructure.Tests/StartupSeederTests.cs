@@ -63,21 +63,28 @@ public sealed class StartupSeederTests
     }
 
     [Fact]
-    public async Task Seed_Development_CreatesThreeOrganizationsWithDefaultsAndRoleAccounts()
+    public async Task Seed_Development_CreatesTwoOrganizationsWithDefaultsAndThreeUsersEach()
     {
         using var ctx = InMemoryContext.Create();
 
         await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: true);
 
-        Assert.Equal(3, await ctx.Organizations.CountAsync());
-        Assert.Equal(3 * OrganizationDefaults.Statuses.Count, await ctx.Statuses.CountAsync());
-        Assert.Equal(3, await ctx.Boards.CountAsync());
+        var organizations = await ctx.Organizations.ToListAsync();
+        Assert.Equal(2, organizations.Count);
+        Assert.Equal(2 * OrganizationDefaults.Statuses.Count, await ctx.Statuses.CountAsync());
+        Assert.Equal(4, await ctx.Boards.CountAsync());
 
-        // Each org has an Org Admin, a User, and a Read Only account (plus the global Site Admin).
-        Assert.Equal(3, await ctx.Users.CountAsync(u => u.Role == Role.OrgAdmin));
-        Assert.Equal(3, await ctx.Users.CountAsync(u => u.Role == Role.User));
-        Assert.Equal(3, await ctx.Users.CountAsync(u => u.Role == Role.ReadOnly));
+        foreach (var organization in organizations)
+        {
+            var users = await ctx.Users.Where(u => u.OrganizationId == organization.Id).ToListAsync();
+            Assert.Equal(3, users.Count);
+            Assert.Single(users, u => u.Role == Role.OrgAdmin);
+            Assert.Equal(2, users.Count(u => u.Role == Role.User));
+            Assert.DoesNotContain(users, u => u.Role is Role.SiteAdmin or Role.ReadOnly);
+        }
+
         Assert.Equal(1, await ctx.Users.CountAsync(u => u.Role == Role.SiteAdmin));
+        Assert.Null((await ctx.Users.SingleAsync(u => u.Role == Role.SiteAdmin)).OrganizationId);
     }
 
     [Fact]
@@ -107,10 +114,10 @@ public sealed class StartupSeederTests
         }
 
         using var verify = InMemoryContext.Create(dbName);
-        Assert.Equal(3, await verify.Organizations.CountAsync());
-        Assert.Equal(3 * OrganizationDefaults.Statuses.Count, await verify.Statuses.CountAsync());
-        Assert.Equal(3, await verify.Boards.CountAsync());
-        Assert.Equal(10, await verify.Users.CountAsync()); // 1 site admin + 9 demo accounts
+        Assert.Equal(2, await verify.Organizations.CountAsync());
+        Assert.Equal(2 * OrganizationDefaults.Statuses.Count, await verify.Statuses.CountAsync());
+        Assert.Equal(4, await verify.Boards.CountAsync());
+        Assert.Equal(7, await verify.Users.CountAsync()); // 1 global Site Admin + 6 organization users
     }
 
     [Fact]
@@ -121,7 +128,11 @@ public sealed class StartupSeederTests
         await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: true);
 
         var boards = await ctx.Boards.ToListAsync();
-        Assert.Equal(3, boards.Count);
+        Assert.Equal(4, boards.Count);
+
+        var organizations = await ctx.Organizations.ToListAsync();
+        Assert.All(organizations, organization =>
+            Assert.Equal(2, boards.Count(board => board.OrganizationId == organization.Id)));
 
         foreach (var board in boards)
         {
@@ -151,8 +162,8 @@ public sealed class StartupSeederTests
 
         await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: true);
 
-        // 3 comments per demo org (see StartupSeeder.SeedDemoBoardContentAsync).
-        Assert.Equal(9, await ctx.Comments.CountAsync());
+        // 3 comments per demo board (see StartupSeeder.SeedDemoBoardContentAsync).
+        Assert.Equal(12, await ctx.Comments.CountAsync());
 
         // Every comment hangs off a seeded idea.
         var ideaIds = await ctx.Ideas.Select(i => i.Id).ToListAsync();
@@ -188,8 +199,8 @@ public sealed class StartupSeederTests
 
         using var verify = InMemoryContext.Create(dbName);
 
-        // 3 orgs x 5 swimlanes = 15 ideas; 3 orgs x 3 comments = 9 comments, unchanged by the re-run.
-        Assert.Equal(3 * OrganizationDefaults.Statuses.Count, await verify.Ideas.CountAsync());
-        Assert.Equal(9, await verify.Comments.CountAsync());
+        // 2 orgs x 2 boards x 5 swimlanes = 20 ideas; 4 boards x 3 comments = 12 comments.
+        Assert.Equal(4 * OrganizationDefaults.Statuses.Count, await verify.Ideas.CountAsync());
+        Assert.Equal(12, await verify.Comments.CountAsync());
     }
 }

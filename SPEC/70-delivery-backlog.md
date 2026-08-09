@@ -6,6 +6,7 @@ Break the technical implementation plan into execution-ready epics and task slic
 ## Restart Baseline
 - All epics and tasks in this backlog are currently planned and pending.
 - No backlog item should be treated as implemented, partially implemented, or accepted based on prior tracker history.
+- Before selecting a backlog item, read `Bug Triage.md`. Its unresolved `TODO` items block new feature starts unless the user explicitly approves an exception.
 - When execution restarts, record active and completed work in `implementation-agent-tracker.md`.
 
 ## Team Lanes
@@ -67,7 +68,7 @@ Tasks:
 - enforce inactive-account denial
 - implement 5-failures-in-15-minutes lockout for 15 minutes
 - seed the global Site Admin with an environment-provided initial credential
-- implement Development-only demo environment seed for 3 organizations with role-based users and forced first-login password change
+- implement Development-only demo environment seed for exactly 2 organizations, each with one Org Admin, two User accounts, and two boards populated across every status; force first-login password change only for the global Site Admin
 - force first-login password change for the seeded Site Admin
 - emit audit events for login outcomes and password actions
 

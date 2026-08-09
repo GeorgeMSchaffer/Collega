@@ -6,7 +6,7 @@ Blazor WebAssembly UI (Fluent UI Blazor components).
 dotnet run --project src/Collega.Client/Collega.Client.csproj   # http://localhost:5098
 ```
 
-**Status: still the stock Blazor template** (`Pages/Counter.razor`, `Weather.razor`, sample data). No Collega UI is built yet. Client tasks are T040-T045 — check `SPEC/implementation-agent-tracker.md` before starting, and confirm with the user before spawning a UI/UX Developer implementation pass; it's a scoped decision even though the design is now unblocked.
+Before starting or resuming client feature work, check `SPEC/Bug Triage.md` and resolve its `TODO` items unless the user explicitly approves an exception. Then check `SPEC/implementation-agent-tracker.md` for current status and confirm with the user before spawning a UI/UX Developer implementation pass.
 
 Keep components focused on rendering and user interaction. Business rules belong in Application/Domain, reached through the API.
 
