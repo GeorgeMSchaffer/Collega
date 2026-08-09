@@ -15,13 +15,11 @@ namespace Collega.API.Tests;
 /// <c>AppExceptionHandler</c> maps 400/401/403/404/409, and lockout to 429 (canonical per
 /// SPEC/30-Contracts.md; CLAUDE.md's 423 is stale doc drift). There is no code path that yields 423.
 ///
-/// KNOWN GAP (flagged, not fixed here — this unit is test-only): responses rendered by
-/// <c>AppExceptionHandler</c> (401/403/404/409/429) omit the <c>type</c> member entirely, whereas
-/// the contract's "Error Envelope" says <c>type</c> is present on all non-2xx responses. The
-/// framework-rendered paths (model-state 400, bodiless routing 404) DO include <c>type</c>. This is
-/// pinned by <see cref="AppExceptionEnvelope_Currently_Omits_Type_KnownGap"/> and
-/// <see cref="ValidationError_400_Envelope_Includes_Type"/> so the discrepancy is visible and any
-/// future fix will flip the characterization test.
+/// The <c>type</c> member is present on every mapped status — both the framework-rendered paths
+/// (model-state 400, bodiless routing 404) and the <c>AppExceptionHandler</c>-rendered paths
+/// (401/403/404/409/429), the latter fixed alongside these tests. Asserted by
+/// <see cref="AppExceptionEnvelope_Includes_Type"/>, <see cref="ValidationError_400_Envelope_Includes_Type"/>,
+/// and the shared <c>AssertProblemEnvelopeAsync</c> helper.
 /// </summary>
 public sealed class ContractTests : IClassFixture<CollegaApiFactory>
 {
@@ -74,12 +72,10 @@ public sealed class ContractTests : IClassFixture<CollegaApiFactory>
     }
 
     [Fact]
-    public async Task AppExceptionEnvelope_Currently_Omits_Type_KnownGap()
+    public async Task AppExceptionEnvelope_Includes_Type()
     {
-        // Characterization of the KNOWN GAP described on this class: AppExceptionHandler-rendered
-        // envelopes (here, a 404) do not include a 'type' member, contrary to SPEC/30-Contracts.md.
-        // If AppExceptionHandler is fixed to populate 'type', this assertion flips and this test
-        // should be updated to require 'type' — that is the intended signal, not a regression.
+        // AppExceptionHandler-rendered envelopes (here, a 404) include a 'type' member per
+        // SPEC/30-Contracts.md "Error Envelope". (Previously omitted; fixed alongside the U3 tests.)
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
 
@@ -87,8 +83,8 @@ public sealed class ContractTests : IClassFixture<CollegaApiFactory>
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var root = await ReadEnvelopeAsync(response);
-        Assert.False(root.TryGetProperty("type", out _),
-            "AppExceptionHandler now emits 'type' — update this characterization test to require it (spec gap fixed).");
+        Assert.True(root.TryGetProperty("type", out var type), "AppExceptionHandler envelope is missing 'type'.");
+        Assert.False(string.IsNullOrWhiteSpace(type.GetString()));
     }
 
     [Fact]
@@ -199,6 +195,7 @@ public sealed class ContractTests : IClassFixture<CollegaApiFactory>
     {
         var root = await ReadEnvelopeAsync(response);
 
+        Assert.True(root.TryGetProperty("type", out var type), "envelope is missing 'type'.");
         Assert.True(root.TryGetProperty("title", out var title), "envelope is missing 'title'.");
         Assert.True(root.TryGetProperty("status", out var status), "envelope is missing 'status'.");
         Assert.True(root.TryGetProperty("detail", out _), "envelope is missing 'detail'.");
@@ -206,6 +203,7 @@ public sealed class ContractTests : IClassFixture<CollegaApiFactory>
 
         Assert.Equal((int)expected, status.GetInt32());
         Assert.False(string.IsNullOrWhiteSpace(title.GetString()));
+        Assert.False(string.IsNullOrWhiteSpace(type.GetString()));
 
         return root;
     }

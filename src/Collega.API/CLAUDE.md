@@ -65,7 +65,7 @@ Optional: `Auth:TokenSigningKey` (base64; a random per-process key is generated 
 | `ForbiddenAppException` | 403 |
 | `NotFoundAppException` | 404 |
 | `ConflictAppException` | 409 |
-| `LockedOutAppException` | 423 |
+| `LockedOutAppException` | 429 |
 
 `UseStatusCodePages` covers bodiless 401/403/404s from routing and auth.
 

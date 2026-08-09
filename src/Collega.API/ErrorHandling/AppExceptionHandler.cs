@@ -14,6 +14,9 @@ namespace Collega.API.ErrorHandling;
 /// </summary>
 public sealed class AppExceptionHandler : IExceptionHandler
 {
+    // SPEC/30-Contracts.md "Error Envelope" requires a `type` member on every non-2xx response.
+    private static string TypeFor(int statusCode) => $"https://collega.dev/problems/{statusCode}";
+
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
         var (status, problemDetails) = exception switch
@@ -29,19 +32,19 @@ public sealed class AppExceptionHandler : IExceptionHandler
                 }),
             UnauthorizedAppException unauthorized => (
                 StatusCodes.Status401Unauthorized,
-                new ProblemDetails { Title = "Unauthorized", Status = StatusCodes.Status401Unauthorized, Detail = unauthorized.Message }),
+                new ProblemDetails { Type = TypeFor(StatusCodes.Status401Unauthorized), Title = "Unauthorized", Status = StatusCodes.Status401Unauthorized, Detail = unauthorized.Message }),
             ForbiddenAppException forbidden => (
                 StatusCodes.Status403Forbidden,
-                new ProblemDetails { Title = "Forbidden", Status = StatusCodes.Status403Forbidden, Detail = forbidden.Message }),
+                new ProblemDetails { Type = TypeFor(StatusCodes.Status403Forbidden), Title = "Forbidden", Status = StatusCodes.Status403Forbidden, Detail = forbidden.Message }),
             NotFoundAppException notFound => (
                 StatusCodes.Status404NotFound,
-                new ProblemDetails { Title = "Not Found", Status = StatusCodes.Status404NotFound, Detail = notFound.Message }),
+                new ProblemDetails { Type = TypeFor(StatusCodes.Status404NotFound), Title = "Not Found", Status = StatusCodes.Status404NotFound, Detail = notFound.Message }),
             ConflictAppException conflict => (
                 StatusCodes.Status409Conflict,
-                new ProblemDetails { Title = "Conflict", Status = StatusCodes.Status409Conflict, Detail = conflict.Message }),
+                new ProblemDetails { Type = TypeFor(StatusCodes.Status409Conflict), Title = "Conflict", Status = StatusCodes.Status409Conflict, Detail = conflict.Message }),
             LockedOutAppException lockedOut => (
                 StatusCodes.Status429TooManyRequests,
-                new ProblemDetails { Title = "Too Many Requests", Status = StatusCodes.Status429TooManyRequests, Detail = lockedOut.Message }),
+                new ProblemDetails { Type = TypeFor(StatusCodes.Status429TooManyRequests), Title = "Too Many Requests", Status = StatusCodes.Status429TooManyRequests, Detail = lockedOut.Message }),
             _ => (0, null)
         };
 
