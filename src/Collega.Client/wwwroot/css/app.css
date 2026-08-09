@@ -216,6 +216,8 @@ code { color: var(--accent-deep); }
   gap: 1px;
 }
 .rail a span { font-size: 8.5px; font-weight: 600; letter-spacing: .02em; }
+/* Icon glyph sized on its own so it reads clearly (~2x the label), independent of the label text. */
+.rail a .ico { font-size: 20px; line-height: 1; }
 .rail a.on { background: var(--accent-soft); color: var(--accent); }
 .rail a:hover { background: #f3f2f1; }
 .rail .push { flex: 1; }

@@ -19,12 +19,17 @@
            class="@(on ? "on" : null)"
            aria-current="@(on ? "page" : null)"
            title="@item.Label">
-            <span aria-hidden="true">@item.Icon</span>
+            <span class="ico" aria-hidden="true">@item.Icon</span>
             <span>@item.Label</span>
         </a>
     }
 
     <span class="push"></span>
+
+    <a href="/logout" title="Log out">
+        <span class="ico" aria-hidden="true">🚪</span>
+        <span>Log out</span>
+    </a>
 
     <span class="avatarwrap">
         <FluentButton Id="collega-avatar"

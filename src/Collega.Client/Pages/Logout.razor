@@ -1,0 +1,24 @@
+@page "/logout"
+@layout AuthLayout
+@inject NavigationManager Nav
+@inject CollegaAuthStateProvider AuthState
+
+<PageTitle>Signing out · Collega</PageTitle>
+
+@*
+    Clears the persisted session and returns to sign-in. Reached from the rail's Log out icon (and
+    usable as a direct /logout link). Anonymous + AuthLayout so it doesn't flash the app chrome.
+*@
+<div class="authwrap">
+    <div class="authcard">
+        <p class="sub">Signing you out…</p>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthState.MarkSignedOutAsync();
+        Nav.NavigateTo("/login", replace: true);
+    }
+}
