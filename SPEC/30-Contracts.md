@@ -674,6 +674,58 @@ Deletion is rejected with `400 Bad Request` when the option is the organization'
 
 For both option types, labels are trimmed before persistence and active labels are unique case-insensitively within the same organization and option type. Missing resources return `404 Not Found`; cross-organization access returns `403 Forbidden`.
 
+## Field Set Contracts
+
+Field Sets scope which User-Defined Fields appear on an idea by its Idea Type (`SPEC/20-feature-idea-type-field-sets.md`). A Field Set is a named, ordered selection of the organization's existing UDFs, each marked required-or-optional *within that set*. Site Admin may manage any organization supplied by route context; Org Admin only their own; User and Read Only callers receive `403 Forbidden`.
+
+### `GET /api/v1/organizations/{organizationId}/field-sets`
+Purpose: List Field Sets for an organization. `?includeDeleted=true` includes archived sets (admin only).
+
+Success response `200` item shape:
+- `fieldSetId`
+- `organizationId`
+- `name`
+- `description` (nullable)
+- `isDeleted`
+- `fields` array of `{ fieldDefinitionId, displayOrder, isRequired }` ordered by `displayOrder`
+
+### `POST /api/v1/organizations/{organizationId}/field-sets`
+Purpose: Create a Field Set with an initial ordered field selection.
+
+Request body:
+- `name` required string, max 100 characters, unique case-insensitively among active sets in the org
+- `description` optional string, max 500 characters
+- `fields` array of `{ fieldDefinitionId (GUID), displayOrder (int), isRequired (bool) }`; every `fieldDefinitionId` must be an active field definition in the org, and each may appear at most once
+
+Success response `201`: Field Set item shape. `400` on duplicate name, unknown/archived field, or duplicate field in the set.
+
+### `GET /api/v1/organizations/{organizationId}/field-sets/{fieldSetId}`
+Purpose: Get a single Field Set with its ordered fields.
+
+Success response `200`: Field Set item shape.
+
+### `PUT /api/v1/organizations/{organizationId}/field-sets/{fieldSetId}`
+Purpose: Rename/redescribe a set and reconcile its field membership, per-set order, and per-set required flags.
+
+Request body: same shape as create. The `fields` array is authoritative — omitted fields are removed from the set, new ones are added, existing ones are updated in place.
+
+Success response `200`: updated Field Set item shape.
+
+### `DELETE /api/v1/organizations/{organizationId}/field-sets/{fieldSetId}`
+Purpose: Soft-delete a Field Set.
+
+Success response `204 No Content`. Rejected with `409 Conflict` when the set is still assigned to one or more active Idea Types (reassign those types first).
+
+### `PUT /api/v1/organizations/{organizationId}/idea-types/{ideaTypeId}/field-set`
+Purpose: Assign a Field Set to an Idea Type, or clear the assignment (type falls back to showing all active org UDFs).
+
+Request body:
+- `fieldSetId` GUID string or `null` to clear
+
+Success response `204 No Content`. `400` when `fieldSetId` names an unknown or archived set; `404` when the Idea Type does not exist in the organization.
+
+> **Note (idea update contract):** idea type is immutable after creation. `PUT`/update paths for an idea must not change `ideaTypeId`; a request that supplies a differing `ideaTypeId` is rejected with `400`. The `POST /api/v1/boards/{boardId}/ideas` create contract's required `ideaTypeId` is unchanged.
+
 ## Board Contracts
 
 ### `GET /api/v1/organizations/{organizationId}/boards`

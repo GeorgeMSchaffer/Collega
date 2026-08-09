@@ -70,6 +70,8 @@ Users can create, discuss, organize, and support ideas within their organization
 8. Archived options cannot be assigned to new ideas or selected during an edit.
 9. Business Impact options include an editable color used by the board-card and detail chips. Idea Type options do not include a color.
 10. New organizations receive the initial option sets listed in the decision table.
+11. **Idea Type is immutable after an idea is created** — it is chosen at creation and cannot be changed on edit (`SPEC/20-feature-idea-type-field-sets.md`). An update that supplies a differing Idea Type is rejected with `400`. (Business Impact mutability is unchanged.)
+12. **Idea Type can carry a Field Set** that scopes which User-Defined Fields appear on ideas of that type; when no set is assigned, all active org UDFs show. Full behavior in `SPEC/20-feature-idea-type-field-sets.md`.
 
 ## Rich Content and Attachments Direction (Resolved)
 1. MVP idea descriptions and comment bodies remain plain text only.

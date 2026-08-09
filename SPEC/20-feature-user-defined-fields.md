@@ -12,10 +12,10 @@ Organizations can extend the `Idea` entity with custom fields (User-Defined Fiel
 |---|---|
 | Scope | Organization-level — all boards share one field schema |
 | Supported types | Text, Number, Date, Boolean, Dropdown (single-select), Multi-select, URL |
-| Required fields | Hard validation — missing required UDF field blocks idea save |
+| Required fields | Hard validation — missing required UDF field blocks idea save. **As of Idea-Type Field Sets (`SPEC/20-feature-idea-type-field-sets.md`): required-ness is a per-set override when the idea's type has a Field Set; `FieldDefinition.IsRequired` remains the default for unassigned types and the seed when a field is added to a set.** |
 | Field ordering | Admin-configurable display order; drag-and-drop reorder |
 | Visibility / access | All org users see and fill UDF fields on idea forms; only Admins can manage field definitions |
-| Templates integration | UDF design must be forward-compatible with a future idea-template feature |
+| Templates integration | **Realized as Idea-Type Field Sets (`SPEC/20-feature-idea-type-field-sets.md`).** A "template" is a field-**visibility** set (which UDFs show per idea type, each required-or-optional within the set), *not* a default-value injector. Default values are deferred to P2 there. See the reinterpretation note in "Template Integration" below. |
 | CSV export / import | UDF values are included as columns in CSV export and CSV import |
 | Filtering / search | UDF values are filterable and full-text searchable in the ideas list |
 | History / audit | UDF value changes are tracked in the audit log |
@@ -514,13 +514,16 @@ public interface IFieldDefinitionApiClient
 
 ---
 
-## Template Integration — Forward Compatibility
+## Template Integration — Realized as Idea-Type Field Sets
 
-To ensure UDFs integrate cleanly with a future idea-template feature:
+> **Reinterpreted (see `SPEC/20-feature-idea-type-field-sets.md`).** The original forward-compat note below imagined "templates" as *default field-value injectors*. That is **not** the v1 direction. The interview-resolved feature is **field-visibility sets**: each Idea Type may point at a reusable **Field Set** (a named, ordered selection of existing org UDFs, each required-or-optional within the set), and the idea form/validator/detail resolve fields by the idea's type. Idea type is **immutable after creation**, so there is no value reconciliation on type change. Default/prefilled values are a **P2 future consideration**, not part of v1.
 
-1. `FieldDefinition` and `FieldDefinitionOption` entities use stable `Guid` PKs — templates reference them by ID
-2. When templates are introduced, an `IdeaTemplate` entity will supply default `FieldValueWriteModel` stubs, which are injected as the initial `fieldValues` on idea create
-3. No changes to the UDF schema or validation pipeline will be required
+How the two readings reconcile:
+
+1. `FieldDefinition` and `FieldDefinitionOption` keep stable `Guid` PKs — Field Sets reference field definitions by ID (unchanged premise).
+2. A Field Set **selects and scopes** existing UDFs per idea type; it does **not** own new fields and does **not** inject default values in v1.
+3. The validation pipeline **does** change: `FieldValueValidator` validates against the idea type's *resolved* field set (with per-set required-ness), not the full active-definition list. See the linked spec's "Effective-field resolution."
+4. Default-value injection (an `IdeaTemplate`-style stub) remains architecturally possible on top of the Field Set entity, deferred to P2.
 
 ---
 
