@@ -421,18 +421,42 @@ public sealed class IdeaService : IIdeaService
         var impacts = await LoadBusinessImpactLookupAsync(board.OrganizationId, cancellationToken);
         var tagLookup = await LoadTagLookupAsync(ideas.SelectMany(i => i.Tags.Select(t => t.TagId)), cancellationToken);
 
-        var headers = IdeaCsvColumns.Core.Select(c => c.Header).ToList();
+        // One extra column per active User-Defined Field, in display order (T060).
+        var fieldDefinitions = (await _fieldDefinitionRepository.ListByOrganizationAsync(board.OrganizationId, includeDeleted: false, cancellationToken))
+            .OrderBy(d => d.DisplayOrder)
+            .ToList();
+        var fieldValueSnapshots = await _ideaRepository.GetFieldValuesByIdeaIdsAsync(ideas.Select(i => i.Id).ToList(), cancellationToken);
+        var valuesByIdea = fieldValueSnapshots
+            .GroupBy(v => v.IdeaId)
+            .ToDictionary(g => g.Key, g => g.ToDictionary(v => v.FieldDefinitionId, v => v.Value));
+
+        var headers = IdeaCsvColumns.Core.Select(c => c.Header)
+            .Concat(fieldDefinitions.Select(d => d.Name))
+            .ToList();
+
         var rows = ideas
-            .Select(i => (IReadOnlyList<string>)new List<string>
+            .Select(i =>
             {
-                i.Title,
-                i.Description,
-                i.Priority.ToString(),
-                IdeaTypeName(ideaTypes, i.IdeaTypeId),
-                BusinessImpactName(impacts, i.BusinessImpactId),
-                StatusName(statusInfo, i.StatusId),
-                FormatDate(i.DueDate) ?? string.Empty,
-                string.Join(", ", ProjectTagNames(i, tagLookup)),
+                var cells = new List<string>
+                {
+                    i.Title,
+                    i.Description,
+                    i.Priority.ToString(),
+                    IdeaTypeName(ideaTypes, i.IdeaTypeId),
+                    BusinessImpactName(impacts, i.BusinessImpactId),
+                    StatusName(statusInfo, i.StatusId),
+                    FormatDate(i.DueDate) ?? string.Empty,
+                    string.Join(", ", ProjectTagNames(i, tagLookup)),
+                };
+
+                valuesByIdea.TryGetValue(i.Id, out var ideaValues);
+                foreach (var definition in fieldDefinitions)
+                {
+                    var stored = ideaValues is not null && ideaValues.TryGetValue(definition.Id, out var v) ? v : null;
+                    cells.Add(FormatUdfForExport(definition, stored));
+                }
+
+                return (IReadOnlyList<string>)cells;
             })
             .ToList();
 
@@ -465,6 +489,10 @@ public sealed class IdeaService : IIdeaService
                 boardStatusByName[info.Name.Trim()] = statusId;
             }
         }
+
+        // Active UDF schema (with options) so per-field columns can be read by name (T060).
+        var fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(org, includeDeleted: false, cancellationToken);
+        var allFieldDefinitionIds = fieldDefinitions.Select(d => d.Id).ToList();
 
         var leftMost = board.LeftMostStatusId;
         var results = new List<IdeaImportRowResult>(rows.Count);
@@ -561,6 +589,44 @@ public sealed class IdeaService : IIdeaService
                 continue;
             }
 
+            // User-Defined Field columns (matched by field name), translated to their stored form then
+            // validated (which also enforces required fields and per-type rules). (T060)
+            var udfWrites = new List<IdeaFieldValueWrite>();
+            string? udfError = null;
+            foreach (var definition in fieldDefinitions)
+            {
+                if (!row.Cells.TryGetValue(definition.Name.Trim().ToLowerInvariant(), out var rawCell) || string.IsNullOrWhiteSpace(rawCell))
+                {
+                    continue;
+                }
+
+                var (stored, error) = TranslateUdfForImport(definition, rawCell.Trim());
+                if (error is not null)
+                {
+                    udfError = $"{definition.Name}: {error}";
+                    break;
+                }
+
+                udfWrites.Add(new IdeaFieldValueWrite(definition.Id, stored));
+            }
+
+            if (udfError is not null)
+            {
+                Reject(udfError);
+                continue;
+            }
+
+            IReadOnlyList<IdeaFieldValueInput> udfValues;
+            try
+            {
+                udfValues = FieldValueValidator.Validate(fieldDefinitions, udfWrites);
+            }
+            catch (ValidationAppException ex)
+            {
+                Reject(string.Join("; ", ex.Errors.SelectMany(e => e.Value)));
+                continue;
+            }
+
             Idea idea;
             try
             {
@@ -572,6 +638,11 @@ public sealed class IdeaService : IIdeaService
             {
                 Reject(ex.Message);
                 continue;
+            }
+
+            if (allFieldDefinitionIds.Count > 0)
+            {
+                idea.ReplaceFieldValues(udfValues, allFieldDefinitionIds, now, authorId);
             }
 
             await _ideaRepository.AddAsync(idea, cancellationToken);
@@ -593,6 +664,79 @@ public sealed class IdeaService : IIdeaService
         string.IsNullOrWhiteSpace(tagsCell)
             ? Array.Empty<string>()
             : tagsCell.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    // Renders a stored UDF value for CSV export: Dropdown/MultiSelect ids become human-readable option
+    // labels; everything else is the stored string (T060).
+    private static string FormatUdfForExport(FieldDefinition definition, string? stored)
+    {
+        if (string.IsNullOrEmpty(stored))
+        {
+            return string.Empty;
+        }
+
+        switch (definition.FieldType)
+        {
+            case FieldType.Dropdown:
+                return Guid.TryParse(stored, out var optionId)
+                    ? definition.Options.FirstOrDefault(o => o.Id == optionId)?.Label ?? stored
+                    : stored;
+
+            case FieldType.MultiSelect:
+                var labels = stored
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(part => Guid.TryParse(part, out var id)
+                        ? definition.Options.FirstOrDefault(o => o.Id == id)?.Label ?? part
+                        : part);
+                return string.Join(", ", labels);
+
+            default:
+                return stored;
+        }
+    }
+
+    // Translates a CSV cell into the stored UDF form for import: Dropdown/MultiSelect match option
+    // labels back to ids; Boolean accepts Yes/No or true/false; other types pass through for the
+    // FieldValueValidator to format-check. Returns an error message when a value can't be resolved.
+    private static (string? Stored, string? Error) TranslateUdfForImport(FieldDefinition definition, string cell)
+    {
+        switch (definition.FieldType)
+        {
+            case FieldType.Boolean:
+                if (cell.Equals("true", StringComparison.OrdinalIgnoreCase) || cell.Equals("yes", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ("true", null);
+                }
+
+                if (cell.Equals("false", StringComparison.OrdinalIgnoreCase) || cell.Equals("no", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ("false", null);
+                }
+
+                return (null, "must be Yes or No.");
+
+            case FieldType.Dropdown:
+                var option = definition.Options.FirstOrDefault(o => string.Equals(o.Label.Trim(), cell, StringComparison.OrdinalIgnoreCase));
+                return option is null ? (null, $"'{cell}' is not a valid option.") : (option.Id.ToString(), null);
+
+            case FieldType.MultiSelect:
+                var ids = new List<string>();
+                foreach (var part in cell.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    var match = definition.Options.FirstOrDefault(o => string.Equals(o.Label.Trim(), part, StringComparison.OrdinalIgnoreCase));
+                    if (match is null)
+                    {
+                        return (null, $"'{part}' is not a valid option.");
+                    }
+
+                    ids.Add(match.Id.ToString());
+                }
+
+                return (string.Join(",", ids), null);
+
+            default:
+                return (cell, null);
+        }
+    }
 
     // Projection ---------------------------------------------------------------------------------
 

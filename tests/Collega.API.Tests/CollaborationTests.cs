@@ -522,6 +522,44 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Idea_Csv_RoundTrips_Udf_Columns_And_Rejects_Bad_Option()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+
+        // A Dropdown UDF with two options.
+        var fieldResponse = await admin.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/field-definitions",
+            new
+            {
+                name = "Area",
+                fieldType = "Dropdown",
+                isRequired = false,
+                displayOrder = 10,
+                options = new[] { new { label = "Frontend", displayOrder = 10 }, new { label = "Backend", displayOrder = 20 } },
+            });
+        Assert.Equal(HttpStatusCode.Created, fieldResponse.StatusCode);
+
+        // Import references the option by label; an unknown label is rejected.
+        var importCsv =
+            "Title,Description,Priority,Idea Type,Business Impact,Area\n"
+            + "Area idea,d,Low,Continuous Improvement,High,Backend\n"
+            + "Bad area,d,Low,Continuous Improvement,High,Nowhere\n";
+        var result = await ImportIdeasAsync(admin, org.DefaultBoardId, importCsv);
+
+        Assert.Equal(1, result.CreatedCount);
+        Assert.Equal(1, result.RejectedCount);
+        Assert.Contains(result.Rows, r => r.Outcome == "Rejected" && r.Error!.Contains("Area"));
+
+        // Export renders the UDF column header and the resolved option label (not the id).
+        using var export = await admin.GetAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas/export");
+        var csv = await export.Content.ReadAsStringAsync();
+        Assert.Contains("Area", csv);
+        Assert.Contains("Backend", csv);
+        Assert.Contains("Area idea", csv);
+    }
+
     private async Task<ImportResult> ImportIdeasAsync(HttpClient client, Guid boardId, string csvContent)
     {
         using var content = new MultipartFormDataContent();

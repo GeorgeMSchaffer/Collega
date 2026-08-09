@@ -24,7 +24,14 @@ public interface IIdeaRepository
 
     /// <summary>True when an active idea with the given normalized title already exists on the board.</summary>
     Task<bool> ExistsByTitleOnBoardAsync(Guid boardId, string normalizedTitle, CancellationToken cancellationToken = default);
+
+    /// <summary>User-Defined Field values for a set of ideas, for bulk projection such as CSV export
+    /// (T060). Empty when no ids are given.</summary>
+    Task<IReadOnlyList<IdeaFieldValueSnapshot>> GetFieldValuesByIdeaIdsAsync(IReadOnlyCollection<Guid> ideaIds, CancellationToken cancellationToken = default);
 }
+
+/// <summary>A flat (idea, field, value) tuple used to project UDF values across many ideas at once.</summary>
+public sealed record IdeaFieldValueSnapshot(Guid IdeaId, Guid FieldDefinitionId, string? Value);
 
 /// <summary>Store-facing filter for the board idea list (SPEC/30-Contracts.md board ideas list).</summary>
 public sealed record IdeaListFilter(

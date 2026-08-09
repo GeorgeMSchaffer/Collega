@@ -194,4 +194,19 @@ public sealed class EfIdeaRepository : IIdeaRepository
         _dbContext.Ideas.AnyAsync(
             i => i.BoardId == boardId && !i.IsDeleted && i.Title.ToLower() == normalizedTitle,
             cancellationToken);
+
+    public async Task<IReadOnlyList<IdeaFieldValueSnapshot>> GetFieldValuesByIdeaIdsAsync(IReadOnlyCollection<Guid> ideaIds, CancellationToken cancellationToken = default)
+    {
+        if (ideaIds.Count == 0)
+        {
+            return Array.Empty<IdeaFieldValueSnapshot>();
+        }
+
+        var ids = ideaIds.ToList();
+        return await _dbContext.IdeaFieldValues
+            .AsNoTracking()
+            .Where(v => ids.Contains(v.IdeaId))
+            .Select(v => new IdeaFieldValueSnapshot(v.IdeaId, v.FieldDefinitionId, v.Value))
+            .ToListAsync(cancellationToken);
+    }
 }

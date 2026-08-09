@@ -409,6 +409,16 @@ internal sealed class FakeIdeaRepository : IIdeaRepository
 
     public Task<bool> ExistsByTitleOnBoardAsync(Guid boardId, string normalizedTitle, CancellationToken cancellationToken = default) =>
         Task.FromResult(Ideas.Any(i => i.BoardId == boardId && !i.IsDeleted && i.Title.ToLowerInvariant() == normalizedTitle));
+
+    public Task<IReadOnlyList<IdeaFieldValueSnapshot>> GetFieldValuesByIdeaIdsAsync(IReadOnlyCollection<Guid> ideaIds, CancellationToken cancellationToken = default)
+    {
+        var ids = ideaIds.ToHashSet();
+        IReadOnlyList<IdeaFieldValueSnapshot> result = Ideas
+            .Where(i => ids.Contains(i.Id))
+            .SelectMany(i => i.FieldValues.Select(v => new IdeaFieldValueSnapshot(i.Id, v.FieldDefinitionId, v.Value)))
+            .ToList();
+        return Task.FromResult(result);
+    }
 }
 
 internal sealed class FakeIdeaUpvoteRepository : IIdeaUpvoteRepository
