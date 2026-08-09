@@ -1,0 +1,440 @@
+@page "/settings/fields"
+@attribute [Authorize(Roles = "OrgAdmin")]
+@inject ApiClient Api
+
+<PageTitle>Custom fields · Collega</PageTitle>
+
+@*
+    Organization User-Defined Field catalog (T057, SPEC/20-feature-user-defined-fields.md "Admin: Field
+    Definition Manager"). Org Admin manages the custom fields every board's ideas share: name,
+    description, type, required flag, display order, and — for Dropdown/MultiSelect — a managed option
+    list. Type is fixed after creation (stored idea values are interpreted by it), so the type selector
+    is disabled on edit. Delete is a soft archive: values are preserved but hidden from idea forms;
+    "Show archived" reveals archived definitions read-only. Business rules (name uniqueness, option
+    guardrails, type immutability) are enforced by the API; this page mirrors the obvious ones and
+    surfaces any server rejection inline.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings">Settings</a> / Custom fields</div>
+    <h1>Custom fields</h1>
+    <p class="sub" style="margin-bottom:18px">Define the custom fields your organization captures on ideas.</p>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else
+    {
+        <div class="cmdbar">
+            <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New field</button>
+            <label class="checkline" style="margin-left:auto">
+                <input type="checkbox" checked="@_showArchived" @onchange="OnToggleArchived" disabled="@_editing" />
+                Show archived
+            </label>
+        </div>
+
+        @if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+
+        @if (_editing)
+        {
+            <div class="card formcard" style="margin-bottom:16px">
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:14px">@(_editId is null ? "New field" : "Edit field")</h3>
+                <div class="field">
+                    <label for="fd-name">Name</label>
+                    <FluentTextField id="fd-name" @bind-Value="_form.Name" Disabled="_busy" Maxlength="100" Style="width:100%" />
+                </div>
+                <div class="field">
+                    <label for="fd-desc">Description</label>
+                    <textarea id="fd-desc" @bind="_form.Description" disabled="@_busy" maxlength="500" rows="2" style="width:100%"></textarea>
+                </div>
+                <div class="formrow">
+                    <div class="field">
+                        <label for="fd-type">Type</label>
+                        <select id="fd-type" @bind="_form.FieldType" disabled="@(_busy || _editId is not null)">
+                            @foreach (var t in FieldTypes)
+                            {
+                                <option value="@t.Value">@t.Label</option>
+                            }
+                        </select>
+                        @if (_editId is not null)
+                        {
+                            <p class="hint">Type can't change after a field is created.</p>
+                        }
+                    </div>
+                    <div class="field">
+                        <label for="fd-order">Display order</label>
+                        <input type="number" id="fd-order" @bind="_form.DisplayOrder" disabled="@_busy" style="width:100px" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="checkline">
+                        <input type="checkbox" checked="@_form.IsRequired" @onchange="e => _form.IsRequired = (bool)(e.Value ?? false)" disabled="@_busy" />
+                        Required — an idea can't be saved until this field has a value
+                    </label>
+                </div>
+
+                @if (IsOptionBacked(_form.FieldType))
+                {
+                    <div class="field">
+                        <label>Options</label>
+                        <div class="opts">
+                            @for (var idx = 0; idx < _form.Options.Count; idx++)
+                            {
+                                var i = idx;
+                                <div class="optrow">
+                                    <input type="text" placeholder="Option label" maxlength="200"
+                                           value="@_form.Options[i].Label"
+                                           @oninput="e => _form.Options[i].Label = e.Value?.ToString() ?? string.Empty"
+                                           disabled="@_busy" style="flex:1" />
+                                    <button class="btn subtle" type="button" @onclick="() => MoveOption(i, -1)" disabled="@(_busy || i == 0)" title="Move up">↑</button>
+                                    <button class="btn subtle" type="button" @onclick="() => MoveOption(i, 1)" disabled="@(_busy || i == _form.Options.Count - 1)" title="Move down">↓</button>
+                                    <button class="btn danger" type="button" @onclick="() => RemoveOption(i)" disabled="@_busy">Remove</button>
+                                </div>
+                            }
+                        </div>
+                        <button class="btn subtle" type="button" @onclick="AddOption" disabled="@_busy" style="margin-top:6px">+ Add option</button>
+                    </div>
+                }
+
+                <div class="btnrow" style="margin-top:6px">
+                    <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
+                    <button class="btn" @onclick="Cancel" disabled="@_busy">Cancel</button>
+                </div>
+            </div>
+        }
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>Field</th><th>Type</th><th>Required</th><th>Options</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @for (var idx = 0; idx < _fields.Count; idx++)
+                    {
+                        var f = _fields[idx];
+                        var i = idx;
+                        <tr class="@(f.IsDeleted ? "archived" : null)">
+                            <td>
+                                <strong>@f.Name</strong>
+                                @if (f.IsDeleted)
+                                {
+                                    <span class="pill neutral" style="margin-left:8px">Archived</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(f.Description))
+                                {
+                                    <div class="fddesc">@f.Description</div>
+                                }
+                            </td>
+                            <td>@TypeLabel(f.FieldType)</td>
+                            <td>@(f.IsRequired ? "Yes" : "No")</td>
+                            <td>@(IsOptionBacked(f.FieldType) ? $"{f.Options.Count}" : "—")</td>
+                            <td class="rowactions">
+                                @if (!f.IsDeleted)
+                                {
+                                    <button class="btn subtle" @onclick="() => MoveField(i, -1)" disabled="@(_editing || _busy || !CanMoveUp(i))" title="Move up">↑</button>
+                                    <button class="btn subtle" @onclick="() => MoveField(i, 1)" disabled="@(_editing || _busy || !CanMoveDown(i))" title="Move down">↓</button>
+                                    <button class="btn subtle" @onclick="() => StartEdit(f)" disabled="@_editing">Edit</button>
+                                    @if (_confirmDeleteId == f.FieldDefinitionId)
+                                    {
+                                        <span class="confirm">Archive? Existing values stay but are hidden.</span>
+                                        <button class="btn danger" @onclick="() => Delete(f)" disabled="@_busy">Confirm</button>
+                                        <button class="btn subtle" @onclick="() => _confirmDeleteId = null" disabled="@_busy">No</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn danger" @onclick="() => _confirmDeleteId = f.FieldDefinitionId" disabled="@_editing">Archive</button>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_fields.Count == 0)
+        {
+            <div class="placeholder"><p>No custom fields yet.</p></div>
+        }
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    // (value = server enum name, label = friendly display) — value is what the API round-trips.
+    private static readonly (string Value, string Label)[] FieldTypes =
+    {
+        ("Text", "Text"),
+        ("Number", "Number"),
+        ("Date", "Date"),
+        ("Url", "URL"),
+        ("Dropdown", "Dropdown (single select)"),
+        ("MultiSelect", "Multi-select"),
+        ("Boolean", "Checkbox (yes / no)"),
+    };
+
+    private sealed class OptionForm
+    {
+        public string? OptionId { get; set; }
+        public string Label { get; set; } = "";
+    }
+
+    private sealed class FormModel
+    {
+        public string Name { get; set; } = "";
+        public string? Description { get; set; }
+        public string FieldType { get; set; } = "Text";
+        public bool IsRequired { get; set; }
+        public int DisplayOrder { get; set; }
+        public List<OptionForm> Options { get; set; } = new();
+    }
+
+    private string? _organizationId;
+    private List<FieldDefinitionDto> _fields = new();
+    private bool _loading = true;
+    private bool _busy;
+    private bool _editing;
+    private bool _showArchived;
+    private string? _editId;
+    private string? _confirmDeleteId;
+    private FormModel _form = new();
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _confirmDeleteId = null;
+        if (string.IsNullOrEmpty(_organizationId))
+        {
+            _error = "Your account isn't associated with an organization.";
+            _loading = false;
+            return;
+        }
+
+        var result = await Api.GetFieldDefinitionsAsync(_organizationId!, _showArchived);
+        if (result.Succeeded)
+        {
+            // Active first (ascending display order), then archived — archived rows are read-only.
+            _fields = result.Value!
+                .OrderBy(f => f.IsDeleted)
+                .ThenBy(f => f.DisplayOrder)
+                .ToList();
+        }
+        else
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+
+    private async Task OnToggleArchived(ChangeEventArgs e)
+    {
+        _showArchived = (bool)(e.Value ?? false);
+        await LoadAsync();
+    }
+
+    private void StartCreate()
+    {
+        _editId = null;
+        _confirmDeleteId = null;
+        var active = _fields.Where(f => !f.IsDeleted).ToList();
+        var nextOrder = active.Count == 0 ? 10 : active.Max(f => f.DisplayOrder) + 10;
+        _form = new FormModel { FieldType = "Text", DisplayOrder = nextOrder };
+        _error = null;
+        _editing = true;
+    }
+
+    private void StartEdit(FieldDefinitionDto f)
+    {
+        _editId = f.FieldDefinitionId;
+        _confirmDeleteId = null;
+        _form = new FormModel
+        {
+            Name = f.Name,
+            Description = f.Description,
+            FieldType = f.FieldType,
+            IsRequired = f.IsRequired,
+            DisplayOrder = f.DisplayOrder,
+            Options = f.Options
+                .OrderBy(o => o.DisplayOrder)
+                .Select(o => new OptionForm { OptionId = o.OptionId, Label = o.Label })
+                .ToList(),
+        };
+        _error = null;
+        _editing = true;
+    }
+
+    private void Cancel()
+    {
+        _editing = false;
+        _error = null;
+    }
+
+    private void AddOption() => _form.Options.Add(new OptionForm());
+
+    private void RemoveOption(int index)
+    {
+        if (index >= 0 && index < _form.Options.Count)
+        {
+            _form.Options.RemoveAt(index);
+        }
+    }
+
+    private void MoveOption(int index, int delta)
+    {
+        var target = index + delta;
+        if (index < 0 || index >= _form.Options.Count || target < 0 || target >= _form.Options.Count)
+        {
+            return;
+        }
+        (_form.Options[index], _form.Options[target]) = (_form.Options[target], _form.Options[index]);
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name))
+        {
+            _error = "A field name is required.";
+            return;
+        }
+
+        var optionBacked = IsOptionBacked(_form.FieldType);
+        List<SaveFieldOptionDto> options = new();
+        if (optionBacked)
+        {
+            var labels = _form.Options
+                .Select(o => new { o.OptionId, Label = (o.Label ?? string.Empty).Trim() })
+                .Where(o => !string.IsNullOrWhiteSpace(o.Label))
+                .ToList();
+
+            if (labels.Count == 0)
+            {
+                _error = "Dropdown and multi-select fields need at least one option.";
+                return;
+            }
+
+            options = labels
+                .Select((o, i) => new SaveFieldOptionDto(o.OptionId, o.Label, (i + 1) * 10))
+                .ToList();
+        }
+
+        _busy = true;
+        _error = null;
+
+        var body = new SaveFieldDefinitionRequestDto(
+            _form.Name.Trim(),
+            string.IsNullOrWhiteSpace(_form.Description) ? null : _form.Description!.Trim(),
+            _form.FieldType,
+            _form.IsRequired,
+            _form.DisplayOrder,
+            options);
+
+        bool succeeded;
+        string? error;
+        if (_editId is null)
+        {
+            var r = await Api.CreateFieldDefinitionAsync(_organizationId!, body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+        else
+        {
+            var r = await Api.UpdateFieldDefinitionAsync(_organizationId!, _editId!, body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+
+        _busy = false;
+        if (succeeded)
+        {
+            _editing = false;
+            await LoadAsync();
+            return;
+        }
+
+        _error = error ?? "Save failed.";
+    }
+
+    private async Task Delete(FieldDefinitionDto f)
+    {
+        _busy = true;
+        _error = null;
+        var result = await Api.DeleteFieldDefinitionAsync(_organizationId!, f.FieldDefinitionId);
+        _busy = false;
+        _confirmDeleteId = null;
+        if (result.Succeeded)
+        {
+            await LoadAsync();
+        }
+        else
+        {
+            _error = result.Error;
+        }
+    }
+
+    // Reorder is applied against the active definitions only; archived rows sort to the bottom and
+    // don't participate. Move optimistically in the list, persist the new order, reload on success.
+    private List<FieldDefinitionDto> ActiveFields => _fields.Where(f => !f.IsDeleted).ToList();
+
+    private bool CanMoveUp(int index) => ActiveFields.FindIndex(a => a.FieldDefinitionId == _fields[index].FieldDefinitionId) > 0;
+
+    private bool CanMoveDown(int index)
+    {
+        var active = ActiveFields;
+        var pos = active.FindIndex(a => a.FieldDefinitionId == _fields[index].FieldDefinitionId);
+        return pos >= 0 && pos < active.Count - 1;
+    }
+
+    private async Task MoveField(int index, int delta)
+    {
+        var active = ActiveFields;
+        var moving = _fields[index];
+        var pos = active.FindIndex(a => a.FieldDefinitionId == moving.FieldDefinitionId);
+        var target = pos + delta;
+        if (pos < 0 || target < 0 || target >= active.Count)
+        {
+            return;
+        }
+
+        (active[pos], active[target]) = (active[target], active[pos]);
+
+        _busy = true;
+        _error = null;
+        var body = new ReorderFieldDefinitionsRequestDto(active.Select(a => a.FieldDefinitionId).ToList());
+        var result = await Api.ReorderFieldDefinitionsAsync(_organizationId!, body);
+        _busy = false;
+
+        if (result.Succeeded)
+        {
+            await LoadAsync();
+        }
+        else
+        {
+            _error = result.Error ?? "Reordering failed.";
+        }
+    }
+
+    private static bool IsOptionBacked(string fieldType) =>
+        string.Equals(fieldType, "Dropdown", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(fieldType, "MultiSelect", StringComparison.OrdinalIgnoreCase);
+
+    private static string TypeLabel(string fieldType) =>
+        FieldTypes.FirstOrDefault(t => string.Equals(t.Value, fieldType, StringComparison.OrdinalIgnoreCase)).Label
+        ?? fieldType;
+}
