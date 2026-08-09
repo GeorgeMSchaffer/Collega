@@ -63,7 +63,13 @@
       "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a2f14d99740245d03 status --short)",
       "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a2f14d99740245d03 branch --show-current)",
       "Bash(git -C /Users/gms/Documents/code/Collega/.claude/worktrees/agent-a2f14d99740245d03 log --oneline -3)",
-      "Bash(git -C /Users/gms/Documents/code/Collega diff --stat)"
+      "Bash(git -C /Users/gms/Documents/code/Collega diff --stat)",
+      "mcp__Claude_Browser__read_page",
+      "mcp__Claude_Browser__get_page_text",
+      "mcp__Claude_Browser__read_console_messages",
+      "mcp__Claude_Browser__find",
+      "mcp__Claude_Browser__read_network_requests",
+      "mcp__Claude_Browser__preview_logs"
     ],
     "additionalDirectories": [
       "/tmp"
