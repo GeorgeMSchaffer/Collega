@@ -15,7 +15,16 @@ namespace Collega.API.ErrorHandling;
 public sealed class AppExceptionHandler : IExceptionHandler
 {
     // SPEC/30-Contracts.md "Error Envelope" requires a `type` member on every non-2xx response.
-    private static string TypeFor(int statusCode) => $"https://collega.dev/problems/{statusCode}";
+    // Named per problem kind (consistent with the validation-error type) rather than restating status.
+    private static string TypeFor(int statusCode) => statusCode switch
+    {
+        StatusCodes.Status401Unauthorized => "https://collega.dev/problems/unauthorized",
+        StatusCodes.Status403Forbidden => "https://collega.dev/problems/forbidden",
+        StatusCodes.Status404NotFound => "https://collega.dev/problems/not-found",
+        StatusCodes.Status409Conflict => "https://collega.dev/problems/conflict",
+        StatusCodes.Status429TooManyRequests => "https://collega.dev/problems/too-many-requests",
+        _ => "https://collega.dev/problems/error",
+    };
 
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {

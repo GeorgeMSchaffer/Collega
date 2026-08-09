@@ -503,6 +503,13 @@
             _newError = "A description is required.";
             return;
         }
+        if (_ideaTypes.Count == 0 || _businessImpacts.Count == 0)
+        {
+            // Provisioning guarantees at least one active option of each, so an empty list means the
+            // options failed to load — don't misreport it as the user omitting a required field.
+            _newError = "Couldn't load Idea Type / Business Impact options. Reload the page and try again.";
+            return;
+        }
         if (string.IsNullOrWhiteSpace(_newIdeaTypeId) || string.IsNullOrWhiteSpace(_newBusinessImpactId))
         {
             _newError = "Idea Type and Business Impact are required.";
