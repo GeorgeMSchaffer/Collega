@@ -1,5 +1,6 @@
 using Collega.API.Contracts.Comments;
 using Collega.Application.Comments;
+using Collega.Application.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,7 +21,12 @@ public sealed class CommentsController : ControllerBase
         _commentService = commentService;
     }
 
+    /// <summary>List comments for an idea with pagination and chronological ordering.</summary>
     [HttpGet("ideas/{ideaId:guid}/comments")]
+    [ProducesResponseType(typeof(PagedResult<CommentListItem>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ListByIdea(
         Guid ideaId,
         [FromQuery] int? page,
@@ -32,21 +38,38 @@ public sealed class CommentsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Add a comment to an idea.</summary>
     [HttpPost("ideas/{ideaId:guid}/comments")]
+    [ProducesResponseType(typeof(CreateCommentResult), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Create(Guid ideaId, [FromBody] CreateCommentRequest request, CancellationToken cancellationToken)
     {
         var result = await _commentService.CreateAsync(ideaId, new CreateCommentCommand(request.Body, request.MentionEmails), cancellationToken);
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
+    /// <summary>Edit a comment authored by the caller.</summary>
     [HttpPut("comments/{commentId:guid}")]
+    [ProducesResponseType(typeof(CommentListItem), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid commentId, [FromBody] UpdateCommentRequest request, CancellationToken cancellationToken)
     {
         var result = await _commentService.UpdateAsync(commentId, new UpdateCommentCommand(request.Body, request.MentionEmails), cancellationToken);
         return Ok(result);
     }
 
+    /// <summary>Delete a comment authored by the caller or by an authorized admin.</summary>
     [HttpDelete("comments/{commentId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid commentId, CancellationToken cancellationToken)
     {
         await _commentService.DeleteAsync(commentId, cancellationToken);

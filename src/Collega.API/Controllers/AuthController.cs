@@ -22,23 +22,36 @@ public sealed class AuthController : ControllerBase
         _authService = authService;
     }
 
+    /// <summary>Authenticate with globally unique email credentials and return an access token.</summary>
     [HttpPost("login")]
+    [ProducesResponseType(typeof(LoginResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
         var result = await _authService.LoginAsync(new LoginCommand(request.Email, request.Password), cancellationToken);
         return Ok(result);
     }
 
+    /// <summary>Return the currently authenticated user summary.</summary>
     [Authorize]
     [HttpGet("me")]
+    [ProducesResponseType(typeof(CurrentUserSummary), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Me(CancellationToken cancellationToken)
     {
         var summary = await _authService.GetCurrentUserAsync(User.GetUserId(), cancellationToken);
         return Ok(summary);
     }
 
+    /// <summary>Update the currently authenticated user's editable profile fields.</summary>
     [Authorize]
     [HttpPut("me")]
+    [ProducesResponseType(typeof(CurrentUserSummary), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateMe([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateProfileCommand(request.FirstName, request.LastName);
@@ -46,8 +59,13 @@ public sealed class AuthController : ControllerBase
         return Ok(summary);
     }
 
+    /// <summary>Change the current user's password, including the first-login forced change.</summary>
     [Authorize]
     [HttpPost("change-password")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
     {
         var command = new ChangePasswordCommand(request.CurrentPassword, request.NewPassword);
@@ -55,7 +73,11 @@ public sealed class AuthController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Self-register a new user account using an organization invite code. Anonymous endpoint.</summary>
     [HttpPost("register")]
+    [ProducesResponseType(typeof(RegisterResult), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
     {
         var command = new RegisterCommand(request.InviteCode, request.FirstName, request.LastName, request.Email, request.Password);

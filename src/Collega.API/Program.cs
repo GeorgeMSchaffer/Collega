@@ -85,6 +85,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Collega API", Version = "v1" });
+
+    // Fold the generated XML doc file (enabled via <GenerateDocumentationFile> in the .csproj) into
+    // the OpenAPI output so controller doc comments and [ProducesResponseType] annotations describe
+    // each operation. The file sits next to the assembly in the build output.
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
 });
 
 var app = builder.Build();

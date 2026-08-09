@@ -10,6 +10,8 @@ namespace Collega.API.Controllers;
 [Route("health")]
 public sealed class HealthController : ControllerBase
 {
+    /// <summary>Dependency-free liveness probe. Always returns <c>200 Healthy</c> when the host is up.</summary>
     [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult Get() => Ok(new { status = "Healthy", timestampUtc = DateTime.UtcNow });
 }

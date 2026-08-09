@@ -26,14 +26,25 @@ public sealed class UsersController : ControllerBase
         _userService = userService;
     }
 
+    /// <summary>Return user detail within the caller's authorized scope.</summary>
     [HttpGet("{userId:guid}")]
+    [ProducesResponseType(typeof(UserDetail), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid userId, CancellationToken cancellationToken)
     {
         var result = await _userService.GetByIdAsync(userId, cancellationToken);
         return Ok(result);
     }
 
+    /// <summary>Update user profile, role, or status within the caller's authorized scope.</summary>
     [HttpPut("{userId:guid}")]
+    [ProducesResponseType(typeof(UserDetail), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid userId, [FromBody] UpdateUserRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateUserCommand(request.FirstName, request.LastName, request.Email, request.Role, request.Status);
@@ -41,7 +52,12 @@ public sealed class UsersController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Issue a one-time admin-generated temporary password for the target user.</summary>
     [HttpPost("{userId:guid}/temporary-password")]
+    [ProducesResponseType(typeof(TemporaryPasswordResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> IssueTemporaryPassword(Guid userId, CancellationToken cancellationToken)
     {
         var result = await _authService.IssueTemporaryPasswordAsync(userId, cancellationToken);

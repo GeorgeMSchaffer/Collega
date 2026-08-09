@@ -22,21 +22,37 @@ public sealed class FieldDefinitionsController : ControllerBase
         _service = service;
     }
 
+    /// <summary>List organization field definitions. Authorized admins may pass <paramref name="includeDeleted"/>.</summary>
     [HttpGet("organizations/{organizationId:guid}/field-definitions")]
+    [ProducesResponseType(typeof(IEnumerable<FieldDefinitionModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> List(Guid organizationId, [FromQuery] bool includeDeleted, CancellationToken cancellationToken)
     {
         var result = await _service.ListAsync(organizationId, includeDeleted, cancellationToken);
         return Ok(result);
     }
 
+    /// <summary>Return a single field definition.</summary>
     [HttpGet("organizations/{organizationId:guid}/field-definitions/{id:guid}")]
+    [ProducesResponseType(typeof(FieldDefinitionModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Get(Guid organizationId, Guid id, CancellationToken cancellationToken)
     {
         var result = await _service.GetAsync(organizationId, id, cancellationToken);
         return Ok(result);
     }
 
+    /// <summary>Create a field definition.</summary>
     [HttpPost("organizations/{organizationId:guid}/field-definitions")]
+    [ProducesResponseType(typeof(FieldDefinitionModel), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Create(Guid organizationId, [FromBody] CreateFieldDefinitionRequest request, CancellationToken cancellationToken)
     {
         var command = new CreateFieldDefinitionCommand(
@@ -51,14 +67,26 @@ public sealed class FieldDefinitionsController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
+    /// <summary>Atomically set the complete field definition display order.</summary>
     [HttpPut("organizations/{organizationId:guid}/field-definitions/reorder")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Reorder(Guid organizationId, [FromBody] ReorderFieldDefinitionsRequest request, CancellationToken cancellationToken)
     {
         await _service.ReorderAsync(organizationId, new ReorderFieldDefinitionsCommand(request.OrderedIds), cancellationToken);
         return NoContent();
     }
 
+    /// <summary>Update a field definition.</summary>
     [HttpPut("organizations/{organizationId:guid}/field-definitions/{id:guid}")]
+    [ProducesResponseType(typeof(FieldDefinitionModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid organizationId, Guid id, [FromBody] UpdateFieldDefinitionRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateFieldDefinitionCommand(
@@ -73,7 +101,13 @@ public sealed class FieldDefinitionsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Soft-delete a field definition while preserving existing idea field values.</summary>
     [HttpDelete("organizations/{organizationId:guid}/field-definitions/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid organizationId, Guid id, CancellationToken cancellationToken)
     {
         await _service.DeleteAsync(organizationId, id, cancellationToken);
