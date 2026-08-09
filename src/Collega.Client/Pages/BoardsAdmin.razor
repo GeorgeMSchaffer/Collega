@@ -1,5 +1,6 @@
 @page "/settings/boards"
-@attribute [Authorize(Roles = "OrgAdmin")]
+@page "/settings/organizations/{OrganizationId}/boards"
+@attribute [Authorize(Roles = "OrgAdmin,SiteAdmin")]
 @inject ApiClient Api
 
 <PageTitle>Boards · Collega</PageTitle>
@@ -25,7 +26,7 @@
     }
     else
     {
-        <div class="cmdbar"><a class="btn primary" href="/settings/boards/new">New board</a></div>
+        <div class="cmdbar"><a class="btn primary" href="@($"{BoardEditBase}/new")">New board</a></div>
         <div class="card">
             <table>
                 <thead>
@@ -47,7 +48,7 @@
                                     <span class="pill neutral">Admins only</span>
                                 }
                             </td>
-                            <td><a class="btn subtle" href="@($"/settings/boards/{b.BoardId}")">Edit</a></td>
+                            <td><a class="btn subtle" href="@($"{BoardEditBase}/{b.BoardId}")">Edit</a></td>
                         </tr>
                     }
                 </tbody>
@@ -61,6 +62,9 @@
 </div>
 
 @code {
+    // Present on the Site-Admin org-scoped route; absent on the Org Admin route (org from the claim).
+    [Parameter] public string? OrganizationId { get; set; }
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
@@ -68,13 +72,16 @@
     private bool _loading = true;
     private string? _error;
 
+    // New/Edit links carry the org when Site-Admin-scoped so BoardEdit targets the right organization.
+    private string BoardEditBase => string.IsNullOrEmpty(OrganizationId)
+        ? "/settings/boards"
+        : $"/settings/organizations/{OrganizationId}/boards";
+
     protected override async Task OnInitializedAsync()
     {
-        string? organizationId = null;
-        if (AuthStateTask is not null)
-        {
-            organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
-        }
+        string? organizationId = !string.IsNullOrEmpty(OrganizationId)
+            ? OrganizationId
+            : AuthStateTask is not null ? (await AuthStateTask).User.FindFirst("organizationId")?.Value : null;
 
         if (string.IsNullOrEmpty(organizationId))
         {

@@ -1,5 +1,6 @@
 @page "/settings/statuses"
-@attribute [Authorize(Roles = "OrgAdmin")]
+@page "/settings/organizations/{OrganizationId}/statuses"
+@attribute [Authorize(Roles = "OrgAdmin,SiteAdmin")]
 @inject ApiClient Api
 
 <PageTitle>Statuses · Collega</PageTitle>
@@ -94,6 +95,9 @@
 </div>
 
 @code {
+    // Present on the Site-Admin org-scoped route; absent on the Org Admin route (org from the claim).
+    [Parameter] public string? OrganizationId { get; set; }
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
@@ -115,7 +119,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (AuthStateTask is not null)
+        if (!string.IsNullOrEmpty(OrganizationId))
+        {
+            _organizationId = OrganizationId;
+        }
+        else if (AuthStateTask is not null)
         {
             _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
         }
