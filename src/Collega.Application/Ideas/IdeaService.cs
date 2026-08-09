@@ -389,6 +389,211 @@ public sealed class IdeaService : IIdeaService
         return new UpvoteToggleResult(ideaId, hasUpvoted, count);
     }
 
+    // CSV export / import (T059/T060) ------------------------------------------------------------
+
+    public async Task<IdeaCsvExport> ExportBoardIdeasAsync(Guid boardId, CancellationToken cancellationToken = default)
+    {
+        RequireAuthenticatedRole();
+
+        var board = await _boardReader.GetBoardContextAsync(boardId, cancellationToken)
+            ?? throw new NotFoundAppException("Board not found.");
+        EnsureOrganizationScope(board.OrganizationId);
+
+        // Pull every active idea on the board (page through the store so export isn't capped).
+        var ideas = new List<Idea>();
+        var page = 1;
+        while (true)
+        {
+            var pageResult = await _ideaRepository.ListByBoardAsync(
+                new IdeaListFilter(boardId, new PageRequest(page, PageRequest.MaxPageSize), null, null, null, null, null, "createdat", "asc"),
+                cancellationToken);
+            ideas.AddRange(pageResult.Items);
+            if (pageResult.Items.Count == 0 || ideas.Count >= pageResult.TotalCount)
+            {
+                break;
+            }
+
+            page++;
+        }
+
+        var statusInfo = await _boardReader.GetStatusInfoAsync(board.OrganizationId, cancellationToken);
+        var ideaTypes = await LoadIdeaTypeLookupAsync(board.OrganizationId, cancellationToken);
+        var impacts = await LoadBusinessImpactLookupAsync(board.OrganizationId, cancellationToken);
+        var tagLookup = await LoadTagLookupAsync(ideas.SelectMany(i => i.Tags.Select(t => t.TagId)), cancellationToken);
+
+        var headers = IdeaCsvColumns.Core.Select(c => c.Header).ToList();
+        var rows = ideas
+            .Select(i => (IReadOnlyList<string>)new List<string>
+            {
+                i.Title,
+                i.Description,
+                i.Priority.ToString(),
+                IdeaTypeName(ideaTypes, i.IdeaTypeId),
+                BusinessImpactName(impacts, i.BusinessImpactId),
+                StatusName(statusInfo, i.StatusId),
+                FormatDate(i.DueDate) ?? string.Empty,
+                string.Join(", ", ProjectTagNames(i, tagLookup)),
+            })
+            .ToList();
+
+        return new IdeaCsvExport(headers, rows);
+    }
+
+    public async Task<IdeaImportResult> ImportBoardIdeasAsync(Guid boardId, IReadOnlyList<IdeaImportRow> rows, CancellationToken cancellationToken = default)
+    {
+        RequireIdeaEditRole();
+
+        var board = await _boardReader.GetBoardContextAsync(boardId, cancellationToken)
+            ?? throw new NotFoundAppException("Board not found.");
+        EnsureOrganizationScope(board.OrganizationId);
+
+        var now = _clock.UtcNow;
+        var authorId = RequireAuthenticatedUserId();
+        var org = board.OrganizationId;
+
+        var ideaTypes = (await _ideaTypeRepository.ListByOrganizationAsync(org, includeDeleted: false, cancellationToken))
+            .ToDictionary(o => o.Name.Trim(), o => o.Id, StringComparer.OrdinalIgnoreCase);
+        var impacts = (await _businessImpactRepository.ListByOrganizationAsync(org, includeDeleted: false, cancellationToken))
+            .ToDictionary(o => o.Name.Trim(), o => o.Id, StringComparer.OrdinalIgnoreCase);
+        var statusInfo = await _boardReader.GetStatusInfoAsync(org, cancellationToken);
+        // Only statuses that are swimlanes on this board are valid import targets.
+        var boardStatusByName = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (statusId, info) in statusInfo)
+        {
+            if (board.HasSwimlaneForStatus(statusId))
+            {
+                boardStatusByName[info.Name.Trim()] = statusId;
+            }
+        }
+
+        var leftMost = board.LeftMostStatusId;
+        var results = new List<IdeaImportRowResult>(rows.Count);
+        var created = 0;
+        var rejected = 0;
+
+        foreach (var row in rows)
+        {
+            string? Cell(string key) => row.Cells.TryGetValue(key, out var v) ? v?.Trim() : null;
+
+            var title = Cell(IdeaCsvColumns.Title);
+            var description = Cell(IdeaCsvColumns.Description);
+            var priorityRaw = Cell(IdeaCsvColumns.Priority);
+            var typeName = Cell(IdeaCsvColumns.IdeaType);
+            var impactName = Cell(IdeaCsvColumns.BusinessImpact);
+            var statusName = Cell(IdeaCsvColumns.Status);
+            var dueRaw = Cell(IdeaCsvColumns.DueDate);
+            var tagsRaw = Cell(IdeaCsvColumns.Tags);
+
+            void Reject(string message)
+            {
+                rejected++;
+                results.Add(new IdeaImportRowResult(row.RowNumber, title, "Rejected", message));
+            }
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                Reject("Title is required.");
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                Reject("Description is required.");
+                continue;
+            }
+
+            var priority = ParseOptionalPriority(priorityRaw);
+            if (priority is null)
+            {
+                Reject("Priority must be Low, Medium, High, or Critical.");
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(typeName) || !ideaTypes.TryGetValue(typeName, out var ideaTypeId))
+            {
+                Reject($"Idea Type '{typeName}' is not an active option.");
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(impactName) || !impacts.TryGetValue(impactName, out var businessImpactId))
+            {
+                Reject($"Business Impact '{impactName}' is not an active option.");
+                continue;
+            }
+
+            Guid statusId;
+            if (string.IsNullOrWhiteSpace(statusName))
+            {
+                if (leftMost is null)
+                {
+                    Reject("The board has no swimlanes to place the idea in.");
+                    continue;
+                }
+
+                statusId = leftMost.Value;
+            }
+            else if (!boardStatusByName.TryGetValue(statusName, out statusId))
+            {
+                Reject($"Status '{statusName}' is not a swimlane on this board.");
+                continue;
+            }
+
+            DateOnly? dueDate = null;
+            if (!string.IsNullOrWhiteSpace(dueRaw))
+            {
+                if (!DateOnly.TryParseExact(dueRaw, DueDateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDue))
+                {
+                    Reject("Due Date must be a valid date (YYYY-MM-DD).");
+                    continue;
+                }
+
+                dueDate = parsedDue;
+            }
+
+            IReadOnlyList<Guid> tagIds;
+            try
+            {
+                tagIds = await ResolveTagsAsync(org, SplitTags(tagsRaw), now, authorId, cancellationToken);
+            }
+            catch (ValidationAppException ex)
+            {
+                Reject(string.Join("; ", ex.Errors.SelectMany(e => e.Value)));
+                continue;
+            }
+
+            Idea idea;
+            try
+            {
+                idea = Idea.Create(org, boardId, statusId, title, description, priority.Value,
+                    ideaTypeId, businessImpactId, dueDate, authorId,
+                    Array.Empty<Guid>(), tagIds, Array.Empty<Guid>(), now);
+            }
+            catch (ArgumentException ex)
+            {
+                Reject(ex.Message);
+                continue;
+            }
+
+            await _ideaRepository.AddAsync(idea, cancellationToken);
+            created++;
+            results.Add(new IdeaImportRowResult(row.RowNumber, title, "Created", null));
+        }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var auditEvent = AuditEvent.Create("IdeasImported", "Board",
+            $"Imported {created} idea(s) ({rejected} rejected) from CSV.", now, org, authorId, boardId,
+            JsonSerializer.Serialize(new { created, rejected }));
+        await _auditEventWriter.WriteAsync(auditEvent, cancellationToken);
+
+        return new IdeaImportResult(created, rejected, results);
+    }
+
+    private static IReadOnlyList<string> SplitTags(string? tagsCell) =>
+        string.IsNullOrWhiteSpace(tagsCell)
+            ? Array.Empty<string>()
+            : tagsCell.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
     // Projection ---------------------------------------------------------------------------------
 
     private async Task<IReadOnlyList<IdeaListItem>> ProjectListItemsAsync(Guid organizationId, IReadOnlyList<Idea> ideas, CancellationToken cancellationToken)

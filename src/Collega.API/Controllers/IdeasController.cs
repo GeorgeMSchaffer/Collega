@@ -1,5 +1,8 @@
+using System.Text;
 using Collega.API.Contracts.Ideas;
+using Collega.API.Parsing;
 using Collega.Application.Common;
+using Collega.Application.Exceptions;
 using Collega.Application.Fields;
 using Collega.Application.Ideas;
 using Microsoft.AspNetCore.Authorization;
@@ -61,13 +64,38 @@ public sealed class IdeasController : ControllerBase
         [FromQuery] string? scope,
         [FromQuery] string? sortBy,
         [FromQuery] string? sortDirection,
-        [FromQuery] Dictionary<Guid, string>? fieldFilters,
         CancellationToken cancellationToken)
     {
-        // fieldFilters[<fieldDefinitionId>]=<value> binds here (T059); typed + validated in the service.
+        // fieldFilters[<fieldDefinitionId>]=<value> (T059) is read straight from the query rather than
+        // model-bound as Dictionary<Guid,string> — that binder greedily treats every query key as a
+        // dictionary entry and 500s trying to parse non-Guid keys (page, search, …) as Guids.
+        var fieldFilters = ParseFieldFilters(Request.Query);
         var query = new OrganizationIdeaListQuery(page, pageSize, search, scope, sortBy, sortDirection, fieldFilters);
         var result = await _ideaService.ListByOrganizationAsync(organizationId, query, cancellationToken);
         return Ok(result);
+    }
+
+    private static IReadOnlyDictionary<Guid, string>? ParseFieldFilters(IQueryCollection queryCollection)
+    {
+        const string prefix = "fieldFilters[";
+        Dictionary<Guid, string>? filters = null;
+        foreach (var pair in queryCollection)
+        {
+            if (pair.Key.Length <= prefix.Length + 1
+                || !pair.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                || !pair.Key.EndsWith(']'))
+            {
+                continue;
+            }
+
+            var inner = pair.Key.Substring(prefix.Length, pair.Key.Length - prefix.Length - 1);
+            if (Guid.TryParse(inner, out var fieldId))
+            {
+                (filters ??= new Dictionary<Guid, string>())[fieldId] = pair.Value.ToString();
+            }
+        }
+
+        return filters;
     }
 
     /// <summary>Create a new idea on a board.</summary>
@@ -167,6 +195,46 @@ public sealed class IdeasController : ControllerBase
     public async Task<IActionResult> ToggleUpvote(Guid ideaId, CancellationToken cancellationToken)
     {
         var result = await _ideaService.ToggleUpvoteAsync(ideaId, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>Export the board's active ideas as a CSV download (T059/T060).</summary>
+    [HttpGet("boards/{boardId:guid}/ideas/export")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ExportCsv(Guid boardId, CancellationToken cancellationToken)
+    {
+        var export = await _ideaService.ExportBoardIdeasAsync(boardId, cancellationToken);
+        var csv = Csv.Write(export.Headers, export.Rows);
+        // Prepend a UTF-8 BOM so Excel opens accented text correctly.
+        var bytes = Encoding.UTF8.GetBytes("﻿" + csv);
+        return File(bytes, "text/csv", "ideas.csv");
+    }
+
+    /// <summary>Create-only CSV import of ideas onto a board (T059/T060).</summary>
+    [HttpPost("boards/{boardId:guid}/ideas/import")]
+    [ProducesResponseType(typeof(IdeaImportResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ImportCsv(Guid boardId, IFormFile? csvFile, CancellationToken cancellationToken)
+    {
+        if (csvFile is null || csvFile.Length == 0)
+        {
+            throw new ValidationAppException("csvFile", new[] { "A CSV file is required." });
+        }
+
+        string content;
+        using (var reader = new StreamReader(csvFile.OpenReadStream()))
+        {
+            content = await reader.ReadToEndAsync(cancellationToken);
+        }
+
+        var rows = CsvIdeaImportParser.Parse(content);
+        var result = await _ideaService.ImportBoardIdeasAsync(boardId, rows, cancellationToken);
         return Ok(result);
     }
 

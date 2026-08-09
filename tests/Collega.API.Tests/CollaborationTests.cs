@@ -433,6 +433,20 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
     // T059 --------------------------------------------------------------------------------------
 
     [Fact]
+    public async Task OrganizationIdeas_WithPagingParams_AndNoFieldFilters_Succeeds()
+    {
+        // Regression: the fieldFilters query parsing must not choke on the page/pageSize/sortDirection
+        // params the client always sends when no field filters are applied.
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Plain list idea", description = "d", priority = "Low" });
+
+        using var response = await admin.GetAsync($"/api/v1/organizations/{org.OrganizationId}/ideas?page=1&pageSize=25&sortDirection=desc");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task OrganizationIdeas_Filters_By_Field_Value_And_Ignores_Unknown_Keys()
     {
         using var admin = _factory.CreateClient();
@@ -460,6 +474,68 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
             $"/api/v1/organizations/{org.OrganizationId}/ideas?fieldFilters%5B{Guid.NewGuid()}%5D=whatever", Json);
         Assert.Equal(2, unknown!.TotalCount);
     }
+
+    [Fact]
+    public async Task Idea_Csv_Export_Then_Import_RoundTrips_And_Rejects_Bad_Rows()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Seed idea", description = "Has, a comma", priority = "High" });
+
+        // Export returns CSV with the seeded idea and the required classification columns populated.
+        using var export = await admin.GetAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas/export");
+        Assert.Equal(HttpStatusCode.OK, export.StatusCode);
+        Assert.Equal("text/csv", export.Content.Headers.ContentType?.MediaType);
+        var csv = await export.Content.ReadAsStringAsync();
+        Assert.Contains("Idea Type", csv);
+        Assert.Contains("Seed idea", csv);
+        Assert.Contains("\"Has, a comma\"", csv); // comma-bearing description is quoted
+
+        // Import: one valid row (create-only) + one row with an unknown Idea Type (rejected).
+        var importCsv =
+            "Title,Description,Priority,Idea Type,Business Impact,Status\n"
+            + "Imported idea,From CSV,Medium,Continuous Improvement,High,\n"
+            + "Bad idea,Nope,Low,Nonexistent Type,High,\n";
+        var result = await ImportIdeasAsync(admin, org.DefaultBoardId, importCsv);
+
+        Assert.Equal(1, result.CreatedCount);
+        Assert.Equal(1, result.RejectedCount);
+        Assert.Contains(result.Rows, r => r.Outcome == "Created" && r.Title == "Imported idea");
+        Assert.Contains(result.Rows, r => r.Outcome == "Rejected" && r.Error!.Contains("Idea Type"));
+
+        // The created idea is now listed on the board.
+        var list = await admin.GetFromJsonAsync<PagedResponse<IdeaListItemResponse>>(
+            $"/api/v1/organizations/{org.OrganizationId}/ideas?search=Imported", Json);
+        Assert.Equal("Imported idea", Assert.Single(list!.Items).Title);
+    }
+
+    [Fact]
+    public async Task Idea_Csv_Import_MissingFile_Returns400()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+
+        using var empty = new MultipartFormDataContent();
+        using var response = await admin.PostAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas/import", empty);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    private async Task<ImportResult> ImportIdeasAsync(HttpClient client, Guid boardId, string csvContent)
+    {
+        using var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes(csvContent));
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+        content.Add(fileContent, "csvFile", "ideas.csv");
+
+        var response = await client.PostAsync($"/api/v1/boards/{boardId}/ideas/import", content);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<ImportResult>(Json))!;
+    }
+
+    private sealed record ImportResult(int CreatedCount, int RejectedCount, IReadOnlyList<ImportRowResult> Rows);
+    private sealed record ImportRowResult(int RowNumber, string? Title, string Outcome, string? Error);
 
     private sealed record FieldDefResponse(Guid FieldDefinitionId, string Name, string FieldType);
 

@@ -69,7 +69,53 @@
             {
                 <button class="btn subtle" @onclick="() => _filter = string.Empty">Clear</button>
             }
+            <span style="margin-left:auto"></span>
+            <button class="btn subtle" @onclick="ExportCsv" disabled="@_exporting">@(_exporting ? "Exporting…" : "Export CSV")</button>
+            @if (!_isReadOnly)
+            {
+                <button class="btn subtle" @onclick="() => _showImport = !_showImport">@(_showImport ? "Hide import" : "Import CSV")</button>
+            }
         </div>
+
+        @if (_showImport && !_isReadOnly)
+        {
+            <div class="card formcard" style="margin-bottom:14px">
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:8px">Import ideas from CSV</h3>
+                <p class="sub" style="margin-bottom:10px">
+                    Columns: Title, Description, Priority, Idea Type, Business Impact, Status (optional), Due Date (optional), Tags (optional).
+                    Idea Type and Business Impact must match an active option by name. Each row creates a new idea. Tip: export first for the exact format.
+                </p>
+                @if (_importError is not null)
+                {
+                    <div class="autherror" role="alert">@_importError</div>
+                }
+                <InputFile OnChange="OnImportFileSelected" accept=".csv" disabled="@_importing" />
+                @if (_importing)
+                {
+                    <div class="loading" style="margin-top:8px"><FluentProgressRing /> <span>Importing…</span></div>
+                }
+                @if (_importResult is not null)
+                {
+                    <div class="authnote" role="status" style="margin-top:10px">
+                        Imported @_importResult.CreatedCount idea(s)@(_importResult.RejectedCount > 0 ? $", {_importResult.RejectedCount} rejected." : ".")
+                    </div>
+                    @if (_importResult.RejectedCount > 0)
+                    {
+                        <div class="card" style="margin-top:8px">
+                            <table>
+                                <thead><tr><th>Row</th><th>Title</th><th>Problem</th></tr></thead>
+                                <tbody>
+                                    @foreach (var r in _importResult.Rows.Where(r => r.Outcome == "Rejected"))
+                                    {
+                                        <tr><td>@r.RowNumber</td><td>@r.Title</td><td>@r.Error</td></tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+            </div>
+        }
 
         @if (_showNew)
         {
@@ -335,6 +381,13 @@
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
     private Dictionary<string, string?> _newFieldValues = new();
 
+    // CSV export/import (T059/T060)
+    private bool _exporting;
+    private bool _showImport;
+    private bool _importing;
+    private string? _importError;
+    private IdeaImportResultDto? _importResult;
+
     // Drag state
     private string? _draggedIdeaId;
     private string? _dragOverStatusId;
@@ -557,6 +610,64 @@
         if (ideasResult.Succeeded)
         {
             _ideas = ideasResult.Value!.Items.ToList();
+        }
+    }
+
+    private async Task ExportCsv()
+    {
+        _exporting = true;
+        _moveError = null;
+        var result = await Api.ExportBoardIdeasCsvAsync(BoardId);
+        _exporting = false;
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            _moveError = result.Error ?? "Export failed.";
+            return;
+        }
+
+        var base64 = Convert.ToBase64String(result.Value);
+        await JS.InvokeVoidAsync("collegaDownloadFile", $"{(_board?.Name ?? "ideas")}.csv", "text/csv", base64);
+    }
+
+    private async Task OnImportFileSelected(InputFileChangeEventArgs e)
+    {
+        _importing = true;
+        _importError = null;
+        _importResult = null;
+
+        try
+        {
+            var file = e.File;
+            // Ideas CSVs are small; 5 MB is a generous ceiling that also guards against a huge upload.
+            await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            buffer.Position = 0;
+
+            var result = await Api.ImportBoardIdeasAsync(BoardId, buffer, file.Name);
+            if (!result.Succeeded || result.Value is null)
+            {
+                _importError = result.Error ?? "Import failed.";
+            }
+            else
+            {
+                _importResult = result.Value;
+                // Refresh the board so newly imported ideas appear.
+                var ideasResult = await Api.GetBoardIdeasAsync(BoardId);
+                if (ideasResult.Succeeded)
+                {
+                    _ideas = ideasResult.Value!.Items.ToList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _importError = $"Couldn't read the file. {ex.Message}";
+        }
+        finally
+        {
+            _importing = false;
         }
     }
 

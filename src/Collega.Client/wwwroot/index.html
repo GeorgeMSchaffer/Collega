@@ -26,6 +26,18 @@
         <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        // Triggers a client-side file download from base64 bytes (used for authenticated CSV exports,
+        // which can't be a plain <a href> because the request needs the bearer token).
+        window.collegaDownloadFile = (fileName, contentType, base64) => {
+            const link = document.createElement('a');
+            link.href = `data:${contentType};base64,${base64}`;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        };
+    </script>
 </body>
 
 </html>

@@ -41,3 +41,11 @@ public sealed record CreateIdeaResultDto(
     string Title,
     string Priority,
     string? DueDate);
+
+/// <summary>Result of <c>POST /boards/{id}/ideas/import</c> (create-only CSV import, T059/T060).</summary>
+public sealed record IdeaImportResultDto(
+    int CreatedCount,
+    int RejectedCount,
+    IReadOnlyList<IdeaImportRowResultDto> Rows);
+
+public sealed record IdeaImportRowResultDto(int RowNumber, string? Title, string Outcome, string? Error);

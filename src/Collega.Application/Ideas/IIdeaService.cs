@@ -24,4 +24,13 @@ public interface IIdeaService
     Task DeleteAsync(Guid ideaId, CancellationToken cancellationToken = default);
 
     Task<UpvoteToggleResult> ToggleUpvoteAsync(Guid ideaId, CancellationToken cancellationToken = default);
+
+    /// <summary>Exports a board's active ideas as CSV rows (T059/T060). One column per core field plus
+    /// one per active User-Defined Field.</summary>
+    Task<IdeaCsvExport> ExportBoardIdeasAsync(Guid boardId, CancellationToken cancellationToken = default);
+
+    /// <summary>Create-only CSV import of ideas onto a board (T059/T060). Each valid row creates one
+    /// idea (defaulting to the left-most swimlane unless a Status names a board swimlane); invalid rows
+    /// are rejected with a per-row message and do not stop the rest.</summary>
+    Task<IdeaImportResult> ImportBoardIdeasAsync(Guid boardId, IReadOnlyList<IdeaImportRow> rows, CancellationToken cancellationToken = default);
 }
