@@ -119,8 +119,19 @@ public sealed class EfIdeaRepository : IIdeaRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var search = filter.Search.Trim();
-            query = query.Where(i => EF.Functions.Like(i.Title, $"%{search}%"));
+            var pattern = $"%{filter.Search.Trim()}%";
+            var textFieldIds = filter.SearchTextFieldIds ?? Array.Empty<Guid>();
+            // The global search matches the title or any of the idea's Text/Url UDF values (T059).
+            query = query.Where(i => EF.Functions.Like(i.Title, pattern)
+                || _dbContext.IdeaFieldValues.Any(v => v.IdeaId == i.Id
+                    && textFieldIds.Contains(v.FieldDefinitionId)
+                    && v.Value != null
+                    && EF.Functions.Like(v.Value, pattern)));
+        }
+
+        foreach (var fieldFilter in filter.FieldFilters ?? Array.Empty<IdeaFieldValueFilter>())
+        {
+            query = ApplyFieldFilter(query, fieldFilter);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -144,6 +155,39 @@ public sealed class EfIdeaRepository : IIdeaRepository
             totalCount,
             filter.SortBy,
             SortDirection.Normalize(filter.SortDirection));
+    }
+
+    // Applies one typed User-Defined Field predicate as an EXISTS subquery over IdeaFieldValues (T059).
+    // Number range converts the stored invariant-decimal string (EF Core translates Convert.ToDecimal to
+    // SQL CONVERT); Date range compares the ISO yyyy-MM-dd strings, whose lexical order is chronological.
+    private IQueryable<Idea> ApplyFieldFilter(IQueryable<Idea> query, IdeaFieldValueFilter f)
+    {
+        var id = f.FieldDefinitionId;
+        return f.Kind switch
+        {
+            IdeaFieldFilterKind.Contains => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
+                v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null
+                && EF.Functions.Like(v.Value, $"%{f.Value}%"))),
+
+            IdeaFieldFilterKind.Equals => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
+                v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value == f.Value)),
+
+            IdeaFieldFilterKind.MultiSelectContains => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
+                v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null
+                && EF.Functions.Like("," + v.Value + ",", "%," + f.Value + ",%"))),
+
+            IdeaFieldFilterKind.NumberRange => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
+                v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null
+                && (f.Min == null || Convert.ToDecimal(v.Value) >= f.Min)
+                && (f.Max == null || Convert.ToDecimal(v.Value) <= f.Max))),
+
+            IdeaFieldFilterKind.DateRange => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
+                v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null
+                && (f.MinText == null || string.Compare(v.Value, f.MinText) >= 0)
+                && (f.MaxText == null || string.Compare(v.Value, f.MaxText) <= 0))),
+
+            _ => query,
+        };
     }
 
     public Task<bool> ExistsByTitleOnBoardAsync(Guid boardId, string normalizedTitle, CancellationToken cancellationToken = default) =>

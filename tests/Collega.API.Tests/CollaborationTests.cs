@@ -430,6 +430,39 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
 
     // Helpers -----------------------------------------------------------------------------------
 
+    // T059 --------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task OrganizationIdeas_Filters_By_Field_Value_And_Ignores_Unknown_Keys()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+
+        // A Text custom field, then two ideas carrying different values for it.
+        var fieldResponse = await admin.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/field-definitions",
+            new { name = "Team", fieldType = "Text", isRequired = false, displayOrder = 10, options = Array.Empty<object>() });
+        Assert.Equal(HttpStatusCode.Created, fieldResponse.StatusCode);
+        var field = (await fieldResponse.Content.ReadFromJsonAsync<FieldDefResponse>(Json))!;
+
+        await CreateIdeaAsync(admin, org.DefaultBoardId,
+            new { title = "Platform idea", description = "d", priority = "Low", fieldValues = new[] { new { fieldDefinitionId = field.FieldDefinitionId, value = "Platform Team" } } });
+        await CreateIdeaAsync(admin, org.DefaultBoardId,
+            new { title = "Design idea", description = "d", priority = "Low", fieldValues = new[] { new { fieldDefinitionId = field.FieldDefinitionId, value = "Design Team" } } });
+
+        // Contains filter on the Text field returns only the matching idea.
+        var filtered = await admin.GetFromJsonAsync<PagedResponse<IdeaListItemResponse>>(
+            $"/api/v1/organizations/{org.OrganizationId}/ideas?fieldFilters%5B{field.FieldDefinitionId}%5D=platform", Json);
+        Assert.Equal("Platform idea", Assert.Single(filtered!.Items).Title);
+
+        // An unknown fieldDefinitionId key is silently ignored (both ideas returned).
+        var unknown = await admin.GetFromJsonAsync<PagedResponse<IdeaListItemResponse>>(
+            $"/api/v1/organizations/{org.OrganizationId}/ideas?fieldFilters%5B{Guid.NewGuid()}%5D=whatever", Json);
+        Assert.Equal(2, unknown!.TotalCount);
+    }
+
+    private sealed record FieldDefResponse(Guid FieldDefinitionId, string Name, string FieldType);
+
     private async Task<IdeaCreatedResponse> CreateIdeaAsync(HttpClient client, Guid boardId, object body)
     {
         var payload = WithClassification(body, OrganizationIdForBoard(boardId));

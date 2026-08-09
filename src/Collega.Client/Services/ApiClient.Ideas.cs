@@ -12,7 +12,8 @@ public sealed partial class ApiClient
     /// <summary>The organization-wide idea list for the global /ideas page. <paramref name="scope"/>
     /// is all/created/assigned; newest-first by default.</summary>
     public Task<ApiResult<PagedResultDto<IdeaListItemDto>>> GetOrganizationIdeasAsync(
-        string organizationId, string? scope, string? search, int page, int pageSize, CancellationToken ct = default)
+        string organizationId, string? scope, string? search, int page, int pageSize,
+        IReadOnlyDictionary<string, string>? fieldFilters = null, CancellationToken ct = default)
     {
         var url = $"{BasePath}/organizations/{organizationId}/ideas?page={page}&pageSize={pageSize}&sortDirection=desc";
         if (!string.IsNullOrWhiteSpace(scope) && scope != "all")
@@ -22,6 +23,17 @@ public sealed partial class ApiClient
         if (!string.IsNullOrWhiteSpace(search))
         {
             url += $"&search={Uri.EscapeDataString(search)}";
+        }
+        // User-Defined Field filters serialize as fieldFilters[<fieldDefinitionId>]=<value> (T059).
+        if (fieldFilters is not null)
+        {
+            foreach (var (fieldId, value) in fieldFilters)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    url += $"&fieldFilters%5B{Uri.EscapeDataString(fieldId)}%5D={Uri.EscapeDataString(value)}";
+                }
+            }
         }
         return GetAsync<PagedResultDto<IdeaListItemDto>>(url, ct);
     }

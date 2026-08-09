@@ -32,12 +32,77 @@
             <button class="chip @(_scope == "assigned" ? "on" : null)" @onclick='() => SetScope("assigned")'>Assigned to me</button>
         </div>
         <div class="cmdbar">
-            <input type="text" placeholder="Search title…" value="@_search" @onchange="OnSearchChanged" style="width:300px" />
+            <input type="text" placeholder="Search title & text fields…" value="@_search" @onchange="OnSearchChanged" style="width:300px" />
             @if (!string.IsNullOrWhiteSpace(_search))
             {
                 <button class="btn subtle" @onclick="ClearSearch">Clear</button>
             }
+            @if (_fieldDefs.Count > 0)
+            {
+                <button class="btn subtle" @onclick="() => _showFilters = !_showFilters" style="margin-left:auto">
+                    @(_showFilters ? "Hide field filters" : "Field filters")@(ActiveFilterCount > 0 ? $" ({ActiveFilterCount})" : "")
+                </button>
+            }
         </div>
+
+        @if (_showFilters && _fieldDefs.Count > 0)
+        {
+            <div class="card" style="margin-bottom:14px">
+                <div class="udf-filterbar">
+                    @foreach (var f in _fieldDefs)
+                    {
+                        var st = _fieldFilters[f.FieldDefinitionId];
+                        <div class="filt">
+                            <label>@f.Name</label>
+                            @switch (f.FieldType)
+                            {
+                                case "Number":
+                                    <div class="rangerow">
+                                        <input type="number" step="any" placeholder="min" @bind="st.Min" />
+                                        <span>–</span>
+                                        <input type="number" step="any" placeholder="max" @bind="st.Max" />
+                                    </div>
+                                    break;
+                                case "Date":
+                                    <div class="rangerow">
+                                        <input type="date" value="@st.From" @onchange="e => st.From = e.Value?.ToString()" />
+                                        <span>–</span>
+                                        <input type="date" value="@st.To" @onchange="e => st.To = e.Value?.ToString()" />
+                                    </div>
+                                    break;
+                                case "Boolean":
+                                    <select @bind="st.Bool">
+                                        <option value="">Any</option>
+                                        <option value="true">Yes</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                    break;
+                                case "Dropdown":
+                                case "MultiSelect":
+                                    <select @bind="st.Option">
+                                        <option value="">Any</option>
+                                        @foreach (var o in f.Options.OrderBy(o => o.DisplayOrder))
+                                        {
+                                            <option value="@o.OptionId">@o.Label</option>
+                                        }
+                                    </select>
+                                    break;
+                                default:
+                                    <input type="text" placeholder="contains…" @bind="st.Text" />
+                                    break;
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="btnrow" style="margin-top:10px">
+                    <button class="btn primary" @onclick="ApplyFilters">Apply filters</button>
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <button class="btn subtle" @onclick="ClearFilters">Clear filters</button>
+                    }
+                </div>
+            </div>
+        }
 
         @if (_loading)
         {
@@ -126,6 +191,23 @@
     private bool _loading = true;
     private string? _error;
 
+    // Org User-Defined Field schema + per-field filter inputs (T059). _fieldFilters is keyed by field
+    // definition id; each holds the raw sub-inputs, encoded to the fieldFilters query value on apply.
+    private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
+    private readonly Dictionary<string, FieldFilterState> _fieldFilters = new();
+    private bool _showFilters;
+
+    private sealed class FieldFilterState
+    {
+        public string? Text { get; set; }
+        public string? Min { get; set; }
+        public string? Max { get; set; }
+        public string? From { get; set; }
+        public string? To { get; set; }
+        public string? Bool { get; set; }
+        public string? Option { get; set; }
+    }
+
     private readonly Dictionary<string, string> _boardNames = new();
     private readonly Dictionary<string, string> _authorNames = new();
     private readonly Dictionary<string, string> _statusColors = new();
@@ -176,6 +258,65 @@
             }
         }
 
+        // Active custom-field schema drives the field-filter panel (best-effort).
+        var fields = await Api.GetActiveFieldDefinitionsAsync(_organizationId!);
+        if (fields.Succeeded)
+        {
+            _fieldDefs = fields.Value!;
+            foreach (var f in _fieldDefs)
+            {
+                _fieldFilters[f.FieldDefinitionId] = new FieldFilterState();
+            }
+        }
+
+        await LoadAsync();
+    }
+
+    // Encodes each field's inputs into the fieldFilters[<id>]=<value> value per the field's type.
+    private Dictionary<string, string> BuildFieldFilters()
+    {
+        var result = new Dictionary<string, string>();
+        foreach (var f in _fieldDefs)
+        {
+            if (!_fieldFilters.TryGetValue(f.FieldDefinitionId, out var st))
+            {
+                continue;
+            }
+
+            string? encoded = f.FieldType switch
+            {
+                "Number" => string.IsNullOrWhiteSpace(st.Min) && string.IsNullOrWhiteSpace(st.Max)
+                    ? null : $"{st.Min?.Trim()}:{st.Max?.Trim()}",
+                "Date" => string.IsNullOrWhiteSpace(st.From) && string.IsNullOrWhiteSpace(st.To)
+                    ? null : $"{st.From?.Trim()}:{st.To?.Trim()}",
+                "Boolean" => string.IsNullOrWhiteSpace(st.Bool) ? null : st.Bool,
+                "Dropdown" or "MultiSelect" => string.IsNullOrWhiteSpace(st.Option) ? null : st.Option,
+                _ => string.IsNullOrWhiteSpace(st.Text) ? null : st.Text!.Trim(),
+            };
+
+            if (encoded is not null)
+            {
+                result[f.FieldDefinitionId] = encoded;
+            }
+        }
+        return result;
+    }
+
+    private int ActiveFilterCount => BuildFieldFilters().Count;
+
+    private async Task ApplyFilters()
+    {
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task ClearFilters()
+    {
+        foreach (var st in _fieldFilters.Values)
+        {
+            st.Text = st.Min = st.Max = st.From = st.To = st.Bool = st.Option = null;
+        }
+        _page = 1;
         await LoadAsync();
     }
 
@@ -184,7 +325,7 @@
         _loading = true;
         _error = null;
 
-        var result = await Api.GetOrganizationIdeasAsync(_organizationId!, _scope, _search, _page, _pageSize);
+        var result = await Api.GetOrganizationIdeasAsync(_organizationId!, _scope, _search, _page, _pageSize, BuildFieldFilters());
         _items.Clear();
         if (result.Succeeded)
         {

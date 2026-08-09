@@ -112,6 +112,16 @@ public sealed class IdeaService : IIdeaService
         var createdBy = scope == "created" ? currentUserId : (Guid?)null;
         var assignedTo = scope == "assigned" ? currentUserId : (Guid?)null;
 
+        // User-Defined Field filtering + search scan (T059). Resolve the org's active field schema so
+        // raw fieldFilters can be typed per definition and the global search can also scan Text/Url
+        // values. Unknown/invalid filter keys are silently dropped (spec: "silently ignored").
+        var fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(organizationId, includeDeleted: false, cancellationToken);
+        var fieldFilters = TranslateFieldFilters(query.FieldFilters, fieldDefinitions);
+        var searchTextFieldIds = fieldDefinitions
+            .Where(d => d.FieldType is FieldType.Text or FieldType.Url)
+            .Select(d => d.Id)
+            .ToList();
+
         var filter = new OrganizationIdeaListFilter(
             organizationId,
             createdBy,
@@ -119,7 +129,9 @@ public sealed class IdeaService : IIdeaService
             new PageRequest(query.Page, query.PageSize),
             query.Search?.Trim(),
             query.SortBy,
-            query.SortDirection);
+            query.SortDirection,
+            fieldFilters,
+            searchTextFieldIds);
 
         var page = await _ideaRepository.ListByOrganizationAsync(filter, cancellationToken);
         var items = await ProjectListItemsAsync(organizationId, page.Items, cancellationToken);
@@ -791,6 +803,105 @@ public sealed class IdeaService : IIdeaService
     }
 
     private static string? FormatDate(DateOnly? date) => date?.ToString(DueDateFormat, CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Translates the raw <c>fieldFilters[&lt;id&gt;]=&lt;value&gt;</c> map into typed predicates per the field's
+    /// type (T059). Keys that don't match an active field definition, blank values, and values that
+    /// don't parse for their type are silently dropped (SPEC/20-feature-user-defined-fields.md).
+    /// </summary>
+    private static IReadOnlyList<IdeaFieldValueFilter> TranslateFieldFilters(
+        IReadOnlyDictionary<Guid, string>? raw,
+        IReadOnlyList<FieldDefinition> definitions)
+    {
+        if (raw is null || raw.Count == 0)
+        {
+            return Array.Empty<IdeaFieldValueFilter>();
+        }
+
+        var byId = definitions.ToDictionary(d => d.Id, d => d.FieldType);
+        var result = new List<IdeaFieldValueFilter>();
+
+        foreach (var (fieldId, rawValue) in raw)
+        {
+            if (!byId.TryGetValue(fieldId, out var type) || string.IsNullOrWhiteSpace(rawValue))
+            {
+                continue;
+            }
+
+            var value = rawValue.Trim();
+            switch (type)
+            {
+                case FieldType.Text:
+                case FieldType.Url:
+                    result.Add(new IdeaFieldValueFilter(fieldId, IdeaFieldFilterKind.Contains, Value: value));
+                    break;
+
+                case FieldType.Dropdown:
+                    result.Add(new IdeaFieldValueFilter(fieldId, IdeaFieldFilterKind.Equals, Value: value));
+                    break;
+
+                case FieldType.MultiSelect:
+                    result.Add(new IdeaFieldValueFilter(fieldId, IdeaFieldFilterKind.MultiSelectContains, Value: value));
+                    break;
+
+                case FieldType.Boolean:
+                    if (value.Equals("true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.Add(new IdeaFieldValueFilter(fieldId, IdeaFieldFilterKind.Equals, Value: "true"));
+                    }
+                    else if (value.Equals("false", StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.Add(new IdeaFieldValueFilter(fieldId, IdeaFieldFilterKind.Equals, Value: "false"));
+                    }
+                    break;
+
+                case FieldType.Number:
+                {
+                    var (min, max) = ParseRange(value);
+                    decimal? minD = decimal.TryParse(min, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var lo) ? lo : null;
+                    decimal? maxD = decimal.TryParse(max, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var hi) ? hi : null;
+                    if (minD is not null || maxD is not null)
+                    {
+                        result.Add(new IdeaFieldValueFilter(fieldId, IdeaFieldFilterKind.NumberRange, Min: minD, Max: maxD));
+                    }
+                    break;
+                }
+
+                case FieldType.Date:
+                {
+                    var (from, to) = ParseRange(value);
+                    var fromOk = IsIsoDate(from);
+                    var toOk = IsIsoDate(to);
+                    if (fromOk || toOk)
+                    {
+                        result.Add(new IdeaFieldValueFilter(fieldId, IdeaFieldFilterKind.DateRange,
+                            MinText: fromOk ? from : null, MaxText: toOk ? to : null));
+                    }
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    // Range filters arrive as "min:max" (either side optional). A value with no ':' is treated as an
+    // exact match (both bounds set to it).
+    private static (string? Min, string? Max) ParseRange(string value)
+    {
+        var colon = value.IndexOf(':');
+        if (colon < 0)
+        {
+            return (value, value);
+        }
+
+        var min = value[..colon].Trim();
+        var max = value[(colon + 1)..].Trim();
+        return (string.IsNullOrEmpty(min) ? null : min, string.IsNullOrEmpty(max) ? null : max);
+    }
+
+    private static bool IsIsoDate(string? value) =>
+        value is not null && DateOnly.TryParseExact(value, DueDateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
 
     private static List<Guid> Distinct(IReadOnlyCollection<Guid>? ids) =>
         ids is null ? new List<Guid>() : ids.Where(id => id != Guid.Empty).Distinct().ToList();

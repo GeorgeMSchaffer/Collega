@@ -20,3 +20,11 @@
 .pager .navbtns button { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-btn); padding: 5px 12px; font-size: 12.5px; cursor: pointer; color: var(--ink-2); }
 .pager .navbtns button:disabled { opacity: .4; cursor: default; }
 .pager .navbtns button:not(:disabled):hover { background: #f3f2f1; }
+
+/* Field-filter panel (T059) */
+.udf-filterbar { display: flex; flex-wrap: wrap; gap: 14px; }
+.udf-filterbar .filt { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+.udf-filterbar .filt > label { font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-3); }
+.udf-filterbar .filt input, .udf-filterbar .filt select { border: 1px solid var(--line); border-radius: var(--radius-btn); padding: 5px 8px; font-size: 13px; }
+.udf-filterbar .rangerow { display: flex; align-items: center; gap: 6px; }
+.udf-filterbar .rangerow input { width: 90px; }

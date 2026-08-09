@@ -61,9 +61,11 @@ public sealed class IdeasController : ControllerBase
         [FromQuery] string? scope,
         [FromQuery] string? sortBy,
         [FromQuery] string? sortDirection,
+        [FromQuery] Dictionary<Guid, string>? fieldFilters,
         CancellationToken cancellationToken)
     {
-        var query = new OrganizationIdeaListQuery(page, pageSize, search, scope, sortBy, sortDirection);
+        // fieldFilters[<fieldDefinitionId>]=<value> binds here (T059); typed + validated in the service.
+        var query = new OrganizationIdeaListQuery(page, pageSize, search, scope, sortBy, sortDirection, fieldFilters);
         var result = await _ideaService.ListByOrganizationAsync(organizationId, query, cancellationToken);
         return Ok(result);
     }

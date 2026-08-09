@@ -53,7 +53,8 @@ public sealed record OrganizationIdeaListQuery(
     string? Search,
     string? Scope,
     string? SortBy,
-    string? SortDirection);
+    string? SortDirection,
+    IReadOnlyDictionary<Guid, string>? FieldFilters = null);
 
 // Results / DTOs ---------------------------------------------------------------------------------
 

@@ -40,7 +40,9 @@ public sealed record IdeaListFilter(
 
 /// <summary>Store-facing filter for the organization-wide idea list. When set, <see cref="CreatedByUserId"/>
 /// restricts to ideas the user authored and <see cref="AssignedToUserId"/> to ideas assigned to them;
-/// both null means all ideas in the organization.</summary>
+/// both null means all ideas in the organization. <see cref="FieldFilters"/> are typed User-Defined
+/// Field predicates (already validated/translated by the Application layer, T059); <see cref="SearchTextFieldIds"/>
+/// are the active Text/Url field-definition ids whose values the global <see cref="Search"/> also scans.</summary>
 public sealed record OrganizationIdeaListFilter(
     Guid OrganizationId,
     Guid? CreatedByUserId,
@@ -48,4 +50,34 @@ public sealed record OrganizationIdeaListFilter(
     PageRequest Page,
     string? Search,
     string? SortBy,
-    string? SortDirection);
+    string? SortDirection,
+    IReadOnlyList<IdeaFieldValueFilter>? FieldFilters = null,
+    IReadOnlyList<Guid>? SearchTextFieldIds = null);
+
+/// <summary>How a single User-Defined Field value predicate matches (T059 filter semantics,
+/// SPEC/20-feature-user-defined-fields.md).</summary>
+public enum IdeaFieldFilterKind
+{
+    /// <summary>Text/Url: <c>LIKE '%value%'</c> contains match.</summary>
+    Contains,
+    /// <summary>Boolean/Dropdown: exact string equality.</summary>
+    Equals,
+    /// <summary>Number: numeric range; <see cref="Min"/>/<see cref="Max"/> bounds (either may be null).</summary>
+    NumberRange,
+    /// <summary>Date: ISO-8601 range; <see cref="Min"/>/<see cref="Max"/> bounds (either may be null).</summary>
+    DateRange,
+    /// <summary>MultiSelect: the stored comma-separated option ids include <see cref="Value"/> (any-of).</summary>
+    MultiSelectContains,
+}
+
+/// <summary>One typed predicate over an idea's value for a given field definition. Built by the
+/// Application layer from the raw <c>fieldFilters[&lt;id&gt;]=&lt;value&gt;</c> query per the field's type;
+/// the repository translates it to SQL against <c>IdeaFieldValues</c>.</summary>
+public sealed record IdeaFieldValueFilter(
+    Guid FieldDefinitionId,
+    IdeaFieldFilterKind Kind,
+    string? Value = null,
+    decimal? Min = null,
+    decimal? Max = null,
+    string? MinText = null,
+    string? MaxText = null);
