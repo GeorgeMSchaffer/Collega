@@ -126,4 +126,6 @@
     .ideabody { grid-template-columns: 1fr; gap: 28px; }
     .facts { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 20px; }
     .ideahd, .ideabody { padding-left: 24px; padding-right: 24px; }
+    .titlerow { flex-wrap: wrap; gap: 12px; }
+    .ideahd h1 { font-size: 24px; }
 }
