@@ -49,6 +49,11 @@ public sealed record IdeaDetailDto(
     string Title,
     string Description,
     string Priority,
+    string IdeaTypeId,
+    string IdeaTypeName,
+    string BusinessImpactId,
+    string BusinessImpactName,
+    string BusinessImpactColor,
     string? DueDate,
     IReadOnlyList<IdeaAssigneeDto> Assignees,
     string StatusId,
@@ -62,11 +67,14 @@ public sealed record IdeaDetailDto(
     IReadOnlyList<IdeaFieldValueDetailDto> FieldValues);
 
 /// <summary>Body for <c>PUT /ideas/{ideaId}</c>. Sends the full editable field set, so unchanged
-/// fields (priority, due date, assignees, tags) must be echoed back to avoid clearing them.</summary>
+/// fields (priority, Idea Type, Business Impact, due date, assignees, tags) must be echoed back to
+/// avoid clearing them (Idea Type and Business Impact are required references).</summary>
 public sealed record UpdateIdeaRequestDto(
     string Title,
     string Description,
     string Priority,
+    string IdeaTypeId,
+    string BusinessImpactId,
     string? DueDate,
     IReadOnlyList<string>? AssigneeUserIds,
     IReadOnlyList<string>? TagNames,

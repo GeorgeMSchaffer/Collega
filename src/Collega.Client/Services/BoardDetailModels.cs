@@ -28,6 +28,8 @@ public sealed record CreateIdeaRequestDto(
     string Title,
     string Description,
     string Priority,
+    string IdeaTypeId,
+    string BusinessImpactId,
     string? StatusId = null,
     IReadOnlyList<IdeaFieldValueWriteDto>? FieldValues = null);
 

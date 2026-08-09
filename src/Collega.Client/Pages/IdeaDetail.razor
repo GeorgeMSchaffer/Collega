@@ -158,6 +158,20 @@ else
                 <div class="k">Priority</div>
                 <div class="v"><span class="pill @PriorityPill(_idea.Priority)">@_idea.Priority</span></div>
             </div>
+            @if (!string.IsNullOrWhiteSpace(_idea.IdeaTypeName))
+            {
+                <div class="fact">
+                    <div class="k">Idea Type</div>
+                    <div class="v">@_idea.IdeaTypeName</div>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_idea.BusinessImpactName))
+            {
+                <div class="fact">
+                    <div class="k">Business Impact</div>
+                    <div class="v"><span class="pill neutral" style="@BusinessImpactStyle(_idea.BusinessImpactColor)">@_idea.BusinessImpactName</span></div>
+                </div>
+            }
             <div class="fact">
                 <div class="k">Assignees</div>
                 <div class="v">
@@ -450,11 +464,14 @@ else
             .Select(f => new IdeaFieldValueWriteDto(f.FieldDefinitionId, _fieldValues.GetValueOrDefault(f.FieldDefinitionId)))
             .ToList();
 
-        // Echo the unchanged fields back so they aren't cleared by the full-replace update.
+        // Echo the unchanged fields back so they aren't cleared by the full-replace update. Idea Type
+        // and Business Impact are required references, so they must be echoed like priority.
         var body = new UpdateIdeaRequestDto(
             title,
             _description,
             _idea.Priority,
+            _idea.IdeaTypeId,
+            _idea.BusinessImpactId,
             _idea.DueDate,
             _idea.Assignees.Select(a => a.UserId).ToList(),
             _idea.TagNames.ToList(),
@@ -630,6 +647,11 @@ else
                 return raw;
         }
     }
+
+    // Tints the Business Impact pill with its configured #RRGGBB color (left border + faint fill),
+    // mirroring how status/priority colors are applied elsewhere. Blank color falls back to the plain pill.
+    private static string BusinessImpactStyle(string? color) =>
+        string.IsNullOrWhiteSpace(color) ? string.Empty : $"border-left:3px solid {color};padding-left:8px";
 
     private static string PriorityPill(string priority) => priority switch
     {

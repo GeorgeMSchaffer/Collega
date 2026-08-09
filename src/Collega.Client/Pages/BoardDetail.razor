@@ -107,6 +107,26 @@
                         </select>
                     </div>
                 </div>
+                <div class="formrow">
+                    <div class="field">
+                        <label for="ni-type">Idea Type</label>
+                        <select id="ni-type" @bind="_newIdeaTypeId" disabled="@_creating">
+                            @foreach (var t in _ideaTypes)
+                            {
+                                <option value="@t.IdeaTypeId">@t.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="ni-impact">Business Impact</label>
+                        <select id="ni-impact" @bind="_newBusinessImpactId" disabled="@_creating">
+                            @foreach (var b in _businessImpacts)
+                            {
+                                <option value="@b.BusinessImpactId">@b.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
                 @if (_fieldDefs.Count > 0)
                 {
                     <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);margin:6px 0 8px">Custom fields</h4>
@@ -300,8 +320,15 @@
     private string _newDescription = string.Empty;
     private string _newPriority = "Medium";
     private string _newStatusId = string.Empty;
+    private string _newIdeaTypeId = string.Empty;
+    private string _newBusinessImpactId = string.Empty;
     private bool _creating;
     private string? _newError;
+
+    // Required classification options (Idea Type / Business Impact) for the new-idea form, loaded
+    // once per org. Provisioning guarantees at least one active option of each.
+    private IReadOnlyList<IdeaTypeOptionDto> _ideaTypes = Array.Empty<IdeaTypeOptionDto>();
+    private IReadOnlyList<BusinessImpactOptionDto> _businessImpacts = Array.Empty<BusinessImpactOptionDto>();
 
     // Org User-Defined Fields (UDFs) rendered on the new-idea form. Loaded once per org from the
     // ApiClient's cache; _newFieldValues holds the in-progress values keyed by field definition id.
@@ -384,6 +411,21 @@
             }
         }
 
+        // Required Idea Type / Business Impact options for the new-idea form.
+        if (_ideaTypes.Count == 0 && !string.IsNullOrEmpty(_organizationId))
+        {
+            var typesResult = await Api.GetIdeaTypesAsync(_organizationId!);
+            if (typesResult.Succeeded)
+            {
+                _ideaTypes = typesResult.Value!.Where(t => !t.IsDeleted).OrderBy(t => t.SortOrder).ToList();
+            }
+            var impactsResult = await Api.GetBusinessImpactsAsync(_organizationId!);
+            if (impactsResult.Succeeded)
+            {
+                _businessImpacts = impactsResult.Value!.Where(b => !b.IsDeleted).OrderBy(b => b.SortOrder).ToList();
+            }
+        }
+
         _loadedBoardId = BoardId;
         _loading = false;
 
@@ -442,6 +484,8 @@
         _newDescription = string.Empty;
         _newPriority = "Medium";
         _newStatusId = statusId ?? OrderedLanes.FirstOrDefault()?.StatusId ?? string.Empty;
+        _newIdeaTypeId = _ideaTypes.FirstOrDefault()?.IdeaTypeId ?? string.Empty;
+        _newBusinessImpactId = _businessImpacts.FirstOrDefault()?.BusinessImpactId ?? string.Empty;
         _newFieldValues = new Dictionary<string, string?>();
         _newError = null;
         _showNew = true;
@@ -457,6 +501,11 @@
         if (string.IsNullOrWhiteSpace(_newDescription))
         {
             _newError = "A description is required.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_newIdeaTypeId) || string.IsNullOrWhiteSpace(_newBusinessImpactId))
+        {
+            _newError = "Idea Type and Business Impact are required.";
             return;
         }
 
@@ -480,6 +529,8 @@
             _newTitle.Trim(),
             _newDescription.Trim(),
             _newPriority,
+            _newIdeaTypeId,
+            _newBusinessImpactId,
             string.IsNullOrEmpty(_newStatusId) ? null : _newStatusId,
             fieldValues.Count > 0 ? fieldValues : null);
 
