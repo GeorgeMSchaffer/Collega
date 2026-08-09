@@ -26,12 +26,30 @@ No unresolved items.
 
 ## IDEAS
 
-Help me come up with a new feature.  The overall idea is that the board is used to manage the process of brainstorming and fleshing out ideas.  However, I also want to enable the user to manage the process of implementing the idea using AGILE Best practices.  I also want user's to be able to create a roadmap with a start and end date, and assign
+Help me come up with a new feature.  The overall idea is that the board is used to manage the process of brainstorming and fleshing out ideas, think of it as a Trello, Jira, Workspace hybrid.  I want to enable the user to manage the process of implementing the idea using AGILE Best practices.  Admins should be able to create Roadmaps. These roadmaps, will consit of Sprints, which consits of Tasks, which are Ideas translated to tasks.  However the idea seems a bit uncooked and potential akward.  Help me to refine the idea for this feature by making recommendations, referencing best practices, and ideas that could differantiate product from Trello and Jira.
 
-    * Main Fun
-        * Create a Roadmap
-        * Create sprint(s) and assign them to a roadmap
-        * An Idea that marked as complete should be added as an issue but not assigned to a Road,
+    * Main Funtionality
+        * Create Roadmap(s)
+            * Should have the following fields
+                * Title
+                * Goal Description Field
+                * Start Date
+                * End Date
+                * The ability to assign Roadmap Owner(s)
+
+        * Sprints should be assignable to a Road Map, the fields on the Sprint:
+            * Title
+            * Start Date
+            * End Date
+            * Sprint Goal
+            * Sprint Owner
+            * Tags
+        * Sprints will consits of one to many Issues.  Issues are an extension of an Idea, however it should have additional fields for:
+            * Start Date
+            * End Date
+            * Effort (Low, Medium, High)
+            * Sprint Tags
+            * Status: Pending, Scoping, Development, Review and Complete
 
 
 ## COMPLETED
