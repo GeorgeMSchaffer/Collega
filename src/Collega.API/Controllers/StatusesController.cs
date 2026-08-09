@@ -22,14 +22,25 @@ public sealed class StatusesController : ControllerBase
         _statusService = statusService;
     }
 
+    /// <summary>List statuses for an organization. Authorized admins may pass <paramref name="includeDeleted"/>.</summary>
     [HttpGet("organizations/{organizationId:guid}/statuses")]
+    [ProducesResponseType(typeof(IEnumerable<StatusItem>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> List(Guid organizationId, [FromQuery] bool includeDeleted, CancellationToken cancellationToken)
     {
         var result = await _statusService.ListAsync(organizationId, includeDeleted, cancellationToken);
         return Ok(result);
     }
 
+    /// <summary>Create a new organization status.</summary>
     [HttpPost("organizations/{organizationId:guid}/statuses")]
+    [ProducesResponseType(typeof(CreateStatusResult), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Create(Guid organizationId, [FromBody] CreateStatusRequest request, CancellationToken cancellationToken)
     {
         var command = new CreateStatusCommand(request.Name, request.Color, request.SortOrder);
@@ -37,7 +48,13 @@ public sealed class StatusesController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, result);
     }
 
+    /// <summary>Rename or recolor a status.</summary>
     [HttpPut("statuses/{statusId:guid}")]
+    [ProducesResponseType(typeof(StatusItem), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(Guid statusId, [FromBody] UpdateStatusRequest request, CancellationToken cancellationToken)
     {
         var command = new UpdateStatusCommand(request.Name, request.Color, request.SortOrder);
@@ -45,7 +62,13 @@ public sealed class StatusesController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Soft-delete a status while preserving existing references. Rejected when it would drop below the active-status floor.</summary>
     [HttpDelete("statuses/{statusId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid statusId, CancellationToken cancellationToken)
     {
         await _statusService.DeleteAsync(statusId, cancellationToken);

@@ -5,6 +5,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>637781c6-bc39-4852-b849-6f0b91021cc9</UserSecretsId>
+    <!-- Emit the XML documentation file so Swashbuckle can surface controller doc comments in the
+         OpenAPI output (see Program.cs IncludeXmlComments). CS1591 warns on every public member that
+         lacks a doc comment; that's noise for a controller-only doc pass, so suppress it. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

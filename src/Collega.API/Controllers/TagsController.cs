@@ -20,7 +20,13 @@ public sealed class TagsController : ControllerBase
         _tagService = tagService;
     }
 
+    /// <summary>Return tag autocomplete suggestions within an organization.</summary>
     [HttpGet("{organizationId:guid}/tags")]
+    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Suggest(
         Guid organizationId,
         [FromQuery] string? search,
