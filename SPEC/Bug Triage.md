@@ -19,11 +19,12 @@ Design locked 2026-08-10 (user-approved as the exception to this triage gate). R
 - URL-addressable via `?idea={ideaId}` on the current route; bare `/ideas/{ideaId}` opens the list with the drawer open; the `/ideas/{ideaId}/edit` route is retired; notification `ideaLink` → `/ideas/{ideaId}`.
 - Inaccessible id → underlying list/board with a not-found/permission notice, no drawer. Narrow viewport: full-width drawer sheet + full-screen modal.
 - **Fold in T-UI-2's Ideas-list gaps** (uniform page-size options, all-column search, Idea Type/Status dropdown filters) as part of this pass since it rebuilds the list interactions.
-- Confirm with the user before spawning a UI/UX Developer implementation pass (scoped decision per CLAUDE.md).
+- **Fold in the T-UI-1 glyph-consistency cleanup** (user decision 2026-08-10): convert the remaining non-navigation Unicode/emoji glyphs to Fluent System Icons in the surfaces this pass touches — upvote `▲` and comment `💬` in the drawer + board/idea cards, admin reorder drag handles `⠿` (Statuses/Idea Types lists), the `←` BackButton, and the `→` option arrows in `IdeaFieldInputs`. (The Idea Type badge emoji **picker** is intentional product data and is out of scope.)
+- Confirm with the user before spawning a UI/UX Developer implementation pass (scoped decision per CLAUDE.md). **Confirmed + started 2026-08-10** (agents in flight).
 
-### T-UI-1 · Navigation icon family
+### T-UI-1 · Navigation icon family — **DECIDED 2026-08-10 (close-as-satisfied + fold consistency into T-UI-3)**
 Replace the current navigation icons with the [Fluent System Icons](https://github.com/microsoft/fluentui-system-icons) family across the rail/navigation.
-- *Status note (2026-08-10):* a Fluent System Icons 4.11.0 refresh already landed for the rail / reorder / drag surfaces (see COMPLETED 2026-08-09). Confirm whether that pass fully satisfies this item or a broader icon sweep is still wanted before closing.
+- **Decision (user, 2026-08-10):** the literal ask is **already satisfied** — the rail is fully on Fluent System Icons 4.11.0 (`NavRail.razor`: Home/Board/Lightbulb/Settings/SignOut via `<FluentIcon>`). No broad standalone sweep. The residual non-navigation glyph consistency (`▲`/`💬`/`⠿`/`←`/`→`) is folded into the **T-UI-3** pass (see that item's icon bullet). This item moves to COMPLETED once T-UI-3 lands those conversions.
 
 ### T-UI-2 · List View enhancements
 Apply consistently across the list/table views (Users, Organizations, Ideas, Boards, Statuses where applicable):
