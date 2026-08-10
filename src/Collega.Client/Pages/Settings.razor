@@ -25,14 +25,18 @@
     }
     else
     {
-        <div class="cmdbar"><BackButton /><a class="btn primary" href="/settings/organizations/new" style="margin-left:auto">New organization</a></div>
+        <div class="cmdbar">
+            <BackButton />
+            <ListToolbar TItem="OrganizationListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search organizations…" OnChanged="StateHasChanged" />
+            <a class="btn primary" href="/settings/organizations/new" style="margin-left:auto">New organization</a>
+        </div>
         <div class="card">
             <table>
                 <thead>
                     <tr><th>Organization</th><th>Location</th><th>Invite code</th><th>Status</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @foreach (var org in _organizations)
+                    @foreach (var org in _list.PageItems)
                     {
                         <tr>
                             <td>
@@ -67,9 +71,14 @@
                 </tbody>
             </table>
         </div>
+        <ListToolbar TItem="OrganizationListItemDto" State="_list" Region="ToolbarRegion.Pager" OnChanged="StateHasChanged" />
         @if (_organizations.Count == 0)
         {
             <div class="placeholder"><p>No organizations yet.</p></div>
+        }
+        else if (_list.FilteredCount == 0)
+        {
+            <div class="placeholder"><p>No organizations match your search.</p></div>
         }
     }
 </div>
@@ -80,6 +89,11 @@
     private string? _error;
     private IReadOnlyList<OrganizationListItemDto> _organizations = Array.Empty<OrganizationListItemDto>();
 
+    private readonly ListState<OrganizationListItemDto> _list = new()
+    {
+        SearchText = o => $"{o.Title} {o.City} {o.State} {o.InviteCode} {(o.IsArchived ? "Archived" : "Active")}",
+    };
+
     protected override async Task OnInitializedAsync()
     {
         _subtitle = "Manage organizations across the platform.";
@@ -87,6 +101,7 @@
         if (result.Succeeded)
         {
             _organizations = result.Value!;
+            _list.SetItems(_organizations);
         }
         else
         {

@@ -30,6 +30,7 @@
     {
         <div class="cmdbar">
             <BackButton />
+            <ListToolbar TItem="IdeaTypeOptionDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search idea types…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
                 <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">New idea type</button>
@@ -175,6 +176,10 @@
         {
             <p class="reorder-hint"><span class="grip">⠿</span> Drag the handle to reorder idea types. The new-idea form lists them in this order.</p>
         }
+        else if (!_siteAdminGlobal && _types.Count > 1 && !_editing && !_list.ShowsAllInOrder)
+        {
+            <p class="reorder-hint">Clear the search and show all idea types on one page to reorder them.</p>
+        }
 
         <div class="card">
             <table>
@@ -182,10 +187,11 @@
                     <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Idea type</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Fields on this type</th><th>Sort order</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @for (var i = 0; i < _types.Count; i++)
+                    @{ var pageTypes = _list.PageItems; }
+                    @for (var i = 0; i < pageTypes.Count; i++)
                     {
                         var index = i;
-                        var t = _types[index];
+                        var t = pageTypes[index];
                         <tr class="@RowClass(index)"
                             draggable="@(CanReorder ? "true" : null)"
                             @ondragstart="() => OnDragStart(index)"
@@ -222,9 +228,14 @@
                 </tbody>
             </table>
         </div>
+        <ListToolbar TItem="IdeaTypeOptionDto" State="_list" Region="ToolbarRegion.Pager" OnChanged="StateHasChanged" />
         @if (_types.Count == 0)
         {
             <div class="placeholder"><p>No idea types yet.</p></div>
+        }
+        else if (_list.FilteredCount == 0)
+        {
+            <div class="placeholder"><p>No idea types match your search.</p></div>
         }
     }
 </div>
@@ -259,6 +270,7 @@
     private bool _siteAdminGlobal;
     private readonly Dictionary<string, string> _organizationNames = new();
     private List<IdeaTypeOptionDto> _types = new();
+    private ListState<IdeaTypeOptionDto> _list = null!;
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
     private bool _loading = true;
     private bool _busy;
@@ -276,7 +288,26 @@
     private int? _fieldDragIndex;
     private int? _fieldDragOverIndex;
 
-    private bool CanReorder => !_siteAdminGlobal && !_editing && _types.Count > 1;
+    private bool CanReorder => !_siteAdminGlobal && !_editing && _types.Count > 1 && _list.ShowsAllInOrder;
+
+    // All-column search text: name + org + sort order + a flat rendering of the type's field selection.
+    private string TypeSearchText(IdeaTypeOptionDto t)
+    {
+        var curated = string.Equals(t.FieldMode, "Curated", StringComparison.OrdinalIgnoreCase) && t.Fields is { Count: > 0 };
+        string fields;
+        if (!curated)
+        {
+            fields = "All org fields";
+        }
+        else
+        {
+            var byId = _fieldDefs.ToDictionary(f => f.FieldDefinitionId);
+            fields = string.Join(" ", t.Fields!.OrderBy(l => l.DisplayOrder)
+                .Select(l => byId.TryGetValue(l.FieldDefinitionId, out var f) ? f.Name : ""));
+        }
+
+        return $"{t.Name} {OrganizationName(t.OrganizationId)} {t.SortOrder} {fields}";
+    }
 
     // Active org fields not yet on this type, in display order.
     private List<FieldDefinitionDto> AvailableFields =>
@@ -286,6 +317,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _list = new ListState<IdeaTypeOptionDto> { SearchText = TypeSearchText };
+
         if (!string.IsNullOrEmpty(OrganizationId))
         {
             _organizationId = OrganizationId;
@@ -322,6 +355,7 @@
         if (result.Succeeded)
         {
             _types = result.Value!.OrderBy(t => t.SortOrder).ToList();
+            _list.SetItems(_types);
         }
         else
         {
@@ -362,6 +396,7 @@
         }
 
         _types = results.SelectMany(result => result.Value!).OrderBy(type => OrganizationName(type.OrganizationId)).ThenBy(type => type.SortOrder).ToList();
+        _list.SetItems(_types);
     }
 
     private string OrganizationName(string organizationId) =>

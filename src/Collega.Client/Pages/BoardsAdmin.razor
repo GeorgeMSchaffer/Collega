@@ -26,14 +26,18 @@
     }
     else
     {
-        <div class="cmdbar"><BackButton /><a class="btn primary" href="@($"{BoardEditBase}/new")" style="margin-left:auto">New board</a></div>
+        <div class="cmdbar">
+            <BackButton />
+            <ListToolbar TItem="BoardListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search boards…" OnChanged="StateHasChanged" />
+            <a class="btn primary" href="@($"{BoardEditBase}/new")" style="margin-left:auto">New board</a>
+        </div>
         <div class="card">
             <table>
                 <thead>
                     <tr><th>Board</th><th>Swimlanes</th><th>User status moves</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @foreach (var b in _boards)
+                    @foreach (var b in _list.PageItems)
                     {
                         <tr>
                             <td><strong>@b.Name</strong></td>
@@ -54,9 +58,14 @@
                 </tbody>
             </table>
         </div>
+        <ListToolbar TItem="BoardListItemDto" State="_list" Region="ToolbarRegion.Pager" OnChanged="StateHasChanged" />
         @if (_boards.Count == 0)
         {
             <div class="placeholder"><p>No boards yet.</p></div>
+        }
+        else if (_list.FilteredCount == 0)
+        {
+            <div class="placeholder"><p>No boards match your search.</p></div>
         }
     }
 </div>
@@ -71,6 +80,11 @@
     private List<BoardListItemDto> _boards = new();
     private bool _loading = true;
     private string? _error;
+
+    private readonly ListState<BoardListItemDto> _list = new()
+    {
+        SearchText = b => $"{b.Name} {b.SwimlaneCount} swimlanes {(b.AllowUserStatusUpdate ? "Allowed" : "Admins only")}",
+    };
 
     // New/Edit links carry the org when Site-Admin-scoped so BoardEdit targets the right organization.
     private string BoardEditBase => string.IsNullOrEmpty(OrganizationId)
@@ -94,6 +108,7 @@
         if (result.Succeeded)
         {
             _boards = result.Value!;
+            _list.SetItems(_boards);
         }
         else
         {

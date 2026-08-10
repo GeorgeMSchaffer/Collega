@@ -26,6 +26,7 @@
     {
         <div class="cmdbar">
             <BackButton />
+            <ListToolbar TItem="StatusItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search statuses…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
                 <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">New status</button>
@@ -73,6 +74,10 @@
         {
             <p class="reorder-hint"><span class="grip">⠿</span> Drag the handle to reorder statuses. Boards and idea cards list statuses in this order.</p>
         }
+        else if (!_siteAdminGlobal && _statuses.Count > 1 && !_editing && !_list.ShowsAllInOrder)
+        {
+            <p class="reorder-hint">Clear the search and show all statuses on one page to reorder them.</p>
+        }
 
         <div class="card">
             <table>
@@ -80,10 +85,11 @@
                     <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Status</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Color</th><th>Sort order</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @for (var i = 0; i < _statuses.Count; i++)
+                    @{ var pageStatuses = _list.PageItems; }
+                    @for (var i = 0; i < pageStatuses.Count; i++)
                     {
                         var index = i;
-                        var s = _statuses[index];
+                        var s = pageStatuses[index];
                         <tr class="@RowClass(index)"
                             draggable="@(CanReorder ? "true" : null)"
                             @ondragstart="() => OnDragStart(index)"
@@ -123,9 +129,14 @@
                 </tbody>
             </table>
         </div>
+        <ListToolbar TItem="StatusItemDto" State="_list" Region="ToolbarRegion.Pager" OnChanged="StateHasChanged" />
         @if (_statuses.Count == 0)
         {
             <div class="placeholder"><p>No statuses yet.</p></div>
+        }
+        else if (_list.FilteredCount == 0)
+        {
+            <div class="placeholder"><p>No statuses match your search.</p></div>
         }
     }
 </div>
@@ -148,6 +159,7 @@
     private bool _siteAdminGlobal;
     private readonly Dictionary<string, string> _organizationNames = new();
     private List<StatusItemDto> _statuses = new();
+    private ListState<StatusItemDto> _list = null!;
     private bool _loading = true;
     private bool _busy;
     private bool _editing;
@@ -162,10 +174,15 @@
 
     // Reordering is a per-org action; it's meaningless in the Site-Admin cross-org list, while editing,
     // or with a single row. The active-status floor (2) already keeps the org list from shrinking below reorderable size.
-    private bool CanReorder => !_siteAdminGlobal && !_editing && _statuses.Count > 1;
+    private bool CanReorder => !_siteAdminGlobal && !_editing && _statuses.Count > 1 && _list.ShowsAllInOrder;
 
     protected override async Task OnInitializedAsync()
     {
+        _list = new ListState<StatusItemDto>
+        {
+            SearchText = s => $"{s.Name} {OrganizationName(s.OrganizationId)} {s.Color} {s.SortOrder}",
+        };
+
         if (!string.IsNullOrEmpty(OrganizationId))
         {
             _organizationId = OrganizationId;
@@ -202,6 +219,7 @@
         if (result.Succeeded)
         {
             _statuses = result.Value!.OrderBy(s => s.SortOrder).ToList();
+            _list.SetItems(_statuses);
         }
         else
         {
@@ -235,6 +253,7 @@
         }
 
         _statuses = results.SelectMany(result => result.Value!).OrderBy(status => OrganizationName(status.OrganizationId)).ThenBy(status => status.SortOrder).ToList();
+        _list.SetItems(_statuses);
     }
 
     private string OrganizationName(string organizationId) =>

@@ -42,6 +42,7 @@
         }
         <div class="cmdbar">
             <BackButton />
+            <ListToolbar TItem="UserListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search users…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
                 <a class="btn primary" href="@($"{RouteBase}/new")" style="margin-left:auto">New user</a>
@@ -61,7 +62,7 @@
                     <tr><th>Name</th><th>Email</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Role</th><th>Status</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @foreach (var user in _users)
+                    @foreach (var user in _list.PageItems)
                     {
                         <tr>
                             <td><strong>@user.FirstName @user.LastName</strong></td>
@@ -87,9 +88,14 @@
                 </tbody>
             </table>
         </div>
+        <ListToolbar TItem="UserListItemDto" State="_list" Region="ToolbarRegion.Pager" OnChanged="StateHasChanged" />
         @if (_users.Count == 0)
         {
             <div class="placeholder"><p>No users in this organization yet.</p></div>
+        }
+        else if (_list.FilteredCount == 0)
+        {
+            <div class="placeholder"><p>No users match your search.</p></div>
         }
     }
 </div>
@@ -111,8 +117,15 @@
     private string? _regenError;
     private bool _regenerating;
 
+    private ListState<UserListItemDto> _list = null!;
+
     protected override async Task OnInitializedAsync()
     {
+        _list = new ListState<UserListItemDto>
+        {
+            SearchText = u => $"{u.FirstName} {u.LastName} {u.Email} {OrganizationName(u.OrganizationId)} {RoleLabel(u.Role)} {u.Status}",
+        };
+
         var principal = AuthStateTask is null ? null : (await AuthStateTask).User;
         _siteAdmin = principal?.IsInRole("SiteAdmin") == true;
         _siteAdminGlobal = _siteAdmin && string.IsNullOrEmpty(OrganizationId);
@@ -145,6 +158,7 @@
         if (users.Succeeded)
         {
             _users = users.Value!;
+            _list.SetItems(_users);
         }
         else
         {
@@ -178,6 +192,7 @@
         }
 
         _users = results.SelectMany(result => result.Value!).OrderBy(user => OrganizationName(user.OrganizationId)).ThenBy(user => user.LastName).ThenBy(user => user.FirstName).ToList();
+        _list.SetItems(_users);
     }
 
     private async Task RegenerateCodeAsync()

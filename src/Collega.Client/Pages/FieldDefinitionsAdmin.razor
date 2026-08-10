@@ -30,6 +30,7 @@
     {
         <div class="cmdbar">
             <BackButton />
+            <ListToolbar TItem="FieldDefinitionDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search custom fields…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
                 <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">New field</button>
@@ -123,10 +124,8 @@
                     <tr><th>Field</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Type</th><th>Required</th><th>Options</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @for (var idx = 0; idx < _fields.Count; idx++)
+                    @foreach (var f in _list.PageItems)
                     {
-                        var f = _fields[idx];
-                        var i = idx;
                         <tr class="@(f.IsDeleted ? "archived" : null)">
                             <td>
                                 <strong>@f.Name</strong>
@@ -153,8 +152,8 @@
                                 }
                                 else if (!f.IsDeleted)
                                 {
-                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(i, -1)" disabled="@(_editing || _busy || !CanMoveUp(i))" title="Move up" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
-                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(i, 1)" disabled="@(_editing || _busy || !CanMoveDown(i))" title="Move down" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
+                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(f, -1)" disabled="@(_editing || _busy || !ReorderEnabled || !CanMoveUp(f))" title="@ReorderTitle("up")" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
+                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(f, 1)" disabled="@(_editing || _busy || !ReorderEnabled || !CanMoveDown(f))" title="@ReorderTitle("down")" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
                                     <button class="btn subtle" @onclick="() => StartEdit(f)" disabled="@_editing">Edit</button>
                                     @if (_confirmDeleteId == f.FieldDefinitionId)
                                     {
@@ -173,9 +172,14 @@
                 </tbody>
             </table>
         </div>
+        <ListToolbar TItem="FieldDefinitionDto" State="_list" Region="ToolbarRegion.Pager" OnChanged="StateHasChanged" />
         @if (_fields.Count == 0)
         {
             <div class="placeholder"><p>No custom fields yet.</p></div>
+        }
+        else if (_list.FilteredCount == 0)
+        {
+            <div class="placeholder"><p>No custom fields match your search.</p></div>
         }
     }
 </div>
@@ -219,6 +223,13 @@
     private bool _siteAdminGlobal;
     private readonly Dictionary<string, string> _organizationNames = new();
     private List<FieldDefinitionDto> _fields = new();
+    private ListState<FieldDefinitionDto> _list = null!;
+
+    // Move up/down only makes sense against the full list in order — disable when searching or paged.
+    private bool ReorderEnabled => !_siteAdminGlobal && _list.ShowsAllInOrder;
+
+    private string ReorderTitle(string direction) =>
+        ReorderEnabled ? $"Move {direction}" : "Clear the search and show all fields on one page to reorder";
     private bool _loading = true;
     private bool _busy;
     private bool _editing;
@@ -230,6 +241,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _list = new ListState<FieldDefinitionDto>
+        {
+            SearchText = f => $"{f.Name} {f.Description} {OrganizationName(f.OrganizationId)} {TypeLabel(f.FieldType)} {(f.IsRequired ? "Required" : "Optional")} {(IsOptionBacked(f.FieldType) ? $"{f.Options.Count} options" : "")} {(f.IsDeleted ? "Archived" : "Active")}",
+        };
+
         if (!string.IsNullOrEmpty(OrganizationId))
         {
             _organizationId = OrganizationId;
@@ -271,6 +287,7 @@
                 .OrderBy(f => f.IsDeleted)
                 .ThenBy(f => f.DisplayOrder)
                 .ToList();
+            _list.SetItems(_fields);
         }
         else
         {
@@ -304,6 +321,7 @@
         }
 
         _fields = results.SelectMany(result => result.Value!).OrderBy(field => OrganizationName(field.OrganizationId)).ThenBy(field => field.IsDeleted).ThenBy(field => field.DisplayOrder).ToList();
+        _list.SetItems(_fields);
     }
 
     private async Task OnToggleArchived(ChangeEventArgs e)
@@ -456,19 +474,18 @@
     // don't participate. Move optimistically in the list, persist the new order, reload on success.
     private List<FieldDefinitionDto> ActiveFields => _fields.Where(f => !f.IsDeleted).ToList();
 
-    private bool CanMoveUp(int index) => ActiveFields.FindIndex(a => a.FieldDefinitionId == _fields[index].FieldDefinitionId) > 0;
+    private bool CanMoveUp(FieldDefinitionDto f) => ActiveFields.FindIndex(a => a.FieldDefinitionId == f.FieldDefinitionId) > 0;
 
-    private bool CanMoveDown(int index)
+    private bool CanMoveDown(FieldDefinitionDto f)
     {
         var active = ActiveFields;
-        var pos = active.FindIndex(a => a.FieldDefinitionId == _fields[index].FieldDefinitionId);
+        var pos = active.FindIndex(a => a.FieldDefinitionId == f.FieldDefinitionId);
         return pos >= 0 && pos < active.Count - 1;
     }
 
-    private async Task MoveField(int index, int delta)
+    private async Task MoveField(FieldDefinitionDto moving, int delta)
     {
         var active = ActiveFields;
-        var moving = _fields[index];
         var pos = active.FindIndex(a => a.FieldDefinitionId == moving.FieldDefinitionId);
         var target = pos + delta;
         if (pos < 0 || target < 0 || target >= active.Count)
