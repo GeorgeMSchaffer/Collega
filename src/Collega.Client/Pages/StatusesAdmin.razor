@@ -25,9 +25,14 @@
     else
     {
         <div class="cmdbar">
+            <BackButton />
             @if (!_siteAdminGlobal)
             {
                 <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New status</button>
+            }
+            else
+            {
+                <a class="btn primary" href="/settings/organizations">New status</a>
             }
         </div>
 

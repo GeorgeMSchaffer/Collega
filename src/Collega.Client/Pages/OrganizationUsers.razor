@@ -40,16 +40,21 @@
                 </div>
             </div>
         }
-        @if (!_siteAdminGlobal)
-        {
-            <div class="cmdbar">
+        <div class="cmdbar">
+            <BackButton />
+            @if (!_siteAdminGlobal)
+            {
                 <a class="btn primary" href="@($"{RouteBase}/new")">New user</a>
                 <a class="btn" href="@($"{RouteBase}/import")">Import CSV</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/statuses")">Manage statuses</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/boards")">Manage boards</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/fields")">Manage fields</a>
-            </div>
-        }
+            }
+            else
+            {
+                <a class="btn primary" href="/settings/organizations">New user</a>
+            }
+        </div>
         <div class="card">
             <table>
                 <thead>

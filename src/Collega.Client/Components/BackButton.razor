@@ -1,0 +1,12 @@
+@inject IJSRuntime JS
+
+@*
+    Reusable "Back" action for list/detail command bars. Returns the user to the previous page using
+    the SPA's browser history, so it works regardless of how the page was reached. Available to every
+    role (no authorization gate) and sits alongside the page's "Add New" action per bug-triage item #3.
+*@
+<button class="btn subtle" type="button" @onclick="GoBackAsync" title="Back to the previous page">← Back</button>
+
+@code {
+    private async Task GoBackAsync() => await JS.InvokeVoidAsync("history.back");
+}

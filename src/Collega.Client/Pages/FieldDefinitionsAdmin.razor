@@ -29,9 +29,14 @@
     else
     {
         <div class="cmdbar">
+            <BackButton />
             @if (!_siteAdminGlobal)
             {
                 <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New field</button>
+            }
+            else
+            {
+                <a class="btn primary" href="/settings/organizations">New field</a>
             }
             <label class="checkline" style="margin-left:auto">
                 <input type="checkbox" checked="@_showArchived" @onchange="OnToggleArchived" disabled="@_editing" />
