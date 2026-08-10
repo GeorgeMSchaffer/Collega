@@ -674,57 +674,36 @@ Deletion is rejected with `400 Bad Request` when the option is the organization'
 
 For both option types, labels are trimmed before persistence and active labels are unique case-insensitively within the same organization and option type. Missing resources return `404 Not Found`; cross-organization access returns `403 Forbidden`.
 
-## Field Set Contracts
+## Idea-Type Field Contracts
 
-Field Sets scope which User-Defined Fields appear on an idea by its Idea Type (`SPEC/20-feature-idea-type-field-sets.md`). A Field Set is a named, ordered selection of the organization's existing UDFs, each marked required-or-optional *within that set*. Site Admin may manage any organization supplied by route context; Org Admin only their own; User and Read Only callers receive `403 Forbidden`.
+Idea Types scope which User-Defined Fields appear on an idea by **direct mapping**: an Idea Type owns an ordered selection of the organization's existing UDFs, each marked required-or-optional *for that type* (`SPEC/20-feature-idea-type-fields.md`). There is no separate "field set" resource. A type has a **field mode** — `AllActiveFields` (default; shows every active org UDF, global required) or `Curated` (shows only the mapped fields, per-type required). Site Admin may manage any organization supplied by route context; Org Admin only their own; User and Read Only callers receive `403 Forbidden`. The Idea Type list/create/rename/reorder/soft-delete contracts are unchanged (see the Idea Field Option Contracts above); the routes below add field selection, appearance, and reassignment.
 
-### `GET /api/v1/organizations/{organizationId}/field-sets`
-Purpose: List Field Sets for an organization. `?includeDeleted=true` includes archived sets (admin only).
-
-Success response `200` item shape:
-- `fieldSetId`
-- `organizationId`
-- `name`
-- `description` (nullable)
-- `isDeleted`
-- `fields` array of `{ fieldDefinitionId, displayOrder, isRequired }` ordered by `displayOrder`
-
-### `POST /api/v1/organizations/{organizationId}/field-sets`
-Purpose: Create a Field Set with an initial ordered field selection.
+### `PUT /api/v1/organizations/{organizationId}/idea-types/{ideaTypeId}/fields`
+Purpose: Replace the Idea Type's field selection. Supplying a non-empty selection switches the type to `Curated`; an empty selection clears it back to `AllActiveFields`.
 
 Request body:
-- `name` required string, max 100 characters, unique case-insensitively among active sets in the org
-- `description` optional string, max 500 characters
-- `fields` array of `{ fieldDefinitionId (GUID), displayOrder (int), isRequired (bool) }`; every `fieldDefinitionId` must be an active field definition in the org, and each may appear at most once
+- `fields` array of `{ fieldDefinitionId (GUID), displayOrder (int), isRequired (bool) }`; every `fieldDefinitionId` must be an active field definition in the org, and each may appear at most once. The array is authoritative — omitted fields are removed, new ones added, existing ones updated in place.
 
-Success response `201`: Field Set item shape. `400` on duplicate name, unknown/archived field, or duplicate field in the set.
+Success response `204 No Content`. `400` on unknown/archived field or duplicate field in the selection; `404` when the Idea Type does not exist in the organization.
 
-### `GET /api/v1/organizations/{organizationId}/field-sets/{fieldSetId}`
-Purpose: Get a single Field Set with its ordered fields.
-
-Success response `200`: Field Set item shape.
-
-### `PUT /api/v1/organizations/{organizationId}/field-sets/{fieldSetId}`
-Purpose: Rename/redescribe a set and reconcile its field membership, per-set order, and per-set required flags.
-
-Request body: same shape as create. The `fields` array is authoritative — omitted fields are removed from the set, new ones are added, existing ones are updated in place.
-
-Success response `200`: updated Field Set item shape.
-
-### `DELETE /api/v1/organizations/{organizationId}/field-sets/{fieldSetId}`
-Purpose: Soft-delete a Field Set.
-
-Success response `204 No Content`. Rejected with `409 Conflict` when the set is still assigned to one or more active Idea Types (reassign those types first).
-
-### `PUT /api/v1/organizations/{organizationId}/idea-types/{ideaTypeId}/field-set`
-Purpose: Assign a Field Set to an Idea Type, or clear the assignment (type falls back to showing all active org UDFs).
+### `PUT /api/v1/organizations/{organizationId}/idea-types/{ideaTypeId}/appearance`
+Purpose: Set or clear the Idea Type's badge appearance.
 
 Request body:
-- `fieldSetId` GUID string or `null` to clear
+- `colorHex` string `#RRGGBB` or `null` to clear (contrast is advisory, not blocking)
+- `icon` short token string (emoji or icon key) or `null` to clear
 
-Success response `204 No Content`. `400` when `fieldSetId` names an unknown or archived set; `404` when the Idea Type does not exist in the organization.
+Success response `204 No Content`. `400` when `colorHex` is present and not a valid `#RRGGBB`; `404` when the Idea Type does not exist in the organization.
 
-> **Note (idea update contract):** idea type is immutable after creation. `PUT`/update paths for an idea must not change `ideaTypeId`; a request that supplies a differing `ideaTypeId` is rejected with `400`. The `POST /api/v1/boards/{boardId}/ideas` create contract's required `ideaTypeId` is unchanged.
+### `PUT /api/v1/organizations/{organizationId}/ideas/{ideaId}/idea-type`
+Purpose: **Admin-only reassignment** of an idea's type (the only path that mutates type after creation). Re-resolves the idea's fields; values for fields not in the new type's resolved set are archived (preserved, hidden), not dropped; an `IdeaTypeReassigned` audit event is emitted.
+
+Request body:
+- `ideaTypeId` GUID string — must be an active Idea Type in the same organization
+
+Success response `204 No Content`. `400` when `ideaTypeId` names an unknown or archived type; `403` for non-admin callers; `404` when the idea does not exist in the organization.
+
+> **Note (idea update contract):** idea type is immutable on the normal edit path. `PUT`/update paths for an idea must not change `ideaTypeId`; a request that supplies a differing `ideaTypeId` is rejected with `400`. Type changes go only through the admin reassignment route above. The `POST /api/v1/boards/{boardId}/ideas` create contract's required `ideaTypeId` is unchanged.
 
 ## Board Contracts
 
