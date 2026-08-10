@@ -1,15 +1,16 @@
 using System.Globalization;
 using Collega.Application.Exceptions;
 using Collega.Domain.Fields;
+using Collega.Domain.IdeaFields;
 
 namespace Collega.Application.Fields;
 
 /// <summary>
-/// Validates and normalizes User-Defined Field values submitted for an idea against the organization's
-/// active field definitions (SPEC/20-feature-user-defined-fields.md "UDF Validation Rules"). Returns the
-/// serialized values (as <see cref="IdeaFieldValueInput"/>) to persist, or throws
-/// <see cref="ValidationAppException"/> with per-field messages. The returned set is authoritative:
-/// fields with an empty value produce no row (the value is cleared).
+/// Validates and normalizes User-Defined Field values submitted for an idea against the fields resolved
+/// for its idea type (SPEC/20-feature-idea-type-fields.md "Value scoping"). Each resolved field carries
+/// its effective required-ness (per-type for a curated type, global otherwise). Returns the serialized
+/// values (as <see cref="IdeaFieldValueInput"/>) to persist, or throws <see cref="ValidationAppException"/>
+/// with per-field messages. The returned set is authoritative: fields with an empty value produce no row.
 /// </summary>
 internal static class FieldValueValidator
 {
@@ -17,11 +18,18 @@ internal static class FieldValueValidator
     private const int UrlMaxLength = 2048;
     private const string DateFormat = "yyyy-MM-dd";
 
+    /// <param name="effectiveFields">The fields resolved for the idea's type, each with its effective required flag.</param>
+    /// <param name="submitted">Raw values submitted with the idea payload.</param>
+    /// <param name="knownFieldNames">
+    /// Optional id→name lookup for all active org fields, used to name a value submitted for a field that
+    /// exists but is not in this type's resolved set. When a submitted id is unknown here, the id is shown.
+    /// </param>
     public static IReadOnlyList<IdeaFieldValueInput> Validate(
-        IReadOnlyList<FieldDefinition> activeDefinitions,
-        IReadOnlyList<IdeaFieldValueWrite>? submitted)
+        IReadOnlyList<EffectiveField> effectiveFields,
+        IReadOnlyList<IdeaFieldValueWrite>? submitted,
+        IReadOnlyDictionary<Guid, string>? knownFieldNames = null)
     {
-        var definitionsById = activeDefinitions.ToDictionary(d => d.Id);
+        var resolvedById = effectiveFields.ToDictionary(f => f.Field.Id);
         var errors = new Dictionary<string, string[]>();
 
         // Last submission wins if a field id is repeated.
@@ -36,24 +44,28 @@ internal static class FieldValueValidator
             submittedById[value.FieldDefinitionId] = value.Value;
         }
 
-        // A submitted value that targets an unknown or archived definition is rejected.
+        // A submitted value for a field outside this type's resolved set is rejected (value scoping).
         foreach (var id in submittedById.Keys)
         {
-            if (!definitionsById.ContainsKey(id))
+            if (!resolvedById.ContainsKey(id))
             {
-                AddError(errors, "fieldValues", $"'{id}' is not an active custom field for this organization.");
+                var name = knownFieldNames is not null && knownFieldNames.TryGetValue(id, out var known) ? known : null;
+                AddError(errors, "fieldValues", name is not null
+                    ? $"\"{name}\" is not a field for this idea type."
+                    : $"'{id}' is not an active custom field for this organization.");
             }
         }
 
         var result = new List<IdeaFieldValueInput>();
-        foreach (var definition in activeDefinitions)
+        foreach (var effective in effectiveFields)
         {
+            var definition = effective.Field;
             submittedById.TryGetValue(definition.Id, out var raw);
             var trimmed = raw?.Trim();
 
             if (string.IsNullOrWhiteSpace(trimmed))
             {
-                if (definition.IsRequired)
+                if (effective.Required)
                 {
                     AddError(errors, definition.Name, $"{definition.Name} is required.");
                 }
@@ -71,7 +83,7 @@ internal static class FieldValueValidator
             // as no value: it must still satisfy a required field, and is otherwise cleared (no row).
             if (string.IsNullOrEmpty(normalized))
             {
-                if (definition.IsRequired)
+                if (effective.Required)
                 {
                     AddError(errors, definition.Name, $"{definition.Name} is required.");
                 }

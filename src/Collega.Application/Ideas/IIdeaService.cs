@@ -19,6 +19,11 @@ public interface IIdeaService
 
     Task<IdeaDetail> UpdateAsync(Guid ideaId, UpdateIdeaCommand command, CancellationToken cancellationToken = default);
 
+    /// <summary>Admin-only reassignment of an idea's (otherwise immutable) type
+    /// (SPEC/20-feature-idea-type-fields.md). Re-resolves fields; out-of-scope values are preserved
+    /// (hidden), not dropped; emits an <c>IdeaTypeReassigned</c> audit event.</summary>
+    Task ReassignIdeaTypeAsync(Guid organizationId, Guid ideaId, Guid ideaTypeId, CancellationToken cancellationToken = default);
+
     Task ChangeStatusAsync(Guid ideaId, ChangeIdeaStatusCommand command, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(Guid ideaId, CancellationToken cancellationToken = default);

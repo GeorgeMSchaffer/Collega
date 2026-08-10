@@ -17,6 +17,21 @@ public interface IIdeaFieldService
 
     Task DeleteIdeaTypeAsync(Guid ideaTypeId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Replaces an Idea Type's User-Defined Field selection (SPEC/20-feature-idea-type-fields.md). A
+    /// non-empty selection switches the type to <c>Curated</c>; an empty selection clears it back to
+    /// <c>AllActiveFields</c>. Every field must be active and in the same organization (else <c>400</c>);
+    /// no field may repeat. <c>404</c> when the type does not exist in the organization.
+    /// </summary>
+    Task SetIdeaTypeFieldsAsync(Guid organizationId, Guid ideaTypeId, IReadOnlyList<IdeaTypeFieldSelectionInput> fields, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sets or clears an Idea Type's badge appearance (SPEC/20-feature-idea-type-fields.md).
+    /// <paramref name="colorHex"/> must be <c>#RRGGBB</c> when present (else <c>400</c>). <c>404</c> when
+    /// the type does not exist in the organization.
+    /// </summary>
+    Task SetIdeaTypeAppearanceAsync(Guid organizationId, Guid ideaTypeId, string? colorHex, string? icon, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<BusinessImpactItem>> ListBusinessImpactsAsync(Guid organizationId, bool includeDeleted, CancellationToken cancellationToken = default);
 
     Task<BusinessImpactItem> CreateBusinessImpactAsync(Guid organizationId, CreateBusinessImpactCommand command, CancellationToken cancellationToken = default);
