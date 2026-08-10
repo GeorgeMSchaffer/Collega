@@ -196,7 +196,7 @@
                                         {
                                             <span class="cmt-inline" role="img" aria-label="@($"{i.CommentCount} comment{(i.CommentCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.Comment())" /> @i.CommentCount</span>
                                         }
-                                        <span class="up @(i.HasUpvoted ? "mine" : null)" role="img" aria-label="@($"{i.UpvoteCount} upvote{(i.UpvoteCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" /> @i.UpvoteCount</span>
+                                        <span class="up @(i.HasUpvoted ? "mine" : null)" role="img" aria-label="@($"{i.UpvoteCount} upvote{(i.UpvoteCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.CaretUp())" /> @i.UpvoteCount</span>
                                     </div>
                                 </div>
                             }
@@ -260,7 +260,7 @@
                                     {
                                         <span class="cmt-inline" role="img" aria-label="@($"{i.CommentCount} comment{(i.CommentCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.Comment())" /> @i.CommentCount</span>
                                     }
-                                    <span class="up @(i.HasUpvoted ? "mine" : null)" role="img" aria-label="@($"{i.UpvoteCount} upvote{(i.UpvoteCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" /> @i.UpvoteCount</span>
+                                    <span class="up @(i.HasUpvoted ? "mine" : null)" role="img" aria-label="@($"{i.UpvoteCount} upvote{(i.UpvoteCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.CaretUp())" /> @i.UpvoteCount</span>
                                 </div>
                             }
                         </div>
