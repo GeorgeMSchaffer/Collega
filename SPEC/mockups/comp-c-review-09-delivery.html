@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Review 09: Issues & Delivery</title>
+<style>
+  /* ===== Tokens copied verbatim from comp-c-review-06-lockin-v5-final (locked) ===== */
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
+    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
+    --im-low-deep:#7d6270; --im-low-soft:#f2ecf0;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+    --radius-card:6px; --radius-btn:4px;
+    /* delivery-status colors (fixed set: Pending/Scoping/Development/Review/Complete) */
+    --ds-pending:#57534e; --ds-scoping:#7a3fb8; --ds-dev:#2f6fb0; --ds-review:#9a5b00; --ds-complete:#0e700e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;position:relative}
+  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
+  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail a:hover{background:#f3f2f1}
+  .rail .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .avatar.s{width:24px;height:24px;font-size:9.5px}
+  .avatar.more{background:#e4e2df;color:var(--ink-2);font-weight:700}
+  .avatarwrap{position:relative}
+  .avatarbtn{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;line-height:0}
+  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
+  .avatarmenu.show{display:block}
+  .avatarmenu .who{padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.5}
+  .avatarmenu .who strong{color:var(--ink);font-size:13px;display:block}
+  .avatarmenu .item{display:block;padding:9px 14px;font-size:13px;color:var(--ink);text-decoration:none;cursor:pointer}
+  .avatarmenu .item:hover{background:#f3f2f1}
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
+  .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .pagehead .sub{color:var(--ink-3);font-size:13.5px;max-width:680px;line-height:1.5}
+  .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .pagehead .row .grow{flex:1}
+  .viewswitch{display:flex;gap:4px;margin-top:18px;flex-wrap:wrap}
+  .viewswitch a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent;cursor:pointer}
+  .viewswitch a.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .body{padding:26px 40px;max-width:1200px}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;color:var(--accent)}
+  .btn.danger{border-color:transparent;color:var(--err)}
+  input[type=text],input[type=email],input[type=password],input[type=date],select,textarea{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
+  .field{margin-bottom:15px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line)}
+  td{padding:12px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#faf9f8}
+  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
+  .pill.ok{background:#e7f2e7;color:var(--ok)}.pill.warn{background:#f7ecdc;color:var(--warn)}
+  .pill.err{background:#fbe5e7;color:var(--err)}.pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
+  .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:760px;line-height:1.5}
+  .code{font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:2px 6px;font-size:11.5px}
+  .btn:focus-visible,.rail a:focus-visible,.kcard:focus-visible,.up:focus-visible,.cmt:focus-visible,
+  .chip:focus-visible,.avatarbtn:focus-visible,.avatarmenu .item:focus-visible,.tile:focus-visible,
+  .viewswitch a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .chipbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip:hover{background:#f3f2f1}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  /* shared chips */
+  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+  .impact.high{background:var(--im-high-soft);color:var(--im-high-deep)}
+  .impact.med{background:var(--im-med-soft);color:var(--im-med-deep)}
+  .impact.low{background:var(--im-low-soft);color:var(--im-low-deep)}
+  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap}
+  .prio-chip.high{background:#fbe5e7;color:var(--err)}
+  .prio-chip.med{background:#f7ecdc;color:var(--warn)}
+  .prio-chip.low{background:#e7f2e7;color:var(--ok)}
+  /* NEW: Effort chip — deliberately a cool slate, distinct from priority(red/amber/green) & impact(pink) */
+  .effort{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap;background:#e9edf3;color:#3d4a5c;border:1px solid #d7dee8}
+  .effort.h{background:#dfe6f2;color:#334463}
+  .tag{background:#f3f2f1;border-radius:3px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .tag.more{background:transparent;color:var(--accent-deep);font-weight:700}
+  .age{font-size:11px;color:var(--ink-3);flex-shrink:0}
+  .avatarstack{display:inline-flex;align-items:center;flex-shrink:0}
+  .avatarstack .avatar{margin-left:-6px;border:2px solid var(--surface)}
+  .avatarstack .avatar:first-child{margin-left:0}
+  .cmt{border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:600;color:var(--ink-2);flex-shrink:0}
+  .up{border:1px solid var(--line);border-radius:4px;padding:6px 13px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:56px;text-align:center;flex-shrink:0}
+  .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+  /* swimlanes — Flat treatment (locked) */
+  .klanes{display:grid;grid-auto-flow:column;grid-auto-columns:270px;gap:16px;overflow-x:auto;padding-bottom:12px;align-items:start}
+  .klane{background:#f3f2f1;border-radius:var(--radius-card);padding:12px}
+  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;font-family:"Segoe UI",sans-serif;color:var(--ink-2);padding:2px 6px 12px}
+  .klane h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--lc-deep,var(--ink-3));flex-shrink:0}
+  .klane h3 .grow{flex:1}
+  .klane .cnt{border-radius:10px;padding:0 8px;font-size:11px;background:#e4e2df}
+  .kcard{background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;cursor:grab;border-left:3px solid var(--lc-deep,transparent)}
+  .kcard:hover{outline:1px solid var(--accent)}
+  .kcard .top{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
+  .kcard .grip{cursor:grab;color:var(--ink-3);flex-shrink:0;font-size:13px;line-height:1.4;padding-top:1px}
+  .kcard .t{font-weight:600;font-size:13.5px;color:var(--ink);flex:1;min-width:0}
+  .kcard .meta2{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .kcard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
+  .kcard .meta .spacer{flex:1}
+  .emptylane{color:var(--ink-3);font-size:12px;text-align:center;padding:22px 8px;font-style:italic}
+  /* NEW: provenance breadcrumb on issue cards */
+  .fromidea{font-size:10.5px;color:var(--accent-deep);font-weight:700;text-decoration:none;background:var(--accent-soft);border-radius:3px;padding:1px 7px;white-space:nowrap}
+  .fromidea:hover{background:#e2e5f6}
+  /* NEW: sprint header strip */
+  .sprintbar{display:flex;align-items:center;gap:18px;padding:16px 20px;flex-wrap:wrap;margin-bottom:18px}
+  .sprintbar .goal{flex:1;min-width:200px}
+  .sprintbar .goal .g-k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:3px}
+  .sprintbar .goal .g-v{font-size:14px;color:var(--ink-2);line-height:1.45}
+  .sprintbar .meta-blk{text-align:center}
+  .sprintbar .meta-blk .m-n{font-family:Georgia,serif;font-size:20px;color:var(--accent-deep)}
+  .sprintbar .meta-blk .m-l{font-size:11px;color:var(--ink-3)}
+  .sprintbar .divider{width:1px;align-self:stretch;background:var(--line)}
+  .state-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:12px}
+  .state-pill.active{background:#e7f2e7;color:var(--ok)}
+  .state-pill.planned{background:var(--accent-soft);color:var(--accent-deep)}
+  .state-pill.completed{background:#f3f2f1;color:var(--ink-2)}
+  .state-pill .d{width:7px;height:7px;border-radius:50%;background:currentColor}
+  /* NEW: modal overlay (promote gate) */
+  .overlay{position:absolute;inset:0;background:rgba(20,18,16,.45);display:flex;align-items:flex-start;justify-content:center;padding:52px 20px;z-index:40}
+  .overlay.hidden{display:none}
+  .modal{width:560px;max-width:100%;background:var(--surface);border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden}
+  .modal .mhd{padding:20px 24px 15px;border-bottom:1px solid var(--line)}
+  .modal .mhd .kick{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px}
+  .modal .mhd h2{font-size:20px}
+  .modal .mbd{padding:20px 24px}
+  .modal .mft{padding:15px 24px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;background:#faf9f8}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .seg button{border:none;background:var(--surface);padding:8px 18px;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--accent);color:#fff}
+  .reqmark{color:var(--err);font-weight:700}
+  /* NEW: lineage / provenance panel — the differentiator */
+  .lineage{background:var(--accent-soft);border:1px solid #dcdef4;border-radius:8px;padding:16px 18px}
+  .lineage h3{font-family:Georgia,serif;font-size:15px;margin-bottom:4px;color:var(--accent-deep)}
+  .lineage .cap{font-size:11.5px;color:var(--ink-3);margin-bottom:13px}
+  .linrow{display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);padding:6px 0;align-items:baseline;border-top:1px solid #e1e3f3}
+  .linrow:first-of-type{border-top:none}
+  .linrow .ic{color:var(--accent);flex-shrink:0;width:16px;text-align:center}
+  .linrow .lk{color:var(--ink-3);flex-shrink:0;width:120px;font-weight:600}
+  .linrow .lv{color:var(--ink);font-weight:600}
+  .linrow a{color:var(--accent-deep);font-weight:700;text-decoration:none}
+  /* idea/issue detail reuse */
+  .ideahd{border-bottom:1px solid var(--line);background:var(--surface);padding:26px 40px}
+  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px}
+  .ideahd h1{font-size:30px;max-width:760px}
+  .ideahd .byline{font-size:13px;color:var(--ink-3);margin:8px 0 4px}
+  .actionbar{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .ideabody{display:grid;grid-template-columns:minmax(0,720px) 320px;gap:40px;padding:30px 40px}
+  .facts{border-left:1px solid var(--line);padding-left:28px}
+  .fact{margin-bottom:18px}
+  .fact .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:5px}
+  .fact .v{font-size:14px;font-weight:600}
+  .fact select,.fact input{width:100%}
+  .taglist{display:flex;gap:6px;flex-wrap:wrap;font-weight:400;align-items:center}
+  .prose{font-size:15px;line-height:1.7;color:var(--ink-2)}
+  /* home tiles for sprints overview */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:26px}
+  .tile{border-radius:var(--radius-card);overflow:hidden;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line)}
+  .tile .band{height:5px}
+  .tile .bd{padding:15px 17px}
+  .tile h3{font-family:Georgia,serif;font-size:16px;margin-bottom:5px}
+  .tile p{font-size:12.5px;color:var(--ink-3);line-height:1.5}
+  .tile .prog{height:6px;border-radius:4px;background:#eceae8;margin:11px 0 8px;overflow:hidden}
+  .tile .prog i{display:block;height:100%;background:var(--ds-complete)}
+  .statgrid{display:flex;gap:28px;margin:4px 0 26px}
+  .stat .n{font-family:Georgia,serif;font-size:26px;color:var(--accent-deep)}
+  .stat .l{font-size:12px;color:var(--ink-3)}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>REVIEW 09 · ISSUES &amp; DELIVERY</strong>
+  <nav id="tabs">
+    <button data-s="promote" class="on">1 · Promote gate</button>
+    <button data-s="sprints">2 · Sprints overview</button>
+    <button data-s="board">3 · Sprint board</button>
+    <button data-s="backlog">4 · Delivery backlog</button>
+    <button data-s="issue">5 · Issue detail + provenance</button>
+  </nav>
+</div>
+
+<!-- ============ 1 · PROMOTE GATE (modal over a dimmed idea detail) ============ -->
+<section class="screen on" id="s-promote">
+  <div class="shell" style="position:relative">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a class="on" href="#" aria-current="page">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <a href="#">🚀<span>Delivery</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="push"></span>
+      <span class="avatarwrap"><button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>Org Admin · Acme Corp</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div></span>
+    </aside>
+    <div>
+      <!-- dimmed context: the idea detail the promotion is launched from -->
+      <div class="ideahd">
+        <div class="crumbs"><a href="#">Boards</a> / <a href="#">Product Ideas</a> / IDEA-128</div>
+        <div class="kicker">Discovery · Complete · Medium priority</div>
+        <div style="display:flex;align-items:flex-start;gap:20px"><h1 style="flex:1">Dark mode support</h1><button class="up mine" style="font-size:13px;padding:6px 16px;margin-top:8px">▲ 24</button></div>
+        <p class="byline">Proposed by <strong>Tom Diaz</strong> on Jul 2 · discussion complete · 24 upvotes</p>
+        <div class="actionbar"><button class="btn primary">🚀 Promote to Issue</button><button class="btn">Move in Board ▾</button><button class="btn">Edit</button></div>
+      </div>
+      <div class="body"><p style="color:var(--ink-3);font-size:13px">The idea has run its course in Discovery. An admin (or the author) commits it to delivery via the explicit <strong>Promote</strong> gate — this is the same decision moment as the deferred approval workflow.</p></div>
+
+      <!-- MODAL -->
+      <div class="overlay" id="promoteOverlay">
+        <div class="modal">
+          <div class="mhd">
+            <div class="kick">🚀 Promote to Issue</div>
+            <h2>Dark mode support</h2>
+          </div>
+          <div class="mbd">
+            <div class="note" style="margin-top:0;margin-bottom:18px">This idea becomes an <strong>Issue</strong> — the same record, moved from Discovery into Delivery. Nothing is copied; all history, upvotes, and discussion travel with it.</div>
+
+            <div class="field">
+              <label>Effort <span class="reqmark">*</span> <span style="font-weight:400;color:var(--ink-3)">— T-shirt size, not story points</span></label>
+              <div class="seg" role="group" aria-label="Effort">
+                <button type="button">Low</button>
+                <button type="button" class="on">Medium</button>
+                <button type="button">High</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Add to sprint <span style="font-weight:400;color:var(--ink-3)">(optional — leave as Backlog to schedule later)</span></label>
+              <select style="width:100%">
+                <option>Backlog (no sprint yet)</option>
+                <option selected>Sprint 14 · Aug 5 – Aug 19 (Active)</option>
+                <option>Sprint 15 · Aug 19 – Sep 2 (Planned)</option>
+              </select>
+            </div>
+
+            <div class="field" style="margin-bottom:6px">
+              <label>Promotion note <span style="font-weight:400;color:var(--ink-3)">(optional — captured in the audit trail)</span></label>
+              <textarea style="width:100%;min-height:60px" placeholder="e.g. Approved at Aug product review; scope to board view first."></textarea>
+            </div>
+
+            <div style="font-size:12px;color:var(--ink-3);line-height:1.6;border-top:1px solid var(--line);padding-top:12px">
+              Carried forward automatically: <strong>Priority</strong> Medium · <strong>Business Impact</strong> High · <strong>Idea Type</strong> Continuous Improvement · <strong>2 assignees</strong> · <strong>24 upvotes</strong> (snapshotted) · full comment thread.
+              Delivery status starts at <span class="pill" style="background:#eceae8;color:var(--ds-pending)">Pending</span>.
+            </div>
+          </div>
+          <div class="mft">
+            <button class="btn" id="promoteCancel">Cancel</button>
+            <span style="flex:1"></span>
+            <button class="btn primary">Promote to Issue →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="body" style="max-width:900px"><div class="note"><strong>Gate design.</strong> Effort is the only required new input (feeds the future Impact×Effort view). Idea Type stays immutable and is not re-asked. Promotion is reversible via an admin "Return to Discovery" action on the Issue. Only author + in-scope admins see the Promote button; Read Only never does.</div></div>
+</section>
+
+<!-- ============ 2 · SPRINTS OVERVIEW (Delivery home) ============ -->
+<section class="screen" id="s-sprints">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <a class="on" href="#" aria-current="page">🚀<span>Delivery</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="push"></span>
+      <span class="avatarwrap"><button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>Org Admin · Acme Corp</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div></span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Delivery</a> / Sprints</div>
+        <div class="row"><div class="grow"><h1>Delivery</h1><p class="sub">Where promoted ideas get built. Sprints are lightweight, time-boxed containers — no story points, no burndown, just the loop closed with provenance intact.</p></div><button class="btn" style="margin-bottom:14px">View backlog · 6</button><button class="btn primary" style="margin-bottom:14px">+ New sprint</button></div>
+        <div class="viewswitch"><a class="on">Sprints</a><a>Backlog</a></div>
+      </div>
+      <div class="body">
+        <div class="statgrid">
+          <div class="stat"><div class="n">1</div><div class="l">Active sprint</div></div>
+          <div class="stat"><div class="n">8</div><div class="l">Issues in flight</div></div>
+          <div class="stat"><div class="n">6</div><div class="l">In backlog</div></div>
+          <div class="stat"><div class="n">23</div><div class="l">Shipped this quarter</div></div>
+        </div>
+        <h2 style="font-size:16px;margin-bottom:12px">Sprints</h2>
+        <div class="tiles">
+          <div class="tile" tabindex="0"><div class="band" style="background:var(--ds-dev)"></div><div class="bd">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px"><h3 style="flex:1">Sprint 14</h3><span class="state-pill active"><span class="d"></span>Active</span></div>
+            <p>Aug 5 – Aug 19 · owner Jordan Reyes</p>
+            <div class="prog"><i style="width:38%"></i></div>
+            <p><strong>3 of 8</strong> issues complete · goal: <em>Ship dark mode + notification digest</em></p>
+          </div></div>
+          <div class="tile" tabindex="0"><div class="band" style="background:var(--accent)"></div><div class="bd">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px"><h3 style="flex:1">Sprint 15</h3><span class="state-pill planned"><span class="d"></span>Planned</span></div>
+            <p>Aug 19 – Sep 2 · owner Ana Liu</p>
+            <div class="prog"><i style="width:0%"></i></div>
+            <p><strong>2</strong> issues queued · goal: <em>SSO hardening</em></p>
+          </div></div>
+          <div class="tile" tabindex="0" style="opacity:.82"><div class="band" style="background:var(--ds-complete)"></div><div class="bd">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px"><h3 style="flex:1">Sprint 13</h3><span class="state-pill completed"><span class="d"></span>Completed</span></div>
+            <p>Jul 22 – Aug 5 · owner Jordan Reyes</p>
+            <div class="prog"><i style="width:100%"></i></div>
+            <p><strong>9 of 9</strong> complete · 1 carried over to backlog</p>
+          </div></div>
+        </div>
+        <div class="note"><strong>Sprint lifecycle is explicit:</strong> Planned → Active → Completed, with Start/Complete as deliberate actions (not date-derived). Completing a sprint returns any unfinished issue to the backlog — carry-over is visible, never silently lost. A P1 refinement adds "roll to next sprint" as an alternative.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 · SPRINT BOARD (fixed delivery statuses) ============ -->
+<section class="screen" id="s-board">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <a class="on" href="#" aria-current="page">🚀<span>Delivery</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="push"></span>
+      <span class="avatarwrap"><button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>Org Admin · Acme Corp</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div></span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Delivery</a> / Sprint 14</div>
+        <div class="row"><div class="grow"><h1>Sprint 14</h1><p class="sub">Fixed delivery lifecycle — Pending → Scoping → Development → Review → Complete. Drag by the grip; other controls never start a drag. Same flat-lane language as the idea board.</p></div>
+          <button class="btn" style="margin-bottom:14px">Edit sprint</button>
+          <button class="btn primary" style="margin-bottom:14px">Complete sprint</button></div>
+      </div>
+      <div class="body" style="max-width:none">
+        <div class="card sprintbar">
+          <span class="state-pill active"><span class="d"></span>Active</span>
+          <div class="divider"></div>
+          <div class="meta-blk"><div class="m-n">Aug 5 – 19</div><div class="m-l">6 days left</div></div>
+          <div class="divider"></div>
+          <div class="meta-blk"><div class="m-n">3 / 8</div><div class="m-l">complete</div></div>
+          <div class="divider"></div>
+          <div class="goal"><div class="g-k">Sprint goal</div><div class="g-v">Ship dark mode to the board view and land the notification digest email.</div></div>
+          <div class="meta-blk"><span class="avatar s">JR</span><div class="m-l" style="margin-top:3px">owner</div></div>
+        </div>
+
+        <div class="klanes">
+          <div class="klane" style="--lc-deep:var(--ds-pending)">
+            <h3><span class="dot"></span><span class="grow">Pending</span><span class="cnt">2</span></h3>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Dark mode support</span><span class="prio-chip med">Med</span></div>
+              <div class="meta2"><span class="effort">M effort</span><span class="impact high">High impact</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">MP</span><span class="avatar s">JR</span></span><span class="spacer"></span><a class="fromidea" href="#">▲24 · IDEA-128</a></div>
+            </div>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Board export to PDF</span><span class="prio-chip low">Low</span></div>
+              <div class="meta2"><span class="effort">L effort</span><span class="impact low">Low impact</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">JR</span></span><span class="spacer"></span><a class="fromidea" href="#">▲5 · IDEA-140</a></div>
+            </div>
+          </div>
+          <div class="klane" style="--lc-deep:var(--ds-scoping)">
+            <h3><span class="dot"></span><span class="grow">Scoping</span><span class="cnt">1</span></h3>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Notification digest email</span><span class="prio-chip med">Med</span></div>
+              <div class="meta2"><span class="effort h">H effort</span><span class="impact med">Medium impact</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">JR</span></span><span class="spacer"></span><a class="fromidea" href="#">▲12 · IDEA-131</a></div>
+            </div>
+          </div>
+          <div class="klane" style="--lc-deep:var(--ds-dev)">
+            <h3><span class="dot"></span><span class="grow">Development</span><span class="cnt">2</span></h3>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">SSO via SAML</span><span class="prio-chip high">High</span></div>
+              <div class="meta2"><span class="effort h">H effort</span><span class="impact high">High impact</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">AL</span></span><span class="spacer"></span><a class="fromidea" href="#">▲31 · IDEA-104</a></div>
+            </div>
+            <div class="kcard" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Mention autocomplete</span><span class="prio-chip low">Low</span></div>
+              <div class="meta2"><span class="effort">M effort</span><span class="impact low">Low impact</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">MP</span></span><span class="spacer"></span><a class="fromidea" href="#">▲9 · IDEA-119</a></div>
+            </div>
+          </div>
+          <div class="klane" style="--lc-deep:var(--ds-review)">
+            <h3><span class="dot"></span><span class="grow">Review</span><span class="cnt">0</span></h3>
+            <div class="emptylane">Nothing in review</div>
+          </div>
+          <div class="klane" style="--lc-deep:var(--ds-complete)">
+            <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">3</span></h3>
+            <div class="kcard" style="opacity:.8" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Org-scoped user search</span><span class="prio-chip med">Med</span></div>
+              <div class="meta2"><span class="effort">M effort</span><span class="impact med">Medium impact</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">AL</span></span><span class="spacer"></span><a class="fromidea" href="#">▲14 · IDEA-092</a></div>
+            </div>
+            <div class="kcard" style="opacity:.8" tabindex="0">
+              <div class="top"><span class="grip">⠿</span><span class="t">Audit log for admin actions</span><span class="prio-chip low">Low</span></div>
+              <div class="meta2"><span class="effort">L effort</span><span class="impact low">Low impact</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">JR</span></span><span class="spacer"></span><a class="fromidea" href="#">▲8 · IDEA-077</a></div>
+            </div>
+          </div>
+        </div>
+        <div class="note">Every card keeps a one-glance <strong>provenance breadcrumb</strong> (<span class="fromidea" style="cursor:default">▲24 · IDEA-128</span>) — upvotes-at-promotion and a link back to the originating idea. That is the differentiator made ambient: mid-sprint, "why are we building this?" is one click away. Cards carry the <span class="effort" style="cursor:default">M effort</span> chip (cool slate) so it never collides with priority (red/amber/green) or Business Impact (pink).</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · DELIVERY BACKLOG ============ -->
+<section class="screen" id="s-backlog">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <a class="on" href="#" aria-current="page">🚀<span>Delivery</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="push"></span>
+      <span class="avatarwrap"><button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>Org Admin · Acme Corp</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div></span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Delivery</a> / Backlog</div>
+        <div class="row"><div class="grow"><h1>Delivery backlog</h1><p class="sub">Promoted Issues not yet in a sprint. Pull the highest-value ones into the active sprint.</p></div><button class="btn primary" style="margin-bottom:14px">Add selected to Sprint 14</button></div>
+        <div class="viewswitch"><a>Sprints</a><a class="on">Backlog</a></div>
+      </div>
+      <div class="body">
+        <div class="cmdbar"><input type="text" placeholder="Search issues…" style="width:240px"><select><option>Sort: Upvotes ▾</option><option>Business Impact</option><option>Effort</option><option>Promoted date</option></select></div>
+        <div class="card" style="max-width:1040px">
+          <table>
+            <thead><tr><th style="width:26px"></th><th>Issue</th><th>Priority</th><th>Impact</th><th>Effort</th><th>From idea</th><th>Promoted</th><th style="width:120px"></th></tr></thead>
+            <tbody>
+              <tr><td><input type="checkbox"></td><td><strong>Keyboard shortcuts cheat sheet</strong></td><td><span class="prio-chip low">Low</span></td><td><span class="impact low">Low</span></td><td><span class="effort">L</span></td><td><a class="fromidea" href="#">▲6 · IDEA-133</a></td><td>Aug 8</td><td><button class="btn subtle">Add to sprint</button></td></tr>
+              <tr><td><input type="checkbox"></td><td><strong>Mobile responsive board</strong></td><td><span class="prio-chip high">High</span></td><td><span class="impact high">High</span></td><td><span class="effort h">H</span></td><td><a class="fromidea" href="#">▲20 · IDEA-118</a></td><td>Aug 7</td><td><button class="btn subtle">Add to sprint</button></td></tr>
+              <tr><td><input type="checkbox"></td><td><strong>Bulk import from CSV</strong></td><td><span class="prio-chip med">Med</span></td><td><span class="impact med">Medium</span></td><td><span class="effort">M</span></td><td><a class="fromidea" href="#">▲17 · IDEA-129</a></td><td>Aug 6</td><td><button class="btn subtle">Add to sprint</button></td></tr>
+              <tr><td><input type="checkbox"></td><td><strong>Slack notification integration</strong></td><td><span class="prio-chip med">Med</span></td><td><span class="impact med">Medium</span></td><td><span class="effort h">H</span></td><td><a class="fromidea" href="#">▲15 · IDEA-141</a></td><td>Aug 5</td><td><button class="btn subtle">Add to sprint</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note"><strong>P1 companion (not in this slice):</strong> a "Top-voted ideas not yet promoted" view sits one step upstream of this backlog — the crowd-prioritized intake funnel. It's a trivial query once the Discovery/Delivery phase flag exists, which is why the enabling fields land now even though the view is deferred.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 · ISSUE DETAIL + PROVENANCE ============ -->
+<section class="screen" id="s-issue">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <a class="on" href="#" aria-current="page">🚀<span>Delivery</span></a>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="push"></span>
+      <span class="avatarwrap"><button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>Org Admin · Acme Corp</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div></span>
+    </aside>
+    <div>
+      <div class="ideahd">
+        <div class="crumbs"><a href="#">Delivery</a> / <a href="#">Sprint 14</a> / ISSUE-128</div>
+        <div class="kicker">🚀 Delivery · Development · Medium priority</div>
+        <div style="display:flex;align-items:flex-start;gap:20px"><h1 style="flex:1">Dark mode support</h1><button class="up mine" style="font-size:13px;padding:6px 16px;margin-top:8px">▲ 26</button></div>
+        <p class="byline">Now an Issue in <strong>Sprint 14</strong> · same record as IDEA-128, promoted Aug 10</p>
+        <div class="actionbar">
+          <button class="btn primary">Save</button>
+          <button class="btn">Delivery status: Development ▾</button>
+          <button class="btn">Move to sprint ▾</button>
+          <span style="flex:1"></span>
+          <button class="btn subtle">↩ Return to Discovery</button>
+        </div>
+      </div>
+      <div class="ideabody">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--ink-3)">Description</label>
+          <p class="prose" style="margin:6px 0 26px">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu. Scope this to the board view first; full-app theming is a follow-up.</p>
+
+          <h2 style="font-size:19px;margin:0 0 14px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif;font-weight:600">carried from the idea · 4 comments</span></h2>
+          <div style="border-left:2px solid var(--line);padding-left:16px;margin-bottom:22px">
+            <div style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:4px"><span class="avatar s">MP</span><span style="font-size:13px;font-weight:700">Mia Park</span><span style="font-size:12px;color:var(--ink-3)">during discovery · Jul 3</span></div><p style="font-size:14px;color:var(--ink-2);line-height:1.6">Can we scope this to the board view first? Full app theming is a bigger lift.</p></div>
+            <div><div style="display:flex;align-items:center;gap:9px;margin-bottom:4px"><span class="avatar s">JR</span><span style="font-size:13px;font-weight:700">Jordan Reyes</span><span style="font-size:12px;color:var(--ink-3)">at promotion · Aug 10</span></div><p style="font-size:14px;color:var(--ink-2);line-height:1.6">Agreed — promoting with board-view scope. Assigning to Sprint 14.</p></div>
+          </div>
+          <div style="display:flex;gap:12px"><span class="avatar s">JR</span><div style="flex:1"><textarea style="width:100%;min-height:64px" placeholder="Add a delivery update…"></textarea><button class="btn primary" style="margin-top:6px">Post comment</button></div></div>
+        </div>
+
+        <div class="facts">
+          <!-- THE DIFFERENTIATOR: provenance panel -->
+          <div class="lineage" style="margin-bottom:22px">
+            <h3>Lineage</h3>
+            <div class="cap">This issue is the same record as the idea it came from — nothing was retyped.</div>
+            <div class="linrow"><span class="ic">💡</span><span class="lk">Originated as</span><span class="lv"><a href="#">IDEA-128</a></span></div>
+            <div class="linrow"><span class="ic">👤</span><span class="lk">Proposed by</span><span class="lv">Tom Diaz · Jul 2</span></div>
+            <div class="linrow"><span class="ic">▲</span><span class="lk">Support</span><span class="lv">24 at promotion · 26 now</span></div>
+            <div class="linrow"><span class="ic">🚀</span><span class="lk">Promoted by</span><span class="lv">Jordan Reyes · Aug 10</span></div>
+            <div class="linrow"><span class="ic">💬</span><span class="lk">Debate</span><span class="lv"><a href="#">4 comments →</a></span></div>
+          </div>
+
+          <div class="fact"><div class="k">Delivery status</div><div class="v"><select><option>Pending</option><option>Scoping</option><option selected>Development</option><option>Review</option><option>Complete</option></select></div></div>
+          <div class="fact"><div class="k">Sprint</div><div class="v"><select><option selected>Sprint 14</option><option>Sprint 15</option><option>Backlog (remove from sprint)</option></select></div></div>
+          <div class="fact"><div class="k">Effort</div><div class="v"><div class="seg" style="width:100%"><button type="button" style="flex:1">Low</button><button type="button" class="on" style="flex:1">Med</button><button type="button" style="flex:1">High</button></div></div></div>
+          <div class="fact"><div class="k">Priority</div><div class="v"><select><option>High</option><option selected>Medium</option><option>Low</option></select></div></div>
+          <div class="fact"><div class="k">Idea Type <span style="text-transform:none;font-weight:400">(locked at creation)</span></div><div class="v" style="color:var(--ink-3)">Continuous Improvement</div></div>
+          <div class="fact"><div class="k">Business Impact</div><div class="v"><span class="impact high">High</span></div></div>
+          <div class="fact"><div class="k">Assignees <span style="text-transform:none;font-weight:400">2 / 5</span></div><div class="v taglist"><span class="pill neutral">Mia Park</span><span class="pill neutral">Jordan Reyes</span><button class="btn subtle" style="padding:1px 8px">+ add</button></div></div>
+          <div class="fact"><div class="k">Tags</div><div class="v taglist"><span class="pill neutral">ui</span><span class="pill neutral">theme</span></div></div>
+        </div>
+      </div>
+      <div class="body" style="max-width:1080px;padding-top:0"><div class="note"><strong>Two lenses, one record.</strong> In Discovery this page showed the org-configured board statuses; in Delivery it shows the fixed delivery lifecycle, the sprint, and effort — but the title, description, upvotes, assignees, tags, and comment thread are literally the same row. The <strong>Lineage</strong> panel is the payoff Jira and Trello can't offer, because they threw the idea away at the handoff. "Return to Discovery" makes a mis-promotion recoverable (admin-only).</div></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+  document.querySelectorAll('.avatarbtn').forEach(btn=>{
+    btn.addEventListener('click', e=>{ e.stopPropagation();
+      const menu=btn.nextElementSibling;
+      document.querySelectorAll('.avatarmenu.show').forEach(m=>{if(m!==menu)m.classList.remove('show');});
+      menu.classList.toggle('show'); });
+  });
+  document.addEventListener('click', ()=>document.querySelectorAll('.avatarmenu.show').forEach(m=>m.classList.remove('show')));
+  // Effort segmented controls
+  document.querySelectorAll('.seg').forEach(seg=>seg.addEventListener('click',e=>{
+    if(e.target.tagName!=='BUTTON')return;
+    seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+    e.target.classList.add('on');
+  }));
+  // Promote modal cancel (re-open by re-selecting the tab)
+  const ov=document.getElementById('promoteOverlay');
+  document.getElementById('promoteCancel').addEventListener('click',()=>ov.classList.add('hidden'));
+</script>
+</body>
+</html>
