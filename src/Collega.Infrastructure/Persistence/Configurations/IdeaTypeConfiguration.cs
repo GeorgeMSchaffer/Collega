@@ -19,6 +19,16 @@ public sealed class IdeaTypeConfiguration : IEntityTypeConfiguration<IdeaType>
         builder.Property(t => t.SortOrder).HasColumnName("sort_order").IsRequired();
         builder.Property(t => t.IsDeleted).HasColumnName("is_deleted").IsRequired();
 
+        builder.Property(t => t.ColorHex).HasColumnName("color_hex").HasMaxLength(IdeaType.ColorHexLength);
+        builder.Property(t => t.Icon).HasColumnName("icon").HasMaxLength(IdeaType.IconMaxLength);
+
+        // Persisted as int (0 = AllActiveFields default, 1 = Curated).
+        builder.Property(t => t.FieldMode)
+            .HasColumnName("field_mode")
+            .HasConversion<int>()
+            .HasDefaultValue(IdeaTypeFieldMode.AllActiveFields)
+            .IsRequired();
+
         builder.Property(t => t.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
         builder.Property(t => t.UpdatedAtUtc).HasColumnName("updated_at_utc").IsRequired();
         builder.Property(t => t.CreatedByUserId).HasColumnName("created_by_user_id");
@@ -31,5 +41,13 @@ public sealed class IdeaTypeConfiguration : IEntityTypeConfiguration<IdeaType>
             .WithMany()
             .HasForeignKey(t => t.OrganizationId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(t => t.Fields)
+            .WithOne()
+            .HasForeignKey(f => f.IdeaTypeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Metadata.FindNavigation(nameof(IdeaType.Fields))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
     }
 }

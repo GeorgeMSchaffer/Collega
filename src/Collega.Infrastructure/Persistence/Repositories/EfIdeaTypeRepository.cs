@@ -19,13 +19,15 @@ public sealed class EfIdeaTypeRepository : IIdeaTypeRepository
     public async Task AddRangeAsync(IEnumerable<IdeaType> options, CancellationToken cancellationToken = default) =>
         await _dbContext.IdeaTypes.AddRangeAsync(options, cancellationToken);
 
-    // Tracked so callers can mutate and persist through the unit of work.
+    // Tracked (with field links) so callers can mutate the selection and persist through the unit of work.
     public Task<IdeaType?> GetByIdAsync(Guid ideaTypeId, CancellationToken cancellationToken = default) =>
-        _dbContext.IdeaTypes.FirstOrDefaultAsync(t => t.Id == ideaTypeId, cancellationToken);
+        _dbContext.IdeaTypes
+            .Include(t => t.Fields)
+            .FirstOrDefaultAsync(t => t.Id == ideaTypeId, cancellationToken);
 
     public async Task<IReadOnlyList<IdeaType>> ListByOrganizationAsync(Guid organizationId, bool includeDeleted, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.IdeaTypes.Where(t => t.OrganizationId == organizationId);
+        var query = _dbContext.IdeaTypes.Include(t => t.Fields).Where(t => t.OrganizationId == organizationId);
         if (!includeDeleted)
         {
             query = query.Where(t => !t.IsDeleted);
