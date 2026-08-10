@@ -1,0 +1,369 @@
+@page "/settings/idea-types"
+@page "/settings/organizations/{OrganizationId}/idea-types"
+@attribute [Authorize(Roles = "OrgAdmin,SiteAdmin")]
+@inject ApiClient Api
+
+<PageTitle>Idea types · Collega</PageTitle>
+
+@*
+    Organization Idea Type configuration. Org Admin manages the classification every idea is filed under:
+    name and catalog order. The API enforces the one-active-type floor and immutability of an idea's type
+    after creation; this page mirrors the floor client-side (Delete is disabled at one active type) and
+    surfaces any server rejection inline. Drag the handle to reorder — the order drives the type selector
+    on the new-idea form.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings">Settings</a> / Idea types</div>
+    <h1>@(_siteAdminGlobal ? "All idea types" : "Idea types")</h1>
+    <p class="sub" style="margin-bottom:18px">@(_siteAdminGlobal ? "Idea classifications across every organization." : "The classification every idea is filed under. The first type is the default on new ideas.")</p>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else
+    {
+        <div class="cmdbar">
+            @if (!_siteAdminGlobal)
+            {
+                <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New idea type</button>
+            }
+        </div>
+
+        @if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+
+        @if (_editing)
+        {
+            <div class="card formcard" style="margin-bottom:16px">
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:14px">@(_editId is null ? "New idea type" : "Edit idea type")</h3>
+                <div class="field">
+                    <label for="name">Name</label>
+                    <FluentTextField id="name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
+                </div>
+                <div class="btnrow">
+                    <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
+                    <button class="btn" @onclick="Cancel" disabled="@_busy">Cancel</button>
+                </div>
+            </div>
+        }
+
+        @if (CanReorder)
+        {
+            <p class="reorder-hint"><span class="grip">⠿</span> Drag the handle to reorder idea types. The new-idea form lists them in this order.</p>
+        }
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Idea type</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Sort order</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < _types.Count; i++)
+                    {
+                        var index = i;
+                        var t = _types[index];
+                        <tr class="@RowClass(index)"
+                            draggable="@(CanReorder ? "true" : null)"
+                            @ondragstart="() => OnDragStart(index)"
+                            @ondragover:preventDefault="true"
+                            @ondragenter="() => OnDragEnter(index)"
+                            @ondrop="() => OnDropAsync(index)"
+                            @ondragend="OnDragEnd">
+                            @if (!_siteAdminGlobal)
+                            {
+                                <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another idea type to enable reordering")" aria-hidden="true">⠿</td>
+                            }
+                            <td><strong>@t.Name</strong></td>
+                            @if (_siteAdminGlobal)
+                            {
+                                <td>@OrganizationName(t.OrganizationId)</td>
+                            }
+                            <td>@t.SortOrder</td>
+                            <td class="rowactions">
+                                @if (_siteAdminGlobal)
+                                {
+                                    <a class="btn subtle" href="@($"/settings/organizations/{t.OrganizationId}/idea-types")">Manage</a>
+                                }
+                                else
+                                {
+                                    <button class="btn subtle" @onclick="() => StartEdit(t)" disabled="@_editing">Edit</button>
+                                    <button class="btn danger" @onclick="() => Delete(t)"
+                                            disabled="@(_editing || _types.Count <= 1)"
+                                            title="@(_types.Count <= 1 ? "An organization must keep at least one active idea type." : null)">Delete</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (_types.Count == 0)
+        {
+            <div class="placeholder"><p>No idea types yet.</p></div>
+        }
+    }
+</div>
+
+@code {
+    // Present on the Site-Admin org-scoped route; absent on the Org Admin route (org from the claim).
+    [Parameter] public string? OrganizationId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private sealed class FormModel
+    {
+        public string Name { get; set; } = "";
+    }
+
+    private string? _organizationId;
+    private bool _siteAdminGlobal;
+    private readonly Dictionary<string, string> _organizationNames = new();
+    private List<IdeaTypeOptionDto> _types = new();
+    private bool _loading = true;
+    private bool _busy;
+    private bool _editing;
+    private string? _editId;
+    private FormModel _form = new();
+    private string? _error;
+
+    // Drag-reorder state (per-org view only). _dragIndex is the row being dragged; _dragOverIndex is the
+    // row currently under the cursor, used to show the insertion indicator.
+    private int? _dragIndex;
+    private int? _dragOverIndex;
+
+    // Reordering is a per-org action; it's meaningless in the Site-Admin cross-org list, while editing,
+    // or with a single row.
+    private bool CanReorder => !_siteAdminGlobal && !_editing && _types.Count > 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(OrganizationId))
+        {
+            _organizationId = OrganizationId;
+        }
+        else if (AuthStateTask is not null)
+        {
+            var user = (await AuthStateTask).User;
+            _organizationId = user.FindFirst("organizationId")?.Value;
+            _siteAdminGlobal = user.IsInRole("SiteAdmin") && string.IsNullOrEmpty(OrganizationId);
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        if (_siteAdminGlobal)
+        {
+            await LoadGlobalAsync();
+            _loading = false;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_organizationId))
+        {
+            _error = "Your account isn't associated with an organization.";
+            _loading = false;
+            return;
+        }
+
+        var result = await Api.GetIdeaTypesAsync(_organizationId!);
+        if (result.Succeeded)
+        {
+            _types = result.Value!.OrderBy(t => t.SortOrder).ToList();
+        }
+        else
+        {
+            _error = result.Error;
+        }
+
+        _loading = false;
+    }
+
+    private async Task LoadGlobalAsync()
+    {
+        var organizations = await Api.GetAllOrganizationsAsync();
+        if (!organizations.Succeeded)
+        {
+            _error = organizations.Error;
+            return;
+        }
+
+        var activeOrganizations = organizations.Value!.Where(organization => !organization.IsArchived).ToList();
+        foreach (var organization in activeOrganizations)
+        {
+            _organizationNames[organization.OrganizationId] = organization.Title;
+        }
+
+        var results = await Task.WhenAll(activeOrganizations.Select(organization => Api.GetIdeaTypesAsync(organization.OrganizationId)));
+        var failure = results.FirstOrDefault(result => !result.Succeeded);
+        if (failure is not null)
+        {
+            _error = failure.Error;
+            return;
+        }
+
+        _types = results.SelectMany(result => result.Value!).OrderBy(type => OrganizationName(type.OrganizationId)).ThenBy(type => type.SortOrder).ToList();
+    }
+
+    private string OrganizationName(string organizationId) =>
+        _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
+
+    private void StartCreate()
+    {
+        _editId = null;
+        _form = new FormModel();
+        _error = null;
+        _editing = true;
+    }
+
+    private void StartEdit(IdeaTypeOptionDto t)
+    {
+        _editId = t.IdeaTypeId;
+        _form = new FormModel { Name = t.Name };
+        _error = null;
+        _editing = true;
+    }
+
+    private void Cancel()
+    {
+        _editing = false;
+        _error = null;
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name))
+        {
+            _error = "An idea type name is required.";
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+
+        // SortOrder omitted: the server appends new types to the end; existing order is preserved on edit.
+        var body = new SaveIdeaTypeRequestDto(_form.Name.Trim(), null);
+        bool succeeded;
+        string? error;
+        if (_editId is null)
+        {
+            var r = await Api.CreateIdeaTypeAsync(_organizationId!, body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+        else
+        {
+            var r = await Api.UpdateIdeaTypeAsync(_editId!, body);
+            (succeeded, error) = (r.Succeeded, r.Error);
+        }
+
+        _busy = false;
+        if (succeeded)
+        {
+            _editing = false;
+            await LoadAsync();
+            return;
+        }
+
+        _error = error ?? "Save failed.";
+    }
+
+    private string RowClass(int index)
+    {
+        if (!CanReorder)
+        {
+            return string.Empty;
+        }
+
+        var classes = "reorderable";
+        if (_dragIndex == index)
+        {
+            classes += " dragging";
+        }
+        else if (_dragOverIndex == index)
+        {
+            classes += " drag-over";
+        }
+
+        return classes;
+    }
+
+    private void OnDragStart(int index)
+    {
+        if (!CanReorder)
+        {
+            return;
+        }
+
+        _dragIndex = index;
+        _dragOverIndex = index;
+    }
+
+    private void OnDragEnter(int index)
+    {
+        if (_dragIndex is not null)
+        {
+            _dragOverIndex = index;
+        }
+    }
+
+    private void OnDragEnd()
+    {
+        _dragIndex = null;
+        _dragOverIndex = null;
+    }
+
+    private async Task OnDropAsync(int index)
+    {
+        var from = _dragIndex;
+        _dragIndex = null;
+        _dragOverIndex = null;
+
+        if (from is null || from == index || !CanReorder)
+        {
+            return;
+        }
+
+        // Optimistic local reorder: drop lands the row at the target slot (below the target when moving
+        // down, above it when moving up). Persist the new id order; on failure, revert by reloading.
+        var moved = _types[from.Value];
+        _types.RemoveAt(from.Value);
+        var insertAt = Math.Clamp(index, 0, _types.Count);
+        _types.Insert(insertAt, moved);
+
+        _error = null;
+        var body = new ReorderIdeaTypesRequestDto(_types.Select(t => t.IdeaTypeId).ToList());
+        var result = await Api.ReorderIdeaTypesAsync(_organizationId!, body);
+        if (result.Succeeded)
+        {
+            await LoadAsync();
+        }
+        else
+        {
+            _error = result.Error ?? "Reorder failed.";
+            await LoadAsync();
+        }
+    }
+
+    private async Task Delete(IdeaTypeOptionDto t)
+    {
+        _error = null;
+        var result = await Api.DeleteIdeaTypeAsync(t.IdeaTypeId);
+        if (result.Succeeded)
+        {
+            await LoadAsync();
+        }
+        else
+        {
+            _error = result.Error;
+        }
+    }
+}
