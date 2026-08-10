@@ -119,11 +119,15 @@ public sealed class Idea : AuditableEntityBase
     /// Updates the core editable fields (rule #6 keeps this available in the Complete status).
     /// Assignees, tags, and mentions are replaced through their own methods.
     /// </summary>
+    /// <remarks>
+    /// Idea Type is immutable on the edit path (SPEC/20-feature-idea-type-fields.md): it is set once at
+    /// creation and only the admin reassign hatch (<see cref="ReassignIdeaType"/>) may change it later.
+    /// Business Impact stays mutable here.
+    /// </remarks>
     public void UpdateContent(
         string title,
         string description,
         Priority priority,
-        Guid ideaTypeId,
         Guid businessImpactId,
         DateOnly? dueDate,
         DateTime nowUtc,
@@ -132,8 +136,24 @@ public sealed class Idea : AuditableEntityBase
         SetTitle(title);
         SetDescription(description);
         Priority = priority;
-        SetClassification(ideaTypeId, businessImpactId);
+        SetBusinessImpact(businessImpactId);
         DueDate = dueDate;
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
+    /// <summary>
+    /// Admin-only reassignment of the idea's type — the only path that mutates <see cref="IdeaTypeId"/>
+    /// after creation (SPEC/20-feature-idea-type-fields.md). Field-value reconciliation against the new
+    /// type's resolved set is the caller's responsibility.
+    /// </summary>
+    public void ReassignIdeaType(Guid ideaTypeId, DateTime nowUtc, Guid? actorUserId)
+    {
+        if (ideaTypeId == Guid.Empty)
+        {
+            throw new ArgumentException("Idea Type is required.", nameof(ideaTypeId));
+        }
+
+        IdeaTypeId = ideaTypeId;
         MarkUpdated(nowUtc, actorUserId);
     }
 
@@ -272,6 +292,16 @@ public sealed class Idea : AuditableEntityBase
         }
 
         IdeaTypeId = ideaTypeId;
+        BusinessImpactId = businessImpactId;
+    }
+
+    private void SetBusinessImpact(Guid businessImpactId)
+    {
+        if (businessImpactId == Guid.Empty)
+        {
+            throw new ArgumentException("Business Impact is required.", nameof(businessImpactId));
+        }
+
         BusinessImpactId = businessImpactId;
     }
 

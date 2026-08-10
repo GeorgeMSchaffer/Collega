@@ -159,7 +159,7 @@ public sealed class IdeaService : IIdeaService
             throw new ValidationAppException("statusId", new[] { "Status must be an active swimlane on the board." });
         }
 
-        await EnsureActiveIdeaTypeAsync(board.OrganizationId, command.IdeaTypeId, cancellationToken);
+        var ideaType = await GetActiveIdeaTypeAsync(board.OrganizationId, command.IdeaTypeId, cancellationToken);
         await EnsureActiveBusinessImpactAsync(board.OrganizationId, command.BusinessImpactId, cancellationToken);
 
         var assigneeIds = await ResolveAssigneesAsync(board.OrganizationId, command.AssigneeUserIds, Array.Empty<Guid>(), cancellationToken);
@@ -167,7 +167,8 @@ public sealed class IdeaService : IIdeaService
         var mentionIds = await _mentionResolver.ResolveAsync(board.OrganizationId, command.MentionEmails, "mentionEmails", cancellationToken);
 
         var fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(board.OrganizationId, includeDeleted: false, cancellationToken);
-        var fieldValues = FieldValueValidator.Validate(fieldDefinitions, command.FieldValues);
+        var effectiveFields = IdeaTypeFieldResolver.ResolveEffectiveFields(ideaType, fieldDefinitions);
+        var fieldValues = FieldValueValidator.Validate(effectiveFields, command.FieldValues, FieldNamesById(fieldDefinitions));
 
         var idea = Idea.Create(
             board.OrganizationId,
@@ -185,7 +186,7 @@ public sealed class IdeaService : IIdeaService
             mentionIds,
             now);
 
-        idea.ReplaceFieldValues(fieldValues, fieldDefinitions.Select(d => d.Id).ToList(), now, authorId);
+        idea.ReplaceFieldValues(fieldValues, effectiveFields.Select(f => f.Field.Id).ToList(), now, authorId);
 
         await _ideaRepository.AddAsync(idea, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -239,11 +240,12 @@ public sealed class IdeaService : IIdeaService
             throw new ForbiddenAppException("You are not allowed to change this idea's description or assignees.");
         }
 
-        // A changed classification must reference an active option; an unchanged reference is left
-        // alone so an idea already pointing at a since-archived option can still be edited.
+        // Idea Type is immutable on the edit path (SPEC/20-feature-idea-type-fields.md): a normal update
+        // may not change it. A request that supplies a differing type is rejected; changes go only through
+        // the admin reassign route. Business Impact stays mutable.
         if (command.IdeaTypeId != idea.IdeaTypeId)
         {
-            await EnsureActiveIdeaTypeAsync(idea.OrganizationId, command.IdeaTypeId, cancellationToken);
+            throw new ValidationAppException("ideaTypeId", new[] { "Idea Type cannot be changed after creation." });
         }
 
         if (command.BusinessImpactId != idea.BusinessImpactId)
@@ -260,22 +262,29 @@ public sealed class IdeaService : IIdeaService
         // neither wipes stored values nor is blocked by required-field validation.
         var reconcileFieldValues = command.FieldValues is not null;
         IReadOnlyList<FieldDefinition> fieldDefinitions = Array.Empty<FieldDefinition>();
+        IReadOnlyList<Guid> reconcileScope = Array.Empty<Guid>();
         IReadOnlyDictionary<Guid, string?> previousFieldValues = new Dictionary<Guid, string?>();
         IReadOnlyList<IdeaFieldValueInput> fieldValues = Array.Empty<IdeaFieldValueInput>();
         if (reconcileFieldValues)
         {
             fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(idea.OrganizationId, includeDeleted: false, cancellationToken);
+            // Resolve against the idea's (immutable) type; the type resolves even if since-archived.
+            var ideaType = await _ideaTypeRepository.GetByIdAsync(idea.IdeaTypeId, cancellationToken);
+            var effectiveFields = ideaType is not null
+                ? IdeaTypeFieldResolver.ResolveEffectiveFields(ideaType, fieldDefinitions)
+                : Array.Empty<EffectiveField>();
+            reconcileScope = effectiveFields.Select(f => f.Field.Id).ToList();
             previousFieldValues = idea.FieldValues.ToDictionary(v => v.FieldDefinitionId, v => v.Value);
-            fieldValues = FieldValueValidator.Validate(fieldDefinitions, command.FieldValues);
+            fieldValues = FieldValueValidator.Validate(effectiveFields, command.FieldValues, FieldNamesById(fieldDefinitions));
         }
 
-        idea.UpdateContent(command.Title ?? string.Empty, command.Description ?? string.Empty, priority, command.IdeaTypeId, command.BusinessImpactId, dueDate, now, actorId);
+        idea.UpdateContent(command.Title ?? string.Empty, command.Description ?? string.Empty, priority, command.BusinessImpactId, dueDate, now, actorId);
         idea.ReplaceAssignees(assigneeIds, now, actorId);
         idea.ReplaceTags(tagIds, now, actorId);
         idea.ReplaceMentions(mentionIds, now, actorId);
         if (reconcileFieldValues)
         {
-            idea.ReplaceFieldValues(fieldValues, fieldDefinitions.Select(d => d.Id).ToList(), now, actorId);
+            idea.ReplaceFieldValues(fieldValues, reconcileScope, now, actorId);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -292,6 +301,46 @@ public sealed class IdeaService : IIdeaService
         await NotifyMentionsAsync(idea, newMentions, actorId, cancellationToken);
 
         return await ProjectDetailAsync(idea, cancellationToken);
+    }
+
+    public async Task ReassignIdeaTypeAsync(Guid organizationId, Guid ideaId, Guid ideaTypeId, CancellationToken cancellationToken = default)
+    {
+        RequireAuthenticatedRole();
+
+        var idea = await _ideaRepository.GetByIdAsync(ideaId, includeDeleted: false, cancellationToken)
+            ?? throw new NotFoundAppException("Idea not found.");
+        EnsureOrganizationScope(idea.OrganizationId);
+        if (idea.OrganizationId != organizationId)
+        {
+            throw new NotFoundAppException("Idea not found.");
+        }
+
+        // Reassignment is the admin-only break-glass hatch (SPEC/20-feature-idea-type-fields.md).
+        if (!CanAdministerIdeaContent(idea, actorUserId: Guid.Empty, adminOnly: true))
+        {
+            throw new ForbiddenAppException("You are not allowed to reassign an idea's type.");
+        }
+
+        // 400 when the target type is unknown or archived in the organization.
+        _ = await GetActiveIdeaTypeAsync(idea.OrganizationId, ideaTypeId, cancellationToken);
+
+        if (idea.IdeaTypeId == ideaTypeId)
+        {
+            return;
+        }
+
+        var now = _clock.UtcNow;
+        var actorId = RequireAuthenticatedUserId();
+        var previousTypeId = idea.IdeaTypeId;
+
+        // Only the type reference changes. Field values are preserved untouched; values outside the new
+        // type's resolved set become archived (hidden on detail) rather than dropped — no ReplaceFieldValues
+        // call is needed because the reconcile scope would only ever clear resubmitted in-scope values.
+        idea.ReassignIdeaType(ideaTypeId, now, actorId);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await AuditAsync("IdeaTypeReassigned", idea, actorId, $"Idea '{idea.Title}' reassigned to a new Idea Type.", now,
+            new { FromIdeaTypeId = previousTypeId, ToIdeaTypeId = ideaTypeId }, cancellationToken);
     }
 
     public async Task ChangeStatusAsync(Guid ideaId, ChangeIdeaStatusCommand command, CancellationToken cancellationToken = default)
@@ -478,7 +527,7 @@ public sealed class IdeaService : IIdeaService
         var org = board.OrganizationId;
 
         var ideaTypes = (await _ideaTypeRepository.ListByOrganizationAsync(org, includeDeleted: false, cancellationToken))
-            .ToDictionary(o => o.Name.Trim(), o => o.Id, StringComparer.OrdinalIgnoreCase);
+            .ToDictionary(o => o.Name.Trim(), o => o, StringComparer.OrdinalIgnoreCase);
         var impacts = (await _businessImpactRepository.ListByOrganizationAsync(org, includeDeleted: false, cancellationToken))
             .ToDictionary(o => o.Name.Trim(), o => o.Id, StringComparer.OrdinalIgnoreCase);
         var statusInfo = await _boardReader.GetStatusInfoAsync(org, cancellationToken);
@@ -498,7 +547,7 @@ public sealed class IdeaService : IIdeaService
         var fieldDefinitions = (await _fieldDefinitionRepository.ListByOrganizationAsync(org, includeDeleted: false, cancellationToken))
             .Where(d => !IdeaCsvColumns.IsReservedColumn(d.Name))
             .ToList();
-        var allFieldDefinitionIds = fieldDefinitions.Select(d => d.Id).ToList();
+        var fieldNamesById = FieldNamesById(fieldDefinitions);
 
         var leftMost = board.LeftMostStatusId;
         var results = new List<IdeaImportRowResult>(rows.Count);
@@ -543,11 +592,13 @@ public sealed class IdeaService : IIdeaService
                 continue;
             }
 
-            if (string.IsNullOrWhiteSpace(typeName) || !ideaTypes.TryGetValue(typeName, out var ideaTypeId))
+            if (string.IsNullOrWhiteSpace(typeName) || !ideaTypes.TryGetValue(typeName, out var ideaType))
             {
                 Reject($"Idea Type '{typeName}' is not an active option.");
                 continue;
             }
+
+            var ideaTypeId = ideaType.Id;
 
             if (string.IsNullOrWhiteSpace(impactName) || !impacts.TryGetValue(impactName, out var businessImpactId))
             {
@@ -622,10 +673,11 @@ public sealed class IdeaService : IIdeaService
                 continue;
             }
 
+            var effectiveFields = IdeaTypeFieldResolver.ResolveEffectiveFields(ideaType, fieldDefinitions);
             IReadOnlyList<IdeaFieldValueInput> udfValues;
             try
             {
-                udfValues = FieldValueValidator.Validate(fieldDefinitions, udfWrites);
+                udfValues = FieldValueValidator.Validate(effectiveFields, udfWrites, fieldNamesById);
             }
             catch (ValidationAppException ex)
             {
@@ -646,9 +698,10 @@ public sealed class IdeaService : IIdeaService
                 continue;
             }
 
-            if (allFieldDefinitionIds.Count > 0)
+            var reconcileScope = effectiveFields.Select(f => f.Field.Id).ToList();
+            if (reconcileScope.Count > 0)
             {
-                idea.ReplaceFieldValues(udfValues, allFieldDefinitionIds, now, authorId);
+                idea.ReplaceFieldValues(udfValues, reconcileScope, now, authorId);
             }
 
             await _ideaRepository.AddAsync(idea, cancellationToken);
@@ -770,6 +823,8 @@ public sealed class IdeaService : IIdeaService
             idea.Priority.ToString(),
             idea.IdeaTypeId,
             IdeaTypeName(ideaTypeLookup, idea.IdeaTypeId),
+            IdeaTypeColorHex(ideaTypeLookup, idea.IdeaTypeId),
+            IdeaTypeIcon(ideaTypeLookup, idea.IdeaTypeId),
             idea.BusinessImpactId,
             BusinessImpactName(businessImpactLookup, idea.BusinessImpactId),
             BusinessImpactColor(businessImpactLookup, idea.BusinessImpactId),
@@ -800,17 +855,31 @@ public sealed class IdeaService : IIdeaService
         var comments = await _commentRepository.ListByIdeaAsync(
             new CommentListFilter(idea.Id, new PageRequest(1, PageRequest.MaxPageSize), SortDirection.Ascending), cancellationToken);
 
-        // Only values for active (non-archived) field definitions are surfaced, ordered by display order.
+        // Field values are ordered/labelled by the fields resolved for the idea's type. Stored values for
+        // active fields outside that set (removed from a curated type, or archived on reassignment) are
+        // appended as historical/out-of-type values so the client can render them muted — preserved, never
+        // dropped (SPEC/20-feature-idea-type-fields.md). Values for soft-deleted definitions stay hidden.
         var fieldDefinitions = await _fieldDefinitionRepository.ListByOrganizationAsync(idea.OrganizationId, includeDeleted: false, cancellationToken);
-        var fieldDefinitionsById = fieldDefinitions.ToDictionary(d => d.Id);
-        var fieldValues = idea.FieldValues
-            .Where(v => fieldDefinitionsById.ContainsKey(v.FieldDefinitionId))
-            .OrderBy(v => fieldDefinitionsById[v.FieldDefinitionId].DisplayOrder)
-            .Select(v =>
-            {
-                var definition = fieldDefinitionsById[v.FieldDefinitionId];
-                return new IdeaFieldValueDto(definition.Id, definition.Name, definition.FieldType.ToString(), v.Value);
-            })
+        var activeDefinitionsById = fieldDefinitions.ToDictionary(d => d.Id);
+        var ideaTypeForFields = ideaTypeLookup.TryGetValue(idea.IdeaTypeId, out var resolvedType) ? resolvedType : null;
+        var effectiveFields = ideaTypeForFields is not null
+            ? IdeaTypeFieldResolver.ResolveEffectiveFields(ideaTypeForFields, fieldDefinitions)
+            : Array.Empty<EffectiveField>();
+        var resolvedIds = effectiveFields.Select(f => f.Field.Id).ToHashSet();
+        var storedByFieldId = idea.FieldValues.ToDictionary(v => v.FieldDefinitionId, v => v.Value);
+
+        var fieldValues = effectiveFields
+            .Where(f => storedByFieldId.ContainsKey(f.Field.Id))
+            .Select(f => new IdeaFieldValueDto(f.Field.Id, f.Field.Name, f.Field.FieldType.ToString(), storedByFieldId[f.Field.Id]))
+            .Concat(idea.FieldValues
+                .Where(v => !resolvedIds.Contains(v.FieldDefinitionId) && activeDefinitionsById.ContainsKey(v.FieldDefinitionId))
+                .OrderBy(v => activeDefinitionsById[v.FieldDefinitionId].DisplayOrder)
+                .ThenBy(v => activeDefinitionsById[v.FieldDefinitionId].Name, StringComparer.OrdinalIgnoreCase)
+                .Select(v =>
+                {
+                    var definition = activeDefinitionsById[v.FieldDefinitionId];
+                    return new IdeaFieldValueDto(definition.Id, definition.Name, definition.FieldType.ToString(), v.Value);
+                }))
             .ToList();
 
         var mentions = mentionUserIds
@@ -831,6 +900,8 @@ public sealed class IdeaService : IIdeaService
             idea.Priority.ToString(),
             idea.IdeaTypeId,
             IdeaTypeName(ideaTypeLookup, idea.IdeaTypeId),
+            ideaTypeForFields?.ColorHex,
+            ideaTypeForFields?.Icon,
             idea.BusinessImpactId,
             BusinessImpactName(businessImpactLookup, idea.BusinessImpactId),
             BusinessImpactColor(businessImpactLookup, idea.BusinessImpactId),
@@ -887,6 +958,12 @@ public sealed class IdeaService : IIdeaService
 
     private static string IdeaTypeName(IReadOnlyDictionary<Guid, IdeaType> lookup, Guid id) =>
         lookup.TryGetValue(id, out var option) ? option.Name : string.Empty;
+
+    private static string? IdeaTypeColorHex(IReadOnlyDictionary<Guid, IdeaType> lookup, Guid id) =>
+        lookup.TryGetValue(id, out var option) ? option.ColorHex : null;
+
+    private static string? IdeaTypeIcon(IReadOnlyDictionary<Guid, IdeaType> lookup, Guid id) =>
+        lookup.TryGetValue(id, out var option) ? option.Icon : null;
 
     private static string BusinessImpactName(IReadOnlyDictionary<Guid, BusinessImpact> lookup, Guid id) =>
         lookup.TryGetValue(id, out var option) ? option.Name : string.Empty;
@@ -1002,14 +1079,19 @@ public sealed class IdeaService : IIdeaService
         return tags.Select(t => t.Id).ToList();
     }
 
-    private async Task EnsureActiveIdeaTypeAsync(Guid organizationId, Guid ideaTypeId, CancellationToken cancellationToken)
+    private async Task<IdeaType> GetActiveIdeaTypeAsync(Guid organizationId, Guid ideaTypeId, CancellationToken cancellationToken)
     {
         var option = ideaTypeId == Guid.Empty ? null : await _ideaTypeRepository.GetByIdAsync(ideaTypeId, cancellationToken);
         if (option is null || option.OrganizationId != organizationId || option.IsDeleted)
         {
             throw new ValidationAppException("ideaTypeId", new[] { "Idea Type must reference an active option in the organization." });
         }
+
+        return option;
     }
+
+    private static IReadOnlyDictionary<Guid, string> FieldNamesById(IReadOnlyList<FieldDefinition> definitions) =>
+        definitions.ToDictionary(d => d.Id, d => d.Name);
 
     private async Task EnsureActiveBusinessImpactAsync(Guid organizationId, Guid businessImpactId, CancellationToken cancellationToken)
     {

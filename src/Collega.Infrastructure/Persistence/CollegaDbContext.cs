@@ -37,6 +37,8 @@ public sealed class CollegaDbContext : DbContext
 
     public DbSet<IdeaType> IdeaTypes => Set<IdeaType>();
 
+    public DbSet<IdeaTypeField> IdeaTypeFields => Set<IdeaTypeField>();
+
     public DbSet<BusinessImpact> BusinessImpacts => Set<BusinessImpact>();
 
     public DbSet<Board> Boards => Set<Board>();

@@ -18,6 +18,7 @@ public sealed partial class IdeaFieldService : IIdeaFieldService
 
     private readonly IIdeaTypeRepository _ideaTypeRepository;
     private readonly IBusinessImpactRepository _businessImpactRepository;
+    private readonly IFieldDefinitionRepository _fieldDefinitionRepository;
     private readonly IOrganizationRepository _organizationRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditEventWriter _auditEventWriter;
@@ -27,6 +28,7 @@ public sealed partial class IdeaFieldService : IIdeaFieldService
     public IdeaFieldService(
         IIdeaTypeRepository ideaTypeRepository,
         IBusinessImpactRepository businessImpactRepository,
+        IFieldDefinitionRepository fieldDefinitionRepository,
         IOrganizationRepository organizationRepository,
         IUnitOfWork unitOfWork,
         IAuditEventWriter auditEventWriter,
@@ -35,6 +37,7 @@ public sealed partial class IdeaFieldService : IIdeaFieldService
     {
         _ideaTypeRepository = ideaTypeRepository;
         _businessImpactRepository = businessImpactRepository;
+        _fieldDefinitionRepository = fieldDefinitionRepository;
         _organizationRepository = organizationRepository;
         _unitOfWork = unitOfWork;
         _auditEventWriter = auditEventWriter;
@@ -130,6 +133,72 @@ public sealed partial class IdeaFieldService : IIdeaFieldService
         option.SoftDelete(now, _currentUser.UserId);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await AuditAsync("IdeaTypeDeleted", "IdeaType", option.OrganizationId, option.Id, $"Idea Type '{option.Name}' soft-deleted.", now, cancellationToken);
+    }
+
+    public async Task SetIdeaTypeFieldsAsync(Guid organizationId, Guid ideaTypeId, IReadOnlyList<IdeaTypeFieldSelectionInput> fields, CancellationToken cancellationToken = default)
+    {
+        EnsureAdminScope(organizationId);
+
+        var option = await _ideaTypeRepository.GetByIdAsync(ideaTypeId, cancellationToken);
+        if (option is null || option.OrganizationId != organizationId || option.IsDeleted)
+        {
+            throw new NotFoundAppException("Idea Type not found.");
+        }
+
+        var selection = fields ?? Array.Empty<IdeaTypeFieldSelectionInput>();
+
+        // Every selected field must be active and in the same organization; none may repeat.
+        var activeFieldIds = (await _fieldDefinitionRepository.ListByOrganizationAsync(organizationId, includeDeleted: false, cancellationToken))
+            .Select(d => d.Id)
+            .ToHashSet();
+
+        var seen = new HashSet<Guid>();
+        foreach (var field in selection)
+        {
+            if (!seen.Add(field.FieldDefinitionId))
+            {
+                throw new ValidationAppException("fields", new[] { "A field may appear at most once in the selection." });
+            }
+
+            if (!activeFieldIds.Contains(field.FieldDefinitionId))
+            {
+                throw new ValidationAppException("fields", new[] { $"'{field.FieldDefinitionId}' is not an active custom field in this organization." });
+            }
+        }
+
+        var now = _clock.UtcNow;
+        var links = selection
+            .Select(f => new IdeaTypeFieldInput(f.FieldDefinitionId, f.DisplayOrder, f.IsRequired))
+            .ToList();
+        option.SetFieldSelection(links, now, _currentUser.UserId);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await AuditAsync("IdeaTypeFieldsUpdated", "IdeaType", organizationId, option.Id,
+            $"Idea Type '{option.Name}' field selection updated ({option.FieldMode}).", now, cancellationToken);
+    }
+
+    public async Task SetIdeaTypeAppearanceAsync(Guid organizationId, Guid ideaTypeId, string? colorHex, string? icon, CancellationToken cancellationToken = default)
+    {
+        EnsureAdminScope(organizationId);
+
+        var option = await _ideaTypeRepository.GetByIdAsync(ideaTypeId, cancellationToken);
+        if (option is null || option.OrganizationId != organizationId || option.IsDeleted)
+        {
+            throw new NotFoundAppException("Idea Type not found.");
+        }
+
+        // Validate here so an invalid color surfaces as a 400 rather than the domain's ArgumentException.
+        if (!string.IsNullOrWhiteSpace(colorHex) && !HexColorRegex().IsMatch(colorHex.Trim()))
+        {
+            throw new ValidationAppException("colorHex", new[] { "Color must be a valid #RRGGBB hex color." });
+        }
+
+        var now = _clock.UtcNow;
+        option.SetAppearance(colorHex, icon, now, _currentUser.UserId);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await AuditAsync("IdeaTypeAppearanceUpdated", "IdeaType", organizationId, option.Id,
+            $"Idea Type '{option.Name}' appearance updated.", now, cancellationToken);
     }
 
     // ---------------- Business Impact ----------------
@@ -316,7 +385,19 @@ public sealed partial class IdeaFieldService : IIdeaFieldService
         return _currentUser.Role.Value;
     }
 
-    private static IdeaTypeItem ToItem(IdeaType o) => new(o.Id, o.OrganizationId, o.Name, o.SortOrder, o.IsDeleted);
+    private static IdeaTypeItem ToItem(IdeaType o) => new(
+        o.Id,
+        o.OrganizationId,
+        o.Name,
+        o.SortOrder,
+        o.IsDeleted,
+        o.ColorHex,
+        o.Icon,
+        o.FieldMode.ToString(),
+        o.Fields
+            .OrderBy(f => f.DisplayOrder)
+            .Select(f => new IdeaTypeFieldItem(f.FieldDefinitionId, f.DisplayOrder, f.IsRequired))
+            .ToList());
 
     private static BusinessImpactItem ToItem(BusinessImpact o) => new(o.Id, o.OrganizationId, o.Name, o.Color, o.SortOrder, o.IsDeleted);
 

@@ -520,4 +520,128 @@ public sealed class IdeaServiceTests
         await Assert.ThrowsAsync<ValidationAppException>(() =>
             sut.CreateAsync(_boardId, FieldValueCommand(new IdeaFieldValueWrite(def.Id, "1,5"))));
     }
+
+    // Idea-Type Fields (T061-T066) --------------------------------------------------------------
+
+    private IdeaType CuratedType(string name, params IdeaTypeFieldInput[] links)
+    {
+        var type = IdeaType.Create(_org.Id, name, 20, _clock.UtcNow);
+        type.SetFieldSelection(links, _clock.UtcNow, null);
+        return _ideaTypes.Add(type);
+    }
+
+    private CreateIdeaCommand CreateCommandForType(Guid ideaTypeId, params IdeaFieldValueWrite[] values) =>
+        new("Title", "A valid description.", "Medium", ideaTypeId, _businessImpact.Id, null, null, _s1, null, null, values);
+
+    [Fact]
+    public async Task Update_ChangingIdeaType_ThrowsValidation()
+    {
+        // Idea Type is immutable on the edit path: a differing ideaTypeId is rejected with 400.
+        var idea = SeedIdea(_s1);
+        var otherType = _ideaTypes.Add(IdeaType.Create(_org.Id, "Other", 20, _clock.UtcNow));
+        ActAs(Role.OrgAdmin, _org.Id);
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.UpdateAsync(idea.Id, new UpdateIdeaCommand("Title", "A valid description.", "Medium", otherType.Id, _businessImpact.Id, null, null, null, null)));
+    }
+
+    [Fact]
+    public async Task Create_ValueForFieldNotInCuratedType_ThrowsValidation()
+    {
+        var budget = _fieldDefs.Add(Build.FieldDefinition(_org.Id, "Budget", FieldType.Number, displayOrder: 10));
+        var owner = _fieldDefs.Add(Build.FieldDefinition(_org.Id, "Owner", FieldType.Text, displayOrder: 20));
+        var curated = CuratedType("Curated", new IdeaTypeFieldInput(budget.Id, 1, IsRequired: false));
+        var sut = CreateSut();
+
+        // Owner is not mapped onto this type; submitting a value for it is rejected (value scoping).
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.CreateAsync(_boardId, CreateCommandForType(curated.Id, new IdeaFieldValueWrite(owner.Id, "Alice"))));
+    }
+
+    [Fact]
+    public async Task Create_CuratedType_EnforcesPerTypeRequired_NotGlobal()
+    {
+        // Budget is globally optional but required in this type; Owner is globally required but unmapped.
+        var budget = _fieldDefs.Add(Build.FieldDefinition(_org.Id, "Budget", FieldType.Number, isRequired: false, displayOrder: 10));
+        _fieldDefs.Add(Build.FieldDefinition(_org.Id, "Owner", FieldType.Text, isRequired: true, displayOrder: 20));
+        var curated = CuratedType("Curated", new IdeaTypeFieldInput(budget.Id, 1, IsRequired: true));
+        var sut = CreateSut();
+
+        // Missing the per-type-required Budget is rejected...
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.CreateAsync(_boardId, CreateCommandForType(curated.Id)));
+
+        // ...while the globally-required-but-unmapped Owner is not enforced for this type.
+        var ok = await sut.CreateAsync(_boardId, CreateCommandForType(curated.Id, new IdeaFieldValueWrite(budget.Id, "100")));
+        var idea = _ideas.Ideas.Single(i => i.Id == ok.IdeaId);
+        Assert.Single(idea.FieldValues);
+    }
+
+    [Fact]
+    public async Task Reassign_MovesTypeAndPreservesOutOfScopeValues()
+    {
+        var budget = _fieldDefs.Add(Build.FieldDefinition(_org.Id, "Budget", FieldType.Number, displayOrder: 10));
+        var owner = _fieldDefs.Add(Build.FieldDefinition(_org.Id, "Owner", FieldType.Text, displayOrder: 20));
+        var sut = CreateSut();
+
+        // Created under the default AllActiveFields type with both values populated.
+        var created = await sut.CreateAsync(_boardId, FieldValueCommand(
+            new IdeaFieldValueWrite(budget.Id, "50000"),
+            new IdeaFieldValueWrite(owner.Id, "Alice")));
+
+        var curated = CuratedType("Curated", new IdeaTypeFieldInput(budget.Id, 1, IsRequired: false));
+        ActAs(Role.OrgAdmin, _org.Id);
+
+        await sut.ReassignIdeaTypeAsync(_org.Id, created.IdeaId, curated.Id);
+
+        var idea = _ideas.Ideas.Single(i => i.Id == created.IdeaId);
+        Assert.Equal(curated.Id, idea.IdeaTypeId);
+        // Owner is out of the new type's resolved set but preserved (archived), not dropped.
+        Assert.Equal(2, idea.FieldValues.Count);
+        Assert.Contains(idea.FieldValues, v => v.FieldDefinitionId == owner.Id && v.Value == "Alice");
+        Assert.Contains(_audit.Events, e => e.EventType == "IdeaTypeReassigned");
+
+        // Detail surfaces the in-scope Budget value first, then the out-of-type Owner value as historical
+        // (returned so the client can render it muted) — never dropped.
+        var detail = await sut.GetByIdAsync(created.IdeaId);
+        Assert.Equal(2, detail.FieldValues.Count);
+        Assert.Equal("Budget", detail.FieldValues[0].FieldName);
+        Assert.Contains(detail.FieldValues, v => v.FieldName == "Owner" && v.Value == "Alice");
+    }
+
+    [Fact]
+    public async Task Reassign_AsUser_ThrowsForbidden()
+    {
+        var idea = SeedIdea(_s1);
+        var otherType = _ideaTypes.Add(IdeaType.Create(_org.Id, "Other", 20, _clock.UtcNow));
+        var sut = CreateSut(); // default actor is a plain User
+
+        await Assert.ThrowsAsync<ForbiddenAppException>(() =>
+            sut.ReassignIdeaTypeAsync(_org.Id, idea.Id, otherType.Id));
+    }
+
+    [Fact]
+    public async Task Reassign_UnknownType_ThrowsValidation()
+    {
+        var idea = SeedIdea(_s1);
+        ActAs(Role.OrgAdmin, _org.Id);
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.ReassignIdeaTypeAsync(_org.Id, idea.Id, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task GetById_IncludesTypeAppearance()
+    {
+        _ideaType.SetAppearance("#1D4ED8", "rocket", _clock.UtcNow, null);
+        var idea = SeedIdea(_s1);
+        var sut = CreateSut();
+
+        var detail = await sut.GetByIdAsync(idea.Id);
+
+        Assert.Equal("#1D4ED8", detail.IdeaTypeColorHex);
+        Assert.Equal("rocket", detail.IdeaTypeIcon);
+    }
 }

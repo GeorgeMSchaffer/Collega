@@ -161,6 +161,19 @@ public sealed class IdeasController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Admin-only reassignment of an idea's type (the only path that changes it after creation).</summary>
+    [HttpPut("organizations/{organizationId:guid}/ideas/{ideaId:guid}/idea-type")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ReassignIdeaType(Guid organizationId, Guid ideaId, [FromBody] ReassignIdeaTypeRequest request, CancellationToken cancellationToken)
+    {
+        await _ideaService.ReassignIdeaTypeAsync(organizationId, ideaId, request.IdeaTypeId, cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Move an idea to another board status.</summary>
     [HttpPost("ideas/{ideaId:guid}/status")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

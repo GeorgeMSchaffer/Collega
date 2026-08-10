@@ -45,6 +45,99 @@ public sealed class IdeaTypeTests
     {
         Assert.Equal(1, IdeaType.MinimumActivePerOrganization);
     }
+
+    [Fact]
+    public void DefaultFieldMode_IsAllActiveFields()
+    {
+        var option = IdeaType.Create(OrgId, "Improvement", 10, TestClock.Now);
+        Assert.Equal(IdeaTypeFieldMode.AllActiveFields, option.FieldMode);
+        Assert.Empty(option.Fields);
+        Assert.Null(option.ColorHex);
+        Assert.Null(option.Icon);
+    }
+
+    [Fact]
+    public void SetAppearance_StoresTrimmedColorAndIcon()
+    {
+        var option = IdeaType.Create(OrgId, "Improvement", 10, TestClock.Now);
+        option.SetAppearance("  #1D4ED8 ", "  rocket ", TestClock.Now, Guid.NewGuid());
+        Assert.Equal("#1D4ED8", option.ColorHex);
+        Assert.Equal("rocket", option.Icon);
+    }
+
+    [Fact]
+    public void SetAppearance_NullsClearBadge()
+    {
+        var option = IdeaType.Create(OrgId, "Improvement", 10, TestClock.Now);
+        option.SetAppearance("#1D4ED8", "rocket", TestClock.Now, Guid.NewGuid());
+        option.SetAppearance(null, null, TestClock.Now, Guid.NewGuid());
+        Assert.Null(option.ColorHex);
+        Assert.Null(option.Icon);
+    }
+
+    [Theory]
+    [InlineData("1D4ED8")]
+    [InlineData("#12345")]
+    [InlineData("#GGGGGG")]
+    public void SetAppearance_RejectsInvalidColor(string color)
+    {
+        var option = IdeaType.Create(OrgId, "Improvement", 10, TestClock.Now);
+        Assert.Throws<ArgumentException>(() => option.SetAppearance(color, null, TestClock.Now, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void SetFieldSelection_SwitchesToCuratedAndStoresLinks()
+    {
+        var option = IdeaType.Create(OrgId, "Improvement", 10, TestClock.Now);
+        var f1 = Guid.NewGuid();
+        var f2 = Guid.NewGuid();
+
+        option.SetFieldSelection(new[]
+        {
+            new IdeaTypeFieldInput(f1, 2, IsRequired: true),
+            new IdeaTypeFieldInput(f2, 1, IsRequired: false),
+        }, TestClock.Now, Guid.NewGuid());
+
+        Assert.Equal(IdeaTypeFieldMode.Curated, option.FieldMode);
+        Assert.Equal(2, option.Fields.Count);
+        Assert.Contains(option.Fields, l => l.FieldDefinitionId == f1 && l.IsRequired && l.DisplayOrder == 2);
+    }
+
+    [Fact]
+    public void SetFieldSelection_RejectsDuplicateField()
+    {
+        var option = IdeaType.Create(OrgId, "Improvement", 10, TestClock.Now);
+        var f1 = Guid.NewGuid();
+        Assert.Throws<InvalidOperationException>(() => option.SetFieldSelection(new[]
+        {
+            new IdeaTypeFieldInput(f1, 1, false),
+            new IdeaTypeFieldInput(f1, 2, true),
+        }, TestClock.Now, Guid.NewGuid()));
+    }
+
+    [Fact]
+    public void SetFieldSelection_EmptyList_ClearsToAllActiveFields()
+    {
+        var option = IdeaType.Create(OrgId, "Improvement", 10, TestClock.Now);
+        option.SetFieldSelection(new[] { new IdeaTypeFieldInput(Guid.NewGuid(), 1, false) }, TestClock.Now, Guid.NewGuid());
+
+        option.SetFieldSelection(Array.Empty<IdeaTypeFieldInput>(), TestClock.Now, Guid.NewGuid());
+
+        Assert.Equal(IdeaTypeFieldMode.AllActiveFields, option.FieldMode);
+        Assert.Empty(option.Fields);
+    }
+
+    [Fact]
+    public void ClearFieldSelection_ReturnsToAllActiveFields()
+    {
+        var option = IdeaType.Create(OrgId, "Improvement", 10, TestClock.Now);
+        option.SetFieldSelection(new[] { new IdeaTypeFieldInput(Guid.NewGuid(), 1, false) }, TestClock.Now, Guid.NewGuid());
+
+        option.ClearFieldSelection(TestClock.Now, Guid.NewGuid());
+
+        Assert.Equal(IdeaTypeFieldMode.AllActiveFields, option.FieldMode);
+        Assert.Empty(option.Fields);
+    }
 }
 
 public sealed class BusinessImpactTests
