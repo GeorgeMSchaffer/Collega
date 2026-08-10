@@ -64,7 +64,9 @@ public sealed record IdeaDetailDto(
     int UpvoteCount,
     bool HasUpvoted,
     int CommentCount,
-    IReadOnlyList<IdeaFieldValueDetailDto> FieldValues);
+    IReadOnlyList<IdeaFieldValueDetailDto> FieldValues,
+    string? IdeaTypeColorHex = null,
+    string? IdeaTypeIcon = null);
 
 /// <summary>Body for <c>PUT /ideas/{ideaId}</c>. Sends the full editable field set, so unchanged
 /// fields (priority, Idea Type, Business Impact, due date, assignees, tags) must be echoed back to

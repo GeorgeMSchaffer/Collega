@@ -135,7 +135,14 @@
                             <tr>
                                 <td>
                                     <div class="t">@idea.Title</div>
-                                    <div class="board">@BoardName(idea.BoardId)</div>
+                                    <div class="board">
+                                        @if (!string.IsNullOrWhiteSpace(idea.IdeaTypeName))
+                                        {
+                                            <TypeBadge Name="@idea.IdeaTypeName" ColorHex="@idea.IdeaTypeColorHex" Icon="@idea.IdeaTypeIcon" />
+                                            <span> · </span>
+                                        }
+                                        @BoardName(idea.BoardId)
+                                    </div>
                                 </td>
                                 @if (_isSiteAdmin)
                                 {

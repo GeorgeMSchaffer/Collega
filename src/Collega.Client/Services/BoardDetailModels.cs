@@ -5,7 +5,10 @@ namespace Collega.Client.Services;
 // convention. Board/swimlane shapes are reused from BoardModels.cs; paging from ApiModels.cs;
 // IdeaAssigneeDto and ChangeIdeaStatusRequestDto are shared with the Idea Detail slice (IdeaModels.cs).
 
-/// <summary>A row of <c>GET /boards/{id}/ideas</c> (canonical paged envelope).</summary>
+/// <summary>A row of <c>GET /boards/{id}/ideas</c> (canonical paged envelope).
+/// The idea-type badge fields (<c>IdeaTypeName</c>/<c>ColorHex</c>/<c>Icon</c>,
+/// SPEC/20-feature-idea-type-fields.md) are appended and nullable so a server that doesn't yet return
+/// them deserializes cleanly — the card simply omits the badge.</summary>
 public sealed record IdeaListItemDto(
     string IdeaId,
     string BoardId,
@@ -20,7 +23,10 @@ public sealed record IdeaListItemDto(
     bool HasUpvoted,
     int CommentCount,
     string AuthorUserId,
-    DateTime CreatedAtUtc);
+    DateTime CreatedAtUtc,
+    string? IdeaTypeName = null,
+    string? IdeaTypeColorHex = null,
+    string? IdeaTypeIcon = null);
 
 /// <summary>Body for <c>POST /boards/{id}/ideas</c>. Minimal create wires title/description/priority
 /// and an optional target status; the API defaults to the left-most swimlane when StatusId is null.</summary>

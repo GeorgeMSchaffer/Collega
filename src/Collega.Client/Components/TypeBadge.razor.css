@@ -1,0 +1,30 @@
+/* Idea-type badge — matches the .typebadge treatment in comp-c-review-09-idea-type-fields.html. */
+.typebadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 11px 3px 9px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.typebadge.icononly {
+    padding: 3px 7px;
+    gap: 0;
+}
+
+.typebadge .ic {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.typebadge .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}

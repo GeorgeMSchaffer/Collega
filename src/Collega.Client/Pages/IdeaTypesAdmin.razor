@@ -7,15 +7,18 @@
 
 @*
     Organization Idea Type configuration. Org Admin manages the classification every idea is filed under:
-    name and catalog order. The API enforces the one-active-type floor and immutability of an idea's type
-    after creation; this page mirrors the floor client-side (Delete is disabled at one active type) and
-    surfaces any server rejection inline. Drag the handle to reorder — the order drives the type selector
-    on the new-idea form.
+    name, catalog order, badge appearance (color + icon), and — per the Idea-Type Fields feature
+    (SPEC/20-feature-idea-type-fields.md, comp-c-review-09-idea-type-fields.html) — the ordered subset of
+    the org's custom fields the type's ideas show, each marked required-or-optional for that type. Choosing
+    fields switches the type to Curated; clearing returns it to AllActiveFields (all fields). The API
+    enforces the one-active-type floor and immutability of an idea's type after creation; this page mirrors
+    the floor client-side (Archive is disabled at one active type) and surfaces any server rejection inline.
+    Drag the handle to reorder — the order drives the type selector on the new-idea form.
 *@
 <div class="pagehead">
     <div class="crumbs"><a href="/settings">Settings</a> / Idea types</div>
     <h1>@(_siteAdminGlobal ? "All idea types" : "Idea types")</h1>
-    <p class="sub" style="margin-bottom:18px">@(_siteAdminGlobal ? "Idea classifications across every organization." : "The classification every idea is filed under. The first type is the default on new ideas.")</p>
+    <p class="sub" style="margin-bottom:18px">@(_siteAdminGlobal ? "Idea classifications across every organization." : "Every idea is exactly one type, chosen at creation. A type carries its own selection of the org's custom fields, plus a color + icon badge shown on cards and detail.")</p>
 </div>
 
 <div class="body">
@@ -39,14 +42,125 @@
 
         @if (_editing)
         {
-            <div class="card formcard" style="margin-bottom:16px">
+            <div class="card formcard editcard" style="margin-bottom:16px">
                 <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:14px">@(_editId is null ? "New idea type" : "Edit idea type")</h3>
                 <div class="field">
                     <label for="name">Name</label>
                     <FluentTextField id="name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
                 </div>
-                <div class="btnrow">
-                    <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
+
+                <div class="field">
+                    <label>Color</label>
+                    <div class="picker">
+                        <div class="opt none @(_form.ColorHex is null ? "sel" : null)" title="No color (neutral badge)"
+                             @onclick="() => PickColor(null)">@(_form.ColorHex is null ? "✓" : "")</div>
+                        @foreach (var hex in ColorPalette)
+                        {
+                            var h = hex;
+                            <div class="opt @(string.Equals(_form.ColorHex, h, StringComparison.OrdinalIgnoreCase) ? "sel" : null)"
+                                 style="@($"background:{h}")" @onclick="() => PickColor(h)">
+                                @(string.Equals(_form.ColorHex, h, StringComparison.OrdinalIgnoreCase) ? "✓" : "")
+                            </div>
+                        }
+                    </div>
+                    @if (LowContrast(_form.ColorHex))
+                    {
+                        <p class="hint contrastwarn">This color is quite light — the badge text may be hard to read.</p>
+                    }
+                </div>
+
+                <div class="field">
+                    <label>Icon</label>
+                    <div class="iconpick">
+                        <div class="opt none @(_form.Icon is null ? "sel" : null)" title="No icon" @onclick="() => PickIcon(null)">∅</div>
+                        @foreach (var ic in IconPalette)
+                        {
+                            var i = ic;
+                            <div class="opt @(string.Equals(_form.Icon, i, StringComparison.Ordinal) ? "sel" : null)"
+                                 @onclick="() => PickIcon(i)">@i</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Preview</label>
+                    <div class="preview">
+                        <TypeBadge Name="@(string.IsNullOrWhiteSpace(_form.Name) ? "Untitled type" : _form.Name)" ColorHex="_form.ColorHex" Icon="_form.Icon" />
+                        <span class="hint" style="margin:0">How this type appears as a badge on cards, the ideas list, and idea detail.</span>
+                    </div>
+                </div>
+
+                <label style="margin-top:6px">Custom fields on this type <span class="charlim">— pick from the org's fields; drag to order; toggle required per field</span></label>
+                @if (_fieldDefs.Count == 0)
+                {
+                    <p class="hint">This organization has no active custom fields yet. Add fields under Settings → Custom fields, then curate them here.</p>
+                }
+                else
+                {
+                    <div class="twopane">
+                        <div class="pane">
+                            <div class="ph"><span>Available org fields</span><span class="muted">@AvailableFields.Count</span></div>
+                            <div class="lst">
+                                @if (AvailableFields.Count == 0)
+                                {
+                                    <p class="hint" style="padding:8px">All fields are on this type.</p>
+                                }
+                                @foreach (var f in AvailableFields)
+                                {
+                                    var fd = f;
+                                    <div class="frow">
+                                        <span class="nm">@fd.Name</span>
+                                        <span class="ty">@fd.FieldType</span>
+                                        <button class="btn subtle sm" @onclick="() => AddField(fd)" disabled="@_busy">Add →</button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="pane">
+                            <div class="ph">
+                                <span>On this type — drag to order</span>
+                                <span class="muted">@_chosen.Count</span>
+                            </div>
+                            <div class="lst">
+                                @if (_chosen.Count == 0)
+                                {
+                                    <p class="hint" style="padding:8px">No fields chosen — this type shows <strong>all active fields</strong> (AllActiveFields). Add fields to curate it.</p>
+                                }
+                                @for (var i = 0; i < _chosen.Count; i++)
+                                {
+                                    var index = i;
+                                    var c = _chosen[index];
+                                    <div class="frow chosen @(_fieldDragIndex == index ? "dragging" : null) @(_fieldDragOverIndex == index ? "dragover" : null)"
+                                         draggable="true"
+                                         @ondragstart="() => OnFieldDragStart(index)"
+                                         @ondragover:preventDefault="true"
+                                         @ondragenter="() => OnFieldDragEnter(index)"
+                                         @ondrop="() => OnFieldDrop(index)"
+                                         @ondragend="OnFieldDragEnd">
+                                        <span class="grip" aria-hidden="true">⠿</span>
+                                        <span class="nm">@c.Field.Name</span>
+                                        <span class="ty">@c.Field.FieldType</span>
+                                        <label class="toggle @(c.Required ? "on" : null)">
+                                            <input type="checkbox" checked="@c.Required" @onchange="e => SetRequired(index, (bool)(e.Value ?? false))" disabled="@_busy" />
+                                            Required
+                                        </label>
+                                        <button class="btn danger sm" title="Remove from this type" @onclick="() => RemoveField(index)" disabled="@_busy">×</button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    @if (_chosen.Count > 0)
+                    {
+                        <div style="margin-top:8px">
+                            <button class="btn subtle sm" @onclick="ClearFields" disabled="@_busy">Clear / show all fields</button>
+                            <span class="hint" style="margin-left:6px">Clearing returns this type to AllActiveFields.</span>
+                        </div>
+                    }
+                }
+
+                <div class="btnrow" style="margin-top:16px">
+                    <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save idea type")</button>
                     <button class="btn" @onclick="Cancel" disabled="@_busy">Cancel</button>
                 </div>
             </div>
@@ -60,7 +174,7 @@
         <div class="card">
             <table>
                 <thead>
-                    <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Idea type</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Sort order</th><th></th></tr>
+                    <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Idea type</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Fields on this type</th><th>Sort order</th><th></th></tr>
                 </thead>
                 <tbody>
                     @for (var i = 0; i < _types.Count; i++)
@@ -78,11 +192,12 @@
                             {
                                 <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another idea type to enable reordering")" aria-hidden="true">⠿</td>
                             }
-                            <td><strong>@t.Name</strong></td>
+                            <td><TypeBadge Name="@t.Name" ColorHex="@t.ColorHex" Icon="@t.Icon" /></td>
                             @if (_siteAdminGlobal)
                             {
                                 <td>@OrganizationName(t.OrganizationId)</td>
                             }
+                            <td>@RenderFieldSummary(t)</td>
                             <td>@t.SortOrder</td>
                             <td class="rowactions">
                                 @if (_siteAdminGlobal)
@@ -94,7 +209,7 @@
                                     <button class="btn subtle" @onclick="() => StartEdit(t)" disabled="@_editing">Edit</button>
                                     <button class="btn danger" @onclick="() => Delete(t)"
                                             disabled="@(_editing || _types.Count <= 1)"
-                                            title="@(_types.Count <= 1 ? "An organization must keep at least one active idea type." : null)">Delete</button>
+                                            title="@(_types.Count <= 1 ? "Cannot archive the last remaining idea type; every idea must have one." : null)">Archive</button>
                                 }
                             </td>
                         </tr>
@@ -116,30 +231,53 @@
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
+    // Palettes mirror comp-c-review-09-idea-type-fields.html.
+    private static readonly string[] ColorPalette =
+        { "#5b5fc7", "#0f7b6c", "#2f6fb0", "#9a5b00", "#b10e1c", "#b23a6b", "#7a3fb8", "#57534e" };
+    private static readonly string[] IconPalette =
+        { "💡", "🔧", "🐞", "📈", "🎯", "🧩", "📋", "⚙️" };
+
     private sealed class FormModel
     {
         public string Name { get; set; } = "";
+        public string? ColorHex { get; set; }
+        public string? Icon { get; set; }
+    }
+
+    private sealed class ChosenField
+    {
+        public required FieldDefinitionDto Field { get; init; }
+        public bool Required { get; set; }
     }
 
     private string? _organizationId;
     private bool _siteAdminGlobal;
     private readonly Dictionary<string, string> _organizationNames = new();
     private List<IdeaTypeOptionDto> _types = new();
+    private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
     private bool _loading = true;
     private bool _busy;
     private bool _editing;
     private string? _editId;
     private FormModel _form = new();
+    private readonly List<ChosenField> _chosen = new();
     private string? _error;
 
-    // Drag-reorder state (per-org view only). _dragIndex is the row being dragged; _dragOverIndex is the
-    // row currently under the cursor, used to show the insertion indicator.
+    // Drag-reorder state for the type LIST (per-org view only).
     private int? _dragIndex;
     private int? _dragOverIndex;
 
-    // Reordering is a per-org action; it's meaningless in the Site-Admin cross-org list, while editing,
-    // or with a single row.
+    // Drag-reorder state for the chosen-FIELD pane inside the editor.
+    private int? _fieldDragIndex;
+    private int? _fieldDragOverIndex;
+
     private bool CanReorder => !_siteAdminGlobal && !_editing && _types.Count > 1;
+
+    // Active org fields not yet on this type, in display order.
+    private List<FieldDefinitionDto> AvailableFields =>
+        _fieldDefs.Where(f => _chosen.All(c => c.Field.FieldDefinitionId != f.FieldDefinitionId))
+                  .OrderBy(f => f.DisplayOrder)
+                  .ToList();
 
     protected override async Task OnInitializedAsync()
     {
@@ -185,6 +323,13 @@
             _error = result.Error;
         }
 
+        // Active custom-field pool for the field picker + list summaries (best-effort; cached).
+        var fields = await Api.GetActiveFieldDefinitionsAsync(_organizationId!);
+        if (fields.Succeeded)
+        {
+            _fieldDefs = fields.Value!;
+        }
+
         _loading = false;
     }
 
@@ -217,10 +362,53 @@
     private string OrganizationName(string organizationId) =>
         _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 
+    // ---- List field summary ("N fields (M required)" + a name preview, or "All org fields") ----
+    private RenderFragment RenderFieldSummary(IdeaTypeOptionDto t) => builder =>
+    {
+        var curated = string.Equals(t.FieldMode, "Curated", StringComparison.OrdinalIgnoreCase) && t.Fields is { Count: > 0 };
+        if (!curated)
+        {
+            builder.OpenElement(0, "span");
+            builder.AddContent(1, _siteAdminGlobal ? "All org fields" : $"All org fields ({_fieldDefs.Count})");
+            builder.CloseElement();
+            builder.OpenElement(2, "div");
+            builder.AddAttribute(3, "class", "hint");
+            builder.AddAttribute(4, "style", "margin-top:2px");
+            builder.AddContent(5, "Migrated default — new fields auto-appear.");
+            builder.CloseElement();
+            return;
+        }
+
+        // Curated: resolve names/required against the active pool (skip links whose field is inactive).
+        var byId = _fieldDefs.ToDictionary(f => f.FieldDefinitionId);
+        var active = t.Fields!.Where(l => _siteAdminGlobal || byId.ContainsKey(l.FieldDefinitionId))
+                              .OrderBy(l => l.DisplayOrder).ToList();
+        var requiredCount = active.Count(l => l.IsRequired);
+        builder.OpenElement(0, "span");
+        builder.AddContent(1, $"{active.Count} field{(active.Count == 1 ? "" : "s")} ");
+        builder.OpenElement(2, "span");
+        builder.AddAttribute(3, "class", "muted");
+        builder.AddContent(4, $"({requiredCount} required)");
+        builder.CloseElement();
+        builder.CloseElement();
+
+        if (!_siteAdminGlobal && active.Count > 0)
+        {
+            var names = string.Join(", ", active.Select(l => byId.TryGetValue(l.FieldDefinitionId, out var f) ? f.Name : "field"));
+            builder.OpenElement(5, "div");
+            builder.AddAttribute(6, "class", "hint");
+            builder.AddAttribute(7, "style", "margin-top:2px");
+            builder.AddContent(8, names);
+            builder.CloseElement();
+        }
+    };
+
+    // ---- Editor open/close ----
     private void StartCreate()
     {
         _editId = null;
         _form = new FormModel();
+        _chosen.Clear();
         _error = null;
         _editing = true;
     }
@@ -228,7 +416,22 @@
     private void StartEdit(IdeaTypeOptionDto t)
     {
         _editId = t.IdeaTypeId;
-        _form = new FormModel { Name = t.Name };
+        _form = new FormModel { Name = t.Name, ColorHex = t.ColorHex, Icon = t.Icon };
+        _chosen.Clear();
+
+        var curated = string.Equals(t.FieldMode, "Curated", StringComparison.OrdinalIgnoreCase) && t.Fields is { Count: > 0 };
+        if (curated)
+        {
+            var byId = _fieldDefs.ToDictionary(f => f.FieldDefinitionId);
+            foreach (var link in t.Fields!.OrderBy(l => l.DisplayOrder))
+            {
+                if (byId.TryGetValue(link.FieldDefinitionId, out var field))
+                {
+                    _chosen.Add(new ChosenField { Field = field, Required = link.IsRequired });
+                }
+            }
+        }
+
         _error = null;
         _editing = true;
     }
@@ -239,6 +442,96 @@
         _error = null;
     }
 
+    // ---- Appearance pickers ----
+    private void PickColor(string? hex) => _form.ColorHex = hex;
+    private void PickIcon(string? icon) => _form.Icon = icon;
+
+    // Advisory contrast check (non-blocking, mirrors the status picker's warning). Flags very light fills.
+    private static bool LowContrast(string? hex)
+    {
+        if (string.IsNullOrWhiteSpace(hex) || hex.Length != 7 || hex[0] != '#')
+        {
+            return false;
+        }
+        try
+        {
+            var r = Convert.ToInt32(hex.Substring(1, 2), 16);
+            var g = Convert.ToInt32(hex.Substring(3, 2), 16);
+            var b = Convert.ToInt32(hex.Substring(5, 2), 16);
+            // Rec. 601 luma; > ~200 reads as too light for pale badge text.
+            return (0.299 * r) + (0.587 * g) + (0.114 * b) > 200;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    // ---- Field picker ----
+    private void AddField(FieldDefinitionDto field)
+    {
+        if (_chosen.All(c => c.Field.FieldDefinitionId != field.FieldDefinitionId))
+        {
+            // Seed the per-type required flag from the field's global default (spec required-ness table).
+            _chosen.Add(new ChosenField { Field = field, Required = field.IsRequired });
+        }
+    }
+
+    private void RemoveField(int index)
+    {
+        if (index >= 0 && index < _chosen.Count)
+        {
+            _chosen.RemoveAt(index);
+        }
+    }
+
+    private void SetRequired(int index, bool required)
+    {
+        if (index >= 0 && index < _chosen.Count)
+        {
+            _chosen[index].Required = required;
+        }
+    }
+
+    private void ClearFields() => _chosen.Clear();
+
+    private void OnFieldDragStart(int index)
+    {
+        _fieldDragIndex = index;
+        _fieldDragOverIndex = index;
+    }
+
+    private void OnFieldDragEnter(int index)
+    {
+        if (_fieldDragIndex is not null)
+        {
+            _fieldDragOverIndex = index;
+        }
+    }
+
+    private void OnFieldDragEnd()
+    {
+        _fieldDragIndex = null;
+        _fieldDragOverIndex = null;
+    }
+
+    private void OnFieldDrop(int index)
+    {
+        var from = _fieldDragIndex;
+        _fieldDragIndex = null;
+        _fieldDragOverIndex = null;
+        if (from is null || from == index || from < 0 || from >= _chosen.Count)
+        {
+            return;
+        }
+
+        var moved = _chosen[from.Value];
+        _chosen.RemoveAt(from.Value);
+        var insertAt = Math.Clamp(index, 0, _chosen.Count);
+        _chosen.Insert(insertAt, moved);
+    }
+
+    // ---- Save (name via type PUT/POST, then appearance + field selection endpoints) ----
     private async Task Save()
     {
         if (string.IsNullOrWhiteSpace(_form.Name))
@@ -246,36 +539,66 @@
             _error = "An idea type name is required.";
             return;
         }
+        if (string.IsNullOrEmpty(_organizationId))
+        {
+            _error = "Your account isn't associated with an organization.";
+            return;
+        }
 
         _busy = true;
         _error = null;
 
-        // SortOrder omitted: the server appends new types to the end; existing order is preserved on edit.
+        // 1. Name (create or update). SortOrder omitted: server appends new types / preserves on edit.
         var body = new SaveIdeaTypeRequestDto(_form.Name.Trim(), null);
-        bool succeeded;
-        string? error;
+        string typeId;
         if (_editId is null)
         {
             var r = await Api.CreateIdeaTypeAsync(_organizationId!, body);
-            (succeeded, error) = (r.Succeeded, r.Error);
+            if (!r.Succeeded || r.Value is null)
+            {
+                _busy = false;
+                _error = r.Error ?? "Save failed.";
+                return;
+            }
+            typeId = r.Value.IdeaTypeId;
         }
         else
         {
             var r = await Api.UpdateIdeaTypeAsync(_editId!, body);
-            (succeeded, error) = (r.Succeeded, r.Error);
+            if (!r.Succeeded)
+            {
+                _busy = false;
+                _error = r.Error ?? "Save failed.";
+                return;
+            }
+            typeId = _editId!;
         }
 
-        _busy = false;
-        if (succeeded)
+        // 2. Appearance (color + icon; nulls clear to a neutral badge).
+        var appearance = await Api.SetIdeaTypeAppearanceAsync(_organizationId!, typeId, new SetIdeaTypeAppearanceRequestDto(_form.ColorHex, _form.Icon));
+        if (!appearance.Succeeded)
         {
-            _editing = false;
-            await LoadAsync();
+            _busy = false;
+            _error = appearance.Error ?? "Saving the type appearance failed.";
             return;
         }
 
-        _error = error ?? "Save failed.";
+        // 3. Field selection. Non-empty ⇒ Curated; empty ⇒ AllActiveFields. Order is the list order.
+        var fields = _chosen.Select((c, i) => new IdeaTypeFieldInputDto(c.Field.FieldDefinitionId, (i + 1) * 10, c.Required)).ToList();
+        var fieldResult = await Api.SetIdeaTypeFieldsAsync(_organizationId!, typeId, new SetIdeaTypeFieldsRequestDto(fields));
+        if (!fieldResult.Succeeded)
+        {
+            _busy = false;
+            _error = fieldResult.Error ?? "Saving the type's field selection failed.";
+            return;
+        }
+
+        _busy = false;
+        _editing = false;
+        await LoadAsync();
     }
 
+    // ---- Type list reorder ----
     private string RowClass(int index)
     {
         if (!CanReorder)
@@ -332,8 +655,6 @@
             return;
         }
 
-        // Optimistic local reorder: drop lands the row at the target slot (below the target when moving
-        // down, above it when moving up). Persist the new id order; on failure, revert by reloading.
         var moved = _types[from.Value];
         _types.RemoveAt(from.Value);
         var insertAt = Math.Clamp(index, 0, _types.Count);

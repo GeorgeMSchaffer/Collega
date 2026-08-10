@@ -156,7 +156,7 @@
                 <div class="formrow">
                     <div class="field">
                         <label for="ni-type">Idea Type</label>
-                        <select id="ni-type" @bind="_newIdeaTypeId" disabled="@_creating">
+                        <select id="ni-type" value="@_newIdeaTypeId" @onchange="OnIdeaTypeChanged" disabled="@_creating">
                             @foreach (var t in _ideaTypes)
                             {
                                 <option value="@t.IdeaTypeId">@t.Name</option>
@@ -173,10 +173,16 @@
                         </select>
                     </div>
                 </div>
-                @if (_fieldDefs.Count > 0)
+                @if (_resolvedFields.Count > 0)
                 {
-                    <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);margin:6px 0 8px">Custom fields</h4>
-                    <IdeaFieldInputs Fields="_fieldDefs" Values="_newFieldValues" Disabled="_creating" />
+                    <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);margin:6px 0 8px">
+                        Custom fields
+                        @if (SelectedIdeaType is not null)
+                        {
+                            <span style="text-transform:none;font-weight:400;color:var(--ink-3)"> · @SelectedIdeaType.Name</span>
+                        }
+                    </h4>
+                    <IdeaFieldInputs Fields="_resolvedFields" Values="_newFieldValues" Disabled="_creating" />
                 }
                 <div class="btnrow">
                     <button class="btn primary" @onclick="CreateIdea" disabled="@_creating">@(_creating ? "Creating…" : "Create idea")</button>
@@ -223,6 +229,10 @@
                                             <span class="grip" title="Drag to move" role="img" aria-label="Drag to move idea"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" /></span>
                                         }
                                         <span class="t" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">@i.Title</span>
+                                        @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
+                                        {
+                                            <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" IconOnly="true" />
+                                        }
                                         <span class="prio-chip @PrioClass(i.Priority)">@PrioLabel(i.Priority)</span>
                                     </div>
                                     @if (i.TagNames.Count > 0)
@@ -292,6 +302,10 @@
                                 <div class="rowcard" style="@CardStyle(lane)" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">
                                     <span class="prio @PrioClass(i.Priority)" title="@PrioLabel(i.Priority) priority"></span>
                                     <span class="t">@i.Title</span>
+                                    @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
+                                    {
+                                        <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" IconOnly="true" />
+                                    }
                                     @foreach (var tag in i.TagNames.Take(2))
                                     {
                                         <span class="tag">@tag</span>
@@ -378,8 +392,14 @@
 
     // Org User-Defined Fields (UDFs) rendered on the new-idea form. Loaded once per org from the
     // ApiClient's cache; _newFieldValues holds the in-progress values keyed by field definition id.
+    // _resolvedFields is the subset the SELECTED idea type shows (SPEC/20-feature-idea-type-fields.md);
+    // it reflows live when the type changes.
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
+    private IReadOnlyList<FieldDefinitionDto> _resolvedFields = Array.Empty<FieldDefinitionDto>();
     private Dictionary<string, string?> _newFieldValues = new();
+
+    private IdeaTypeOptionDto? SelectedIdeaType =>
+        _ideaTypes.FirstOrDefault(t => t.IdeaTypeId == _newIdeaTypeId);
 
     // CSV export/import (T059/T060)
     private bool _exporting;
@@ -548,8 +568,28 @@
         _newIdeaTypeId = _ideaTypes.FirstOrDefault()?.IdeaTypeId ?? string.Empty;
         _newBusinessImpactId = _businessImpacts.FirstOrDefault()?.BusinessImpactId ?? string.Empty;
         _newFieldValues = new Dictionary<string, string?>();
+        ResolveNewIdeaFields();
         _newError = null;
         _showNew = true;
+    }
+
+    // Reflows the create form's custom fields to the selected type's resolved set. Values for fields no
+    // longer shown are pruned so they can't be submitted for a type that doesn't include them (the server
+    // rejects out-of-set values); overlapping values are preserved.
+    private void OnIdeaTypeChanged(ChangeEventArgs e)
+    {
+        _newIdeaTypeId = e.Value?.ToString() ?? string.Empty;
+        ResolveNewIdeaFields();
+    }
+
+    private void ResolveNewIdeaFields()
+    {
+        _resolvedFields = IdeaTypeFieldResolution.Resolve(SelectedIdeaType, _fieldDefs);
+        var allowed = _resolvedFields.Select(f => f.FieldDefinitionId).ToHashSet();
+        foreach (var key in _newFieldValues.Keys.Where(k => !allowed.Contains(k)).ToList())
+        {
+            _newFieldValues.Remove(key);
+        }
     }
 
     private async Task CreateIdea()
@@ -577,8 +617,9 @@
             return;
         }
 
-        // Mirror the server's required-field guardrail so the user sees it before the round-trip.
-        var missing = _fieldDefs.FirstOrDefault(f => f.IsRequired && string.IsNullOrWhiteSpace(FieldValue(f.FieldDefinitionId)));
+        // Mirror the server's required-field guardrail so the user sees it before the round-trip. Only the
+        // fields the selected type resolves are checked (per-type required-ness).
+        var missing = _resolvedFields.FirstOrDefault(f => f.IsRequired && string.IsNullOrWhiteSpace(FieldValue(f.FieldDefinitionId)));
         if (missing is not null)
         {
             _newError = $"{missing.Name} is required.";
@@ -588,7 +629,7 @@
         _creating = true;
         _newError = null;
 
-        var fieldValues = _fieldDefs
+        var fieldValues = _resolvedFields
             .Select(f => new IdeaFieldValueWriteDto(f.FieldDefinitionId, FieldValue(f.FieldDefinitionId)))
             .Where(v => !string.IsNullOrWhiteSpace(v.Value))
             .ToList();
