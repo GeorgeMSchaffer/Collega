@@ -72,7 +72,7 @@
 
         @if (CanReorder)
         {
-            <p class="reorder-hint"><span class="grip">⠿</span> Drag the handle to reorder statuses. Boards and idea cards list statuses in this order.</p>
+            <p class="reorder-hint"><span class="grip"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></span> Drag the handle to reorder statuses. Boards and idea cards list statuses in this order.</p>
         }
         else if (!_siteAdminGlobal && _statuses.Count > 1 && !_editing && !_list.ShowsAllInOrder)
         {
@@ -99,7 +99,7 @@
                             @ondragend="OnDragEnd">
                             @if (!_siteAdminGlobal)
                             {
-                                <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another status to enable reordering")" aria-hidden="true">⠿</td>
+                                <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another status to enable reordering")" aria-hidden="true"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></td>
                             }
                             <td>
                                 <span class="swatch" style="background:@s.Color"></span>

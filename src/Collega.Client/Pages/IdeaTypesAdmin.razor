@@ -143,7 +143,7 @@
                                          @ondragenter="() => OnFieldDragEnter(index)"
                                          @ondrop="() => OnFieldDrop(index)"
                                          @ondragend="OnFieldDragEnd">
-                                        <span class="grip" aria-hidden="true">⠿</span>
+                                        <span class="grip" aria-hidden="true"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></span>
                                         <span class="nm">@c.Field.Name</span>
                                         <span class="ty">@c.Field.FieldType</span>
                                         <label class="toggle @(c.Required ? "on" : null)">
@@ -174,7 +174,7 @@
 
         @if (CanReorder)
         {
-            <p class="reorder-hint"><span class="grip">⠿</span> Drag the handle to reorder idea types. The new-idea form lists them in this order.</p>
+            <p class="reorder-hint"><span class="grip"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></span> Drag the handle to reorder idea types. The new-idea form lists them in this order.</p>
         }
         else if (!_siteAdminGlobal && _types.Count > 1 && !_editing && !_list.ShowsAllInOrder)
         {
@@ -201,7 +201,7 @@
                             @ondragend="OnDragEnd">
                             @if (!_siteAdminGlobal)
                             {
-                                <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another idea type to enable reordering")" aria-hidden="true">⠿</td>
+                                <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another idea type to enable reordering")" aria-hidden="true"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></td>
                             }
                             <td><TypeBadge Name="@t.Name" ColorHex="@t.ColorHex" Icon="@t.Icon" /></td>
                             @if (_siteAdminGlobal)

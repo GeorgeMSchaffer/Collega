@@ -86,7 +86,7 @@
                         <div class="topactions">
                             <button class="up @(_idea.HasUpvoted ? "mine" : "")" @onclick="ToggleUpvote" disabled="@_upvoting"
                                     title="@(_idea.HasUpvoted ? "Remove your upvote" : "Upvote this idea")">
-                                ▲ @_idea.UpvoteCount
+                                <FluentIcon Value="@(new Icons.Regular.Size16.CaretUp())" aria-hidden="true" /> @_idea.UpvoteCount
                             </button>
                             @if (_canEdit)
                             {
