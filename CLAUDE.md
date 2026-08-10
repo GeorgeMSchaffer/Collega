@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository State
 
-Collega has a working solution scaffold and an initial implementation slice. `Collega.sln`, `global.json` (.NET 8 SDK), all five `src/Collega.*` projects, and their `tests/Collega.*.Tests` counterparts exist and build. Before starting or resuming implementation, read `SPEC/Bug Triage.md` and `SPEC/implementation-agent-tracker.md`. Bug Triage is the authoritative pre-feature queue; unresolved `TODO` items take priority and block new feature starts unless the user explicitly approves an exception. The tracker remains authoritative for implementation status over any summary here, which will drift as tasks complete. As of the last tracker update (2026-08-07): Foundation (T001-T004) and Auth Agent (T005-T011) are merged into `dev`; Tenant Administration Agent (T012-T019) is next and not yet started; the Client Agent (Blazor UI, T040-T045) is no longer blocked on UI comp sign-off — `comp-c-review-06-lockin-v5-final.html` is locked (see "Locked (2026-08-07)" below) — but confirm with the user before spawning a UI/UX Developer implementation pass, since that's still a scoped decision.
+Collega has a working solution with a large amount of implementation already merged — do not assume this is an early scaffold. `Collega.sln`, `global.json` (.NET 8 SDK), all five `src/Collega.*` projects, and their `tests/Collega.*.Tests` counterparts exist and build. Before starting or resuming implementation, read `SPEC/Bug Triage.md` and `SPEC/implementation-agent-tracker.md`. Bug Triage is the authoritative pre-feature queue; unresolved `TODO` items take priority and block new feature starts unless the user explicitly approves an exception. **This paragraph intentionally does not summarize current implementation status** — any such summary goes stale the moment it's written (a prior version of this paragraph, frozen at a 2026-08-07 snapshot, was itself the direct cause of a major planning error once enough time and parallel-agent work had passed — see `SPEC/implementation-agent-tracker-archive.md` if curious). `SPEC/implementation-agent-tracker.md`'s Current Status section is the single source of truth for "what's built" — read it fresh every time per the Ground-Truth Verification rule below, not this file.
 
 This repo also contains:
 
@@ -14,6 +14,10 @@ This repo also contains:
 - `FluentUiComps/` — **not part of Collega**, see below
 
 Verify a file/project actually exists and check the tracker before assuming a command will work or a slice is unbuilt — don't rely solely on the descriptions below, which describe the target shape rather than tracking live status.
+
+## Ground-Truth Verification
+
+Before any status, planning, or scope claim about this project — in this session or any future one — re-read `SPEC/implementation-agent-tracker.md`'s Current Status section AND run `git log --oneline -10` fresh in that same turn. Never answer from recollection, even within the same conversation, and even if you're confident you already know the state — this project has repeatedly moved faster than any one conversation's memory of it (large batches of work land via parallel worktree agents, sometimes outside the thread asking the status question). A large date jump, an unfamiliar recent commit, or simply "it's been a while since I last checked" are signals to verify more, not less. `implementation-agent-tracker.md` is deliberately kept short and current-only for this reason — full narrative history lives in `SPEC/implementation-agent-tracker-archive.md`.
 
 
 ## Source of Truth
@@ -27,6 +31,7 @@ Canonical product behavior lives in `SPEC/*.md`. Read the relevant spec before d
 - `SPEC/40-test-strategy.md`
 - `SPEC/50-technical-implementation-plan.md`, `SPEC/50-kubernetes-deployment.md`
 - `SPEC/70-delivery-backlog.md`, `SPEC/80-workstream-roadmap.md`, `SPEC/85-implementation-timeline.md`
+- `SPEC/95-next-sprints.md` — index for the sprint plan covering remaining pre-MVP work (Bug Triage close-out + deferred QA/review debt), as of 2026-08-10 once all originally-scoped MVP epics were merged. Each sprint has its own file under `SPEC/sprints/`, moved to `SPEC/sprints/archive/` on completion — read the index for sequencing, read the per-sprint file for that sprint's actual plan.
 - `SPEC/90-definition-of-done.md`
 - `SPEC/Bug Triage.md` — authoritative pre-feature bug/minor-tweak queue; clear its `TODO` section before starting new features unless the user explicitly approves an exception
 - `SPEC/implementation-agent-tracker.md` — **not product behavior, but the authoritative log of what's actually been built, what's in progress, and what's next**; check this before starting, resuming, or describing the state of implementation work
