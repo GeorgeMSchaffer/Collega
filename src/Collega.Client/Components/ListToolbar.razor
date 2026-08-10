@@ -1,0 +1,112 @@
+@typeparam TItem
+
+@*
+    Reusable list controls for the admin list pages (T-UI-2): an all-column search box and a pager
+    (range indicator, page-size selector, prev/next), both driven by a shared ListState<TItem>.
+    Rendered in two regions so a page can drop the Search box into its command bar and the Pager
+    below its table, matching the /ideas list layout. Filtering/paging is client-side over the
+    already-loaded rows — appropriate for these small, fully-loaded admin lists.
+*@
+
+@if (Region == ToolbarRegion.Search)
+{
+    <div class="lt-search">
+        <input type="search" placeholder="@Placeholder" value="@State.Search"
+               aria-label="@Placeholder" @oninput="OnSearchInput" />
+        @if (!string.IsNullOrEmpty(State.Search))
+        {
+            <button class="btn subtle" type="button" @onclick="ClearSearch">Clear</button>
+        }
+    </div>
+}
+else if (State.TotalCount > 0)
+{
+    <div class="pager">
+        <span class="info">
+            @if (State.FilteredCount == 0)
+            {
+                <text>No results</text>
+                @if (!string.IsNullOrEmpty(State.Search))
+                {
+                    <text> — @State.TotalCount total</text>
+                }
+            }
+            else
+            {
+                <text>Showing @State.RangeStart–@State.RangeEnd of @State.FilteredCount</text>
+                @if (State.FilteredCount != State.TotalCount)
+                {
+                    <text> (filtered from @State.TotalCount)</text>
+                }
+            }
+        </span>
+        <span class="sizesel">
+            Rows per page
+            <select value="@State.PageSize" @onchange="OnPageSizeChanged">
+                @foreach (var option in State.PageSizeOptions)
+                {
+                    <option value="@option">@option</option>
+                }
+            </select>
+        </span>
+        <span class="navbtns">
+            <button type="button" @onclick="Prev" disabled="@(State.ClampedPage <= 1)">‹ Previous</button>
+            <span class="pageind">Page @State.ClampedPage of @State.PageCount</span>
+            <button type="button" @onclick="Next" disabled="@(State.ClampedPage >= State.PageCount)">Next ›</button>
+        </span>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public ListState<TItem> State { get; set; } = default!;
+
+    /// <summary>Which slice of the toolbar to render. Search sits in the command bar; Pager below the table.</summary>
+    [Parameter] public ToolbarRegion Region { get; set; } = ToolbarRegion.Pager;
+
+    [Parameter] public string Placeholder { get; set; } = "Search…";
+
+    /// <summary>Raised after any control mutates the state, so the host page can re-render its rows.</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        State.Search = e.Value?.ToString() ?? "";
+        State.Page = 1;
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task ClearSearch()
+    {
+        State.Search = "";
+        State.Page = 1;
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var size) && size > 0)
+        {
+            State.PageSize = size;
+            State.Page = 1;
+            await OnChanged.InvokeAsync();
+        }
+    }
+
+    private async Task Prev()
+    {
+        if (State.ClampedPage > 1)
+        {
+            State.Page = State.ClampedPage - 1;
+            await OnChanged.InvokeAsync();
+        }
+    }
+
+    private async Task Next()
+    {
+        if (State.ClampedPage < State.PageCount)
+        {
+            State.Page = State.ClampedPage + 1;
+            await OnChanged.InvokeAsync();
+        }
+    }
+}

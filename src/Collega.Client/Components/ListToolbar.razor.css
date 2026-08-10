@@ -1,0 +1,28 @@
+/* Search box for the command bar. Sits inline with BackButton / New… actions. */
+.lt-search { display: inline-flex; align-items: center; gap: 8px; }
+.lt-search input[type=search] { width: 280px; max-width: 100%; }
+
+/* Pager below the table: range info, page-size select, prev/next + page indicator.
+   Matches the /ideas list pager so both lists read as one visual system. */
+.pager { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; flex-wrap: wrap; gap: 12px; }
+.pager .info { font-size: 12.5px; color: var(--ink-3); }
+.pager .sizesel { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-3); }
+.pager .sizesel select { height: 30px; min-height: 30px; line-height: 28px; padding: 0 8px; }
+.pager .navbtns { display: flex; align-items: center; gap: 6px; }
+.pager .navbtns .pageind { font-size: 12.5px; color: var(--ink-3); padding: 0 4px; }
+.pager .navbtns button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--radius-btn);
+  padding: 5px 12px;
+  font-size: 12.5px;
+  cursor: pointer;
+  color: var(--ink-2);
+}
+.pager .navbtns button:disabled { opacity: .4; cursor: default; }
+.pager .navbtns button:not(:disabled):hover { background: #f3f2f1; }
+
+@media (max-width: 640px) {
+  .lt-search input[type=search] { width: 100%; }
+  .lt-search { flex: 1 1 100%; }
+}
