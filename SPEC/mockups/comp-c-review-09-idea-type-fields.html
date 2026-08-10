@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Review 09: Idea-Type Fields</title>
+<style>
+  /* Tokens, rail, and component classes copied verbatim from comp-c-review-06-lockin-v5-final.html / -07 — do not re-derive. */
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
+    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
+    --im-low-deep:#7d6270; --im-low-soft:#f2ecf0;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+    --radius-card:6px; --radius-btn:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
+  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
+  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail a:hover{background:#f3f2f1}
+  .rail .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
+  .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .pagehead .sub{color:var(--ink-3);font-size:13.5px;max-width:680px;line-height:1.5}
+  .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .pagehead .row .grow{flex:1}
+  .ptabs{display:flex;gap:4px;margin-top:18px}
+  .ptabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent}
+  .ptabs a.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .body{padding:26px 40px;max-width:1200px}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;color:var(--accent)}
+  .btn.danger{border-color:transparent;color:var(--err)}
+  .btn.sm{padding:4px 10px;font-size:12px}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn:disabled:hover{background:var(--surface)}
+  input[type=text],input[type=number],textarea,select{border:1px solid #8a8886;border-radius:var(--radius-btn);padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
+  .field{margin-bottom:18px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line)}
+  td{padding:12px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:#faf9f8}
+  tr.dragging{opacity:.4}
+  tr.dragover td{border-top:2px solid var(--accent)}
+  .pill{display:inline-block;padding:3px 11px;border-radius:12px;font-size:12px;font-weight:700}
+  .pill.state-ok{background:#e7f2e7;color:var(--ok)}
+  .pill.state-err{background:#fbe5e7;color:var(--err)}
+  .typebadge{display:inline-flex;align-items:center;gap:6px;padding:3px 11px 3px 9px;border-radius:12px;font-size:12.5px;font-weight:700;white-space:nowrap}
+  .typebadge .ic{font-size:12px;line-height:1}
+  .chip{display:inline-block;padding:2px 9px;border-radius:11px;font-size:11px;font-weight:700}
+  .chip.hi{background:var(--im-high-soft);color:var(--im-high-deep)}
+  .chip.med{background:var(--im-med-soft);color:var(--im-med-deep)}
+  .chip.lo{background:var(--im-low-soft);color:var(--im-low-deep)}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:720px;line-height:1.55}
+  .note code{background:#fff;padding:0 3px;border-radius:3px;border:1px solid var(--line)}
+  .hint{font-size:12px;color:var(--ink-3);margin-top:5px}
+  .charlim{font-size:11px;color:var(--ink-3);font-weight:400}
+  .req{color:var(--err);font-weight:700}
+  .muted{color:var(--ink-3)}
+  .panelform{max-width:620px}
+  .preview{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;background:#faf9f8;border:1px solid var(--line);border-radius:6px;flex-wrap:wrap}
+  .grip{cursor:grab;color:var(--ink-3);font-size:15px}
+  /* color + icon picker */
+  .picker{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .picker .opt{width:30px;height:30px;border-radius:9px;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
+  .picker .opt.sel{border-color:var(--ink)}
+  .iconpick{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .iconpick .opt{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .iconpick .opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+  /* two-pane field picker */
+  .twopane{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:900px}
+  .pane{border:1px solid var(--line);border-radius:var(--radius-card);background:var(--surface);overflow:hidden;min-height:240px;display:flex;flex-direction:column}
+  .pane .ph{padding:10px 14px;border-bottom:1px solid var(--line);font-size:12px;font-weight:700;color:var(--ink-2);display:flex;justify-content:space-between;align-items:center;background:#faf9f8}
+  .pane .lst{flex:1;padding:6px}
+  .frow{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:5px;font-size:13px}
+  .frow:hover{background:#f5f4f2}
+  .frow .nm{flex:1;font-weight:600}
+  .frow .ty{font-size:11px;color:var(--ink-3);font-weight:600;background:#f1f0ee;padding:1px 7px;border-radius:9px}
+  .frow.chosen{border:1px solid #f0efed;margin-bottom:6px;background:var(--surface)}
+  .frow.chosen:hover{background:var(--surface)}
+  .toggle{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--ink-3);cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--accent)}
+  .toggle.on{color:var(--err)}
+  /* segmented type selector on the idea form */
+  .seg{display:flex;gap:10px;flex-wrap:wrap}
+  .seg .opt{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:8px;padding:9px 13px;cursor:pointer;background:var(--surface);font-size:13px;font-weight:600}
+  .seg .opt.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .seg .opt .ic{font-size:15px}
+  .resolved{margin-top:6px}
+  .grpname{font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;margin:22px 0 10px}
+  .rofield{background:#faf9f8;border:1px solid var(--line);border-radius:6px;padding:9px 12px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .rofield .lbl{font-size:12.5px;font-weight:700;color:var(--ink-2);min-width:150px}
+  .rofield .val{font-size:13px;color:var(--ink)}
+  .rofield.archived{opacity:.7;background:#f6f4f2;border-style:dashed}
+  .archtag{font-size:10.5px;font-weight:700;color:var(--ink-3);background:#eae7e3;padding:1px 7px;border-radius:9px}
+  .kv{display:none}.kv.on{display:block}
+  .flash{background:#fff;border:1px solid var(--line);border-left:3px solid var(--warn);padding:8px 12px;border-radius:0 4px 4px 0;font-size:12.5px;color:var(--ink-2);margin-top:10px;max-width:560px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>COMP C REVIEW 9 · IDEA-TYPE FIELDS (direct mapping)</strong>
+  <nav id="tabs">
+    <button data-s="types" class="on">Idea Types — list</button>
+    <button data-s="typeeditor">Idea Type — editor (fields inline)</button>
+    <button data-s="create">Idea — create (resolved fields)</button>
+    <button data-s="detail">Idea — detail (immutable + reassign)</button>
+  </nav>
+</div>
+
+<!-- ============ 1. IDEA TYPES LIST ============ -->
+<section class="screen on" id="s-types">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a href="#">🗂<span>Boards</span></a><a href="#">💡<span>Ideas</span></a><a class="on" href="#">⚙️<span>Settings</span></a><span class="push"></span><span class="avatar">SA</span></aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Settings</a> / <a href="#">Organizations</a> / Acme Corp / Idea Types</div>
+        <div class="row"><div class="grow"><h1>Idea Types</h1><p class="sub">Every idea is exactly one type, chosen at creation. A type carries its own selection of the org's custom fields — so a type's ideas show only the fields that matter. Color + icon give each type a badge on cards and detail.</p></div><button class="btn primary" style="margin-bottom:14px">+ New idea type</button></div>
+        <div class="ptabs"><a class="on" href="#">Active · 3</a><a href="#">Archived · 0</a><a href="#">All · 3</a></div>
+      </div>
+      <div class="body">
+        <div class="card" style="max-width:940px">
+          <table>
+            <thead><tr><th style="width:30px"></th><th>Idea type</th><th>Fields on this type</th><th>Ideas</th><th>State</th><th style="width:150px"></th></tr></thead>
+            <tbody id="typeRows">
+              <tr draggable="true">
+                <td class="grip">⠿</td>
+                <td><span class="typebadge" style="background:var(--accent-soft);color:var(--accent-deep)"><span class="ic">💡</span>Continuous Improvement</span></td>
+                <td>3 fields <span class="muted">(2 required)</span><div class="hint" style="margin-top:2px">Budget, ROI Estimate, Impacted Team</div></td>
+                <td>42</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle sm">Edit</button> <button class="btn danger sm">Archive</button></td>
+              </tr>
+              <tr draggable="true">
+                <td class="grip">⠿</td>
+                <td><span class="typebadge" style="background:#e2f1ee;color:#0f5f54"><span class="ic">🔧</span>Process Revision</span></td>
+                <td>4 fields <span class="muted">(2 required)</span><div class="hint" style="margin-top:2px">Target Release, Risk Level, Compliance Flag, Impacted Team</div></td>
+                <td>18</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle sm">Edit</button> <button class="btn danger sm">Archive</button></td>
+              </tr>
+              <tr draggable="true">
+                <td class="grip">⠿</td>
+                <td><span class="typebadge" style="background:#fbe5e7;color:#8f0b17"><span class="ic">🐞</span>Defect</span></td>
+                <td>7 fields <span class="muted">(0 required)</span><div class="hint" style="margin-top:2px">All org fields — migrated default</div></td>
+                <td>7</td>
+                <td><span class="pill state-ok">Active</span></td>
+                <td><button class="btn subtle sm">Edit</button> <button class="btn danger sm">Archive</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note"><strong>Last-type guard.</strong> When an org is down to one active idea type, its Archive action is disabled with a tooltip — "Cannot archive the last remaining idea type; every idea must have one." Archiving a type in use is a soft delete: existing ideas keep the badge and still resolve their fields; the type just leaves the create picker.
+        <br><br><strong>Migration.</strong> On ship, existing types (e.g. <em>Defect</em>) are mapped to <em>all</em> current org fields, so nothing changes for existing ideas until an admin curates a type's field list.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. IDEA TYPE EDITOR — FIELDS INLINE ============ -->
+<section class="screen" id="s-typeeditor">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a href="#">🗂<span>Boards</span></a><a href="#">💡<span>Ideas</span></a><a class="on" href="#">⚙️<span>Settings</span></a><span class="push"></span><span class="avatar">SA</span></aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Settings</a> / Acme Corp / <a href="#">Idea Types</a> / Continuous Improvement</div><h1>Edit idea type</h1><p class="sub" style="margin-bottom:20px">42 ideas use this type. Choose its identity and the custom fields its ideas show. Type on an existing idea can't be changed by regular users (see the Idea detail tab).</p></div>
+      <div class="body">
+        <div class="card panelform" style="padding:24px;margin-bottom:22px">
+          <div class="field">
+            <label>Name <span class="charlim">23 / 60</span></label>
+            <input type="text" style="width:100%" value="Continuous Improvement" maxlength="60">
+          </div>
+          <div class="field">
+            <label>Color</label>
+            <div class="picker" id="picker-type">
+              <div class="opt sel" data-hex="#5b5fc7" style="background:#5b5fc7">✓</div>
+              <div class="opt" data-hex="#0f7b6c" style="background:#0f7b6c"></div>
+              <div class="opt" data-hex="#2f6fb0" style="background:#2f6fb0"></div>
+              <div class="opt" data-hex="#9a5b00" style="background:#9a5b00"></div>
+              <div class="opt" data-hex="#b10e1c" style="background:#b10e1c"></div>
+              <div class="opt" data-hex="#b23a6b" style="background:#b23a6b"></div>
+              <div class="opt" data-hex="#7a3fb8" style="background:#7a3fb8"></div>
+              <div class="opt" data-hex="#57534e" style="background:#57534e"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Icon</label>
+            <div class="iconpick" id="iconpick">
+              <div class="opt sel">💡</div><div class="opt">🔧</div><div class="opt">🐞</div><div class="opt">📈</div>
+              <div class="opt">🎯</div><div class="opt">🧩</div><div class="opt">📋</div><div class="opt">⚙️</div>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Preview</label>
+            <div class="preview">
+              <span class="typebadge" id="typePreview" style="background:var(--accent-soft);color:var(--accent-deep)"><span class="ic">💡</span>Continuous Improvement</span>
+              <span class="hint" style="margin:0">How this type appears as a badge on cards, the ideas list, and idea detail.</span>
+            </div>
+          </div>
+        </div>
+
+        <label style="margin-bottom:10px">Custom fields on this type <span class="charlim">— pick from the org's fields; drag to order; toggle required per field</span></label>
+        <div class="twopane">
+          <div class="pane">
+            <div class="ph"><span>Available org fields</span><span class="muted" id="availCount">5</span></div>
+            <div class="lst" id="availList">
+              <div class="frow" data-f="Target Release" data-t="Date"><span class="nm">Target Release</span><span class="ty">Date</span><button class="btn subtle sm addf">Add →</button></div>
+              <div class="frow" data-f="Risk Level" data-t="Dropdown"><span class="nm">Risk Level</span><span class="ty">Dropdown</span><button class="btn subtle sm addf">Add →</button></div>
+              <div class="frow" data-f="Compliance Flag" data-t="Boolean"><span class="nm">Compliance Flag</span><span class="ty">Boolean</span><button class="btn subtle sm addf">Add →</button></div>
+              <div class="frow" data-f="Customer Ref" data-t="Text"><span class="nm">Customer Ref</span><span class="ty">Text</span><button class="btn subtle sm addf">Add →</button></div>
+              <div class="frow" data-f="Reference URL" data-t="Url"><span class="nm">Reference URL</span><span class="ty">URL</span><button class="btn subtle sm addf">Add →</button></div>
+            </div>
+          </div>
+          <div class="pane">
+            <div class="ph"><span>On this type — drag to order</span><span class="muted" id="chosenCount">3</span></div>
+            <div class="lst" id="chosenList">
+              <div class="frow chosen" draggable="true" data-f="Budget" data-t="Number">
+                <span class="grip">⠿</span><span class="nm">Budget</span><span class="ty">Number</span>
+                <label class="toggle on"><input type="checkbox" checked>Required</label>
+                <button class="btn danger sm rmf">×</button>
+              </div>
+              <div class="frow chosen" draggable="true" data-f="ROI Estimate" data-t="Number">
+                <span class="grip">⠿</span><span class="nm">ROI Estimate</span><span class="ty">Number</span>
+                <label class="toggle on"><input type="checkbox" checked>Required</label>
+                <button class="btn danger sm rmf">×</button>
+              </div>
+              <div class="frow chosen" draggable="true" data-f="Impacted Team" data-t="Dropdown">
+                <span class="grip">⠿</span><span class="nm">Impacted Team</span><span class="ty">Dropdown</span>
+                <label class="toggle"><input type="checkbox">Required</label>
+                <button class="btn danger sm rmf">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="note"><strong>Direct type→field mapping (the chosen model).</strong> Fields are attached straight to the type — no separate "field set" concept. The org's field <em>pool</em> stays shared (a field like <em>Impacted Team</em> can sit on several types and still reports as one field); each type just selects an ordered subset and sets <strong>required</strong> per field on the type↔field link. Removing a field here hides it for new ideas; existing values are preserved (shown archived on detail), never dropped.</div>
+        <div style="display:flex;gap:10px;margin-top:18px"><button class="btn primary">Save idea type</button><button class="btn danger">Archive type</button><button class="btn">Cancel</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. IDEA CREATE — RESOLVED FIELDS ============ -->
+<section class="screen" id="s-create">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a href="#">🗂<span>Boards</span></a><a class="on" href="#">💡<span>Ideas</span></a><a href="#">⚙️<span>Settings</span></a><span class="push"></span><span class="avatar">JR</span></aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Ideas</a> / New idea</div><h1>New idea</h1><p class="sub" style="margin-bottom:20px">Pick the idea type first — it decides which custom fields appear below.</p></div>
+      <div class="body">
+        <div class="card panelform" style="padding:24px;max-width:620px">
+          <div class="field">
+            <label>Title <span class="req">*</span></label>
+            <input type="text" style="width:100%" placeholder="Short summary of the idea">
+          </div>
+          <div class="field">
+            <label>Idea type <span class="req">*</span></label>
+            <div class="seg" id="typeSeg">
+              <div class="opt sel" data-k="ci" style="border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)"><span class="ic">💡</span>Continuous Improvement</div>
+              <div class="opt" data-k="pr"><span class="ic">🔧</span>Process Revision</div>
+              <div class="opt" data-k="df"><span class="ic">🐞</span>Defect</div>
+            </div>
+            <p class="hint">Type is set once at creation and can't be changed later by regular users.</p>
+          </div>
+
+          <div class="grpname">Custom fields <span class="muted" id="resolvedFor">· Continuous Improvement</span></div>
+          <div class="resolved">
+            <div class="kv on" data-k="ci">
+              <div class="field"><label>Budget <span class="req">*</span></label><input type="number" style="width:100%" placeholder="e.g. 50000"></div>
+              <div class="field"><label>ROI Estimate <span class="req">*</span></label><input type="number" style="width:100%" placeholder="e.g. 120000"></div>
+              <div class="field" style="margin-bottom:0"><label>Impacted Team</label><select style="width:100%"><option>—</option><option>Support</option><option>Engineering</option><option>Sales</option></select></div>
+            </div>
+            <div class="kv" data-k="pr">
+              <div class="field"><label>Target Release <span class="req">*</span></label><input type="text" style="width:100%" placeholder="yyyy-mm-dd"></div>
+              <div class="field"><label>Risk Level <span class="req">*</span></label><select style="width:100%"><option>—</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+              <div class="field"><label>Compliance Flag</label><select style="width:100%"><option>—</option><option>Yes</option><option>No</option></select></div>
+              <div class="field" style="margin-bottom:0"><label>Impacted Team</label><select style="width:100%"><option>—</option><option>Support</option><option>Engineering</option><option>Sales</option></select></div>
+            </div>
+            <div class="kv" data-k="df">
+              <div class="flash" style="margin-top:0;margin-bottom:12px">This type carries <strong>all org fields</strong> (migrated default — none marked required). An admin can trim it on the Idea Type editor.</div>
+              <div class="field"><label>Budget</label><input type="number" style="width:100%"></div>
+              <div class="field"><label>ROI Estimate</label><input type="number" style="width:100%"></div>
+              <div class="field"><label>Target Release</label><input type="text" style="width:100%" placeholder="yyyy-mm-dd"></div>
+              <div class="field"><label>Risk Level</label><select style="width:100%"><option>—</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+              <div class="field"><label>Compliance Flag</label><select style="width:100%"><option>—</option><option>Yes</option><option>No</option></select></div>
+              <div class="field"><label>Customer Ref</label><input type="text" style="width:100%"></div>
+              <div class="field" style="margin-bottom:0"><label>Reference URL</label><input type="text" style="width:100%"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:22px"><button class="btn primary">Create idea</button><button class="btn">Cancel</button></div>
+        </div>
+        <div class="note"><strong>Open question #7 shown here:</strong> the type selector is an inline segmented control at the top of the form; switching it reflows the Custom Fields section live (try the three options). Alternative under review — a modal type chooser as a first step before the form opens.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. IDEA DETAIL — IMMUTABLE + ADMIN REASSIGN ============ -->
+<section class="screen" id="s-detail">
+  <div class="shell">
+    <aside class="rail"><span class="mark">CG</span><a href="#">🏠<span>Home</span></a><a href="#">🗂<span>Boards</span></a><a class="on" href="#">💡<span>Ideas</span></a><a href="#">⚙️<span>Settings</span></a><span class="push"></span><span class="avatar">SA</span></aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Ideas</a> / Streamline onboarding checklist</div>
+        <div class="row"><div class="grow"><h1>Streamline onboarding checklist</h1>
+          <p class="sub" style="margin-bottom:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="typebadge" style="background:var(--accent-soft);color:var(--accent-deep)"><span class="ic">💡</span>Continuous Improvement</span>
+            <span class="chip hi">High priority</span>
+            <span class="muted">· In Progress · opened by J. Rivera</span>
+          </p></div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="card panelform" style="padding:24px;max-width:640px">
+          <div class="field">
+            <label>Idea type</label>
+            <div class="preview" style="justify-content:space-between">
+              <span class="typebadge" style="background:var(--accent-soft);color:var(--accent-deep)"><span class="ic">💡</span>Continuous Improvement</span>
+              <button class="btn sm" id="reassignBtn">Reassign type…</button>
+            </div>
+            <p class="hint">Read-only for regular users. <strong>Reassign</strong> is an admin-only break-glass action for a mis-typed idea — it re-resolves the type's fields; values outside the new type's fields are archived, not lost.</p>
+            <div class="kv" id="reassignBox" style="margin-top:10px">
+              <div class="card" style="padding:14px;background:#faf9f8">
+                <label>Reassign to <span class="muted">(admin)</span></label>
+                <select style="width:100%;margin-bottom:8px"><option>Continuous Improvement</option><option>Process Revision</option><option>Defect</option></select>
+                <div class="flash" style="margin-top:0">Changing type re-resolves custom fields. <strong>ROI Estimate</strong> and <strong>Budget</strong> aren't on Process Revision — their values will be kept but hidden (archived). This is logged to the audit trail.</div>
+                <div style="display:flex;gap:8px;margin-top:10px"><button class="btn primary sm">Confirm reassignment</button><button class="btn sm" id="reassignCancel">Cancel</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grpname">Custom fields</div>
+          <div class="rofield"><span class="lbl">Budget</span><span class="val">$48,000</span></div>
+          <div class="rofield"><span class="lbl">ROI Estimate</span><span class="val">$120,000</span></div>
+          <div class="rofield"><span class="lbl">Impacted Team</span><span class="val">Support</span></div>
+          <div class="rofield archived"><span class="lbl">Risk Level <span class="archtag">archived</span></span><span class="val muted">Medium</span></div>
+          <div class="hint" style="margin-top:2px">"Risk Level" was removed from this type after this idea was created. Its value is preserved and shown muted, never dropped — same treatment as a soft-deleted field.</div>
+
+          <div style="display:flex;gap:10px;margin-top:22px"><button class="btn primary">Edit idea</button></div>
+        </div>
+        <div class="note"><strong>Open questions #2, #8, #9 shown here:</strong> immutable type displayed as a read-only badge; the admin-only <em>Reassign</em> hatch (brainstorm amendment); and the archived out-of-type value treatment reusing the existing soft-deleted-field pattern.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs=document.querySelectorAll('#tabs button');
+  tabs.forEach(b=>b.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+
+  // Color picker (type)
+  const picker=document.getElementById('picker-type');
+  const typePreview=document.getElementById('typePreview');
+  function tint(hex){return hex+'22';}
+  picker.querySelectorAll('.opt').forEach(opt=>{
+    opt.addEventListener('click',()=>{
+      picker.querySelectorAll('.opt').forEach(o=>{o.classList.remove('sel');o.textContent='';});
+      opt.classList.add('sel');opt.textContent='✓';
+      typePreview.style.color=opt.dataset.hex;typePreview.style.background=tint(opt.dataset.hex);
+    });
+  });
+  // Icon picker
+  const iconpick=document.getElementById('iconpick');
+  iconpick.querySelectorAll('.opt').forEach(opt=>{
+    opt.addEventListener('click',()=>{
+      iconpick.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+      opt.classList.add('sel');
+      typePreview.querySelector('.ic').textContent=opt.textContent;
+    });
+  });
+
+  // Two-pane add/remove + required toggle
+  const availList=document.getElementById('availList');
+  const chosenList=document.getElementById('chosenList');
+  function recount(){
+    document.getElementById('availCount').textContent=availList.querySelectorAll('.frow').length;
+    document.getElementById('chosenCount').textContent=chosenList.querySelectorAll('.frow').length;
+  }
+  function wireToggle(row){
+    const t=row.querySelector('.toggle');const cb=t.querySelector('input');
+    cb.addEventListener('change',()=>t.classList.toggle('on',cb.checked));
+  }
+  function makeChosen(name,type){
+    const row=document.createElement('div');
+    row.className='frow chosen';row.draggable=true;row.dataset.f=name;row.dataset.t=type;
+    row.innerHTML='<span class="grip">⠿</span><span class="nm">'+name+'</span><span class="ty">'+type+'</span><label class="toggle"><input type="checkbox">Required</label><button class="btn danger sm rmf">×</button>';
+    wireToggle(row);wireRemove(row);wireDrag(row);
+    return row;
+  }
+  function wireRemove(row){
+    row.querySelector('.rmf').addEventListener('click',()=>{
+      const name=row.dataset.f,type=row.dataset.t;row.remove();
+      const back=document.createElement('div');
+      back.className='frow';back.dataset.f=name;back.dataset.t=type;
+      back.innerHTML='<span class="nm">'+name+'</span><span class="ty">'+type+'</span><button class="btn subtle sm addf">Add →</button>';
+      wireAdd(back);availList.appendChild(back);recount();
+    });
+  }
+  function wireAdd(row){
+    row.querySelector('.addf').addEventListener('click',()=>{
+      const name=row.dataset.f,type=row.dataset.t;row.remove();
+      chosenList.appendChild(makeChosen(name,type));recount();
+    });
+  }
+  let dragRow=null;
+  function wireDrag(row){
+    row.addEventListener('dragstart',()=>{dragRow=row;setTimeout(()=>row.classList.add('dragging'),0);});
+    row.addEventListener('dragend',()=>{row.classList.remove('dragging');dragRow=null;});
+    row.addEventListener('dragover',e=>{e.preventDefault();
+      const after=[...chosenList.querySelectorAll('.frow:not(.dragging)')].find(r=>e.clientY<=r.getBoundingClientRect().top+r.offsetHeight/2);
+      if(after)chosenList.insertBefore(dragRow,after);else chosenList.appendChild(dragRow);
+    });
+  }
+  availList.querySelectorAll('.frow').forEach(wireAdd);
+  chosenList.querySelectorAll('.frow').forEach(r=>{wireToggle(r);wireRemove(r);wireDrag(r);});
+
+  // Idea create — reflow resolved fields on type change
+  const seg=document.getElementById('typeSeg');
+  const labels={ci:'Continuous Improvement',pr:'Process Revision',df:'Defect'};
+  seg.querySelectorAll('.opt').forEach(opt=>{
+    opt.addEventListener('click',()=>{
+      seg.querySelectorAll('.opt').forEach(o=>{o.classList.remove('sel');o.style.borderColor='';o.style.boxShadow='';});
+      opt.classList.add('sel');opt.style.borderColor='var(--accent)';opt.style.boxShadow='0 0 0 2px var(--accent-soft)';
+      const k=opt.dataset.k;
+      document.querySelectorAll('.resolved .kv').forEach(g=>g.classList.toggle('on',g.dataset.k===k));
+      document.getElementById('resolvedFor').textContent='· '+labels[k];
+    });
+  });
+
+  // Idea detail — reassign box
+  document.getElementById('reassignBtn').addEventListener('click',()=>document.getElementById('reassignBox').classList.add('on'));
+  document.getElementById('reassignCancel').addEventListener('click',()=>document.getElementById('reassignBox').classList.remove('on'));
+</script>
+</body>
+</html>
