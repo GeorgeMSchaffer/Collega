@@ -91,7 +91,7 @@ Key rule: all tenant-owned data is organization-scoped; Site Admin is global and
 - Limits: title 150, description 4000, comment body 2000, tag name 100.
 - Default status is the left-most swimlane when omitted at create time.
 - Board cards remain compact: title, priority, assignee display, upvote state.
-- Clicking card title navigates to the full-page Idea Detail view (`/ideas/{ideaId}/edit`) for full edit workflow; the same view is reached from the Ideas list.
+- Clicking card title opens the Idea Detail drawer (right slide-in; addressable as `/ideas/{ideaId}`, `?idea={ideaId}` over lists/boards) for full edit workflow; the same drawer is reached from the Ideas list. Create uses a centered modal. (See `SPEC/20-feature-client-ui.md` → Idea Detail Surface.)
 - Ideas in `Complete` remain editable and collaborative.
 - Mentions resolve by same-organization email only.
 - Unresolved mentions show inline validation and block save.

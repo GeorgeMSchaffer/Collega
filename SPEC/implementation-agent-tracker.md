@@ -36,6 +36,21 @@ Four independent units built in isolated worktree agents off `dev`, merged centr
   - **S3 — UDF columns in idea CSV (T060):** export appends one column per active UDF field (Dropdown/MultiSelect show labels); import reads UDF columns by field name, maps labels→ids / Yes-No→bool, then `FieldValueValidator` enforces required + per-type. `IIdeaRepository.GetFieldValuesByIdeaIdsAsync` added for bulk export.
   - **All UDF MVP work (Epic 9) is now complete** (backend slice 1 + client slices 2 & 3). Remaining MVP items are the non-UDF leftovers below.
 
+## Idea Detail Surface — slide-in drawer + create modal (DESIGN LOCKED 2026-08-10, NOT YET BUILT)
+Design decision only — no implementation has started. Locked reference: `SPEC/mockups/comp-c-review-09-detail-surfaces.html` (Right slide-in pattern). Canonical spec: `SPEC/20-feature-client-ui.md` → **Idea Detail Surface**. This is the **next pre-MVP implementation item** (user-approved as the exception to the current Bug Triage `TODO` gate); it absorbs the related T-UI-2 Ideas-list gaps and supersedes the full-page Idea Detail everywhere.
+
+Decisions (all user-confirmed 2026-08-10):
+- **Detail + inline edit → right slide-in drawer (~620px);** **create → centered modal (~760px).** The drawer opens in a read view with an Edit action that swaps the body in place (Cancel / Save changes footer).
+- **All idea entry points** (Ideas list, Board List rows, Swim Lane cards) open the drawer; the standalone full-page `/ideas/{ideaId}/edit` route is **retired**.
+- **URL-addressable:** `?idea={ideaId}` appended to the current route (`/ideas?idea=…`, `/board/{boardId}?idea=…`); bare `/ideas/{ideaId}` opens the Ideas list with the drawer open; closing drops the param. Notification/mention `ideaLink` is now `/ideas/{ideaId}`.
+- **Full parity in the drawer:** all edit fields + UDFs, tags, mentions, 0–5 assignees, comments, upvote, status move (live re-slot behind the drawer), admin-only delete.
+- **After create:** modal closes, new row/card appears in place, **no** auto-opened drawer.
+- Inaccessible `idea` id → underlying list/board renders with a not-found/permission notice, no drawer.
+- Narrow viewport: drawer → full-width sheet, modal → full-screen (first locked mobile pass for these surfaces; broader mobile pass still open).
+- Implementation impact: replaces the planned full-page `IdeaDetail.razor` navigation (T044 / C6) with a drawer component overlaid on the Ideas list and board pages, driven by a query-string parameter; create moves to a modal. Confirm with the user before spawning a UI/UX implementation pass.
+
+Specs updated for this decision (2026-08-10): `20-feature-client-ui.md`, `20-feature-client-ui-revisions.md`, `20-feature-ideas-and-engagement.md`, `20-feature-notifications.md`, `20-feature-issues-and-delivery.md`, `20-feature-user-defined-fields.md`, `30-Contracts.md`, `40-test-strategy.md`, `50-technical-implementation-plan.md`, `60-spec-q-and-a-backlog.md`, `70-delivery-backlog.md`, `85-implementation-timeline.md`, `Specs Overview.md`, `draft-porting-proposal.md`, `CLAUDE.md`, and `Bug Triage.md`.
+
 ## Current Status
 - **Major parallel-agent push completed 2026-08-08.** `dev` tip `bf15089`. Merged this session, in order, each build 0/0 and full-suite green after merge: Tenant Administration (T012-T019, merge `80782f4`), Workflow Configuration (T020-T024, merge `218bfd3`), Blazor client app shell (merge `9cf5d3a`), Collaboration (T025-T036, merge `bf15089`). Foundation (T001-T004) and Auth (T005-T011) were merged previously. **Test count on `dev` (updated 2026-08-08 after the QA pass + Idea Field Options merge): 330 passing** — Domain 80, Application 136, Infrastructure 63, API 51. The Domain/Application/Infrastructure unit projects are no longer empty: the deferred unit-test QA landed (Domain-invariant suite + Application use-case + Infrastructure repo/seed tests).
 - **Backend MVP slices T001-T036 are now all merged into `dev`.** Remaining backend: Events Agent (T037-T039, notification events) — next backend slice. Then Hardening Agent (T046-T052, incl. the deferred full QA/unit-test pass).
@@ -253,7 +268,7 @@ Three page slices built by parallel background worktree agents off `dev` @ `7fd6
 - T043 Build board and status administration workflows.
 - T044 Build idea detail, tags, mentions, comments, and upvote workflows.
 - T045 Reflect Site Admin, Org Admin, User, and Read Only boundaries in the UI.
-- C6-Kanban Board detail view (`/board/{boardId}`, standalone alongside — not a replacement for — the `/ideas` list page): board picker (localStorage persist), compact cards (title/priority/assignee/upvote), title-click navigates to the full-page Idea Detail view at `/ideas/{ideaId}/edit` (Cancel/Save/Move in Board — no overlay, per the Comp C pivot), New Idea button (hidden for ReadOnly), search by title/tag/assignee, filter chips, card drag to `MoveIdeaStatusAsync` (optimistic + rollback), admin column reorder to `UpdateStatusAsync` (immediate-save on drop + rollback), HTML5 DnD desktop-only, components in `Shared/Kanban/`.
+- C6-Kanban Board detail view (`/board/{boardId}`, standalone alongside — not a replacement for — the `/ideas` list page): board picker (localStorage persist), compact cards (title/priority/assignee/upvote), title-click opens the Idea Detail slide-in drawer (`?idea={ideaId}` over the board; addressable as `/ideas/{ideaId}`) — Edit/Cancel/Save changes/Move in Board (revised 2026-08-10, superseding the interim full-page `/ideas/{ideaId}/edit`), New Idea button (hidden for ReadOnly), search by title/tag/assignee, filter chips, card drag to `MoveIdeaStatusAsync` (optimistic + rollback), admin column reorder to `UpdateStatusAsync` (immediate-save on drop + rollback), HTML5 DnD desktop-only, components in `Shared/Kanban/`.
 
 ### Hardening Agent
 - T046 Align OpenAPI with the written contracts.

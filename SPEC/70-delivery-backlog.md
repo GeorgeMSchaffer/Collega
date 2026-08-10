@@ -246,7 +246,7 @@ Tasks:
 - render one column per status on the selected board, ordered by `Status.SortOrder`; horizontal scroll on overflow
 - restyle the Board detail hierarchy, full-height lanes, density, cards, tag rows, persona footers, and age placement from `mockups/sprint-management/idea-board.html`; preserve configured statuses and approved controls, excluding demo-only pivots, conversion actions, duplicate commands, and sprint features
 - render compact idea cards showing title, priority, Business Impact chip, first three alphabetical tags plus `+N`, first three ordered assignee personas plus `+N`, viewer-local submission age, current-user upvote control/count, and comment control/count
-- clicking a card title navigates to the full-page Idea Detail view (`/ideas/{ideaId}/edit`, no overlay); fields: title, priority, due date, description, zero-to-five assignees, zero-to-10 tags, mentions, comments; actions: Cancel, Save Idea, Move in Board
+- clicking a card title opens the Idea Detail drawer (right slide-in overlay; URL gains `?idea={ideaId}`, addressable as `/ideas/{ideaId}`); fields: title, priority, due date, description, zero-to-five assignees, zero-to-10 tags, mentions, comments; actions: Edit idea, Cancel, Save changes, Move in Board; create uses the centered modal
 - add primary **New Idea** button in board header that navigates to Idea Detail in create mode (hidden for ReadOnly users)
 - add filter chips (All / Created by me / Assigned to me) and search input (filters by title, tag, or assignee, client-side); filtering is combinable; empty columns remain visible with "No ideas" placeholder
 - implement card drag-and-drop from a dedicated handle: optimistic column move, one status call, revert on failure with error toast

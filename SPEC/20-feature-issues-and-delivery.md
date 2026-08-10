@@ -236,7 +236,7 @@ All under `/api/v1`, org-scoped, following existing conventions and problem-deta
 Reuses the existing audit-event and `INotificationWriter` patterns (`SPEC/20-feature-notifications.md`); self-notifications remain suppressed.
 
 - **Audit events** (new types): `IdeaPromotedToIssue`, `IssueReturnedToDiscovery`, `IssueDeliveryStatusChanged`, `IssueSprintAssignmentChanged`, `SprintCreated`, `SprintStarted`, `SprintCompleted`, `SprintUpdated`, `SprintDeleted`.
-- **Notification events** (new types, notify idea author + assignees): `IdeaPromoted` and `IssueDeliveryStatusChanged`. The stored canonical link remains `/ideas/{ideaId}/edit` (the same item), consistent with the notifications spec.
+- **Notification events** (new types, notify idea author + assignees): `IdeaPromoted` and `IssueDeliveryStatusChanged`. The stored canonical link is `/ideas/{ideaId}` (drawer-addressable, the same item), consistent with the notifications spec.
 
 ---
 
@@ -318,7 +318,7 @@ Approving this spec requires these canonical edits *before* implementation (per 
 
 1. **`SPEC/20-feature-ideas-and-engagement.md`** — introduce the Discovery/Delivery **phase** concept, the optional `Effort` field, and the **promotion gate**; note that the ideation board now filters to `Phase == Discovery`; record that the deferred *Approval Workflow* is partially realized as the promotion gate (the always-review-before-commit principle already applies to AI-assisted creation).
 2. **`SPEC/20-feature-boards-and-statuses.md`** — document ideation-board phase filtering and the new **Sprint board** with its fixed delivery statuses; cross-reference the promotion gate against the deferred approval-workflow decisions.
-3. **`SPEC/20-feature-notifications.md`** — add `IdeaPromoted` and `IssueDeliveryStatusChanged` notification types (recipients: idea author + assignees; self-suppressed; link `/ideas/{ideaId}/edit`).
+3. **`SPEC/20-feature-notifications.md`** — add `IdeaPromoted` and `IssueDeliveryStatusChanged` notification types (recipients: idea author + assignees; self-suppressed; link `/ideas/{ideaId}`).
 4. **`SPEC/30-Contracts.md`** — add the promote / return-to-discovery / delivery-status / sprint-assignment routes and the sprint CRUD + lifecycle routes and the `/delivery` query.
 5. **`SPEC/20-feature-client-ui.md`** and **`SPEC/20-feature-client-ui-revisions.md`** — add the Delivery rail destination, the Sprint board, the promotion dialog, and the provenance panel; note the still-open mobile/narrow-viewport pass applies.
 6. **`SPEC/70-delivery-backlog.md`** / **`SPEC/80-workstream-roadmap.md`** — add this slice as a post-MVP milestone ("Idea → Delivery"), sequenced after the MVP release gate.

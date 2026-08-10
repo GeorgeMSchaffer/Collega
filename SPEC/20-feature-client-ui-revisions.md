@@ -55,7 +55,7 @@ See `SPEC/20-feature-client-ui.md` NAVIGATION for the authoritative rail descrip
 - Client layout and interaction details should align to the mockup set in `SPEC/mockups`:
   - `01-login-and-org-selection.svg` for login/register baseline structure (while using invite-code self-registration behavior from current auth contracts).
   - `02-admin-organizations.svg`, `03-admin-users.svg`, and `06-status-management.svg` for settings administration list/form rhythm.
-  - `04-board-overview.svg`, `05-idea-detail-panel.svg`, and `12-idea-card-and-overlay.svg` for board and idea interaction patterns — **superseded**: these SVGs depict an idea-detail overlay, which the Comp C pivot replaced with the full-page Idea Detail view at `/ideas/{ideaId}/edit` (see `SPEC/20-feature-client-ui.md` Visual Design Direction). Use `SPEC/mockups/comp-c-review-04-idea-detail.html` for idea-detail interaction patterns instead once locked.
+  - `04-board-overview.svg`, `05-idea-detail-panel.svg`, and `12-idea-card-and-overlay.svg` for board and idea interaction patterns — **superseded**: the Comp C pivot first replaced these SVG overlays with a full-page Idea Detail, and the 2026-08-10 decision then replaced that full page with a right slide-in **drawer** (detail + inline edit) plus a centered **create modal**, addressable at `/ideas/{ideaId}` / `?idea={ideaId}` (see `SPEC/20-feature-client-ui.md` → Idea Detail Surface). Use `SPEC/mockups/comp-c-review-09-detail-surfaces.html` (Right slide-in pattern) as the locked reference for idea detail/edit/create; `comp-c-review-04-idea-detail.html` is retained only for the field-level content it enumerates.
   - `10-board-empty-state-guided-setup.svg` for guided empty-state behavior.
 
 ## Settings Area (formerly "Admin")

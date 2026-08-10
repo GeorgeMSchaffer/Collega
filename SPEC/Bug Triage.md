@@ -14,6 +14,15 @@ This document is the authoritative queue for bugs and minor tweaks that must be 
  * Move the add new button on list pages to be on the right.
  * 
 
+### T-UI-3 · Idea Detail slide-in drawer + create modal — **NEXT MAJOR ITEM (pre-MVP)**
+Design locked 2026-08-10 (user-approved as the exception to this triage gate). Replace the full-page Idea Detail with a right slide-in **drawer** (detail + inline edit, ≈620px) and a centered **create modal** (≈760px), used from every idea entry point (Ideas list, Board List rows, Swim Lane cards). Canonical spec: `SPEC/20-feature-client-ui.md` → **Idea Detail Surface**; reference comp `SPEC/mockups/comp-c-review-09-detail-surfaces.html` (Right slide-in pattern); full decision log in `SPEC/implementation-agent-tracker.md`.
+- Drawer = read view with Edit (in-place swap, Cancel/Save changes footer); create = modal, returns to list on success (no auto-open drawer).
+- Full parity in the drawer: all fields + UDFs, tags, mentions, 0–5 assignees, comments, upvote, status move (live re-slot behind the drawer), admin-only delete.
+- URL-addressable via `?idea={ideaId}` on the current route; bare `/ideas/{ideaId}` opens the list with the drawer open; the `/ideas/{ideaId}/edit` route is retired; notification `ideaLink` → `/ideas/{ideaId}`.
+- Inaccessible id → underlying list/board with a not-found/permission notice, no drawer. Narrow viewport: full-width drawer sheet + full-screen modal.
+- **Fold in T-UI-2's Ideas-list gaps** (uniform page-size options, all-column search, Idea Type/Status dropdown filters) as part of this pass since it rebuilds the list interactions.
+- Confirm with the user before spawning a UI/UX Developer implementation pass (scoped decision per CLAUDE.md).
+
 ### T-UI-1 · Navigation icon family
 Replace the current navigation icons with the [Fluent System Icons](https://github.com/microsoft/fluentui-system-icons) family across the rail/navigation.
 - *Status note (2026-08-10):* a Fluent System Icons 4.11.0 refresh already landed for the rail / reorder / drag surfaces (see COMPLETED 2026-08-09). Confirm whether that pass fully satisfies this item or a broader icon sweep is still wanted before closing.

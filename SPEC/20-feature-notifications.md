@@ -26,12 +26,12 @@ Self-notifications are suppressed: no event is written when the actor and the re
 Each notification event persists a canonical link to the idea:
 
 ```
-/ideas/{ideaId}/edit
+/ideas/{ideaId}
 ```
 
-This is the single-idea edit route used by the Ideas page. The link is stored in the `NotificationEvent` row alongside the idea title.
+This is the canonical single-idea route; following it opens the Ideas list with that idea's detail drawer open (see the Idea Detail Surface in `SPEC/20-feature-client-ui.md`). The link is stored in the `NotificationEvent` row alongside the idea title.
 
-> **Change from prior spec**: The earlier route pattern `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}` is superseded by `/ideas/{ideaId}/edit` to match the updated client routing (see `SPEC/20-feature-client-ui-revisions.md`).
+> **Change from prior spec**: The earlier route pattern `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}` and the interim `/ideas/{ideaId}/edit` full-page route are both superseded by `/ideas/{ideaId}` (drawer-addressable) to match the updated client routing (see `SPEC/20-feature-client-ui.md` Idea Detail Surface and `SPEC/20-feature-client-ui-revisions.md`).
 
 ## Implementation Design (MVP)
 
@@ -47,12 +47,12 @@ This is the single-idea edit route used by the Ideas page. The link is stored in
 ### Infrastructure layer
 - `NotificationWriter` implements `INotificationWriter`
 - Inserts one `NotificationEvent` row per recipient per event (no batching in MVP)
-- Fields populated: `RecipientUserId`, `EventType`, `IdeaId`, `IdeaTitle`, `OrgId`, `TriggeredByUserId`, `Link` (`/ideas/{ideaId}/edit`), `OccurredAtUtc`
+- Fields populated: `RecipientUserId`, `EventType`, `IdeaId`, `IdeaTitle`, `OrgId`, `TriggeredByUserId`, `Link` (`/ideas/{ideaId}`), `OccurredAtUtc`
 - No SMTP, email client, or outbound HTTP — purely database writes
 
 ### Test coverage (T037–T039)
 - **T037**: `WorkflowManagementService` emits `IdeaMention` / `CommentMention` / `CommentAdded` / `IdeaStatusChanged` events via `INotificationWriter`; `FakeNotificationWriter` collects events for assertion.
-- **T038**: Emitted event `Link` field equals `/ideas/{ideaId}/edit`.
+- **T038**: Emitted event `Link` field equals `/ideas/{ideaId}`.
 - **T039**: Infrastructure DI registration test asserts `INotificationWriter` resolves to `NotificationWriter` and that no `SmtpClient` or `IHttpClientFactory` descriptor is present in the service collection.
 
 ## Delivery Rules (later phase)
@@ -65,7 +65,7 @@ This is the single-idea edit route used by the Ideas page. The link is stored in
 - [ ] `INotificationWriter` and `NotificationWriter` are implemented and registered
 - [ ] `WorkflowManagementService` calls `INotificationWriter` for all four trigger events
 - [ ] Self-notifications are suppressed (actor == recipient → no event written)
-- [ ] Each emitted event's `Link` field stores `/ideas/{ideaId}/edit`
+- [ ] Each emitted event's `Link` field stores `/ideas/{ideaId}`
 - [ ] No SMTP, email client, or outbound HTTP code is present in the notification path (T039 test guard)
 - [ ] Notification events do not require read or query API endpoints in MVP
 - [ ] Email delivery and per-user preferences remain deferred outside MVP

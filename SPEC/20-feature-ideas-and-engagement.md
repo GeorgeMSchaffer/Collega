@@ -46,7 +46,7 @@ Users can create, discuss, organize, and support ideas within their organization
    - Submission age in viewer-local calendar days
    - Upvote icon button and count
    - Add Comment icon button and comment count
-4. Clicking the idea title from a board card navigates to the full-page Idea Detail view for full idea review and editing (`/ideas/{ideaId}/edit`; see `SPEC/20-feature-client-ui.md`). This is the same Idea Detail view reached from the Ideas list, not a separate surface.
+4. Clicking the idea title from a board card opens the Idea Detail drawer (right slide-in overlay) for full idea review and editing (URL gains `?idea={ideaId}`; addressable as `/ideas/{ideaId}`; see `SPEC/20-feature-client-ui.md` Idea Detail Surface). This is the same drawer reached from the Ideas list, not a separate surface.
 5. Idea Detail must support all editable idea fields and collaboration fields, including tags, mentions, due date, assignment, comments, and upvote state.
 6. Ideas in the `Complete` status remain editable and continue to allow comments, mentions, and upvotes.
 7. When a `statusId` is provided on idea create or status update, it must correspond to an active swimlane on the idea's target board; providing a status that is not on the board is a validation error.
@@ -296,7 +296,7 @@ When this feature is implemented it must address:
 - [ ] Submission age uses viewer-local calendar dates, displays `0 days ago`, singular `1 day ago`, or plural `{N} days ago`, and clamps future values to zero
 - [ ] Card upvote state reflects whether the current user has upvoted and toggles with optimistic rollback on failure
 - [ ] Clicking the card comment control opens Idea Detail and focuses the comment composer
-- [ ] Clicking an idea title from a board card navigates to the full-page Idea Detail view (`/ideas/{ideaId}/edit`)
+- [ ] Clicking an idea title from a board card opens the Idea Detail drawer (URL gains `?idea={ideaId}`; addressable as `/ideas/{ideaId}`)
 - [ ] Idea Detail supports all idea edit fields including tags, mentions, assignment, and optional due date
 - [ ] Mentions are restricted to users in the same organization
 - [ ] Comment authors can edit and delete their own comments

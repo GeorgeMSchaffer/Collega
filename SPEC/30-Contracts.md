@@ -966,7 +966,7 @@ Request body:
 
 UI behavior contract:
 - board cards remain compact and show `title`, `priority`, Business Impact chip, the first three alphabetical `tagNames` plus tag overflow count, the first three ordered `assignees` plus assignee overflow count, viewer-local age derived from `createdAtUtc`, current-user upvote state/count, and comment count.
-- selecting the card title navigates to the full-page Idea Detail view (`/ideas/{ideaId}/edit`) for full idea editing.
+- selecting the card title opens the Idea Detail drawer (right slide-in; URL gains `?idea={ideaId}`, addressable as `/ideas/{ideaId}`) for full idea editing.
 - Idea Detail supports all editable idea fields and collaboration fields.
 - selecting the card comment action navigates to Idea Detail and focuses the comment composer.
 - description updates are accepted only from the idea author, an in-scope Org Admin, or Site Admin; unauthorized description changes return `403 Forbidden`.
@@ -1174,7 +1174,7 @@ Success response `200`:
 - `actorUserId` GUID string
 - `recipientUserId` GUID string
 - `occurredAtUtc` UTC timestamp
-- `ideaLink` string using `/ideas/{ideaId}/edit` (superseded from the earlier `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}` pattern; see `SPEC/20-feature-notifications.md`)
+- `ideaLink` string using `/ideas/{ideaId}` (drawer-addressable; supersedes both the earlier `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}` and the interim `/ideas/{ideaId}/edit` patterns; see `SPEC/20-feature-notifications.md`)
 - `message` human-readable event summary string
 - `metadata` object for event-specific context
 

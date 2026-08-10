@@ -36,7 +36,7 @@ The active item in the application's primary navigation has a flat rectangular b
 Replaces the previous flat-list design (All / Created by me / Assigned to me filter tabs and inline edit form). Ideas are displayed as cards arranged in swimlane columns, where each column represents one `Status` from the selected board.
 
 ### Board Header
-The board header contains: board name (left), search input (placeholder: "Search title, tag, assignee"), and a primary **New Idea** button (right). The New Idea button navigates to the Idea Detail page in create mode, pre-populating the target status as the left-most column. The New Idea button is hidden for ReadOnly users.
+The board header contains: board name (left), search input (placeholder: "Search title, tag, assignee"), and a primary **New Idea** button (right). The New Idea button opens the create modal (centered layover; see Idea Detail Surface below), pre-populating the target status as the left-most column. The New Idea button is hidden for ReadOnly users.
 
 ### Swimlane Columns
 - One column per `Status` on the selected board, ordered by `Status.SortOrder` ascending.
@@ -44,7 +44,7 @@ The board header contains: board name (left), search input (placeholder: "Search
 - Columns scroll horizontally if they overflow the viewport.
 
 ### Idea Cards
-Cards are compact. Each card shows: title (clickable, 2-line truncation), priority badge, Business Impact color chip, assigned tags, assigned-user personas, submission age, upvote icon button/count, and Add Comment icon button/count. A dedicated drag handle starts card movement; interactive controls never start a drag. Clicking the card title navigates to the full-page Idea Detail view at `/ideas/{ideaId}/edit` — the same view reached from the Ideas list (see `SPEC/20-feature-client-ui-revisions.md`). The page supports full editing: title, priority, Idea Type, Business Impact, due date (optional), description when authorized, zero to five assignees, zero to 10 tags, mentions, and comments. Page actions include **Cancel** (returns to the board), **Save Idea**, **Move in Board** (status picker without dragging), and an admin-only **Delete Idea** action with confirmation.
+Cards are compact. Each card shows: title (clickable, 2-line truncation), priority badge, Business Impact color chip, assigned tags, assigned-user personas, submission age, upvote icon button/count, and Add Comment icon button/count. A dedicated drag handle starts card movement; interactive controls never start a drag. Clicking the card title opens the Idea Detail **drawer** (right slide-in overlay; see Idea Detail Surface below) — the same drawer reached from the Ideas list (see `SPEC/20-feature-client-ui-revisions.md`). The drawer supports full editing: title, priority, Idea Type, Business Impact, due date (optional), description when authorized, zero to five assignees, zero to 10 tags, mentions, and comments. Drawer actions include **Edit idea** / **Cancel** / **Save changes**, **Move in Board** (status picker without dragging), and an admin-only **Delete Idea** action with confirmation.
 
 Tags are selected and created through a searchable multi-value Tag field in Idea Detail. Anyone authorized to edit the idea can create a reusable organization-scoped tag inline. Tag names are trimmed and matched case-insensitively. Cards display the first three tags alphabetically and a `+N` indicator for the remainder; the complete tag list is available in Idea Detail and accessible text or a keyboard-accessible tooltip.
 
@@ -52,7 +52,7 @@ The Assignees field is an optional searchable multi-select populated with active
 
 Cards show submission age as viewer-local calendar-day difference between `createdAtUtc` and today: `0 days ago`, `1 day ago`, or `{N} days ago`. Future values are clamped to `0 days ago`.
 
-The upvote icon is unfilled when inactive and filled when the current user has upvoted. Toggle the icon and count optimistically and restore both on failure. Clicking Add Comment navigates to the Idea Detail page, scrolls comments into view, and focuses the comment composer. If commenting is unavailable, focus the comments heading.
+The upvote icon is unfilled when inactive and filled when the current user has upvoted. Toggle the icon and count optimistically and restore both on failure. Clicking Add Comment opens the Idea Detail drawer, scrolls comments into view, and focuses the comment composer. If commenting is unavailable, focus the comments heading.
 
 ### Filter Chips
 Filter chips appear above the board: **All**, **Created by me** (`AuthorUserId == currentUserId`), **Assigned to me** (the current user is in the idea's assignee collection). Filtering is client-side. Empty columns remain visible with a "No ideas" placeholder.
@@ -74,8 +74,8 @@ Text input above the board filters cards by title, tag, or assignee (client-side
 4. On failure: revert all columns, show error toast.
 5. User and ReadOnly roles see columns but cannot reorder them.
 
-6. Changing status in Idea Detail uses the same move operation and immediately updates the idea's status; returning to the board shows the card in the corresponding swimlane.
-7. Keyboard and touch users move ideas with the Idea Detail status selector; touch drag is deferred.
+6. Changing status in the Idea Detail drawer uses the same move operation and immediately updates the idea's status; the card re-slots into the corresponding swimlane behind the open drawer (no navigation away).
+7. Keyboard and touch users move ideas with the Idea Detail drawer's status selector; touch drag is deferred.
 
 ### Component Structure
 ```
@@ -97,25 +97,26 @@ HTML5 drag-and-drop (desktop only) with a dedicated handle and visible drop targ
 - Filter chips and title/tag/assignee search work across all columns (client-side)
 - Card drag starts only from the dedicated handle, calls `MoveIdeaStatusAsync`, sets the idea status to the target swimlane's status, and reverts on failure with a toast
 - Column drag (SiteAdmin/OrgAdmin only) saves immediately on drop; calls `UpdateStatusAsync` per affected status; reverts on failure
-- Clicking a card title navigates to the full-page Idea Detail view at `/ideas/{ideaId}/edit`
-- Idea Detail page provides Cancel, Save Idea, Move in Board, and authorized soft-delete actions
-- Changing status in Idea Detail immediately updates the idea's status, reflected in the matching swimlane on return to the board
+- Clicking a card title opens the Idea Detail drawer over the current board (URL gains `?idea={ideaId}`)
+- Idea Detail drawer provides Edit/Cancel/Save changes, Move in Board, and authorized soft-delete actions
+- Changing status in the drawer immediately updates the idea's status and re-slots the card in the matching swimlane behind the open drawer
 - Cards display Business Impact, current-user upvote state/count, and comment count
 - Idea Detail provides a searchable Tag multi-select that selects existing organization tags and creates normalized reusable tags inline for authorized editors, with at most 10 tags per idea
 - Idea Detail provides an optional searchable Assignees multi-select containing active users from the idea's organization, with at most five distinct assignees and historical inactive-assignee display
 - Cards display the first three tags alphabetically and first three assignee personas by first/last name, with `+N` overflow and complete accessible values
 - Each persona shows first-name/last-name initials followed by first name, with an accessible missing-name fallback
 - Cards display viewer-local calendar-day submission age with zero, singular, plural, and future-timestamp behavior
-- Clicking the card comment action navigates to Idea Detail and focuses the comment composer
+- Clicking the card comment action opens the Idea Detail drawer with comments in view and the composer focused
 - Upvote toggles optimistically and rolls back on failure
-- New Idea button in board header navigates to Idea Detail in create mode; hidden for ReadOnly users
-- Mobile/touch: scrollable view, no drag support, status movement available in Idea Detail
+- New Idea button in board header opens the create modal; hidden for ReadOnly users
+- Mobile/touch: scrollable view, no drag support, status movement available in the Idea Detail drawer (full-width sheet on narrow viewports)
+- A `/ideas/{ideaId}` or `?idea={ideaId}` deep link opens the target list/board with the idea's drawer open; an inaccessible id shows a not-found/permission notice without a drawer
 
 ## VISUAL DESIGN DIRECTION (Selected 2026-08-06 — supersedes Comp A)
 
 Comp C "Fluent Editorial" (`SPEC/mockups/comp-c-fluent-editorial.html`) is the selected UI/UX layout direction for all client pages, per `CLAUDE.md`. Comp A "Command Center" (`SPEC/mockups/comp-a-command-center.html`) and Comp B "Board First" are retained for history only and are not implementation targets.
 
-Page-level layout for Comp C is being locked incrementally via throwaway review comps in `SPEC/mockups/comp-c-review-*.html` (see `SPEC/implementation-agent-tracker.md`). **Locked as of 2026-08-07:** `comp-c-review-06-lockin-v5-final.html` is the chosen direction for Sign in, Home, Settings (Orgs/Users lists), Board List, Swim Lanes, and Idea Detail. `comp-c-review-01`, `-02`, `-04`, and `-05` remain the reference for detailed CRUD states v5 doesn't repeat (new/edit/detail/CSV-import forms, status color picker, sign-in edge cases). Still unsettled: the standalone `/ideas` page has no comp yet, and a mobile/narrow-viewport pass is undesigned. See `CLAUDE.md`'s "Target Architecture" section for the current summary.
+Page-level layout for Comp C is being locked incrementally via throwaway review comps in `SPEC/mockups/comp-c-review-*.html` (see `SPEC/implementation-agent-tracker.md`). **Locked as of 2026-08-07:** `comp-c-review-06-lockin-v5-final.html` is the chosen direction for Sign in, Home, Settings (Orgs/Users lists), Board List, Swim Lanes, and Idea Detail. `comp-c-review-01`, `-02`, `-04`, and `-05` remain the reference for detailed CRUD states v5 doesn't repeat (new/edit/detail/CSV-import forms, status color picker, sign-in edge cases). **Locked 2026-08-10:** `comp-c-review-09-detail-surfaces.html` replaces the full-page Idea Detail with a right slide-in **drawer** (detail + inline edit) plus a centered **create modal**, across all idea entry points — see "Idea Detail Surface" above; this supersedes the idea-detail portions of `-04` and the full-page treatment in `-06`. The `/ideas` list layout is `comp-c-review-07-ideas-list.html`. Still open: the broader mobile pass for the icon rail and other pages. See `CLAUDE.md`'s "Target Architecture" section for the current summary.
 
 ### Board-Specific Reference (superseded 2026-08-07)
 The workspace artifact `mockups/sprint-management/idea-board.html` was the layout and styling authority for `/board/{boardId}` under the earlier Comp A direction. It has been superseded by `comp-c-review-06-lockin-v5-final.html`'s locked Board List and Swim Lanes screens (see Layout below); treat this subsection as historical only.
@@ -125,10 +126,26 @@ The workspace artifact `mockups/sprint-management/idea-board.html` was the layou
 - Content pages use breadcrumbs, a page title with short subtitle, and a command bar (primary action, filters) above dense data tables or cards.
 - Home is a dashboard — content scope is locked to the richer dashboard (welcome + counts + board tiles + activity feed) per `SPEC/20-feature-client-ui-revisions.md` Decision D4 (supersedes D1), matching `comp-c-review-06-lockin-v5-final.html`'s `Home` screen.
 - Settings hub (formerly "Admin hub") uses link cards per tool (Organizations, Users, Boards & Statuses) scoped per role, per `SPEC/20-feature-client-ui-revisions.md`.
-- Board view offers both a List view (grouped rows by status, Swim Lane default per `comp-c-review-03-board-list.html`) and a Swim Lanes Kanban view, both locked in `comp-c-review-06-lockin-v5-final.html`. Swimlane cards use the **Flat** treatment (pale lane background, priority-colored chip, left-border status accent per card, small status dot in the lane header) — Banded and Tinted alternatives were considered and dropped. List rows and Swim Lane cards share one status-color visual system; priority is a separate red/amber/green dot/chip in both views, not borrowed from the lane's status color. Clicking a card title navigates to the full-page Idea Detail view (below); it does not open an overlay.
-- Idea detail is a full-page, editorial article layout (not an overlay): primary content/comments in the main column with a metadata sidebar (status, priority, assignee, due date, tags, audit info) alongside. Reached at `/ideas/{ideaId}/edit` from both a board card and the Ideas list — one Idea Detail experience, two entry points.
+- Board view offers both a List view (grouped rows by status, Swim Lane default per `comp-c-review-03-board-list.html`) and a Swim Lanes Kanban view, both locked in `comp-c-review-06-lockin-v5-final.html`. Swimlane cards use the **Flat** treatment (pale lane background, priority-colored chip, left-border status accent per card, small status dot in the lane header) — Banded and Tinted alternatives were considered and dropped. List rows and Swim Lane cards share one status-color visual system; priority is a separate red/amber/green dot/chip in both views, not borrowed from the lane's status color. Clicking a card title opens the Idea Detail **drawer** — a right slide-in overlay over the current board/list (see Idea Detail Surface below).
+- Idea detail is a right slide-in **drawer** overlay, not a full page (revised 2026-08-10, superseding the earlier full-page / "not an overlay" decision). Full specification in **Idea Detail Surface** below. The drawer opens over whatever list or board the user is on and carries full idea-detail parity; the standalone full-page `/ideas/{ideaId}/edit` route is retired in favor of the addressable `/ideas/{ideaId}` (and `?idea={ideaId}` over lists/boards).
 - Auth screens (login, first-login password change) are centered cards using Comp C's warm neutral palette, locked via `comp-c-review-06-lockin-v5-final.html`'s Sign in screen (general edge-case detail remains in `comp-c-review-01-login-and-auth.html`).
 - Implement with Fluent UI Blazor components per `SPEC/mockups/README.md` implementation notes (providers, dialog/toast services, no manual asset tags).
+
+### Idea Detail Surface — slide-in drawer + create modal (locked 2026-08-10)
+
+Reference comp: `SPEC/mockups/comp-c-review-09-detail-surfaces.html` (the **Right slide-in** pattern; the comp's "Form layover" toggle is the create modal). This supersedes the earlier full-page Idea Detail (`/ideas/{ideaId}/edit`, now retired) across every idea entry point.
+
+**Surfaces.**
+- **Detail + edit → right slide-in drawer.** Clicking an idea title/Details from the Ideas list, a Board List row, or a Swim Lane card opens a right drawer (≈620px on desktop) that overlays the current list/board behind a dim backdrop. The originating row/card shows a selected state. The drawer opens in a read view (eyebrow `IDEA-{n} · {status}`, title, meta, status chip, description, a facts grid, and the Discussion/comments thread) with an **Edit idea** action. Edit swaps the drawer body in place to the edit form and reveals a Cancel / Save changes footer; Cancel returns to the read view, Save persists and returns to the read view. Close (×, backdrop click, or Esc) drops the drawer and returns focus to the opener.
+- **Create → centered modal layover.** **+ New idea** (Ideas list and board header) opens a centered modal (≈760px) over a dimmed list for the create form. On success the modal closes and the new row/card appears in place — no drawer auto-opens. Cancel/backdrop/Esc dismisses without saving.
+
+**Full parity in the drawer.** The drawer is the complete idea experience, not a preview: title, priority, Idea Type, Business Impact, optional due date, description (when authorized), 0–5 assignees, 0–10 tags, mentions, comments, upvote, status move (**Move in Board** / status selector), and the admin-only **Delete Idea** (confirmation; on success removes the card and closes the drawer). The card comment action opens the drawer with comments scrolled into view and the composer focused (comments heading if commenting is unavailable).
+
+**URL / deep-linking.** Drawer open state lives in the URL as a query param on the current route: `/ideas?idea={ideaId}` over the Ideas list, `/board/{boardId}?idea={ideaId}` over a board. Closing the drawer drops the param and leaves the underlying page unchanged (back/forward navigate drawer open/closed). A bare `/ideas/{ideaId}` link resolves to the Ideas list with that idea's drawer open, so shared idea links, notification links, and mention links keep working; the retired `/ideas/{ideaId}/edit` route is not preserved. An `idea` id the viewer can't access (wrong org, soft-deleted, missing) opens the underlying list/board with a not-found/permission notice and no drawer.
+
+**Live re-slot behind the drawer.** Changing status from the drawer immediately moves the card to the mapped swimlane/row behind the open drawer without closing it; a failed update restores the prior status and shows an error.
+
+**Responsive.** Below the narrow breakpoint the drawer becomes a full-width sheet and the create modal becomes full-screen (per the reference comp); the icon rail collapses to the bottom bar. This is the first locked narrow-viewport treatment for these surfaces; the broader mobile pass for the rail and other pages remains open.
 
 ### Session, Profile, Controls, and Icons (locked 2026-08-08)
 - My Profile contains an editable first/last-name section and a voluntary password-change section; email and role are read-only. A successful name update refreshes shell identity immediately.

@@ -464,7 +464,7 @@ PUT    /api/v1/organizations/{orgId}/field-definitions/reorder   → 204
 
 ### Idea Form UDF Fields
 
-**Location**: Idea create mode and the Idea Detail page (`/ideas/{ideaId}/edit`), rendered below the standard fields in a collapsible "Custom Fields" section.
+**Location**: the create modal and the Idea Detail drawer's edit form (addressable as `/ideas/{ideaId}`), rendered below the standard fields in a collapsible "Custom Fields" section.
 
 **Rendering per type**:
 
@@ -553,7 +553,7 @@ How the two readings reconcile:
 - [ ] Field definitions for archived fields continue to appear by name in audit records
 
 ### Field Values on Ideas
-- [ ] UDF fields appear on the idea create mode and the Idea Detail page, ordered by `DisplayOrder`
+- [ ] UDF fields appear in the create modal and the Idea Detail drawer edit form, ordered by `DisplayOrder`
 - [ ] Required UDF fields block idea save when empty (hard validation)
 - [ ] Validation error messages use the format: `<FieldName> is required.`
 - [ ] Type validation errors use the format: `<FieldName> must be a valid <FormatName>.`

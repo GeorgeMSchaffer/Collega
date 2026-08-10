@@ -693,7 +693,7 @@ Validation gate:
 - admin organizations page
 - admin users page
 - board overview page
-- idea detail page or side panel
+- idea detail drawer (right slide-in) + create modal
 - status management page
 
 ### Shared Components
@@ -857,7 +857,7 @@ Add to the Persistence Design / Core Tables:
 | `FieldDefinitionList.razor` | Admin → Org Settings → Custom Fields | List, reorder, edit, archive definitions |
 | `FieldDefinitionEditor.razor` | Admin → Org Settings | Create/edit dialog with type selector and options sub-editor |
 | `FieldOptionEditor.razor` | Embedded in editor | Manage Dropdown/MultiSelect option labels |
-| `IdeaUdfFields.razor` | Idea create mode + Idea Detail page | Dynamic rendering of UDF fields by type |
+| `IdeaUdfFields.razor` | Create modal + Idea Detail drawer edit form | Dynamic rendering of UDF fields by type |
 | `UdfFilterPanel.razor` | Ideas list filter panel | Per-type filter controls for UDF fields |
 
 New client service: `IFieldDefinitionApiClient` + `FieldDefinitionCacheService` (scoped, avoids repeated fetches)

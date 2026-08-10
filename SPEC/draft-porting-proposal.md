@@ -135,7 +135,7 @@ Roughly 34–48 agent-days remain on the .NET plan. On the proposed stack:
 **Survives untouched:**
 - `SPEC/30-Contracts.md` (990 lines, 53 endpoints) — stack-neutral. **This is the single biggest reason the port is ~10 agent-days and not ~40.**
 - All feature specs (`SPEC/20-feature-*.md`) as *behavior* definitions.
-- The locked UI direction. `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` is raw HTML/CSS, so the 2026-08-07 lock-in — 64px icon rail, flat swimlane cards, minimal border radius, status-colored board rows, full-page Idea Detail — ports to React **more** directly than it would have to Blazor. The design decisions are not at risk.
+- The locked UI direction. `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` is raw HTML/CSS, so the lock-in — 64px icon rail, flat swimlane cards, minimal border radius, status-colored board rows, and the Idea Detail slide-in drawer + create modal (2026-08-10, superseding the earlier full-page detail) — ports to React **more** directly than it would have to Blazor. The design decisions are not at risk.
 - `docker-compose.yml`, the SQL Server 2022 container, and the `.env` workflow.
 - The database schema itself, and the seeded password hashes (given matched PBKDF2 parameters).
 
@@ -268,7 +268,7 @@ For a design locked this deliberately, bounded-one-time is the better trade. Opt
 - "DnD Technology: HTML5 drag-and-drop (desktop only)" should be restated as `dnd-kit`, which also makes the currently-deferred touch support cheap to add later.
 - `SPEC/mockups/README.md` design-intent section references Fluent component language throughout.
 
-**Unaffected:** every visual decision — palette, typography, rail, Flat card treatment, minimal radius, status-color system, full-page Idea Detail. The comps remain the authority; only the implementation primitives change.
+**Unaffected:** every visual decision — palette, typography, rail, Flat card treatment, minimal radius, status-color system, and the Idea Detail slide-in drawer + create modal. The comps remain the authority; only the implementation primitives change.
 
 ### Still open regardless of this decision
 
