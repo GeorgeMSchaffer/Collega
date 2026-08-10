@@ -73,6 +73,36 @@ public sealed class IdeaTypesController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Replace the Idea Type's User-Defined Field selection. A non-empty list switches the type
+    /// to Curated; an empty list clears it back to AllActiveFields.</summary>
+    [HttpPut("organizations/{organizationId:guid}/idea-types/{ideaTypeId:guid}/fields")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetFields(Guid organizationId, Guid ideaTypeId, [FromBody] SetIdeaTypeFieldsRequest request, CancellationToken cancellationToken)
+    {
+        var fields = (request.Fields ?? new List<IdeaTypeFieldSelectionItem>())
+            .Select(f => new IdeaTypeFieldSelectionInput(f.FieldDefinitionId, f.DisplayOrder, f.IsRequired))
+            .ToList();
+        await _service.SetIdeaTypeFieldsAsync(organizationId, ideaTypeId, fields, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Set or clear the Idea Type's badge appearance (color + icon).</summary>
+    [HttpPut("organizations/{organizationId:guid}/idea-types/{ideaTypeId:guid}/appearance")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetAppearance(Guid organizationId, Guid ideaTypeId, [FromBody] SetIdeaTypeAppearanceRequest request, CancellationToken cancellationToken)
+    {
+        await _service.SetIdeaTypeAppearanceAsync(organizationId, ideaTypeId, request.ColorHex, request.Icon, cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Soft-delete an Idea Type. Rejected with 400 when it is the organization's last active Idea Type.</summary>
     [HttpDelete("idea-types/{ideaTypeId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
