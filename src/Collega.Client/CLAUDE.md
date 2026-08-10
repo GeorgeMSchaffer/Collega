@@ -12,7 +12,7 @@ Keep components focused on rendering and user interaction. Business rules belong
 
 ## Design direction
 
-**Comp C "Fluent Editorial"** — `SPEC/mockups/comp-c-fluent-editorial.html`, specified in `SPEC/20-feature-client-ui.md`: slim 64px icon rail, serif display headings, warm neutral palette with an indigo accent, page-header tabs, list-style status sections (grouped rows, not Kanban columns) for boards, and a full-page article-style idea detail (not an overlay).
+**Comp C "Fluent Editorial"** — `SPEC/mockups/comp-c-fluent-editorial.html`, specified in `SPEC/20-feature-client-ui.md`: slim 64px icon rail, serif display headings, warm neutral palette with an indigo accent, page-header tabs, list-style status sections (grouped rows, not Kanban columns) for boards, and — **since 2026-08-10** — an idea detail that opens as a **right slide-in drawer** (detail + inline edit) with a centered **create modal**, replacing the earlier full-page idea detail. See `SPEC/20-feature-client-ui.md` → Idea Detail Surface and `SPEC/mockups/comp-c-review-09-detail-surfaces.html`. Built (T-UI-3) in `Components/IdeaDrawer.razor` + `Components/IdeaCreateModal.razor`, used from the Ideas list and board rows/cards.
 
 Comps A ("Command Center") and B ("Board First") are rejected alternatives kept for history, as are the `comp-a-review-*.html` files. Not implementation targets.
 
@@ -41,8 +41,9 @@ Full before/after detail, including a UI/UX critique's gap and anti-pattern find
 
 ### Still undesigned
 
-- **`/ideas`** — a global idea search page distinct from a board's own view. The rail icon already points at it, but it has no comp. Needs a design pass before Client build reaches it.
-- **Mobile / narrow viewport** — for the icon rail and Idea Detail's fixed two-column layout.
+- **Mobile / narrow viewport** — a broader pass for the icon rail and other pages remains open. (The drawer + create modal already ship their first locked narrow-viewport treatment: full-width drawer sheet + full-screen modal at ≤768px.)
+
+(`/ideas` — the global idea search page — is **built and shipped**: `Pages/Ideas.razor`, comp `comp-c-review-07-ideas-list.html`, with the drawer/create-modal wired in per T-UI-3. No longer undesigned.)
 
 ## Before writing production Blazor
 
