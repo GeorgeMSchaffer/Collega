@@ -26,10 +26,12 @@
     }
     else
     {
-        <div class="cmdbar">
+        <div class="backrow">
             <BackButton />
+        </div>
+        <div class="cmdbar">
             <ListToolbar TItem="BoardListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search boards…" OnChanged="StateHasChanged" />
-            <a class="btn primary" href="@($"{BoardEditBase}/new")" style="margin-left:auto">New board</a>
+            <a class="btn primary" href="@($"{BoardEditBase}/new")" style="margin-left:auto">Add New</a>
         </div>
         <div class="card">
             <table>

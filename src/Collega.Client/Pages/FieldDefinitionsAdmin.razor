@@ -28,21 +28,19 @@
     }
     else
     {
-        <div class="cmdbar">
+        <div class="backrow">
             <BackButton />
+        </div>
+        <div class="cmdbar">
             <ListToolbar TItem="FieldDefinitionDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search custom fields…" OnChanged="StateHasChanged" />
-            @if (!_siteAdminGlobal)
-            {
-                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">New field</button>
-            }
-            else
-            {
-                <a class="btn primary" href="/settings/organizations" style="margin-left:auto">New field</a>
-            }
-            <label class="checkline" style="margin-left:auto">
+            <label class="checkline">
                 <input type="checkbox" checked="@_showArchived" @onchange="OnToggleArchived" disabled="@_editing" />
                 Show archived
             </label>
+            @if (!_siteAdminGlobal)
+            {
+                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">Add New</button>
+            }
         </div>
 
         @if (_error is not null)

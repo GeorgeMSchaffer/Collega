@@ -24,16 +24,14 @@
     }
     else
     {
-        <div class="cmdbar">
+        <div class="backrow">
             <BackButton />
+        </div>
+        <div class="cmdbar">
             <ListToolbar TItem="StatusItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search statuses…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
-                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">New status</button>
-            }
-            else
-            {
-                <a class="btn primary" href="/settings/organizations" style="margin-left:auto">New status</a>
+                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">Add New</button>
             }
         </div>
 

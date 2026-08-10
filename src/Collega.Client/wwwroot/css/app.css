@@ -148,6 +148,8 @@ tr:hover td { background: #faf9f8; }
 .pill.info { background: var(--accent-soft); color: var(--accent-deep); }
 
 /* ---- Command bar / filter chips ---- */
+/* Back action sits on its own row above the command bar, left-aligned, on every list page. */
+.backrow { display: flex; margin-bottom: 10px; }
 .cmdbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
 .chipbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .chip {

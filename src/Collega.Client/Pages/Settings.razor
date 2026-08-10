@@ -25,10 +25,12 @@
     }
     else
     {
-        <div class="cmdbar">
+        <div class="backrow">
             <BackButton />
+        </div>
+        <div class="cmdbar">
             <ListToolbar TItem="OrganizationListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search organizations…" OnChanged="StateHasChanged" />
-            <a class="btn primary" href="/settings/organizations/new" style="margin-left:auto">New organization</a>
+            <a class="btn primary" href="/settings/organizations/new" style="margin-left:auto">Add New</a>
         </div>
         <div class="card">
             <table>

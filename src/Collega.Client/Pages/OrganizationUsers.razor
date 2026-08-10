@@ -40,20 +40,18 @@
                 </div>
             </div>
         }
-        <div class="cmdbar">
+        <div class="backrow">
             <BackButton />
+        </div>
+        <div class="cmdbar">
             <ListToolbar TItem="UserListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search users…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
-                <a class="btn primary" href="@($"{RouteBase}/new")" style="margin-left:auto">New user</a>
+                <a class="btn primary" href="@($"{RouteBase}/new")" style="margin-left:auto">Add New</a>
                 <a class="btn" href="@($"{RouteBase}/import")">Import CSV</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/statuses")">Manage statuses</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/boards")">Manage boards</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/fields")">Manage fields</a>
-            }
-            else
-            {
-                <a class="btn primary" href="/settings/organizations" style="margin-left:auto">New user</a>
             }
         </div>
         <div class="card">
