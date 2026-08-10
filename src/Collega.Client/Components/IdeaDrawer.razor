@@ -85,6 +85,7 @@
                         </div>
                         <div class="topactions">
                             <button class="up @(_idea.HasUpvoted ? "mine" : "")" @onclick="ToggleUpvote" disabled="@_upvoting"
+                                    aria-label="@(_idea.HasUpvoted ? "Remove your upvote" : "Upvote this idea")"
                                     title="@(_idea.HasUpvoted ? "Remove your upvote" : "Upvote this idea")">
                                 <FluentIcon Value="@(new Icons.Regular.Size16.CaretUp())" aria-hidden="true" /> @_idea.UpvoteCount
                             </button>
@@ -475,6 +476,12 @@
         _confirmingDelete = false;
         _showReassign = false;
         _error = _actionError = _commentsError = _saveMessage = null;
+        // Reset per-idea draft state so an unsent comment/tag/reassign from a previously
+        // viewed idea can't carry over (and post) onto the next one opened in the same drawer instance.
+        _newComment = "";
+        _tagDraft = "";
+        _reassignTargetId = "";
+        _reassignError = null;
         _comments.Clear();
         _names.Clear();
         StateHasChanged();
@@ -489,6 +496,7 @@
         }
 
         var result = await Api.GetIdeaAsync(ideaId);
+        if (ideaId != _loadedId) return; // a newer open superseded this load; abandon it
         if (!result.Succeeded || result.Value is null)
         {
             _error = result.Error ?? "This idea could not be loaded.";
@@ -539,8 +547,10 @@
             }
         }
 
+        if (ideaId != _loadedId) return; // superseded while loading related org data
         _resolvedFields = IdeaTypeFieldResolution.Resolve(SelectedIdeaType, _fieldDefs);
         await LoadCommentsAsync(ideaId);
+        if (ideaId != _loadedId) return; // superseded while loading comments
 
         _loading = false;
         StateHasChanged();

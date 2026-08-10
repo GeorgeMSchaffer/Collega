@@ -467,7 +467,7 @@
 
     // Create returns to the board on success (no auto-open drawer); reload so the new card appears in its
     // lane with server-resolved fields.
-    private async Task OnIdeaCreated(IdeaDetailDto _)
+    private async Task OnIdeaCreated(IdeaDetailDto? _)
     {
         _showCreate = false;
         var ideasResult = await Api.GetBoardIdeasAsync(BoardId);

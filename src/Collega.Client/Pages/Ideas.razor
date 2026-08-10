@@ -72,7 +72,9 @@
                     @(_showFilters ? "Hide field filters" : "Field filters")@(ActiveFilterCount > 0 ? $" ({ActiveFilterCount})" : "")
                 </button>
             }
-            @if (!_isReadOnly)
+            @* Site Admins have no organization (and no board picker context here), so idea creation is
+               scoped to org members. Read Only cannot create. *@
+            @if (!_isReadOnly && !_isSiteAdmin)
             {
                 <button class="btn primary" style="margin-left:auto" @onclick="OpenCreate">+ New idea</button>
             }
@@ -575,7 +577,7 @@
 
     private void CloseCreate() => _showCreate = false;
 
-    private async Task OnIdeaCreated(IdeaDetailDto _)
+    private async Task OnIdeaCreated(IdeaDetailDto? _)
     {
         _showCreate = false;
         await LoadAsync();

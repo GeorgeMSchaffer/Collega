@@ -180,7 +180,7 @@
     [Parameter] public bool Open { get; set; }
     [Parameter] public string? BoardId { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
-    [Parameter] public EventCallback<IdeaDetailDto> OnCreated { get; set; }
+    [Parameter] public EventCallback<IdeaDetailDto?> OnCreated { get; set; }
 
     [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
 
@@ -466,7 +466,7 @@
         var detail = await Api.GetIdeaAsync(result.Value.IdeaId);
         _creating = false;
         _wasOpen = false;
-        await OnCreated.InvokeAsync(detail.Value!);
+        await OnCreated.InvokeAsync(detail.Value);
     }
 
     private async Task Cancel()
