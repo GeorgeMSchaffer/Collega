@@ -62,6 +62,19 @@ public sealed class StatusesController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Replace the complete active-status order atomically.</summary>
+    [HttpPost("organizations/{organizationId:guid}/statuses/reorder")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Reorder(Guid organizationId, [FromBody] ReorderStatusesRequest request, CancellationToken cancellationToken)
+    {
+        await _statusService.ReorderAsync(organizationId, request.OrderedStatusIds, cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>Soft-delete a status while preserving existing references. Rejected when it would drop below the active-status floor.</summary>
     [HttpDelete("statuses/{statusId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

@@ -93,6 +93,14 @@ public sealed class Status : AuditableEntityBase
         MarkUpdated(nowUtc, actorUserId);
     }
 
+    /// <summary>Sets only the catalog sort order, leaving name and color untouched. Used by the atomic
+    /// bulk reorder so a drag-reorder does not re-validate unrelated fields.</summary>
+    public void SetSortOrder(int sortOrder, DateTime nowUtc, Guid? actorUserId = null)
+    {
+        SortOrder = sortOrder;
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
     /// <summary>
     /// Soft-deletes the status so existing board and idea references stay valid (rule #5). Idempotent.
     /// The org-wide 2-active-status floor (#7) and the no-active-board-reference guard (#6) are

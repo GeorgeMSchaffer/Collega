@@ -572,6 +572,15 @@ Request body:
 - `color` optional CSS/hex color string (max 20 chars)
 - `sortOrder` optional integer
 
+### `POST /api/v1/organizations/{organizationId}/statuses/reorder`
+Purpose: Replace the complete active-status order atomically.
+
+Request body:
+- `orderedStatusIds` required array containing every active organization status ID exactly once
+
+Success response:
+- `204 No Content`
+
 ### `DELETE /api/v1/statuses/{statusId}`
 Purpose: Soft-delete a status while preserving existing references.
 

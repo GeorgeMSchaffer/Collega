@@ -362,6 +362,20 @@ code { color: var(--accent-deep); }
 /* Status color swatch shown before the name in the statuses table. */
 .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(0,0,0,.12); }
 .rowactions { display: flex; gap: 6px; }
+
+/* Drag-to-reorder affordance for ordered catalogs (statuses, idea types). The grip cell + grab cursor
+   signal that a row is draggable, distinguishing these from plain non-ordered lists (e.g. organizations). */
+.reorder-hint { display: flex; align-items: center; gap: 6px; color: var(--ink-3); font-size: 12px; margin: 0 0 10px; }
+.reorder-hint .grip { color: var(--ink-3); }
+tr.reorderable { cursor: default; }
+tr.reorderable .drag-handle {
+  width: 20px; color: #b9b6b2; cursor: grab; user-select: none; text-align: center;
+  line-height: 1; letter-spacing: -1px; touch-action: none;
+}
+tr.reorderable:hover .drag-handle { color: var(--ink-3); }
+tr.reorderable .drag-handle:active { cursor: grabbing; }
+tr.reorderable.dragging { opacity: .45; }
+tr.reorderable.drag-over td { box-shadow: inset 0 2px 0 0 var(--accent); }
 /* Inline auth feedback: a red error banner and a neutral success/status note. */
 .autherror { border: 1px solid #d13438; background: #fdf3f4; color: #a4262c; border-radius: 4px; padding: 9px 12px; font-size: 13px; margin-bottom: 16px; line-height: 1.4; }
 .authnote { border: 1px solid var(--line); background: #f3f2f1; color: var(--ink-2); border-radius: 4px; padding: 9px 12px; font-size: 13px; margin-bottom: 16px; line-height: 1.4; }

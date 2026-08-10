@@ -64,15 +64,32 @@
             </div>
         }
 
+        @if (CanReorder)
+        {
+            <p class="reorder-hint"><span class="grip">⠿</span> Drag the handle to reorder statuses. Boards and idea cards list statuses in this order.</p>
+        }
+
         <div class="card">
             <table>
                 <thead>
-                    <tr><th>Status</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Color</th><th>Sort order</th><th></th></tr>
+                    <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Status</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Color</th><th>Sort order</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @foreach (var s in _statuses)
+                    @for (var i = 0; i < _statuses.Count; i++)
                     {
-                        <tr>
+                        var index = i;
+                        var s = _statuses[index];
+                        <tr class="@RowClass(index)"
+                            draggable="@(CanReorder ? "true" : null)"
+                            @ondragstart="() => OnDragStart(index)"
+                            @ondragover:preventDefault="true"
+                            @ondragenter="() => OnDragEnter(index)"
+                            @ondrop="() => OnDropAsync(index)"
+                            @ondragend="OnDragEnd">
+                            @if (!_siteAdminGlobal)
+                            {
+                                <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another status to enable reordering")" aria-hidden="true">⠿</td>
+                            }
                             <td>
                                 <span class="swatch" style="background:@s.Color"></span>
                                 <strong>@s.Name</strong>
@@ -132,6 +149,15 @@
     private string? _editId;
     private FormModel _form = new();
     private string? _error;
+
+    // Drag-reorder state (per-org view only). _dragIndex is the row being dragged; _dragOverIndex is
+    // the row currently under the cursor, used to show the insertion indicator.
+    private int? _dragIndex;
+    private int? _dragOverIndex;
+
+    // Reordering is a per-org action; it's meaningless in the Site-Admin cross-org list, while editing,
+    // or with a single row. The active-status floor (2) already keeps the org list from shrinking below reorderable size.
+    private bool CanReorder => !_siteAdminGlobal && !_editing && _statuses.Count > 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -266,6 +292,83 @@
         }
 
         _error = error ?? "Save failed.";
+    }
+
+    private string RowClass(int index)
+    {
+        if (!CanReorder)
+        {
+            return string.Empty;
+        }
+
+        var classes = "reorderable";
+        if (_dragIndex == index)
+        {
+            classes += " dragging";
+        }
+        else if (_dragOverIndex == index)
+        {
+            classes += " drag-over";
+        }
+
+        return classes;
+    }
+
+    private void OnDragStart(int index)
+    {
+        if (!CanReorder)
+        {
+            return;
+        }
+
+        _dragIndex = index;
+        _dragOverIndex = index;
+    }
+
+    private void OnDragEnter(int index)
+    {
+        if (_dragIndex is not null)
+        {
+            _dragOverIndex = index;
+        }
+    }
+
+    private void OnDragEnd()
+    {
+        _dragIndex = null;
+        _dragOverIndex = null;
+    }
+
+    private async Task OnDropAsync(int index)
+    {
+        var from = _dragIndex;
+        _dragIndex = null;
+        _dragOverIndex = null;
+
+        if (from is null || from == index || !CanReorder)
+        {
+            return;
+        }
+
+        // Optimistic local reorder: drop lands the row at the target slot (below the target when moving
+        // down, above it when moving up). Persist the new id order; on failure, revert by reloading.
+        var moved = _statuses[from.Value];
+        _statuses.RemoveAt(from.Value);
+        var insertAt = Math.Clamp(index, 0, _statuses.Count);
+        _statuses.Insert(insertAt, moved);
+
+        _error = null;
+        var body = new ReorderStatusesRequestDto(_statuses.Select(s => s.StatusId).ToList());
+        var result = await Api.ReorderStatusesAsync(_organizationId!, body);
+        if (result.Succeeded)
+        {
+            await LoadAsync();
+        }
+        else
+        {
+            _error = result.Error ?? "Reorder failed.";
+            await LoadAsync();
+        }
     }
 
     private async Task Delete(StatusItemDto s)
