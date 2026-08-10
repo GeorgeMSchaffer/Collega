@@ -1,20 +1,21 @@
-@page "/settings/statuses"
-@page "/settings/organizations/{OrganizationId}/statuses"
+@page "/settings/idea-types"
+@page "/settings/organizations/{OrganizationId}/idea-types"
 @attribute [Authorize(Roles = "OrgAdmin,SiteAdmin")]
 @inject ApiClient Api
 
-<PageTitle>Statuses · Collega</PageTitle>
+<PageTitle>Idea types · Collega</PageTitle>
 
 @*
-    Organization status configuration (T043). Org Admin manages the status catalog used by boards'
-    swimlanes and idea cards: name, color, and catalog sort order. The API enforces the two-active
-    floor and the board-reference delete guard; this page mirrors the floor client-side (Delete is
-    disabled at two active) and surfaces any server rejection inline.
+    Organization Idea Type configuration. Org Admin manages the classification every idea is filed under:
+    name and catalog order. The API enforces the one-active-type floor and immutability of an idea's type
+    after creation; this page mirrors the floor client-side (Delete is disabled at one active type) and
+    surfaces any server rejection inline. Drag the handle to reorder — the order drives the type selector
+    on the new-idea form.
 *@
 <div class="pagehead">
-    <div class="crumbs"><a href="/settings">Settings</a> / Statuses</div>
-    <h1>@(_siteAdminGlobal ? "All statuses" : "Statuses")</h1>
-    <p class="sub" style="margin-bottom:18px">@(_siteAdminGlobal ? "Workflow statuses across every organization." : "Configure the statuses your boards group ideas by.")</p>
+    <div class="crumbs"><a href="/settings">Settings</a> / Idea types</div>
+    <h1>@(_siteAdminGlobal ? "All idea types" : "Idea types")</h1>
+    <p class="sub" style="margin-bottom:18px">@(_siteAdminGlobal ? "Idea classifications across every organization." : "The classification every idea is filed under. The first type is the default on new ideas.")</p>
 </div>
 
 <div class="body">
@@ -27,7 +28,7 @@
         <div class="cmdbar">
             @if (!_siteAdminGlobal)
             {
-                <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New status</button>
+                <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New idea type</button>
             }
         </div>
 
@@ -39,23 +40,10 @@
         @if (_editing)
         {
             <div class="card formcard" style="margin-bottom:16px">
-                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:14px">@(_editId is null ? "New status" : "Edit status")</h3>
+                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:14px">@(_editId is null ? "New idea type" : "Edit idea type")</h3>
                 <div class="field">
                     <label for="name">Name</label>
                     <FluentTextField id="name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
-                </div>
-                <div class="formrow">
-                    <div class="field">
-                        <label for="color">Color</label>
-                        <div class="btnrow">
-                            <input type="color" id="color" @bind="_form.Color" disabled="@_busy" style="width:44px;height:32px;padding:0;border:1px solid var(--line);border-radius:4px;background:none" />
-                            <code>@_form.Color</code>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label for="sort">Sort order</label>
-                        <input type="number" id="sort" @bind="_form.SortOrder" disabled="@_busy" style="width:100px" />
-                    </div>
                 </div>
                 <div class="btnrow">
                     <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
@@ -66,19 +54,19 @@
 
         @if (CanReorder)
         {
-            <p class="reorder-hint"><span class="grip">⠿</span> Drag the handle to reorder statuses. Boards and idea cards list statuses in this order.</p>
+            <p class="reorder-hint"><span class="grip">⠿</span> Drag the handle to reorder idea types. The new-idea form lists them in this order.</p>
         }
 
         <div class="card">
             <table>
                 <thead>
-                    <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Status</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Color</th><th>Sort order</th><th></th></tr>
+                    <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Idea type</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Sort order</th><th></th></tr>
                 </thead>
                 <tbody>
-                    @for (var i = 0; i < _statuses.Count; i++)
+                    @for (var i = 0; i < _types.Count; i++)
                     {
                         var index = i;
-                        var s = _statuses[index];
+                        var t = _types[index];
                         <tr class="@RowClass(index)"
                             draggable="@(CanReorder ? "true" : null)"
                             @ondragstart="() => OnDragStart(index)"
@@ -88,29 +76,25 @@
                             @ondragend="OnDragEnd">
                             @if (!_siteAdminGlobal)
                             {
-                                <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another status to enable reordering")" aria-hidden="true">⠿</td>
+                                <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another idea type to enable reordering")" aria-hidden="true">⠿</td>
                             }
-                            <td>
-                                <span class="swatch" style="background:@s.Color"></span>
-                                <strong>@s.Name</strong>
-                            </td>
+                            <td><strong>@t.Name</strong></td>
                             @if (_siteAdminGlobal)
                             {
-                                <td>@OrganizationName(s.OrganizationId)</td>
+                                <td>@OrganizationName(t.OrganizationId)</td>
                             }
-                            <td><code>@s.Color</code></td>
-                            <td>@s.SortOrder</td>
+                            <td>@t.SortOrder</td>
                             <td class="rowactions">
                                 @if (_siteAdminGlobal)
                                 {
-                                    <a class="btn subtle" href="@($"/settings/organizations/{s.OrganizationId}/statuses")">Manage</a>
+                                    <a class="btn subtle" href="@($"/settings/organizations/{t.OrganizationId}/idea-types")">Manage</a>
                                 }
                                 else
                                 {
-                                    <button class="btn subtle" @onclick="() => StartEdit(s)" disabled="@_editing">Edit</button>
-                                    <button class="btn danger" @onclick="() => Delete(s)"
-                                            disabled="@(_editing || _statuses.Count <= 2)"
-                                            title="@(_statuses.Count <= 2 ? "An organization must keep at least two active statuses." : null)">Delete</button>
+                                    <button class="btn subtle" @onclick="() => StartEdit(t)" disabled="@_editing">Edit</button>
+                                    <button class="btn danger" @onclick="() => Delete(t)"
+                                            disabled="@(_editing || _types.Count <= 1)"
+                                            title="@(_types.Count <= 1 ? "An organization must keep at least one active idea type." : null)">Delete</button>
                                 }
                             </td>
                         </tr>
@@ -118,9 +102,9 @@
                 </tbody>
             </table>
         </div>
-        @if (_statuses.Count == 0)
+        @if (_types.Count == 0)
         {
-            <div class="placeholder"><p>No statuses yet.</p></div>
+            <div class="placeholder"><p>No idea types yet.</p></div>
         }
     }
 </div>
@@ -135,14 +119,12 @@
     private sealed class FormModel
     {
         public string Name { get; set; } = "";
-        public string Color { get; set; } = "#64748B";
-        public int SortOrder { get; set; }
     }
 
     private string? _organizationId;
     private bool _siteAdminGlobal;
     private readonly Dictionary<string, string> _organizationNames = new();
-    private List<StatusItemDto> _statuses = new();
+    private List<IdeaTypeOptionDto> _types = new();
     private bool _loading = true;
     private bool _busy;
     private bool _editing;
@@ -150,14 +132,14 @@
     private FormModel _form = new();
     private string? _error;
 
-    // Drag-reorder state (per-org view only). _dragIndex is the row being dragged; _dragOverIndex is
-    // the row currently under the cursor, used to show the insertion indicator.
+    // Drag-reorder state (per-org view only). _dragIndex is the row being dragged; _dragOverIndex is the
+    // row currently under the cursor, used to show the insertion indicator.
     private int? _dragIndex;
     private int? _dragOverIndex;
 
     // Reordering is a per-org action; it's meaningless in the Site-Admin cross-org list, while editing,
-    // or with a single row. The active-status floor (2) already keeps the org list from shrinking below reorderable size.
-    private bool CanReorder => !_siteAdminGlobal && !_editing && _statuses.Count > 1;
+    // or with a single row.
+    private bool CanReorder => !_siteAdminGlobal && !_editing && _types.Count > 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -193,10 +175,10 @@
             return;
         }
 
-        var result = await Api.GetStatusesAsync(_organizationId!);
+        var result = await Api.GetIdeaTypesAsync(_organizationId!);
         if (result.Succeeded)
         {
-            _statuses = result.Value!.OrderBy(s => s.SortOrder).ToList();
+            _types = result.Value!.OrderBy(t => t.SortOrder).ToList();
         }
         else
         {
@@ -221,7 +203,7 @@
             _organizationNames[organization.OrganizationId] = organization.Title;
         }
 
-        var results = await Task.WhenAll(activeOrganizations.Select(organization => Api.GetStatusesAsync(organization.OrganizationId)));
+        var results = await Task.WhenAll(activeOrganizations.Select(organization => Api.GetIdeaTypesAsync(organization.OrganizationId)));
         var failure = results.FirstOrDefault(result => !result.Succeeded);
         if (failure is not null)
         {
@@ -229,7 +211,7 @@
             return;
         }
 
-        _statuses = results.SelectMany(result => result.Value!).OrderBy(status => OrganizationName(status.OrganizationId)).ThenBy(status => status.SortOrder).ToList();
+        _types = results.SelectMany(result => result.Value!).OrderBy(type => OrganizationName(type.OrganizationId)).ThenBy(type => type.SortOrder).ToList();
     }
 
     private string OrganizationName(string organizationId) =>
@@ -238,16 +220,15 @@
     private void StartCreate()
     {
         _editId = null;
-        var nextSort = _statuses.Count == 0 ? 10 : _statuses.Max(s => s.SortOrder) + 10;
-        _form = new FormModel { SortOrder = nextSort };
+        _form = new FormModel();
         _error = null;
         _editing = true;
     }
 
-    private void StartEdit(StatusItemDto s)
+    private void StartEdit(IdeaTypeOptionDto t)
     {
-        _editId = s.StatusId;
-        _form = new FormModel { Name = s.Name, Color = s.Color, SortOrder = s.SortOrder };
+        _editId = t.IdeaTypeId;
+        _form = new FormModel { Name = t.Name };
         _error = null;
         _editing = true;
     }
@@ -262,24 +243,25 @@
     {
         if (string.IsNullOrWhiteSpace(_form.Name))
         {
-            _error = "A status name is required.";
+            _error = "An idea type name is required.";
             return;
         }
 
         _busy = true;
         _error = null;
 
-        var body = new SaveStatusRequestDto(_form.Name.Trim(), _form.Color, _form.SortOrder);
+        // SortOrder omitted: the server appends new types to the end; existing order is preserved on edit.
+        var body = new SaveIdeaTypeRequestDto(_form.Name.Trim(), null);
         bool succeeded;
         string? error;
         if (_editId is null)
         {
-            var r = await Api.CreateStatusAsync(_organizationId!, body);
+            var r = await Api.CreateIdeaTypeAsync(_organizationId!, body);
             (succeeded, error) = (r.Succeeded, r.Error);
         }
         else
         {
-            var r = await Api.UpdateStatusAsync(_editId!, body);
+            var r = await Api.UpdateIdeaTypeAsync(_editId!, body);
             (succeeded, error) = (r.Succeeded, r.Error);
         }
 
@@ -352,14 +334,14 @@
 
         // Optimistic local reorder: drop lands the row at the target slot (below the target when moving
         // down, above it when moving up). Persist the new id order; on failure, revert by reloading.
-        var moved = _statuses[from.Value];
-        _statuses.RemoveAt(from.Value);
-        var insertAt = Math.Clamp(index, 0, _statuses.Count);
-        _statuses.Insert(insertAt, moved);
+        var moved = _types[from.Value];
+        _types.RemoveAt(from.Value);
+        var insertAt = Math.Clamp(index, 0, _types.Count);
+        _types.Insert(insertAt, moved);
 
         _error = null;
-        var body = new ReorderStatusesRequestDto(_statuses.Select(s => s.StatusId).ToList());
-        var result = await Api.ReorderStatusesAsync(_organizationId!, body);
+        var body = new ReorderIdeaTypesRequestDto(_types.Select(t => t.IdeaTypeId).ToList());
+        var result = await Api.ReorderIdeaTypesAsync(_organizationId!, body);
         if (result.Succeeded)
         {
             await LoadAsync();
@@ -371,10 +353,10 @@
         }
     }
 
-    private async Task Delete(StatusItemDto s)
+    private async Task Delete(IdeaTypeOptionDto t)
     {
         _error = null;
-        var result = await Api.DeleteStatusAsync(s.StatusId);
+        var result = await Api.DeleteIdeaTypeAsync(t.IdeaTypeId);
         if (result.Succeeded)
         {
             await LoadAsync();

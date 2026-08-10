@@ -10,20 +10,21 @@ This document is the authoritative queue for bugs and minor tweaks that must be 
 - Do not duplicate an item between sections. If a change is incomplete, unverified, or deferred, keep it under `TODO` and note its status there.
 - New bugs and minor tweaks belong under `TODO`; feature ideas remain in the delivery backlog.
 
-Updates the icons to use from the following icon family
-https://github.com/microsoft/fluentui-system-icons, updates the Nav icons to use these.
-
-* List Views
-    * Number of results (10,25,50,100)
-    * Should have pagination controls
-    * Search box which should search all columns displayed in the list.
-    * Ideas List should have aj additional Idea Type, Idea Status dropdown filters.
-
-
-
 ## TODO
  * Move the add new button on list pages to be on the right.
  * 
+
+### T-UI-1 · Navigation icon family
+Replace the current navigation icons with the [Fluent System Icons](https://github.com/microsoft/fluentui-system-icons) family across the rail/navigation.
+- *Status note (2026-08-10):* a Fluent System Icons 4.11.0 refresh already landed for the rail / reorder / drag surfaces (see COMPLETED 2026-08-09). Confirm whether that pass fully satisfies this item or a broader icon sweep is still wanted before closing.
+
+### T-UI-2 · List View enhancements
+Apply consistently across the list/table views (Users, Organizations, Ideas, Boards, Statuses where applicable):
+- Page-size selector: 10 / 25 / 50 / 100 results.
+- Pagination controls.
+- Search box that searches **all columns shown in the list**, not just the title.
+- Ideas List: add **Idea Type** and **Idea Status** dropdown filters (alongside the existing filter chips).
+- *Status note (2026-08-10):* the `/ideas` global list already ships server-side paging (25/50/100/250) + search + filter chips; scope this to the gaps — uniform page-size options across all lists, all-column search, and the Ideas Type/Status dropdowns — rather than rebuilding what exists.
 
 ## IDEAS
 

@@ -8,9 +8,17 @@ namespace Collega.Client.Services;
 /// <summary>An Idea Type option row from <c>GET /organizations/{orgId}/idea-types</c>.</summary>
 public sealed record IdeaTypeOptionDto(
     string IdeaTypeId,
+    string OrganizationId,
     string Name,
     int SortOrder,
     bool IsDeleted);
+
+/// <summary>Body for creating/updating an Idea Type (<c>POST/PUT .../idea-types</c>). <c>SortOrder</c> is
+/// optional on create (appended to the end when omitted).</summary>
+public sealed record SaveIdeaTypeRequestDto(string Name, int? SortOrder);
+
+/// <summary>Body for <c>POST .../idea-types/reorder</c> — the new catalog order by id.</summary>
+public sealed record ReorderIdeaTypesRequestDto(List<string> OrderedIdeaTypeIds);
 
 /// <summary>A Business Impact option row from <c>GET /organizations/{orgId}/business-impacts</c>.</summary>
 public sealed record BusinessImpactOptionDto(

@@ -155,5 +155,8 @@ public sealed record StatusItemDto(
 /// <summary>Body for both <c>POST .../statuses</c> and <c>PUT /statuses/{id}</c>. Color/SortOrder are optional.</summary>
 public sealed record SaveStatusRequestDto(string Name, string? Color, int? SortOrder);
 
+/// <summary>Body for <c>POST .../statuses/reorder</c> — the new catalog order by id (active statuses only).</summary>
+public sealed record ReorderStatusesRequestDto(List<string> OrderedStatusIds);
+
 /// <summary>Response of <c>POST .../statuses</c>.</summary>
 public sealed record CreateStatusResultDto(string StatusId, string Name, string Color, int SortOrder);

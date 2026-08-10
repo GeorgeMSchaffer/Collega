@@ -191,6 +191,21 @@ public sealed partial class ApiClient
     public Task<ApiResult<StatusItemDto>> UpdateStatusAsync(string statusId, SaveStatusRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<StatusItemDto>(HttpMethod.Put, $"{BasePath}/statuses/{statusId}", body, ct);
 
+    /// <summary>Replaces the active-status order. Returns 204 (no body), so it's built by hand rather than
+    /// via the JSON-reading <c>SendJsonAsync</c> helper.</summary>
+    public async Task<ApiResult<bool>> ReorderStatusesAsync(string organizationId, ReorderStatusesRequestDto body, CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/statuses/reorder")
+        {
+            Content = JsonContent.Create(body),
+        };
+        await AttachTokenAsync(request);
+        using var response = await _http.SendAsync(request, ct);
+        return response.IsSuccessStatusCode
+            ? ApiResult<bool>.Success(true, (int)response.StatusCode)
+            : ApiResult<bool>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
+    }
+
     public async Task<ApiResult<bool>> DeleteStatusAsync(string statusId, CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Delete, $"{BasePath}/statuses/{statusId}");

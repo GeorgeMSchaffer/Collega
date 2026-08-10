@@ -96,6 +96,25 @@ public sealed class StatusService : IStatusService
         return ToItem(status);
     }
 
+    public async Task ReorderAsync(Guid organizationId, IReadOnlyList<Guid> orderedIds, CancellationToken cancellationToken = default)
+    {
+        EnsureAdminScope(organizationId);
+        await EnsureOrganizationExistsAsync(organizationId, cancellationToken);
+
+        var active = await _statusRepository.ListByOrganizationAsync(organizationId, includeDeleted: false, cancellationToken);
+        EnsureReorderCoversActive(orderedIds, active.Select(s => s.Id));
+
+        var now = _clock.UtcNow;
+        var byId = active.ToDictionary(s => s.Id);
+        for (var i = 0; i < orderedIds.Count; i++)
+        {
+            byId[orderedIds[i]].SetSortOrder((i + 1) * SortOrderStep, now, _currentUser.UserId);
+        }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await AuditAsync("StatusesReordered", organizationId, organizationId, "Status order updated.", now, null, cancellationToken);
+    }
+
     public async Task DeleteAsync(Guid statusId, CancellationToken cancellationToken = default)
     {
         var status = await _statusRepository.GetByIdAsync(statusId, cancellationToken)
@@ -134,6 +153,15 @@ public sealed class StatusService : IStatusService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await AuditAsync("StatusDeleted", status.OrganizationId, status.Id, $"Status '{status.Name}' soft-deleted.", now, null, cancellationToken);
+    }
+
+    private static void EnsureReorderCoversActive(IReadOnlyList<Guid> orderedIds, IEnumerable<Guid> activeIds)
+    {
+        var active = activeIds.ToHashSet();
+        if (orderedIds is null || orderedIds.Count != active.Count || orderedIds.Distinct().Count() != orderedIds.Count || !orderedIds.All(active.Contains))
+        {
+            throw new ValidationAppException("orderedIds", new[] { "The reorder must list every active status exactly once." });
+        }
     }
 
     private async Task<int> NextSortOrderAsync(Guid organizationId, CancellationToken cancellationToken)

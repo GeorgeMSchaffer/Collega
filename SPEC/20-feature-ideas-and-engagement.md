@@ -68,10 +68,10 @@ Users can create, discuss, organize, and support ideas within their organization
 6. Each field must always have at least one active option. Deleting the last active option is rejected.
 7. Deleting an option performs a soft delete even when ideas reference it. Existing references continue to display the prior label with an archived indicator.
 8. Archived options cannot be assigned to new ideas or selected during an edit.
-9. Business Impact options include an editable color used by the board-card and detail chips. Idea Type options do not include a color.
+9. Business Impact options include an editable color used by the board-card and detail chips. **Idea Type options carry an editable color and icon, rendered as a badge** on cards, the ideas list, and idea detail (`SPEC/20-feature-idea-type-fields.md`). *(Supersedes the earlier "Idea Type options do not include a color" rule.)*
 10. New organizations receive the initial option sets listed in the decision table.
-11. **Idea Type is immutable after an idea is created** — it is chosen at creation and cannot be changed on edit (`SPEC/20-feature-idea-type-field-sets.md`). An update that supplies a differing Idea Type is rejected with `400`. (Business Impact mutability is unchanged.)
-12. **Idea Type can carry a Field Set** that scopes which User-Defined Fields appear on ideas of that type; when no set is assigned, all active org UDFs show. Full behavior in `SPEC/20-feature-idea-type-field-sets.md`.
+11. **Idea Type is immutable after an idea is created** — it is chosen at creation and cannot be changed on the normal edit path (`SPEC/20-feature-idea-type-fields.md`). An update that supplies a differing Idea Type is rejected with `400`. The sole exception is an **admin-only reassignment** action (`PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type`), which re-resolves the idea's fields and archives out-of-scope values. (Business Impact mutability is unchanged.)
+12. **Idea Type directly maps an ordered selection of the organization's User-Defined Fields** — each marked required-or-optional for that type — that scopes which UDFs appear on ideas of that type. A type in `AllActiveFields` mode (the default) shows all active org UDFs; a `Curated` type shows only its mapped fields. Full behavior in `SPEC/20-feature-idea-type-fields.md`.
 
 ## Rich Content and Attachments Direction (Resolved)
 1. MVP idea descriptions and comment bodies remain plain text only.

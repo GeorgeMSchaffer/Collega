@@ -13,5 +13,8 @@ public interface IStatusService
 
     Task<StatusItem> UpdateAsync(Guid statusId, UpdateStatusCommand command, CancellationToken cancellationToken = default);
 
+    /// <summary>Replaces the complete active-status order atomically; the list must name every active status exactly once.</summary>
+    Task ReorderAsync(Guid organizationId, IReadOnlyList<Guid> orderedIds, CancellationToken cancellationToken = default);
+
     Task DeleteAsync(Guid statusId, CancellationToken cancellationToken = default);
 }

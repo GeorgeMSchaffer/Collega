@@ -178,4 +178,74 @@ public sealed class StatusServiceTests
 
         Assert.DoesNotContain(_audit.Events, e => e.EventType == "StatusDeleted");
     }
+
+    // Reorder -----------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Reorder_AsPlainUser_ThrowsForbidden()
+    {
+        _currentUser.Role = Role.User;
+        _currentUser.OrganizationId = _org.Id;
+        var a = SeedStatus("A", 10);
+        var b = SeedStatus("B", 20);
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ForbiddenAppException>(() =>
+            sut.ReorderAsync(_org.Id, new[] { b.Id, a.Id }));
+    }
+
+    [Fact]
+    public async Task Reorder_AppliesNewSortOrder_AndAudits()
+    {
+        var a = SeedStatus("A", 10);
+        var b = SeedStatus("B", 20);
+        var c = SeedStatus("C", 30);
+        var sut = CreateSut();
+
+        await sut.ReorderAsync(_org.Id, new[] { c.Id, a.Id, b.Id });
+
+        Assert.Equal(10, c.SortOrder);
+        Assert.Equal(20, a.SortOrder);
+        Assert.Equal(30, b.SortOrder);
+        Assert.Contains(_audit.Events, e => e.EventType == "StatusesReordered");
+    }
+
+    [Fact]
+    public async Task Reorder_IncompleteList_ThrowsValidation()
+    {
+        var a = SeedStatus("A", 10);
+        SeedStatus("B", 20);
+        var sut = CreateSut();
+
+        var ex = await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.ReorderAsync(_org.Id, new[] { a.Id }));
+        Assert.True(ex.Errors.ContainsKey("orderedIds"));
+    }
+
+    [Fact]
+    public async Task Reorder_WithUnknownId_ThrowsValidation()
+    {
+        var a = SeedStatus("A", 10);
+        SeedStatus("B", 20);
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.ReorderAsync(_org.Id, new[] { a.Id, Guid.NewGuid() }));
+    }
+
+    [Fact]
+    public async Task Reorder_ExcludesSoftDeleted_FromRequiredSet()
+    {
+        var a = SeedStatus("A", 10);
+        var b = SeedStatus("B", 20);
+        var deleted = SeedStatus("Old", 30);
+        deleted.SoftDelete(_clock.UtcNow, null);
+        var sut = CreateSut();
+
+        // The two active statuses are the complete set; the archived one must not be listed.
+        await sut.ReorderAsync(_org.Id, new[] { b.Id, a.Id });
+
+        Assert.Equal(10, b.SortOrder);
+        Assert.Equal(20, a.SortOrder);
+    }
 }
