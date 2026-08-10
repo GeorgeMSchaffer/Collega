@@ -1,5 +1,6 @@
 @page "/board/{BoardId}"
 @attribute [Authorize]
+@implements IDisposable
 @inject ApiClient Api
 @inject NavigationManager Nav
 @inject IJSRuntime JS
@@ -35,7 +36,7 @@
         <BackButton />
         @if (!_isReadOnly)
         {
-            <button class="btn primary" style="margin-bottom:14px" @onclick="() => OpenNew(null)">+ New idea</button>
+            <button class="btn primary" style="margin-bottom:14px" @onclick="OpenCreate">+ New idea</button>
         }
     </div>
     <div class="viewswitch">
@@ -118,80 +119,6 @@
             </div>
         }
 
-        @if (_showNew)
-        {
-            <div class="card formcard newidea">
-                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:12px">New idea</h3>
-                @if (_newError is not null)
-                {
-                    <div class="autherror" role="alert">@_newError</div>
-                }
-                <div class="field">
-                    <label for="ni-title">Title</label>
-                    <input id="ni-title" type="text" @bind="_newTitle" disabled="@_creating" style="width:100%" />
-                </div>
-                <div class="field">
-                    <label for="ni-desc">Description</label>
-                    <textarea id="ni-desc" @bind="_newDescription" disabled="@_creating" rows="3" style="width:100%"></textarea>
-                </div>
-                <div class="formrow">
-                    <div class="field">
-                        <label for="ni-prio">Priority</label>
-                        <select id="ni-prio" @bind="_newPriority" disabled="@_creating">
-                            <option value="Critical">Critical</option>
-                            <option value="High">High</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Low">Low</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="ni-status">Status</label>
-                        <select id="ni-status" @bind="_newStatusId" disabled="@_creating">
-                            @foreach (var sw in OrderedLanes)
-                            {
-                                <option value="@sw.StatusId">@sw.StatusName</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="formrow">
-                    <div class="field">
-                        <label for="ni-type">Idea Type</label>
-                        <select id="ni-type" value="@_newIdeaTypeId" @onchange="OnIdeaTypeChanged" disabled="@_creating">
-                            @foreach (var t in _ideaTypes)
-                            {
-                                <option value="@t.IdeaTypeId">@t.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="ni-impact">Business Impact</label>
-                        <select id="ni-impact" @bind="_newBusinessImpactId" disabled="@_creating">
-                            @foreach (var b in _businessImpacts)
-                            {
-                                <option value="@b.BusinessImpactId">@b.Name</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                @if (_resolvedFields.Count > 0)
-                {
-                    <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-3);margin:6px 0 8px">
-                        Custom fields
-                        @if (SelectedIdeaType is not null)
-                        {
-                            <span style="text-transform:none;font-weight:400;color:var(--ink-3)"> · @SelectedIdeaType.Name</span>
-                        }
-                    </h4>
-                    <IdeaFieldInputs Fields="_resolvedFields" Values="_newFieldValues" Disabled="_creating" />
-                }
-                <div class="btnrow">
-                    <button class="btn primary" @onclick="CreateIdea" disabled="@_creating">@(_creating ? "Creating…" : "Create idea")</button>
-                    <button class="btn" @onclick="() => _showNew = false" disabled="@_creating">Cancel</button>
-                </div>
-            </div>
-        }
-
         @if (OrderedLanes.Count == 0)
         {
             <div class="placeholder"><p>This board has no swimlanes yet.</p></div>
@@ -267,16 +194,16 @@
                                         <span class="spacer"></span>
                                         @if (i.CommentCount > 0)
                                         {
-                                            <span class="cmt-inline">💬 @i.CommentCount</span>
+                                            <span class="cmt-inline" role="img" aria-label="@($"{i.CommentCount} comment{(i.CommentCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.Comment())" /> @i.CommentCount</span>
                                         }
-                                        <span class="up @(i.HasUpvoted ? "mine" : null)">▲ @i.UpvoteCount</span>
+                                        <span class="up @(i.HasUpvoted ? "mine" : null)" role="img" aria-label="@($"{i.UpvoteCount} upvote{(i.UpvoteCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" /> @i.UpvoteCount</span>
                                     </div>
                                 </div>
                             }
                         }
                         @if (!_isReadOnly)
                         {
-                            <button class="btn subtle" style="width:100%" @onclick="() => OpenNew(lane.StatusId)">+ Add idea</button>
+                            <button class="btn subtle" style="width:100%" @onclick="OpenCreate">+ Add idea</button>
                         }
                     </div>
                 }
@@ -331,9 +258,9 @@
                                     <span class="age">@Age(i.CreatedAtUtc)</span>
                                     @if (i.CommentCount > 0)
                                     {
-                                        <span class="cmt-inline">💬 @i.CommentCount</span>
+                                        <span class="cmt-inline" role="img" aria-label="@($"{i.CommentCount} comment{(i.CommentCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.Comment())" /> @i.CommentCount</span>
                                     }
-                                    <span class="up @(i.HasUpvoted ? "mine" : null)">▲ @i.UpvoteCount</span>
+                                    <span class="up @(i.HasUpvoted ? "mine" : null)" role="img" aria-label="@($"{i.UpvoteCount} upvote{(i.UpvoteCount == 1 ? "" : "s")}")"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" /> @i.UpvoteCount</span>
                                 </div>
                             }
                         </div>
@@ -348,6 +275,9 @@
         }
     }
 </div>
+
+<IdeaDrawer IdeaId="@_openIdeaId" OnClose="CloseDrawer" OnChanged="OnDrawerChanged" />
+<IdeaCreateModal Open="_showCreate" BoardId="@BoardId" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
 
 @code {
     [Parameter] public string BoardId { get; set; } = string.Empty;
@@ -375,32 +305,11 @@
     private string? _moveError;
     private string? _loadedBoardId;
 
-    // New-idea mini form
-    private bool _showNew;
-    private string _newTitle = string.Empty;
-    private string _newDescription = string.Empty;
-    private string _newPriority = "Medium";
-    private string _newStatusId = string.Empty;
-    private string _newIdeaTypeId = string.Empty;
-    private string _newBusinessImpactId = string.Empty;
-    private bool _creating;
-    private string? _newError;
-
-    // Required classification options (Idea Type / Business Impact) for the new-idea form, loaded
-    // once per org. Provisioning guarantees at least one active option of each.
-    private IReadOnlyList<IdeaTypeOptionDto> _ideaTypes = Array.Empty<IdeaTypeOptionDto>();
-    private IReadOnlyList<BusinessImpactOptionDto> _businessImpacts = Array.Empty<BusinessImpactOptionDto>();
-
-    // Org User-Defined Fields (UDFs) rendered on the new-idea form. Loaded once per org from the
-    // ApiClient's cache; _newFieldValues holds the in-progress values keyed by field definition id.
-    // _resolvedFields is the subset the SELECTED idea type shows (SPEC/20-feature-idea-type-fields.md);
-    // it reflows live when the type changes.
-    private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
-    private IReadOnlyList<FieldDefinitionDto> _resolvedFields = Array.Empty<FieldDefinitionDto>();
-    private Dictionary<string, string?> _newFieldValues = new();
-
-    private IdeaTypeOptionDto? SelectedIdeaType =>
-        _ideaTypes.FirstOrDefault(t => t.IdeaTypeId == _newIdeaTypeId);
+    // Idea detail drawer + create modal (SPEC/20-feature-client-ui.md → "Idea Detail Surface", locked
+    // 2026-08-10). The drawer's open state is URL-addressable via ?idea={id} over /board/{BoardId}; the
+    // create action opens the shared centered IdeaCreateModal, which loads its own board/org context.
+    private string? _openIdeaId;
+    private bool _showCreate;
 
     // CSV export/import (T059/T060)
     private bool _exporting;
@@ -418,6 +327,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Nav.LocationChanged += OnLocationChanged;
+
         if (AuthStateTask is not null)
         {
             var user = (await AuthStateTask).User;
@@ -428,12 +339,14 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (string.IsNullOrEmpty(BoardId) || BoardId == _loadedBoardId)
+        if (!string.IsNullOrEmpty(BoardId) && BoardId != _loadedBoardId)
         {
-            return;
+            await LoadAsync();
         }
 
-        await LoadAsync();
+        // The drawer's open idea rides on the ?idea= query param over the same /board/{BoardId} route,
+        // so a change there re-runs OnParametersSet without reloading the board.
+        SyncOpenIdeaFromUrl();
     }
 
     private async Task LoadAsync()
@@ -441,7 +354,6 @@
         _loading = true;
         _error = null;
         _moveError = null;
-        _showNew = false;
         StateHasChanged();
 
         var boardResult = await Api.GetBoardAsync(BoardId);
@@ -457,9 +369,6 @@
         if (!string.Equals(_organizationId, _board.OrganizationId, StringComparison.OrdinalIgnoreCase))
         {
             _boards.Clear();
-            _fieldDefs = Array.Empty<FieldDefinitionDto>();
-            _ideaTypes = Array.Empty<IdeaTypeOptionDto>();
-            _businessImpacts = Array.Empty<BusinessImpactOptionDto>();
         }
         _organizationId = _board.OrganizationId;
 
@@ -473,38 +382,14 @@
             _error = ideasResult.Error;
         }
 
-        // Board picker options (best-effort; a failure here just hides the picker).
+        // Board picker options (best-effort; a failure here just hides the picker). Idea Type / Business
+        // Impact / custom-field options for creating an idea now load inside the IdeaCreateModal.
         if (_boards.Count == 0 && !string.IsNullOrEmpty(_organizationId))
         {
             var boardsResult = await Api.GetBoardsAsync(_organizationId!);
             if (boardsResult.Succeeded)
             {
                 _boards = boardsResult.Value!.OrderBy(b => b.Name).ToList();
-            }
-        }
-
-        // Org custom-field schema for the new-idea form (best-effort; cached in the ApiClient).
-        if (_fieldDefs.Count == 0 && !string.IsNullOrEmpty(_organizationId))
-        {
-            var fieldsResult = await Api.GetActiveFieldDefinitionsAsync(_organizationId!);
-            if (fieldsResult.Succeeded)
-            {
-                _fieldDefs = fieldsResult.Value!;
-            }
-        }
-
-        // Required Idea Type / Business Impact options for the new-idea form.
-        if (_ideaTypes.Count == 0 && !string.IsNullOrEmpty(_organizationId))
-        {
-            var typesResult = await Api.GetIdeaTypesAsync(_organizationId!);
-            if (typesResult.Succeeded)
-            {
-                _ideaTypes = typesResult.Value!.Where(t => !t.IsDeleted).OrderBy(t => t.SortOrder).ToList();
-            }
-            var impactsResult = await Api.GetBusinessImpactsAsync(_organizationId!);
-            if (impactsResult.Succeeded)
-            {
-                _businessImpacts = impactsResult.Value!.Where(b => !b.IsDeleted).OrderBy(b => b.SortOrder).ToList();
             }
         }
 
@@ -532,9 +417,6 @@
 
     private void OnFilterInput(ChangeEventArgs e) => _filter = e.Value?.ToString() ?? string.Empty;
 
-    private string? FieldValue(string fieldDefinitionId) =>
-        _newFieldValues.TryGetValue(fieldDefinitionId, out var v) ? v : null;
-
     private List<IdeaListItemDto> IdeasFor(string statusId)
     {
         var f = _filter?.Trim();
@@ -558,109 +440,79 @@
         return i.Assignees.Any(a => a.DisplayName.Contains(f, StringComparison.OrdinalIgnoreCase));
     }
 
-    private void OpenIdea(string ideaId) => Nav.NavigateTo($"/ideas/{ideaId}/edit");
+    // ---- Idea detail drawer + create modal wiring ----
 
-    private void OpenNew(string? statusId)
+    // Every idea entry point (List rows and Swim Lane cards) opens the shared drawer over the board by
+    // pushing ?idea={id} onto the current /board/{BoardId} route; closing drops the param.
+    private void OpenIdea(string ideaId) =>
+        Nav.NavigateTo($"/board/{BoardId}?idea={Uri.EscapeDataString(ideaId)}");
+
+    private void CloseDrawer() => Nav.NavigateTo($"/board/{BoardId}");
+
+    // Fired after any drawer mutation (save / status move / upvote / delete). Re-fetch the board's ideas so
+    // a status move re-lanes the card behind the still-open drawer, and a delete drops it from its lane.
+    private async Task OnDrawerChanged(IdeaDetailDto _)
     {
-        _newTitle = string.Empty;
-        _newDescription = string.Empty;
-        _newPriority = "Medium";
-        _newStatusId = statusId ?? OrderedLanes.FirstOrDefault()?.StatusId ?? string.Empty;
-        _newIdeaTypeId = _ideaTypes.FirstOrDefault()?.IdeaTypeId ?? string.Empty;
-        _newBusinessImpactId = _businessImpacts.FirstOrDefault()?.BusinessImpactId ?? string.Empty;
-        _newFieldValues = new Dictionary<string, string?>();
-        ResolveNewIdeaFields();
-        _newError = null;
-        _showNew = true;
-    }
-
-    // Reflows the create form's custom fields to the selected type's resolved set. Values for fields no
-    // longer shown are pruned so they can't be submitted for a type that doesn't include them (the server
-    // rejects out-of-set values); overlapping values are preserved.
-    private void OnIdeaTypeChanged(ChangeEventArgs e)
-    {
-        _newIdeaTypeId = e.Value?.ToString() ?? string.Empty;
-        ResolveNewIdeaFields();
-    }
-
-    private void ResolveNewIdeaFields()
-    {
-        _resolvedFields = IdeaTypeFieldResolution.Resolve(SelectedIdeaType, _fieldDefs);
-        var allowed = _resolvedFields.Select(f => f.FieldDefinitionId).ToHashSet();
-        foreach (var key in _newFieldValues.Keys.Where(k => !allowed.Contains(k)).ToList())
-        {
-            _newFieldValues.Remove(key);
-        }
-    }
-
-    private async Task CreateIdea()
-    {
-        if (string.IsNullOrWhiteSpace(_newTitle))
-        {
-            _newError = "A title is required.";
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(_newDescription))
-        {
-            _newError = "A description is required.";
-            return;
-        }
-        if (_ideaTypes.Count == 0 || _businessImpacts.Count == 0)
-        {
-            // Provisioning guarantees at least one active option of each, so an empty list means the
-            // options failed to load — don't misreport it as the user omitting a required field.
-            _newError = "Couldn't load Idea Type / Business Impact options. Reload the page and try again.";
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(_newIdeaTypeId) || string.IsNullOrWhiteSpace(_newBusinessImpactId))
-        {
-            _newError = "Idea Type and Business Impact are required.";
-            return;
-        }
-
-        // Mirror the server's required-field guardrail so the user sees it before the round-trip. Only the
-        // fields the selected type resolves are checked (per-type required-ness).
-        var missing = _resolvedFields.FirstOrDefault(f => f.IsRequired && string.IsNullOrWhiteSpace(FieldValue(f.FieldDefinitionId)));
-        if (missing is not null)
-        {
-            _newError = $"{missing.Name} is required.";
-            return;
-        }
-
-        _creating = true;
-        _newError = null;
-
-        var fieldValues = _resolvedFields
-            .Select(f => new IdeaFieldValueWriteDto(f.FieldDefinitionId, FieldValue(f.FieldDefinitionId)))
-            .Where(v => !string.IsNullOrWhiteSpace(v.Value))
-            .ToList();
-
-        var body = new CreateIdeaRequestDto(
-            _newTitle.Trim(),
-            _newDescription.Trim(),
-            _newPriority,
-            _newIdeaTypeId,
-            _newBusinessImpactId,
-            string.IsNullOrEmpty(_newStatusId) ? null : _newStatusId,
-            fieldValues.Count > 0 ? fieldValues : null);
-
-        var result = await Api.CreateIdeaAsync(BoardId, body);
-        _creating = false;
-
-        if (!result.Succeeded)
-        {
-            _newError = result.Error ?? "Creating the idea failed.";
-            return;
-        }
-
-        _showNew = false;
-
-        // Reload ideas so the new card appears with server-resolved fields (status, upvotes, etc.).
         var ideasResult = await Api.GetBoardIdeasAsync(BoardId);
         if (ideasResult.Succeeded)
         {
             _ideas = ideasResult.Value!.Items.ToList();
         }
+        StateHasChanged();
+    }
+
+    private void OpenCreate() => _showCreate = true;
+
+    private void CloseCreate() => _showCreate = false;
+
+    // Create returns to the board on success (no auto-open drawer); reload so the new card appears in its
+    // lane with server-resolved fields.
+    private async Task OnIdeaCreated(IdeaDetailDto _)
+    {
+        _showCreate = false;
+        var ideasResult = await Api.GetBoardIdeasAsync(BoardId);
+        if (ideasResult.Succeeded)
+        {
+            _ideas = ideasResult.Value!.Items.ToList();
+        }
+        StateHasChanged();
+    }
+
+    private void SyncOpenIdeaFromUrl()
+    {
+        var next = GetQueryIdea();
+        if (next != _openIdeaId)
+        {
+            _openIdeaId = next;
+        }
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        var previous = _openIdeaId;
+        SyncOpenIdeaFromUrl();
+        if (previous != _openIdeaId)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private string? GetQueryIdea()
+    {
+        var query = Nav.ToAbsoluteUri(Nav.Uri).Query;
+        if (string.IsNullOrEmpty(query))
+        {
+            return null;
+        }
+        foreach (var part in query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kv = part.Split('=', 2);
+            if (kv.Length == 2 && kv[0].Equals("idea", StringComparison.OrdinalIgnoreCase))
+            {
+                return Uri.UnescapeDataString(kv[1]);
+            }
+        }
+        return null;
     }
 
     private async Task ExportCsv()
@@ -803,4 +655,6 @@
     private static string LaneStyle(SwimlaneDetailDto lane) => $"--lc-deep:{lane.StatusColor}";
 
     private static string CardStyle(SwimlaneDetailDto lane) => $"--lc-deep:{lane.StatusColor}";
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
 }
