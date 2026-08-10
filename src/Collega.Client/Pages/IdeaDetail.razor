@@ -73,10 +73,23 @@ else
                 <textarea id="idea-desc" class="prose descinput" maxlength="4000"
                           @bind="_description" @bind:event="oninput" disabled="@_savingIdea"></textarea>
 
-                @if (_fieldDefs.Count > 0)
+                @if (_resolvedFields.Count > 0)
                 {
                     <h2 class="fieldlabel" style="margin-top:20px">Custom fields</h2>
-                    <IdeaFieldInputs Fields="_fieldDefs" Values="_fieldValues" Disabled="_savingIdea" OnChanged="StateHasChanged" />
+                    <IdeaFieldInputs Fields="_resolvedFields" Values="_fieldValues" Disabled="_savingIdea" OnChanged="StateHasChanged" />
+                }
+                @if (ArchivedValues.Count > 0)
+                {
+                    <div class="archived-fields">
+                        @foreach (var av in ArchivedValues)
+                        {
+                            <div class="rofield archived">
+                                <span class="lbl">@av.FieldName <span class="archtag">archived</span></span>
+                                <span class="val muted">@ArchivedDisplay(av)</span>
+                            </div>
+                        }
+                        <p class="hint">These fields aren't on this idea's type. Their values are preserved and shown muted — never dropped, same as a soft-deleted field.</p>
+                    </div>
                 }
 
                 <div class="btnrow savebtnrow">
@@ -162,7 +175,50 @@ else
             {
                 <div class="fact">
                     <div class="k">Idea Type</div>
-                    <div class="v">@_idea.IdeaTypeName</div>
+                    <div class="v">
+                        <div class="typerow">
+                            <TypeBadge Name="@_idea.IdeaTypeName" ColorHex="@_idea.IdeaTypeColorHex" Icon="@_idea.IdeaTypeIcon" />
+                            @if (_canReassign)
+                            {
+                                <button class="btn subtle sm" @onclick="ToggleReassign" disabled="@_reassigning">Reassign type…</button>
+                            }
+                        </div>
+                        @if (_canReassign)
+                        {
+                            <p class="hint" style="margin-top:6px">Type is set at creation and immutable for regular users. Reassign is an admin break-glass — values outside the new type's fields are archived, not lost.</p>
+                        }
+                        @if (_showReassign && _canReassign)
+                        {
+                            <div class="reassign-box">
+                                <label>Reassign to <span class="muted">(admin)</span></label>
+                                <select value="@_reassignTargetId" @onchange="OnReassignTargetChanged" disabled="@_reassigning" style="width:100%">
+                                    @foreach (var t in _ideaTypes.Where(t => !t.IsDeleted))
+                                    {
+                                        <option value="@t.IdeaTypeId">@t.Name</option>
+                                    }
+                                </select>
+                                @if (ReassignArchivedNames.Count > 0)
+                                {
+                                    <div class="flash">
+                                        Changing type re-resolves custom fields.
+                                        <strong>@string.Join(", ", ReassignArchivedNames)</strong>
+                                        @(ReassignArchivedNames.Count == 1 ? "isn't" : "aren't") on the new type — its value@(ReassignArchivedNames.Count == 1 ? "" : "s") will be kept but hidden (archived). This is logged to the audit trail.
+                                    </div>
+                                }
+                                @if (_reassignError is not null)
+                                {
+                                    <div class="autherror" role="alert" style="margin-top:8px">@_reassignError</div>
+                                }
+                                <div class="btnrow" style="margin-top:10px">
+                                    <button class="btn primary sm" @onclick="ConfirmReassign"
+                                            disabled="@(_reassigning || string.IsNullOrEmpty(_reassignTargetId) || _reassignTargetId == _idea.IdeaTypeId)">
+                                        @(_reassigning ? "Reassigning…" : "Confirm reassignment")
+                                    </button>
+                                    <button class="btn subtle sm" @onclick="ToggleReassign" disabled="@_reassigning">Cancel</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
             }
             @if (!string.IsNullOrWhiteSpace(_idea.BusinessImpactName))
@@ -217,7 +273,7 @@ else
             </div>
             @if (!_canEdit)
             {
-                @foreach (var f in _fieldDefs)
+                @foreach (var f in _resolvedFields)
                 {
                     var display = DisplayFieldValue(f);
                     @if (!string.IsNullOrEmpty(display))
@@ -227,6 +283,13 @@ else
                             <div class="v">@display</div>
                         </div>
                     }
+                }
+                @foreach (var av in ArchivedValues)
+                {
+                    <div class="fact">
+                        <div class="k">@av.FieldName <span class="archtag">archived</span></div>
+                        <div class="v muted">@ArchivedDisplay(av)</div>
+                    </div>
                 }
             }
             <div class="fact">
@@ -250,9 +313,22 @@ else
 
     // Org User-Defined Fields (UDFs). _fieldValues is the editable working copy keyed by field
     // definition id; _originalFieldValues snapshots the loaded values for change detection / discard.
+    // _resolvedFields is the subset this idea's TYPE shows (SPEC/20-feature-idea-type-fields.md); values
+    // outside it are historical/archived and rendered muted, never edited.
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
+    private IReadOnlyList<FieldDefinitionDto> _resolvedFields = Array.Empty<FieldDefinitionDto>();
+    private IReadOnlyList<IdeaTypeOptionDto> _ideaTypes = Array.Empty<IdeaTypeOptionDto>();
     private Dictionary<string, string?> _fieldValues = new();
     private Dictionary<string, string?> _originalFieldValues = new();
+
+    // Admin-only "reassign type" break-glass (P1).
+    private bool _showReassign;
+    private bool _reassigning;
+    private string _reassignTargetId = "";
+    private string? _reassignError;
+    private bool _canReassign =>
+        string.Equals(_role, "OrgAdmin", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(_role, "SiteAdmin", StringComparison.OrdinalIgnoreCase);
 
     private string _title = "";
     private string _description = "";
@@ -284,9 +360,49 @@ else
     private bool HasIdeaChanges =>
         _idea is not null && (_title != _idea.Title || _description != _idea.Description || FieldValuesChanged);
 
-    private bool FieldValuesChanged => _fieldDefs.Any(f =>
+    private bool FieldValuesChanged => _resolvedFields.Any(f =>
         NormFieldValue(_fieldValues.GetValueOrDefault(f.FieldDefinitionId))
         != NormFieldValue(_originalFieldValues.GetValueOrDefault(f.FieldDefinitionId)));
+
+    // The idea's own type option (with its field selection), used to resolve the fields it shows.
+    private IdeaTypeOptionDto? SelectedIdeaType =>
+        _idea is null ? null : _ideaTypes.FirstOrDefault(t => t.IdeaTypeId == _idea.IdeaTypeId);
+
+    // Historical values whose field is no longer in this idea's resolved set — removed from a Curated
+    // type or archived on reassignment. Preserved server-side and shown muted (never dropped).
+    private IReadOnlyList<IdeaFieldValueDetailDto> ArchivedValues
+    {
+        get
+        {
+            if (_idea?.FieldValues is null)
+            {
+                return Array.Empty<IdeaFieldValueDetailDto>();
+            }
+            var resolved = _resolvedFields.Select(f => f.FieldDefinitionId).ToHashSet();
+            return _idea.FieldValues
+                .Where(v => !string.IsNullOrWhiteSpace(v.Value) && !resolved.Contains(v.FieldDefinitionId))
+                .ToList();
+        }
+    }
+
+    // Field names whose current value would be archived by reassigning to _reassignTargetId — named in the
+    // inline confirm so the admin sees exactly what leaves the form.
+    private IReadOnlyList<string> ReassignArchivedNames
+    {
+        get
+        {
+            if (_idea?.FieldValues is null || string.IsNullOrEmpty(_reassignTargetId))
+            {
+                return Array.Empty<string>();
+            }
+            var target = _ideaTypes.FirstOrDefault(t => t.IdeaTypeId == _reassignTargetId);
+            var targetResolved = IdeaTypeFieldResolution.Resolve(target, _fieldDefs).Select(f => f.FieldDefinitionId).ToHashSet();
+            return _idea.FieldValues
+                .Where(v => !string.IsNullOrWhiteSpace(v.Value) && !targetResolved.Contains(v.FieldDefinitionId))
+                .Select(v => v.FieldName)
+                .ToList();
+        }
+    }
 
     private static string NormFieldValue(string? v) => string.IsNullOrWhiteSpace(v) ? "" : v;
 
@@ -344,8 +460,9 @@ else
                 .ToList();
         }
 
-        // Org custom-field schema (best-effort; cached in the ApiClient). Available to any member so
-        // read-only viewers still see values. Seed the editable working copy from the idea's values.
+        // Org custom-field schema + idea-type catalog (best-effort; the field pool is cached in the
+        // ApiClient). Available to any member so read-only viewers still see values. The idea's type +
+        // the pool resolve which fields this idea shows; the rest are historical/archived.
         if (!string.IsNullOrEmpty(_organizationId))
         {
             var fieldsResult = await Api.GetActiveFieldDefinitionsAsync(_organizationId);
@@ -353,7 +470,14 @@ else
             {
                 _fieldDefs = fieldsResult.Value!;
             }
+
+            var typesResult = await Api.GetIdeaTypesAsync(_organizationId);
+            if (typesResult.Succeeded)
+            {
+                _ideaTypes = typesResult.Value!.OrderBy(t => t.SortOrder).ToList();
+            }
         }
+        _resolvedFields = IdeaTypeFieldResolution.Resolve(SelectedIdeaType, _fieldDefs);
         SeedFieldValues();
 
         // Best-effort author name map from the org's users, so comment bylines show real names.
@@ -403,7 +527,7 @@ else
             return;
         }
 
-        foreach (var f in _fieldDefs)
+        foreach (var f in _resolvedFields)
         {
             var value = _idea.FieldValues?.FirstOrDefault(v => v.FieldDefinitionId == f.FieldDefinitionId)?.Value;
             _fieldValues[f.FieldDefinitionId] = value;
@@ -447,8 +571,9 @@ else
             return;
         }
 
-        // Mirror the server's required-field guardrail so the user sees it before the round-trip.
-        var missing = _fieldDefs.FirstOrDefault(f => f.IsRequired && string.IsNullOrWhiteSpace(_fieldValues.GetValueOrDefault(f.FieldDefinitionId)));
+        // Mirror the server's required-field guardrail so the user sees it before the round-trip. Only the
+        // fields this idea's type resolves are validated (per-type required-ness).
+        var missing = _resolvedFields.FirstOrDefault(f => f.IsRequired && string.IsNullOrWhiteSpace(_fieldValues.GetValueOrDefault(f.FieldDefinitionId)));
         if (missing is not null)
         {
             _actionError = $"{missing.Name} is required.";
@@ -459,9 +584,10 @@ else
         _actionError = null;
         _saveMessage = null;
 
-        // Field values are full-replace on the server, so every active field must be sent every save —
-        // omitting one clears it. A field left blank is sent as null, which correctly clears it.
-        var fieldValues = _fieldDefs
+        // Field values reconcile against the idea type's resolved set as the scope, so only those fields
+        // are sent (a blank one is sent as null to clear it). Historical/archived values outside the set
+        // are preserved untouched server-side because they're not in the reconcile scope.
+        var fieldValues = _resolvedFields
             .Select(f => new IdeaFieldValueWriteDto(f.FieldDefinitionId, _fieldValues.GetValueOrDefault(f.FieldDefinitionId)))
             .ToList();
 
@@ -477,7 +603,7 @@ else
             _idea.Assignees.Select(a => a.UserId).ToList(),
             _idea.TagNames.ToList(),
             null,
-            _fieldDefs.Count > 0 ? fieldValues : null);
+            _resolvedFields.Count > 0 ? fieldValues : null);
 
         var result = await Api.UpdateIdeaAsync(_idea.IdeaId, body);
         if (result.Succeeded && result.Value is not null)
@@ -647,6 +773,72 @@ else
             default:
                 return raw;
         }
+    }
+
+    // Best-effort display of a historical/archived value from its detail DTO. Option ids are mapped back
+    // to labels via the active field pool when the definition is still around; otherwise shown raw.
+    private string ArchivedDisplay(IdeaFieldValueDetailDto av)
+    {
+        var raw = av.Value ?? "";
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return "";
+        }
+
+        var f = _fieldDefs.FirstOrDefault(x => x.FieldDefinitionId == av.FieldDefinitionId);
+        switch (av.FieldType)
+        {
+            case "Boolean":
+                return string.Equals(raw, "true", StringComparison.OrdinalIgnoreCase) ? "Yes" : "No";
+            case "Dropdown":
+                return f?.Options.FirstOrDefault(o => o.OptionId == raw)?.Label ?? raw;
+            case "MultiSelect":
+                var ids = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                return string.Join(", ", ids.Select(idv => f?.Options.FirstOrDefault(o => o.OptionId == idv)?.Label ?? idv));
+            default:
+                return raw;
+        }
+    }
+
+    // ---- Admin reassign type (P1) ----
+    private void ToggleReassign()
+    {
+        _showReassign = !_showReassign;
+        _reassignError = null;
+        if (_showReassign && _idea is not null)
+        {
+            _reassignTargetId = _idea.IdeaTypeId;
+        }
+    }
+
+    private void OnReassignTargetChanged(ChangeEventArgs e) => _reassignTargetId = e.Value?.ToString() ?? "";
+
+    private async Task ConfirmReassign()
+    {
+        if (_idea is null || !_canReassign || string.IsNullOrEmpty(_organizationId) || string.IsNullOrEmpty(_reassignTargetId))
+        {
+            return;
+        }
+        if (_reassignTargetId == _idea.IdeaTypeId)
+        {
+            _reassignError = "Choose a different idea type.";
+            return;
+        }
+
+        _reassigning = true;
+        _reassignError = null;
+
+        var result = await Api.ReassignIdeaTypeAsync(_organizationId!, _idea.IdeaId, new ReassignIdeaTypeRequestDto(_reassignTargetId));
+        _reassigning = false;
+        if (!result.Succeeded)
+        {
+            _reassignError = result.Error ?? "Reassigning the idea type failed.";
+            return;
+        }
+
+        _showReassign = false;
+        // Reload so the new type, its re-resolved fields, and any newly-archived values reflect.
+        await LoadAsync(_idea.IdeaId);
     }
 
     // Tints the Business Impact pill with its configured #RRGGBB color (left border + faint fill),
