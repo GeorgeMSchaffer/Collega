@@ -22,7 +22,8 @@ https://github.com/microsoft/fluentui-system-icons, updates the Nav icons to use
 
 
 ## TODO
-No unresolved items.
+ * Move the add new button on list pages to be on the right.
+ * 
 
 ## IDEAS
 

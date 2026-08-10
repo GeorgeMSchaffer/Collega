@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega - Review 09: Detail Surfaces</title>
+<style>
+  :root{
+    --accent:#5b5fc7;--accent-deep:#444791;--accent-soft:#eef0fb;
+    --ink:#242424;--ink-2:#484644;--ink-3:#66615d;
+    --bg:#faf9f8;--surface:#fff;--line:#e4e2df;
+    --ok:#0e700e;--warn:#9a5b00;--err:#b10e1c;
+    --shadow:0 1px 2px rgba(0,0,0,.08);--shadow-float:0 18px 48px rgba(0,0,0,.22);
+    --radius-card:6px;--radius-btn:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  body{font-family:"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);font-size:14px;overflow-x:hidden}
+  button,input,select,textarea{font:inherit}
+  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:0}
+  .comp-bar{height:46px;background:#33312e;color:#fff;padding:8px 18px;display:flex;gap:18px;align-items:center;position:sticky;top:0;z-index:80}
+  .comp-bar strong{font:600 13px Georgia,serif;letter-spacing:.04em;white-space:nowrap}
+  .mode-tabs{display:flex;gap:6px;overflow:auto}
+  .mode-tabs button{background:transparent;color:#d1cfcc;border:1px solid #5a5754;border-radius:3px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .mode-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .shell{display:grid;grid-template-columns:64px minmax(0,1fr);min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;z-index:10}
+  .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:grid;place-items:center;font:700 13px Georgia,serif;margin-bottom:14px}
+  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;gap:2px}
+  .rail a svg{width:19px;height:19px;fill:currentColor}.rail a span{font-size:8.5px;font-weight:600}.rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .push{flex:1}.avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+  .page{min-width:0}.pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 20px}
+  .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:9px}.pagehead h1{font-size:26px;margin-bottom:4px}.sub{color:var(--ink-3);font-size:13.5px}
+  .body{padding:24px 40px;max-width:1280px}
+  .toolbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}.toolbar .search{flex:1;min-width:240px;max-width:420px}.toolbar .new{margin-left:auto}
+  label{display:block;color:var(--ink-3);font-size:11.5px;font-weight:700;margin-bottom:5px}
+  input,select,textarea{border:1px solid #8a8886;border-radius:4px;background:#fff;color:var(--ink);padding:8px 10px;min-height:36px;width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  textarea{resize:vertical;line-height:1.5}.btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:8px 13px;min-height:36px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}.btn:hover{background:#f3f2f1}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:var(--accent-deep)}.btn.link{border-color:transparent;background:transparent;color:var(--accent);padding-inline:8px}
+  .filters{display:flex;gap:10px}.filters select{width:160px}.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow);overflow:auto}
+  table{width:100%;border-collapse:collapse;min-width:820px}th{text-align:left;font-size:12px;color:var(--ink-3);padding:11px 15px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px 15px;border-bottom:1px solid #f0efed;vertical-align:middle}tbody tr:last-child td{border-bottom:0}tbody tr:hover td,tbody tr.selected td{background:#f7f7fc}tbody tr.selected td:first-child{box-shadow:inset 3px 0 var(--accent)}
+  .title{font-weight:650}.meta{font-size:11.5px;color:var(--ink-3);margin-top:2px}.status{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--ink-2);white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%}.pager{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:13px;color:var(--ink-3);font-size:12.5px}.pager .nav{display:flex;gap:6px}.pager button{padding:5px 10px;border:1px solid var(--line);background:#fff;border-radius:4px;color:var(--ink-2)}
+  .surface-backdrop{position:fixed;inset:46px 0 0 64px;background:rgba(36,36,36,.28);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:40}.surface-backdrop.open{opacity:1;visibility:visible}
+  .drawer{position:fixed;top:46px;right:0;bottom:0;width:min(620px,calc(100vw - 64px));background:var(--surface);border-left:1px solid var(--line);box-shadow:-12px 0 32px rgba(0,0,0,.16);z-index:50;transform:translateX(105%);visibility:hidden;transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s linear .24s;display:flex;flex-direction:column}.drawer.open{transform:translateX(0);visibility:visible;transition-delay:0s}
+  .surface-head{padding:20px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:16px}.surface-head .grow{flex:1;min-width:0}.eyebrow{text-transform:uppercase;letter-spacing:.07em;color:var(--accent-deep);font-size:11px;font-weight:700;margin-bottom:5px}.surface-head h2{font-size:22px;line-height:1.25}.surface-head .meta{margin-top:6px}.iconbtn{width:34px;height:34px;border:1px solid var(--line);border-radius:4px;background:#fff;cursor:pointer;color:var(--ink-2);display:grid;place-items:center;font-size:19px;line-height:1}.iconbtn:hover{background:#f3f2f1}
+  .surface-body{padding:22px 24px;overflow:auto;flex:1}.surface-foot{padding:13px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px;background:#fff}
+  .detail-copy{color:var(--ink-2);font-size:14px;line-height:1.65;margin:18px 0 24px}.facts{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.fact .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:700;margin-bottom:4px}.fact .v{font-weight:600}.section-title{font-size:17px;margin:24px 0 12px}.comment{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid #f0efed}.comment .avatar{width:26px;height:26px;font-size:9px;flex:none}.comment p{line-height:1.5;color:var(--ink-2)}
+  .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.span2{grid-column:1/-1}.help{font-size:11px;color:var(--ink-3);margin-top:4px}.required{color:var(--err)}
+  .modal-wrap{position:fixed;inset:46px 0 0 64px;z-index:60;display:grid;place-items:center;padding:24px;background:rgba(36,36,36,.38);opacity:0;visibility:hidden;transition:opacity .18s ease}.modal-wrap.open{opacity:1;visibility:visible}.modal{width:min(760px,100%);max-height:calc(100vh - 94px);background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow-float);display:flex;flex-direction:column;transform:translateY(18px) scale(.985);transition:transform .2s ease}.modal-wrap.open .modal{transform:translateY(0) scale(1)}
+  .decision-note{margin-top:18px;border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 13px;color:var(--ink-2);font-size:12px;line-height:1.5;max-width:880px}
+  .btn:focus-visible,.iconbtn:focus-visible,.mode-tabs button:focus-visible,.rail a:focus-visible,tbody tr:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media(max-width:760px){
+    .comp-bar{height:auto;min-height:46px;align-items:flex-start;flex-direction:column;gap:7px}.shell{grid-template-columns:1fr;padding-bottom:58px}.rail{position:fixed;left:0;right:0;bottom:0;height:58px;flex-direction:row;border-right:0;border-top:1px solid var(--line);padding:5px 10px;justify-content:space-around;z-index:90}.mark,.rail .push{display:none}.rail a{height:46px}.avatar{flex:none}.pagehead,.body{padding-left:18px;padding-right:18px}.filters{width:100%;flex-wrap:wrap}.filters select{flex:1;min-width:135px}.toolbar .new{margin-left:0}.surface-backdrop,.modal-wrap{inset:0 0 58px 0}.drawer{top:0;bottom:58px;width:100%}.formgrid,.facts{grid-template-columns:1fr}.span2{grid-column:auto}.modal-wrap{padding:0}.modal{width:100%;height:100%;max-height:none;border:0;border-radius:0}.surface-head,.surface-body,.surface-foot{padding-left:18px;padding-right:18px}
+  }
+  @media(prefers-reduced-motion:reduce){.drawer,.surface-backdrop,.modal-wrap,.modal{transition:none}}
+</style>
+</head>
+<body>
+<div class="comp-bar">
+  <strong>REVIEW 09 · DETAIL SURFACES</strong>
+  <div class="mode-tabs" aria-label="Pattern comparison">
+    <button class="on" data-pattern="drawer">Right slide-in</button>
+    <button data-pattern="modal">Form layover</button>
+  </div>
+</div>
+<div class="shell">
+  <aside class="rail" aria-label="Primary navigation">
+    <span class="mark">CG</span>
+    <a href="#" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M12 3 3 10v11h6v-7h6v7h6V10z"/></svg><span>Home</span></a>
+    <a href="#" aria-label="Boards"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zm9 0h7v4h-7zM4 13h7v7H4zm9-3h7v10h-7z"/></svg><span>Boards</span></a>
+    <a href="#" class="on" aria-current="page" aria-label="Ideas"><svg viewBox="0 0 24 24"><path d="M9 21h6v-1H9zm3-19a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2m2 11.6V15h-4v-1.4l-.8-.6A5 5 0 1 1 14.8 13z"/></svg><span>Ideas</span></a>
+    <a href="#" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="m19.4 13 .1-1-.1-1 2-1.6-2-3.4-2.5 1a8 8 0 0 0-1.7-1L14.8 3h-4l-.4 2.7a8 8 0 0 0-1.7 1L6.2 5.6l-2 3.5L6.3 11l-.1 1 .1 1-2 1.6 2 3.4 2.5-1a8 8 0 0 0 1.7 1l.4 2.8h4l.4-2.7a8 8 0 0 0 1.7-1l2.5 1.1 2-3.5zM12.8 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8"/></svg><span>Settings</span></a>
+    <span class="push"></span><span class="avatar">JR</span>
+  </aside>
+  <main class="page">
+    <header class="pagehead"><div class="crumbs">Home / Ideas</div><h1>Ideas</h1><p class="sub">Review, search, and develop ideas across all boards.</p></header>
+    <div class="body">
+      <div class="toolbar">
+        <div class="search"><label for="search">Search all columns</label><input id="search" type="search" placeholder="Search ideas, people, status..."></div>
+        <div class="filters"><div><label for="type">Idea type</label><select id="type"><option>All types</option><option>Continuous Improvement</option><option>Process Revision</option></select></div><div><label for="status">Idea status</label><select id="status"><option>All statuses</option><option>New / Pending</option><option>In Progress</option><option>In Review</option></select></div></div>
+        <button class="btn primary new" data-open="create">+ New idea</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Title</th><th>Idea Type</th><th>Created By</th><th>Assigned To</th><th>Status</th><th>Created Date</th><th></th></tr></thead>
+          <tbody>
+            <tr tabindex="0" data-row="dark"><td><div class="title">Dark mode support</div><div class="meta">Product Ideas · IDEA-128</div></td><td>Continuous Improvement</td><td>Tom Diaz</td><td>Mia Park</td><td><span class="status"><span class="dot" style="background:#2563eb"></span>In Progress</span></td><td>Jul 2, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
+            <tr tabindex="0"><td><div class="title">Bulk import from CSV</div><div class="meta">Product Ideas · IDEA-142</div></td><td>Process Revision</td><td>Tom Diaz</td><td>Jordan Reyes</td><td><span class="status"><span class="dot" style="background:#64748b"></span>New / Pending</span></td><td>Aug 6, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
+            <tr tabindex="0"><td><div class="title">Mobile responsive board</div><div class="meta">Platform Backlog · IDEA-139</div></td><td>Continuous Improvement</td><td>Jordan Reyes</td><td>Tom Diaz</td><td><span class="status"><span class="dot" style="background:#d97706"></span>In Review</span></td><td>Aug 2, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
+            <tr tabindex="0"><td><div class="title">Notification digest email</div><div class="meta">Platform Backlog · IDEA-140</div></td><td>Process Revision</td><td>Jordan Reyes</td><td>Jordan Reyes</td><td><span class="status"><span class="dot" style="background:#2563eb"></span>In Progress</span></td><td>Aug 3, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pager"><span>Showing 1-4 of 44</span><span>Rows per page <select style="width:72px;margin-left:6px"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></span><span class="nav"><button disabled>Previous</button><button>Next</button></span></div>
+      <div class="decision-note" id="pattern-note"><strong>Right slide-in:</strong> best for quick review and lightweight editing because the selected row and list context remain visible. On narrow screens it becomes a full-width sheet.</div>
+    </div>
+  </main>
+</div>
+
+<div class="surface-backdrop" id="drawer-backdrop"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" aria-hidden="true">
+  <header class="surface-head"><div class="grow"><div class="eyebrow" id="drawer-eyebrow">IDEA-128 · In Progress</div><h2 id="drawer-title">Dark mode support</h2><div class="meta" id="drawer-meta">Product Ideas · Proposed by Tom Diaz on July 2</div></div><button class="iconbtn" data-close aria-label="Close">×</button></header>
+  <div class="surface-body" id="drawer-view">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><span class="status"><span class="dot" style="background:#2563eb"></span>In Progress</span><button class="btn" id="edit-drawer">Edit idea</button></div>
+    <p class="detail-copy">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu.</p>
+    <div class="facts"><div class="fact"><div class="k">Idea type</div><div class="v">Continuous Improvement</div></div><div class="fact"><div class="k">Business impact</div><div class="v">High</div></div><div class="fact"><div class="k">Assigned to</div><div class="v">Mia Park</div></div><div class="fact"><div class="k">Due date</div><div class="v">Aug 15, 2026</div></div></div>
+    <h3 class="section-title">Discussion <span class="meta">2 comments</span></h3>
+    <div class="comment"><span class="avatar">MP</span><p><strong>Mia Park</strong><br>Can we scope this to the board view first?</p></div><div class="comment"><span class="avatar">TD</span><p><strong>Tom Diaz</strong><br>The Fluent design tokens should make that a practical first slice.</p></div>
+  </div>
+  <form class="surface-body" id="drawer-form" hidden>
+    <div class="formgrid"><div class="span2"><label>Title <span class="required">*</span></label><input value="Dark mode support"></div><div class="span2"><label>Description</label><textarea rows="6">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu.</textarea></div><div><label>Status</label><select><option>New / Pending</option><option selected>In Progress</option><option>In Review</option></select></div><div><label>Assigned to</label><select><option selected>Mia Park</option><option>Jordan Reyes</option></select></div><div><label>Business impact</label><select><option selected>High</option><option>Medium</option><option>Low</option></select></div><div><label>Due date</label><input type="date" value="2026-08-15"></div></div>
+  </form>
+  <footer class="surface-foot" id="drawer-foot" hidden><button class="btn" id="cancel-edit">Cancel</button><button class="btn primary" id="drawer-submit">Save changes</button></footer>
+</aside>
+
+<div class="modal-wrap" id="modal-wrap" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+  <section class="modal">
+    <header class="surface-head"><div class="grow"><div class="eyebrow" id="modal-eyebrow">New idea</div><h2 id="modal-title">Create an idea</h2><div class="meta">Product Ideas</div></div><button class="iconbtn" data-close aria-label="Close">×</button></header>
+    <form class="surface-body">
+      <div class="formgrid"><div class="span2"><label>Title <span class="required">*</span></label><input placeholder="What's the idea?"></div><div class="span2"><label>Description</label><textarea rows="5" placeholder="Add context, motivation, or details..."></textarea><div class="help">0 / 4,000 characters</div></div><div><label>Idea type <span class="required">*</span></label><select><option>Continuous Improvement</option><option>Process Revision</option></select></div><div><label>Business impact <span class="required">*</span></label><select><option>High</option><option selected>Medium</option><option>Low</option></select></div><div><label>Status</label><select><option>New / Pending</option><option>In Progress</option></select></div><div><label>Assigned to</label><select><option>Unassigned</option><option>Mia Park</option><option>Jordan Reyes</option></select></div><div><label>Due date</label><input type="date"></div><div><label>Tags</label><input placeholder="Add tags"></div></div>
+    </form>
+    <footer class="surface-foot"><button class="btn" data-close>Cancel</button><button class="btn primary">Create idea</button></footer>
+  </section>
+</div>
+<script>
+  const patternButtons = document.querySelectorAll('[data-pattern]');
+  const drawer = document.getElementById('drawer');
+  const drawerBackdrop = document.getElementById('drawer-backdrop');
+  const modalWrap = document.getElementById('modal-wrap');
+  const drawerView = document.getElementById('drawer-view');
+  const drawerForm = document.getElementById('drawer-form');
+  const drawerFoot = document.getElementById('drawer-foot');
+  const note = document.getElementById('pattern-note');
+  let pattern = 'drawer';
+  let opener = null;
+
+  function setPattern(next) {
+    pattern = next;
+    patternButtons.forEach(button => button.classList.toggle('on', button.dataset.pattern === next));
+    note.innerHTML = next === 'drawer'
+      ? '<strong>Right slide-in:</strong> best for quick review and lightweight editing because the selected row and list context remain visible. On narrow screens it becomes a full-width sheet.'
+      : '<strong>Form layover:</strong> best for focused create or edit tasks with more fields. The dimmed list preserves orientation while reducing distraction; on narrow screens it becomes full-screen.';
+    closeSurfaces(false);
+  }
+
+  function populateForm(form, editMode) {
+    const title = form.querySelector('input');
+    const description = form.querySelector('textarea');
+    const selects = form.querySelectorAll('select');
+    const date = form.querySelector('input[type="date"]');
+    title.value = editMode ? 'Dark mode support' : '';
+    title.placeholder = editMode ? '' : "What's the idea?";
+    description.value = editMode ? 'Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu.' : '';
+    selects.forEach(select => select.selectedIndex = editMode ? Math.min(1, select.options.length - 1) : 0);
+    if (date) date.value = editMode ? '2026-08-15' : '';
+  }
+
+  function openDrawer(source, createMode = false) {
+    opener = source;
+    document.getElementById('drawer-eyebrow').textContent = createMode ? 'New idea' : 'IDEA-128 · In Progress';
+    document.getElementById('drawer-title').textContent = createMode ? 'Create an idea' : 'Dark mode support';
+    document.getElementById('drawer-meta').textContent = createMode ? 'Product Ideas' : 'Product Ideas · Proposed by Tom Diaz on July 2';
+    drawerView.hidden = createMode;
+    drawerForm.hidden = !createMode;
+    drawerFoot.hidden = !createMode;
+    document.getElementById('drawer-submit').textContent = createMode ? 'Create idea' : 'Save changes';
+    populateForm(drawerForm, !createMode);
+    drawer.classList.add('open');
+    drawerBackdrop.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    source.closest('tr')?.classList.add('selected');
+    setTimeout(() => drawer.querySelector('[data-close]').focus(), 250);
+  }
+
+  function openModal(source, editMode = false) {
+    opener = source;
+    document.getElementById('modal-eyebrow').textContent = editMode ? 'IDEA-128' : 'New idea';
+    document.getElementById('modal-title').textContent = editMode ? 'Edit dark mode support' : 'Create an idea';
+    modalWrap.querySelector('.primary').textContent = editMode ? 'Save changes' : 'Create idea';
+    populateForm(modalWrap.querySelector('form'), editMode);
+    modalWrap.classList.add('open');
+    modalWrap.setAttribute('aria-hidden', 'false');
+    setTimeout(() => modalWrap.querySelector('[data-close]').focus(), 200);
+  }
+
+  function closeSurfaces(restoreFocus = true) {
+    drawer.classList.remove('open');
+    drawerBackdrop.classList.remove('open');
+    modalWrap.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    modalWrap.setAttribute('aria-hidden', 'true');
+    document.querySelectorAll('tbody tr.selected').forEach(row => row.classList.remove('selected'));
+    drawerView.hidden = false;
+    drawerForm.hidden = true;
+    drawerFoot.hidden = true;
+    if (restoreFocus && opener) opener.focus();
+  }
+
+  patternButtons.forEach(button => button.addEventListener('click', () => setPattern(button.dataset.pattern)));
+  document.querySelectorAll('[data-open="detail"]').forEach(button => button.addEventListener('click', () => pattern === 'drawer' ? openDrawer(button) : openModal(button, true)));
+  document.querySelector('[data-open="create"]').addEventListener('click', event => pattern === 'drawer' ? openDrawer(event.currentTarget, true) : openModal(event.currentTarget));
+  document.getElementById('edit-drawer').addEventListener('click', () => { drawerView.hidden = true; drawerForm.hidden = false; drawerFoot.hidden = false; document.getElementById('drawer-submit').textContent = 'Save changes'; populateForm(drawerForm, true); drawerForm.querySelector('input').focus(); });
+  document.getElementById('cancel-edit').addEventListener('click', () => { drawerView.hidden = false; drawerForm.hidden = true; drawerFoot.hidden = true; });
+  document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', closeSurfaces));
+  drawerBackdrop.addEventListener('click', closeSurfaces);
+  modalWrap.addEventListener('click', event => { if (event.target === modalWrap) closeSurfaces(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeSurfaces(); });
+</script>
+</body>
+</html>
