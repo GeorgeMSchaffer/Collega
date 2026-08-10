@@ -1,6 +1,7 @@
 using Collega.API.Authentication;
 using Collega.API.Conventions;
 using Collega.API.ErrorHandling;
+using Collega.API.Startup;
 using Collega.API.Validation;
 using Collega.Application.Abstractions;
 using Collega.Application.Auth;
@@ -22,18 +23,21 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Auth requirement #8: "Startup must fail fast if either is missing" — checked before anything
-// else touches configuration, so a misconfigured deployment never gets far enough to serve a
-// request pretending to be healthy.
-var siteAdminEmail = builder.Configuration["SiteAdmin:Email"];
-var siteAdminPassword = builder.Configuration["SiteAdmin:Password"];
-if (string.IsNullOrWhiteSpace(siteAdminEmail) || string.IsNullOrWhiteSpace(siteAdminPassword))
+// Auth requirement #8: "Startup must fail fast if either is missing." Validate every required
+// setting (the Site Admin credentials and the database connection string) in one pass before
+// anything else touches configuration, so a misconfigured deployment never gets far enough to
+// serve a request pretending to be healthy. On failure, write a clear banner naming exactly what
+// is missing and exit with a non-zero code — no stack trace to bury the message.
+var missingConfiguration = StartupConfigurationValidator.FindMissing(builder.Configuration);
+if (missingConfiguration.Count > 0)
 {
-    throw new InvalidOperationException(
-        "Configuration keys 'SiteAdmin:Email' and 'SiteAdmin:Password' are required at startup " +
-        "(environment variables SiteAdmin__Email / SiteAdmin__Password, or dotnet user-secrets). " +
-        "See SPEC/20-feature-auth.md requirement #8.");
+    await Console.Error.WriteLineAsync(
+        StartupConfigurationValidator.FormatMissingConfigurationMessage(missingConfiguration));
+    return 1;
 }
+
+var siteAdminEmail = builder.Configuration["SiteAdmin:Email"]!;
+var siteAdminPassword = builder.Configuration["SiteAdmin:Password"]!;
 
 // Add services to the container.
 
@@ -157,6 +161,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+return 0;
 
 // Reads a boolean seed switch from the raw command-line args, tolerant of the forms the CLI hands
 // us: `--seed:auth`, `/seed:auth`, or `--seed:auth=false`. Returns null when absent (so the caller
