@@ -28,8 +28,11 @@ public sealed record IdeaListItemDto(
     string? IdeaTypeColorHex = null,
     string? IdeaTypeIcon = null);
 
-/// <summary>Body for <c>POST /boards/{id}/ideas</c>. Minimal create wires title/description/priority
-/// and an optional target status; the API defaults to the left-most swimlane when StatusId is null.</summary>
+/// <summary>Body for <c>POST /boards/{id}/ideas</c>. Wires title/description/priority and an optional
+/// target status (the API defaults to the left-most swimlane when StatusId is null). The trailing
+/// optional members (<c>DueDate</c>, <c>AssigneeUserIds</c>, <c>TagNames</c>, <c>MentionEmails</c>)
+/// carry the full create-modal surface (SPEC/30-Contracts.md <c>POST /boards/{boardId}/ideas</c>); they
+/// default to null so the minimal board-detail create call is unaffected.</summary>
 public sealed record CreateIdeaRequestDto(
     string Title,
     string Description,
@@ -37,7 +40,11 @@ public sealed record CreateIdeaRequestDto(
     string IdeaTypeId,
     string BusinessImpactId,
     string? StatusId = null,
-    IReadOnlyList<IdeaFieldValueWriteDto>? FieldValues = null);
+    IReadOnlyList<IdeaFieldValueWriteDto>? FieldValues = null,
+    string? DueDate = null,
+    IReadOnlyList<string>? AssigneeUserIds = null,
+    IReadOnlyList<string>? TagNames = null,
+    IReadOnlyList<string>? MentionEmails = null);
 
 /// <summary>Response of <c>POST /boards/{id}/ideas</c>.</summary>
 public sealed record CreateIdeaResultDto(
