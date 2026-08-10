@@ -1,0 +1,506 @@
+@using System.Security.Claims
+@using System.Text.RegularExpressions
+@using Collega.Client.Services
+@inject ApiClient Api
+
+@*
+    Centered create-idea modal (SPEC/20-feature-client-ui.md → "Idea Detail Surface", locked 2026-08-10;
+    comp SPEC/mockups/comp-c-review-09-detail-surfaces.html "Form layover"). Opened from the Ideas list
+    and board headers. On success it closes and returns control to the host (no drawer auto-opens).
+
+    Priority is included even though the review comp omits it, because the create contract
+    (SPEC/30-Contracts.md POST /boards/{boardId}/ideas) requires it.
+
+    Public contract:
+      Open      : whether the modal is shown.
+      BoardId   : create context. When null (launched from the global Ideas list), a board picker is shown.
+      OnCancel  : dismissed without saving.
+      OnCreated : fired with the created idea's detail after a successful create.
+*@
+
+@if (Open)
+{
+    <div class="modal-wrap open" @onclick="BackdropClick" @onkeydown="OnKeyDown">
+        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="create-title" @onclick:stopPropagation="true">
+            <header class="surface-head">
+                <div class="grow">
+                    <div class="eyebrow">New idea</div>
+                    <h2 id="create-title">Create an idea</h2>
+                    <div class="meta">@(_boardName is { Length: > 0 } ? _boardName : "Choose a board")</div>
+                </div>
+                <button class="iconbtn" @onclick="Cancel" aria-label="Close">×</button>
+            </header>
+
+            <div class="surface-body">
+                @if (_error is not null)
+                {
+                    <div class="autherror" role="alert">@_error</div>
+                }
+
+                @if (_loadingContext)
+                {
+                    <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+                }
+                else
+                {
+                    <div class="formgrid">
+                        @if (BoardId is null)
+                        {
+                            <div class="span2">
+                                <label for="cr-board">Board <span class="required">*</span></label>
+                                <select id="cr-board" value="@_selectedBoardId" @onchange="OnBoardPicked" disabled="@_creating">
+                                    <option value="">Select a board…</option>
+                                    @foreach (var b in _boards)
+                                    {
+                                        <option value="@b.BoardId">@b.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+
+                        <div class="span2">
+                            <label for="cr-title">Title <span class="required">*</span> <span class="charlim">@_title.Length / 150</span></label>
+                            <input id="cr-title" type="text" maxlength="150" placeholder="What's the idea?"
+                                   @bind="_title" @bind:event="oninput" disabled="@(_creating || !_hasBoard)" />
+                        </div>
+                        <div class="span2">
+                            <label for="cr-desc">Description <span class="required">*</span> <span class="charlim">@_description.Length / 4000</span></label>
+                            <textarea id="cr-desc" rows="5" maxlength="4000" placeholder="Add context, motivation, or details…"
+                                      @bind="_description" @bind:event="oninput" disabled="@(_creating || !_hasBoard)"></textarea>
+                            <div class="help">Type an email with @@ to notify that person.</div>
+                        </div>
+                        <div>
+                            <label for="cr-type">Idea type <span class="required">*</span></label>
+                            <select id="cr-type" value="@_ideaTypeId" @onchange="OnIdeaTypeChanged" disabled="@(_creating || !_hasBoard)">
+                                @foreach (var t in _ideaTypes)
+                                {
+                                    <option value="@t.IdeaTypeId">@t.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label for="cr-impact">Business impact <span class="required">*</span></label>
+                            <select id="cr-impact" @bind="_businessImpactId" disabled="@(_creating || !_hasBoard)">
+                                @foreach (var b in _businessImpacts)
+                                {
+                                    <option value="@b.BusinessImpactId">@b.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label for="cr-prio">Priority</label>
+                            <select id="cr-prio" @bind="_priority" disabled="@(_creating || !_hasBoard)">
+                                <option value="Critical">Critical</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="cr-status">Status</label>
+                            <select id="cr-status" @bind="_statusId" disabled="@(_creating || !_hasBoard || _statusOptions.Count == 0)">
+                                @foreach (var s in _statusOptions)
+                                {
+                                    <option value="@s.StatusId">@s.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label for="cr-due">Due date</label>
+                            <input id="cr-due" type="date" value="@_dueDate" @onchange="e => _dueDate = e.Value?.ToString()" disabled="@(_creating || !_hasBoard)" />
+                        </div>
+                        <div class="span2">
+                            <label>Assigned to <span class="muted">(@_assigneeIds.Count / 5)</span></label>
+                            @if (_assigneeIds.Count > 0)
+                            {
+                                <div class="chips">
+                                    @foreach (var uid in _assigneeIds)
+                                    {
+                                        <span class="editchip">@UserName(uid)
+                                            <button type="button" class="x" @onclick="() => RemoveAssignee(uid)" disabled="@_creating" aria-label="Remove assignee">×</button>
+                                        </span>
+                                    }
+                                </div>
+                            }
+                            @if (_assigneeIds.Count < 5)
+                            {
+                                <select value="" @onchange="OnAddAssignee" disabled="@(_creating || !_hasBoard)">
+                                    <option value="">Add assignee…</option>
+                                    @foreach (var u in AssignableUsers)
+                                    {
+                                        <option value="@u.UserId">@($"{u.FirstName} {u.LastName}".Trim())</option>
+                                    }
+                                </select>
+                            }
+                        </div>
+                        <div class="span2">
+                            <label>Tags <span class="muted">(@_tags.Count / 10)</span></label>
+                            @if (_tags.Count > 0)
+                            {
+                                <div class="chips">
+                                    @foreach (var t in _tags)
+                                    {
+                                        <span class="editchip">@t
+                                            <button type="button" class="x" @onclick="() => RemoveTag(t)" disabled="@_creating" aria-label="Remove tag">×</button>
+                                        </span>
+                                    }
+                                </div>
+                            }
+                            @if (_tags.Count < 10)
+                            {
+                                <div class="tagadd">
+                                    <input type="text" placeholder="Add a tag" @bind="_tagDraft" @bind:event="oninput"
+                                           @onkeydown="OnTagKeyDown" disabled="@(_creating || !_hasBoard)" />
+                                    <button type="button" class="btn sm" @onclick="AddTag" disabled="@(_creating || string.IsNullOrWhiteSpace(_tagDraft))">Add</button>
+                                </div>
+                            }
+                        </div>
+                        @if (_resolvedFields.Count > 0)
+                        {
+                            <div class="span2">
+                                <h4 class="udf-head">Custom fields</h4>
+                                <IdeaFieldInputs Fields="_resolvedFields" Values="_fieldValues" Disabled="_creating" OnChanged="StateHasChanged" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <footer class="surface-foot">
+                <button class="btn" @onclick="Cancel" disabled="@_creating">Cancel</button>
+                <button class="btn primary" @onclick="Create" disabled="@(_creating || !_hasBoard || _loadingContext)">
+                    @(_creating ? "Creating…" : "Create idea")
+                </button>
+            </footer>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public string? BoardId { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<IdeaDetailDto> OnCreated { get; set; }
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private bool _wasOpen;
+    private bool _loadingContext;
+    private bool _creating;
+    private string? _error;
+
+    private string? _authOrganizationId;
+    private string? _organizationId;
+    private string? _selectedBoardId;
+    private string _boardName = "";
+
+    private IReadOnlyList<BoardListItemDto> _boards = Array.Empty<BoardListItemDto>();
+    private List<StatusItemDto> _statusOptions = new();
+    private IReadOnlyList<IdeaTypeOptionDto> _ideaTypes = Array.Empty<IdeaTypeOptionDto>();
+    private IReadOnlyList<BusinessImpactOptionDto> _businessImpacts = Array.Empty<BusinessImpactOptionDto>();
+    private IReadOnlyList<UserListItemDto> _orgUsers = Array.Empty<UserListItemDto>();
+    private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
+    private IReadOnlyList<FieldDefinitionDto> _resolvedFields = Array.Empty<FieldDefinitionDto>();
+
+    private string _title = "";
+    private string _description = "";
+    private string _priority = "Medium";
+    private string _ideaTypeId = "";
+    private string _businessImpactId = "";
+    private string _statusId = "";
+    private string? _dueDate;
+    private readonly List<string> _assigneeIds = new();
+    private readonly List<string> _tags = new();
+    private string _tagDraft = "";
+    private readonly Dictionary<string, string> _names = new();
+    private Dictionary<string, string?> _fieldValues = new();
+
+    private bool _hasBoard => !string.IsNullOrEmpty(_selectedBoardId);
+
+    private IEnumerable<UserListItemDto> AssignableUsers =>
+        _orgUsers.Where(u => !_assigneeIds.Contains(u.UserId)
+            && string.Equals(u.Status, "Active", StringComparison.OrdinalIgnoreCase));
+
+    private IdeaTypeOptionDto? SelectedIdeaType => _ideaTypes.FirstOrDefault(t => t.IdeaTypeId == _ideaTypeId);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Open && !_wasOpen)
+        {
+            _wasOpen = true;
+            await OpenAsync();
+        }
+        else if (!Open)
+        {
+            _wasOpen = false;
+        }
+    }
+
+    private async Task OpenAsync()
+    {
+        ResetForm();
+        _error = null;
+        _loadingContext = true;
+
+        if (AuthStateTask is not null)
+        {
+            _authOrganizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+        }
+
+        _selectedBoardId = BoardId;
+
+        if (BoardId is null)
+        {
+            // Global Ideas-list entry point: list the caller's boards for the picker.
+            if (!string.IsNullOrEmpty(_authOrganizationId))
+            {
+                var boards = await Api.GetBoardsAsync(_authOrganizationId);
+                if (boards.Succeeded)
+                {
+                    _boards = boards.Value!;
+                }
+            }
+            _loadingContext = false;
+            StateHasChanged();
+            return;
+        }
+
+        await LoadBoardContextAsync(BoardId);
+        _loadingContext = false;
+        StateHasChanged();
+    }
+
+    private void ResetForm()
+    {
+        _title = _description = _tagDraft = "";
+        _priority = "Medium";
+        _dueDate = null;
+        _assigneeIds.Clear();
+        _tags.Clear();
+        _fieldValues = new Dictionary<string, string?>();
+        _resolvedFields = Array.Empty<FieldDefinitionDto>();
+        _statusOptions = new List<StatusItemDto>();
+        _statusId = "";
+        _boardName = "";
+    }
+
+    private async Task OnBoardPicked(ChangeEventArgs e)
+    {
+        var id = e.Value?.ToString();
+        _selectedBoardId = string.IsNullOrEmpty(id) ? null : id;
+        _assigneeIds.Clear();
+        if (_hasBoard)
+        {
+            _loadingContext = true;
+            StateHasChanged();
+            await LoadBoardContextAsync(_selectedBoardId!);
+            _loadingContext = false;
+        }
+    }
+
+    private async Task LoadBoardContextAsync(string boardId)
+    {
+        var board = await Api.GetBoardAsync(boardId);
+        if (!board.Succeeded || board.Value is null)
+        {
+            _error = board.Error ?? "Couldn't load the board.";
+            return;
+        }
+        _boardName = board.Value.Name;
+        _organizationId = board.Value.OrganizationId;
+        _statusOptions = board.Value.Swimlanes
+            .OrderBy(s => s.Order)
+            .Select(s => new StatusItemDto(s.StatusId, board.Value.OrganizationId, s.StatusName, s.StatusColor, s.Order, s.StatusIsDeleted))
+            .ToList();
+        _statusId = _statusOptions.FirstOrDefault()?.StatusId ?? "";
+
+        await LoadOrgOptionsAsync(_organizationId!);
+    }
+
+    private async Task LoadOrgOptionsAsync(string organizationId)
+    {
+        var typesResult = await Api.GetIdeaTypesAsync(organizationId);
+        if (typesResult.Succeeded)
+        {
+            _ideaTypes = typesResult.Value!.Where(t => !t.IsDeleted).OrderBy(t => t.SortOrder).ToList();
+            _ideaTypeId = _ideaTypes.FirstOrDefault()?.IdeaTypeId ?? "";
+        }
+        var impactsResult = await Api.GetBusinessImpactsAsync(organizationId);
+        if (impactsResult.Succeeded)
+        {
+            _businessImpacts = impactsResult.Value!.Where(b => !b.IsDeleted).OrderBy(b => b.SortOrder).ToList();
+            _businessImpactId = _businessImpacts.FirstOrDefault()?.BusinessImpactId ?? "";
+        }
+        var fieldsResult = await Api.GetActiveFieldDefinitionsAsync(organizationId);
+        if (fieldsResult.Succeeded)
+        {
+            _fieldDefs = fieldsResult.Value!;
+        }
+        var users = await Api.GetAllOrganizationUsersAsync(organizationId);
+        if (users.Succeeded && users.Value is not null)
+        {
+            _orgUsers = users.Value;
+            _names.Clear();
+            foreach (var u in users.Value)
+            {
+                _names[u.UserId] = $"{u.FirstName} {u.LastName}".Trim();
+            }
+        }
+        RecomputeResolvedFields();
+    }
+
+    private void OnIdeaTypeChanged(ChangeEventArgs e)
+    {
+        _ideaTypeId = e.Value?.ToString() ?? "";
+        RecomputeResolvedFields();
+    }
+
+    private void RecomputeResolvedFields()
+    {
+        _resolvedFields = IdeaTypeFieldResolution.Resolve(SelectedIdeaType, _fieldDefs);
+        var next = new Dictionary<string, string?>();
+        foreach (var f in _resolvedFields)
+        {
+            next[f.FieldDefinitionId] = _fieldValues.GetValueOrDefault(f.FieldDefinitionId);
+        }
+        _fieldValues = next;
+    }
+
+    private void OnAddAssignee(ChangeEventArgs e)
+    {
+        var id = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(id) && _assigneeIds.Count < 5 && !_assigneeIds.Contains(id))
+        {
+            _assigneeIds.Add(id);
+        }
+    }
+
+    private void RemoveAssignee(string id) => _assigneeIds.Remove(id);
+
+    private void AddTag()
+    {
+        var t = _tagDraft.Trim();
+        if (!string.IsNullOrEmpty(t) && _tags.Count < 10
+            && !_tags.Any(x => string.Equals(x, t, StringComparison.OrdinalIgnoreCase)))
+        {
+            _tags.Add(t);
+        }
+        _tagDraft = "";
+    }
+
+    private void OnTagKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Enter" or ",")
+        {
+            AddTag();
+        }
+    }
+
+    private void RemoveTag(string t) => _tags.Remove(t);
+
+    private async Task Create()
+    {
+        if (!_hasBoard)
+        {
+            _error = "Select a board first.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_title))
+        {
+            _error = "A title is required.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_description))
+        {
+            _error = "A description is required.";
+            return;
+        }
+        if (_ideaTypes.Count == 0 || _businessImpacts.Count == 0)
+        {
+            _error = "Couldn't load Idea Type / Business Impact options. Reload and try again.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_ideaTypeId) || string.IsNullOrWhiteSpace(_businessImpactId))
+        {
+            _error = "Idea Type and Business Impact are required.";
+            return;
+        }
+        var missing = _resolvedFields.FirstOrDefault(f => f.IsRequired && string.IsNullOrWhiteSpace(_fieldValues.GetValueOrDefault(f.FieldDefinitionId)));
+        if (missing is not null)
+        {
+            _error = $"{missing.Name} is required.";
+            return;
+        }
+
+        _creating = true;
+        _error = null;
+
+        var fieldValues = _resolvedFields
+            .Select(f => new IdeaFieldValueWriteDto(f.FieldDefinitionId, _fieldValues.GetValueOrDefault(f.FieldDefinitionId)))
+            .Where(v => !string.IsNullOrWhiteSpace(v.Value))
+            .ToList();
+
+        var body = new CreateIdeaRequestDto(
+            _title.Trim(),
+            _description.Trim(),
+            _priority,
+            _ideaTypeId,
+            _businessImpactId,
+            string.IsNullOrEmpty(_statusId) ? null : _statusId,
+            fieldValues.Count > 0 ? fieldValues : null,
+            string.IsNullOrWhiteSpace(_dueDate) ? null : _dueDate,
+            _assigneeIds.Count > 0 ? _assigneeIds.ToList() : null,
+            _tags.Count > 0 ? _tags.ToList() : null,
+            ExtractMentionEmails(_description));
+
+        var result = await Api.CreateIdeaAsync(_selectedBoardId!, body);
+        if (!result.Succeeded || result.Value is null)
+        {
+            _error = result.Error ?? "Creating the idea failed.";
+            _creating = false;
+            return;
+        }
+
+        // Best-effort: fetch the full detail so the host gets a complete DTO. The host reloads its list
+        // regardless, so a failed fetch still closes the modal successfully.
+        var detail = await Api.GetIdeaAsync(result.Value.IdeaId);
+        _creating = false;
+        _wasOpen = false;
+        await OnCreated.InvokeAsync(detail.Value!);
+    }
+
+    private async Task Cancel()
+    {
+        if (_creating)
+        {
+            return;
+        }
+        _wasOpen = false;
+        await OnCancel.InvokeAsync();
+    }
+
+    private async Task BackdropClick() => await Cancel();
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await Cancel();
+        }
+    }
+
+    private string UserName(string userId) =>
+        _names.TryGetValue(userId, out var name) && !string.IsNullOrWhiteSpace(name) ? name : "Member";
+
+    private static readonly Regex EmailPattern =
+        new(@"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", RegexOptions.Compiled);
+
+    private static List<string>? ExtractMentionEmails(string body)
+    {
+        var emails = EmailPattern.Matches(body)
+            .Select(m => m.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return emails.Count > 0 ? emails : null;
+    }
+}

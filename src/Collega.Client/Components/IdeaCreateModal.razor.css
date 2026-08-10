@@ -1,0 +1,111 @@
+/* Centered create-idea modal — chrome/spacing per comp-c-review-09-detail-surfaces.html "Form layover".
+   Global .btn / .autherror / input / label styles come from app.css. */
+
+.modal-wrap {
+    position: fixed;
+    inset: 0 0 0 64px;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(36, 36, 36, .38);
+}
+
+.modal {
+    width: min(760px, 100%);
+    max-height: calc(100vh - 48px);
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .22);
+    display: flex;
+    flex-direction: column;
+}
+
+.surface-head {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+.surface-head .grow { flex: 1; min-width: 0; }
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--accent-deep);
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+.surface-head h2 { font-family: Georgia, "Times New Roman", serif; font-size: 22px; line-height: 1.25; font-weight: 600; }
+.meta { font-size: 11.5px; color: var(--ink-3); margin-top: 6px; }
+
+.iconbtn {
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-btn);
+    background: #fff;
+    cursor: pointer;
+    color: var(--ink-2);
+    display: grid;
+    place-items: center;
+    font-size: 19px;
+    line-height: 1;
+    flex: none;
+}
+.iconbtn:hover { background: #f3f2f1; }
+
+.surface-body { padding: 22px 24px; overflow: auto; flex: 1; }
+.surface-foot {
+    padding: 13px 24px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    background: #fff;
+}
+
+.formgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.span2 { grid-column: 1 / -1; }
+.required { color: var(--err); }
+.muted { color: var(--ink-3); }
+.help { font-size: 11px; color: var(--ink-3); margin-top: 4px; line-height: 1.5; }
+.charlim { float: right; font-weight: 400; color: var(--ink-3); text-transform: none; letter-spacing: 0; }
+.udf-head { font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-3); margin-bottom: 8px; font-weight: 700; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.editchip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    border-radius: 3px;
+    padding: 3px 4px 3px 9px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.editchip .x {
+    border: none;
+    background: none;
+    color: var(--accent-deep);
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 0 3px;
+    min-height: 0;
+}
+.editchip .x:hover { color: var(--err); }
+.tagadd { display: flex; gap: 8px; align-items: center; }
+.tagadd input { flex: 1; }
+.btn.sm { padding: 5px 10px; min-height: 30px; font-size: 12px; }
+
+@media (max-width: 768px) {
+    .modal-wrap { inset: 0 0 56px 0; padding: 0; }
+    .modal { width: 100%; height: 100%; max-height: none; border: none; border-radius: 0; }
+    .formgrid { grid-template-columns: 1fr; }
+    .span2 { grid-column: auto; }
+    .surface-head, .surface-body, .surface-foot { padding-left: 18px; padding-right: 18px; }
+}

@@ -61,6 +61,27 @@ public sealed partial class ApiClient
     public Task<ApiResult<IdeaDetailDto>> UpdateIdeaAsync(string ideaId, UpdateIdeaRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<IdeaDetailDto>(HttpMethod.Put, $"{BasePath}/ideas/{ideaId}", body, ct);
 
+    /// <summary>Soft-deletes an idea (admin-only server-side, SPEC/30-Contracts.md
+    /// <c>DELETE /ideas/{ideaId}</c>). Returns 204 with no body, so it's built by hand rather than via
+    /// the JSON-reading <c>SendAsync</c> helper (mirrors <c>ChangeIdeaStatusAsync</c>).</summary>
+    public async Task<ApiResult<bool>> DeleteIdeaAsync(string ideaId, CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"{BasePath}/ideas/{ideaId}");
+        await AttachTokenAsync(request);
+
+        try
+        {
+            using var response = await _http.SendAsync(request, ct);
+            return response.IsSuccessStatusCode
+                ? ApiResult<bool>.Success(true, (int)response.StatusCode)
+                : ApiResult<bool>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
+        }
+        catch (HttpRequestException ex)
+        {
+            return ApiResult<bool>.Failure(0, $"Couldn't reach the server. {ex.Message}");
+        }
+    }
+
     /// <summary>Moves the idea to a new status. Returns 204 with no body, so it's built by hand
     /// rather than via the JSON-reading <c>SendAsync</c> helper (mirrors <c>DeleteStatusAsync</c>).
     /// This is the single status-move method shared by Idea Detail and Board detail.</summary>

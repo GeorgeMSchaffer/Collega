@@ -1,5 +1,7 @@
 @page "/ideas"
+@page "/ideas/{IdeaId}"
 @attribute [Authorize]
+@implements IDisposable
 @inject ApiClient Api
 @inject NavigationManager Nav
 
@@ -8,8 +10,13 @@
 @*
     Global, cross-board idea list (comp-c-review-07-ideas-list.html). Server-side search + paging via
     GET /organizations/{orgId}/ideas; the All / Created by me / Assigned to me chips map to the scope
-    filter. Created-by name, board name, and status color are resolved from the org's users, boards,
-    and statuses (loaded once), since the list item carries only ids/names.
+    filter. The Idea Type and Idea Status dropdowns filter the loaded page client-side (the list endpoint
+    exposes no type/status query params, SPEC/30-Contracts.md), a known limitation over server paging.
+
+    Idea Detail opens in the shared right slide-in IdeaDrawer, and + New idea in the centered
+    IdeaCreateModal (SPEC/20-feature-client-ui.md → "Idea Detail Surface", locked 2026-08-10). Drawer open
+    state is URL-addressable: /ideas/{id} (bare route) and /ideas?idea={id} both open the drawer; closing
+    drops the param.
 *@
 <div class="pagehead">
     <h1>Ideas</h1>
@@ -35,16 +42,39 @@
             </div>
         }
         <div class="cmdbar">
-            <input type="text" placeholder="Search title & text fields…" value="@_search" @onchange="OnSearchChanged" style="width:300px" />
+            <input type="text" placeholder="Search title & text fields…" value="@_search" @onchange="OnSearchChanged" style="width:280px" />
             @if (!string.IsNullOrWhiteSpace(_search))
             {
                 <button class="btn subtle" @onclick="ClearSearch">Clear</button>
             }
+            @if (!_isSiteAdmin)
+            {
+                <div class="listfilters">
+                    <select aria-label="Filter by idea type" value="@_typeFilter" @onchange="OnTypeFilterChanged">
+                        <option value="">All types</option>
+                        @foreach (var t in _ideaTypeNames)
+                        {
+                            <option value="@t">@t</option>
+                        }
+                    </select>
+                    <select aria-label="Filter by status" value="@_statusFilter" @onchange="OnStatusFilterChanged">
+                        <option value="">All statuses</option>
+                        @foreach (var s in _statusList)
+                        {
+                            <option value="@s.StatusId">@s.Name</option>
+                        }
+                    </select>
+                </div>
+            }
             @if (_fieldDefs.Count > 0)
             {
-                <button class="btn subtle" @onclick="() => _showFilters = !_showFilters" style="margin-left:auto">
+                <button class="btn subtle" @onclick="() => _showFilters = !_showFilters">
                     @(_showFilters ? "Hide field filters" : "Field filters")@(ActiveFilterCount > 0 ? $" ({ActiveFilterCount})" : "")
                 </button>
+            }
+            @if (!_isReadOnly)
+            {
+                <button class="btn primary" style="margin-left:auto" @onclick="OpenCreate">+ New idea</button>
             }
         </div>
 
@@ -115,7 +145,7 @@
         {
             <div class="autherror" role="alert">@_error</div>
         }
-        else if (_items.Count == 0)
+        else if (FilteredItems.Count == 0)
         {
             <div class="emptystate">
                 <h3>No ideas match this filter</h3>
@@ -127,27 +157,30 @@
             <div class="card">
                 <table>
                     <thead>
-                        <tr><th>Title</th>@if (_isSiteAdmin) { <th>Organization</th> }<th>Created By</th><th>Assigned To</th><th>Status</th><th>Created</th><th></th></tr>
+                        <tr><th>Title</th>@if (_isSiteAdmin) { <th>Organization</th> }<th>Idea Type</th><th>Created By</th><th>Assigned To</th><th>Status</th><th>Created</th><th></th></tr>
                     </thead>
                     <tbody>
-                        @foreach (var idea in _items)
+                        @foreach (var idea in FilteredItems)
                         {
-                            <tr>
+                            <tr class="@(idea.IdeaId == _openIdeaId ? "selected" : null)">
                                 <td>
                                     <div class="t">@idea.Title</div>
-                                    <div class="board">
-                                        @if (!string.IsNullOrWhiteSpace(idea.IdeaTypeName))
-                                        {
-                                            <TypeBadge Name="@idea.IdeaTypeName" ColorHex="@idea.IdeaTypeColorHex" Icon="@idea.IdeaTypeIcon" />
-                                            <span> · </span>
-                                        }
-                                        @BoardName(idea.BoardId)
-                                    </div>
+                                    <div class="board">@BoardName(idea.BoardId)</div>
                                 </td>
                                 @if (_isSiteAdmin)
                                 {
                                     <td>@OrganizationName(idea.BoardId)</td>
                                 }
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(idea.IdeaTypeName))
+                                    {
+                                        <TypeBadge Name="@idea.IdeaTypeName" ColorHex="@idea.IdeaTypeColorHex" Icon="@idea.IdeaTypeIcon" />
+                                    }
+                                    else
+                                    {
+                                        <span class="muted">—</span>
+                                    }
+                                </td>
                                 <td>@AuthorName(idea.AuthorUserId)</td>
                                 <td>
                                     @if (idea.Assignees.Count == 0)
@@ -161,7 +194,7 @@
                                 </td>
                                 <td><span class="statusdot"><span class="d" style="background:@StatusColor(idea.StatusId)"></span>@idea.StatusName</span></td>
                                 <td>@idea.CreatedAtUtc.ToLocalTime().ToString("MMM d, yyyy")</td>
-                                <td><a class="btn subtle" href="@($"/ideas/{idea.IdeaId}/edit")">Details</a></td>
+                                <td><button class="btn subtle" @onclick="() => OpenDrawer(idea.IdeaId)">Details</button></td>
                             </tr>
                         }
                     </tbody>
@@ -188,13 +221,19 @@
     }
 </div>
 
+<IdeaDrawer IdeaId="@_openIdeaId" OnClose="CloseDrawer" OnChanged="OnDrawerChanged" />
+<IdeaCreateModal Open="_showCreate" BoardId="@_createBoardId" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
+
 @code {
+    [Parameter] public string? IdeaId { get; set; }
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
     private string? _organizationId;
     private bool _noOrg;
     private bool _isSiteAdmin;
+    private bool _isReadOnly;
     private readonly List<string> _siteAdminOrganizationIds = new();
 
     private readonly List<IdeaListItemDto> _items = new();
@@ -207,8 +246,18 @@
     private bool _loading = true;
     private string? _error;
 
-    // Org User-Defined Field schema + per-field filter inputs (T059). _fieldFilters is keyed by field
-    // definition id; each holds the raw sub-inputs, encoded to the fieldFilters query value on apply.
+    // Idea Type + Status dropdown filters (T-UI-2). Applied client-side over the current page since the
+    // org ideas list endpoint has no type/status query params (SPEC/30-Contracts.md).
+    private IReadOnlyList<string> _ideaTypeNames = Array.Empty<string>();
+    private IReadOnlyList<StatusItemDto> _statusList = Array.Empty<StatusItemDto>();
+    private string _typeFilter = "";
+    private string _statusFilter = "";
+
+    // Drawer + create modal state.
+    private string? _openIdeaId;
+    private bool _showCreate;
+    private string? _createBoardId;
+
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
     private readonly Dictionary<string, FieldFilterState> _fieldFilters = new();
     private bool _showFilters;
@@ -230,22 +279,31 @@
     private readonly Dictionary<string, string> _authorNames = new();
     private readonly Dictionary<string, string> _statusColors = new();
 
+    private List<IdeaListItemDto> FilteredItems => _items
+        .Where(i => string.IsNullOrEmpty(_typeFilter) || string.Equals(i.IdeaTypeName, _typeFilter, StringComparison.OrdinalIgnoreCase))
+        .Where(i => string.IsNullOrEmpty(_statusFilter) || i.StatusId == _statusFilter)
+        .ToList();
+
     private int TotalPages => _pageSize > 0 ? Math.Max(1, (int)Math.Ceiling(_total / (double)_pageSize)) : 1;
     private int RangeStart => _total == 0 ? 0 : ((_page - 1) * _pageSize) + 1;
     private int RangeEnd => Math.Min(_page * _pageSize, _total);
 
     protected override async Task OnInitializedAsync()
     {
+        Nav.LocationChanged += OnLocationChanged;
+
         if (AuthStateTask is not null)
         {
             var user = (await AuthStateTask).User;
             _organizationId = user.FindFirst("organizationId")?.Value;
             _isSiteAdmin = user.IsInRole("SiteAdmin");
+            _isReadOnly = user.IsInRole("ReadOnly");
         }
 
         if (_isSiteAdmin)
         {
             await InitializeSiteAdminAsync();
+            SyncOpenIdeaFromUrl();
             return;
         }
 
@@ -256,7 +314,6 @@
             return;
         }
 
-        // Load display lookups once (best-effort — a failure just degrades a column, not the list).
         var boards = await Api.GetBoardsAsync(_organizationId!);
         if (boards.Succeeded)
         {
@@ -269,10 +326,17 @@
         var statuses = await Api.GetStatusesAsync(_organizationId!);
         if (statuses.Succeeded)
         {
+            _statusList = statuses.Value!;
             foreach (var s in statuses.Value!)
             {
                 _statusColors[s.StatusId] = s.Color;
             }
+        }
+
+        var types = await Api.GetIdeaTypesAsync(_organizationId!);
+        if (types.Succeeded)
+        {
+            _ideaTypeNames = types.Value!.Where(t => !t.IsDeleted).OrderBy(t => t.SortOrder).Select(t => t.Name).ToList();
         }
 
         var users = await Api.GetOrganizationUsersAsync(_organizationId!);
@@ -284,7 +348,6 @@
             }
         }
 
-        // Active custom-field schema drives the field-filter panel (best-effort).
         var fields = await Api.GetActiveFieldDefinitionsAsync(_organizationId!);
         if (fields.Succeeded)
         {
@@ -296,7 +359,10 @@
         }
 
         await LoadAsync();
+        SyncOpenIdeaFromUrl();
     }
+
+    protected override void OnParametersSet() => SyncOpenIdeaFromUrl();
 
     private async Task InitializeSiteAdminAsync()
     {
@@ -345,7 +411,6 @@
         await LoadAsync();
     }
 
-    // Encodes each field's inputs into the fieldFilters[<id>]=<value> value per the field's type.
     private Dictionary<string, string> BuildFieldFilters()
     {
         var result = new Dictionary<string, string>();
@@ -443,6 +508,10 @@
         await LoadAsync();
     }
 
+    private void OnTypeFilterChanged(ChangeEventArgs e) => _typeFilter = e.Value?.ToString() ?? "";
+
+    private void OnStatusFilterChanged(ChangeEventArgs e) => _statusFilter = e.Value?.ToString() ?? "";
+
     private async Task OnSearchChanged(ChangeEventArgs e)
     {
         _search = e.Value?.ToString() ?? "";
@@ -484,6 +553,73 @@
             await LoadAsync();
         }
     }
+
+    // ---- Drawer + create modal wiring ----
+
+    private void OpenDrawer(string ideaId) =>
+        Nav.NavigateTo($"/ideas?idea={Uri.EscapeDataString(ideaId)}");
+
+    private void CloseDrawer() => Nav.NavigateTo("/ideas");
+
+    private async Task OnDrawerChanged(IdeaDetailDto _)
+    {
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private void OpenCreate()
+    {
+        _createBoardId = null; // global list: the modal shows a board picker
+        _showCreate = true;
+    }
+
+    private void CloseCreate() => _showCreate = false;
+
+    private async Task OnIdeaCreated(IdeaDetailDto _)
+    {
+        _showCreate = false;
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private void SyncOpenIdeaFromUrl()
+    {
+        var next = IdeaId ?? GetQueryIdea();
+        if (next != _openIdeaId)
+        {
+            _openIdeaId = next;
+        }
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        var previous = _openIdeaId;
+        SyncOpenIdeaFromUrl();
+        if (previous != _openIdeaId)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private string? GetQueryIdea()
+    {
+        var query = Nav.ToAbsoluteUri(Nav.Uri).Query;
+        if (string.IsNullOrEmpty(query))
+        {
+            return null;
+        }
+        foreach (var part in query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kv = part.Split('=', 2);
+            if (kv.Length == 2 && kv[0].Equals("idea", StringComparison.OrdinalIgnoreCase))
+            {
+                return Uri.UnescapeDataString(kv[1]);
+            }
+        }
+        return null;
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
 
     private string BoardName(string boardId) =>
         _boardNames.TryGetValue(boardId, out var name) ? name : "";
