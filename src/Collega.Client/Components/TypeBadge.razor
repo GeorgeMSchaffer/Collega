@@ -1,0 +1,48 @@
+@*
+    Idea-type badge (SPEC/20-feature-idea-type-fields.md "Type appearance"). Renders a type's color +
+    icon + name as a pill, tying idea types into the same visual system as statuses and priority. Used on
+    the Idea Types admin list, the idea create form preview, idea detail, and idea cards/list.
+
+    Colors come in as inline styles (a soft tint of the type color for the fill, the color itself for the
+    text) so no shared app.css class is needed and the palette follows whatever the admin picked. A null
+    color falls back to a neutral badge; a null icon simply omits the glyph. Set IconOnly for tight spots
+    (swimlane/list cards) where the name would cause chip overload — the full name rides the tooltip.
+*@
+<span class="typebadge @(IconOnly ? "icononly" : null)" style="@Style()" title="@Tooltip()">
+    @if (!string.IsNullOrWhiteSpace(Icon))
+    {
+        <span class="ic">@Icon</span>
+    }
+    else if (IconOnly)
+    {
+        <span class="dot"></span>
+    }
+    @if (!IconOnly)
+    {
+        @Name
+    }
+</span>
+
+@code {
+    [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
+    [Parameter] public string? ColorHex { get; set; }
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Compact form (icon or dot only, name on the tooltip) for cards where space is tight.</summary>
+    [Parameter] public bool IconOnly { get; set; }
+
+    private string Style()
+    {
+        if (IsHex(ColorHex))
+        {
+            // #RRGGBB + "22" ≈ 13% alpha fill; the solid color is used for the text/glyph.
+            return $"background:{ColorHex}22;color:{ColorHex}";
+        }
+        return "background:#f1f0ee;color:var(--ink-2)";
+    }
+
+    private string? Tooltip() => IconOnly ? Name : null;
+
+    private static bool IsHex(string? value) =>
+        !string.IsNullOrWhiteSpace(value) && value.Length == 7 && value[0] == '#';
+}
