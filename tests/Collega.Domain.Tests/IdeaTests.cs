@@ -51,16 +51,35 @@ public sealed class IdeaTests
     }
 
     [Fact]
-    public void UpdateContent_ChangesClassification()
+    public void UpdateContent_ChangesBusinessImpact_LeavesTypeImmutable()
+    {
+        var idea = NewIdea();
+        var originalType = idea.IdeaTypeId;
+        var newImpact = Guid.NewGuid();
+
+        idea.UpdateContent("Retitled", "A revised description.", Priority.High, newImpact, dueDate: null, TestClock.Now.AddMinutes(1), AuthorId);
+
+        // Idea Type is immutable on the edit path; only Business Impact changes here.
+        Assert.Equal(originalType, idea.IdeaTypeId);
+        Assert.Equal(newImpact, idea.BusinessImpactId);
+    }
+
+    [Fact]
+    public void ReassignIdeaType_ChangesType()
     {
         var idea = NewIdea();
         var newType = Guid.NewGuid();
-        var newImpact = Guid.NewGuid();
 
-        idea.UpdateContent("Retitled", "A revised description.", Priority.High, newType, newImpact, dueDate: null, TestClock.Now.AddMinutes(1), AuthorId);
+        idea.ReassignIdeaType(newType, TestClock.Now.AddMinutes(1), AuthorId);
 
         Assert.Equal(newType, idea.IdeaTypeId);
-        Assert.Equal(newImpact, idea.BusinessImpactId);
+    }
+
+    [Fact]
+    public void ReassignIdeaType_RejectsEmpty()
+    {
+        var idea = NewIdea();
+        Assert.Throws<ArgumentException>(() => idea.ReassignIdeaType(Guid.Empty, TestClock.Now, AuthorId));
     }
 
     [Fact]
