@@ -11,6 +11,23 @@ This document is the authoritative queue for bugs and minor tweaks that must be 
 - New bugs and minor tweaks belong under `TODO`; feature ideas remain in the delivery backlog.
 
 ## TODO
+* The Ideas List and details form vs great on the Ideas page.  However this behavior is incorrect on the custom fields where clicking "New Field" it just goes to the organizations list.  Also the wording and placement of the "Add New" button should be uniformally on the right on all list pages.
+* The showed archived check box should go to the just right of the search field.
+* The back button should be above the search field aligned to the left for all List pages
+* All List pages should have the following filters:
+    * Search field, which searches each propery of the entity that are display as columns on a list.
+    * For all entities that support tags should have tag search field.
+    * Where a user can be associated with an entity such as an idea, we should also display a search box for filtering by users that either created the entity or are assigned to it.
+* Every list / detail field such as Organizations, User Fields, Idea Types etc are missing the List View / Form drawer layout we speced.  An example of where it working correctly is the Ideas list and detail view . All other list / detail combos should be consitent with the Ideas list / detail functionality.
+* on the /setting page, all words in settings link should have it's first letter capitalized since it a title.
+* When in Edit mode on the Ideas page the form inputs are two squished.  Each Input should be able to take up a 100% in situations where there are two columns in a row, then each should be 50% wide.
+
+* In the idea-type page the button should be "Add New" this should be uniform for all list
+* The home page does not need the Platform Administration section, just all boards and activity feed is needed right now.
+* My profile should allow for the uploading of a portrait, if the portrait is set it should be display instead of the current avatar circle with initals where every the. The size of both the portrait should be 25 px high and wide. Also add validation and security checks so the user cannot uplad a malicous content instead of a GIF, Jpeg, and PNG. The uploaded image should be resized to fit the 25px maximum height / width rule.
+* List pages should also have a back button which goes back to the page they came from.
+* On the Ideas list view we should allow for sorting by 
+
 
 ### T-UI-3 · Idea Detail slide-in drawer + create modal — **NEXT MAJOR ITEM (pre-MVP)**
 Design locked 2026-08-10 (user-approved as the exception to this triage gate). Replace the full-page Idea Detail with a right slide-in **drawer** (detail + inline edit, ≈620px) and a centered **create modal** (≈760px), used from every idea entry point (Ideas list, Board List rows, Swim Lane cards). Canonical spec: `SPEC/20-feature-client-ui.md` → **Idea Detail Surface**; reference comp `SPEC/mockups/comp-c-review-09-detail-surfaces.html` (Right slide-in pattern); full decision log in `SPEC/implementation-agent-tracker.md`.
