@@ -44,7 +44,7 @@
             <BackButton />
             @if (!_siteAdminGlobal)
             {
-                <a class="btn primary" href="@($"{RouteBase}/new")">New user</a>
+                <a class="btn primary" href="@($"{RouteBase}/new")" style="margin-left:auto">New user</a>
                 <a class="btn" href="@($"{RouteBase}/import")">Import CSV</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/statuses")">Manage statuses</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/boards")">Manage boards</a>
@@ -52,7 +52,7 @@
             }
             else
             {
-                <a class="btn primary" href="/settings/organizations">New user</a>
+                <a class="btn primary" href="/settings/organizations" style="margin-left:auto">New user</a>
             }
         </div>
         <div class="card">

@@ -32,11 +32,11 @@
             <BackButton />
             @if (!_siteAdminGlobal)
             {
-                <button class="btn primary" @onclick="StartCreate" disabled="@_editing">New idea type</button>
+                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">New idea type</button>
             }
             else
             {
-                <a class="btn primary" href="/settings/organizations">New idea type</a>
+                <a class="btn primary" href="/settings/organizations" style="margin-left:auto">New idea type</a>
             }
         </div>
 

@@ -11,8 +11,6 @@ This document is the authoritative queue for bugs and minor tweaks that must be 
 - New bugs and minor tweaks belong under `TODO`; feature ideas remain in the delivery backlog.
 
 ## TODO
- * Move the add new button on list pages to be on the right.
- * 
 
 ### T-UI-3 · Idea Detail slide-in drawer + create modal — **NEXT MAJOR ITEM (pre-MVP)**
 Design locked 2026-08-10 (user-approved as the exception to this triage gate). Replace the full-page Idea Detail with a right slide-in **drawer** (detail + inline edit, ≈620px) and a centered **create modal** (≈760px), used from every idea entry point (Ideas list, Board List rows, Swim Lane cards). Canonical spec: `SPEC/20-feature-client-ui.md` → **Idea Detail Surface**; reference comp `SPEC/mockups/comp-c-review-09-detail-surfaces.html` (Right slide-in pattern); full decision log in `SPEC/implementation-agent-tracker.md`.
@@ -64,6 +62,7 @@ Help me come up with a new feature.  The overall idea is that the board is used 
 
 
 ## COMPLETED
+- 2026-08-10 — Add-new button right-alignment on list pages completed: the primary "New …" action now sits on the right of the `.cmdbar` header (via `margin-left:auto`) on Settings→Organizations, Boards admin, Statuses admin, Custom Fields admin, Idea Types admin, and Organization Users (both active and Site-Admin fallback variants; on Organization Users the whole action cluster right-aligns with Back kept on the left). Verified by a clean `Collega.Client` build (0 errors; the single pre-existing BoardDetail.razor:456 nullable warning is unrelated).
 - 2026-08-09 — Site Admin global visibility and stale-session handling completed: Site Admin Home, Boards, Ideas, Users, Statuses, and User-Defined Fields aggregate every active organization with explicit organization labels and scoped management links; Board and Idea detail derive related-data context from the owning board rather than an account membership. Every authenticated API path now clears an invalid persisted token and redirects to Login with the expired-session message, and Development HTTP hosting no longer runs HTTPS redirection. Verified by two clean Release solution builds, two full 425-test passes, and a live browser reproduction that cleared the stale token and reached `/login?sessionExpired=true` instead of leaving the page on 401.
 - 2026-08-09 — Settings information architecture completed: `/settings` is a role-scoped link-card hub; organizations moved to `/settings/organizations`; Org Admin users moved to `/settings/users`; and Users, Statuses, and User-Defined Fields link to dedicated list/form views. Site Admin organization rows expose scoped Users, Statuses, and Fields actions. Verified by focused and full solution builds plus live Org Admin/member browser checks, including invite-code preservation, authorization, and a 375px responsive pass.
 - 2026-08-09 — Session lifetime completed: verified the 480-minute absolute expiry in persisted browser state, the warning dialog and countdown after 28 minutes idle, activity reset through Stay signed in, automatic logout after 30 minutes idle, expired-session confirmation, and logout synchronization across two browser tabs.
