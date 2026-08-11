@@ -23,9 +23,18 @@ A recall-oriented `/code-review` of `dev` was already run on 2026-08-11 and prod
 | Priority | Item | Notes | Dependencies |
 |---|---|---|---|
 | P0 | Code-Review pass across all previously-unreviewed merged slices | See `SPEC/implementation-agent-tracker-archive.md`'s per-slice "Judgment calls" sections for a running list of things flagged but never human-reviewed (e.g. lockout fixed-window approximation, JWT ephemeral signing key needing prod config, status name max length 100 vs. the comp's 25-char hint, response-DTO layering compromises) | Sprints 1-3 merged first, so review covers the final shape of things, not a moving target |
-| P0 | Confirm or change the still-open judgment calls the review surfaces | Each becomes its own small decision — interview multiple-choice per standing preference | Depends on review findings |
+| ✅ P0 | Confirm or change the still-open judgment calls | **RESOLVED 2026-08-11 (user interview)** — all four decided, see "Judgment Calls (resolved)" below; none needs a code change now | Done |
 | P1 | Profile portrait upload: GIF/JPEG/PNG only, validated against malicious content, **resized server-side** to a 25×25px thumbnail, replaces the initials avatar when set (nav rail + everywhere initials render) | Independent of the review pass — can run in parallel. Decisions locked 2026-08-10: **store the thumbnail on the user record** (nullable bytes/base64 column) rather than a separate blob table/endpoint; resize + re-encode happens **server-side** for security. **Image library APPROVED 2026-08-11: SkiaSharp** (permissive MIT-style license, cleaner for MVP than ImageSharp's split license) — decode/validate/resize/re-encode through SkiaSharp, do not trust extension or declared MIME | None |
-| P2 | Lock the still-unconfirmed default `Status.Color`/`SortOrder` values (currently implemented with placeholder values from the locked comp — see `SPEC/60-spec-q-and-a-backlog.md`) | Cheap to close out alongside the review pass | None |
+| ✅ P2 | Lock the default `Status.Color`/`SortOrder` values | **RESOLVED 2026-08-11** — confirmed final (see below) | Done |
+
+## Judgment Calls (resolved 2026-08-11, user interview)
+The P0 "confirm the open judgment calls" item is closed. All four were decided; **none needs a code change now** (the JWT-key item is routed to Sprint 7):
+| Call | Decision | Follow-up |
+|---|---|---|
+| Account lockout window | **Keep the fixed-window approximation** for MVP (not reworked to a true sliding window) | None — no code change |
+| JWT signing key (ephemeral per-process) | **Stays ephemeral for now; enforcing a stable `Auth:TokenSigningKey` is deferred to Sprint 7 (Azure)** | Already on Sprint 7's App Service config (P0) + risks + post-deploy checklist — verify token survives a restart there |
+| `Status` name length (`nvarchar(100)` vs 25-char comp hint) | **Keep `nvarchar(100)`** — the 25 hint is dropped | None — no migration |
+| Default `Status.Color`/`SortOrder` | **Confirmed final** — the 5 canonical `OrganizationDefaults` statuses (New/Pending #64748B, In Review #D97706, In Progress #2563EB, Client Review #7C3AED, Complete #16A34A; sort 10–50) | None — no code change |
 
 ## Code-Review Hardening Batch (from the 2026-08-11 `/code-review` of `dev`)
 Concrete defects already surfaced (auth/token stack, password hashing, and all Application services reviewed clean for org-scoping/role checks — no cross-tenant leak or authz bypass). These are the seed set for the P0 review pass above; full per-item detail (file, line, failure, suggested fix) lives in the matching `SPEC/Bug Triage.md` `TODO` entry.
@@ -55,7 +64,8 @@ Most-severe first:
 ## Definition of Done
 - [ ] Code Reviewer has reviewed every previously-unreviewed slice at least once, findings triaged
 - [ ] All P0 findings fixed or explicitly accepted with a documented reason
+- [x] Open judgment calls (lockout / JWT key / status-name length / status defaults) all decided 2026-08-11 — see "Judgment Calls (resolved)"
 - [ ] **Code-review hardening batch:** all six items resolved (or explicitly deferred with reason) — CSV export formula-guard (HIGH); server-side `MustChangePassword` gate; `LIKE` wildcard escaping; export/import memory bounds; client token-expiry check
 - [ ] Profile portrait upload built, validated, server-side resized to 25×25px, stored on the user record, and tested (including a rejection test for disguised non-image content)
 - [ ] Image-library NuGet package approved before it's added
-- [ ] Default status Color/SortOrder values confirmed and the spec open item closed
+- [x] Default status Color/SortOrder values confirmed as final (2026-08-11 user interview) — the 5 `OrganizationDefaults` statuses, no change
