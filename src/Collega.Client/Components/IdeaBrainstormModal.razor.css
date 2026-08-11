@@ -1,0 +1,58 @@
+/* IdeaBrainstormModal — ChatGPT-style chat body. Chrome (overlay/card/header/footer) comes from
+   CreateModalShell.razor.css; this styles the transcript + composer only. Global .btn / textarea /
+   label come from app.css. Palette per app.css design tokens. */
+
+.chat { display: flex; flex-direction: column; gap: 14px; min-height: 320px; }
+
+.transcript { display: flex; flex-direction: column; gap: 12px; }
+
+.msg { display: flex; flex-direction: column; gap: 4px; max-width: 82%; }
+.msg.user { align-self: flex-end; align-items: flex-end; }
+.msg.bot { align-self: flex-start; align-items: flex-start; }
+
+.who {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: 700;
+    color: var(--ink-3);
+}
+
+.bubble {
+    padding: 10px 13px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.msg.bot .bubble {
+    background: #f3f2f1;
+    color: var(--ink);
+    border-bottom-left-radius: 3px;
+}
+.msg.user .bubble {
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 3px;
+}
+
+.composer {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    margin-top: auto;
+}
+.composer textarea {
+    flex: 1;
+    resize: vertical;
+    min-height: 44px;
+    font: inherit;
+}
+.composer .btn { flex: none; }
+
+@media (max-width: 768px) {
+    .msg { max-width: 92%; }
+}

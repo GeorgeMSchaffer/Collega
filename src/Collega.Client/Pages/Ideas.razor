@@ -224,7 +224,8 @@
 </div>
 
 <IdeaDrawer IdeaId="@_openIdeaId" OnClose="CloseDrawer" OnChanged="OnDrawerChanged" />
-<IdeaCreateModal Open="_showCreate" BoardId="@_createBoardId" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
+<IdeaBrainstormModal Open="_showBrainstorm" OnCancel="CloseBrainstorm" OnComplete="OnBrainstormComplete" />
+<IdeaCreateModal Open="_showCreate" BoardId="@_createBoardId" InitialDescription="@_seedDescription" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
 
 @code {
     [Parameter] public string? IdeaId { get; set; }
@@ -257,8 +258,10 @@
 
     // Drawer + create modal state.
     private string? _openIdeaId;
+    private bool _showBrainstorm;
     private bool _showCreate;
     private string? _createBoardId;
+    private string? _seedDescription;
 
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
     private readonly Dictionary<string, FieldFilterState> _fieldFilters = new();
@@ -569,9 +572,20 @@
         StateHasChanged();
     }
 
+    // "Add New" opens the brainstorm chat first; its transcript seeds the create form's description.
     private void OpenCreate()
     {
         _createBoardId = null; // global list: the modal shows a board picker
+        _seedDescription = null;
+        _showBrainstorm = true;
+    }
+
+    private void CloseBrainstorm() => _showBrainstorm = false;
+
+    private void OnBrainstormComplete(string transcript)
+    {
+        _seedDescription = string.IsNullOrWhiteSpace(transcript) ? null : transcript;
+        _showBrainstorm = false;
         _showCreate = true;
     }
 

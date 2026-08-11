@@ -172,6 +172,9 @@
 
     [Parameter] public bool Open { get; set; }
     [Parameter] public string? BoardId { get; set; }
+    // Optional seed text for the Description, e.g. the transcript carried over from the brainstorm chat
+    // (IdeaBrainstormModal). Applied once when the modal opens, after ResetForm clears the form.
+    [Parameter] public string? InitialDescription { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
     [Parameter] public EventCallback<IdeaDetailDto?> OnCreated { get; set; }
 
@@ -232,6 +235,10 @@
     private async Task OpenAsync()
     {
         ResetForm();
+        if (!string.IsNullOrWhiteSpace(InitialDescription))
+        {
+            _description = InitialDescription.Length > 4000 ? InitialDescription[..4000] : InitialDescription;
+        }
         _error = null;
         _loadingContext = true;
 

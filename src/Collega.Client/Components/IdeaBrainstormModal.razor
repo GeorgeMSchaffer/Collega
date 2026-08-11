@@ -1,0 +1,131 @@
+@using Microsoft.AspNetCore.Components.Web
+
+@*
+    IdeaBrainstormModal — a ChatGPT-style chat box that fronts the create-idea flow. Opened from the
+    global Ideas list's "Add New" action. The user describes their idea conversationally; each message
+    they send becomes a bubble, and scripted assistant prompts nudge them for more detail. There is no
+    live LLM behind it — the transcript of the user's own messages is what gets carried forward as the
+    seed Description on the new-idea form (IdeaCreateModal.InitialDescription). Built to be upgradeable
+    to a real model later: swap _NextAssistantPrompt for a model call and pass through its replies.
+
+    Reuses CreateModalShell for chrome so it matches the create/detail surfaces
+    (SPEC/mockups/comp-c-review-09-detail-surfaces.html).
+
+    Public contract:
+      Open       : whether the modal is shown.
+      OnCancel   : dismissed without continuing.
+      OnComplete : fired with the combined transcript text when the user continues to the idea form.
+*@
+<CreateModalShell IsOpen="Open" OnClose="Cancel"
+                  Eyebrow="New idea" Title="Let's flesh out your idea"
+                  Meta="Chat it out — your notes become the idea's description."
+                  FooterContent="RenderFooter">
+    <div class="chat">
+        <div class="transcript">
+            @foreach (var m in _messages)
+            {
+                <div class="msg @(m.FromUser ? "user" : "bot")">
+                    <div class="who">@(m.FromUser ? "You" : "Assistant")</div>
+                    <div class="bubble">@m.Text</div>
+                </div>
+            }
+        </div>
+
+        <div class="composer">
+            <textarea rows="2" placeholder="Describe your idea… (Enter to send, Shift+Enter for a new line)"
+                      @bind="_draft" @bind:event="oninput" @onkeydown="OnKeyDown"></textarea>
+            <button class="btn primary" @onclick="Send" disabled="@string.IsNullOrWhiteSpace(_draft)">Send</button>
+        </div>
+    </div>
+</CreateModalShell>
+
+@code {
+    private RenderFragment RenderFooter => @<text>
+        <button class="btn subtle" @onclick="Cancel">Cancel</button>
+        <button class="btn" @onclick="() => Complete(string.Empty)" title="Skip the chat and fill the form yourself">Skip &amp; fill manually</button>
+        <button class="btn primary" @onclick="() => Complete(Transcript())" disabled="@(!HasUserInput)">
+            Continue to idea form →
+        </button>
+    </text>;
+
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<string> OnComplete { get; set; }
+
+    private sealed record ChatMessage(bool FromUser, string Text);
+
+    private readonly List<ChatMessage> _messages = new();
+    private string _draft = "";
+    private int _promptIndex;
+    private bool _wasOpen;
+
+    // Scripted assistant nudges, cycled after each user message to encourage a fuller description.
+    private static readonly string[] AssistantPrompts =
+    {
+        "Nice — what problem does this solve, and who feels it most?",
+        "Got it. How would you know this idea succeeded? What would change?",
+        "Anything else worth capturing — constraints, examples, or next steps?",
+    };
+
+    private const string Greeting =
+        "Hi! Tell me about your idea in your own words. What are you trying to build or improve?";
+
+    private bool HasUserInput => _messages.Any(m => m.FromUser);
+
+    protected override void OnParametersSet()
+    {
+        if (Open && !_wasOpen)
+        {
+            _wasOpen = true;
+            _messages.Clear();
+            _messages.Add(new ChatMessage(false, Greeting));
+            _draft = "";
+            _promptIndex = 0;
+        }
+        else if (!Open)
+        {
+            _wasOpen = false;
+        }
+    }
+
+    private void Send()
+    {
+        var text = _draft.Trim();
+        if (string.IsNullOrEmpty(text))
+        {
+            return;
+        }
+        _messages.Add(new ChatMessage(true, text));
+        _draft = "";
+        _messages.Add(new ChatMessage(false, AssistantPrompts[_promptIndex % AssistantPrompts.Length]));
+        _promptIndex++;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            // Fluent/Blazor fires keydown before the two-way bind flush on Enter, so _draft is already
+            // current here via @bind:event="oninput".
+            Send();
+            await Task.CompletedTask;
+        }
+    }
+
+    // The seed Description is the user's own words only — assistant nudges are conversational scaffolding,
+    // not content.
+    private string Transcript() =>
+        string.Join("\n\n", _messages.Where(m => m.FromUser).Select(m => m.Text));
+
+    private async Task Complete(string text)
+    {
+        _wasOpen = false;
+        await OnComplete.InvokeAsync(text);
+    }
+
+    private async Task Cancel()
+    {
+        _wasOpen = false;
+        await OnCancel.InvokeAsync();
+    }
+}

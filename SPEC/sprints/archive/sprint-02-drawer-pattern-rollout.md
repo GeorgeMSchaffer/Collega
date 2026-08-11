@@ -1,7 +1,9 @@
 # Sprint 2: Drawer-Pattern Rollout
 
-**Status:** Not started
+**Status:** Complete (2026-08-10)
 **Sequence:** 2 of 4 — see `SPEC/95-next-sprints.md` for the full sequence and how these sprints relate. Starts after Sprint 1 (`sprint-01-bug-triage-quick-wins.md`) is merged.
+
+> **Outcome (2026-08-10):** Delivered and merged to `dev`. Executed as parallel worktree agents: (1) shared `DrawerShell`/`CreateModalShell` extracted from the Ideas surface with Ideas refactored to use them (zero behavior change); (2) all five entities (Organizations, Users, Statuses, Idea Types, Custom Fields) converted to List + Drawer, with full-page routes retired (`/settings/organizations/new`, `/settings/users/new`, per-entity edit routes) and Organizations' drawer made URL-addressable at `/settings/organizations/{id}`; (3) the independent `--seed:auth=reset` Site Admin seed-reset affordance (+4 hermetic tests). Each branch passed a coordinator code-review gate before merge. Client build 0/0; full suite **478 green**. Live QA (Org Admin, injected session) verified the Statuses/Users drawers, the Custom Fields/Idea Types create modals, and the Ideas control (no regression); it caught one defect — the Idea Types create/edit badge preview passed `ColorHex`/`Icon` as literal strings (missing `@`) — fixed in `b419842`. Organizations (SiteAdmin-only) verified by code review. Specs updated: `20-feature-client-ui.md` (new "Admin entities use the same List + Drawer pattern" section) and `20-feature-client-ui-revisions.md` (Decision D5).
 
 > **Reorder note (2026-08-10):** pulled ahead of List Filter Parity (now Sprint 3). This is the largest structural change to the admin list pages, so it runs immediately after the Sprint 1 quick-wins to consolidate all list-page churn; filters + server-side sort then layer onto the finalized pages once, in Sprint 3.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.

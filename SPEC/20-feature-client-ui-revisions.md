@@ -12,6 +12,10 @@ Defines a batch of client UI bug fixes and structural revisions covering layout,
 
 ## Decision Log Addendum (2026-08-07)
 
+## Decision Log Addendum (2026-08-10)
+
+- Decision D5: The admin management entities — Organizations, Users, Statuses, Idea Types, and Custom Fields — adopt the **List + Drawer** pattern canonically, matching the Ideas surface, replacing the earlier full-page-form (Organizations, Users) and inline-edit-card (Statuses, Idea Types, Custom Fields) patterns described under "Admin-Style Pages: List/Form Pattern" below (that section's list-column definitions remain current; its full-page/inline **edit** surface is superseded by the drawer). Each list row's **Details** action opens a right slide-in drawer (read view + Edit toggle → inline form + Save/Cancel footer); **Add New** opens a centered create modal. The drawer/modal chrome is the shared `Components/DrawerShell.razor` / `Components/CreateModalShell.razor` used by Ideas too. Full specification and the preserved per-entity rules/retired routes are in `SPEC/20-feature-client-ui.md` → "Admin entities use the same List + Drawer pattern". Delivered in Sprint 2 (`SPEC/sprints/archive/sprint-02-drawer-pattern-rollout.md`).
+
 - Decision D4: Home dashboard scope is locked to the **richer dashboard** — welcome message, `Boards` / `Your ideas` / `Assigned to you` counts, a "Your boards" tile grid (one tile per accessible board with an open/assigned/last-active summary, plus a "Request a new board" tile), and a "Catching you up" activity feed (recent mentions, upvotes, and status moves). This supersedes Decision D1's simpler MVP version (see "Home Page Dashboard" below, which still describes the superseded D1 scope). Locked via `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` (`Home` screen, superseding the earlier `-v4-combined.html` sign-off) — see `SPEC/implementation-agent-tracker.md` for the full decision trail.
 
 ## Bug Fixes
