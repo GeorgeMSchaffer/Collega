@@ -5,7 +5,9 @@
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
 ## Goal
-Pay down the deferred QA/Code-Review debt across the large volume of fast-tracked merges (per explicit user decision to pull this in now rather than defer further), and land the two remaining standalone feature items from Bug Triage — profile portrait upload and the Site Admin idea-create path (the latter assigned to this sprint 2026-08-11).
+Pay down the deferred QA/Code-Review debt across the large volume of fast-tracked merges (per explicit user decision to pull this in now rather than defer further), and land the one remaining standalone feature item from Bug Triage — profile portrait upload.
+
+> **Removed 2026-08-11 (same day it was added):** the Site Admin idea-create path (org picker → board picker) was briefly assigned here as a P1 UI/UX slice, then **superseded by decision** — Site Admin will not get direct org-scoped create paths at all; org content is created/edited via View As act-as impersonation (Sprint 6). See `SPEC/20-feature-client-ui.md` → "Site Admin org-content mutation model" and `SPEC/sprints/sprint-06-view-as.md`.
 
 A recall-oriented `/code-review` of `dev` was already run on 2026-08-11 and produced a concrete six-item hardening batch (below) — treat it as a head start on this sprint's P0 review pass, not a replacement for it.
 
@@ -15,8 +17,7 @@ A recall-oriented `/code-review` of `dev` was already run on 2026-08-11 and prod
 | Code Reviewer | 1 (broad pass) | First real review across Auth, Tenant Admin, Workflow Config, Collaboration, Events, UDFs, Idea-Type Fields, and all client slices — none of these had a Code Reviewer pass at merge time |
 | QA Developer | 1 | Full regression + gap-fill on anything the review surfaces |
 | Backend + Client Developer | 1 (portrait upload) | Independent feature work, can run in its own worktree parallel to the review pass |
-| UI/UX Developer | 1 (Site Admin idea-create path) | **Comp-first**: throwaway HTML comp in `SPEC/mockups/` for sign-off before any Blazor. Blazor work starts only after sign-off |
-| **Total** | **4** | |
+| **Total** | **3** | |
 
 ## Sprint Backlog
 | Priority | Item | Notes | Dependencies |
@@ -24,7 +25,6 @@ A recall-oriented `/code-review` of `dev` was already run on 2026-08-11 and prod
 | P0 | Code-Review pass across all previously-unreviewed merged slices | See `SPEC/implementation-agent-tracker-archive.md`'s per-slice "Judgment calls" sections for a running list of things flagged but never human-reviewed (e.g. lockout fixed-window approximation, JWT ephemeral signing key needing prod config, status name max length 100 vs. the comp's 25-char hint, response-DTO layering compromises) | Sprints 1-3 merged first, so review covers the final shape of things, not a moving target |
 | P0 | Confirm or change the still-open judgment calls the review surfaces | Each becomes its own small decision — interview multiple-choice per standing preference | Depends on review findings |
 | P1 | Profile portrait upload: GIF/JPEG/PNG only, validated against malicious content, **resized server-side** to a 25×25px thumbnail, replaces the initials avatar when set (nav rail + everywhere initials render) | Independent of the review pass — can run in parallel. Decisions locked 2026-08-10: **store the thumbnail on the user record** (nullable bytes/base64 column) rather than a separate blob table/endpoint; resize + re-encode happens **server-side** for security. **Image library APPROVED 2026-08-11: SkiaSharp** (permissive MIT-style license, cleaner for MVP than ImageSharp's split license) — decode/validate/resize/re-encode through SkiaSharp, do not trust extension or declared MIME | None |
-| P1 | Site Admin idea-create path (added to this sprint 2026-08-11): give Site Admins an "Add New" idea flow with an **org picker step before the board picker**; Read-Only stays gated off. Currently gated OFF in `Pages/Ideas.razor` via `@if (!_isReadOnly && !_isSiteAdmin)` | **Comp-first** per the 2026-08-11 process decision: throwaway HTML comp in `SPEC/mockups/` (comp-c-review series) signed off before production Blazor. Resolution of Idea-Brainstorm open question #1 — see the matching `SPEC/Bug Triage.md` `TODO` entry | Comp sign-off gates the Blazor work; otherwise independent of the review pass |
 | P2 | Lock the still-unconfirmed default `Status.Color`/`SortOrder` values (currently implemented with placeholder values from the locked comp — see `SPEC/60-spec-q-and-a-backlog.md`) | Cheap to close out alongside the review pass | None |
 
 ## Code-Review Hardening Batch (from the 2026-08-11 `/code-review` of `dev`)
@@ -57,6 +57,5 @@ Most-severe first:
 - [ ] All P0 findings fixed or explicitly accepted with a documented reason
 - [ ] **Code-review hardening batch:** all six items resolved (or explicitly deferred with reason) — CSV export formula-guard (HIGH); server-side `MustChangePassword` gate; `LIKE` wildcard escaping; export/import memory bounds; client token-expiry check
 - [ ] Profile portrait upload built, validated, server-side resized to 25×25px, stored on the user record, and tested (including a rejection test for disguised non-image content)
-- [ ] Site Admin idea-create path: HTML comp signed off, then org-picker → board-picker create flow built in Blazor (Read-Only stays gated off) and tested
 - [ ] Image-library NuGet package approved before it's added
 - [ ] Default status Color/SortOrder values confirmed and the spec open item closed

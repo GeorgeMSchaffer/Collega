@@ -5,16 +5,18 @@
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
 ## Goal
-Let a privileged user temporarily browse Collega **as** another user — same role, org scope, and visible data — to reproduce issues, verify permissions, and support users. Comp-first design is already done and signed off in principle (`SPEC/mockups/comp-c-review-10-view-as.html`); this sprint builds the real backend mechanism + Blazor UI.
+Let a privileged user temporarily act in Collega **as** another user — same role, org scope, and visible data — to reproduce issues, verify permissions, support users, **and (decided 2026-08-11) serve as the Site Admin's only path for creating/editing org-owned content**. Site Admin gets no direct org-scoped create/edit surfaces and no org dropdowns anywhere (see `SPEC/20-feature-client-ui.md` → "Site Admin org-content mutation model"); org and user administration stay direct as the bootstrap exception. Comp-first design is already done and signed off in principle (`SPEC/mockups/comp-c-review-10-view-as.html`); this sprint builds the real backend mechanism + Blazor UI.
 
-This is a **post-MVP feature** pulled in by explicit user decision, not original MVP scope.
+This is a **post-MVP feature** pulled in by explicit user decision, not original MVP scope — but it is now **load-bearing**: until it ships, Site Admin has no org-content create path at all.
 
-## Prerequisite — resolve the four open decisions first
-The comp's "Behavior & security" screen parks four decisions that change what gets built. Lock them (interview, multiple-choice) **before** implementation:
+## Prerequisite — open decisions
+**D-MODE is RESOLVED (2026-08-11): full act-as.** Impersonation permits mutations, performed under the impersonated identity with dual attribution (real actor + impersonated user) on every write. Site Admin can act as users in any org; Org Admin's act-as is limited to active users within their own org. The read-only-first recommendation is dropped — it would defeat the feature's new role as the Site Admin org-content mutation path.
+
+The remaining three decisions still lock (interview, multiple-choice) **before** implementation:
 
 | ID | Decision | Comp recommendation |
 |---|---|---|
-| D-MODE | Read-only preview vs full act-as (can the admin perform actions while viewing-as)? | **Read-only first** — disable all mutating controls while viewing-as; add opt-in act-as later behind the same dual-audit trail |
+| ~~D-MODE~~ | ~~Read-only preview vs full act-as~~ | **RESOLVED 2026-08-11: full act-as** (see above) |
 | D-SCOPE | Can a Site Admin view as another Site Admin? | **No for MVP** — picker lists org-scoped users only |
 | D-EXPIRE | Auto-expiry window | **30 min idle, hard cap 2 h** |
 | D-PLACE | Entry-control location | **Page-header `View as…` control + rail avatar-menu item**; no reintroduced global top bar |
@@ -23,7 +25,7 @@ The comp's "Behavior & security" screen parks four decisions that change what ge
 | Role | Slices | Notes |
 |---|---|---|
 | Backend Developer | 1 | Server-issued, scoped act-as context tied to the real admin's identity; authorization rules; start/exit + (if act-as) dual-attribution audit; expiry; non-nestable |
-| Client Developer | 1 | Page-header control + avatar-menu item, picker **drawer** (shared `DrawerShell`), active-banner + rail swap + one-click exit, read-only gating (if D-MODE = read-only) — build to the locked comp |
+| Client Developer | 1 | Page-header control + avatar-menu item, picker **drawer** (shared `DrawerShell`), active-banner + rail swap + one-click exit — build to the locked comp. Also retire Site Admin direct org-content mutation affordances (below) |
 | QA Developer | 1 | Authorization matrix, audit assertions, expiry, non-nestable, exit-restores-identity |
 | Code Reviewer | 1 (mandatory) | Security-sensitive — impersonation must be reviewed before merge; no fast-track |
 
@@ -32,9 +34,9 @@ The comp's "Behavior & security" screen parks four decisions that change what ge
 |---|---|---|
 | P0 | **Impersonation mechanism** | Server-issued, scoped "act-as" context tied to the real admin's identity (NOT a login/token for the target, NOT a role change). Time-boxed (D-EXPIRE), one-click exit restores the admin, **non-nestable**. |
 | P0 | **Authorization** | Site Admin → any org user; Org Admin → **active** users in **own** org only; User/Read-Only → refused (control hidden + endpoint 403). Suspended/archived users not selectable. Other Site Admins excluded per D-SCOPE. Enforced server-side, not just in the UI. |
-| P0 | **Audit** | Start + exit each write an audit event (real actor + target + timestamps). If act-as is enabled (D-MODE), every mutation carries **dual attribution** (real admin + impersonated user); the target's own trail is never forged as self-authored. |
-| P0 | **Client UI** | Per `comp-c-review-10-view-as.html`: `View as…` page-header control + avatar-menu item; picker drawer (searchable; org-grouped for Site Admin, own-org for Org Admin); persistent active banner + rail avatar swap (impersonated initials, role-scoped rail) + Exit; if read-only (D-MODE) disable mutating controls while viewing-as. |
-| P1 | **Read-only enforcement** (if D-MODE = read-only) | Mutating endpoints refuse writes performed under a read-only view-as context — server-side, not just disabled buttons. |
+| P0 | **Audit** | Start + exit each write an audit event (real actor + target + timestamps). D-MODE is act-as, so every mutation carries **dual attribution** (real admin + impersonated user) unconditionally; the target's own trail is never forged as self-authored. |
+| P0 | **Client UI** | Per `comp-c-review-10-view-as.html`: `View as…` page-header control + avatar-menu item; picker drawer (searchable; org-grouped for Site Admin, own-org for Org Admin); persistent active banner + rail avatar swap (impersonated initials, role-scoped rail) + Exit. Mutating controls stay live (act-as). |
+| P1 | **Retire Site Admin direct org-content mutation paths** | Once View As works end-to-end: the Site Admin global aggregate views (Boards, Ideas, Statuses, Idea Types, Custom Fields) and org-scoped `/settings/organizations/{orgId}/statuses` / `/idea-fields` routes become **read-only for Site Admin** — create/edit/delete affordances removed, View As is the mutation path. Org and user administration (orgs, users, CSV import, invite codes) stay direct per the bootstrap exception. Spec: `20-feature-client-ui.md` → "Site Admin org-content mutation model". |
 
 ## Risks
 | Risk | Impact | Mitigation |
@@ -44,10 +46,11 @@ The comp's "Behavior & security" screen parks four decisions that change what ge
 | Stale view-as context lingers | Admin unknowingly acts as someone else | Time-box (D-EXPIRE) + always-visible non-dismissable banner + one-click exit + non-nestable |
 
 ## Definition of Done
-- [ ] D-MODE / D-SCOPE / D-EXPIRE / D-PLACE resolved and recorded (spec + this file)
+- [ ] D-SCOPE / D-EXPIRE / D-PLACE resolved and recorded (spec + this file); D-MODE already resolved 2026-08-11 = full act-as
 - [ ] Impersonation mechanism built: scoped, tied to real admin, time-boxed, non-nestable, one-click exit
 - [ ] Authorization enforced server-side and covered by an exhaustive who-can-impersonate-whom test matrix
-- [ ] Start/exit audited; dual attribution on mutations if act-as is enabled
-- [ ] Client UI matches the locked comp (control, drawer picker, active banner, rail swap, exit); read-only gating if D-MODE = read-only
+- [ ] Start/exit audited; dual attribution on every mutation performed while acting as
+- [ ] Client UI matches the locked comp (control, drawer picker, active banner, rail swap, exit); mutations work under act-as
+- [ ] Site Admin direct org-content mutation affordances retired (global views + org-scoped statuses/idea-fields routes read-only for Site Admin); org/user administration confirmed still direct
 - [ ] Code Reviewer has signed off (mandatory — security-sensitive)
 - [ ] `SPEC/20-feature-*` spec written/updated for View As, and `SPEC/30-Contracts.md` updated with the new endpoints

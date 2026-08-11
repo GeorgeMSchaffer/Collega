@@ -19,9 +19,21 @@ The active item in the application's primary navigation has a flat rectangular b
 
   Site Admin is a global account and never requires an organization membership or `organizationId`
   claim to browse platform data. Home, Boards, Ideas, Users, Statuses, and User-Defined Fields aggregate records
-  from every organization and display the owning organization where needed. Create and edit operations
-  remain explicitly scoped to the selected resource's organization; Site Admin chooses an organization
-  before creating an organization-owned resource.
+  from every organization and display the owning organization where needed.
+
+  Site Admin org-content mutation model (decided 2026-08-11, supersedes the earlier org-picker
+  direction): Site Admin does **not** get direct create/edit/delete paths for organization-owned
+  content — boards, statuses, idea types/business impacts, custom fields, and ideas. There is no
+  org dropdown/picker on any create or edit surface. Instead, Site Admin uses the **View As**
+  feature (act-as impersonation, `SPEC/sprints/sprint-06-view-as.md`) to act as a user within the
+  target organization; mutations are performed under that impersonated identity with dual-attribution
+  audit, so they are naturally org-scoped and permission-checked. **Exception (bootstrap):**
+  organization administration and user administration stay direct — Site Admin creates/edits
+  organizations, manages users in any organization (including CSV import and invite-code
+  regeneration) exactly as specified in `20-feature-organizations-and-users.md`, since a new
+  organization has nobody to impersonate yet. Until View As ships, Site Admin has no create path
+  for org content (the existing UI gates stay as-is); once it ships, the global aggregate views
+  become read-only for org content, with View As as the mutation path.
 
   When an authenticated API request returns `401` because the persisted token is expired or its
   security stamp is no longer valid, the client clears the persisted session and returns to Login with
