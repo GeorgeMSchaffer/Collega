@@ -4,8 +4,15 @@
 .muted { color: var(--ink-3); }
 
 /* Idea Type + Status dropdown filters in the command bar. */
-.listfilters { display: flex; gap: 8px; }
+.listfilters { display: flex; gap: 8px; flex-wrap: wrap; }
 .listfilters select { width: 150px; }
+.listfilters .tagfilter { width: 120px; border: 1px solid var(--line); border-radius: var(--radius-btn); padding: 5px 8px; font-size: 13px; }
+
+/* Sortable column headers: clickable, with an active-column sort arrow. */
+th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable:hover { color: var(--ink); }
+th.sortable.sorted { color: var(--ink); }
+th.sortable .sortind { display: inline-block; margin-left: 5px; font-size: 10px; color: var(--accent); }
 
 /* Selected-row accent while its drawer is open (matches comp-c-review-09). */
 tbody tr.selected td { background: #f7f7fc; }
