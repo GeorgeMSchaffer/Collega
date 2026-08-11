@@ -1,9 +1,9 @@
 /*
- * Idea Types editor — color/icon pickers, badge preview, and the two-pane field picker, ported from
- * comp-c-review-09-idea-type-fields.html. Shared chrome (.btn, .card, .field, table, .hint, .muted) comes
- * from wwwroot/css/app.css; these are the type-editor-specific bits that don't belong in the shared sheet.
+ * Idea Types editor — color/icon pickers, badge preview, and the field picker, ported from
+ * comp-c-review-09-idea-type-fields.html. The create/edit form now lives inside the shared
+ * CreateModalShell / DrawerShell surfaces (their chrome is styled by the shell components' own scoped
+ * sheets); these are the type-editor content bits that don't belong in the shared app.css sheet.
  */
-.editcard { max-width: 900px; }
 .contrastwarn { color: var(--warn); }
 
 /* Local utilities (scoped CSS — these aren't in the global sheet). */
@@ -60,11 +60,11 @@
     flex-wrap: wrap;
 }
 
-/* Two-pane field picker */
+/* Field picker — stacked, since the form now renders inside a ~620px drawer / centered modal. */
 .twopane {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
+    grid-template-columns: 1fr;
+    gap: 14px;
     margin-top: 8px;
 }
 .pane {
@@ -129,7 +129,3 @@
 }
 .toggle.on { color: var(--err); }
 .toggle input { accent-color: var(--accent); }
-
-@media (max-width: 720px) {
-    .twopane { grid-template-columns: 1fr; }
-}
