@@ -18,31 +18,26 @@
       OnCreated : fired with the created idea's detail after a successful create.
 *@
 
-@if (Open)
-{
-    <div class="modal-wrap open" @onclick="BackdropClick" @onkeydown="OnKeyDown">
-        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="create-title" @onclick:stopPropagation="true">
-            <header class="surface-head">
-                <div class="grow">
-                    <div class="eyebrow">New idea</div>
-                    <h2 id="create-title">Create an idea</h2>
-                    <div class="meta">@(_boardName is { Length: > 0 } ? _boardName : "Choose a board")</div>
-                </div>
-                <button class="iconbtn" @onclick="Cancel" aria-label="Close">×</button>
-            </header>
+@*
+    Chrome (overlay, centered card, header, scroll body, footer, and dismissal) is delegated to the
+    reusable CreateModalShell; everything below is Idea-specific content. Cancel is passed as OnClose so
+    the modal can block dismissal mid-create.
+*@
+<CreateModalShell IsOpen="Open" OnClose="Cancel"
+                  Eyebrow="New idea" Title="Create an idea"
+                  Meta="@(_boardName is { Length: > 0 } ? _boardName : "Choose a board")"
+                  FooterContent="RenderFooter">
+    @if (_error is not null)
+    {
+        <div class="autherror" role="alert">@_error</div>
+    }
 
-            <div class="surface-body">
-                @if (_error is not null)
-                {
-                    <div class="autherror" role="alert">@_error</div>
-                }
-
-                @if (_loadingContext)
-                {
-                    <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
-                }
-                else
-                {
+    @if (_loadingContext)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else
+    {
                     <div class="formgrid">
                         @if (BoardId is null)
                         {
@@ -163,20 +158,18 @@
                             </div>
                         }
                     </div>
-                }
-            </div>
-
-            <footer class="surface-foot">
-                <button class="btn" @onclick="Cancel" disabled="@_creating">Cancel</button>
-                <button class="btn primary" @onclick="Create" disabled="@(_creating || !_hasBoard || _loadingContext)">
-                    @(_creating ? "Creating…" : "Create idea")
-                </button>
-            </footer>
-        </section>
-    </div>
-}
+    }
+</CreateModalShell>
 
 @code {
+    // Modal action bar, passed as the shell footer.
+    private RenderFragment RenderFooter => @<text>
+        <button class="btn" @onclick="Cancel" disabled="@_creating">Cancel</button>
+        <button class="btn primary" @onclick="Create" disabled="@(_creating || !_hasBoard || _loadingContext)">
+            @(_creating ? "Creating…" : "Create idea")
+        </button>
+    </text>;
+
     [Parameter] public bool Open { get; set; }
     [Parameter] public string? BoardId { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
@@ -477,16 +470,6 @@
         }
         _wasOpen = false;
         await OnCancel.InvokeAsync();
-    }
-
-    private async Task BackdropClick() => await Cancel();
-
-    private async Task OnKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Escape")
-        {
-            await Cancel();
-        }
     }
 
     private string UserName(string userId) =>

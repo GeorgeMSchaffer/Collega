@@ -18,52 +18,28 @@
                   can refresh/re-slot. For delete, OnChanged fires first, then OnClose.
 *@
 
-@if (IdeaId is not null)
-{
-    <div class="surface-backdrop open" @onclick="CloseAsync"></div>
-    <aside class="drawer open" role="dialog" aria-modal="true" aria-labelledby="drawer-title"
-           tabindex="-1" @onkeydown="OnKeyDown">
-        @if (_loading)
-        {
-            <header class="surface-head">
-                <div class="grow"><div class="eyebrow">Idea</div><h2 id="drawer-title">Loading…</h2></div>
-                <button class="iconbtn" @onclick="CloseAsync" aria-label="Close">×</button>
-            </header>
-            <div class="surface-body"><div class="loading"><FluentProgressRing /> <span>Loading idea…</span></div></div>
-        }
-        else if (_idea is null)
-        {
-            <header class="surface-head">
-                <div class="grow"><div class="eyebrow">Idea</div><h2 id="drawer-title">Idea unavailable</h2></div>
-                <button class="iconbtn" @onclick="CloseAsync" aria-label="Close">×</button>
-            </header>
-            <div class="surface-body">
-                <div class="autherror" role="alert">@(_error ?? "This idea could not be loaded.")</div>
-            </div>
-        }
-        else
-        {
-            <header class="surface-head">
-                <div class="grow">
-                    <div class="eyebrow" id="drawer-eyebrow">Idea · @_idea.StatusName</div>
-                    <h2 id="drawer-title">@_idea.Title</h2>
-                    <div class="meta">@BoardName @(_idea.Priority is { Length: > 0 } ? $"· {_idea.Priority} priority" : "")</div>
-                </div>
-                <button class="iconbtn" @onclick="CloseAsync" aria-label="Close">×</button>
-            </header>
-
-            @if (_actionError is not null)
-            {
-                <div class="drawer-flash"><div class="autherror" role="alert">@_actionError</div></div>
-            }
-            @if (_saveMessage is not null)
-            {
-                <div class="drawer-flash"><div class="authnote" role="status">@_saveMessage</div></div>
-            }
-
+@*
+    Chrome (overlay, right panel, header, scroll body, footer, and dismissal) is delegated to the
+    reusable DrawerShell; everything below is Idea-specific content. Routing (?idea={id} etc.) is the
+    host's concern, not the shell's. CloseAsync is passed as OnClose so the drawer can block dismissal
+    mid save/delete.
+*@
+<DrawerShell IsOpen="@(IdeaId is not null)" OnClose="CloseAsync"
+             Eyebrow="@HeaderEyebrow" Title="@HeaderTitle" Meta="@HeaderMeta"
+             SubHeaderContent="RenderFlash"
+             FooterContent="@(_editing && _idea is not null ? RenderEditFooter : null)">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading idea…</span></div>
+    }
+    else if (_idea is null)
+    {
+        <div class="autherror" role="alert">@(_error ?? "This idea could not be loaded.")</div>
+    }
+    else
+    {
             @if (!_editing)
             {
-                <div class="surface-body" id="drawer-view">
                     <div class="topline">
                         <div class="statuspick">
                             @if (_canEdit && _statusOptions.Count > 0)
@@ -274,11 +250,9 @@
                             }
                         </div>
                     }
-                </div>
             }
             else
             {
-                <div class="surface-body" id="drawer-form">
                     <div class="formgrid">
                         <div class="span2">
                             <label for="ed-title">Title <span class="required">*</span> <span class="charlim">@_title.Length / 150</span></label>
@@ -370,17 +344,36 @@
                             </div>
                         }
                     </div>
-                </div>
-                <footer class="surface-foot">
-                    <button class="btn" @onclick="CancelEdit" disabled="@_savingIdea">Cancel</button>
-                    <button class="btn primary" @onclick="SaveIdea" disabled="@_savingIdea">@(_savingIdea ? "Saving…" : "Save changes")</button>
-                </footer>
             }
         }
-    </aside>
-}
+</DrawerShell>
 
 @code {
+    // Header fields for the DrawerShell, derived from load state (matches the previous per-state headers).
+    private string HeaderEyebrow => _loading || _idea is null ? "Idea" : $"Idea · {_idea.StatusName}";
+    private string HeaderTitle => _loading ? "Loading…" : _idea is null ? "Idea unavailable" : _idea.Title;
+    private string? HeaderMeta => _loading || _idea is null
+        ? null
+        : $"{BoardName} {(_idea.Priority is { Length: > 0 } ? $"· {_idea.Priority} priority" : "")}";
+
+    // Inline flash region rendered between the header and the scroll body (self-gates on message state).
+    private RenderFragment RenderFlash => @<text>
+        @if (_actionError is not null)
+        {
+            <div class="drawer-flash"><div class="autherror" role="alert">@_actionError</div></div>
+        }
+        @if (_saveMessage is not null)
+        {
+            <div class="drawer-flash"><div class="authnote" role="status">@_saveMessage</div></div>
+        }
+    </text>;
+
+    // Edit-mode action bar; passed as the shell footer only while editing.
+    private RenderFragment RenderEditFooter => @<text>
+        <button class="btn" @onclick="CancelEdit" disabled="@_savingIdea">Cancel</button>
+        <button class="btn primary" @onclick="SaveIdea" disabled="@_savingIdea">@(_savingIdea ? "Saving…" : "Save changes")</button>
+    </text>;
+
     [Parameter] public string? IdeaId { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<IdeaDetailDto> OnChanged { get; set; }
@@ -860,14 +853,6 @@
             return;
         }
         await OnClose.InvokeAsync();
-    }
-
-    private async Task OnKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Escape")
-        {
-            await CloseAsync();
-        }
     }
 
     // Historical values whose field is no longer in this idea's resolved set — preserved, shown muted.

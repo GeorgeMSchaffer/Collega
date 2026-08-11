@@ -1,0 +1,93 @@
+@*
+    CreateModalShell — reusable centered modal chrome (overlay + card + header + body + footer).
+
+    Presentation only, mirroring DrawerShell for the create path. It owns the dimmed overlay, the
+    centered card (full-screen at ≤768px), the header row with a close button, the scrollable body, an
+    optional footer, and dismissal via close button, overlay click, or Escape; clicks inside the card
+    do not dismiss. Visual design is locked in SPEC/mockups/comp-c-review-09-detail-surfaces.html
+    ("Form layover") — do not restyle here. Entity-specific fields/validation stay in the host.
+
+    On any dismiss the shell raises OnClose; the host decides whether to actually close (e.g. to block
+    dismissal mid-create).
+
+    Public API
+      IsOpen        bool             When false the shell renders nothing.
+      OnClose       EventCallback    Raised on close button, overlay click, or Escape.
+      Title         string?          Heading text; also the aria-labelledby target.
+      Eyebrow       string?          Small uppercase kicker above the title.
+      Meta          string?          Small secondary line below the title.
+      HeaderContent RenderFragment?  Optional; replaces the Eyebrow/Title/Meta block inside the header.
+      ChildContent  RenderFragment?  The scrollable body.
+      FooterContent RenderFragment?  Optional action bar; the footer element is omitted when null.
+
+    Usage
+      <CreateModalShell IsOpen="_open" OnClose="Cancel" Eyebrow="New organization" Title="Create an organization">
+          <ChildContent>...form fields...</ChildContent>
+          <FooterContent>
+              <button class="btn" @onclick="Cancel">Cancel</button>
+              <button class="btn primary" @onclick="Create">Create</button>
+          </FooterContent>
+      </CreateModalShell>
+*@
+
+@if (IsOpen)
+{
+    <div class="modal-wrap open" @onclick="OnClose" @onkeydown="OnKeyDown">
+        <section class="modal" role="dialog" aria-modal="true"
+                 aria-labelledby="@(Title is not null ? _titleId : null)"
+                 @onclick:stopPropagation="true">
+            <header class="surface-head">
+                <div class="grow">
+                    @if (HeaderContent is not null)
+                    {
+                        @HeaderContent
+                    }
+                    else
+                    {
+                        @if (!string.IsNullOrEmpty(Eyebrow))
+                        {
+                            <div class="eyebrow">@Eyebrow</div>
+                        }
+                        <h2 id="@_titleId">@Title</h2>
+                        @if (!string.IsNullOrEmpty(Meta))
+                        {
+                            <div class="meta">@Meta</div>
+                        }
+                    }
+                </div>
+                <button class="iconbtn" @onclick="OnClose" aria-label="Close">×</button>
+            </header>
+
+            <div class="surface-body">
+                @ChildContent
+            </div>
+
+            @if (FooterContent is not null)
+            {
+                <footer class="surface-foot">@FooterContent</footer>
+            }
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public string? Meta { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    // Stable per-instance id so the card's aria-labelledby resolves without colliding across instances.
+    private readonly string _titleId = $"modal-title-{Guid.NewGuid():N}";
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+}

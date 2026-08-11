@@ -1,0 +1,77 @@
+/* Right slide-in drawer chrome — surface only (overlay, panel, header, scroll body, footer).
+   Extracted from IdeaDrawer so every List+Drawer surface shares one copy. Per-entity content styles
+   live in the host component's own scoped stylesheet. Layout/spacing per
+   SPEC/mockups/comp-c-review-09-detail-surfaces.html. Global .btn / input / label come from app.css. */
+
+.surface-backdrop {
+    position: fixed;
+    inset: 0 0 0 64px;
+    background: rgba(36, 36, 36, .28);
+    z-index: 45;
+}
+
+.drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(620px, calc(100vw - 64px));
+    background: var(--surface);
+    border-left: 1px solid var(--line);
+    box-shadow: -12px 0 32px rgba(0, 0, 0, .16);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    outline: none;
+}
+
+.surface-head {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+.surface-head .grow { flex: 1; min-width: 0; }
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--accent-deep);
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+.surface-head h2 { font-family: Georgia, "Times New Roman", serif; font-size: 22px; line-height: 1.25; font-weight: 600; }
+.meta { font-size: 11.5px; color: var(--ink-3); margin-top: 6px; }
+
+.iconbtn {
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-btn);
+    background: #fff;
+    cursor: pointer;
+    color: var(--ink-2);
+    display: grid;
+    place-items: center;
+    font-size: 19px;
+    line-height: 1;
+    flex: none;
+}
+.iconbtn:hover { background: #f3f2f1; }
+
+.surface-body { padding: 22px 24px; overflow: auto; flex: 1; }
+.surface-foot {
+    padding: 13px 24px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    background: #fff;
+}
+
+@media (max-width: 768px) {
+    .surface-backdrop { inset: 0 0 56px 0; }
+    .drawer { top: 0; left: 0; right: 0; bottom: 56px; width: 100%; border-left: none; }
+    .surface-head, .surface-body, .surface-foot { padding-left: 18px; padding-right: 18px; }
+}

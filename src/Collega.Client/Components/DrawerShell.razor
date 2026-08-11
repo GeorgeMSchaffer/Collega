@@ -1,0 +1,102 @@
+@*
+    DrawerShell — reusable right slide-in drawer chrome (overlay + panel + header + body + footer).
+
+    Presentation only. It owns the surface and nothing entity-specific: the dimmed overlay, the
+    ~620px right panel (full-width sheet at ≤768px), the header row with a close button, the
+    scrollable body, an optional pinned footer, and the three ways to dismiss (close button, overlay
+    click, Escape). Visual design is locked in SPEC/mockups/comp-c-review-09-detail-surfaces.html —
+    do not restyle here. Any entity/URL-specific logic stays in the host component.
+
+    On any dismiss the shell simply raises OnClose; the host decides whether to actually close (e.g.
+    to block dismissal mid-save). Extracted from IdeaDrawer for reuse across the admin List+Drawer
+    conversions (Organizations, Users, Statuses, Idea Types, Custom Fields).
+
+    Public API
+      IsOpen           bool             When false the shell renders nothing.
+      OnClose          EventCallback    Raised on close button, overlay click, or Escape.
+      Title            string?          Heading text; also the aria-labelledby target.
+      Eyebrow          string?          Small uppercase kicker above the title.
+      Meta             string?          Small secondary line below the title.
+      HeaderContent    RenderFragment?  Optional; replaces the Eyebrow/Title/Meta block inside the header.
+      SubHeaderContent RenderFragment?  Optional; sits between header and the scrollable body (e.g. inline
+                                        flash/status), so it is not scrolled away with the body.
+      ChildContent     RenderFragment?  The scrollable body.
+      FooterContent    RenderFragment?  Optional pinned action bar; the footer element is omitted when null.
+
+    Usage
+      <DrawerShell IsOpen="@(_selectedId is not null)" OnClose="Close"
+                   Eyebrow="Organization" Title="@_name" Meta="@_meta">
+          <ChildContent>...detail / edit form...</ChildContent>
+          <FooterContent>
+              <button class="btn" @onclick="Close">Cancel</button>
+              <button class="btn primary" @onclick="Save">Save</button>
+          </FooterContent>
+      </DrawerShell>
+*@
+
+@if (IsOpen)
+{
+    <div class="surface-backdrop open" @onclick="OnClose"></div>
+    <aside class="drawer open" role="dialog" aria-modal="true"
+           aria-labelledby="@(Title is not null ? _titleId : null)"
+           tabindex="-1" @onkeydown="OnKeyDown">
+        <header class="surface-head">
+            <div class="grow">
+                @if (HeaderContent is not null)
+                {
+                    @HeaderContent
+                }
+                else
+                {
+                    @if (!string.IsNullOrEmpty(Eyebrow))
+                    {
+                        <div class="eyebrow">@Eyebrow</div>
+                    }
+                    <h2 id="@_titleId">@Title</h2>
+                    @if (!string.IsNullOrEmpty(Meta))
+                    {
+                        <div class="meta">@Meta</div>
+                    }
+                }
+            </div>
+            <button class="iconbtn" @onclick="OnClose" aria-label="Close">×</button>
+        </header>
+
+        @if (SubHeaderContent is not null)
+        {
+            @SubHeaderContent
+        }
+
+        <div class="surface-body">
+            @ChildContent
+        </div>
+
+        @if (FooterContent is not null)
+        {
+            <footer class="surface-foot">@FooterContent</footer>
+        }
+    </aside>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public string? Meta { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment? SubHeaderContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    // Stable per-instance id so the panel's aria-labelledby resolves without colliding across instances.
+    private readonly string _titleId = $"drawer-title-{Guid.NewGuid():N}";
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+}
