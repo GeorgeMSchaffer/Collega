@@ -28,16 +28,14 @@
     }
     else
     {
-        <div class="cmdbar">
+        <div class="backrow">
             <BackButton />
+        </div>
+        <div class="cmdbar">
             <ListToolbar TItem="IdeaTypeOptionDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search idea types…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
-                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">New idea type</button>
-            }
-            else
-            {
-                <a class="btn primary" href="/settings/organizations" style="margin-left:auto">New idea type</a>
+                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">Add New</button>
             }
         </div>
 

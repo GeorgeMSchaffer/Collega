@@ -1,8 +1,10 @@
 # Sprint 1: Bug Triage Quick Wins + Bookkeeping Reconciliation
 
-**Status:** Not started
+**Status:** Complete (2026-08-10)
 **Sequence:** 1 of 4 — see `SPEC/95-next-sprints.md` for the full sequence and how these sprints relate.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
+
+> **Outcome (2026-08-10):** Delivered on branch `feature/sprint-01-bug-triage-quick-wins`, merged to `dev`. The bookkeeping audit found that — contrary to the "may already be done" note — 6 of 7 items still needed real work (only add-button right-alignment and the idea edit-input widths were already satisfied). All addressed items were moved to `COMPLETED` in `SPEC/Bug Triage.md`. Client build clean; full suite 474 green; live-verified as demo Org Admin (Site-Admin-only bits verified by code+build). One new bug was discovered and filed to `Bug Triage.md` TODO: the idea-type/business-impact migration fails its FK when applied over a DB that already has idea rows.
 
 ## Goal
 Every small, mechanical Bug Triage item is fixed and verified; `SPEC/Bug Triage.md`'s `TODO`/`COMPLETED` bookkeeping is fully caught up (some items already appear fixed in `SPEC/implementation-agent-tracker-archive.md` but are still listed under `TODO` — that mismatch gets closed here first, since it's the cheapest way to find out how much of this sprint is already done).
