@@ -1,12 +1,20 @@
 @page "/settings/organizations"
+@page "/settings/organizations/{OrganizationId}"
 @attribute [Authorize(Roles = "SiteAdmin")]
 @inject ApiClient Api
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>Organizations · Collega</PageTitle>
 
 @*
-    Dedicated Site Admin organization list. Organization-specific management routes are reached
-    from each row; the Settings landing page is owned by SettingsHub.
+    Dedicated Site Admin organization list, converted to the List + Drawer pattern (Sprint 2, mirroring
+    Ideas): each row opens the organization detail + inline edit in the shared right slide-in DrawerShell,
+    and "Add New" opens the create form in the shared centered CreateModalShell. The full-page
+    OrganizationEdit component (/settings/organizations/new and the bare edit route) is retired; this page
+    now claims /settings/organizations/{OrganizationId} so the drawer is URL-addressable and deep-linkable
+    (parallel to /ideas/{id}). The per-row scoped links to Users/Statuses/Fields are other pages' routes
+    and are unchanged.
 *@
 <div class="pagehead">
     <div class="crumbs"><a href="/settings">Settings</a> / Organizations</div>
@@ -30,7 +38,7 @@
         </div>
         <div class="cmdbar">
             <ListToolbar TItem="OrganizationListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search organizations…" OnChanged="StateHasChanged" />
-            <a class="btn primary" href="/settings/organizations/new" style="margin-left:auto">Add New</a>
+            <button class="btn primary" style="margin-left:auto" @onclick="OpenCreate">Add New</button>
         </div>
         <div class="card">
             <table>
@@ -40,7 +48,7 @@
                 <tbody>
                     @foreach (var org in _list.PageItems)
                     {
-                        <tr>
+                        <tr class="@(org.OrganizationId == _selectedId ? "selected" : null)">
                             <td>
                                 <div class="row" style="align-items:center;gap:8px">
                                     @if (!string.IsNullOrEmpty(org.LogoThumbnailUrl))
@@ -66,7 +74,7 @@
                                 <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}/users")">Users</a>
                                 <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}/statuses")">Statuses</a>
                                 <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}/fields")">Fields</a>
-                                <a class="btn subtle" href="@($"/settings/organizations/{org.OrganizationId}")">Edit</a>
+                                <button class="btn subtle" @onclick="() => OpenDrawer(org.OrganizationId)">Details</button>
                             </td>
                         </tr>
                     }
@@ -85,7 +93,219 @@
     }
 </div>
 
+@*
+    Detail + inline edit drawer. Chrome (overlay, panel, header, scroll body, pinned footer, dismissal)
+    is the shared DrawerShell; the footer appears only while editing. Dismissal is blocked mid-mutation
+    by CloseDrawer.
+*@
+<DrawerShell IsOpen="@(_selectedId is not null)" OnClose="CloseDrawer"
+             Eyebrow="Organization" Title="@DrawerTitle" Meta="@DrawerMeta"
+             SubHeaderContent="RenderFlash"
+             FooterContent="@(_editing && _detail is not null ? RenderEditFooter : null)">
+    @if (_detailLoading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading organization…</span></div>
+    }
+    else if (_detail is null)
+    {
+        <div class="autherror" role="alert">@(_detailError ?? "This organization could not be loaded.")</div>
+    }
+    else if (!_editing)
+    {
+        <div class="topline">
+            <span class="status">
+                @if (IsArchived)
+                {
+                    <span class="pill neutral">Archived</span>
+                }
+                else
+                {
+                    <span class="pill ok">Active</span>
+                }
+            </span>
+            <div class="topactions">
+                <button class="btn" @onclick="StartEdit">Edit</button>
+            </div>
+        </div>
+
+        <p class="detail-copy">@(string.IsNullOrWhiteSpace(_detail.Description) ? "No description." : _detail.Description)</p>
+
+        <div class="facts">
+            <div class="fact">
+                <div class="k">Address</div>
+                <div class="v">@FactOrDash(_detail.Address)</div>
+            </div>
+            <div class="fact">
+                <div class="k">Location</div>
+                <div class="v">@FactOrDash(Location(_detail.City, _detail.State))</div>
+            </div>
+            <div class="fact">
+                <div class="k">Zip</div>
+                <div class="v">@FactOrDash(_detail.Zip)</div>
+            </div>
+            <div class="fact">
+                <div class="k">Phone</div>
+                <div class="v">@FactOrDash(_detail.Phone)</div>
+            </div>
+            <div class="fact">
+                <div class="k">Primary contact</div>
+                <div class="v">@FactOrDash(ContactName(_detail.PrimaryContactFirstName, _detail.PrimaryContactLastName))</div>
+            </div>
+        </div>
+
+        <h3 class="section-title">Invite code</h3>
+        <p class="help">New members join this organization by self-registering with this code. Regenerating it invalidates the old one.</p>
+        @if (_regenError is not null)
+        {
+            <div class="autherror" role="alert">@_regenError</div>
+        }
+        <div class="row" style="align-items:center;gap:10px">
+            <code class="invitecode">@_detail.InviteCode</code>
+            <button class="btn subtle" @onclick="RegenerateCode" disabled="@_regenerating">@(_regenerating ? "Regenerating…" : "Regenerate")</button>
+        </div>
+
+        <h3 class="section-title">Logo</h3>
+        <p class="help">Upload a logo (resized to 150px tall). Shown on the organization list.</p>
+        @if (_logoError is not null)
+        {
+            <div class="autherror" role="alert">@_logoError</div>
+        }
+        <div class="row logorow">
+            @if (!string.IsNullOrEmpty(_detail.LogoThumbnailUrl))
+            {
+                <img src="@_detail.LogoThumbnailUrl" alt="Organization logo" class="logopreview" style="height:@(_detail.LogoHeightPx ?? 48)px" />
+            }
+            else
+            {
+                <span class="muted">No logo yet.</span>
+            }
+            <InputFile OnChange="OnLogoSelected" accept="image/*" disabled="@_logoBusy" />
+            @if (!string.IsNullOrEmpty(_detail.LogoThumbnailUrl))
+            {
+                <button class="btn subtle" @onclick="RemoveLogo" disabled="@_logoBusy">Remove</button>
+            }
+        </div>
+
+        <div class="dangerzone">
+            <div class="dz-copy">
+                <h3 class="section-title" style="margin-top:0">Archive organization</h3>
+                <p class="help">Archiving hides the organization without deleting its data.</p>
+            </div>
+            @if (_archiveError is not null)
+            {
+                <div class="autherror" role="alert" style="width:100%">@_archiveError</div>
+            }
+            @if (_confirmArchive)
+            {
+                <div class="row" style="align-items:center;gap:10px">
+                    <span class="confirmtext">Archive this organization?</span>
+                    <button class="btn danger" @onclick="ArchiveOrg" disabled="@_archiving">@(_archiving ? "Archiving…" : "Yes, archive")</button>
+                    <button class="btn subtle" @onclick="() => _confirmArchive = false" disabled="@_archiving">Cancel</button>
+                </div>
+            }
+            else
+            {
+                <button class="btn danger" @onclick="() => _confirmArchive = true">Archive</button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="formgrid">
+            <div class="span2">
+                <label for="ed-title">Title <span class="required">*</span></label>
+                <input id="ed-title" type="text" @bind="_edit.Title" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div class="span2">
+                <label for="ed-desc">Description <span class="required">*</span></label>
+                <textarea id="ed-desc" rows="3" @bind="_edit.Description" @bind:event="oninput" disabled="@_saving"></textarea>
+            </div>
+            <div class="span2">
+                <label for="ed-address">Address</label>
+                <input id="ed-address" type="text" @bind="_edit.Address" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div>
+                <label for="ed-city">City</label>
+                <input id="ed-city" type="text" @bind="_edit.City" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div>
+                <label for="ed-state">State</label>
+                <input id="ed-state" type="text" @bind="_edit.State" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div>
+                <label for="ed-zip">Zip</label>
+                <input id="ed-zip" type="text" @bind="_edit.Zip" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div>
+                <label for="ed-phone">Phone</label>
+                <input id="ed-phone" type="text" @bind="_edit.Phone" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div>
+                <label for="ed-contactfirst">Primary contact first name</label>
+                <input id="ed-contactfirst" type="text" @bind="_edit.PrimaryContactFirstName" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div>
+                <label for="ed-contactlast">Primary contact last name</label>
+                <input id="ed-contactlast" type="text" @bind="_edit.PrimaryContactLastName" @bind:event="oninput" disabled="@_saving" />
+            </div>
+        </div>
+    }
+</DrawerShell>
+
+@*
+    Create-organization modal. Chrome is the shared CreateModalShell; on success it closes and the list
+    reloads (no drawer auto-opens), mirroring the retired full-page create.
+*@
+<CreateModalShell IsOpen="_showCreate" OnClose="CancelCreate"
+                  Eyebrow="New organization" Title="Create an organization"
+                  FooterContent="RenderCreateFooter">
+    @if (_createError is not null)
+    {
+        <div class="autherror" role="alert">@_createError</div>
+    }
+    <div class="formgrid">
+        <div class="span2">
+            <label for="cr-title">Title <span class="required">*</span></label>
+            <input id="cr-title" type="text" placeholder="Organization name" @bind="_create.Title" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div class="span2">
+            <label for="cr-desc">Description <span class="required">*</span></label>
+            <textarea id="cr-desc" rows="3" @bind="_create.Description" @bind:event="oninput" disabled="@_creating"></textarea>
+        </div>
+        <div class="span2">
+            <label for="cr-address">Address</label>
+            <input id="cr-address" type="text" @bind="_create.Address" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div>
+            <label for="cr-city">City</label>
+            <input id="cr-city" type="text" @bind="_create.City" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div>
+            <label for="cr-state">State</label>
+            <input id="cr-state" type="text" @bind="_create.State" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div>
+            <label for="cr-zip">Zip</label>
+            <input id="cr-zip" type="text" @bind="_create.Zip" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div>
+            <label for="cr-phone">Phone</label>
+            <input id="cr-phone" type="text" @bind="_create.Phone" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div>
+            <label for="cr-contactfirst">Primary contact first name</label>
+            <input id="cr-contactfirst" type="text" @bind="_create.PrimaryContactFirstName" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div>
+            <label for="cr-contactlast">Primary contact last name</label>
+            <input id="cr-contactlast" type="text" @bind="_create.PrimaryContactLastName" @bind:event="oninput" disabled="@_creating" />
+        </div>
+    </div>
+</CreateModalShell>
+
 @code {
+    [Parameter] public string? OrganizationId { get; set; }
+
     private string _subtitle = "";
     private bool _loading = true;
     private string? _error;
@@ -96,23 +316,392 @@
         SearchText = o => $"{o.Title} {o.City} {o.State} {o.InviteCode} {(o.IsArchived ? "Archived" : "Active")}",
     };
 
+    // ---- Drawer (detail + inline edit) state ----
+    private string? _selectedId;
+    private OrganizationDetailDto? _detail;
+    private bool _detailLoading;
+    private string? _detailError;
+    private bool _editing;
+
+    private readonly FormModel _edit = new();
+    private bool _saving;
+    private string? _saveError;
+    private string? _saveMessage;
+
+    private bool _regenerating;
+    private string? _regenError;
+
+    private bool _logoBusy;
+    private string? _logoError;
+
+    private bool _confirmArchive;
+    private bool _archiving;
+    private string? _archiveError;
+
+    // ---- Create modal state ----
+    private bool _showCreate;
+    private readonly FormModel _create = new();
+    private bool _creating;
+    private string? _createError;
+
+    private string DrawerTitle => _detailLoading ? "Loading…" : _detail?.Title ?? "Organization unavailable";
+    private string? DrawerMeta => _detail is null ? null : FactOrNull(Location(_detail.City, _detail.State));
+    private bool IsArchived => _selectedId is not null
+        && _organizations.FirstOrDefault(o => o.OrganizationId == _selectedId)?.IsArchived == true;
+
+    private sealed class FormModel
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string? Address { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? Zip { get; set; }
+        public string? Phone { get; set; }
+        public string? PrimaryContactFirstName { get; set; }
+        public string? PrimaryContactLastName { get; set; }
+    }
+
+    private sealed record LogoResizeResult(string DataUri, int Height);
+
+    // Inline flash (save success / save error) rendered between header and scroll body so it isn't
+    // scrolled away — mirrors IdeaDrawer.
+    private RenderFragment RenderFlash => @<text>
+        @if (_saveError is not null)
+        {
+            <div class="drawer-flash"><div class="autherror" role="alert">@_saveError</div></div>
+        }
+        @if (_saveMessage is not null)
+        {
+            <div class="drawer-flash"><div class="authnote" role="status">@_saveMessage</div></div>
+        }
+    </text>;
+
+    private RenderFragment RenderEditFooter => @<text>
+        <button class="btn" @onclick="CancelEdit" disabled="@_saving">Cancel</button>
+        <button class="btn primary" @onclick="Save" disabled="@_saving">@(_saving ? "Saving…" : "Save changes")</button>
+    </text>;
+
+    private RenderFragment RenderCreateFooter => @<text>
+        <button class="btn" @onclick="CancelCreate" disabled="@_creating">Cancel</button>
+        <button class="btn primary" @onclick="Create" disabled="@_creating">@(_creating ? "Creating…" : "Create organization")</button>
+    </text>;
+
     protected override async Task OnInitializedAsync()
     {
         _subtitle = "Manage organizations across the platform.";
+        await ReloadListAsync(initial: true);
+        _loading = false;
+    }
+
+    // Route-parameter-driven drawer: /settings/organizations/{id} opens the drawer for that org; the bare
+    // list route closes it. Re-invoked by Blazor whenever OrganizationId changes.
+    protected override async Task OnParametersSetAsync()
+    {
+        var next = string.IsNullOrEmpty(OrganizationId) ? null : OrganizationId;
+        if (next == _selectedId)
+        {
+            return;
+        }
+        _selectedId = next;
+        if (_selectedId is null)
+        {
+            _detail = null;
+            _detailError = null;
+            return;
+        }
+        await LoadDetailAsync(_selectedId);
+    }
+
+    private async Task ReloadListAsync(bool initial = false)
+    {
         var result = await Api.GetAllOrganizationsAsync();
         if (result.Succeeded)
         {
             _organizations = result.Value!;
             _list.SetItems(_organizations);
         }
-        else
+        else if (initial)
         {
             _error = result.Error;
         }
-
-        _loading = false;
     }
+
+    private async Task LoadDetailAsync(string organizationId)
+    {
+        _detailLoading = true;
+        _editing = false;
+        _confirmArchive = false;
+        _detail = null;
+        _detailError = _saveError = _saveMessage = _regenError = _logoError = _archiveError = null;
+        StateHasChanged();
+
+        var result = await Api.GetOrganizationAsync(organizationId);
+        if (organizationId != _selectedId)
+        {
+            return; // a newer open superseded this load; abandon it
+        }
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _detail = result.Value;
+        }
+        else
+        {
+            _detailError = result.Error ?? "This organization could not be loaded.";
+        }
+
+        _detailLoading = false;
+        StateHasChanged();
+    }
+
+    // ---- Open / close ----
+
+    private void OpenDrawer(string organizationId) =>
+        Nav.NavigateTo($"/settings/organizations/{organizationId}");
+
+    private void CloseDrawer()
+    {
+        // Block dismissal mid-mutation so an in-flight save/archive/logo write can't be abandoned.
+        if (_saving || _archiving || _logoBusy)
+        {
+            return;
+        }
+        Nav.NavigateTo("/settings/organizations");
+    }
+
+    private void StartEdit()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+        _edit.Title = _detail.Title;
+        _edit.Description = _detail.Description;
+        _edit.Address = _detail.Address;
+        _edit.City = _detail.City;
+        _edit.State = _detail.State;
+        _edit.Zip = _detail.Zip;
+        _edit.Phone = _detail.Phone;
+        _edit.PrimaryContactFirstName = _detail.PrimaryContactFirstName;
+        _edit.PrimaryContactLastName = _detail.PrimaryContactLastName;
+        _saveError = _saveMessage = null;
+        _editing = true;
+    }
+
+    private void CancelEdit()
+    {
+        _editing = false;
+        _saveError = null;
+    }
+
+    private async Task Save()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_edit.Title) || string.IsNullOrWhiteSpace(_edit.Description))
+        {
+            _saveError = "Title and description are required.";
+            return;
+        }
+
+        _saving = true;
+        _saveError = _saveMessage = null;
+
+        var body = BuildBody(_edit);
+        var result = await Api.UpdateOrganizationAsync(_detail.OrganizationId, body);
+        if (result.Succeeded && result.Value is not null)
+        {
+            _detail = result.Value;
+            _saveMessage = "Changes saved.";
+            _editing = false;
+            await ReloadListAsync();
+        }
+        else
+        {
+            _saveError = result.Error ?? "Save failed.";
+        }
+        _saving = false;
+    }
+
+    private async Task RegenerateCode()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+        _regenerating = true;
+        _regenError = null;
+        var result = await Api.RegenerateInviteCodeAsync(_detail.OrganizationId);
+        _regenerating = false;
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _detail = _detail with { InviteCode = result.Value.InviteCode };
+            await ReloadListAsync();
+        }
+        else
+        {
+            _regenError = result.Error ?? "Couldn't regenerate the invite code.";
+        }
+    }
+
+    private async Task OnLogoSelected(InputFileChangeEventArgs e)
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+        _logoBusy = true;
+        _logoError = null;
+
+        try
+        {
+            var file = e.File;
+            // Cap the raw upload (resizing happens client-side; a small thumbnail is stored).
+            await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            var sourceUri = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer.ToArray())}";
+
+            var resized = await JS.InvokeAsync<LogoResizeResult>("collegaResizeImage", sourceUri, 150);
+            var result = await Api.SetOrganizationLogoAsync(_detail.OrganizationId, new SetLogoRequestDto(resized.DataUri, resized.Height));
+            if (result.Succeeded && result.Value is not null)
+            {
+                _detail = result.Value;
+                await ReloadListAsync();
+            }
+            else
+            {
+                _logoError = result.Error ?? "Couldn't save the logo.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logoError = $"Couldn't process the image. {ex.Message}";
+        }
+        finally
+        {
+            _logoBusy = false;
+        }
+    }
+
+    private async Task RemoveLogo()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+        _logoBusy = true;
+        _logoError = null;
+        var result = await Api.ClearOrganizationLogoAsync(_detail.OrganizationId);
+        _logoBusy = false;
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _detail = result.Value;
+            await ReloadListAsync();
+        }
+        else
+        {
+            _logoError = result.Error ?? "Couldn't remove the logo.";
+        }
+    }
+
+    private async Task ArchiveOrg()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+        _archiving = true;
+        _archiveError = null;
+        var result = await Api.ArchiveOrganizationAsync(_detail.OrganizationId);
+
+        if (result.Succeeded)
+        {
+            _archiving = false;
+            await ReloadListAsync();
+            CloseDrawer();
+        }
+        else
+        {
+            _archiveError = result.Error ?? "Couldn't archive the organization.";
+            _confirmArchive = false;
+            _archiving = false;
+        }
+    }
+
+    // ---- Create ----
+
+    private void OpenCreate()
+    {
+        ResetCreate();
+        _createError = null;
+        _showCreate = true;
+    }
+
+    private void CancelCreate()
+    {
+        if (_creating)
+        {
+            return;
+        }
+        _showCreate = false;
+    }
+
+    private void ResetCreate()
+    {
+        _create.Title = _create.Description = "";
+        _create.Address = _create.City = _create.State = _create.Zip = _create.Phone = null;
+        _create.PrimaryContactFirstName = _create.PrimaryContactLastName = null;
+    }
+
+    private async Task Create()
+    {
+        if (string.IsNullOrWhiteSpace(_create.Title) || string.IsNullOrWhiteSpace(_create.Description))
+        {
+            _createError = "Title and description are required.";
+            return;
+        }
+
+        _creating = true;
+        _createError = null;
+
+        var result = await Api.CreateOrganizationAsync(BuildBody(_create));
+        if (result.Succeeded)
+        {
+            _creating = false;
+            _showCreate = false;
+            await ReloadListAsync();
+        }
+        else
+        {
+            _createError = result.Error ?? "Creating the organization failed.";
+            _creating = false;
+        }
+    }
+
+    private static SaveOrganizationRequestDto BuildBody(FormModel m) => new(
+        Title: m.Title.Trim(),
+        Description: m.Description.Trim(),
+        Address: m.Address,
+        City: m.City,
+        State: m.State,
+        Zip: m.Zip,
+        Phone: m.Phone,
+        PrimaryContactFirstName: m.PrimaryContactFirstName,
+        PrimaryContactLastName: m.PrimaryContactLastName);
 
     private static string Location(string? city, string? state) =>
         string.Join(", ", new[] { city, state }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private static string ContactName(string? first, string? last) =>
+        string.Join(" ", new[] { first, last }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private static string FactOrDash(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value!;
+
+    private static string? FactOrNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 }
