@@ -110,8 +110,12 @@ var app = builder.Build();
 // --seed:demo`), not a one-shot. See src/Collega.API/CLAUDE.md.
 var seedAuthFlag = ReadSeedFlag(args, "seed:auth");
 var seedDemoFlag = ReadSeedFlag(args, "seed:demo");
+// Dev/ops-only affordance: `--seed:auth=reset` drops and recreates the configured Site Admin (forcing
+// a fresh MustChangePassword) instead of leaving the existing one alone. Forces the Site Admin seed on
+// so the recreate always runs. Scope is the Site Admin only — demo data is untouched.
+var resetSiteAdmin = ReadSeedResetFlag(args, "seed:auth");
 var explicitSeeding = seedAuthFlag is not null || seedDemoFlag is not null;
-var seedSiteAdmin = explicitSeeding ? seedAuthFlag ?? false : true;
+var seedSiteAdmin = resetSiteAdmin || (explicitSeeding ? seedAuthFlag ?? false : true);
 var seedDemoData = explicitSeeding ? seedDemoFlag ?? false : app.Environment.IsDevelopment();
 
 // Migrate/create the schema, then run idempotent startup seeding (auth requirements #8-11): the
@@ -131,7 +135,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     var seeder = scope.ServiceProvider.GetRequiredService<IStartupSeeder>();
-    await seeder.SeedAsync(siteAdminEmail, siteAdminPassword, seedSiteAdmin, seedDemoData);
+    await seeder.SeedAsync(siteAdminEmail, siteAdminPassword, seedSiteAdmin, seedDemoData, resetSiteAdmin);
 }
 
 // Configure the HTTP request pipeline.
@@ -188,6 +192,35 @@ static bool? ReadSeedFlag(string[] args, string name)
     }
 
     return null;
+}
+
+// Detects the dev/ops-only reset form of a seed switch: `--seed:auth=reset` (or `/seed:auth=reset`).
+// Returns true only when the flag's value is the literal `reset`; every other form (bare flag,
+// true/false) is handled by ReadSeedFlag and returns false here.
+static bool ReadSeedResetFlag(string[] args, string name)
+{
+    foreach (var arg in args)
+    {
+        var token = arg.TrimStart('-', '/');
+        var separator = token.IndexOf('=');
+        if (separator < 0)
+        {
+            continue;
+        }
+
+        var key = token[..separator];
+        if (!string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+
+        if (string.Equals(token[(separator + 1)..], "reset", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // Testing-only shim: exposes Program as a public partial class so

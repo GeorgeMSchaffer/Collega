@@ -89,14 +89,32 @@ public sealed class StartupSeeder : IStartupSeeder
         string siteAdminPassword,
         bool seedSiteAdmin,
         bool seedDemoData,
+        bool resetSiteAdmin = false,
         CancellationToken cancellationToken = default)
     {
         var now = _clock.UtcNow;
 
         if (seedSiteAdmin)
         {
-            var hasSiteAdmin = await _dbContext.Users.AnyAsync(u => u.Role == Role.SiteAdmin, cancellationToken);
-            if (!hasSiteAdmin)
+            // Match the configured account specifically (normalized email + Site Admin role) rather
+            // than "any Site Admin", so a manually promoted Site Admin is never targeted by a reset.
+            var normalizedEmail = EmailNormalizer.Normalize(siteAdminEmail);
+            var configuredSiteAdmin = await _dbContext.Users.SingleOrDefaultAsync(
+                u => u.Role == Role.SiteAdmin && u.NormalizedEmail == normalizedEmail,
+                cancellationToken);
+
+            // Dev/ops reset affordance: drop the configured Site Admin so the recreate below restores
+            // the configured credentials with MustChangePassword = true. FK-safe — AuditEvent/
+            // NotificationEvent.ActorUserId are plain Guid columns (no navigation), and the Site Admin
+            // has no org membership or authored org content, so the hard delete has no cascade fallout.
+            if (resetSiteAdmin && configuredSiteAdmin is not null)
+            {
+                _dbContext.Users.Remove(configuredSiteAdmin);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                configuredSiteAdmin = null;
+            }
+
+            if (configuredSiteAdmin is null)
             {
                 var passwordHash = _passwordHasher.Hash(siteAdminPassword);
                 var siteAdmin = User.CreateSiteAdmin("Site", "Admin", siteAdminEmail, passwordHash, now);

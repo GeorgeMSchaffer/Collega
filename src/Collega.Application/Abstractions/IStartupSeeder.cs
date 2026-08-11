@@ -10,10 +10,18 @@ namespace Collega.Application.Abstractions;
 /// </summary>
 public interface IStartupSeeder
 {
+    /// <param name="resetSiteAdmin">
+    /// Dev/ops affordance (not product behavior). When <c>true</c> and <paramref name="seedSiteAdmin"/>
+    /// is also set, an existing Site Admin matching <paramref name="siteAdminEmail"/> is dropped and
+    /// recreated from the configured credentials with <c>MustChangePassword = true</c>. Scope is the
+    /// Site Admin only; demo data is untouched. When <c>false</c> the Site Admin seed stays idempotent
+    /// (created only when absent), the historical default.
+    /// </param>
     Task SeedAsync(
         string siteAdminEmail,
         string siteAdminPassword,
         bool seedSiteAdmin,
         bool seedDemoData,
+        bool resetSiteAdmin = false,
         CancellationToken cancellationToken = default);
 }

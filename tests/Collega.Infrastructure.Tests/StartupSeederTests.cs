@@ -1,5 +1,6 @@
 using Collega.Application.Organizations;
 using Collega.Domain.Enums;
+using Collega.Domain.Users;
 using Collega.Infrastructure.Persistence;
 using Collega.Infrastructure.Persistence.Repositories;
 using Collega.Infrastructure.Seeding;
@@ -60,6 +61,87 @@ public sealed class StartupSeederTests
 
         using var verify = InMemoryContext.Create(dbName);
         Assert.Equal(1, await verify.Users.CountAsync(u => u.Role == Role.SiteAdmin));
+    }
+
+    [Fact]
+    public async Task Seed_ResetFalse_LeavesExistingChangedSiteAdminUntouched()
+    {
+        using var ctx = InMemoryContext.Create();
+        var seeder = CreateSeeder(ctx);
+
+        await seeder.SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false);
+
+        // Simulate a Site Admin who has completed the forced first-login password change.
+        var admin = await ctx.Users.SingleAsync(u => u.Role == Role.SiteAdmin);
+        var changedHash = FakePasswordHasher.Prefix + "Changed!123";
+        admin.ChangePassword(changedHash, TestClock.Default);
+        await ctx.SaveChangesAsync();
+
+        await seeder.SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false, resetSiteAdmin: false);
+
+        var admins = await ctx.Users.Where(u => u.Role == Role.SiteAdmin).ToListAsync();
+        Assert.Single(admins);
+        Assert.Equal(changedHash, admins[0].PasswordHash);
+        Assert.False(admins[0].MustChangePassword);
+    }
+
+    [Fact]
+    public async Task Seed_ResetTrue_RecreatesExistingSiteAdminWithForcedPasswordChange()
+    {
+        using var ctx = InMemoryContext.Create();
+        var seeder = CreateSeeder(ctx);
+
+        await seeder.SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false);
+        var original = await ctx.Users.SingleAsync(u => u.Role == Role.SiteAdmin);
+        var originalId = original.Id;
+        original.ChangePassword(FakePasswordHasher.Prefix + "Changed!123", TestClock.Default);
+        await ctx.SaveChangesAsync();
+
+        await seeder.SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false, resetSiteAdmin: true);
+
+        var admins = await ctx.Users.Where(u => u.Role == Role.SiteAdmin).ToListAsync();
+        Assert.Single(admins);
+        Assert.Equal(SiteAdminEmail, admins[0].Email);
+        Assert.Equal(FakePasswordHasher.Prefix + SiteAdminPassword, admins[0].PasswordHash);
+        Assert.True(admins[0].MustChangePassword);
+        Assert.NotEqual(originalId, admins[0].Id); // genuinely recreated, not updated in place
+    }
+
+    [Fact]
+    public async Task Seed_ResetTrue_WithNoExistingSiteAdmin_CreatesOne()
+    {
+        using var ctx = InMemoryContext.Create();
+
+        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false, resetSiteAdmin: true);
+
+        var admin = await ctx.Users.SingleAsync(u => u.Role == Role.SiteAdmin);
+        Assert.Equal(SiteAdminEmail, admin.Email);
+        Assert.Equal(FakePasswordHasher.Prefix + SiteAdminPassword, admin.PasswordHash);
+        Assert.True(admin.MustChangePassword);
+    }
+
+    [Fact]
+    public async Task Seed_ResetTrue_DoesNotTouchManuallyPromotedSiteAdminWithDifferentEmail()
+    {
+        using var ctx = InMemoryContext.Create();
+
+        // A second Site Admin promoted manually, on a different email, past their forced change.
+        var promoted = User.CreateSiteAdmin("Other", "Admin", "other-admin@collega.local", FakePasswordHasher.Prefix + "Other!123", TestClock.Default);
+        promoted.ChangePassword(FakePasswordHasher.Prefix + "Other!123", TestClock.Default);
+        await ctx.Users.AddAsync(promoted);
+        await ctx.SaveChangesAsync();
+        var promotedId = promoted.Id;
+
+        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false, resetSiteAdmin: true);
+
+        var survivor = await ctx.Users.SingleAsync(u => u.Id == promotedId);
+        Assert.Equal(Role.SiteAdmin, survivor.Role);
+        Assert.False(survivor.MustChangePassword); // untouched by the reset
+
+        Assert.Equal(2, await ctx.Users.CountAsync(u => u.Role == Role.SiteAdmin));
+        var normalized = EmailNormalizer.Normalize(SiteAdminEmail);
+        var configured = await ctx.Users.SingleAsync(u => u.Role == Role.SiteAdmin && u.NormalizedEmail == normalized);
+        Assert.True(configured.MustChangePassword);
     }
 
     [Fact]
