@@ -41,3 +41,50 @@
 tr.archived td {
     opacity: .7;
 }
+
+/* Drawer detail (read) view: definition-list of the field's attributes. */
+.facts {
+    margin: 0 0 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.fact {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+.fact dt {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-3);
+}
+
+.fact dd {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.5;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.optview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.muted {
+    color: var(--ink-3);
+}
+
+@media (max-width: 520px) {
+    .fact {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+}

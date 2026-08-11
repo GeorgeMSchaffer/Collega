@@ -14,6 +14,12 @@
     "Show archived" reveals archived definitions read-only. Business rules (name uniqueness, option
     guardrails, type immutability) are enforced by the API; this page mirrors the obvious ones and
     surfaces any server rejection inline.
+
+    List + Drawer surface (Sprint 2, SPEC/mockups/comp-c-review-09-detail-surfaces.html): each row's
+    Details action opens a right slide-in DrawerShell showing the field's detail with an Edit toggle
+    that swaps in the inline form; "Add New" (Org Admin only) opens a centered CreateModalShell. Manual
+    reorder (move up/down) stays in the list rows, gated to the unfiltered/single-page view. The
+    Site-Admin global view lists fields across every org read-only (Manage links, no create) — no drawer.
 *@
 <div class="pagehead">
     <div class="crumbs"><a href="/settings">Settings</a> / Custom fields</div>
@@ -34,86 +40,18 @@
         <div class="cmdbar">
             <ListToolbar TItem="FieldDefinitionDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search custom fields…" OnChanged="StateHasChanged" />
             <label class="checkline">
-                <input type="checkbox" checked="@_showArchived" @onchange="OnToggleArchived" disabled="@_editing" />
+                <input type="checkbox" checked="@_showArchived" @onchange="OnToggleArchived" disabled="@_busy" />
                 Show archived
             </label>
             @if (!_siteAdminGlobal)
             {
-                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">Add New</button>
+                <button class="btn primary" @onclick="StartCreate" disabled="@_busy" style="margin-left:auto">Add New</button>
             }
         </div>
 
         @if (_error is not null)
         {
             <div class="autherror" role="alert">@_error</div>
-        }
-
-        @if (_editing)
-        {
-            <div class="card formcard" style="margin-bottom:16px">
-                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:14px">@(_editId is null ? "New field" : "Edit field")</h3>
-                <div class="field">
-                    <label for="fd-name">Name</label>
-                    <FluentTextField id="fd-name" @bind-Value="_form.Name" Disabled="_busy" Maxlength="100" Style="width:100%" />
-                </div>
-                <div class="field">
-                    <label for="fd-desc">Description</label>
-                    <textarea id="fd-desc" @bind="_form.Description" disabled="@_busy" maxlength="500" rows="2" style="width:100%"></textarea>
-                </div>
-                <div class="formrow">
-                    <div class="field">
-                        <label for="fd-type">Type</label>
-                        <select id="fd-type" @bind="_form.FieldType" disabled="@(_busy || _editId is not null)">
-                            @foreach (var t in FieldTypes)
-                            {
-                                <option value="@t.Value">@t.Label</option>
-                            }
-                        </select>
-                        @if (_editId is not null)
-                        {
-                            <p class="hint">Type can't change after a field is created.</p>
-                        }
-                    </div>
-                    <div class="field">
-                        <label for="fd-order">Display order</label>
-                        <input type="number" id="fd-order" @bind="_form.DisplayOrder" disabled="@_busy" style="width:100px" />
-                    </div>
-                </div>
-                <div class="field">
-                    <label class="checkline">
-                        <input type="checkbox" checked="@_form.IsRequired" @onchange="e => _form.IsRequired = (bool)(e.Value ?? false)" disabled="@_busy" />
-                        Required — an idea can't be saved until this field has a value
-                    </label>
-                </div>
-
-                @if (IsOptionBacked(_form.FieldType))
-                {
-                    <div class="field">
-                        <label>Options</label>
-                        <div class="opts">
-                            @for (var idx = 0; idx < _form.Options.Count; idx++)
-                            {
-                                var i = idx;
-                                <div class="optrow">
-                                    <input type="text" placeholder="Option label" maxlength="200"
-                                           value="@_form.Options[i].Label"
-                                           @oninput="e => _form.Options[i].Label = e.Value?.ToString() ?? string.Empty"
-                                           disabled="@_busy" style="flex:1" />
-                                    <button class="btn subtle iconbtn" type="button" @onclick="() => MoveOption(i, -1)" disabled="@(_busy || i == 0)" title="Move up" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
-                                    <button class="btn subtle iconbtn" type="button" @onclick="() => MoveOption(i, 1)" disabled="@(_busy || i == _form.Options.Count - 1)" title="Move down" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
-                                    <button class="btn danger" type="button" @onclick="() => RemoveOption(i)" disabled="@_busy">Remove</button>
-                                </div>
-                            }
-                        </div>
-                        <button class="btn subtle" type="button" @onclick="AddOption" disabled="@_busy" style="margin-top:6px">+ Add option</button>
-                    </div>
-                }
-
-                <div class="btnrow" style="margin-top:6px">
-                    <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
-                    <button class="btn" @onclick="Cancel" disabled="@_busy">Cancel</button>
-                </div>
-            </div>
         }
 
         <div class="card">
@@ -150,9 +88,9 @@
                                 }
                                 else if (!f.IsDeleted)
                                 {
-                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(f, -1)" disabled="@(_editing || _busy || !ReorderEnabled || !CanMoveUp(f))" title="@ReorderTitle("up")" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
-                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(f, 1)" disabled="@(_editing || _busy || !ReorderEnabled || !CanMoveDown(f))" title="@ReorderTitle("down")" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
-                                    <button class="btn subtle" @onclick="() => StartEdit(f)" disabled="@_editing">Edit</button>
+                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(f, -1)" disabled="@(_busy || !ReorderEnabled || !CanMoveUp(f))" title="@ReorderTitle("up")" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
+                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(f, 1)" disabled="@(_busy || !ReorderEnabled || !CanMoveDown(f))" title="@ReorderTitle("down")" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
+                                    <button class="btn subtle" @onclick="() => OpenField(f)" disabled="@_busy">Details</button>
                                     @if (_confirmDeleteId == f.FieldDefinitionId)
                                     {
                                         <span class="confirm">Archive? Existing values stay but are hidden.</span>
@@ -161,7 +99,7 @@
                                     }
                                     else
                                     {
-                                        <button class="btn danger" @onclick="() => _confirmDeleteId = f.FieldDefinitionId" disabled="@_editing">Archive</button>
+                                        <button class="btn danger" @onclick="() => _confirmDeleteId = f.FieldDefinitionId" disabled="@_busy">Archive</button>
                                     }
                                 }
                             </td>
@@ -181,6 +119,72 @@
         }
     }
 </div>
+
+@* ---- Detail + edit drawer (org-scoped view only) ---- *@
+<DrawerShell IsOpen="@(_selected is not null)" OnClose="CloseDrawer"
+             Eyebrow="Custom field" Title="@(_selected?.Name)" Meta="@(_selected is not null ? TypeLabel(_selected.FieldType) : null)"
+             FooterContent="@(_drawerEditing ? RenderEditFooter : null)">
+    @if (_selected is not null)
+    {
+        @if (_formError is not null)
+        {
+            <div class="autherror" role="alert" style="margin-bottom:14px">@_formError</div>
+        }
+
+        @if (!_drawerEditing)
+        {
+            <dl class="facts">
+                @if (!string.IsNullOrWhiteSpace(_selected.Description))
+                {
+                    <div class="fact"><dt>Description</dt><dd>@_selected.Description</dd></div>
+                }
+                <div class="fact"><dt>Type</dt><dd>@TypeLabel(_selected.FieldType)</dd></div>
+                <div class="fact"><dt>Required</dt><dd>@(_selected.IsRequired ? "Yes — an idea can't be saved until this field has a value" : "No")</dd></div>
+                <div class="fact"><dt>Display order</dt><dd>@_selected.DisplayOrder</dd></div>
+                @if (IsOptionBacked(_selected.FieldType))
+                {
+                    <div class="fact">
+                        <dt>Options</dt>
+                        <dd>
+                            @if (_selected.Options.Count == 0)
+                            {
+                                <span class="muted">None</span>
+                            }
+                            else
+                            {
+                                <div class="optview">
+                                    @foreach (var o in _selected.Options.OrderBy(o => o.DisplayOrder))
+                                    {
+                                        <span class="pill neutral">@o.Label</span>
+                                    }
+                                </div>
+                            }
+                        </dd>
+                    </div>
+                }
+            </dl>
+
+            <div class="btnrow" style="margin-top:6px">
+                <button class="btn" @onclick="BeginEdit" disabled="@_busy">Edit field</button>
+            </div>
+        }
+        else
+        {
+            @RenderFieldForm
+        }
+    }
+</DrawerShell>
+
+@* ---- Create modal (org-scoped view only; suppressed for the Site-Admin global list) ---- *@
+<CreateModalShell IsOpen="_showCreate" OnClose="CloseCreate"
+                  Eyebrow="New custom field" Title="Create a custom field"
+                  FooterContent="RenderCreateFooter">
+    @if (_formError is not null)
+    {
+        <div class="autherror" role="alert" style="margin-bottom:14px">@_formError</div>
+    }
+    @RenderFieldForm
+</CreateModalShell>
 
 @code {
     // Present on the Site-Admin org-scoped route; absent on the Org Admin route (org from the claim).
@@ -230,12 +234,89 @@
         ReorderEnabled ? $"Move {direction}" : "Clear the search and show all fields on one page to reorder";
     private bool _loading = true;
     private bool _busy;
-    private bool _editing;
     private bool _showArchived;
-    private string? _editId;
     private string? _confirmDeleteId;
+
+    // Drawer (detail + edit) + create modal surfaces.
+    private FieldDefinitionDto? _selected; // field open in the detail/edit drawer; null = drawer closed
+    private bool _drawerEditing;           // drawer swapped from detail to the inline edit form
+    private bool _showCreate;              // create modal open
+    private string? _editId;               // routing for Save: null while creating, the field id while editing
     private FormModel _form = new();
-    private string? _error;
+    private string? _error;                // list-level (load / reorder / archive) error
+    private string? _formError;            // drawer/modal form validation + save error
+
+    // Edit-mode drawer action bar; passed as the shell footer only while editing.
+    private RenderFragment RenderEditFooter => @<text>
+        <button class="btn" @onclick="CancelEdit" disabled="@_busy">Cancel</button>
+        <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
+    </text>;
+
+    // Create-modal action bar.
+    private RenderFragment RenderCreateFooter => @<text>
+        <button class="btn" @onclick="CloseCreate" disabled="@_busy">Cancel</button>
+        <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Creating…" : "Create")</button>
+    </text>;
+
+    // Shared field form, rendered inside both the drawer (edit mode) and the create modal.
+    private RenderFragment RenderFieldForm => @<text>
+        <div class="field">
+            <label for="fd-name">Name</label>
+            <FluentTextField id="fd-name" @bind-Value="_form.Name" Disabled="_busy" Maxlength="100" Style="width:100%" />
+        </div>
+        <div class="field">
+            <label for="fd-desc">Description</label>
+            <textarea id="fd-desc" @bind="_form.Description" disabled="@_busy" maxlength="500" rows="2" style="width:100%"></textarea>
+        </div>
+        <div class="formrow">
+            <div class="field">
+                <label for="fd-type">Type</label>
+                <select id="fd-type" @bind="_form.FieldType" disabled="@(_busy || _editId is not null)">
+                    @foreach (var t in FieldTypes)
+                    {
+                        <option value="@t.Value">@t.Label</option>
+                    }
+                </select>
+                @if (_editId is not null)
+                {
+                    <p class="hint">Type can't change after a field is created.</p>
+                }
+            </div>
+            <div class="field">
+                <label for="fd-order">Display order</label>
+                <input type="number" id="fd-order" @bind="_form.DisplayOrder" disabled="@_busy" style="width:100px" />
+            </div>
+        </div>
+        <div class="field">
+            <label class="checkline">
+                <input type="checkbox" checked="@_form.IsRequired" @onchange="e => _form.IsRequired = (bool)(e.Value ?? false)" disabled="@_busy" />
+                Required — an idea can't be saved until this field has a value
+            </label>
+        </div>
+
+        @if (IsOptionBacked(_form.FieldType))
+        {
+            <div class="field">
+                <label>Options</label>
+                <div class="opts">
+                    @for (var idx = 0; idx < _form.Options.Count; idx++)
+                    {
+                        var i = idx;
+                        <div class="optrow">
+                            <input type="text" placeholder="Option label" maxlength="200"
+                                   value="@_form.Options[i].Label"
+                                   @oninput="e => _form.Options[i].Label = e.Value?.ToString() ?? string.Empty"
+                                   disabled="@_busy" style="flex:1" />
+                            <button class="btn subtle iconbtn" type="button" @onclick="() => MoveOption(i, -1)" disabled="@(_busy || i == 0)" title="Move up" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
+                            <button class="btn subtle iconbtn" type="button" @onclick="() => MoveOption(i, 1)" disabled="@(_busy || i == _form.Options.Count - 1)" title="Move down" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
+                            <button class="btn danger" type="button" @onclick="() => RemoveOption(i)" disabled="@_busy">Remove</button>
+                        </div>
+                    }
+                </div>
+                <button class="btn subtle" type="button" @onclick="AddOption" disabled="@_busy" style="margin-top:6px">+ Add option</button>
+            </div>
+        }
+    </text>;
 
     protected override async Task OnInitializedAsync()
     {
@@ -328,44 +409,80 @@
         await LoadAsync();
     }
 
-    private void StartCreate()
-    {
-        _editId = null;
-        _confirmDeleteId = null;
-        var active = _fields.Where(f => !f.IsDeleted).ToList();
-        var nextOrder = active.Count == 0 ? 10 : active.Max(f => f.DisplayOrder) + 10;
-        _form = new FormModel { FieldType = "Text", DisplayOrder = nextOrder };
-        _error = null;
-        _editing = true;
-    }
-
     private string OrganizationName(string organizationId) =>
         _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 
-    private void StartEdit(FieldDefinitionDto f)
+    // ---- Create modal ----
+
+    private void StartCreate()
     {
-        _editId = f.FieldDefinitionId;
         _confirmDeleteId = null;
+        _editId = null;
+        var active = _fields.Where(f => !f.IsDeleted).ToList();
+        var nextOrder = active.Count == 0 ? 10 : active.Max(f => f.DisplayOrder) + 10;
+        _form = new FormModel { FieldType = "Text", DisplayOrder = nextOrder };
+        _formError = null;
+        _showCreate = true;
+    }
+
+    private void CloseCreate()
+    {
+        if (_busy)
+        {
+            return; // don't dismiss mid-create
+        }
+        _showCreate = false;
+        _formError = null;
+    }
+
+    // ---- Detail / edit drawer ----
+
+    private void OpenField(FieldDefinitionDto f)
+    {
+        _confirmDeleteId = null;
+        _selected = f;
+        _drawerEditing = false;
+        _formError = null;
+    }
+
+    private void CloseDrawer()
+    {
+        if (_busy)
+        {
+            return; // don't dismiss mid-save
+        }
+        _selected = null;
+        _drawerEditing = false;
+        _formError = null;
+    }
+
+    private void BeginEdit()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+        _editId = _selected.FieldDefinitionId;
         _form = new FormModel
         {
-            Name = f.Name,
-            Description = f.Description,
-            FieldType = f.FieldType,
-            IsRequired = f.IsRequired,
-            DisplayOrder = f.DisplayOrder,
-            Options = f.Options
+            Name = _selected.Name,
+            Description = _selected.Description,
+            FieldType = _selected.FieldType,
+            IsRequired = _selected.IsRequired,
+            DisplayOrder = _selected.DisplayOrder,
+            Options = _selected.Options
                 .OrderBy(o => o.DisplayOrder)
                 .Select(o => new OptionForm { OptionId = o.OptionId, Label = o.Label })
                 .ToList(),
         };
-        _error = null;
-        _editing = true;
+        _formError = null;
+        _drawerEditing = true;
     }
 
-    private void Cancel()
+    private void CancelEdit()
     {
-        _editing = false;
-        _error = null;
+        _drawerEditing = false;
+        _formError = null;
     }
 
     private void AddOption() => _form.Options.Add(new OptionForm());
@@ -392,7 +509,7 @@
     {
         if (string.IsNullOrWhiteSpace(_form.Name))
         {
-            _error = "A field name is required.";
+            _formError = "A field name is required.";
             return;
         }
 
@@ -407,7 +524,7 @@
 
             if (labels.Count == 0)
             {
-                _error = "Dropdown and multi-select fields need at least one option.";
+                _formError = "Dropdown and multi-select fields need at least one option.";
                 return;
             }
 
@@ -417,7 +534,7 @@
         }
 
         _busy = true;
-        _error = null;
+        _formError = null;
 
         var body = new SaveFieldDefinitionRequestDto(
             _form.Name.Trim(),
@@ -443,12 +560,28 @@
         _busy = false;
         if (succeeded)
         {
-            _editing = false;
+            var editedId = _editId;
             await LoadAsync();
+            if (editedId is null)
+            {
+                // Create succeeded: close the modal, return to the list.
+                _showCreate = false;
+            }
+            else
+            {
+                // Edit succeeded: back to the detail view in the drawer, refreshed from the reload.
+                _selected = _fields.FirstOrDefault(f => f.FieldDefinitionId == editedId);
+                _drawerEditing = false;
+                if (_selected is null)
+                {
+                    // Field is no longer in the current (possibly filtered) view — close the drawer.
+                    CloseDrawer();
+                }
+            }
             return;
         }
 
-        _error = error ?? "Save failed.";
+        _formError = error ?? "Save failed.";
     }
 
     private async Task Delete(FieldDefinitionDto f)
@@ -460,6 +593,12 @@
         _confirmDeleteId = null;
         if (result.Succeeded)
         {
+            // If the archived field was open in the drawer, close it.
+            if (_selected?.FieldDefinitionId == f.FieldDefinitionId)
+            {
+                _selected = null;
+                _drawerEditing = false;
+            }
             await LoadAsync();
         }
         else
