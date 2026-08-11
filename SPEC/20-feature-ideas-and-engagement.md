@@ -90,6 +90,7 @@ Users can create, discuss, organize, and support ideas within their organization
 - Site Admin and Org Admin can soft-delete ideas within their authorized scope; soft-deleted ideas are excluded from board views and list queries.
 - The Delete action is visible in Idea Detail only to an authorized Site Admin or Org Admin, requires confirmation, returns to the board after success, and removes the card from the board immediately.
 - Only the creating author, an in-scope Org Admin, or Site Admin can edit an idea description or change its assignee collection. Other editable fields retain the general idea-edit permission unless a narrower rule is specified.
+- To support assignee selection and mention lookup, any authenticated caller scoped to an organization (User and Read Only included, not only admins) can read a minimal list of its active members — id, name, and email only — via `GET /organizations/{organizationId}/members`. This is deliberately narrower than the admin user listing (`GET /organizations/{organizationId}/users`), which exposes roles, status filters, and full user administration and remains Org-Admin+. Callers outside the organization receive a 404.
 - Idea deletion generates an audit event.
 - Read Only cannot edit or delete idea content.
 - User can update idea status for any idea on a board if allowed by board configuration.

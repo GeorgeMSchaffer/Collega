@@ -171,6 +171,23 @@ public sealed class OrganizationsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Active, assignable members of an organization (id + name + email only) for the idea assignee
+    /// picker and mention lookup. Unlike the admin user listing above, this is available to any
+    /// authenticated caller scoped to the organization — a plain User can populate the picker
+    /// (SPEC/20-feature-ideas-and-engagement.md Permissions). Authorization and scoping live in the
+    /// Application service.
+    /// </summary>
+    [HttpGet("{organizationId:guid}/members")]
+    [ProducesResponseType(typeof(IReadOnlyList<OrganizationMember>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ListMembers(Guid organizationId, CancellationToken cancellationToken)
+    {
+        var result = await _userService.ListAssignableMembersAsync(organizationId, cancellationToken);
+        return Ok(result);
+    }
+
     /// <summary>Create a user within an organization.</summary>
     [HttpPost("{organizationId:guid}/users")]
     [ProducesResponseType(typeof(CreateUserResult), StatusCodes.Status201Created)]

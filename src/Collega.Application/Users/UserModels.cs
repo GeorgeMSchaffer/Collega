@@ -36,6 +36,16 @@ public sealed record UserListItem(
     string Role,
     string Status);
 
+/// <summary>Minimal, non-privileged view of an active organization member — id, name, and email
+/// only — for the idea assignee picker and mention lookup. Unlike <see cref="UserListItem"/> this
+/// carries no role or status and is readable by any authenticated caller in the organization, not
+/// only admins (SPEC/20-feature-ideas-and-engagement.md Permissions).</summary>
+public sealed record OrganizationMember(
+    Guid UserId,
+    string FirstName,
+    string LastName,
+    string Email);
+
 /// <summary>Shape matches <c>GET /api/v1/users/{id}</c> detail.</summary>
 public sealed record UserDetail(
     Guid UserId,

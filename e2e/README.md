@@ -26,11 +26,11 @@ demo seed. Two behaviors these specs encode:
 - Flow 9 avoids the `/ideas` **Add New** button on purpose — that path currently opens the brainstorm
   modal first (WIP), so the fixture idea is created from the board header, where **New idea** opens the
   create modal directly.
-- **Unassigned picker for Users:** the drawer/create-modal assignee picker is populated from the org
-  user list, which is **Org-Admin+ only** (`GET /organizations/{id}/users`). A plain **User** therefore
-  sees an empty picker and cannot add assignees, so flow 12's assignee step is driven as **Org Admin**
-  (a role that can list users). Whether a User *should* be able to assign teammates is an open product
-  question, not a test artifact.
+- **Assignee picker for Users:** the drawer/create-modal assignee picker is populated from
+  `GET /organizations/{id}/members` — a minimal, non-admin member list any in-org caller may read.
+  A plain **User** can therefore populate the picker and, as the creating author, change the assignee
+  collection (SPEC/20-feature-ideas-and-engagement.md Permissions), so flow 12's assignee step runs as
+  the authoring **User**. (The admin user listing `GET /organizations/{id}/users` stays Org-Admin+.)
 
 ## Prerequisites
 

@@ -60,6 +60,32 @@ public sealed class UserService : IUserService
         return new PagedResult<UserListItem>(items, page.Page, page.PageSize, page.TotalCount, page.SortBy, page.SortDirection);
     }
 
+    public async Task<IReadOnlyList<OrganizationMember>> ListAssignableMembersAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        await AuthorizeOrganizationReadScopeAsync(organizationId, cancellationToken);
+
+        var members = new List<OrganizationMember>();
+        for (var page = 1; ; page++)
+        {
+            var filter = new UserListFilter(
+                organizationId,
+                new PageRequest(page, PageRequest.MaxPageSize),
+                Search: null,
+                Role: null,
+                Status: UserStatus.Active,
+                SortBy: null,
+                SortDirection: null);
+
+            var result = await _userRepository.ListByOrganizationAsync(filter, cancellationToken);
+            members.AddRange(result.Items.Select(u => new OrganizationMember(u.Id, u.FirstName, u.LastName, u.Email)));
+
+            if (members.Count >= result.TotalCount || result.Items.Count == 0)
+            {
+                return members;
+            }
+        }
+    }
+
     public async Task<CreateUserResult> CreateAsync(Guid organizationId, CreateUserCommand command, CancellationToken cancellationToken = default)
     {
         await AuthorizeOrganizationScopeAsync(organizationId, cancellationToken);
@@ -273,6 +299,31 @@ public sealed class UserService : IUserService
         }
 
         throw new ForbiddenAppException("You are not allowed to manage users in this organization.");
+    }
+
+    /// <summary>
+    /// Read-only membership scope for listing assignable members. Broader than
+    /// <see cref="AuthorizeOrganizationScopeAsync"/>: any authenticated caller bound to the target
+    /// organization (Org Admin, User, or Read Only) may read its members, and a Site Admin may read
+    /// any organization. A caller outside the organization gets a 404 rather than leaking existence.
+    /// </summary>
+    private async Task AuthorizeOrganizationReadScopeAsync(Guid organizationId, CancellationToken cancellationToken)
+    {
+        var role = RequireAuthenticatedRole();
+
+        if (role == Role.SiteAdmin)
+        {
+            _ = await _organizationRepository.GetByIdAsync(organizationId, cancellationToken)
+                ?? throw new NotFoundAppException("Organization not found.");
+            return;
+        }
+
+        if (_currentUser.OrganizationId == organizationId)
+        {
+            return;
+        }
+
+        throw new NotFoundAppException("Organization not found.");
     }
 
     /// <summary>Loads a user the caller may view/administer, or 404 if it is outside their scope.</summary>
