@@ -55,7 +55,9 @@ nunit-*.xml
 
 # Local Docker environment (contains SA password)
 .env
-SPEC/.DS_Store
+# macOS Finder metadata (anywhere in the tree)
+.DS_Store
+**/.DS_Store
 
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
