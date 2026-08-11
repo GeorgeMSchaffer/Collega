@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Review 10: View As (impersonation)</title>
+<style>
+  /* Foundation matches the locked detail-surface language (comp-c-review-09-detail-surfaces.html):
+     same tokens, rail (real Fluent Size20 icons), right slide-in drawer + surface chrome, modal. */
+  :root{
+    --accent:#5b5fc7;--accent-deep:#444791;--accent-soft:#eef0fb;
+    --ink:#242424;--ink-2:#484644;--ink-3:#66615d;
+    --bg:#faf9f8;--surface:#fff;--line:#e4e2df;
+    --ok:#0e700e;--warn:#9a5b00;--err:#b10e1c;
+    --vas:#8a5300;--vas-soft:#f7ecdc;--vas-deep:#5f3a00;
+    --shadow:0 1px 2px rgba(0,0,0,.08);--shadow-float:0 18px 48px rgba(0,0,0,.22);
+    --radius-card:6px;--radius-btn:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  body{font-family:"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);font-size:14px;overflow-x:hidden}
+  button,input,select,textarea{font:inherit}
+  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:0}
+  .comp-bar{min-height:46px;background:#33312e;color:#fff;padding:8px 18px;display:flex;gap:16px;align-items:center;position:sticky;top:0;z-index:80;flex-wrap:wrap}
+  .comp-bar strong{font:600 13px Georgia,serif;letter-spacing:.04em;white-space:nowrap}
+  .comp-bar .sep{width:1px;height:20px;background:#5a5754}
+  .comp-bar .lbl{font-size:11px;color:#a8a5a2;text-transform:uppercase;letter-spacing:.05em}
+  .mode-tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .mode-tabs button{background:transparent;color:#d1cfcc;border:1px solid #5a5754;border-radius:3px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .mode-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+
+  .shell{display:grid;grid-template-columns:64px minmax(0,1fr);min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;z-index:10}
+  .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:grid;place-items:center;font:700 13px Georgia,serif;margin-bottom:14px}
+  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;gap:2px;cursor:pointer}
+  .rail a svg{width:20px;height:20px;fill:currentColor}.rail a span{font-size:8.5px;font-weight:600}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail a:hover{background:#f3f2f1}
+  .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+  .avatar.s{width:26px;height:26px;font-size:9.5px}
+  .railavatar{position:relative}
+  .railavatar.vas .avatar{background:var(--vas)}
+  .railavatar .badge{position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;border-radius:50%;background:var(--vas);color:#fff;font-size:9px;display:grid;place-items:center;border:2px solid var(--surface)}
+
+  .page{min-width:0}
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 20px;display:flex;align-items:flex-start;gap:16px}
+  .pagehead .grow{flex:1;min-width:0}
+  .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:9px}.pagehead h1{font-size:26px;margin-bottom:4px}.sub{color:var(--ink-3);font-size:13.5px;line-height:1.5;max-width:640px}
+  .body{padding:24px 40px;max-width:1280px}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:8px 13px;min-height:36px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:var(--accent-deep)}
+  .btn.link{border-color:transparent;background:transparent;color:var(--accent);padding-inline:8px}
+  input,select,textarea{border:1px solid #8a8886;border-radius:4px;background:#fff;color:var(--ink);padding:8px 10px;min-height:36px;width:100%}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{display:block;color:var(--ink-3);font-size:11.5px;font-weight:700;margin-bottom:5px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow);overflow:auto}
+  table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;color:var(--ink-3);padding:11px 15px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px 15px;border-bottom:1px solid #f0efed;vertical-align:middle}tbody tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
+  .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
+  .pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .pill.vas{background:var(--vas-soft);color:var(--vas-deep)}
+  .status{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--ink-2);white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%}
+  .decision-note{margin-top:18px;border-left:3px solid var(--accent);background:var(--accent-soft);padding:11px 14px;color:var(--ink-2);font-size:12.5px;line-height:1.55;max-width:880px}
+
+  /* View-as trigger (right-aligned in the page header — the locked design has no top bar) */
+  .viewas .trigger{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:8px 15px;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;box-shadow:var(--shadow);white-space:nowrap}
+  .viewas .trigger:hover{background:#f3f2f1}
+  .viewas .trigger svg{width:16px;height:16px;fill:currentColor}
+  .viewas .trigger .caret{color:var(--ink-3);font-size:10px}
+
+  /* Shared surface chrome (drawer + modal) — identical to review-09 */
+  .surface-backdrop{position:fixed;inset:46px 0 0 64px;background:rgba(36,36,36,.28);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:40}
+  .surface-backdrop.open{opacity:1;visibility:visible}
+  .drawer{position:fixed;top:46px;right:0;bottom:0;width:min(620px,calc(100vw - 64px));background:var(--surface);border-left:1px solid var(--line);box-shadow:-12px 0 32px rgba(0,0,0,.16);z-index:50;transform:translateX(105%);visibility:hidden;transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s linear .24s;display:flex;flex-direction:column}
+  .drawer.open{transform:translateX(0);visibility:visible;transition-delay:0s}
+  .surface-head{padding:20px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:16px}
+  .surface-head .grow{flex:1;min-width:0}
+  .eyebrow{text-transform:uppercase;letter-spacing:.07em;color:var(--accent-deep);font-size:11px;font-weight:700;margin-bottom:5px}
+  .surface-head h2{font-size:22px;line-height:1.25}.surface-head .meta{margin-top:6px;font-size:12px;color:var(--ink-3);line-height:1.5}
+  .iconbtn{width:34px;height:34px;border:1px solid var(--line);border-radius:4px;background:#fff;cursor:pointer;color:var(--ink-2);display:grid;place-items:center;font-size:19px;line-height:1;flex:none}.iconbtn:hover{background:#f3f2f1}
+  .surface-body{padding:0;overflow:auto;flex:1}
+  .surface-foot{padding:13px 24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:9px;background:#fff;font-size:12px;color:var(--ink-3)}
+
+  /* Picker list inside the drawer */
+  .vsearch{padding:16px 24px;border-bottom:1px solid var(--line)}
+  .vgroup{padding:11px 24px 5px;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:700;background:var(--bg);position:sticky;top:0}
+  .vrow{display:flex;align-items:center;gap:12px;padding:11px 24px;cursor:pointer;border-bottom:1px solid #f4f3f2;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0}
+  .vrow:hover{background:var(--accent-soft)}
+  .vrow .m{min-width:0;flex:1}
+  .vrow .nm{font-weight:650;font-size:13.5px}
+  .vrow .em{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vrow .rp{flex:none}
+  .vrow.disabled{opacity:.5;cursor:not-allowed}.vrow.disabled:hover{background:none}
+
+  /* Active-impersonation banner */
+  .vasbar{display:flex;align-items:center;gap:14px;background:var(--vas);color:#fff;padding:11px 22px;font-size:13px}
+  .vasbar svg{width:18px;height:18px;fill:currentColor;flex:none}
+  .vasbar .msg{line-height:1.4}.vasbar .msg strong{font-weight:700}
+  .vasbar .msg .s2{opacity:.9;font-size:11.5px;display:block}
+  .vasbar .grow{flex:1}
+  .vasbar .exit{background:#fff;color:var(--vas-deep);border:none;border-radius:4px;padding:8px 15px;font-size:12.5px;font-weight:700;cursor:pointer;flex:none}
+  .vasbar .exit:hover{background:#f4ede1}
+
+  /* Spec sheet */
+  .doc{max-width:920px;margin:0 auto;padding:30px 40px 60px}
+  .doc h1{font-size:28px;margin-bottom:6px}
+  .doc .lead{color:var(--ink-3);font-size:14px;line-height:1.55;margin-bottom:20px;max-width:720px}
+  .doc h2{font-size:18px;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .doc p,.doc li{font-size:13.5px;line-height:1.6;color:var(--ink-2)}
+  .doc ul{margin:6px 0 6px 20px}.doc li{margin-bottom:5px}
+  .decision{border:1px solid var(--vas);background:var(--vas-soft);border-radius:8px;padding:14px 16px;margin:14px 0}
+  .decision .qh{font-weight:700;color:var(--vas-deep);font-size:13.5px;font-family:"Segoe UI",sans-serif;margin-bottom:5px}
+  .decision .rec{font-size:12.5px;color:var(--vas-deep);margin-top:7px}.decision .rec b{text-transform:uppercase;letter-spacing:.03em;font-size:11px}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#f3f2f1;color:var(--ink-2);margin-left:6px}
+
+  .btn:focus-visible,.iconbtn:focus-visible,.mode-tabs button:focus-visible,.rail a:focus-visible,.vrow:focus-visible,.trigger:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media(max-width:760px){
+    .shell{grid-template-columns:1fr;padding-bottom:58px}
+    .rail{position:fixed;left:0;right:0;bottom:0;height:58px;flex-direction:row;border-right:0;border-top:1px solid var(--line);padding:5px 10px;justify-content:space-around;z-index:90}
+    .mark,.rail .push{display:none}.rail a{height:46px}
+    .pagehead{flex-direction:column;padding-left:18px;padding-right:18px}.body{padding:18px}
+    .surface-backdrop{inset:0 0 58px 0}.drawer{top:0;bottom:58px;width:100%}
+  }
+  @media(prefers-reduced-motion:reduce){.drawer,.surface-backdrop{transition:none}}
+</style>
+</head>
+<body>
+<div class="comp-bar">
+  <strong>REVIEW 10 · VIEW AS</strong>
+  <div class="mode-tabs" id="modetabs">
+    <button class="on" data-s="demo">Interactive demo</button>
+    <button data-s="spec">Behavior &amp; security</button>
+  </div>
+  <span class="sep"></span>
+  <span class="lbl">Acting as</span>
+  <div class="mode-tabs" id="roletabs">
+    <button class="on" data-role="site">Site Admin</button>
+    <button data-role="org">Org Admin</button>
+  </div>
+</div>
+
+<!-- ================= DEMO ================= -->
+<section class="screen on" id="s-demo">
+  <div class="vasbar" id="vasbar" hidden>
+    <svg viewBox="0 0 20 20"><path d="M10 4c3.3 0 6.4 1.9 8.4 5.1a.9.9 0 0 1 0 .9C16.4 13.1 13.3 15 10 15S3.6 13.1 1.6 9.9a.9.9 0 0 1 0-.9C3.6 5.9 6.7 4 10 4Zm0 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0 1.8a1.8 1.8 0 1 1 0 3.5 1.8 1.8 0 0 1 0-3.5Z"/></svg>
+    <div class="msg"><strong id="vasname">Viewing as Noah Contributor</strong> <span id="vasrole">— User · Acme Robotics</span>
+      <span class="s2">You're seeing exactly what they see. Anything you do is recorded as <strong id="vasactor">Sam Sitewide</strong> acting as them.</span>
+    </div>
+    <span class="grow"></span>
+    <button class="exit" id="vasexit">Exit view-as</button>
+  </div>
+
+  <div class="shell">
+    <aside class="rail" aria-label="Primary navigation">
+      <span class="mark">CG</span>
+      <a class="on" aria-current="page" aria-label="Home"><svg viewBox="0 0 20 20"><path d="M9 2.39a1.5 1.5 0 0 1 2 0l5.5 4.94c.32.28.5.69.5 1.12v7.05c0 .83-.67 1.5-1.5 1.5H13a1.5 1.5 0 0 1-1.5-1.5V12a.5.5 0 0 0-.5-.5H9a.5.5 0 0 0-.5.5v3.5c0 .83-.67 1.5-1.5 1.5H4.5A1.5 1.5 0 0 1 3 15.5V8.45c0-.43.18-.84.5-1.12L9 2.39Zm1.33.74a.5.5 0 0 0-.66 0l-5.5 4.94a.5.5 0 0 0-.17.38v7.05c0 .28.22.5.5.5H7a.5.5 0 0 0 .5-.5V12c0-.83.67-1.5 1.5-1.5h2c.83 0 1.5.67 1.5 1.5v3.5c0 .28.22.5.5.5h2.5a.5.5 0 0 0 .5-.5V8.45a.5.5 0 0 0-.17-.38l-5.5-4.94Z"/></svg><span>Home</span></a>
+      <a aria-label="Boards"><svg viewBox="0 0 20 20"><path d="M3 6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm3-2a2 2 0 0 0-2 2v1.06L9.5 7V4H6Zm4.5 0v8H16V6a2 2 0 0 0-2-2h-3.5Zm5.5 9h-5.5v3H14a2 2 0 0 0 2-2v-1Zm-6.5 3V8L4 8.06V14c0 1.1.9 2 2 2h3.5Z"/></svg><span>Boards</span></a>
+      <a aria-label="Ideas"><svg viewBox="0 0 20 20"><path d="M10 2c3.31 0 6 2.6 6 5.8 0 1.68-.75 3.22-2.2 4.6a.6.6 0 0 0-.15.2l-.02.09-.94 3.92a1.84 1.84 0 0 1-1.67 1.38l-.15.01H9.13c-.82 0-1.54-.52-1.78-1.26l-.04-.14-.93-3.91a.6.6 0 0 0-.17-.3A6.32 6.32 0 0 1 4 8.04L4 7.8v-.2A5.91 5.91 0 0 1 10 2Zm2.04 13H7.96l.31 1.33.03.1c.1.3.38.52.71.56l.12.01h1.81a.86.86 0 0 0 .75-.53l.03-.1.32-1.37ZM10 3a4.92 4.92 0 0 0-4.98 4.41L5 7.63V8c.06 1.3.68 2.52 1.9 3.67.18.17.32.4.4.64l.05.15.37 1.54h4.57l.38-1.61.05-.16c.09-.21.22-.4.39-.56C14.38 10.47 15 9.18 15 7.8A4.9 4.9 0 0 0 10 3Z"/></svg><span>Ideas</span></a>
+      <a id="rail-settings" aria-label="Settings"><svg viewBox="0 0 20 20"><path d="M1.91 7.38A8.5 8.5 0 0 1 3.7 4.3a.5.5 0 0 1 .54-.13l1.92.68a1 1 0 0 0 1.32-.76l.36-2a.5.5 0 0 1 .4-.4 8.53 8.53 0 0 1 3.55 0c.2.04.35.2.38.4l.37 2a1 1 0 0 0 1.32.76l1.92-.68a.5.5 0 0 1 .54.13 8.5 8.5 0 0 1 1.78 3.08c.06.2 0 .4-.15.54l-1.56 1.32a1 1 0 0 0 0 1.52l1.56 1.32a.5.5 0 0 1 .15.54 8.5 8.5 0 0 1-1.78 3.08.5.5 0 0 1-.54.13l-1.92-.68a1 1 0 0 0-1.32.76l-.37 2a.5.5 0 0 1-.38.4 8.53 8.53 0 0 1-3.56 0 .5.5 0 0 1-.39-.4l-.36-2a1 1 0 0 0-1.32-.76l-1.92.68a.5.5 0 0 1-.54-.13 8.5 8.5 0 0 1-1.78-3.08.5.5 0 0 1 .15-.54l1.56-1.32a1 1 0 0 0 0-1.52L2.06 7.92a.5.5 0 0 1-.15-.54Zm1.06 0 1.3 1.1a2 2 0 0 1 0 3.04l-1.3 1.1c.3.79.72 1.51 1.25 2.16l1.6-.58a2 2 0 0 1 2.63 1.53l.3 1.67a7.56 7.56 0 0 0 2.5 0l.3-1.67a2 2 0 0 1 2.64-1.53l1.6.58a7.5 7.5 0 0 0 1.24-2.16l-1.3-1.1a2 2 0 0 1 0-3.04l1.3-1.1a7.5 7.5 0 0 0-1.25-2.16l-1.6.58a2 2 0 0 1-2.63-1.53l-.3-1.67a7.55 7.55 0 0 0-2.5 0l-.3 1.67A2 2 0 0 1 5.81 5.8l-1.6-.58a7.5 7.5 0 0 0-1.24 2.16ZM7.5 10a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0Zm1 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z"/></svg><span>Settings</span></a>
+      <span class="push"></span>
+      <span class="railavatar" id="railavatar"><span class="avatar" id="railinitials">SA</span></span>
+    </aside>
+
+    <main class="page">
+      <header class="pagehead">
+        <div class="grow">
+          <div class="crumbs" id="crumbs">Platform</div>
+          <h1 id="pagetitle">Platform overview</h1>
+          <p class="sub" id="pagesub">Signed in as <strong>Sam Sitewide</strong> · Site Admin. Use <em>View as…</em> (top-right) to browse Collega as any user.</p>
+        </div>
+        <div class="viewas">
+          <button class="trigger" id="vas-open"><svg viewBox="0 0 20 20"><path d="M10 4c3.3 0 6.4 1.9 8.4 5.1a.9.9 0 0 1 0 .9C16.4 13.1 13.3 15 10 15S3.6 13.1 1.6 9.9a.9.9 0 0 1 0-.9C3.6 5.9 6.7 4 10 4Zm0 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Zm0 1.8a1.8 1.8 0 1 1 0 3.5 1.8 1.8 0 0 1 0-3.5Z"/></svg> View as… <span class="caret">▾</span></button>
+        </div>
+      </header>
+      <div class="body">
+        <div class="decision-note" id="ctxnote">The <strong>View as…</strong> control is a right-aligned page-header affordance on every screen (the locked Comp&nbsp;C design dropped the dark top bar). Click it to open the picker as a right slide-in drawer, matching every other detail surface. Selecting a user starts the session — an amber banner appears and the rail switches to that user.</div>
+        <div class="card" style="margin-top:14px" id="whocard">
+          <table><thead><tr><th>What you can view as</th><th>Scope</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Site Admin</strong></td><td>Any user in any organization (picker grouped by org)</td></tr>
+            <tr><td><strong>Org Admin</strong></td><td>Active users in their own organization only</td></tr>
+            <tr><td>User / Read-Only</td><td>No access — the control is hidden</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Picker drawer -->
+  <div class="surface-backdrop" id="backdrop"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <header class="surface-head">
+      <div class="grow">
+        <div class="eyebrow">View as</div>
+        <h2 id="drawer-title">View as another user</h2>
+        <div class="meta" id="drawer-meta">Browse Collega exactly as they see it. A banner stays on screen the whole time; exit in one click.</div>
+      </div>
+      <button class="iconbtn" id="drawer-close" aria-label="Close">×</button>
+    </header>
+    <div class="vsearch"><input type="search" id="vsearch" placeholder="Search name, email, org…"></div>
+    <div class="surface-body">
+      <!-- SITE ADMIN list -->
+      <div id="list-site">
+        <div class="vgroup">Acme Robotics</div>
+        <button class="vrow" data-name="Olivia Administer" data-role="Org Admin · Acme Robotics" data-init="OA"><span class="avatar s">OA</span><div class="m"><div class="nm">Olivia Administer</div><div class="em">orgadmin@acme-robotics.demo…</div></div><span class="rp pill info">Org Admin</span></button>
+        <button class="vrow" data-name="Noah Contributor" data-role="User · Acme Robotics" data-init="NC"><span class="avatar s">NC</span><div class="m"><div class="nm">Noah Contributor</div><div class="em">user@acme-robotics.demo…</div></div><span class="rp pill neutral">User</span></button>
+        <button class="vrow" data-name="Maya Collaborator" data-role="User · Acme Robotics" data-init="MC"><span class="avatar s">MC</span><div class="m"><div class="nm">Maya Collaborator</div><div class="em">user2@acme-robotics.demo…</div></div><span class="rp pill neutral">User</span></button>
+        <div class="vrow disabled"><span class="avatar s">RB</span><div class="m"><div class="nm">Riley Byrne</div><div class="em">riley@acme-robotics.demo… · suspended</div></div><span class="rp pill neutral">Read-Only</span></div>
+        <div class="vgroup">Blue Harbor Logistics</div>
+        <button class="vrow" data-name="Olivia Administer" data-role="Org Admin · Blue Harbor Logistics" data-init="OA"><span class="avatar s">OA</span><div class="m"><div class="nm">Olivia Administer</div><div class="em">orgadmin@blue-harbor.demo…</div></div><span class="rp pill info">Org Admin</span></button>
+        <button class="vrow" data-name="Noah Contributor" data-role="User · Blue Harbor Logistics" data-init="NC"><span class="avatar s">NC</span><div class="m"><div class="nm">Noah Contributor</div><div class="em">user@blue-harbor.demo…</div></div><span class="rp pill neutral">User</span></button>
+      </div>
+      <!-- ORG ADMIN list -->
+      <div id="list-org" hidden>
+        <button class="vrow" data-name="Noah Contributor" data-role="User · Acme Robotics" data-init="NC"><span class="avatar s">NC</span><div class="m"><div class="nm">Noah Contributor</div><div class="em">user@acme-robotics.demo…</div></div><span class="rp pill neutral">User</span></button>
+        <button class="vrow" data-name="Maya Collaborator" data-role="User · Acme Robotics" data-init="MC"><span class="avatar s">MC</span><div class="m"><div class="nm">Maya Collaborator</div><div class="em">user2@acme-robotics.demo…</div></div><span class="rp pill neutral">User</span></button>
+        <button class="vrow" data-name="Theo Park" data-role="Read-Only · Acme Robotics" data-init="TP"><span class="avatar s">TP</span><div class="m"><div class="nm">Theo Park</div><div class="em">theo@acme-robotics.demo…</div></div><span class="rp pill neutral">Read-Only</span></button>
+      </div>
+    </div>
+    <footer class="surface-foot"><span id="scopehint">Site Admin — all users, every organization. Suspended accounts aren't selectable.</span></footer>
+  </aside>
+</section>
+
+<!-- ================= SPEC ================= -->
+<section class="screen" id="s-spec">
+  <div class="doc">
+    <h1>View As — behavior &amp; security model</h1>
+    <p class="lead">The comp is cheap to change; the rules below drive the backend and are the part to sign off on. Bracketed items are open decisions.</p>
+
+    <h2>What it is</h2>
+    <p>A privileged user temporarily browses Collega <em>as</em> another user — same role, same organization scope, same visible data — to reproduce issues, verify permissions, and support users. It is <strong>not</strong> a login as that user (no password, no session for them) and <strong>not</strong> a permanent role change.</p>
+
+    <h2>Who can impersonate whom <span class="tag">enforced server-side</span></h2>
+    <ul>
+      <li><strong>Site Admin</strong> → any user in any organization.</li>
+      <li><strong>Org Admin</strong> → <strong>active</strong> users in their <strong>own</strong> organization only.</li>
+      <li><strong>User / Read-Only</strong> → no access; the control is hidden and the endpoint refuses them.</li>
+      <li>Suspended / archived users are listed but not selectable.</li>
+    </ul>
+    <div class="decision">
+      <div class="qh">D-SCOPE — Can a Site Admin view as another Site Admin?</div>
+      <p>Site Admins have no organization, so view-as mostly makes sense for org users; impersonating a peer Site Admin has little support value and more risk.</p>
+      <div class="rec"><b>Recommendation:</b> exclude other Site Admins from the picker for MVP. Easy to relax later.</div>
+    </div>
+
+    <h2>What you can do while viewing-as</h2>
+    <div class="decision">
+      <div class="qh">D-MODE — Read-only preview, or full act-as?</div>
+      <p><strong>Read-only:</strong> you see everything as them, but every mutating control is disabled. Safest; covers "why can't they see X / does their board look right?".</p>
+      <p><strong>Full act-as:</strong> you can also perform actions, recorded with dual attribution. More powerful, larger blast radius.</p>
+      <div class="rec"><b>Recommendation:</b> ship <b>read-only</b> first (fast, low-risk, satisfies "view the app as another user"); add opt-in act-as later behind the same dual-audit trail.</div>
+    </div>
+
+    <h2>Audit &amp; accountability <span class="tag">non-negotiable</span></h2>
+    <ul>
+      <li>Starting and exiting view-as each write an audit event (real actor + target user + timestamps).</li>
+      <li>If act-as is enabled, every mutation is stamped with <strong>both</strong> the real admin and the impersonated user — e.g. <span class="pill vas">Sam Sitewide via view-as</span> on behalf of Noah Contributor.</li>
+      <li>The impersonated user's own trail is never forged to look self-authored.</li>
+    </ul>
+
+    <h2>Session mechanics</h2>
+    <ul>
+      <li>Server-issued, <strong>scoped</strong> view-as context tied to the admin's real identity — not a re-login, not a token for the target.</li>
+      <li><strong>Time-boxed</strong> (auto-expires) and <strong>one-click exit</strong> back to the admin's own identity; the banner is always visible and can't be dismissed without exiting.</li>
+      <li><strong>Non-nestable</strong> — you can't view-as from within a view-as.</li>
+    </ul>
+    <div class="decision">
+      <div class="qh">D-EXPIRE — Auto-expiry window?</div>
+      <div class="rec"><b>Recommendation:</b> 30 min idle, hard cap 2 h — mirrors the existing session-timeout feel.</div>
+    </div>
+
+    <h2>Placement</h2>
+    <div class="decision">
+      <div class="qh">D-PLACE — Where does the entry control live?</div>
+      <p>The request said "top nav bar, right-aligned," but Comp&nbsp;C deliberately dropped the top bar (the rail's avatar owns identity). Options: (a) a right-aligned <strong>View as…</strong> control in the page header — shown in the demo; (b) an item in the rail avatar menu.</p>
+      <div class="rec"><b>Recommendation:</b> page-header control (a), and also add it to the avatar menu — no reintroduced global bar.</div>
+    </div>
+
+    <h2>Out of scope</h2>
+    <p>Impersonation across a future SSO/OAuth boundary, and consented "request access" impersonation. Post-MVP.</p>
+  </div>
+</section>
+
+<script>
+  // screen + role switches
+  document.querySelectorAll('#modetabs button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#modetabs button').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+    window.scrollTo(0,0);
+  }));
+
+  const listSite=document.getElementById('list-site'), listOrg=document.getElementById('list-org');
+  let role='site';
+  document.querySelectorAll('#roletabs button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#roletabs button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); role=b.dataset.role; exitViewAs();
+    const site=role==='site';
+    listSite.hidden=!site; listOrg.hidden=site;
+    document.getElementById('railinitials').textContent=site?'SA':'OA';
+    document.getElementById('crumbs').textContent=site?'Platform':'Acme Robotics';
+    document.getElementById('pagetitle').textContent=site?'Platform overview':'Home';
+    document.getElementById('pagesub').innerHTML=site
+      ? 'Signed in as <strong>Sam Sitewide</strong> · Site Admin. Use <em>View as…</em> (top-right) to browse Collega as any user.'
+      : 'Signed in as <strong>Olivia Administer</strong> · Org Admin, Acme Robotics. <em>View as…</em> is scoped to your own active members.';
+    document.getElementById('vasactor').textContent=site?'Sam Sitewide':'Olivia Administer';
+    document.getElementById('scopehint').textContent=site
+      ? 'Site Admin — all users, every organization. Suspended accounts aren’t selectable.'
+      : 'Org Admin — active members of Acme Robotics only. No cross-organization access.';
+    document.getElementById('rail-settings').style.display='';
+  }));
+
+  // drawer open/close
+  const drawer=document.getElementById('drawer'), backdrop=document.getElementById('backdrop');
+  function openDrawer(){drawer.classList.add('open');backdrop.classList.add('open');setTimeout(()=>document.getElementById('vsearch').focus(),200);}
+  function closeDrawer(){drawer.classList.remove('open');backdrop.classList.remove('open');}
+  document.getElementById('vas-open').addEventListener('click',openDrawer);
+  document.getElementById('drawer-close').addEventListener('click',closeDrawer);
+  backdrop.addEventListener('click',closeDrawer);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+
+  // pick a user → activate impersonation
+  function selectUser(name,roleLine,init){
+    document.getElementById('vasname').textContent='Viewing as '+name;
+    document.getElementById('vasrole').textContent='— '+roleLine;
+    document.getElementById('railinitials').textContent=init;
+    const ra=document.getElementById('railavatar'); ra.classList.add('vas');
+    if(!ra.querySelector('.badge')){const b=document.createElement('span');b.className='badge';b.textContent='👁';ra.appendChild(b);}
+    document.getElementById('vasbar').hidden=false;
+    // a viewed User/Read-Only has no Settings in their rail
+    document.getElementById('rail-settings').style.display=/^(User|Read-Only)/.test(roleLine)?'none':'';
+    closeDrawer();
+    window.scrollTo(0,0);
+  }
+  function exitViewAs(){
+    document.getElementById('vasbar').hidden=true;
+    const ra=document.getElementById('railavatar'); ra.classList.remove('vas');
+    ra.querySelector('.badge')?.remove();
+    document.getElementById('railinitials').textContent=role==='site'?'SA':'OA';
+    document.getElementById('rail-settings').style.display='';
+  }
+  document.querySelectorAll('.vrow:not(.disabled)').forEach(r=>r.addEventListener('click',()=>
+    selectUser(r.dataset.name,r.dataset.role,r.dataset.init)));
+  document.getElementById('vasexit').addEventListener('click',exitViewAs);
+
+  // live filter
+  document.getElementById('vsearch').addEventListener('input',e=>{
+    const q=e.target.value.toLowerCase();
+    (role==='site'?listSite:listOrg).querySelectorAll('.vrow').forEach(r=>{
+      r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});
+  });
+</script>
+</body>
+</html>
