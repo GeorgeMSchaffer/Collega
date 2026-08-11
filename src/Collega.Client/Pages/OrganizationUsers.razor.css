@@ -1,0 +1,45 @@
+/* Users list + drawer content styles (Sprint 2 List+Drawer conversion). The drawer/modal chrome
+   (overlay, panel/card, header, scroll body, footer) comes from DrawerShell/CreateModalShell; global
+   .btn / .pill / .autherror / .authnote / input / label / .card / .formcard styles come from app.css.
+   This file styles only the User-specific drawer/modal body: the flash region, the detail facts grid,
+   the reset-password block, and the inline edit / create form grid. Visual language mirrors
+   Components/IdeaDrawer.razor.css so all List+Drawer surfaces read as one system. */
+
+/* Selected row highlight, matching the Ideas list. */
+tbody tr.selected td { background: var(--accent-soft); }
+
+/* Inline flash region between the drawer header and its scroll body. */
+.drawer-flash { padding: 12px 24px 0; }
+.drawer-flash .autherror, .drawer-flash .authnote { margin-bottom: 0; }
+
+/* Read view: top action row (Edit user). */
+.topline { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 16px; }
+
+/* Detail facts grid. */
+.facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 22px;
+    padding: 18px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+.fact .k { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 700; margin-bottom: 4px; }
+.fact .v { font-weight: 600; }
+
+/* Reset-password block. */
+.resetblock { margin-top: 22px; }
+.section-title { font-family: Georgia, serif; font-size: 17px; margin: 0 0 6px; font-weight: 600; }
+.help { font-size: 11px; color: var(--ink-3); margin-top: 4px; line-height: 1.5; }
+
+/* Inline edit / create form grid. */
+.formgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.span2 { grid-column: 1 / -1; }
+.required { color: var(--err); }
+.formgrid input, .formgrid select { width: 100%; box-sizing: border-box; }
+
+@media (max-width: 768px) {
+    .facts, .formgrid { grid-template-columns: 1fr; }
+    .span2 { grid-column: auto; }
+    .drawer-flash { padding-left: 18px; padding-right: 18px; }
+}
