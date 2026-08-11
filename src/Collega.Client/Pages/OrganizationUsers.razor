@@ -8,6 +8,11 @@
 @*
     User administration list. Site Admin reaches an organization-scoped route from the organization
     list; Org Admin reaches /settings/users and is scoped to the organization in their claims.
+
+    User detail + edit open in the shared right slide-in DrawerShell from each row; create opens in the
+    shared centered CreateModalShell from "Add New" (Sprint 2 List+Drawer conversion, mirroring
+    Components/IdeaDrawer + IdeaCreateModal). The full-page /settings/users/new and /settings/users/{id}
+    routes (and org-scoped equivalents) are retired. CSV import stays its own page (Pages/UserImport.razor).
 *@
 <div class="pagehead">
     <div class="crumbs"><a href="/settings">Settings</a> / Users</div>
@@ -47,7 +52,7 @@
             <ListToolbar TItem="UserListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search users…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
-                <a class="btn primary" href="@($"{RouteBase}/new")" style="margin-left:auto">Add New</a>
+                <button class="btn primary" style="margin-left:auto" @onclick="OpenCreate">Add New</button>
                 <a class="btn" href="@($"{RouteBase}/import")">Import CSV</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/statuses")">Manage statuses</a>
                 <a class="btn" href="@($"{OrganizationRouteBase}/boards")">Manage boards</a>
@@ -62,7 +67,7 @@
                 <tbody>
                     @foreach (var user in _list.PageItems)
                     {
-                        <tr>
+                        <tr class="@(user.UserId == _selectedUserId ? "selected" : null)">
                             <td><strong>@user.FirstName @user.LastName</strong></td>
                             <td>@user.Email</td>
                             @if (_siteAdminGlobal)
@@ -80,7 +85,7 @@
                                     <span class="pill neutral">@user.Status</span>
                                 }
                             </td>
-                            <td><a class="btn subtle" href="@UserEditRoute(user)">Edit</a></td>
+                            <td><button class="btn subtle" @onclick="() => OpenUser(user)">Details</button></td>
                         </tr>
                     }
                 </tbody>
@@ -97,6 +102,167 @@
         }
     }
 </div>
+
+@*
+    User detail + inline edit drawer. Opens in a read view; "Edit user" swaps the body to the inline
+    form and pins the Save/Cancel footer. CloseDrawer is passed as OnClose so a mid-save/mid-reset
+    dismissal is blocked. Full parity with the retired UserEdit page: first/last name, email, role,
+    status, forced-first-login note, and the reset-temporary-password action.
+*@
+<DrawerShell IsOpen="@(_selectedUserId is not null)" OnClose="CloseDrawer"
+             Eyebrow="User" Title="@DrawerTitle" Meta="@DrawerMeta"
+             SubHeaderContent="RenderFlash"
+             FooterContent="@(_editing ? RenderEditFooter : null)">
+    @if (_detailLoading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading user…</span></div>
+    }
+    else if (_detail is null)
+    {
+        <div class="autherror" role="alert">@(_detailError ?? "This user could not be loaded.")</div>
+    }
+    else if (!_editing)
+    {
+        <div class="topline">
+            <button class="btn" @onclick="StartEdit">Edit user</button>
+        </div>
+
+        <div class="facts">
+            <div class="fact">
+                <div class="k">Role</div>
+                <div class="v"><span class="pill info">@RoleLabel(_detail.Role)</span></div>
+            </div>
+            <div class="fact">
+                <div class="k">Status</div>
+                <div class="v">
+                    @if (string.Equals(_detail.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <span class="pill ok">Active</span>
+                    }
+                    else
+                    {
+                        <span class="pill neutral">@_detail.Status</span>
+                    }
+                </div>
+            </div>
+            @if (_siteAdminGlobal)
+            {
+                <div class="fact">
+                    <div class="k">Organization</div>
+                    <div class="v">@OrganizationName(_detail.OrganizationId)</div>
+                </div>
+            }
+            <div class="fact">
+                <div class="k">Email</div>
+                <div class="v">@_detail.Email</div>
+            </div>
+            <div class="fact">
+                <div class="k">First sign-in</div>
+                <div class="v">@(_detail.MustChangePassword ? "Must change password" : "Password set")</div>
+            </div>
+        </div>
+
+        <div class="resetblock">
+            <h3 class="section-title">Reset password</h3>
+            <p class="help">Generates a one-time temporary password. Give it to the user; they'll be required to set a new password at their next sign-in.</p>
+            @if (_resetError is not null)
+            {
+                <div class="autherror" role="alert" style="margin-top:8px">@_resetError</div>
+            }
+            @if (_tempPassword is not null)
+            {
+                <div class="authnote" role="status" style="margin-top:10px;margin-bottom:0">
+                    Temporary password: <code style="font-size:15px;background:#f3f2f1;padding:4px 10px;border-radius:var(--radius-btn)">@_tempPassword</code>
+                    <div class="help" style="margin-top:4px">Copy it now — it isn't shown again.</div>
+                </div>
+            }
+            <div style="margin-top:12px">
+                <button class="btn subtle" @onclick="ResetPasswordAsync" disabled="@_resetting">@(_resetting ? "Generating…" : "Generate temporary password")</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="formgrid">
+            <div>
+                <label for="ed-first">First name <span class="required">*</span></label>
+                <input id="ed-first" type="text" @bind="_edit.FirstName" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div>
+                <label for="ed-last">Last name <span class="required">*</span></label>
+                <input id="ed-last" type="text" @bind="_edit.LastName" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div class="span2">
+                <label for="ed-email">Email <span class="required">*</span></label>
+                <input id="ed-email" type="email" @bind="_edit.Email" @bind:event="oninput" disabled="@_saving" />
+            </div>
+            <div>
+                <label for="ed-role">Role</label>
+                <select id="ed-role" @bind="_edit.Role" disabled="@_saving">
+                    <option value="OrgAdmin">Org Admin</option>
+                    <option value="User">User</option>
+                    <option value="ReadOnly">Read Only</option>
+                </select>
+            </div>
+            <div>
+                <label for="ed-status">Status</label>
+                <select id="ed-status" @bind="_edit.Status" disabled="@_saving">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+    }
+</DrawerShell>
+
+@*
+    Create-user modal. Opened from "Add New" (non-global views only). Cancel is passed as OnClose so a
+    mid-create dismissal is blocked. New users get an initial password and are forced to change it on
+    first sign-in (server behavior).
+*@
+<CreateModalShell IsOpen="_showCreate" OnClose="CloseCreate"
+                  Eyebrow="New user" Title="Create a user"
+                  Meta="@(_orgName ?? "This organization")"
+                  FooterContent="RenderCreateFooter">
+    @if (_createError is not null)
+    {
+        <div class="autherror" role="alert">@_createError</div>
+    }
+    <div class="formgrid">
+        <div>
+            <label for="cr-first">First name <span class="required">*</span></label>
+            <input id="cr-first" type="text" @bind="_create.FirstName" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div>
+            <label for="cr-last">Last name <span class="required">*</span></label>
+            <input id="cr-last" type="text" @bind="_create.LastName" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div class="span2">
+            <label for="cr-email">Email <span class="required">*</span></label>
+            <input id="cr-email" type="email" @bind="_create.Email" @bind:event="oninput" disabled="@_creating" />
+        </div>
+        <div>
+            <label for="cr-role">Role</label>
+            <select id="cr-role" @bind="_create.Role" disabled="@_creating">
+                <option value="OrgAdmin">Org Admin</option>
+                <option value="User">User</option>
+                <option value="ReadOnly">Read Only</option>
+            </select>
+        </div>
+        <div>
+            <label for="cr-status">Status</label>
+            <select id="cr-status" @bind="_create.Status" disabled="@_creating">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+            </select>
+        </div>
+        <div class="span2">
+            <label for="cr-pw">Initial password <span class="required">*</span></label>
+            <input id="cr-pw" type="password" @bind="_create.InitialPassword" @bind:event="oninput" disabled="@_creating" />
+            <div class="help">The user must change this at their first sign-in.</div>
+        </div>
+    </div>
+</CreateModalShell>
 
 @code {
     [Parameter] public string? OrganizationId { get; set; }
@@ -116,6 +282,65 @@
     private bool _regenerating;
 
     private ListState<UserListItemDto> _list = null!;
+
+    // ---- Drawer (detail + inline edit) state ----
+    private string? _selectedUserId;
+    private UserListItemDto? _selectedUser;
+    private UserDetailDto? _detail;
+    private bool _detailLoading;
+    private string? _detailError;
+    private bool _editing;
+    private bool _saving;
+    private string? _saveError;
+    private string? _saveMessage;
+    private readonly FormModel _edit = new();
+    // Reset-password affordance (existing users only).
+    private bool _resetting;
+    private string? _tempPassword;
+    private string? _resetError;
+
+    // ---- Create modal state ----
+    private bool _showCreate;
+    private bool _creating;
+    private string? _createError;
+    private readonly FormModel _create = new();
+
+    private sealed class FormModel
+    {
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Role { get; set; } = "User";
+        public string Status { get; set; } = "Active";
+        public string InitialPassword { get; set; } = "";
+    }
+
+    private string DrawerTitle => _selectedUser is not null
+        ? $"{_selectedUser.FirstName} {_selectedUser.LastName}".Trim()
+        : _detail is not null ? $"{_detail.FirstName} {_detail.LastName}".Trim() : "User";
+    private string? DrawerMeta => _selectedUser?.Email ?? _detail?.Email;
+
+    // Inline flash region between header and scroll body (matches IdeaDrawer).
+    private RenderFragment RenderFlash => @<text>
+        @if (_saveError is not null)
+        {
+            <div class="drawer-flash"><div class="autherror" role="alert">@_saveError</div></div>
+        }
+        @if (_saveMessage is not null)
+        {
+            <div class="drawer-flash"><div class="authnote" role="status">@_saveMessage</div></div>
+        }
+    </text>;
+
+    private RenderFragment RenderEditFooter => @<text>
+        <button class="btn" @onclick="CancelEdit" disabled="@_saving">Cancel</button>
+        <button class="btn primary" @onclick="SaveAsync" disabled="@_saving">@(_saving ? "Saving…" : "Save changes")</button>
+    </text>;
+
+    private RenderFragment RenderCreateFooter => @<text>
+        <button class="btn" @onclick="CloseCreate" disabled="@_creating">Cancel</button>
+        <button class="btn primary" @onclick="CreateAsync" disabled="@_creating">@(_creating ? "Creating…" : "Create user")</button>
+    </text>;
 
     protected override async Task OnInitializedAsync()
     {
@@ -210,6 +435,222 @@
         }
     }
 
+    // ---- Drawer wiring ----
+
+    private async Task OpenUser(UserListItemDto user)
+    {
+        _selectedUser = user;
+        _selectedUserId = user.UserId;
+        _editing = false;
+        _detail = null;
+        _detailError = _saveError = _saveMessage = null;
+        _tempPassword = _resetError = null;
+        await LoadDetailAsync(user.UserId);
+    }
+
+    private async Task LoadDetailAsync(string userId)
+    {
+        _detailLoading = true;
+        StateHasChanged();
+
+        var result = await Api.GetUserAsync(userId);
+        if (userId != _selectedUserId)
+        {
+            return; // a newer open superseded this load
+        }
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _detail = result.Value;
+        }
+        else
+        {
+            _detail = null;
+            _detailError = result.Error ?? "This user could not be loaded.";
+        }
+
+        _detailLoading = false;
+        StateHasChanged();
+    }
+
+    private void CloseDrawer()
+    {
+        if (_saving || _resetting)
+        {
+            return; // block dismissal mid-save / mid-reset
+        }
+        _selectedUserId = null;
+        _selectedUser = null;
+        _detail = null;
+        _editing = false;
+        _detailError = _saveError = _saveMessage = null;
+        _tempPassword = _resetError = null;
+    }
+
+    private void StartEdit()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+        _edit.FirstName = _detail.FirstName;
+        _edit.LastName = _detail.LastName;
+        _edit.Email = _detail.Email;
+        _edit.Role = _detail.Role;
+        _edit.Status = _detail.Status;
+        _saveError = _saveMessage = null;
+        _editing = true;
+    }
+
+    private void CancelEdit()
+    {
+        _editing = false;
+        _saveError = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_edit.FirstName) || string.IsNullOrWhiteSpace(_edit.LastName) || string.IsNullOrWhiteSpace(_edit.Email))
+        {
+            _saveError = "First name, last name, and email are required.";
+            return;
+        }
+
+        _saving = true;
+        _saveError = _saveMessage = null;
+
+        var body = new UpdateUserRequestDto(
+            _edit.FirstName.Trim(), _edit.LastName.Trim(), _edit.Email.Trim(), _edit.Role, _edit.Status);
+        var result = await Api.UpdateUserAsync(_detail.UserId, body);
+        _saving = false;
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _detail = result.Value;
+            _selectedUser = _selectedUser is null
+                ? null
+                : _selectedUser with
+                {
+                    FirstName = _detail.FirstName,
+                    LastName = _detail.LastName,
+                    Email = _detail.Email,
+                    Role = _detail.Role,
+                    Status = _detail.Status,
+                };
+            ReplaceInList(_detail);
+            _saveMessage = "Changes saved.";
+            _editing = false;
+        }
+        else
+        {
+            _saveError = result.Error ?? "Save failed.";
+        }
+    }
+
+    private async Task ResetPasswordAsync()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+        _resetting = true;
+        _resetError = null;
+        _tempPassword = null;
+
+        var result = await Api.IssueTemporaryPasswordAsync(_detail.UserId);
+        _resetting = false;
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _tempPassword = result.Value.TemporaryPassword;
+        }
+        else
+        {
+            _resetError = result.Error ?? "Couldn't reset the password.";
+        }
+    }
+
+    private void ReplaceInList(UserDetailDto updated)
+    {
+        var index = _users.FindIndex(u => u.UserId == updated.UserId);
+        if (index < 0)
+        {
+            return;
+        }
+        _users[index] = _users[index] with
+        {
+            FirstName = updated.FirstName,
+            LastName = updated.LastName,
+            Email = updated.Email,
+            Role = updated.Role,
+            Status = updated.Status,
+        };
+        _list.SetItems(_users);
+    }
+
+    // ---- Create wiring ----
+
+    private void OpenCreate()
+    {
+        _create.FirstName = _create.LastName = _create.Email = _create.InitialPassword = "";
+        _create.Role = "User";
+        _create.Status = "Active";
+        _createError = null;
+        _showCreate = true;
+    }
+
+    private void CloseCreate()
+    {
+        if (_creating)
+        {
+            return; // block dismissal mid-create
+        }
+        _showCreate = false;
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_create.FirstName) || string.IsNullOrWhiteSpace(_create.LastName) || string.IsNullOrWhiteSpace(_create.Email))
+        {
+            _createError = "First name, last name, and email are required.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_create.InitialPassword))
+        {
+            _createError = "An initial password is required for a new user.";
+            return;
+        }
+        if (string.IsNullOrEmpty(_resolvedOrganizationId))
+        {
+            _createError = "Your account isn't associated with an organization.";
+            return;
+        }
+
+        _creating = true;
+        _createError = null;
+
+        var body = new CreateUserRequestDto(
+            _create.FirstName.Trim(), _create.LastName.Trim(), _create.Email.Trim(),
+            _create.Role, _create.InitialPassword, _create.Status);
+        var result = await Api.CreateUserAsync(_resolvedOrganizationId, body);
+        _creating = false;
+
+        if (result.Succeeded && result.Value is not null)
+        {
+            _users.Add(result.Value);
+            _list.SetItems(_users);
+            _showCreate = false;
+        }
+        else
+        {
+            _createError = result.Error ?? "Save failed.";
+        }
+    }
+
     private string RouteBase => _siteAdmin
         ? $"/settings/organizations/{_resolvedOrganizationId}/users"
         : "/settings/users";
@@ -220,10 +661,6 @@
 
     private string OrganizationName(string? organizationId) =>
         organizationId is not null && _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
-
-    private string UserEditRoute(UserListItemDto user) => _siteAdminGlobal
-        ? $"/settings/organizations/{user.OrganizationId}/users/{user.UserId}"
-        : $"{RouteBase}/{user.UserId}";
 
     private static string RoleLabel(string role) => role switch
     {
