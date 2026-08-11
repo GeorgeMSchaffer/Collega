@@ -9,17 +9,17 @@ Let a privileged user temporarily act in Collega **as** another user — same ro
 
 This is a **post-MVP feature** pulled in by explicit user decision, not original MVP scope — but it is now **load-bearing**: until it ships, Site Admin has no org-content create path at all.
 
-## Prerequisite — open decisions
-**D-MODE is RESOLVED (2026-08-11): full act-as.** Impersonation permits mutations, performed under the impersonated identity with dual attribution (real actor + impersonated user) on every write. Site Admin can act as users in any org; Org Admin's act-as is limited to active users within their own org. The read-only-first recommendation is dropped — it would defeat the feature's new role as the Site Admin org-content mutation path.
+## Decisions — all locked 2026-08-11
+All four design decisions are resolved; implementation may proceed on these.
 
-The remaining three decisions still lock (interview, multiple-choice) **before** implementation:
+**D-MODE: full act-as.** Impersonation permits mutations, performed under the impersonated identity with dual attribution (real actor + impersonated user) on every write. Site Admin can act as users in any org; Org Admin's act-as is limited to active users within their own org. (The read-only-first recommendation is dropped — it would defeat the feature's role as the Site Admin org-content mutation path.)
 
-| ID | Decision | Comp recommendation |
+| ID | Decision | Locked value (2026-08-11) |
 |---|---|---|
-| ~~D-MODE~~ | ~~Read-only preview vs full act-as~~ | **RESOLVED 2026-08-11: full act-as** (see above) |
-| D-SCOPE | Can a Site Admin view as another Site Admin? | **No for MVP** — picker lists org-scoped users only |
-| D-EXPIRE | Auto-expiry window | **30 min idle, hard cap 2 h** |
-| D-PLACE | Entry-control location | **Page-header `View as…` control + rail avatar-menu item**; no reintroduced global top bar |
+| D-MODE | Read-only preview vs full act-as | **Full act-as** — mutations allowed, dual attribution on every write |
+| D-SCOPE | Can a Site Admin view-as another Site Admin? | **No** — picker lists org-scoped users only; other Site Admins excluded (they own no org content, so acting as a peer grants nothing new) |
+| D-EXPIRE | Auto-expiry window | **30 min idle, hard cap 2 h** — mirrors the existing session-timeout feel |
+| D-PLACE | Entry-control location | **Page-header `View as…` control _and_ a rail avatar-menu item** (both, for discoverability — it's the Site Admin's mutation path); no reintroduced global top bar |
 
 ## Capacity
 | Role | Slices | Notes |
@@ -46,7 +46,7 @@ The remaining three decisions still lock (interview, multiple-choice) **before**
 | Stale view-as context lingers | Admin unknowingly acts as someone else | Time-box (D-EXPIRE) + always-visible non-dismissable banner + one-click exit + non-nestable |
 
 ## Definition of Done
-- [ ] D-SCOPE / D-EXPIRE / D-PLACE resolved and recorded (spec + this file); D-MODE already resolved 2026-08-11 = full act-as
+- [x] All four decisions (D-MODE / D-SCOPE / D-EXPIRE / D-PLACE) locked and recorded 2026-08-11 — see the Decisions section
 - [ ] Impersonation mechanism built: scoped, tied to real admin, time-boxed, non-nestable, one-click exit
 - [ ] Authorization enforced server-side and covered by an exhaustive who-can-impersonate-whom test matrix
 - [ ] Start/exit audited; dual attribution on every mutation performed while acting as
