@@ -7,6 +7,8 @@
 ## Goal
 Switch Collega's application database engine from SQL Server 2022 to PostgreSQL. Approved direction (2026-08-11). The full technical scope — coupling surface, task breakdown, risks, and non-issues — lives in **`SPEC/50-postgres-migration.md`**; this file is the sprint wrapper (sequencing, capacity, DoD). Do not duplicate the scope here — read that doc.
 
+**Added scope (folded in 2026-08-11):** the six-item Code-Review Hardening Batch from the 2026-08-11 whole-codebase review (see `SPEC/Bug Triage.md` `TODO`) rides along in this sprint — see "Added Scope" below. One item (LIKE-wildcard escaping) genuinely overlaps the engine swap because `LIKE`/`ESCAPE` semantics and default case-sensitivity differ between SQL Server and Postgres, so it should be handled while the persistence layer is already open.
+
 ## Why after Sprint 4
 The engine swap regenerates all migrations and touches the persistence layer. Running it *after* the Sprint 4 QA/Code-Review pass means the review reasons about the final SQL-Server shape once, and the Postgres cutover starts from reviewed, stable code rather than a moving target. It is otherwise independent of Sprints 1–4.
 
@@ -29,6 +31,19 @@ Maps to the task breakdown in `SPEC/50-postgres-migration.md` §"Task breakdown 
 | P0 | Postgres-backed smoke test | Testcontainers/Postgres (approved): migrate-up + timestamped round-trip + email-uniqueness |
 | P1 | Documentation fan-out | Reconcile `SPEC/00-project-brief.md`, `CLAUDE.md`, `50-technical-implementation-plan.md`, `50-kubernetes-deployment.md`, `85-implementation-timeline.md`, `20-feature-issues-and-delivery.md`, `50-azure-api-cicd.md`. (`50-azure-deployment.md` already done.) |
 
+## Added Scope — Code-Review Hardening Batch (folded in 2026-08-11)
+From the 2026-08-11 `/code-review` of `dev` (auth/token stack, password hashing, and all Application services reviewed clean for org-scoping/role checks — no cross-tenant leak or authz bypass). Full per-item detail (file, line, failure, suggested fix) lives in the matching `SPEC/Bug Triage.md` `TODO` entry; this table is the sprint-execution view. Most-severe first:
+| Priority | Sev | Item | Location | Fix |
+|---|---|---|---|---|
+| P0 | HIGH | CSV export formula injection (CWE-1236) | `src/Collega.API/Parsing/Csv.cs` `Escape` | Prefix a formula-guard on cells starting `= + - @ \t \r` before export |
+| P1 | MED | Forced password change enforced only client-side | `src/Collega.Application/Auth/TokenAuthenticationService.cs` | Block non-allowlisted endpoints server-side while `MustChangePassword` is true |
+| P1 | MED | Unescaped `LIKE` wildcards in search (`%`/`_`) — *overlaps the PG swap* | `EfIdeaRepository.cs` + sibling `Ef*Repository` search paths | Escape `% _ [` with an `ESCAPE` clause; re-verify under Postgres case-sensitivity |
+| P2 | MED | Board CSV export builds full dataset in memory (sync DoS) | `IdeaService.ExportBoardIdeasAsync` / `IdeasController.ExportCsv` | Stream / cap rows, or move off the sync request path |
+| P2 | MED/LOW | CSV import reads whole upload into memory, no endpoint cap | `IdeasController.ImportCsv` | Add explicit request-size + max-row-count limits |
+| P3 | LOW | Client auth state ignores stored token expiry | `CollegaAuthStateProvider.GetAuthenticationStateAsync` | Treat an elapsed `expiresAtUtc` as anonymous on load |
+
+*Excluded false positive:* a `Convert.ToDecimal` 500 in the Number-range filter — `FieldValueValidator` never persists empty/non-decimal values and `FieldType` is immutable, so it cannot fire.
+
 ## Risks
 | Risk | Impact | Mitigation |
 |---|---|---|
@@ -44,4 +59,5 @@ Maps to the task breakdown in `SPEC/50-postgres-migration.md` §"Task breakdown 
 - [ ] Postgres-backed smoke/integration test added and green
 - [ ] Full `dotnet test Collega.sln` green
 - [ ] Docs reconciled per the fan-out list; `00-project-brief.md` + `CLAUDE.md` stack references updated to PostgreSQL
+- [ ] **Code-review hardening batch:** all six items resolved (or explicitly deferred with reason) — CSV export formula-guard (HIGH); server-side `MustChangePassword` gate; `LIKE` wildcard escaping verified under Postgres; export/import memory bounds; client token-expiry check
 - [ ] Code Reviewer approved before merge
