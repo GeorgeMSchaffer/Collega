@@ -12,9 +12,24 @@ from the in-process `Collega.API.Tests` HTTP integration suite.
 | `02-org-admin-users.spec.ts` | 2. Org Admin creates two users · 3. deactivates them* |
 | `03-org-admin-statuses.spec.ts` | 4. Org Admin adds a status · 5. deletes it |
 | `04-board-and-card.spec.ts` | 6. Org Admin creates a board · 7. User adds a card · 8. User moves the card through all statuses |
+| `05-idea-drawer-engagement.spec.ts` | 9. drawer opens from the Ideas list + is URL-addressable (`?idea=`, bare `/ideas/{id}`; `/edit` retired) · 10. upvote · 11. comment (with @mention token) · 12. edit adds a tag + assignee · 13. status move from the drawer |
+| `06-ideas-list-surface.spec.ts` | 14. scope chips + server-side search + clear · 15. sortable column headers · 16. page-size options |
 
 \* There is no hard-delete user endpoint; "delete" is implemented as **deactivate** (status → Inactive),
 which is the app's actual behavior.
+
+**Flows 9–16 (specs `05`/`06`)** are validated green against the live stack. `05` is stateful (creates its
+own throwaway board + idea, then drives the drawer on it) and runs serially; `06` is read-only against the
+demo seed. Two behaviors these specs encode:
+
+- Flow 9 avoids the `/ideas` **Add New** button on purpose — that path currently opens the brainstorm
+  modal first (WIP), so the fixture idea is created from the board header, where **New idea** opens the
+  create modal directly.
+- **Unassigned picker for Users:** the drawer/create-modal assignee picker is populated from the org
+  user list, which is **Org-Admin+ only** (`GET /organizations/{id}/users`). A plain **User** therefore
+  sees an empty picker and cannot add assignees, so flow 12's assignee step is driven as **Org Admin**
+  (a role that can list users). Whether a User *should* be able to assign teammates is an open product
+  question, not a test artifact.
 
 ## Prerequisites
 

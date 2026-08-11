@@ -94,16 +94,16 @@ Status legend: ✅ implemented & passing · 🟡 scaffolded (written, `Skip`ped,
 | "Back" returns to the previous page | 🟡 | `Back_button_returns_to_the_previous_page` |
 | Site Admin *global* aggregated views route "Add New" to the Organizations list | ⬜ | needs a Site Admin seed without a forced password change |
 
-### Ideas & idea-detail drawer — (no file yet)
-Locked design: right slide-in **drawer** + centered **create modal**, URL-addressable via `?idea={id}` and `/ideas/{id}` (SPEC/20-feature-client-ui.md → Idea Detail Surface).
+### Ideas & idea-detail drawer — (no .NET file; covered in the TS `e2e/` suite)
+Locked design: right slide-in **drawer** + centered **create modal**, URL-addressable via `?idea={id}` and `/ideas/{id}` (SPEC/20-feature-client-ui.md → Idea Detail Surface). **These cases now live in the runnable TypeScript Playwright suite** (`e2e/tests/05-idea-drawer-engagement.spec.ts`, `06-ideas-list-surface.spec.ts`), not this .NET project — see `e2e/README.md`. Status below reflects that suite; ✅ once verified against a live stack.
 | Case | Status | Notes |
 |---|---|---|
-| `/ideas` list + search + All/Created-by-me/Assigned-to-me filter chips | ⬜ | server-side paginated table (25/50/100/250) |
-| Idea detail opens as a drawer from Ideas list, board rows, and swim-lane cards | ⬜ | full field parity in drawer |
-| `?idea={id}` / bare `/ideas/{id}` deep-link opens the drawer | ⬜ | `/ideas/{id}/edit` route is retired — assert it no longer resolves |
-| Create idea via modal returns to list on success (no auto-open) | ⬜ | |
-| Idea engagement: upvote, comment, tags, mentions, 0–5 assignees, status move | ⬜ | |
-| Admin delete of an idea | ⬜ | |
+| `/ideas` list + search + All/Created-by-me/Assigned-to-me filter chips | ✅ | `e2e/06` — chips, server-side search, sortable headers, 25/50/100/250 page sizes |
+| Idea detail opens as a drawer from Ideas list, board rows, and swim-lane cards | 🟡 | `e2e/05` covers Ideas-list + board card (spec 04); swim-lane-card entry still ⬜ |
+| `?idea={id}` / bare `/ideas/{id}` deep-link opens the drawer | ✅ | `e2e/05` — also asserts retired `/ideas/{id}/edit` opens no editor |
+| Create idea via modal returns to list on success (no auto-open) | 🟡 | board path proven by `e2e/04`; `/ideas` Add New path opens brainstorm-modal-first (WIP), unautomated |
+| Idea engagement: upvote, comment, tags, mentions, 0–5 assignees, status move | ✅ | `e2e/05` — upvote, comment(+@mention token), add tag+assignee, status move; assignee driven as Org Admin (User picker is empty — org-user list is Org-Admin+); mention *delivery* stays server-verified |
+| Admin delete of an idea | ⬜ | drawer danger-zone; needs an Org/Site Admin author or admin-visible idea |
 
 ### Board detail — List & Swim Lanes — (no file yet)
 | Case | Status | Notes |
@@ -138,3 +138,14 @@ When you touch the suite:
 2. Keep case names in the table matching the actual `[Fact]` method names.
 3. If a behavior changes in `SPEC/`, update the spec first (repo rule), then reflect it here.
 4. When you un-`Skip` a case, verify its locators against the running app and move it to ✅ only once it passes.
+
+## Use Cases
+I as a site admin want to login for the first time.
+I as an org admin want to login to the application and logout.
+I as a site admin, need to create a new organization, update it and delete it.
+I as a site admin, need to create users for an organization, update it and delete it.
+I as a site admin can create a UDF and assign it to a Idea Type
+I as user need to create a new idea, update it and delete it.
+I as a user, need to vote on an idea and comment on it.
+I as a user, need to create an idea and update it.
+I as a user, need to use the swimlanes to move an idea from one status to another untill completion

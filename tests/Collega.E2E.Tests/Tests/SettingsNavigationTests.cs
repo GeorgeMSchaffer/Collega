@@ -5,7 +5,9 @@ namespace Collega.E2E.Tests.Tests;
 
 /// <summary>
 /// Regression coverage for two Bug Triage fixes:
-///  • every list view (one level below root) exposes a "Back" control, for all roles;
+///  • every drill-in list view (a page reached *from* a rail destination) exposes a "Back"
+///    control, for all roles — the primary rail destinations themselves (/settings, /boards,
+///    /ideas) intentionally omit it, since they are top-level nav, not "back"-able (commit c15454a);
 ///  • every admin list view exposes an "Add New" action for a role that can create;
 ///  • the Back control returns to the previous page.
 ///
@@ -16,17 +18,16 @@ namespace Collega.E2E.Tests.Tests;
 [Collection("e2e")]
 public class SettingsNavigationTests : CollegaPageTest
 {
-    // Every list view one level below root. All must show a Back control regardless of role.
+    // Drill-in list views (reached from a rail destination). Each shows a Back control for all
+    // roles. The primary rail destinations themselves (/settings, /boards, /ideas) intentionally
+    // omit Back — top-level nav is not "back"-able (see commit c15454a).
     private static readonly string[] ListViews =
     {
-        "/settings",
         "/settings/statuses",
         "/settings/idea-types",
         "/settings/fields",
         "/settings/users",
         "/settings/boards",
-        "/boards",
-        "/ideas",
     };
 
     // Admin list views that let an Org Admin create, with the label of their create control.
@@ -39,7 +40,7 @@ public class SettingsNavigationTests : CollegaPageTest
         ("/settings/boards", "New board"),
     };
 
-    [Fact(Skip = "Scaffold: enable once a running Client+API and Playwright browsers are available (see CLAUDE.md).")]
+    [Fact(Skip = "E2E: needs a running Client+API; verified passing 2026-08-10 (see CLAUDE.md).")]
     public async Task Every_list_view_shows_a_back_button()
     {
         await SignInAsync();
@@ -52,7 +53,7 @@ public class SettingsNavigationTests : CollegaPageTest
         }
     }
 
-    [Fact(Skip = "Scaffold: enable once a running Client+API and Playwright browsers are available (see CLAUDE.md).")]
+    [Fact(Skip = "E2E: needs a running Client+API; verified passing 2026-08-10 (see CLAUDE.md).")]
     public async Task Admin_lists_show_an_add_new_action()
     {
         await SignInAsync();
@@ -68,7 +69,7 @@ public class SettingsNavigationTests : CollegaPageTest
         }
     }
 
-    [Fact(Skip = "Scaffold: enable once a running Client+API and Playwright browsers are available (see CLAUDE.md).")]
+    [Fact(Skip = "E2E: needs a running Client+API; verified passing 2026-08-10 (see CLAUDE.md).")]
     public async Task Back_button_returns_to_the_previous_page()
     {
         await SignInAsync();
