@@ -1,0 +1,68 @@
+/* Statuses List + Drawer — content styles for the detail view rendered inside the shared DrawerShell.
+   The drawer/modal chrome (overlay, panel, header, scroll body, footer) lives in DrawerShell.razor.css
+   / CreateModalShell.razor.css; the edit/create form reuses global .field / .formrow / .btnrow. Global
+   .swatch / .btn / .autherror come from app.css. Layout mirrors the Idea detail drawer facts grid. */
+
+.detailhead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    min-width: 0;
+}
+.status .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex: none;
+    border: 1px solid rgba(0, 0, 0, .12);
+}
+
+.facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 22px;
+    padding: 18px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+.fact .k {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-3);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.fact .v {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dangerzone {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.floorhint { font-size: 12px; color: var(--ink-3); }
+
+@media (max-width: 768px) {
+    .facts { grid-template-columns: 1fr; }
+}

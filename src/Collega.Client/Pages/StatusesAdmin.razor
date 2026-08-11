@@ -10,6 +10,10 @@
     swimlanes and idea cards: name, color, and catalog sort order. The API enforces the two-active
     floor and the board-reference delete guard; this page mirrors the floor client-side (Delete is
     disabled at two active) and surfaces any server rejection inline.
+
+    List + Drawer (Sprint 2): the list owns selection and manual reorder; a row's Details action opens
+    the shared DrawerShell (status detail with an Edit toggle → inline form + footer), and Add New opens
+    the shared CreateModalShell. The Site-Admin cross-org view stays read-only with per-org Manage links.
 *@
 <div class="pagehead">
     <div class="crumbs"><a href="/settings">Settings</a> / Statuses</div>
@@ -31,7 +35,7 @@
             <ListToolbar TItem="StatusItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search statuses…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
-                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">Add New</button>
+                <button class="btn primary" @onclick="StartCreate" disabled="@_overlayOpen" style="margin-left:auto">Add New</button>
             }
         </div>
 
@@ -40,39 +44,11 @@
             <div class="autherror" role="alert">@_error</div>
         }
 
-        @if (_editing)
-        {
-            <div class="card formcard" style="margin-bottom:16px">
-                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:14px">@(_editId is null ? "New status" : "Edit status")</h3>
-                <div class="field">
-                    <label for="name">Name</label>
-                    <FluentTextField id="name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
-                </div>
-                <div class="formrow">
-                    <div class="field">
-                        <label for="color">Color</label>
-                        <div class="btnrow">
-                            <input type="color" id="color" @bind="_form.Color" disabled="@_busy" style="width:44px;height:32px;padding:0;border:1px solid var(--line);border-radius:4px;background:none" />
-                            <code>@_form.Color</code>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label for="sort">Sort order</label>
-                        <input type="number" id="sort" @bind="_form.SortOrder" disabled="@_busy" style="width:100px" />
-                    </div>
-                </div>
-                <div class="btnrow">
-                    <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
-                    <button class="btn" @onclick="Cancel" disabled="@_busy">Cancel</button>
-                </div>
-            </div>
-        }
-
         @if (CanReorder)
         {
             <p class="reorder-hint"><span class="grip"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></span> Drag the handle to reorder statuses. Boards and idea cards list statuses in this order.</p>
         }
-        else if (!_siteAdminGlobal && _statuses.Count > 1 && !_editing && !_list.ShowsAllInOrder)
+        else if (!_siteAdminGlobal && _statuses.Count > 1 && !_overlayOpen && !_list.ShowsAllInOrder)
         {
             <p class="reorder-hint">Clear the search and show all statuses on one page to reorder them.</p>
         }
@@ -116,10 +92,7 @@
                                 }
                                 else
                                 {
-                                    <button class="btn subtle" @onclick="() => StartEdit(s)" disabled="@_editing">Edit</button>
-                                    <button class="btn danger" @onclick="() => Delete(s)"
-                                            disabled="@(_editing || _statuses.Count <= 2)"
-                                            title="@(_statuses.Count <= 2 ? "An organization must keep at least two active statuses." : null)">Delete</button>
+                                    <button class="btn subtle" @onclick="() => OpenDetail(s)" disabled="@_overlayOpen">Details</button>
                                 }
                             </td>
                         </tr>
@@ -138,6 +111,96 @@
         }
     }
 </div>
+
+@* ---- Detail / edit drawer (org-scoped view only) ---- *@
+<DrawerShell IsOpen="@(_selected is not null)" OnClose="CloseDrawer"
+             Eyebrow="Status" Title="@_selected?.Name"
+             FooterContent="@(_drawerEditing ? RenderEditFooter : null)">
+    @if (_selected is not null)
+    {
+        @if (_drawerError is not null)
+        {
+            <div class="autherror" role="alert">@_drawerError</div>
+        }
+
+        @if (!_drawerEditing)
+        {
+            <div class="detailhead">
+                <span class="status"><span class="dot" style="background:@_selected.Color"></span>@_selected.Name</span>
+                <button class="btn" @onclick="StartDrawerEdit">Edit status</button>
+            </div>
+
+            <div class="facts">
+                <div class="fact">
+                    <div class="k">Color</div>
+                    <div class="v"><span class="swatch" style="background:@_selected.Color"></span><code>@_selected.Color</code></div>
+                </div>
+                <div class="fact">
+                    <div class="k">Sort order</div>
+                    <div class="v">@_selected.SortOrder</div>
+                </div>
+            </div>
+
+            <div class="dangerzone">
+                <button class="btn danger" @onclick="DeleteSelected"
+                        disabled="@(_busy || _statuses.Count <= 2)"
+                        title="@(_statuses.Count <= 2 ? "An organization must keep at least two active statuses." : null)">
+                    @(_busy ? "Deleting…" : "Delete status")
+                </button>
+                @if (_statuses.Count <= 2)
+                {
+                    <span class="floorhint">An organization must keep at least two active statuses.</span>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="field">
+                <label for="edit-name">Name</label>
+                <FluentTextField id="edit-name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
+            </div>
+            <div class="formrow">
+                <div class="field">
+                    <label for="edit-color">Color</label>
+                    <div class="btnrow">
+                        <input type="color" id="edit-color" @bind="_form.Color" disabled="@_busy" style="width:44px;height:32px;padding:0;border:1px solid var(--line);border-radius:4px;background:none" />
+                        <code>@_form.Color</code>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="edit-sort">Sort order</label>
+                    <input type="number" id="edit-sort" @bind="_form.SortOrder" disabled="@_busy" style="width:100px" />
+                </div>
+            </div>
+        }
+    }
+</DrawerShell>
+
+@* ---- Create modal (org-scoped view only) ---- *@
+<CreateModalShell IsOpen="_showCreate" OnClose="CloseCreate" Eyebrow="New status" Title="Create a status"
+                  FooterContent="RenderCreateFooter">
+    @if (_createError is not null)
+    {
+        <div class="autherror" role="alert">@_createError</div>
+    }
+    <div class="field">
+        <label for="create-name">Name</label>
+        <FluentTextField id="create-name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
+    </div>
+    <div class="formrow">
+        <div class="field">
+            <label for="create-color">Color</label>
+            <div class="btnrow">
+                <input type="color" id="create-color" @bind="_form.Color" disabled="@_busy" style="width:44px;height:32px;padding:0;border:1px solid var(--line);border-radius:4px;background:none" />
+                <code>@_form.Color</code>
+            </div>
+        </div>
+        <div class="field">
+            <label for="create-sort">Sort order</label>
+            <input type="number" id="create-sort" @bind="_form.SortOrder" disabled="@_busy" style="width:100px" />
+        </div>
+    </div>
+</CreateModalShell>
 
 @code {
     // Present on the Site-Admin org-scoped route; absent on the Org Admin route (org from the claim).
@@ -160,19 +223,40 @@
     private ListState<StatusItemDto> _list = null!;
     private bool _loading = true;
     private bool _busy;
-    private bool _editing;
-    private string? _editId;
     private FormModel _form = new();
     private string? _error;
+
+    // Drawer (detail + edit) + create-modal state.
+    private StatusItemDto? _selected;
+    private bool _drawerEditing;
+    private bool _showCreate;
+    private string? _drawerError;
+    private string? _createError;
 
     // Drag-reorder state (per-org view only). _dragIndex is the row being dragged; _dragOverIndex is
     // the row currently under the cursor, used to show the insertion indicator.
     private int? _dragIndex;
     private int? _dragOverIndex;
 
-    // Reordering is a per-org action; it's meaningless in the Site-Admin cross-org list, while editing,
-    // or with a single row. The active-status floor (2) already keeps the org list from shrinking below reorderable size.
-    private bool CanReorder => !_siteAdminGlobal && !_editing && _statuses.Count > 1 && _list.ShowsAllInOrder;
+    // A drawer or create modal covers the list; reorder and Add New are gated while one is open.
+    private bool _overlayOpen => _selected is not null || _showCreate;
+
+    // Reordering is a per-org action; it's meaningless in the Site-Admin cross-org list, while an overlay
+    // is open, or with a single row. The active-status floor (2) already keeps the org list from shrinking
+    // below reorderable size.
+    private bool CanReorder => !_siteAdminGlobal && !_overlayOpen && _statuses.Count > 1 && _list.ShowsAllInOrder;
+
+    // Edit-mode action bar; passed as the drawer footer only while editing.
+    private RenderFragment RenderEditFooter => @<text>
+        <button class="btn" @onclick="CancelDrawerEdit" disabled="@_busy">Cancel</button>
+        <button class="btn primary" @onclick="SaveEdit" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
+    </text>;
+
+    // Create-modal action bar, passed as the modal footer.
+    private RenderFragment RenderCreateFooter => @<text>
+        <button class="btn" @onclick="CloseCreate" disabled="@_busy">Cancel</button>
+        <button class="btn primary" @onclick="SaveCreate" disabled="@_busy">@(_busy ? "Creating…" : "Create")</button>
+    </text>;
 
     protected override async Task OnInitializedAsync()
     {
@@ -257,64 +341,145 @@
     private string OrganizationName(string organizationId) =>
         _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 
+    // ---- Create modal ----
+
     private void StartCreate()
     {
-        _editId = null;
         var nextSort = _statuses.Count == 0 ? 10 : _statuses.Max(s => s.SortOrder) + 10;
         _form = new FormModel { SortOrder = nextSort };
-        _error = null;
-        _editing = true;
+        _createError = null;
+        _showCreate = true;
     }
 
-    private void StartEdit(StatusItemDto s)
+    private void CloseCreate()
     {
-        _editId = s.StatusId;
-        _form = new FormModel { Name = s.Name, Color = s.Color, SortOrder = s.SortOrder };
-        _error = null;
-        _editing = true;
+        if (_busy)
+        {
+            return;
+        }
+        _showCreate = false;
+        _createError = null;
     }
 
-    private void Cancel()
-    {
-        _editing = false;
-        _error = null;
-    }
-
-    private async Task Save()
+    private async Task SaveCreate()
     {
         if (string.IsNullOrWhiteSpace(_form.Name))
         {
-            _error = "A status name is required.";
+            _createError = "A status name is required.";
             return;
         }
 
         _busy = true;
-        _error = null;
+        _createError = null;
 
         var body = new SaveStatusRequestDto(_form.Name.Trim(), _form.Color, _form.SortOrder);
-        bool succeeded;
-        string? error;
-        if (_editId is null)
-        {
-            var r = await Api.CreateStatusAsync(_organizationId!, body);
-            (succeeded, error) = (r.Succeeded, r.Error);
-        }
-        else
-        {
-            var r = await Api.UpdateStatusAsync(_editId!, body);
-            (succeeded, error) = (r.Succeeded, r.Error);
-        }
-
+        var result = await Api.CreateStatusAsync(_organizationId!, body);
         _busy = false;
-        if (succeeded)
+
+        if (result.Succeeded)
         {
-            _editing = false;
+            _showCreate = false;
             await LoadAsync();
             return;
         }
 
-        _error = error ?? "Save failed.";
+        _createError = result.Error ?? "Save failed.";
     }
+
+    // ---- Detail / edit drawer ----
+
+    private void OpenDetail(StatusItemDto s)
+    {
+        _selected = s;
+        _drawerEditing = false;
+        _drawerError = null;
+    }
+
+    private void StartDrawerEdit()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+        _form = new FormModel { Name = _selected.Name, Color = _selected.Color, SortOrder = _selected.SortOrder };
+        _drawerError = null;
+        _drawerEditing = true;
+    }
+
+    private void CancelDrawerEdit()
+    {
+        _drawerEditing = false;
+        _drawerError = null;
+    }
+
+    private void CloseDrawer()
+    {
+        if (_busy)
+        {
+            return;
+        }
+        _selected = null;
+        _drawerEditing = false;
+        _drawerError = null;
+    }
+
+    private async Task SaveEdit()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_form.Name))
+        {
+            _drawerError = "A status name is required.";
+            return;
+        }
+
+        _busy = true;
+        _drawerError = null;
+
+        var body = new SaveStatusRequestDto(_form.Name.Trim(), _form.Color, _form.SortOrder);
+        var result = await Api.UpdateStatusAsync(_selected.StatusId, body);
+        _busy = false;
+
+        if (result.Succeeded)
+        {
+            var selectedId = _selected.StatusId;
+            await LoadAsync();
+            // Re-resolve the selected row from the reloaded list so the detail view shows saved values.
+            _selected = _statuses.FirstOrDefault(s => s.StatusId == selectedId);
+            _drawerEditing = false;
+            return;
+        }
+
+        _drawerError = result.Error ?? "Save failed.";
+    }
+
+    private async Task DeleteSelected()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _drawerError = null;
+        var result = await Api.DeleteStatusAsync(_selected.StatusId);
+        _busy = false;
+
+        if (result.Succeeded)
+        {
+            _selected = null;
+            _drawerEditing = false;
+            await LoadAsync();
+        }
+        else
+        {
+            _drawerError = result.Error;
+        }
+    }
+
+    // ---- Drag reorder (list) ----
 
     private string RowClass(int index)
     {
@@ -390,20 +555,6 @@
         {
             _error = result.Error ?? "Reorder failed.";
             await LoadAsync();
-        }
-    }
-
-    private async Task Delete(StatusItemDto s)
-    {
-        _error = null;
-        var result = await Api.DeleteStatusAsync(s.StatusId);
-        if (result.Succeeded)
-        {
-            await LoadAsync();
-        }
-        else
-        {
-            _error = result.Error;
         }
     }
 }
