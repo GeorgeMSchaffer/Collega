@@ -26,7 +26,13 @@ A recall-oriented `/code-review` of `dev` was already run on 2026-08-11 and prod
 | P2 | Lock the still-unconfirmed default `Status.Color`/`SortOrder` values (currently implemented with placeholder values from the locked comp — see `SPEC/60-spec-q-and-a-backlog.md`) | Cheap to close out alongside the review pass | None |
 
 ## Code-Review Hardening Batch (from the 2026-08-11 `/code-review` of `dev`)
-Concrete defects already surfaced (auth/token stack, password hashing, and all Application services reviewed clean for org-scoping/role checks — no cross-tenant leak or authz bypass). These are the seed set for the P0 review pass above; full per-item detail (file, line, failure, suggested fix) lives in the matching `SPEC/Bug Triage.md` `TODO` entry. Most-severe first:
+Concrete defects already surfaced (auth/token stack, password hashing, and all Application services reviewed clean for org-scoping/role checks — no cross-tenant leak or authz bypass). These are the seed set for the P0 review pass above; full per-item detail (file, line, failure, suggested fix) lives in the matching `SPEC/Bug Triage.md` `TODO` entry.
+
+**Security-review corroboration (2026-08-11):** a separate adversarially-filtered `/security-review` of `dev` found **no vulnerabilities beyond this batch** — JWT issuance/validation, PBKDF2 password hashing, CSPRNG invite-code/temp-password generation, tenant isolation (no IDOR), role-escalation ceilings, SQL parameterization, client XSS surfaces, CORS, and the deploy workflow were all verified clean. It confirmed batch item 2 (`MustChangePassword` client-only gate) and added one aggravating detail, now recorded in the Bug Triage entry: `User.RegisterSuccessfulLogin` clears `TemporaryPasswordExpiresAtUtc` on first login, so an unrotated temp password becomes permanent (and remains known to the issuing admin).
+
+**Ordering (user direction, 2026-08-11):** the two security-relevant items below (CSV formula injection; server-side `MustChangePassword` gate) are fixed **first, at sprint start**, before the broader review pass and the portrait-upload feature work — the point is to have them resolved well ahead of the Postgres (Sprint 5) and Azure (Sprint 7) sprints.
+
+Most-severe first:
 | Priority | Sev | Item | Location | Fix |
 |---|---|---|---|---|
 | P0 | HIGH | CSV export formula injection (CWE-1236) | `src/Collega.API/Parsing/Csv.cs` `Escape` | Prefix a formula-guard on cells starting `= + - @ \t \r` before export |
