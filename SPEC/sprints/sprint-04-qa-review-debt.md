@@ -7,6 +7,8 @@
 ## Goal
 Pay down the deferred QA/Code-Review debt across the large volume of fast-tracked merges (per explicit user decision to pull this in now rather than defer further), and land the one remaining standalone feature item from Bug Triage — profile portrait upload.
 
+A recall-oriented `/code-review` of `dev` was already run on 2026-08-11 and produced a concrete six-item hardening batch (below) — treat it as a head start on this sprint's P0 review pass, not a replacement for it.
+
 ## Capacity
 | Role | Slices this sprint | Notes |
 |---|---|---|
@@ -23,6 +25,19 @@ Pay down the deferred QA/Code-Review debt across the large volume of fast-tracke
 | P1 | Profile portrait upload: GIF/JPEG/PNG only, validated against malicious content, **resized server-side** to a 25×25px thumbnail, replaces the initials avatar when set (nav rail + everywhere initials render) | Independent of the review pass — can run in parallel. Decisions locked 2026-08-10: **store the thumbnail on the user record** (nullable bytes/base64 column) rather than a separate blob table/endpoint; resize + re-encode happens **server-side** for security. **Image library APPROVED 2026-08-11: SkiaSharp** (permissive MIT-style license, cleaner for MVP than ImageSharp's split license) — decode/validate/resize/re-encode through SkiaSharp, do not trust extension or declared MIME | None |
 | P2 | Lock the still-unconfirmed default `Status.Color`/`SortOrder` values (currently implemented with placeholder values from the locked comp — see `SPEC/60-spec-q-and-a-backlog.md`) | Cheap to close out alongside the review pass | None |
 
+## Code-Review Hardening Batch (from the 2026-08-11 `/code-review` of `dev`)
+Concrete defects already surfaced (auth/token stack, password hashing, and all Application services reviewed clean for org-scoping/role checks — no cross-tenant leak or authz bypass). These are the seed set for the P0 review pass above; full per-item detail (file, line, failure, suggested fix) lives in the matching `SPEC/Bug Triage.md` `TODO` entry. Most-severe first:
+| Priority | Sev | Item | Location | Fix |
+|---|---|---|---|---|
+| P0 | HIGH | CSV export formula injection (CWE-1236) | `src/Collega.API/Parsing/Csv.cs` `Escape` | Prefix a formula-guard on cells starting `= + - @ \t \r` before export |
+| P0 | MED | Forced password change enforced only client-side | `src/Collega.Application/Auth/TokenAuthenticationService.cs` | Block non-allowlisted endpoints server-side while `MustChangePassword` is true |
+| P1 | MED | Unescaped `LIKE` wildcards in search (`%`/`_`) | `EfIdeaRepository.cs` + sibling `Ef*Repository` search paths | Escape `% _ [` with an `ESCAPE` clause. *Re-verify in Sprint 5 under Postgres semantics.* |
+| P1 | MED | Board CSV export builds full dataset in memory (sync DoS) | `IdeaService.ExportBoardIdeasAsync` / `IdeasController.ExportCsv` | Stream / cap rows, or move off the sync request path |
+| P2 | MED/LOW | CSV import reads whole upload into memory, no endpoint cap | `IdeasController.ImportCsv` | Add explicit request-size + max-row-count limits |
+| P2 | LOW | Client auth state ignores stored token expiry | `CollegaAuthStateProvider.GetAuthenticationStateAsync` | Treat an elapsed `expiresAtUtc` as anonymous on load |
+
+*Excluded false positive:* a `Convert.ToDecimal` 500 in the Number-range filter — `FieldValueValidator` never persists empty/non-decimal values and `FieldType` is immutable, so it cannot fire.
+
 ## Risks
 | Risk | Impact | Mitigation |
 |---|---|---|
@@ -32,6 +47,7 @@ Pay down the deferred QA/Code-Review debt across the large volume of fast-tracke
 ## Definition of Done
 - [ ] Code Reviewer has reviewed every previously-unreviewed slice at least once, findings triaged
 - [ ] All P0 findings fixed or explicitly accepted with a documented reason
+- [ ] **Code-review hardening batch:** all six items resolved (or explicitly deferred with reason) — CSV export formula-guard (HIGH); server-side `MustChangePassword` gate; `LIKE` wildcard escaping; export/import memory bounds; client token-expiry check
 - [ ] Profile portrait upload built, validated, server-side resized to 25×25px, stored on the user record, and tested (including a rejection test for disguised non-image content)
 - [ ] Image-library NuGet package approved before it's added
 - [ ] Default status Color/SortOrder values confirmed and the spec open item closed
