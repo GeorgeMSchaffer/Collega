@@ -58,6 +58,11 @@ Users can create, discuss, organize, and support ideas within their organization
 13. Assignment changes replace the complete assignee collection atomically. Duplicate user IDs, more than five IDs, inactive users, or users from another organization are validation errors.
 14. Existing non-null singular assignments are migrated to one idea-assignee relationship each before the legacy singular assignment column and foreign key are removed.
 15. `Assigned to me` matches an idea when the current user belongs to its assignee collection.
+16. The global Ideas list (`GET /api/v1/organizations/{organizationId}/ideas`, backing the `/ideas` page) filters and sorts **server-side**:
+    - **All-column search** covers every column the list displays — Title, Created By (author name), Assigned To (assignee names), Status (status name), and Created Date — plus the values of Text/Url User-Defined Fields. Text columns match as a case-insensitive substring; the Created Date column matches when the search term is a full ISO `YYYY-MM-DD` date (ideas created on that UTC calendar day).
+    - **Tag filter** narrows to ideas carrying a tag with the given (normalized) name.
+    - **User-association filter** narrows to ideas a specific chosen user either authored or is assigned to (the user search box in `SPEC/Bug Triage.md`), distinct from the caller-scoped `All`/`Created by me`/`Assigned to me` chips.
+    - **Column sort** is supported on Title, Created By, Assigned To (alphabetically-first assignee), Status, and Created Date, ascending or descending, with a stable idea-id tiebreaker so paging is deterministic.
 
 ## Organization-Managed Idea Fields
 1. Site Admin and Org Admin can create, rename, reorder, and soft-delete Idea Type and Business Impact options within their authorized organization scope.

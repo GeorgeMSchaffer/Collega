@@ -806,10 +806,12 @@ Purpose: Cross-board, organization-scoped idea list for the global `/ideas` page
 Query parameters:
 - `page`
 - `pageSize`
-- `search` optional (matches the idea title and the values of Text/Url User-Defined Fields)
-- `scope` optional `all` (default), `created` (authored by the caller), or `assigned` (assigned to the caller)
-- `sortBy` optional `createdAt` (default) or `title`
-- `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first)
+- `search` optional — all-column search across every column the `/ideas` list displays: the idea **Title**, **Created By** (author first/last/full name), **Assigned To** (any assignee's first/last/full name), and **Status** (status name); it also scans the values of Text/Url User-Defined Fields. When the term is a full ISO date (`YYYY-MM-DD`) it additionally matches the **Created Date** column (ideas created on that UTC calendar day). Matching is case-insensitive substring (`LIKE '%term%'`) except the date term, which matches the whole calendar day.
+- `scope` optional `all` (default), `created` (authored by the caller), or `assigned` (assigned to the caller) — the caller's me-chips
+- `tag` optional — filter to ideas carrying a tag whose normalized name equals the given value (same normalization/semantics as the board list's `tag`)
+- `user` optional GUID — user-association search box: filter to ideas the given user **authored or is assigned to** (`SPEC/Bug Triage.md`). `Guid.Empty` is treated as absent. Composes (AND) with `scope`/`tag`/`search`/`fieldFilters` when combined.
+- `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name)
+- `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first). All sorts apply a stable `ideaId` tiebreaker so ordering is deterministic across pages.
 - `fieldFilters[<fieldDefinitionId>]=<value>` optional, repeatable — filter by User-Defined Field value (T059). Semantics per field type: `Text`/`Url` contains; `Number` range `<min>:<max>` (either side omittable); `Date` range `<from>:<to>` (ISO-8601, either side omittable); `Boolean` `true`/`false`; `Dropdown` exact option id; `MultiSelect` any-of (matches when the stored option ids include the value). Unknown/invalid `fieldDefinitionId` keys and unparseable values are silently ignored.
 
 Success response `200`: same paged item shape as `GET /api/v1/boards/{boardId}/ideas`.

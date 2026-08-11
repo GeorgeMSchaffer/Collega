@@ -378,8 +378,14 @@ internal sealed class FakeIdeaRepository : IIdeaRepository
         return Task.FromResult(new PagedResult<Idea>(items, filter.Page.Page, filter.Page.PageSize, all.Count, filter.SortBy, SortDirection.Normalize(filter.SortDirection)));
     }
 
+    /// <summary>The most recent org-list filter, so tests can assert the Application layer's mapping
+    /// (scope/user/tag/date-search) without needing the real store.</summary>
+    public OrganizationIdeaListFilter? LastOrganizationFilter { get; private set; }
+
     public Task<PagedResult<Idea>> ListByOrganizationAsync(OrganizationIdeaListFilter filter, CancellationToken cancellationToken = default)
     {
+        LastOrganizationFilter = filter;
+
         IEnumerable<Idea> query = Ideas.Where(i => i.OrganizationId == filter.OrganizationId && !i.IsDeleted);
 
         if (filter.CreatedByUserId is Guid createdBy)
@@ -390,6 +396,12 @@ internal sealed class FakeIdeaRepository : IIdeaRepository
         if (filter.AssignedToUserId is Guid assignedTo)
         {
             query = query.Where(i => i.Assignees.Any(a => a.UserId == assignedTo));
+        }
+
+        if (filter.AssociatedUserId is Guid associatedUser)
+        {
+            query = query.Where(i => i.AuthorUserId == associatedUser
+                || i.Assignees.Any(a => a.UserId == associatedUser));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Search))

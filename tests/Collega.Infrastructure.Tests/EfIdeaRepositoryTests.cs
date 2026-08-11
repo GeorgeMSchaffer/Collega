@@ -173,8 +173,15 @@ public sealed class EfIdeaRepositoryTests
         string? search = null,
         IReadOnlyList<IdeaFieldValueFilter>? fieldFilters = null,
         IReadOnlyList<Guid>? searchTextFieldIds = null,
+        string? tag = null,
+        Guid? associatedUserId = null,
+        DateOnly? searchCreatedOnDate = null,
+        string? sortBy = null,
+        string? sortDirection = null,
+        int page = 1,
         int pageSize = 50) =>
-        new(_orgId, null, null, new PageRequest(1, pageSize), search, null, null, fieldFilters, searchTextFieldIds);
+        new(_orgId, null, null, new PageRequest(page, pageSize), search, sortBy, sortDirection,
+            fieldFilters, searchTextFieldIds, tag, associatedUserId, searchCreatedOnDate);
 
     private Idea IdeaWithField(string title, Guid fieldId, string value)
     {
@@ -271,5 +278,187 @@ public sealed class EfIdeaRepositoryTests
         var page = await repo.ListByOrganizationAsync(filter, default);
 
         Assert.Equal("Untitled work", Assert.Single(page.Items).Title);
+    }
+
+    // --- Organization list: all-column search, tag + user-association filter, column sort (Sprint 3) ---
+
+    [Fact]
+    public async Task ListByOrganization_Search_MatchesAuthorName()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        var author = Build.User(_orgId, firstName: "Marguerite", lastName: "Winters");
+        var other = Build.User(_orgId, firstName: "Bob", lastName: "Stone");
+        ctx.Users.AddRange(author, other);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, author.Id, title: "By Marguerite"));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, other.Id, title: "By Bob"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(OrgFilter(search: "marguer"), default);
+
+        Assert.Equal("By Marguerite", Assert.Single(page.Items).Title);
+    }
+
+    [Fact]
+    public async Task ListByOrganization_Search_MatchesAssigneeName()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        var author = Build.User(_orgId, firstName: "Author", lastName: "One");
+        var assignee = Build.User(_orgId, firstName: "Priya", lastName: "Nadella");
+        ctx.Users.AddRange(author, assignee);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, author.Id, title: "Assigned to Priya", assignees: new[] { assignee.Id }));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, author.Id, title: "Unassigned"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(OrgFilter(search: "nadella"), default);
+
+        Assert.Equal("Assigned to Priya", Assert.Single(page.Items).Title);
+    }
+
+    [Fact]
+    public async Task ListByOrganization_Search_MatchesStatusName()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        var backlog = Build.Status(_orgId, name: "Backlog");
+        var done = Build.Status(_orgId, name: "Done");
+        ctx.Statuses.AddRange(backlog, done);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, backlog.Id, _author, title: "In backlog"));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, done.Id, _author, title: "Finished"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(OrgFilter(search: "backlog"), default);
+
+        Assert.Equal("In backlog", Assert.Single(page.Items).Title);
+    }
+
+    [Fact]
+    public async Task ListByOrganization_Search_MatchesCreatedDate_WhenTermIsIsoDate()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        // Build.Idea stamps CreatedAtUtc = TestClock.Default (2026-08-08).
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "Created today"));
+        await ctx.SaveChangesAsync();
+
+        var match = await repo.ListByOrganizationAsync(
+            OrgFilter(search: "2026-08-08", searchCreatedOnDate: new DateOnly(2026, 8, 8)), default);
+        Assert.Equal("Created today", Assert.Single(match.Items).Title);
+
+        var noMatch = await repo.ListByOrganizationAsync(
+            OrgFilter(search: "2026-08-09", searchCreatedOnDate: new DateOnly(2026, 8, 9)), default);
+        Assert.Empty(noMatch.Items);
+    }
+
+    [Fact]
+    public async Task ListByOrganization_FiltersByTag()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        var tag = Tag.Create(_orgId, "Roadmap", TestClock.Default);
+        ctx.Tags.Add(tag);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "Tagged", tags: new[] { tag.Id }));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "Untagged"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(OrgFilter(tag: "roadmap"), default);
+
+        Assert.Equal("Tagged", Assert.Single(page.Items).Title);
+    }
+
+    [Fact]
+    public async Task ListByOrganization_FiltersByAssociatedUser_MatchesAuthorOrAssignee()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        var target = Guid.NewGuid();
+        var someoneElse = Guid.NewGuid();
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, target, title: "Authored by target"));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, someoneElse, title: "Assigned to target", assignees: new[] { target }));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, someoneElse, title: "Unrelated"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(OrgFilter(associatedUserId: target), default);
+
+        Assert.Equal(2, page.TotalCount);
+        Assert.DoesNotContain(page.Items, i => i.Title == "Unrelated");
+    }
+
+    [Fact]
+    public async Task ListByOrganization_SortsByStatusName()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        var alpha = Build.Status(_orgId, name: "Alpha");
+        var zeta = Build.Status(_orgId, name: "Zeta");
+        ctx.Statuses.AddRange(alpha, zeta);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, zeta.Id, _author, title: "Z-idea"));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, alpha.Id, _author, title: "A-idea"));
+        await ctx.SaveChangesAsync();
+
+        var asc = await repo.ListByOrganizationAsync(OrgFilter(sortBy: "status", sortDirection: "asc"), default);
+        Assert.Equal(new[] { "A-idea", "Z-idea" }, asc.Items.Select(i => i.Title).ToArray());
+
+        var desc = await repo.ListByOrganizationAsync(OrgFilter(sortBy: "status", sortDirection: "desc"), default);
+        Assert.Equal(new[] { "Z-idea", "A-idea" }, desc.Items.Select(i => i.Title).ToArray());
+    }
+
+    [Fact]
+    public async Task ListByOrganization_SortsByCreatedByName()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        var anders = Build.User(_orgId, firstName: "Anders", lastName: "Berg");
+        var zoe = Build.User(_orgId, firstName: "Zoe", lastName: "Young");
+        ctx.Users.AddRange(anders, zoe);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, zoe.Id, title: "By Zoe"));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, anders.Id, title: "By Anders"));
+        await ctx.SaveChangesAsync();
+
+        var asc = await repo.ListByOrganizationAsync(OrgFilter(sortBy: "createdby", sortDirection: "asc"), default);
+        Assert.Equal(new[] { "By Anders", "By Zoe" }, asc.Items.Select(i => i.Title).ToArray());
+    }
+
+    [Fact]
+    public async Task ListByOrganization_SortsByAssignedToName_UsingFirstAssignee()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        var aaron = Build.User(_orgId, firstName: "Aaron", lastName: "Ash");
+        var yolanda = Build.User(_orgId, firstName: "Yolanda", lastName: "York");
+        ctx.Users.AddRange(aaron, yolanda);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "Y-assigned", assignees: new[] { yolanda.Id }));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "A-assigned", assignees: new[] { aaron.Id }));
+        await ctx.SaveChangesAsync();
+
+        var asc = await repo.ListByOrganizationAsync(OrgFilter(sortBy: "assignedto", sortDirection: "asc"), default);
+        Assert.Equal(new[] { "A-assigned", "Y-assigned" }, asc.Items.Select(i => i.Title).ToArray());
+    }
+
+    [Fact]
+    public async Task ListByOrganization_Pagination_IsStable_WhenSortKeyTies()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        // Every idea shares the same CreatedAtUtc (TestClock.Default), so the primary sort key ties for
+        // all of them; the idea-id tiebreaker must keep paging deterministic and non-overlapping.
+        for (var i = 0; i < 7; i++)
+        {
+            ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: $"Idea {i}"));
+        }
+
+        await ctx.SaveChangesAsync();
+
+        var seen = new List<Guid>();
+        for (var p = 1; p <= 3; p++)
+        {
+            var page = await repo.ListByOrganizationAsync(
+                OrgFilter(sortBy: "createdat", sortDirection: "asc", page: p, pageSize: 3), default);
+            seen.AddRange(page.Items.Select(i => i.Id));
+        }
+
+        Assert.Equal(7, seen.Count);
+        Assert.Equal(7, seen.Distinct().Count());
     }
 }
