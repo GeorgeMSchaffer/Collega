@@ -7,7 +7,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 - `00-project-brief.md` — product model, stack, solution structure, architecture rules
 - `10-requirements.md` — requirement set
 - `30-Contracts.md` — **canonical API route and payload contracts**; authoritative for endpoint and payload details
-- `Specs Overview.md` — single-document aggregate meant as a fast AI entrypoint. **Not fully in sync** with the individual specs (e.g. it omits invite-code self-registration). Where it disagrees with a detailed spec, treat it as an open spec conflict and ask.
+- `Specs Overview.md` — **derived, non-canonical** single-document summary; useful for orientation only. Last reconciled 2026-08-06. **Do not implement from it**, and where it disagrees with a canonical spec, the canonical spec simply wins — that is precedence, not a conflict to escalate.
 
 ### Feature specs — `20-feature-*.md`
 

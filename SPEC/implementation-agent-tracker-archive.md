@@ -295,3 +295,25 @@ Three page slices built by parallel background worktree agents off `dev` @ `7fd6
 - Start with Foundation tasks T001 through T004.
 - Use `Specs Overview.md` as the behavior entrypoint and `30-Contracts.md` for endpoint and payload authority.
 - Keep this document updated whenever a task starts or completes.
+
+## 2026-08-11 narrative (compressed out of the live tracker on 2026-08-11)
+Moved here verbatim-in-substance when the live tracker's Current Status was re-compacted to a table. The live tracker carries the current-state summary; this is the "how we got here" detail for that day.
+
+### Bug-triage fixes landed pre-Sprint-4 (2026-08-11)
+1. The idea-type/business-impact migration FK failure over a populated DB was fixed by adding a backfill to `20260808233009_AddIdeaClassification`. (This is the same migration bug filed to `Bug Triage.md` TODO during Sprint 1 verification — discovered and fixed; it appeared twice in the live tracker, once as fixed and once as still-open, which is why the duplicate was removed.)
+2. Site-Admin "Manage" links on the global Idea Types/Statuses/Fields admin lists now navigate correctly — they had reused the same component instance; fixed with an `OnParametersSetAsync` reload.
+3. Added a Development-only demo Site Admin (`siteadmin@demo.collega.test` / `Abc123!`, no forced password change) so the platform-admin view is testable.
+
+### Sprint 4 security items — detail
+The mandatory password-rotation gate broke nine integration-test classes that had been acting as the seeded Site Admin without ever rotating — direct evidence the hole was real. Their duplicated login helpers were consolidated into one shared rotation-aware `SiteAdminAuth`.
+
+The recorded test baseline was corrected from a stale 500 to 525: the previously-recorded 500 predated the members-endpoint merge (`d3ef5e4`/`fe2f37f`), which added 6; Sprint 4's two security items added the other 19.
+
+### Idea Detail surface (historical note)
+A right slide-in drawer + centered create modal (`IdeaDrawer.razor`/`IdeaCreateModal.razor`), reached via `?idea={id}` over the Ideas list or a board, or bare `/ideas/{id}`. This superseded an earlier full-page `/ideas/{id}/edit` design; that route is retired. Canonical behavior: `SPEC/20-feature-client-ui.md` → Idea Detail Surface.
+
+### Site Admin org-content mutation — decision reversal (2026-08-11)
+Earlier the same day the tracker recorded "Site Admins get an idea-create path" and assigned it to Sprint 4. That was **reversed later the same day**: Site Admins get no direct org-scoped create/edit paths and no org dropdowns. Org content is created/edited via View As act-as impersonation (Sprint 6; D-MODE locked = full act-as, dual attribution). Org + user administration stay direct as the bootstrap exception. Canonical: `20-feature-client-ui.md` → "Site Admin org-content mutation model". The superseded Sprint 4 idea-create item was removed from scope.
+
+### AI-assisted idea drafting — scheduling detail
+Scheduled as Sprint 7 on user direction ("before the Azure deployment work but after the Postgres migration"), which renumbered Azure deployment from Sprint 7 to Sprint 8 and took the sprint count to 8. Four design decisions locked the same day: scope gate = Idea Types + an Org-Admin-editable scope statement; similar-idea dedupe deferred to v2 (v1 retrieves structured org data only — no embeddings, no `pgvector`, so no Sprint 5 dependency); API key = single platform-level key in server secrets (per-org "Org AI credentials" stays backlogged); pre-fill = Title, Description, Idea Type, Business Impact, Priority as editable suggestions (UDFs + tags out of v1). Containment comes from structured output — the per-request JSON Schema's classification enums are built from the org's real option ids, and `next_question` is the model's only user-visible text field. The per-org `ai-key` contracts already present in `30-Contracts.md` are deliberately **not** in Sprint 7 scope.

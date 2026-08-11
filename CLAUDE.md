@@ -34,9 +34,9 @@ Canonical product behavior lives in `SPEC/*.md`. Read the relevant spec before d
 - `SPEC/30-Contracts.md` — canonical API route/payload contracts. Read before adding or changing an endpoint.
 - `SPEC/40-test-strategy.md`, `SPEC/90-definition-of-done.md` — what must be covered, and what "done" means.
 
-`SPEC/Specs Overview.md` is a fast aggregate entrypoint but is **not fully in sync** with the individual specs (e.g. it omits invite-code self-registration, which `10-requirements.md`, `20-feature-organizations-and-users.md`, and `30-Contracts.md` treat as canonical). When it disagrees with a detailed spec, treat that as an open spec conflict and ask.
+`SPEC/Specs Overview.md` is a **derived, non-canonical** summary — useful for orientation, never for implementation. Where it disagrees with a canonical spec, the canonical spec wins; that is precedence, not a conflict to raise.
 
-If behavior is ambiguous or specs conflict, ask before implementing.
+If behavior is ambiguous, or **two canonical specs** conflict, ask before implementing.
 
 ## Product Model
 
