@@ -1,7 +1,9 @@
-# Sprint 7: Azure Deployment (provision + first deploy + CI/CD)
+# Sprint 8: Azure Deployment (provision + first deploy + CI/CD)
 
 **Status:** Not started
-**Sequence:** 7 of 7 (last) — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 6 (`sprint-06-view-as.md`) is merged, so the first deployment ships View As too. **Hard blocker:** does not start until Sprint 5 (`sprint-05-postgres-migration.md`) is **implemented in code and verified working** — not merely planned (the migration sets the deployment's DB engine).
+**Sequence:** 8 of 8 (last) — see `SPEC/95-next-sprints.md` for the full sequence. Renumbered from Sprint 7 on 2026-08-11 when AI-assisted idea drafting was scheduled ahead of it at user request. Starts after Sprint 7 (`sprint-07-ai-idea-assist.md`) is merged, so the first deployment ships both View As (Sprint 6) and AI idea assist. **Hard blocker:** does not start until Sprint 5 (`sprint-05-postgres-migration.md`) is **implemented in code and verified working** — not merely planned (the migration sets the deployment's DB engine).
+
+**Config note (added 2026-08-11):** Sprint 7 introduces a deployment-level AI API key. It must be provisioned as App Service configuration alongside the other secrets in this sprint's config task; the feature stays dark without it, which is a supported state rather than a failure.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
 ## ⛔ Dependency gate — read first

@@ -23,6 +23,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 | `20-feature-client-ui-revisions.md` | Numbered client UI decisions (D1…) | MVP |
 | `20-feature-user-defined-fields.md` | User-defined fields | Pulled into MVP 2026-08-08 |
 | `20-feature-idea-type-fields.md` | Idea types and per-type fields | In MVP scope |
+| `20-feature-ai-idea-assist.md` | AI-assisted idea drafting (brainstorm chat → Idea fields) | Post-MVP, **scheduled Sprint 7** |
 | `20-feature-issues-and-delivery.md` | Idea → execution handoff | Post-MVP |
 | `20-feature-oauth.md` | OAuth/SSO | **Deferred** |
 | `20-feature-saml.md` | SAML | **Deferred** |
@@ -44,7 +45,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 ## Technical and Deployment Plans
 
 - `50-technical-implementation-plan.md` — implementation plan across layers
-- `50-azure-deployment.md`, `50-azure-api-cicd.md` — Azure target (Sprint 7)
+- `50-azure-deployment.md`, `50-azure-api-cicd.md` — Azure target (Sprint 8; renumbered from 7 on 2026-08-11)
 - `50-postgres-migration.md` — Postgres migration plan (Sprint 5)
 - `50-kubernetes-deployment.md` — Kubernetes deployment notes
 

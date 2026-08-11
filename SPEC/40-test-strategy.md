@@ -79,6 +79,21 @@
 - Text-like controls render at a stable 36px height with vertically centered content, and Fluent icon actions expose accessible names, tooltips, keyboard focus, and disabled states on desktop and narrow layouts.
 - Client unit-test and Playwright infrastructure is intentionally excluded from this batch because a parallel branch owns browser automation; these items remain pending until user manual acceptance.
 
+## AI Idea Assist (Sprint 7 — `SPEC/20-feature-ai-idea-assist.md`)
+Coverage required before this feature merges. The provider is never called from the test suite: `IIdeaDraftModel` is faked, keeping tests hermetic per `tests/CLAUDE.md`.
+
+- **Classification cannot escape the org.** A faked model response naming an inactive, soft-deleted, or other-organization `ideaTypeId`/`businessImpactId` is rejected server-side and never reaches the client. This is the single most important assertion in the batch — it is what makes the schema-enum design load-bearing rather than decorative.
+- **Schema construction** builds enums from exactly the caller org's active options, `additionalProperties` is `false`, and title/description constraints match `Idea.TitleMaxLength` / `DescriptionMaxLength`.
+- **Scope gate matrix:** in-scope turn advances the draft; out-of-scope turn returns the fixed redirect, leaves the draft unchanged, and the offending turn is dropped from the transcript rather than appended; three consecutive out-of-scope turns return `conversationClosed`.
+- **Scope statement** is applied when set, ignored when null/empty, rejected over 500 characters, and is readable/writable by Org Admin on own org and Site Admin on any org — and by nobody else.
+- **Turn cap:** a transcript over 20 entries is a `400`; a transcript not ending in a `user` entry is a `400`.
+- **Degradation:** provider timeout, rate limit, refusal, and malformed/unparseable response each fall back to scripted behavior without blocking; an unconfigured key returns `503` and the client falls back silently. Idea creation must remain possible in every one of these states.
+- **Authorization:** Read Only is refused; a member of another organization gets `404` on the board; org-scoping mirrors the existing service-level suite.
+- **No write path:** no AI endpoint creates, updates, or deletes an idea — asserted directly, since the guarantee is architectural rather than incidental.
+- **Audit records outcomes, not content:** the audit event carries actor/org/board/turn count/usage/out-of-scope flag, and asserts prompt and transcript text are **absent**.
+- **Contract alignment** with `30-Contracts.md` → "AI Idea Assist Contracts", including the `503`-when-unconfigured case.
+- **Live check (manual, not automated):** on a second turn in the same conversation, `usage.cache_read_input_tokens > 0`, confirming the org catalog sits in a stable cached prefix.
+
 ## Startup Safety
 - Demo environment seed runs only in Development
 - Non-Development startup does not apply demo data seed

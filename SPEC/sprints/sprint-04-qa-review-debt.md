@@ -1,7 +1,7 @@
 # Sprint 4: QA / Code-Review Debt Pass + Profile Portrait Upload
 
 **Status:** Not started
-**Sequence:** 4 of 7 — see `SPEC/95-next-sprints.md` for the full sequence and how these sprints relate. Starts after Sprint 3 (`sprint-03-list-filter-parity.md`) is merged; followed by Sprint 5 (`sprint-05-postgres-migration.md`), Sprint 6 (`sprint-06-view-as.md`), then Sprint 7 (`sprint-07-azure-deployment.md`).
+**Sequence:** 4 of 8 — see `SPEC/95-next-sprints.md` for the full sequence and how these sprints relate. Starts after Sprint 3 (`sprint-03-list-filter-parity.md`) is merged; followed by Sprint 5 (`sprint-05-postgres-migration.md`), Sprint 6 (`sprint-06-view-as.md`), Sprint 7 (`sprint-07-ai-idea-assist.md`), then Sprint 8 (`sprint-08-azure-deployment.md`).
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
 ## Goal
@@ -28,11 +28,11 @@ A recall-oriented `/code-review` of `dev` was already run on 2026-08-11 and prod
 | ✅ P2 | Lock the default `Status.Color`/`SortOrder` values | **RESOLVED 2026-08-11** — confirmed final (see below) | Done |
 
 ## Judgment Calls (resolved 2026-08-11, user interview)
-The P0 "confirm the open judgment calls" item is closed. All four were decided; **none needs a code change now** (the JWT-key item is routed to Sprint 7):
+The P0 "confirm the open judgment calls" item is closed. All four were decided; **none needs a code change now** (the JWT-key item is routed to Sprint 8):
 | Call | Decision | Follow-up |
 |---|---|---|
 | Account lockout window | **Keep the fixed-window approximation** for MVP (not reworked to a true sliding window) | None — no code change |
-| JWT signing key (ephemeral per-process) | **Stays ephemeral for now; enforcing a stable `Auth:TokenSigningKey` is deferred to Sprint 7 (Azure)** | Already on Sprint 7's App Service config (P0) + risks + post-deploy checklist — verify token survives a restart there |
+| JWT signing key (ephemeral per-process) | **Stays ephemeral for now; enforcing a stable `Auth:TokenSigningKey` is deferred to Sprint 8 (Azure)** | Already on Sprint 8's App Service config (P0) + risks + post-deploy checklist — verify token survives a restart there |
 | `Status` name length (`nvarchar(100)` vs 25-char comp hint) | **Keep `nvarchar(100)`** — the 25 hint is dropped | None — no migration |
 | Default `Status.Color`/`SortOrder` | **Confirmed final** — the 5 canonical `OrganizationDefaults` statuses (New/Pending #64748B, In Review #D97706, In Progress #2563EB, Client Review #7C3AED, Complete #16A34A; sort 10–50) | None — no code change |
 
@@ -41,7 +41,7 @@ Concrete defects already surfaced (auth/token stack, password hashing, and all A
 
 **Security-review corroboration (2026-08-11):** a separate adversarially-filtered `/security-review` of `dev` found **no vulnerabilities beyond this batch** — JWT issuance/validation, PBKDF2 password hashing, CSPRNG invite-code/temp-password generation, tenant isolation (no IDOR), role-escalation ceilings, SQL parameterization, client XSS surfaces, CORS, and the deploy workflow were all verified clean. It confirmed batch item 2 (`MustChangePassword` client-only gate) and added one aggravating detail, now recorded in the Bug Triage entry: `User.RegisterSuccessfulLogin` clears `TemporaryPasswordExpiresAtUtc` on first login, so an unrotated temp password becomes permanent (and remains known to the issuing admin).
 
-**Ordering (user direction, 2026-08-11):** the two security-relevant items below (CSV formula injection; server-side `MustChangePassword` gate) are fixed **first, at sprint start**, before the broader review pass and the portrait-upload feature work — the point is to have them resolved well ahead of the Postgres (Sprint 5) and Azure (Sprint 7) sprints.
+**Ordering (user direction, 2026-08-11):** the two security-relevant items below (CSV formula injection; server-side `MustChangePassword` gate) are fixed **first, at sprint start**, before the broader review pass and the portrait-upload feature work — the point is to have them resolved well ahead of the Postgres (Sprint 5) and Azure (Sprint 8) sprints.
 
 Most-severe first:
 | Priority | Sev | Item | Location | Fix |

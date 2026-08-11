@@ -1172,6 +1172,90 @@ Success response `200`:
 - `hasUpvoted` boolean
 - `upvoteCount` integer
 
+## AI Idea Assist Contracts
+
+Behavior spec: `SPEC/20-feature-ai-idea-assist.md`. Scheduled as Sprint 7 (`SPEC/sprints/sprint-07-ai-idea-assist.md`) — **not implemented yet**.
+
+Contract-wide rules for this section:
+- the caller's organization is resolved from the access token, never from the request body
+- the client never sends a prompt, system instructions, model name, retrieved context, or the organization's scope statement — the server assembles all of it
+- these endpoints **never create, update, or delete an idea**; they return draft suggestions that seed the create form, which is submitted separately through `POST /api/v1/boards/{boardId}/ideas` and validated there as normal
+- suggested option ids are always active options in the caller's organization; the server rejects a model response containing any id outside the retrieved set rather than passing it to the client
+
+### `POST /api/v1/boards/{boardId}/idea-assist/turns`
+Purpose: Advance the idea-drafting conversation by one turn and return the updated draft.
+
+Request body:
+- `transcript` required array, max 20 entries, ordered oldest-first. Each entry:
+  - `role` required string, one of `user`, `assistant`
+  - `text` required string, max 4000 characters, trimmed before validation
+- `draft` optional object carrying the current draft so the model can revise rather than restate. Same shape as `draft` in the response; unknown or inactive ids are discarded server-side rather than rejected
+
+Behavior rules:
+- authorized for any member of the board's organization who may create ideas (Read Only is refused)
+- the final transcript entry must have `role` of `user`
+- the server assembles retrieval context (active idea types with their resolved field sets, business impacts, board statuses, tags, members) scoped to the caller's organization
+- the response schema's `ideaTypeId` and `businessImpactId` are constrained to the retrieved active option ids
+- when the turn is judged out of scope, `inScope` is `false`, `draft` is returned unchanged, and `nextQuestion` carries the server's fixed redirect string; the client discards the offending user turn rather than appending it
+- three consecutive out-of-scope turns additionally return `conversationClosed` as `true`
+- rate limited per user and per organization; each call writes an audit event recording the actor, organization, board, turn count, token usage, and out-of-scope outcome, and never the prompt or transcript content
+
+Success response `200`:
+- `inScope` boolean
+- `conversationClosed` boolean
+- `nextQuestion` string — the assistant's reply; the only free-text field the model produces
+- `draft` object:
+  - `title` string or null, max 150 characters
+  - `description` string or null, max 4000 characters
+  - `ideaTypeId` GUID string or null — an active idea type in this organization
+  - `businessImpactId` GUID string or null — an active business impact in this organization
+  - `priority` string or null, one of the `Priority` enum values
+- `turnsRemaining` integer
+
+Error responses:
+- `400` request body is malformed, violates field constraints, exceeds the 20-turn cap, or does not end with a `user` entry
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to create ideas on this board
+- `404` board does not exist or is outside caller scope
+- `429` rate limit exceeded for this user or organization
+- `503` AI assist is not configured or the provider is unavailable — clients degrade to the scripted brainstorm chat rather than surfacing an error
+
+### `GET /api/v1/organizations/{organizationId}/ai-assist/settings`
+Purpose: Read the organization's AI assist configuration for the settings UI.
+
+Behavior rules:
+- authorized for Site Admin on any organization, and for Org Admin on their own organization only
+- reports whether the deployment has a key configured; never returns a key or any part of one
+
+Success response `200`:
+- `aiAssistAvailable` boolean — a deployment key is configured and the feature is on
+- `scopeStatement` string or null
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to administer this organization
+- `404` organization does not exist or is outside caller scope
+
+### `PUT /api/v1/organizations/{organizationId}/ai-assist/settings`
+Purpose: Set or clear the organization's scope statement — the free-text narrowing of what the assistant will discuss.
+
+Request body:
+- `scopeStatement` required string or null, max 500 characters, trimmed before validation. Null or empty clears it, leaving the organization's active Idea Types as the only scope boundary
+
+Behavior rules:
+- authorized for Site Admin on any organization, and for Org Admin on their own organization only
+- generates an audit event recording the acting user and the new value
+- takes effect on the next turn; in-flight conversations are not retroactively re-scoped
+
+Success response `200`:
+- `scopeStatement` string or null
+
+Error responses:
+- `400` request body is malformed or the statement exceeds 500 characters
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to administer this organization
+- `404` organization does not exist or is outside caller scope
+
 ## Notification Event Contract
 
 ### Internal notification event types

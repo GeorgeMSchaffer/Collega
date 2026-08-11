@@ -1,7 +1,7 @@
 # Sprint 6: View As (user impersonation for support)
 
 **Status:** Not started
-**Sequence:** 6 of 7 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 5 (`sprint-05-postgres-migration.md`) is merged, so it's built on the migrated Postgres codebase; precedes Sprint 7 (`sprint-07-azure-deployment.md`) so the first Azure deployment ships this feature. Added 2026-08-11 at user request; **kick off only once Sprints 4–5 are done** (per user: start this once all other work is complete).
+**Sequence:** 6 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 5 (`sprint-05-postgres-migration.md`) is merged, so it's built on the migrated Postgres codebase; followed by Sprint 7 (`sprint-07-ai-idea-assist.md`) and then Sprint 8 (`sprint-08-azure-deployment.md`), so the first Azure deployment ships this feature. Added 2026-08-11 at user request; **kick off only once Sprints 4–5 are done** (per user: start this once all other work is complete).
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
 ## Goal

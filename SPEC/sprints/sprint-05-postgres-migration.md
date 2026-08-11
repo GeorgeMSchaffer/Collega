@@ -1,7 +1,7 @@
 # Sprint 5: PostgreSQL Migration (SQL Server → Postgres)
 
 **Status:** Not started
-**Sequence:** 5 of 7 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 4 (`sprint-04-qa-review-debt.md`) is merged; followed by Sprint 6 (`sprint-06-view-as.md`), which is built on the migrated Postgres codebase. **Blocks Sprint 7 (Azure deployment):** that sprint cannot start until this one is implemented in code and verified working against a real Postgres instance, because it changes the deployment's database engine and connection-string requirements.
+**Sequence:** 5 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 4 (`sprint-04-qa-review-debt.md`) is merged; followed by Sprint 6 (`sprint-06-view-as.md`) and Sprint 7 (`sprint-07-ai-idea-assist.md`), both built on the migrated Postgres codebase. **Blocks Sprint 8 (Azure deployment):** that sprint cannot start until this one is implemented in code and verified working against a real Postgres instance, because it changes the deployment's database engine and connection-string requirements.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
 ## Goal
