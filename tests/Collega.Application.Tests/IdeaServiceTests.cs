@@ -385,6 +385,84 @@ public sealed class IdeaServiceTests
         await Assert.ThrowsAsync<NotFoundAppException>(() => sut.GetByIdAsync(idea.Id));
     }
 
+    // Organization list: filter/sort mapping (Sprint 3) -----------------------------------------
+
+    private OrganizationIdeaListQuery OrgQuery(
+        string? search = null,
+        string? scope = null,
+        string? sortBy = null,
+        string? sortDirection = null,
+        string? tag = null,
+        Guid? user = null) =>
+        new(1, 50, search, scope, sortBy, sortDirection, null, tag, user);
+
+    [Fact]
+    public async Task ListByOrganization_MapsUser_ToAssociatedFilter_MatchingAuthorOrAssignee()
+    {
+        var other = _users.Add(Build.User(_org.Id));
+        _ideas.Add(Build.Idea(_org.Id, _boardId, _s1, _author.Id, title: "Authored"));
+        _ideas.Add(Build.Idea(_org.Id, _boardId, _s1, other.Id, title: "AssignedToAuthor", assignees: new[] { _author.Id }));
+        _ideas.Add(Build.Idea(_org.Id, _boardId, _s1, other.Id, title: "Unrelated"));
+        var sut = CreateSut();
+
+        var page = await sut.ListByOrganizationAsync(_org.Id, OrgQuery(user: _author.Id));
+
+        Assert.Equal(_author.Id, _ideas.LastOrganizationFilter!.AssociatedUserId);
+        Assert.Equal(2, page.TotalCount);
+        Assert.DoesNotContain(page.Items, i => i.Title == "Unrelated");
+    }
+
+    [Fact]
+    public async Task ListByOrganization_EmptyUserGuid_IsTreatedAsNoFilter()
+    {
+        var sut = CreateSut();
+
+        await sut.ListByOrganizationAsync(_org.Id, OrgQuery(user: Guid.Empty));
+
+        Assert.Null(_ideas.LastOrganizationFilter!.AssociatedUserId);
+    }
+
+    [Fact]
+    public async Task ListByOrganization_IsoDateSearch_SetsSearchCreatedOnDate()
+    {
+        var sut = CreateSut();
+
+        await sut.ListByOrganizationAsync(_org.Id, OrgQuery(search: "2026-08-08"));
+
+        Assert.Equal(new DateOnly(2026, 8, 8), _ideas.LastOrganizationFilter!.SearchCreatedOnDate);
+    }
+
+    [Fact]
+    public async Task ListByOrganization_NonDateSearch_LeavesSearchCreatedOnDateNull()
+    {
+        var sut = CreateSut();
+
+        await sut.ListByOrganizationAsync(_org.Id, OrgQuery(search: "onboarding"));
+
+        Assert.Null(_ideas.LastOrganizationFilter!.SearchCreatedOnDate);
+    }
+
+    [Fact]
+    public async Task ListByOrganization_TrimsTag()
+    {
+        var sut = CreateSut();
+
+        await sut.ListByOrganizationAsync(_org.Id, OrgQuery(tag: "  roadmap  "));
+
+        Assert.Equal("roadmap", _ideas.LastOrganizationFilter!.Tag);
+    }
+
+    [Fact]
+    public async Task ListByOrganization_ScopeCreated_MapsCurrentUserToCreatedByFilter()
+    {
+        var sut = CreateSut();
+
+        await sut.ListByOrganizationAsync(_org.Id, OrgQuery(scope: "created"));
+
+        Assert.Equal(_author.Id, _ideas.LastOrganizationFilter!.CreatedByUserId);
+        Assert.Null(_ideas.LastOrganizationFilter.AssignedToUserId);
+    }
+
     // User-Defined Field values -----------------------------------------------------------------
 
     private CreateIdeaCommand FieldValueCommand(params IdeaFieldValueWrite[] values) =>

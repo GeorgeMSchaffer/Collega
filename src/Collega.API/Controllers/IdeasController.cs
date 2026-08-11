@@ -62,15 +62,18 @@ public sealed class IdeasController : ControllerBase
         [FromQuery] int? pageSize,
         [FromQuery] string? search,
         [FromQuery] string? scope,
+        [FromQuery] string? tag,
+        [FromQuery] Guid? user,
         [FromQuery] string? sortBy,
         [FromQuery] string? sortDirection,
         CancellationToken cancellationToken)
     {
         // fieldFilters[<fieldDefinitionId>]=<value> (T059) is read straight from the query rather than
         // model-bound as Dictionary<Guid,string> — that binder greedily treats every query key as a
-        // dictionary entry and 500s trying to parse non-Guid keys (page, search, …) as Guids.
+        // dictionary entry and 500s trying to parse non-Guid keys (page, search, …) as Guids. tag/user
+        // are explicit [FromQuery] scalars for the same reason (they are not dictionary keys).
         var fieldFilters = ParseFieldFilters(Request.Query);
-        var query = new OrganizationIdeaListQuery(page, pageSize, search, scope, sortBy, sortDirection, fieldFilters);
+        var query = new OrganizationIdeaListQuery(page, pageSize, search, scope, sortBy, sortDirection, fieldFilters, tag, user);
         var result = await _ideaService.ListByOrganizationAsync(organizationId, query, cancellationToken);
         return Ok(result);
     }

@@ -47,9 +47,14 @@ public sealed record IdeaListFilter(
 
 /// <summary>Store-facing filter for the organization-wide idea list. When set, <see cref="CreatedByUserId"/>
 /// restricts to ideas the user authored and <see cref="AssignedToUserId"/> to ideas assigned to them;
-/// both null means all ideas in the organization. <see cref="FieldFilters"/> are typed User-Defined
-/// Field predicates (already validated/translated by the Application layer, T059); <see cref="SearchTextFieldIds"/>
-/// are the active Text/Url field-definition ids whose values the global <see cref="Search"/> also scans.</summary>
+/// both null means all ideas in the organization. <see cref="AssociatedUserId"/> is the user-association
+/// search box (SPEC/Bug Triage.md): when set it matches ideas the user authored <em>or</em> is assigned to.
+/// <see cref="FieldFilters"/> are typed User-Defined Field predicates (already validated/translated by the
+/// Application layer, T059); <see cref="SearchTextFieldIds"/> are the active Text/Url field-definition ids
+/// whose values the global <see cref="Search"/> also scans. <see cref="Tag"/> is a normalized tag-name
+/// match. The global <see cref="Search"/> also scans the author name, assignee names, and status name;
+/// <see cref="SearchCreatedOnDate"/>, set by the Application layer only when the search term parses as an
+/// ISO <c>yyyy-MM-dd</c> date, additionally matches ideas created on that (UTC) calendar day.</summary>
 public sealed record OrganizationIdeaListFilter(
     Guid OrganizationId,
     Guid? CreatedByUserId,
@@ -59,7 +64,10 @@ public sealed record OrganizationIdeaListFilter(
     string? SortBy,
     string? SortDirection,
     IReadOnlyList<IdeaFieldValueFilter>? FieldFilters = null,
-    IReadOnlyList<Guid>? SearchTextFieldIds = null);
+    IReadOnlyList<Guid>? SearchTextFieldIds = null,
+    string? Tag = null,
+    Guid? AssociatedUserId = null,
+    DateOnly? SearchCreatedOnDate = null);
 
 /// <summary>How a single User-Defined Field value predicate matches (T059 filter semantics,
 /// SPEC/20-feature-user-defined-fields.md).</summary>

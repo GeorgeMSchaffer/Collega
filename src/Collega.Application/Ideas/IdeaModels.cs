@@ -45,7 +45,9 @@ public sealed record IdeaListQuery(
 /// <summary>
 /// Cross-board, organization-scoped idea list for the global <c>/ideas</c> page. <c>Scope</c> is one
 /// of <c>all</c> / <c>created</c> (authored by the current user) / <c>assigned</c> (assigned to the
-/// current user); anything else is treated as <c>all</c>.
+/// current user); anything else is treated as <c>all</c>. <c>Tag</c> filters to ideas carrying a tag
+/// with that (normalized) name. <c>User</c> is the user-association search-box selection: it matches
+/// ideas the given user authored <em>or</em> is assigned to (SPEC/Bug Triage.md).
 /// </summary>
 public sealed record OrganizationIdeaListQuery(
     int? Page,
@@ -54,7 +56,9 @@ public sealed record OrganizationIdeaListQuery(
     string? Scope,
     string? SortBy,
     string? SortDirection,
-    IReadOnlyDictionary<Guid, string>? FieldFilters = null);
+    IReadOnlyDictionary<Guid, string>? FieldFilters = null,
+    string? Tag = null,
+    Guid? User = null);
 
 // Results / DTOs ---------------------------------------------------------------------------------
 

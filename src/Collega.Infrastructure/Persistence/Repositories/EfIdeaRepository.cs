@@ -117,16 +117,46 @@ public sealed class EfIdeaRepository : IIdeaRepository
             query = query.Where(i => i.Assignees.Any(a => a.UserId == assignedTo));
         }
 
+        // User-association search box: match ideas the user authored OR is assigned to (SPEC/Bug Triage.md).
+        if (filter.AssociatedUserId is Guid associatedUser)
+        {
+            query = query.Where(i => i.AuthorUserId == associatedUser
+                || i.Assignees.Any(a => a.UserId == associatedUser));
+        }
+
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var pattern = $"%{filter.Search.Trim()}%";
             var textFieldIds = filter.SearchTextFieldIds ?? Array.Empty<Guid>();
-            // The global search matches the title or any of the idea's Text/Url UDF values (T059).
+            var hasCreatedOnDate = filter.SearchCreatedOnDate is not null;
+            var createdDayStart = filter.SearchCreatedOnDate?.ToDateTime(TimeOnly.MinValue) ?? default;
+            var createdDayEnd = createdDayStart.AddDays(1);
+
+            // The all-column search covers every column the /ideas table displays: Title, Created By
+            // (author name), Assigned To (assignee names), Status (status name), and — when the term is a
+            // full ISO date — Created Date. It also scans the idea's Text/Url UDF values (T059).
             query = query.Where(i => EF.Functions.Like(i.Title, pattern)
+                || _dbContext.Users.Any(u => u.Id == i.AuthorUserId
+                    && (EF.Functions.Like(u.FirstName, pattern)
+                        || EF.Functions.Like(u.LastName, pattern)
+                        || EF.Functions.Like(u.FirstName + " " + u.LastName, pattern)))
+                || i.Assignees.Any(a => _dbContext.Users.Any(u => u.Id == a.UserId
+                    && (EF.Functions.Like(u.FirstName, pattern)
+                        || EF.Functions.Like(u.LastName, pattern)
+                        || EF.Functions.Like(u.FirstName + " " + u.LastName, pattern))))
+                || _dbContext.Statuses.Any(s => s.Id == i.StatusId && EF.Functions.Like(s.Name, pattern))
                 || _dbContext.IdeaFieldValues.Any(v => v.IdeaId == i.Id
                     && textFieldIds.Contains(v.FieldDefinitionId)
                     && v.Value != null
-                    && EF.Functions.Like(v.Value, pattern)));
+                    && EF.Functions.Like(v.Value, pattern))
+                || (hasCreatedOnDate && i.CreatedAtUtc >= createdDayStart && i.CreatedAtUtc < createdDayEnd));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Tag))
+        {
+            var normalizedTag = Tag.Normalize(filter.Tag);
+            query = query.Where(i => i.Tags.Any(it =>
+                _dbContext.Tags.Any(t => t.Id == it.TagId && t.NormalizedName == normalizedTag)));
         }
 
         foreach (var fieldFilter in filter.FieldFilters ?? Array.Empty<IdeaFieldValueFilter>())
@@ -137,11 +167,27 @@ public sealed class EfIdeaRepository : IIdeaRepository
         var totalCount = await query.CountAsync(cancellationToken);
 
         var descending = SortDirection.IsDescending(filter.SortDirection);
-        query = (filter.SortBy?.Trim().ToLowerInvariant()) switch
+        // Sort by any of the five displayed columns. Joined columns (Created By / Assigned To / Status)
+        // sort by a correlated name subquery; Assigned To uses the alphabetically-first assignee's name.
+        IOrderedQueryable<Idea> ordered = (filter.SortBy?.Trim().ToLowerInvariant()) switch
         {
             "title" => descending ? query.OrderByDescending(i => i.Title) : query.OrderBy(i => i.Title),
+            "createdby" => descending
+                ? query.OrderByDescending(i => _dbContext.Users.Where(u => u.Id == i.AuthorUserId).Select(u => u.FirstName).FirstOrDefault())
+                    .ThenByDescending(i => _dbContext.Users.Where(u => u.Id == i.AuthorUserId).Select(u => u.LastName).FirstOrDefault())
+                : query.OrderBy(i => _dbContext.Users.Where(u => u.Id == i.AuthorUserId).Select(u => u.FirstName).FirstOrDefault())
+                    .ThenBy(i => _dbContext.Users.Where(u => u.Id == i.AuthorUserId).Select(u => u.LastName).FirstOrDefault()),
+            "assignedto" => descending
+                ? query.OrderByDescending(i => _dbContext.Users.Where(u => i.Assignees.Any(a => a.UserId == u.Id)).Select(u => u.FirstName).Min())
+                : query.OrderBy(i => _dbContext.Users.Where(u => i.Assignees.Any(a => a.UserId == u.Id)).Select(u => u.FirstName).Min()),
+            "status" => descending
+                ? query.OrderByDescending(i => _dbContext.Statuses.Where(s => s.Id == i.StatusId).Select(s => s.Name).FirstOrDefault())
+                : query.OrderBy(i => _dbContext.Statuses.Where(s => s.Id == i.StatusId).Select(s => s.Name).FirstOrDefault()),
             _ => descending ? query.OrderByDescending(i => i.CreatedAtUtc) : query.OrderBy(i => i.CreatedAtUtc)
         };
+
+        // Deterministic tiebreaker so pagination is stable when the sort column has ties.
+        query = ordered.ThenBy(i => i.Id);
 
         var items = await query
             .Skip(filter.Page.Skip)

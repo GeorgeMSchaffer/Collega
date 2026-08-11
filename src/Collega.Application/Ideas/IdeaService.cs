@@ -122,16 +122,32 @@ public sealed class IdeaService : IIdeaService
             .Select(d => d.Id)
             .ToList();
 
+        var search = query.Search?.Trim();
+        // The all-column search covers the Created Date column too: when the term is a full ISO date the
+        // repository additionally matches ideas created on that calendar day. Parsed here (hermetically,
+        // invariant culture) so the repository stays free of ambient/culture concerns.
+        DateOnly? searchCreatedOnDate = null;
+        if (!string.IsNullOrEmpty(search)
+            && DateOnly.TryParseExact(search, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedSearchDate))
+        {
+            searchCreatedOnDate = parsedSearchDate;
+        }
+
+        var associatedUserId = query.User == Guid.Empty ? null : query.User;
+
         var filter = new OrganizationIdeaListFilter(
             organizationId,
             createdBy,
             assignedTo,
             new PageRequest(query.Page, query.PageSize),
-            query.Search?.Trim(),
+            search,
             query.SortBy,
             query.SortDirection,
             fieldFilters,
-            searchTextFieldIds);
+            searchTextFieldIds,
+            string.IsNullOrWhiteSpace(query.Tag) ? null : query.Tag.Trim(),
+            associatedUserId,
+            searchCreatedOnDate);
 
         var page = await _ideaRepository.ListByOrganizationAsync(filter, cancellationToken);
         var items = await ProjectListItemsAsync(organizationId, page.Items, cancellationToken);

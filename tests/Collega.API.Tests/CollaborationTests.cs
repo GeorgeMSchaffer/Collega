@@ -475,6 +475,80 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         Assert.Equal(2, unknown!.TotalCount);
     }
 
+    // Sprint 3: all-column search, tag filter, user-association filter, server-side sort ----------
+
+    [Fact]
+    public async Task OrganizationIdeas_FiltersByTag()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Tagged idea", description = "d", priority = "Low", tagNames = new[] { "Roadmap" } });
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Plain idea", description = "d", priority = "Low" });
+
+        var list = await admin.GetFromJsonAsync<PagedResponse<IdeaListItemResponse>>(
+            $"/api/v1/organizations/{org.OrganizationId}/ideas?tag=roadmap", Json);
+
+        Assert.Equal("Tagged idea", Assert.Single(list!.Items).Title);
+    }
+
+    [Fact]
+    public async Task OrganizationIdeas_FiltersByAssociatedUser_MatchesAuthorOrAssignee()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+
+        var member = await CreateUserAsync(admin, org.OrganizationId, "User");
+        using var memberClient = await LoginAsync(member.Email);
+
+        await CreateIdeaAsync(memberClient, org.DefaultBoardId, new { title = "Member authored", description = "d", priority = "Low" });
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Assigned to member", description = "d", priority = "Low", assigneeUserIds = new[] { member.UserId } });
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Unrelated", description = "d", priority = "Low" });
+
+        var list = await admin.GetFromJsonAsync<PagedResponse<IdeaListItemResponse>>(
+            $"/api/v1/organizations/{org.OrganizationId}/ideas?user={member.UserId}&pageSize=100", Json);
+
+        Assert.Equal(2, list!.TotalCount);
+        Assert.DoesNotContain(list.Items, i => i.Title == "Unrelated");
+    }
+
+    [Fact]
+    public async Task OrganizationIdeas_Search_MatchesAuthorName()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+
+        var member = await CreateUserAsync(admin, org.OrganizationId, "User");
+        using var memberClient = await LoginAsync(member.Email);
+        await CreateIdeaAsync(memberClient, org.DefaultBoardId, new { title = "Member idea", description = "d", priority = "Low" });
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Admin idea", description = "d", priority = "Low" });
+
+        // CreateUserAsync names members "Test <Role>"; the seeded Site Admin is "Site Admin", so a search
+        // for "Test" matches only the member-authored idea.
+        var list = await admin.GetFromJsonAsync<PagedResponse<IdeaListItemResponse>>(
+            $"/api/v1/organizations/{org.OrganizationId}/ideas?search=Test&pageSize=100", Json);
+
+        Assert.Contains(list!.Items, i => i.Title == "Member idea");
+        Assert.DoesNotContain(list.Items, i => i.Title == "Admin idea");
+    }
+
+    [Fact]
+    public async Task OrganizationIdeas_SortsByTitle_ServerSide()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Zebra", description = "d", priority = "Low" });
+        await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Apple", description = "d", priority = "Low" });
+
+        var list = await admin.GetFromJsonAsync<PagedResponse<IdeaListItemResponse>>(
+            $"/api/v1/organizations/{org.OrganizationId}/ideas?sortBy=title&sortDirection=asc&pageSize=100", Json);
+
+        Assert.Equal(new[] { "Apple", "Zebra" }, list!.Items.Select(i => i.Title).ToArray());
+    }
+
     [Fact]
     public async Task Idea_Csv_Export_Then_Import_RoundTrips_And_Rejects_Bad_Rows()
     {
