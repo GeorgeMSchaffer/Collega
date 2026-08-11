@@ -421,7 +421,7 @@
         <div class="field">
             <label>Preview</label>
             <div class="preview">
-                <TypeBadge Name="@(string.IsNullOrWhiteSpace(_form.Name) ? "Untitled type" : _form.Name)" ColorHex="_form.ColorHex" Icon="_form.Icon" />
+                <TypeBadge Name="@(string.IsNullOrWhiteSpace(_form.Name) ? "Untitled type" : _form.Name)" ColorHex="@_form.ColorHex" Icon="@_form.Icon" />
                 <span class="hint" style="margin:0">How this type appears as a badge on cards, the ideas list, and idea detail.</span>
             </div>
         </div>
