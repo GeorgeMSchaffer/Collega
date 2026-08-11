@@ -103,7 +103,7 @@ Locked design: right slide-in **drawer** + centered **create modal**, URL-addres
 | `?idea={id}` / bare `/ideas/{id}` deep-link opens the drawer | ✅ | `e2e/05` — also asserts retired `/ideas/{id}/edit` opens no editor |
 | Create idea via modal returns to list on success (no auto-open) | 🟡 | board path proven by `e2e/04`; `/ideas` Add New path opens brainstorm-modal-first (WIP), unautomated |
 | Idea engagement: upvote, comment, tags, mentions, 0–5 assignees, status move | ✅ | `e2e/05` — upvote, comment(+@mention token), add tag+assignee, status move; assignee driven as Org Admin (User picker is empty — org-user list is Org-Admin+); mention *delivery* stays server-verified |
-| Admin delete of an idea | ⬜ | drawer danger-zone; needs an Org/Site Admin author or admin-visible idea |
+| Admin delete of an idea | ✅ | `e2e/07` — Org Admin arms + confirms the drawer danger-zone; idea leaves the list and a deep-link to it can no longer load (soft-deleted) |
 
 ### Board detail — List & Swim Lanes — (no file yet)
 | Case | Status | Notes |

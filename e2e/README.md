@@ -14,6 +14,7 @@ from the in-process `Collega.API.Tests` HTTP integration suite.
 | `04-board-and-card.spec.ts` | 6. Org Admin creates a board · 7. User adds a card · 8. User moves the card through all statuses |
 | `05-idea-drawer-engagement.spec.ts` | 9. drawer opens from the Ideas list + is URL-addressable (`?idea=`, bare `/ideas/{id}`; `/edit` retired) · 10. upvote · 11. comment (with @mention token) · 12. edit adds a tag + assignee · 13. status move from the drawer |
 | `06-ideas-list-surface.spec.ts` | 14. scope chips + server-side search + clear · 15. sortable column headers · 16. page-size options |
+| `07-idea-admin-delete.spec.ts` | 17. Org Admin deletes an idea from the drawer danger zone · 18. a deep-link to the deleted idea no longer loads |
 
 \* There is no hard-delete user endpoint; "delete" is implemented as **deactivate** (status → Inactive),
 which is the app's actual behavior.
