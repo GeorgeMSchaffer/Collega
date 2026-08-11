@@ -10,12 +10,22 @@ public sealed partial class ApiClient
         GetAsync<IdeaDetailDto>($"{BasePath}/ideas/{ideaId}", ct);
 
     /// <summary>The organization-wide idea list for the global /ideas page. <paramref name="scope"/>
-    /// is all/created/assigned; newest-first by default.</summary>
+    /// is all/created/assigned; newest-first by default. <paramref name="tag"/> filters by normalized
+    /// tag name, <paramref name="user"/> (a GUID string) filters to ideas the given user authored or is
+    /// assigned to, and <paramref name="sortBy"/>/<paramref name="sortDirection"/> drive server-side
+    /// column sorting (SPEC/30-Contracts.md org ideas route).</summary>
     public Task<ApiResult<PagedResultDto<IdeaListItemDto>>> GetOrganizationIdeasAsync(
         string organizationId, string? scope, string? search, int page, int pageSize,
-        IReadOnlyDictionary<string, string>? fieldFilters = null, CancellationToken ct = default)
+        IReadOnlyDictionary<string, string>? fieldFilters = null,
+        string? tag = null, string? user = null, string? sortBy = null, string? sortDirection = null,
+        CancellationToken ct = default)
     {
-        var url = $"{BasePath}/organizations/{organizationId}/ideas?page={page}&pageSize={pageSize}&sortDirection=desc";
+        var direction = string.IsNullOrWhiteSpace(sortDirection) ? "desc" : sortDirection;
+        var url = $"{BasePath}/organizations/{organizationId}/ideas?page={page}&pageSize={pageSize}&sortDirection={Uri.EscapeDataString(direction)}";
+        if (!string.IsNullOrWhiteSpace(sortBy))
+        {
+            url += $"&sortBy={Uri.EscapeDataString(sortBy)}";
+        }
         if (!string.IsNullOrWhiteSpace(scope) && scope != "all")
         {
             url += $"&scope={Uri.EscapeDataString(scope)}";
@@ -23,6 +33,14 @@ public sealed partial class ApiClient
         if (!string.IsNullOrWhiteSpace(search))
         {
             url += $"&search={Uri.EscapeDataString(search)}";
+        }
+        if (!string.IsNullOrWhiteSpace(tag))
+        {
+            url += $"&tag={Uri.EscapeDataString(tag)}";
+        }
+        if (!string.IsNullOrWhiteSpace(user))
+        {
+            url += $"&user={Uri.EscapeDataString(user)}";
         }
         // User-Defined Field filters serialize as fieldFilters[<fieldDefinitionId>]=<value> (T059).
         if (fieldFilters is not null)
@@ -44,7 +62,7 @@ public sealed partial class ApiClient
         var items = new List<IdeaListItemDto>();
         for (var page = 1; ; page++)
         {
-            var result = await GetOrganizationIdeasAsync(organizationId, "all", search, page, 250, null, ct);
+            var result = await GetOrganizationIdeasAsync(organizationId, "all", search, page, 250, null, ct: ct);
             if (!result.Succeeded)
             {
                 return ApiResult<List<IdeaListItemDto>>.Failure(result.StatusCode, result.Error ?? "Couldn't load ideas.");

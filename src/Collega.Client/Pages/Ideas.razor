@@ -64,6 +64,14 @@
                             <option value="@s.StatusId">@s.Name</option>
                         }
                     </select>
+                    <input class="tagfilter" type="text" aria-label="Filter by tag" placeholder="Tag…" value="@_tagFilter" @onchange="OnTagFilterChanged" />
+                    <select aria-label="Filter by user (created or assigned)" value="@_userFilter" @onchange="OnUserFilterChanged">
+                        <option value="">Any user</option>
+                        @foreach (var u in _orgUsers)
+                        {
+                            <option value="@u.UserId">@u.DisplayName</option>
+                        }
+                    </select>
                 </div>
             }
             @if (_fieldDefs.Count > 0)
@@ -159,7 +167,22 @@
             <div class="card">
                 <table>
                     <thead>
-                        <tr><th>Title</th>@if (_isSiteAdmin) { <th>Organization</th> }<th>Idea Type</th><th>Created By</th><th>Assigned To</th><th>Status</th><th>Created</th><th></th></tr>
+                        @if (_isSiteAdmin)
+                        {
+                            <tr><th>Title</th><th>Organization</th><th>Idea Type</th><th>Created By</th><th>Assigned To</th><th>Status</th><th>Created</th><th></th></tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <th class="sortable @SortClass("title")" @onclick='() => Sort("title")' aria-sort="@AriaSort("title")">Title<span class="sortind">@SortIndicator("title")</span></th>
+                                <th>Idea Type</th>
+                                <th class="sortable @SortClass("createdBy")" @onclick='() => Sort("createdBy")' aria-sort="@AriaSort("createdBy")">Created By<span class="sortind">@SortIndicator("createdBy")</span></th>
+                                <th class="sortable @SortClass("assignedTo")" @onclick='() => Sort("assignedTo")' aria-sort="@AriaSort("assignedTo")">Assigned To<span class="sortind">@SortIndicator("assignedTo")</span></th>
+                                <th class="sortable @SortClass("status")" @onclick='() => Sort("status")' aria-sort="@AriaSort("status")">Status<span class="sortind">@SortIndicator("status")</span></th>
+                                <th class="sortable @SortClass("createdAt")" @onclick='() => Sort("createdAt")' aria-sort="@AriaSort("createdAt")">Created<span class="sortind">@SortIndicator("createdAt")</span></th>
+                                <th></th>
+                            </tr>
+                        }
                     </thead>
                     <tbody>
                         @foreach (var idea in FilteredItems)
@@ -256,6 +279,14 @@
     private string _typeFilter = "";
     private string _statusFilter = "";
 
+    // Server-side tag / user-association filters and column sort (Sprint 3, SPEC/30-Contracts.md org
+    // ideas route). tag = normalized tag name; user = a member's UserId (authored OR assigned).
+    private string _tagFilter = "";
+    private string _userFilter = "";
+    private string _sortBy = "createdAt";
+    private string _sortDirection = "desc";
+    private IReadOnlyList<(string UserId, string DisplayName)> _orgUsers = Array.Empty<(string, string)>();
+
     // Drawer + create modal state.
     private string? _openIdeaId;
     private bool _showBrainstorm;
@@ -351,6 +382,10 @@
             {
                 _authorNames[u.UserId] = $"{u.FirstName} {u.LastName}".Trim();
             }
+            _orgUsers = users.Value!.Items
+                .Select(u => (u.UserId, DisplayName: string.IsNullOrWhiteSpace($"{u.FirstName} {u.LastName}".Trim()) ? u.Email : $"{u.FirstName} {u.LastName}".Trim()))
+                .OrderBy(u => u.DisplayName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         var fields = await Api.GetActiveFieldDefinitionsAsync(_organizationId!);
@@ -488,7 +523,9 @@
             return;
         }
 
-        var result = await Api.GetOrganizationIdeasAsync(_organizationId!, _scope, _search, _page, _pageSize, BuildFieldFilters());
+        var result = await Api.GetOrganizationIdeasAsync(
+            _organizationId!, _scope, _search, _page, _pageSize, BuildFieldFilters(),
+            _tagFilter, _userFilter, _sortBy, _sortDirection);
         if (result.Succeeded)
         {
             _items.AddRange(result.Value!.Items);
@@ -516,6 +553,55 @@
     private void OnTypeFilterChanged(ChangeEventArgs e) => _typeFilter = e.Value?.ToString() ?? "";
 
     private void OnStatusFilterChanged(ChangeEventArgs e) => _statusFilter = e.Value?.ToString() ?? "";
+
+    private async Task OnTagFilterChanged(ChangeEventArgs e)
+    {
+        var next = (e.Value?.ToString() ?? "").Trim();
+        if (next == _tagFilter)
+        {
+            return;
+        }
+        _tagFilter = next;
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private async Task OnUserFilterChanged(ChangeEventArgs e)
+    {
+        var next = e.Value?.ToString() ?? "";
+        if (next == _userFilter)
+        {
+            return;
+        }
+        _userFilter = next;
+        _page = 1;
+        await LoadAsync();
+    }
+
+    // Column-header sort: clicking the active column flips direction, a new column starts ascending.
+    // Keys map to the server sortBy values (SPEC/30-Contracts.md org ideas route).
+    private async Task Sort(string key)
+    {
+        if (_sortBy == key)
+        {
+            _sortDirection = _sortDirection == "asc" ? "desc" : "asc";
+        }
+        else
+        {
+            _sortBy = key;
+            _sortDirection = "asc";
+        }
+        _page = 1;
+        await LoadAsync();
+    }
+
+    private string SortClass(string key) => _sortBy == key ? "sorted" : "";
+
+    private string SortIndicator(string key) =>
+        _sortBy != key ? "" : (_sortDirection == "asc" ? "▲" : "▼");
+
+    private string AriaSort(string key) =>
+        _sortBy != key ? "none" : (_sortDirection == "asc" ? "ascending" : "descending");
 
     private async Task OnSearchChanged(ChangeEventArgs e)
     {
