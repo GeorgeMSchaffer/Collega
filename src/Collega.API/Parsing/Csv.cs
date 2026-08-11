@@ -7,9 +7,24 @@ namespace Collega.API.Parsing;
 /// legacy user-import splitter, this handles quoted fields with embedded commas, escaped quotes
 /// (<c>""</c>), and embedded newlines — idea descriptions routinely contain commas, so a naive split
 /// would corrupt them. Fields are quoted on write only when they contain a comma, quote, or newline.
+///
+/// <para><b>Formula injection (CWE-1236).</b> Spreadsheet applications evaluate a cell whose text
+/// begins with <c>=</c>, <c>+</c>, <c>-</c>, <c>@</c>, tab, or CR as a formula when the file is
+/// opened, so user-authored content exported verbatim can execute in the reader's spreadsheet (a
+/// <c>=HYPERLINK(...)</c> exfiltration or a DDE payload). <see cref="Write"/> prefixes a guard
+/// apostrophe on such cells, and <see cref="Parse"/> strips the same guard, so Write/Parse remain a
+/// lossless pair and an export → edit → re-import round trip is unchanged.</para>
 /// </summary>
 public static class Csv
 {
+    /// <summary>Leading characters that make a spreadsheet treat a cell as a formula.</summary>
+    private static readonly char[] FormulaTriggers = { '=', '+', '-', '@', '\t', '\r' };
+
+    /// <summary>Characters that force RFC 4180 quoting.</summary>
+    private static readonly char[] QuoteTriggers = { ',', '"', '\n', '\r' };
+
+    private const char FormulaGuard = '\'';
+
     /// <summary>Parses CSV text into records of raw field strings. A trailing newline does not produce
     /// an empty trailing record.</summary>
     public static IReadOnlyList<IReadOnlyList<string>> Parse(string? content)
@@ -58,12 +73,12 @@ public static class Csv
                     sawAny = true;
                     break;
                 case ',':
-                    record.Add(field.ToString());
+                    record.Add(StripFormulaGuard(field.ToString()));
                     field.Clear();
                     sawAny = true;
                     break;
                 case '\n':
-                    record.Add(field.ToString());
+                    record.Add(StripFormulaGuard(field.ToString()));
                     field.Clear();
                     records.Add(record);
                     record = new List<string>();
@@ -79,7 +94,7 @@ public static class Csv
         // Flush a final record only if the last line carried content (no phantom trailing record).
         if (sawAny || field.Length > 0 || record.Count > 0)
         {
-            record.Add(field.ToString());
+            record.Add(StripFormulaGuard(field.ToString()));
             records.Add(record);
         }
 
@@ -117,11 +132,32 @@ public static class Csv
     private static string Escape(string? value)
     {
         value ??= string.Empty;
-        if (value.IndexOfAny(new[] { ',', '"', '\n', '\r' }) < 0)
+
+        // Guard before quoting: the apostrophe becomes part of the cell text, so it must be inside
+        // the quotes when the value also needs quoting.
+        if (NeedsFormulaGuard(value))
+        {
+            value = FormulaGuard + value;
+        }
+
+        if (value.IndexOfAny(QuoteTriggers) < 0)
         {
             return value;
         }
 
         return "\"" + value.Replace("\"", "\"\"") + "\"";
     }
+
+    private static bool NeedsFormulaGuard(string value) =>
+        value.Length > 0 && Array.IndexOf(FormulaTriggers, value[0]) >= 0;
+
+    /// <summary>
+    /// Removes the guard apostrophe <see cref="Escape"/> adds, and only that: a leading apostrophe
+    /// is stripped solely when the next character is itself a formula trigger. A field that
+    /// genuinely starts with an apostrophe (<c>'tis</c>) is left untouched.
+    /// </summary>
+    private static string StripFormulaGuard(string field) =>
+        field.Length >= 2 && field[0] == FormulaGuard && Array.IndexOf(FormulaTriggers, field[1]) >= 0
+            ? field[1..]
+            : field;
 }

@@ -228,12 +228,25 @@ public sealed class User : AuditableEntityBase
         MarkUpdated(nowUtc, null);
     }
 
+    /// <summary>
+    /// Clears the failed-attempt/lockout counters after a successful authentication.
+    /// </summary>
+    /// <remarks>
+    /// The temporary-password deadline survives here on purpose. Only a completed rotation
+    /// (<see cref="ChangePassword"/>) retires it — clearing it on login instead would turn an
+    /// unrotated admin-issued temporary password, one the issuing admin still knows, into a
+    /// permanent credential, which is what auth requirement #13's expiry exists to prevent.
+    /// </remarks>
     public void RegisterSuccessfulLogin(DateTime nowUtc)
     {
         FailedLoginCount = 0;
         LockoutWindowStartUtc = null;
         LockedUntilUtc = null;
-        TemporaryPasswordExpiresAtUtc = null;
+
+        if (!MustChangePassword)
+        {
+            TemporaryPasswordExpiresAtUtc = null;
+        }
 
         MarkUpdated(nowUtc, Id);
     }

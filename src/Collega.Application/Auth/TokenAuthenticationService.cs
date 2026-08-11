@@ -41,6 +41,7 @@ public sealed class TokenAuthenticationService : ITokenAuthenticationService
             return null;
         }
 
-        return new AuthenticatedPrincipal(user.Id, user.OrganizationId, user.Role, user.FirstName, user.LastName, user.Email, user.Status);
+        return new AuthenticatedPrincipal(
+            user.Id, user.OrganizationId, user.Role, user.FirstName, user.LastName, user.Email, user.Status, user.MustChangePassword);
     }
 }
