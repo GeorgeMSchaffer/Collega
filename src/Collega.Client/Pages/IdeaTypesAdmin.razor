@@ -14,6 +14,11 @@
     enforces the one-active-type floor and immutability of an idea's type after creation; this page mirrors
     the floor client-side (Archive is disabled at one active type) and surfaces any server rejection inline.
     Drag the handle to reorder — the order drives the type selector on the new-idea form.
+
+    Surface pattern (Sprint 2): the list owns selection; a row's Edit action opens the shared right
+    slide-in DrawerShell (detail, with an Edit toggle → inline edit form + pinned footer), and "Add New"
+    opens the centered CreateModalShell. Manual reorder stays in the list rows. Both surfaces share one
+    form fragment and block dismissal mid-save.
 *@
 <div class="pagehead">
     <div class="crumbs"><a href="/settings">Settings</a> / Idea types</div>
@@ -35,7 +40,7 @@
             <ListToolbar TItem="IdeaTypeOptionDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search idea types…" OnChanged="StateHasChanged" />
             @if (!_siteAdminGlobal)
             {
-                <button class="btn primary" @onclick="StartCreate" disabled="@_editing" style="margin-left:auto">Add New</button>
+                <button class="btn primary" @onclick="StartCreate" disabled="@AnyOpen" style="margin-left:auto">Add New</button>
             }
         </div>
 
@@ -44,137 +49,11 @@
             <div class="autherror" role="alert">@_error</div>
         }
 
-        @if (_editing)
-        {
-            <div class="card formcard editcard" style="margin-bottom:16px">
-                <h3 style="font-family:Georgia,serif;font-size:16px;margin-bottom:14px">@(_editId is null ? "New idea type" : "Edit idea type")</h3>
-                <div class="field">
-                    <label for="name">Name</label>
-                    <FluentTextField id="name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
-                </div>
-
-                <div class="field">
-                    <label>Color</label>
-                    <div class="picker">
-                        <div class="opt none @(_form.ColorHex is null ? "sel" : null)" title="No color (neutral badge)"
-                             @onclick="() => PickColor(null)">@(_form.ColorHex is null ? "✓" : "")</div>
-                        @foreach (var hex in ColorPalette)
-                        {
-                            var h = hex;
-                            <div class="opt @(string.Equals(_form.ColorHex, h, StringComparison.OrdinalIgnoreCase) ? "sel" : null)"
-                                 style="@($"background:{h}")" @onclick="() => PickColor(h)">
-                                @(string.Equals(_form.ColorHex, h, StringComparison.OrdinalIgnoreCase) ? "✓" : "")
-                            </div>
-                        }
-                    </div>
-                    @if (LowContrast(_form.ColorHex))
-                    {
-                        <p class="hint contrastwarn">This color is quite light — the badge text may be hard to read.</p>
-                    }
-                </div>
-
-                <div class="field">
-                    <label>Icon</label>
-                    <div class="iconpick">
-                        <div class="opt none @(_form.Icon is null ? "sel" : null)" title="No icon" @onclick="() => PickIcon(null)">∅</div>
-                        @foreach (var ic in IconPalette)
-                        {
-                            var i = ic;
-                            <div class="opt @(string.Equals(_form.Icon, i, StringComparison.Ordinal) ? "sel" : null)"
-                                 @onclick="() => PickIcon(i)">@i</div>
-                        }
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label>Preview</label>
-                    <div class="preview">
-                        <TypeBadge Name="@(string.IsNullOrWhiteSpace(_form.Name) ? "Untitled type" : _form.Name)" ColorHex="_form.ColorHex" Icon="_form.Icon" />
-                        <span class="hint" style="margin:0">How this type appears as a badge on cards, the ideas list, and idea detail.</span>
-                    </div>
-                </div>
-
-                <label style="margin-top:6px">Custom fields on this type <span class="charlim">— pick from the org's fields; drag to order; toggle required per field</span></label>
-                @if (_fieldDefs.Count == 0)
-                {
-                    <p class="hint">This organization has no active custom fields yet. Add fields under Settings → Custom fields, then curate them here.</p>
-                }
-                else
-                {
-                    <div class="twopane">
-                        <div class="pane">
-                            <div class="ph"><span>Available org fields</span><span class="muted">@AvailableFields.Count</span></div>
-                            <div class="lst">
-                                @if (AvailableFields.Count == 0)
-                                {
-                                    <p class="hint" style="padding:8px">All fields are on this type.</p>
-                                }
-                                @foreach (var f in AvailableFields)
-                                {
-                                    var fd = f;
-                                    <div class="frow">
-                                        <span class="nm">@fd.Name</span>
-                                        <span class="ty">@fd.FieldType</span>
-                                        <button class="btn subtle sm" @onclick="() => AddField(fd)" disabled="@_busy">Add →</button>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                        <div class="pane">
-                            <div class="ph">
-                                <span>On this type — drag to order</span>
-                                <span class="muted">@_chosen.Count</span>
-                            </div>
-                            <div class="lst">
-                                @if (_chosen.Count == 0)
-                                {
-                                    <p class="hint" style="padding:8px">No fields chosen — this type shows <strong>all active fields</strong> (AllActiveFields). Add fields to curate it.</p>
-                                }
-                                @for (var i = 0; i < _chosen.Count; i++)
-                                {
-                                    var index = i;
-                                    var c = _chosen[index];
-                                    <div class="frow chosen @(_fieldDragIndex == index ? "dragging" : null) @(_fieldDragOverIndex == index ? "dragover" : null)"
-                                         draggable="true"
-                                         @ondragstart="() => OnFieldDragStart(index)"
-                                         @ondragover:preventDefault="true"
-                                         @ondragenter="() => OnFieldDragEnter(index)"
-                                         @ondrop="() => OnFieldDrop(index)"
-                                         @ondragend="OnFieldDragEnd">
-                                        <span class="grip" aria-hidden="true"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></span>
-                                        <span class="nm">@c.Field.Name</span>
-                                        <span class="ty">@c.Field.FieldType</span>
-                                        <label class="toggle @(c.Required ? "on" : null)">
-                                            <input type="checkbox" checked="@c.Required" @onchange="e => SetRequired(index, (bool)(e.Value ?? false))" disabled="@_busy" />
-                                            Required
-                                        </label>
-                                        <button class="btn danger sm" title="Remove from this type" @onclick="() => RemoveField(index)" disabled="@_busy">×</button>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                    @if (_chosen.Count > 0)
-                    {
-                        <div style="margin-top:8px">
-                            <button class="btn subtle sm" @onclick="ClearFields" disabled="@_busy">Clear / show all fields</button>
-                            <span class="hint" style="margin-left:6px">Clearing returns this type to AllActiveFields.</span>
-                        </div>
-                    }
-                }
-
-                <div class="btnrow" style="margin-top:16px">
-                    <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save idea type")</button>
-                    <button class="btn" @onclick="Cancel" disabled="@_busy">Cancel</button>
-                </div>
-            </div>
-        }
-
         @if (CanReorder)
         {
             <p class="reorder-hint"><span class="grip"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></span> Drag the handle to reorder idea types. The new-idea form lists them in this order.</p>
         }
-        else if (!_siteAdminGlobal && _types.Count > 1 && !_editing && !_list.ShowsAllInOrder)
+        else if (!_siteAdminGlobal && _types.Count > 1 && !AnyOpen && !_list.ShowsAllInOrder)
         {
             <p class="reorder-hint">Clear the search and show all idea types on one page to reorder them.</p>
         }
@@ -215,10 +94,7 @@
                                 }
                                 else
                                 {
-                                    <button class="btn subtle" @onclick="() => StartEdit(t)" disabled="@_editing">Edit</button>
-                                    <button class="btn danger" @onclick="() => Delete(t)"
-                                            disabled="@(_editing || _types.Count <= 1)"
-                                            title="@(_types.Count <= 1 ? "Cannot archive the last remaining idea type; every idea must have one." : null)">Archive</button>
+                                    <button class="btn subtle" @onclick="() => OpenDrawer(t)" disabled="@AnyOpen">Edit</button>
                                 }
                             </td>
                         </tr>
@@ -237,6 +113,60 @@
         }
     }
 </div>
+
+@* ---- Detail + edit drawer (org-scoped view only) ---- *@
+<DrawerShell IsOpen="@(_selected is not null)" OnClose="CloseDrawer"
+             Eyebrow="Idea type" Title="@(_selected?.Name ?? "Idea type")"
+             FooterContent="@(_drawerEditing ? RenderEditFooter : null)">
+    @if (_selected is not null)
+    {
+        @if (_formError is not null)
+        {
+            <div class="autherror" role="alert">@_formError</div>
+        }
+
+        @if (_drawerEditing)
+        {
+            @RenderTypeForm
+        }
+        else
+        {
+            <div class="field">
+                <label>Preview</label>
+                <div class="preview">
+                    <TypeBadge Name="@_selected.Name" ColorHex="@_selected.ColorHex" Icon="@_selected.Icon" />
+                    <span class="hint" style="margin:0">How this type appears as a badge on cards, the ideas list, and idea detail.</span>
+                </div>
+            </div>
+            <div class="field">
+                <label>Fields on this type</label>
+                <div>@RenderFieldSummary(_selected)</div>
+            </div>
+            <div class="field">
+                <label>Sort order</label>
+                <div>@_selected.SortOrder</div>
+            </div>
+
+            <div class="btnrow" style="margin-top:16px">
+                <button class="btn primary" @onclick="BeginDrawerEdit">Edit idea type</button>
+                <button class="btn danger" @onclick="DeleteFromDrawer"
+                        disabled="@(_busy || _types.Count <= 1)"
+                        title="@(_types.Count <= 1 ? "Cannot archive the last remaining idea type; every idea must have one." : null)">Archive</button>
+            </div>
+        }
+    }
+</DrawerShell>
+
+@* ---- Create modal (org-scoped view only) ---- *@
+<CreateModalShell IsOpen="_showCreate" OnClose="CloseCreate"
+                  Eyebrow="New idea type" Title="New idea type"
+                  FooterContent="RenderCreateFooter">
+    @if (_formError is not null)
+    {
+        <div class="autherror" role="alert">@_formError</div>
+    }
+    @RenderTypeForm
+</CreateModalShell>
 
 @code {
     // Present on the Site-Admin org-scoped route; absent on the Org Admin route (org from the claim).
@@ -272,11 +202,17 @@
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
     private bool _loading = true;
     private bool _busy;
-    private bool _editing;
     private string? _editId;
     private FormModel _form = new();
     private readonly List<ChosenField> _chosen = new();
-    private string? _error;
+    private string? _error;      // page-level (load / reorder) errors
+    private string? _formError;  // drawer/modal (create / edit / archive) errors
+
+    // Surface state. The drawer holds the currently opened type (null = closed); the create modal is
+    // separate. Only one surface is ever open at a time, so both share _form / _chosen / _editId.
+    private IdeaTypeOptionDto? _selected;
+    private bool _showCreate;
+    private bool _drawerEditing;
 
     // Drag-reorder state for the type LIST (per-org view only).
     private int? _dragIndex;
@@ -286,7 +222,8 @@
     private int? _fieldDragIndex;
     private int? _fieldDragOverIndex;
 
-    private bool CanReorder => !_siteAdminGlobal && !_editing && _types.Count > 1 && _list.ShowsAllInOrder;
+    private bool AnyOpen => _selected is not null || _showCreate;
+    private bool CanReorder => !_siteAdminGlobal && !AnyOpen && _types.Count > 1 && _list.ShowsAllInOrder;
 
     // All-column search text: name + org + sort order + a flat rendering of the type's field selection.
     private string TypeSearchText(IdeaTypeOptionDto t)
@@ -441,27 +378,190 @@
         }
     };
 
-    // ---- Editor open/close ----
+    // ---- Shared create/edit form (rendered inside the drawer edit body and the create modal) ----
+    private RenderFragment RenderTypeForm => @<text>
+        <div class="field">
+            <label for="type-name">Name</label>
+            <FluentTextField id="type-name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
+        </div>
+
+        <div class="field">
+            <label>Color</label>
+            <div class="picker">
+                <div class="opt none @(_form.ColorHex is null ? "sel" : null)" title="No color (neutral badge)"
+                     @onclick="() => PickColor(null)">@(_form.ColorHex is null ? "✓" : "")</div>
+                @foreach (var hex in ColorPalette)
+                {
+                    var h = hex;
+                    <div class="opt @(string.Equals(_form.ColorHex, h, StringComparison.OrdinalIgnoreCase) ? "sel" : null)"
+                         style="@($"background:{h}")" @onclick="() => PickColor(h)">
+                        @(string.Equals(_form.ColorHex, h, StringComparison.OrdinalIgnoreCase) ? "✓" : "")
+                    </div>
+                }
+            </div>
+            @if (LowContrast(_form.ColorHex))
+            {
+                <p class="hint contrastwarn">This color is quite light — the badge text may be hard to read.</p>
+            }
+        </div>
+
+        <div class="field">
+            <label>Icon</label>
+            <div class="iconpick">
+                <div class="opt none @(_form.Icon is null ? "sel" : null)" title="No icon" @onclick="() => PickIcon(null)">∅</div>
+                @foreach (var ic in IconPalette)
+                {
+                    var i = ic;
+                    <div class="opt @(string.Equals(_form.Icon, i, StringComparison.Ordinal) ? "sel" : null)"
+                         @onclick="() => PickIcon(i)">@i</div>
+                }
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Preview</label>
+            <div class="preview">
+                <TypeBadge Name="@(string.IsNullOrWhiteSpace(_form.Name) ? "Untitled type" : _form.Name)" ColorHex="_form.ColorHex" Icon="_form.Icon" />
+                <span class="hint" style="margin:0">How this type appears as a badge on cards, the ideas list, and idea detail.</span>
+            </div>
+        </div>
+
+        <label style="margin-top:6px">Custom fields on this type <span class="charlim">— pick from the org's fields; drag to order; toggle required per field</span></label>
+        @if (_fieldDefs.Count == 0)
+        {
+            <p class="hint">This organization has no active custom fields yet. Add fields under Settings → Custom fields, then curate them here.</p>
+        }
+        else
+        {
+            <div class="twopane">
+                <div class="pane">
+                    <div class="ph"><span>Available org fields</span><span class="muted">@AvailableFields.Count</span></div>
+                    <div class="lst">
+                        @if (AvailableFields.Count == 0)
+                        {
+                            <p class="hint" style="padding:8px">All fields are on this type.</p>
+                        }
+                        @foreach (var f in AvailableFields)
+                        {
+                            var fd = f;
+                            <div class="frow">
+                                <span class="nm">@fd.Name</span>
+                                <span class="ty">@fd.FieldType</span>
+                                <button class="btn subtle sm" @onclick="() => AddField(fd)" disabled="@_busy">Add →</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="pane">
+                    <div class="ph">
+                        <span>On this type — drag to order</span>
+                        <span class="muted">@_chosen.Count</span>
+                    </div>
+                    <div class="lst">
+                        @if (_chosen.Count == 0)
+                        {
+                            <p class="hint" style="padding:8px">No fields chosen — this type shows <strong>all active fields</strong> (AllActiveFields). Add fields to curate it.</p>
+                        }
+                        @for (var i = 0; i < _chosen.Count; i++)
+                        {
+                            var index = i;
+                            var c = _chosen[index];
+                            <div class="frow chosen @(_fieldDragIndex == index ? "dragging" : null) @(_fieldDragOverIndex == index ? "dragover" : null)"
+                                 draggable="true"
+                                 @ondragstart="() => OnFieldDragStart(index)"
+                                 @ondragover:preventDefault="true"
+                                 @ondragenter="() => OnFieldDragEnter(index)"
+                                 @ondrop="() => OnFieldDrop(index)"
+                                 @ondragend="OnFieldDragEnd">
+                                <span class="grip" aria-hidden="true"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></span>
+                                <span class="nm">@c.Field.Name</span>
+                                <span class="ty">@c.Field.FieldType</span>
+                                <label class="toggle @(c.Required ? "on" : null)">
+                                    <input type="checkbox" checked="@c.Required" @onchange="e => SetRequired(index, (bool)(e.Value ?? false))" disabled="@_busy" />
+                                    Required
+                                </label>
+                                <button class="btn danger sm" title="Remove from this type" @onclick="() => RemoveField(index)" disabled="@_busy">×</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            @if (_chosen.Count > 0)
+            {
+                <div style="margin-top:8px">
+                    <button class="btn subtle sm" @onclick="ClearFields" disabled="@_busy">Clear / show all fields</button>
+                    <span class="hint" style="margin-left:6px">Clearing returns this type to AllActiveFields.</span>
+                </div>
+            }
+        }
+    </text>;
+
+    // Drawer edit-mode action bar (passed as the shell footer only while editing).
+    private RenderFragment RenderEditFooter => @<text>
+        <button class="btn" @onclick="CancelDrawerEdit" disabled="@_busy">Cancel</button>
+        <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save idea type")</button>
+    </text>;
+
+    // Create-modal action bar (passed as the shell footer).
+    private RenderFragment RenderCreateFooter => @<text>
+        <button class="btn" @onclick="CloseCreate" disabled="@_busy">Cancel</button>
+        <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Create idea type")</button>
+    </text>;
+
+    // ---- Surface open/close ----
     private void StartCreate()
     {
         _editId = null;
         _form = new FormModel();
         _chosen.Clear();
-        _error = null;
-        _editing = true;
+        _formError = null;
+        _showCreate = true;
     }
 
-    private void StartEdit(IdeaTypeOptionDto t)
+    private void CloseCreate()
     {
-        _editId = t.IdeaTypeId;
-        _form = new FormModel { Name = t.Name, ColorHex = t.ColorHex, Icon = t.Icon };
+        if (_busy)
+        {
+            return;
+        }
+        _showCreate = false;
+        _formError = null;
+    }
+
+    private void OpenDrawer(IdeaTypeOptionDto t)
+    {
+        _selected = t;
+        _drawerEditing = false;
+        _formError = null;
+    }
+
+    private void CloseDrawer()
+    {
+        if (_busy)
+        {
+            return;
+        }
+        _selected = null;
+        _drawerEditing = false;
+        _formError = null;
+    }
+
+    private void BeginDrawerEdit()
+    {
+        if (_selected is null)
+        {
+            return;
+        }
+
+        _editId = _selected.IdeaTypeId;
+        _form = new FormModel { Name = _selected.Name, ColorHex = _selected.ColorHex, Icon = _selected.Icon };
         _chosen.Clear();
 
-        var curated = string.Equals(t.FieldMode, "Curated", StringComparison.OrdinalIgnoreCase) && t.Fields is { Count: > 0 };
+        var curated = string.Equals(_selected.FieldMode, "Curated", StringComparison.OrdinalIgnoreCase) && _selected.Fields is { Count: > 0 };
         if (curated)
         {
             var byId = _fieldDefs.ToDictionary(f => f.FieldDefinitionId);
-            foreach (var link in t.Fields!.OrderBy(l => l.DisplayOrder))
+            foreach (var link in _selected.Fields!.OrderBy(l => l.DisplayOrder))
             {
                 if (byId.TryGetValue(link.FieldDefinitionId, out var field))
                 {
@@ -470,14 +570,18 @@
             }
         }
 
-        _error = null;
-        _editing = true;
+        _formError = null;
+        _drawerEditing = true;
     }
 
-    private void Cancel()
+    private void CancelDrawerEdit()
     {
-        _editing = false;
-        _error = null;
+        if (_busy)
+        {
+            return;
+        }
+        _drawerEditing = false;
+        _formError = null;
     }
 
     // ---- Appearance pickers ----
@@ -574,28 +678,29 @@
     {
         if (string.IsNullOrWhiteSpace(_form.Name))
         {
-            _error = "An idea type name is required.";
+            _formError = "An idea type name is required.";
             return;
         }
         if (string.IsNullOrEmpty(_organizationId))
         {
-            _error = "Your account isn't associated with an organization.";
+            _formError = "Your account isn't associated with an organization.";
             return;
         }
 
+        var wasCreate = _editId is null;
         _busy = true;
-        _error = null;
+        _formError = null;
 
         // 1. Name (create or update). SortOrder omitted: server appends new types / preserves on edit.
         var body = new SaveIdeaTypeRequestDto(_form.Name.Trim(), null);
         string typeId;
-        if (_editId is null)
+        if (wasCreate)
         {
             var r = await Api.CreateIdeaTypeAsync(_organizationId!, body);
             if (!r.Succeeded || r.Value is null)
             {
                 _busy = false;
-                _error = r.Error ?? "Save failed.";
+                _formError = r.Error ?? "Save failed.";
                 return;
             }
             typeId = r.Value.IdeaTypeId;
@@ -606,7 +711,7 @@
             if (!r.Succeeded)
             {
                 _busy = false;
-                _error = r.Error ?? "Save failed.";
+                _formError = r.Error ?? "Save failed.";
                 return;
             }
             typeId = _editId!;
@@ -617,7 +722,7 @@
         if (!appearance.Succeeded)
         {
             _busy = false;
-            _error = appearance.Error ?? "Saving the type appearance failed.";
+            _formError = appearance.Error ?? "Saving the type appearance failed.";
             return;
         }
 
@@ -627,13 +732,28 @@
         if (!fieldResult.Succeeded)
         {
             _busy = false;
-            _error = fieldResult.Error ?? "Saving the type's field selection failed.";
+            _formError = fieldResult.Error ?? "Saving the type's field selection failed.";
             return;
         }
 
         _busy = false;
-        _editing = false;
         await LoadAsync();
+
+        if (wasCreate)
+        {
+            // Create returns to the list (no auto-open), matching the Ideas create flow.
+            _showCreate = false;
+        }
+        else
+        {
+            // Edit stays in the drawer, re-showing the refreshed detail for the saved type.
+            _selected = _types.FirstOrDefault(t => t.IdeaTypeId == typeId);
+            _drawerEditing = false;
+            if (_selected is null)
+            {
+                CloseDrawer();
+            }
+        }
     }
 
     // ---- Type list reorder ----
@@ -712,17 +832,32 @@
         }
     }
 
-    private async Task Delete(IdeaTypeOptionDto t)
+    private async Task DeleteFromDrawer()
     {
-        _error = null;
-        var result = await Api.DeleteIdeaTypeAsync(t.IdeaTypeId);
+        if (_selected is null)
+        {
+            return;
+        }
+        // Client mirror of the API's one-active-type floor: never archive the last remaining type.
+        if (_types.Count <= 1)
+        {
+            _formError = "Cannot archive the last remaining idea type; every idea must have one.";
+            return;
+        }
+
+        _busy = true;
+        _formError = null;
+        var result = await Api.DeleteIdeaTypeAsync(_selected.IdeaTypeId);
+        _busy = false;
         if (result.Succeeded)
         {
+            _selected = null;
+            _drawerEditing = false;
             await LoadAsync();
         }
         else
         {
-            _error = result.Error;
+            _formError = result.Error;
         }
     }
 }
