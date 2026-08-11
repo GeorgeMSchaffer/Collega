@@ -83,6 +83,55 @@ public sealed class UserServiceTests
         Assert.Single(page.Items);
     }
 
+    // Assignable members (minimal, non-admin listing) ------------------------------------------
+
+    [Fact]
+    public async Task ListAssignableMembers_AsPlainUserInOwnOrg_ReturnsActiveOrgMembersOnly()
+    {
+        _users.Add(Build.User(_org.Id, email: "active@example.com"));
+        _users.Add(Build.User(_org.Id, status: UserStatus.Inactive, email: "inactive@example.com"));
+        _users.Add(Build.User(Guid.NewGuid(), email: "other-org@example.com"));
+        _currentUser.Role = Role.User;
+        _currentUser.OrganizationId = _org.Id;
+        var sut = CreateSut();
+
+        var members = await sut.ListAssignableMembersAsync(_org.Id);
+
+        Assert.Single(members);
+        Assert.Equal("active@example.com", members[0].Email);
+    }
+
+    [Fact]
+    public async Task ListAssignableMembers_AsReadOnlyInOwnOrg_IsAllowed()
+    {
+        _users.Add(Build.User(_org.Id, email: "a@example.com"));
+        _currentUser.Role = Role.ReadOnly;
+        _currentUser.OrganizationId = _org.Id;
+        var sut = CreateSut();
+
+        var members = await sut.ListAssignableMembersAsync(_org.Id);
+
+        Assert.Single(members);
+    }
+
+    [Fact]
+    public async Task ListAssignableMembers_ForDifferentOrg_ThrowsNotFound()
+    {
+        _currentUser.Role = Role.User;
+        _currentUser.OrganizationId = Guid.NewGuid();
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<NotFoundAppException>(() => sut.ListAssignableMembersAsync(_org.Id));
+    }
+
+    [Fact]
+    public async Task ListAssignableMembers_AsSiteAdminForUnknownOrg_ThrowsNotFound()
+    {
+        var sut = CreateSut(); // seeded current user is Site Admin
+
+        await Assert.ThrowsAsync<NotFoundAppException>(() => sut.ListAssignableMembersAsync(Guid.NewGuid()));
+    }
+
     // Create ------------------------------------------------------------------------------------
 
     [Fact]

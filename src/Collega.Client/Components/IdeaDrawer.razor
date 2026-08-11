@@ -384,7 +384,7 @@
     private readonly List<CommentListItemDto> _comments = new();
     private List<StatusItemDto> _statusOptions = new();
     private readonly Dictionary<string, string> _names = new();
-    private IReadOnlyList<UserListItemDto> _orgUsers = Array.Empty<UserListItemDto>();
+    private IReadOnlyList<OrganizationMemberDto> _orgUsers = Array.Empty<OrganizationMemberDto>();
     private IReadOnlyList<BusinessImpactOptionDto> _businessImpacts = Array.Empty<BusinessImpactOptionDto>();
 
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
@@ -440,9 +440,9 @@
 
     private string BoardName => _boardName;
 
-    private IEnumerable<UserListItemDto> AssignableUsers =>
-        _orgUsers.Where(u => !_assigneeIds.Contains(u.UserId)
-            && string.Equals(u.Status, "Active", StringComparison.OrdinalIgnoreCase));
+    // The members endpoint already returns only active members, so we filter only out the already-chosen.
+    private IEnumerable<OrganizationMemberDto> AssignableUsers =>
+        _orgUsers.Where(u => !_assigneeIds.Contains(u.UserId));
 
     private IdeaTypeOptionDto? SelectedIdeaType =>
         _idea is null ? null : _ideaTypes.FirstOrDefault(t => t.IdeaTypeId == _idea.IdeaTypeId);
@@ -529,7 +529,7 @@
             {
                 _businessImpacts = impactsResult.Value!.OrderBy(b => b.SortOrder).ToList();
             }
-            var users = await Api.GetAllOrganizationUsersAsync(_organizationId);
+            var users = await Api.GetAssignableMembersAsync(_organizationId);
             if (users.Succeeded && users.Value is not null)
             {
                 _orgUsers = users.Value;

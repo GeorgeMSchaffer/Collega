@@ -110,11 +110,11 @@ test.describe.serial('Idea drawer & engagement', () => {
     await expect(page.getByText(commentBody, { exact: false })).toBeVisible();
   });
 
-  test('Org Admin edits the idea: adds a tag and an assignee, then saves', async ({ page }) => {
-    // Edited as Org Admin, not the authoring User: listing org users (which populates the assignee
-    // picker) is Org-Admin+ only, so a plain User sees an empty picker — see the "Unassigned picker for
-    // Users" note in e2e/README.md. Editing another member's idea is permitted for Org Admin.
-    await loginExpectingShell(page, ACCOUNTS.orgAdmin.email, ACCOUNTS.orgAdmin.password);
+  test('User edits their idea: adds a tag and an assignee, then saves', async ({ page }) => {
+    // Edited by the authoring User (not an admin): the assignee picker is populated by
+    // GET /organizations/{id}/members, which any in-org caller may read, and the creating author may
+    // change the assignee collection (SPEC/20-feature-ideas-and-engagement.md Permissions).
+    await loginExpectingShell(page, ACCOUNTS.user.email, ACCOUNTS.user.password);
     await page.goto(`/ideas?idea=${encodeURIComponent(ideaId)}`);
 
     await page.getByRole('button', { name: 'Edit idea' }).click();

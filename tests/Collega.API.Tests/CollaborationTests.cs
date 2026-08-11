@@ -385,6 +385,46 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
     }
 
     [Fact]
+    public async Task Members_Endpoint_Lets_Plain_User_List_Assignable_Members()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+
+        var author = await CreateUserAsync(admin, org.OrganizationId, "User");
+        var teammate = await CreateUserAsync(admin, org.OrganizationId, "User");
+        using var authorClient = await LoginAsync(author.Email);
+
+        // The admin user listing stays Org-Admin+, so a plain User is forbidden there...
+        var forbidden = await authorClient.GetAsync($"/api/v1/organizations/{org.OrganizationId}/users");
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+
+        // ...but the minimal members endpoint is readable and populates the assignee picker.
+        var members = await authorClient.GetFromJsonAsync<List<MemberItem>>(
+            $"/api/v1/organizations/{org.OrganizationId}/members", Json);
+
+        Assert.NotNull(members);
+        Assert.Contains(members!, m => m.UserId == author.UserId);
+        Assert.Contains(members!, m => m.UserId == teammate.UserId);
+        Assert.All(members!, m => Assert.False(string.IsNullOrWhiteSpace(m.Email)));
+    }
+
+    [Fact]
+    public async Task Members_Endpoint_Is_Scoped_To_Caller_Organization()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var orgA = await CreateOrganizationAsync(admin);
+        var orgB = await CreateOrganizationAsync(admin);
+        var outsider = await CreateUserAsync(admin, orgB.OrganizationId, "User");
+        using var outsiderClient = await LoginAsync(outsider.Email);
+
+        // A User in org B cannot read org A's members — 404 rather than leaking the org's existence.
+        var response = await outsiderClient.GetAsync($"/api/v1/organizations/{orgA.OrganizationId}/members");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Idea_Delete_Is_Admin_Only_And_Excludes_From_Queries()
     {
         using var admin = _factory.CreateClient();
@@ -819,6 +859,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
     private sealed record CreateOrgResponse(Guid OrganizationId, string InviteCode, Guid DefaultBoardId, int DefaultStatusCount);
     private sealed record CreateUserResponse(Guid UserId, Guid OrganizationId, string Email, string Role, string Status);
     private sealed record CreatedUser(Guid UserId, string Email);
+    private sealed record MemberItem(Guid UserId, string FirstName, string LastName, string Email);
     private sealed record LoginResponse(string AccessToken, int ExpiresInSeconds, bool RequiresPasswordChange);
     private sealed record IdeaCreatedResponse(Guid IdeaId, Guid BoardId, Guid StatusId, string Title, string Priority, string? DueDate);
     private sealed record IdeaListItemResponse(Guid IdeaId, string Title, Guid StatusId);

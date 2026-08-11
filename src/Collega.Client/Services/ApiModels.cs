@@ -61,6 +61,14 @@ public sealed record UserListItemDto(
     string Role,
     string Status);
 
+/// <summary>A row of <c>GET /organizations/{id}/members</c> — the minimal, non-admin assignable
+/// member list used by the idea assignee picker.</summary>
+public sealed record OrganizationMemberDto(
+    string UserId,
+    string FirstName,
+    string LastName,
+    string Email);
+
 /// <summary>Response of <c>POST /organizations/{id}/invite-code/regenerate</c>.</summary>
 public sealed record RegenerateInviteCodeResultDto(string InviteCode);
 

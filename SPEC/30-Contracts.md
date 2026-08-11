@@ -456,6 +456,19 @@ Error responses:
 - `403` caller is authenticated but not allowed to list users in this organization
 - `404` organization does not exist or is outside caller scope
 
+### `GET /api/v1/organizations/{organizationId}/members`
+Purpose: Minimal list of an organization's active members (id, name, email only) for the idea assignee picker and mention lookup. Unlike the admin user listing above, this is available to any authenticated caller scoped to the organization — a plain User or Read Only, not only admins (SPEC/20-feature-ideas-and-engagement.md Permissions). Returns a plain array (no pagination); only `Active` members are included.
+
+Success response `200` array item shape:
+- `userId`
+- `firstName`
+- `lastName`
+- `email`
+
+Error responses:
+- `401` caller is not authenticated
+- `404` organization does not exist or is outside caller scope
+
 ### `POST /api/v1/organizations/{organizationId}/users`
 Purpose: Create a user within an organization.
 

@@ -194,7 +194,7 @@
     private List<StatusItemDto> _statusOptions = new();
     private IReadOnlyList<IdeaTypeOptionDto> _ideaTypes = Array.Empty<IdeaTypeOptionDto>();
     private IReadOnlyList<BusinessImpactOptionDto> _businessImpacts = Array.Empty<BusinessImpactOptionDto>();
-    private IReadOnlyList<UserListItemDto> _orgUsers = Array.Empty<UserListItemDto>();
+    private IReadOnlyList<OrganizationMemberDto> _orgUsers = Array.Empty<OrganizationMemberDto>();
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
     private IReadOnlyList<FieldDefinitionDto> _resolvedFields = Array.Empty<FieldDefinitionDto>();
 
@@ -213,9 +213,9 @@
 
     private bool _hasBoard => !string.IsNullOrEmpty(_selectedBoardId);
 
-    private IEnumerable<UserListItemDto> AssignableUsers =>
-        _orgUsers.Where(u => !_assigneeIds.Contains(u.UserId)
-            && string.Equals(u.Status, "Active", StringComparison.OrdinalIgnoreCase));
+    // The members endpoint already returns only active members, so we filter only out the already-chosen.
+    private IEnumerable<OrganizationMemberDto> AssignableUsers =>
+        _orgUsers.Where(u => !_assigneeIds.Contains(u.UserId));
 
     private IdeaTypeOptionDto? SelectedIdeaType => _ideaTypes.FirstOrDefault(t => t.IdeaTypeId == _ideaTypeId);
 
@@ -336,7 +336,7 @@
         {
             _fieldDefs = fieldsResult.Value!;
         }
-        var users = await Api.GetAllOrganizationUsersAsync(organizationId);
+        var users = await Api.GetAssignableMembersAsync(organizationId);
         if (users.Succeeded && users.Value is not null)
         {
             _orgUsers = users.Value;

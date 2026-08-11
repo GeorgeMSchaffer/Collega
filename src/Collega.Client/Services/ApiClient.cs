@@ -74,6 +74,11 @@ public sealed partial class ApiClient
     public Task<ApiResult<PagedResultDto<UserListItemDto>>> GetOrganizationUsersAsync(string organizationId, int page = 1, int pageSize = 100, CancellationToken ct = default) =>
         GetAsync<PagedResultDto<UserListItemDto>>($"{BasePath}/organizations/{organizationId}/users?page={page}&pageSize={pageSize}", ct);
 
+    /// <summary>Active, assignable members of an organization (id + name + email). Available to any
+    /// authenticated caller in the org, so a plain User can populate the idea assignee picker.</summary>
+    public Task<ApiResult<List<OrganizationMemberDto>>> GetAssignableMembersAsync(string organizationId, CancellationToken ct = default) =>
+        GetAsync<List<OrganizationMemberDto>>($"{BasePath}/organizations/{organizationId}/members", ct);
+
     public async Task<ApiResult<List<UserListItemDto>>> GetAllOrganizationUsersAsync(string organizationId, CancellationToken ct = default)
     {
         var items = new List<UserListItemDto>();
