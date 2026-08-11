@@ -1,0 +1,46 @@
+# Sprint 7: Azure Deployment (provision + first deploy + CI/CD)
+
+**Status:** Not started
+**Sequence:** 7 of 7 (last) — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 6 (`sprint-06-view-as.md`) is merged, so the first deployment ships View As too. **Hard blocker:** does not start until Sprint 5 (`sprint-05-postgres-migration.md`) is **implemented in code and verified working** — not merely planned (the migration sets the deployment's DB engine).
+**When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
+
+## ⛔ Dependency gate — read first
+This sprint provisions **Azure Database for PostgreSQL** (Flexible Server), not Azure SQL. That target is only correct **after** the SQL Server → Postgres migration (Sprint 5) is done in code and proven: solution builds on Npgsql, the fresh `InitialCreate` applies, and the API boots + migrates + seeds against a **real Postgres instance** with the Postgres-backed smoke test green. Starting deployment before that would provision the wrong database engine and wire the wrong connection-string format — the migration **changes the deployment requirements**, which is exactly why it goes first. Do not begin any task below until Sprint 5's Definition of Done is fully checked off.
+
+## Goal
+Stand up Collega's three tiers on Azure per `SPEC/50-azure-deployment.md` (Static Web Apps + App Service + Azure Database for PostgreSQL), get a first working deployment end-to-end, and confirm the API CI/CD pipeline (`.github/workflows/deploy-api.yml`, documented in `SPEC/50-azure-api-cicd.md`) deploys on push. The two guide docs already exist and are Postgres-aligned; this sprint executes and verifies them.
+
+## Capacity
+| Role | Slices this sprint | Notes |
+|---|---|---|
+| Backend / DevOps Developer | 1 | Provision resources, apply App Service config, first deploy, wire CI/CD secrets/variables |
+| QA Developer | 1 | Run the §7 post-deploy checklist end-to-end against the live environment |
+| Code Reviewer | 1 | Review any infra-as-code / workflow / config changes committed before merge |
+| **Total** | **3** | |
+
+## Sprint Backlog
+| Priority | Item | Notes |
+|---|---|---|
+| P0 | Provision the three tiers | Resource group, **Azure Database for PostgreSQL Flexible Server (Burstable B1ms)**, App Service (Linux .NET 8), Static Web Apps (Free) — `SPEC/50-azure-deployment.md` §4–6 |
+| P0 | App Service configuration | Required settings (`ConnectionStrings__DefaultConnection` in Npgsql format, `SiteAdmin__Email/Password`) + recommended (`ASPNETCORE_ENVIRONMENT=Production`, `Cors__AllowedOrigins__0`, `Auth__TokenSigningKey`) — §3 |
+| P0 | First deploy + boot verification | API connects to Postgres, runs migrations, seeds Site Admin; frontend loads and calls the API without CORS errors — §5–7 |
+| P0 | CI/CD pipeline wiring | `AZURE_WEBAPP_PUBLISH_PROFILE` secret + `AZURE_WEBAPP_NAME` variable; confirm push-to-`main` deploys — `SPEC/50-azure-api-cicd.md` |
+| P1 | Post-deploy checklist pass | Every box in `SPEC/50-azure-deployment.md` §7 verified live (sign-in, forced password change, token stability across restart) |
+| P2 | Hardening follow-ups (as time allows) | Key Vault for secrets, Private Access (VNet) for the DB, least-privilege DB role — `SPEC/50-azure-deployment.md` §8; can be deferred to a post-MVP hardening pass if scope-constrained |
+
+## Risks
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Deployment work starts before Sprint 5 is verified | Wrong DB engine provisioned, wasted infra + rework | The dependency gate above is a hard blocker — Sprint 5 DoD must be fully checked first |
+| `Auth__TokenSigningKey` left unset | Every App Service restart/scale logs all users out | It's on the §3 recommended list and the §7 checklist — verify token survives a restart |
+| CORS origin not set after SWA host is known | Frontend can't call the API at all | §6.3 closes the CORS loop explicitly; the checklist confirms 200s in the network tab |
+| Postgres Flexible Server has no auto-pause (unlike Azure SQL) | Unexpected always-on compute cost | Documented in the guide (§1/§9); stop the server when idle on dev |
+
+## Definition of Done
+- [ ] Sprint 5 fully complete and verified (this sprint's precondition) before any task started
+- [ ] All three tiers provisioned in one region per `SPEC/50-azure-deployment.md`
+- [ ] API deployed, boots against Azure Database for PostgreSQL, migrations applied, Site Admin seeded
+- [ ] Frontend deployed on Static Web Apps and successfully calling the API (no CORS failures)
+- [ ] `.github/workflows/deploy-api.yml` deploys on push to `main` with secrets/variables configured
+- [ ] `SPEC/50-azure-deployment.md` §7 post-deploy checklist fully passed against the live environment
+- [ ] Code Reviewer approved any committed config/workflow changes before merge
