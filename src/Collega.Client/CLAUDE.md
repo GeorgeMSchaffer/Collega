@@ -41,9 +41,9 @@ Full before/after detail, including a UI/UX critique's gap and anti-pattern find
 
 ### Still undesigned
 
-- **Mobile / narrow viewport** — a broader pass for the icon rail and other pages remains open. (The drawer + create modal already ship their first locked narrow-viewport treatment: full-width drawer sheet + full-screen modal at ≤768px.)
+- **Mobile / narrow viewport** — a broader pass for the icon rail and other pages remains open. The drawer and create modal are the exception: they already ship a locked narrow-viewport treatment (full-width drawer sheet, full-screen modal at ≤768px).
 
-(`/ideas` — the global idea search page — is **built and shipped**: `Pages/Ideas.razor`, comp `comp-c-review-07-ideas-list.html`, with the drawer/create-modal wired in per T-UI-3. No longer undesigned.)
+New pages and flows are **comp-first** going forward (user decision, 2026-08-11).
 
 ## Before writing production Blazor
 

@@ -12,7 +12,7 @@ Organization-scoped collaboration and idea-tracking tool. Organizations contain 
 
 | Requirement | Notes |
 |---|---|
-| .NET SDK **8.0.204** | Pinned in `global.json` (`rollForward: latestFeature`). |
+| .NET SDK **8.0.118** | Pinned in `global.json` (`rollForward: latestFeature`). |
 | Docker Desktop | Runs the local SQL Server 2022 container. |
 | `dotnet-ef` (optional) | Only needed to author migrations: `dotnet tool install -g dotnet-ef`. See the version caveat under [Migrations](#migrations). |
 
@@ -42,7 +42,7 @@ SITE_ADMIN_PASSWORD=<your-password>
 
 ### 2. Configure the API's secrets
 
-The API **fails fast at startup** if `SiteAdmin:Email` or `SiteAdmin:Password` is missing (see [`Program.cs:18-26`](src/Collega.API/Program.cs#L18-L26) and `SPEC/20-feature-auth.md` requirement #8). Store them in user-secrets so nothing secret is committed:
+The API **fails fast at startup** if `SiteAdmin:Email` or `SiteAdmin:Password` is missing (see [`Program.cs:26-36`](src/Collega.API/Program.cs#L26-L36), which delegates to [`StartupConfigurationValidator`](src/Collega.API/Startup/StartupConfigurationValidator.cs), and `SPEC/20-feature-auth.md` requirement #8). Store them in user-secrets so nothing secret is committed:
 
 ```bash
 cd src/Collega.API
@@ -88,7 +88,7 @@ On startup the API applies EF Core migrations, creates the `Collega` database, a
 | Surface | URL |
 |---|---|
 | API | http://localhost:5103 |
-| Swagger UI | http://localhost:5103/swagger |
+| Swagger UI (**Development only**) | http://localhost:5103/swagger |
 | Health check | http://localhost:5103/api/v1/health |
 
 To override the port, bypass the launch profile — `ASPNETCORE_URLS` alone is ignored because `Properties/launchSettings.json` sets `applicationUrl`:
@@ -98,11 +98,13 @@ ASPNETCORE_URLS='http://localhost:5027' \
   dotnet run --project src/Collega.API/Collega.API.csproj --no-launch-profile
 ```
 
-Run the Blazor client (currently the stock template) separately:
+Run the Blazor client separately:
 
 ```bash
 dotnet run --project src/Collega.Client/Collega.Client.csproj   # http://localhost:5098
 ```
+
+The client is a full application — sign-in, home, boards (list and swim lanes), the global `/ideas` list, the idea detail drawer, and the role-scoped `/settings` hub. See [`src/Collega.Client/CLAUDE.md`](src/Collega.Client/CLAUDE.md) for the locked design direction.
 
 ---
 
@@ -112,21 +114,30 @@ Seeding is idempotent and runs on every startup ([`StartupSeeder.cs`](src/Colleg
 
 **Site Admin** — always seeded, from your configured credentials. Created with `mustChangePassword: true`, so the first login returns `requiresPasswordChange: true` and you must call `POST /api/v1/auth/change-password` before doing anything else.
 
-**Manually triggering seeds** — by default the Site Admin is always seeded and demo data only under `Development`. Two optional flags override that with explicit control (only the seeds you name run, in any environment):
+**Manually triggering seeds** — by default the Site Admin is always seeded and demo data only under `Development`. Optional flags override that with explicit control (only the seeds you name run, in any environment):
 
 ```bash
 dotnet watch --project ./src/Collega.API -- --seed:auth --seed:demo
 ```
 
-`--seed:auth` seeds the Site Admin; `--seed:demo` seeds the demo orgs. See [`src/Collega.API/CLAUDE.md`](src/Collega.API/CLAUDE.md#seeding-flags) for details.
+`--seed:auth` seeds the Site Admin; `--seed:demo` seeds the demo orgs.
 
-**Demo data** — `Development` environment only. Three organizations, each with an Org Admin, a User, and a Read Only account, all at password `Abc123!` with no forced change:
+**Forgot the Site Admin password?** `--seed:auth=reset` drops the account matching the configured `SiteAdmin:Email` and recreates it from `SiteAdmin:Email` / `SiteAdmin:Password` with `MustChangePassword: true`. It targets only that configured account, so a manually promoted Site Admin on a different email is left alone, and it does not seed demo data:
+
+```bash
+dotnet run --project ./src/Collega.API -- --seed:auth=reset
+```
+
+See [`src/Collega.API/CLAUDE.md`](src/Collega.API/CLAUDE.md#seeding-flags) for the full flag semantics.
+
+**Demo data** — `Development` environment only. Two organizations, each with one Org Admin and two `User` accounts, all at password `Abc123!` with no forced change. Each organization gets two boards, and each board 11 ideas distributed `3/2/2/1/3` across the canonical statuses. **No Read Only account is seeded.**
 
 | Organization | Email pattern |
 |---|---|
-| Acme Robotics | `{orgadmin,user,readonly}@acme-robotics.demo.collega.test` |
-| Blue Harbor Logistics | `{orgadmin,user,readonly}@blue-harbor.demo.collega.test` |
-| Crestline Health Group | `{orgadmin,user,readonly}@crestline-health.demo.collega.test` |
+| Acme Robotics | `{orgadmin,user,user2}@acme-robotics.demo.collega.test` |
+| Blue Harbor Logistics | `{orgadmin,user,user2}@blue-harbor.demo.collega.test` |
+
+The demo seed also creates a convenience **Site Admin** — `siteadmin@demo.collega.test` / `Abc123!`, no forced password change — distinct from the configured account, so the platform-admin perspective is testable without your `SiteAdmin:Password` secret. Development-only and idempotent. The configured Site Admin stays outside every organization.
 
 Smoke-test a login:
 
@@ -138,6 +149,22 @@ curl -s -X POST http://localhost:5103/api/v1/auth/login \
 
 ---
 
+## Settings administration
+
+`/settings` is a role-scoped hub. Admin entities use a **List + Drawer** pattern — the list stays in place and the record opens in a right slide-in drawer.
+
+| Role | Routes |
+|---|---|
+| **Site Admin** | `/settings/organizations` → a record opens at `/settings/organizations/{id}`. Organization-scoped Users, Statuses, Idea Types, Custom Fields, and Boards hang off that org: `/settings/organizations/{id}/users`, `/statuses`, `/idea-types`, `/fields`, `/boards` (plus `/users/import`). |
+| **Org Admin** | Their own organization, flat: `/settings/users`, `/settings/statuses`, `/settings/idea-types`, `/settings/fields`, `/settings/boards`, and `/settings/users/import`. |
+| **Any signed-in user** | `/settings/profile`. |
+
+Canonical role visibility and route behavior are defined in [`SPEC/20-feature-client-ui.md`](SPEC/20-feature-client-ui.md).
+
+> **Planned change (Sprint 6):** Site Admins are moving to a **View As** act-as model for organization *content* — no direct org-scoped create/edit paths and no org dropdowns. Organization and user administration stay direct as the bootstrap exception. See `SPEC/20-feature-client-ui.md` → "Site Admin org-content mutation model".
+
+---
+
 ## Testing
 
 ```bash
@@ -146,6 +173,11 @@ dotnet test tests/Collega.Application.Tests/Collega.Application.Tests.csproj   #
 ```
 
 Tests are hermetic: no network, no filesystem, no `DateTime.Now`, no randomness. EF Core tests use the InMemory provider, never a real database — so the SQL Server container is **not** required to run the suite.
+
+Browser tests are separate and **do** need a running app plus a seeded database:
+
+- `tests/Collega.E2E.Tests` — Playwright for .NET. Skipped by default, so `dotnet test Collega.sln` compiles it without needing a browser or server. See [`tests/Collega.E2E.Tests/CLAUDE.md`](tests/Collega.E2E.Tests/CLAUDE.md) for setup and the use-case catalog.
+- `e2e/` — TypeScript Playwright suite, run with its own tooling. See [`e2e/README.md`](e2e/README.md).
 
 ---
 
@@ -160,6 +192,8 @@ src/
   Collega.Client           Blazor WebAssembly UI
 tests/
   Collega.Domain.Tests  Collega.Application.Tests  Collega.Infrastructure.Tests  Collega.API.Tests
+  Collega.E2E.Tests        Playwright-for-.NET browser suite; needs a running app, skipped by default
+e2e/                       TypeScript Playwright browser suite (see e2e/README.md)
 SPEC/                      Canonical specs — the source of truth
 SPEC/mockups/              UI comps (HTML/SVG)
 ```
@@ -223,9 +257,4 @@ See [`CLAUDE.md`](CLAUDE.md) for the full working rules, coding standards, and t
 ## License
 
 See [LICENSE](LICENSE).
-
-## Settings administration
-
-`/settings` is a role-scoped hub. Site Admins manage organizations at `/settings/organizations` and open organization-scoped Users, Statuses, and User-Defined Fields from that list. Org Admins manage their own organization through `/settings/users`, `/settings/statuses`, and `/settings/fields`.
-Canonical role visibility and route behavior are defined in [`SPEC/20-feature-client-ui.md`](SPEC/20-feature-client-ui.md).
 
