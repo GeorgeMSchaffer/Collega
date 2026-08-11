@@ -165,8 +165,35 @@ public sealed class StartupSeederTests
             Assert.DoesNotContain(users, u => u.Role is Role.SiteAdmin or Role.ReadOnly);
         }
 
-        Assert.Equal(1, await ctx.Users.CountAsync(u => u.Role == Role.SiteAdmin));
-        Assert.Null((await ctx.Users.SingleAsync(u => u.Role == Role.SiteAdmin)).OrganizationId);
+        // 2 Site Admins in demo mode: the configured global one + the Development-only demo login.
+        var siteAdmins = await ctx.Users.Where(u => u.Role == Role.SiteAdmin).ToListAsync();
+        Assert.Equal(2, siteAdmins.Count);
+        Assert.All(siteAdmins, a => Assert.Null(a.OrganizationId));
+    }
+
+    [Fact]
+    public async Task Seed_Development_CreatesDemoSiteAdmin_NotForcedToChangePassword()
+    {
+        using var ctx = InMemoryContext.Create();
+
+        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: true);
+
+        var normalized = EmailNormalizer.Normalize("siteadmin@demo.collega.test");
+        var demoSiteAdmin = await ctx.Users.SingleAsync(u => u.NormalizedEmail == normalized);
+        Assert.Equal(Role.SiteAdmin, demoSiteAdmin.Role);
+        Assert.Null(demoSiteAdmin.OrganizationId);
+        Assert.False(demoSiteAdmin.MustChangePassword);
+    }
+
+    [Fact]
+    public async Task Seed_Production_DoesNotCreateDemoSiteAdmin()
+    {
+        using var ctx = InMemoryContext.Create();
+
+        await CreateSeeder(ctx).SeedAsync(SiteAdminEmail, SiteAdminPassword, seedSiteAdmin: true, seedDemoData: false);
+
+        var normalized = EmailNormalizer.Normalize("siteadmin@demo.collega.test");
+        Assert.False(await ctx.Users.AnyAsync(u => u.NormalizedEmail == normalized));
     }
 
     [Fact]
@@ -199,7 +226,7 @@ public sealed class StartupSeederTests
         Assert.Equal(2, await verify.Organizations.CountAsync());
         Assert.Equal(2 * OrganizationDefaults.Statuses.Count, await verify.Statuses.CountAsync());
         Assert.Equal(4, await verify.Boards.CountAsync());
-        Assert.Equal(7, await verify.Users.CountAsync()); // 1 global Site Admin + 6 organization users
+        Assert.Equal(8, await verify.Users.CountAsync()); // 2 Site Admins (configured + demo) + 6 organization users
         Assert.Equal(44, await verify.Ideas.CountAsync());
         Assert.Equal(16, await verify.Tags.CountAsync());
         Assert.Equal(12, await verify.Comments.CountAsync());

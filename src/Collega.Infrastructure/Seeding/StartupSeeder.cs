@@ -22,11 +22,17 @@ namespace Collega.Infrastructure.Seeding;
 /// 2. 2 demo organizations, each provisioned with the default statuses and two demo boards,
 ///    plus one Org Admin and two User accounts at password `Abc123!`, none forced to change it.
 ///    Every demo board is populated with 11 ideas distributed 3/2/2/1/3 across its swimlanes.
+/// 3. A Development-only convenience Site Admin (siteadmin@demo.collega.test / `Abc123!`, no forced
+///    change) so the platform-admin perspective can be tested without the configured Site Admin secret.
 /// </summary>
 public sealed class StartupSeeder : IStartupSeeder
 {
     private const string DemoPassword = "Abc123!";
     private const string SecondDemoBoardName = "Opportunities";
+
+    // Development-only convenience Site Admin (see EnsureDemoSiteAdminAsync). Distinct from the
+    // environment-configured Site Admin so seeding never disturbs that account.
+    private const string DemoSiteAdminEmail = "siteadmin@demo.collega.test";
 
     private static readonly int[] IdeasPerStatus = { 3, 2, 2, 1, 3 };
 
@@ -130,6 +136,8 @@ public sealed class StartupSeeder : IStartupSeeder
 
         var demoPasswordHash = _passwordHasher.Hash(DemoPassword);
 
+        await EnsureDemoSiteAdminAsync(demoPasswordHash, now, cancellationToken);
+
         foreach (var scenario in DemoOrganizations)
         {
             var organization = await _dbContext.Organizations.FirstOrDefaultAsync(o => o.Title == scenario.Title, cancellationToken);
@@ -152,6 +160,31 @@ public sealed class StartupSeeder : IStartupSeeder
             await EnsureSecondDemoBoardAsync(organization.Id, now, cancellationToken);
             await SeedDemoBoardContentAsync(organization.Id, scenario, now, cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// Development-only convenience account: a Site Admin that signs in with the standard demo
+    /// password and is NOT forced to change it, so the platform-admin perspective can be exercised
+    /// without the environment-configured Site Admin secret (which forces a first-login change).
+    /// Runs only inside the demo seed (Development), uses a distinct email from the configured Site
+    /// Admin, and is idempotent. The forced-change flag that <see cref="User.CreateSiteAdmin"/> always
+    /// sets is cleared via <see cref="User.ChangePassword"/> with the same demo hash.
+    /// </summary>
+    private async Task EnsureDemoSiteAdminAsync(string passwordHash, DateTime nowUtc, CancellationToken cancellationToken)
+    {
+        var normalizedEmail = EmailNormalizer.Normalize(DemoSiteAdminEmail);
+        var exists = await _dbContext.Users.AnyAsync(
+            u => u.Role == Role.SiteAdmin && u.NormalizedEmail == normalizedEmail,
+            cancellationToken);
+        if (exists)
+        {
+            return;
+        }
+
+        var demoSiteAdmin = User.CreateSiteAdmin("Sam", "Sitewide", DemoSiteAdminEmail, passwordHash, nowUtc);
+        demoSiteAdmin.ChangePassword(passwordHash, nowUtc);
+        await _dbContext.Users.AddAsync(demoSiteAdmin, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private async Task EnsureSecondDemoBoardAsync(Guid organizationId, DateTime nowUtc, CancellationToken cancellationToken)

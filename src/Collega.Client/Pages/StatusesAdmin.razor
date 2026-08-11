@@ -258,13 +258,30 @@
         <button class="btn primary" @onclick="SaveCreate" disabled="@_busy">@(_busy ? "Creating…" : "Create")</button>
     </text>;
 
-    protected override async Task OnInitializedAsync()
-    {
-        _list = new ListState<StatusItemDto>
+    // The last OrganizationId route value we resolved + loaded for (empty string = the global route).
+    private string? _loadedOrgKey;
+
+    protected override void OnInitialized()
+        => _list = new ListState<StatusItemDto>
         {
             SearchText = s => $"{s.Name} {OrganizationName(s.OrganizationId)} {s.Color} {s.SortOrder}",
         };
 
+    // Re-resolve org scope and reload whenever the route parameter changes. A Site Admin clicking
+    // "Manage" navigates between the global (/settings/statuses) and org-scoped
+    // (/settings/organizations/{id}/statuses) routes — both handled by THIS component, so Blazor
+    // reuses the instance and never re-runs OnInitialized. Without reacting here the URL would change
+    // but the view wouldn't, which reads as "Manage does nothing."
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = OrganizationId ?? string.Empty;
+        if (_loadedOrgKey == key)
+        {
+            return;
+        }
+        _loadedOrgKey = key;
+
+        _siteAdminGlobal = false;
         if (!string.IsNullOrEmpty(OrganizationId))
         {
             _organizationId = OrganizationId;
@@ -273,7 +290,7 @@
         {
             var user = (await AuthStateTask).User;
             _organizationId = user.FindFirst("organizationId")?.Value;
-            _siteAdminGlobal = user.IsInRole("SiteAdmin") && string.IsNullOrEmpty(OrganizationId);
+            _siteAdminGlobal = user.IsInRole("SiteAdmin");
         }
 
         await LoadAsync();
