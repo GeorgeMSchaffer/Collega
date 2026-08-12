@@ -16,7 +16,7 @@ The engine swap regenerates all migrations and touches the persistence layer. Ru
 | Role | Slices this sprint | Notes |
 |---|---|---|
 | Backend Developer | 1 | Provider swap, regenerate migrations, connection strings, docker-compose (`postgres:16`), UTC-correctness audit |
-| QA Developer | 1 | Postgres-backed smoke/integration test (Testcontainers or local compose DB) — the existing 500 tests run on EF InMemory and will **not** prove PG SQL translation |
+| QA Developer | 1 | Postgres-backed smoke/integration test (Testcontainers or local compose DB) — the existing 547 tests run on EF InMemory and will **not** prove PG SQL translation |
 | Code Reviewer | 1 | Gate the branch before merge (diff, build, tests, spec conformance) |
 | **Total** | **3** | Backend + QA can overlap; Reviewer gates |
 
@@ -24,8 +24,8 @@ The engine swap regenerates all migrations and touches the persistence layer. Ru
 Maps to the task breakdown in `SPEC/50-postgres-migration.md` §"Task breakdown & effort":
 | Priority | Item | Notes |
 |---|---|---|
-| P0 | Provider swap | `Npgsql.EntityFrameworkCore.PostgreSQL` (approved), both `UseNpgsql` calls, drop the two `nvarchar(max)` annotations |
-| P0 | Regenerate migrations fresh | Delete the 10 SQL-Server migrations + snapshot, `dotnet ef migrations add InitialCreate` against Npgsql; verify partial index, `uuid`, `timestamptz`, `text` |
+| P0 | Provider swap | `Npgsql.EntityFrameworkCore.PostgreSQL` (approved), both `UseNpgsql` calls, drop the two `nvarchar(max)` annotations **and the `varbinary(max)` annotation on `User.PortraitPng`** (`UserConfiguration.cs:83`) |
+| P0 | Regenerate migrations fresh | Delete the 11 SQL-Server migrations + snapshot, `dotnet ef migrations add InitialCreate` against Npgsql; verify partial index, `uuid`, `timestamptz`, `text` |
 | P0 | `DateTime` → `timestamptz` UTC-correctness audit | The one real risk — Npgsql throws on non-UTC `Kind`. Audit all persisted `DateTime` writes; do **not** use the legacy timestamp switch (decision locked) |
 | P0 | Connection strings + infra | `appsettings.Development.json`, `CollegaDbContextFactory` default, `docker-compose.yml` (swap `sqlserver`→`postgres:16`, port 5432, volume, `pg_isready` healthcheck), `.env`/`.env.example`, `StartupConfigurationValidator` text |
 | P0 | Postgres-backed smoke test | Testcontainers/Postgres (approved): migrate-up + timestamped round-trip + email-uniqueness |
