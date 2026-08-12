@@ -22,7 +22,7 @@ public sealed class StartupConfigurationValidatorTests
     {
         ("SiteAdmin:Email", "admin@collega.test"),
         ("SiteAdmin:Password", "Test123!Password"),
-        ("ConnectionStrings:DefaultConnection", "Server=(localdb)\\MSSQLLocalDB;Database=Collega;Trusted_Connection=True"),
+        ("ConnectionStrings:DefaultConnection", "Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=Test123!Password"),
     };
 
     [Fact]

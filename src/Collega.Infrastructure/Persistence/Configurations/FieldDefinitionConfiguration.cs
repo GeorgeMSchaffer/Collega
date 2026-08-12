@@ -57,7 +57,7 @@ public sealed class FieldDefinitionConfiguration : IEntityTypeConfiguration<Fiel
 
         // One active field name per organization (soft-deleted rows are excluded from the constraint).
         builder.HasIndex(f => new { f.OrganizationId, f.Name })
-            .HasFilter("[is_deleted] = 0")
+            .HasFilter("is_deleted = false")
             .IsUnique()
             .HasDatabaseName("ux_field_definitions_organization_id_name");
 

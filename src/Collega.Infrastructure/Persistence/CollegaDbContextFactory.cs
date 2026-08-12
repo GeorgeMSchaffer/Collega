@@ -14,7 +14,7 @@ namespace Collega.Infrastructure.Persistence;
 public sealed class CollegaDbContextFactory : IDesignTimeDbContextFactory<CollegaDbContext>
 {
     private const string LocalDevelopmentDefault =
-        "Server=localhost,1433;Database=Collega;User Id=sa;Password=Ch4ngeMe!Now;TrustServerCertificate=True;";
+        "Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=Ch4ngeMe!Now";
 
     public CollegaDbContext CreateDbContext(string[] args)
     {
@@ -23,7 +23,7 @@ public sealed class CollegaDbContextFactory : IDesignTimeDbContextFactory<Colleg
             ?? LocalDevelopmentDefault;
 
         var optionsBuilder = new DbContextOptionsBuilder<CollegaDbContext>();
-        optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.UseNpgsql(connectionString);
 
         return new CollegaDbContext(optionsBuilder.Options);
     }
