@@ -38,6 +38,3 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 8 | Azure deployment (provision + first deploy + CI/CD) | `SPEC/sprints/sprint-08-azure-deployment.md` | Not started | Medium |
 
 Update the Status column here whenever a sprint file's own `Status:` line changes (Not started → In Progress → Complete), and move the file to `SPEC/sprints/archive/` once Complete.
-
-## Key Open Question For Next Session
-Sprint 1's actual size depends entirely on the bookkeeping audit (how much of Bug Triage's `TODO` list is already fixed but just not marked `COMPLETED`). Run that audit first before committing agent capacity to the rest of Sprint 1.

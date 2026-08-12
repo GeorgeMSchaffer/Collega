@@ -3,10 +3,11 @@
 ## Goal
 Deliver the Collega MVP as a layered ASP.NET Core application with a Blazor client, SQL Server persistence, organization-scoped authorization, audit coverage, and contract-aligned API behavior.
 
-## Restart Baseline
-- This plan assumes implementation is restarting from the beginning.
-- Treat every slice and phase in this document as planned work, not accepted or partially completed work.
-- Re-record progress only in the tracker after implementation is intentionally restarted.
+## Status (corrected 2026-08-12)
+- **This document describes the target design, not remaining work.** The MVP slices it plans (T001-T067) are built and merged to `dev`.
+- It previously carried a "Restart Baseline" telling readers to treat every slice as unstarted planned work. That was true when written and is false now; it was removed rather than left to mislead.
+- For what is actually built, read `SPEC/implementation-agent-tracker.md` → Current Status. For what is next, read `SPEC/95-next-sprints.md`.
+- Read this file for **layer design and technical approach** — the part that has not gone stale.
 
 ## Scope Alignment
 - MVP in scope: authentication, organization and user management, boards, statuses, organization-managed Idea Type and Business Impact options, ideas, tags, comments, upvotes, mentions, audit events, and notification event definitions.
