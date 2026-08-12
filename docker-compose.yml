@@ -3,7 +3,7 @@ services:
     image: postgres:16
     container_name: collega-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-collega}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: Collega
     ports:
@@ -37,7 +37,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=Collega;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=Collega;Username=${POSTGRES_USER:-collega};Password=${POSTGRES_PASSWORD}
       SiteAdmin__Email: ${SITE_ADMIN_EMAIL}
       SiteAdmin__Password: ${SITE_ADMIN_PASSWORD}
     ports:

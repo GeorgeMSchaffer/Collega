@@ -1,8 +1,10 @@
 # Scope: Migrate Database Technology — MS SQL Server → PostgreSQL
 
-## Status — APPROVED DIRECTION (not yet implemented)
+## Status — IMPLEMENTED ON BRANCH, NOT YET MERGED TO `dev` (2026-08-12)
 
-**Decided (2026-08-11): Collega's application database moves from SQL Server 2022 to PostgreSQL.** This document is the implementation scope for that decision. The work itself has not landed yet — no code has changed — but the direction is committed, not speculative. The canonical stack in `SPEC/00-project-brief.md` and the other SQL-Server-referencing specs listed under [Documentation fan-out](#8-documentation-fan-out) should be reconciled to PostgreSQL as the migration is implemented and merged.
+**Decided (2026-08-11): Collega's application database moves from SQL Server 2022 to PostgreSQL.** This document is the implementation scope for that decision.
+
+**As of 2026-08-12 the work is built and verified on `sprint-05-integration`, but `dev` is still on SQL Server.** Do not read this document as describing the current state of `dev`. Until that merge lands, a fresh checkout of `dev` still runs `Microsoft.EntityFrameworkCore.SqlServer`. The documentation fan-out below has been applied on the same branch, so those docs describe the post-merge target.
 
 **Decisions locked (2026-08-11 user interview):**
 1. Deliverable = this SPEC doc (implementation is a separate approved step).
@@ -13,7 +15,9 @@
 
 ## Verdict
 
-**Small-to-moderate, low-risk migration — ~2–4 agent-days.** The provider is cleanly isolated behind EF Core, there is no production data (only the disposable demo seed), primary keys are `Guid` (no int-identity sequences to port), and case-insensitive uniqueness is already handled in application code (`EmailNormalizer` → `NormalizedEmail`, `Tag.NormalizedName`) rather than relying on SQL Server's default collation. The only area needing real care is `DateTime` → `timestamptz`.
+**Small-to-moderate migration — ~2–4 agent-days.** The provider is cleanly isolated behind EF Core, there is no production data (only the disposable demo seed), and primary keys are `Guid` (no int-identity sequences to port).
+
+**Revised risk assessment (2026-08-12, after implementing).** This verdict originally called the migration "low-risk" and named `DateTime` → `timestamptz` as "the only area needing real care". The UTC audit in fact came back completely clean — every persisted `DateTime` already flowed from `IClock.UtcNow`. The real defects were elsewhere and were **all silent**: a hardcoded SQL-Server filter string in the model, and three case-sensitivity regressions from losing `CI_AS` collation (one of which broke self-registration outright). See the corrections below. The lasting lesson is that **the risk was not where the type mapping was, it was wherever behaviour had been quietly depending on SQL Server semantics** — and none of it was visible to a test suite running on EF InMemory.
 
 ## Coupling surface (complete inventory)
 
@@ -46,12 +50,14 @@ The codebase appears UTC-consistent, but this must be **verified, not assumed** 
 
 > **Correction (2026-08-12):** this section previously also claimed "no `varbinary`". That stopped being true when the profile-portrait slice merged `User.PortraitPng` as `HasColumnType("varbinary(max)")` (`UserConfiguration.cs:83`). It is **not** a non-issue — `varbinary(max)` is SQL-Server-only and must be dropped so EF maps `byte[]` to `bytea`. Tracked in the coupling surface, row 3.
 - **All LINQ is provider-agnostic** (`.Contains` / `.StartsWith` over strings and in-memory collections); nothing SQL-Server-specific to translate.
-- **Case-insensitivity is handled in code** — email uniqueness/login and tag uniqueness use pre-normalized lowercase columns, so Postgres's case-sensitive default is a non-factor.
-- **The one filtered index** (`filter: "[is_deleted] = 0"`, `AddUserDefinedFields` migration) becomes a correct Postgres partial index automatically when migrations are regenerated.
+- **Case-insensitivity is handled in code — *only for email and tags*.** Those use pre-normalized lowercase columns (`EmailNormalizer` → `NormalizedEmail`, `Tag.NormalizedName`), so they are genuinely unaffected.
+
+> **Correction (2026-08-12) — the "non-factor" claim was too broad and hid three real regressions.** Everything *not* using a pre-normalized column relied on SQL Server's `CI_AS` collation for free case-insensitivity, and Postgres is case-sensitive. Found during Unit 1 and confirmed against a live container: (1) **invite-code self-registration broke** — codes generate from an uppercase-only alphabet and `AuthService` only trimmed, so any lowercase input failed to match; (2) **all `Ef*Repository` search paths** stopped matching differing case, so `acme` no longer found `Acme`; (3) **field-definition name uniqueness** stopped treating `Priority`/`priority` as a collision. (1) and (2) were fixed in Unit 6; (3) is deferred by user decision — see "Known follow-up" at the end of this document. **None of this is catchable by the existing suite**, which runs on EF InMemory and does not model collation.
+> **Correction (2026-08-12) — this was wrong, and it was a latent break.** This section previously claimed the one filtered index "becomes a correct Postgres partial index automatically when migrations are regenerated." It does not. The filter is hardcoded **in the model**, not emitted by the provider: `Persistence/Configurations/FieldDefinitionConfiguration.cs:60` carried `HasFilter("[is_deleted] = 0")`, and that SQL-Server bracket syntax regenerates verbatim into the Npgsql migration and then fails at `MigrateAsync` against Postgres. It was changed to `HasFilter("is_deleted = false")` during Unit 1; the live index is now `... WHERE (is_deleted = false)`. **General lesson: anything passed as a raw SQL string to `HasFilter`, `HasComputedColumnSql`, `HasDefaultValueSql`, or similar is provider-specific and does not migrate itself — grep for those before assuming a regeneration is clean.**
 
 ## Known coverage gap
 
-The 547-test suite runs on the **EF InMemory provider**, so it does **not** exercise real PostgreSQL SQL translation — the same limitation Sprint 3 documented for SQL Server. Green-on-InMemory does not prove the migration. This is why §5 adds a Postgres-backed smoke test.
+The 561-test suite runs on the **EF InMemory provider**, so it does **not** exercise real PostgreSQL SQL translation — the same limitation Sprint 3 documented for SQL Server. Green-on-InMemory does not prove the migration. This is why §5 adds a Postgres-backed smoke test.
 
 ## Task breakdown & effort
 
@@ -76,3 +82,13 @@ Effort in agent-days (1 agent-day = one focused session from partial to build-cl
 - ~~**NuGet approvals**~~ — approved 2026-08-11 (`Npgsql.EntityFrameworkCore.PostgreSQL` + Testcontainers/Postgres test package).
 - **Target Postgres version & host:** local `postgres:16` in compose is assumed and the Azure guide now targets **Azure Database for PostgreSQL Flexible Server (Burstable B1ms)**; confirm this over a self-hosted/K8s host (`SPEC/50-kubernetes-deployment.md` still describes SQL Server and is not yet reconciled).
 - ~~**Timing vs. Sprint 4**~~ — scheduled 2026-08-11 as **Sprint 5**, immediately after Sprint 4, in `SPEC/95-next-sprints.md` (`SPEC/sprints/sprint-05-postgres-migration.md`). Runs last so the engine swap starts from Sprint 4's reviewed, stable code.
+
+## Known follow-up — deferred by user decision (2026-08-12)
+
+**Field-definition name uniqueness is now case-sensitive.** `Persistence/Configurations/FieldDefinitionConfiguration.cs:59` puts the unique index on the raw `Name` column. Under SQL Server's `CI_AS` collation the database rejected `"Priority"` alongside `"priority"` in the same organization; under PostgreSQL it does not, and the read-then-write guard in `EfFieldDefinitionRepository.cs:56` is not transactional, so two concurrent creates can both succeed.
+
+This was found during the migration but **deliberately not fixed with it**: whether two field names differing only by case may coexist in one organization is a product decision, not a mechanical provider swap. Fixing it means either a functional unique index on `lower(name)` or a normalized column following the `EmailNormalizer`/`Tag.NormalizedName` precedent — both change behaviour that users can observe.
+
+Two sibling case-sensitivity regressions found at the same time **were** fixed (Sprint 5 Unit 6): invite-code lookup, which broke self-registration for lowercase input, and the `Ef*Repository` search paths, which moved to `EF.Functions.ILike`. Those restored pre-migration behaviour; this one would change it, which is why it is separated.
+
+**No existing test can catch any of this** — the suite runs on EF InMemory, which does not model collation.

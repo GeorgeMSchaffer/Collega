@@ -14,7 +14,7 @@ namespace Collega.Infrastructure.Persistence;
 public sealed class CollegaDbContextFactory : IDesignTimeDbContextFactory<CollegaDbContext>
 {
     private const string LocalDevelopmentDefault =
-        "Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=Ch4ngeMe!Now";
+        "Host=localhost;Port=5432;Database=Collega;Username=collega;Password=Ch4ngeMe!Now";
 
     public CollegaDbContext CreateDbContext(string[] args)
     {
