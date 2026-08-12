@@ -45,8 +45,8 @@ public sealed class EfIdeaRepository : IIdeaRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var search = filter.Search.Trim();
-            query = query.Where(i => EF.Functions.Like(i.Title, $"%{search}%"));
+            var search = LikePattern.Contains(filter.Search.Trim());
+            query = query.Where(i => EF.Functions.Like(i.Title, search, LikePattern.EscapeCharacter));
         }
 
         if (filter.StatusId is not null)
@@ -126,7 +126,7 @@ public sealed class EfIdeaRepository : IIdeaRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var pattern = $"%{filter.Search.Trim()}%";
+            var pattern = LikePattern.Contains(filter.Search.Trim());
             var textFieldIds = filter.SearchTextFieldIds ?? Array.Empty<Guid>();
             var hasCreatedOnDate = filter.SearchCreatedOnDate is not null;
             var createdDayStart = filter.SearchCreatedOnDate?.ToDateTime(TimeOnly.MinValue) ?? default;
@@ -213,14 +213,14 @@ public sealed class EfIdeaRepository : IIdeaRepository
         {
             IdeaFieldFilterKind.Contains => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
                 v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null
-                && EF.Functions.Like(v.Value, $"%{f.Value}%"))),
+                && EF.Functions.Like(v.Value, LikePattern.Contains(f.Value), LikePattern.EscapeCharacter))),
 
             IdeaFieldFilterKind.Equals => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
                 v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value == f.Value)),
 
             IdeaFieldFilterKind.MultiSelectContains => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
                 v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null
-                && EF.Functions.Like("," + v.Value + ",", "%," + f.Value + ",%"))),
+                && EF.Functions.Like("," + v.Value + ",", "%," + LikePattern.Escape(f.Value) + ",%", LikePattern.EscapeCharacter))),
 
             IdeaFieldFilterKind.NumberRange => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
                 v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null

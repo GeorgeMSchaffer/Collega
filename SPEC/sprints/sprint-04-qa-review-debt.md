@@ -1,6 +1,6 @@
 # Sprint 4: QA / Code-Review Debt Pass + Profile Portrait Upload
 
-**Status:** In Progress (started 2026-08-11 — the two security items are done; see the hardening batch below)
+**Status:** In Progress (started 2026-08-11 — **the full six-item code-review hardening batch is done**; the broad review pass and portrait upload remain)
 **Sequence:** 4 of 8 — see `SPEC/95-next-sprints.md` for the full sequence and how these sprints relate. Starts after Sprint 3 (`sprint-03-list-filter-parity.md`) is merged; followed by Sprint 5 (`sprint-05-postgres-migration.md`), Sprint 6 (`sprint-06-view-as.md`), Sprint 7 (`sprint-07-ai-idea-assist.md`), then Sprint 8 (`sprint-08-azure-deployment.md`).
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -48,10 +48,10 @@ Most-severe first:
 |---|---|---|---|---|
 | ✅ P0 | HIGH | CSV export formula injection (CWE-1236) | `src/Collega.API/Parsing/Csv.cs` `Escape` | **DONE 2026-08-11** — guard apostrophe on cells starting `= + - @ \t \r`, stripped symmetrically by `Csv.Parse` so the round trip stays lossless. 15 new tests |
 | ✅ P0 | MED | Forced password change enforced only client-side | `src/Collega.API/Authentication/PasswordChangeRequiredFilter.cs` | **DONE 2026-08-11** — global filter refuses all but an opt-in allowlist (`GET /auth/me`, `POST /auth/change-password`) with `403` while `MustChangePassword` is true; flag read from live state per request. Also fixed the aggravator: an unrotated temp password no longer loses its expiry on login. Specs + contracts updated; 4 new tests |
-| P1 | MED | Unescaped `LIKE` wildcards in search (`%`/`_`) | `EfIdeaRepository.cs` + sibling `Ef*Repository` search paths | Escape `% _ [` with an `ESCAPE` clause. *Re-verify in Sprint 5 under Postgres semantics.* |
-| P1 | MED | Board CSV export builds full dataset in memory (sync DoS) | `IdeaService.ExportBoardIdeasAsync` / `IdeasController.ExportCsv` | Stream / cap rows, or move off the sync request path |
-| P2 | MED/LOW | CSV import reads whole upload into memory, no endpoint cap | `IdeasController.ImportCsv` | Add explicit request-size + max-row-count limits |
-| P2 | LOW | Client auth state ignores stored token expiry | `CollegaAuthStateProvider.GetAuthenticationStateAsync` | Treat an elapsed `expiresAtUtc` as anonymous on load |
+| ✅ P1 | MED | Unescaped `LIKE` wildcards in search (`%`/`_`) | `Persistence/LikePattern.cs` + the three `Ef*Repository` search paths | **DONE 2026-08-11** — shared `LikePattern` helper escapes `\ % _ [` and every call site uses the 3-arg `EF.Functions.Like` with an explicit `ESCAPE`. 4 new tests. *Still to re-verify in Sprint 5 under Postgres semantics.* |
+| ✅ P1 | MED | Board CSV export builds full dataset in memory (sync DoS) | `IdeaService.ExportBoardIdeasAsync` | **DONE 2026-08-11** — capped at `MaxExportRows` = 10,000, refusing with `400` rather than truncating. Judgment call flagged to the user; streaming is the alternative if bigger exports are needed |
+| ✅ P2 | MED/LOW | CSV import reads whole upload into memory, no endpoint cap | `IdeasController.ImportCsv` | **DONE 2026-08-11** — `[RequestSizeLimit]` 5 MB + 5,000-row cap checked before any per-row work; rejected in full, no partial import. 1 new test |
+| ✅ P2 | LOW | Client auth state ignores stored token expiry | `CollegaAuthStateProvider.GetAuthenticationStateAsync` | **DONE 2026-08-11** — consults `GetExpiresAtUtcAsync`, clears the session and returns anonymous when the absolute expiry has elapsed |
 
 *Excluded false positive:* a `Convert.ToDecimal` 500 in the Number-range filter — `FieldValueValidator` never persists empty/non-decimal values and `FieldType` is immutable, so it cannot fire.
 

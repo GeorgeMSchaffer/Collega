@@ -157,6 +157,48 @@ public sealed class EfUserRepositoryTests
         Assert.Equal("alice@example.com", page.Items[0].Email);
     }
 
+    /// <summary>
+    /// A search term is data, not pattern syntax. Interpolated straight into <c>$"%{term}%"</c>, an
+    /// underscore is a single-character wildcard, so searching "a_b" used to match "axb" — the term
+    /// could not be searched literally at all, and matched rows the user never asked for.
+    /// </summary>
+    [Fact]
+    public async Task ListByOrganization_SearchTreatsWildcardCharactersLiterally()
+    {
+        using var ctx = InMemoryContext.Create();
+        var orgId = await SeedOrgAsync(ctx);
+        var repo = new EfUserRepository(ctx);
+        await repo.AddAsync(Build.User(orgId, firstName: "A_B", lastName: "Literal", email: "underscore@example.com"));
+        await repo.AddAsync(Build.User(orgId, firstName: "AxB", lastName: "Wildcard", email: "wildcard@example.com"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(
+            new UserListFilter(orgId, new PageRequest(1, 50), "A_B", null, null, null, null), default);
+
+        Assert.Single(page.Items);
+        Assert.Equal("underscore@example.com", page.Items[0].Email);
+    }
+
+    /// <summary>A term of only wildcards matches nothing rather than everything.</summary>
+    [Theory]
+    [InlineData("%")]
+    [InlineData("%%")]
+    [InlineData("_")]
+    public async Task ListByOrganization_BareWildcardTermMatchesNothing(string term)
+    {
+        using var ctx = InMemoryContext.Create();
+        var orgId = await SeedOrgAsync(ctx);
+        var repo = new EfUserRepository(ctx);
+        await repo.AddAsync(Build.User(orgId, firstName: "Alice", lastName: "Smith", email: "alice@example.com"));
+        await repo.AddAsync(Build.User(orgId, firstName: "Bob", lastName: "Jones", email: "bob@example.com"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(
+            new UserListFilter(orgId, new PageRequest(1, 50), term, null, null, null, null), default);
+
+        Assert.Empty(page.Items);
+    }
+
     [Fact]
     public async Task ListByOrganization_SortsByEmailDescending()
     {

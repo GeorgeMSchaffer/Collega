@@ -847,6 +847,13 @@ Success response `200`:
 - `Content-Type: text/csv` (UTF-8 with BOM), attachment `ideas.csv`
 - Columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`, `Status`, `Due Date`, `Tags`, then one column per active User-Defined Field (header = field name). Dropdown/MultiSelect values render as option labels.
 
+Limits and escaping (added 2026-08-11, Sprint 4):
+- **Bounded at 10,000 ideas.** A board above the cap is refused with `400` rather than truncated — a silently short extract is worse than a clear failure for a file people use as a reporting export. The whole dataset is materialised in memory, and the endpoint is reachable by any member including Read Only, so the bound is what keeps it from being a cheap way to pressure the host.
+- **Formula-injection guarded.** Any cell whose first non-apostrophe character is `=`, `+`, `-`, `@`, tab, or CR is written with a leading guard apostrophe (CWE-1236). The import strips exactly that guard, so an export → edit → re-import round trip returns the original values unchanged.
+
+Error responses:
+- `400` the board holds more ideas than the export supports
+
 ### `POST /api/v1/boards/{boardId}/ideas/import`
 Purpose: Create-only CSV import of ideas onto a board (T059/T060). Multipart form field `csvFile`.
 
@@ -854,6 +861,8 @@ Behavior:
 - Each data row creates a new idea. Required columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`. `Status` is optional (must name a board swimlane; defaults to the left-most swimlane); `Due Date`, `Tags`, and per-UDF-field columns are optional.
 - `Idea Type` and `Business Impact` are matched by name (case-insensitive) against active options; a missing or unknown value rejects that row. Dropdown/MultiSelect UDF columns are matched by option label; Boolean accepts `Yes`/`No` or `true`/`false`.
 - Invalid rows are rejected individually with a per-row message; valid rows still import.
+- **Bounded (added 2026-08-11, Sprint 4):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import.
+- A leading guard apostrophe written by the export is stripped on import (see the export contract above), so re-importing an exported file is lossless.
 
 Success response `200`:
 - `createdCount` integer
@@ -861,7 +870,8 @@ Success response `200`:
 - `rows` array of `{ rowNumber, title, outcome (`Created`/`Rejected`), error }`
 
 Error responses:
-- `400` the file is missing/empty or its header lacks the required columns
+- `400` the file is missing/empty, its header lacks the required columns, it exceeds 5 MB, or it exceeds 5,000 rows
+- `413` the request body exceeds the server's size limit before it reaches the handler
 
 ### `POST /api/v1/boards/{boardId}/ideas`
 Purpose: Create a new idea on a board.

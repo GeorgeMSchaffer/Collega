@@ -27,6 +27,13 @@ public sealed class IdeaService : IIdeaService
 {
     private const string DueDateFormat = "yyyy-MM-dd";
 
+    /// <summary>
+    /// Upper bound on rows a single board CSV export will materialise. Well above any plausible
+    /// board — it exists to bound the memory an anonymous-to-the-board member can make the host
+    /// allocate, not to constrain normal use.
+    /// </summary>
+    public const int MaxExportRows = 10_000;
+
     private readonly IIdeaRepository _ideaRepository;
     private readonly IBoardReader _boardReader;
     private readonly ITagRepository _tagRepository;
@@ -464,7 +471,11 @@ public sealed class IdeaService : IIdeaService
             ?? throw new NotFoundAppException("Board not found.");
         EnsureOrganizationScope(board.OrganizationId);
 
-        // Pull every active idea on the board (page through the store so export isn't capped).
+        // Page through the store, but bounded. Every idea, its tags, its field-value snapshots, the
+        // rendered CSV string, and the response byte[] are all held in memory at once, and the
+        // endpoint is reachable by any member including Read Only — so an unbounded export is a
+        // cheap way to pressure the host. The cap refuses rather than truncating: a silently short
+        // export is worse than a clear failure for something people use as a reporting extract.
         var ideas = new List<Idea>();
         var page = 1;
         while (true)
@@ -472,6 +483,15 @@ public sealed class IdeaService : IIdeaService
             var pageResult = await _ideaRepository.ListByBoardAsync(
                 new IdeaListFilter(boardId, new PageRequest(page, PageRequest.MaxPageSize), null, null, null, null, null, "createdat", "asc"),
                 cancellationToken);
+
+            if (pageResult.TotalCount > MaxExportRows)
+            {
+                throw new ValidationAppException("boardId", new[]
+                {
+                    $"This board has {pageResult.TotalCount} ideas, which is more than the {MaxExportRows} this export supports. Contact an administrator if you need a larger extract."
+                });
+            }
+
             ideas.AddRange(pageResult.Items);
             if (pageResult.Items.Count == 0 || ideas.Count >= pageResult.TotalCount)
             {

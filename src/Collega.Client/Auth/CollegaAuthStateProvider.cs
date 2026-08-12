@@ -34,6 +34,19 @@ public sealed class CollegaAuthStateProvider : AuthenticationStateProvider
             return _anonymous;
         }
 
+        // The stored absolute expiry is authoritative on load. Without this check any non-empty
+        // token+user pair rendered as authenticated, so an expired session showed a signed-in UI
+        // until the first API call came back 401 — a confusing half-authenticated state where the
+        // rail, nav, and role-gated controls were all live but nothing worked. The server remains
+        // the real authority on token validity; this only stops the client asserting a session it
+        // can already tell has lapsed.
+        var expiresAtUtc = await _store.GetExpiresAtUtcAsync();
+        if (expiresAtUtc is not null && expiresAtUtc.Value <= DateTimeOffset.UtcNow)
+        {
+            await _store.ClearAsync("expired", broadcast: false);
+            return _anonymous;
+        }
+
         var mustChange = await _store.GetMustChangePasswordAsync();
         return new AuthenticationState(BuildPrincipal(user, mustChange));
     }
