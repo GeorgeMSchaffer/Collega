@@ -17,6 +17,9 @@ public sealed class CollegaAuthStateProvider : AuthenticationStateProvider
     /// <summary>Claim marking a session that must complete a forced password change before use.</summary>
     public const string MustChangePasswordClaim = "mustChangePassword";
 
+    /// <summary>Claim carrying the current user's portrait as an inline data URL (absent when unset).</summary>
+    public const string PortraitClaim = "portrait";
+
     private readonly AuthSessionStore _store;
     private AuthenticationState _anonymous = new(new ClaimsPrincipal(new ClaimsIdentity()));
 
@@ -68,6 +71,11 @@ public sealed class CollegaAuthStateProvider : AuthenticationStateProvider
         if (mustChangePassword)
         {
             claims.Add(new Claim(MustChangePasswordClaim, "true"));
+        }
+
+        if (!string.IsNullOrEmpty(user.PortraitDataUrl))
+        {
+            claims.Add(new Claim(PortraitClaim, user.PortraitDataUrl));
         }
 
         if (!string.IsNullOrEmpty(user.OrganizationId))

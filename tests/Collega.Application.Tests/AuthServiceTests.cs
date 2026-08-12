@@ -16,9 +16,10 @@ public sealed class AuthServiceTests
     private readonly FakeAccessTokenIssuer _tokenIssuer = new();
     private readonly RecordingAuditEventWriter _audit = new();
     private readonly FakeCurrentUserContext _currentUser = new();
+    private readonly FakeImageProcessor _imageProcessor = new();
 
     private AuthService CreateSut() =>
-        new(_users, _orgs, _uow, _hasher, _tokenIssuer, _audit, _currentUser, _clock);
+        new(_users, _orgs, _uow, _hasher, _tokenIssuer, _audit, _currentUser, _imageProcessor, _clock);
 
     private User AddUser(Role role = Role.User, UserStatus status = UserStatus.Active, string email = "pat@example.com", string password = "Secret1!", bool mustChange = false)
     {

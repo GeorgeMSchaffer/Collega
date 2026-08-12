@@ -78,6 +78,10 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(64)
             .IsRequired();
 
+        builder.Property(u => u.PortraitPng)
+            .HasColumnName("portrait_png")
+            .HasColumnType("varbinary(max)");
+
         builder.Property(u => u.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
         builder.Property(u => u.UpdatedAtUtc).HasColumnName("updated_at_utc").IsRequired();
         builder.Property(u => u.CreatedByUserId).HasColumnName("created_by_user_id");

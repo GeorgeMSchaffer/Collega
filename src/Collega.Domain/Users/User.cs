@@ -17,6 +17,7 @@ public sealed class User : AuditableEntityBase
     private static readonly TimeSpan LockoutWindow = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan TemporaryPasswordValidity = TimeSpan.FromHours(24);
+    private const int MaxPortraitBytes = 64 * 1024;
 
     public Guid? OrganizationId { get; private set; }
     public string FirstName { get; private set; } = string.Empty;
@@ -37,6 +38,16 @@ public sealed class User : AuditableEntityBase
     /// requirement #13: "expire after 24 hours [if unused]".
     /// </summary>
     public DateTime? TemporaryPasswordExpiresAtUtc { get; private set; }
+
+    /// <summary>
+    /// Optional square profile portrait, stored as a small pre-resized PNG thumbnail (≤25×25 px per
+    /// the Bug-Triage requirement). Null when the user has no portrait, in which case callers fall
+    /// back to the initials avatar. The domain never decodes or resizes image content — that (and
+    /// the "reject anything that isn't a real GIF/JPEG/PNG" security check) happens in the
+    /// Application/Infrastructure image pipeline before <see cref="SetPortrait"/> is called; the
+    /// entity only guards the stored size so a malformed caller can't persist an oversized blob.
+    /// </summary>
+    public byte[]? PortraitPng { get; private set; }
 
     /// <summary>
     /// Server-side session-revocation stamp (SPEC/20-feature-auth.md #35-36, resolved 2026-08-07).
@@ -149,6 +160,36 @@ public sealed class User : AuditableEntityBase
 
         FirstName = firstName.Trim();
         LastName = lastName.Trim();
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
+    /// <summary>
+    /// Stores a pre-validated, pre-resized PNG portrait thumbnail on the user record. The bytes must
+    /// already be a decoded/re-encoded PNG no larger than 25×25 px produced by the image pipeline —
+    /// this method only enforces a defensive upper bound on the stored size, not image validity.
+    /// </summary>
+    public void SetPortrait(byte[] portraitPng, DateTime nowUtc, Guid? actorUserId)
+    {
+        if (portraitPng is null || portraitPng.Length == 0)
+        {
+            throw new ArgumentException("Portrait content is required.", nameof(portraitPng));
+        }
+
+        // A 25×25 PNG is well under 4 KB; this cap is a safety net against a caller bypassing the
+        // resize pipeline, not a functional limit.
+        if (portraitPng.Length > MaxPortraitBytes)
+        {
+            throw new ArgumentException($"Portrait exceeds the maximum stored size of {MaxPortraitBytes} bytes.", nameof(portraitPng));
+        }
+
+        PortraitPng = portraitPng;
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
+    /// <summary>Clears the stored portrait so the initials avatar is shown again.</summary>
+    public void RemovePortrait(DateTime nowUtc, Guid? actorUserId)
+    {
+        PortraitPng = null;
         MarkUpdated(nowUtc, actorUserId);
     }
 

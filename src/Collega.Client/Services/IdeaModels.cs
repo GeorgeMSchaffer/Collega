@@ -10,7 +10,8 @@ public sealed record IdeaAssigneeDto(
     string FirstName,
     string LastName,
     string DisplayName,
-    bool IsActive);
+    bool IsActive,
+    string? PortraitDataUrl = null);
 
 /// <summary>A resolved @mention on an idea (mirrors the API's MentionDto).</summary>
 public sealed record IdeaMentionDto(
@@ -18,7 +19,8 @@ public sealed record IdeaMentionDto(
     string FirstName,
     string LastName,
     string DisplayName,
-    string Email);
+    string Email,
+    string? PortraitDataUrl = null);
 
 /// <summary>A comment as embedded on an idea detail or returned by the comments endpoint.</summary>
 public sealed record IdeaCommentDto(

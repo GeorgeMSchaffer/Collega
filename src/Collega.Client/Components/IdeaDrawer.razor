@@ -113,7 +113,7 @@
                                     <div class="assignees">
                                         @foreach (var a in _idea.Assignees)
                                         {
-                                            <span class="assignee"><span class="avatar s">@Initials(a.DisplayName)</span>@a.DisplayName</span>
+                                            <span class="assignee"><span class="avatar s @(!string.IsNullOrEmpty(a.PortraitDataUrl) ? "has-portrait" : null)">@if (!string.IsNullOrEmpty(a.PortraitDataUrl)){<img class="portrait" src="@a.PortraitDataUrl" alt="@a.DisplayName" />}else{@Initials(a.DisplayName)}</span>@a.DisplayName</span>
                                         }
                                     </div>
                                 }
@@ -210,7 +210,11 @@
                         @foreach (var c in _comments)
                         {
                             <div class="comment">
-                                <span class="avatar s">@Initials(DisplayNameFor(c.AuthorUserId))</span>
+                                @{
+                                    var authorName = DisplayNameFor(c.AuthorUserId);
+                                    var authorPortrait = PortraitFor(c.AuthorUserId);
+                                }
+                                <span class="avatar s @(!string.IsNullOrEmpty(authorPortrait) ? "has-portrait" : null)">@if (!string.IsNullOrEmpty(authorPortrait)){<img class="portrait" src="@authorPortrait" alt="@authorName" />}else{@Initials(authorName)}</span>
                                 <div class="cbody">
                                     <div class="cbyline"><span class="who">@DisplayNameFor(c.AuthorUserId)</span> <span class="when">@FormatWhen(c.CreatedAtUtc)</span></div>
                                     <p>@c.Body</p>
@@ -220,7 +224,7 @@
                     }
 
                     <div class="addcomment">
-                        <span class="avatar s">@Initials(_currentUserName)</span>
+                        <span class="avatar s @(!string.IsNullOrEmpty(_currentUserPortrait) ? "has-portrait" : null)">@if (!string.IsNullOrEmpty(_currentUserPortrait)){<img class="portrait" src="@_currentUserPortrait" alt="@_currentUserName" />}else{@Initials(_currentUserName)}</span>
                         <div class="addbox">
                             <textarea aria-label="Add a comment" maxlength="2000"
                                       placeholder="Join the discussion… type someone's email with @@ to notify them"
@@ -384,6 +388,9 @@
     private readonly List<CommentListItemDto> _comments = new();
     private List<StatusItemDto> _statusOptions = new();
     private readonly Dictionary<string, string> _names = new();
+    // Portrait data URLs keyed by user id, resolved the same way names are (from the idea's
+    // assignees + mentions). Missing → initials fallback.
+    private readonly Dictionary<string, string?> _portraits = new();
     private IReadOnlyList<UserListItemDto> _orgUsers = Array.Empty<UserListItemDto>();
     private IReadOnlyList<BusinessImpactOptionDto> _businessImpacts = Array.Empty<BusinessImpactOptionDto>();
 
@@ -406,6 +413,7 @@
     private string _role = "";
     private string? _currentUserId;
     private string _currentUserName = "";
+    private string? _currentUserPortrait;
     private string? _organizationId;
     private string _boardName = "";
 
@@ -477,6 +485,7 @@
         _reassignError = null;
         _comments.Clear();
         _names.Clear();
+        _portraits.Clear();
         StateHasChanged();
 
         if (AuthStateTask is not null)
@@ -485,6 +494,7 @@
             _role = user.FindFirst(ClaimTypes.Role)?.Value ?? "";
             _currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             _currentUserName = user.FindFirst(ClaimTypes.Name)?.Value ?? "";
+            _currentUserPortrait = user.FindFirst(CollegaAuthStateProvider.PortraitClaim)?.Value;
             _organizationId = user.FindFirst("organizationId")?.Value;
         }
 
@@ -565,10 +575,12 @@
         foreach (var a in idea.Assignees)
         {
             _names[a.UserId] = a.DisplayName;
+            _portraits[a.UserId] = a.PortraitDataUrl;
         }
         foreach (var m in idea.Mentions)
         {
             _names[m.UserId] = m.DisplayName;
+            _portraits[m.UserId] = m.PortraitDataUrl;
         }
     }
 
@@ -912,6 +924,20 @@
         return string.Equals(userId, _currentUserId, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(_currentUserName)
             ? _currentUserName
             : "Member";
+    }
+
+    // Portrait resolution mirrors DisplayNameFor: the current user's own portrait comes from the
+    // session claim; everyone else from the assignee/mention lookup. Null → initials fallback.
+    private string? PortraitFor(string? userId)
+    {
+        if (!string.IsNullOrEmpty(userId)
+            && string.Equals(userId, _currentUserId, StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrEmpty(_currentUserPortrait))
+        {
+            return _currentUserPortrait;
+        }
+
+        return !string.IsNullOrEmpty(userId) && _portraits.TryGetValue(userId, out var portrait) ? portrait : null;
     }
 
     private static string Initials(string name)

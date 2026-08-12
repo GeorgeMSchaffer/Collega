@@ -15,6 +15,32 @@ internal sealed class TestClock : IClock
     public DateTime UtcNow { get; set; }
 }
 
+/// <summary>
+/// Deterministic <see cref="IImageProcessor"/>. Real decode/resize is exercised in
+/// Collega.Infrastructure.Tests against SkiaSharp; here we only need to steer the Application-layer
+/// branch: any non-empty input is treated as a valid image (returns a fixed 3-byte "thumbnail")
+/// unless <see cref="RejectAll"/> is set, which simulates content that failed the codec check.
+/// </summary>
+internal sealed class FakeImageProcessor : IImageProcessor
+{
+    public bool RejectAll { get; set; }
+
+    public byte[] Thumbnail { get; set; } = { 1, 2, 3 };
+
+    public byte[]? LastInput { get; private set; }
+
+    public byte[]? TryCreatePngThumbnail(byte[] input, int maxDimension)
+    {
+        LastInput = input;
+        if (RejectAll || input is null || input.Length == 0)
+        {
+            return null;
+        }
+
+        return Thumbnail;
+    }
+}
+
 /// <summary>Settable <see cref="ICurrentUserContext"/> with factory helpers for each role.</summary>
 internal sealed class FakeCurrentUserContext : ICurrentUserContext
 {

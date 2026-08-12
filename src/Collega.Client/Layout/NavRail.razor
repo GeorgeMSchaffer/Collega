@@ -39,7 +39,16 @@
                       aria-haspopup="menu"
                       aria-expanded="@_menuOpen.ToString().ToLowerInvariant()"
                       title="Account">
-            <span class="avatar">@Initials</span>
+            <span class="avatar @(HasPortrait ? "has-portrait" : null)">
+                @if (HasPortrait)
+                {
+                    <img class="portrait" src="@_portrait" alt="@DisplayName" />
+                }
+                else
+                {
+                    @Initials
+                }
+            </span>
         </FluentButton>
         @*
             Account popover. The trigger is a FluentButton; the dropdown itself is a
@@ -69,8 +78,11 @@
     // resolved display name / email for the account popover.
     private string DisplayName = "";
     private string AccountSubtitle = "";
+    private string? _portrait;
 
     private bool _menuOpen;
+
+    private bool HasPortrait => !string.IsNullOrEmpty(_portrait);
 
     private string Initials => BuildInitials(DisplayName);
 
@@ -85,14 +97,28 @@
     protected override async Task OnInitializedAsync()
     {
         Nav.LocationChanged += OnLocationChanged;
+        AuthState.AuthenticationStateChanged += OnAuthStateChanged;
 
-        var state = await AuthState.GetAuthenticationStateAsync();
+        ApplyAuthState(await AuthState.GetAuthenticationStateAsync());
+    }
+
+    private void ApplyAuthState(AuthenticationState state)
+    {
         var user = state.User;
         DisplayName = user.Identity?.Name is { Length: > 0 } name ? name : "Account";
         AccountSubtitle = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
+        _portrait = user.FindFirst(CollegaAuthStateProvider.PortraitClaim)?.Value;
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    // Re-read identity (incl. the portrait) whenever the session changes — e.g. after the user
+    // uploads or removes a portrait on the Profile page, which raises this event via RefreshUserAsync.
+    private void OnAuthStateChanged(Task<AuthenticationState> task) => InvokeAsync(async () =>
+    {
+        ApplyAuthState(await task);
+        StateHasChanged();
+    });
 
     private void ToggleMenu() => _menuOpen = !_menuOpen;
 
@@ -139,7 +165,11 @@
             : (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
     }
 
-    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        AuthState.AuthenticationStateChanged -= OnAuthStateChanged;
+    }
 
     private readonly record struct RailItem(Icon Icon, string Label, string Href, NavLinkMatch Match);
 }
