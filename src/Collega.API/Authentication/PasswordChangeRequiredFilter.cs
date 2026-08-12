@@ -1,4 +1,5 @@
 using Collega.Application.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Collega.API.Authentication;
@@ -46,7 +47,24 @@ public sealed class PasswordChangeRequiredFilter : IAuthorizationFilter
             return;
         }
 
-        if (context.ActionDescriptor.EndpointMetadata.OfType<AllowWhilePasswordChangeRequiredAttribute>().Any())
+        var metadata = context.ActionDescriptor.EndpointMetadata;
+
+        // Only gate endpoints that actually require authorization. This codebase marks protected
+        // actions with [Authorize] individually rather than authorizing at the controller level and
+        // opting out with [AllowAnonymous], so "is it anonymous?" cannot be answered by looking for
+        // IAllowAnonymous — POST /auth/login carries neither attribute. Testing for the absence of
+        // IAuthorizeData covers both shapes: an endpoint that never needed a caller identity is not
+        // one where the caller's rotation state can be relevant. A client that attaches its bearer
+        // header to every request must still be able to re-submit a login.
+        var requiresAuthorization = metadata.OfType<IAuthorizeData>().Any()
+            && !metadata.OfType<IAllowAnonymous>().Any();
+
+        if (!requiresAuthorization)
+        {
+            return;
+        }
+
+        if (metadata.OfType<AllowWhilePasswordChangeRequiredAttribute>().Any())
         {
             return;
         }

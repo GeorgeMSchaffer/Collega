@@ -265,6 +265,14 @@ public sealed class AuthenticationTests : IClassFixture<CollegaApiFactory>
         var login = await client.PostAsJsonAsync("/api/v1/auth/login", new { email = SiteAdminEmail, password = SiteAdminPassword });
 
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        // And still reachable with a valid, still-unrotated bearer header attached — a client that
+        // sends its token on every request must not be locked out of an anonymous endpoint.
+        var body = (await login.Content.ReadFromJsonAsync<LoginResponse>(Json))!;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body.AccessToken);
+
+        var again = await client.PostAsJsonAsync("/api/v1/auth/login", new { email = SiteAdminEmail, password = SiteAdminPassword });
+        Assert.Equal(HttpStatusCode.OK, again.StatusCode);
     }
 
     // Rotates the seeded Site Admin's mandatory first-login password before use; shared so the

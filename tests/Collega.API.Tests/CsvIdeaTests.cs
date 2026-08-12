@@ -95,6 +95,14 @@ public sealed class CsvIdeaTests
     [InlineData("plain value")]
     [InlineData("'tis a quoted phrase")]
     [InlineData("has, comma")]
+    // Values that already look guarded. Without apostrophe-depth counting in the guard, the strip
+    // on re-import eats the user's own apostrophe and silently rewrites stored data.
+    [InlineData("'=1+1")]
+    [InlineData("''=1+1")]
+    [InlineData("'-2")]
+    [InlineData("''")]
+    [InlineData("'")]
+    [InlineData("")]
     public void Csv_WriteThenParse_RoundTripsGuardedCellsLosslessly(string original)
     {
         var csv = Csv.Write(new[] { "Title" }, new[] { (IReadOnlyList<string>)new[] { original } });
@@ -105,13 +113,30 @@ public sealed class CsvIdeaTests
     }
 
     [Fact]
-    public void Csv_Parse_StripsGuardOnlyWhenItPrecedesAFormulaTrigger()
+    public void Csv_Parse_StripsGuardOnlyWhenWhatRemainsWouldHaveBeenGuarded()
     {
-        var records = Csv.Parse("a\n'=1+1\n'tis\n''");
+        var records = Csv.Parse("a\n'=1+1\n'tis\n''\n''=1+1");
 
-        Assert.Equal("=1+1", records[1][0]);   // guard removed
-        Assert.Equal("'tis", records[2][0]);   // ordinary leading apostrophe preserved
-        Assert.Equal("''", records[3][0]);     // apostrophe not followed by a trigger, preserved
+        Assert.Equal("=1+1", records[1][0]);    // guard removed
+        Assert.Equal("'tis", records[2][0]);    // ordinary leading apostrophe preserved
+        Assert.Equal("''", records[3][0]);      // apostrophes with no trigger behind them, preserved
+        Assert.Equal("'=1+1", records[4][0]);   // one guard removed, the user's own apostrophe kept
+    }
+
+    /// <summary>
+    /// The guard must survive a second pass through the exporter — an export of re-imported data
+    /// must not accumulate apostrophes, or repeated round trips would drift.
+    /// </summary>
+    [Theory]
+    [InlineData("=1+1")]
+    [InlineData("'=1+1")]
+    [InlineData("'tis")]
+    public void Csv_WriteParseWrite_IsStable(string original)
+    {
+        var once = Csv.Write(new[] { "T" }, new[] { (IReadOnlyList<string>)new[] { original } });
+        var twice = Csv.Write(new[] { "T" }, new[] { (IReadOnlyList<string>)new[] { Csv.Parse(once)[1][0] } });
+
+        Assert.Equal(once, twice);
     }
 
     [Fact]

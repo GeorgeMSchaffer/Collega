@@ -148,16 +148,37 @@ public static class Csv
         return "\"" + value.Replace("\"", "\"\"") + "\"";
     }
 
-    private static bool NeedsFormulaGuard(string value) =>
-        value.Length > 0 && Array.IndexOf(FormulaTriggers, value[0]) >= 0;
+    /// <summary>
+    /// True when the cell is either dangerous (a spreadsheet would evaluate it) or ambiguous (it
+    /// already looks like a guarded cell, so an unguarded write would be misread on the way back
+    /// in). Both cases are answered by skipping any leading apostrophes and testing the first
+    /// character that isn't one: <c>=1+1</c>, <c>'=1+1</c>, and <c>''=1+1</c> all qualify, while
+    /// <c>'tis</c>, <c>''</c>, and <c>plain</c> do not.
+    /// </summary>
+    /// <remarks>
+    /// The apostrophe-counting matters for round-trip fidelity, not just for the leading case. A
+    /// naive "is the first character a trigger" test writes <c>'=1+1</c> unguarded, and
+    /// <see cref="StripFormulaGuard"/> then eats the user's own apostrophe on re-import, silently
+    /// changing stored data. Guarding by depth makes escape/strip exact inverses at every level.
+    /// </remarks>
+    private static bool NeedsFormulaGuard(string value)
+    {
+        var i = 0;
+        while (i < value.Length && value[i] == FormulaGuard)
+        {
+            i++;
+        }
+
+        return i < value.Length && Array.IndexOf(FormulaTriggers, value[i]) >= 0;
+    }
 
     /// <summary>
-    /// Removes the guard apostrophe <see cref="Escape"/> adds, and only that: a leading apostrophe
-    /// is stripped solely when the next character is itself a formula trigger. A field that
-    /// genuinely starts with an apostrophe (<c>'tis</c>) is left untouched.
+    /// Exact inverse of the guard <see cref="Escape"/> applies: removes one leading apostrophe, and
+    /// only when what remains would itself have been guarded on write. A field that genuinely
+    /// starts with an apostrophe (<c>'tis</c>, <c>''</c>) is left untouched.
     /// </summary>
     private static string StripFormulaGuard(string field) =>
-        field.Length >= 2 && field[0] == FormulaGuard && Array.IndexOf(FormulaTriggers, field[1]) >= 0
+        field.Length > 0 && field[0] == FormulaGuard && NeedsFormulaGuard(field[1..])
             ? field[1..]
             : field;
 }
