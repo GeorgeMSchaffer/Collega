@@ -9,7 +9,8 @@ Before making any status, planning, or scope claim about this project — in thi
 ## Pre-Feature Triage Gate
 - Before starting or resuming implementation, read `SPEC/Bug Triage.md`.
 - Unresolved items in its `TODO` section take priority over new feature work. Do not start a new feature until those items are cleared unless the user explicitly approves an exception.
-- After a fix is complete and focused validation passes, move the item from `TODO` to `COMPLETED` with its completion date and verification note; do not retain it in both sections.
+- After a fix is complete and focused validation passes, move the item out of `TODO` into `SPEC/archive/bug-triage-completed.md` with its completion date and verification note; do not retain it in both places.
+- When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
 **Verified 2026-08-12 against `7502a88` (`dev`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
@@ -25,7 +26,7 @@ Before making any status, planning, or scope claim about this project — in thi
 | Local DB | `collega-sqlserver` container, host port **1434** | Standard demo seed only (2 orgs, 6 org users + 1 Site Admin, 4 boards, ideas); dropped and re-seeded 2026-08-10. Dev-only demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. An unrelated `sql-server-wwi` container holds 1433 and can shadow LocalDB. |
 
 ### Sprint 4 — in progress
-**Done and merged to `dev`:** the whole six-item code-review hardening batch, and profile portrait upload (SkiaSharp). Per-item detail and verification notes: `Bug Triage.md` → COMPLETED. Specs: `20-feature-auth.md` #32a/#32b, `30-Contracts.md` → "Mandatory Password Rotation Gate" and the export/import limits.
+**Done and merged to `dev`:** the whole six-item code-review hardening batch, and profile portrait upload (SkiaSharp). Per-item detail and verification notes: `SPEC/archive/bug-triage-completed.md`. Specs: `20-feature-auth.md` #32a/#32b, `30-Contracts.md` → "Mandatory Password Rotation Gate" and the export/import limits.
 Two things to carry forward: the `LIKE` escaping needs **re-verification under Postgres in Sprint 5** (on that sprint's DoD), and the board-export cap **refuses rather than truncates** above 10,000 rows — a reversible judgment call if larger extracts are ever needed.
 **Open:** the broad code-review pass across previously-unreviewed slices. Plan: `sprints/sprint-04-qa-review-debt.md`.
 

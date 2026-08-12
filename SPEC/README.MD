@@ -35,7 +35,8 @@ Exactly two files answer "where does work stand" and "what is next". Everything 
 
 - `implementation-agent-tracker.md` — **authoritative "what's built right now."** Read its Current Status section fresh before any status or planning claim (see its Ground-Truth Verification section).
 - `95-next-sprints.md` — **authoritative "what's next."** Index of remaining sprint scope; per-sprint plans live in `sprints/`, completed sprints move to `sprints/archive/`.
-- `Bug Triage.md` — **authoritative pre-feature bug/tweak queue.** Unresolved `TODO` items take priority over new feature work unless the user explicitly approves an exception. Move fixes to `COMPLETED` with date and verification note; never leave an item in both sections.
+- `Bug Triage.md` — **authoritative pre-feature bug/tweak queue**, kept short on purpose. Unresolved `TODO` items take priority over new feature work unless the user explicitly approves an exception. Fixed items move to `archive/bug-triage-completed.md`; promoted items are **deleted** once a spec or sprint file owns them. Never leave an item in two places.
+- `ideas-inbox.md` — unrefined feature ideas. Nothing there is scheduled or approved, and **nothing there gates a sprint**; items are picked up only when the user asks.
 - `90-definition-of-done.md` — exit criteria
 - `40-test-strategy.md` — what must be covered, per feature
 - `60-spec-q-and-a-backlog.md` — clarification decisions and unresolved scope questions
@@ -66,6 +67,7 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 | `80-workstream-roadmap.md` | Original milestone/workstream sequencing | Asserts no milestone is in progress or complete |
 | `85-implementation-timeline.md` | Advisory agent-day estimates | Lists `global.json`, `Collega.sln`, and the `src/` skeletons as not yet created; all exist |
 | `bugs.md` | Historical bug log | Superseded by `Bug Triage.md`, the active queue |
+| `bug-triage-completed.md` | Resolved bug-triage items, plus the decision record for entries promoted into specs/sprints | Split out 2026-08-12 to keep the queue short |
 | `draft-porting-proposal.md` | **⛔ DO NOT IMPLEMENT.** Unapproved TypeScript/Next.js/NestJS evaluation draft | Never approved; the canonical stack is unchanged |
 
 ## Working Rules

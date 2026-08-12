@@ -199,4 +199,4 @@ Applies to Organizations, Users, Ideas, Boards, and any future entity list page.
 - [ ] The 28-minute idle warning, 30-minute expiry, Stay signed in action, absolute expiry, and cross-tab activity/logout behavior match the canonical authentication spec.
 - [ ] Native and Fluent text-like controls render at a stable 36px height with vertically centered content; textareas retain independent content-sized geometry.
 - [ ] Rail and reorder/drag actions use Fluent System Icons with stable dimensions, accessible labels/tooltips, visible focus, and disabled states instead of emoji or Unicode glyphs.
-- [ ] Session, password redirect, control geometry, and icon behavior receive user manual acceptance on desktop and narrow layouts before their Bug Triage items move to COMPLETED.
+- [ ] Session, password redirect, control geometry, and icon behavior receive user manual acceptance on desktop and narrow layouts before their Bug Triage items move to `SPEC/archive/bug-triage-completed.md`.

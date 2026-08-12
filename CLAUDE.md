@@ -29,7 +29,8 @@ This project routinely moves faster than any one conversation's memory of it; la
 
 Canonical product behavior lives in `SPEC/*.md`. Read the relevant spec before describing or changing behavior. `SPEC/README.MD` indexes the full set; the ones that gate work:
 
-- `SPEC/Bug Triage.md` — authoritative pre-feature bug/tweak queue. **Clear its `TODO` items before starting new features** unless the user explicitly approves an exception. After a fix passes focused validation, move the item to `COMPLETED` with date and verification note — never leave it in both sections.
+- `SPEC/Bug Triage.md` — authoritative pre-feature bug/tweak queue, deliberately kept short. **Clear its `TODO` items before starting new features** unless the user explicitly approves an exception. After a fix passes focused validation, move the item to `SPEC/archive/bug-triage-completed.md` — never leave it in both. When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue**; the spec or sprint file becomes its only home.
+- `SPEC/ideas-inbox.md` — unrefined feature ideas. Not scheduled, not specified, and **does not gate work** — only picked up when the user asks.
 - `SPEC/implementation-agent-tracker.md` — not product behavior, but the authoritative log of what's built, in progress, and next.
 - `SPEC/95-next-sprints.md` — index for remaining pre-MVP sprint scope; per-sprint files live in `SPEC/sprints/` (completed ones in `SPEC/sprints/archive/`).
 - `SPEC/30-Contracts.md` — canonical API route/payload contracts. Read before adding or changing an endpoint.
