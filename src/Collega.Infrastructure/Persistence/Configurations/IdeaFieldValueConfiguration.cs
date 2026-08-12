@@ -37,11 +37,11 @@ public sealed class IdeaFieldValueConfiguration : IEntityTypeConfiguration<IdeaF
             .IsUnique()
             .HasDatabaseName("ux_idea_field_values_idea_id_field_definition_id");
 
-        // Supports filter/search on a field's values. `value` is an included column, not a key column,
-        // because NVARCHAR(4000) exceeds SQL Server's index-key size limit (the spec's composite-key
-        // form is not creatable as written).
+        // Supports filter/search on a field's values. `value` is deliberately neither a key nor an
+        // INCLUDE column: Postgres stores INCLUDE payloads in the btree leaf tuple and counts them
+        // against the 2704-byte limit (unlike SQL Server, which exempts them), so covering a
+        // 4000-character column would fail the insert outright on long values.
         builder.HasIndex(v => v.FieldDefinitionId)
-            .IncludeProperties(v => v.Value)
             .HasDatabaseName("ix_idea_field_values_field_definition_id");
 
         builder.HasOne<FieldDefinition>()

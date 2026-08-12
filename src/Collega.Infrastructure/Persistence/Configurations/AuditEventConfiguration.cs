@@ -40,8 +40,7 @@ public sealed class AuditEventConfiguration : IEntityTypeConfiguration<AuditEven
             .IsRequired();
 
         builder.Property(e => e.MetadataJson)
-            .HasColumnName("metadata_json")
-            .HasColumnType("nvarchar(max)");
+            .HasColumnName("metadata_json");
 
         builder.Property(e => e.OccurredAtUtc)
             .HasColumnName("occurred_at_utc")

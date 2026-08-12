@@ -13,7 +13,7 @@ public static class StartupConfigurationValidator
     {
         new("SiteAdmin:Email", "SiteAdmin__Email", "the seed Site Admin's login email"),
         new("SiteAdmin:Password", "SiteAdmin__Password", "the seed Site Admin's initial password"),
-        new("ConnectionStrings:DefaultConnection", "ConnectionStrings__DefaultConnection", "the SQL Server connection string"),
+        new("ConnectionStrings:DefaultConnection", "ConnectionStrings__DefaultConnection", "the PostgreSQL connection string"),
     };
 
     /// <summary>
