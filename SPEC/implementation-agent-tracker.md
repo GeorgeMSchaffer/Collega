@@ -23,7 +23,7 @@ Before making any status, planning, or scope claim about this project — in thi
 | Sprints | 1–3 complete · **4 in progress** · 5–8 not started | Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Accumulated debt** | Skipped on nearly every merge by standing user direction to move fast through MVP build-out. Being paid down in Sprint 4. |
 | Bug queue | See `SPEC/Bug Triage.md` | Authoritative open `TODO` list; gates new feature work (see Pre-Feature Triage Gate above). |
-| Local DB | `collega-sqlserver` container, host port **1434** | Standard demo seed only (2 orgs, 6 org users + 1 Site Admin, 4 boards, ideas); dropped and re-seeded 2026-08-10. Dev-only demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. An unrelated `sql-server-wwi` container holds 1433 and can shadow LocalDB. |
+| Local DB | `collega-postgres` container, host port **5432** | Target after the Sprint 5 Postgres cutover (`SPEC/50-postgres-migration.md`); overridable via `POSTGRES_HOST_PORT`. Standard demo seed only (2 orgs, 6 org users + 1 Site Admin, 4 boards, ideas); dropped and re-seeded 2026-08-10. Dev-only demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **Port correction (2026-08-12):** this row previously recorded host port **1434**, which was never right — the running container and `.env` both used 1433. |
 
 ### Sprint 4 — in progress
 **Done and merged to `dev`:** the whole six-item code-review hardening batch, and profile portrait upload (SkiaSharp). Per-item detail and verification notes: `SPEC/archive/bug-triage-completed.md`. Specs: `20-feature-auth.md` #32a/#32b, `30-Contracts.md` → "Mandatory Password Rotation Gate" and the export/import limits.
