@@ -1,6 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <!-- Search predicates are exposed as internal seams so tests can assert on the SQL they generate
+         (the InMemory provider the suite runs on cannot show LIKE/ESCAPE or case-folding). -->
+    <InternalsVisibleTo Include="Collega.API.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Collega.Application\Collega.Application.csproj" />
     <ProjectReference Include="..\Collega.Domain\Collega.Domain.csproj" />
   </ItemGroup>

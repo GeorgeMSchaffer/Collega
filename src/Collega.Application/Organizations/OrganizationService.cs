@@ -210,7 +210,8 @@ public sealed class OrganizationService : IOrganizationService
     {
         for (var attempt = 0; attempt < InviteCodeGenerationAttempts; attempt++)
         {
-            var candidate = _inviteCodeGenerator.Generate();
+            // Normalized here too so the uniqueness probe uses the same canonical form the entity stores.
+            var candidate = InviteCodeNormalizer.Normalize(_inviteCodeGenerator.Generate());
             if (!await _organizationRepository.InviteCodeExistsAsync(candidate, cancellationToken))
             {
                 return candidate;
