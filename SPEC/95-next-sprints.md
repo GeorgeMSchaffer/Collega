@@ -31,7 +31,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 1 | Bug Triage quick wins + bookkeeping reconciliation | `SPEC/sprints/archive/sprint-01-bug-triage-quick-wins.md` | Complete (2026-08-10) | Small |
 | 2 | Drawer-pattern rollout (Orgs/Users/Statuses/Idea Types/Custom Fields) + Site Admin seed-reset flag | `SPEC/sprints/archive/sprint-02-drawer-pattern-rollout.md` | Complete (2026-08-10) | Medium–Large (largest blast radius) |
 | 3 | List filter parity (all-column search, tag filter, user-association filter) + server-side sort | `SPEC/sprints/archive/sprint-03-list-filter-parity.md` | Complete (2026-08-11) | Small–Medium |
-| 4 | QA/Code-Review debt pass + profile portrait upload + code-review hardening batch (folded in 2026-08-11) | `SPEC/sprints/sprint-04-qa-review-debt.md` | Not started | Medium |
+| 4 | QA/Code-Review debt pass + profile portrait upload + code-review hardening batch (folded in 2026-08-11) | `SPEC/sprints/sprint-04-qa-review-debt.md` | In Progress | Medium |
 | 5 | PostgreSQL migration (SQL Server → Postgres) | `SPEC/sprints/sprint-05-postgres-migration.md` | Not started | Small–Medium |
 | 6 | View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin's only org-content mutation path) | `SPEC/sprints/sprint-06-view-as.md` | Not started | Medium |
 | 7 | AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, `Anthropic` package approved) | `SPEC/sprints/sprint-07-ai-idea-assist.md` | Not started | Medium |

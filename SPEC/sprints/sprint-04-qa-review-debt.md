@@ -1,6 +1,6 @@
 # Sprint 4: QA / Code-Review Debt Pass + Profile Portrait Upload
 
-**Status:** In Progress (started 2026-08-11 — **the full six-item code-review hardening batch is done**; the broad review pass and portrait upload remain)
+**Status:** In Progress (started 2026-08-11 — **the six-item code-review hardening batch and profile portrait upload are both done and merged**; only the broad review pass remains)
 **Sequence:** 4 of 8 — see `SPEC/95-next-sprints.md` for the full sequence and how these sprints relate. Starts after Sprint 3 (`sprint-03-list-filter-parity.md`) is merged; followed by Sprint 5 (`sprint-05-postgres-migration.md`), Sprint 6 (`sprint-06-view-as.md`), Sprint 7 (`sprint-07-ai-idea-assist.md`), then Sprint 8 (`sprint-08-azure-deployment.md`).
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -24,7 +24,7 @@ A recall-oriented `/code-review` of `dev` was already run on 2026-08-11 and prod
 |---|---|---|---|
 | P0 | Code-Review pass across all previously-unreviewed merged slices | See `SPEC/archive/implementation-agent-tracker-archive.md`'s per-slice "Judgment calls" sections for a running list of things flagged but never human-reviewed (e.g. lockout fixed-window approximation, JWT ephemeral signing key needing prod config, status name max length 100 vs. the comp's 25-char hint, response-DTO layering compromises) | Sprints 1-3 merged first, so review covers the final shape of things, not a moving target |
 | ✅ P0 | Confirm or change the still-open judgment calls | **RESOLVED 2026-08-11 (user interview)** — all four decided, see "Judgment Calls (resolved)" below; none needs a code change now | Done |
-| P1 | Profile portrait upload: GIF/JPEG/PNG only, validated against malicious content, **resized server-side** to a 25×25px thumbnail, replaces the initials avatar when set (nav rail + everywhere initials render) | Independent of the review pass — can run in parallel. Decisions locked 2026-08-10: **store the thumbnail on the user record** (nullable bytes/base64 column) rather than a separate blob table/endpoint; resize + re-encode happens **server-side** for security. **Image library APPROVED 2026-08-11: SkiaSharp** (permissive MIT-style license, cleaner for MVP than ImageSharp's split license) — decode/validate/resize/re-encode through SkiaSharp, do not trust extension or declared MIME | None |
+| ✅ P1 | Profile portrait upload: GIF/JPEG/PNG only, validated against malicious content, **resized server-side** to a 25×25px thumbnail, replaces the initials avatar when set (nav rail + everywhere initials render) | **DONE 2026-08-12** (`a993102`, merged `0d3c0d5`) — `portrait_png` on `users`, `IImageProcessor` in Application + `SkiaSharpImageProcessor` in Infrastructure, Skia decode as the content check (extension/MIME untrusted), re-encoded to a fresh PNG. Detail: `Bug Triage.md` → COMPLETED | Done |
 | ✅ P2 | Lock the default `Status.Color`/`SortOrder` values | **RESOLVED 2026-08-11** — confirmed final (see below) | Done |
 
 ## Judgment Calls (resolved 2026-08-11, user interview)
@@ -65,7 +65,7 @@ Most-severe first:
 - [ ] Code Reviewer has reviewed every previously-unreviewed slice at least once, findings triaged
 - [ ] All P0 findings fixed or explicitly accepted with a documented reason
 - [x] Open judgment calls (lockout / JWT key / status-name length / status defaults) all decided 2026-08-11 — see "Judgment Calls (resolved)"
-- [ ] **Code-review hardening batch:** all six items resolved (or explicitly deferred with reason) — CSV export formula-guard (HIGH); server-side `MustChangePassword` gate; `LIKE` wildcard escaping; export/import memory bounds; client token-expiry check
-- [ ] Profile portrait upload built, validated, server-side resized to 25×25px, stored on the user record, and tested (including a rejection test for disguised non-image content)
-- [ ] Image-library NuGet package approved before it's added
+- [x] **Code-review hardening batch:** all six items resolved (or explicitly deferred with reason) — CSV export formula-guard (HIGH); server-side `MustChangePassword` gate; `LIKE` wildcard escaping; export/import memory bounds; client token-expiry check — all six done 2026-08-11, merged `161e4c9` + `7502a88`. *Carry-forward:* the `LIKE` fix is re-verified under Postgres on Sprint 5's DoD.
+- [x] Profile portrait upload built, validated, server-side resized to 25×25px, stored on the user record, and tested (including a rejection test for disguised non-image content) — done 2026-08-12, merged `0d3c0d5`
+- [x] Image-library NuGet package approved before it's added — SkiaSharp 2.88.8, user-approved 2026-08-11
 - [x] Default status Color/SortOrder values confirmed as final (2026-08-11 user interview) — the 5 `OrganizationDefaults` statuses, no change
