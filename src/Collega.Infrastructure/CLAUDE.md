@@ -23,8 +23,15 @@ Connection string key: `ConnectionStrings:DefaultConnection` (see [src/Collega.A
 ```bash
 dotnet ef migrations add <Name> \
   --project src/Collega.Infrastructure \
-  --startup-project src/Collega.API
+  --startup-project src/Collega.API \
+  --output-dir Persistence/Migrations
 ```
+
+**`--output-dir` is required, not optional.** `dotnet ef` defaults to a `Migrations/` folder at the
+project root, so omitting it silently writes the migration and the model snapshot to
+`src/Collega.Infrastructure/Migrations/` while the real ones live in `Persistence/Migrations/`. The
+command reports success either way, and the build still passes — you get two snapshots and the wrong
+one wins.
 
 Two caveats worth knowing before you touch packages or tooling:
 

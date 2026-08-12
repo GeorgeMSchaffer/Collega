@@ -136,6 +136,7 @@ namespace Collega.Infrastructure.Persistence.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     organization_id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     field_type = table.Column<int>(type: "integer", nullable: false),
                     is_required = table.Column<bool>(type: "boolean", nullable: false),
@@ -628,9 +629,9 @@ namespace Collega.Infrastructure.Persistence.Migrations
                 columns: new[] { "organization_id", "display_order" });
 
             migrationBuilder.CreateIndex(
-                name: "ux_field_definitions_organization_id_name",
+                name: "ux_field_definitions_organization_id_normalized_name",
                 table: "field_definitions",
-                columns: new[] { "organization_id", "name" },
+                columns: new[] { "organization_id", "normalized_name" },
                 unique: true,
                 filter: "is_deleted = false");
 

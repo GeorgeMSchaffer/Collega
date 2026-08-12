@@ -7,7 +7,7 @@ using Collega.Infrastructure.Persistence;
 using Collega.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace Collega.API.Tests;
+namespace Collega.Infrastructure.Tests;
 
 /// <summary>
 /// Asserts on the SQL the search predicates generate against the real Npgsql provider.

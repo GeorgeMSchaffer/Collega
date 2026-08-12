@@ -140,6 +140,62 @@ public sealed class PostgresProviderTests : IClassFixture<PostgresContainerFixtu
         Assert.Equal("ux_users_normalized_email", postgres.ConstraintName);
     }
 
+    [DockerRequiredFact]
+    public async Task FieldDefinitionNameIndex_RejectsCaseVariantDuplicates()
+    {
+        // The application layer already refuses a case-variant duplicate, so this asserts the database
+        // backstop specifically: without it, two concurrent creates can both pass the application check
+        // and both commit. Under SQL Server the raw-name index caught this only because the default
+        // collation is case-insensitive; PostgreSQL's is not, so the index moved onto normalized_name.
+        var connectionString = await CreateDatabaseAsync("field_name_uniqueness");
+        Guid organizationId;
+
+        await using (var seed = CreateContext(connectionString))
+        {
+            await seed.Database.MigrateAsync();
+            var organization = Build.Organization();
+            seed.Organizations.Add(organization);
+            seed.FieldDefinitions.Add(Build.FieldDefinition(organization.Id, "Cost"));
+            await seed.SaveChangesAsync();
+            organizationId = organization.Id;
+        }
+
+        await using var context = CreateContext(connectionString);
+        context.FieldDefinitions.Add(Build.FieldDefinition(organizationId, "cost", displayOrder: 2));
+
+        var exception = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+
+        var postgres = Assert.IsType<PostgresException>(exception.InnerException);
+        Assert.Equal(PostgresErrorCodes.UniqueViolation, postgres.SqlState);
+        Assert.Equal("ux_field_definitions_organization_id_normalized_name", postgres.ConstraintName);
+    }
+
+    [DockerRequiredFact]
+    public async Task FieldDefinitionNameIndex_AllowsReuseAfterSoftDelete()
+    {
+        // The index is filtered on is_deleted = false, so archiving a field must free its name. This is
+        // the half of the constraint a stricter index would silently break.
+        var connectionString = await CreateDatabaseAsync("field_name_soft_delete");
+
+        await using (var seed = CreateContext(connectionString))
+        {
+            await seed.Database.MigrateAsync();
+            var organization = Build.Organization();
+            seed.Organizations.Add(organization);
+            seed.FieldDefinitions.Add(Build.FieldDefinition(organization.Id, "Cost", archived: true));
+            await seed.SaveChangesAsync();
+
+            seed.FieldDefinitions.Add(Build.FieldDefinition(organization.Id, "COST", displayOrder: 2));
+
+            // No throw: the archived row is outside the filtered index.
+            await seed.SaveChangesAsync();
+        }
+
+        await using var context = CreateContext(connectionString);
+        Assert.Equal(2, await context.FieldDefinitions.CountAsync());
+        Assert.Equal(1, await context.FieldDefinitions.CountAsync(f => !f.IsDeleted));
+    }
+
     /// <summary>Creates an empty database on the shared container and returns its connection string.</summary>
     private async Task<string> CreateDatabaseAsync(string databaseName)
     {

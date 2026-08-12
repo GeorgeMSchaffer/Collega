@@ -268,6 +268,12 @@ namespace Collega.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("normalized_name");
+
                     b.Property<Guid>("OrganizationId")
                         .HasColumnType("uuid")
                         .HasColumnName("organization_id");
@@ -285,9 +291,9 @@ namespace Collega.Infrastructure.Persistence.Migrations
                     b.HasIndex("OrganizationId", "DisplayOrder")
                         .HasDatabaseName("ix_field_definitions_organization_id_display_order");
 
-                    b.HasIndex("OrganizationId", "Name")
+                    b.HasIndex("OrganizationId", "NormalizedName")
                         .IsUnique()
-                        .HasDatabaseName("ux_field_definitions_organization_id_name")
+                        .HasDatabaseName("ux_field_definitions_organization_id_normalized_name")
                         .HasFilter("is_deleted = false");
 
                     b.ToTable("field_definitions", (string)null);
