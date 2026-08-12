@@ -11,6 +11,7 @@ Collega has a working solution with a large amount of implementation already mer
 Repo layout beyond the `src/` and `tests/` projects:
 
 - `SPEC/` — canonical specs, the implementation tracker, and delivery/sprint plans (source of truth, see below)
+- `SPEC/archive/` — **superseded documents; don't read unless asked for history.** Several assert the project is unstarted, which was true when written and is not now. Nothing here is canonical or gates work.
 - `SPEC/mockups/` — SVG/HTML UI mockups and throwaway review comps
 - `SPEC/SPECKIT/specs/<NNN-feature>/spec.md` — derived downstream copies of canonical `SPEC/*.md`; edit the canonical file first
 - `e2e/` — TypeScript Playwright browser suite (see `e2e/README.md`), separate from `tests/Collega.E2E.Tests`
@@ -116,7 +117,7 @@ For epic-level work, split execution across role-based subagents, each in its ow
 Rules:
 
 - Each implementer gets its own worktree so they don't collide mid-flight.
-- A role sits out a round if the epic has no task for it — check `SPEC/70-delivery-backlog.md` before assigning UI/UX work, and don't parallelize downstream-epic UI work early.
+- A role sits out a round if the sprint has no task for it — check the sprint's own file in `SPEC/sprints/` before assigning UI/UX work, and don't parallelize downstream UI work early.
 - Code Reviewer must approve before merge.
 - Once merged into `dev`, delete both the worktree and the branch. Don't leave merged worktrees around.
 - This merges directly into `dev` per finished slice; it skips the per-branch PR-to-`main` step above. That still happens once per epic, when exit criteria are met.

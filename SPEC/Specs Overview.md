@@ -262,7 +262,7 @@ Update canonical `SPEC/*.md` first, then align this overview, implementation, an
 - `SPEC/40-test-strategy.md`
 - `SPEC/50-technical-implementation-plan.md`
 - `SPEC/60-spec-q-and-a-backlog.md`
-- `SPEC/70-delivery-backlog.md`
-- `SPEC/80-workstream-roadmap.md`
-- `SPEC/85-implementation-timeline.md`
+- `SPEC/archive/70-delivery-backlog.md`
+- `SPEC/archive/80-workstream-roadmap.md`
+- `SPEC/archive/85-implementation-timeline.md`
 - `SPEC/90-definition-of-done.md`

@@ -29,7 +29,7 @@ Maps to the task breakdown in `SPEC/50-postgres-migration.md` §"Task breakdown 
 | P0 | `DateTime` → `timestamptz` UTC-correctness audit | The one real risk — Npgsql throws on non-UTC `Kind`. Audit all persisted `DateTime` writes; do **not** use the legacy timestamp switch (decision locked) |
 | P0 | Connection strings + infra | `appsettings.Development.json`, `CollegaDbContextFactory` default, `docker-compose.yml` (swap `sqlserver`→`postgres:16`, port 5432, volume, `pg_isready` healthcheck), `.env`/`.env.example`, `StartupConfigurationValidator` text |
 | P0 | Postgres-backed smoke test | Testcontainers/Postgres (approved): migrate-up + timestamped round-trip + email-uniqueness |
-| P1 | Documentation fan-out | Reconcile `SPEC/00-project-brief.md`, `CLAUDE.md`, `50-technical-implementation-plan.md`, `50-kubernetes-deployment.md`, `85-implementation-timeline.md`, `20-feature-issues-and-delivery.md`, `50-azure-api-cicd.md`. (`50-azure-deployment.md` already done.) |
+| P1 | Documentation fan-out | Reconcile `SPEC/00-project-brief.md`, `CLAUDE.md`, `50-technical-implementation-plan.md`, `50-kubernetes-deployment.md`, `20-feature-issues-and-delivery.md`, `50-azure-api-cicd.md`. (`50-azure-deployment.md` already done. `85-implementation-timeline.md` was archived 2026-08-11 — do **not** reconcile it.) |
 
 ## Risks
 | Risk | Impact | Mitigation |

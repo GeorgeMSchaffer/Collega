@@ -1,5 +1,11 @@
 # Workstream Roadmap
 
+> ⛔ **ARCHIVED / HISTORICAL — DO NOT PLAN FROM THIS FILE.**
+> Archived 2026-08-11. Its Restart Baseline asserts that no milestone is in progress or complete and that work should begin at Milestone 1.
+> That is **false**: all MVP milestones are delivered; the project is in post-MVP sprint work (Sprint 4 of 8).
+>
+> Current status is `SPEC/implementation-agent-tracker.md` (Current Status). Current scope is `SPEC/95-next-sprints.md` + `SPEC/sprints/`. This file is retained only as a record of the original plan.
+
 ## Purpose
 Translate the implementation plan into milestone-oriented workstreams grouped by architecture responsibility.
 

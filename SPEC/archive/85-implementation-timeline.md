@@ -1,7 +1,13 @@
 # Implementation Timeline
 
+> ⛔ **ARCHIVED / HISTORICAL — DO NOT PLAN FROM THIS FILE.**
+> Archived 2026-08-11. Its Prerequisites section lists `global.json`, `Collega.sln`, and the five `src/Collega.*` project skeletons as "not yet done in this repo", and estimates the MVP as unstarted.
+> That is **false**: all of those exist and the MVP epics they gate are merged. The agent-day estimates describe work already completed.
+>
+> Current status is `SPEC/implementation-agent-tracker.md` (Current Status). Current scope is `SPEC/95-next-sprints.md` + `SPEC/sprints/`. This file is retained only as a record of the original plan.
+
 ## Purpose
-`SPEC/50-technical-implementation-plan.md`, `SPEC/70-delivery-backlog.md`, and `SPEC/80-workstream-roadmap.md` already define the full task breakdown, exit criteria, and dependency ordering for the MVP and post-MVP phases. None of them assign effort or calendar estimates — the one exception is the User-Defined-Fields addendum at the bottom of `SPEC/50-technical-implementation-plan.md`, sized at "~12–16 dev-days." This document adds that missing dimension: effort estimates and a critical path, expressed in **agent-days**, on top of the existing epic/phase/milestone structure. It does not redefine scope — `SPEC/70-delivery-backlog.md` remains the task-level source of truth; this file only adds sizing and sequencing commentary.
+`SPEC/50-technical-implementation-plan.md`, `SPEC/archive/70-delivery-backlog.md`, and `SPEC/archive/80-workstream-roadmap.md` already define the full task breakdown, exit criteria, and dependency ordering for the MVP and post-MVP phases. None of them assign effort or calendar estimates — the one exception is the User-Defined-Fields addendum at the bottom of `SPEC/50-technical-implementation-plan.md`, sized at "~12–16 dev-days." This document adds that missing dimension: effort estimates and a critical path, expressed in **agent-days**, on top of the existing epic/phase/milestone structure. It does not redefine scope — `SPEC/archive/70-delivery-backlog.md` remains the task-level source of truth; this file only adds sizing and sequencing commentary.
 
 ## Status
 Advisory / non-canonical. This is a planning aid, not a contract. If effort estimates and actual implementation pace diverge significantly, update this file — it does not gate delivery the way `SPEC/30-Contracts.md` or the feature specs do.
@@ -9,7 +15,7 @@ Advisory / non-canonical. This is a planning aid, not a contract. If effort esti
 ## Estimation Basis
 - **Unit:** 1 agent-day = one focused Claude Code session that takes a coherent task slice from empty/partial to build-clean, tested, and spec-aligned — not a literal 24-hour period.
 - **Calibration anchor:** the existing UDF sizing (`SPEC/50-technical-implementation-plan.md`, "Effort Sizing" table) — a feature touching Domain, Application, API, Client (editor + dynamic form + filter panel), and CSV import/export at ~12–16 agent-days. Every estimate below is sized relative to that anchor.
-- **Assumption:** a single AI agent (not a multi-person team) executes sequentially across Domain → Application → Infrastructure → API → Client for a given slice. The "parallel team workstream" framing in `SPEC/70-delivery-backlog.md` and `SPEC/80-workstream-roadmap.md` (separate API/Application/Infrastructure/Client/QA lanes running concurrently) does not shorten a solo-agent timeline the way it would a real team's — see "Sequencing for a solo agent" below.
+- **Assumption:** a single AI agent (not a multi-person team) executes sequentially across Domain → Application → Infrastructure → API → Client for a given slice. The "parallel team workstream" framing in `SPEC/archive/70-delivery-backlog.md` and `SPEC/archive/80-workstream-roadmap.md` (separate API/Application/Infrastructure/Client/QA lanes running concurrently) does not shorten a solo-agent timeline the way it would a real team's — see "Sequencing for a solo agent" below.
 - **Excluded from the estimate:** human review/approval latency, environment setup outside this repo (e.g. cloud infra, CI runners), and time spent on spec clarification Q&A when new ambiguities surface (two were found and resolved while drafting this document — see "Open Items" below).
 
 ## Prerequisites (Day 0, before Epic 1)
@@ -27,7 +33,7 @@ Both items found while researching this plan are now resolved; see `SPEC/60-spec
 2. **Seed Site Admin credential mechanism was unnamed** — resolved: configuration keys `SiteAdmin__Email` / `SiteAdmin__Password` (ASP.NET Core config, fail-fast on startup if missing), recorded in `SPEC/20-feature-auth.md`, `SPEC/50-technical-implementation-plan.md`, and `SPEC/50-kubernetes-deployment.md`.
 
 ## MVP Epic Estimates
-Epics and dependency rules are as defined in `SPEC/70-delivery-backlog.md`; this table only adds the `Est.` column. Task-ID cross-references are to `SPEC/implementation-agent-tracker.md`.
+Epics and dependency rules are as defined in `SPEC/archive/70-delivery-backlog.md`; this table only adds the `Est.` column. Task-ID cross-references are to `SPEC/implementation-agent-tracker.md`.
 
 | Epic | Scope | Est. (agent-days) | Depends on | Tracker tasks |
 |---|---|---|---|---|
@@ -44,7 +50,7 @@ Epics and dependency rules are as defined in `SPEC/70-delivery-backlog.md`; this
 **MVP subtotal: 52–73 agent-days** (midpoint ≈ 62). *Epics 1–8 = 40–57; UDF (Epic 9) adds 12–16.*
 
 ## Sequencing for a Solo Agent
-`SPEC/70-delivery-backlog.md` and `SPEC/80-workstream-roadmap.md` describe API/Application/Infrastructure/Client/QA as concurrent lanes — that's team-sequencing advice and doesn't apply directly to a single agent working alone, since one agent can't truly parallelize across lanes. For a solo agent, two sequencing options:
+`SPEC/archive/70-delivery-backlog.md` and `SPEC/archive/80-workstream-roadmap.md` describe API/Application/Infrastructure/Client/QA as concurrent lanes — that's team-sequencing advice and doesn't apply directly to a single agent working alone, since one agent can't truly parallelize across lanes. For a solo agent, two sequencing options:
 
 - **Batched (as written):** Epics 1→2→3→4→5→6 build the full backend, then Epic 7 builds the whole client, then Epic 8 hardens everything. Simple to reason about; the same total effort as below, but Epic 7 involves relearning context across every prior epic's API shape at once, and defects found late in Epic 7 can bounce back into Epics 3–5.
 - **Interleaved (recommended):** pull the client tasks for each epic into that epic (e.g. build the org/user admin UI right after Epic 3's API stabilizes, not deferred to Epic 7). Total effort is roughly the same, but integration issues surface immediately instead of during a large end-of-project client push, and there's no separate large "Epic 7" — its component tasks distribute into Epics 2–6, leaving Epic 7 as only the cross-cutting items that don't belong to one epic (global nav/header, Settings shell, uniform search/pagination, primary-nav styling).

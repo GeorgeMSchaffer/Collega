@@ -6,7 +6,7 @@ namespace Collega.API.Tests;
 
 /// <summary>
 /// Epic 1 QA baseline: "baseline smoke checks for boot and error envelope behavior"
-/// (SPEC/70-delivery-backlog.md, Epic 1). These are integration-style smoke tests
+/// (SPEC/archive/70-delivery-backlog.md, Epic 1). These are integration-style smoke tests
 /// against the real in-memory host (see <see cref="CollegaApiFactory"/>), not unit
 /// tests — booting a real ASP.NET Core pipeline is the point, so hermeticity here
 /// means "no external network/database", not "no host".
@@ -23,7 +23,7 @@ public sealed class SmokeTests : IClassFixture<CollegaApiFactory>
     /// <summary>
     /// GREEN today. Confirms the host can be built and started and will serve an
     /// HTTP request without throwing. This exercises exactly the "the API starts
-    /// successfully" exit criterion for Epic 1 in SPEC/70-delivery-backlog.md.
+    /// successfully" exit criterion for Epic 1 in SPEC/archive/70-delivery-backlog.md.
     /// </summary>
     [Fact]
     public async Task Application_Boots_And_Responds_To_Requests()
