@@ -1,10 +1,12 @@
 # Scope: Migrate Database Technology — MS SQL Server → PostgreSQL
 
-## Status — IMPLEMENTED ON BRANCH, NOT YET MERGED TO `dev` (2026-08-12)
+## Status — COMPLETE, MERGED TO `dev` (2026-08-12, `7c5a78b`)
 
-**Decided (2026-08-11): Collega's application database moves from SQL Server 2022 to PostgreSQL.** This document is the implementation scope for that decision.
+**Decided (2026-08-11): Collega's application database moves from SQL Server 2022 to PostgreSQL.** This document was the implementation scope for that decision; the work is done.
 
-**As of 2026-08-12 the work is built and verified on `sprint-05-integration`, but `dev` is still on SQL Server.** Do not read this document as describing the current state of `dev`. Until that merge lands, a fresh checkout of `dev` still runs `Microsoft.EntityFrameworkCore.SqlServer`. The documentation fan-out below has been applied on the same branch, so those docs describe the post-merge target.
+`dev` now runs `Npgsql.EntityFrameworkCore.PostgreSQL` 8.0.10 against a single `20260812195251_InitialCreate` migration, with `docker-compose.yml` on `postgres:16`. No `UseSqlServer` call or SQL Server package reference remains anywhere in `src/`. Verified at merge: 579 tests passing, and a live boot against a real `postgres:16` container applying the migration and completing `StartupSeeder` with no `timestamptz`/`Kind` exception.
+
+Read this file now for **why the migration went the way it did** — particularly the corrections below, which record four claims this document originally made that turned out to be wrong. For current state, read `SPEC/implementation-agent-tracker.md`.
 
 **Decisions locked (2026-08-11 user interview):**
 1. Deliverable = this SPEC doc (implementation is a separate approved step).
@@ -81,7 +83,7 @@ Effort in agent-days (1 agent-day = one focused session from partial to build-cl
 
 - ~~**NuGet approvals**~~ — approved 2026-08-11 (`Npgsql.EntityFrameworkCore.PostgreSQL` + Testcontainers/Postgres test package).
 - **Target Postgres version & host:** local `postgres:16` in compose is assumed and the Azure guide now targets **Azure Database for PostgreSQL Flexible Server (Burstable B1ms)**; confirm this over a self-hosted/K8s host (`SPEC/50-kubernetes-deployment.md` still describes SQL Server and is not yet reconciled).
-- ~~**Timing vs. Sprint 4**~~ — scheduled 2026-08-11 as **Sprint 5**, immediately after Sprint 4, in `SPEC/95-next-sprints.md` (`SPEC/sprints/sprint-05-postgres-migration.md`). Runs last so the engine swap starts from Sprint 4's reviewed, stable code.
+- ~~**Timing vs. Sprint 4**~~ — scheduled 2026-08-11 as **Sprint 5**, immediately after Sprint 4, in `SPEC/95-next-sprints.md` (`SPEC/sprints/archive/sprint-05-postgres-migration.md`). Runs last so the engine swap starts from Sprint 4's reviewed, stable code.
 
 ## Field-definition name uniqueness — RESOLVED (2026-08-12)
 

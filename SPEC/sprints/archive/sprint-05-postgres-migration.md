@@ -1,6 +1,6 @@
 # Sprint 5: PostgreSQL Migration (SQL Server → Postgres)
 
-**Status:** Not started
+**Status:** Complete (2026-08-12) — merged to `dev` as `7c5a78b`. 579 tests passing; live-verified against a real `postgres:16` container.
 **Sequence:** 5 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 4 (`archive/sprint-04-qa-review-debt.md`) is merged; followed by Sprint 6 (`sprint-06-view-as.md`) and Sprint 7 (`sprint-07-ai-idea-assist.md`), both built on the migrated Postgres codebase. **Blocks Sprint 8 (Azure deployment):** that sprint cannot start until this one is implemented in code and verified working against a real Postgres instance, because it changes the deployment's database engine and connection-string requirements.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -39,12 +39,27 @@ Maps to the task breakdown in `SPEC/50-postgres-migration.md` §"Task breakdown 
 | InMemory test suite stays green while real PG translation breaks | False confidence | Postgres-backed integration test is mandatory this sprint, not optional |
 
 ## Definition of Done
-- [ ] Provider swapped to Npgsql; solution builds clean
-- [ ] Single fresh `InitialCreate` migration generated and its DDL reviewed
-- [ ] All persisted `DateTime` writes confirmed UTC; no legacy-timestamp switch used
-- [ ] Connection strings, `docker-compose.yml`, and `.env(.example)` all target Postgres; API boots and migrates against a real Postgres container
-- [ ] Postgres-backed smoke/integration test added and green
-- [ ] Full `dotnet test Collega.sln` green
-- [ ] Docs reconciled per the fan-out list; `00-project-brief.md` + `CLAUDE.md` stack references updated to PostgreSQL
-- [ ] `LIKE`-wildcard escaping (Sprint 4 hardening batch) re-verified under Postgres `LIKE`/`ESCAPE` + case-sensitivity semantics. **Verify the generated SQL actually emits an `ESCAPE` clause — do not trust the call sites by reading them.** The original batch fix left `EfIdeaRepository.ListByOrganizationAsync` on the two-argument `EF.Functions.Like` overload, so its escaping was inert until 2026-08-12; the same mistake is easy to reintroduce and no in-memory test can catch it (the InMemory provider evaluates `Like` client-side and cannot distinguish the overloads). Capture the SQL from a real Postgres run, or assert on `ToQueryString()` against a relational provider.
-- [ ] Code Reviewer approved before merge
+- [x] Provider swapped to Npgsql; solution builds clean
+- [x] Single fresh `InitialCreate` migration generated and its DDL reviewed
+- [x] All persisted `DateTime` writes confirmed UTC; no legacy-timestamp switch used
+- [x] Connection strings, `docker-compose.yml`, and `.env(.example)` all target Postgres; API boots and migrates against a real Postgres container
+- [x] Postgres-backed smoke/integration test added and green
+- [x] Full `dotnet test Collega.sln` green
+- [x] Docs reconciled per the fan-out list; `00-project-brief.md` + `CLAUDE.md` stack references updated to PostgreSQL
+- [x] `LIKE`-wildcard escaping (Sprint 4 hardening batch) re-verified under Postgres `LIKE`/`ESCAPE` + case-sensitivity semantics. **Verify the generated SQL actually emits an `ESCAPE` clause — do not trust the call sites by reading them.** The original batch fix left `EfIdeaRepository.ListByOrganizationAsync` on the two-argument `EF.Functions.Like` overload, so its escaping was inert until 2026-08-12; the same mistake is easy to reintroduce and no in-memory test can catch it (the InMemory provider evaluates `Like` client-side and cannot distinguish the overloads). Capture the SQL from a real Postgres run, or assert on `ToQueryString()` against a relational provider.
+- [x] Code Reviewer approved before merge
+
+## Outcome (2026-08-12)
+
+Delivered across six units in isolated worktrees, integrated on `sprint-05-integration`, merged as `7c5a78b`.
+
+**The DoD boxes above are all ticked, but the sprint found more than it planned for.** The UTC audit — flagged here as "the one real risk" — came back completely clean. The defects that did exist were all silent, and none were visible to the 561-test suite because it runs on EF InMemory:
+
+1. `HasFilter("[is_deleted] = 0")` hardcoded in the model, which regenerates verbatim and fails at `MigrateAsync` on Postgres. The scope doc had claimed this converts automatically.
+2. Invite-code self-registration broke for lowercase input — codes generate from an uppercase-only alphabet and only got trimmed.
+3. All repository search paths stopped matching differing case, violating `SPEC/30-Contracts.md`'s "Matching is case-insensitive substring".
+4. `/ideas` date search returned HTTP 500 — `DateOnly.ToDateTime` yields `Kind=Unspecified`, which Npgsql rejects. The UTC audit missed it because the audit covered *persisted writes*; this is a *query parameter*.
+
+Two additions beyond the original plan: the field-definition `NormalizedName` column (closing a concurrency window the old collation had covered), and container tests excluded from the deploy gate so shipping does not depend on Docker Hub.
+
+**Carry into Sprint 8:** Npgsql's 2-argument `Like` overload emits `ESCAPE ''` — an empty escape character — rather than omitting the clause. Asserting on the keyword `ESCAPE` is therefore not discriminating; assert on `ESCAPE '\'`.
