@@ -84,6 +84,17 @@ Defines the system contracts that implementations must follow.
 
 Access tokens expire absolutely 480 minutes after issuance, so a successful login returns `expiresInSeconds: 28800`. Deployments may override the lifetime through `Auth:AccessTokenLifetimeMinutes` (environment variable `Auth__AccessTokenLifetimeMinutes`). The browser independently enforces a 30-minute inactivity deadline, warns at minute 28 with a two-minute countdown, and synchronizes activity and logout/expiry across tabs. Staying signed in resets only browser inactivity and never changes `expiresInSeconds` or the JWT expiry. Idle or absolute expiry clears client authentication and navigates to `/login?sessionExpired=true`; explicit logout and successful password changes do not use that query state.
 
+### Mandatory Password Rotation Gate (Resolved 2026-08-11, Sprint 4)
+While a user's persisted `MustChangePassword` is true, the API refuses every authenticated endpoint except a fixed allowlist, returning `403` with the standard problem-details envelope. The allowlist is `GET /api/v1/auth/me` (the client needs it to render the change screen) and `POST /api/v1/auth/change-password` (the only way out). Anonymous endpoints — login, register — are unaffected, since an unauthenticated caller owes no rotation.
+
+Rules:
+- the flag is read from live persisted state on each request, not from a claim baked into the token at issuance, so completing the rotation lifts the restriction on the very next request without reissuing a token
+- login still succeeds and still returns a token plus `requiresPasswordChange: true`; the token is simply scoped to the allowlist until the rotation is done
+- the allowlist is opt-in per endpoint — a newly added endpoint is refused during rotation unless it is explicitly marked
+- this is a server-side gate. The Blazor client's own `mustChangePassword` routing is a UX convenience layered on top of it and is not the enforcement point
+
+Before this gate, the rule was enforced only client-side: the issued token was valid everywhere, so a caller holding an admin-issued temporary password could skip the rotation entirely by calling the API directly and continue on a credential the issuing admin still knew.
+
 ### `POST /api/v1/auth/login`
 Purpose: Authenticate a user with globally unique email credentials.
 

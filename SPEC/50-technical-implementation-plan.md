@@ -722,7 +722,7 @@ Validation gate:
 ## Traceability Guidance
 - map each implementation slice back to the relevant `SPEC/20-feature-*.md` file
 - keep `SPEC/30-Contracts.md` and OpenAPI artifacts synchronized with endpoint changes
-- use `SPEC/70-delivery-backlog.md` as the execution tracker derived from this plan
+- use `SPEC/archive/70-delivery-backlog.md` as the execution tracker derived from this plan
 
 ## Implementation Notes
 - Put business rules in Domain and Application layers; keep controllers and components thin.

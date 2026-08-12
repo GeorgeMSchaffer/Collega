@@ -66,6 +66,13 @@ public sealed class BearerTokenAuthenticationHandler : AuthenticationHandler<Aut
             new(CollegaClaimTypes.Status, principal.Status.ToString())
         };
 
+        // Emitted only when true so the absence of the claim is unambiguous — a token minted before
+        // this claim existed never reads as "no rotation required" by accident.
+        if (principal.MustChangePassword)
+        {
+            claims.Add(new Claim(CollegaClaimTypes.MustChangePassword, "true"));
+        }
+
         if (principal.OrganizationId.HasValue)
         {
             claims.Add(new Claim(CollegaClaimTypes.OrganizationId, principal.OrganizationId.Value.ToString()));
@@ -83,4 +90,5 @@ public static class CollegaClaimTypes
 {
     public const string OrganizationId = "collega:organizationId";
     public const string Status = "collega:status";
+    public const string MustChangePassword = "collega:mustChangePassword";
 }

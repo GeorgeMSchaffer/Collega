@@ -1,10 +1,19 @@
-# Collega MVP Single Source Specification
+# Collega MVP Specification Summary (DERIVED — NOT CANONICAL)
+
+> ⚠️ **This file is a derived summary, not a source of truth, and it is not maintained in lockstep with the canonical specs.**
+> Its content was last reconciled **2026-08-06**; the canonical `SPEC/*.md` files have moved since.
+>
+> - **Do not implement from this file.** Read the canonical spec for the area you are changing (`SPEC/README.MD` indexes them; `SPEC/30-Contracts.md` is authoritative for endpoints and payloads).
+> - **Where this file disagrees with a canonical spec, the canonical spec wins.** That is a precedence rule, not a conflict — resolve it and move on. It is *not* the "specs conflict, ask the user" case in `CLAUDE.md`, which covers disagreement between two **canonical** specs.
+> - **Do not edit behavior here.** Update the canonical spec first; this summary is regenerated from it.
+>
+> Kept because a single-file overview is genuinely useful for orientation and onboarding. Read it for shape, never for detail.
 
 ## Document Metadata
-- Status: Draft
-- Last Updated: 2026-08-06
-- Audience: Engineering, Product, QA, AI coding agents
-- Purpose: Provide one implementation-ready spec that reduces duplication while preserving canonical rules from `SPEC/*.md`.
+- Status: **Derived summary — non-canonical**
+- Last reconciled with canonical specs: 2026-08-06
+- Audience: Engineering, Product, QA, AI coding agents — for orientation only
+- Purpose: One-file orientation view of the MVP. Canonical rules live in the individual `SPEC/*.md` documents.
 
 ## Product Intent
 Collega is a tenant-scoped collaboration platform for capturing, refining, and advancing process ideas.
@@ -14,9 +23,9 @@ The system supports organization administration, board workflow configuration, a
 Security-sensitive flows include password policy enforcement, lockout handling, forced first-login password change, and audited administration actions.
 
 ## Source of Truth and Usage
-- Canonical behavior remains in `SPEC/*.md`.
-- This file is the preferred AI ingestion entrypoint for implementation work.
-- If behavior changes, update the relevant canonical specs and keep this overview aligned.
+- Canonical behavior lives in the individual `SPEC/*.md` documents, indexed by `SPEC/README.MD`.
+- **This file is not an implementation entrypoint.** Use it to orient; read the canonical spec before changing behavior.
+- If behavior changes, update the canonical spec first, then reconcile this summary and bump its "Last reconciled" date.
 
 ## MVP Scope
 ### In Scope
@@ -253,7 +262,7 @@ Update canonical `SPEC/*.md` first, then align this overview, implementation, an
 - `SPEC/40-test-strategy.md`
 - `SPEC/50-technical-implementation-plan.md`
 - `SPEC/60-spec-q-and-a-backlog.md`
-- `SPEC/70-delivery-backlog.md`
-- `SPEC/80-workstream-roadmap.md`
-- `SPEC/85-implementation-timeline.md`
+- `SPEC/archive/70-delivery-backlog.md`
+- `SPEC/archive/80-workstream-roadmap.md`
+- `SPEC/archive/85-implementation-timeline.md`
 - `SPEC/90-definition-of-done.md`

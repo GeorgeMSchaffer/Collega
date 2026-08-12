@@ -40,7 +40,12 @@ public sealed class AuthenticationTests : IClassFixture<CollegaApiFactory>
     [Fact]
     public async Task Login_Succeeds_And_Issues_A_Usable_Token()
     {
-        using var client = _factory.CreateClient();
+        // Deliberately NOT the class-shared factory: this is the one test that asserts on the
+        // *seeded* Site Admin password and its pristine RequiresPasswordChange flag, and sibling
+        // tests rotate that password (they must, to get past the mandatory-rotation gate). Sharing
+        // the fixture here would make the test order-dependent, and xUnit does not guarantee order.
+        using var factory = new CollegaApiFactory();
+        using var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/v1/auth/login", new { email = SiteAdminEmail, password = SiteAdminPassword });
 
@@ -199,13 +204,81 @@ public sealed class AuthenticationTests : IClassFixture<CollegaApiFactory>
         return new CreatedUser(createdUser.UserId, email);
     }
 
-    private static async Task AuthenticateAsSiteAdminAsync(HttpClient client)
+    /// <summary>
+    /// The mandatory first-login rotation is enforced server-side, not just by the Blazor client's
+    /// <c>mustChangePassword</c> claim. Before this gate existed the token issued alongside
+    /// <c>RequiresPasswordChange = true</c> was fully valid for every endpoint, so a user holding an
+    /// admin-issued temporary password could skip the rotation entirely by calling the API directly
+    /// and keep operating on a credential the issuing admin still knows.
+    /// </summary>
+    [Fact]
+    public async Task Token_Issued_While_PasswordChangeRequired_Is_Refused_Outside_The_Allowlist()
     {
+        // Own factory: this test needs a Site Admin that has NOT yet rotated (see the note on
+        // Login_Succeeds_And_Issues_A_Usable_Token).
+        using var factory = new CollegaApiFactory();
+        using var client = factory.CreateClient();
+
         var login = await client.PostAsJsonAsync("/api/v1/auth/login", new { email = SiteAdminEmail, password = SiteAdminPassword });
         login.EnsureSuccessStatusCode();
-        var body = await login.Content.ReadFromJsonAsync<LoginResponse>(Json);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body!.AccessToken);
+        var body = (await login.Content.ReadFromJsonAsync<LoginResponse>(Json))!;
+        Assert.True(body.RequiresPasswordChange);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body.AccessToken);
+
+        // Allowlisted: the client needs these two to render and complete the rotation.
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/v1/auth/me")).StatusCode);
+
+        // Everything else is refused, whatever the caller's role would otherwise permit.
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/v1/organizations")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.PostAsJsonAsync("/api/v1/organizations", new { title = "Blocked Org", description = "x" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await client.PutAsJsonAsync("/api/v1/auth/me", new { firstName = "Nope", lastName = "Nope" })).StatusCode);
+
+        // Completing the rotation lifts the restriction on the next request.
+        var change = await client.PostAsJsonAsync("/api/v1/auth/change-password", new
+        {
+            currentPassword = SiteAdminPassword,
+            newPassword = ChangedPassword
+        });
+        change.EnsureSuccessStatusCode();
+
+        var reLogin = await client.PostAsJsonAsync("/api/v1/auth/login", new { email = SiteAdminEmail, password = ChangedPassword });
+        reLogin.EnsureSuccessStatusCode();
+        var reBody = (await reLogin.Content.ReadFromJsonAsync<LoginResponse>(Json))!;
+        Assert.False(reBody.RequiresPasswordChange);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", reBody.AccessToken);
+
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/v1/organizations")).StatusCode);
     }
+
+    /// <summary>
+    /// The gate reads live persisted state per request rather than a value baked into the token, so
+    /// an unauthenticated caller is untouched by it — login and register keep working.
+    /// </summary>
+    [Fact]
+    public async Task PasswordChangeGate_Does_Not_Affect_Anonymous_Endpoints()
+    {
+        using var factory = new CollegaApiFactory();
+        using var client = factory.CreateClient();
+
+        var login = await client.PostAsJsonAsync("/api/v1/auth/login", new { email = SiteAdminEmail, password = SiteAdminPassword });
+
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        // And still reachable with a valid, still-unrotated bearer header attached — a client that
+        // sends its token on every request must not be locked out of an anonymous endpoint.
+        var body = (await login.Content.ReadFromJsonAsync<LoginResponse>(Json))!;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body.AccessToken);
+
+        var again = await client.PostAsJsonAsync("/api/v1/auth/login", new { email = SiteAdminEmail, password = SiteAdminPassword });
+        Assert.Equal(HttpStatusCode.OK, again.StatusCode);
+    }
+
+    // Rotates the seeded Site Admin's mandatory first-login password before use; shared so the
+    // nine test classes that need a Site Admin session don't each carry a copy.
+    private static Task AuthenticateAsSiteAdminAsync(HttpClient client) =>
+        SiteAdminAuth.AuthenticateAsSiteAdminAsync(client);
 
     private sealed record LoginResponse(string AccessToken, int ExpiresInSeconds, bool RequiresPasswordChange);
     private sealed record CreateOrgResponse(Guid OrganizationId, string InviteCode, Guid DefaultBoardId, int DefaultStatusCount);

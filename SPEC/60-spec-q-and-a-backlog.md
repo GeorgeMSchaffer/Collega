@@ -53,7 +53,7 @@ Implementation direction:
 ## Decision Log (2026-08-06): Overview Sync Gaps
 
 ### 5. `Specs Overview.md` omitted invite-code self-registration
-Found while drafting `SPEC/85-implementation-timeline.md`: `SPEC/Specs Overview.md` — despite being "the preferred AI ingestion entrypoint" — omitted invite-code self-registration, invite-code display/regeneration, and the `POST /api/v1/auth/register` and invite-code-regenerate endpoints, even though `SPEC/10-requirements.md`, `SPEC/20-feature-auth.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/25-client-ui.md`, and `SPEC/30-Contracts.md` all define this behavior as MVP/canonical, and `SPEC/70-delivery-backlog.md` already tasks it under Epic 3.
+Found while drafting `SPEC/archive/85-implementation-timeline.md`: `SPEC/Specs Overview.md` — despite being "the preferred AI ingestion entrypoint" — omitted invite-code self-registration, invite-code display/regeneration, and the `POST /api/v1/auth/register` and invite-code-regenerate endpoints, even though `SPEC/10-requirements.md`, `SPEC/20-feature-auth.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/25-client-ui.md`, and `SPEC/30-Contracts.md` all define this behavior as MVP/canonical, and `SPEC/archive/70-delivery-backlog.md` already tasks it under Epic 3.
 Resolved: this was an omission in the overview, not a scope change. Self-registration via invite code remains in MVP scope. `Specs Overview.md` has been updated (Authentication and Access, Organizations and Users, MVP In Scope, and the API Contract Summary Matrix) to match the canonical specs.
 
 ### 6. Seed Site Admin credential configuration keys were unnamed

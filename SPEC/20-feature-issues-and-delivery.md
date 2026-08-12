@@ -321,7 +321,7 @@ Approving this spec requires these canonical edits *before* implementation (per 
 3. **`SPEC/20-feature-notifications.md`** — add `IdeaPromoted` and `IssueDeliveryStatusChanged` notification types (recipients: idea author + assignees; self-suppressed; link `/ideas/{ideaId}`).
 4. **`SPEC/30-Contracts.md`** — add the promote / return-to-discovery / delivery-status / sprint-assignment routes and the sprint CRUD + lifecycle routes and the `/delivery` query.
 5. **`SPEC/20-feature-client-ui.md`** and **`SPEC/20-feature-client-ui-revisions.md`** — add the Delivery rail destination, the Sprint board, the promotion dialog, and the provenance panel; note the still-open mobile/narrow-viewport pass applies.
-6. **`SPEC/70-delivery-backlog.md`** / **`SPEC/80-workstream-roadmap.md`** — add this slice as a post-MVP milestone ("Idea → Delivery"), sequenced after the MVP release gate.
+6. **`SPEC/archive/70-delivery-backlog.md`** / **`SPEC/archive/80-workstream-roadmap.md`** — add this slice as a post-MVP milestone ("Idea → Delivery"), sequenced after the MVP release gate.
 
 ---
 

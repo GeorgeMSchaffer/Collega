@@ -283,19 +283,10 @@ public sealed class TenantAdministrationTests : IClassFixture<CollegaApiFactory>
         return (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
     }
 
-    private static async Task AuthenticateAsSiteAdminAsync(HttpClient client)
-    {
-        // Credentials from CollegaApiFactory's environment variables. The seeded Site Admin is
-        // flagged MustChangePassword, but the issued token is still valid for protected calls.
-        var login = await client.PostAsJsonAsync("/api/v1/auth/login", new
-        {
-            email = "siteadmin@collega.test",
-            password = "Test123!Password"
-        });
-        login.EnsureSuccessStatusCode();
-        var body = await login.Content.ReadFromJsonAsync<LoginResponse>(Json);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body!.AccessToken);
-    }
+    // Rotates the seeded Site Admin's mandatory first-login password before use; shared so the
+    // nine test classes that need a Site Admin session don't each carry a copy.
+    private static Task AuthenticateAsSiteAdminAsync(HttpClient client) =>
+        SiteAdminAuth.AuthenticateAsSiteAdminAsync(client);
 
     private sealed record LoginResponse(string AccessToken, int ExpiresInSeconds, bool RequiresPasswordChange);
     private sealed record CreateOrgResponse(Guid OrganizationId, string InviteCode, Guid DefaultBoardId, int DefaultStatusCount);

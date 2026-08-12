@@ -7,7 +7,7 @@
 > **Outcome (2026-08-10):** Delivered on branch `feature/sprint-01-bug-triage-quick-wins`, merged to `dev`. The bookkeeping audit found that — contrary to the "may already be done" note — 6 of 7 items still needed real work (only add-button right-alignment and the idea edit-input widths were already satisfied). All addressed items were moved to `COMPLETED` in `SPEC/Bug Triage.md`. Client build clean; full suite 474 green; live-verified as demo Org Admin (Site-Admin-only bits verified by code+build). One new bug was discovered and filed to `Bug Triage.md` TODO: the idea-type/business-impact migration fails its FK when applied over a DB that already has idea rows.
 
 ## Goal
-Every small, mechanical Bug Triage item is fixed and verified; `SPEC/Bug Triage.md`'s `TODO`/`COMPLETED` bookkeeping is fully caught up (some items already appear fixed in `SPEC/implementation-agent-tracker-archive.md` but are still listed under `TODO` — that mismatch gets closed here first, since it's the cheapest way to find out how much of this sprint is already done).
+Every small, mechanical Bug Triage item is fixed and verified; `SPEC/Bug Triage.md`'s `TODO`/`COMPLETED` bookkeeping is fully caught up (some items already appear fixed in `SPEC/archive/implementation-agent-tracker-archive.md` but are still listed under `TODO` — that mismatch gets closed here first, since it's the cheapest way to find out how much of this sprint is already done).
 
 ## Capacity
 | Role | Slices this sprint | Notes |
@@ -20,7 +20,7 @@ Every small, mechanical Bug Triage item is fixed and verified; `SPEC/Bug Triage.
 ## Sprint Backlog
 | Priority | Item | Notes | Dependencies |
 |---|---|---|---|
-| P0 | **Bookkeeping audit first**: for each `TODO` item below, check whether `SPEC/implementation-agent-tracker-archive.md` already claims it done (e.g. "Add new" right-align, Back button extension) — if code confirms it, move straight to `COMPLETED` in `SPEC/Bug Triage.md` with a verification note instead of re-building it | Do this before touching code — may shrink this sprint significantly | None |
+| P0 | **Bookkeeping audit first**: for each `TODO` item below, check whether `SPEC/archive/implementation-agent-tracker-archive.md` already claims it done (e.g. "Add new" right-align, Back button extension) — if code confirms it, move straight to `COMPLETED` in `SPEC/Bug Triage.md` with a verification note instead of re-building it | Do this before touching code — may shrink this sprint significantly | None |
 | P0 | Fix Custom Fields "New Field" button — navigates to the organizations list instead of the field-create form | Real bug, not a polish item | None |
 | P0 | Archived checkbox placement: move to just right of the search field, on every list page that has one | | None |
 | P1 | Back button: confirm/finish "above the search field, left-aligned" on every list page, and that it returns to the originating page (not just to a fixed parent) | May already be done per `b73a5af`/`79bd619` — verify against exact wording | None |

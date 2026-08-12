@@ -107,6 +107,32 @@ public sealed class UserTests
     }
 
     [Fact]
+    public void SuccessfulLogin_KeepsTemporaryPasswordDeadline_WhileRotationIsStillOwed()
+    {
+        var user = NewOrgUser();
+        user.IssueTemporaryPassword("temphash", TestClock.Now, Guid.NewGuid());
+
+        // The user signs in with the temporary password but does not rotate it.
+        user.RegisterSuccessfulLogin(TestClock.Now.AddMinutes(1));
+
+        Assert.True(user.MustChangePassword);
+        Assert.True(user.IsTemporaryPasswordExpired(TestClock.Now.AddHours(24).AddSeconds(1)));
+    }
+
+    [Fact]
+    public void SuccessfulLogin_ClearsTemporaryPasswordDeadline_OnceRotationIsDone()
+    {
+        var user = NewOrgUser();
+        user.IssueTemporaryPassword("temphash", TestClock.Now, Guid.NewGuid());
+        user.ChangePassword("newhash", TestClock.Now.AddMinutes(1));
+
+        user.RegisterSuccessfulLogin(TestClock.Now.AddMinutes(2));
+
+        Assert.False(user.MustChangePassword);
+        Assert.False(user.IsTemporaryPasswordExpired(TestClock.Now.AddHours(48)));
+    }
+
+    [Fact]
     public void ChangePassword_ClearsMustChangeAndRotatesSecurityStamp()
     {
         var user = User.CreateOrganizationUser(OrgId, "Pat", "Jones", "pat@example.com", "old", Role.User, UserStatus.Active, mustChangePassword: true, TestClock.Now);

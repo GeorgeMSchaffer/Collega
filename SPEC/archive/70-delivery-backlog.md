@@ -1,5 +1,11 @@
 # Delivery Backlog
 
+> ⛔ **ARCHIVED / HISTORICAL — DO NOT PLAN FROM THIS FILE.**
+> Archived 2026-08-11. Its Restart Baseline asserts that every epic and task is "planned and pending" and that no item should be treated as implemented.
+> That is **false**: epics T001-T067 (Foundation through Hardening, User-Defined Fields, Idea-Type Fields) are built and merged to `dev`.
+>
+> Current status is `SPEC/implementation-agent-tracker.md` (Current Status). Current scope is `SPEC/95-next-sprints.md` + `SPEC/sprints/`. This file is retained only as a record of the original plan.
+
 ## Purpose
 Break the technical implementation plan into execution-ready epics and task slices.
 

@@ -38,6 +38,11 @@ public sealed record TemporaryPasswordResult(string TemporaryPassword, bool Must
 /// request (see ITokenAuthenticationService) so a mid-session deactivation or role change takes
 /// effect immediately rather than trusting stale token claims.
 /// </summary>
+/// <param name="MustChangePassword">
+/// Live persisted state, not a token claim, so a rotation completed in another tab lifts the
+/// restriction on the next request. The API refuses all but a small allowlist of endpoints while
+/// this is true (auth requirement #31); the client's own gate is a UX convenience on top of it.
+/// </param>
 public sealed record AuthenticatedPrincipal(
     Guid UserId,
     Guid? OrganizationId,
@@ -45,4 +50,5 @@ public sealed record AuthenticatedPrincipal(
     string FirstName,
     string LastName,
     string Email,
-    UserStatus Status);
+    UserStatus Status,
+    bool MustChangePassword);

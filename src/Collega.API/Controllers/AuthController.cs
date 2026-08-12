@@ -36,7 +36,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>Return the currently authenticated user summary.</summary>
+    /// <remarks>Allowlisted mid-rotation: the client needs it to render the change-password screen.</remarks>
     [Authorize]
+    [AllowWhilePasswordChangeRequired]
     [HttpGet("me")]
     [ProducesResponseType(typeof(CurrentUserSummary), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -60,7 +62,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>Change the current user's password, including the first-login forced change.</summary>
+    /// <remarks>Allowlisted mid-rotation: this is the only way out of the restriction.</remarks>
     [Authorize]
+    [AllowWhilePasswordChangeRequired]
     [HttpPost("change-password")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]

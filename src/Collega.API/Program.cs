@@ -45,6 +45,11 @@ builder.Services.AddControllers(options =>
 {
     options.Conventions.Add(new ApiVersionRoutePrefixConvention());
     options.ModelMetadataDetailsProviders.Add(new SpacedDisplayNameMetadataProvider());
+
+    // Server-side enforcement of the mandatory first-login password change. Closed by default:
+    // an endpoint is only reachable mid-rotation if it carries
+    // [AllowWhilePasswordChangeRequired]. See PasswordChangeRequiredFilter.
+    options.Filters.Add<PasswordChangeRequiredFilter>();
 });
 
 builder.Services.AddExceptionHandler<AppExceptionHandler>();

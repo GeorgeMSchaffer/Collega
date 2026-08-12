@@ -1,6 +1,6 @@
 # Sprint 4: QA / Code-Review Debt Pass + Profile Portrait Upload
 
-**Status:** Not started
+**Status:** In Progress (started 2026-08-11 — the two security items are done; see the hardening batch below)
 **Sequence:** 4 of 8 — see `SPEC/95-next-sprints.md` for the full sequence and how these sprints relate. Starts after Sprint 3 (`sprint-03-list-filter-parity.md`) is merged; followed by Sprint 5 (`sprint-05-postgres-migration.md`), Sprint 6 (`sprint-06-view-as.md`), Sprint 7 (`sprint-07-ai-idea-assist.md`), then Sprint 8 (`sprint-08-azure-deployment.md`).
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -22,7 +22,7 @@ A recall-oriented `/code-review` of `dev` was already run on 2026-08-11 and prod
 ## Sprint Backlog
 | Priority | Item | Notes | Dependencies |
 |---|---|---|---|
-| P0 | Code-Review pass across all previously-unreviewed merged slices | See `SPEC/implementation-agent-tracker-archive.md`'s per-slice "Judgment calls" sections for a running list of things flagged but never human-reviewed (e.g. lockout fixed-window approximation, JWT ephemeral signing key needing prod config, status name max length 100 vs. the comp's 25-char hint, response-DTO layering compromises) | Sprints 1-3 merged first, so review covers the final shape of things, not a moving target |
+| P0 | Code-Review pass across all previously-unreviewed merged slices | See `SPEC/archive/implementation-agent-tracker-archive.md`'s per-slice "Judgment calls" sections for a running list of things flagged but never human-reviewed (e.g. lockout fixed-window approximation, JWT ephemeral signing key needing prod config, status name max length 100 vs. the comp's 25-char hint, response-DTO layering compromises) | Sprints 1-3 merged first, so review covers the final shape of things, not a moving target |
 | ✅ P0 | Confirm or change the still-open judgment calls | **RESOLVED 2026-08-11 (user interview)** — all four decided, see "Judgment Calls (resolved)" below; none needs a code change now | Done |
 | P1 | Profile portrait upload: GIF/JPEG/PNG only, validated against malicious content, **resized server-side** to a 25×25px thumbnail, replaces the initials avatar when set (nav rail + everywhere initials render) | Independent of the review pass — can run in parallel. Decisions locked 2026-08-10: **store the thumbnail on the user record** (nullable bytes/base64 column) rather than a separate blob table/endpoint; resize + re-encode happens **server-side** for security. **Image library APPROVED 2026-08-11: SkiaSharp** (permissive MIT-style license, cleaner for MVP than ImageSharp's split license) — decode/validate/resize/re-encode through SkiaSharp, do not trust extension or declared MIME | None |
 | ✅ P2 | Lock the default `Status.Color`/`SortOrder` values | **RESOLVED 2026-08-11** — confirmed final (see below) | Done |
@@ -46,8 +46,8 @@ Concrete defects already surfaced (auth/token stack, password hashing, and all A
 Most-severe first:
 | Priority | Sev | Item | Location | Fix |
 |---|---|---|---|---|
-| P0 | HIGH | CSV export formula injection (CWE-1236) | `src/Collega.API/Parsing/Csv.cs` `Escape` | Prefix a formula-guard on cells starting `= + - @ \t \r` before export |
-| P0 | MED | Forced password change enforced only client-side | `src/Collega.Application/Auth/TokenAuthenticationService.cs` | Block non-allowlisted endpoints server-side while `MustChangePassword` is true |
+| ✅ P0 | HIGH | CSV export formula injection (CWE-1236) | `src/Collega.API/Parsing/Csv.cs` `Escape` | **DONE 2026-08-11** — guard apostrophe on cells starting `= + - @ \t \r`, stripped symmetrically by `Csv.Parse` so the round trip stays lossless. 15 new tests |
+| ✅ P0 | MED | Forced password change enforced only client-side | `src/Collega.API/Authentication/PasswordChangeRequiredFilter.cs` | **DONE 2026-08-11** — global filter refuses all but an opt-in allowlist (`GET /auth/me`, `POST /auth/change-password`) with `403` while `MustChangePassword` is true; flag read from live state per request. Also fixed the aggravator: an unrotated temp password no longer loses its expiry on login. Specs + contracts updated; 4 new tests |
 | P1 | MED | Unescaped `LIKE` wildcards in search (`%`/`_`) | `EfIdeaRepository.cs` + sibling `Ef*Repository` search paths | Escape `% _ [` with an `ESCAPE` clause. *Re-verify in Sprint 5 under Postgres semantics.* |
 | P1 | MED | Board CSV export builds full dataset in memory (sync DoS) | `IdeaService.ExportBoardIdeasAsync` / `IdeasController.ExportCsv` | Stream / cap rows, or move off the sync request path |
 | P2 | MED/LOW | CSV import reads whole upload into memory, no endpoint cap | `IdeasController.ImportCsv` | Add explicit request-size + max-row-count limits |

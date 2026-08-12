@@ -824,13 +824,10 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         return client;
     }
 
-    private static async Task AuthenticateAsSiteAdminAsync(HttpClient client)
-    {
-        var login = await client.PostAsJsonAsync("/api/v1/auth/login", new { email = "siteadmin@collega.test", password = "Test123!Password" });
-        login.EnsureSuccessStatusCode();
-        var body = await login.Content.ReadFromJsonAsync<LoginResponse>(Json);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body!.AccessToken);
-    }
+    // Rotates the seeded Site Admin's mandatory first-login password before use; shared so the
+    // nine test classes that need a Site Admin session don't each carry a copy.
+    private static Task AuthenticateAsSiteAdminAsync(HttpClient client) =>
+        SiteAdminAuth.AuthenticateAsSiteAdminAsync(client);
 
     private List<Guid> GetBoardStatusIds(Guid boardId)
     {

@@ -6,19 +6,19 @@
 
 - The canonical stack remains **ASP.NET Core + Blazor + EF Core + SQL Server 2022**, as defined in `SPEC/00-project-brief.md`. That document is unchanged and remains authoritative.
 - Nothing in this file supersedes any canonical spec. Where this document and a canonical spec disagree, **the canonical spec wins** — this file is the one that is wrong.
-- No implementation work, scaffolding, package installation, branch, or worktree should be created against this proposal. Continue executing the .NET plan in `SPEC/70-delivery-backlog.md` and `SPEC/85-implementation-timeline.md` until and unless this proposal is explicitly approved.
+- No implementation work, scaffolding, package installation, branch, or worktree should be created against this proposal. Continue executing the .NET plan in `SPEC/archive/70-delivery-backlog.md` and `SPEC/archive/85-implementation-timeline.md` until and unless this proposal is explicitly approved.
 - Approval requires an explicit decision recorded in `SPEC/60-spec-q-and-a-backlog.md`. Until that entry exists, treat this document as speculative.
 - Several decisions inside remain open (see **Open Decisions**). The proposal is not executable even if approved in principle.
 
 ## Purpose
 
-`SPEC/85-implementation-timeline.md` sizes the MVP at 40–57 agent-days on the current .NET stack. This document answers a different question: **what would it cost to move Collega to TypeScript — Next.js on the frontend, NestJS on the backend, TypeORM for persistence — and is now the moment to do it?**
+`SPEC/archive/85-implementation-timeline.md` sizes the MVP at 40–57 agent-days on the current .NET stack. This document answers a different question: **what would it cost to move Collega to TypeScript — Next.js on the frontend, NestJS on the backend, TypeORM for persistence — and is now the moment to do it?**
 
 It reuses that document's estimating unit exactly, so the numbers are directly comparable.
 
 ## Estimation Basis
 
-- **Unit:** 1 agent-day = one focused Claude Code session taking a coherent task slice from empty/partial to build-clean, tested, and spec-aligned. Identical to `SPEC/85-implementation-timeline.md`.
+- **Unit:** 1 agent-day = one focused Claude Code session taking a coherent task slice from empty/partial to build-clean, tested, and spec-aligned. Identical to `SPEC/archive/85-implementation-timeline.md`.
 - **Excluded:** human review/approval latency, cloud/CI setup, and clarification rounds on decisions still open below.
 - **Assumption:** a single agent executing sequentially, consistent with the "Sequencing for a Solo Agent" section of the timeline document.
 
@@ -126,7 +126,7 @@ Roughly 34–48 agent-days remain on the .NET plan. On the proposed stack:
 | 7. Client Experience | 10–14 | **−2 to −4** | The largest single win — see below. |
 | 8. Hardening and Release | 5–7 | ~0 | Playwright browser tests are identical either way; Jest↔xUnit is a wash. |
 
-**Epic 7 is where the stack actually pays.** `SPEC/85-implementation-timeline.md` flags the Kanban rebuild (`BE-3`/`BE-4`) as *"the single largest concentration of client complexity … the most likely epic to overrun its range."* Drag-and-drop with rollback, column reorder, optimistic upvote and status updates, and multi-select assignee/tag pickers are precisely what the React ecosystem has mature, well-trodden answers for (`dnd-kit`, TanStack Query optimistic mutations). Blazor requires JS interop for drag-and-drop and hand-rolled optimistic state.
+**Epic 7 is where the stack actually pays.** `SPEC/archive/85-implementation-timeline.md` flags the Kanban rebuild (`BE-3`/`BE-4`) as *"the single largest concentration of client complexity … the most likely epic to overrun its range."* Drag-and-drop with rollback, column reorder, optimistic upvote and status updates, and multi-select assignee/tag pickers are precisely what the React ecosystem has mature, well-trodden answers for (`dnd-kit`, TanStack Query optimistic mutations). Blazor requires JS interop for drag-and-drop and hand-rolled optimistic state.
 
 **Net: the remaining MVP is roughly a wash, tilting mildly favorable.** The port therefore costs close to its face value of 8–11 agent-days rather than being amortized away — but also is not compounded by ongoing drag.
 
@@ -152,7 +152,7 @@ Requires rewriting (stack-specific content):
 - `SPEC/50-technical-implementation-plan.md` — Architecture Plan and layer responsibilities (888 lines, the largest single edit)
 - `SPEC/40-test-strategy.md` — xUnit/EF-InMemory conventions → Jest/Supertest; test *cases* themselves are unaffected
 - `SPEC/20-feature-client-ui.md` and `SPEC/20-feature-client-ui-revisions.md` — Fluent UI Blazor component references
-- `SPEC/70-delivery-backlog.md`, `SPEC/80-workstream-roadmap.md`, `SPEC/85-implementation-timeline.md` — task phrasing and estimates
+- `SPEC/archive/70-delivery-backlog.md`, `SPEC/archive/80-workstream-roadmap.md`, `SPEC/archive/85-implementation-timeline.md` — task phrasing and estimates
 - `SPEC/20-feature-auth.md`, `SPEC/50-kubernetes-deployment.md` — `SiteAdmin__Email`/`SiteAdmin__Password` config-key shape
 
 Largely unaffected: `SPEC/30-Contracts.md`, `SPEC/10-requirements.md`, the remaining `SPEC/20-feature-*.md` behavior specs, `SPEC/90-definition-of-done.md`, `SPEC/mockups/`.

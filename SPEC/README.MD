@@ -7,7 +7,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 - `00-project-brief.md` — product model, stack, solution structure, architecture rules
 - `10-requirements.md` — requirement set
 - `30-Contracts.md` — **canonical API route and payload contracts**; authoritative for endpoint and payload details
-- `Specs Overview.md` — single-document aggregate meant as a fast AI entrypoint. **Not fully in sync** with the individual specs (e.g. it omits invite-code self-registration). Where it disagrees with a detailed spec, treat it as an open spec conflict and ask.
+- `Specs Overview.md` — **derived, non-canonical** single-document summary; useful for orientation only. Last reconciled 2026-08-06. **Do not implement from it**, and where it disagrees with a canonical spec, the canonical spec simply wins — that is precedence, not a conflict to escalate.
 
 ### Feature specs — `20-feature-*.md`
 
@@ -31,16 +31,16 @@ Canonical product and delivery specifications. This file is the index; the numbe
 
 ## Delivery, Planning, and Status
 
+Exactly two files answer "where does work stand" and "what is next". Everything else in this section is supporting detail.
+
 - `implementation-agent-tracker.md` — **authoritative "what's built right now."** Read its Current Status section fresh before any status or planning claim (see its Ground-Truth Verification section).
-- `implementation-agent-tracker-archive.md` — full narrative history; per-slice write-ups, judgment calls, UI sign-off history, the original T001-T052 backlog.
+- `95-next-sprints.md` — **authoritative "what's next."** Index of remaining sprint scope; per-sprint plans live in `sprints/`, completed sprints move to `sprints/archive/`.
 - `Bug Triage.md` — **authoritative pre-feature bug/tweak queue.** Unresolved `TODO` items take priority over new feature work unless the user explicitly approves an exception. Move fixes to `COMPLETED` with date and verification note; never leave an item in both sections.
-- `95-next-sprints.md` — index for remaining pre-MVP sprint scope. Per-sprint plans live in `sprints/`; completed sprints move to `sprints/archive/`.
-- `70-delivery-backlog.md` — task-level delivery backlog
-- `80-workstream-roadmap.md` — workstream sequencing
-- `85-implementation-timeline.md` — advisory effort/timeline estimates; **not canonical behavior**
 - `90-definition-of-done.md` — exit criteria
 - `40-test-strategy.md` — what must be covered, per feature
 - `60-spec-q-and-a-backlog.md` — clarification decisions and unresolved scope questions
+
+The original epic/milestone/estimate planning documents (`70-delivery-backlog.md`, `80-workstream-roadmap.md`, `85-implementation-timeline.md`) were **archived on 2026-08-11**: each asserted the project was unstarted, which stopped being true once T001-T067 merged. See `archive/` below.
 
 ## Technical and Deployment Plans
 
@@ -54,8 +54,19 @@ Canonical product and delivery specifications. This file is the index; the numbe
 - `mockups/` — SVG/HTML UI mockups and throwaway review comps; `comp-c-*` is the live direction, `comp-a-*`/`comp-b-*` are rejected alternatives kept for history
 - `ui-ux-spec-template.md` — start here for a new client layout/interaction spec
 - `SPECKIT/specs/<NNN-feature>/spec.md` — spec-kit-style **downstream copies** of the canonical files; edit the canonical file first
-- `bugs.md` — historical bug log, retained as completed history. `Bug Triage.md` is the active queue.
-- `draft-porting-proposal.md` — **⛔ DO NOT IMPLEMENT.** An unapproved TypeScript/Next.js/NestJS evaluation draft. The canonical stack is unchanged.
+
+## `archive/` — historical, do not plan or implement from
+
+**Do not read these unless you are asked for history, or you need to know why a past decision was made.** They are excluded from normal spec reading on purpose: each is superseded, and several assert a world-state that is no longer true. Nothing here is canonical, and nothing here gates work.
+
+| File | What it is | Why archived |
+|---|---|---|
+| `implementation-agent-tracker-archive.md` | Full narrative history — per-slice write-ups, judgment calls, UI sign-off history, the original T001-T052 backlog | Split from the live tracker to keep Current Status short |
+| `70-delivery-backlog.md` | Original epic/task breakdown | Asserts every epic is "planned and pending"; T001-T067 are merged |
+| `80-workstream-roadmap.md` | Original milestone/workstream sequencing | Asserts no milestone is in progress or complete |
+| `85-implementation-timeline.md` | Advisory agent-day estimates | Lists `global.json`, `Collega.sln`, and the `src/` skeletons as not yet created; all exist |
+| `bugs.md` | Historical bug log | Superseded by `Bug Triage.md`, the active queue |
+| `draft-porting-proposal.md` | **⛔ DO NOT IMPLEMENT.** Unapproved TypeScript/Next.js/NestJS evaluation draft | Never approved; the canonical stack is unchanged |
 
 ## Working Rules
 

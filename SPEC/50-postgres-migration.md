@@ -53,7 +53,7 @@ The 500-test suite runs on the **EF InMemory provider**, so it does **not** exer
 
 ## Task breakdown & effort
 
-Effort in agent-days (1 agent-day = one focused session from partial to build-clean/tested/spec-aligned), consistent with `SPEC/85-implementation-timeline.md`.
+Effort in agent-days (1 agent-day = one focused session from partial to build-clean/tested/spec-aligned), consistent with `SPEC/archive/85-implementation-timeline.md`.
 
 1. **Provider swap** (~0.25 d) — package reference (approved), both `UseNpgsql` calls, remove the two `nvarchar(max)` annotations.
 2. **Regenerate migrations** (~0.5 d) — delete the 10 migrations + snapshot; `dotnet ef migrations add InitialCreate` against Npgsql; verify the generated DDL (partial index, `uuid`, `timestamptz`, `text`).
@@ -67,7 +67,7 @@ Effort in agent-days (1 agent-day = one focused session from partial to build-cl
 
 ## Documentation fan-out
 
-`SPEC/50-azure-deployment.md` is **already updated** (targets Azure Database for PostgreSQL — Flexible Server, Burstable B1ms). Still to reconcile when this migration merges: `SPEC/00-project-brief.md`, `CLAUDE.md` (stack table + Local SQL Server section + docker-compose notes), `SPEC/50-technical-implementation-plan.md`, `SPEC/50-kubernetes-deployment.md`, `SPEC/85-implementation-timeline.md`, `SPEC/20-feature-issues-and-delivery.md`, and `SPEC/50-azure-api-cicd.md` (check its build/deploy steps for any SQL-specific assumptions).
+`SPEC/50-azure-deployment.md` is **already updated** (targets Azure Database for PostgreSQL — Flexible Server, Burstable B1ms). Still to reconcile when this migration merges: `SPEC/00-project-brief.md`, `CLAUDE.md` (stack table + Local SQL Server section + docker-compose notes), `SPEC/50-technical-implementation-plan.md`, `SPEC/50-kubernetes-deployment.md`, `SPEC/20-feature-issues-and-delivery.md`, and `SPEC/50-azure-api-cicd.md` (check its build/deploy steps for any SQL-specific assumptions). `85-implementation-timeline.md` was archived 2026-08-11 and is deliberately **excluded** — do not reconcile archived documents.
 
 ## Open items requiring a human decision before implementation
 
