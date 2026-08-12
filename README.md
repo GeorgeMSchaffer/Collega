@@ -2,7 +2,9 @@
 
 Organization-scoped collaboration and idea-tracking tool. Organizations contain users, boards, statuses, and ideas; boards organize ideas by status using swimlanes.
 
-**Stack:** .NET 8 · ASP.NET Core Web API · Blazor WebAssembly (Fluent UI Blazor) · EF Core · SQL Server 2022 · xUnit
+**Stack:** .NET 8 · ASP.NET Core Web API · Blazor WebAssembly (Fluent UI Blazor) · EF Core · PostgreSQL 16 (Npgsql) · xUnit
+
+> **Database engine — Sprint 5 cutover.** PostgreSQL is the target engine, replacing SQL Server 2022. Setup below is written against it. Scope: [`SPEC/50-postgres-migration.md`](SPEC/50-postgres-migration.md); sprint wrapper: [`SPEC/sprints/sprint-05-postgres-migration.md`](SPEC/sprints/sprint-05-postgres-migration.md). If your checkout still references `Microsoft.EntityFrameworkCore.SqlServer`, the provider swap has not reached your branch yet.
 
 > **Implementation gate:** check [`SPEC/Bug Triage.md`](SPEC/Bug%20Triage.md) before starting feature work. Unresolved `TODO` items take priority unless the user explicitly approves an exception. See [`SPEC/implementation-agent-tracker.md`](SPEC/implementation-agent-tracker.md) for implementation status.
 
@@ -13,7 +15,7 @@ Organization-scoped collaboration and idea-tracking tool. Organizations contain 
 | Requirement | Notes |
 |---|---|
 | .NET SDK **8.0.118** | Pinned in `global.json` (`rollForward: latestFeature`). |
-| Docker Desktop | Runs the local SQL Server 2022 container. |
+| Docker Desktop | Runs the local PostgreSQL 16 container. |
 | `dotnet-ef` (optional) | Only needed to author migrations: `dotnet tool install -g dotnet-ef`. See the version caveat under [Migrations](#migrations). |
 
 ---
@@ -22,17 +24,18 @@ Organization-scoped collaboration and idea-tracking tool. Organizations contain 
 
 ### 1. Create your local `.env`
 
-`.env` is gitignored and supplies the SQL Server container's `sa` password.
+`.env` is gitignored and supplies the PostgreSQL container's superuser password.
 
 ```bash
 cp .env.example .env
 ```
 
-Then edit `.env` and set a real password. It must satisfy SQL Server complexity rules (8+ characters, with uppercase, lowercase, digit, and symbol):
+Then edit `.env` and set a real password. PostgreSQL enforces no complexity rules of its own, so pick a strong one:
 
 ```dotenv
-MSSQL_SA_PASSWORD=<your-password>
-MSSQL_HOST_PORT=1433
+POSTGRES_PASSWORD=<your-password>
+POSTGRES_USER=postgres
+POSTGRES_HOST_PORT=5432
 
 SITE_ADMIN_EMAIL=admin@collega.local
 SITE_ADMIN_PASSWORD=<your-password>
@@ -49,7 +52,7 @@ cd src/Collega.API
 dotnet user-secrets init
 dotnet user-secrets set "SiteAdmin:Email" "admin@collega.local"
 dotnet user-secrets set "SiteAdmin:Password" "<your-password>"
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=Collega;User Id=sa;Password=<your-password>;TrustServerCertificate=True;"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=<your-password>"
 ```
 
 The connection-string secret overrides the placeholder in `appsettings.Development.json`, which is committed and must never hold a real password.
@@ -59,22 +62,24 @@ Environment variables work as an alternative (note the **double** underscore):
 ```bash
 export SiteAdmin__Email='admin@collega.local'
 export SiteAdmin__Password='<your-password>'
-export ConnectionStrings__DefaultConnection='Server=localhost,1433;Database=Collega;User Id=sa;Password=<your-password>;TrustServerCertificate=True;'
+export ConnectionStrings__DefaultConnection='Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=<your-password>'
 ```
 
-### 3. Start SQL Server
+### 3. Start PostgreSQL
 
 ```bash
-docker compose up -d sqlserver
+docker compose up -d postgres
 ```
 
 Wait for it to report healthy:
 
 ```bash
-docker inspect -f '{{.State.Health.Status}}' collega-sqlserver
+docker inspect -f '{{.State.Health.Status}}' collega-postgres
 ```
 
-Data persists in the named volume `collega_sqlserver-data`.
+The healthcheck runs `pg_isready`, which confirms the server accepts connections but does **not** authenticate — a healthy container is not proof your password is right.
+
+Data persists in the named volume `collega_postgres-data`.
 
 ### 4. Build and run
 
@@ -172,12 +177,11 @@ dotnet test Collega.sln
 dotnet test tests/Collega.Application.Tests/Collega.Application.Tests.csproj   # single project
 ```
 
-Tests are hermetic: no network, no filesystem, no `DateTime.Now`, no randomness. EF Core tests use the InMemory provider, never a real database — so the SQL Server container is **not** required to run the suite.
+Tests are hermetic: no network, no filesystem, no `DateTime.Now`, no randomness. EF Core tests use the InMemory provider, never a real database — so the PostgreSQL container is **not** required to run the suite.
 
 Browser tests are separate and **do** need a running app plus a seeded database:
 
 - `tests/Collega.E2E.Tests` — Playwright for .NET. Skipped by default, so `dotnet test Collega.sln` compiles it without needing a browser or server. See [`tests/Collega.E2E.Tests/CLAUDE.md`](tests/Collega.E2E.Tests/CLAUDE.md) for setup and the use-case catalog.
-- `e2e/` — TypeScript Playwright suite, run with its own tooling. See [`e2e/README.md`](e2e/README.md).
 
 ---
 
@@ -193,7 +197,6 @@ src/
 tests/
   Collega.Domain.Tests  Collega.Application.Tests  Collega.Infrastructure.Tests  Collega.API.Tests
   Collega.E2E.Tests        Playwright-for-.NET browser suite; needs a running app, skipped by default
-e2e/                       TypeScript Playwright browser suite (see e2e/README.md)
 SPEC/                      Canonical specs — the source of truth
 SPEC/mockups/              UI comps (HTML/SVG)
 ```
@@ -214,7 +217,7 @@ dotnet ef migrations add <Name> \
 
 Two environment caveats worth knowing:
 
-- `Microsoft.EntityFrameworkCore.SqlServer` / `.Design` are pinned to **8.0.10**. The 10.x default from `dotnet add package` is net10-only and fails to restore against net8.0. A global `dotnet-ef` v10 works fine against these pinned 8.0.10 packages.
+- The EF packages are pinned to their net8.0-compatible majors — `Npgsql.EntityFrameworkCore.PostgreSQL` on **8.0.x**, `Microsoft.EntityFrameworkCore.Design` on **8.0.10**. The newer majors `dotnet add package` picks by default target net9/net10 only and fail to restore against net8.0. A global `dotnet-ef` v10 works fine against these pinned 8.0.x packages.
 - [`CollegaDbContextFactory.cs`](src/Collega.Infrastructure/Persistence/CollegaDbContextFactory.cs) (`IDesignTimeDbContextFactory`) exists because `dotnet ef` could not reliably resolve the connection string through minimal-hosting auto-discovery. It is tooling-only; runtime DI is unaffected.
 
 ---
@@ -224,22 +227,15 @@ Two environment caveats worth knowing:
 **`Configuration keys 'SiteAdmin:Email' and 'SiteAdmin:Password' are required at startup`**
 Step 2 was skipped, or you set them for the wrong project. Verify with `cd src/Collega.API && dotnet user-secrets list`.
 
-**`Login failed for user 'sa'` even though the password in `.env` is correct**
-`MSSQL_SA_PASSWORD` is applied **only when the volume is first initialized**. If the container was ever created with a different or empty password, the old credential persists in the volume. Reset it in place without losing data:
+**`password authentication failed for user "postgres"` even though the password in `.env` is correct**
+`POSTGRES_PASSWORD` is applied **only when the data directory is first initialized**. If the container was ever created with a different or empty password, the old credential persists in the volume. Reset it in place without losing data — the official image initializes `pg_hba.conf` with `local all all trust`, so this exec over the Unix socket needs no password:
 
 ```bash
-docker stop collega-sqlserver
-docker run --rm -v collega_sqlserver-data:/var/opt/mssql -u root \
-  -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD='<your-password>' \
-  --entrypoint /opt/mssql/bin/mssql-conf \
-  mcr.microsoft.com/mssql/server:2022-latest set-sa-password
-docker compose up -d sqlserver
+docker exec -it collega-postgres \
+  psql -U postgres -c "ALTER USER postgres WITH PASSWORD '<your-password>';"
 ```
 
 To start over instead (**destroys all local data**): `docker compose down -v`.
-
-**Container reports `unhealthy` while the logs say "SQL Server is now ready for client connections"**
-The healthcheck authenticates as `sa`, so a bad `sa` credential shows up as `unhealthy` even though the engine is running. Same fix as above.
 
 **Port already in use** — see the `--no-launch-profile` override under [Build and run](#4-build-and-run).
 

@@ -7,7 +7,7 @@ dotnet test Collega.sln
 dotnet test tests/Collega.Application.Tests/Collega.Application.Tests.csproj   # single project
 ```
 
-The SQL Server container is **not** required: EF Core tests use the InMemory provider.
+The PostgreSQL container is **not** required: EF Core tests use the InMemory provider.
 
 | Project | Covers |
 |---|---|

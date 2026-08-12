@@ -14,7 +14,7 @@ The product is conceptually similar to Trello/Jira:
 - Blazor
 - Fluent UI
 - Entity Framework Core
-- SQL Server 2022
+- PostgreSQL 16 (via Npgsql)
 
 ## Solution Structure
 - `Collega.API` — HTTP API host

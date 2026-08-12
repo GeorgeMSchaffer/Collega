@@ -1,7 +1,7 @@
 # Technical Implementation Plan
 
 ## Goal
-Deliver the Collega MVP as a layered ASP.NET Core application with a Blazor client, SQL Server persistence, organization-scoped authorization, audit coverage, and contract-aligned API behavior.
+Deliver the Collega MVP as a layered ASP.NET Core application with a Blazor client, PostgreSQL persistence, organization-scoped authorization, audit coverage, and contract-aligned API behavior.
 
 ## Status (corrected 2026-08-12)
 - **This document describes the target design, not remaining work.** The MVP slices it plans (T001-T067) are built and merged to `dev`.
@@ -70,7 +70,7 @@ Produce an implementation plan that is detailed enough to drive engineering exec
 
 ### Core Technical Decisions
 - Enforce organization scoping in the Application layer, not in controllers or UI.
-- Use a single SQL Server database with organization-owned rows, foreign keys, and a global Site Admin account outside tenant ownership.
+- Use a single PostgreSQL database with organization-owned rows, foreign keys, and a global Site Admin account outside tenant ownership.
 - Keep API contracts versioned under `/api/v1` and aligned with `SPEC/30-Contracts.md`.
 - Use problem-details-style error responses for all non-2xx outcomes.
 - Validate request shape and field constraints at the API boundary; enforce business rules in Application and Domain layers.
