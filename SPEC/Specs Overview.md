@@ -36,10 +36,12 @@ Security-sensitive flows include password policy enforcement, lockout handling, 
 - Tags, mentions, comments, and upvotes
 - Audit event generation
 - Notification event persistence for internal verification
+- AI Guided Idea intake .
 
 ### Deferred Scope
 - OAuth and SSO
 - Reporting
+- Webhooks for Zappier Integation
 - Guaranteed outbound email delivery
 - Remember-this-device behavior
 - Public event query endpoints

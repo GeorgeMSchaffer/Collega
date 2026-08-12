@@ -61,3 +61,4 @@ nunit-*.xml
 
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
+/e2e/node_modules

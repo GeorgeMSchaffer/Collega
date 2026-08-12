@@ -1,6 +1,6 @@
 # Sprint 4: QA / Code-Review Debt Pass + Profile Portrait Upload
 
-**Status:** In Progress (started 2026-08-11 — **the six-item code-review hardening batch and profile portrait upload are both done and merged**; only the broad review pass remains)
+**Status:** Complete (2026-08-12) — hardening batch, portrait upload, and judgment calls all done; the broad review pass ran with **partial coverage, closed by explicit user decision**. See "Review pass — what it actually covered" at the end of this file before treating the P0 box as a full review.
 **Sequence:** 4 of 8 — see `SPEC/95-next-sprints.md` for the full sequence and how these sprints relate. Starts after Sprint 3 (`sprint-03-list-filter-parity.md`) is merged; followed by Sprint 5 (`sprint-05-postgres-migration.md`), Sprint 6 (`sprint-06-view-as.md`), Sprint 7 (`sprint-07-ai-idea-assist.md`), then Sprint 8 (`sprint-08-azure-deployment.md`).
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -62,10 +62,22 @@ Most-severe first:
 | Portrait upload security validation (rejecting disguised malicious content, not just trusting the file extension) is easy to under-scope | Security gap if rushed | Explicitly validate file *content* (magic bytes / re-encode through an image library), not just the extension or declared MIME type |
 
 ## Definition of Done
-- [ ] Code Reviewer has reviewed every previously-unreviewed slice at least once, findings triaged
-- [ ] All P0 findings fixed or explicitly accepted with a documented reason
+- [x] Code Reviewer has reviewed every previously-unreviewed slice at least once, findings triaged — **closed 2026-08-12 by explicit user decision, with partial coverage. Read the "Review pass — what it actually covered" section below before relying on this box.**
+- [x] All P0 findings fixed or explicitly accepted with a documented reason — 2 of 3 findings fixed (`5a148f6`); the third is filed as an open `TODO`, see below
 - [x] Open judgment calls (lockout / JWT key / status-name length / status defaults) all decided 2026-08-11 — see "Judgment Calls (resolved)"
 - [x] **Code-review hardening batch:** all six items resolved (or explicitly deferred with reason) — CSV export formula-guard (HIGH); server-side `MustChangePassword` gate; `LIKE` wildcard escaping; export/import memory bounds; client token-expiry check — all six done 2026-08-11, merged `161e4c9` + `7502a88`. *Carry-forward:* the `LIKE` fix is re-verified under Postgres on Sprint 5's DoD.
 - [x] Profile portrait upload built, validated, server-side resized to 25×25px, stored on the user record, and tested (including a rejection test for disguised non-image content) — done 2026-08-12, merged `0d3c0d5`
 - [x] Image-library NuGet package approved before it's added — SkiaSharp 2.88.8, user-approved 2026-08-11
 - [x] Default status Color/SortOrder values confirmed as final (2026-08-11 user interview) — the 5 `OrganizationDefaults` statuses, no change
+
+## Review pass — what it actually covered (2026-08-12)
+
+The P0 review-pass box above is ticked by **user decision to accept partial coverage and start Sprint 5**, not because the slice-by-slice review it describes was completed. Recording the real boundary so a future agent does not read "Complete" as "everything here has been reviewed."
+
+**Reviewed:** `Csv` escape/strip (verified an exact inverse at apostrophe depth 0/1/2), `PasswordChangeRequiredFilter` + its two-endpoint allowlist, `FieldValueValidator` and `FieldDefinition` type immutability, `EfIdeaRepository` search/filter/sort paths, `LikePattern`, `AppExceptionHandler`, `AuthController` attribute map, `AuthService` login head, `IdeaService` export cap + org scoping + portrait data-URL construction, `CollegaAuthStateProvider`, plus codebase-wide scans for `async void`, `.Result`/`.Wait()`, and missing `await`.
+
+**Not reviewed — still carries the original debt:** Collaboration/Comments, Events/notifications, Tenant Admin services, Workflow Config, most of the ~55 `src/Collega.Client` files, and Domain entities.
+
+**Findings:** 3 raised, 2 fixed in `5a148f6` (the `LIKE` `ESCAPE` gap in `ListByOrganizationAsync`; `Csv.Parse` rewriting CRLF inside quoted fields). The third — `AppExceptionHandler` upcasting `ValidationProblemDetails`, which drops the field-level `errors` dictionary from every 400 — is **not fixed** and remains an open item in `SPEC/Bug Triage.md`.
+
+**Standing gap worth carrying:** the whole suite runs on EF Core InMemory, which evaluates `EF.Functions.Like` client-side and cannot distinguish the 2-arg from the 3-arg overload. The `LIKE`-`ESCAPE` defect class is invisible to every in-memory test in this repo. Sprint 5's DoD now requires checking the generated SQL rather than reading the call sites.
