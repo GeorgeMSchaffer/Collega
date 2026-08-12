@@ -35,11 +35,7 @@ public sealed class EfUserRepository : IUserRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var pattern = LikePattern.Contains(filter.Search.Trim());
-            query = query.Where(u =>
-                EF.Functions.Like(u.FirstName, pattern, LikePattern.EscapeCharacter) ||
-                EF.Functions.Like(u.LastName, pattern, LikePattern.EscapeCharacter) ||
-                EF.Functions.Like(u.Email, pattern, LikePattern.EscapeCharacter));
+            query = ApplySearch(query, filter.Search);
         }
 
         if (filter.Role is not null)
@@ -76,6 +72,17 @@ public sealed class EfUserRepository : IUserRepository
             totalCount,
             filter.SortBy,
             SortDirection.Normalize(filter.SortDirection));
+    }
+
+    // Internal so a test can assert on the SQL this produces; see LikePattern's remarks for why the
+    // match is spelled lower()/LIKE rather than ILIKE.
+    internal static IQueryable<User> ApplySearch(IQueryable<User> query, string search)
+    {
+        var pattern = LikePattern.ContainsCaseInsensitive(search.Trim());
+        return query.Where(u =>
+            EF.Functions.Like(u.FirstName.ToLower(), pattern, LikePattern.EscapeCharacter) ||
+            EF.Functions.Like(u.LastName.ToLower(), pattern, LikePattern.EscapeCharacter) ||
+            EF.Functions.Like(u.Email.ToLower(), pattern, LikePattern.EscapeCharacter));
     }
 
     public async Task<IReadOnlyList<User>> ListByIdsAsync(IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default)

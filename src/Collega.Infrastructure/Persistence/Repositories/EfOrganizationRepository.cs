@@ -32,10 +32,7 @@ public sealed class EfOrganizationRepository : IOrganizationRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var pattern = LikePattern.Contains(filter.Search.Trim());
-            query = query.Where(o =>
-                EF.Functions.Like(o.Title, pattern, LikePattern.EscapeCharacter) ||
-                EF.Functions.Like(o.Description, pattern, LikePattern.EscapeCharacter));
+            query = ApplySearch(query, filter.Search);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -60,6 +57,16 @@ public sealed class EfOrganizationRepository : IOrganizationRepository
             totalCount,
             filter.SortBy,
             SortDirection.Normalize(filter.SortDirection));
+    }
+
+    // Internal so a test can assert on the SQL this produces; see LikePattern's remarks for why the
+    // match is spelled lower()/LIKE rather than ILIKE.
+    internal static IQueryable<Organization> ApplySearch(IQueryable<Organization> query, string search)
+    {
+        var pattern = LikePattern.ContainsCaseInsensitive(search.Trim());
+        return query.Where(o =>
+            EF.Functions.Like(o.Title.ToLower(), pattern, LikePattern.EscapeCharacter) ||
+            EF.Functions.Like(o.Description.ToLower(), pattern, LikePattern.EscapeCharacter));
     }
 
     public Task<bool> InviteCodeExistsAsync(string inviteCode, CancellationToken cancellationToken = default) =>
