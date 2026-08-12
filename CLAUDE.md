@@ -16,7 +16,7 @@ Repo layout beyond the `src/` and `tests/` projects:
 - `SPEC/SPECKIT/specs/<NNN-feature>/spec.md` — derived downstream copies of canonical `SPEC/*.md`; edit the canonical file first
 - `FluentUiComps/` — an unrelated spike, **not part of Collega**; don't change it as part of Collega work
 
-There is no `e2e/` directory. A TypeScript Playwright suite lived there and was **deleted** (commit `3c367f3`) at the owner's request; `tests/Collega.E2E.Tests` (Playwright for .NET) is the only browser suite. Don't recreate it without an explicit ask.
+`e2e/` — TypeScript Playwright browser suite (see `e2e/README.md`), separate from `tests/Collega.E2E.Tests` (Playwright for .NET). It was briefly deleted in `3c367f3` and **restored in `9301073`** (2026-08-12) after that removal was identified as a mistake; treat it as live.
 
 Verify a file or project actually exists before assuming a command will work or a slice is unbuilt.
 

@@ -94,19 +94,19 @@ Status legend: ✅ implemented & passing · 🟡 scaffolded (written, `Skip`ped,
 | "Back" returns to the previous page | 🟡 | `Back_button_returns_to_the_previous_page` |
 | Site Admin *global* aggregated views route "Add New" to the Organizations list | ⬜ | needs a Site Admin seed without a forced password change |
 
-### Ideas & idea-detail drawer — (no automated coverage)
-Locked design: right slide-in **drawer** + centered **create modal**, URL-addressable via `?idea={id}` and `/ideas/{id}` (SPEC/20-feature-client-ui.md → Idea Detail Surface).
+### Ideas & idea-detail drawer — (no .NET file; covered in the TS `e2e/` suite)
+Locked design: right slide-in **drawer** + centered **create modal**, URL-addressable via `?idea={id}` and `/ideas/{id}` (SPEC/20-feature-client-ui.md → Idea Detail Surface). **These cases live in the TypeScript Playwright suite** (`e2e/tests/05-idea-drawer-engagement.spec.ts`, `06-ideas-list-surface.spec.ts`), not this .NET project — see `e2e/README.md`. Status below reflects that suite.
 
-> **Coverage lost 2026-08-11.** These cases used to live in a TypeScript Playwright suite under `e2e/`. That suite was **deleted from the repo** (commit `3c367f3`) at the owner's request, and there is no `e2e/README.md`. Nothing automated covers the rows below today — they are **⬜ uncovered**, not passing. The Notes column records what the deleted suite had verified, kept so the cases can be rebuilt here as .NET Playwright specs if that work is ever scheduled.
+> **Note on this section's history.** The `e2e/` suite was deleted in `3c367f3` and these rows were re-marked ⬜ uncovered as a result. It was **restored in `9301073`** (2026-08-12) after the removal was identified as a mistake, so the original statuses are reinstated. Before trusting a ✅ here, re-run the suite: its setup targets SQL Server and has not yet been reconciled to PostgreSQL (see `e2e/README.md`).
 
-| Case | Status | Notes (last verified by the deleted TS suite) |
+| Case | Status | Notes |
 |---|---|---|
-| `/ideas` list + search + All/Created-by-me/Assigned-to-me filter chips | ⬜ | chips, server-side search, sortable headers, 25/50/100/250 page sizes |
-| Idea detail opens as a drawer from Ideas list, board rows, and swim-lane cards | ⬜ | Ideas-list + board-card entry had been covered; swim-lane-card entry never was |
-| `?idea={id}` / bare `/ideas/{id}` deep-link opens the drawer | ⬜ | also asserted that retired `/ideas/{id}/edit` opens no editor |
-| Create idea via modal returns to list on success (no auto-open) | ⬜ | board path had been covered; `/ideas` Add New path opens brainstorm-modal-first (WIP), never automated |
-| Idea engagement: upvote, comment, tags, mentions, 0–5 assignees, status move | ⬜ | upvote, comment(+@mention token), add tag+assignee, status move; assignee driven as Org Admin (User picker is empty — org-user list is Org-Admin+); mention *delivery* stays server-verified |
-| Admin delete of an idea | ⬜ | Org Admin arms + confirms the drawer danger-zone; idea leaves the list and a deep-link to it can no longer load (soft-deleted) |
+| `/ideas` list + search + All/Created-by-me/Assigned-to-me filter chips | ✅ | `e2e/06` — chips, server-side search, sortable headers, 25/50/100/250 page sizes |
+| Idea detail opens as a drawer from Ideas list, board rows, and swim-lane cards | 🟡 | `e2e/05` covers Ideas-list + board card (spec 04); swim-lane-card entry still ⬜ |
+| `?idea={id}` / bare `/ideas/{id}` deep-link opens the drawer | ✅ | `e2e/05` — also asserts retired `/ideas/{id}/edit` opens no editor |
+| Create idea via modal returns to list on success (no auto-open) | 🟡 | board path proven by `e2e/04`; `/ideas` Add New path opens brainstorm-modal-first (WIP), unautomated |
+| Idea engagement: upvote, comment, tags, mentions, 0–5 assignees, status move | ✅ | `e2e/05` — upvote, comment(+@mention token), add tag+assignee, status move; assignee driven as Org Admin (User picker is empty — org-user list is Org-Admin+); mention *delivery* stays server-verified |
+| Admin delete of an idea | ✅ | `e2e/07` — Org Admin arms + confirms the drawer danger-zone; idea leaves the list and a deep-link to it can no longer load (soft-deleted) |
 
 ### Board detail — List & Swim Lanes — (no file yet)
 | Case | Status | Notes |
