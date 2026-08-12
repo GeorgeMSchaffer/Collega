@@ -182,7 +182,7 @@
                                             <span class="avatarstack">
                                                 @foreach (var a in i.Assignees.Take(3))
                                                 {
-                                                    <span class="avatar s" title="@a.DisplayName">@Initials(a)</span>
+                                                    <span class="avatar s @(!string.IsNullOrEmpty(a.PortraitDataUrl) ? "has-portrait" : null)" title="@a.DisplayName">@if (!string.IsNullOrEmpty(a.PortraitDataUrl)){<img class="portrait" src="@a.PortraitDataUrl" alt="@a.DisplayName" />}else{@Initials(a)}</span>
                                                 }
                                                 @if (i.Assignees.Count > 3)
                                                 {

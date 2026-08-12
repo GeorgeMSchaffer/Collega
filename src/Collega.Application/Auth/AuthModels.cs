@@ -18,7 +18,8 @@ public sealed record CurrentUserSummary(
     string FirstName,
     string LastName,
     string Email,
-    string Status);
+    string Status,
+    string? PortraitDataUrl = null);
 
 /// <summary>Shape matches the `POST /api/v1/auth/login` success response.</summary>
 public sealed record LoginResult(

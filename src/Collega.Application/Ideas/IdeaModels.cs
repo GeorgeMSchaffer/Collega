@@ -68,14 +68,16 @@ public sealed record IdeaAssigneeDto(
     string FirstName,
     string LastName,
     string DisplayName,
-    bool IsActive);
+    bool IsActive,
+    string? PortraitDataUrl = null);
 
 public sealed record MentionDto(
     Guid UserId,
     string FirstName,
     string LastName,
     string DisplayName,
-    string Email);
+    string Email,
+    string? PortraitDataUrl = null);
 
 public sealed record IdeaCommentDto(
     Guid CommentId,

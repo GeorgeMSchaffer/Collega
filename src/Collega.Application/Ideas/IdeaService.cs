@@ -901,7 +901,7 @@ public sealed class IdeaService : IIdeaService
         var mentions = mentionUserIds
             .Where(userLookup.ContainsKey)
             .Select(id => userLookup[id])
-            .Select(u => new MentionDto(u.Id, u.FirstName, u.LastName, DisplayName(u), u.Email))
+            .Select(u => new MentionDto(u.Id, u.FirstName, u.LastName, DisplayName(u), u.Email, PortraitDataUrl(u)))
             .ToList();
 
         var commentDtos = comments.Items
@@ -993,7 +993,7 @@ public sealed class IdeaService : IIdeaService
             .Select(a => userLookup[a.UserId])
             .OrderBy(u => u.FirstName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(u => u.LastName, StringComparer.OrdinalIgnoreCase)
-            .Select(u => new IdeaAssigneeDto(u.Id, u.FirstName, u.LastName, DisplayName(u), u.Status == UserStatus.Active))
+            .Select(u => new IdeaAssigneeDto(u.Id, u.FirstName, u.LastName, DisplayName(u), u.Status == UserStatus.Active, PortraitDataUrl(u)))
             .ToList();
 
     private static IReadOnlyList<string> ProjectTagNames(Idea idea, IReadOnlyDictionary<Guid, Tag> tagLookup) =>
@@ -1007,6 +1007,12 @@ public sealed class IdeaService : IIdeaService
         statusInfo.TryGetValue(statusId, out var info) ? info.Name : string.Empty;
 
     private static string DisplayName(User u) => $"{u.FirstName} {u.LastName}".Trim();
+
+    // Portraits ride along as inline data URLs so any avatar surface (board cards, drawer assignees,
+    // comment authors) can render the picture wherever it renders initials, without a second
+    // per-user request the bearer-token SPA couldn't authenticate anyway. Null → initials fallback.
+    private static string? PortraitDataUrl(User u) =>
+        u.PortraitPng is { Length: > 0 } bytes ? "data:image/png;base64," + Convert.ToBase64String(bytes) : null;
 
     // Resolution helpers -------------------------------------------------------------------------
 

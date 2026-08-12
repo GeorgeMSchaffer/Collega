@@ -16,7 +16,11 @@ public sealed class AuthService : IAuthService
     private readonly IAccessTokenIssuer _tokenIssuer;
     private readonly IAuditEventWriter _auditEventWriter;
     private readonly ICurrentUserContext _currentUser;
+    private readonly IImageProcessor _imageProcessor;
     private readonly IClock _clock;
+
+    // ≤25 px on either side, per the portrait-upload requirement (SPEC/Bug Triage.md).
+    private const int PortraitMaxDimension = 25;
 
     public AuthService(
         IUserRepository userRepository,
@@ -26,6 +30,7 @@ public sealed class AuthService : IAuthService
         IAccessTokenIssuer tokenIssuer,
         IAuditEventWriter auditEventWriter,
         ICurrentUserContext currentUser,
+        IImageProcessor imageProcessor,
         IClock clock)
     {
         _userRepository = userRepository;
@@ -35,6 +40,7 @@ public sealed class AuthService : IAuthService
         _tokenIssuer = tokenIssuer;
         _auditEventWriter = auditEventWriter;
         _currentUser = currentUser;
+        _imageProcessor = imageProcessor;
         _clock = clock;
     }
 
@@ -113,6 +119,48 @@ public sealed class AuthService : IAuthService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         await AuditAsync("UserProfileUpdated", user.OrganizationId, user.Id, user.Id, "User updated their profile name.", now, null, cancellationToken);
+
+        return ToSummary(user);
+    }
+
+    public async Task<CurrentUserSummary> UpdatePortraitAsync(Guid userId, byte[] imageBytes, CancellationToken cancellationToken = default)
+    {
+        var now = _clock.UtcNow;
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+            ?? throw new UnauthorizedAppException("Caller identity could not be resolved.");
+
+        if (imageBytes is null || imageBytes.Length == 0)
+        {
+            throw new ValidationAppException("portrait", new[] { "Choose an image file to upload." });
+        }
+
+        // Security boundary: the bytes are decoded through a real image codec (SkiaSharp). Content
+        // that isn't a genuine GIF/JPEG/PNG — including a disguised text/executable payload with an
+        // image name or MIME type — comes back null and is rejected here, never persisted.
+        var thumbnail = _imageProcessor.TryCreatePngThumbnail(imageBytes, PortraitMaxDimension);
+        if (thumbnail is null)
+        {
+            throw new ValidationAppException("portrait", new[] { "That file isn't a supported image. Upload a GIF, JPEG, or PNG." });
+        }
+
+        user.SetPortrait(thumbnail, now, user.Id);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await AuditAsync("UserPortraitUpdated", user.OrganizationId, user.Id, user.Id, "User updated their profile portrait.", now, null, cancellationToken);
+
+        return ToSummary(user);
+    }
+
+    public async Task<CurrentUserSummary> RemovePortraitAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var now = _clock.UtcNow;
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken)
+            ?? throw new UnauthorizedAppException("Caller identity could not be resolved.");
+
+        user.RemovePortrait(now, user.Id);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await AuditAsync("UserPortraitRemoved", user.OrganizationId, user.Id, user.Id, "User removed their profile portrait.", now, null, cancellationToken);
 
         return ToSummary(user);
     }
@@ -248,7 +296,8 @@ public sealed class AuthService : IAuthService
         user.FirstName,
         user.LastName,
         user.Email,
-        user.Status.ToString());
+        user.Status.ToString(),
+        user.PortraitPng is { Length: > 0 } bytes ? "data:image/png;base64," + Convert.ToBase64String(bytes) : null);
 
     private async Task AuditAsync(
         string eventType,

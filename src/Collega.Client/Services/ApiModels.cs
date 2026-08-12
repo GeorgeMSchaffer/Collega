@@ -25,7 +25,11 @@ public sealed record UserSummaryDto(
     string FirstName,
     string LastName,
     string Email,
-    string Status);
+    string Status,
+    string? PortraitDataUrl = null);
+
+/// <summary>Request body for `PUT /api/v1/auth/me/portrait` — Base64 of the raw chosen image file.</summary>
+public sealed record UpdatePortraitRequestDto(string ImageBase64);
 
 /// <summary>RFC 7807 problem-details envelope the API returns for every non-2xx response.</summary>
 public sealed record ProblemDetailsDto(string? Title, int? Status, string? Detail);

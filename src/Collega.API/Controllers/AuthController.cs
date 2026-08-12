@@ -61,6 +61,62 @@ public sealed class AuthController : ControllerBase
         return Ok(summary);
     }
 
+    /// <summary>Upload/replace the current user's profile portrait (Base64 of the raw image file).</summary>
+    [Authorize]
+    [HttpPut("me/portrait")]
+    [ProducesResponseType(typeof(CurrentUserSummary), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UpdatePortrait([FromBody] UpdatePortraitRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryDecodeBase64(request.ImageBase64, out var imageBytes))
+        {
+            ModelState.AddModelError(nameof(request.ImageBase64), "The uploaded image could not be read.");
+            return ValidationProblem(ModelState);
+        }
+
+        var summary = await _authService.UpdatePortraitAsync(User.GetUserId(), imageBytes, cancellationToken);
+        return Ok(summary);
+    }
+
+    /// <summary>Remove the current user's profile portrait, reverting to the initials avatar.</summary>
+    [Authorize]
+    [HttpDelete("me/portrait")]
+    [ProducesResponseType(typeof(CurrentUserSummary), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> RemovePortrait(CancellationToken cancellationToken)
+    {
+        var summary = await _authService.RemovePortraitAsync(User.GetUserId(), cancellationToken);
+        return Ok(summary);
+    }
+
+    private static bool TryDecodeBase64(string? value, out byte[] bytes)
+    {
+        bytes = Array.Empty<byte>();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        // Accept a bare Base64 string or a full data URL (data:image/png;base64,....).
+        var payload = value;
+        var commaIndex = payload.IndexOf(',');
+        if (payload.StartsWith("data:", StringComparison.OrdinalIgnoreCase) && commaIndex >= 0)
+        {
+            payload = payload[(commaIndex + 1)..];
+        }
+
+        try
+        {
+            bytes = Convert.FromBase64String(payload);
+            return bytes.Length > 0;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Change the current user's password, including the first-login forced change.</summary>
     /// <remarks>Allowlisted mid-rotation: this is the only way out of the restriction.</remarks>
     [Authorize]

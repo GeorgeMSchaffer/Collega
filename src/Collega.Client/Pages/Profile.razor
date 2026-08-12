@@ -18,6 +18,38 @@
     }
     else
     {
+        <section class="settings-section" aria-labelledby="profile-portrait-heading">
+            <h2 id="profile-portrait-heading">Portrait</h2>
+            <p class="sub">Upload a GIF, JPEG, or PNG. It is resized to a small thumbnail and shown in place of your initials throughout Collega.</p>
+
+            @if (_portraitMessage is not null)
+            {
+                <div class="@(_portraitSucceeded ? "authnote" : "autherror")" role="@(_portraitSucceeded ? "status" : "alert")">@_portraitMessage</div>
+            }
+
+            <div class="portrait-row">
+                <span class="avatar portrait-preview @(HasPortrait ? "has-portrait" : null)" aria-hidden="true">
+                    @if (HasPortrait)
+                    {
+                        <img class="portrait" src="@_portrait" alt="Your portrait" />
+                    }
+                    else
+                    {
+                        @Initials
+                    }
+                </span>
+                <div class="portrait-actions">
+                    <label class="portrait-upload">
+                        <InputFile OnChange="OnPortraitSelectedAsync" accept="image/gif,image/jpeg,image/png" disabled="@_savingPortrait" />
+                    </label>
+                    @if (HasPortrait)
+                    {
+                        <FluentButton Appearance="Appearance.Stealth" OnClick="RemovePortraitAsync" Disabled="_savingPortrait">Remove portrait</FluentButton>
+                    }
+                </div>
+            </div>
+        </section>
+
         <section class="settings-section" aria-labelledby="profile-details-heading">
             <h2 id="profile-details-heading">Profile details</h2>
             <p class="sub">Your name appears throughout Collega.</p>
@@ -100,6 +132,32 @@
     private string? _newPassword;
     private string? _confirmPassword;
     private string? _passwordError;
+    private string? _portrait;
+    private bool _savingPortrait;
+    private bool _portraitSucceeded;
+    private string? _portraitMessage;
+
+    // Cap the source upload before it reaches the server; the server still re-decodes and resizes.
+    private const long MaxPortraitUploadBytes = 8 * 1024 * 1024;
+
+    private bool HasPortrait => !string.IsNullOrEmpty(_portrait);
+
+    private string Initials
+    {
+        get
+        {
+            var name = $"{_firstName} {_lastName}".Trim();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return "?";
+            }
+
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length == 1
+                ? parts[0][..1].ToUpperInvariant()
+                : (parts[0][..1] + parts[^1][..1]).ToUpperInvariant();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -169,11 +227,75 @@
         Nav.NavigateTo("/login?passwordChanged=true", replace: true);
     }
 
+    private async Task OnPortraitSelectedAsync(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null)
+        {
+            return;
+        }
+
+        _portraitMessage = null;
+        _savingPortrait = true;
+        try
+        {
+            byte[] bytes;
+            using (var stream = file.OpenReadStream(MaxPortraitUploadBytes))
+            using (var memory = new MemoryStream())
+            {
+                await stream.CopyToAsync(memory);
+                bytes = memory.ToArray();
+            }
+
+            var result = await Api.UpdatePortraitAsync(bytes);
+            if (!result.Succeeded)
+            {
+                _portraitSucceeded = false;
+                _portraitMessage = result.Error ?? "That image couldn't be uploaded.";
+                return;
+            }
+
+            ApplyUser(result.Value!);
+            await AuthState.RefreshUserAsync(result.Value!);
+            _portraitSucceeded = true;
+            _portraitMessage = "Your portrait was updated.";
+        }
+        catch (IOException)
+        {
+            _portraitSucceeded = false;
+            _portraitMessage = $"That file is too large. Choose an image under {MaxPortraitUploadBytes / (1024 * 1024)} MB.";
+        }
+        finally
+        {
+            _savingPortrait = false;
+        }
+    }
+
+    private async Task RemovePortraitAsync()
+    {
+        _portraitMessage = null;
+        _savingPortrait = true;
+        var result = await Api.RemovePortraitAsync();
+        _savingPortrait = false;
+        if (!result.Succeeded)
+        {
+            _portraitSucceeded = false;
+            _portraitMessage = result.Error ?? "The portrait couldn't be removed.";
+            return;
+        }
+
+        ApplyUser(result.Value!);
+        await AuthState.RefreshUserAsync(result.Value!);
+        _portraitSucceeded = true;
+        _portraitMessage = "Your portrait was removed.";
+    }
+
     private void ApplyUser(UserSummaryDto user)
     {
         _firstName = user.FirstName;
         _lastName = user.LastName;
         _email = user.Email;
         _role = user.Role;
+        _portrait = user.PortraitDataUrl;
     }
 }

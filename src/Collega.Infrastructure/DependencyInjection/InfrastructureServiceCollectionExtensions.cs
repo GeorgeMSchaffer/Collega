@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Collega.Application.Abstractions;
 using Collega.Infrastructure.Auditing;
+using Collega.Infrastructure.Imaging;
 using Collega.Infrastructure.Notifications;
 using Collega.Infrastructure.Persistence;
 using Collega.Infrastructure.Persistence.Repositories;
@@ -42,6 +43,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IInviteCodeGenerator, InviteCodeGenerator>();
+        services.AddSingleton<IImageProcessor, SkiaSharpImageProcessor>();
 
         services.AddSingleton(sp =>
         {

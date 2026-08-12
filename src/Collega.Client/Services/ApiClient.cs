@@ -47,6 +47,17 @@ public sealed partial class ApiClient
     public Task<ApiResult<UserSummaryDto>> UpdateCurrentUserAsync(string firstName, string lastName, CancellationToken ct = default) =>
         SendJsonAsync<UserSummaryDto>(HttpMethod.Put, $"{BasePath}/auth/me", new UpdateCurrentUserRequestDto(firstName, lastName), ct);
 
+    /// <summary>Uploads the raw image bytes as the caller's portrait; the server validates + resizes. Returns the updated summary.</summary>
+    public Task<ApiResult<UserSummaryDto>> UpdatePortraitAsync(byte[] imageBytes, CancellationToken ct = default) =>
+        SendJsonAsync<UserSummaryDto>(HttpMethod.Put, $"{BasePath}/auth/me/portrait", new UpdatePortraitRequestDto(Convert.ToBase64String(imageBytes)), ct);
+
+    /// <summary>Removes the caller's portrait, reverting to the initials avatar. Returns the updated summary.</summary>
+    public async Task<ApiResult<UserSummaryDto>> RemovePortraitAsync(CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"{BasePath}/auth/me/portrait");
+        return await SendAsync<UserSummaryDto>(request, ct);
+    }
+
     /// <summary>Site Admin: one page of organizations.</summary>
     public Task<ApiResult<PagedResultDto<OrganizationListItemDto>>> GetOrganizationsAsync(int page = 1, int pageSize = 100, CancellationToken ct = default) =>
         GetAsync<PagedResultDto<OrganizationListItemDto>>($"{BasePath}/organizations?page={page}&pageSize={pageSize}", ct);

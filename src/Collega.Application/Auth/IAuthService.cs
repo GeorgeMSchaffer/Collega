@@ -15,6 +15,15 @@ public interface IAuthService
     /// <summary>Self-service update of the caller's own first/last name (auth requirement #20).</summary>
     Task<CurrentUserSummary> UpdateProfileAsync(Guid userId, UpdateProfileCommand command, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Validates raw uploaded image bytes through the image pipeline (reject non-images / disguised
+    /// content), resizes to the ≤25×25 portrait thumbnail, and stores it on the caller's record.
+    /// </summary>
+    Task<CurrentUserSummary> UpdatePortraitAsync(Guid userId, byte[] imageBytes, CancellationToken cancellationToken = default);
+
+    /// <summary>Clears the caller's stored portrait so the initials avatar is shown again.</summary>
+    Task<CurrentUserSummary> RemovePortraitAsync(Guid userId, CancellationToken cancellationToken = default);
+
     Task ChangePasswordAsync(Guid userId, ChangePasswordCommand command, CancellationToken cancellationToken = default);
 
     Task<RegisterResult> RegisterAsync(RegisterCommand command, CancellationToken cancellationToken = default);
