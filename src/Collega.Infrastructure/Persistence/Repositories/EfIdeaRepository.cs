@@ -135,20 +135,28 @@ public sealed class EfIdeaRepository : IIdeaRepository
             // The all-column search covers every column the /ideas table displays: Title, Created By
             // (author name), Assigned To (assignee names), Status (status name), and — when the term is a
             // full ISO date — Created Date. It also scans the idea's Text/Url UDF values (T059).
-            query = query.Where(i => EF.Functions.Like(i.Title, pattern)
+            //
+            // Every Like here MUST pass LikePattern.EscapeCharacter. The pattern already carries the
+            // escapes LikePattern added; without the matching ESCAPE clause the engine has no escape
+            // character defined, so those backslashes degrade to literal characters and the wildcards
+            // they were meant to neutralise stay live — a search for "100%" then matches only titles
+            // containing "100\". The InMemory provider evaluates Like client-side and cannot tell the
+            // two overloads apart, so no in-memory test covers this; see LikePattern's remarks.
+            const string escape = LikePattern.EscapeCharacter;
+            query = query.Where(i => EF.Functions.Like(i.Title, pattern, escape)
                 || _dbContext.Users.Any(u => u.Id == i.AuthorUserId
-                    && (EF.Functions.Like(u.FirstName, pattern)
-                        || EF.Functions.Like(u.LastName, pattern)
-                        || EF.Functions.Like(u.FirstName + " " + u.LastName, pattern)))
+                    && (EF.Functions.Like(u.FirstName, pattern, escape)
+                        || EF.Functions.Like(u.LastName, pattern, escape)
+                        || EF.Functions.Like(u.FirstName + " " + u.LastName, pattern, escape)))
                 || i.Assignees.Any(a => _dbContext.Users.Any(u => u.Id == a.UserId
-                    && (EF.Functions.Like(u.FirstName, pattern)
-                        || EF.Functions.Like(u.LastName, pattern)
-                        || EF.Functions.Like(u.FirstName + " " + u.LastName, pattern))))
-                || _dbContext.Statuses.Any(s => s.Id == i.StatusId && EF.Functions.Like(s.Name, pattern))
+                    && (EF.Functions.Like(u.FirstName, pattern, escape)
+                        || EF.Functions.Like(u.LastName, pattern, escape)
+                        || EF.Functions.Like(u.FirstName + " " + u.LastName, pattern, escape))))
+                || _dbContext.Statuses.Any(s => s.Id == i.StatusId && EF.Functions.Like(s.Name, pattern, escape))
                 || _dbContext.IdeaFieldValues.Any(v => v.IdeaId == i.Id
                     && textFieldIds.Contains(v.FieldDefinitionId)
                     && v.Value != null
-                    && EF.Functions.Like(v.Value, pattern))
+                    && EF.Functions.Like(v.Value, pattern, escape))
                 || (hasCreatedOnDate && i.CreatedAtUtc >= createdDayStart && i.CreatedAtUtc < createdDayEnd));
         }
 

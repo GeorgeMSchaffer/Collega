@@ -46,5 +46,5 @@ Maps to the task breakdown in `SPEC/50-postgres-migration.md` §"Task breakdown 
 - [ ] Postgres-backed smoke/integration test added and green
 - [ ] Full `dotnet test Collega.sln` green
 - [ ] Docs reconciled per the fan-out list; `00-project-brief.md` + `CLAUDE.md` stack references updated to PostgreSQL
-- [ ] `LIKE`-wildcard escaping (Sprint 4 hardening batch) re-verified under Postgres `LIKE`/`ESCAPE` + case-sensitivity semantics
+- [ ] `LIKE`-wildcard escaping (Sprint 4 hardening batch) re-verified under Postgres `LIKE`/`ESCAPE` + case-sensitivity semantics. **Verify the generated SQL actually emits an `ESCAPE` clause — do not trust the call sites by reading them.** The original batch fix left `EfIdeaRepository.ListByOrganizationAsync` on the two-argument `EF.Functions.Like` overload, so its escaping was inert until 2026-08-12; the same mistake is easy to reintroduce and no in-memory test can catch it (the InMemory provider evaluates `Like` client-side and cannot distinguish the overloads). Capture the SQL from a real Postgres run, or assert on `ToQueryString()` against a relational provider.
 - [ ] Code Reviewer approved before merge

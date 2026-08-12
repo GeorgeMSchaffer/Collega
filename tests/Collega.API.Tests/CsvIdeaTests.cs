@@ -35,6 +35,61 @@ public sealed class CsvIdeaTests
         Assert.Equal(2, records.Count);
     }
 
+    // Parse used to normalise the whole document (Replace("\r\n", "\n")) before the quote state
+    // machine ran, which rewrote the CRLFs *inside* quoted fields too. A Windows-authored idea
+    // description came back from an export → re-import round trip with its line endings silently
+    // changed, so Write/Parse were not the lossless pair the type documents.
+    [Fact]
+    public void Csv_Parse_PreservesCrLfInsideQuotedField()
+    {
+        var records = Csv.Parse("title,description\r\n\"a\",\"Line one\r\nLine two\"\r\n");
+
+        Assert.Equal(2, records.Count);
+        Assert.Equal("Line one\r\nLine two", records[1][1]);
+    }
+
+    [Theory]
+    [InlineData("Line one\r\nLine two")]   // CRLF — the case the normalisation destroyed
+    [InlineData("Line one\nLine two")]     // LF only
+    [InlineData("Line one\rLine two")]     // CR only
+    [InlineData("Mixed\r\nsecond\nthird\rfourth")]
+    public void Csv_WriteThenParse_PreservesEmbeddedLineEndingsExactly(string original)
+    {
+        var csv = Csv.Write(new[] { "Description" }, new[] { (IReadOnlyList<string>)new[] { original } });
+
+        var back = Csv.Parse(csv);
+
+        Assert.Equal(original, back[1][0]);
+    }
+
+    // Outside quotes, all three line-ending conventions still terminate a record, and a CRLF pair
+    // must not open a second, empty one.
+    [Theory]
+    [InlineData("a,b\r\n1,2\r\n")]
+    [InlineData("a,b\n1,2\n")]
+    [InlineData("a,b\r1,2\r")]
+    public void Csv_Parse_TreatsCrLfCrAndLfAsRecordSeparators(string content)
+    {
+        var records = Csv.Parse(content);
+
+        Assert.Equal(2, records.Count);
+        Assert.Equal(new[] { "a", "b" }, records[0]);
+        Assert.Equal(new[] { "1", "2" }, records[1]);
+    }
+
+    // A cell starting with CR is a formula trigger. The old normalisation rewrote it before the
+    // guard could be observed on the way back in, so this round trip was untestable.
+    [Fact]
+    public void Csv_WriteThenParse_RoundTripsCellStartingWithCarriageReturn()
+    {
+        const string original = "\rleading cr";
+
+        var csv = Csv.Write(new[] { "Title" }, new[] { (IReadOnlyList<string>)new[] { original } });
+
+        Assert.Contains("\"'\r", csv);
+        Assert.Equal(original, Csv.Parse(csv)[1][0]);
+    }
+
     [Fact]
     public void Csv_Write_QuotesOnlyWhereNeeded_AndRoundTrips()
     {

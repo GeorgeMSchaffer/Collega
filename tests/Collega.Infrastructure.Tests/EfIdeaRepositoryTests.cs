@@ -299,6 +299,67 @@ public sealed class EfIdeaRepositoryTests
         Assert.Equal("By Marguerite", Assert.Single(page.Items).Title);
     }
 
+    /// <summary>
+    /// A search term is data, not pattern syntax. The equivalent guarantee for the user list is
+    /// covered in <c>EfUserRepositoryTests</c>; the ideas list had no such test, which is how the
+    /// all-column search kept its <c>LIKE</c> calls on the two-argument overload — pattern escaped,
+    /// but no <c>ESCAPE</c> clause emitted — after the rest of the codebase moved to the three-arg form.
+    /// </summary>
+    /// <remarks>
+    /// <b>Coverage limit, stated so this test is not mistaken for more than it is:</b> the InMemory
+    /// provider evaluates <c>EF.Functions.Like</c> client-side and cannot distinguish the two-arg
+    /// overload from the three-arg one, so this test passes with or without the <c>ESCAPE</c> clause.
+    /// It pins the pattern-building side (a regression that dropped <c>LikePattern.Contains</c> would
+    /// fail here) and documents intent. The missing-ESCAPE defect itself is only observable against a
+    /// real relational engine — it is on Sprint 5's Definition of Done.
+    /// </remarks>
+    [Fact]
+    public async Task ListByOrganization_SearchTreatsWildcardCharactersLiterally()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "Uptime A_B target"));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "Uptime AxB target"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(OrgFilter(search: "A_B"), default);
+
+        Assert.Equal("Uptime A_B target", Assert.Single(page.Items).Title);
+    }
+
+    /// <summary>A term of only wildcards matches nothing rather than every idea in the org.</summary>
+    [Theory]
+    [InlineData("%")]
+    [InlineData("%%")]
+    [InlineData("_")]
+    public async Task ListByOrganization_BareWildcardTermMatchesNothing(string term)
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "First idea"));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "Second idea"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(OrgFilter(search: term), default);
+
+        Assert.Empty(page.Items);
+    }
+
+    /// <summary>A term containing a literal percent sign finds the row that actually contains it.</summary>
+    [Fact]
+    public async Task ListByOrganization_SearchMatchesLiteralPercentInTitle()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "Hit 100% uptime"));
+        ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: "Hit 1000 requests"));
+        await ctx.SaveChangesAsync();
+
+        var page = await repo.ListByOrganizationAsync(OrgFilter(search: "100%"), default);
+
+        Assert.Equal("Hit 100% uptime", Assert.Single(page.Items).Title);
+    }
+
     [Fact]
     public async Task ListByOrganization_Search_MatchesAssigneeName()
     {

@@ -35,7 +35,11 @@ public static class Csv
             return records;
         }
 
-        var text = content.Replace("\r\n", "\n").Replace("\r", "\n");
+        // Line endings are resolved inside the state machine rather than by normalising the whole
+        // document up front. A blanket Replace("\r\n", "\n") also rewrites the CRLFs *inside* quoted
+        // fields, so a multi-line idea description exported and re-imported came back with its line
+        // endings silently changed — the round trip Write/Parse documents as lossless was not.
+        var text = content;
         var field = new StringBuilder();
         var record = new List<string>();
         var inQuotes = false;
@@ -60,6 +64,7 @@ public static class Csv
                 }
                 else
                 {
+                    // Verbatim, including CR and LF: inside quotes they are content, not structure.
                     field.Append(c);
                 }
 
@@ -77,7 +82,15 @@ public static class Csv
                     field.Clear();
                     sawAny = true;
                     break;
+                case '\r':
                 case '\n':
+                    // Outside quotes any of CRLF / CR / LF terminates the record; consume the LF of a
+                    // CRLF pair so it doesn't open a second, empty one.
+                    if (c == '\r' && i + 1 < text.Length && text[i + 1] == '\n')
+                    {
+                        i++;
+                    }
+
                     record.Add(StripFormulaGuard(field.ToString()));
                     field.Clear();
                     records.Add(record);
