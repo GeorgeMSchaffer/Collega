@@ -12,21 +12,22 @@ Before making any status, planning, or scope claim about this project — in thi
 - After a fix is complete and focused validation passes, move the item from `TODO` to `COMPLETED` with its completion date and verification note; do not retain it in both sections.
 
 ## Current Status
-**Verified 2026-08-11 against `e968d39`.** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-08-11 against `161e4c9` (`dev`), plus the four hardening items on `feature/sprint-04-hardening-batch`.** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
 | MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening (T001-T052), User-Defined Fields (T053-T060, pulled into MVP 2026-08-08), Idea-Type Fields (T061-T067). The archive holds the original task breakdown — it is done; do not restart it. |
 | Blazor client | ~16 pages, 9 shared components | `DrawerShell`, `CreateModalShell`, `IdeaDrawer`, `IdeaCreateModal`, `ListToolbar`, `IdeaFieldInputs`, `BackButton`, `SessionTimeoutGuard`, `TypeBadge`. Sprint 2 retired full-page `OrganizationEdit`/`UserEdit`. |
-| Test suite | **525 green** (2026-08-11) | 113 Domain + 189 Application + 90 Infrastructure + 133 API. Re-run `dotnet test Collega.sln` before trusting this number. |
+| Test suite | **539 green** (2026-08-11) | 113 Domain + 189 Application + 94 Infrastructure + 143 API. Re-run `dotnet test Collega.sln` before trusting this number. |
 | Sprints | 1–3 complete · **4 in progress** · 5–8 not started | Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Accumulated debt** | Skipped on nearly every merge by standing user direction to move fast through MVP build-out. Being paid down in Sprint 4. |
 | Bug queue | See `SPEC/Bug Triage.md` | Authoritative open `TODO` list; gates new feature work (see Pre-Feature Triage Gate above). |
 | Local DB | `collega-sqlserver` container, host port **1434** | Standard demo seed only (2 orgs, 6 org users + 1 Site Admin, 4 boards, ideas); dropped and re-seeded 2026-08-10. Dev-only demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. An unrelated `sql-server-wwi` container holds 1433 and can shadow LocalDB. |
 
-### Sprint 4 — in progress (branch `feature/sprint-04-security-hardening`)
-**Done:** CSV export formula-injection guard (`Csv.Escape`/`Csv.Parse`, symmetric so export→re-import is lossless); server-side password-rotation gate (`PasswordChangeRequiredFilter`) + temp-password expiry fix. Specs: `20-feature-auth.md` #32a/#32b, `30-Contracts.md` → "Mandatory Password Rotation Gate".
-**Open:** code-review pass; LIKE-wildcard escaping; export/import memory bounds; client token-expiry; profile portrait upload. Plan: `sprints/sprint-04-qa-review-debt.md`.
+### Sprint 4 — in progress
+**Done — the whole six-item code-review hardening batch.** Security items merged to `dev` (`161e4c9`); the four remaining items sit on `feature/sprint-04-hardening-batch`. Per-item detail and verification notes: `Bug Triage.md` → COMPLETED. Specs: `20-feature-auth.md` #32a/#32b, `30-Contracts.md` → "Mandatory Password Rotation Gate" and the export/import limits.
+Two things to carry forward: the `LIKE` escaping needs **re-verification under Postgres in Sprint 5** (on that sprint's DoD), and the export cap **refuses rather than truncates** above 10,000 rows — a reversible judgment call if larger extracts are ever needed.
+**Open:** the broad code-review pass across previously-unreviewed slices; profile portrait upload (SkiaSharp). Plan: `sprints/sprint-04-qa-review-debt.md`.
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Portrait image library = **SkiaSharp**.

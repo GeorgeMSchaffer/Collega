@@ -19,6 +19,12 @@ namespace Collega.API.Controllers;
 [Authorize]
 public sealed class IdeasController : ControllerBase
 {
+    /// <summary>Hard ceiling on a CSV import body. Must be a constant — <c>[RequestSizeLimit]</c> is an attribute argument.</summary>
+    private const long MaxImportBytes = 5 * 1024 * 1024;
+
+    /// <summary>Hard ceiling on parsed import rows, applied after the header row is dropped.</summary>
+    private const int MaxImportRows = 5_000;
+
     private readonly IIdeaService _ideaService;
 
     public IdeasController(IIdeaService ideaService)
@@ -231,6 +237,7 @@ public sealed class IdeasController : ControllerBase
 
     /// <summary>Create-only CSV import of ideas onto a board (T059/T060).</summary>
     [HttpPost("boards/{boardId:guid}/ideas/import")]
+    [RequestSizeLimit(MaxImportBytes)]
     [ProducesResponseType(typeof(IdeaImportResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -243,6 +250,18 @@ public sealed class IdeasController : ControllerBase
             throw new ValidationAppException("csvFile", new[] { "A CSV file is required." });
         }
 
+        // The upload is buffered into a string and then re-materialised as parsed records before any
+        // per-row work happens, so size has to be bounded here rather than discovered during import.
+        // [RequestSizeLimit] rejects an oversized body at the pipeline; this check turns the same
+        // condition into the standard problem-details 400 when the declared length is already known.
+        if (csvFile.Length > MaxImportBytes)
+        {
+            throw new ValidationAppException("csvFile", new[]
+            {
+                $"The file is larger than the {MaxImportBytes / (1024 * 1024)} MB import limit."
+            });
+        }
+
         string content;
         using (var reader = new StreamReader(csvFile.OpenReadStream()))
         {
@@ -250,6 +269,14 @@ public sealed class IdeasController : ControllerBase
         }
 
         var rows = CsvIdeaImportParser.Parse(content);
+        if (rows.Count > MaxImportRows)
+        {
+            throw new ValidationAppException("csvFile", new[]
+            {
+                $"The file has {rows.Count} rows, which is more than the {MaxImportRows} this import supports. Split it into smaller files."
+            });
+        }
+
         var result = await _ideaService.ImportBoardIdeasAsync(boardId, rows, cancellationToken);
         return Ok(result);
     }

@@ -35,11 +35,11 @@ public sealed class EfUserRepository : IUserRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var search = filter.Search.Trim();
+            var pattern = LikePattern.Contains(filter.Search.Trim());
             query = query.Where(u =>
-                EF.Functions.Like(u.FirstName, $"%{search}%") ||
-                EF.Functions.Like(u.LastName, $"%{search}%") ||
-                EF.Functions.Like(u.Email, $"%{search}%"));
+                EF.Functions.Like(u.FirstName, pattern, LikePattern.EscapeCharacter) ||
+                EF.Functions.Like(u.LastName, pattern, LikePattern.EscapeCharacter) ||
+                EF.Functions.Like(u.Email, pattern, LikePattern.EscapeCharacter));
         }
 
         if (filter.Role is not null)

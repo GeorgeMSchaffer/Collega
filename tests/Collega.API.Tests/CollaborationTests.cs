@@ -636,6 +636,40 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    /// <summary>
+    /// The import buffers the whole upload into a string and re-materialises every record before any
+    /// per-row work, so an unbounded row count is a cheap way to make the host allocate. The cap is
+    /// enforced after parsing and reported as a normal validation failure, not a 413 or a timeout.
+    /// </summary>
+    [Fact]
+    public async Task Idea_Csv_Import_RejectsFileExceedingRowCap()
+    {
+        using var admin = _factory.CreateClient();
+        await AuthenticateAsSiteAdminAsync(admin);
+        var org = await CreateOrganizationAsync(admin);
+
+        var csv = new System.Text.StringBuilder("Title,Description,Priority,Idea Type,Business Impact,Status\r\n");
+        for (var i = 0; i < 5_001; i++)
+        {
+            csv.Append($"Idea {i},Desc,Medium,,,\r\n");
+        }
+
+        using var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(System.Text.Encoding.UTF8.GetBytes(csv.ToString()));
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
+        content.Add(fileContent, "csvFile", "ideas.csv");
+
+        using var response = await admin.PostAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas/import", content);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        // Rejected before any per-row work — the point of the cap. A plain 400 assertion alone would
+        // also pass if the request had failed for some unrelated reason after creating rows.
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<CollegaDbContext>();
+        Assert.Empty(db.Ideas.Where(i => i.BoardId == org.DefaultBoardId));
+    }
+
     [Fact]
     public async Task Idea_Csv_RoundTrips_Udf_Columns_And_Rejects_Bad_Option()
     {

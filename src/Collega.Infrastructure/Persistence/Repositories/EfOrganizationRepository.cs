@@ -32,10 +32,10 @@ public sealed class EfOrganizationRepository : IOrganizationRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var search = filter.Search.Trim();
+            var pattern = LikePattern.Contains(filter.Search.Trim());
             query = query.Where(o =>
-                EF.Functions.Like(o.Title, $"%{search}%") ||
-                EF.Functions.Like(o.Description, $"%{search}%"));
+                EF.Functions.Like(o.Title, pattern, LikePattern.EscapeCharacter) ||
+                EF.Functions.Like(o.Description, pattern, LikePattern.EscapeCharacter));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
