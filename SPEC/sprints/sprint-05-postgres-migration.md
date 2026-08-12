@@ -1,13 +1,13 @@
 # Sprint 5: PostgreSQL Migration (SQL Server → Postgres)
 
 **Status:** Not started
-**Sequence:** 5 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 4 (`sprint-04-qa-review-debt.md`) is merged; followed by Sprint 6 (`sprint-06-view-as.md`) and Sprint 7 (`sprint-07-ai-idea-assist.md`), both built on the migrated Postgres codebase. **Blocks Sprint 8 (Azure deployment):** that sprint cannot start until this one is implemented in code and verified working against a real Postgres instance, because it changes the deployment's database engine and connection-string requirements.
+**Sequence:** 5 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 4 (`archive/sprint-04-qa-review-debt.md`) is merged; followed by Sprint 6 (`sprint-06-view-as.md`) and Sprint 7 (`sprint-07-ai-idea-assist.md`), both built on the migrated Postgres codebase. **Blocks Sprint 8 (Azure deployment):** that sprint cannot start until this one is implemented in code and verified working against a real Postgres instance, because it changes the deployment's database engine and connection-string requirements.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
 ## Goal
 Switch Collega's application database engine from SQL Server 2022 to PostgreSQL. Approved direction (2026-08-11). The full technical scope — coupling surface, task breakdown, risks, and non-issues — lives in **`SPEC/50-postgres-migration.md`**; this file is the sprint wrapper (sequencing, capacity, DoD). Do not duplicate the scope here — read that doc.
 
-> **Note:** The 2026-08-11 code-review hardening batch was originally folded here, then moved to Sprint 4 (`sprint-04-qa-review-debt.md`, the QA/Code-Review debt pass) on 2026-08-11 as its more natural home. One item — `LIKE`-wildcard escaping — should be **re-verified** during this sprint's Postgres cutover, since `LIKE`/`ESCAPE` semantics and default case-sensitivity differ between SQL Server and Postgres.
+> **Note:** The 2026-08-11 code-review hardening batch was originally folded here, then moved to Sprint 4 (`archive/sprint-04-qa-review-debt.md`, the QA/Code-Review debt pass) on 2026-08-11 as its more natural home. One item — `LIKE`-wildcard escaping — should be **re-verified** during this sprint's Postgres cutover, since `LIKE`/`ESCAPE` semantics and default case-sensitivity differ between SQL Server and Postgres.
 
 ## Why after Sprint 4
 The engine swap regenerates all migrations and touches the persistence layer. Running it *after* the Sprint 4 QA/Code-Review pass means the review reasons about the final SQL-Server shape once, and the Postgres cutover starts from reviewed, stable code rather than a moving target. It is otherwise independent of Sprints 1–4.

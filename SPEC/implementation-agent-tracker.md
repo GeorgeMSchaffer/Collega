@@ -13,29 +13,34 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-08-12 against `7502a88` (`dev`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-08-12 against `5a148f6` (`dev`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
 | MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening (T001-T052), User-Defined Fields (T053-T060, pulled into MVP 2026-08-08), Idea-Type Fields (T061-T067). The archive holds the original task breakdown — it is done; do not restart it. |
 | Blazor client | ~16 pages, 9 shared components | `DrawerShell`, `CreateModalShell`, `IdeaDrawer`, `IdeaCreateModal`, `ListToolbar`, `IdeaFieldInputs`, `BackButton`, `SessionTimeoutGuard`, `TypeBadge`. Sprint 2 retired full-page `OrganizationEdit`/`UserEdit`. |
-| Test suite | **547 green** (2026-08-12) | 113 Domain + 189 Application + 102 Infrastructure + 143 API. Re-run `dotnet test Collega.sln` before trusting this number. |
-| Sprints | 1–3 complete · **4 in progress** · 5–8 not started | Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
-| QA / code review | **Accumulated debt** | Skipped on nearly every merge by standing user direction to move fast through MVP build-out. Being paid down in Sprint 4. |
+| Test suite | **561 green** (2026-08-12) | 113 Domain + 189 Application + 107 Infrastructure + 152 API. Re-run `dotnet test Collega.sln` before trusting this number. |
+| Sprints | 1–4 complete · **5 is next, not started** · 6–8 not started | Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
+| QA / code review | **Partially paid down** | Sprint 4 reviewed the auth/CSV/UDF/idea-repository/client-auth surfaces and fixed 2 defects. **Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files, and Domain entities were never reviewed** — that debt is still open, closed only by a decision to start Sprint 5. Boundary: `sprints/archive/sprint-04-qa-review-debt.md` → "Review pass — what it actually covered". |
 | Bug queue | See `SPEC/Bug Triage.md` | Authoritative open `TODO` list; gates new feature work (see Pre-Feature Triage Gate above). |
 | Local DB | `collega-postgres` container, host port **5432** | Target after the Sprint 5 Postgres cutover (`SPEC/50-postgres-migration.md`); overridable via `POSTGRES_HOST_PORT`. Standard demo seed only (2 orgs, 6 org users + 1 Site Admin, 4 boards, ideas); dropped and re-seeded 2026-08-10. Dev-only demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **Port correction (2026-08-12):** this row previously recorded host port **1434**, which was never right — the running container and `.env` both used 1433. |
 
-### Sprint 4 — in progress
-**Done and merged to `dev`:** the whole six-item code-review hardening batch, and profile portrait upload (SkiaSharp). Per-item detail and verification notes: `SPEC/archive/bug-triage-completed.md`. Specs: `20-feature-auth.md` #32a/#32b, `30-Contracts.md` → "Mandatory Password Rotation Gate" and the export/import limits.
-Two things to carry forward: the `LIKE` escaping needs **re-verification under Postgres in Sprint 5** (on that sprint's DoD), and the board-export cap **refuses rather than truncates** above 10,000 rows — a reversible judgment call if larger extracts are ever needed.
-**Open:** the broad code-review pass across previously-unreviewed slices. Plan: `sprints/sprint-04-qa-review-debt.md`.
+### Sprint 5 — next, not started
+PostgreSQL migration (SQL Server → Postgres). Plan: `sprints/sprint-05-postgres-migration.md`. It is a hard blocker for Sprint 8 — the engine change decides the Azure target and connection-string format, so deploying before Sprint 5 is verified against a real Postgres instance provisions the wrong thing.
+
+Three things land on this sprint from Sprint 4:
+- **`LIKE`/`ESCAPE` re-verification, and it is not a formality.** Sprint 4 found that `EfIdeaRepository.ListByOrganizationAsync` had been left on the two-argument `EF.Functions.Like` overload, so its escaping emitted no `ESCAPE` clause and was inert on the app's highest-traffic search path (fixed `5a148f6`). **Verify the generated SQL, do not read the call sites** — the InMemory provider evaluates `Like` client-side and cannot distinguish the overloads, so no test in this repo can catch a regression here. Postgres `LIKE`/`ESCAPE` and default case-sensitivity both differ from SQL Server.
+- The board-export cap **refuses rather than truncates** above 10,000 rows — a reversible judgment call if larger extracts are ever needed.
+- `AppExceptionHandler` drops the field-level `errors` dictionary from every 400 (open in `Bug Triage.md`). It makes the export-cap refusal message invisible to the user, so it is worth fixing near this work.
+
+**Carried debt, stated plainly:** Sprint 4's review pass was closed at partial coverage by user decision. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files, and Domain entities have still never had a code review. → `sprints/archive/sprint-04-qa-review-debt.md`.
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Portrait image library = **SkiaSharp**.
 - Site Admin org-content mutation = **View As act-as only** (Sprint 6, full act-as + dual attribution); no direct create/edit paths, no org dropdowns. Org + user admin stay direct as the bootstrap exception. → `20-feature-client-ui.md`.
 - AI idea drafting = **Sprint 7**; `Anthropic` package approved, single platform-level key, dedupe deferred to v2. → `20-feature-ai-idea-assist.md`.
 - New page/flow UI is **comp-first**.
-- Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/sprint-04-qa-review-debt.md`.
+- Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/archive/sprint-04-qa-review-debt.md`.
 
 ### Out of sprint scope — leave intact
 User-owned, landed on `dev`: the `e2e/` Playwright suite (`7a92dda`) and the AI-brainstorm WIP in `Ideas.razor`/`IdeaBrainstormModal.razor`.
