@@ -23,12 +23,19 @@ Connection string key: `ConnectionStrings:DefaultConnection` (see [src/Collega.A
 ```bash
 dotnet ef migrations add <Name> \
   --project src/Collega.Infrastructure \
-  --startup-project src/Collega.API
+  --startup-project src/Collega.API \
+  --output-dir Persistence/Migrations
 ```
+
+**`--output-dir` is required, not optional.** `dotnet ef` defaults to a `Migrations/` folder at the
+project root, so omitting it silently writes the migration and the model snapshot to
+`src/Collega.Infrastructure/Migrations/` while the real ones live in `Persistence/Migrations/`. The
+command reports success either way, and the build still passes — you get two snapshots and the wrong
+one wins.
 
 Two caveats worth knowing before you touch packages or tooling:
 
-- **`Microsoft.EntityFrameworkCore.SqlServer` / `.Design` are pinned to 8.0.10.** The 10.x version `dotnet add package` picks by default is net10-only and fails to restore against net8.0. A globally installed `dotnet-ef` v10 works fine against these pinned 8.0.10 packages.
+- **The EF packages are pinned to their net8.0-compatible majors** — `Npgsql.EntityFrameworkCore.PostgreSQL` on **8.0.x** and `Microsoft.EntityFrameworkCore.Design` on **8.0.10**. The newer majors `dotnet add package` picks by default target net9/net10 only and fail to restore against net8.0. A globally installed `dotnet-ef` v10 works fine against these pinned 8.0.x packages.
 - **[`CollegaDbContextFactory`](Persistence/CollegaDbContextFactory.cs) (`IDesignTimeDbContextFactory`) is tooling-only.** It exists because `dotnet ef` could not reliably resolve the connection string through minimal-hosting auto-discovery. Runtime DI does not use it.
 
 The API applies migrations on startup, so a fresh clone needs no manual `database update`.
@@ -47,28 +54,26 @@ The API applies migrations on startup, so a fresh clone needs no manual `databas
 
 Non-Development startup must never apply the demo seed — `SPEC/40-test-strategy.md` gates this.
 
-## Local SQL Server (Docker)
+## Local PostgreSQL (Docker)
 
-`docker-compose.yml` at repo root runs SQL Server 2022 with persistent storage in the named volume `collega_sqlserver-data`. Copy `.env.example` to `.env` (gitignored) and set a real `MSSQL_SA_PASSWORD` first.
+`docker-compose.yml` at repo root runs `postgres:16` as the `postgres` service (container `collega-postgres`) with persistent storage in the named volume `collega_postgres-data`. Copy `.env.example` to `.env` (gitignored) and set a real `POSTGRES_PASSWORD` first.
 
 ```bash
-docker compose up -d sqlserver        # just SQL Server (also the default)
+docker compose up -d postgres         # just PostgreSQL (also the default)
 docker compose --profile full up -d   # + the api/web placeholder services
 docker compose down                   # stop; -v also deletes the volume and all data
-docker inspect -f '{{.State.Health.Status}}' collega-sqlserver
+docker inspect -f '{{.State.Health.Status}}' collega-postgres
 ```
+
+`POSTGRES_HOST_PORT` (default `5432`) sets the host-side port mapping and `POSTGRES_USER` (default `postgres`) the superuser. The healthcheck is `pg_isready`, which only proves the server is accepting connections — it does **not** authenticate, so a healthy container is not by itself evidence that your password is right.
 
 The `api` and `web` services are placeholders wired for `dotnet watch`, still referencing `Dockerfile.dev` paths that don't exist. They stay behind the `full` profile so they can't be started by accident. Add real `Dockerfile.dev` files to enable them.
 
-**`Login failed for user 'sa'` even with a correct `.env`** — `MSSQL_SA_PASSWORD` is applied only when the volume is *first* initialized, so an old credential persists in an existing volume. Reset it in place without losing data:
+**`password authentication failed for user "postgres"` even with a correct `.env`** — `POSTGRES_PASSWORD` is applied only when the data directory is *first* initialized, so an old credential survives in an existing volume. Reset it in place without losing data; the official image initializes `pg_hba.conf` with `local all all trust`, so this exec over the Unix socket needs no password:
 
 ```bash
-docker stop collega-sqlserver
-docker run --rm -v collega_sqlserver-data:/var/opt/mssql -u root \
-  -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD='<your-password>' \
-  --entrypoint /opt/mssql/bin/mssql-conf \
-  mcr.microsoft.com/mssql/server:2022-latest set-sa-password
-docker compose up -d sqlserver
+docker exec -it collega-postgres \
+  psql -U postgres -c "ALTER USER postgres WITH PASSWORD '<your-password>';"
 ```
 
-The healthcheck authenticates as `sa`, so the same bad credential also shows as `unhealthy` while the logs say the engine is ready. Same fix.
+To start over instead (**destroys all local data**): `docker compose down -v`.

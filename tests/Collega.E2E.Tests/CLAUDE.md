@@ -23,7 +23,7 @@ This file is the **living use-case catalog** for the suite. When we add or chang
    dotnet run --project src/Collega.API/Collega.API.csproj     # http://localhost:5103
    dotnet run --project src/Collega.Client/Collega.Client.csproj # http://localhost:5098
    ```
-   The API needs a reachable SQL Server (see repo root `docker-compose.yml`).
+   The API needs a reachable PostgreSQL instance (see repo root `docker-compose.yml`).
 
 ## Running
 
@@ -95,7 +95,10 @@ Status legend: ✅ implemented & passing · 🟡 scaffolded (written, `Skip`ped,
 | Site Admin *global* aggregated views route "Add New" to the Organizations list | ⬜ | needs a Site Admin seed without a forced password change |
 
 ### Ideas & idea-detail drawer — (no .NET file; covered in the TS `e2e/` suite)
-Locked design: right slide-in **drawer** + centered **create modal**, URL-addressable via `?idea={id}` and `/ideas/{id}` (SPEC/20-feature-client-ui.md → Idea Detail Surface). **These cases now live in the runnable TypeScript Playwright suite** (`e2e/tests/05-idea-drawer-engagement.spec.ts`, `06-ideas-list-surface.spec.ts`), not this .NET project — see `e2e/README.md`. Status below reflects that suite; ✅ once verified against a live stack.
+Locked design: right slide-in **drawer** + centered **create modal**, URL-addressable via `?idea={id}` and `/ideas/{id}` (SPEC/20-feature-client-ui.md → Idea Detail Surface). **These cases live in the TypeScript Playwright suite** (`e2e/tests/05-idea-drawer-engagement.spec.ts`, `06-ideas-list-surface.spec.ts`), not this .NET project — see `e2e/README.md`. Status below reflects that suite.
+
+> **Note on this section's history.** The `e2e/` suite was deleted in `3c367f3` and these rows were re-marked ⬜ uncovered as a result. It was **restored in `9301073`** (2026-08-12) after the removal was identified as a mistake, so the original statuses are reinstated. Before trusting a ✅ here, re-run the suite: its setup targets SQL Server and has not yet been reconciled to PostgreSQL (see `e2e/README.md`).
+
 | Case | Status | Notes |
 |---|---|---|
 | `/ideas` list + search + All/Created-by-me/Assigned-to-me filter chips | ✅ | `e2e/06` — chips, server-side search, sortable headers, 25/50/100/250 page sizes |

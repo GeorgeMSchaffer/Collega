@@ -39,14 +39,16 @@ Stop any API/watch process you started before finishing a session.
 
 ## Required configuration
 
-Startup **fails fast** if `SiteAdmin:Email` or `SiteAdmin:Password` is missing ([Program.cs:18-26](Program.cs#L18-L26), per `SPEC/20-feature-auth.md` requirement #8). Store secrets in user-secrets — `appsettings.Development.json` is committed and must never hold a real password.
+Startup **fails fast** if `SiteAdmin:Email` or `SiteAdmin:Password` is missing ([Program.cs:18-26](Program.cs#L18-L26), per `SPEC/20-feature-auth.md` requirement #8). Store secrets in user-secrets — `appsettings.Development.json` is committed and must **never hold a real credential**.
+
+**Narrowed 2026-08-12 (Postgres migration).** This rule previously read "never hold a password" outright. That was achievable under SQL Server because the dev connection string used `Trusted_Connection=True` and carried no credential at all; PostgreSQL has no Windows-auth equivalent, so a local dev connection string must name a user and password. The committed value is the throwaway placeholder that matches `.env.example` and the `docker-compose.yml` defaults, so a fresh clone connects to the local container with no extra setup. The rule that matters is unchanged and absolute: **never commit a credential that grants access to anything real.** Anything beyond the local throwaway container belongs in user-secrets.
 
 ```bash
 cd src/Collega.API
 dotnet user-secrets set "SiteAdmin:Email" "admin@collega.local"
 dotnet user-secrets set "SiteAdmin:Password" "<your-password>"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
-  "Server=localhost,1433;Database=Collega;User Id=sa;Password=<your-password>;TrustServerCertificate=True;"
+  "Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=<your-password>"
 ```
 
 Environment variables work too, with a **double** underscore: `SiteAdmin__Email`, `ConnectionStrings__DefaultConnection`, `Auth__AccessTokenLifetimeMinutes`.

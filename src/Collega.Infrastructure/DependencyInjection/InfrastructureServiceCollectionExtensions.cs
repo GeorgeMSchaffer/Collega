@@ -21,7 +21,7 @@ public static class InfrastructureServiceCollectionExtensions
     {
         var connectionString = configuration.GetConnectionString(ConnectionStringName);
 
-        services.AddDbContext<CollegaDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddDbContext<CollegaDbContext>(options => options.UseNpgsql(connectionString));
 
         services.AddScoped<IAuditEventWriter, EfAuditEventWriter>();
         services.AddScoped<INotificationEventWriter, EfNotificationEventWriter>();

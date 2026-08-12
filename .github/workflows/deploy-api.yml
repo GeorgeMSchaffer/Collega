@@ -18,8 +18,14 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      # Container-backed tests are excluded from the deploy gate on purpose. `ubuntu-latest` has a
+      # Docker daemon, so without this filter the Testcontainers PostgreSQL tests run here and every
+      # production deploy would depend on pulling postgres:16 and Ryuk from Docker Hub — a registry
+      # outage or rate limit would block shipping. They exist to verify the PostgreSQL migration
+      # (real SQL translation, collation, DDL — none of which the InMemory suite can prove), not to
+      # gate each deploy. Run them locally with `dotnet test Collega.sln`, which includes them.
       - name: Test
-        run: dotnet test Collega.sln -c Release
+        run: dotnet test Collega.sln -c Release --filter "Category!=Container"
 
       - name: Publish
         run: dotnet publish src/Collega.API/Collega.API.csproj -c Release -o ./publish

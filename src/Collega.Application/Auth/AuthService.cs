@@ -3,6 +3,7 @@ using Collega.Application.Abstractions;
 using Collega.Application.Exceptions;
 using Collega.Domain.Auditing;
 using Collega.Domain.Enums;
+using Collega.Domain.Organizations;
 using Collega.Domain.Users;
 
 namespace Collega.Application.Auth;
@@ -193,7 +194,7 @@ public sealed class AuthService : IAuthService
     public async Task<RegisterResult> RegisterAsync(RegisterCommand command, CancellationToken cancellationToken = default)
     {
         var now = _clock.UtcNow;
-        var inviteCode = (command.InviteCode ?? string.Empty).Trim();
+        var inviteCode = InviteCodeNormalizer.Normalize(command.InviteCode);
 
         if (string.IsNullOrWhiteSpace(inviteCode))
         {

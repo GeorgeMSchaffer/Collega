@@ -120,7 +120,7 @@ public ICollection<IdeaFieldValue> FieldValues { get; set; } = new List<IdeaFiel
 
 | Table | Index | Notes |
 |---|---|---|
-| `FieldDefinitions` | Unique on `(OrganizationId, Name)` filtered where `IsDeleted = 0` | Prevents duplicate active names per org |
+| `FieldDefinitions` | Unique on `(OrganizationId, NormalizedName)` filtered where `IsDeleted = false` | Prevents duplicate active names per org, **case-insensitively** |
 | `IdeaFieldValues` | Unique on `(IdeaId, FieldDefinitionId)` | One value row per field per idea |
 | `IdeaFieldValues` | Non-unique on `(FieldDefinitionId, Value)` | Supports filter/sort queries |
 
@@ -183,9 +183,9 @@ CREATE TABLE FieldDefinitions (
     CONSTRAINT FK_FieldDefinitions_Organizations FOREIGN KEY (OrganizationId) REFERENCES Organizations(Id)
 );
 
-CREATE UNIQUE INDEX UIX_FieldDefinitions_OrgName
-    ON FieldDefinitions (OrganizationId, Name)
-    WHERE IsDeleted = 0;
+CREATE UNIQUE INDEX ux_field_definitions_organization_id_normalized_name
+    ON field_definitions (organization_id, normalized_name)
+    WHERE is_deleted = false;
 
 -- FieldDefinitionOptions
 CREATE TABLE FieldDefinitionOptions (

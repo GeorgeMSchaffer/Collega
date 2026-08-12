@@ -14,8 +14,9 @@ Repo layout beyond the `src/` and `tests/` projects:
 - `SPEC/archive/` — **superseded documents; don't read unless asked for history.** Several assert the project is unstarted, which was true when written and is not now. Nothing here is canonical or gates work.
 - `SPEC/mockups/` — SVG/HTML UI mockups and throwaway review comps
 - `SPEC/SPECKIT/specs/<NNN-feature>/spec.md` — derived downstream copies of canonical `SPEC/*.md`; edit the canonical file first
-- `e2e/` — TypeScript Playwright browser suite (see `e2e/README.md`), separate from `tests/Collega.E2E.Tests`
 - `FluentUiComps/` — an unrelated spike, **not part of Collega**; don't change it as part of Collega work
+
+`e2e/` — TypeScript Playwright browser suite (see `e2e/README.md`), separate from `tests/Collega.E2E.Tests` (Playwright for .NET). It was briefly deleted in `3c367f3` and **restored in `9301073`** (2026-08-12) after that removal was identified as a mistake; treat it as live.
 
 Verify a file or project actually exists before assuming a command will work or a slice is unbuilt.
 
@@ -61,7 +62,9 @@ Layered with strict boundaries — business rules live in Domain and Application
 | `src/Collega.Infrastructure` | Persistence, external integrations | implements Application/Domain abstractions |
 | `src/Collega.Client` | Blazor WebAssembly UI (Fluent UI Blazor) | — |
 
-Stack: .NET 8, ASP.NET Core API, Blazor (Fluent UI Blazor), EF Core, SQL Server 2022, xUnit.
+Stack: .NET 8, ASP.NET Core API, Blazor (Fluent UI Blazor), EF Core, PostgreSQL 16 (Npgsql), xUnit.
+
+> **Database engine — Sprint 5 cutover.** PostgreSQL is the target engine, replacing SQL Server 2022. Scope: `SPEC/50-postgres-migration.md`; sprint wrapper: `SPEC/sprints/sprint-05-postgres-migration.md`. If your checkout still references `Microsoft.EntityFrameworkCore.SqlServer`, the provider swap has not reached your branch yet — reconcile before assuming otherwise.
 
 Client design direction is **Comp C "Fluent Editorial"**, locked and documented in `SPEC/20-feature-client-ui.md` and `src/Collega.Client/CLAUDE.md` — read those before UI work rather than inferring from mockup filenames.
 
@@ -91,7 +94,7 @@ dotnet build Collega.sln
 dotnet test Collega.sln
 ```
 
-Running the API or Client, required configuration and secrets, seeding flags, migrations, and the local SQL Server container are all documented where they belong: `src/Collega.API/CLAUDE.md`, `src/Collega.Infrastructure/CLAUDE.md`, `src/Collega.Client/CLAUDE.md`, `tests/CLAUDE.md`, and `README.md`.
+Running the API or Client, required configuration and secrets, seeding flags, migrations, and the local PostgreSQL container are all documented where they belong: `src/Collega.API/CLAUDE.md`, `src/Collega.Infrastructure/CLAUDE.md`, `src/Collega.Client/CLAUDE.md`, `tests/CLAUDE.md`, and `README.md`.
 
 ## Session, Branch, and Source Control
 

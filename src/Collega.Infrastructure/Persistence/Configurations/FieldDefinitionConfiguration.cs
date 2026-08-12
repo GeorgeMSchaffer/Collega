@@ -25,6 +25,11 @@ public sealed class FieldDefinitionConfiguration : IEntityTypeConfiguration<Fiel
             .HasMaxLength(FieldDefinition.NameMaxLength)
             .IsRequired();
 
+        builder.Property(f => f.NormalizedName)
+            .HasColumnName("normalized_name")
+            .HasMaxLength(FieldDefinition.NameMaxLength)
+            .IsRequired();
+
         builder.Property(f => f.Description)
             .HasColumnName("description")
             .HasMaxLength(FieldDefinition.DescriptionMaxLength);
@@ -55,11 +60,15 @@ public sealed class FieldDefinitionConfiguration : IEntityTypeConfiguration<Fiel
         builder.Property(f => f.CreatedByUserId).HasColumnName("created_by_user_id");
         builder.Property(f => f.UpdatedByUserId).HasColumnName("updated_by_user_id");
 
-        // One active field name per organization (soft-deleted rows are excluded from the constraint).
-        builder.HasIndex(f => new { f.OrganizationId, f.Name })
-            .HasFilter("[is_deleted] = 0")
+        // One active field name per organization, compared case-insensitively (soft-deleted rows are
+        // excluded from the constraint). The index sits on the normalized column rather than the raw
+        // name: under SQL Server the raw index rejected case-variant duplicates only because the
+        // default collation is case-insensitive, and PostgreSQL's is not. Same pattern as
+        // ux_tags_organization_id_normalized_name and the normalized-email index.
+        builder.HasIndex(f => new { f.OrganizationId, f.NormalizedName })
+            .HasFilter("is_deleted = false")
             .IsUnique()
-            .HasDatabaseName("ux_field_definitions_organization_id_name");
+            .HasDatabaseName("ux_field_definitions_organization_id_normalized_name");
 
         builder.HasIndex(f => new { f.OrganizationId, f.DisplayOrder })
             .HasDatabaseName("ix_field_definitions_organization_id_display_order");

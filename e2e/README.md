@@ -34,23 +34,30 @@ demo seed. Two behaviors these specs encode:
 
 ## Prerequisites
 
-1. **SQL Server** running (the repo's `collega-sqlserver` container, host port **1434**).
+1. **PostgreSQL** running (the repo's `collega-postgres` container, host port **5432** — `docker compose up -d postgres`).
 2. **API on `http://localhost:5103`** against a **fresh** throwaway `CollegaE2E` database, in the
    `Development` environment (so the demo orgs/users are seeded and the Site Admin still requires a
    first-login password change). Never point these tests at your real `Collega` database.
 3. **Client on `http://localhost:5098`** (its `wwwroot/appsettings.json` already targets `:5103`).
 
-### Start the stack (PowerShell / bash)
+> **Reconciled to PostgreSQL 2026-08-12 (Sprint 5).** This suite was restored in `9301073` still
+> carrying its original SQL Server setup — `collega-sqlserver` on port 1434, a `sqlcmd` drop, and a
+> `Server=…;TrustServerCertificate=True` connection string, none of which work against the current
+> stack. The commands below are the Postgres equivalents. Substitute your own `POSTGRES_PASSWORD`
+> from `.env`; the value shown is the `.env.example` placeholder, not a real credential.
+
+### Start the stack
 
 ```bash
-# 1) Fresh throwaway DB (drops any previous CollegaE2E)
-docker exec collega-sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'rsbr220Sql!' -C \
-  -Q "IF DB_ID('CollegaE2E') IS NOT NULL BEGIN ALTER DATABASE CollegaE2E SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE CollegaE2E; END"
+# 1) Fresh throwaway DB (drops any previous CollegaE2E; FORCE terminates open connections,
+#    the Postgres equivalent of SINGLE_USER WITH ROLLBACK IMMEDIATE — requires PG 13+)
+docker exec collega-postgres psql -U collega -d postgres \
+  -c 'DROP DATABASE IF EXISTS "CollegaE2E" WITH (FORCE);'
 
-# 2) API (migrates + demo-seeds CollegaE2E on boot)
+# 2) API (creates, migrates and demo-seeds CollegaE2E on boot)
 ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5103 \
-  ConnectionStrings__DefaultConnection="Server=localhost,1434;Database=CollegaE2E;User Id=sa;Password=rsbr220Sql!;TrustServerCertificate=True;" \
-  SiteAdmin__Email=admin@collega.local SiteAdmin__Password=rsbr220Sql! \
+  ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=CollegaE2E;Username=collega;Password=Ch4ngeMe!Now" \
+  SiteAdmin__Email=admin@collega.local SiteAdmin__Password='Ch4ngeMe!Now' \
   dotnet run --project src/Collega.API/Collega.API.csproj --no-launch-profile
 
 # 3) Client

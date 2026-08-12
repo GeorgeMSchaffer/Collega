@@ -1,5 +1,6 @@
 using Collega.Domain.Boards;
 using Collega.Domain.Enums;
+using Collega.Domain.Fields;
 using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
 using Collega.Domain.Statuses;
@@ -21,6 +22,23 @@ internal static class Build
         }
 
         return org;
+    }
+
+    /// <summary>A Text field definition; <paramref name="archived"/> soft-deletes it.</summary>
+    public static FieldDefinition FieldDefinition(
+        Guid organizationId,
+        string name = "Cost",
+        int displayOrder = 1,
+        bool archived = false)
+    {
+        var definition = Domain.Fields.FieldDefinition.Create(
+            organizationId, name, null, FieldType.Text, false, displayOrder, Array.Empty<FieldOptionInput>(), Now);
+        if (archived)
+        {
+            definition.SoftDelete(Now, null);
+        }
+
+        return definition;
     }
 
     public static User User(

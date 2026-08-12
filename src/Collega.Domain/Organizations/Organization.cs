@@ -82,7 +82,7 @@ public sealed class Organization : AuditableEntityBase
         {
             Title = title.Trim(),
             Description = description.Trim(),
-            InviteCode = inviteCode.Trim(),
+            InviteCode = InviteCodeNormalizer.Normalize(inviteCode),
             LogoUrl = Normalize(logoUrl)
         };
         organization.ApplyProfile(profile);
@@ -165,7 +165,7 @@ public sealed class Organization : AuditableEntityBase
             throw new ArgumentException("Invite code is required.", nameof(newInviteCode));
         }
 
-        InviteCode = newInviteCode.Trim();
+        InviteCode = InviteCodeNormalizer.Normalize(newInviteCode);
         MarkUpdated(nowUtc, actorUserId);
     }
 

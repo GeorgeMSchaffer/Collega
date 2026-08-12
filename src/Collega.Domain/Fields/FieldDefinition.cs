@@ -18,6 +18,21 @@ public sealed class FieldDefinition : AuditableEntityBase
 
     public Guid OrganizationId { get; private set; }
     public string Name { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Lower-cased, trimmed form of <see cref="Name"/>, carrying the unique index that keeps active
+    /// field names distinct case-insensitively within an organization.
+    /// </summary>
+    /// <remarks>
+    /// Follows the same pattern as <c>Tag.NormalizedName</c> and <c>User.NormalizedEmail</c>: the
+    /// comparison lives in a column rather than in a collation. That mattered when the database moved
+    /// from SQL Server to PostgreSQL — the old index sat on the raw name and only rejected
+    /// case-variant duplicates because SQL Server's default collation is case-insensitive, which
+    /// PostgreSQL's is not. The application layer has always compared case-insensitively; this keeps
+    /// the database enforcing the same rule instead of leaving a window where two concurrent creates
+    /// of <c>Cost</c> and <c>cost</c> both commit.
+    /// </remarks>
+    public string NormalizedName { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public FieldType FieldType { get; private set; }
     public bool IsRequired { get; private set; }
@@ -61,6 +76,7 @@ public sealed class FieldDefinition : AuditableEntityBase
         {
             OrganizationId = organizationId,
             Name = NormalizeName(name),
+            NormalizedName = Normalize(name),
             Description = NormalizeDescription(description),
             FieldType = fieldType,
             IsRequired = isRequired,
@@ -84,6 +100,7 @@ public sealed class FieldDefinition : AuditableEntityBase
         EnsureNotDeleted();
 
         Name = NormalizeName(name);
+        NormalizedName = Normalize(name);
         Description = NormalizeDescription(description);
         IsRequired = isRequired;
         DisplayOrder = displayOrder;
@@ -175,6 +192,9 @@ public sealed class FieldDefinition : AuditableEntityBase
             throw new InvalidOperationException("A deleted field definition cannot be modified.");
         }
     }
+
+    /// <summary>Trims surrounding whitespace and lower-cases, for case-insensitive comparison.</summary>
+    public static string Normalize(string? name) => name?.Trim().ToLowerInvariant() ?? string.Empty;
 
     private static string NormalizeName(string name)
     {

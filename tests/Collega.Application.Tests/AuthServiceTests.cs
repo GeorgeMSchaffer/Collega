@@ -2,6 +2,7 @@ using Collega.Application.Auth;
 using Collega.Application.Exceptions;
 using Collega.Application.Tests.TestDoubles;
 using Collega.Domain.Enums;
+using Collega.Domain.Organizations;
 using Collega.Domain.Users;
 
 namespace Collega.Application.Tests;
@@ -230,6 +231,47 @@ public sealed class AuthServiceTests
         var created = _users.Users.Single(u => u.NormalizedEmail == "new@example.com");
         Assert.False(created.MustChangePassword);
         Assert.Contains(_audit.Events, e => e.EventType == "UserSelfRegistered");
+    }
+
+    // Invite codes are generated from an uppercase-only alphabet, and someone transcribing one from
+    // an email very commonly types it in lower or mixed case. SQL Server's CI_AS collation matched
+    // those for free; PostgreSQL does not, so self-registration broke until the code was normalized
+    // in the Application layer. These three cases fail against the pre-fix `.Trim()`-only code —
+    // FakeOrganizationRepository.GetByInviteCodeAsync compares ordinally, exactly as Postgres does.
+    [Theory]
+    [InlineData("join-4")]
+    [InlineData("JoIn-4")]
+    [InlineData("  join-4  ")]
+    public async Task Register_InviteCodeMatchesRegardlessOfCase(string typedInviteCode)
+    {
+        var org = _orgs.Add(Build.Organization(inviteCode: "JOIN-4"));
+        var sut = CreateSut();
+
+        var result = await sut.RegisterAsync(
+            new RegisterCommand(typedInviteCode, "New", "User", "new@example.com", "Secret1!"));
+
+        Assert.Equal(org.Id, result.OrganizationId);
+    }
+
+    [Fact]
+    public async Task Register_LowercaseInviteCodeForArchivedOrganization_StillRejected()
+    {
+        _orgs.Add(Build.Organization(inviteCode: "ARCHIVED-2", archived: true));
+        var sut = CreateSut();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            sut.RegisterAsync(new RegisterCommand("archived-2", "A", "B", "new@example.com", "Secret1!")));
+    }
+
+    [Fact]
+    public void InviteCodeNormalizer_TrimsAndUppercases_Invariantly()
+    {
+        Assert.Equal("ABC123", InviteCodeNormalizer.Normalize("  abc123 "));
+        Assert.Equal(string.Empty, InviteCodeNormalizer.Normalize(null!));
+
+        // Invariant casing, not culture-sensitive: Turkish culture maps "i" to "İ", which would not
+        // match a stored "I". Asserted by value so the test does not depend on the ambient culture.
+        Assert.Equal("JOINING", InviteCodeNormalizer.Normalize("joining"));
     }
 
     // IssueTemporaryPassword --------------------------------------------------------------------

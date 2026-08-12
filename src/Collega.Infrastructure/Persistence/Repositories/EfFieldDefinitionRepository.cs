@@ -49,11 +49,13 @@ public sealed class EfFieldDefinitionRepository : IFieldDefinitionRepository
 
     public Task<bool> ExistsActiveByNameAsync(Guid organizationId, string name, Guid? excludeId, CancellationToken cancellationToken = default)
     {
-        var normalized = name.Trim().ToLowerInvariant();
+        // Compares the stored normalized column rather than lower-casing the raw name in SQL, so this
+        // check and the ux_field_definitions_organization_id_normalized_name constraint agree exactly.
+        var normalized = FieldDefinition.Normalize(name);
         return _dbContext.FieldDefinitions.AnyAsync(
             f => f.OrganizationId == organizationId
                 && !f.IsDeleted
-                && f.Name.ToLower() == normalized
+                && f.NormalizedName == normalized
                 && (excludeId == null || f.Id != excludeId),
             cancellationToken);
     }

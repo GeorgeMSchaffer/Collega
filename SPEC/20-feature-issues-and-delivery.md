@@ -304,7 +304,7 @@ Layouts here are **directional**; the locked Comp C system (`SPEC/mockups/comp-c
 ## Migration Strategy
 
 **EF migration `AddDeliveryAndSprints`:**
-- `ideas` gains: `phase` (int, NOT NULL, default `0`/Discovery — existing rows backfill to Discovery), `effort` (int, null), `delivery_status` (int, null), `sprint_id` (guid, null, FK → `sprints`, `ON DELETE` restricted; unassignment is handled in the app layer), `promoted_at_utc` (datetime2, null), `promoted_by_user_id` (guid, null), `upvote_count_at_promotion` (int, null).
+- `ideas` gains: `phase` (int, NOT NULL, default `0`/Discovery — existing rows backfill to Discovery), `effort` (int, null), `delivery_status` (int, null), `sprint_id` (guid, null, FK → `sprints`, `ON DELETE` restricted; unassignment is handled in the app layer), `promoted_at_utc` (timestamptz, null — `DateTime` with `Kind = Utc`, per the Npgsql mapping in `SPEC/50-postgres-migration.md`), `promoted_by_user_id` (guid, null), `upvote_count_at_promotion` (int, null).
 - New table `sprints` (snake_case, per Infrastructure convention) with `organization_id`, `name`, `goal`, `start_date`, `end_date`, `owner_user_id`, `state`, `is_deleted`, and audit columns.
 - Indexes: `(organization_id, phase)` on `ideas` (board/backlog filtering); `sprint_id` on `ideas`; `(organization_id, state)` on `sprints`.
 - Because every existing idea backfills to `Discovery` and no sprints exist, all ideation boards and idea flows are byte-for-byte unchanged post-migration; delivery surfaces are simply empty.

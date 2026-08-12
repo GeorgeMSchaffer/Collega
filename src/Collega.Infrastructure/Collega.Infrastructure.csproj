@@ -1,6 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <!-- Search predicates are internal seams so Collega.Infrastructure.Tests can assert on the SQL they
+         generate — the InMemory provider the rest of the suite runs on cannot show LIKE/ESCAPE or case-folding. -->
+    <InternalsVisibleTo Include="Collega.Infrastructure.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Collega.Application\Collega.Application.csproj" />
     <ProjectReference Include="..\Collega.Domain\Collega.Domain.csproj" />
   </ItemGroup>
@@ -10,7 +16,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.10" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
   </ItemGroup>
 

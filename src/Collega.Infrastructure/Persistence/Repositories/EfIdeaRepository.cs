@@ -45,8 +45,7 @@ public sealed class EfIdeaRepository : IIdeaRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var search = LikePattern.Contains(filter.Search.Trim());
-            query = query.Where(i => EF.Functions.Like(i.Title, search, LikePattern.EscapeCharacter));
+            query = ApplyTitleSearch(query, filter.Search);
         }
 
         if (filter.StatusId is not null)
@@ -126,38 +125,7 @@ public sealed class EfIdeaRepository : IIdeaRepository
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
-            var pattern = LikePattern.Contains(filter.Search.Trim());
-            var textFieldIds = filter.SearchTextFieldIds ?? Array.Empty<Guid>();
-            var hasCreatedOnDate = filter.SearchCreatedOnDate is not null;
-            var createdDayStart = filter.SearchCreatedOnDate?.ToDateTime(TimeOnly.MinValue) ?? default;
-            var createdDayEnd = createdDayStart.AddDays(1);
-
-            // The all-column search covers every column the /ideas table displays: Title, Created By
-            // (author name), Assigned To (assignee names), Status (status name), and — when the term is a
-            // full ISO date — Created Date. It also scans the idea's Text/Url UDF values (T059).
-            //
-            // Every Like here MUST pass LikePattern.EscapeCharacter. The pattern already carries the
-            // escapes LikePattern added; without the matching ESCAPE clause the engine has no escape
-            // character defined, so those backslashes degrade to literal characters and the wildcards
-            // they were meant to neutralise stay live — a search for "100%" then matches only titles
-            // containing "100\". The InMemory provider evaluates Like client-side and cannot tell the
-            // two overloads apart, so no in-memory test covers this; see LikePattern's remarks.
-            const string escape = LikePattern.EscapeCharacter;
-            query = query.Where(i => EF.Functions.Like(i.Title, pattern, escape)
-                || _dbContext.Users.Any(u => u.Id == i.AuthorUserId
-                    && (EF.Functions.Like(u.FirstName, pattern, escape)
-                        || EF.Functions.Like(u.LastName, pattern, escape)
-                        || EF.Functions.Like(u.FirstName + " " + u.LastName, pattern, escape)))
-                || i.Assignees.Any(a => _dbContext.Users.Any(u => u.Id == a.UserId
-                    && (EF.Functions.Like(u.FirstName, pattern, escape)
-                        || EF.Functions.Like(u.LastName, pattern, escape)
-                        || EF.Functions.Like(u.FirstName + " " + u.LastName, pattern, escape))))
-                || _dbContext.Statuses.Any(s => s.Id == i.StatusId && EF.Functions.Like(s.Name, pattern, escape))
-                || _dbContext.IdeaFieldValues.Any(v => v.IdeaId == i.Id
-                    && textFieldIds.Contains(v.FieldDefinitionId)
-                    && v.Value != null
-                    && EF.Functions.Like(v.Value, pattern, escape))
-                || (hasCreatedOnDate && i.CreatedAtUtc >= createdDayStart && i.CreatedAtUtc < createdDayEnd));
+            query = ApplyAllColumnSearch(query, filter);
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Tag))
@@ -211,24 +179,79 @@ public sealed class EfIdeaRepository : IIdeaRepository
             SortDirection.Normalize(filter.SortDirection));
     }
 
+    // Board-scoped search: title only. Internal so a test can assert on the SQL it produces.
+    internal static IQueryable<Idea> ApplyTitleSearch(IQueryable<Idea> query, string search)
+    {
+        var pattern = LikePattern.ContainsCaseInsensitive(search.Trim());
+        return query.Where(i => EF.Functions.Like(i.Title.ToLower(), pattern, LikePattern.EscapeCharacter));
+    }
+
+    // The all-column search covers every column the /ideas table displays: Title, Created By (author
+    // name), Assigned To (assignee names), Status (status name), and — when the term is a full ISO
+    // date — Created Date. It also scans the idea's Text/Url UDF values (T059).
+    //
+    // Two invariants hold for every Like below, neither of which any InMemory test can observe:
+    //
+    //  * It MUST pass LikePattern.EscapeCharacter. The pattern already carries the escapes LikePattern
+    //    added; without the matching ESCAPE clause the engine has no escape character defined, so those
+    //    backslashes degrade to literal characters and the wildcards they were meant to neutralise stay
+    //    live — a search for "100%" then matches only titles containing "100\". The InMemory provider
+    //    evaluates Like client-side and cannot tell the two overloads apart.
+    //  * Both sides MUST be lowercased, because Postgres LIKE is case-sensitive and the contract
+    //    (SPEC/30-Contracts.md) requires case-insensitive matching.
+    //
+    // Internal so a test can assert on the generated SQL; see LikePattern's remarks.
+    internal IQueryable<Idea> ApplyAllColumnSearch(IQueryable<Idea> query, OrganizationIdeaListFilter filter)
+    {
+        var pattern = LikePattern.ContainsCaseInsensitive(filter.Search!.Trim());
+        var textFieldIds = filter.SearchTextFieldIds ?? Array.Empty<Guid>();
+        var hasCreatedOnDate = filter.SearchCreatedOnDate is not null;
+
+        // created_at_utc is `timestamp with time zone`, and Npgsql rejects a DateTime whose Kind is
+        // Unspecified for that type — DateOnly.ToDateTime yields exactly that, so an ISO-date search
+        // term threw ArgumentException at execution rather than returning the day's ideas. AddDays
+        // carries the Kind forward.
+        var createdDayStart = filter.SearchCreatedOnDate is DateOnly createdOn
+            ? DateTime.SpecifyKind(createdOn.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc)
+            : default;
+        var createdDayEnd = createdDayStart.AddDays(1);
+
+        const string escape = LikePattern.EscapeCharacter;
+        return query.Where(i => EF.Functions.Like(i.Title.ToLower(), pattern, escape)
+            || _dbContext.Users.Any(u => u.Id == i.AuthorUserId
+                && (EF.Functions.Like(u.FirstName.ToLower(), pattern, escape)
+                    || EF.Functions.Like(u.LastName.ToLower(), pattern, escape)
+                    || EF.Functions.Like((u.FirstName + " " + u.LastName).ToLower(), pattern, escape)))
+            || i.Assignees.Any(a => _dbContext.Users.Any(u => u.Id == a.UserId
+                && (EF.Functions.Like(u.FirstName.ToLower(), pattern, escape)
+                    || EF.Functions.Like(u.LastName.ToLower(), pattern, escape)
+                    || EF.Functions.Like((u.FirstName + " " + u.LastName).ToLower(), pattern, escape))))
+            || _dbContext.Statuses.Any(s => s.Id == i.StatusId && EF.Functions.Like(s.Name.ToLower(), pattern, escape))
+            || _dbContext.IdeaFieldValues.Any(v => v.IdeaId == i.Id
+                && textFieldIds.Contains(v.FieldDefinitionId)
+                && v.Value != null
+                && EF.Functions.Like(v.Value.ToLower(), pattern, escape))
+            || (hasCreatedOnDate && i.CreatedAtUtc >= createdDayStart && i.CreatedAtUtc < createdDayEnd));
+    }
+
     // Applies one typed User-Defined Field predicate as an EXISTS subquery over IdeaFieldValues (T059).
     // Number range converts the stored invariant-decimal string (EF Core translates Convert.ToDecimal to
     // SQL CONVERT); Date range compares the ISO yyyy-MM-dd strings, whose lexical order is chronological.
-    private IQueryable<Idea> ApplyFieldFilter(IQueryable<Idea> query, IdeaFieldValueFilter f)
+    internal IQueryable<Idea> ApplyFieldFilter(IQueryable<Idea> query, IdeaFieldValueFilter f)
     {
         var id = f.FieldDefinitionId;
         return f.Kind switch
         {
             IdeaFieldFilterKind.Contains => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
                 v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null
-                && EF.Functions.Like(v.Value, LikePattern.Contains(f.Value), LikePattern.EscapeCharacter))),
+                && EF.Functions.Like(v.Value.ToLower(), LikePattern.ContainsCaseInsensitive(f.Value), LikePattern.EscapeCharacter))),
 
             IdeaFieldFilterKind.Equals => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
                 v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value == f.Value)),
 
             IdeaFieldFilterKind.MultiSelectContains => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
                 v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null
-                && EF.Functions.Like("," + v.Value + ",", "%," + LikePattern.Escape(f.Value) + ",%", LikePattern.EscapeCharacter))),
+                && EF.Functions.Like("," + v.Value.ToLower() + ",", "%," + LikePattern.EscapeCaseInsensitive(f.Value) + ",%", LikePattern.EscapeCharacter))),
 
             IdeaFieldFilterKind.NumberRange => query.Where(i => _dbContext.IdeaFieldValues.Any(v =>
                 v.IdeaId == i.Id && v.FieldDefinitionId == id && v.Value != null

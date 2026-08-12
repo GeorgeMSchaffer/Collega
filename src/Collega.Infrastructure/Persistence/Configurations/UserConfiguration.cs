@@ -41,7 +41,6 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.PasswordHash)
             .HasColumnName("password_hash")
-            .HasColumnType("nvarchar(max)")
             .IsRequired();
 
         builder.Property(u => u.Role)
@@ -79,8 +78,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.Property(u => u.PortraitPng)
-            .HasColumnName("portrait_png")
-            .HasColumnType("varbinary(max)");
+            .HasColumnName("portrait_png");
 
         builder.Property(u => u.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
         builder.Property(u => u.UpdatedAtUtc).HasColumnName("updated_at_utc").IsRequired();

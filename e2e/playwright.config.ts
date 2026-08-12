@@ -5,7 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
  * (http://localhost:5103) and a throwaway SQL database. The flows are stateful and ordered, so tests
  * run serially (workers: 1, fullyParallel: false).
  *
- * Prerequisites (see e2e/README.md): SQL Server up, API running on :5103 against a FRESH CollegaE2E
+ * Prerequisites (see e2e/README.md): PostgreSQL up, API running on :5103 against a FRESH CollegaE2E
  * database (Development env so demo orgs/users are seeded and the Site Admin still requires a first-
  * login password change), and the client running on :5098.
  */
