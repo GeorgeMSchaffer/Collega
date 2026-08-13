@@ -99,6 +99,39 @@ public sealed class EfUserRepository : IUserRepository
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Candidates for the View As picker. The organization restriction is applied in the query, not
+    /// after it, so an Org Admin's result set can never contain a user outside their organization
+    /// (SPEC/20-feature-view-as.md rule 11). Site Admins are excluded here as well as in the service
+    /// — D-SCOPE holds even if a future caller forgets to filter.
+    /// </summary>
+    public async Task<IReadOnlyList<User>> SearchForImpersonationAsync(Guid? organizationId, string? search, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.Users.AsNoTracking()
+            .Where(u => u.OrganizationId != null && u.Role != Role.SiteAdmin);
+
+        if (organizationId is not null)
+        {
+            query = query.Where(u => u.OrganizationId == organizationId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            // lower() on both sides, matching every other search path in this repository — Postgres
+            // compares case-sensitively, so the old SQL Server collation cannot be relied on.
+            var pattern = LikePattern.ContainsCaseInsensitive(search.Trim());
+            const string escape = LikePattern.EscapeCharacter;
+            query = query.Where(u =>
+                EF.Functions.Like(u.FirstName.ToLower(), pattern, escape)
+                || EF.Functions.Like(u.LastName.ToLower(), pattern, escape)
+                || EF.Functions.Like(u.Email.ToLower(), pattern, escape));
+        }
+
+        return await query
+            .OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<int> CountActiveOrgAdminsAsync(Guid organizationId, Guid? excludingUserId = null, CancellationToken cancellationToken = default) =>
         _dbContext.Users.CountAsync(
             u => u.OrganizationId == organizationId

@@ -1,0 +1,204 @@
+@using Collega.Client.Services
+@implements IDisposable
+@inject ApiClient Api
+
+@* Picker for View As (SPEC/20-feature-view-as.md rule 21). Uses the shared DrawerShell so it
+   matches every other detail surface, per the locked comp comp-c-review-10-view-as.html. *@
+
+<DrawerShell IsOpen="IsOpen"
+             OnClose="OnClose"
+             Title="View as another user"
+             Meta="Browse Collega exactly as they see it. A banner stays on screen the whole time; exit in one click.">
+    <ChildContent>
+        <input class="input viewas-search"
+               type="search"
+               placeholder="Search by name or email"
+               aria-label="Search users"
+               value="@_search"
+               @oninput="OnSearchInput" />
+
+        @if (_loading)
+        {
+            <p class="muted">Loading…</p>
+        }
+        else if (_error is not null)
+        {
+            <p class="error" role="alert">@_error</p>
+        }
+        else if (_candidates.Count == 0)
+        {
+            <p class="muted">No users match that search.</p>
+        }
+        else
+        {
+            @* Grouped by organization. For an Org Admin the server returns only their own, so this
+               renders a single group rather than needing a separate code path. *@
+            @foreach (var group in _candidates.GroupBy(c => c.OrganizationName).OrderBy(g => g.Key))
+            {
+                <h3 class="viewas-org">@group.Key</h3>
+                <ul class="viewas-list">
+                    @foreach (var candidate in group.OrderBy(c => c.FirstName).ThenBy(c => c.LastName))
+                    {
+                        <li>
+                            @* Inactive users stay visible but disabled (rule 21) — hiding them would
+                               make an admin think the account is gone rather than deactivated. The
+                               server refuses them regardless of what this button allows. *@
+                            <button type="button"
+                                    class="viewas-item"
+                                    disabled="@(!candidate.Selectable || _starting)"
+                                    title="@(candidate.Selectable ? null : "This account is inactive and cannot be viewed as.")"
+                                    @onclick="() => StartAsync(candidate)">
+                                <span class="viewas-avatar" aria-hidden="true">@Initials(candidate)</span>
+                                <span class="viewas-who">
+                                    <span class="viewas-name">@candidate.FirstName @candidate.LastName</span>
+                                    <span class="viewas-email">@candidate.Email</span>
+                                </span>
+                                <span class="viewas-role">
+                                    @candidate.Role@(candidate.Selectable ? "" : " · inactive")
+                                </span>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    </ChildContent>
+</DrawerShell>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    /// <summary>Raised once a session has started, so the shell can reload identity from the server.</summary>
+    [Parameter] public EventCallback OnStarted { get; set; }
+
+    private List<ViewAsCandidateDto> _candidates = new();
+    private string _search = string.Empty;
+    private bool _loading;
+    private bool _starting;
+    private string? _error;
+
+    // Guards against an earlier, slower search response overwriting a later one.
+    private CancellationTokenSource? _searchCts;
+    private bool _loadedOnce;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen && !_loadedOnce)
+        {
+            _loadedOnce = true;
+            await LoadAsync();
+        }
+        else if (!IsOpen)
+        {
+            // Reset so reopening re-queries rather than showing a stale list — membership and
+            // active status can change between openings.
+            _loadedOnce = false;
+            _search = string.Empty;
+            _error = null;
+        }
+    }
+
+    /// <summary>
+    /// Debounced: without this every keystroke issued its own request, so typing a six-letter name
+    /// ran the candidate query six times. The cancellation below already stopped stale results from
+    /// painting, but it did not stop the requests being sent or the server doing the work.
+    /// </summary>
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        _search = e.Value?.ToString() ?? string.Empty;
+
+        var cts = ResetSearchCts();
+        try
+        {
+            await Task.Delay(SearchDebounce, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            // Superseded by a later keystroke — that one owns the request now.
+            return;
+        }
+
+        await LoadAsync(cts);
+    }
+
+    private static readonly TimeSpan SearchDebounce = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>Cancels and disposes any in-flight search, and installs a fresh token source.</summary>
+    private CancellationTokenSource ResetSearchCts()
+    {
+        var previous = _searchCts;
+        var cts = new CancellationTokenSource();
+        _searchCts = cts;
+
+        previous?.Cancel();
+        previous?.Dispose();
+
+        return cts;
+    }
+
+    private Task LoadAsync() => LoadAsync(ResetSearchCts());
+
+    private async Task LoadAsync(CancellationTokenSource cts)
+    {
+        _loading = true;
+        _error = null;
+
+        var result = await Api.GetViewAsCandidatesAsync(_search, cts.Token);
+
+        // A superseded request must not paint its results over the current ones.
+        if (cts.IsCancellationRequested || !ReferenceEquals(cts, _searchCts))
+        {
+            return;
+        }
+
+        _loading = false;
+        if (result.Succeeded)
+        {
+            _candidates = result.Value ?? new();
+        }
+        else
+        {
+            _error = result.Error ?? "Could not load users.";
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task StartAsync(ViewAsCandidateDto candidate)
+    {
+        if (_starting)
+        {
+            return;
+        }
+
+        _starting = true;
+        _error = null;
+
+        var result = await Api.StartViewAsAsync(candidate.UserId);
+        _starting = false;
+
+        if (!result.Succeeded)
+        {
+            // Surfaced in place rather than closing: the 409 (already viewing as someone) and the
+            // 403 are both things the admin needs to read and act on.
+            _error = result.Error ?? "Could not start viewing as that user.";
+            StateHasChanged();
+            return;
+        }
+
+        await OnStarted.InvokeAsync();
+        await OnClose.InvokeAsync();
+    }
+
+    private static string Initials(ViewAsCandidateDto c) =>
+        $"{(c.FirstName.Length > 0 ? c.FirstName[0] : ' ')}{(c.LastName.Length > 0 ? c.LastName[0] : ' ')}".Trim().ToUpperInvariant();
+
+    /// <summary>Disposes the last token source; the superseded ones are disposed as they are replaced.</summary>
+    public void Dispose()
+    {
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = null;
+    }
+}

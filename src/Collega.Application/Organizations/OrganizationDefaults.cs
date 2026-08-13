@@ -15,11 +15,9 @@ public static class OrganizationDefaults
     public const string DefaultStatusColor = "#64748B";
 
     /// <summary>
-    /// The 5 canonical default statuses in catalog order. Default <c>Color</c>/<c>SortOrder</c>
-    /// values are a spec open item (SPEC/60-spec-q-and-a-backlog.md "Remaining MVP Clarifications");
-    /// these colors match the locked design comps recorded in the implementation tracker
-    /// (New/Pending slate, In Review amber, In Progress blue, Client Review purple, Complete green)
-    /// and are the working default until that item is formally resolved.
+    /// The 5 canonical default statuses in catalog order, with the <c>Color</c>/<c>SortOrder</c>
+    /// values ratified in SPEC/20-feature-boards-and-statuses.md "Status Rules" #4
+    /// (New/Pending slate, In Review amber, In Progress blue, Client Review purple, Complete green).
     /// </summary>
     public static readonly IReadOnlyList<DefaultStatus> Statuses = new[]
     {

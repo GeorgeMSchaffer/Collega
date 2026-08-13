@@ -1,5 +1,7 @@
 using Collega.Application.Abstractions;
 using Collega.Domain.Enums;
+using Collega.Domain.Impersonation;
+using Collega.Domain.Users;
 
 namespace Collega.Application.Auth;
 
@@ -7,14 +9,33 @@ public sealed class TokenAuthenticationService : ITokenAuthenticationService
 {
     private readonly IAccessTokenValidator _tokenValidator;
     private readonly IUserRepository _userRepository;
+    private readonly IOrganizationRepository _organizationRepository;
+    private readonly IImpersonationSessionRepository _impersonationSessions;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IClock _clock;
 
-    public TokenAuthenticationService(IAccessTokenValidator tokenValidator, IUserRepository userRepository, IClock clock)
+    public TokenAuthenticationService(
+        IAccessTokenValidator tokenValidator,
+        IUserRepository userRepository,
+        IOrganizationRepository organizationRepository,
+        IImpersonationSessionRepository impersonationSessions,
+        IUnitOfWork unitOfWork,
+        IClock clock)
     {
         _tokenValidator = tokenValidator;
         _userRepository = userRepository;
+        _organizationRepository = organizationRepository;
+        _impersonationSessions = impersonationSessions;
+        _unitOfWork = unitOfWork;
         _clock = clock;
     }
+
+    /// <summary>
+    /// How stale <see cref="ImpersonationSession.LastSeenAtUtc"/> may get before it is rewritten.
+    /// A quarter of the idle window: small enough that expiry stays accurate to within a few
+    /// minutes, large enough that a burst of parallel requests writes at most once.
+    /// </summary>
+    private static readonly TimeSpan IdleRefreshInterval = TimeSpan.FromTicks(ImpersonationSession.IdleTimeout.Ticks / 4);
 
     public async Task<AuthenticatedPrincipal?> AuthenticateAsync(string token, CancellationToken cancellationToken = default)
     {
@@ -41,7 +62,90 @@ public sealed class TokenAuthenticationService : ITokenAuthenticationService
             return null;
         }
 
-        return new AuthenticatedPrincipal(
-            user.Id, user.OrganizationId, user.Role, user.FirstName, user.LastName, user.Email, user.Status, user.MustChangePassword);
+        // The token always names the real user; impersonation is never carried in it
+        // (SPEC/20-feature-view-as.md rule 1). Resolving the session here — the one place identity
+        // is already established — is what lets every downstream authorization check work unchanged.
+        var impersonated = await ResolveImpersonationAsync(user, cancellationToken);
+        if (impersonated is not null)
+        {
+            return impersonated;
+        }
+
+        return Principal(user);
     }
+
+    private async Task<AuthenticatedPrincipal?> ResolveImpersonationAsync(User realUser, CancellationToken cancellationToken)
+    {
+        var session = await _impersonationSessions.GetOpenForRealUserAsync(realUser.Id, cancellationToken);
+        if (session is null)
+        {
+            return null;
+        }
+
+        var now = _clock.UtcNow;
+
+        // Expiry is decided here, server-side (rule 18). An expired-but-open row is closed with the
+        // reason recorded rather than merely ignored, so the audit trail shows why it ended.
+        if (!session.IsActiveAt(now))
+        {
+            session.End(now, now >= session.AbsoluteExpiresAtUtc
+                ? ImpersonationEndReason.AbsoluteTimeout
+                : ImpersonationEndReason.IdleTimeout);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            return null;
+        }
+
+        var target = await _userRepository.GetByIdAsync(session.TargetUserId, cancellationToken);
+
+        // Rule 12 has two halves, and both have to be checked here. A deactivated target is the
+        // obvious one; an archived organization is the one that is easy to miss, because the target
+        // stays Active — archiving decommissions the organization without touching its users. Acting
+        // inside an archived organization has to stop at the next request, not merely at expiry.
+        var targetOrganization = target?.OrganizationId is null
+            ? null
+            : await _organizationRepository.GetByIdAsync(target.OrganizationId.Value, cancellationToken);
+
+        if (target is null
+            || target.Status != UserStatus.Active
+            || targetOrganization is null
+            || targetOrganization.IsArchived)
+        {
+            session.End(now, ImpersonationEndReason.TargetNoLongerValid);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            return null;
+        }
+
+        // FIX (review): this used to Touch and save on every authenticated request, turning every
+        // GET during a session into a database write and a committed transaction. Idle tracking does
+        // not need per-request precision — refreshing once the recorded time is more than a quarter
+        // of the idle window old keeps the same expiry behaviour while collapsing the writes.
+        if (now - session.LastSeenAtUtc > IdleRefreshInterval)
+        {
+            session.Touch(now);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        // Every identity field is the target's: this is what makes org-scoping and role checks
+        // downstream apply to the impersonated user with no per-service special-casing (rule 4).
+        // MustChangePassword is deliberately the real user's own — an admin acting as someone must
+        // not inherit that user's rotation gate, and cannot have their own suppressed by it.
+        return new AuthenticatedPrincipal(
+            target.Id,
+            target.OrganizationId,
+            target.Role,
+            target.FirstName,
+            target.LastName,
+            target.Email,
+            target.Status,
+            realUser.MustChangePassword,
+            new ImpersonationContext(
+                realUser.Id,
+                realUser.FirstName,
+                realUser.LastName,
+                session.StartedAtUtc,
+                session.AbsoluteExpiresAtUtc));
+    }
+
+    private static AuthenticatedPrincipal Principal(User user) => new(
+        user.Id, user.OrganizationId, user.Role, user.FirstName, user.LastName, user.Email, user.Status, user.MustChangePassword);
 }

@@ -1,4 +1,5 @@
 using Collega.Domain.Auditing;
+using Collega.Domain.Impersonation;
 using Collega.Domain.Boards;
 using Collega.Domain.Comments;
 using Collega.Domain.Fields;
@@ -28,6 +29,8 @@ public sealed class CollegaDbContext : DbContext
     }
 
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+
+    public DbSet<ImpersonationSession> ImpersonationSessions => Set<ImpersonationSession>();
 
     public DbSet<Organization> Organizations => Set<Organization>();
 

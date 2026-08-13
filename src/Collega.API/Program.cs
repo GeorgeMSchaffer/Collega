@@ -5,6 +5,7 @@ using Collega.API.Startup;
 using Collega.API.Validation;
 using Collega.Application.Abstractions;
 using Collega.Application.Auth;
+using Collega.Application.Impersonation;
 using Collega.Application.Boards;
 using Collega.Application.Collaboration;
 using Collega.Application.Comments;
@@ -59,6 +60,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddSingleton<IClock, Collega.Application.Abstractions.SystemClock>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IViewAsService, ViewAsService>();
 builder.Services.AddScoped<ITokenAuthenticationService, TokenAuthenticationService>();
 builder.Services.AddScoped<IOrganizationBootstrapService, OrganizationBootstrapService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();

@@ -12,7 +12,17 @@ Organizations can manage idea boards using configurable status swimlanes.
    - In Progress
    - Client Review
    - Complete
-4. The default statuses are provisioned automatically when a new organization is created. Default `Color` and `SortOrder` values for these 5 statuses are not yet chosen — open item, see `SPEC/60-spec-q-and-a-backlog.md`.
+4. The default statuses are provisioned automatically when a new organization is created, with these canonical `Color` and `SortOrder` values:
+
+   | Status | `Color` | `SortOrder` |
+   |---|---|---|
+   | New / Pending | `#64748B` (slate) | 10 |
+   | In Review | `#D97706` (amber) | 20 |
+   | In Progress | `#2563EB` (blue) | 30 |
+   | Client Review | `#7C3AED` (purple) | 40 |
+   | Complete | `#16A34A` (green) | 50 |
+
+   `#64748B` is also the fallback `Color` applied to a custom status created without an explicit color (rule #9). These values are provisioned once at organization creation; an Org Admin may change them afterward like any other status.
 5. Status deletion is soft-delete only so existing board and idea references remain valid.
 6. A status that is currently referenced as a swimlane on any active board cannot be soft-deleted; the delete must be rejected with an appropriate error until the swimlane reference is removed.
 7. An organization must retain at least 2 active statuses at all times — matching a board's own 2-swimlane minimum, not the 1-active-option minimum used for Idea Type/Business Impact. Deleting a status that would drop the organization below 2 active statuses is rejected, independent of whether that status is currently referenced as a swimlane on any board. This prevents an organization from being left unable to create a new board.

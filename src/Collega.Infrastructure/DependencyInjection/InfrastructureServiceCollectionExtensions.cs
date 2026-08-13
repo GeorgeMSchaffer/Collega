@@ -27,6 +27,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<INotificationEventWriter, EfNotificationEventWriter>();
 
         services.AddScoped<IUserRepository, EfUserRepository>();
+        services.AddScoped<IImpersonationSessionRepository, EfImpersonationSessionRepository>();
         services.AddScoped<IOrganizationRepository, EfOrganizationRepository>();
         services.AddScoped<IStatusRepository, EfStatusRepository>();
         services.AddScoped<IIdeaTypeRepository, EfIdeaTypeRepository>();
@@ -43,7 +44,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IInviteCodeGenerator, InviteCodeGenerator>();
-        services.AddSingleton<IImageProcessor, SkiaSharpImageProcessor>();
+        services.AddSingleton<IImageProcessor, ImageSharpImageProcessor>();
 
         services.AddSingleton(sp =>
         {

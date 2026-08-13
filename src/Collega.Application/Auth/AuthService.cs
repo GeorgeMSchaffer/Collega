@@ -135,7 +135,7 @@ public sealed class AuthService : IAuthService
             throw new ValidationAppException("portrait", new[] { "Choose an image file to upload." });
         }
 
-        // Security boundary: the bytes are decoded through a real image codec (SkiaSharp). Content
+        // Security boundary: the bytes are decoded through a real image codec (ImageSharp). Content
         // that isn't a genuine GIF/JPEG/PNG — including a disguised text/executable payload with an
         // image name or MIME type — comes back null and is rejected here, never persisted.
         var thumbnail = _imageProcessor.TryCreatePngThumbnail(imageBytes, PortraitMaxDimension);

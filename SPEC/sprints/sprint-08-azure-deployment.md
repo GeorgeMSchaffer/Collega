@@ -26,9 +26,33 @@ Stand up Collega's three tiers on Azure per `SPEC/50-azure-deployment.md` (Stati
 | P0 | Provision the three tiers | Resource group, **Azure Database for PostgreSQL Flexible Server (Burstable B1ms)**, App Service (Linux .NET 8), Static Web Apps (Free) — `SPEC/50-azure-deployment.md` §4–6 |
 | P0 | App Service configuration | Required settings (`ConnectionStrings__DefaultConnection` in Npgsql format, `SiteAdmin__Email/Password`) + recommended (`ASPNETCORE_ENVIRONMENT=Production`, `Cors__AllowedOrigins__0`, `Auth__TokenSigningKey`) — §3 |
 | P0 | First deploy + boot verification | API connects to Postgres, runs migrations, seeds Site Admin; frontend loads and calls the API without CORS errors — §5–7 |
-| P0 | CI/CD pipeline wiring | `AZURE_WEBAPP_PUBLISH_PROFILE` secret + `AZURE_WEBAPP_NAME` variable; confirm push-to-`main` deploys — `SPEC/50-azure-api-cicd.md` |
-| P1 | Post-deploy checklist pass | Every box in `SPEC/50-azure-deployment.md` §7 verified live (sign-in, forced password change, token stability across restart) |
+| P0 | CI/CD pipeline wiring — **API** | `AZURE_WEBAPP_PUBLISH_PROFILE` secret + `AZURE_WEBAPP_NAME` variable; confirm push-to-`main` deploys — `SPEC/50-azure-api-cicd.md` |
+| P0 | CI/CD pipeline wiring — **client** | `.github/workflows/deploy-client.yml` (drafted 2026-08-13, never yet run) needs the `AZURE_STATIC_WEB_APPS_API_TOKEN` secret. **Create the SWA without `--source`** or Azure generates a competing workflow — `SPEC/50-azure-deployment.md` §6.2 |
+| ✅ | ~~Make portrait upload work on Linux App Service~~ | **Resolved 2026-08-13 before the sprint started** — imaging swapped to ImageSharp. See "Image processing on Linux" below. |
+| P1 | Post-deploy checklist pass | Every box in `SPEC/50-azure-deployment.md` §7 verified live (sign-in, forced password change, token stability across restart) — **include a portrait upload**, which the existing checklist does not cover |
 | P2 | Hardening follow-ups (as time allows) | Key Vault for secrets, Private Access (VNet) for the DB, least-privilege DB role — `SPEC/50-azure-deployment.md` §8; can be deferred to a post-MVP hardening pass if scope-constrained |
+
+## Image processing on Linux — resolved 2026-08-13
+Raised while walking the deployment guide: `SkiaSharp 2.88.8` ships native binaries for Windows and
+macOS only, so the API booted fine (the processor is a lazily-used singleton) and then threw
+`DllNotFoundException: libSkiaSharp` on the first avatar upload. No test could catch it — the whole
+suite runs on hosts where that package *does* carry natives.
+
+**Outcome: swapped to `SixLabors.ImageSharp`, pinned 3.1.12** (user decision, package approved
+2026-08-13). Adding `SkiaSharp.NativeAssets.Linux.NoDependencies` would also have fixed the
+immediate break at lower cost, but ImageSharp is **fully managed and ships no native assets at
+all**, which removes the failure mode rather than re-plumbing it — no per-platform binary can go
+missing on a future target (ARM, Alpine, containers). Deploying on Windows App Service instead was
+rejected as sidestepping rather than fixing.
+
+`IImageProcessor` was unchanged, so the swap touched one implementation file, its tests, the DI
+registration, and the `.csproj`. GIF fixtures no longer need a hand-written literal (ImageSharp has
+a GIF *encoder*, which Skia lacked), so the resize theory now covers all three accepted formats.
+
+**Stay on the 3.1.x line.** ImageSharp 4.x requires a Six Labors license key and emits a build
+warning on every compile without one; 3.1.x uses the Split License, free for OSS/personal use and
+organizations under the revenue threshold. Re-verify the terms before any commercial release.
+Recorded in `SPEC/implementation-agent-tracker.md`'s locked-decisions block.
 
 ## Risks
 | Risk | Impact | Mitigation |
@@ -37,6 +61,7 @@ Stand up Collega's three tiers on Azure per `SPEC/50-azure-deployment.md` (Stati
 | `Auth__TokenSigningKey` left unset | Every App Service restart/scale logs all users out | It's on the §3 recommended list and the §7 checklist — verify token survives a restart |
 | CORS origin not set after SWA host is known | Frontend can't call the API at all | §6.3 closes the CORS loop explicitly; the checklist confirms 200s in the network tab |
 | Postgres Flexible Server has no auto-pause (unlike Azure SQL) | Unexpected always-on compute cost | Documented in the guide (§1/§9); stop the server when idle on dev |
+| A native-asset gap ships undetected | Any imaging/native dependency can 500 in production while every test stays green, because the suite runs on developer platforms — this is exactly how the SkiaSharp Linux gap survived to deployment | Closed at the root by moving to a fully managed imaging library (above); **still add a portrait upload to the §7 post-deploy checklist** — it is the only check that exercises the path on the real host |
 
 ## Definition of Done
 - [ ] Sprint 5 fully complete and verified (this sprint's precondition) before any task started
@@ -44,5 +69,6 @@ Stand up Collega's three tiers on Azure per `SPEC/50-azure-deployment.md` (Stati
 - [ ] API deployed, boots against Azure Database for PostgreSQL, migrations applied, Site Admin seeded
 - [ ] Frontend deployed on Static Web Apps and successfully calling the API (no CORS failures)
 - [ ] `.github/workflows/deploy-api.yml` deploys on push to `main` with secrets/variables configured
+- [ ] `.github/workflows/deploy-client.yml` deploys on push to `main` with its token secret configured, and a deep link (e.g. `/boards/<id>`) loads on refresh — proving `staticwebapp.config.json`'s fallback is live
 - [ ] `SPEC/50-azure-deployment.md` §7 post-deploy checklist fully passed against the live environment
 - [ ] Code Reviewer approved any committed config/workflow changes before merge

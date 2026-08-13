@@ -1,7 +1,7 @@
 namespace Collega.Application.Abstractions;
 
 /// <summary>
-/// Decodes and re-encodes user-supplied image uploads. Implemented in Infrastructure (SkiaSharp) so
+/// Decodes and re-encodes user-supplied image uploads. Implemented in Infrastructure (ImageSharp) so
 /// the Application layer stays free of any imaging dependency. The contract is deliberately
 /// content-first: the implementation must decode the raw bytes through a real image codec and reject
 /// anything that isn't a genuine raster image, rather than trusting a file extension or declared

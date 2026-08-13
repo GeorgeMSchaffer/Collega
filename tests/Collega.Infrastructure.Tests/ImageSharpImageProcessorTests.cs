@@ -1,23 +1,28 @@
 using System.Text;
 using Collega.Infrastructure.Imaging;
-using SkiaSharp;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Gif;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace Collega.Infrastructure.Tests;
 
 /// <summary>
 /// Content-validation + resize behavior for the profile-portrait pipeline. These run against the
-/// real SkiaSharp codec (no DB, no network — hermetic) because the whole point of the feature is
+/// real ImageSharp codec (no DB, no network — hermetic) because the whole point of the feature is
 /// that validity is decided by decoding actual bytes, which a fake could not prove.
 /// </summary>
-public sealed class SkiaSharpImageProcessorTests
+public sealed class ImageSharpImageProcessorTests
 {
-    private readonly SkiaSharpImageProcessor _sut = new();
+    private readonly ImageSharpImageProcessor _sut = new();
 
     /// <summary>
-    /// A real 1x1 GIF89a. Skia ships no GIF *encoder* — only a decoder — so a GIF fixture cannot be
-    /// produced by <see cref="EncodeImage"/> and has to be a literal. Kept minimal on purpose: its job
-    /// is to prove GIF input decodes and is accepted, not to exercise the resize math (PNG/JPEG cover
-    /// that).
+    /// A real 1x1 GIF89a. ImageSharp can encode GIF, so unlike the SkiaSharp implementation this
+    /// fixture is no longer strictly required — it is kept because bytes written by hand exercise the
+    /// decoder independently, where a round trip through <see cref="EncodeImage"/> could mask a bug
+    /// symmetrical across the same library's encoder and decoder.
     /// </summary>
     private static readonly byte[] OnePixelGif =
     {
@@ -30,36 +35,50 @@ public sealed class SkiaSharpImageProcessorTests
         0x3B,                                           // trailer
     };
 
-    private static byte[] EncodeImage(int width, int height, SKEncodedImageFormat format)
+    private static byte[] EncodeImage(int width, int height, string format)
     {
-        using var bitmap = new SKBitmap(width, height);
-        using (var canvas = new SKCanvas(bitmap))
+        using var image = new Image<Rgba32>(width, height);
+        image.Mutate(x => x.BackgroundColor(Color.CornflowerBlue));
+
+        using var buffer = new MemoryStream();
+        switch (format)
         {
-            canvas.Clear(SKColors.CornflowerBlue);
+            case "png":
+                image.Save(buffer, new PngEncoder());
+                break;
+            case "jpeg":
+                image.Save(buffer, new JpegEncoder());
+                break;
+            case "gif":
+                image.Save(buffer, new GifEncoder());
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(format), format, "Unhandled fixture format.");
         }
 
-        using var image = SKImage.FromBitmap(bitmap);
-        using var data = image.Encode(format, 100);
+        return buffer.ToArray();
+    }
 
-        // Skia returns null rather than throwing for a format it cannot encode (GIF, notably). Fail
-        // with the format named instead of letting a NullReferenceException surface from ToArray().
-        Assert.NotNull(data);
-        return data!.ToArray();
+    private static void AssertIsPng(byte[] bytes)
+    {
+        using var buffer = new MemoryStream(bytes);
+        var info = Image.Identify(buffer);
+        Assert.IsType<PngFormat>(info.Metadata.DecodedImageFormat);
     }
 
     [Theory]
-    [InlineData(SKEncodedImageFormat.Png)]
-    [InlineData(SKEncodedImageFormat.Jpeg)]
-    public void TryCreatePngThumbnail_WithLargeSupportedImage_ResizesToFitMaxDimension(SKEncodedImageFormat format)
+    [InlineData("png")]
+    [InlineData("jpeg")]
+    [InlineData("gif")]
+    public void TryCreatePngThumbnail_WithLargeSupportedImage_ResizesToFitMaxDimension(string format)
     {
         var input = EncodeImage(200, 120, format);
 
         var result = _sut.TryCreatePngThumbnail(input, 25);
 
         Assert.NotNull(result);
-        using var decoded = SKBitmap.Decode(result);
-        Assert.NotNull(decoded);
-        Assert.True(decoded!.Width <= 25, $"width was {decoded.Width}");
+        using var decoded = Image.Load(result!);
+        Assert.True(decoded.Width <= 25, $"width was {decoded.Width}");
         Assert.True(decoded.Height <= 25, $"height was {decoded.Height}");
         // Aspect ratio (200x120) preserved: the long side hits the 25px cap.
         Assert.Equal(25, decoded.Width);
@@ -74,33 +93,43 @@ public sealed class SkiaSharpImageProcessorTests
         var result = _sut.TryCreatePngThumbnail(OnePixelGif, 25);
 
         Assert.NotNull(result);
-        using var codec = SKCodec.Create(new MemoryStream(result!));
-        Assert.Equal(SKEncodedImageFormat.Png, codec.EncodedFormat);
+        AssertIsPng(result!);
     }
 
     [Fact]
     public void TryCreatePngThumbnail_AlwaysReEncodesAsPng()
     {
-        var jpeg = EncodeImage(40, 40, SKEncodedImageFormat.Jpeg);
+        var jpeg = EncodeImage(40, 40, "jpeg");
 
         var result = _sut.TryCreatePngThumbnail(jpeg, 25);
 
         Assert.NotNull(result);
-        using var codec = SKCodec.Create(new MemoryStream(result!));
-        Assert.Equal(SKEncodedImageFormat.Png, codec.EncodedFormat);
+        AssertIsPng(result!);
     }
 
     [Fact]
     public void TryCreatePngThumbnail_DoesNotUpscaleSmallImage()
     {
-        var input = EncodeImage(10, 8, SKEncodedImageFormat.Png);
+        var input = EncodeImage(10, 8, "png");
 
         var result = _sut.TryCreatePngThumbnail(input, 25);
 
         Assert.NotNull(result);
-        using var decoded = SKBitmap.Decode(result);
-        Assert.Equal(10, decoded!.Width);
+        using var decoded = Image.Load(result!);
+        Assert.Equal(10, decoded.Width);
         Assert.Equal(8, decoded.Height);
+    }
+
+    [Fact]
+    public void TryCreatePngThumbnail_WithUnsupportedButValidImageFormat_IsRejected()
+    {
+        // A genuinely decodable image in a format outside the GIF/JPEG/PNG allowlist must still be
+        // refused — the allowlist is a policy boundary, not just a decode check.
+        using var image = new Image<Rgba32>(20, 20);
+        using var buffer = new MemoryStream();
+        image.Save(buffer, new SixLabors.ImageSharp.Formats.Bmp.BmpEncoder());
+
+        Assert.Null(_sut.TryCreatePngThumbnail(buffer.ToArray(), 25));
     }
 
     [Fact]

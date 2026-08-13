@@ -19,7 +19,19 @@ public sealed record CurrentUserSummary(
     string LastName,
     string Email,
     string Status,
-    string? PortraitDataUrl = null);
+    string? PortraitDataUrl = null,
+    ViewingAsSummary? ViewingAs = null);
+
+/// <summary>
+/// Present on <c>GET /auth/me</c> only while a View As session is live. The client renders the
+/// persistent banner from this rather than from remembered local state, so a session ended or
+/// expired server-side cannot leave a stale banner on screen (SPEC/30-Contracts.md → View As).
+/// </summary>
+public sealed record ViewingAsSummary(
+    Guid RealUserId,
+    string RealUserName,
+    DateTime StartedAtUtc,
+    DateTime ExpiresAtUtc);
 
 /// <summary>Shape matches the `POST /api/v1/auth/login` success response.</summary>
 public sealed record LoginResult(
@@ -44,6 +56,12 @@ public sealed record TemporaryPasswordResult(string TemporaryPassword, bool Must
 /// restriction on the next request. The API refuses all but a small allowlist of endpoints while
 /// this is true (auth requirement #31); the client's own gate is a UX convenience on top of it.
 /// </param>
+/// <summary>
+/// The identity a request acts under. While a View As session is active, every field here describes
+/// the <b>impersonated</b> user — that is what makes existing org-scoping and role checks apply
+/// unchanged (SPEC/20-feature-view-as.md rule 4) — and <see cref="Impersonation"/> carries the real
+/// administrator alongside, for audit and for the banner.
+/// </summary>
 public sealed record AuthenticatedPrincipal(
     Guid UserId,
     Guid? OrganizationId,
@@ -52,4 +70,13 @@ public sealed record AuthenticatedPrincipal(
     string LastName,
     string Email,
     UserStatus Status,
-    bool MustChangePassword);
+    bool MustChangePassword,
+    ImpersonationContext? Impersonation = null);
+
+/// <summary>The real administrator behind an active View As session, and when it must end.</summary>
+public sealed record ImpersonationContext(
+    Guid RealUserId,
+    string RealUserFirstName,
+    string RealUserLastName,
+    DateTime StartedAtUtc,
+    DateTime ExpiresAtUtc);

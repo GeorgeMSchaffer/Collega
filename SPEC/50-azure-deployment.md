@@ -208,11 +208,11 @@ az webapp log tail --name $API_APP --resource-group $RG
 The WASM client reads its API base URL **at runtime** from a static file in `wwwroot`, so you
 point it at the deployed API by adding a Production settings file — no rebuild logic required.
 
-### 6.1 Add the production API URL
+### 6.1 Set the production API URL
 
-Create `src/Collega.Client/wwwroot/appsettings.Production.json` (the WASM host loads
-`appsettings.json` then `appsettings.{Environment}.json`, and a published app runs as
-`Production`):
+`src/Collega.Client/wwwroot/appsettings.Production.json` **already exists in the repo** with a
+placeholder host — edit it, don't create it. (The WASM host loads `appsettings.json` then
+`appsettings.{Environment}.json`, and a published app runs as `Production`.)
 
 ```json
 {
@@ -226,28 +226,49 @@ Create `src/Collega.Client/wwwroot/appsettings.Production.json` (the WASM host l
 }
 ```
 
-Replace `<API_APP>` with the real API host. Commit this file.
+Replace the placeholder `BaseUrl` with the real API host and commit. Leaving it unedited ships a
+frontend that calls a nonexistent host over plain HTTP — every request fails on mixed content.
 
-### 6.2 Create the Static Web App (GitHub-connected)
+### 6.1a SPA routing fallback (already in the repo)
 
-Static Web Apps Free builds and deploys from a GitHub Actions workflow it generates in your
-repo. Run this against the repo/branch that holds the code:
+`src/Collega.Client/wwwroot/staticwebapp.config.json` gives Static Web Apps a navigation fallback
+to `/index.html`. Blazor WASM routes on the client, so **without it every deep link and every
+browser refresh returns 404** — Blazor's publish does not generate this file. It needs no editing;
+it is listed here so it is not mistaken for stray config and deleted.
+
+### 6.2 Create the Static Web App
+
+The repo already has a hand-written deploy workflow — `.github/workflows/deploy-client.yml` —
+so create the SWA **without** `--source`. Passing `--source`/`--login-with-github` makes Azure
+generate its *own* workflow, and you would end up with two pipelines deploying the same app:
 
 ```bash
 az staticwebapp create \
-  --name $SWA_NAME --resource-group $RG --location $LOC \
-  --sku Free \
-  --source https://github.com/<you>/<repo> --branch main \
-  --app-location "src/Collega.Client" \
-  --output-location "wwwroot" \
-  --login-with-github
+  --name $SWA_NAME --resource-group $RG --location $LOC --sku Free
 ```
 
-This commits a workflow under `.github/workflows/` that builds the Blazor WASM project and
-publishes `wwwroot`. Subsequent pushes to `main` redeploy automatically.
+Then publish the deployment token as a repo **secret** so the workflow can authenticate
+(**Settings → Secrets and variables → Actions → New repository secret**):
 
-> **CLI-only alternative (no GitHub):** create the SWA without `--source`, then deploy the
-> published output with the SWA CLI:
+```bash
+az staticwebapp secrets list --name $SWA_NAME --resource-group $RG \
+  --query properties.apiKey -o tsv
+```
+
+| Secret name | Value |
+|---|---|
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | the `apiKey` printed above |
+
+That is the only secret the frontend pipeline needs — the API host is runtime config
+(§6.1), not a build input. Pushes to `main` that touch `src/Collega.Client/**` now deploy
+automatically; you can also trigger a run by hand from the **Actions** tab.
+
+> **Why the workflow builds the app itself.** It runs `dotnet publish` and hands Static Web Apps
+> the finished output (`skip_app_build: true`). The alternative — letting SWA's Oryx builder
+> compile the project — uses an SDK Oryx chooses, which does not honour `global.json`'s `8.0.118`
+> pin. Building in the workflow keeps CI and local builds on the same SDK.
+
+> **First deploy, or no GitHub:** you can push the same output straight from a workstation:
 > ```bash
 > dotnet publish src/Collega.Client/Collega.Client.csproj -c Release -o ./client-publish
 > npx @azure/static-web-apps-cli deploy ./client-publish/wwwroot \

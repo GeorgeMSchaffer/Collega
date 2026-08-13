@@ -17,7 +17,7 @@ internal sealed class TestClock : IClock
 
 /// <summary>
 /// Deterministic <see cref="IImageProcessor"/>. Real decode/resize is exercised in
-/// Collega.Infrastructure.Tests against SkiaSharp; here we only need to steer the Application-layer
+/// Collega.Infrastructure.Tests against ImageSharp; here we only need to steer the Application-layer
 /// branch: any non-empty input is treated as a valid image (returns a fixed 3-byte "thumbnail")
 /// unless <see cref="RejectAll"/> is set, which simulates content that failed the codec check.
 /// </summary>
@@ -48,6 +48,14 @@ internal sealed class FakeCurrentUserContext : ICurrentUserContext
     public Guid? UserId { get; set; }
     public Guid? OrganizationId { get; set; }
     public Role? Role { get; set; }
+
+    /// <summary>Set this to simulate an active View As session; leave null for an ordinary caller.</summary>
+    public Guid? ImpersonatingRealUserId { get; set; }
+
+    public bool IsImpersonating => ImpersonatingRealUserId is not null;
+
+    /// <summary>Mirrors the production adapter: falls back to <see cref="UserId"/> when not impersonating.</summary>
+    public Guid? RealUserId => ImpersonatingRealUserId ?? UserId;
 
     public static FakeCurrentUserContext Anonymous() => new();
 
