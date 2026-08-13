@@ -60,8 +60,15 @@
         @if (_menuOpen)
         {
             <div class="avatarmenu" role="menu">
-                <div class="who"><strong>@DisplayName</strong>@AccountSubtitle</div>
+                <div class="who"><strong>@EffectiveName</strong>@AccountSubtitle</div>
                 <a class="item" role="menuitem" href="/settings/profile" @onclick="CloseMenu">Profile</a>
+                @* D-PLACE: the rail avatar-menu is one of the two entry points; the other is the
+                   page-header control. Both exist for discoverability, since this is the Site
+                   Admin's only path to creating org content. *@
+                @if (ShowViewAs)
+                {
+                    <button class="item" role="menuitem" type="button" @onclick="OpenViewAs">View as…</button>
+                }
                 <button class="item" role="menuitem" type="button" @onclick="SignOut">Sign Out</button>
             </div>
         }
@@ -82,9 +89,32 @@
 
     private bool _menuOpen;
 
+    /// <summary>Whether to offer the View As entry point. Presentation only — the endpoint enforces.</summary>
+    [Parameter] public bool ShowViewAs { get; set; }
+
+    /// <summary>
+    /// The impersonated user's name while a session is live. When set, the rail shows them rather
+    /// than the real administrator, so the admin sees what the target sees (rule 23).
+    /// </summary>
+    [Parameter] public string? ViewAsName { get; set; }
+
+    [Parameter] public EventCallback OnOpenViewAs { get; set; }
+
+    private async Task OpenViewAs()
+    {
+        CloseMenu();
+        await OnOpenViewAs.InvokeAsync();
+    }
+
     private bool HasPortrait => !string.IsNullOrEmpty(_portrait);
 
-    private string Initials => BuildInitials(DisplayName);
+    /// <summary>
+    /// Rule 23: while acting as someone the rail shows the impersonated user, so an admin is never
+    /// looking at their own identity while operating as someone else's.
+    /// </summary>
+    private string EffectiveName => string.IsNullOrWhiteSpace(ViewAsName) ? DisplayName : ViewAsName!;
+
+    private string Initials => BuildInitials(EffectiveName);
 
     private readonly RailItem[] _items =
     {

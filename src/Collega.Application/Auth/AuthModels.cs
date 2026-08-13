@@ -19,7 +19,19 @@ public sealed record CurrentUserSummary(
     string LastName,
     string Email,
     string Status,
-    string? PortraitDataUrl = null);
+    string? PortraitDataUrl = null,
+    ViewingAsSummary? ViewingAs = null);
+
+/// <summary>
+/// Present on <c>GET /auth/me</c> only while a View As session is live. The client renders the
+/// persistent banner from this rather than from remembered local state, so a session ended or
+/// expired server-side cannot leave a stale banner on screen (SPEC/30-Contracts.md → View As).
+/// </summary>
+public sealed record ViewingAsSummary(
+    Guid RealUserId,
+    string RealUserName,
+    DateTime StartedAtUtc,
+    DateTime ExpiresAtUtc);
 
 /// <summary>Shape matches the `POST /api/v1/auth/login` success response.</summary>
 public sealed record LoginResult(

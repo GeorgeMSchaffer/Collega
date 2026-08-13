@@ -90,6 +90,28 @@ public sealed partial class ApiClient
     public Task<ApiResult<List<OrganizationMemberDto>>> GetAssignableMembersAsync(string organizationId, CancellationToken ct = default) =>
         GetAsync<List<OrganizationMemberDto>>($"{BasePath}/organizations/{organizationId}/members", ct);
 
+    // ---- View As (SPEC/20-feature-view-as.md) ----
+
+    /// <summary>Users the caller may act as. The server has already applied the authorization
+    /// matrix, so the client never reproduces those rules.</summary>
+    public Task<ApiResult<List<ViewAsCandidateDto>>> GetViewAsCandidatesAsync(string? search = null, CancellationToken ct = default) =>
+        GetAsync<List<ViewAsCandidateDto>>(
+            $"{BasePath}/auth/view-as/candidates{(string.IsNullOrWhiteSpace(search) ? "" : $"?search={Uri.EscapeDataString(search)}")}", ct);
+
+    public Task<ApiResult<StartViewAsResponseDto>> StartViewAsAsync(string targetUserId, CancellationToken ct = default) =>
+        SendJsonAsync<StartViewAsResponseDto>(HttpMethod.Post, $"{BasePath}/auth/view-as", new { targetUserId }, ct);
+
+    /// <summary>
+    /// Idempotent by contract — succeeds whether or not a session was active, so a client that has
+    /// lost track of state can always return to acting as itself. Returns 204, hence the object
+    /// payload type: there is no body to deserialize.
+    /// </summary>
+    public async Task<ApiResult<object>> EndViewAsAsync(CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"{BasePath}/auth/view-as");
+        return await SendAsync<object>(request, ct);
+    }
+
     public async Task<ApiResult<List<UserListItemDto>>> GetAllOrganizationUsersAsync(string organizationId, CancellationToken ct = default)
     {
         var items = new List<UserListItemDto>();

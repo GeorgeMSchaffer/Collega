@@ -1,15 +1,22 @@
 @inherits LayoutComponentBase
 @implements IDisposable
+@using Collega.Client.Services
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthState
+@inject ApiClient Api
 
 @* Comp C application shell: 64px icon rail + page content. *@
 <div class="shell">
-    <NavRail />
+    <NavRail ViewAsName="@ActingAsName" OnOpenViewAs="OpenViewAs" ShowViewAs="_canViewAs" />
     <div class="shell-main">
+        @* Above the page content and outside it, so it cannot be scrolled away or covered by a
+           page that manages its own layout (rule 22). *@
+        <ViewAsBanner ViewingAs="_me?.ViewingAs" ActingAsName="@ActingAsName" OnExited="ReloadIdentityAsync" />
         @Body
     </div>
 </div>
+
+<ViewAsDrawer IsOpen="_viewAsOpen" OnClose="() => _viewAsOpen = false" OnStarted="ReloadIdentityAsync" />
 
 @code {
     // Global forced-password-change gate: any authenticated session flagged mustChangePassword is
@@ -17,7 +24,11 @@
     // Backs up the post-login redirect for the case where such a user navigates to an app page directly.
     protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
 
-    protected override Task OnInitializedAsync() => EnforcePasswordChangeGateAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        await EnforcePasswordChangeGateAsync();
+        await ReloadIdentityAsync();
+    }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e) =>
         _ = InvokeAsync(EnforcePasswordChangeGateAsync);
@@ -35,6 +46,38 @@
         {
             Nav.NavigateTo("/change-password", replace: true);
         }
+    }
+
+    // ---- View As ----
+
+    private UserSummaryDto? _me;
+    private bool _viewAsOpen;
+    private bool _canViewAs;
+
+    private string ActingAsName => _me is null ? string.Empty : $"{_me.FirstName} {_me.LastName}".Trim();
+
+    private void OpenViewAs() => _viewAsOpen = true;
+
+    /// <summary>
+    /// Re-reads identity from the server after starting or exiting a session. Everything the shell
+    /// renders — banner, rail avatar, whether the control is offered — comes from this one call, so
+    /// the client never has to reason about impersonation state it holds locally.
+    /// </summary>
+    private async Task ReloadIdentityAsync()
+    {
+        var result = await Api.GetCurrentUserAsync();
+        if (result.Succeeded)
+        {
+            _me = result.Value;
+
+            // Offered only to roles that may impersonate. This is presentation, not enforcement —
+            // the endpoint refuses everyone else regardless (rule 8/9).
+            _canViewAs = _me is not null
+                && _me.ViewingAs is null
+                && (_me.Role == "SiteAdmin" || _me.Role == "OrgAdmin");
+        }
+
+        StateHasChanged();
     }
 
     public void Dispose() => Nav.LocationChanged -= OnLocationChanged;

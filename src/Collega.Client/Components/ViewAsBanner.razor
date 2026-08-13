@@ -1,0 +1,50 @@
+@using Collega.Client.Services
+@inject ApiClient Api
+
+@* Persistent, non-dismissable while acting as someone (SPEC/20-feature-view-as.md rule 22).
+   Rendered from server state supplied by GET /auth/me, never from remembered client state — a
+   session ended or expired server-side must not leave a stale banner on screen. *@
+
+@if (ViewingAs is not null)
+{
+    <div class="viewas-banner" role="status" aria-live="polite">
+        <span class="viewas-banner-text">
+            <strong>Viewing as @ActingAsName</strong>
+            — you're seeing exactly what they see. Anything you do is recorded as
+            @ViewingAs.RealUserName acting as them.
+        </span>
+        <button type="button" class="btn btn-ghost viewas-exit" disabled="@_exiting" @onclick="ExitAsync">
+            @(_exiting ? "Exiting…" : "Exit view-as")
+        </button>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public ViewingAsDto? ViewingAs { get; set; }
+
+    /// <summary>The impersonated user's name, for the banner's first clause.</summary>
+    [Parameter] public string ActingAsName { get; set; } = string.Empty;
+
+    /// <summary>Raised after exiting, so the shell reloads identity from the server.</summary>
+    [Parameter] public EventCallback OnExited { get; set; }
+
+    private bool _exiting;
+
+    private async Task ExitAsync()
+    {
+        if (_exiting)
+        {
+            return;
+        }
+
+        _exiting = true;
+
+        // Idempotent by contract, so a failure here is a transport problem rather than a state
+        // problem. Reload regardless: the server is authoritative about whether the session is over,
+        // and leaving the banner up on a transient error would be worse than re-asking.
+        await Api.EndViewAsAsync();
+
+        _exiting = false;
+        await OnExited.InvokeAsync();
+    }
+}

@@ -26,7 +26,33 @@ public sealed record UserSummaryDto(
     string LastName,
     string Email,
     string Status,
-    string? PortraitDataUrl = null);
+    string? PortraitDataUrl = null,
+    ViewingAsDto? ViewingAs = null);
+
+/// <summary>
+/// Present on `GET /auth/me` only while a View As session is live. The banner is rendered from this
+/// server-supplied value rather than from remembered client state, so a session that expired or was
+/// ended elsewhere cannot leave a stale banner on screen.
+/// </summary>
+public sealed record ViewingAsDto(
+    string RealUserId,
+    string RealUserName,
+    DateTime StartedAtUtc,
+    DateTime ExpiresAtUtc);
+
+/// <summary>A row in the View As picker (`GET /auth/view-as/candidates`).</summary>
+public sealed record ViewAsCandidateDto(
+    string UserId,
+    string FirstName,
+    string LastName,
+    string Email,
+    string Role,
+    string Status,
+    string OrganizationId,
+    string OrganizationName,
+    bool Selectable);
+
+public sealed record StartViewAsResponseDto(string TargetUserId, DateTime StartedAtUtc, DateTime ExpiresAtUtc);
 
 /// <summary>Request body for `PUT /api/v1/auth/me/portrait` — Base64 of the raw chosen image file.</summary>
 public sealed record UpdatePortraitRequestDto(string ImageBase64);

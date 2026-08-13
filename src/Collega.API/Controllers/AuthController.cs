@@ -44,8 +44,11 @@ public sealed class AuthController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Me(CancellationToken cancellationToken)
     {
+        // User.GetUserId() is the *impersonated* user while a session is live, which is what the
+        // contract wants — every client surface should render as the target sees it. The real actor
+        // is attached alongside so the banner can name both.
         var summary = await _authService.GetCurrentUserAsync(User.GetUserId(), cancellationToken);
-        return Ok(summary);
+        return Ok(summary with { ViewingAs = User.GetViewingAs() });
     }
 
     /// <summary>Update the currently authenticated user's editable profile fields.</summary>
