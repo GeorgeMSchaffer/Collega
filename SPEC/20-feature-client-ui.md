@@ -174,7 +174,14 @@ Implementation: the drawer and modal chrome are the shared, presentation-only `C
 - Session timing, cross-tab behavior, password redirects, control geometry, and icon accessibility require user manual acceptance on desktop and narrow layouts until the parallel browser-automation work is integrated.
 
 ### Typography
-- Font family: `"Segoe UI", -apple-system, Roboto, sans-serif` for body text; `Georgia, "Times New Roman", serif` for headings and display text (`h1`, `h2`, stat figures) — per `SPEC/mockups/comp-c-fluent-editorial.html`. This replaces the prior single-family IBM Plex Sans / Inter direction from Comp A.
+
+**Single family: Geist, falling back to `sans-serif`.** Declared once as the `--font-sans` token in `src/Collega.Client/wwwroot/css/app.css`; every rule in the global stylesheet and in the page/component stylesheets refers to that token rather than repeating a stack, so the family changes in one place.
+
+Self-hosted from `wwwroot/fonts/geist-latin-variable.woff2` — a 29 KB latin-subset variable font whose weight axis spans 400–700, so one file serves every weight. Provenance and licence: `wwwroot/fonts/README.md`.
+
+**One deliberate exception:** the `.code` rule keeps `ui-monospace, Consolas, monospace`. Invite codes and identifiers depend on fixed-width alignment, and a proportional face breaks the thing that rule exists for.
+
+> **Changed 2026-08-12 by user decision, superseding the original Comp C pairing.** This previously specified `"Segoe UI", -apple-system, Roboto, sans-serif` for body with `Georgia, "Times New Roman", serif` for headings and display text. That serif/sans contrast was the visual argument behind the name "Fluent Editorial" — with a single family it no longer exists, so the direction now reads as editorial through its layout, spacing and restraint rather than its typeface pairing. The reference comps under `SPEC/mockups/comp-c-*.html` still show the old Georgia headings and have **not** been re-rendered; where a comp and this section disagree on type, this section wins.
 
 ### Color palette (from `SPEC/mockups/comp-c-fluent-editorial.html`)
 - Ink/neutrals: text `#242424`, secondary `#484644`, muted `#797672`.

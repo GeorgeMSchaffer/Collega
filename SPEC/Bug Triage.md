@@ -35,5 +35,4 @@ Keep entries short. A symptom, where it happens, and — if you know it — the 
 
 ## TODO
 
-* **[Validation error details never reach the client — found 2026-08-11 while testing the import row cap.]** `AppExceptionHandler` builds a `ValidationProblemDetails` (which carries the field-level `errors` dictionary) but casts it to `ProblemDetails` before returning it (`src/Collega.API/ErrorHandling/AppExceptionHandler.cs:35`). `System.Text.Json` serializes by *declared* type, so the `errors` property is dropped and every 400 reaches the client as a generic envelope whose own `detail` says "See the errors property for field-level details" — a property that is not there. Field-level messages the Application layer takes care to produce are invisible to the UI. **Fix:** serialize the runtime type (return the `ValidationProblemDetails` without the upcast, or serialize with `object`/the concrete type). Small, but it silently degrades every validation surface in the client.
-** Update all fonts to  "Geist" with a fallback to "San Serif"
+_Empty — nothing queued. Add bugs and minor tweaks here; see Scope above for what belongs elsewhere._

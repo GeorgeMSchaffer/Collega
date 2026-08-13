@@ -55,7 +55,7 @@
 .lanesec { margin-bottom: 32px; }
 .lanesec > h2 { font-size: 17px; display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .lanesec > h2 .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.lanesec > h2 .cnt { font-size: 12px; color: var(--ink-3); font-family: "Segoe UI", sans-serif; font-weight: 600; }
+.lanesec > h2 .cnt { font-size: 12px; color: var(--ink-3); font-family: var(--font-sans); font-weight: 600; }
 .rowcard {
   display: flex;
   align-items: center;
@@ -90,7 +90,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-family: "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   color: var(--ink-2);
   padding: 2px 6px 12px;
 }

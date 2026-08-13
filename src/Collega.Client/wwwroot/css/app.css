@@ -5,7 +5,25 @@
  * pills). Page-specific styles live with their page components.
  */
 
+/*
+ * Geist, self-hosted. Latin subset, variable weight axis 400-700 — one file serves every
+ * weight, so there are deliberately no per-weight faces. Provenance, licence and the
+ * reasoning behind the subset choice: wwwroot/fonts/README.md.
+ * `swap` keeps text readable during the 29 KB fetch instead of blocking on it.
+ */
+@font-face {
+  font-family: "Geist";
+  src: url("../fonts/geist-latin-variable.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
+  /* Single UI typeface. Every rule below and in the page/component stylesheets refers to this
+     token rather than repeating the stack, so the family changes in one place. */
+  --font-sans: "Geist", sans-serif;
+
   --accent: #5b5fc7;
   --accent-deep: #444791;
   --accent-soft: #eef0fb;
@@ -36,14 +54,14 @@
 }
 
 html, body {
-  font-family: "Segoe UI", -apple-system, Roboto, sans-serif;
+  font-family: var(--font-sans);
   color: var(--ink);
   background: var(--bg);
   font-size: 14px;
 }
 
 h1, h2 {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   letter-spacing: -.01em;
 }
@@ -223,7 +241,7 @@ code { color: var(--accent-deep); }
   font-weight: 700;
   font-size: 13px;
   margin-bottom: 14px;
-  font-family: Georgia, serif;
+  font-family: var(--font-sans);
 }
 .rail a {
   width: 44px;
@@ -356,9 +374,9 @@ code { color: var(--accent-deep); }
   justify-content: center;
   font-weight: 700;
   font-size: 13px;
-  font-family: Georgia, serif;
+  font-family: var(--font-sans);
 }
-.brand .name { font-family: Georgia, serif; font-size: 19px; font-weight: 600; }
+.brand .name { font-family: var(--font-sans); font-size: 19px; font-weight: 600; }
 .authcard .sub { font-size: 13px; color: var(--ink-3); margin-bottom: 20px; line-height: 1.5; }
 /* Inline loading row: a Fluent progress ring next to a muted label. */
 .loading { display: flex; align-items: center; gap: 10px; color: var(--ink-3); font-size: 13px; padding: 8px 0; }
@@ -414,7 +432,7 @@ tr.reorderable.drag-over td { box-shadow: inset 0 2px 0 0 var(--accent); }
   background: var(--surface);
   max-width: 680px;
 }
-.placeholder h3 { font-family: Georgia, serif; font-size: 17px; margin-bottom: 8px; color: var(--ink); }
+.placeholder h3 { font-family: var(--font-sans); font-size: 17px; margin-bottom: 8px; color: var(--ink); }
 
 /* ---- Fluent UI Blazor component theming ----
    Fluent components are the interactive substrate; these rules pin their look to

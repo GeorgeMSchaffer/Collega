@@ -25,7 +25,7 @@
 .fact .k { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 700; margin-bottom: 4px; }
 .fact .v { font-weight: 600; }
 
-.section-title { font-family: Georgia, serif; font-size: 17px; margin: 24px 0 10px; font-weight: 600; }
+.section-title { font-family: var(--font-sans); font-size: 17px; margin: 24px 0 10px; font-weight: 600; }
 .help { font-size: 11px; color: var(--ink-3); margin-top: 4px; margin-bottom: 10px; line-height: 1.5; }
 
 .invitecode {

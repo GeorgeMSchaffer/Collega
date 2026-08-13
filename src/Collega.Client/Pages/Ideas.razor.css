@@ -24,7 +24,7 @@ tbody tr.selected td:first-child { box-shadow: inset 3px 0 var(--accent); }
 
 /* Empty / no-results state. */
 .emptystate { border: 1.5px dashed var(--line); border-radius: var(--radius-card); padding: 60px 24px; text-align: center; color: var(--ink-3); }
-.emptystate h3 { font-family: Georgia, serif; font-size: 16px; color: var(--ink-2); margin-bottom: 6px; font-weight: 600; }
+.emptystate h3 { font-family: var(--font-sans); font-size: 16px; color: var(--ink-2); margin-bottom: 6px; font-weight: 600; }
 .emptystate p { font-size: 13px; }
 
 /* Pager: range info, page-size select, prev/next. */
