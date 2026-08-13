@@ -24,14 +24,46 @@ All four design decisions are resolved; implementation may proceed on these.
 ## Capacity
 | Role | Slices | Notes |
 |---|---|---|
+| Code Reviewer — **pass 1 of 2** | 1 (**Slice 0, first**) | The authorization audit below. Blocking: runs *before* any mechanism work, not alongside it |
 | Backend Developer | 1 | Server-issued, scoped act-as context tied to the real admin's identity; authorization rules; start/exit + (if act-as) dual-attribution audit; expiry; non-nestable |
 | Client Developer | 1 | Page-header control + avatar-menu item, picker **drawer** (shared `DrawerShell`), active-banner + rail swap + one-click exit — build to the locked comp. Also retire Site Admin direct org-content mutation affordances (below) |
 | QA Developer | 1 | Authorization matrix, audit assertions, expiry, non-nestable, exit-restores-identity |
-| Code Reviewer | 1 (mandatory) | Security-sensitive — impersonation must be reviewed before merge; no fast-track |
+| Code Reviewer — **pass 2 of 2** | 1 (mandatory) | Pre-merge review of the built feature. Security-sensitive; no fast-track. Distinct from Slice 0, which reviews the ground the feature is built on |
+
+## Slice 0 — Authorization audit (blocking prerequisite, added 2026-08-13)
+
+**Run this before building the mechanism.** It is not a general code-review pass; it answers one bounded question across a known list of call sites, and its answer decides whether the View As design is safe to build on.
+
+**The question:** does every Application-layer authorization path derive organization scope from `ICurrentUserContext`, or does any of them trust an `organizationId` passed in by the caller?
+
+**Why it blocks.** View As makes `ICurrentUserContext` report the *impersonated* identity, so every existing role and org-scope check silently changes meaning. Today a Site Admin passes org checks unconditionally — see the pattern in `OrganizationService.LoadForAdministrationAsync` (`src/Collega.Application/Organizations/OrganizationService.cs:191-207`): `OrgAdmin` is compared against `_currentUser.OrganizationId`, `SiteAdmin` skips the comparison entirely. Under impersonation that same Site Admin arrives as an Org Admin scoped to one organization, which is the design working correctly. But **any** method that scopes off its own `organizationId` argument instead of the context is, under impersonation, a cross-organization write path.
+
+**Scope — 23 `Role.SiteAdmin` branches across 11 services**, plus the ~101 service methods taking a `Guid organizationId` parameter:
+
+| Service | Branches | Reviewed in Sprint 4? |
+|---|---|---|
+| `Users/UserService.cs` | 282, 314, 337, 368 | No |
+| `Ideas/IdeaService.cs` | 1181, 1201, 1214 | **Yes** |
+| `Fields/FieldDefinitionService.cs` | 246, 258, 283 | No |
+| `Statuses/StatusService.cs` | 184, 201 | No |
+| `Organizations/OrganizationService.cs` | 195, 236 | No |
+| `IdeaFields/IdeaFieldService.cs` | 349, 360 | No |
+| `Comments/CommentService.cs` | 131, 142 | No |
+| `Boards/BoardService.cs` | 203, 219 | No |
+| `Tags/TagService.cs` | 45 | No |
+| `Collaboration/MentionResolver.cs` | 51 | No |
+| `Auth/AuthService.cs` | 261 | Login head only |
+
+Sprint 4's review reached exactly one of these services. The other ten hold **20 of the 23 branches** — see `sprints/archive/sprint-04-qa-review-debt.md` → "Review pass — what it actually covered".
+
+**Deliverable:** a per-call-site verdict — *scopes from context* / *trusts the parameter* / *no scoping needed* — with anything in the middle column fixed before the mechanism is built. Findings that are pre-existing bugs independent of View As go to `SPEC/Bug Triage.md`; findings that only bite under impersonation get fixed in this sprint.
+
+**Why not reopen Sprint 4:** its remaining debt is Collaboration, Events, Workflow Config, ~55 client files and Domain entities — largely irrelevant to View As, and Sprint 4 is archived and Complete. This audit is the specific slice of that debt View As actually sits on. The rest stays open and unclaimed.
 
 ## Sprint Backlog
 | Priority | Item | Notes |
 |---|---|---|
+| **P0 (first)** | **Slice 0 — authorization audit** | See above. Blocks the mechanism; do not start the impersonation work until every listed call site has a verdict. |
 | P0 | **Impersonation mechanism** | Server-issued, scoped "act-as" context tied to the real admin's identity (NOT a login/token for the target, NOT a role change). Time-boxed (D-EXPIRE), one-click exit restores the admin, **non-nestable**. |
 | P0 | **Authorization** | Site Admin → any org user; Org Admin → **active** users in **own** org only; User/Read-Only → refused (control hidden + endpoint 403). Suspended/archived users not selectable. Other Site Admins excluded per D-SCOPE. Enforced server-side, not just in the UI. |
 | P0 | **Audit** | Start + exit each write an audit event (real actor + target + timestamps). D-MODE is act-as, so every mutation carries **dual attribution** (real admin + impersonated user) unconditionally; the target's own trail is never forged as self-authored. |
@@ -41,6 +73,7 @@ All four design decisions are resolved; implementation may proceed on these.
 ## Risks
 | Risk | Impact | Mitigation |
 |---|---|---|
+| An existing service scopes off a caller-supplied `organizationId` rather than `ICurrentUserContext` | Under impersonation this becomes a cross-org write path — invisible today, critical once View As ships | **Slice 0 audit, before the mechanism is built.** 20 of the 23 SiteAdmin branches sit in services Sprint 4 never reviewed |
 | Impersonation becomes a privilege-escalation path | Critical security hole | Scope server-side to the caller's real role; Org Admin can never reach another org or a higher role; mandatory Code-Review pass; test the authorization matrix exhaustively |
 | "Act-as" writes look self-authored | Accountability gap / audit fraud | Dual attribution on every mutation; never overwrite the target's authorship; audit start/exit unconditionally |
 | Stale view-as context lingers | Admin unknowingly acts as someone else | Time-box (D-EXPIRE) + always-visible non-dismissable banner + one-click exit + non-nestable |
@@ -52,5 +85,6 @@ All four design decisions are resolved; implementation may proceed on these.
 - [ ] Start/exit audited; dual attribution on every mutation performed while acting as
 - [ ] Client UI matches the locked comp (control, drawer picker, active banner, rail swap, exit); mutations work under act-as
 - [ ] Site Admin direct org-content mutation affordances retired (global views + org-scoped statuses/idea-fields routes read-only for Site Admin); org/user administration confirmed still direct
+- [ ] **Slice 0 audit complete**: every one of the 23 `Role.SiteAdmin` branches and the `organizationId`-taking service methods has a verdict, and anything that scopes off a caller-supplied `organizationId` rather than `ICurrentUserContext` is fixed
 - [ ] Code Reviewer has signed off (mandatory — security-sensitive)
 - [x] `SPEC/20-feature-view-as.md` written and `SPEC/30-Contracts.md` gained a "View As Contracts" section (2026-08-13)

@@ -22,14 +22,14 @@ Before making any status, planning, or scope claim about this project — in thi
 | Test suite | **580 green** (2026-08-12) | 113 Domain + 194 Application + 120 Infrastructure + 153 API. Three need Docker (skip cleanly without it; CI excludes via `--filter "Category!=Container"`). Re-run before trusting. |
 | Sprints | 1–5 complete · **6 in progress** · 7–8 not started | Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
-| Bug queue | **Empty** | `SPEC/Bug Triage.md` `TODO` is clear as of 2026-08-12 — nothing gates the start of Sprint 6. |
+| Bug queue | **Empty** | `SPEC/Bug Triage.md` clear as of 2026-08-12. |
 | Local DB | `collega-postgres` (`postgres:16`), port **5432**, role `collega` | Standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas). Dev demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **If the API won't connect, check user-secrets for a stale SQL Server string** — see `src/Collega.API/CLAUDE.md`. |
 
 ### Sprint 5 — complete (merged `7c5a78b`)
-**The InMemory suite sees neither collation, SQL translation, nor DDL** — all four defects it found were invisible to 561 green tests, so container-backed `PostgresProviderTests` is the only real proof the DB behaves. Post-mortem: `sprints/archive/sprint-05-postgres-migration.md`.
+**The InMemory suite sees neither collation, SQL translation, nor DDL** — its four defects were invisible to 561 green tests. Post-mortem: `sprints/archive/sprint-05-postgres-migration.md`.
 
 ### Sprint 6 — in progress (started 2026-08-13)
-View As. **Spec + contracts written, no implementation code yet** — stopped for design review, since a mistake here is a privilege-escalation hole. Canonical: `20-feature-view-as.md`; endpoints: `30-Contracts.md` → "View As Contracts"; plan: `sprints/sprint-06-view-as.md`.
+View As. **Spec + contracts written; no implementation code.** Next is **Slice 0, a blocking authorization audit** — View As changes what `ICurrentUserContext` reports, so any service scoping off a caller-supplied `organizationId` becomes a cross-org write path. 23 `Role.SiteAdmin` branches across 11 services; Sprint 4 reviewed one of them. Canonical: `20-feature-view-as.md`; plan: `sprints/sprint-06-view-as.md`.
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Portrait image library = **SkiaSharp**.
