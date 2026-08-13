@@ -21,6 +21,12 @@ public sealed class AuditEventConfiguration : IEntityTypeConfiguration<AuditEven
         builder.Property(e => e.ActorUserId)
             .HasColumnName("actor_user_id");
 
+        // The impersonated user when the action was performed through View As; null otherwise.
+        // Its own column rather than metadata JSON so "on behalf of whom" stays queryable
+        // (SPEC/20-feature-view-as.md rule 14).
+        builder.Property(a => a.OnBehalfOfUserId)
+            .HasColumnName("on_behalf_of_user_id");
+
         builder.Property(e => e.EventType)
             .HasColumnName("event_type")
             .HasMaxLength(100)

@@ -5,7 +5,19 @@ namespace Collega.Domain.Auditing;
 public sealed class AuditEvent : EntityBase
 {
     public Guid? OrganizationId { get; private set; }
+    /// <summary>
+    /// Who really performed the action. While a View As session is active this stays the **real
+    /// administrator**, never the user being acted as — so an audit row can never read as though the
+    /// target did it themselves (SPEC/20-feature-view-as.md rule 14).
+    /// </summary>
     public Guid? ActorUserId { get; private set; }
+
+    /// <summary>
+    /// The impersonated user, when the action was performed through View As; null otherwise. Kept as
+    /// its own column rather than inside <see cref="MetadataJson"/> so "what was done on behalf of
+    /// whom" stays queryable — this is an accountability record, not a debugging note.
+    /// </summary>
+    public Guid? OnBehalfOfUserId { get; private set; }
     public string EventType { get; private set; } = string.Empty;
     public string EntityType { get; private set; } = string.Empty;
     public Guid? EntityId { get; private set; }
@@ -25,7 +37,8 @@ public sealed class AuditEvent : EntityBase
         Guid? organizationId = null,
         Guid? actorUserId = null,
         Guid? entityId = null,
-        string? metadataJson = null)
+        string? metadataJson = null,
+        Guid? onBehalfOfUserId = null)
     {
         if (string.IsNullOrWhiteSpace(eventType))
         {
@@ -51,7 +64,8 @@ public sealed class AuditEvent : EntityBase
             OrganizationId = organizationId,
             ActorUserId = actorUserId,
             EntityId = entityId,
-            MetadataJson = metadataJson
+            MetadataJson = metadataJson,
+            OnBehalfOfUserId = onBehalfOfUserId
         };
     }
 }

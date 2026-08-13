@@ -27,6 +27,14 @@ public interface IUserRepository
     /// Number of active <see cref="Role.OrgAdmin"/> users in an organization, used to enforce the
     /// last-Org-Admin safeguard (org-and-users requirement #8).
     /// </summary>
+    /// <summary>
+    /// Users the View As picker may offer. <paramref name="organizationId"/> is null for a Site
+    /// Admin (all organizations) and set for an Org Admin, so the scope restriction is applied in
+    /// the query rather than filtered afterwards — an Org Admin's result set never contains a user
+    /// they may not target.
+    /// </summary>
+    Task<IReadOnlyList<User>> SearchForImpersonationAsync(Guid? organizationId, string? search, CancellationToken cancellationToken = default);
+
     Task<int> CountActiveOrgAdminsAsync(Guid organizationId, Guid? excludingUserId = null, CancellationToken cancellationToken = default);
 
     Task AddAsync(User user, CancellationToken cancellationToken = default);

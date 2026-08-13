@@ -11,6 +11,7 @@ using Collega.Domain.Statuses;
 using Collega.Domain.Tags;
 using Collega.Domain.Upvotes;
 using Collega.Domain.Users;
+using Collega.Domain.Impersonation;
 
 namespace Collega.Application.Tests.TestDoubles;
 
@@ -73,6 +74,28 @@ internal sealed class FakeUserRepository : IUserRepository
         var set = userIds.ToHashSet();
         IReadOnlyList<User> result = Users.Where(u => set.Contains(u.Id)).ToList();
         return Task.FromResult(result);
+    }
+
+    public Task<IReadOnlyList<User>> SearchForImpersonationAsync(Guid? organizationId, string? search, CancellationToken cancellationToken = default)
+    {
+        IEnumerable<User> users = Users.Where(u => u.OrganizationId is not null && u.Role != Collega.Domain.Enums.Role.SiteAdmin);
+
+        if (organizationId is not null)
+        {
+            users = users.Where(u => u.OrganizationId == organizationId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            users = users.Where(u =>
+                u.FirstName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || u.LastName.Contains(term, StringComparison.OrdinalIgnoreCase)
+                || u.Email.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return Task.FromResult<IReadOnlyList<User>>(
+            users.OrderBy(u => u.FirstName).ThenBy(u => u.LastName).ToList());
     }
 
     public Task<int> CountActiveOrgAdminsAsync(Guid organizationId, Guid? excludingUserId = null, CancellationToken cancellationToken = default) =>
@@ -624,5 +647,28 @@ internal sealed class FakeFieldDefinitionRepository : IFieldDefinitionRepository
             && !d.IsDeleted
             && string.Equals(d.Name, normalized, StringComparison.OrdinalIgnoreCase)
             && (excludeId == null || d.Id != excludeId)));
+    }
+}
+
+/// <summary>In-memory <see cref="IImpersonationSessionRepository"/> for the View As tests.</summary>
+internal sealed class FakeImpersonationSessionRepository : IImpersonationSessionRepository
+{
+    public List<ImpersonationSession> Sessions { get; } = new();
+
+    /// <summary>
+    /// Mirrors the EF implementation: returns the open row whether or not it has expired, because
+    /// liveness is the caller's decision. A fake that filtered expired rows would hide the very
+    /// close-and-record-why path the resolver depends on.
+    /// </summary>
+    public Task<ImpersonationSession?> GetOpenForRealUserAsync(Guid realUserId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(Sessions
+            .Where(s => s.RealUserId == realUserId && s.EndedAtUtc is null)
+            .OrderByDescending(s => s.StartedAtUtc)
+            .FirstOrDefault());
+
+    public Task AddAsync(ImpersonationSession session, CancellationToken cancellationToken = default)
+    {
+        Sessions.Add(session);
+        return Task.CompletedTask;
     }
 }

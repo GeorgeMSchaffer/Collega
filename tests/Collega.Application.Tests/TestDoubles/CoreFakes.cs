@@ -49,6 +49,14 @@ internal sealed class FakeCurrentUserContext : ICurrentUserContext
     public Guid? OrganizationId { get; set; }
     public Role? Role { get; set; }
 
+    /// <summary>Set this to simulate an active View As session; leave null for an ordinary caller.</summary>
+    public Guid? ImpersonatingRealUserId { get; set; }
+
+    public bool IsImpersonating => ImpersonatingRealUserId is not null;
+
+    /// <summary>Mirrors the production adapter: falls back to <see cref="UserId"/> when not impersonating.</summary>
+    public Guid? RealUserId => ImpersonatingRealUserId ?? UserId;
+
     public static FakeCurrentUserContext Anonymous() => new();
 
     public static FakeCurrentUserContext SiteAdmin(Guid? userId = null) => new()
