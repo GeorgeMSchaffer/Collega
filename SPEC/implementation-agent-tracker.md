@@ -13,26 +13,23 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-08-12 against `e21c0d0` (`dev`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-08-13 against `00bd6fb` (`dev`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
-| MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening, User-Defined Fields, Idea-Type Fields. The archive holds the original breakdown — done; do not restart it. |
-| Blazor client | ~16 pages, 9 shared components | `DrawerShell`, `CreateModalShell`, `IdeaDrawer`, `IdeaCreateModal`, `ListToolbar`, `IdeaFieldInputs`, `BackButton`, `SessionTimeoutGuard`, `TypeBadge`. |
+| MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening, User-Defined Fields, Idea-Type Fields. Done — do not restart. |
+| Blazor client | ~16 pages, 9 shared components in `src/Collega.Client/Components/` | Geist is the single typeface. |
 | Test suite | **580 green** (2026-08-12) | 113 Domain + 194 Application + 120 Infrastructure + 153 API. Three need Docker (skip cleanly without it; CI excludes via `--filter "Category!=Container"`). Re-run before trusting. |
-| Sprints | 1–5 complete · **6 is next, not started** · 7–8 not started | Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
-| QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. **Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files, and Domain entities were never reviewed** — still open. Exact boundary: `sprints/archive/sprint-04-qa-review-debt.md` → "Review pass — what it actually covered". |
+| Sprints | 1–5 complete · **6 in progress** · 7–8 not started | Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
+| QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
 | Bug queue | **Empty** | `SPEC/Bug Triage.md` `TODO` is clear as of 2026-08-12 — nothing gates the start of Sprint 6. |
-| Local DB | `collega-postgres` (`postgres:16`), host port **5432**, role `collega` | Live as of the Sprint 5 cutover (merged `7c5a78b`); overridable via `POSTGRES_HOST_PORT`. Standard demo seed only (2 orgs, 6 org users + 1 Site Admin, 4 boards, ideas). Dev-only demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. |
+| Local DB | `collega-postgres` (`postgres:16`), port **5432**, role `collega` | Standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas). Dev demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **If the API won't connect, check user-secrets for a stale SQL Server string** — see `src/Collega.API/CLAUDE.md`. |
 
-### Sprint 5 — complete (merged `7c5a78b`, 2026-08-12)
-PostgreSQL cutover done. **Carry forward: the InMemory suite sees neither collation, SQL translation, nor DDL** — all four defects this sprint found were invisible to 561 green tests, so container-backed `PostgresProviderTests` is the only real proof the database behaves. Post-mortem, the defects, and the `ESCAPE ''` gotcha: `sprints/archive/sprint-05-postgres-migration.md`.
+### Sprint 5 — complete (merged `7c5a78b`)
+**The InMemory suite sees neither collation, SQL translation, nor DDL** — all four defects it found were invisible to 561 green tests, so container-backed `PostgresProviderTests` is the only real proof the DB behaves. Post-mortem: `sprints/archive/sprint-05-postgres-migration.md`.
 
-### Since Sprint 5 (merged `e21c0d0`)
-Both remaining Bug Triage items cleared: the `AppExceptionHandler` upcast that silently dropped field-level `errors` from every Application-layer 400, and the move to Geist as the single UI typeface (self-hosted, `--font-sans` token, `20-feature-client-ui.md` Typography amended). Detail: `SPEC/archive/bug-triage-completed.md`.
-
-### Sprint 6 — next, not started
-View As (act-as impersonation), `sprints/sprint-06-view-as.md`. Four decisions locked; load-bearing — it is the Site Admin's only org-content mutation path. The open QA debt above applies.
+### Sprint 6 — in progress (started 2026-08-13)
+View As. **Spec + contracts written, no implementation code yet** — stopped for design review, since a mistake here is a privilege-escalation hole. Canonical: `20-feature-view-as.md`; endpoints: `30-Contracts.md` → "View As Contracts"; plan: `sprints/sprint-06-view-as.md`.
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Portrait image library = **SkiaSharp**.

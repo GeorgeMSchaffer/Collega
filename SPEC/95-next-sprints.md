@@ -33,7 +33,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 3 | List filter parity (all-column search, tag filter, user-association filter) + server-side sort | `SPEC/sprints/archive/sprint-03-list-filter-parity.md` | Complete (2026-08-11) | Small–Medium |
 | 4 | QA/Code-Review debt pass + profile portrait upload + code-review hardening batch (folded in 2026-08-11) | `SPEC/sprints/archive/sprint-04-qa-review-debt.md` | Complete (2026-08-12) — review pass closed at **partial coverage** by user decision; see that file's "Review pass — what it actually covered" | Medium |
 | 5 | PostgreSQL migration (SQL Server → Postgres) | `SPEC/sprints/archive/sprint-05-postgres-migration.md` | Complete (2026-08-12) — merged `7c5a78b` | Small–Medium |
-| 6 | View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin's only org-content mutation path) | `SPEC/sprints/sprint-06-view-as.md` | Not started | Medium |
+| 6 | View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin's only org-content mutation path) | `SPEC/sprints/sprint-06-view-as.md` | In Progress (2026-08-13) — spec + contracts done | Medium |
 | 7 | AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, `Anthropic` package approved) | `SPEC/sprints/sprint-07-ai-idea-assist.md` | Not started | Medium |
 | 8 | Azure deployment (provision + first deploy + CI/CD) | `SPEC/sprints/sprint-08-azure-deployment.md` | Not started | Medium |
 
