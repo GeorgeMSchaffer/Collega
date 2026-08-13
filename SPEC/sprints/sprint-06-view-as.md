@@ -1,6 +1,6 @@
 # Sprint 6: View As (user impersonation for support)
 
-**Status:** In Progress (started 2026-08-13) — canonical spec and contracts written and awaiting review; no implementation code yet.
+**Status:** In Progress (started 2026-08-13) — **mechanism, authorization, audit, and client UI all built and merged to `dev` (`c25eeda`, 2026-08-13); 605 tests green.** One P1 item remains: the Site Admin direct org-content mutation retirement is only half done (see the Definition of Done). Do not archive this file until that closes.
 **Sequence:** 6 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 5 (`sprint-05-postgres-migration.md`) is merged, so it's built on the migrated Postgres codebase; followed by Sprint 7 (`sprint-07-ai-idea-assist.md`) and then Sprint 8 (`sprint-08-azure-deployment.md`), so the first Azure deployment ships this feature. Added 2026-08-11 at user request; **kick off only once Sprints 4–5 are done** (per user: start this once all other work is complete).
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -114,11 +114,11 @@ Two branches are not authorization at all and were mis-counted by the original g
 
 ## Definition of Done
 - [x] All four decisions (D-MODE / D-SCOPE / D-EXPIRE / D-PLACE) locked and recorded 2026-08-11 — see the Decisions section
-- [ ] Impersonation mechanism built: scoped, tied to real admin, time-boxed, non-nestable, one-click exit
-- [ ] Authorization enforced server-side and covered by an exhaustive who-can-impersonate-whom test matrix
-- [ ] Start/exit audited; dual attribution on every mutation performed while acting as
-- [ ] Client UI matches the locked comp (control, drawer picker, active banner, rail swap, exit); mutations work under act-as
-- [ ] Site Admin direct org-content mutation affordances retired (global views + org-scoped statuses/idea-fields routes read-only for Site Admin); org/user administration confirmed still direct
+- [x] Impersonation mechanism built: scoped, tied to real admin, time-boxed, non-nestable, one-click exit — `Application/Impersonation/ViewAsService.cs`, `Domain/Impersonation/ImpersonationSession.cs`, migration `20260813160032_AddImpersonationSessions`
+- [x] Authorization enforced server-side and covered by an exhaustive who-can-impersonate-whom test matrix — 18 tests in `ViewAsServiceTests.cs` (Site Admin → any org; Org Admin → own org only, cross-org refused; User/Read-Only refused; Site-Admin-to-Site-Admin refused per D-SCOPE; suspended target and archived organization both refused)
+- [x] Start/exit audited; dual attribution on every mutation performed while acting as — `AuditEvent.OnBehalfOfUserId`, written from `ViewAsService`
+- [x] Client UI matches the locked comp (control, drawer picker, active banner, rail swap, exit); mutations work under act-as — `Components/ViewAsDrawer.razor`, `Components/ViewAsBanner.razor`, `Layout/NavRail.razor`, `Layout/MainLayout.razor`
+- [ ] **Site Admin direct org-content mutation affordances retired — HALF DONE, this is the sprint's only open item.** The *global aggregate* views are correct: `StatusesAdmin.razor` hides "Add New" and swaps row "Details" for a "Manage" link when `_siteAdminGlobal` is set. The *org-scoped routes are not*, and the two interact badly. `StatusesAdmin.razor` serves both `/settings/statuses` and `/settings/organizations/{OrganizationId}/statuses` from one component, and `_siteAdminGlobal` is only ever true on the first (`:284-294` — it is set from the role **only** when `OrganizationId` is absent). So a Site Admin on the org-scoped route gets the full mutating UI, and the global view's own "Manage" link is what sends them there. Apply the same audit to `/idea-fields` and to the other named global views (Boards, Ideas, Idea Types, Custom Fields) before closing. Org and user administration stay direct per the bootstrap exception — unchanged, still correct.
 - [x] **Slice 0 audit complete (2026-08-13)** — no holes found; see "Slice 0 result": every one of the 23 `Role.SiteAdmin` branches and the `organizationId`-taking service methods has a verdict, and anything that scopes off a caller-supplied `organizationId` rather than `ICurrentUserContext` is fixed
-- [ ] Code Reviewer has signed off (mandatory — security-sensitive)
+- [x] Code Reviewer has signed off (mandatory — security-sensitive) — pass 2 ran and raised 8 findings, all fixed in `ba104db`. Two were real authorization gaps: `EnsureMayActAs` never tested the target organization for `IsArchived`, and `ResolveImpersonationAsync` tested `target.Status` but not the organization, so a live session survived its org being archived (rule 12 requires both halves). **No post-fix re-review is recorded** — if this sprint's process requires one, it is outstanding.
 - [x] `SPEC/20-feature-view-as.md` written and `SPEC/30-Contracts.md` gained a "View As Contracts" section (2026-08-13)

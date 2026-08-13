@@ -13,13 +13,13 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-08-13 against `00bd6fb` (`dev`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-08-13 against `c25eeda` (`dev`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
 | MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening, User-Defined Fields, Idea-Type Fields. Done — do not restart. |
 | Blazor client | ~16 pages, 9 shared components in `src/Collega.Client/Components/` | Geist is the single typeface. |
-| Test suite | **580 green** (2026-08-12) | 113 Domain + 194 Application + 120 Infrastructure + 153 API. Three need Docker (skip cleanly without it; CI excludes via `--filter "Category!=Container"`). Re-run before trusting. |
+| Test suite | **605 green** (2026-08-13) | 113 Domain + 222 Application + 117 Infrastructure + 153 API. Three need Docker (skip cleanly without it; CI excludes via `--filter "Category!=Container"`). Re-run before trusting. |
 | Sprints | 1–5 complete · **6 in progress** · 7–8 not started | Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
 | Bug queue | **Empty** | `SPEC/Bug Triage.md` clear as of 2026-08-12. |
@@ -28,8 +28,10 @@ Before making any status, planning, or scope claim about this project — in thi
 ### Sprint 5 — complete (merged `7c5a78b`)
 **The InMemory suite sees neither collation, SQL translation, nor DDL** — its four defects were invisible to 561 green tests. Post-mortem: `sprints/archive/sprint-05-postgres-migration.md`.
 
-### Sprint 6 — in progress (started 2026-08-13)
-View As. Spec + contracts written. **Slice 0 authorization audit complete (2026-08-13): no holes** — every path scopes off `ICurrentUserContext`, which is the single identity chokepoint (nothing outside `API/Authentication/` reads claims). The mechanism is unblocked; **no implementation code yet**. Canonical: `20-feature-view-as.md`; plan + audit result: `sprints/sprint-06-view-as.md`.
+### Sprint 6 — in progress (started 2026-08-13), merged to `dev` at `c25eeda`
+View As. **Mechanism, authorization, audit, and client UI are built and merged**; code review pass 2 raised 8 findings, all fixed. Slice 0's audit holds: `ICurrentUserContext` is the single identity chokepoint (nothing outside `API/Authentication/` reads claims) — **preserve that**, since a service reading claims directly would silently opt itself out of View As.
+
+**Not done — the one open item:** retiring Site Admin direct org-content mutation. The global aggregate views are read-only for Site Admin, but the org-scoped routes behind them are not, and the global views link into them. Detail and the specific `StatusesAdmin.razor` mechanics: `sprints/sprint-06-view-as.md` Definition of Done. Canonical: `20-feature-view-as.md`.
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Portrait image library = **ImageSharp** (`SixLabors.ImageSharp`, pinned **3.1.12**). Fully managed, no native assets — chosen 2026-08-13 specifically because SkiaSharp's package ships natives for Windows/macOS only and broke portrait upload on Linux App Service. **Stay on the 3.1.x line:** 4.x requires a Six Labors license key and warns on every build; 3.1.x is the Split License (free for OSS/personal and organizations under the revenue threshold — re-verify terms before any commercial release).
