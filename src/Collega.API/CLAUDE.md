@@ -53,6 +53,23 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
 
 Environment variables work too, with a **double** underscore: `SiteAdmin__Email`, `ConnectionStrings__DefaultConnection`, `Auth__AccessTokenLifetimeMinutes`.
 
+### After the Postgres migration: check your user-secrets
+
+**User-secrets override `appsettings.Development.json`, and they are per-developer and gitignored — so the Sprint 5 migration could not fix them.** If you had a connection string in user-secrets from the SQL Server era, the API will fail to boot on a repo that is otherwise correct. Two failures in sequence, both confusing:
+
+1. `password authentication failed for user "sa"`, alongside a nonsense address like `0.0.5.153:5432`. Npgsql reads SQL Server's `Server=localhost,1433` as a **comma-separated multi-host list**, so it treats `1433` as a hostname. The port is not the problem; the syntax is.
+2. Once the syntax is right, `password authentication failed for user "collega"` — the committed `appsettings.Development.json` carries the `.env.example` placeholder, which will not match a real `POSTGRES_PASSWORD` you have set in your own `.env`.
+
+Fix by pointing the secret at your actual local container:
+
+```bash
+cd src/Collega.API
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
+  "Host=localhost;Port=5432;Database=Collega;Username=collega;Password=<your POSTGRES_PASSWORD from .env>"
+```
+
+Or `dotnet user-secrets remove "ConnectionStrings:DefaultConnection"` if your `.env` uses the placeholder password, in which case the committed default already works. Check what you have with `dotnet user-secrets list`.
+
 Optional: `Auth:TokenSigningKey` (base64; a random per-process key is generated if unset, so tokens don't survive a restart) and `Auth:AccessTokenLifetimeMinutes` (default 480).
 
 ## Conventions
