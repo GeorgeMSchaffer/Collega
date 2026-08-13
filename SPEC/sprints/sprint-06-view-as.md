@@ -60,10 +60,44 @@ Sprint 4's review reached exactly one of these services. The other ten hold **20
 
 **Why not reopen Sprint 4:** its remaining debt is Collaboration, Events, Workflow Config, ~55 client files and Domain entities — largely irrelevant to View As, and Sprint 4 is archived and Complete. This audit is the specific slice of that debt View As actually sits on. The rest stays open and unclaimed.
 
+### Slice 0 result — COMPLETE (2026-08-13): no holes found, design is safe to build on
+
+**Verdict: every authorization path derives organization scope from `ICurrentUserContext`. No service scopes off a caller-supplied `organizationId`.** The View As design — swapping what `ICurrentUserContext` reports — is therefore safe.
+
+**Method.** Every `Role.SiteAdmin` branch read in context, plus a mechanical sweep of every public service method taking a `Guid organizationId`, checking whether its body reaches an authorization guard.
+
+**1. The 23 `Role.SiteAdmin` branches — all one shape, all correct.**
+
+```
+role == SiteAdmin                                    -> allow, no org comparison
+role == OrgAdmin && _currentUser.OrganizationId == organizationId  -> allow
+otherwise                                            -> 404 (existence not leaked)
+```
+
+The `organizationId` argument is the *target*; it is always **validated against the context**, never trusted. Under impersonation `_currentUser` reports the target's role and org, so the SiteAdmin branch is not taken (targets are never Site Admins, per D-SCOPE) and the comparison applies against the impersonated user's organization — which is the intended behaviour, reached without changing any of these call sites.
+
+Two branches are not authorization at all and were mis-counted by the original grep: `MentionResolver.cs:51` *excludes* Site Admins from being mentioned (filtering targets, not authorizing a caller), and `IdeaService.EnsureCanMoveIdea` is a pure role check.
+
+**2. `EnsureCanMoveIdea` — investigated as a suspected hole, cleared.** It checks role with no org comparison (`IdeaService.cs:1196`). Its only caller, `ChangeStatusAsync`, calls `EnsureOrganizationScope(idea.OrganizationId)` at line 375 *before* reaching it at line 385. Scope first, then permission — correctly layered, not a gap.
+
+**3. Method sweep: 34 methods take `organizationId`. 32 reach a guard; the 2 that do not are both correct.**
+
+| Method | Why it is safe |
+|---|---|
+| `OrganizationBootstrapService.ProvisionDefaultsAsync` | Internal collaborator, not a caller-facing entry point. Called only from `OrganizationService.CreateAsync` (behind `RequireSiteAdmin()`) and `StartupSeeder`. No controller reaches it. |
+| `MentionResolver.ResolveAsync` | Every call site passes `idea.OrganizationId` / `board.OrganizationId` — an org id read off an **already-loaded, already-scoped entity**, never a caller-supplied value. |
+
+**4. The finding that most de-risks View As: `ICurrentUserContext` is the single chokepoint for identity.** No file outside `src/Collega.API/Authentication/` reads `HttpContext.User`, `ClaimTypes` or `FindFirstValue`, and no controller resolves identity itself. There is no second path by which a service could learn "who is calling" and thereby bypass impersonation. This is what makes the design work with no per-service changes — and it is a property to **preserve**: a future service that reads claims directly would silently opt itself out of View As.
+
+**Scope limits, stated so this is not read as broader than it was.** This audited authorization in the Application layer. It did **not** review Infrastructure repository queries for missing org filters, nor the ~55 client files — both remain part of the open Sprint 4 debt (`sprints/archive/sprint-04-qa-review-debt.md`). Client-side scoping is not a security boundary; the repository question is pre-existing and not specific to View As, so it was not pulled into this sprint.
+
+**No findings were routed to `SPEC/Bug Triage.md`** — there were none to route.
+
+
 ## Sprint Backlog
 | Priority | Item | Notes |
 |---|---|---|
-| **P0 (first)** | **Slice 0 — authorization audit** | See above. Blocks the mechanism; do not start the impersonation work until every listed call site has a verdict. |
+| ✅ **P0 (first)** | **Slice 0 — authorization audit** | **DONE 2026-08-13 — no holes found.** See "Slice 0 result". The mechanism is unblocked. |
 | P0 | **Impersonation mechanism** | Server-issued, scoped "act-as" context tied to the real admin's identity (NOT a login/token for the target, NOT a role change). Time-boxed (D-EXPIRE), one-click exit restores the admin, **non-nestable**. |
 | P0 | **Authorization** | Site Admin → any org user; Org Admin → **active** users in **own** org only; User/Read-Only → refused (control hidden + endpoint 403). Suspended/archived users not selectable. Other Site Admins excluded per D-SCOPE. Enforced server-side, not just in the UI. |
 | P0 | **Audit** | Start + exit each write an audit event (real actor + target + timestamps). D-MODE is act-as, so every mutation carries **dual attribution** (real admin + impersonated user) unconditionally; the target's own trail is never forged as self-authored. |
@@ -85,6 +119,6 @@ Sprint 4's review reached exactly one of these services. The other ten hold **20
 - [ ] Start/exit audited; dual attribution on every mutation performed while acting as
 - [ ] Client UI matches the locked comp (control, drawer picker, active banner, rail swap, exit); mutations work under act-as
 - [ ] Site Admin direct org-content mutation affordances retired (global views + org-scoped statuses/idea-fields routes read-only for Site Admin); org/user administration confirmed still direct
-- [ ] **Slice 0 audit complete**: every one of the 23 `Role.SiteAdmin` branches and the `organizationId`-taking service methods has a verdict, and anything that scopes off a caller-supplied `organizationId` rather than `ICurrentUserContext` is fixed
+- [x] **Slice 0 audit complete (2026-08-13)** — no holes found; see "Slice 0 result": every one of the 23 `Role.SiteAdmin` branches and the `organizationId`-taking service methods has a verdict, and anything that scopes off a caller-supplied `organizationId` rather than `ICurrentUserContext` is fixed
 - [ ] Code Reviewer has signed off (mandatory — security-sensitive)
 - [x] `SPEC/20-feature-view-as.md` written and `SPEC/30-Contracts.md` gained a "View As Contracts" section (2026-08-13)

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Collega — Sprint Board</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --bg:#f4f5f7;--surface:#fff;--surface-2:#ebecf0;--col:#f1f2f4;
+  --ink:#172b4d;--ink-2:#44546f;--ink-3:#626f86;--line:#dcdfe4;
+  --accent:#0c66e4;--accent-soft:#e9f2ff;--done:#216e4e;--done-soft:#dcfff1;
+  --warn:#a54800;--warn-soft:#fff4e5;--danger:#c9372c;--danger-soft:#ffeceb;
+  --purple:#5e4db2;--purple-soft:#f3f0ff;
+  --shadow:0 1px 1px rgba(9,30,66,.16),0 0 1px rgba(9,30,66,.12);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1d2125;--surface:#22272b;--surface-2:#2c333a;--col:#161a1d;
+  --ink:#dee4ea;--ink-2:#9fadbc;--ink-3:#8595a4;--line:#333b43;
+  --accent:#579dff;--accent-soft:#1c2b41;--done:#7ee2b8;--done-soft:#1c3329;
+  --warn:#f5cd47;--warn-soft:#3b2c14;--danger:#ff9c8f;--danger-soft:#42221f;
+  --purple:#b8acf6;--purple-soft:#2b273f;
+  --shadow:0 1px 1px rgba(0,0,0,.5),0 0 1px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --bg:#1d2125;--surface:#22272b;--surface-2:#2c333a;--col:#161a1d;
+  --ink:#dee4ea;--ink-2:#9fadbc;--ink-3:#8595a4;--line:#333b43;
+  --accent:#579dff;--accent-soft:#1c2b41;--done:#7ee2b8;--done-soft:#1c3329;
+  --warn:#f5cd47;--warn-soft:#3b2c14;--danger:#ff9c8f;--danger-soft:#42221f;
+  --purple:#b8acf6;--purple-soft:#2b273f;
+  --shadow:0 1px 1px rgba(0,0,0,.5),0 0 1px rgba(0,0,0,.4);
+}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em;
+  background:var(--surface-2);padding:1px 4px;border-radius:3px}
+.strike{text-decoration:line-through;opacity:.6}
+.ref{color:var(--accent)}
+h2.sec{margin:22px 20px 0;font-size:11.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.09em;color:var(--ink-3)}
+
+header{position:sticky;top:0;z-index:20;background:var(--surface);
+  border-bottom:1px solid var(--line);padding:10px 20px}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.crumb{font-size:12px;color:var(--ink-3)}
+h1{margin:0;font-size:19px;font-weight:600;letter-spacing:-.01em}
+.spacer{flex:1 1 auto}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+  padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--done-soft);color:var(--done)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--danger-soft);color:var(--danger)}
+.pill.info{background:var(--accent-soft);color:var(--accent)}
+.pill.mute{background:var(--surface-2);color:var(--ink-2)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.live .dot,.st-working .dot{animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(156px,1fr));
+  gap:10px;padding:14px 20px 2px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:6px;
+  padding:10px 12px;box-shadow:var(--shadow)}
+.stat .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--ink-3);font-weight:700}
+.stat .v{font-size:21px;font-weight:600;margin-top:3px;letter-spacing:-.02em}
+.stat .s{font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.stat.alert{border-color:var(--warn)}.stat.alert .v{color:var(--warn)}
+.stat.good .v{color:var(--done)}
+
+/* agents */
+.agents{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:10px;padding:8px 20px 0}
+.agent{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  padding:11px 13px;box-shadow:var(--shadow);border-left:3px solid var(--line)}
+.agent.st-working{border-left-color:var(--done)}
+.agent.st-active{border-left-color:var(--accent)}
+.agent.st-idle{border-left-color:var(--line);opacity:.82}
+.agent.tree{border-left-color:var(--purple)}
+.agent .top{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.agent .who{font-size:13px;font-weight:600}
+.agent .task{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.agent .now{font-size:12px;color:var(--ink-3);margin-top:7px;padding-top:7px;
+  border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;
+  align-items:center}
+.agent .lbl{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--ink-3)}
+
+.board{display:grid;grid-template-columns:repeat(5,minmax(240px,1fr));gap:10px;
+  padding:8px 20px 18px;align-items:start}
+@media (max-width:1250px){.board{grid-template-columns:repeat(2,minmax(240px,1fr))}}
+@media (max-width:700px){.board{grid-template-columns:1fr}}
+.col{background:var(--col);border-radius:8px;padding:8px;min-width:0}
+.col-head{display:flex;align-items:center;gap:8px;padding:4px 6px 10px}
+.col-title{font-size:11.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink-2)}
+.count{background:var(--surface-2);color:var(--ink-2);font-size:11px;font-weight:700;
+  border-radius:999px;padding:1px 7px}
+.col.blockers .col-title{color:var(--danger)}
+.col.prog .col-title{color:var(--purple)}
+.col.next .col-title{color:var(--accent)}
+.col.done .col-title{color:var(--done)}
+
+.card{background:var(--surface);border-radius:6px;box-shadow:var(--shadow);
+  padding:10px 11px;margin-bottom:8px;border-left:3px solid transparent}
+.card.b-danger{border-left-color:var(--danger)}
+.card.b-accent{border-left-color:var(--accent)}
+.card.b-done{border-left-color:var(--done)}
+.card.b-mute{border-left-color:var(--line)}
+.card.b-purple{border-left-color:var(--purple)}
+.card h3{margin:0 0 6px;font-size:13.5px;font-weight:600;line-height:1.35}
+.card .goal{font-size:12px;color:var(--ink-3);margin:0 0 8px;line-height:1.45}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tag{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:3px;
+  background:var(--surface-2);color:var(--ink-2)}
+.tag.p0{background:var(--danger-soft);color:var(--danger)}
+.tag.p1{background:var(--warn-soft);color:var(--warn)}
+.tag.hi{background:var(--accent-soft);color:var(--accent)}
+.foot{display:flex;align-items:center;gap:8px;margin-top:9px;padding-top:8px;
+  border-top:1px solid var(--line)}
+.key{font-family:ui-monospace,Menlo,monospace;font-size:11px;font-weight:700;
+  color:var(--ink-3)}
+.bar-track{height:5px;background:var(--surface-2);border-radius:3px;overflow:hidden;
+  flex:1;min-width:36px}
+.bar-fill{height:100%;background:var(--accent);border-radius:3px}
+.bar-fill.full{background:var(--done)}
+.pct{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.items{margin:8px 0 0;padding:0;list-style:none}
+.items li{font-size:12px;color:var(--ink-2);padding:3px 0 3px 15px;position:relative;
+  line-height:1.4}
+.items li::before{content:"";position:absolute;left:2px;top:9px;width:5px;height:5px;
+  border-radius:50%;background:var(--ink-3);opacity:.55}
+.items li.chk{padding-left:20px}
+.items li.chk::before{display:none}
+.box{position:absolute;left:0;top:4px;width:13px;height:13px;border-radius:3px;
+  border:1.5px solid var(--ink-3);font-size:9px;line-height:10px;text-align:center;
+  color:transparent}
+.box.on{background:var(--done);border-color:var(--done);color:var(--surface)}
+.empty{font-size:12px;color:var(--ink-3);padding:14px 8px;text-align:center;
+  border:1px dashed var(--line);border-radius:6px}
+
+.panels{display:grid;grid-template-columns:1.25fr 1fr;gap:12px;padding:8px 20px 24px}
+@media (max-width:980px){.panels{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  box-shadow:var(--shadow);overflow:hidden}
+.panel h2{margin:0;font-size:11.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink-2);padding:11px 14px;
+  border-bottom:1px solid var(--line)}
+.panel .body{padding:4px 14px 12px}
+.row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);
+  font-size:12.5px}
+.row:last-child{border-bottom:none}
+.row .sha{font-family:ui-monospace,Menlo,monospace;color:var(--accent);flex:none}
+.row .when{color:var(--ink-3);flex:none;font-variant-numeric:tabular-nums}
+.row .what{color:var(--ink-2);min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;flex:1}
+.kv{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);
+  font-size:12.5px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--ink-3);flex:none;width:120px}
+.kv .v{color:var(--ink-2);flex:1;min-width:0}
+.spark{display:flex;align-items:flex-end;gap:3px;height:42px;padding:10px 14px 4px}
+.spark i{flex:1;background:var(--accent);border-radius:2px 2px 0 0;min-height:2px;
+  opacity:.85}
+.spark i.zero{background:var(--line);opacity:1}
+.sparkx{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-3);
+  padding:0 14px 10px}
+footer{padding:0 20px 26px;font-size:11.5px;color:var(--ink-3);line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <div class="crumb">Collega &nbsp;/&nbsp; Delivery &nbsp;/&nbsp; Pre-MVP sprints</div>
+      <h1>Sprint Board</h1>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill mute">HEAD <code>23f4e17</code></span>
+    <span class="pill bad">1 uncommitted</span>
+    <span class="pill info">branch dev</span>
+    <span class="pill ok live"><span class="dot"></span>live · <span id="cd">60</span>s</span>
+  </div>
+</header>
+
+<div class="stats"><div class="stat "><div class="k">Active sprint</div><div class="v">Sprint 6</div><div class="s">2 of 9 DoD done</div></div><div class="stat "><div class="k">Sprints complete</div><div class="v">5 / 8</div><div class="s">1 in progress · 2 queued</div></div><div class="stat alert"><div class="k">Blockers</div><div class="v">3</div><div class="s">gating work</div></div><div class="stat good"><div class="k">Agents working</div><div class="v">2</div><div class="s">6 session(s) · 0 worktree(s)</div></div><div class="stat "><div class="k">Test suite</div><div class="v">580</div><div class="s">green as of 2026-08-13</div></div><div class="stat alert"><div class="k">Tracker freshness</div><div class="v">stale</div><div class="s">verified @ 00bd6fb vs HEAD 23f4e17</div></div></div>
+
+<h2 class="sec">Agents — who is working on what, right now</h2>
+<div class="agents"><div class="agent st-working"><div class="top"><span class="pill ok live"><span class="dot"></span>working now</span><span class="who">session c4f9a639</span><span class="spacer"></span><span class="pill mute">just now</span></div><div class="task">Create a JIRA like dashboard to monitor work on the current sprint and to monitor what has been done and what is coming up to be worked on. Please refresh it every minute.</div><div class="now"><span class="lbl">last tool</span><code>Bash</code> &nbsp;·&nbsp; <span class="lbl">branch</span><code>dev</code></div></div><div class="agent st-working"><div class="top"><span class="pill ok live"><span class="dot"></span>working now</span><span class="who">session 73978ee2</span><span class="spacer"></span><span class="pill mute">1m ago</span></div><div class="task">start</div><div class="now"><span class="lbl">last tool</span><code>Bash</code> &nbsp;·&nbsp; <span class="lbl">branch</span><code>dev</code></div></div><div class="agent st-idle"><div class="top"><span class="pill mute"><span class="dot"></span>idle</span><span class="who">session 418199c0</span><span class="spacer"></span><span class="pill mute">20h ago</span></div><div class="task">I think I accidently asked to delete the E2E suite and it was removed via commit 3c367f3, is it possible to salvage these and move them back into the dev branch for further development.</div><div class="now"><span class="lbl">last tool</span><code>Bash</code> &nbsp;·&nbsp; <span class="lbl">branch</span><code>dev</code></div></div><div class="agent st-idle"><div class="top"><span class="pill mute"><span class="dot"></span>idle</span><span class="who">session 1f72c26f</span><span class="spacer"></span><span class="pill mute">20h 30m ago</span></div><div class="task">[Request interrupted by user]</div><div class="now"><span class="lbl">last tool</span><code>Bash</code> &nbsp;·&nbsp; <span class="lbl">branch</span><code>dev</code></div></div><div class="agent st-idle"><div class="top"><span class="pill mute"><span class="dot"></span>idle</span><span class="who">session f7884061</span><span class="spacer"></span><span class="pill mute">23h 23m ago</span></div><div class="task">Make sure worktrees cleaned up and feature branches are merged into dev and push it</div><div class="now"><span class="lbl">last tool</span><code>Bash</code> &nbsp;·&nbsp; <span class="lbl">branch</span><code>dev</code></div></div><div class="agent st-idle"><div class="top"><span class="pill mute"><span class="dot"></span>idle</span><span class="who">session f10fdc51</span><span class="spacer"></span><span class="pill mute">23h 23m ago</span></div><div class="task">Another Claude session sent a message: &lt;cross-session-message from=&quot;uds:/tmp/cc-socks/7925.sock&quot; from-name=&quot;Current work status and roadmap&quot; from-mode=&quot;prompting&quot;&gt; Good catch, and agreed — that hazar…</div><div class="now"><span class="lbl">last tool</span><code>Bash</code> &nbsp;·&nbsp; <span class="lbl">branch</span><code>dev</code></div></div></div>
+
+<h2 class="sec">Board</h2>
+<div class="board"><div class="col blockers"><div class="col-head"><span class="col-title">Blockers</span><span class="count">3</span></div><div class="card b-danger"><h3>Slice 0 — Authorization audit</h3><p class="goal">Run this before building the mechanism. It is not a general code-review pass; it answers one bounded question across a known list of call sites, and its answer decides whether the View As design is safe to build on.</p><div class="tags"><span class="tag p0">Blocks Sprint 6</span><span class="tag ">Sprint 6</span></div><div class="foot"><span class="key">GATE-1</span></div></div><div class="card b-purple"><h3>Target Postgres version &amp; host: local postgres:16 in compose is assumed and the Azure guide now targets Azure Database for PostgreSQL Flexible Server (Burstable B1ms); confirm this over a s…</h3><div class="tags"><span class="tag p1">Needs your call</span><span class="tag ">50-postgres-migration.md</span></div><div class="foot"><span class="key">DEC-1</span></div></div><div class="card b-danger"><h3>QA / code review — Partially paid down</h3><p class="goal">Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were never reviewed — still open, and Sprint 6 touches authorization. Boundary: sprints/a…</p><div class="tags"><span class="tag p1">Carried debt</span></div><div class="foot"><span class="key">DEBT-1</span></div></div></div><div class="col "><div class="col-head"><span class="col-title">Backlog</span><span class="count">1</span></div><div class="card b-mute"><h3>Azure deployment (provision + first deploy + CI/CD)</h3><p class="goal">Stand up Collega&#x27;s three tiers on Azure per SPEC/50-azure-deployment.md (Static Web Apps + App Service + Azure Database for PostgreSQL), get a first working deployment end-to-end, and confirm the API CI/CD pipeline (.github/workflows/deploy-api.yml,…</p><div class="tags"><span class="tag ">Sprint 8</span><span class="tag ">Medium</span><span class="tag p0">Hard dependency</span><span class="tag ">Backend / DevOps Developer</span><span class="tag ">QA Developer</span><span class="tag ">Code Reviewer</span></div><ul class="items"><li>P0 — Provision the three tiers</li><li>P0 — App Service configuration</li><li>P0 — First deploy + boot verification</li><li>P0 — CI/CD pipeline wiring</li></ul><div class="foot"><span class="key">SPR-8</span><div class="bar-track"><div class="bar-fill " style="width:0%"></div></div><span class="pct">0/7</span></div></div></div><div class="col next"><div class="col-head"><span class="col-title">Up Next</span><span class="count">1</span></div><div class="card b-accent"><h3>AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, Anthropic package approved)</h3><p class="goal">Replace the scripted nudges in Components/IdeaBrainstormModal.razor with a real model-backed conversation that maps the user&#x27;s answers onto Idea form fields, while keeping the conversation confined to idea drafting for the caller&#x27;s organization. Can…</p><div class="tags"><span class="tag ">Sprint 7</span><span class="tag ">Medium</span><span class="tag ">Backend Developer</span><span class="tag ">UI/UX Developer</span><span class="tag ">QA Developer</span><span class="tag ">Code Reviewer</span></div><ul class="items"><li>P0 — IIdeaDraftModel abstraction (Application) + Anthropic implementation…</li><li>P0 — Per-request JSON Schema from retrieval</li><li>P0 — IdeaAssistService (Application)</li><li>P0 — POST /api/v1/boards/{boardId}/idea-assist/turns</li></ul><div class="foot"><span class="key">SPR-7</span><div class="bar-track"><div class="bar-fill " style="width:17%"></div></div><span class="pct">2/12</span></div></div></div><div class="col prog"><div class="col-head"><span class="col-title">In Progress</span><span class="count">1</span></div><div class="card b-purple"><h3>View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin&#x27;s only org-content mutation path)</h3><p class="goal">Let a privileged user temporarily act in Collega as another user — same role, org scope, and visible data — to reproduce issues, verify permissions, support users, and (decided 2026-08-11) serve as the Site Admin&#x27;s only path for creating/editing org…</p><div class="tags"><span class="tag hi">Sprint 6</span><span class="tag ">Medium</span><span class="tag ">Code Reviewer — pass 1 of…</span><span class="tag ">Backend Developer</span><span class="tag ">Client Developer</span><span class="tag ">QA Developer</span><span class="tag ">Code Reviewer — pass 2 of…</span></div><ul class="items"><li class="chk"><span class="box on">&#10003;</span>All four decisions (D-MODE / D-SCOPE / D-EXPIRE / D-PLACE) locked and recorded 2026-08-11 — see the Decisions section</li><li class="chk"><span class="box ">&#10003;</span>Impersonation mechanism built: scoped, tied to real admin, time-boxed, non-nestable, one-click exit</li><li class="chk"><span class="box ">&#10003;</span>Authorization enforced server-side and covered by an exhaustive who-can-impersonate-whom test matrix</li><li class="chk"><span class="box ">&#10003;</span>Start/exit audited; dual attribution on every mutation performed while acting as</li><li class="chk"><span class="box ">&#10003;</span>Client UI matches the locked comp (control, drawer picker, active banner, rail swap, exit); mutations work under act-as</li><li class="chk"><span class="box ">&#10003;</span>Site Admin direct org-content mutation affordances retired (global views + org-scoped statuses/idea-fields routes read-only for Site Admin); org/user administration confirmed still direct</li><li class="chk"><span class="box ">&#10003;</span><strong>Slice 0 audit complete</strong>: every one of the 23 <code>Role.SiteAdmin</code> branches and the <code>organizationId</code>-taking service methods has a verdict, and anything that scopes off a caller-supplied <code>organizationId</code> rather than <code>ICurrentUserContext</code> is fixed</li><li class="chk"><span class="box ">&#10003;</span>Code Reviewer has signed off (mandatory — security-sensitive)</li><li class="chk"><span class="box on">&#10003;</span><code>SPEC/20-feature-view-as.md</code> written and <code>SPEC/30-Contracts.md</code> gained a &quot;View As Contracts&quot; section (2026-08-13)</li></ul><div class="foot"><span class="key">SPR-6</span><div class="bar-track"><div class="bar-fill " style="width:22%"></div></div><span class="pct">2/9</span></div></div></div><div class="col done"><div class="col-head"><span class="col-title">Done</span><span class="count">5</span></div><div class="card b-done"><h3>PostgreSQL migration (SQL Server → Postgres)</h3><div class="tags"><span class="tag ">Sprint 5</span><span class="tag ">Small–Medium</span><span class="tag ">Backend Developer</span><span class="tag ">QA Developer</span><span class="tag ">Code Reviewer</span></div><div class="foot"><span class="key">SPR-5</span><div class="bar-track"><div class="bar-fill full" style="width:100%"></div></div><span class="pct">9/9</span></div></div><div class="card b-done"><h3>QA/Code-Review debt pass + profile portrait upload + code-review hardening batch (folded in 2026-08-11)</h3><div class="tags"><span class="tag ">Sprint 4</span><span class="tag ">Medium</span><span class="tag ">Code Reviewer</span><span class="tag ">QA Developer</span><span class="tag ">Backend + Client Developer</span></div><div class="foot"><span class="key">SPR-4</span><div class="bar-track"><div class="bar-fill full" style="width:100%"></div></div><span class="pct">7/7</span></div></div><div class="card b-done"><h3>List filter parity (all-column search, tag filter, user-association filter) + server-side sort</h3><div class="tags"><span class="tag ">Sprint 3</span><span class="tag ">Small–Medium</span><span class="tag ">Backend Developer</span><span class="tag ">Client Developer</span><span class="tag ">QA Developer</span></div><div class="foot"><span class="key">SPR-3</span><div class="bar-track"><div class="bar-fill " style="width:0%"></div></div><span class="pct">0/5</span></div></div><div class="card b-done"><h3>Drawer-pattern rollout (Orgs/Users/Statuses/Idea Types/Custom Fields) + Site Admin seed-reset flag</h3><div class="tags"><span class="tag ">Sprint 2</span><span class="tag ">Medium–Large (largest blast radius)</span><span class="tag ">Client Developer</span><span class="tag ">Backend Developer</span><span class="tag ">QA Developer</span><span class="tag ">Code Reviewer</span></div><div class="foot"><span class="key">SPR-2</span><div class="bar-track"><div class="bar-fill " style="width:0%"></div></div><span class="pct">0/9</span></div></div><div class="card b-done"><h3>Bug Triage quick wins + bookkeeping reconciliation</h3><div class="tags"><span class="tag ">Sprint 1</span><span class="tag ">Small</span><span class="tag ">Backend Developer</span><span class="tag ">UI/UX → Client Developer</span><span class="tag ">QA Developer</span></div><div class="foot"><span class="key">SPR-1</span><div class="bar-track"><div class="bar-fill " style="width:0%"></div></div><span class="pct">0/3</span></div></div></div></div>
+
+<div class="panels">
+  <div class="panel">
+    <h2>Recent activity</h2>
+    <div class="spark"><i class="zero" style="height:4%" title="2026-07-24: 0 commits"></i><i class="zero" style="height:4%" title="2026-07-25: 0 commits"></i><i class="zero" style="height:4%" title="2026-07-26: 0 commits"></i><i class="zero" style="height:4%" title="2026-07-27: 0 commits"></i><i class="zero" style="height:4%" title="2026-07-28: 0 commits"></i><i class="zero" style="height:4%" title="2026-07-29: 0 commits"></i><i class="zero" style="height:4%" title="2026-07-30: 0 commits"></i><i class="zero" style="height:4%" title="2026-07-31: 0 commits"></i><i class="zero" style="height:4%" title="2026-08-01: 0 commits"></i><i class="zero" style="height:4%" title="2026-08-02: 0 commits"></i><i class="zero" style="height:4%" title="2026-08-03: 0 commits"></i><i class="zero" style="height:4%" title="2026-08-04: 0 commits"></i><i class="zero" style="height:4%" title="2026-08-05: 0 commits"></i><i class="" style="height:31%" title="2026-08-06: 22 commits"></i><i class="" style="height:18%" title="2026-08-07: 13 commits"></i><i class="" style="height:100%" title="2026-08-08: 71 commits"></i><i class="" style="height:28%" title="2026-08-09: 20 commits"></i><i class="" style="height:87%" title="2026-08-10: 62 commits"></i><i class="" style="height:41%" title="2026-08-11: 29 commits"></i><i class="" style="height:51%" title="2026-08-12: 36 commits"></i><i class="" style="height:7%" title="2026-08-13: 5 commits"></i></div>
+    <div class="sparkx"><span>21 days ago</span><span>commits / day</span><span>today</span></div>
+    <div class="body"><div class="row"><span class="sha">23f4e17</span><span class="when">2026-08-13</span><span class="what">Sprint 6: add Slice 0 — blocking authorization audit before the mechanism</span></div><div class="row"><span class="sha">44932cd</span><span class="when">2026-08-13</span><span class="what">Sprint 6: canonical View As spec + contracts (no implementation)</span></div><div class="row"><span class="sha">00bd6fb</span><span class="when">2026-08-13</span><span class="what">Docs: record the user-secrets trap the Postgres migration leaves behind</span></div><div class="row"><span class="sha">8f3e7dc</span><span class="when">2026-08-13</span><span class="what">Tracker: reconcile to e21c0d0 (bug queue cleared, 580 green)</span></div><div class="row"><span class="sha">e21c0d0</span><span class="when">2026-08-13</span><span class="what">Merge: Bug Triage queue cleared (validation envelope + Geist fonts)</span></div><div class="row"><span class="sha">3be6e1b</span><span class="when">2026-08-12</span><span class="what">UI: move all fonts to Geist, self-hosted</span></div><div class="row"><span class="sha">686e97b</span><span class="when">2026-08-12</span><span class="what">Fix: validation errors reach the client again (runtime-type serialization)</span></div><div class="row"><span class="sha">674ed10</span><span class="when">2026-08-12</span><span class="what">Docs: close out Sprint 5 bookkeeping</span></div><div class="row"><span class="sha">7c5a78b</span><span class="when">2026-08-12</span><span class="what">Merge: Sprint 5 — PostgreSQL migration (SQL Server -&gt; Postgres)</span></div><div class="row"><span class="sha">68a992c</span><span class="when">2026-08-12</span><span class="what">Sprint 5: close both deferred decisions</span></div><div class="row"><span class="sha">6e675d9</span><span class="when">2026-08-12</span><span class="what">Sprint 5: reconcile docs to the restored e2e suite, port it to PostgreSQL</span></div><div class="row"><span class="sha">adc959b</span><span class="when">2026-08-12</span><span class="what">Merge dev into sprint-05-integration (e2e suite restore + spec updates)</span></div><div class="row"><span class="sha">4c21280</span><span class="when">2026-08-12</span><span class="what">Merge: Sprint 5 Unit 6 — restore case-insensitive matching under PostgreSQL</span></div><div class="row"><span class="sha">7f87b7c</span><span class="when">2026-08-12</span><span class="what">Spec updates and ignoring E2E node_modules</span></div></div>
+  </div>
+  <div class="panel">
+    <h2>Ground truth — tracker current status</h2>
+    <div class="body"><div class="kv"><span class="k">MVP epics (T001–T067)</span><span class="v">Merged to dev</span></div><div class="kv"><span class="k">Blazor client</span><span class="v">16 pages, 9 shared components in src/Collega.Client/Components/</span></div><div class="kv"><span class="k">Test suite</span><span class="v">580 green (2026-08-12)</span></div><div class="kv"><span class="k">Sprints</span><span class="v">1–5 complete · 6 in progress · 7–8 not started</span></div><div class="kv"><span class="k">QA / code review</span><span class="v">Partially paid down</span></div><div class="kv"><span class="k">Bug queue</span><span class="v">Empty</span></div><div class="kv"><span class="k">Local DB</span><span class="v">collega-postgres (postgres:16), port 5432, role collega</span></div>
+      <div class="kv"><span class="k">Verified</span><span class="v">2026-08-13 against <code>00bd6fb</code> &nbsp;<span class="pill warn">stale vs HEAD</span></span></div>
+    </div>
+    <h2 style="border-top:1px solid var(--line)">Sprint notes</h2>
+    <div class="body"><div class="kv"><span class="k">Sprint 5 — complete (merged 7c5a78b)</span><span class="v">The InMemory suite sees neither collation, SQL translation, nor DDL — its four defects were invisible to 561 green tests. Post-mortem: sprints/archive/sprint-05-postgres-migration.md.</span></div><div class="kv"><span class="k">Sprint 6 — in progress (started 2026-08-13)</span><span class="v">View As. Spec + contracts written; no implementation code. Next is Slice 0, a blocking authorization audit — View As changes what ICurrentUserContext reports, so any service scoping off a caller-supplied organizationId becomes a cross-org write path. 23 Role.SiteAdmin branches across 11 services; S…</span></div></div>
+    <h2 style="border-top:1px solid var(--line)">Coming up, in order</h2>
+    <div class="body"><div class="kv"><span class="k">Sprint 7</span><span class="v">AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, Anthropic package approved)</span></div><div class="kv"><span class="k">Sprint 8</span><span class="v">Azure deployment (provision + first deploy + CI/CD)</span></div></div>
+    <h2 style="border-top:1px solid var(--line)">Locked decisions</h2>
+    <div class="body"><div class="row"><span class="what">Portrait image library = SkiaSharp.</span></div><div class="row"><span class="what">Site Admin org-content mutation = View As act-as only (Sprint 6, full act-as + dual attribution); no direct create/edit paths, no org dropdowns. Org + user admin stay direct as the bootstrap exception. → 20-feature-client-ui.md.</span></div><div class="row"><span class="what">AI idea drafting = Sprint 7; Anthropic package approved, single platform-level key, dedupe deferred to v2. → 20-feature-ai-idea-assist.md.</span></div><div class="row"><span class="what">New page/flow UI is comp-first.</span></div><div class="row"><span class="what">Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; Status name stays nvarchar(100); status defaults final. → sprints/archive/sprint-04-qa-review-debt.md.</span></div></div>
+  </div>
+</div>
+
+<footer>
+  Generated 2026-08-13 08:29:53 MST from <code>SPEC/95-next-sprints.md</code>,
+  <code>SPEC/sprints/*.md</code>, <code>SPEC/Bug Triage.md</code>,
+  <code>SPEC/implementation-agent-tracker.md</code>, <code>git worktree</code> and
+  local Claude Code session transcripts.<br>
+  Page reloads every 60s; the file behind it is regenerated every 60s by
+  <code>.sprint-dashboard/run.sh</code>.
+</footer>
+
+<script>
+(function(){
+  var k='collega-board-scroll';
+  var y=sessionStorage.getItem(k); if(y) window.scrollTo(0, parseInt(y,10)||0);
+  addEventListener('beforeunload', function(){
+    sessionStorage.setItem(k, String(window.scrollY));
+  });
+  var n=60, el=document.getElementById('cd');
+  setInterval(function(){
+    n--; if(el) el.textContent = n<0 ? 0 : n;
+    if(n<=0) location.reload();
+  }, 1000);
+})();
+</script>
+</body>
+</html>

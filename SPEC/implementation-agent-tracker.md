@@ -29,7 +29,7 @@ Before making any status, planning, or scope claim about this project — in thi
 **The InMemory suite sees neither collation, SQL translation, nor DDL** — its four defects were invisible to 561 green tests. Post-mortem: `sprints/archive/sprint-05-postgres-migration.md`.
 
 ### Sprint 6 — in progress (started 2026-08-13)
-View As. **Spec + contracts written; no implementation code.** Next is **Slice 0, a blocking authorization audit** — View As changes what `ICurrentUserContext` reports, so any service scoping off a caller-supplied `organizationId` becomes a cross-org write path. 23 `Role.SiteAdmin` branches across 11 services; Sprint 4 reviewed one of them. Canonical: `20-feature-view-as.md`; plan: `sprints/sprint-06-view-as.md`.
+View As. Spec + contracts written. **Slice 0 authorization audit complete (2026-08-13): no holes** — every path scopes off `ICurrentUserContext`, which is the single identity chokepoint (nothing outside `API/Authentication/` reads claims). The mechanism is unblocked; **no implementation code yet**. Canonical: `20-feature-view-as.md`; plan + audit result: `sprints/sprint-06-view-as.md`.
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Portrait image library = **SkiaSharp**.
