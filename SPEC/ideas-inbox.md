@@ -30,3 +30,25 @@ Help me come up with a new feature.  The overall idea is that the board is used 
             * Effort (Low, Medium, High)
             * Sprint Tags
             * Status: Pending, Scoping, Development, Review and Complete
+
+---
+
+## Org bootstrap templates
+
+*Parked 2026-08-13 after a brainstorm on "should the Site Admin be able to edit the default statuses?" — explored, recommendation was **don't build now**. Captured so the reasoning isn't re-derived.*
+
+**What is actually hardcoded.** Statuses, Idea Types, and Business Impacts are already fully editable per organization (`StatusesAdmin.razor`, `IdeaTypesAdmin.razor`). The only hardcoded thing is the *starting template* — `OrganizationDefaults` in `Collega.Application/Organizations/`, read in one place (`OrganizationBootstrapService`) at organization-creation time, plus the demo seeder. Any change to it affects only organizations that do not exist yet.
+
+**Three separable features hide under "editable defaults":**
+
+- **A — editable global template.** Site Admin edits the default catalog; applies to future orgs only.
+- **B — multiple starter templates.** Per-vertical sets chosen at org creation. This is where the real product value is, if it ever arrives.
+- **C — retroactive push to existing orgs.** *Rejected, not parked.* Statuses are referenced by ideas and board swimlanes, so a push means rename/merge/conflict handling against live data, and it overwrites deliberate per-org customization.
+
+**Why it was deferred.** Org creation is rare and hand-onboarded by the Site Admin (confirmed 2026-08-13), so the value realized is near zero — and a Site Admin present at every org creation can tune that org's set *in context*, which beats a template guessed in advance. Against that: four test files couple to the constant, `StartupSeeder` gains an ordering dependency on a provisioned catalog, and a new failure mode appears (a bad saved template breaks *every* future org bootstrap, requiring the `MinimumActiveStatusesPerOrganization` floor to be mirrored at template level).
+
+**The deciding argument — no compounding cost of delay.** Because the defaults touch only bootstrap, retrofitting a DB-backed catalog later needs *no data migration for existing organizations*; they already own their rows. The refactor is the same size later as now, with better information. Deferral is free.
+
+**Revisit if either trigger fires:** self-serve organization signup ships (defaults become the first-run experience — and then the right feature is B, not A), or a third organization's starting set has to be hand-fixed.
+
+**Cheapest hedge, if one is ever wanted:** bind `OrganizationDefaults` to `IOptions<T>` from configuration with the current values as the in-code fallback. No table, no migration, no admin page, no new failure surface — but also not a Site Admin feature.

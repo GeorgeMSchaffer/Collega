@@ -80,7 +80,7 @@ Resolved: the canonical default status set stays as the existing 5 (`New/Pending
 Resolved via a second structured interview covering the four items flagged open at the end of the 2026-08-06 spec-audit session.
 
 ### 10. Status Color/SortOrder fields
-Resolved: adopted into the canonical spec now, not deferred until the comp locks. `20-feature-boards-and-statuses.md` gains `Status.Color` (hex/CSS, max 20 chars) and `Status.SortOrder` (int, organization-level catalog order, distinct from a board's independently-reorderable swimlane order). Default `Color`/`SortOrder` values for the 5 canonical default statuses are still unassigned — that specific sub-item remains open (see Remaining MVP Clarifications below).
+Resolved: adopted into the canonical spec now, not deferred until the comp locks. `20-feature-boards-and-statuses.md` gains `Status.Color` (hex/CSS, max 20 chars) and `Status.SortOrder` (int, organization-level catalog order, distinct from a board's independently-reorderable swimlane order). Default `Color`/`SortOrder` values for the 5 canonical default statuses were left unassigned at the time — that sub-item was closed later by item 17 below.
 
 ### 11. Last-status minimum vs. board's 2-swimlane minimum
 Resolved: the organization-wide active-status minimum is raised to 2, matching a board's own swimlane minimum (rather than reusing the 1-active-option minimum pattern from Idea Type/Business Impact). A status delete that would drop an organization below 2 active statuses is rejected regardless of whether that status is currently referenced as a swimlane. Recorded in `20-feature-boards-and-statuses.md`. Note: `comp-c-review-05-admin-statuses.html`'s "last-status guard" demo still shows the old 1-remaining threshold and needs updating to 2 — tracked in `implementation-agent-tracker.md`.
@@ -107,8 +107,13 @@ Resolved: the `errors` object *keys* stay camelCase (matching wire JSON field na
 Found by the Backend Developer agent implementing the Auth Agent slice: `SPEC/10-requirements.md` specified the Development demo password verbatim as `abc123!`, but `SPEC/20-feature-auth.md` requirement #5 requires uppercase + lowercase + numeric + special characters, and `abc123!` has no uppercase. The agent had bypassed policy validation in the seeder to honor the literal value rather than silently resolving the conflict.
 Resolved: changed the demo password to `Abc123!` (minimal change — capitalizes the first letter) everywhere it's referenced, rather than carving out a policy exception. Updated in `10-requirements.md`, `20-feature-auth.md`, `40-test-strategy.md`, `Specs Overview.md`, `SPEC/SPECKIT/specs/002-authentication-and-access/spec.md`, and `src/Collega.Infrastructure/Seeding/StartupSeeder.cs` (`DemoPassword` constant, bypass-justifying doc comment removed since it's no longer needed).
 
+## Decision Log (2026-08-13): Default Status Values
+
+### 17. Default `Status.Color` / `Status.SortOrder` values (closes item 10's open sub-item)
+Resolved: the values shipped with the locked design comps are adopted as canonical — New/Pending `#64748B` (10), In Review `#D97706` (20), In Progress `#2563EB` (30), Client Review `#7C3AED` (40), Complete `#16A34A` (50); `#64748B` doubles as the fallback color for a custom status created without one. This ratifies what `OrganizationDefaults` has provisioned since the Foundation epic and what `implementation-agent-tracker.md` recorded as "status defaults final" on 2026-08-11 — the sub-item was left open here by oversight, so the spec and the tracker disagreed. Recorded in `20-feature-boards-and-statuses.md` "Status Rules" #4; the "working default until formally resolved" hedge in `OrganizationDefaults`'s doc comment is removed. No code or test change — the values are unchanged.
+
 ## Remaining MVP Clarifications
-- Default `Status.Color` and `Status.SortOrder` values for the 5 canonical default statuses (`New/Pending`, `In Review`, `In Progress`, `Client Review`, `Complete`) have not been chosen yet.
+- None currently blocking planning. New questions should be added here when introduced.
 
 ## Remaining Post-MVP Clarifications
 - None currently blocking planning. New questions should be added here when introduced.
