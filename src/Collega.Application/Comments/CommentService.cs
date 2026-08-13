@@ -169,7 +169,10 @@ public sealed class CommentService : ICommentService
     private async Task AuditAsync(string eventType, Idea idea, Guid commentId, Guid actorUserId, string message, DateTime nowUtc, CancellationToken cancellationToken)
     {
         var metadataJson = JsonSerializer.Serialize(new { idea.Id, CommentId = commentId });
-        var auditEvent = AuditEvent.Create(eventType, "Comment", message, nowUtc, idea.OrganizationId, actorUserId, commentId, metadataJson);
+        // Rule 14: while acting as someone, the real administrator is the actor and the target
+        // moves to OnBehalfOfUserId — an audit row must never read as though the target did it.
+        var attribution = _currentUser.AttributeAudit(actorUserId);
+        var auditEvent = AuditEvent.Create(eventType, "Comment", message, nowUtc, idea.OrganizationId, attribution.ActorUserId, commentId, metadataJson, attribution.OnBehalfOfUserId);
         await _auditEventWriter.WriteAsync(auditEvent, cancellationToken);
     }
 

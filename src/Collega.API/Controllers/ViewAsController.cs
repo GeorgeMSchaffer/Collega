@@ -42,8 +42,11 @@ public sealed class ViewAsController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<StartViewAsResponse>> Start(StartViewAsRequest request, CancellationToken cancellationToken)
     {
-        var result = await _viewAsService.StartAsync(request.TargetUserId, cancellationToken);
-        return Ok(new StartViewAsResponse(result.TargetUserId, result.StartedAtUtc, result.ExpiresAtUtc));
+        // TargetUserId is nullable so [RequiredField] actually rejects a missing id with 400; model
+        // validation has already run by the time we get here, so the value is present.
+        var result = await _viewAsService.StartAsync(request.TargetUserId!.Value, cancellationToken);
+        return Ok(new StartViewAsResponse(
+            result.Impersonating, result.RealUser, result.StartedAtUtc, result.ExpiresAtUtc));
     }
 
     /// <summary>

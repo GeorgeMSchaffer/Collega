@@ -167,6 +167,49 @@ public sealed class TokenAuthenticationServiceTests
     }
 
     [Fact]
+    public async Task WhenTheRealAdminIsDemoted_TheSessionEnds()
+    {
+        // Nothing rotates the security stamp when User.Administer changes a role, so the demoted
+        // admin's token stays valid. Without a per-request re-check they would keep operating with
+        // the target's elevated identity until the 2-hour cap — revocation that does not revoke.
+        var org = AddOrg();
+        var admin = AddAdmin();
+        var target = AddUser(org, Role.OrgAdmin);
+        var session = StartSession(admin, target);
+
+        admin.Administer(admin.FirstName, admin.LastName, admin.Email, Role.User, UserStatus.Active, _clock.UtcNow, admin.Id);
+
+        var principal = await Sut.AuthenticateAsync(Token);
+
+        Assert.Equal(admin.Id, principal!.UserId);
+        Assert.Null(principal.Impersonation);
+        Assert.Equal(ImpersonationEndReason.RealUserNoLongerAuthorized, session.EndReason);
+    }
+
+    [Fact]
+    public async Task AnOrgAdminActingOutsideTheirOwnOrganization_HasTheSessionEnded()
+    {
+        // Rule 11 re-applied mid-session: an Org Admin may only ever act within their own
+        // organization, so a session that no longer satisfies that must not survive.
+        var theirOrg = AddOrg();
+        var otherOrg = Organization.Create("Harbor", "Harbor description", "HARB-001", _clock.UtcNow);
+        _orgs.Organizations.Add(otherOrg);
+
+        var admin = Build.User(theirOrg.Id, Role.OrgAdmin);
+        _users.Users.Add(admin);
+        _validator.UserId = admin.Id;
+        _validator.SecurityStamp = admin.SecurityStamp;
+
+        var target = AddUser(otherOrg, Role.User);
+        var session = StartSession(admin, target);
+
+        var principal = await Sut.AuthenticateAsync(Token);
+
+        Assert.Null(principal!.Impersonation);
+        Assert.Equal(ImpersonationEndReason.RealUserNoLongerAuthorized, session.EndReason);
+    }
+
+    [Fact]
     public async Task LastSeenIsNotRewrittenOnEveryRequest()
     {
         // Regression for the review finding that Touch+SaveChanges ran per request, turning every

@@ -103,13 +103,22 @@ public sealed partial class ApiClient
 
     /// <summary>
     /// Idempotent by contract — succeeds whether or not a session was active, so a client that has
-    /// lost track of state can always return to acting as itself. Returns 204, hence the object
-    /// payload type: there is no body to deserialize.
+    /// lost track of state can always return to acting as itself.
     /// </summary>
-    public async Task<ApiResult<object>> EndViewAsAsync(CancellationToken ct = default)
+    /// <remarks>
+    /// Hand-rolled rather than routed through <c>SendAsync&lt;T&gt;</c>, which always calls
+    /// <c>ReadFromJsonAsync</c>. This endpoint answers 204 with an empty body, so that helper threw a
+    /// JsonException the caller never caught — leaving the Exit button stuck reading "Exiting…" while
+    /// the server-side session had in fact closed. Same shape as every other 204 caller in this file.
+    /// </remarks>
+    public async Task<ApiResult<bool>> EndViewAsAsync(CancellationToken ct = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Delete, $"{BasePath}/auth/view-as");
-        return await SendAsync<object>(request, ct);
+        await AttachTokenAsync(request);
+        using var response = await _http.SendAsync(request, ct);
+        return response.IsSuccessStatusCode
+            ? ApiResult<bool>.Success(true, (int)response.StatusCode)
+            : ApiResult<bool>.Failure((int)response.StatusCode, await ReadFailureAsync(request, response, ct));
     }
 
     public async Task<ApiResult<List<UserListItemDto>>> GetAllOrganizationUsersAsync(string organizationId, CancellationToken ct = default)

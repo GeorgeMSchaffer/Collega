@@ -169,4 +169,41 @@ public sealed class BoardServiceTests
         await Assert.ThrowsAsync<NotFoundAppException>(() =>
             sut.ReorderSwimlanesAsync(Guid.NewGuid(), new ReorderSwimlanesCommand(new[] { Lane(_s1, 0), Lane(_s2, 1) })));
     }
+
+    [Fact]
+    public async Task MutationsMadeWhileActingAsSomeone_CarryDualAttribution()
+    {
+        // Rule 14, and the gap the cloud review found: the column, the context property and the
+        // AuditEvent parameter all existed, but only ViewAsService used them. Every other service
+        // recorded _currentUser.UserId — which IS the target while impersonating — so a board created
+        // through View As read as though the target had made it, with the real admin nowhere in the
+        // record. View As is the Site Admin's only path to org content, so this was the primary
+        // administrative path silently mis-attributing every write.
+        var target = Guid.NewGuid();
+        var realAdmin = Guid.NewGuid();
+
+        _currentUser.UserId = target;              // acting identity, exactly as the resolver sets it
+        _currentUser.OrganizationId = _org.Id;
+        _currentUser.Role = Role.OrgAdmin;
+        _currentUser.ImpersonatingRealUserId = realAdmin;
+
+        var sut = CreateSut();
+        await sut.CreateAsync(_org.Id, new CreateBoardCommand("Board", true, new[] { Lane(_s1, 0), Lane(_s2, 1) }));
+
+        var audit = Assert.Single(_audit.Events.Where(e => e.EventType == "BoardCreated"));
+        Assert.Equal(realAdmin, audit.ActorUserId);
+        Assert.Equal(target, audit.OnBehalfOfUserId);
+    }
+
+    [Fact]
+    public async Task MutationsMadeNormally_CarryNoOnBehalfOf()
+    {
+        // The other half: attribution must not be rewritten when nobody is impersonating.
+        var sut = CreateSut();
+        await sut.CreateAsync(_org.Id, new CreateBoardCommand("Board", true, new[] { Lane(_s1, 0), Lane(_s2, 1) }));
+
+        var audit = Assert.Single(_audit.Events.Where(e => e.EventType == "BoardCreated"));
+        Assert.Equal(_currentUser.UserId, audit.ActorUserId);
+        Assert.Null(audit.OnBehalfOfUserId);
+    }
 }

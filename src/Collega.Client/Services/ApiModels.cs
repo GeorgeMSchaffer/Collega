@@ -52,7 +52,16 @@ public sealed record ViewAsCandidateDto(
     string OrganizationName,
     bool Selectable);
 
-public sealed record StartViewAsResponseDto(string TargetUserId, DateTime StartedAtUtc, DateTime ExpiresAtUtc);
+/// <summary>
+/// Response of `POST /auth/view-as`. Carries both identities inline so the banner and rail can be
+/// rendered without a follow-up call; MainLayout still re-reads /auth/me so that one server response
+/// remains the single source of shell state, but the data is here if a consumer wants it.
+/// </summary>
+public sealed record StartViewAsResponseDto(
+    UserSummaryDto Impersonating,
+    UserSummaryDto RealUser,
+    DateTime StartedAtUtc,
+    DateTime ExpiresAtUtc);
 
 /// <summary>Request body for `PUT /api/v1/auth/me/portrait` — Base64 of the raw chosen image file.</summary>
 public sealed record UpdatePortraitRequestDto(string ImageBase64);

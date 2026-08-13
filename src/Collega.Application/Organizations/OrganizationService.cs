@@ -288,7 +288,10 @@ public sealed class OrganizationService : IOrganizationService
         CancellationToken cancellationToken)
     {
         var metadataJson = metadata is null ? null : JsonSerializer.Serialize(metadata);
-        var auditEvent = AuditEvent.Create(eventType, "Organization", message, nowUtc, organizationId, actorUserId, organizationId, metadataJson);
+        // Rule 14: while acting as someone, the real administrator is the actor and the target
+        // moves to OnBehalfOfUserId — an audit row must never read as though the target did it.
+        var attribution = _currentUser.AttributeAudit(actorUserId);
+        var auditEvent = AuditEvent.Create(eventType, "Organization", message, nowUtc, organizationId, attribution.ActorUserId, organizationId, metadataJson, attribution.OnBehalfOfUserId);
         await _auditEventWriter.WriteAsync(auditEvent, cancellationToken);
     }
 }

@@ -129,8 +129,16 @@ public sealed class EfUserRepository : IUserRepository
 
         return await query
             .OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
+            // Capped. The picker is a live search, not a directory listing, and a Site Admin's query
+            // spans every organization — uncapped, the first drawer open (which sends an empty
+            // search) materialises every user in the deployment. Past the cap the admin narrows with
+            // the search box.
+            .Take(ImpersonationCandidateLimit)
             .ToListAsync(cancellationToken);
     }
+
+    /// <summary>Most candidates the View As picker returns in one response.</summary>
+    internal const int ImpersonationCandidateLimit = 200;
 
     public Task<int> CountActiveOrgAdminsAsync(Guid organizationId, Guid? excludingUserId = null, CancellationToken cancellationToken = default) =>
         _dbContext.Users.CountAsync(

@@ -23,6 +23,15 @@
     {
         <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
     }
+    else if (_refused)
+    {
+        @* Site Admin reached this URL directly. Show the reason and a way out — never the form,
+           which would otherwise render empty below the message and offer a Save that cannot work. *@
+        <div class="card formcard">
+            <div class="autherror" role="alert">@_error</div>
+            <div class="btnrow" style="margin-top:12px"><a class="btn" href="@ListUrl">Back to boards</a></div>
+        </div>
+    }
     else
     {
         <div class="card formcard">
@@ -113,12 +122,25 @@
     private bool _loading = true;
     private bool _busy;
     private string? _error;
+    private bool _refused;
 
     private List<StatusItemDto> Available =>
         _allStatuses.Where(s => _selected.All(x => x.StatusId != s.StatusId)).ToList();
 
     protected override async Task OnInitializedAsync()
     {
+        // BoardsAdmin withholds the Add New and Edit links from a Site Admin, but this page is
+        // still reachable by typing the URL. Boards are org content, and View As is the Site
+        // Admin's only path to mutating it (SPEC/20-feature-client-ui.md -> "Site Admin
+        // org-content mutation model"), so refuse before loading anything into the form.
+        if (AuthStateTask is not null && (await AuthStateTask).User.IsInRole("SiteAdmin"))
+        {
+            _error = "Site Admin cannot create or edit boards directly. Use View as… to act as a user in this organization.";
+            _refused = true;
+            _loading = false;
+            return;
+        }
+
         if (!string.IsNullOrEmpty(OrganizationId))
         {
             _organizationId = OrganizationId;

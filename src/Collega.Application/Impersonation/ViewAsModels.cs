@@ -1,3 +1,4 @@
+using Collega.Application.Auth;
 using Collega.Domain.Enums;
 
 namespace Collega.Application.Impersonation;
@@ -12,7 +13,16 @@ public interface IViewAsService
     Task<IReadOnlyList<ViewAsCandidate>> ListCandidatesAsync(string? search, CancellationToken cancellationToken = default);
 }
 
-public sealed record ViewAsSessionResult(Guid TargetUserId, DateTime StartedAtUtc, DateTime ExpiresAtUtc);
+/// <summary>
+/// Response of starting a session. Carries both identities inline, per SPEC/30-Contracts.md → View
+/// As: the caller can render the banner and the rail from this alone, and can confirm the server
+/// still recognises the same real actor, without a follow-up GET /auth/me.
+/// </summary>
+public sealed record ViewAsSessionResult(
+    CurrentUserSummary Impersonating,
+    CurrentUserSummary RealUser,
+    DateTime StartedAtUtc,
+    DateTime ExpiresAtUtc);
 
 /// <summary>
 /// A row in the View As picker. <paramref name="Selectable"/> is false for users the picker shows

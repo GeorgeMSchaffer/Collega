@@ -38,7 +38,7 @@
         </div>
         <div class="cmdbar">
             <ListToolbar TItem="IdeaTypeOptionDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search idea types…" OnChanged="StateHasChanged" />
-            @if (!_siteAdminGlobal)
+            @if (CanMutate)
             {
                 <button class="btn primary" @onclick="StartCreate" disabled="@AnyOpen" style="margin-left:auto">Add New</button>
             }
@@ -53,7 +53,7 @@
         {
             <p class="reorder-hint"><span class="grip"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></span> Drag the handle to reorder idea types. The new-idea form lists them in this order.</p>
         }
-        else if (!_siteAdminGlobal && _types.Count > 1 && !AnyOpen && !_list.ShowsAllInOrder)
+        else if (CanMutate && _types.Count > 1 && !AnyOpen && !_list.ShowsAllInOrder)
         {
             <p class="reorder-hint">Clear the search and show all idea types on one page to reorder them.</p>
         }
@@ -61,7 +61,7 @@
         <div class="card">
             <table>
                 <thead>
-                    <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Idea type</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Fields on this type</th><th>Sort order</th><th></th></tr>
+                    <tr>@if (CanMutate) { <th></th> }<th>Idea type</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Fields on this type</th><th>Sort order</th><th></th></tr>
                 </thead>
                 <tbody>
                     @{ var pageTypes = _list.PageItems; }
@@ -76,7 +76,7 @@
                             @ondragenter="() => OnDragEnter(index)"
                             @ondrop="() => OnDropAsync(index)"
                             @ondragend="OnDragEnd">
-                            @if (!_siteAdminGlobal)
+                            @if (CanMutate)
                             {
                                 <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another idea type to enable reordering")" aria-hidden="true"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></td>
                             }
@@ -94,7 +94,7 @@
                                 }
                                 else
                                 {
-                                    <button class="btn subtle" @onclick="() => OpenDrawer(t)" disabled="@AnyOpen">Edit</button>
+                                    <button class="btn subtle" @onclick="() => OpenDrawer(t)" disabled="@AnyOpen">@(CanMutate ? "Edit" : "Details")</button>
                                 }
                             </td>
                         </tr>
@@ -147,12 +147,19 @@
                 <div>@_selected.SortOrder</div>
             </div>
 
-            <div class="btnrow" style="margin-top:16px">
-                <button class="btn primary" @onclick="BeginDrawerEdit">Edit idea type</button>
-                <button class="btn danger" @onclick="DeleteFromDrawer"
-                        disabled="@(_busy || _types.Count <= 1)"
-                        title="@(_types.Count <= 1 ? "Cannot archive the last remaining idea type; every idea must have one." : null)">Archive</button>
-            </div>
+            @if (CanMutate)
+            {
+                <div class="btnrow" style="margin-top:16px">
+                    <button class="btn primary" @onclick="BeginDrawerEdit">Edit idea type</button>
+                    <button class="btn danger" @onclick="DeleteFromDrawer"
+                            disabled="@(_busy || _types.Count <= 1)"
+                            title="@(_types.Count <= 1 ? "Cannot archive the last remaining idea type; every idea must have one." : null)">Archive</button>
+                </div>
+            }
+            else
+            {
+                <span class="hint" style="margin-top:16px">Read-only. Use <strong>View as…</strong> to act inside this organization.</span>
+            }
         }
     }
 </DrawerShell>
@@ -196,6 +203,12 @@
 
     private string? _organizationId;
     private bool _siteAdminGlobal;
+    private bool _isSiteAdmin;
+
+    // Site Admin has no direct org-content mutation path: View As is the only one
+    // (SPEC/20-feature-client-ui.md -> "Site Admin org-content mutation model"). Gates every
+    // create/edit/archive/reorder affordance here, on BOTH routes.
+    private bool CanMutate => !_isSiteAdmin;
     private readonly Dictionary<string, string> _organizationNames = new();
     private List<IdeaTypeOptionDto> _types = new();
     private ListState<IdeaTypeOptionDto> _list = null!;
@@ -223,7 +236,7 @@
     private int? _fieldDragOverIndex;
 
     private bool AnyOpen => _selected is not null || _showCreate;
-    private bool CanReorder => !_siteAdminGlobal && !AnyOpen && _types.Count > 1 && _list.ShowsAllInOrder;
+    private bool CanReorder => CanMutate && !AnyOpen && _types.Count > 1 && _list.ShowsAllInOrder;
 
     // All-column search text: name + org + sort order + a flat rendering of the type's field selection.
     private string TypeSearchText(IdeaTypeOptionDto t)
@@ -270,16 +283,23 @@
         }
         _loadedOrgKey = key;
 
-        _siteAdminGlobal = false;
+        if (AuthStateTask is not null)
+        {
+            _isSiteAdmin = (await AuthStateTask).User.IsInRole("SiteAdmin");
+        }
+
+        // Role vs view — see the note on CanMutate. _siteAdminGlobal must not gate mutation:
+        // it is false on the org-scoped route, which is exactly where Site Admin used to keep
+        // a full create/edit surface.
+        _siteAdminGlobal = _isSiteAdmin && string.IsNullOrEmpty(OrganizationId);
+
         if (!string.IsNullOrEmpty(OrganizationId))
         {
             _organizationId = OrganizationId;
         }
         else if (AuthStateTask is not null)
         {
-            var user = (await AuthStateTask).User;
-            _organizationId = user.FindFirst("organizationId")?.Value;
-            _siteAdminGlobal = user.IsInRole("SiteAdmin");
+            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
         }
 
         await LoadAsync();

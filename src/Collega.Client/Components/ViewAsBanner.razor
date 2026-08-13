@@ -39,12 +39,21 @@
 
         _exiting = true;
 
-        // Idempotent by contract, so a failure here is a transport problem rather than a state
-        // problem. Reload regardless: the server is authoritative about whether the session is over,
-        // and leaving the banner up on a transient error would be worse than re-asking.
-        await Api.EndViewAsAsync();
+        try
+        {
+            // Idempotent by contract, so a failure here is a transport problem rather than a state
+            // problem. Reload regardless: the server is authoritative about whether the session is
+            // over, and leaving the banner up on a transient error would be worse than re-asking.
+            await Api.EndViewAsAsync();
+        }
+        finally
+        {
+            // In a finally because rule 22 promises the exit affordance always works. If an
+            // exception left this true the button would stay disabled reading "Exiting…" with no way
+            // out but a page reload — the precise failure the persistent banner exists to prevent.
+            _exiting = false;
+        }
 
-        _exiting = false;
         await OnExited.InvokeAsync();
     }
 }

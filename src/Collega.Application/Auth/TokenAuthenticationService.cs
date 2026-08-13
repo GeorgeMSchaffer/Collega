@@ -1,6 +1,7 @@
 using Collega.Application.Abstractions;
 using Collega.Domain.Enums;
 using Collega.Domain.Impersonation;
+using Collega.Domain.Organizations;
 using Collega.Domain.Users;
 
 namespace Collega.Application.Auth;
@@ -115,6 +116,19 @@ public sealed class TokenAuthenticationService : ITokenAuthenticationService
             return null;
         }
 
+        // Rule 11 is a per-request guarantee, not a start-time one. Nothing rotates the security
+        // stamp when an administrator is demoted (User.Administer changes Role and Status but leaves
+        // the stamp alone), so their token stays valid — and without this check a demoted admin would
+        // keep operating with the target's elevated identity until the 2-hour cap. The matrix is
+        // re-applied against the real user's *current* role, exactly as ViewAsService applies it at
+        // start.
+        if (!MayStillActAs(realUser, target, targetOrganization))
+        {
+            session.End(now, ImpersonationEndReason.RealUserNoLongerAuthorized);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            return null;
+        }
+
         // FIX (review): this used to Touch and save on every authenticated request, turning every
         // GET during a session into a database write and a committed transaction. Idle tracking does
         // not need per-request precision — refreshing once the recorded time is more than a quarter
@@ -145,6 +159,20 @@ public sealed class TokenAuthenticationService : ITokenAuthenticationService
                 session.StartedAtUtc,
                 session.AbsoluteExpiresAtUtc));
     }
+
+    /// <summary>
+    /// The rule 8 matrix, re-applied mid-session. Deliberately mirrors ViewAsService.EnsureMayActAs —
+    /// if the two ever disagree, a session could outlive the authority that created it.
+    /// </summary>
+    private static bool MayStillActAs(User realUser, User target, Organization? targetOrganization) =>
+        realUser.Status == UserStatus.Active
+        && realUser.Role switch
+        {
+            Role.SiteAdmin => true,
+            Role.OrgAdmin => realUser.OrganizationId is not null
+                             && realUser.OrganizationId == target.OrganizationId,
+            _ => false,   // User and Read Only may never act as anyone
+        };
 
     private static AuthenticatedPrincipal Principal(User user) => new(
         user.Id, user.OrganizationId, user.Role, user.FirstName, user.LastName, user.Email, user.Status, user.MustChangePassword);

@@ -31,7 +31,10 @@
         </div>
         <div class="cmdbar">
             <ListToolbar TItem="BoardListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search boards…" OnChanged="StateHasChanged" />
-            <a class="btn primary" href="@($"{BoardEditBase}/new")" style="margin-left:auto">Add New</a>
+            @if (CanMutate)
+            {
+                <a class="btn primary" href="@($"{BoardEditBase}/new")" style="margin-left:auto">Add New</a>
+            }
         </div>
         <div class="card">
             <table>
@@ -54,7 +57,12 @@
                                     <span class="pill neutral">Admins only</span>
                                 }
                             </td>
-                            <td><a class="btn subtle" href="@($"{BoardEditBase}/{b.BoardId}")">Edit</a></td>
+                            <td>
+                                @if (CanMutate)
+                                {
+                                    <a class="btn subtle" href="@($"{BoardEditBase}/{b.BoardId}")">Edit</a>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -82,6 +90,13 @@
     private List<BoardListItemDto> _boards = new();
     private bool _loading = true;
     private string? _error;
+    private bool _isSiteAdmin;
+
+    // Site Admin has no direct org-content mutation path: View As is the only one
+    // (SPEC/20-feature-client-ui.md -> "Site Admin org-content mutation model"). Boards are org
+    // content, so Add New and the per-row Edit link are both withheld — on BOTH routes, since a
+    // Site Admin reaches this page via the org-scoped one.
+    private bool CanMutate => !_isSiteAdmin;
 
     private readonly ListState<BoardListItemDto> _list = new()
     {
@@ -95,6 +110,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (AuthStateTask is not null)
+        {
+            _isSiteAdmin = (await AuthStateTask).User.IsInRole("SiteAdmin");
+        }
+
         string? organizationId = !string.IsNullOrEmpty(OrganizationId)
             ? OrganizationId
             : AuthStateTask is not null ? (await AuthStateTask).User.FindFirst("organizationId")?.Value : null;

@@ -403,7 +403,10 @@ public sealed partial class IdeaFieldService : IIdeaFieldService
 
     private async Task AuditAsync(string eventType, string entityType, Guid organizationId, Guid entityId, string message, DateTime nowUtc, CancellationToken cancellationToken)
     {
-        var auditEvent = AuditEvent.Create(eventType, entityType, message, nowUtc, organizationId, _currentUser.UserId, entityId);
+        // Rule 14: while acting as someone, the real administrator is the actor and the target
+        // moves to OnBehalfOfUserId — an audit row must never read as though the target did it.
+        var attribution = _currentUser.AttributeAudit(_currentUser.UserId);
+        var auditEvent = AuditEvent.Create(eventType, entityType, message, nowUtc, organizationId, attribution.ActorUserId, entityId, null, attribution.OnBehalfOfUserId);
         await _auditEventWriter.WriteAsync(auditEvent, cancellationToken);
     }
 }

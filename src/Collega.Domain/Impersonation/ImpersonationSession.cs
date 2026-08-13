@@ -123,5 +123,12 @@ public enum ImpersonationEndReason
     AbsoluteTimeout,
 
     /// <summary>The target stopped being a valid subject — deactivated, or their org archived (rule 12).</summary>
-    TargetNoLongerValid
+    TargetNoLongerValid,
+
+    /// <summary>
+    /// The real administrator no longer satisfies the rule 8 matrix — demoted, deactivated, or moved
+    /// out of the target's organization while the session was live. Revocation has to take effect at
+    /// the next request, not at expiry.
+    /// </summary>
+    RealUserNoLongerAuthorized
 }

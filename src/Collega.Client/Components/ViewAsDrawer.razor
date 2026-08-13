@@ -175,8 +175,17 @@
         _starting = true;
         _error = null;
 
-        var result = await Api.StartViewAsAsync(candidate.UserId);
-        _starting = false;
+        ApiResult<StartViewAsResponseDto> result;
+        try
+        {
+            result = await Api.StartViewAsAsync(candidate.UserId);
+        }
+        finally
+        {
+            // See ViewAsBanner: a stuck flag disables every candidate button until a page reload,
+            // and OnParametersSetAsync does not reset it on close/reopen.
+            _starting = false;
+        }
 
         if (!result.Succeeded)
         {

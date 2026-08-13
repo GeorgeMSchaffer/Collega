@@ -34,7 +34,7 @@
             </div>
         }
         <BackButton />
-        @if (!_isReadOnly)
+        @if (CanMutate)
         {
             <button class="btn primary" style="margin-bottom:14px" @onclick="OpenCreate">+ New idea</button>
         }
@@ -73,13 +73,13 @@
             }
             <span style="margin-left:auto"></span>
             <button class="btn subtle" @onclick="ExportCsv" disabled="@_exporting">@(_exporting ? "Exporting…" : "Export CSV")</button>
-            @if (!_isReadOnly)
+            @if (CanMutate)
             {
                 <button class="btn subtle" @onclick="() => _showImport = !_showImport">@(_showImport ? "Hide import" : "Import CSV")</button>
             }
         </div>
 
-        @if (_showImport && !_isReadOnly)
+        @if (_showImport && CanMutate)
         {
             <div class="card formcard" style="margin-bottom:14px">
                 <h3 style="font-family: var(--font-sans);font-size:16px;margin-bottom:8px">Import ideas from CSV</h3>
@@ -201,7 +201,7 @@
                                 </div>
                             }
                         }
-                        @if (!_isReadOnly)
+                        @if (CanMutate)
                         {
                             <button class="btn subtle" style="width:100%" @onclick="OpenCreate">+ Add idea</button>
                         }
@@ -271,7 +271,7 @@
 
         @if (_ideas.Count == 0)
         {
-            <div class="placeholder"><p>No ideas on this board yet.@(_isReadOnly ? "" : " Use “New idea” to add the first one.")</p></div>
+            <div class="placeholder"><p>No ideas on this board yet.@(CanMutate ? " Use “New idea” to add the first one." : "")</p></div>
         }
     }
 </div>
@@ -298,7 +298,14 @@
     private bool _isAdmin => string.Equals(_role, "OrgAdmin", StringComparison.OrdinalIgnoreCase)
         || string.Equals(_role, "SiteAdmin", StringComparison.OrdinalIgnoreCase);
     private bool _isReadOnly => string.Equals(_role, "ReadOnly", StringComparison.OrdinalIgnoreCase);
-    private bool _canMove => _board is not null && (_board.AllowUserStatusUpdate || _isAdmin) && !_isReadOnly;
+    private bool _isSiteAdmin => string.Equals(_role, "SiteAdmin", StringComparison.OrdinalIgnoreCase);
+
+    // Ideas are org content, and a Site Admin's only path to mutating it is View As
+    // (SPEC/20-feature-client-ui.md -> "Site Admin org-content mutation model"). Ideas.razor
+    // already withholds idea creation from Site Admin for this reason; this board view reached
+    // the same content through a different door. Read Only is excluded as before.
+    private bool CanMutate => !_isReadOnly && !_isSiteAdmin;
+    private bool _canMove => _board is not null && (_board.AllowUserStatusUpdate || _isAdmin) && CanMutate;
 
     private bool _loading = true;
     private string? _error;

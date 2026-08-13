@@ -33,7 +33,7 @@
         </div>
         <div class="cmdbar">
             <ListToolbar TItem="StatusItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search statuses…" OnChanged="StateHasChanged" />
-            @if (!_siteAdminGlobal)
+            @if (CanMutate)
             {
                 <button class="btn primary" @onclick="StartCreate" disabled="@_overlayOpen" style="margin-left:auto">Add New</button>
             }
@@ -48,7 +48,7 @@
         {
             <p class="reorder-hint"><span class="grip"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></span> Drag the handle to reorder statuses. Boards and idea cards list statuses in this order.</p>
         }
-        else if (!_siteAdminGlobal && _statuses.Count > 1 && !_overlayOpen && !_list.ShowsAllInOrder)
+        else if (CanMutate && _statuses.Count > 1 && !_overlayOpen && !_list.ShowsAllInOrder)
         {
             <p class="reorder-hint">Clear the search and show all statuses on one page to reorder them.</p>
         }
@@ -56,7 +56,7 @@
         <div class="card">
             <table>
                 <thead>
-                    <tr>@if (!_siteAdminGlobal) { <th></th> }<th>Status</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Color</th><th>Sort order</th><th></th></tr>
+                    <tr>@if (CanMutate) { <th></th> }<th>Status</th>@if (_siteAdminGlobal) { <th>Organization</th> }<th>Color</th><th>Sort order</th><th></th></tr>
                 </thead>
                 <tbody>
                     @{ var pageStatuses = _list.PageItems; }
@@ -71,7 +71,7 @@
                             @ondragenter="() => OnDragEnter(index)"
                             @ondrop="() => OnDropAsync(index)"
                             @ondragend="OnDragEnd">
-                            @if (!_siteAdminGlobal)
+                            @if (CanMutate)
                             {
                                 <td class="drag-handle" title="@(CanReorder ? "Drag to reorder" : "Add another status to enable reordering")" aria-hidden="true"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" aria-hidden="true" /></td>
                             }
@@ -127,7 +127,10 @@
         {
             <div class="detailhead">
                 <span class="status"><span class="dot" style="background:@_selected.Color"></span>@_selected.Name</span>
-                <button class="btn" @onclick="StartDrawerEdit">Edit status</button>
+                @if (CanMutate)
+                {
+                    <button class="btn" @onclick="StartDrawerEdit">Edit status</button>
+                }
             </div>
 
             <div class="facts">
@@ -141,17 +144,24 @@
                 </div>
             </div>
 
-            <div class="dangerzone">
-                <button class="btn danger" @onclick="DeleteSelected"
-                        disabled="@(_busy || _statuses.Count <= 2)"
-                        title="@(_statuses.Count <= 2 ? "An organization must keep at least two active statuses." : null)">
-                    @(_busy ? "Deleting…" : "Delete status")
-                </button>
-                @if (_statuses.Count <= 2)
-                {
-                    <span class="floorhint">An organization must keep at least two active statuses.</span>
-                }
-            </div>
+            @if (CanMutate)
+            {
+                <div class="dangerzone">
+                    <button class="btn danger" @onclick="DeleteSelected"
+                            disabled="@(_busy || _statuses.Count <= 2)"
+                            title="@(_statuses.Count <= 2 ? "An organization must keep at least two active statuses." : null)">
+                        @(_busy ? "Deleting…" : "Delete status")
+                    </button>
+                    @if (_statuses.Count <= 2)
+                    {
+                        <span class="floorhint">An organization must keep at least two active statuses.</span>
+                    }
+                </div>
+            }
+            else
+            {
+                <span class="floorhint">Read-only. Use <strong>View as…</strong> to act inside this organization.</span>
+            }
         }
         else
         {
@@ -218,6 +228,12 @@
 
     private string? _organizationId;
     private bool _siteAdminGlobal;
+    private bool _isSiteAdmin;
+
+    // Site Admin has no direct org-content mutation path: View As is the only one
+    // (SPEC/20-feature-client-ui.md -> "Site Admin org-content mutation model"). This gates every
+    // create/edit/delete/reorder affordance on this page, on BOTH routes.
+    private bool CanMutate => !_isSiteAdmin;
     private readonly Dictionary<string, string> _organizationNames = new();
     private List<StatusItemDto> _statuses = new();
     private ListState<StatusItemDto> _list = null!;
@@ -244,7 +260,7 @@
     // Reordering is a per-org action; it's meaningless in the Site-Admin cross-org list, while an overlay
     // is open, or with a single row. The active-status floor (2) already keeps the org list from shrinking
     // below reorderable size.
-    private bool CanReorder => !_siteAdminGlobal && !_overlayOpen && _statuses.Count > 1 && _list.ShowsAllInOrder;
+    private bool CanReorder => CanMutate && !_overlayOpen && _statuses.Count > 1 && _list.ShowsAllInOrder;
 
     // Edit-mode action bar; passed as the drawer footer only while editing.
     private RenderFragment RenderEditFooter => @<text>
@@ -281,16 +297,24 @@
         }
         _loadedOrgKey = key;
 
-        _siteAdminGlobal = false;
+        if (AuthStateTask is not null)
+        {
+            _isSiteAdmin = (await AuthStateTask).User.IsInRole("SiteAdmin");
+        }
+
+        // Two distinct things, deliberately not one flag: _isSiteAdmin is the *role* and holds on
+        // both routes; _siteAdminGlobal is the *view* — the cross-org aggregate, which only exists
+        // when the route carries no organization. Mutation gates read the role (see CanMutate);
+        // only presentation reads the view.
+        _siteAdminGlobal = _isSiteAdmin && string.IsNullOrEmpty(OrganizationId);
+
         if (!string.IsNullOrEmpty(OrganizationId))
         {
             _organizationId = OrganizationId;
         }
         else if (AuthStateTask is not null)
         {
-            var user = (await AuthStateTask).User;
-            _organizationId = user.FindFirst("organizationId")?.Value;
-            _siteAdminGlobal = user.IsInRole("SiteAdmin");
+            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
         }
 
         await LoadAsync();

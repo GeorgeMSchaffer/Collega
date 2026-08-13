@@ -1,4 +1,5 @@
 using Collega.Application.Abstractions;
+using Collega.Application.Auth;
 using Collega.Application.Exceptions;
 using Collega.Domain.Enums;
 using Collega.Domain.Impersonation;
@@ -65,7 +66,7 @@ public sealed class ViewAsService : IViewAsService
         {
             if (existing.IsActiveAt(now))
             {
-                throw new ConflictAppException("You are already viewing as another user. Exit that session first.");
+                throw new ConflictAppException(AlreadyViewingAs);
             }
 
             // Open but expired. It must be closed here rather than left behind: two rows with a null
@@ -96,9 +97,21 @@ public sealed class ViewAsService : IViewAsService
         await AuditAsync("ViewAsStarted", $"{Describe(realUser)} started viewing as {Describe(target)}.",
             now, target.OrganizationId, realUser.Id, target.Id, cancellationToken);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex) when (IsOpenSessionUniqueViolation(ex))
+        {
+            // The check above is a read-then-write, so two concurrent starts can both pass it. The
+            // filtered unique index is what actually enforces non-nestability; this turns the loser's
+            // constraint violation into the same 409 the caller would have got had it seen the other
+            // session, instead of an opaque 500.
+            throw new ConflictAppException(AlreadyViewingAs);
+        }
 
-        return new ViewAsSessionResult(target.Id, session.StartedAtUtc, session.AbsoluteExpiresAtUtc);
+        return new ViewAsSessionResult(
+            Summarize(target), Summarize(realUser), session.StartedAtUtc, session.AbsoluteExpiresAtUtc);
     }
 
     /// <summary>Idempotent (contract): ending with no active session is a success, not an error.</summary>
@@ -181,9 +194,14 @@ public sealed class ViewAsService : IViewAsService
     }
 
     /// <summary>
-    /// The authorization matrix (rule 8). Every refusal returns the same message so the endpoint
-    /// cannot be used to probe whether a user exists, what role they hold, or which organization
-    /// they belong to.
+    /// The authorization matrix (rule 8). Every refusal <i>this method makes</i> returns the same
+    /// message, so a caller cannot tell an out-of-organization target from a Site Admin, an inactive
+    /// account, or an archived organization.
+    ///
+    /// <para>Note the narrower scope: an id that names no user at all returns 404 from the caller,
+    /// not 403, exactly as SPEC/30-Contracts.md specifies. So a caller who already holds a candidate
+    /// id can still distinguish "no such user" from "exists but forbidden". That is contract
+    /// behaviour rather than an oversight, and closing it would need the spec changed first.</para>
     /// </summary>
     private void EnsureMayActAs(User realUser, Role realRole, User target, Organization? targetOrganization)
     {
@@ -245,7 +263,31 @@ public sealed class ViewAsService : IViewAsService
         return _audit.WriteAsync(auditEvent, cancellationToken);
     }
 
+    /// <summary>Same shape GET /auth/me returns, so a client can bind both with one type.</summary>
+    private static CurrentUserSummary Summarize(User user) => new(
+        user.Id, user.OrganizationId, user.Role.ToString(),
+        user.FirstName, user.LastName, user.Email, user.Status.ToString());
+
     private static string Describe(User user) => $"{user.FirstName} {user.LastName}".Trim();
 
     private const string NotAllowed = "You are not allowed to view as that user.";
+    private const string AlreadyViewingAs = "You are already viewing as another user. Exit that session first.";
+
+    /// <summary>
+    /// Recognises the open-session unique-index violation without taking a dependency on Npgsql from
+    /// the Application layer — matched on the constraint name, which is stable and named in the
+    /// EF configuration.
+    /// </summary>
+    private static bool IsOpenSessionUniqueViolation(Exception ex)
+    {
+        for (var e = ex; e is not null; e = e.InnerException)
+        {
+            if (e.Message.Contains("ux_impersonation_sessions_real_user_id_open", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

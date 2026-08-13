@@ -82,7 +82,7 @@ public sealed class ViewAsServiceTests
 
         var result = await Sut.StartAsync(target.Id);
 
-        Assert.Equal(target.Id, result.TargetUserId);
+        Assert.Equal(target.Id, result.Impersonating.UserId);
         Assert.Single(_sessions.Sessions);
     }
 
@@ -95,7 +95,7 @@ public sealed class ViewAsServiceTests
 
         var result = await Sut.StartAsync(target.Id);
 
-        Assert.Equal(target.Id, result.TargetUserId);
+        Assert.Equal(target.Id, result.Impersonating.UserId);
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public sealed class ViewAsServiceTests
     }
 
     [Fact]
-    public async Task RefusalsAreIndistinguishable_SoTheEndpointCannotBeUsedToProbe()
+    public async Task AuthorizationRefusals_AreIndistinguishableFromEachOther()
     {
         // A caller must not be able to tell "no such user" from "exists but forbidden", or learn a
         // target's role or organization by comparing messages.
@@ -247,7 +247,7 @@ public sealed class ViewAsServiceTests
         // Not a conflict: the old row is open but no longer live, so it must not wedge the admin out
         // of starting a new session.
         var result = await Sut.StartAsync(second.Id);
-        Assert.Equal(second.Id, result.TargetUserId);
+        Assert.Equal(second.Id, result.Impersonating.UserId);
 
         // The stale row must be *closed*, not merely ignored. Two rows with a null ended_at_utc for
         // one administrator violate ux_impersonation_sessions_real_user_id_open, so leaving it open

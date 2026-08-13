@@ -43,7 +43,7 @@
                 <input type="checkbox" checked="@_showArchived" @onchange="OnToggleArchived" disabled="@_busy" />
                 Show archived
             </label>
-            @if (!_siteAdminGlobal)
+            @if (CanMutate)
             {
                 <button class="btn primary" @onclick="StartCreate" disabled="@_busy" style="margin-left:auto">Add New</button>
             }
@@ -88,18 +88,24 @@
                                 }
                                 else if (!f.IsDeleted)
                                 {
-                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(f, -1)" disabled="@(_busy || !ReorderEnabled || !CanMoveUp(f))" title="@ReorderTitle("up")" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
-                                    <button class="btn subtle iconbtn" @onclick="() => MoveField(f, 1)" disabled="@(_busy || !ReorderEnabled || !CanMoveDown(f))" title="@ReorderTitle("down")" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
-                                    <button class="btn subtle" @onclick="() => OpenField(f)" disabled="@_busy">Details</button>
-                                    @if (_confirmDeleteId == f.FieldDefinitionId)
+                                    @if (CanMutate)
                                     {
-                                        <span class="confirm">Archive? Existing values stay but are hidden.</span>
-                                        <button class="btn danger" @onclick="() => Delete(f)" disabled="@_busy">Confirm</button>
-                                        <button class="btn subtle" @onclick="() => _confirmDeleteId = null" disabled="@_busy">No</button>
+                                        <button class="btn subtle iconbtn" @onclick="() => MoveField(f, -1)" disabled="@(_busy || !ReorderEnabled || !CanMoveUp(f))" title="@ReorderTitle("up")" aria-label="Move up"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowUp())" aria-hidden="true" /></button>
+                                        <button class="btn subtle iconbtn" @onclick="() => MoveField(f, 1)" disabled="@(_busy || !ReorderEnabled || !CanMoveDown(f))" title="@ReorderTitle("down")" aria-label="Move down"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowDown())" aria-hidden="true" /></button>
                                     }
-                                    else
+                                    <button class="btn subtle" @onclick="() => OpenField(f)" disabled="@_busy">Details</button>
+                                    @if (CanMutate)
                                     {
-                                        <button class="btn danger" @onclick="() => _confirmDeleteId = f.FieldDefinitionId" disabled="@_busy">Archive</button>
+                                        @if (_confirmDeleteId == f.FieldDefinitionId)
+                                        {
+                                            <span class="confirm">Archive? Existing values stay but are hidden.</span>
+                                            <button class="btn danger" @onclick="() => Delete(f)" disabled="@_busy">Confirm</button>
+                                            <button class="btn subtle" @onclick="() => _confirmDeleteId = null" disabled="@_busy">No</button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn danger" @onclick="() => _confirmDeleteId = f.FieldDefinitionId" disabled="@_busy">Archive</button>
+                                        }
                                     }
                                 }
                             </td>
@@ -164,9 +170,16 @@
                 }
             </dl>
 
-            <div class="btnrow" style="margin-top:6px">
-                <button class="btn" @onclick="BeginEdit" disabled="@_busy">Edit field</button>
-            </div>
+            @if (CanMutate)
+            {
+                <div class="btnrow" style="margin-top:6px">
+                    <button class="btn" @onclick="BeginEdit" disabled="@_busy">Edit field</button>
+                </div>
+            }
+            else
+            {
+                <span class="hint" style="margin-top:6px">Read-only. Use <strong>View as…</strong> to act inside this organization.</span>
+            }
         }
         else
         {
@@ -223,12 +236,18 @@
 
     private string? _organizationId;
     private bool _siteAdminGlobal;
+    private bool _isSiteAdmin;
+
+    // Site Admin has no direct org-content mutation path: View As is the only one
+    // (SPEC/20-feature-client-ui.md -> "Site Admin org-content mutation model"). Gates every
+    // create/edit/archive/reorder affordance here, on BOTH routes.
+    private bool CanMutate => !_isSiteAdmin;
     private readonly Dictionary<string, string> _organizationNames = new();
     private List<FieldDefinitionDto> _fields = new();
     private ListState<FieldDefinitionDto> _list = null!;
 
     // Move up/down only makes sense against the full list in order — disable when searching or paged.
-    private bool ReorderEnabled => !_siteAdminGlobal && _list.ShowsAllInOrder;
+    private bool ReorderEnabled => CanMutate && _list.ShowsAllInOrder;
 
     private string ReorderTitle(string direction) =>
         ReorderEnabled ? $"Move {direction}" : "Clear the search and show all fields on one page to reorder";
@@ -341,16 +360,22 @@
         }
         _loadedOrgKey = key;
 
-        _siteAdminGlobal = false;
+        if (AuthStateTask is not null)
+        {
+            _isSiteAdmin = (await AuthStateTask).User.IsInRole("SiteAdmin");
+        }
+
+        // Role vs view — see the note on CanMutate. _siteAdminGlobal is false on the org-scoped
+        // route, so it must never gate mutation.
+        _siteAdminGlobal = _isSiteAdmin && string.IsNullOrEmpty(OrganizationId);
+
         if (!string.IsNullOrEmpty(OrganizationId))
         {
             _organizationId = OrganizationId;
         }
         else if (AuthStateTask is not null)
         {
-            var user = (await AuthStateTask).User;
-            _organizationId = user.FindFirst("organizationId")?.Value;
-            _siteAdminGlobal = user.IsInRole("SiteAdmin");
+            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
         }
 
         await LoadAsync();

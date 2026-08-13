@@ -1,3 +1,4 @@
+using Collega.Application.Auth;
 using Collega.API.Validation;
 
 namespace Collega.API.Contracts.Auth;
@@ -6,10 +7,21 @@ namespace Collega.API.Contracts.Auth;
 public sealed class StartViewAsRequest
 {
     [RequiredField]
-    public Guid TargetUserId { get; set; }
+    // Nullable on purpose. RequiredAttribute only rejects null, so on a non-nullable Guid the
+    // annotation was a no-op: a missing or empty id bound to Guid.Empty, passed validation, and came
+    // back 404 from the repository instead of the 400 the contract specifies.
+    public Guid? TargetUserId { get; set; }
 }
 
-public sealed record StartViewAsResponse(Guid TargetUserId, DateTime StartedAtUtc, DateTime ExpiresAtUtc);
+/// <summary>
+/// Matches SPEC/30-Contracts.md → View As: both identities inline so the caller does not need a
+/// follow-up GET /auth/me to render the banner.
+/// </summary>
+public sealed record StartViewAsResponse(
+    CurrentUserSummary Impersonating,
+    CurrentUserSummary RealUser,
+    DateTime StartedAtUtc,
+    DateTime ExpiresAtUtc);
 
 /// <summary>
 /// A picker row. <c>Selectable</c> is false for users shown but not actionable — inactive accounts

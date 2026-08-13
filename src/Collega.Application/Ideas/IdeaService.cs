@@ -1388,7 +1388,10 @@ public sealed class IdeaService : IIdeaService
     private async Task AuditAsync(string eventType, Idea idea, Guid? actorUserId, string message, DateTime nowUtc, object? metadata, CancellationToken cancellationToken)
     {
         var metadataJson = metadata is null ? null : JsonSerializer.Serialize(metadata);
-        var auditEvent = AuditEvent.Create(eventType, "Idea", message, nowUtc, idea.OrganizationId, actorUserId, idea.Id, metadataJson);
+        // Rule 14: while acting as someone, the real administrator is the actor and the target
+        // moves to OnBehalfOfUserId — an audit row must never read as though the target did it.
+        var attribution = _currentUser.AttributeAudit(actorUserId);
+        var auditEvent = AuditEvent.Create(eventType, "Idea", message, nowUtc, idea.OrganizationId, attribution.ActorUserId, idea.Id, metadataJson, attribution.OnBehalfOfUserId);
         await _auditEventWriter.WriteAsync(auditEvent, cancellationToken);
     }
 
