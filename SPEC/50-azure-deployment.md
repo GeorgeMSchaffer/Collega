@@ -208,11 +208,11 @@ az webapp log tail --name $API_APP --resource-group $RG
 The WASM client reads its API base URL **at runtime** from a static file in `wwwroot`, so you
 point it at the deployed API by adding a Production settings file — no rebuild logic required.
 
-### 6.1 Add the production API URL
+### 6.1 Set the production API URL
 
-Create `src/Collega.Client/wwwroot/appsettings.Production.json` (the WASM host loads
-`appsettings.json` then `appsettings.{Environment}.json`, and a published app runs as
-`Production`):
+`src/Collega.Client/wwwroot/appsettings.Production.json` **already exists in the repo** with a
+placeholder host — edit it, don't create it. (The WASM host loads `appsettings.json` then
+`appsettings.{Environment}.json`, and a published app runs as `Production`.)
 
 ```json
 {
@@ -226,7 +226,15 @@ Create `src/Collega.Client/wwwroot/appsettings.Production.json` (the WASM host l
 }
 ```
 
-Replace `<API_APP>` with the real API host. Commit this file.
+Replace the placeholder `BaseUrl` with the real API host and commit. Leaving it unedited ships a
+frontend that calls a nonexistent host over plain HTTP — every request fails on mixed content.
+
+### 6.1a SPA routing fallback (already in the repo)
+
+`src/Collega.Client/wwwroot/staticwebapp.config.json` gives Static Web Apps a navigation fallback
+to `/index.html`. Blazor WASM routes on the client, so **without it every deep link and every
+browser refresh returns 404** — Blazor's publish does not generate this file. It needs no editing;
+it is listed here so it is not mistaken for stray config and deleted.
 
 ### 6.2 Create the Static Web App (GitHub-connected)
 

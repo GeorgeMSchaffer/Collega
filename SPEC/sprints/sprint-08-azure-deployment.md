@@ -27,8 +27,25 @@ Stand up Collega's three tiers on Azure per `SPEC/50-azure-deployment.md` (Stati
 | P0 | App Service configuration | Required settings (`ConnectionStrings__DefaultConnection` in Npgsql format, `SiteAdmin__Email/Password`) + recommended (`ASPNETCORE_ENVIRONMENT=Production`, `Cors__AllowedOrigins__0`, `Auth__TokenSigningKey`) — §3 |
 | P0 | First deploy + boot verification | API connects to Postgres, runs migrations, seeds Site Admin; frontend loads and calls the API without CORS errors — §5–7 |
 | P0 | CI/CD pipeline wiring | `AZURE_WEBAPP_PUBLISH_PROFILE` secret + `AZURE_WEBAPP_NAME` variable; confirm push-to-`main` deploys — `SPEC/50-azure-api-cicd.md` |
-| P1 | Post-deploy checklist pass | Every box in `SPEC/50-azure-deployment.md` §7 verified live (sign-in, forced password change, token stability across restart) |
+| P0 | Make portrait upload work on Linux App Service | `Collega.Infrastructure.csproj` references `SkiaSharp 2.88.8` with **no Linux native assets**, which that package does not bundle. The API boots fine (the processor is a lazily-used singleton), then the first avatar upload throws `DllNotFoundException: libSkiaSharp` at `SkiaSharpImageProcessor.Decode`. See "Image processing on Linux" below for the options — **needs a decision before the first deploy**, not after. |
+| P1 | Post-deploy checklist pass | Every box in `SPEC/50-azure-deployment.md` §7 verified live (sign-in, forced password change, token stability across restart) — **include a portrait upload**, which the existing checklist does not cover |
 | P2 | Hardening follow-ups (as time allows) | Key Vault for secrets, Private Access (VNet) for the DB, least-privilege DB role — `SPEC/50-azure-deployment.md` §8; can be deferred to a post-MVP hardening pass if scope-constrained |
+
+## Image processing on Linux — decision needed
+Raised 2026-08-13 while walking the deployment guide. **The problem is packaging, not the library.**
+SkiaSharp is fully cross-platform; the `SkiaSharp` NuGet package simply ships native binaries for
+Windows and macOS only, and Linux native assets come from a separate companion package. Nothing
+about `SKBitmap` is Windows-specific, so this is not evidence that the library choice was wrong.
+
+| Option | Cost | Notes |
+|---|---|---|
+| **A — add `SkiaSharp.NativeAssets.Linux.NoDependencies`** (recommended) | One `PackageReference`; no code change | Keeps the tracker's locked "Portrait image library = SkiaSharp" decision intact. The `NoDependencies` variant is correct here because `SkiaSharpImageProcessor` only decodes/resizes/encodes and never renders text, so it does not need the host's fontconfig/freetype. **Requires package approval per `CLAUDE.md`.** |
+| B — deploy the API on **Windows** App Service instead of Linux | No code or package change | Same or higher cost; narrows platform options later. Sidesteps rather than fixes. |
+| C — swap to another imaging library (e.g. ImageSharp) | Rewrite `SkiaSharpImageProcessor` + its tests | **Reverses a locked decision to solve a problem Option A already solves**, and still adds a NuGet dependency — one with commercial-use licensing terms to review. Only justified if a second, independent reason to leave SkiaSharp appears. |
+
+Recommendation: **Option A**. Whichever is chosen, delete the other rows and record the outcome in
+`SPEC/implementation-agent-tracker.md`'s locked-decisions block — replacing the existing SkiaSharp
+line if it changes, per that file's "delete reversed decisions" rule.
 
 ## Risks
 | Risk | Impact | Mitigation |
@@ -37,6 +54,7 @@ Stand up Collega's three tiers on Azure per `SPEC/50-azure-deployment.md` (Stati
 | `Auth__TokenSigningKey` left unset | Every App Service restart/scale logs all users out | It's on the §3 recommended list and the §7 checklist — verify token survives a restart |
 | CORS origin not set after SWA host is known | Frontend can't call the API at all | §6.3 closes the CORS loop explicitly; the checklist confirms 200s in the network tab |
 | Postgres Flexible Server has no auto-pause (unlike Azure SQL) | Unexpected always-on compute cost | Documented in the guide (§1/§9); stop the server when idle on dev |
+| Missing SkiaSharp Linux native assets ship undetected | Portrait upload 500s in production while every test stays green — the whole suite runs on hosts whose SkiaSharp package **does** carry native binaries, so no test can catch this | Resolve the decision above **before** first deploy; add a portrait upload to the §7 post-deploy checklist |
 
 ## Definition of Done
 - [ ] Sprint 5 fully complete and verified (this sprint's precondition) before any task started
