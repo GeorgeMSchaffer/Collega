@@ -184,6 +184,36 @@ public sealed class ViewAsServiceTests
         Assert.Single(messages.Distinct());
     }
 
+    [Fact]
+    public async Task ArchivedOrganization_IsNotAValidTarget()
+    {
+        // Rule 12, and the gap the code review found: the picker greyed these out but the
+        // authorization path did not check, so POSTing a target id directly succeeded. Archiving is
+        // how an organization is decommissioned — it already invalidates the invite code and blocks
+        // self-registration — so acting inside one has to be refused too.
+        var admin = AddSiteAdmin();
+        var target = AddUser(Harbor, Role.User);
+        Harbor.Archive(_clock.UtcNow, admin.Id);
+        ActingAs(admin);
+
+        await Assert.ThrowsAsync<ForbiddenAppException>(() => Sut.StartAsync(target.Id));
+        Assert.Empty(_sessions.Sessions);
+    }
+
+    [Fact]
+    public async Task ArchivedOrganizationCandidates_AreListedButNotSelectable()
+    {
+        var admin = AddSiteAdmin();
+        var target = AddUser(Harbor, Role.User);
+        Harbor.Archive(_clock.UtcNow, admin.Id);
+        ActingAs(admin);
+
+        var candidates = await Sut.ListCandidatesAsync(null);
+
+        var entry = Assert.Single(candidates.Where(c => c.UserId == target.Id));
+        Assert.False(entry.Selectable);
+    }
+
     // ---- Invariants ----
 
     [Fact]
@@ -218,6 +248,12 @@ public sealed class ViewAsServiceTests
         // of starting a new session.
         var result = await Sut.StartAsync(second.Id);
         Assert.Equal(second.Id, result.TargetUserId);
+
+        // The stale row must be *closed*, not merely ignored. Two rows with a null ended_at_utc for
+        // one administrator violate ux_impersonation_sessions_real_user_id_open, so leaving it open
+        // would fail against a real database while passing here — the fake models no index.
+        Assert.Single(_sessions.Sessions.Where(x => x.EndedAtUtc is null));
+        Assert.Equal(ImpersonationEndReason.AbsoluteTimeout, _sessions.Sessions[0].EndReason);
     }
 
     [Fact]
@@ -229,6 +265,22 @@ public sealed class ViewAsServiceTests
         await Sut.EndAsync();   // must not throw — contract says 204 either way
 
         Assert.Empty(_audit.Events.Where(e => e.EventType == "ViewAsEnded"));
+    }
+
+    [Fact]
+    public async Task ExitingAnAlreadyExpiredSession_RecordsTheTimeout_NotAUserExit()
+    {
+        // end_reason is an accountability field. Recording ExitedByUser for a session that actually
+        // timed out would put a claim in the record that is simply untrue.
+        var admin = AddSiteAdmin();
+        var target = AddUser(Acme, Role.User);
+        ActingAs(admin);
+
+        await Sut.StartAsync(target.Id);
+        _clock.UtcNow = _clock.UtcNow.Add(ImpersonationSession.AbsoluteLifetime).AddMinutes(1);
+        await Sut.EndAsync();
+
+        Assert.Equal(ImpersonationEndReason.AbsoluteTimeout, _sessions.Sessions[0].EndReason);
     }
 
     // ---- Attribution (rules 13-14) ----

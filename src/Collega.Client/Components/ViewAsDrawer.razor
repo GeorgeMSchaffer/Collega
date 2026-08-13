@@ -1,4 +1,5 @@
 @using Collega.Client.Services
+@implements IDisposable
 @inject ApiClient Api
 
 @* Picker for View As (SPEC/20-feature-view-as.md rule 21). Uses the shared DrawerShell so it
@@ -98,18 +99,48 @@
         }
     }
 
+    /// <summary>
+    /// Debounced: without this every keystroke issued its own request, so typing a six-letter name
+    /// ran the candidate query six times. The cancellation below already stopped stale results from
+    /// painting, but it did not stop the requests being sent or the server doing the work.
+    /// </summary>
     private async Task OnSearchInput(ChangeEventArgs e)
     {
         _search = e.Value?.ToString() ?? string.Empty;
-        await LoadAsync();
+
+        var cts = ResetSearchCts();
+        try
+        {
+            await Task.Delay(SearchDebounce, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            // Superseded by a later keystroke — that one owns the request now.
+            return;
+        }
+
+        await LoadAsync(cts);
     }
 
-    private async Task LoadAsync()
+    private static readonly TimeSpan SearchDebounce = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>Cancels and disposes any in-flight search, and installs a fresh token source.</summary>
+    private CancellationTokenSource ResetSearchCts()
     {
-        _searchCts?.Cancel();
+        var previous = _searchCts;
         var cts = new CancellationTokenSource();
         _searchCts = cts;
 
+        previous?.Cancel();
+        previous?.Dispose();
+
+        return cts;
+    }
+
+    private Task LoadAsync() => LoadAsync(ResetSearchCts());
+
+    private async Task LoadAsync(CancellationTokenSource cts)
+    {
         _loading = true;
         _error = null;
 
@@ -162,4 +193,12 @@
 
     private static string Initials(ViewAsCandidateDto c) =>
         $"{(c.FirstName.Length > 0 ? c.FirstName[0] : ' ')}{(c.LastName.Length > 0 ? c.LastName[0] : ' ')}".Trim().ToUpperInvariant();
+
+    /// <summary>Disposes the last token source; the superseded ones are disposed as they are replaced.</summary>
+    public void Dispose()
+    {
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = null;
+    }
 }

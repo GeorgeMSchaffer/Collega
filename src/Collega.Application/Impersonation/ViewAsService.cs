@@ -2,6 +2,7 @@ using Collega.Application.Abstractions;
 using Collega.Application.Exceptions;
 using Collega.Domain.Enums;
 using Collega.Domain.Impersonation;
+using Collega.Domain.Organizations;
 using Collega.Domain.Auditing;
 using Collega.Domain.Users;
 
@@ -56,19 +57,37 @@ public sealed class ViewAsService : IViewAsService
             throw new ForbiddenAppException(NotAllowed);
         }
 
+        var now = _clock.UtcNow;
+
         // Rule 5: never silently replaced. A caller already acting as someone must exit first.
         var existing = await _sessions.GetOpenForRealUserAsync(realUser.Id, cancellationToken);
-        if (existing is not null && existing.IsActiveAt(_clock.UtcNow))
+        if (existing is not null)
         {
-            throw new ConflictAppException("You are already viewing as another user. Exit that session first.");
+            if (existing.IsActiveAt(now))
+            {
+                throw new ConflictAppException("You are already viewing as another user. Exit that session first.");
+            }
+
+            // Open but expired. It must be closed here rather than left behind: two rows with a null
+            // ended_at_utc for the same administrator violate
+            // ux_impersonation_sessions_real_user_id_open, so the insert below would fail. The
+            // authentication pipeline normally closes these first, but StartAsync must not depend on
+            // having been reached through it.
+            existing.End(now, now >= existing.AbsoluteExpiresAtUtc
+                ? ImpersonationEndReason.AbsoluteTimeout
+                : ImpersonationEndReason.IdleTimeout);
         }
 
         var target = await _userRepository.GetByIdAsync(targetUserId, cancellationToken)
             ?? throw new NotFoundAppException("User not found.");
 
-        EnsureMayActAs(realUser, realRole, target);
+        // Loaded before the authorization check because the target's organization is part of it —
+        // an archived organization is not a valid place to act (rule 12).
+        var targetOrganization = target.OrganizationId is null
+            ? null
+            : await _organizationRepository.GetByIdAsync(target.OrganizationId.Value, cancellationToken);
 
-        var now = _clock.UtcNow;
+        EnsureMayActAs(realUser, realRole, target, targetOrganization);
         var session = ImpersonationSession.Start(realUser.Id, target.Id, now);
         await _sessions.AddAsync(session, cancellationToken);
 
@@ -95,7 +114,14 @@ public sealed class ViewAsService : IViewAsService
 
         var now = _clock.UtcNow;
         var wasActive = session.IsActiveAt(now);
-        session.End(now, ImpersonationEndReason.ExitedByUser);
+
+        // A session that already timed out must not be recorded as a deliberate exit — end_reason is
+        // an accountability field, not a label for whichever code path happened to close the row.
+        session.End(now, wasActive
+            ? ImpersonationEndReason.ExitedByUser
+            : now >= session.AbsoluteExpiresAtUtc
+                ? ImpersonationEndReason.AbsoluteTimeout
+                : ImpersonationEndReason.IdleTimeout);
 
         // Only audited when a live session actually ended. Closing an already-expired row is
         // bookkeeping, and auditing it would imply the admin was still acting when they were not.
@@ -123,6 +149,10 @@ public sealed class ViewAsService : IViewAsService
         var organizationId = realRole == Role.SiteAdmin ? (Guid?)null : realUser.OrganizationId;
         var users = await _userRepository.SearchForImpersonationAsync(organizationId, search, cancellationToken);
 
+        // One lookup per distinct organization rather than per user: a Site Admin's list spans every
+        // organization, and the naive form re-fetched the same one once for each of its members.
+        var organizations = new Dictionary<Guid, Organization?>();
+
         var candidates = new List<ViewAsCandidate>();
         foreach (var user in users)
         {
@@ -133,7 +163,11 @@ public sealed class ViewAsService : IViewAsService
                 continue;
             }
 
-            var organization = await _organizationRepository.GetByIdAsync(user.OrganizationId.Value, cancellationToken);
+            if (!organizations.TryGetValue(user.OrganizationId.Value, out var organization))
+            {
+                organization = await _organizationRepository.GetByIdAsync(user.OrganizationId.Value, cancellationToken);
+                organizations[user.OrganizationId.Value] = organization;
+            }
 
             // Inactive users are returned so the picker can show them greyed out (rule 21), but
             // `Selectable` is false and StartAsync refuses them regardless of what the list showed.
@@ -151,7 +185,7 @@ public sealed class ViewAsService : IViewAsService
     /// cannot be used to probe whether a user exists, what role they hold, or which organization
     /// they belong to.
     /// </summary>
-    private void EnsureMayActAs(User realUser, Role realRole, User target)
+    private void EnsureMayActAs(User realUser, Role realRole, User target, Organization? targetOrganization)
     {
         // The SiteAdmin clause is currently redundant: the domain forbids a Site Admin from having
         // an OrganizationId at all (User.cs:84 and :225), so the null-organization clause below
@@ -161,7 +195,13 @@ public sealed class ViewAsService : IViewAsService
         if (target.Id == realUser.Id
             || target.Role == Role.SiteAdmin          // D-SCOPE (see note above)
             || target.OrganizationId is null          // not organization-scoped
-            || target.Status != UserStatus.Active)    // rule 10 — Inactive, never "suspended"
+            || target.Status != UserStatus.Active     // rule 10 — Inactive, never "suspended"
+            // Rule 12. The picker already greys these out, but that is presentation: a caller can
+            // POST a target id directly, so the check has to exist here to be a control at all.
+            // Archiving is how an organization is decommissioned — it invalidates the invite code and
+            // blocks self-registration — so acting inside one must be refused for the same reason.
+            || targetOrganization is null
+            || targetOrganization.IsArchived)
         {
             throw new ForbiddenAppException(NotAllowed);
         }
