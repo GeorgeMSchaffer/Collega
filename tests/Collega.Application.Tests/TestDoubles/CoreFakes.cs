@@ -17,7 +17,7 @@ internal sealed class TestClock : IClock
 
 /// <summary>
 /// Deterministic <see cref="IImageProcessor"/>. Real decode/resize is exercised in
-/// Collega.Infrastructure.Tests against SkiaSharp; here we only need to steer the Application-layer
+/// Collega.Infrastructure.Tests against ImageSharp; here we only need to steer the Application-layer
 /// branch: any non-empty input is treated as a valid image (returns a fixed 3-byte "thumbnail")
 /// unless <see cref="RejectAll"/> is set, which simulates content that failed the codec check.
 /// </summary>

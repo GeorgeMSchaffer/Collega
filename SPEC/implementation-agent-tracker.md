@@ -32,7 +32,7 @@ Before making any status, planning, or scope claim about this project — in thi
 View As. Spec + contracts written. **Slice 0 authorization audit complete (2026-08-13): no holes** — every path scopes off `ICurrentUserContext`, which is the single identity chokepoint (nothing outside `API/Authentication/` reads claims). The mechanism is unblocked; **no implementation code yet**. Canonical: `20-feature-view-as.md`; plan + audit result: `sprints/sprint-06-view-as.md`.
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
-- Portrait image library = **SkiaSharp**.
+- Portrait image library = **ImageSharp** (`SixLabors.ImageSharp`, pinned **3.1.12**). Fully managed, no native assets — chosen 2026-08-13 specifically because SkiaSharp's package ships natives for Windows/macOS only and broke portrait upload on Linux App Service. **Stay on the 3.1.x line:** 4.x requires a Six Labors license key and warns on every build; 3.1.x is the Split License (free for OSS/personal and organizations under the revenue threshold — re-verify terms before any commercial release).
 - Site Admin org-content mutation = **View As act-as only** (Sprint 6, full act-as + dual attribution); no direct create/edit paths, no org dropdowns. Org + user admin stay direct as the bootstrap exception. → `20-feature-client-ui.md`.
 - AI idea drafting = **Sprint 7**; `Anthropic` package approved, single platform-level key, dedupe deferred to v2. → `20-feature-ai-idea-assist.md`.
 - New page/flow UI is **comp-first**.

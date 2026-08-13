@@ -44,7 +44,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IInviteCodeGenerator, InviteCodeGenerator>();
-        services.AddSingleton<IImageProcessor, SkiaSharpImageProcessor>();
+        services.AddSingleton<IImageProcessor, ImageSharpImageProcessor>();
 
         services.AddSingleton(sp =>
         {

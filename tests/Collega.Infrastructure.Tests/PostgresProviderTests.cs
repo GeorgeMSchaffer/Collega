@@ -56,7 +56,7 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
 /// Every other EF test uses the InMemory provider, which models neither SQL translation, nor column
 /// types, nor DDL, and so stayed green through the entire SQL Server to PostgreSQL swap while
 /// proving nothing about it. The precedent for the shape of this — reach for the real component and
-/// document why in the class itself — is <see cref="SkiaSharpImageProcessorTests"/>, though that one
+/// document why in the class itself — is <see cref="ImageSharpImageProcessorTests"/>, though that one
 /// is still hermetic; this class is the first that is not.
 /// </summary>
 /// <remarks>
