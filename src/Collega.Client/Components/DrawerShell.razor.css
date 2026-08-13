@@ -41,7 +41,7 @@
     font-weight: 700;
     margin-bottom: 5px;
 }
-.surface-head h2 { font-family: Georgia, "Times New Roman", serif; font-size: 22px; line-height: 1.25; font-weight: 600; }
+.surface-head h2 { font-family: var(--font-sans); font-size: 22px; line-height: 1.25; font-weight: 600; }
 .meta { font-size: 11.5px; color: var(--ink-3); margin-top: 6px; }
 
 .iconbtn {

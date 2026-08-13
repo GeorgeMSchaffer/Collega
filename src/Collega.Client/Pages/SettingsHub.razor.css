@@ -30,7 +30,7 @@
 }
 
 .settings-link strong {
-  font-family: Georgia, serif;
+  font-family: var(--font-sans);
   font-size: 17px;
 }
 
