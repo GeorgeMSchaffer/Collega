@@ -55,6 +55,36 @@ public sealed class ContractTests : IClassFixture<CollegaApiFactory>
     }
 
     [Fact]
+    public async Task ApplicationLayerValidationError_400_Includes_Field_Level_Errors()
+    {
+        // Distinct from the two tests above, which post an empty body and are answered by ASP.NET
+        // Core's automatic model-state 400 — a path that never reaches AppExceptionHandler. This one
+        // sends a well-formed body that clears every attribute, so the failure comes from
+        // AuthService throwing ValidationAppException and is rendered by AppExceptionHandler. That
+        // handler is the only producer of `errors` those tests do not exercise.
+        using var client = _factory.CreateClient();
+
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/register", new
+        {
+            inviteCode = "ZZZZ-NOT-A-REAL-CODE",
+            firstName = "Ada",
+            lastName = "Lovelace",
+            email = "ada@example.com",
+            password = "Abc123!"
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var root = await AssertProblemEnvelopeAsync(response, HttpStatusCode.BadRequest);
+
+        // The envelope's own `detail` points the reader at `errors`, so shipping without it leaves a
+        // dangling reference and hides every field-level message the Application layer produced.
+        Assert.True(
+            root.TryGetProperty("errors", out var errors),
+            "envelope is missing 'errors' — its own 'detail' says to look there for field-level messages.");
+        Assert.Contains("inviteCode", errors.EnumerateObject().Select(p => p.Name));
+    }
+
+    [Fact]
     public async Task ValidationError_400_Envelope_Includes_Type()
     {
         using var admin = _factory.CreateClient();

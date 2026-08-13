@@ -69,7 +69,14 @@ public sealed class AppExceptionHandler : IExceptionHandler
         httpContext.Response.StatusCode = status;
         // WriteAsJsonAsync sets its own Content-Type unless one is passed explicitly here, so
         // setting httpContext.Response.ContentType beforehand alone would get overwritten.
-        await httpContext.Response.WriteAsJsonAsync(problemDetails, options: null, contentType: "application/problem+json", cancellationToken);
+        //
+        // Serialize the RUNTIME type, not the declared one. The switch above widens every arm to
+        // ProblemDetails, and System.Text.Json writes only the declared type's members — so the
+        // generic overload silently dropped ValidationProblemDetails.Errors, and every 400 shipped
+        // an envelope whose own `detail` referred the client to an `errors` property that was not
+        // there. Passing the concrete type keeps the subtype's members.
+        await httpContext.Response.WriteAsJsonAsync(
+            problemDetails, problemDetails.GetType(), options: null, contentType: "application/problem+json", cancellationToken);
 
         return true;
     }
