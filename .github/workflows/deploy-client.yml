@@ -1,0 +1,52 @@
+name: Deploy Client
+
+# Builds and deploys the Blazor WebAssembly client (src/Collega.Client) to Azure Static Web Apps
+# on every push to main that touches it. Setup (one secret) is in SPEC/50-azure-deployment.md §6.2.
+#
+# We build with the .NET SDK here and hand Static Web Apps the finished output
+# (skip_app_build: true) rather than letting its Oryx builder compile the project. Oryx supplies
+# its own SDK, which does not honour global.json — this repo pins 8.0.118, so an Oryx build is one
+# SDK bump away from failing for a reason that has nothing to do with the app. Building here also
+# means the deploy step needs no toolchain knowledge and the CI logs show a normal dotnet publish.
+#
+# No build-time configuration is needed: the client reads its API base URL at runtime from
+# wwwroot/appsettings.Production.json (see src/Collega.Client/Program.cs), so this workflow never
+# handles the API host or any secret beyond the deployment token.
+
+on:
+  push:
+    branches: [main]
+    # Scoped to the client so API-only or SPEC-only pushes don't burn a frontend deploy. The
+    # workflow file itself is included so changes to this pipeline are exercised on merge.
+    paths:
+      - 'src/Collega.Client/**'
+      - '.github/workflows/deploy-client.yml'
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Installs exactly what global.json pins, so CI and local builds cannot drift.
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Publish
+        run: dotnet publish src/Collega.Client/Collega.Client.csproj -c Release -o ./client-publish
+
+      # app_location points at the published wwwroot — the folder holding index.html,
+      # _framework/, and staticwebapp.config.json. output_location must be empty when
+      # skip_app_build is set, otherwise the action looks for a build output inside the output.
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: upload
+          app_location: ./client-publish/wwwroot
+          output_location: ''
+          api_location: ''
+          skip_app_build: true
+          skip_api_build: true

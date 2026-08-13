@@ -62,3 +62,9 @@ nunit-*.xml
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
 /e2e/node_modules
+
+# Local deploy staging dirs from SPEC/50-azure-deployment.md §5.3 and §6.2. CI publishes to the
+# same names, but running those steps by hand drops a full build output at the repo root.
+/publish/
+/client-publish/
+/collega-api.zip

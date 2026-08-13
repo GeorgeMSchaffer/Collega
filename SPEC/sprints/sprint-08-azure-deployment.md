@@ -26,7 +26,8 @@ Stand up Collega's three tiers on Azure per `SPEC/50-azure-deployment.md` (Stati
 | P0 | Provision the three tiers | Resource group, **Azure Database for PostgreSQL Flexible Server (Burstable B1ms)**, App Service (Linux .NET 8), Static Web Apps (Free) — `SPEC/50-azure-deployment.md` §4–6 |
 | P0 | App Service configuration | Required settings (`ConnectionStrings__DefaultConnection` in Npgsql format, `SiteAdmin__Email/Password`) + recommended (`ASPNETCORE_ENVIRONMENT=Production`, `Cors__AllowedOrigins__0`, `Auth__TokenSigningKey`) — §3 |
 | P0 | First deploy + boot verification | API connects to Postgres, runs migrations, seeds Site Admin; frontend loads and calls the API without CORS errors — §5–7 |
-| P0 | CI/CD pipeline wiring | `AZURE_WEBAPP_PUBLISH_PROFILE` secret + `AZURE_WEBAPP_NAME` variable; confirm push-to-`main` deploys — `SPEC/50-azure-api-cicd.md` |
+| P0 | CI/CD pipeline wiring — **API** | `AZURE_WEBAPP_PUBLISH_PROFILE` secret + `AZURE_WEBAPP_NAME` variable; confirm push-to-`main` deploys — `SPEC/50-azure-api-cicd.md` |
+| P0 | CI/CD pipeline wiring — **client** | `.github/workflows/deploy-client.yml` (drafted 2026-08-13, never yet run) needs the `AZURE_STATIC_WEB_APPS_API_TOKEN` secret. **Create the SWA without `--source`** or Azure generates a competing workflow — `SPEC/50-azure-deployment.md` §6.2 |
 | ✅ | ~~Make portrait upload work on Linux App Service~~ | **Resolved 2026-08-13 before the sprint started** — imaging swapped to ImageSharp. See "Image processing on Linux" below. |
 | P1 | Post-deploy checklist pass | Every box in `SPEC/50-azure-deployment.md` §7 verified live (sign-in, forced password change, token stability across restart) — **include a portrait upload**, which the existing checklist does not cover |
 | P2 | Hardening follow-ups (as time allows) | Key Vault for secrets, Private Access (VNet) for the DB, least-privilege DB role — `SPEC/50-azure-deployment.md` §8; can be deferred to a post-MVP hardening pass if scope-constrained |
@@ -68,5 +69,6 @@ Recorded in `SPEC/implementation-agent-tracker.md`'s locked-decisions block.
 - [ ] API deployed, boots against Azure Database for PostgreSQL, migrations applied, Site Admin seeded
 - [ ] Frontend deployed on Static Web Apps and successfully calling the API (no CORS failures)
 - [ ] `.github/workflows/deploy-api.yml` deploys on push to `main` with secrets/variables configured
+- [ ] `.github/workflows/deploy-client.yml` deploys on push to `main` with its token secret configured, and a deep link (e.g. `/boards/<id>`) loads on refresh — proving `staticwebapp.config.json`'s fallback is live
 - [ ] `SPEC/50-azure-deployment.md` §7 post-deploy checklist fully passed against the live environment
 - [ ] Code Reviewer approved any committed config/workflow changes before merge
