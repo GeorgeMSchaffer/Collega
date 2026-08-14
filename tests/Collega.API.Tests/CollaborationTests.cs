@@ -157,6 +157,11 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         var orgB = await CreateOrganizationAsync(admin);
         var outsider = await CreateUserAsync(admin, orgB.OrganizationId, "User");
 
+        // The idea under test belongs to orgA, but the setup helper leaves us acting in orgB — the
+        // organization it created last. Re-target, so what the endpoint rejects is the foreign
+        // mention rather than the caller being out of scope for the board.
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, orgA.OrganizationId);
+
         var response = await admin.PostAsJsonAsync($"/api/v1/boards/{orgA.DefaultBoardId}/ideas",
             new { title = "Cross-org", description = "d", priority = "Low", mentionEmails = new[] { outsider.Email } });
 
@@ -457,10 +462,12 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
     {
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
+        // Ordering matters: the setup helper leaves us acting in the organization it created last,
+        // so orgA's idea is written while we are still scoped to orgA, and orgB's user afterwards.
         var orgA = await CreateOrganizationAsync(admin);
-        var orgB = await CreateOrganizationAsync(admin);
         var ideaInA = await CreateIdeaAsync(admin, orgA.DefaultBoardId, new { title = "Secret", description = "d", priority = "Low" });
 
+        var orgB = await CreateOrganizationAsync(admin);
         var outsider = await CreateUserAsync(admin, orgB.OrganizationId, "User");
         using var outsiderClient = await LoginAsync(outsider.Email);
 
@@ -809,13 +816,26 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
 
     private async Task<CreateOrgResponse> CreateOrganizationAsync(HttpClient admin)
     {
+        // Bootstrap runs as the Site Admin, so any session left open by a previous test in this
+        // class must be closed first — sessions are non-nestable and outlive a single test because
+        // the InMemory database is shared. Exit is idempotent by contract, so this is safe
+        // unconditionally.
+        await ViewAsAuth.StopActingAsync(admin);
         var response = await admin.PostAsJsonAsync("/api/v1/organizations", new
         {
             title = $"Org {Guid.NewGuid():N}",
             description = "Collaboration test organization."
         });
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
+        var created = (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
+
+        // Rule 25: a Site Admin acting as themselves can bootstrap an organization but cannot then
+        // mutate its content. Elevating here — once, in the shared helper — leaves every test body
+        // unchanged while routing its mutations through View As, which is the path the product now
+        // requires and which nothing else covers end to end.
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, created.OrganizationId);
+
+        return created;
     }
 
     private async Task<CreatedUser> CreateUserAsync(HttpClient admin, Guid organizationId, string role)

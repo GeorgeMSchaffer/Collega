@@ -117,7 +117,7 @@ Users can create, discuss, organize, and support ideas within their organization
 4. If a typed mention does not resolve to a same-organization user, the UI must show inline validation and block save until the unresolved mention is removed or corrected.
 
 ## Comments
-1. All authenticated users, including Read Only, can comment on ideas.
+1. All authenticated users of the idea's organization, including Read Only, can comment on ideas. **A Site Admin acting as themselves cannot** — see Upvotes #1 for the same reasoning and `20-feature-view-as.md` rules 25/25c.
 2. Comments are displayed chronologically.
 3. Comment authors can edit and delete their own comments.
 4. Site Admin and Org Admin can delete any comment within their authorized scope.
@@ -127,7 +127,7 @@ Users can create, discuss, organize, and support ideas within their organization
 8. Development startup seed includes example comments on seeded ideas for collaboration walkthroughs.
 
 ## Upvotes
-1. All authenticated users, including Read Only, can upvote ideas.
+1. All authenticated users of the idea's organization, including Read Only, can upvote ideas. **A Site Admin acting as themselves cannot** — they are not a member of that organization, and a vote expresses a member's position; they upvote through View As instead (`20-feature-view-as.md` rules 25/25c, decided 2026-08-14).
 2. Upvoting is a toggle.
 3. A user can have at most one active upvote per idea.
 4, Upvotes are counted per Idea and displayed next to the upvote icon.
@@ -138,7 +138,7 @@ Users can create, discuss, organize, and support ideas within their organization
 ## CSV Import
 
 ### Rules
-1. Only Site Admin and Org Admin can upload ideas via CSV to a board.
+1. Only Site Admin and Org Admin can upload ideas via CSV to a board. **The Site Admin's path is View As**, not a direct upload — bulk create is still create, and guarding single-idea create while leaving import open would defeat rule 25 at scale (`20-feature-view-as.md` rules 25/25c).
 2. The CSV file must use UTF-8 encoding with a header row.
 3. Supported columns:
 

@@ -138,10 +138,20 @@ public sealed class IdeaFieldOptionsTests : IClassFixture<CollegaApiFactory>
 
     private async Task<Guid> CreateOrganizationAsync(HttpClient client, string title)
     {
+        // Bootstrap runs as the Site Admin, so close any session a previous test left open — they
+        // are non-nestable and the InMemory database is shared across the class. Idempotent.
+        await ViewAsAuth.StopActingAsync(client);
         var response = await client.PostAsJsonAsync("/api/v1/organizations", new { title, description = "desc" });
         response.EnsureSuccessStatusCode();
         var created = await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json);
-        return created!.OrganizationId;
+
+        // Rule 25: a Site Admin acting as themselves can bootstrap an organization but cannot then
+        // mutate its content. Elevating here — once, in the shared helper — leaves every test body
+        // unchanged while routing its mutations through View As, which is the path the product now
+        // requires and which nothing else covers end to end.
+        await ViewAsAuth.ActAsOrgAdminAsync(client, created!.OrganizationId);
+
+        return created.OrganizationId;
     }
 
     // Rotates the seeded Site Admin's mandatory first-login password before use; shared so the

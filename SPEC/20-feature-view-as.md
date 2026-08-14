@@ -71,8 +71,20 @@ Per the locked comp; `SPEC/20-feature-client-ui.md` governs general chrome.
 
 ## Retiring Site Admin direct mutation
 
-25. Once View As works end to end, these become **read-only for Site Admin**: the global aggregate views (Boards, Ideas, Statuses, Idea Types, Custom Fields) and the org-scoped `/settings/organizations/{organizationId}/statuses` and `/idea-fields` routes. Create, edit and delete affordances are removed; View As is the mutation path.
-26. **Bootstrap exception:** organization and user administration — creating organizations and users, CSV import, invite codes — stay **direct** for Site Admin. Without this a new deployment could never be set up, since there would be no user to act as.
+25. **A Site Admin acting as themselves may not create, edit or delete organization-owned content.** That covers boards, statuses, idea types, business impacts, custom fields, ideas, comments, tags, **upvotes, and bulk idea creation by CSV import**. Reading stays unrestricted — the global aggregate views and the org-scoped `/settings/organizations/{organizationId}/statuses` and `/idea-fields` routes remain fully visible. View As is the mutation path.
+25a. **Enforced server-side, in the Application layer** (changed 2026-08-13; this rule previously said only that UI affordances were removed). Hiding a button is presentation; with the client-only form, "View As is the only mutation path" was true of the UI and false of the API. A refused mutation returns `403`.
+25c. **Rule 25 supersedes three rules in `20-feature-ideas-and-engagement.md` for the Site Admin role specifically** (decided 2026-08-14, on the question of whether "all authenticated users" includes a Site Admin acting as themselves):
+
+| Superseded rule | Reading before | Reading now |
+|---|---|---|
+| Upvotes #1 — "All authenticated users, including Read Only, can upvote ideas" | A Site Admin could upvote directly | Direct upvote refused; the rule means all authenticated users **of the idea's organization** |
+| Comments #1 — "All authenticated users, including Read Only, can comment on ideas" | A Site Admin could comment directly | Direct comment refused; same reading |
+| CSV Import #1 — "Only Site Admin and Org Admin can upload ideas via CSV to a board" | A Site Admin could bulk-create ideas directly | Direct import refused; satisfied through View As, where the caller *is* an Org Admin |
+
+The rationale is one sentence: **a Site Admin is not a member of the organization the idea belongs to**, so engagement actions that express a member's position — a vote, a comment — are not theirs to cast as themselves. Each remains fully available through View As, which is the point: the action is then attributable to a real member of that organization, with the acting administrator recorded alongside (rule 14). None of this touches Read Only users, who are members and keep both rules in full.
+
+25b. The enforcement needs no special case for impersonation, and deliberately so. While a session is live, `ICurrentUserContext.Role` is the **target's** role, not `SiteAdmin` — so the refusal simply does not fire, and the same guard that blocks the direct path permits the View As path. The mechanism that makes rule 4 work is what makes this work.
+26. **Bootstrap exception:** organization and user administration — creating organizations and users, **user** CSV import, invite codes, archiving — stay **direct** for Site Admin. Stated as the product rule (user, 2026-08-14): *a Site Admin creates organizations and users for organizations; for every other activity they use Act As.* Note the two CSV imports fall on opposite sides of that line — **user** import (`/organizations/{id}/users/import`) is bootstrap and stays direct, while **idea** import (`/boards/{id}/ideas/import`) is org content and goes through View As (rule 25). The practical flow for filling a new organization: create an Org Admin in it directly, then act as that user to add boards and ideas. Without this a new deployment could never be set up, since there would be no user to act as. Default statuses and the default board provisioned when an organization is created are part of that bootstrap and are unaffected: they are created by `OrganizationBootstrapService`, which is an internal collaborator behind organization creation rather than a caller-facing mutation path.
 
 ## Out of scope
 

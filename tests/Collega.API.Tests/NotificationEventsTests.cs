@@ -248,13 +248,24 @@ public sealed class NotificationEventsTests : IClassFixture<CollegaApiFactory>
 
     private async Task<CreateOrgResponse> CreateOrganizationAsync(HttpClient admin)
     {
+        // Bootstrap runs as the Site Admin, so close any session a previous test left open — they
+        // are non-nestable and the InMemory database is shared across the class. Idempotent.
+        await ViewAsAuth.StopActingAsync(admin);
         var response = await admin.PostAsJsonAsync("/api/v1/organizations", new
         {
             title = $"Org {Guid.NewGuid():N}",
             description = "Notification test organization."
         });
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
+        var created = (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
+
+        // Rule 25: a Site Admin acting as themselves can bootstrap an organization but cannot then
+        // mutate its content. Elevating here — once, in the shared helper — leaves every test body
+        // unchanged while routing its mutations through View As, which is the path the product now
+        // requires and which nothing else covers end to end.
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, created.OrganizationId);
+
+        return created;
     }
 
     private async Task<CreatedUser> CreateUserAsync(HttpClient admin, Guid organizationId, string role)

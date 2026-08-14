@@ -198,11 +198,15 @@ public sealed class StatusService : IStatusService
     private void EnsureAdminScope(Guid organizationId)
     {
         var role = RequireAuthenticatedRole();
-        if (role == Role.SiteAdmin)
-        {
-            return;
-        }
 
+        // Rule 25: a Site Admin acting as themselves may not mutate org-owned content — View As is
+        // the path. No impersonation branch is needed: while a session is live this role is the
+        // target's, so the guard does not fire. Read paths use EnsureReadScope and are unaffected.
+        _currentUser.EnsureNotDirectSiteAdmin();
+
+        // No SiteAdmin pass-through below, deliberately: the guard above has already refused that
+        // role, so a `return` here would be dead code that reads like a live bypass. Should the
+        // guard ever move, falling through to the OrgAdmin check denies rather than admits.
         if (role == Role.OrgAdmin)
         {
             if (_currentUser.OrganizationId == organizationId)

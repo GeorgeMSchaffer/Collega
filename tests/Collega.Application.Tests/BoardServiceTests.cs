@@ -29,13 +29,45 @@ public sealed class BoardServiceTests
         _s3 = _statuses.Add(Build.Status(_org.Id, "Done", sortOrder: 30));
         _currentUser.IsAuthenticated = true;
         _currentUser.UserId = Guid.NewGuid();
-        _currentUser.Role = Role.SiteAdmin;
+        // Org Admin, not Site Admin: since rule 25 a Site Admin acting as themselves cannot mutate
+        // org content, so the natural actor for these paths is an in-scope Org Admin. Site Admin
+        // reaches the same operations through View As, covered separately.
+        _currentUser.Role = Role.OrgAdmin;
+        _currentUser.OrganizationId = _org.Id;
     }
 
     private BoardService CreateSut() =>
         new(_boards, _statuses, _orgs, _uow, _audit, _currentUser, _clock);
 
     private static SwimlaneInput Lane(Status status, int order) => new(status.Id, order);
+
+    // Rule 25 — Site Admin acting as themselves ------------------------------------------------
+
+    [Fact]
+    public async Task Create_AsDirectSiteAdmin_ThrowsForbidden()
+    {
+        // The class-wide actor is an Org Admin because that is who mutates boards now; this
+        // restores the Site Admin case the flip would otherwise have dropped.
+        _currentUser.Role = Role.SiteAdmin;
+        _currentUser.OrganizationId = null;
+
+        await Assert.ThrowsAsync<ForbiddenAppException>(() =>
+            CreateSut().CreateAsync(_org.Id, new CreateBoardCommand("Board", true, new[] { Lane(_s1, 0), Lane(_s2, 1) })));
+    }
+
+    [Fact]
+    public async Task Create_WhileActingAsAnOrgAdmin_Succeeds()
+    {
+        // Under View As the context reports the target's role, so the guard does not fire — the
+        // property the whole no-impersonation-branch design rests on.
+        _currentUser.Role = Role.OrgAdmin;
+        _currentUser.OrganizationId = _org.Id;
+
+        var created = await CreateSut().CreateAsync(
+            _org.Id, new CreateBoardCommand("Board", true, new[] { Lane(_s1, 0), Lane(_s2, 1) }));
+
+        Assert.Equal("Board", created.Name);
+    }
 
     // Create ------------------------------------------------------------------------------------
 

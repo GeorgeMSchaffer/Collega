@@ -60,11 +60,20 @@
                             }
                         </div>
                         <div class="topactions">
-                            <button class="up @(_idea.HasUpvoted ? "mine" : "")" @onclick="ToggleUpvote" disabled="@_upvoting"
-                                    aria-label="@(_idea.HasUpvoted ? "Remove your upvote" : "Upvote this idea")"
-                                    title="@(_idea.HasUpvoted ? "Remove your upvote" : "Upvote this idea")">
-                                <FluentIcon Value="@(new Icons.Regular.Size16.CaretUp())" aria-hidden="true" /> @_idea.UpvoteCount
-                            </button>
+                            @if (_canEngage)
+                            {
+                                <button class="up @(_idea.HasUpvoted ? "mine" : "")" @onclick="ToggleUpvote" disabled="@_upvoting"
+                                        aria-label="@(_idea.HasUpvoted ? "Remove your upvote" : "Upvote this idea")"
+                                        title="@(_idea.HasUpvoted ? "Remove your upvote" : "Upvote this idea")">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.CaretUp())" aria-hidden="true" /> @_idea.UpvoteCount
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="up" title="Upvote counts are read-only for a Site Admin; use View as… to vote as a member">
+                                    <FluentIcon Value="@(new Icons.Regular.Size16.CaretUp())" aria-hidden="true" /> @_idea.UpvoteCount
+                                </span>
+                            }
                             @if (_canEdit)
                             {
                                 <button class="btn" @onclick="StartEdit">Edit idea</button>
@@ -225,6 +234,12 @@
 
                     <div class="addcomment">
                         <span class="avatar s @(!string.IsNullOrEmpty(_currentUserPortrait) ? "has-portrait" : null)">@if (!string.IsNullOrEmpty(_currentUserPortrait)){<img class="portrait" src="@_currentUserPortrait" alt="@_currentUserName" />}else{@Initials(_currentUserName)}</span>
+                        @if (!_canEngage)
+                        {
+                            <p class="sub">Commenting is available through <strong>View as…</strong> — a Site Admin is not a member of this organization, so a comment is posted as one of its users.</p>
+                        }
+                        else
+                        {
                         <div class="addbox">
                             <textarea aria-label="Add a comment" maxlength="2000"
                                       placeholder="Join the discussion… type someone's email with @@ to notify them"
@@ -237,6 +252,7 @@
                                 </button>
                             </div>
                         </div>
+                        }
                     </div>
 
                     @if (_canDelete)
@@ -440,11 +456,23 @@
     private string _reassignTargetId = "";
     private string? _reassignError;
 
-    private bool _canEdit => _role != "ReadOnly" && !string.IsNullOrEmpty(_role);
+    // Rule 25: editing, reassigning and deleting an idea are all org-content mutation, so a Site
+    // Admin reaches them through View As rather than directly. While acting as someone, _role is
+    // the target's, so these correctly permit an in-scope Org Admin. The drawer is rendered
+    // unconditionally from the board and the Ideas list and reads stay open to a Site Admin, so
+    // without these the controls would render and then fail with a raw 403 on save.
+    private bool _isSiteAdmin =>
+        string.Equals(_role, "SiteAdmin", StringComparison.OrdinalIgnoreCase);
+    private bool _canEdit => _role != "ReadOnly" && !string.IsNullOrEmpty(_role) && !_isSiteAdmin;
+    // Upvoting and commenting express a member's position on an idea, and a Site Admin is not a
+    // member of the owning organization — so both go through View As (rule 25c, decided
+    // 2026-08-14; supersedes Upvotes #1 / Comments #1 for this role only). Read Only users are
+    // members and keep both, which is why this gates on Site Admin rather than on _canEdit.
+    private bool _canEngage => !_isSiteAdmin && !string.IsNullOrEmpty(_role);
     private bool _canReassign =>
-        string.Equals(_role, "OrgAdmin", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(_role, "SiteAdmin", StringComparison.OrdinalIgnoreCase);
-    private bool _canDelete => _canReassign;
+        string.Equals(_role, "OrgAdmin", StringComparison.OrdinalIgnoreCase);
+    private bool _canDelete =>
+        string.Equals(_role, "OrgAdmin", StringComparison.OrdinalIgnoreCase);
 
     private string BoardName => _boardName;
 

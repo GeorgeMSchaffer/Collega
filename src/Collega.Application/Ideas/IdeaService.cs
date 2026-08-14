@@ -164,6 +164,8 @@ public sealed class IdeaService : IIdeaService
 
     public async Task<CreateIdeaResult> CreateAsync(Guid boardId, CreateIdeaCommand command, CancellationToken cancellationToken = default)
     {
+        // Rule 25: org content is mutated through View As, not directly as a Site Admin.
+        _currentUser.EnsureNotDirectSiteAdmin();
         RequireIdeaEditRole();
 
         var board = await _boardReader.GetBoardContextAsync(boardId, cancellationToken)
@@ -238,6 +240,8 @@ public sealed class IdeaService : IIdeaService
 
     public async Task<IdeaDetail> UpdateAsync(Guid ideaId, UpdateIdeaCommand command, CancellationToken cancellationToken = default)
     {
+        // Rule 25: org content is mutated through View As, not directly as a Site Admin.
+        _currentUser.EnsureNotDirectSiteAdmin();
         RequireIdeaEditRole();
 
         var idea = await _ideaRepository.GetByIdAsync(ideaId, includeDeleted: false, cancellationToken)
@@ -329,6 +333,8 @@ public sealed class IdeaService : IIdeaService
     public async Task ReassignIdeaTypeAsync(Guid organizationId, Guid ideaId, Guid ideaTypeId, CancellationToken cancellationToken = default)
     {
         RequireAuthenticatedRole();
+        _currentUser.EnsureNotDirectSiteAdmin();
+
 
         var idea = await _ideaRepository.GetByIdAsync(ideaId, includeDeleted: false, cancellationToken)
             ?? throw new NotFoundAppException("Idea not found.");
@@ -368,6 +374,8 @@ public sealed class IdeaService : IIdeaService
 
     public async Task ChangeStatusAsync(Guid ideaId, ChangeIdeaStatusCommand command, CancellationToken cancellationToken = default)
     {
+        // Rule 25: org content is mutated through View As, not directly as a Site Admin.
+        _currentUser.EnsureNotDirectSiteAdmin();
         RequireAuthenticatedRole();
 
         var idea = await _ideaRepository.GetByIdAsync(ideaId, includeDeleted: false, cancellationToken)
@@ -405,6 +413,8 @@ public sealed class IdeaService : IIdeaService
 
     public async Task DeleteAsync(Guid ideaId, CancellationToken cancellationToken = default)
     {
+        // Rule 25: org content is mutated through View As, not directly as a Site Admin.
+        _currentUser.EnsureNotDirectSiteAdmin();
         RequireAuthenticatedRole();
 
         var idea = await _ideaRepository.GetByIdAsync(ideaId, includeDeleted: false, cancellationToken)
@@ -427,6 +437,8 @@ public sealed class IdeaService : IIdeaService
 
     public async Task<UpvoteToggleResult> ToggleUpvoteAsync(Guid ideaId, CancellationToken cancellationToken = default)
     {
+        // Rule 25: org content is mutated through View As, not directly as a Site Admin.
+        _currentUser.EnsureNotDirectSiteAdmin();
         // All authenticated users, including Read Only, can upvote (rule #32 "Upvotes" #1).
         var userId = RequireAuthenticatedUserId();
 
@@ -552,7 +564,11 @@ public sealed class IdeaService : IIdeaService
 
     public async Task<IdeaImportResult> ImportBoardIdeasAsync(Guid boardId, IReadOnlyList<IdeaImportRow> rows, CancellationToken cancellationToken = default)
     {
+        // Bulk create is still create: without this, a Site Admin refused POST /boards/{id}/ideas
+        // could make the same ideas by the hundred through the sibling import endpoint.
         RequireIdeaEditRole();
+        _currentUser.EnsureNotDirectSiteAdmin();
+
 
         var board = await _boardReader.GetBoardContextAsync(boardId, cancellationToken)
             ?? throw new NotFoundAppException("Board not found.");

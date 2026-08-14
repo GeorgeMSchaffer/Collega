@@ -35,4 +35,4 @@ Keep entries short. A symptom, where it happens, and — if you know it — the 
 
 ## TODO
 
-_Empty — nothing queued. Add bugs and minor tweaks here; see Scope above for what belongs elsewhere._
+- **Test-harness tweak — `ViewAsAuth` leaves every API test holding a live impersonation session.** Added 2026-08-14 from the Sprint 6 code review. The five `CreateOrganizationAsync` helpers end in `ActAsOrgAdminAsync`, so a test body silently continues as an Org Admin of whichever organization was created *last*. That already forced two workarounds inside the change that introduced it (`CollaborationTests` re-targets in one test and reorders org creation in another), and it injects an extra `OrgAdmin` into every test organization, so future assertions on membership, View As candidate lists, or notification fan-out will quietly include a phantom user. Suggested fix: the helper leaves the client as the Site Admin and tests opt into `ActAsOrgAdminAsync` explicitly. Touches five test classes; deferred deliberately rather than widening an already-large diff, and the suite is green as-is.

@@ -25,7 +25,11 @@ public sealed class StatusServiceTests
         _org = _orgs.Add(Build.Organization());
         _currentUser.IsAuthenticated = true;
         _currentUser.UserId = Guid.NewGuid();
-        _currentUser.Role = Role.SiteAdmin;
+        // Org Admin, not Site Admin: since rule 25 a Site Admin acting as themselves cannot mutate
+        // org content, so the natural actor for these paths is an in-scope Org Admin. Site Admin
+        // reaches the same operations through View As, covered separately.
+        _currentUser.Role = Role.OrgAdmin;
+        _currentUser.OrganizationId = _org.Id;
     }
 
     private StatusService CreateSut() =>
@@ -35,6 +39,35 @@ public sealed class StatusServiceTests
     {
         var status = Build.Status(_org.Id, name, sortOrder: sortOrder);
         return _statuses.Add(status);
+    }
+
+    // Rule 25 — Site Admin acting as themselves ------------------------------------------------
+
+    [Fact]
+    public async Task Create_AsDirectSiteAdmin_ThrowsForbidden()
+    {
+        // The class-wide actor is an Org Admin because that is who mutates statuses now; this
+        // restores the Site Admin case the flip would otherwise have dropped. It also pins the
+        // refusal at the Application layer rather than only at the API boundary.
+        _currentUser.Role = Role.SiteAdmin;
+        _currentUser.OrganizationId = null;
+
+        await Assert.ThrowsAsync<ForbiddenAppException>(() =>
+            CreateSut().CreateAsync(_org.Id, new CreateStatusCommand("Blocked", "#EF4444", 60)));
+    }
+
+    [Fact]
+    public async Task Create_WhileActingAsAnOrgAdmin_Succeeds()
+    {
+        // Under View As the context reports the *target's* role, which is exactly why the guard
+        // needs no impersonation branch. Asserting it here keeps that property from silently
+        // regressing into a blanket Site Admin ban.
+        _currentUser.Role = Role.OrgAdmin;
+        _currentUser.OrganizationId = _org.Id;
+
+        var created = await CreateSut().CreateAsync(_org.Id, new CreateStatusCommand("Blocked", "#EF4444", 60));
+
+        Assert.Equal("Blocked", created.Name);
     }
 
     // List / read scope -------------------------------------------------------------------------

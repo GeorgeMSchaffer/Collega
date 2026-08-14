@@ -56,6 +56,8 @@ public sealed class CommentService : ICommentService
 
     public async Task<CreateCommentResult> CreateAsync(Guid ideaId, CreateCommentCommand command, CancellationToken cancellationToken = default)
     {
+        // Rule 25: org content is mutated through View As, not directly as a Site Admin.
+        _currentUser.EnsureNotDirectSiteAdmin();
         // All authenticated users, including Read Only, can comment ("Comments" #1).
         var idea = await LoadIdeaInScopeAsync(ideaId, cancellationToken);
 
@@ -78,6 +80,8 @@ public sealed class CommentService : ICommentService
 
     public async Task<CommentListItem> UpdateAsync(Guid commentId, UpdateCommentCommand command, CancellationToken cancellationToken = default)
     {
+        // Rule 25: org content is mutated through View As, not directly as a Site Admin.
+        _currentUser.EnsureNotDirectSiteAdmin();
         var comment = await _commentRepository.GetByIdAsync(commentId, cancellationToken)
             ?? throw new NotFoundAppException("Comment not found.");
         var idea = await LoadIdeaInScopeAsync(comment.IdeaId, cancellationToken);
@@ -103,6 +107,8 @@ public sealed class CommentService : ICommentService
 
     public async Task DeleteAsync(Guid commentId, CancellationToken cancellationToken = default)
     {
+        // Rule 25: org content is mutated through View As, not directly as a Site Admin.
+        _currentUser.EnsureNotDirectSiteAdmin();
         var comment = await _commentRepository.GetByIdAsync(commentId, cancellationToken)
             ?? throw new NotFoundAppException("Comment not found.");
         var idea = await LoadIdeaInScopeAsync(comment.IdeaId, cancellationToken);

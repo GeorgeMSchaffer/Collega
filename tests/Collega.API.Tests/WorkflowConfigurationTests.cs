@@ -204,8 +204,15 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         var orgA = await CreateOrganizationAsync(client, "Org A Boards", "Board org A.");
         var orgB = await CreateOrganizationAsync(client, "Org B Boards", "Board org B.");
 
+        // Read as the Site Admin: rule 25 restricts mutation only, and the Site Admin is the one
+        // actor that can see both organizations' statuses — an Org Admin of either sees just its own.
+        await ViewAsAuth.StopActingAsync(client);
         var statusesA = await ListStatusesAsync(client, orgA.OrganizationId);
         var statusesB = await ListStatusesAsync(client, orgB.OrganizationId);
+
+        // The create itself must run as an in-scope Org Admin of orgA, so that what the endpoint
+        // rejects is the foreign status in the swimlane rather than the caller's identity.
+        await ViewAsAuth.ActAsOrgAdminAsync(client, orgA.OrganizationId);
 
         var create = await client.PostAsJsonAsync($"/api/v1/organizations/{orgA.OrganizationId}/boards", new
         {
@@ -392,9 +399,22 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
 
     private async Task<CreateOrgResponse> CreateOrganizationAsync(HttpClient client, string title, string description)
     {
+        // Bootstrap runs as the Site Admin, so any session left open by a previous test in this
+        // class must be closed first — sessions are non-nestable and outlive a single test because
+        // the InMemory database is shared. Exit is idempotent by contract, so this is safe
+        // unconditionally.
+        await ViewAsAuth.StopActingAsync(client);
         var response = await client.PostAsJsonAsync("/api/v1/organizations", new { title, description });
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
+        var created = (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
+
+        // Rule 25: a Site Admin acting as themselves can bootstrap an organization but cannot then
+        // mutate its content. Elevating here — once, in the shared helper — leaves every test body
+        // unchanged while routing its mutations through View As, which is the path the product now
+        // requires and which nothing else covers end to end.
+        await ViewAsAuth.ActAsOrgAdminAsync(client, created.OrganizationId);
+
+        return created;
     }
 
     // Rotates the seeded Site Admin's mandatory first-login password before use; shared so the

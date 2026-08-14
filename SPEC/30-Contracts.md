@@ -294,6 +294,12 @@ The client renders the persistent banner from this field rather than from rememb
 ### Expiry
 A session ends after **30 minutes idle** or **2 hours absolute**, whichever comes first, enforced server-side (`SPEC/20-feature-view-as.md` rules 17-19). Expiry restores the real identity; it does **not** sign the caller out, so requests after expiry succeed as the real user rather than returning `401`. Clients detect the transition by `viewingAs` disappearing from `GET /api/v1/auth/me`, not by an error status.
 
+### Site Admin org-content mutations are refused
+
+A Site Admin acting as themselves receives `403` from any endpoint that creates, edits or deletes organization-owned content — boards, statuses, idea types, business impacts, custom fields, ideas, comments, tags (`SPEC/20-feature-view-as.md` rules 25-25b). Reads are unaffected.
+
+The same call succeeds while a View As session is active, because the caller is then acting with the target's role rather than as a Site Admin. Organization and user administration are the bootstrap exception and stay available directly (rule 26).
+
 ## Organization Contracts
 
 ### `GET /api/v1/organizations`
