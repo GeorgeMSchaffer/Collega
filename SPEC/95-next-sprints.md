@@ -14,6 +14,8 @@ Index of the sprint plan for remaining pre-MVP work as of 2026-08-10. This is **
 ## Sequencing
 Sprints run **strictly in order** — each builds on the previous sprint's merged state, not in parallel.
 
+**Sprint 6.5 supersedes all other sprints** (user decision, 2026-08-14). It is a bug-and-tweak paydown sprint that runs after 6 and **before 7 and 8**, which do not start until it completes. It is numbered 6.5 rather than renumbering 7 and 8 so existing cross-references to `sprint-07-*` and `sprint-08-*` stay valid. It is currently in **intake, not execution** — the user is testing Act As and adding findings.
+
 | # | Blocked by | Why that dependency exists |
 |---|---|---|
 | 2 | 1 | Largest structural change to the admin list pages; runs right after the quick-wins so all list-page churn is consolidated once. |
@@ -21,8 +23,9 @@ Sprints run **strictly in order** — each builds on the previous sprint's merge
 | 4 | 1–3 | The review pass needs a settled shape to review, not a moving target. |
 | 5 | 4 | Engine swap starts from reviewed, stable code and regenerates migrations **once**, after Sprint 4 settles the final SQL-Server shape. Otherwise independent of 1–3. |
 | 6 | 5 | Built on the migrated Postgres code, and must land **before** deployment so the first Azure deploy ships View As. |
-| 7 | 6 | Its one schema addition must be generated against the final engine; must precede deployment so the first Azure deploy provisions its key. |
-| 8 | 5 **(hard)**, 6, 7 | **Hard dependency, not a preference:** the migration changes the deployment's database engine (Azure Database for PostgreSQL, not Azure SQL) and connection-string format. Deploying before Sprint 5 is implemented *and verified against a real Postgres instance* provisions the wrong target. Also waits on 6 and 7 so the deploy includes them. |
+| 6.5 | 6 | Pays down bugs and rough edges — chiefly from user testing of Act As, the flow Sprint 6 reshaped — before more feature work lands on top of them. Supersedes 7 and 8. |
+| 7 | 6, **6.5** | Its one schema addition must be generated against the final engine; must precede deployment so the first Azure deploy provisions its key. |
+| 8 | 5 **(hard)**, 6, **6.5**, 7 | **Hard dependency, not a preference:** the migration changes the deployment's database engine (Azure Database for PostgreSQL, not Azure SQL) and connection-string format. Deploying before Sprint 5 is implemented *and verified against a real Postgres instance* provisions the wrong target. Also waits on 6 and 7 so the deploy includes them. |
 
 Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint dependency — it sits there for scheduling convenience only.
 
@@ -33,7 +36,8 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 3 | List filter parity (all-column search, tag filter, user-association filter) + server-side sort | `SPEC/sprints/archive/sprint-03-list-filter-parity.md` | Complete (2026-08-11) | Small–Medium |
 | 4 | QA/Code-Review debt pass + profile portrait upload + code-review hardening batch (folded in 2026-08-11) | `SPEC/sprints/archive/sprint-04-qa-review-debt.md` | Complete (2026-08-12) — review pass closed at **partial coverage** by user decision; see that file's "Review pass — what it actually covered" | Medium |
 | 5 | PostgreSQL migration (SQL Server → Postgres) | `SPEC/sprints/archive/sprint-05-postgres-migration.md` | Complete (2026-08-12) — merged `7c5a78b` | Small–Medium |
-| 6 | View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin's only org-content mutation path) | `SPEC/sprints/sprint-06-view-as.md` | In Progress (2026-08-13) — built and merged to `dev` (`c25eeda`); one P1 item open (Site Admin org-content mutation retirement, half done) | Medium |
+| 6 | View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin's only org-content mutation path) | `SPEC/sprints/sprint-06-view-as.md` | In Progress (2026-08-14) — all DoD items built and reviewed; 622 tests green at `5577f9d`. Awaiting the epic's PR to `main` | Medium |
+| 6.5 | Bug fixes and element tweaks — paydown sprint; **supersedes all other sprints** | `SPEC/sprints/sprint-06.5-bug-fixes-and-tweaks.md` | Intake (2026-08-14) — open for items, not ready to execute; user testing Act As | TBD |
 | 7 | AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, `Anthropic` package approved) | `SPEC/sprints/sprint-07-ai-idea-assist.md` | Not started | Medium |
 | 8 | Azure deployment (provision + first deploy + CI/CD) | `SPEC/sprints/sprint-08-azure-deployment.md` | Not started | Medium |
 
