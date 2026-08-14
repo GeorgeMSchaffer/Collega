@@ -17,7 +17,7 @@
 
     List + Drawer surface (Sprint 2, SPEC/mockups/comp-c-review-09-detail-surfaces.html): each row's
     Details action opens a right slide-in DrawerShell showing the field's detail with an Edit toggle
-    that swaps in the inline form; "Add New" (Org Admin only) opens a centered CreateModalShell. Manual
+    that swaps in the inline form; "Add New" (Org Admin only) opens the same right slide-in DrawerShell. Manual
     reorder (move up/down) stays in the list rows, gated to the unfiltered/single-page view. The
     Site-Admin global view lists fields across every org read-only (Manage links, no create) — no drawer.
 *@
@@ -34,10 +34,8 @@
     }
     else
     {
-        <div class="backrow">
-            <BackButton />
-        </div>
         <div class="cmdbar">
+            <BackButton />
             <ListToolbar TItem="FieldDefinitionDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search custom fields…" OnChanged="StateHasChanged" />
             <label class="checkline">
                 <input type="checkbox" checked="@_showArchived" @onchange="OnToggleArchived" disabled="@_busy" />
@@ -188,8 +186,8 @@
     }
 </DrawerShell>
 
-@* ---- Create modal (org-scoped view only; suppressed for the Site-Admin global list) ---- *@
-<CreateModalShell IsOpen="_showCreate" OnClose="CloseCreate"
+@* ---- Create drawer (org-scoped view only; suppressed for the Site-Admin global list) ---- *@
+<DrawerShell IsOpen="_showCreate" OnClose="CloseCreate"
                   Eyebrow="New custom field" Title="Create a custom field"
                   FooterContent="RenderCreateFooter">
     @if (_formError is not null)
@@ -197,7 +195,7 @@
         <div class="autherror" role="alert" style="margin-bottom:14px">@_formError</div>
     }
     @RenderFieldForm
-</CreateModalShell>
+</DrawerShell>
 
 @code {
     // Present on the Site-Admin org-scoped route; absent on the Org Admin route (org from the claim).
@@ -256,10 +254,10 @@
     private bool _showArchived;
     private string? _confirmDeleteId;
 
-    // Drawer (detail + edit) + create modal surfaces.
+    // Drawer (detail + edit) + create drawer surfaces.
     private FieldDefinitionDto? _selected; // field open in the detail/edit drawer; null = drawer closed
     private bool _drawerEditing;           // drawer swapped from detail to the inline edit form
-    private bool _showCreate;              // create modal open
+    private bool _showCreate;              // create drawer open
     private string? _editId;               // routing for Save: null while creating, the field id while editing
     private FormModel _form = new();
     private string? _error;                // list-level (load / reorder / archive) error
@@ -271,13 +269,13 @@
         <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
     </text>;
 
-    // Create-modal action bar.
+    // Create-drawer action bar.
     private RenderFragment RenderCreateFooter => @<text>
         <button class="btn" @onclick="CloseCreate" disabled="@_busy">Cancel</button>
         <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Creating…" : "Create")</button>
     </text>;
 
-    // Shared field form, rendered inside both the drawer (edit mode) and the create modal.
+    // Shared field form, rendered inside both the drawer (edit mode) and the create drawer.
     private RenderFragment RenderFieldForm => @<text>
         <div class="field">
             <label for="fd-name">Name</label>
@@ -454,7 +452,7 @@
     private string OrganizationName(string organizationId) =>
         _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 
-    // ---- Create modal ----
+    // ---- Create drawer ----
 
     private void StartCreate()
     {

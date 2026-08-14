@@ -167,7 +167,9 @@ tr:hover td { background: #faf9f8; }
 
 /* ---- Command bar / filter chips ---- */
 /* Back action sits on its own row above the command bar, left-aligned, on every list page. */
-.backrow { display: flex; margin-bottom: 10px; }
+/* One command row per list page: Back leftmost, then search, then the primary
+   action pushed right by its own margin-left:auto (user decision, 2026-08-14).
+   The former .backrow wrapper put Back on its own line above this and is gone. */
 .cmdbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
 .chipbar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .chip {
@@ -211,6 +213,43 @@ code { color: var(--accent-deep); }
   display: grid;
   grid-template-columns: 64px 1fr;
   min-height: 100vh;
+}
+
+/* Positioning context for the page-header "View as…" control, which MainLayout renders
+   once here rather than inside each page's .pagehead (see ViewAsHeaderControl.razor). */
+.shell-main { position: relative; }
+
+/* Anchored to the crumbs line — empty on every page, so this collides with nothing.
+   BoardDetail is the only page with right-side header content and its picker sits
+   lower, aligned to the bottom of the header row. */
+.viewas-anchor {
+  position: absolute;
+  top: 18px;
+  right: 40px;
+  z-index: 5;
+}
+.viewas-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input, 4px);
+  background: var(--surface);
+  color: var(--ink-2, inherit);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.viewas-trigger:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  /* The rail becomes a bottom bar and headers tighten; keep the control clear of the edge. */
+  .viewas-anchor { top: 14px; right: 18px; }
+  .viewas-trigger span { display: none; } /* icon-only at narrow widths */
 }
 
 /* ---- Icon rail ---- */
@@ -343,7 +382,12 @@ code { color: var(--accent-deep); }
 }
 .ptabs a.on { color: var(--accent); border-bottom-color: var(--accent); }
 
-.body { padding: 26px 40px; max-width: 1200px; }
+/* Full width by user decision (2026-08-14, Sprint 6.5). This previously carried
+   max-width: 1200px as a readability cap, which left list pages short of the
+   viewport on wide displays — the wide data tables want the room more than the
+   prose does. Long-form prose blocks keep their own narrower caps (.pagehead .sub,
+   .formcard, .settings-form). */
+.body { padding: 26px 40px; }
 
 /* ---- Auth (sign in) ---- */
 .authwrap {

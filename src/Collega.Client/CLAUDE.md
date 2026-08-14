@@ -14,6 +14,8 @@ Keep components focused on rendering and user interaction. Business rules belong
 
 **Comp C "Fluent Editorial"** — `SPEC/mockups/comp-c-fluent-editorial.html`, specified in `SPEC/20-feature-client-ui.md`: slim 64px icon rail, serif display headings, warm neutral palette with an indigo accent, page-header tabs, list-style status sections (grouped rows, not Kanban columns) for boards, and — **since 2026-08-10** — an idea detail that opens as a **right slide-in drawer** (detail + inline edit) with a centered **create modal**, replacing the earlier full-page idea detail. See `SPEC/20-feature-client-ui.md` → Idea Detail Surface and `SPEC/mockups/comp-c-review-09-detail-surfaces.html`. Built (T-UI-3) in `Components/IdeaDrawer.razor` + `Components/IdeaCreateModal.razor`, used from the Ideas list and board rows/cards.
 
+**Since 2026-08-14 the five admin list pages differ from Ideas here:** Organizations, Users, Statuses, Idea Types and Custom Fields open **create in a drawer too**, not a centered modal, so one surface serves create, detail and edit (user decision — reverses the create half of the 2026-08-10 lock for those entities). Ideas keeps its centered create modal because that surface is also opened from the board header. Don't "fix" the admin pages back to a modal for consistency; the divergence is deliberate and recorded in `SPEC/20-feature-client-ui.md` → "Admin entities use the same List + Drawer pattern".
+
 Comps A ("Command Center") and B ("Board First") are rejected alternatives kept for history, as are the `comp-a-review-*.html` files. Not implementation targets.
 
 ### Locked (2026-08-07)

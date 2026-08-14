@@ -26,10 +26,8 @@
     }
     else
     {
-        <div class="backrow">
-            <BackButton />
-        </div>
         <div class="cmdbar">
+            <BackButton />
             <ListToolbar TItem="BoardListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search boards…" OnChanged="StateHasChanged" />
             @if (CanMutate)
             {

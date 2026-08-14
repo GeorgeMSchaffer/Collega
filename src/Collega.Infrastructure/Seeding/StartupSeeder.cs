@@ -11,6 +11,7 @@ using Collega.Domain.Upvotes;
 using Collega.Domain.Users;
 using Collega.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Collega.Infrastructure.Seeding;
 
@@ -77,17 +78,20 @@ public sealed class StartupSeeder : IStartupSeeder
     private readonly IPasswordHasher _passwordHasher;
     private readonly IOrganizationBootstrapService _bootstrapService;
     private readonly IClock _clock;
+    private readonly ILogger<StartupSeeder> _logger;
 
     public StartupSeeder(
         CollegaDbContext dbContext,
         IPasswordHasher passwordHasher,
         IOrganizationBootstrapService bootstrapService,
-        IClock clock)
+        IClock clock,
+        ILogger<StartupSeeder> logger)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _bootstrapService = bootstrapService;
         _clock = clock;
+        _logger = logger;
     }
 
     public async Task SeedAsync(
@@ -160,6 +164,57 @@ public sealed class StartupSeeder : IStartupSeeder
             await EnsureSecondDemoBoardAsync(organization.Id, now, cancellationToken);
             await SeedDemoBoardContentAsync(organization.Id, scenario, now, cancellationToken);
         }
+
+        await LogSeededAccountsAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Writes the resulting account roster to the log so the seeded users can actually be found
+    /// (Sprint 6.5, requested 2026-08-14 — the seed created them silently, which made testing and
+    /// debugging guesswork).
+    /// </summary>
+    /// <remarks>
+    /// <para>Logs the <i>resulting</i> roster rather than only what this run created. The seed is
+    /// idempotent, so on every run after the first it creates nothing — a "what I just created"
+    /// list would be empty exactly when someone is trying to find out what exists.</para>
+    ///
+    /// <para><b>Runs only when demo seeding is on</b>, which is Development. It prints the shared
+    /// demo password because that is a compile-time constant in this file and already documented in
+    /// <c>CLAUDE.md</c>, so the log reveals nothing the repository does not. It deliberately never
+    /// prints the configured Site Admin password, which comes from configuration or user-secrets.</para>
+    /// </remarks>
+    private async Task LogSeededAccountsAsync(CancellationToken cancellationToken)
+    {
+        if (!_logger.IsEnabled(LogLevel.Information))
+        {
+            return;
+        }
+
+        var accounts = await _dbContext.Users
+            .AsNoTracking()
+            .OrderBy(u => u.Role)
+            .ThenBy(u => u.Email)
+            .Select(u => new { u.Email, u.Role, u.OrganizationId, u.MustChangePassword })
+            .ToListAsync(cancellationToken);
+
+        var organizations = await _dbContext.Organizations
+            .AsNoTracking()
+            .ToDictionaryAsync(o => o.Id, o => o.Title, cancellationToken);
+
+        var lines = accounts.Select(a =>
+        {
+            var scope = a.OrganizationId is Guid orgId && organizations.TryGetValue(orgId, out var title)
+                ? title
+                : "(global — no organization)";
+            var mustChange = a.MustChangePassword ? "  [must change password at first sign-in]" : string.Empty;
+            return $"  {a.Role,-9}  {a.Email,-46}  {scope}{mustChange}";
+        });
+
+        _logger.LogInformation(
+            "Seeded accounts ({Count}). Demo accounts sign in with password {DemoPassword}; the configured Site Admin uses its own configured password.\n{Accounts}",
+            accounts.Count,
+            DemoPassword,
+            string.Join(Environment.NewLine, lines));
     }
 
     /// <summary>

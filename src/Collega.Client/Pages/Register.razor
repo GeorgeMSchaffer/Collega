@@ -45,7 +45,7 @@
             </div>
             <div class="field">
                 <label for="password">Password</label>
-                <FluentTextField id="password" @bind-Value="_password" TextFieldType="TextFieldType.Password" Disabled="_busy" Style="width:100%" />
+                <PasswordField Id="password" @bind-Value="_password" Disabled="_busy" AutoComplete="new-password" />
             </div>
             <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Class="authbtn" Disabled="_busy">
                 @(_busy ? "Creating account…" : "Create account")

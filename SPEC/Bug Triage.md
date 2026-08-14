@@ -35,6 +35,15 @@ Keep entries short. A symptom, where it happens, and — if you know it — the 
 
 ## TODO
 
+
+* The demo seed should seed a site admin user for each org it's generates also the user's should be assigned to the org it creates.
+
+* The password inputs should have a show password toggle icon on the right
+* In List views such as Orgs, Users, Ideas etc. The Back button, Search Box and Add New button should be vertically aligned with the back button to the left most, followed by the searchbox and the the "Add New" button to the right most.
+* <div class="" ></div> Should have 100% width.
+* We will need to output the users created by the auth and demo seed so I can see the users created by the seed commands.  This will help with testing and debugging.
+* The form for the Orgs List page is a overly and not a drawer.  Make sure to apply the same design pattern for all list pages.  The form should be a drawer that slides in from the right side of the screen.
+
 _Empty — **and intake is redirected while Sprint 6.5 is open.**_
 
 Per the user's decision (2026-08-14), this queue was emptied into **`SPEC/sprints/sprint-06.5-bug-fixes-and-tweaks.md`**, a dedicated bug-and-tweak sprint that supersedes all other sprints. Its Scope table is the single home for bugs and minor tweaks until it closes — add new findings there, not here, so items don't live in two places. The one item that was queued here (the `ViewAsAuth` test-harness leak) moved with it.
