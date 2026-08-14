@@ -25,7 +25,7 @@ The active item in the application's primary navigation has a flat rectangular b
   direction): Site Admin does **not** get direct create/edit/delete paths for organization-owned
   content — boards, statuses, idea types/business impacts, custom fields, and ideas. There is no
   org dropdown/picker on any create or edit surface. Instead, Site Admin uses the **View As**
-  feature (act-as impersonation, `SPEC/sprints/sprint-06-view-as.md`) to act as a user within the
+  feature (act-as impersonation, `SPEC/sprints/archive/sprint-06-view-as.md`) to act as a user within the
   target organization; mutations are performed under that impersonated identity with dual-attribution
   audit, so they are naturally org-scoped and permission-checked. **Exception (bootstrap):**
   organization administration and user administration stay direct — Site Admin creates/edits

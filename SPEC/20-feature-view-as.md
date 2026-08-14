@@ -42,7 +42,7 @@ Design comp, signed off: `SPEC/mockups/comp-c-review-10-view-as.html`.
 | **Read Only** | Nobody | — |
 
 9. A caller who is not a Site Admin or Org Admin is refused with `403`, and the entry control is hidden. Both, not either.
-10. **Only `UserStatus.Active` users are selectable.** The comp labels one demo account "suspended"; the domain has no such status — `UserStatus` is `Active` or `Inactive` only (`src/Collega.Domain/Enums/UserStatus.cs`). Read every "suspended/archived" reference in the comp and in `SPEC/sprints/sprint-06-view-as.md` as **`Inactive`**. Do not introduce a new status for this feature.
+10. **Only `UserStatus.Active` users are selectable.** The comp labels one demo account "suspended"; the domain has no such status — `UserStatus` is `Active` or `Inactive` only (`src/Collega.Domain/Enums/UserStatus.cs`). Read every "suspended/archived" reference in the comp and in `SPEC/sprints/archive/sprint-06-view-as.md` as **`Inactive`**. Do not introduce a new status for this feature.
 11. Impersonation can never escalate. The effective role is the target's own role, and the authorization check is made against the **caller's real role** — an Org Admin acting as a user in their org gains nothing they did not already have, and cannot reach another organization by any path.
 12. A session whose target becomes inactive, or whose target's organization is archived, stops being valid at the next request.
 

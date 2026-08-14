@@ -1,7 +1,7 @@
 # Sprint 7: AI-Assisted Idea Drafting (Idea Brainstorm Chat)
 
 **Status:** Not started
-**Sequence:** 7 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 6 (`sprint-06-view-as.md`) is merged; precedes Sprint 8 (`sprint-08-azure-deployment.md`) so the first Azure deployment ships this feature and provisions its key. Scheduled 2026-08-11 at user request ("before the Azure deployment work but after the Postgres migration"). Azure was renumbered 7 → 8 to make room.
+**Sequence:** 7 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 6 (`archive/sprint-06-view-as.md`, complete) **and Sprint 6.5** (`sprint-06.5-bug-fixes-and-tweaks.md`), which supersedes all other sprints per the user's 2026-08-14 decision; precedes Sprint 8 (`sprint-08-azure-deployment.md`) so the first Azure deployment ships this feature and provisions its key. Scheduled 2026-08-11 at user request ("before the Azure deployment work but after the Postgres migration"). Azure was renumbered 7 → 8 to make room.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
 ## Goal
