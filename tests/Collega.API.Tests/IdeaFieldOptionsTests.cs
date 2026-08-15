@@ -43,6 +43,7 @@ public sealed class IdeaFieldOptionsTests : IClassFixture<CollegaApiFactory>
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var orgId = await CreateOrganizationAsync(client, "Northwind Fields");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, orgId);
 
         var create = await client.PostAsJsonAsync($"/api/v1/organizations/{orgId}/idea-types", new { name = "Bug Fix" });
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
@@ -70,6 +71,7 @@ public sealed class IdeaFieldOptionsTests : IClassFixture<CollegaApiFactory>
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var orgId = await CreateOrganizationAsync(client, "Tailspin Fields");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, orgId);
 
         // "Continuous Improvement" already exists as a provisioned default (case-insensitive clash).
         var dup = await client.PostAsJsonAsync($"/api/v1/organizations/{orgId}/idea-types", new { name = "continuous improvement" });
@@ -82,6 +84,7 @@ public sealed class IdeaFieldOptionsTests : IClassFixture<CollegaApiFactory>
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var orgId = await CreateOrganizationAsync(client, "Fabrikam Fields");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, orgId);
 
         var bad = await client.PostAsJsonAsync($"/api/v1/organizations/{orgId}/business-impacts", new { name = "Blocker", color = "red" });
         Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
@@ -96,6 +99,7 @@ public sealed class IdeaFieldOptionsTests : IClassFixture<CollegaApiFactory>
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var orgId = await CreateOrganizationAsync(client, "Adventure Fields");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, orgId);
 
         var impacts = await client.GetFromJsonAsync<List<BusinessImpactItem>>($"/api/v1/organizations/{orgId}/business-impacts", Json);
         var reversed = impacts!.Select(i => i.BusinessImpactId).Reverse().ToList();
@@ -143,15 +147,12 @@ public sealed class IdeaFieldOptionsTests : IClassFixture<CollegaApiFactory>
         await ViewAsAuth.StopActingAsync(client);
         var response = await client.PostAsJsonAsync("/api/v1/organizations", new { title, description = "desc" });
         response.EnsureSuccessStatusCode();
+        // Leaves the client acting as the Site Admin. Rule 25 means the caller cannot yet mutate
+        // this organization's content — a test that needs to must opt in with an explicit
+        // ViewAsAuth.ActAsOrgAdminAsync naming the organization it means. See ViewAsAuth's remarks
+        // for why this is opt-in rather than automatic.
         var created = await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json);
-
-        // Rule 25: a Site Admin acting as themselves can bootstrap an organization but cannot then
-        // mutate its content. Elevating here — once, in the shared helper — leaves every test body
-        // unchanged while routing its mutations through View As, which is the path the product now
-        // requires and which nothing else covers end to end.
-        await ViewAsAuth.ActAsOrgAdminAsync(client, created!.OrganizationId);
-
-        return created.OrganizationId;
+        return created!.OrganizationId;
     }
 
     // Rotates the seeded Site Admin's mandatory first-login password before use; shared so the

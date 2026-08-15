@@ -166,7 +166,6 @@ tr:hover td { background: #faf9f8; }
 .pill.info { background: var(--accent-soft); color: var(--accent-deep); }
 
 /* ---- Command bar / filter chips ---- */
-/* Back action sits on its own row above the command bar, left-aligned, on every list page. */
 /* One command row per list page: Back leftmost, then search, then the primary
    action pushed right by its own margin-left:auto (user decision, 2026-08-14).
    The former .backrow wrapper put Back on its own line above this and is gone. */

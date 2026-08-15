@@ -30,6 +30,7 @@ public sealed class IdeaTypeFieldsTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var orgId = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, orgId);
         var fieldId = await CreateFieldDefinitionAsync(admin, orgId, "Budget", "Number");
         var typeId = (await GetIdeaTypesAsync(admin, orgId))[0].IdeaTypeId;
 
@@ -59,6 +60,7 @@ public sealed class IdeaTypeFieldsTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var orgId = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, orgId);
         var typeId = (await GetIdeaTypesAsync(admin, orgId))[0].IdeaTypeId;
 
         var set = await admin.PutAsJsonAsync($"/api/v1/organizations/{orgId}/idea-types/{typeId}/fields", new
@@ -74,6 +76,7 @@ public sealed class IdeaTypeFieldsTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var orgId = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, orgId);
         var typeId = (await GetIdeaTypesAsync(admin, orgId))[0].IdeaTypeId;
 
         var bad = await admin.PutAsJsonAsync($"/api/v1/organizations/{orgId}/idea-types/{typeId}/appearance", new { colorHex = "red", icon = "x" });
@@ -93,6 +96,7 @@ public sealed class IdeaTypeFieldsTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var (orgId, boardId) = await CreateOrgWithBoardAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, orgId);
         var types = await GetIdeaTypesAsync(admin, orgId);
         var (typeA, typeB) = (types[0], types[1]);
         var impactId = FirstBusinessImpactId(orgId);
@@ -116,17 +120,19 @@ public sealed class IdeaTypeFieldsTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var (orgId, boardId) = await CreateOrgWithBoardAsync(admin);
+        var userEmail = await CreateUserAsync(admin, orgId, "User");
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, orgId);
         var types = await GetIdeaTypesAsync(admin, orgId);
         var impactId = FirstBusinessImpactId(orgId);
         var created = await CreateIdeaAsync(admin, boardId, types[0].IdeaTypeId, impactId);
 
         // A plain user cannot reassign.
-        var userEmail = await CreateUserAsync(admin, orgId, "User");
         using var user = await LoginAsync(userEmail);
         var forbidden = await user.PutAsJsonAsync($"/api/v1/organizations/{orgId}/ideas/{created}/idea-type", new { ideaTypeId = types[1].IdeaTypeId });
         Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
 
-        // The Site Admin can.
+        // An in-scope admin can. Rule 25 refuses a Site Admin acting as themselves here, so this
+        // runs through the View As session opened above — the path the product requires.
         var ok = await admin.PutAsJsonAsync($"/api/v1/organizations/{orgId}/ideas/{created}/idea-type", new { ideaTypeId = types[1].IdeaTypeId });
         Assert.Equal(HttpStatusCode.NoContent, ok.StatusCode);
 
@@ -155,15 +161,11 @@ public sealed class IdeaTypeFieldsTests : IClassFixture<CollegaApiFactory>
             description = "Idea-type fields test organization."
         });
         response.EnsureSuccessStatusCode();
-        var created = (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
-
-        // Rule 25: a Site Admin acting as themselves can bootstrap an organization but cannot then
-        // mutate its content. Elevating here — once, in the shared helper — leaves every test body
-        // unchanged while routing its mutations through View As, which is the path the product now
-        // requires and which nothing else covers end to end.
-        await ViewAsAuth.ActAsOrgAdminAsync(admin, created.OrganizationId);
-
-        return created;
+        // Leaves the client acting as the Site Admin. Rule 25 means the caller cannot yet mutate
+        // this organization's content — a test that needs to must opt in with an explicit
+        // ViewAsAuth.ActAsOrgAdminAsync naming the organization it means. See ViewAsAuth's remarks
+        // for why this is opt-in rather than automatic.
+        return (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
     }
 
     private async Task<Guid> CreateFieldDefinitionAsync(HttpClient admin, Guid orgId, string name, string fieldType)
