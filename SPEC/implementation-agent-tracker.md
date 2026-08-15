@@ -13,16 +13,16 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-08-14 against `a5d53b2` (`dev`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-08-15 against `45ee623` (`feature/065-viewas-test-harness`, ahead of `dev` at `0858032`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
 | MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening, User-Defined Fields, Idea-Type Fields. Done — do not restart. |
 | Blazor client | ~16 pages, 9 shared components in `src/Collega.Client/Components/` | Geist is the single typeface. |
-| Test suite | **622 green** (2026-08-14) | 113 Domain + 230 Application + 117 Infrastructure + 162 API. Three need Docker (skip cleanly without it; CI excludes via `--filter "Category!=Container"`). Re-run before trusting. |
-| Sprints | **1–6 complete** · **6.5 next, in intake** · 7–8 blocked behind 6.5 | **Sprint 6.5 supersedes all other sprints** (user, 2026-08-14) — it is a bug/tweak paydown sprint, currently collecting items from user testing of Act As. Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
+| Test suite | **622 green** (2026-08-15, run twice) | 113 Domain + 230 Application + 117 Infrastructure + 162 API. Five `PostgresProviderTests` need Docker (skip cleanly without it; CI excludes via `--filter "Category!=Container"`); 11 `Collega.E2E.Tests` skip without a running app. Re-run before trusting. |
+| Sprints | **1–6 complete** · **6.5 in progress, intake closed** · 7–8 blocked behind 6.5 | **Sprint 6.5 supersedes all other sprints** (user, 2026-08-14). All 7 items are implemented; **none has had Code Reviewer sign-off, and items 2/4/5/7 have had no visual confirmation** — they are UI changes no test covers. Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
-| Bug queue | **Redirected to Sprint 6.5 — 2 items, one P1** | `SPEC/Bug Triage.md` is empty and points at `sprints/sprint-06.5-bug-fixes-and-tweaks.md`, the single home for bugs and tweaks until that sprint closes. **P1: View As is missing its page-header entry point** (D-PLACE locked two; only the rail avatar-menu item exists), so the feature is hard to find on `dev`. Add findings there, not to the queue. |
+| Bug queue | **Redirected to Sprint 6.5 — 7 items, all implemented** | `SPEC/Bug Triage.md` is empty and points at `sprints/sprint-06.5-bug-fixes-and-tweaks.md`, the single home for bugs and tweaks until that sprint closes. Add findings there, not to the queue. |
 | Local DB | `collega-postgres` (`postgres:16`), port **5432**, role `collega` | Standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas). Dev demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **If the API won't connect, check user-secrets for a stale SQL Server string** — see `src/Collega.API/CLAUDE.md`. |
 
 ### Sprint 5 — complete (merged `7c5a78b`)

@@ -14,7 +14,7 @@ Index of the sprint plan for remaining pre-MVP work as of 2026-08-10. This is **
 ## Sequencing
 Sprints run **strictly in order** — each builds on the previous sprint's merged state, not in parallel.
 
-**Sprint 6.5 supersedes all other sprints** (user decision, 2026-08-14). It is a bug-and-tweak paydown sprint that runs after 6 and **before 7 and 8**, which do not start until it completes. It is numbered 6.5 rather than renumbering 7 and 8 so existing cross-references to `sprint-07-*` and `sprint-08-*` stay valid. It is currently in **intake, not execution** — the user is testing Act As and adding findings.
+**Sprint 6.5 supersedes all other sprints** (user decision, 2026-08-14). It is a bug-and-tweak paydown sprint that runs after 6 and **before 7 and 8**, which do not start until it completes. It is numbered 6.5 rather than renumbering 7 and 8 so existing cross-references to `sprint-07-*` and `sprint-08-*` stay valid. Intake closed at 7 items (2026-08-14); it is now in **execution**.
 
 | # | Blocked by | Why that dependency exists |
 |---|---|---|
@@ -37,7 +37,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 4 | QA/Code-Review debt pass + profile portrait upload + code-review hardening batch (folded in 2026-08-11) | `SPEC/sprints/archive/sprint-04-qa-review-debt.md` | Complete (2026-08-12) — review pass closed at **partial coverage** by user decision; see that file's "Review pass — what it actually covered" | Medium |
 | 5 | PostgreSQL migration (SQL Server → Postgres) | `SPEC/sprints/archive/sprint-05-postgres-migration.md` | Complete (2026-08-12) — merged `7c5a78b` | Small–Medium |
 | 6 | View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin's only org-content mutation path) | `SPEC/sprints/archive/sprint-06-view-as.md` | **Complete (2026-08-14)** — 622 tests green at `a0ef22c`, now the tip of both `dev` and `main` | Medium |
-| 6.5 | Bug fixes and element tweaks — paydown sprint; **supersedes all other sprints** | `SPEC/sprints/sprint-06.5-bug-fixes-and-tweaks.md` | Intake (2026-08-14) — open for items, not ready to execute; user testing Act As | TBD |
+| 6.5 | Bug fixes and element tweaks — paydown sprint; **supersedes all other sprints** | `SPEC/sprints/sprint-06.5-bug-fixes-and-tweaks.md` | In Progress (2026-08-14) — intake closed at 7 items, all implemented; awaiting visual confirmation and Code Reviewer sign-off | Medium |
 | 7 | AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, `Anthropic` package approved) | `SPEC/sprints/sprint-07-ai-idea-assist.md` | Not started | Medium |
 | 8 | Azure deployment (provision + first deploy + CI/CD) | `SPEC/sprints/sprint-08-azure-deployment.md` | Not started | Medium |
 
