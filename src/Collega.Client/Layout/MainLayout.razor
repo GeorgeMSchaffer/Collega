@@ -2,7 +2,7 @@
 @implements IDisposable
 @using Collega.Client.Services
 @inject NavigationManager Nav
-@inject AuthenticationStateProvider AuthState
+@inject Collega.Client.Auth.CollegaAuthStateProvider AuthState
 @inject ApiClient Api
 
 @* Comp C application shell: 64px icon rail + page content. *@
@@ -82,6 +82,20 @@
             _canViewAs = _me is not null
                 && _me.ViewingAs is null
                 && (_me.Role == "SiteAdmin" || _me.Role == "OrgAdmin");
+
+            // Push the server's answer into the ClaimsPrincipal, not just into _me.
+            //
+            // Impersonation is a server-side session and the access token is never reissued
+            // (SPEC/30-Contracts.md), so /auth/me is the *only* thing that knows who the client is
+            // acting as. The principal is built from the stored user summary, so without this the
+            // role claim keeps describing the real administrator for the whole session — and
+            // [Authorize(Roles=…)], <AuthorizeView Roles=…> and IsInRole() all read the principal.
+            // That left every role-gated surface rendering for the admin rather than the target,
+            // which is exactly what rule 23 forbids.
+            if (_me is not null)
+            {
+                await AuthState.RefreshUserAsync(_me);
+            }
         }
 
         StateHasChanged();

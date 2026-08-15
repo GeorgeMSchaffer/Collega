@@ -71,7 +71,17 @@
       "mcp__Claude_Browser__read_network_requests",
       "mcp__Claude_Browser__preview_logs",
       "mcp__Claude_Browser__tabs_context",
-      "mcp__ccd_session_mgmt__list_events"
+      "mcp__ccd_session_mgmt__list_events",
+      "PowerShell(Select-String *)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Get-CimInstance *)",
+      "PowerShell(docker ps *)",
+      "PowerShell(docker inspect *)",
+      "PowerShell(docker logs *)",
+      "PowerShell(dotnet build *)",
+      "PowerShell(dotnet test *)"
     ],
     "additionalDirectories": [
       "/tmp"

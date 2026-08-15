@@ -189,7 +189,10 @@
                         {
                             <tr class="@(idea.IdeaId == _openIdeaId ? "selected" : null)">
                                 <td>
-                                    <div class="t">@idea.Title</div>
+                                    @* The title opens the same drawer as the row's Details button. A
+                                       real <button> rather than a click handler on the <div> so it is
+                                       reachable by keyboard and announced as an action. *@
+                                    <button type="button" class="t" @onclick="() => OpenDrawer(idea.IdeaId)">@idea.Title</button>
                                     <div class="board">@BoardName(idea.BoardId)</div>
                                 </td>
                                 @if (_isSiteAdmin)

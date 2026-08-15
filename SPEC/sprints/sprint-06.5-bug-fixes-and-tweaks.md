@@ -1,6 +1,6 @@
 ﻿# Sprint 6.5: Bug fixes and element tweaks
 
-**Status:** In Progress (started 2026-08-14) — **intake closed by the user**, seven items in scope plus one closed with no change. See the Scope table.
+**Status:** In Progress (started 2026-08-14) — **intake reopened 2026-08-15** for a second round from Act As testing. 13 items in scope plus one closed with no change; all implemented, none visually confirmed or reviewed. See the Scope table and "Items 8–13".
 **Sequence:** runs **after Sprint 6, before Sprint 7** — see `SPEC/95-next-sprints.md`. Numbered 6.5 rather than renumbering 7 and 8, so existing cross-references to `sprint-07-*` and `sprint-08-*` stay valid.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -32,6 +32,27 @@ Two sources feed it:
 | 5 | **List-page content container is not full width.** The card/table wrapper on list pages does not fill the available width. | User testing (2026-08-14) | Small | Built, unreviewed |
 | 6 | **Seed output.** The auth and demo seed commands create users silently, so there is no way to see what exists for testing or debugging. Emit the created users (email + role + organization) at startup. This is also what closed the "seed a Site Admin per org" item below — the users were already there and correctly org-assigned; they just were not visible. | User testing (2026-08-14) | Small | Built, unreviewed |
 | 7 | **Create form becomes a right slide-in drawer on all list pages.** Today all five use the centered `CreateModalShell`; detail/edit already use `DrawerShell`. **This reverses a locked decision** — Comp C locked "right slide-in drawer (detail + inline edit) with a centered create modal" (`client/CLAUDE.md`, Sprint 2 rollout). User decision 2026-08-14: create becomes a drawer too. **Spec first** per `CLAUDE.md`: update `SPEC/20-feature-client-ui.md` and `src/Collega.Client/CLAUDE.md` before touching components. Note the original report named only the Orgs page as wrong; investigation showed all five are identical, so "make Orgs match the others" would have been a no-op — the reversal is the actual intent. | User testing (2026-08-14) | Medium | Built, unreviewed |
+
+### Items 8–13 — second intake round (2026-08-15)
+
+Intake reopened: six further findings from Act As testing. **Five of the six are one defect**, diagnosed below, not five independent gaps.
+
+| # | Item | Source | Size | State |
+|---|---|---|---|---|
+| 8 | **Idea list title should open the detail drawer.** `Pages/Ideas.razor` rendered the title as a plain `<div class="t">`; only the row's **Details** button opened the drawer. | User testing (2026-08-15) | Small | **Fixed** |
+| 9 | **Non-admins must see the Boards list and be able to open a board.** | User testing (2026-08-15) | — | **Fixed via item 13** |
+| 10 | **Non-admins must see the Ideas list and be able to add ideas.** | User testing (2026-08-15) | — | **Fixed via item 13** |
+| 11 | **Org Admins must be able to manage idea types for their org.** | User testing (2026-08-15) | — | **Fixed via item 13** |
+| 12 | **Org Admins must be able to manage custom fields for their org.** | User testing (2026-08-15) | — | **Fixed via item 13** |
+| 13 | **Root cause: the client's role never changes when a View As session starts.** See below. | Diagnosis (2026-08-15) | Small | **Fixed** |
+
+**Item 13 — diagnosis.** Items 9–12 all reproduce only *while acting as* another user; each page's own gate was already correct (`IdeaTypesAdmin`, `FieldDefinitionsAdmin`, `OrganizationUsers` all carry `[Authorize(Roles = "OrgAdmin,SiteAdmin")]`, `Boards`/`Ideas` carry a bare `[Authorize]`, and `SettingsHub` already has an `OrgAdmin` link block).
+
+Impersonation is a server-side session and the access token is **never reissued** (`30-Contracts.md`), so `GET /auth/me` is the only source of the effective identity — the contract says outright that this "is what makes every existing client surface render as the target sees it." But `CollegaAuthStateProvider` builds the `ClaimsPrincipal` from the *stored* `UserSummaryDto`, and `MainLayout.ReloadIdentityAsync` only assigned the fresh summary to a local field. It never called `RefreshUserAsync`, so the principal — and therefore every `[Authorize(Roles=…)]`, `<AuthorizeView Roles=…>` and `IsInRole()` in the client — kept describing the real administrator for the whole session.
+
+Verified against the running API: with a live session the JWT is byte-identical and carries **no role claim at all** (`sub`, `sstamp`, `iat`, `exp` only), while `/auth/me` correctly flips `SiteAdmin` → `OrgAdmin`. The server was right throughout; only the client's principal was stale. So a Site Admin acting as an Org Admin still saw `_isSiteAdmin == true`, which is what suppressed the Ideas create button, forced the cross-org read-only board/idea tables, set `CanMutate => !_isSiteAdmin` to false on the admin pages, and showed the Site Admin block of `SettingsHub` instead of the Org Admin one.
+
+**Consequence worth knowing:** now that the principal follows the impersonated user, a Site Admin who starts a session while sitting on `/settings/organizations` (which is `[Authorize(Roles = "SiteAdmin")]`) will be bounced off that page. That is rule 23 working as specified — the admin sees what the target sees — not a regression.
 
 ### Item 1 — how it was resolved (2026-08-14)
 
