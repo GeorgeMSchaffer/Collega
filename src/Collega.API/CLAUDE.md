@@ -72,6 +72,21 @@ Or `dotnet user-secrets remove "ConnectionStrings:DefaultConnection"` if your `.
 
 Optional: `Auth:TokenSigningKey` (base64; a random per-process key is generated if unset, so tokens don't survive a restart) and `Auth:AccessTokenLifetimeMinutes` (default 480).
 
+### AI idea assist configuration
+
+`Ai:ApiKey` is the single deployment-level Anthropic key every organization shares (`SPEC/20-feature-ai-idea-assist.md` rule 29). It is a **secret** — user-secrets locally, App Service configuration in Azure, never `appsettings*.json`:
+
+```bash
+cd src/Collega.API
+dotnet user-secrets set "Ai:ApiKey" "sk-ant-..."
+```
+
+Leaving it unset is a supported state, not a misconfiguration: the feature runs dark (rule 31), so unlike `SiteAdmin:*` it must never fail startup.
+
+`docker-compose.yml`'s `api` service binds it from `CLAUDE_API_KEY` in `.env` — that path only applies under `docker compose --profile full`. **`dotnet run` does not read `.env`**, so a key set only there will look configured and behave as absent.
+
+The rest of the `Ai:*` section is not secret and has working defaults in code (`AiUsageLimits`): `Ai:DailyTokenLimit` (500000), `Ai:Model` (`claude-sonnet-5`), `Ai:Effort` (`low`), `Ai:Pricing:InputPerMillion` (3.00), `Ai:Pricing:OutputPerMillion` (15.00). A non-positive `Ai:DailyTokenLimit` disables the budget gate — local use only.
+
 ## Conventions
 
 **Routing** — never write the version segment in a controller. [`ApiVersionRoutePrefixConvention`](Conventions/ApiVersionRoutePrefixConvention.cs) prefixes every controller with `api/v1`, so `[Route("auth")]` serves `/api/v1/auth`. Use plural-noun resource routes per `SPEC/30-Contracts.md`.

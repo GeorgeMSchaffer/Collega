@@ -40,6 +40,10 @@ services:
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=Collega;Username=${POSTGRES_USER:-collega};Password=${POSTGRES_PASSWORD}
       SiteAdmin__Email: ${SITE_ADMIN_EMAIL}
       SiteAdmin__Password: ${SITE_ADMIN_PASSWORD}
+      # Empty is a supported state, not a misconfiguration — the AI feature runs dark
+      # (SPEC/20-feature-ai-idea-assist.md rule 31), so this must not fail fast the way
+      # the SiteAdmin keys above do.
+      Ai__ApiKey: ${CLAUDE_API_KEY:-}
     ports:
       - "5027:8080"
     volumes:

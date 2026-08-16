@@ -121,7 +121,7 @@ The deployment key is shared by every organization (rule 29), so without a ceili
 
 ### Credentials (D-CREDS)
 
-29. v1 uses a **single deployment-level key** from server configuration (user-secrets locally, App Service configuration in Azure — see `SPEC/50-azure-deployment.md`). All organizations share it.
+29. v1 uses a **single deployment-level key** from server configuration (user-secrets locally, App Service configuration in Azure — see `SPEC/50-azure-deployment.md`). All organizations share it. The configuration key is **`Ai:ApiKey`**, alongside the other `Ai:*` settings the cost controls read; the environment-variable form is `Ai__ApiKey`, and `docker-compose.yml` binds it from `CLAUDE_API_KEY` in `.env`. It is a secret and never belongs in `appsettings*.json`.
 30. `SPEC/30-Contracts.md` already specifies `PUT`/`DELETE /api/v1/organizations/{organizationId}/ai-key` for a **per-org key overriding the deployment default**. Those contracts stay in the spec and stay **unimplemented in v1** — they are the "Org AI credentials" backlog item. This is a deliberate deferral, not an oversight: a future agent reading those contracts must not build them as part of this sprint.
 31. If no key is configured, the feature is **off**: the brainstorm modal falls back to its current scripted behavior and the API returns a clear "not configured" response rather than an error. The product must work with the feature dark.
 
