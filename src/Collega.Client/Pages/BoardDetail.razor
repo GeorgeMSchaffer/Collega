@@ -277,7 +277,11 @@
 </div>
 
 <IdeaDrawer IdeaId="@_openIdeaId" OnClose="CloseDrawer" OnChanged="OnDrawerChanged" />
-<IdeaCreateModal Open="_showCreate" BoardId="@BoardId" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
+@* Rule 1: the assistant is reachable only from the New Idea flow, on the Ideas list and the board.
+   From here the board is genuinely known, so the turn is attributed to the board being worked on. *@
+<IdeaBrainstormModal Open="_showBrainstorm" BoardId="@BoardId" OrganizationId="@_organizationId"
+                     OnCancel="CloseBrainstorm" OnComplete="OnBrainstormComplete" />
+<IdeaCreateModal Open="_showCreate" BoardId="@BoardId" InitialDraft="@_seedDraft" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
 
 @code {
     [Parameter] public string BoardId { get; set; } = string.Empty;
@@ -317,6 +321,8 @@
     // create action opens the shared centered IdeaCreateModal, which loads its own board/org context.
     private string? _openIdeaId;
     private bool _showCreate;
+    private bool _showBrainstorm;
+    private IdeaDraftDto? _seedDraft;
 
     // CSV export/import (T059/T060)
     private bool _exporting;
@@ -468,7 +474,20 @@
         StateHasChanged();
     }
 
-    private void OpenCreate() => _showCreate = true;
+    private void OpenCreate()
+    {
+        _seedDraft = null;
+        _showBrainstorm = true;
+    }
+
+    private void CloseBrainstorm() => _showBrainstorm = false;
+
+    private void OnBrainstormComplete(IdeaDraftDto draft)
+    {
+        _seedDraft = draft;
+        _showBrainstorm = false;
+        _showCreate = true;
+    }
 
     private void CloseCreate() => _showCreate = false;
 

@@ -73,6 +73,10 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
             .HasColumnName("primary_contact_last_name")
             .HasMaxLength(Organization.ContactNameMaxLength);
 
+        builder.Property(o => o.AiScopeStatement)
+            .HasColumnName("ai_scope_statement")
+            .HasMaxLength(Organization.AiScopeStatementMaxLength);
+
         builder.Property(o => o.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
         builder.Property(o => o.UpdatedAtUtc).HasColumnName("updated_at_utc").IsRequired();
         builder.Property(o => o.CreatedByUserId).HasColumnName("created_by_user_id");

@@ -1,3 +1,4 @@
+using Collega.Application.Ai;
 using Collega.Application.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ public sealed class AppExceptionHandler : IExceptionHandler
         StatusCodes.Status404NotFound => "https://collega.dev/problems/not-found",
         StatusCodes.Status409Conflict => "https://collega.dev/problems/conflict",
         StatusCodes.Status429TooManyRequests => "https://collega.dev/problems/too-many-requests",
+        StatusCodes.Status503ServiceUnavailable => "https://collega.dev/problems/service-unavailable",
         _ => "https://collega.dev/problems/error",
     };
 
@@ -54,6 +56,12 @@ public sealed class AppExceptionHandler : IExceptionHandler
             LockedOutAppException lockedOut => (
                 StatusCodes.Status429TooManyRequests,
                 new ProblemDetails { Type = TypeFor(StatusCodes.Status429TooManyRequests), Title = "Too Many Requests", Status = StatusCodes.Status429TooManyRequests, Detail = lockedOut.Message }),
+            // Deliberately one shape for all three causes — unconfigured, provider down, budget spent.
+            // The client cannot tell them apart, and must not: each means "the assistant is
+            // unavailable, keep working without it" (SPEC/30-Contracts.md, AI assist 503).
+            AiAssistUnavailableException unavailable => (
+                StatusCodes.Status503ServiceUnavailable,
+                new ProblemDetails { Type = TypeFor(StatusCodes.Status503ServiceUnavailable), Title = "Service Unavailable", Status = StatusCodes.Status503ServiceUnavailable, Detail = unavailable.Message }),
             _ => (0, null)
         };
 

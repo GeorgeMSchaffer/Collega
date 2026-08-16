@@ -147,7 +147,7 @@ Implementation detail, recorded here because it is behavior-affecting:
 
 | Entity | Change |
 |---|---|
-| `Organization` | `AiScopeStatement` — `nvarchar(500)`, nullable. Org-Admin editable. Empty/null = Idea Types alone define scope. |
+| `Organization` | `AiScopeStatement` — `character varying(500)`, nullable (Postgres; the pre-Sprint-5 wording said `nvarchar`). Org-Admin editable. Empty/null = Idea Types alone define scope. |
 | `AiUsageRecord` *(new)* | One row per model call (rule 28c). Organization (**required** — the attribution axis), acting user, impersonated user, board, occurred-at, model id, the four token counts, the input/output rates applied, a key-source discriminator, and the call's outcome. Indexed on `(OrganizationId, OccurredAtUtc)` — both the budget check and every report read on that pair. |
 
 The per-org AI key fields implied by the `ai-key` contracts are **not** added in this sprint (rule 30). `AiUsageRecord` nonetheless carries a **key-source discriminator**, always `Platform` in v1: when per-org keys do land, each org's own key can be metered separately with no backfill and no schema change to historical rows.

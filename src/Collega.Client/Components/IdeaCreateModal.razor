@@ -54,19 +54,42 @@
                         }
 
                         <div class="span2">
-                            <label for="cr-title">Title <span class="required">*</span> <span class="charlim">@_title.Length / 150</span></label>
+                            <div class="lblrow">
+                                <label for="cr-title">Title <span class="required">*</span> <span class="charlim">@_title.Length / 150</span></label>
+                                @if (IsSuggested(nameof(_title)))
+                                {
+                                    <span class="sugchip">Suggested</span>
+                                    <button type="button" class="sug-clear" @onclick="() => ClearSuggestion(nameof(_title))">clear</button>
+                                }
+                            </div>
                             <input id="cr-title" type="text" maxlength="150" placeholder="What's the idea?"
+                                   class="@SuggestedClass(nameof(_title))"
                                    @bind="_title" @bind:event="oninput" disabled="@(_creating || !_hasBoard)" />
                         </div>
                         <div class="span2">
-                            <label for="cr-desc">Description <span class="required">*</span> <span class="charlim">@_description.Length / 4000</span></label>
+                            <div class="lblrow">
+                                <label for="cr-desc">Description <span class="required">*</span> <span class="charlim">@_description.Length / 4000</span></label>
+                                @if (IsSuggested(nameof(_description)))
+                                {
+                                    <span class="sugchip">Suggested</span>
+                                    <button type="button" class="sug-clear" @onclick="() => ClearSuggestion(nameof(_description))">clear</button>
+                                }
+                            </div>
                             <textarea id="cr-desc" rows="5" maxlength="4000" placeholder="Add context, motivation, or details…"
+                                      class="@SuggestedClass(nameof(_description))"
                                       @bind="_description" @bind:event="oninput" disabled="@(_creating || !_hasBoard)"></textarea>
                             <div class="help">Type an email with @@ to notify that person.</div>
                         </div>
                         <div>
-                            <label for="cr-type">Idea type <span class="required">*</span></label>
-                            <select id="cr-type" value="@_ideaTypeId" @onchange="OnIdeaTypeChanged" disabled="@(_creating || !_hasBoard)">
+                            <div class="lblrow">
+                                <label for="cr-type">Idea type <span class="required">*</span></label>
+                                @if (IsSuggested(nameof(_ideaTypeId)))
+                                {
+                                    <span class="sugchip">Suggested</span>
+                                }
+                            </div>
+                            <select id="cr-type" value="@_ideaTypeId" class="@SuggestedClass(nameof(_ideaTypeId))"
+                                    @onchange="OnIdeaTypeChanged" disabled="@(_creating || !_hasBoard)">
                                 @foreach (var t in _ideaTypes)
                                 {
                                     <option value="@t.IdeaTypeId">@t.Name</option>
@@ -74,8 +97,15 @@
                             </select>
                         </div>
                         <div>
-                            <label for="cr-impact">Business impact <span class="required">*</span></label>
-                            <select id="cr-impact" @bind="_businessImpactId" disabled="@(_creating || !_hasBoard)">
+                            <div class="lblrow">
+                                <label for="cr-impact">Business impact <span class="required">*</span></label>
+                                @if (IsSuggested(nameof(_businessImpactId)))
+                                {
+                                    <span class="sugchip">Suggested</span>
+                                }
+                            </div>
+                            <select id="cr-impact" class="@SuggestedClass(nameof(_businessImpactId))"
+                                    @bind="_businessImpactId" disabled="@(_creating || !_hasBoard)">
                                 @foreach (var b in _businessImpacts)
                                 {
                                     <option value="@b.BusinessImpactId">@b.Name</option>
@@ -83,8 +113,15 @@
                             </select>
                         </div>
                         <div>
-                            <label for="cr-prio">Priority</label>
-                            <select id="cr-prio" @bind="_priority" disabled="@(_creating || !_hasBoard)">
+                            <div class="lblrow">
+                                <label for="cr-prio">Priority</label>
+                                @if (IsSuggested(nameof(_priority)))
+                                {
+                                    <span class="sugchip">Suggested</span>
+                                }
+                            </div>
+                            <select id="cr-prio" class="@SuggestedClass(nameof(_priority))"
+                                    @bind="_priority" disabled="@(_creating || !_hasBoard)">
                                 <option value="Critical">Critical</option>
                                 <option value="High">High</option>
                                 <option value="Medium">Medium</option>
@@ -172,9 +209,12 @@
 
     [Parameter] public bool Open { get; set; }
     [Parameter] public string? BoardId { get; set; }
-    // Optional seed text for the Description, e.g. the transcript carried over from the brainstorm chat
-    // (IdeaBrainstormModal). Applied once when the modal opens, after ResetForm clears the form.
-    [Parameter] public string? InitialDescription { get; set; }
+    /// <summary>
+    /// The draft carried over from the brainstorm chat (D-PREFILL). Every value arrives as an
+    /// <b>editable default</b> marked with a teal suggestion indicator — the user may change or clear
+    /// any of them, and nothing is committed until they submit the form (rules 19-20, 23).
+    /// </summary>
+    [Parameter] public IdeaDraftDto? InitialDraft { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
     [Parameter] public EventCallback<IdeaDetailDto?> OnCreated { get; set; }
 
@@ -235,11 +275,13 @@
     private async Task OpenAsync()
     {
         ResetForm();
-        if (!string.IsNullOrWhiteSpace(InitialDescription))
-        {
-            _description = InitialDescription.Length > 4000 ? InitialDescription[..4000] : InitialDescription;
-        }
         _error = null;
+        _suggested.Clear();
+
+        // Split by what each value actually depends on. Title, description and priority need no
+        // catalog, so they apply now — otherwise they would be lost entirely on the global
+        // Ideas-list path, which returns below to show a board picker before any catalog loads.
+        ApplyDraftText();
         _loadingContext = true;
 
         if (AuthStateTask is not null)
@@ -315,6 +357,100 @@
         _statusId = _statusOptions.FirstOrDefault()?.StatusId ?? "";
 
         await LoadOrgOptionsAsync(_organizationId!);
+        ApplyDraftOptions();
+    }
+
+    /// <summary>
+    /// The catalog-independent half of the draft. Applied as soon as the modal opens, so it survives
+    /// the global Ideas-list path where the user must pick a board before any catalog is fetched.
+    /// </summary>
+    private void ApplyDraftText()
+    {
+        if (InitialDraft is null)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(InitialDraft.Title))
+        {
+            _title = Clamp(InitialDraft.Title!, 150);
+            _suggested.Add(nameof(_title));
+        }
+
+        if (!string.IsNullOrWhiteSpace(InitialDraft.Description))
+        {
+            _description = Clamp(InitialDraft.Description!, 4000);
+            _suggested.Add(nameof(_description));
+        }
+
+        if (InitialDraft.Priority is { Length: > 0 } priority)
+        {
+            _priority = priority;
+            _suggested.Add(nameof(_priority));
+        }
+    }
+
+    /// <summary>
+    /// The catalog-dependent half: the option ids. Runs after <see cref="LoadOrgOptionsAsync"/>,
+    /// because that is what seeds the selects — applying earlier would be silently overwritten. An id
+    /// no longer in the catalog is skipped and the default stands: a stale suggestion should not leave
+    /// the form pointing at an option that isn't there.
+    /// </summary>
+    private void ApplyDraftOptions()
+    {
+        if (InitialDraft is null)
+        {
+            return;
+        }
+
+        if (InitialDraft.IdeaTypeId is { Length: > 0 } typeId
+            && _ideaTypes.Any(t => t.IdeaTypeId == typeId))
+        {
+            _ideaTypeId = typeId;
+            _suggested.Add(nameof(_ideaTypeId));
+            // The resolved field set follows the type, so a suggested type must re-resolve it —
+            // otherwise the form shows the default type's fields under the suggested type's name.
+            RecomputeResolvedFields();
+        }
+
+        if (InitialDraft.BusinessImpactId is { Length: > 0 } impactId
+            && _businessImpacts.Any(b => b.BusinessImpactId == impactId))
+        {
+            _businessImpactId = impactId;
+            _suggested.Add(nameof(_businessImpactId));
+        }
+    }
+
+    private static string Clamp(string value, int maxLength) =>
+        value.Length <= maxLength ? value : value[..maxLength];
+
+    /// <summary>
+    /// Which fields carry a suggestion indicator. Set once when the draft is applied and cleared per
+    /// field on demand — v1 deliberately tracks nothing finer. Direction C keeps the draft strip
+    /// read-only precisely so no suggested-vs-user-edited state machine is needed; if a chip lingers
+    /// after the user edits a field, that is the accepted trade, not a bug to fix with more state.
+    /// </summary>
+    private readonly HashSet<string> _suggested = new();
+
+    private bool IsSuggested(string field) => _suggested.Contains(field);
+
+    private string? SuggestedClass(string field) => _suggested.Contains(field) ? "sug-input" : null;
+
+    private void ClearSuggestion(string field)
+    {
+        if (!_suggested.Remove(field))
+        {
+            return;
+        }
+
+        if (field == nameof(_title))
+        {
+            _title = "";
+        }
+        else if (field == nameof(_description))
+        {
+            _description = "";
+        }
     }
 
     private async Task LoadOrgOptionsAsync(string organizationId)

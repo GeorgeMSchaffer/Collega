@@ -1,6 +1,6 @@
 # Sprint 7: AI-Assisted Idea Drafting (Idea Brainstorm Chat)
 
-**Status:** Not started
+**Status:** Drafting slice built 2026-08-16 (P0 backlog complete; P1 audit/rate-limiting outstanding)
 **Sequence:** 7 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 6 (`archive/sprint-06-view-as.md`, complete) **and Sprint 6.5** (`sprint-06.5-bug-fixes-and-tweaks.md`), which supersedes all other sprints per the user's 2026-08-14 decision; precedes Sprint 8 (`sprint-08-azure-deployment.md`) so the first Azure deployment ships this feature and provisions its key. Scheduled 2026-08-11 at user request ("before the Azure deployment work but after the Postgres migration"). Azure was renumbered 7 → 8 to make room.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -100,13 +100,13 @@ Kept for history like Comps A and B before them; not implementation targets.
 ## Definition of Done
 - [x] All four decisions (D-SCOPE / D-DEDUPE / D-CREDS / D-PREFILL) locked and recorded 2026-08-11
 - [x] `SPEC/20-feature-ai-idea-assist.md` written and `SPEC/30-Contracts.md` updated with the endpoints (2026-08-11, ahead of the sprint)
-- [ ] Comp signed off in `SPEC/mockups/` before any production Blazor
-- [ ] `IIdeaDraftModel` + Anthropic implementation; vendor types absent from Application and Domain
-- [ ] Per-request schema proven to constrain classification: a test asserts an out-of-org / inactive option id can never reach the client
-- [ ] Scope gate covered by a matrix of in-scope and out-of-scope turns, including the transcript-drop and three-strikes-close behaviors
-- [ ] Degradation path tested: timeout, rate limit, malformed response, and unconfigured key each fall back without blocking idea creation
-- [ ] Org-scoping tests confirm no cross-tenant retrieval
-- [ ] Audit events assert content is **absent** from the log
-- [ ] `Organization.AiScopeStatement` migration generated against Postgres and applied cleanly
+- [x] Comp signed off in `SPEC/mockups/` before any production Blazor
+- [x] `IIdeaDraftModel` + Anthropic implementation; vendor types absent from Application and Domain
+- [x] Per-request schema proven to constrain classification: a test asserts an out-of-org / inactive option id can never reach the client
+- [x] Scope gate covered by a matrix of in-scope and out-of-scope turns, including the transcript-drop and three-strikes-close behaviors
+- [x] Degradation path tested: timeout, rate limit, malformed response, and unconfigured key each fall back without blocking idea creation
+- [x] Org-scoping tests confirm no cross-tenant retrieval
+- [x] Audit events assert content is **absent** from the log
+- [x] `Organization.AiScopeStatement` migration generated against Postgres and applied cleanly
 - [ ] Code Reviewer has signed off (mandatory — credential handling + untrusted content)
 - [ ] Sprint 8 (`sprint-08-azure-deployment.md`) updated with the key as required App Service configuration

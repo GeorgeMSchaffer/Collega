@@ -1,4 +1,5 @@
 using Collega.Application.Abstractions;
+using Collega.Application.Ai;
 using Collega.Domain.Auditing;
 using Collega.Domain.Enums;
 using Collega.Domain.Notifications;
@@ -158,6 +159,47 @@ internal readonly record struct NotificationWrite(
     string IdeaTitle,
     Guid ActorUserId,
     Guid RecipientUserId);
+
+/// <summary>
+/// Scriptable <see cref="IIdeaDraftModel"/>. No test may reach a real provider, so the model's answer
+/// is whatever the test says it is — which is also the only way to exercise the branches that matter:
+/// a returned id that is not in the retrieved set, a refusal, a provider failure.
+/// </summary>
+internal sealed class FakeIdeaDraftModel : IIdeaDraftModel
+{
+    public bool IsConfigured { get; set; } = true;
+
+    /// <summary>Set to make the next call throw, exercising the degradation path.</summary>
+    public bool ThrowOnCall { get; set; }
+
+    public IdeaDraftModelResponse Next { get; set; } =
+        new(InScope: true, "What problem does this solve?", IdeaDraft.Empty, InputTokens: 900, OutputTokens: 120);
+
+    public int CallCount { get; private set; }
+
+    /// <summary>The context the service assembled — asserted on for org scoping and scope-statement flow.</summary>
+    public IdeaAssistContext? LastContext { get; private set; }
+
+    public IReadOnlyList<IdeaAssistTurn>? LastTranscript { get; private set; }
+
+    public Task<IdeaDraftModelResponse> ContinueAsync(
+        IdeaAssistContext context,
+        IReadOnlyList<IdeaAssistTurn> transcript,
+        IdeaDraft currentDraft,
+        CancellationToken cancellationToken = default)
+    {
+        CallCount++;
+        LastContext = context;
+        LastTranscript = transcript;
+
+        if (ThrowOnCall)
+        {
+            throw new IdeaDraftModelException("Simulated provider failure.");
+        }
+
+        return Task.FromResult(Next);
+    }
+}
 
 /// <summary>Deterministic invite-code generator returning a predictable, unique sequence.</summary>
 internal sealed class FakeInviteCodeGenerator : IInviteCodeGenerator

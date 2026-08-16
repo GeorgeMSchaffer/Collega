@@ -250,8 +250,9 @@
 </div>
 
 <IdeaDrawer IdeaId="@_openIdeaId" OnClose="CloseDrawer" OnChanged="OnDrawerChanged" />
-<IdeaBrainstormModal Open="_showBrainstorm" OnCancel="CloseBrainstorm" OnComplete="OnBrainstormComplete" />
-<IdeaCreateModal Open="_showCreate" BoardId="@_createBoardId" InitialDescription="@_seedDescription" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
+<IdeaBrainstormModal Open="_showBrainstorm" BoardId="@_assistBoardId" OrganizationId="@_organizationId"
+                     OnCancel="CloseBrainstorm" OnComplete="OnBrainstormComplete" />
+<IdeaCreateModal Open="_showCreate" BoardId="@_createBoardId" InitialDraft="@_seedDraft" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
 
 @code {
     [Parameter] public string? IdeaId { get; set; }
@@ -295,7 +296,8 @@
     private bool _showBrainstorm;
     private bool _showCreate;
     private string? _createBoardId;
-    private string? _seedDescription;
+    private string? _assistBoardId;
+    private IdeaDraftDto? _seedDraft;
 
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
     private readonly Dictionary<string, FieldFilterState> _fieldFilters = new();
@@ -661,19 +663,24 @@
         StateHasChanged();
     }
 
-    // "Add New" opens the brainstorm chat first; its transcript seeds the create form's description.
+    // "Add New" opens the brainstorm chat first; its draft pre-fills the create form.
     private void OpenCreate()
     {
         _createBoardId = null; // global list: the modal shows a board picker
-        _seedDescription = null;
+        _seedDraft = null;
+
+        // The assist endpoint is board-scoped for authorization and attribution, but retrieval is
+        // organization-scoped — so from the global list any board the caller can see yields the same
+        // catalog. No board at all means the chat stays scripted, which is a supported state.
+        _assistBoardId = _boardNames.Keys.FirstOrDefault();
         _showBrainstorm = true;
     }
 
     private void CloseBrainstorm() => _showBrainstorm = false;
 
-    private void OnBrainstormComplete(string transcript)
+    private void OnBrainstormComplete(IdeaDraftDto draft)
     {
-        _seedDescription = string.IsNullOrWhiteSpace(transcript) ? null : transcript;
+        _seedDraft = draft;
         _showBrainstorm = false;
         _showCreate = true;
     }

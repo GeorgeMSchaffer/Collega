@@ -242,6 +242,32 @@ public sealed partial class ApiClient
     public Task<ApiResult<AiUsageReportDto>> GetOrganizationAiUsageAsync(string organizationId, CancellationToken ct = default) =>
         GetAsync<AiUsageReportDto>($"{BasePath}/organizations/{organizationId}/ai-assist/usage", ct);
 
+    // ---- AI idea assist (SPEC/30-Contracts.md → "AI Idea Assist Contracts") ----
+
+    /// <summary>
+    /// Advances the drafting conversation by one turn. A failure here — including the 503 that means
+    /// "assistant unavailable" — is never fatal: the caller degrades to the scripted nudge and keeps
+    /// the user's text (rules 31–32).
+    /// </summary>
+    public Task<ApiResult<IdeaAssistTurnResponseDto>> ContinueIdeaAssistAsync(
+        string boardId,
+        IdeaAssistTurnRequestDto request,
+        CancellationToken ct = default) =>
+        SendJsonAsync<IdeaAssistTurnResponseDto>(
+            HttpMethod.Post, $"{BasePath}/boards/{boardId}/idea-assist/turns", request, ct);
+
+    /// <summary>Reads an organization's AI assist configuration. Never returns a key.</summary>
+    public Task<ApiResult<AiAssistSettingsDto>> GetAiAssistSettingsAsync(string organizationId, CancellationToken ct = default) =>
+        GetAsync<AiAssistSettingsDto>($"{BasePath}/organizations/{organizationId}/ai-assist/settings", ct);
+
+    /// <summary>Sets or clears the organization's scope statement.</summary>
+    public Task<ApiResult<AiAssistSettingsDto>> UpdateAiAssistSettingsAsync(
+        string organizationId,
+        UpdateAiAssistSettingsRequestDto request,
+        CancellationToken ct = default) =>
+        SendJsonAsync<AiAssistSettingsDto>(
+            HttpMethod.Put, $"{BasePath}/organizations/{organizationId}/ai-assist/settings", request, ct);
+
     public Task<ApiResult<CreateStatusResultDto>> CreateStatusAsync(string organizationId, SaveStatusRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<CreateStatusResultDto>(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/statuses", body, ct);
 

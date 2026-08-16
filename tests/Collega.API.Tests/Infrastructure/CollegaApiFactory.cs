@@ -1,9 +1,28 @@
+using Collega.Application.Abstractions;
+using Collega.Application.Ai;
 using Collega.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Collega.API.Tests.Infrastructure;
+
+/// <summary>
+/// A draft model that is never configured, so the integration host can exercise the drafting
+/// endpoints without a provider. <see cref="ContinueAsync"/> throws rather than returning a canned
+/// answer: a test that somehow reaches it has escaped the guard, and should fail loudly.
+/// </summary>
+internal sealed class UnconfiguredIdeaDraftModel : IIdeaDraftModel
+{
+    public bool IsConfigured => false;
+
+    public Task<IdeaDraftModelResponse> ContinueAsync(
+        IdeaAssistContext context,
+        IReadOnlyList<IdeaAssistTurn> transcript,
+        IdeaDraft currentDraft,
+        CancellationToken cancellationToken = default) =>
+        throw new IdeaDraftModelException("Integration tests never call a model provider.");
+}
 
 /// <summary>
 /// Shared integration-test harness for Collega.API. Boots the real ASP.NET Core
@@ -53,6 +72,13 @@ public sealed class CollegaApiFactory : WebApplicationFactory<Program>
         // them — see the ConfigureAppConfiguration-vs-environment-variables note above.
         Environment.SetEnvironmentVariable("SiteAdmin__Email", "siteadmin@collega.test");
         Environment.SetEnvironmentVariable("SiteAdmin__Password", "Test123!Password");
+
+        // Blank the AI credential. WebApplicationFactory runs as Development, so the host loads the
+        // developer's user-secrets — and a developer with a real Ai:ApiKey there would have the suite
+        // make live, billed model calls on every run. Environment variables outrank user-secrets in
+        // the default configuration chain, so this wins. The IIdeaDraftModel override below makes the
+        // guarantee independent of that ordering; both are deliberate.
+        Environment.SetEnvironmentVariable("Ai__ApiKey", string.Empty);
     }
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
@@ -68,6 +94,18 @@ public sealed class CollegaApiFactory : WebApplicationFactory<Program>
 
             services.AddDbContext<CollegaDbContext>(options =>
                 options.UseInMemoryDatabase(_inMemoryDatabaseName));
+
+            // No test may reach a model provider — the same rule that keeps every other test off a
+            // real database. Replacing the registration outright means it holds even if the
+            // configuration chain changes, and it makes the drafting endpoints exercise their
+            // degradation path (rule 31), which is the behaviour worth covering here anyway.
+            var draftModelDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IIdeaDraftModel));
+            if (draftModelDescriptor is not null)
+            {
+                services.Remove(draftModelDescriptor);
+            }
+
+            services.AddSingleton<IIdeaDraftModel, UnconfiguredIdeaDraftModel>();
         });
 
         base.ConfigureWebHost(builder);

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Collega.Application.Abstractions;
 using Collega.Application.Ai;
+using Collega.Infrastructure.Ai;
 using Collega.Infrastructure.Auditing;
 using Collega.Infrastructure.Imaging;
 using Collega.Infrastructure.Notifications;
@@ -42,6 +43,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IFieldDefinitionRepository, EfFieldDefinitionRepository>();
         services.AddScoped<IAiUsageRepository, EfAiUsageRepository>();
         services.AddScoped<IAiUsageService, AiUsageService>();
+        services.AddScoped<IdeaAssistContextBuilder>();
+        services.AddScoped<IIdeaAssistService, IdeaAssistService>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IStartupSeeder, StartupSeeder>();
 
@@ -86,6 +89,16 @@ public static class InfrastructureServiceCollectionExtensions
                     : defaults.OutputRatePerMillion,
             };
         });
+
+        // The deployment AI credential. Absent is a supported state — the feature runs dark (rule 31),
+        // so this must never fail startup the way the SiteAdmin keys do.
+        services.AddSingleton(sp => new AiCredentials
+        {
+            ApiKey = sp.GetRequiredService<IConfiguration>()["Ai:ApiKey"],
+        });
+
+        // Singleton: the model client is stateless and holds an HTTP client, so one per process.
+        services.AddSingleton<IIdeaDraftModel, AnthropicIdeaDraftModel>();
 
         services.AddSingleton<JwtAccessTokenService>();
         services.AddSingleton<IAccessTokenIssuer>(sp => sp.GetRequiredService<JwtAccessTokenService>());

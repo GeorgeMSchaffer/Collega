@@ -27,6 +27,12 @@ public sealed class Organization : AuditableEntityBase
     public const int PhoneMaxLength = 25;
     public const int ContactNameMaxLength = 100;
 
+    /// <summary>
+    /// Cap on <see cref="AiScopeStatement"/>. Short on purpose: the statement goes into the system
+    /// prompt on every AI assist turn, so it is a per-call cost as well as a policy.
+    /// </summary>
+    public const int AiScopeStatementMaxLength = 500;
+
     public string Title { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
     public string InviteCode { get; private set; } = string.Empty;
@@ -49,6 +55,18 @@ public sealed class Organization : AuditableEntityBase
     public string? Phone { get; private set; }
     public string? PrimaryContactFirstName { get; private set; }
     public string? PrimaryContactLastName { get; private set; }
+
+    /// <summary>
+    /// Optional free text narrowing what the AI assistant will discuss for this organization
+    /// (SPEC/20-feature-ai-idea-assist.md rules 6–9). Null or empty is valid and means "no narrowing
+    /// beyond the organization's active Idea Types" — it can only tighten that boundary, never widen it.
+    /// </summary>
+    /// <remarks>
+    /// Written by an Org Admin, who is a trusted operator here, and placed in the system prompt by the
+    /// server. It is nonetheless length-capped and never concatenated with end-user text: the whole
+    /// point of the scope gate is that untrusted input cannot reach the instruction channel.
+    /// </remarks>
+    public string? AiScopeStatement { get; private set; }
 
     private Organization()
     {
@@ -166,6 +184,26 @@ public sealed class Organization : AuditableEntityBase
         }
 
         InviteCode = InviteCodeNormalizer.Normalize(newInviteCode);
+        MarkUpdated(nowUtc, actorUserId);
+    }
+
+    /// <summary>
+    /// Sets or clears the AI assist scope statement (rule 6). Null, empty, or whitespace clears it,
+    /// leaving the organization's active Idea Types as the only boundary — clearing is a legitimate
+    /// choice, not a reset to an unset state, so it takes the same path as setting.
+    /// </summary>
+    public void SetAiScopeStatement(string? scopeStatement, DateTime nowUtc, Guid? actorUserId)
+    {
+        var normalized = Normalize(scopeStatement);
+
+        if (normalized is { Length: > AiScopeStatementMaxLength })
+        {
+            throw new ArgumentException(
+                $"Scope statement cannot exceed {AiScopeStatementMaxLength} characters.",
+                nameof(scopeStatement));
+        }
+
+        AiScopeStatement = normalized;
         MarkUpdated(nowUtc, actorUserId);
     }
 
