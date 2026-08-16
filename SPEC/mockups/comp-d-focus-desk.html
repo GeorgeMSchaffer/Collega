@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp D: Focus Desk</title>
+<!--
+  ALTERNATE DIRECTION — not the locked design. Comp C "Fluent Editorial" remains locked
+  (SPEC/20-feature-client-ui.md). This is one of three alternates produced 2026-08-16 for review.
+
+  Thesis: Collega is a daily-driver tracker, so the interface should optimise rows-per-screen and
+  keyboard throughput, not reading comfort. Structural moves away from Comp C:
+    1. The 64px icon rail becomes a COLLAPSIBLE LABELLED SIDEBAR — labels are always legible,
+       and the sidebar collapses to icons on demand rather than being permanently ambiguous.
+    2. A COMMAND PALETTE (Cmd/Ctrl-K) is the primary navigation and action surface.
+    3. DENSE TABLES with tabular numerals; ~1.6x the rows of Comp C in the same height.
+    4. Detail opens as a RIGHT INSPECTOR that is docked and resizable, not a modal drawer —
+       so there is no focus-trap problem to solve and the list stays usable beside it.
+    5. No serif, no shadows. Flat surfaces, one electric accent, hairline rules.
+
+  Accessibility notes baked in (these fix live findings filed in SPEC/Bug Triage.md 2026-08-16):
+    - every form uses a NATIVE <button type="submit"> so Enter submits;
+    - every input has a real <label for> bound to a real <input>;
+    - the inspector is non-modal by design, so Escape/focus-trap semantics are not required;
+    - idea type carries TEXT, never colour alone.
+-->
+<style>
+  :root{
+    --accent:#0369a1; --accent-deep:#075985; --accent-soft:#e0f2fe;
+    /* Every ink step below is >=4.5:1 on both --surface and --bg. --ink-4 is used at 10px, so it
+       cannot be the usual slate-400; micro-labels are separated by weight and case, not by fading. */
+    --ink:#020617; --ink-2:#334155; --ink-3:#475569; --ink-4:#556274;
+    --bg:#f8fafc; --surface:#ffffff; --line:#e2e8f0; --line-2:#cbd5e1;
+    --ok:#15803d; --warn:#b45309; --err:#b91c1c;
+    --p-low:#64748b; --p-med:#0369a1; --p-high:#b45309; --p-crit:#b91c1c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Inter,-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:13px;line-height:1.45}
+  h1,h2,h3{font-weight:650;letter-spacing:-.015em}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  a{color:var(--accent)}
+  button,[role=button],a[href]{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ---- comp chrome (review harness, not product) ---- */
+  .comp-bar{background:#0f172a;color:#fff;padding:9px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:80}
+  .comp-bar strong{font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  .comp-bar .tag{font-size:10.5px;background:#1e293b;color:#94a3b8;padding:2px 7px;border-radius:3px;letter-spacing:.03em}
+  .comp-bar nav{display:flex;gap:5px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#cbd5e1;border:1px solid #334155;border-radius:3px;padding:4px 10px;font-size:11.5px;font-family:inherit;transition:background .15s,color .15s}
+  .comp-bar button:hover{background:#1e293b;color:#fff}
+  .comp-bar button.on{background:#38bdf8;border-color:#38bdf8;color:#0f172a;font-weight:650}
+  .screen{display:none}.screen.on{display:block}
+
+  /* ---- shell ---- */
+  .shell{display:grid;grid-template-columns:212px 1fr;min-height:calc(100vh - 42px)}
+  .shell.insp{grid-template-columns:212px 1fr 340px}
+  .side{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px}
+  .side .brand{display:flex;align-items:center;gap:9px;padding:4px 8px 16px}
+  .side .mark{width:26px;height:26px;border-radius:5px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:11px}
+  .side .brand b{font-size:14px;letter-spacing:-.02em}
+  .side .org{font-size:11px;color:var(--ink-3);padding:0 8px 12px;border-bottom:1px solid var(--line);margin-bottom:10px}
+  .side .grp{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-4);padding:10px 8px 5px;font-weight:700}
+  .side a.nav{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:4px;color:var(--ink-2);text-decoration:none;font-size:12.5px;font-weight:550;transition:background .15s,color .15s}
+  .side a.nav:hover{background:#f1f5f9;color:var(--ink)}
+  .side a.nav.on{background:var(--accent-soft);color:var(--accent-deep);font-weight:650}
+  .side a.nav .ic{width:15px;height:15px;flex:none;opacity:.85}
+  .side a.nav .cnt{margin-left:auto;font-size:10.5px;color:var(--ink-4);background:#f1f5f9;padding:1px 6px;border-radius:9px}
+  .side .push{flex:1}
+  .kbd{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:10px;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:3px;padding:1px 4px;color:var(--ink-3);background:var(--surface)}
+  .side .palette{display:flex;align-items:center;gap:7px;width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink-3);font-size:12px;font-family:inherit;margin-bottom:10px;transition:border-color .15s}
+  .side .palette:hover{border-color:var(--accent)}
+  .side .me{display:flex;align-items:center;gap:8px;padding:7px 8px;border-top:1px solid var(--line);margin-top:8px}
+  .avatar{width:24px;height:24px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-grid;place-items:center;font-size:9.5px;font-weight:700;flex:none}
+  .avatar.s{width:19px;height:19px;font-size:8px}
+  .side .me .nm{font-size:11.5px;font-weight:600;line-height:1.25}
+  .side .me .rl{font-size:10px;color:var(--ink-3)}
+
+  /* ---- main ---- */
+  .main{min-width:0;display:flex;flex-direction:column}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--line);padding:0 22px;display:flex;align-items:center;gap:14px;height:46px;flex:none}
+  .topbar .crumb{font-size:11.5px;color:var(--ink-3)}
+  .topbar .crumb a{color:var(--ink-3);text-decoration:none;display:inline-block;padding:5px 2px}
+  .topbar .crumb a:hover{color:var(--accent)}
+  .topbar .grow{flex:1}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .seg button{border:0;background:var(--surface);padding:5px 11px;font-size:11.5px;font-family:inherit;color:var(--ink-2);font-weight:600;border-right:1px solid var(--line);transition:background .15s}
+  .seg button:last-child{border-right:0}
+  .seg button:hover{background:#f1f5f9}
+  .seg button.on{background:var(--accent);color:#fff}
+  .work{padding:18px 22px;flex:1;min-width:0}
+  .pgh{display:flex;align-items:flex-end;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+  .pgh h1{font-size:19px}
+  .pgh .sub{font-size:12px;color:var(--ink-3);margin-top:2px}
+  .pgh .grow{flex:1}
+
+  .btn{border:1px solid var(--line-2);background:var(--surface);border-radius:4px;padding:5px 11px;font-size:12px;font-family:inherit;color:var(--ink);font-weight:600;transition:background .15s,border-color .15s}
+  .btn:hover{background:#f1f5f9;border-color:var(--ink-4)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep);border-color:var(--accent-deep)}
+  .btn.sm{padding:5px 9px;font-size:11px}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--accent);font-weight:600}
+  .btn.ghost:hover{background:var(--accent-soft)}
+
+  input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],select,textarea{
+    border:1px solid var(--line-2);border-radius:4px;padding:6px 9px;font-size:12.5px;font-family:inherit;background:var(--surface);color:var(--ink);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{font-size:11.5px;font-weight:650;color:var(--ink-2);display:block;margin-bottom:4px}
+  .field{margin-bottom:13px}
+  .hint{font-size:11px;color:var(--ink-3);margin-top:4px}
+  .req{color:var(--err);font-weight:700}
+
+  /* Wide tables scroll inside the panel; the page body itself must never scroll sideways. */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow-x:auto}
+  .filters{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .filters .fw{display:flex;flex-direction:column;gap:0}
+  .filters label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-4);margin-bottom:3px}
+  .filters select,.filters input{width:auto;min-width:130px;padding:4px 8px;font-size:11.5px}
+  .filters .search{min-width:230px}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--ink-4);padding:7px 12px;border-bottom:1px solid var(--line);background:#f8fafc;white-space:nowrap}
+  th button{background:none;border:0;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;display:inline-flex;gap:3px;align-items:center;padding:5px 2px;margin:-5px -2px}
+  td{padding:6px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  tbody tr:hover td{background:#f8fafc}
+  tbody tr:last-child td{border-bottom:0}
+  td .t{font-weight:600;color:var(--ink);text-decoration:none;display:block;padding:5px 0}
+  td .t:hover{color:var(--accent)}
+  td .bd{font-size:10.5px;color:var(--ink-4);margin-top:1px}
+
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:1px 7px;border-radius:3px;font-size:10.5px;font-weight:650;white-space:nowrap;border:1px solid transparent}
+  .chip .dot{width:6px;height:6px;border-radius:50%;flex:none}
+  .chip.status{background:#f1f5f9;color:var(--ink-2);border-color:var(--line)}
+  .chip.type{background:var(--surface);color:var(--ink-2);border-color:var(--line-2)}
+  .p-low{color:var(--p-low)}.p-med{color:var(--p-med)}.p-high{color:var(--p-high)}.p-crit{color:var(--p-crit)}
+  .chip.prio{background:var(--surface);border-color:currentColor}
+  .tag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;background:#f1f5f9;color:var(--ink-3);margin-right:3px}
+  .stack{display:inline-flex}
+  .stack .avatar{margin-left:-5px;border:1.5px solid var(--surface)}
+  .stack .avatar:first-child{margin-left:0}
+
+  .foot{display:flex;align-items:center;gap:12px;padding:9px 12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-3)}
+  .foot .grow{flex:1}
+
+  /* ---- home ---- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:11px 13px}
+  .kpi .k{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-4);font-weight:700}
+  .kpi .v{font-size:23px;font-weight:700;margin-top:3px;letter-spacing:-.02em}
+  .kpi .d{font-size:11px;color:var(--ink-3);margin-top:1px}
+  .cols{display:grid;grid-template-columns:1.35fr 1fr;gap:14px;align-items:start}
+  .panel h2{font-size:13px;padding:10px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .panel h2 .grow{flex:1}
+  .feed{list-style:none}
+  .feed li{display:flex;gap:9px;padding:9px 13px;border-bottom:1px solid #f1f5f9;font-size:12px}
+  .feed li:last-child{border-bottom:0}
+  .feed .when{margin-left:auto;font-size:10.5px;color:var(--ink-4);white-space:nowrap}
+
+  /* ---- board (dense lanes) ---- */
+  .lanes{display:grid;grid-template-columns:repeat(5,minmax(190px,1fr));gap:10px;align-items:start}
+  .lane{background:var(--surface);border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;min-width:0}
+  .lane>h2{font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;border-top:2px solid var(--lc,var(--ink-4));border-radius:6px 6px 0 0}
+  .lane>h2 .cnt{margin-left:auto;font-size:10.5px;color:var(--ink-3);background:#f1f5f9;padding:0 6px;border-radius:8px;font-weight:700}
+  .lane .body{padding:7px;display:flex;flex-direction:column;gap:6px}
+  .kc{border:1px solid var(--line);border-left:3px solid var(--lc,var(--ink-4));border-radius:4px;padding:7px 9px;background:var(--surface);transition:border-color .15s,background .15s}
+  .kc:hover{background:#f8fafc;border-color:var(--line-2)}
+  .kc .t{font-size:12px;font-weight:600;display:block;text-align:left;background:none;border:0;font-family:inherit;color:var(--ink);padding:4px 0;width:100%;line-height:1.35}
+  .kc .t:hover{color:var(--accent)}
+  .kc .r{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+  .kc .r .grow{flex:1}
+  .mini{font-size:10.5px;color:var(--ink-4);display:inline-flex;align-items:center;gap:3px}
+  .addcard{border:1px dashed var(--line-2);border-radius:4px;padding:6px;font-size:11.5px;color:var(--ink-3);background:transparent;font-family:inherit;font-weight:600;transition:border-color .15s,color .15s}
+  .addcard:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* ---- inspector (docked, non-modal) ---- */
+  .inspector{background:var(--surface);border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+  .insp-head{padding:12px 15px;border-bottom:1px solid var(--line)}
+  .insp-head .eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-4);font-weight:700;margin-bottom:3px}
+  .insp-head h2{font-size:14.5px;line-height:1.3}
+  .insp-head .meta{font-size:11px;color:var(--ink-3);margin-top:4px}
+  .insp-body{padding:13px 15px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:13px}
+  .kv{display:grid;grid-template-columns:74px 1fr;gap:5px 9px;font-size:12px;align-items:center}
+  .kv dt{color:var(--ink-4);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+  .sec-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-4);font-weight:700;padding-bottom:5px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .cmt{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12px}
+  .cmt:last-child{border-bottom:0}
+  .cmt .who{font-weight:650;font-size:11.5px}
+  .cmt .when{font-size:10px;color:var(--ink-4)}
+  .insp-foot{padding:10px 15px;border-top:1px solid var(--line);display:flex;gap:8px}
+
+  /* ---- auth ---- */
+  .authwrap{min-height:calc(100vh - 42px);display:grid;grid-template-columns:1fr 420px;background:var(--surface)}
+  .authpitch{background:#0f172a;color:#e2e8f0;padding:52px 56px;display:flex;flex-direction:column;justify-content:center}
+  .authpitch .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;margin-bottom:24px}
+  .authpitch h2{font-size:27px;line-height:1.25;letter-spacing:-.02em;margin-bottom:12px;color:#fff}
+  .authpitch p{font-size:13.5px;color:#94a3b8;max-width:430px;line-height:1.6}
+  .authpitch ul{list-style:none;margin-top:22px;display:flex;flex-direction:column;gap:9px}
+  .authpitch li{display:flex;gap:9px;font-size:12.5px;color:#cbd5e1;align-items:flex-start}
+  .authpitch li svg{flex:none;margin-top:2px;color:#38bdf8}
+  .authform{padding:52px 46px;display:flex;flex-direction:column;justify-content:center}
+  .authform h1{font-size:21px;margin-bottom:5px}
+  .authform .sub{font-size:12.5px;color:var(--ink-3);margin-bottom:22px;line-height:1.5}
+  .authform .foot2{font-size:11.5px;color:var(--ink-3);margin-top:16px;line-height:1.7}
+  .authform .foot2 a{display:inline-block;padding:5px 2px;margin:-5px -2px}
+  .msg{border-radius:4px;padding:8px 11px;font-size:11.5px;margin-bottom:14px;border-left:3px solid}
+  .msg.err{background:#fef2f2;color:var(--err);border-color:var(--err)}
+  .msg.info{background:var(--accent-soft);color:var(--accent-deep);border-color:var(--accent)}
+
+  /* ---- command palette ---- */
+  .cp-back{position:fixed;inset:0;background:rgba(15,23,42,.42);display:grid;place-items:start center;padding-top:11vh;z-index:70}
+  .cp{width:min(560px,92vw);background:var(--surface);border:1px solid var(--line-2);border-radius:8px;box-shadow:0 12px 40px rgba(2,6,23,.28);overflow:hidden}
+  .cp .q{display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .cp .q input{border:0;font-size:14px;padding:0;outline:0}
+  .cp .grp{font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-4);font-weight:700;padding:9px 14px 4px}
+  .cp .it{display:flex;align-items:center;gap:9px;padding:7px 14px;font-size:12.5px}
+  .cp .it.on{background:var(--accent-soft);color:var(--accent-deep);font-weight:600}
+  .cp .it .kbd{margin-left:auto}
+  .cp .cpfoot{border-top:1px solid var(--line);padding:7px 14px;font-size:10.5px;color:var(--ink-4);display:flex;gap:12px}
+
+  .note{font-size:11.5px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 13px;border-radius:0 4px 4px 0;margin-top:16px;max-width:720px;line-height:1.55}
+  .note b{color:var(--accent-deep)}
+
+  @media (max-width:1100px){.shell,.shell.insp{grid-template-columns:1fr}.side{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr!important}.authwrap{grid-template-columns:1fr}.authpitch{display:none}
+    /* Lanes become a horizontally scrollable strip inside .canvas-scroll rather than widening the page. */
+    .lanes{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(210px,1fr);overflow-x:auto;padding-bottom:8px}}
+  @media (max-width:560px){.kpis{grid-template-columns:1fr}}
+  /* 16px minimum on form controls below 768px — anything smaller makes iOS Safari zoom on focus. */
+  @media (max-width:768px){input,select,textarea,.filters select,.filters input,.foot select,.prop select,.prop input{font-size:16px!important}}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>Comp D</strong><span class="tag">Focus Desk</span><span class="tag">alternate — not locked</span>
+  <nav>
+    <button data-s="login" class="on">Sign in</button>
+    <button data-s="home">Home</button>
+    <button data-s="ideas">Ideas</button>
+    <button data-s="board">Board</button>
+    <button data-s="inspect">Idea inspector</button>
+    <button data-s="settings">Settings</button>
+    <button data-s="palette">Command palette</button>
+  </nav>
+</div>
+
+<!-- ============ SIGN IN ============ -->
+<section class="screen on" id="s-login">
+  <div class="authwrap">
+    <div class="authpitch">
+      <div class="mark">CG</div>
+      <h2>Every idea your organization has, in one place.</h2>
+      <p>Collega tracks an idea from the first rough note through review, work, and delivery — with the people, comments, and history attached to it the whole way.</p>
+      <ul>
+        <li><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>One account per person, scoped to your organization</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>Boards, statuses and idea types you define yourself</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>Keyboard-first: press <span class="kbd" style="border-color:#334155;color:#cbd5e1;background:#1e293b">Ctrl K</span> anywhere</span></li>
+      </ul>
+    </div>
+    <div class="authform">
+      <h1>Sign in</h1>
+      <p class="sub">One email, one account. We'll take you straight to your organization.</p>
+      <!-- NATIVE submit button: Enter submits. Fixes the live finding filed 2026-08-16. -->
+      <form>
+        <div class="field">
+          <label for="d-email">Email</label>
+          <input type="email" id="d-email" name="email" autocomplete="username" placeholder="you@yourcompany.com">
+        </div>
+        <div class="field">
+          <label for="d-pw">Password</label>
+          <input type="password" id="d-pw" name="password" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn primary" style="width:100%;padding:8px;font-size:13px">Sign in</button>
+      </form>
+      <p class="foot2">Have an invite code? <a href="#">Create an account</a>.<br>
+      Forgot your password? Ask your organization admin to reset it.</p>
+      <div class="note"><b>Fixes carried by this comp:</b> native <code>&lt;button type="submit"&gt;</code> so Enter submits; <code>autocomplete="username"</code> paired with the password field so password managers work; real <code>&lt;label for&gt;</code> bound to a real <code>&lt;input&gt;</code>.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOME ============ -->
+<section class="screen" id="s-home">
+  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <button class="palette" type="button"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.4 9.8l3.4 3.4a1 1 0 0 0 1.4-1.4l-3.4-3.4A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"/></svg><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="grp">Workspace</div>
+      <a class="nav on" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</a>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="cnt num">2</span></a>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="cnt num">22</span></a>
+      <div class="grp">Configure</div>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.6 2.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7ZM10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Z"/></svg>Settings</a>
+      <div class="push"></div>
+      <div class="me"><span class="avatar">OA</span><div><div class="nm">Olivia Administer</div><div class="rl">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb">Home</span><span class="grow"></span><button class="btn sm">View as…</button><button class="btn primary sm">New idea</button></div>
+      <div class="work">
+        <div class="pgh"><div class="grow"><h1>Good afternoon, Olivia</h1><div class="sub">Acme Robotics · 22 ideas across 2 boards</div></div></div>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Open ideas</div><div class="v num">14</div><div class="d">of 22 total</div></div>
+          <div class="kpi"><div class="k">Awaiting review</div><div class="v num">4</div><div class="d">2 over 7 days</div></div>
+          <div class="kpi"><div class="k">Assigned to me</div><div class="v num">6</div><div class="d">1 critical</div></div>
+          <div class="kpi"><div class="k">Completed · 30d</div><div class="v num">6</div><div class="d">+2 vs prior</div></div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <h2><span class="grow">Needs your attention</span><button class="btn ghost sm">View all</button></h2>
+            <table>
+              <thead><tr><th>Idea</th><th>Status</th><th>Priority</th><th>Age</th></tr></thead>
+              <tbody>
+                <tr><td><a class="t" href="#">Pilot a faster review path</a><div class="bd">Ideas · Process Revision</div></td><td><span class="chip status"><span class="dot" style="background:#b45309"></span>In Review</span></td><td><span class="chip prio p-crit">Critical</span></td><td class="num">9d</td></tr>
+                <tr><td><a class="t" href="#">Validate the customer feedback loop</a><div class="bd">Ideas · Process Revision</div></td><td><span class="chip status"><span class="dot" style="background:#7c3aed"></span>Client Review</span></td><td><span class="chip prio p-crit">Critical</span></td><td class="num">8d</td></tr>
+                <tr><td><a class="t" href="#">Standardize the intake checklist</a><div class="bd">Ideas · Continuous Improvement</div></td><td><span class="chip status"><span class="dot" style="background:#64748b"></span>New / Pending</span></td><td><span class="chip prio p-high">High</span></td><td class="num">6d</td></tr>
+                <tr><td><a class="t" href="#">Create a shared playbook</a><div class="bd">Ideas · Continuous Improvement</div></td><td><span class="chip status"><span class="dot" style="background:#0369a1"></span>In Progress</span></td><td><span class="chip prio p-high">High</span></td><td class="num">5d</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <h2><span class="grow">Recent activity</span></h2>
+            <ul class="feed">
+              <li><span class="avatar s">NC</span><span>Noah moved <b>Automate weekly reporting</b> to In Progress</span><span class="when">14m</span></li>
+              <li><span class="avatar s">MC</span><span>Maya commented on <b>Improve exception visibility</b></span><span class="when">1h</span></li>
+              <li><span class="avatar s">OA</span><span>You upvoted <b>Reduce manual handoffs</b></span><span class="when">3h</span></li>
+              <li><span class="avatar s">NC</span><span>Noah created <b>Roll out the proven workflow</b></span><span class="when">yest</span></li>
+              <li><span class="avatar s">MC</span><span>Maya assigned <b>Retire the legacy step</b> to Noah</span><span class="when">yest</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="note"><b>Direction note:</b> Home answers "what needs me now", not "what exists". The KPI row and the attention table are both filtered queries you can open in the Ideas list — nothing here is a dead-end summary.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ IDEAS LIST ============ -->
+<section class="screen" id="s-ideas">
+  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <button class="palette" type="button"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.4 9.8l3.4 3.4a1 1 0 0 0 1.4-1.4l-3.4-3.4A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"/></svg><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="grp">Workspace</div>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</a>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="cnt num">2</span></a>
+      <a class="nav on" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="cnt num">22</span></a>
+      <div class="grp">Configure</div>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.6 2.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7ZM10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Z"/></svg>Settings</a>
+      <div class="push"></div>
+      <div class="me"><span class="avatar">OA</span><div><div class="nm">Olivia Administer</div><div class="rl">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><a href="#">Home</a> / Ideas</span><span class="grow"></span>
+        <div class="seg" role="group" aria-label="Scope"><button class="on">All</button><button>Created by me</button><button>Assigned to me</button></div>
+        <button class="btn primary sm">New idea</button>
+      </div>
+      <div class="work">
+        <div class="pgh"><div class="grow"><h1>Ideas</h1><div class="sub">Every idea in Acme Robotics, across all boards.</div></div></div>
+        <!-- every filter has a real, visible label -->
+        <div class="filters">
+          <div class="fw"><label for="d-q">Search</label><input class="search" type="text" id="d-q" placeholder="Title, tag, assignee…"></div>
+          <div class="fw"><label for="d-board">Board</label><select id="d-board"><option>All boards</option><option>Ideas</option><option>Opportunities</option></select></div>
+          <div class="fw"><label for="d-type">Idea type</label><select id="d-type"><option>All types</option><option>Continuous Improvement</option><option>Process Revision</option></select></div>
+          <div class="fw"><label for="d-status">Status</label><select id="d-status"><option>All statuses</option><option>New / Pending</option><option>In Review</option><option>In Progress</option><option>Client Review</option><option>Complete</option></select></div>
+          <div class="fw"><label for="d-user">Person</label><select id="d-user"><option>Any user</option><option>Maya Collaborator</option><option>Noah Contributor</option><option>Olivia Administer</option></select></div>
+        </div>
+        <div class="panel">
+          <table>
+            <thead><tr>
+              <th style="width:34%"><button type="button">Title <svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 7 2 4h6Z"/></svg></button></th>
+              <th>Type</th><th>Status</th><th>Priority</th><th>Assigned</th><th><button type="button">Created</button></th><th>Votes</th>
+            </tr></thead>
+            <tbody>
+              <tr><td><a class="t" href="#">Standardize the intake checklist</a><div class="bd">Ideas · <span class="tag">cycle-time</span><span class="tag">quality</span></div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#0d9488"></span>Continuous Improvement</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#64748b"></span>New / Pending</span></td>
+                  <td><span class="chip prio p-high">High</span></td>
+                  <td><span class="stack"><span class="avatar s">MC</span><span class="avatar s">OA</span></span></td><td class="num">Aug 15</td><td class="num">2</td></tr>
+              <tr><td><a class="t" href="#">Add proactive alerts</a><div class="bd">Ideas · <span class="tag">safety</span></div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#7c3aed"></span>Process Revision</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#64748b"></span>New / Pending</span></td>
+                  <td><span class="chip prio p-med">Medium</span></td>
+                  <td><span class="stack"><span class="avatar s">NC</span></span></td><td class="num">Aug 15</td><td class="num">1</td></tr>
+              <tr><td><a class="t" href="#">Pilot a faster review path</a><div class="bd">Ideas</div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#7c3aed"></span>Process Revision</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#b45309"></span>In Review</span></td>
+                  <td><span class="chip prio p-crit">Critical</span></td>
+                  <td><span style="color:var(--ink-4)">—</span></td><td class="num">Aug 15</td><td class="num">0</td></tr>
+              <tr><td><a class="t" href="#">Improve exception visibility</a><div class="bd">Ideas · <span class="tag">automation</span></div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#0d9488"></span>Continuous Improvement</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#b45309"></span>In Review</span></td>
+                  <td><span class="chip prio p-low">Low</span></td>
+                  <td><span class="stack"><span class="avatar s">NC</span></span></td><td class="num">Aug 15</td><td class="num">1</td></tr>
+              <tr><td><a class="t" href="#">Automate weekly reporting</a><div class="bd">Ideas · <span class="tag">quality</span><span class="tag">safety</span></div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#7c3aed"></span>Process Revision</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#0369a1"></span>In Progress</span></td>
+                  <td><span class="chip prio p-med">Medium</span></td>
+                  <td><span class="stack"><span class="avatar s">MC</span><span class="avatar s">OA</span></span></td><td class="num">Aug 15</td><td class="num">2</td></tr>
+              <tr><td><a class="t" href="#">Create a shared playbook</a><div class="bd">Ideas</div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#0d9488"></span>Continuous Improvement</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#0369a1"></span>In Progress</span></td>
+                  <td><span class="chip prio p-high">High</span></td>
+                  <td><span style="color:var(--ink-4)">—</span></td><td class="num">Aug 15</td><td class="num">0</td></tr>
+              <tr><td><a class="t" href="#">Validate the customer feedback loop</a><div class="bd">Ideas · <span class="tag">cycle-time</span></div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#7c3aed"></span>Process Revision</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#7c3aed"></span>Client Review</span></td>
+                  <td><span class="chip prio p-crit">Critical</span></td>
+                  <td><span class="stack"><span class="avatar s">NC</span></span></td><td class="num">Aug 15</td><td class="num">1</td></tr>
+              <tr><td><a class="t" href="#">Roll out the proven workflow</a><div class="bd">Ideas · <span class="tag">automation</span><span class="tag">safety</span></div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#0d9488"></span>Continuous Improvement</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#15803d"></span>Complete</span></td>
+                  <td><span class="chip prio p-low">Low</span></td>
+                  <td><span class="stack"><span class="avatar s">MC</span><span class="avatar s">OA</span></span></td><td class="num">Aug 15</td><td class="num">2</td></tr>
+              <tr><td><a class="t" href="#">Retire the legacy step</a><div class="bd">Ideas · <span class="tag">quality</span></div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#0d9488"></span>Continuous Improvement</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#15803d"></span>Complete</span></td>
+                  <td><span class="chip prio p-high">High</span></td>
+                  <td><span class="stack"><span class="avatar s">NC</span></span></td><td class="num">Aug 15</td><td class="num">1</td></tr>
+              <tr><td><a class="t" href="#">Measure time saved</a><div class="bd">Ideas</div></td>
+                  <td><span class="chip type"><span class="dot" style="background:#7c3aed"></span>Process Revision</span></td>
+                  <td><span class="chip status"><span class="dot" style="background:#15803d"></span>Complete</span></td>
+                  <td><span class="chip prio p-med">Medium</span></td>
+                  <td><span style="color:var(--ink-4)">—</span></td><td class="num">Aug 15</td><td class="num">0</td></tr>
+            </tbody>
+          </table>
+          <div class="foot">
+            <span class="num">Showing 1–10 of 22</span><span class="grow"></span>
+            <label for="d-size" style="margin:0;font-size:11px">Rows per page</label>
+            <select id="d-size" style="width:auto;padding:3px 7px;font-size:11.5px"><option>10</option><option>25</option><option>50</option></select>
+            <button class="btn sm">Previous</button><button class="btn sm">Next</button>
+          </div>
+        </div>
+        <div class="note"><b>Density:</b> 10 rows here occupy roughly the height Comp C gives 6. Row height is 30px with a secondary line, so board + tags stay visible without a second column.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BOARD ============ -->
+<section class="screen" id="s-board">
+  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <button class="palette" type="button"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.4 9.8l3.4 3.4a1 1 0 0 0 1.4-1.4l-3.4-3.4A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"/></svg><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="grp">Workspace</div>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</a>
+      <a class="nav on" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="cnt num">2</span></a>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="cnt num">22</span></a>
+      <div class="grp">Configure</div>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.6 2.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7ZM10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Z"/></svg>Settings</a>
+      <div class="push"></div>
+      <div class="me"><span class="avatar">OA</span><div><div class="nm">Olivia Administer</div><div class="rl">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><a href="#">Boards</a> / Ideas</span><span class="grow"></span>
+        <div class="seg" role="group" aria-label="View"><button>List</button><button class="on">Lanes</button></div>
+        <button class="btn sm">Export CSV</button><button class="btn primary sm">New idea</button>
+      </div>
+      <div class="work">
+        <div class="pgh"><div class="grow"><h1>Ideas</h1><div class="sub">Move a card with drag, or focus it and press <span class="kbd">←</span> <span class="kbd">→</span>. Both paths do the same thing.</div></div></div>
+        <div class="lanes">
+          <div class="lane" style="--lc:#64748b"><h2>New / Pending <span class="cnt num">3</span></h2><div class="body">
+            <div class="kc" style="--lc:#64748b"><button class="t">Standardize the intake checklist</button><div class="r"><span class="chip prio p-high">High</span><span class="grow"></span><span class="stack"><span class="avatar s">MC</span><span class="avatar s">OA</span></span></div><div class="r"><span class="mini">Continuous Improvement</span><span class="grow"></span><span class="mini num">2 votes</span></div></div>
+            <div class="kc" style="--lc:#64748b"><button class="t">Add proactive alerts</button><div class="r"><span class="chip prio p-med">Medium</span><span class="grow"></span><span class="stack"><span class="avatar s">NC</span></span></div><div class="r"><span class="mini">Process Revision</span><span class="grow"></span><span class="mini num">1 vote</span></div></div>
+            <div class="kc" style="--lc:#64748b"><button class="t">Reduce manual handoffs</button><div class="r"><span class="chip prio p-low">Low</span><span class="grow"></span></div><div class="r"><span class="mini">Continuous Improvement</span><span class="grow"></span><span class="mini num">2 votes</span></div></div>
+            <button class="addcard">+ Add idea</button></div></div>
+          <div class="lane" style="--lc:#b45309"><h2>In Review <span class="cnt num">2</span></h2><div class="body">
+            <div class="kc" style="--lc:#b45309"><button class="t">Improve exception visibility</button><div class="r"><span class="chip prio p-low">Low</span><span class="grow"></span><span class="stack"><span class="avatar s">NC</span></span></div><div class="r"><span class="mini">Continuous Improvement</span><span class="grow"></span><span class="mini num">1 vote</span></div></div>
+            <div class="kc" style="--lc:#b45309"><button class="t">Pilot a faster review path</button><div class="r"><span class="chip prio p-crit">Critical</span><span class="grow"></span></div><div class="r"><span class="mini">Process Revision</span><span class="grow"></span><span class="mini num">0 votes</span></div></div>
+            <button class="addcard">+ Add idea</button></div></div>
+          <div class="lane" style="--lc:#0369a1"><h2>In Progress <span class="cnt num">2</span></h2><div class="body">
+            <div class="kc" style="--lc:#0369a1"><button class="t">Automate weekly reporting</button><div class="r"><span class="chip prio p-med">Medium</span><span class="grow"></span><span class="stack"><span class="avatar s">MC</span><span class="avatar s">OA</span></span></div><div class="r"><span class="mini">Process Revision</span><span class="grow"></span><span class="mini num">2 votes</span></div></div>
+            <div class="kc" style="--lc:#0369a1"><button class="t">Create a shared playbook</button><div class="r"><span class="chip prio p-high">High</span><span class="grow"></span></div><div class="r"><span class="mini">Continuous Improvement</span><span class="grow"></span><span class="mini num">0 votes</span></div></div>
+            <button class="addcard">+ Add idea</button></div></div>
+          <div class="lane" style="--lc:#7c3aed"><h2>Client Review <span class="cnt num">1</span></h2><div class="body">
+            <div class="kc" style="--lc:#7c3aed"><button class="t">Validate the customer feedback loop</button><div class="r"><span class="chip prio p-crit">Critical</span><span class="grow"></span><span class="stack"><span class="avatar s">NC</span></span></div><div class="r"><span class="mini">Process Revision</span><span class="grow"></span><span class="mini num">1 vote</span></div></div>
+            <button class="addcard">+ Add idea</button></div></div>
+          <div class="lane" style="--lc:#15803d"><h2>Complete <span class="cnt num">3</span></h2><div class="body">
+            <div class="kc" style="--lc:#15803d"><button class="t">Roll out the proven workflow</button><div class="r"><span class="chip prio p-low">Low</span><span class="grow"></span><span class="stack"><span class="avatar s">MC</span><span class="avatar s">OA</span></span></div><div class="r"><span class="mini">Continuous Improvement</span><span class="grow"></span><span class="mini num">2 votes</span></div></div>
+            <div class="kc" style="--lc:#15803d"><button class="t">Retire the legacy step</button><div class="r"><span class="chip prio p-high">High</span><span class="grow"></span><span class="stack"><span class="avatar s">NC</span></span></div><div class="r"><span class="mini">Continuous Improvement</span><span class="grow"></span><span class="mini num">1 vote</span></div></div>
+            <div class="kc" style="--lc:#15803d"><button class="t">Measure time saved</button><div class="r"><span class="chip prio p-med">Medium</span><span class="grow"></span></div><div class="r"><span class="mini">Process Revision</span><span class="grow"></span><span class="mini num">0 votes</span></div></div>
+            <button class="addcard">+ Add idea</button></div></div>
+        </div>
+        <div class="note"><b>Two fixes visible here:</b> idea type is written as <em>text</em> on every card rather than encoded in a coloured dot alone; and the header states the keyboard equivalent for drag, so moving a card never requires a pointer.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INSPECTOR ============ -->
+<section class="screen" id="s-inspect">
+  <div class="shell insp">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <button class="palette" type="button"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.4 9.8l3.4 3.4a1 1 0 0 0 1.4-1.4l-3.4-3.4A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"/></svg><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="grp">Workspace</div>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</a>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="cnt num">2</span></a>
+      <a class="nav on" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="cnt num">22</span></a>
+      <div class="push"></div>
+      <div class="me"><span class="avatar">OA</span><div><div class="nm">Olivia Administer</div><div class="rl">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><a href="#">Home</a> / Ideas</span><span class="grow"></span><button class="btn primary sm">New idea</button></div>
+      <div class="work">
+        <div class="pgh"><div class="grow"><h1>Ideas</h1><div class="sub">The list stays live and scrollable while the inspector is open.</div></div></div>
+        <div class="panel">
+          <table>
+            <thead><tr><th style="width:42%">Title</th><th>Status</th><th>Priority</th><th>Assigned</th><th>Votes</th></tr></thead>
+            <tbody>
+              <tr style="background:var(--accent-soft)"><td><a class="t" href="#" style="color:var(--accent-deep)">Standardize the intake checklist</a><div class="bd">Ideas · Continuous Improvement</div></td><td><span class="chip status"><span class="dot" style="background:#64748b"></span>New / Pending</span></td><td><span class="chip prio p-high">High</span></td><td><span class="stack"><span class="avatar s">MC</span><span class="avatar s">OA</span></span></td><td class="num">2</td></tr>
+              <tr><td><a class="t" href="#">Add proactive alerts</a><div class="bd">Ideas · Process Revision</div></td><td><span class="chip status"><span class="dot" style="background:#64748b"></span>New / Pending</span></td><td><span class="chip prio p-med">Medium</span></td><td><span class="stack"><span class="avatar s">NC</span></span></td><td class="num">1</td></tr>
+              <tr><td><a class="t" href="#">Pilot a faster review path</a><div class="bd">Ideas · Process Revision</div></td><td><span class="chip status"><span class="dot" style="background:#b45309"></span>In Review</span></td><td><span class="chip prio p-crit">Critical</span></td><td><span style="color:var(--ink-4)">—</span></td><td class="num">0</td></tr>
+              <tr><td><a class="t" href="#">Automate weekly reporting</a><div class="bd">Ideas · Process Revision</div></td><td><span class="chip status"><span class="dot" style="background:#0369a1"></span>In Progress</span></td><td><span class="chip prio p-med">Medium</span></td><td><span class="stack"><span class="avatar s">MC</span></span></td><td class="num">2</td></tr>
+              <tr><td><a class="t" href="#">Create a shared playbook</a><div class="bd">Ideas · Continuous Improvement</div></td><td><span class="chip status"><span class="dot" style="background:#0369a1"></span>In Progress</span></td><td><span class="chip prio p-high">High</span></td><td><span style="color:var(--ink-4)">—</span></td><td class="num">0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note"><b>Why docked, not modal:</b> the inspector is a third grid column, so background content is never covered and never needs <code>inert</code>. There is no focus trap to get wrong, Escape simply closes the column, and you can compare two ideas by arrowing down the list with the inspector open.</div>
+      </div>
+    </div>
+    <aside class="inspector" aria-label="Idea inspector">
+      <div class="insp-head">
+        <div class="eyebrow">Ideas board · #IDEA-118</div>
+        <h2>Standardize the intake checklist</h2>
+        <div class="meta">Created by Noah Contributor · Aug 15, 2026</div>
+      </div>
+      <div class="insp-body">
+        <dl class="kv">
+          <dt>Status</dt><dd><select aria-label="Status" style="padding:3px 7px;font-size:11.5px"><option>New / Pending</option><option>In Review</option><option>In Progress</option></select></dd>
+          <dt>Type</dt><dd><span class="chip type"><span class="dot" style="background:#0d9488"></span>Continuous Improvement</span></dd>
+          <dt>Priority</dt><dd><span class="chip prio p-high">High</span></dd>
+          <dt>Impact</dt><dd>Operational efficiency</dd>
+          <dt>Assigned</dt><dd><span class="stack"><span class="avatar s">MC</span><span class="avatar s">OA</span></span> Maya, Olivia</dd>
+          <dt>Tags</dt><dd><span class="tag">cycle-time</span><span class="tag">quality</span></dd>
+        </dl>
+        <div>
+          <div class="sec-t">Description</div>
+          <p style="font-size:12.5px;line-height:1.6;color:var(--ink-2)">Use one concise checklist so requests arrive complete and ready for action. Today three teams each keep their own version, and roughly a third of intake requests bounce back for missing information.</p>
+        </div>
+        <div>
+          <div class="sec-t">Discussion · 3</div>
+          <div class="cmt"><span class="avatar s">MC</span><div><div class="who">Maya Collaborator <span class="when">2d ago</span></div><div style="color:var(--ink-2)">Can we fold the safety sign-off into the same checklist? It's the step people forget.</div></div></div>
+          <div class="cmt"><span class="avatar s">NC</span><div><div class="who">Noah Contributor <span class="when">1d ago</span></div><div style="color:var(--ink-2)">Yes — drafted it as section 4. Worth a review before we pilot.</div></div></div>
+          <div class="cmt"><span class="avatar s">OA</span><div><div class="who">Olivia Administer <span class="when">3h ago</span></div><div style="color:var(--ink-2)">Looks right. Moving to In Review after standup.</div></div></div>
+          <div style="margin-top:9px">
+            <label for="d-cmt">Add a comment</label>
+            <textarea id="d-cmt" rows="2" placeholder="Write a comment…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="insp-foot"><button class="btn primary" style="flex:1">Save</button><button class="btn">Close</button></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section class="screen" id="s-settings">
+  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <button class="palette" type="button"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.4 9.8l3.4 3.4a1 1 0 0 0 1.4-1.4l-3.4-3.4A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"/></svg><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="grp">Workspace</div>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</a>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="cnt num">2</span></a>
+      <a class="nav" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="cnt num">22</span></a>
+      <div class="grp">Configure</div>
+      <a class="nav on" href="#"><svg class="ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.6 2.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7ZM10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Z"/></svg>Settings</a>
+      <div class="push"></div>
+      <div class="me"><span class="avatar">OA</span><div><div class="nm">Olivia Administer</div><div class="rl">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><a href="#">Settings</a> / Statuses</span><span class="grow"></span><button class="btn primary sm">Add status</button></div>
+      <div class="work">
+        <div class="pgh"><div class="grow"><h1>Statuses</h1><div class="sub">The columns your boards group ideas by. Order here is the order on every board.</div></div></div>
+        <div class="cols" style="grid-template-columns:1fr 340px">
+          <div class="panel">
+            <table>
+              <thead><tr><th style="width:34px"></th><th>Name</th><th>Colour</th><th>Ideas</th><th>Order</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><svg width="13" height="13" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M7 5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm0 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm5-11a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg></td><td><b>New / Pending</b></td><td><span class="chip status"><span class="dot" style="background:#64748b"></span>Slate 500</span></td><td class="num">6</td><td class="num">1</td><td><button class="btn ghost sm">Edit</button></td></tr>
+                <tr><td><svg width="13" height="13" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M7 5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm0 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm5-11a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg></td><td><b>In Review</b></td><td><span class="chip status"><span class="dot" style="background:#b45309"></span>Amber 700</span></td><td class="num">4</td><td class="num">2</td><td><button class="btn ghost sm">Edit</button></td></tr>
+                <tr><td><svg width="13" height="13" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M7 5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm0 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm5-11a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg></td><td><b>In Progress</b></td><td><span class="chip status"><span class="dot" style="background:#0369a1"></span>Sky 700</span></td><td class="num">4</td><td class="num">3</td><td><button class="btn ghost sm">Edit</button></td></tr>
+                <tr><td><svg width="13" height="13" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M7 5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm0 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm5-11a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg></td><td><b>Client Review</b></td><td><span class="chip status"><span class="dot" style="background:#7c3aed"></span>Violet 600</span></td><td class="num">2</td><td class="num">4</td><td><button class="btn ghost sm">Edit</button></td></tr>
+                <tr><td><svg width="13" height="13" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M7 5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm0 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm5-11a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg></td><td><b>Complete</b></td><td><span class="chip status"><span class="dot" style="background:#15803d"></span>Green 700</span></td><td class="num">6</td><td class="num">5</td><td><button class="btn ghost sm">Edit</button></td></tr>
+              </tbody>
+            </table>
+            <div class="foot"><span>Reorder by dragging, or focus a row and press <span class="kbd">Alt ↑</span> / <span class="kbd">Alt ↓</span>.</span></div>
+          </div>
+          <div class="panel" style="padding:14px">
+            <h2 style="padding:0 0 10px;font-size:13px">Add status</h2>
+            <form>
+              <div class="field"><label for="d-sname">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="d-sname" required><div class="hint">Shown as a lane header on every board.</div></div>
+              <div class="field"><label for="d-shex">Colour</label>
+                <div style="display:flex;gap:7px"><input type="text" id="d-shex" value="#0369A1" style="flex:1;font-family:ui-monospace,Consolas,monospace"><input type="color" value="#0369a1" aria-label="Pick colour visually" style="width:38px;padding:2px;height:31px"></div>
+                <div class="hint">Colour is decoration — the status name always shows beside it.</div></div>
+              <div class="field"><label for="d-sord">Position</label><select id="d-sord"><option>Last</option><option>First</option><option>After New / Pending</option></select></div>
+              <button type="submit" class="btn primary" style="width:100%">Add status</button>
+            </form>
+          </div>
+        </div>
+        <div class="note"><b>Create is inline, not a drawer.</b> A short create form sits beside the list it adds to, so the list stays visible for reference and there is no overlay to trap focus in. Longer edits still open the docked inspector.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMMAND PALETTE ============ -->
+<section class="screen" id="s-palette">
+  <div class="shell" style="filter:blur(1.5px);opacity:.6" aria-hidden="true">
+    <aside class="side"><div class="brand"><span class="mark">CG</span><b>Collega</b></div><div class="org">Acme Robotics</div><div class="push"></div></aside>
+    <div class="main"><div class="topbar"><span class="crumb">Home / Ideas</span></div><div class="work"><div class="pgh"><h1>Ideas</h1></div><div class="panel" style="height:300px"></div></div></div>
+  </div>
+  <div class="cp-back">
+    <div class="cp" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="q"><svg width="16" height="16" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.4 9.8l3.4 3.4a1 1 0 0 0 1.4-1.4l-3.4-3.4A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"/></svg><input type="text" value="intake" aria-label="Search or run a command"></div>
+      <div class="grp">Ideas</div>
+      <div class="it on"><svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg>Standardize the intake checklist <span style="color:var(--ink-4);font-weight:400">· Ideas · New / Pending</span><span class="kbd">↵</span></div>
+      <div class="it"><svg width="14" height="14" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg>Field service enablement: Standardize the intake checklist <span style="color:var(--ink-4);font-weight:400">· Opportunities</span></div>
+      <div class="grp">Actions</div>
+      <div class="it"><svg width="14" height="14" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M10 3a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H4a1 1 0 1 1 0-2h5V4a1 1 0 0 1 1-1Z"/></svg>Create idea "intake"<span class="kbd">Ctrl N</span></div>
+      <div class="it"><svg width="14" height="14" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Filter Ideas by tag "intake"</div>
+      <div class="it"><svg width="14" height="14" viewBox="0 0 20 20" fill="var(--ink-4)" aria-hidden="true"><path d="M10 4a6 6 0 1 0 0 12A6 6 0 0 0 10 4Zm0 2.5a1 1 0 0 1 1 1V10h1.8a1 1 0 1 1 0 2H10a1 1 0 0 1-1-1V7.5a1 1 0 0 1 1-1Z"/></svg>View as another user…</div>
+      <div class="cpfoot"><span><span class="kbd">↑</span><span class="kbd">↓</span> navigate</span><span><span class="kbd">↵</span> open</span><span><span class="kbd">Esc</span> dismiss</span></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.comp-bar button[data-s]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.comp-bar button[data-s]').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+      document.getElementById('s-'+b.dataset.s).classList.add('on');
+      window.scrollTo(0,0);
+    });
+  });
+</script>
+</body>
+</html>
