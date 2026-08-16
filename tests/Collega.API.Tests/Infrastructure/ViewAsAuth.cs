@@ -32,9 +32,17 @@ public static class ViewAsAuth
     /// acting as them. Returns the impersonated user's id for tests that need to assert on authorship.
     /// </summary>
     /// <remarks>
-    /// Safe to call with a session already open: it ends that one first. A test that builds two
-    /// organizations is left acting in whichever was created last, so any test operating on the
-    /// earlier one has to re-target — calling this again with the wanted organization is how.
+    /// <para>Safe to call with a session already open: it ends that one first, so a test that moves
+    /// between two organizations just calls this again with the one it wants.</para>
+    ///
+    /// <para><b>Call this explicitly, from the test body — never from a shared setup helper.</b> The
+    /// <c>CreateOrganizationAsync</c> helpers in this project used to end with it, which read as a
+    /// convenience and behaved as a trap: a test body silently continued as an Org Admin of whichever
+    /// organization was created <i>last</i>, so tests operating on an earlier one failed for a reason
+    /// unrelated to what they asserted. It also added an Org Admin to every organization any test
+    /// created, quietly inflating membership lists, View As candidate lists and notification fan-out.
+    /// Opting in per test costs one visible line and makes both the actor and the target organization
+    /// readable at the point they matter.</para>
     /// </remarks>
     public static async Task<Guid> ActAsOrgAdminAsync(HttpClient client, Guid organizationId)
     {

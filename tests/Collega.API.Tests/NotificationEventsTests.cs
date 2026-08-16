@@ -39,6 +39,7 @@ public sealed class NotificationEventsTests : IClassFixture<CollegaApiFactory>
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
         var mentioned = await CreateUserAsync(admin, org.OrganizationId, "User");
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId,
             new { title = "Mention me", description = "d", priority = "Low", mentionEmails = new[] { mentioned.Email } });
@@ -60,6 +61,7 @@ public sealed class NotificationEventsTests : IClassFixture<CollegaApiFactory>
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
         var mentioned = await CreateUserAsync(admin, org.OrganizationId, "User");
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Discuss", description = "d", priority = "Low" });
 
         var comment = await admin.PostAsJsonAsync($"/api/v1/ideas/{idea.IdeaId}/comments",
@@ -86,6 +88,7 @@ public sealed class NotificationEventsTests : IClassFixture<CollegaApiFactory>
         using var authorClient = await LoginAsync(author.Email);
         var idea = await CreateIdeaAsync(authorClient, org.DefaultBoardId, new { title = "Owned", description = "d", priority = "Low" });
 
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var comment = await admin.PostAsJsonAsync($"/api/v1/ideas/{idea.IdeaId}/comments", new { body = "Nice idea" });
         comment.EnsureSuccessStatusCode();
 
@@ -109,7 +112,8 @@ public sealed class NotificationEventsTests : IClassFixture<CollegaApiFactory>
         using var authorClient = await LoginAsync(author.Email);
         var idea = await CreateIdeaAsync(authorClient, org.DefaultBoardId, new { title = "Movable", description = "d", priority = "Low" });
 
-        // A different actor (Site Admin) moves the idea, so the author receives the notification.
+        // A different actor (an Org Admin, acted as) moves the idea, so the author is notified.
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var move = await admin.PostAsJsonAsync($"/api/v1/ideas/{idea.IdeaId}/status", new { statusId = statusIds[1] });
         move.EnsureSuccessStatusCode();
 
@@ -127,8 +131,10 @@ public sealed class NotificationEventsTests : IClassFixture<CollegaApiFactory>
         var org = await CreateOrganizationAsync(admin);
         var statusIds = GetBoardStatusIds(org.DefaultBoardId);
         var assignee = await CreateUserAsync(admin, org.OrganizationId, "User");
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
-        // Admin authors and moves, so the author (admin) is suppressed and only the assignee is notified.
+        // One actor both authors and moves, so that author is self-suppressed and the assignee is
+        // the only recipient.
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId,
             new { title = "Assigned", description = "d", priority = "Low", assigneeUserIds = new[] { assignee.UserId } });
         var move = await admin.PostAsJsonAsync($"/api/v1/ideas/{idea.IdeaId}/status", new { statusId = statusIds[1] });
@@ -257,15 +263,12 @@ public sealed class NotificationEventsTests : IClassFixture<CollegaApiFactory>
             description = "Notification test organization."
         });
         response.EnsureSuccessStatusCode();
-        var created = (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
-
-        // Rule 25: a Site Admin acting as themselves can bootstrap an organization but cannot then
-        // mutate its content. Elevating here — once, in the shared helper — leaves every test body
-        // unchanged while routing its mutations through View As, which is the path the product now
-        // requires and which nothing else covers end to end.
-        await ViewAsAuth.ActAsOrgAdminAsync(admin, created.OrganizationId);
-
-        return created;
+        // Leaves the client acting as the Site Admin. Rule 25 means the caller cannot yet mutate
+        // this organization's content — a test that needs to must opt in with an explicit
+        // ViewAsAuth.ActAsOrgAdminAsync naming the organization it means. This matters more here
+        // than elsewhere: the helper used to add an Org Admin to every organization it created, and
+        // notification fan-out counts recipients.
+        return (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
     }
 
     private async Task<CreatedUser> CreateUserAsync(HttpClient admin, Guid organizationId, string role)

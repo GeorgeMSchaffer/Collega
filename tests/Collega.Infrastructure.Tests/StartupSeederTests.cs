@@ -6,6 +6,7 @@ using Collega.Infrastructure.Persistence.Repositories;
 using Collega.Infrastructure.Seeding;
 using Collega.Infrastructure.Tests.TestSupport;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Collega.Infrastructure.Tests;
 
@@ -17,7 +18,9 @@ public sealed class StartupSeederTests
     private static StartupSeeder CreateSeeder(CollegaDbContext ctx)
     {
         var bootstrap = new OrganizationBootstrapService(new EfStatusRepository(ctx), new EfBoardRepository(ctx), new EfIdeaTypeRepository(ctx), new EfBusinessImpactRepository(ctx));
-        return new StartupSeeder(ctx, new FakePasswordHasher(), bootstrap, new TestClock());
+        // NullLogger: the seeder's account-roster output is an operator convenience, not behaviour
+        // under test, and it is guarded by IsEnabled so a null logger skips the query entirely.
+        return new StartupSeeder(ctx, new FakePasswordHasher(), bootstrap, new TestClock(), NullLogger<StartupSeeder>.Instance);
     }
 
     [Fact]

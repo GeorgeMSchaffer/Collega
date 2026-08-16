@@ -13,16 +13,16 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-08-14 against `a5d53b2` (`dev`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-08-16 against `cc30ab2` (`dev`, pushed; `main` still at `4ef133b` pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
 | MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening, User-Defined Fields, Idea-Type Fields. Done — do not restart. |
 | Blazor client | ~16 pages, 9 shared components in `src/Collega.Client/Components/` | Geist is the single typeface. |
-| Test suite | **622 green** (2026-08-14) | 113 Domain + 230 Application + 117 Infrastructure + 162 API. Three need Docker (skip cleanly without it; CI excludes via `--filter "Category!=Container"`). Re-run before trusting. |
-| Sprints | **1–6 complete** · **6.5 next, in intake** · 7–8 blocked behind 6.5 | **Sprint 6.5 supersedes all other sprints** (user, 2026-08-14) — it is a bug/tweak paydown sprint, currently collecting items from user testing of Act As. Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
+| Test suite | **627 green** (2026-08-15) | 113 Domain + 230 Application + 122 Infrastructure + 162 API. Infrastructure includes five `PostgresProviderTests` that need Docker — they **ran and passed** on 2026-08-15 rather than skipping; without Docker the count is 622. 11 `Collega.E2E.Tests` skip without a running app. Re-run before trusting. |
+| Sprints | **1–6.5 complete** · **7 next** · 8 after it | Sprint 6.5 closed 2026-08-15 (13 items, visually confirmed and reviewed). **Sprint 7 (AI idea assist) opens with a comp-first gate, not code.** Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
-| Bug queue | **Redirected to Sprint 6.5 — 2 items, one P1** | `SPEC/Bug Triage.md` is empty and points at `sprints/sprint-06.5-bug-fixes-and-tweaks.md`, the single home for bugs and tweaks until that sprint closes. **P1: View As is missing its page-header entry point** (D-PLACE locked two; only the rail avatar-menu item exists), so the feature is hard to find on `dev`. Add findings there, not to the queue. |
+| Bug queue | **Back in `SPEC/Bug Triage.md` — 1 open item** | Intake returned there when 6.5 archived. Open: two admin drawers can be opened at once by keyboard (no focus trap in `DrawerShell`); mouse-unreachable. |
 | Local DB | `collega-postgres` (`postgres:16`), port **5432**, role `collega` | Standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas). Dev demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **If the API won't connect, check user-secrets for a stale SQL Server string** — see `src/Collega.API/CLAUDE.md`. |
 
 ### Sprint 5 — complete (merged `7c5a78b`)
@@ -35,10 +35,24 @@ The last open item, retiring Site Admin direct org-content mutation, closed 2026
 
 **Product rule, stated by the user 2026-08-14 and now the reading of rules 25/25c/26:** *a Site Admin creates organizations and users for organizations; every other activity goes through Act As.* This resolved a real conflict — `20-feature-ideas-and-engagement.md` had said all authenticated users may upvote and comment, and that Site Admin may CSV-import ideas. Those three rules are now explicitly superseded **for the Site Admin role only** (Read Only users are members and keep both). Note the two CSV imports split: **user** import stays direct as bootstrap, **idea** import goes through View As.
 
+### Sprint 6.5 — complete (2026-08-15)
+Paydown sprint, 13 items over two intake rounds. Post-mortem: `sprints/archive/sprint-06.5-bug-fixes-and-tweaks.md`.
+
+The one finding worth carrying forward: **the client's `ClaimsPrincipal` must be refreshed from `/auth/me`, not just read into a local field.** Impersonation is a server-side session and the token is never reissued, so the principal is the only thing that can carry the effective role — and `[Authorize(Roles=…)]`, `<AuthorizeView Roles=…>` and `IsInRole()` all read it. `MainLayout.ReloadIdentityAsync` now calls `RefreshUserAsync`; without that every role-gated surface renders for the real administrator during a View As session. This is the client-side twin of Sprint 6's `ICurrentUserContext` rule.
+
+### Sprint 7 — in progress
+**Cost-control slice landed 2026-08-16, ahead of the feature it meters.** `AiUsageRecord` + `ai_usage_records`, `AiUsageService` (daily budget gate + per-org reports), `EfAiUsageRepository`, `GET /ai-assist/usage` and `GET /organizations/{id}/ai-assist/usage`, and **Settings → API** (`/settings/api`). Verified in the running app for Site Admin, Org Admin, and a Site Admin acting as an Org Admin — the last narrows to the impersonated user's organization, which is the attribution rule that matters.
+
+**What is still wired to nothing:** `IsWithinDailyBudgetAsync` and `RecordAsync` have no caller. Whoever builds the drafting slice owns calling the gate before the provider and the recorder after every turn — including refused and failed ones. Until then the page renders a real but always-empty report.
+
+Nothing else of Sprint 7 is built: no `IdeaAssistService`, no provider call, no comp-11C draft strip.
+
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Portrait image library = **ImageSharp** (`SixLabors.ImageSharp`, pinned **3.1.12**). Fully managed, no native assets — chosen 2026-08-13 specifically because SkiaSharp's package ships natives for Windows/macOS only and broke portrait upload on Linux App Service. **Stay on the 3.1.x line:** 4.x requires a Six Labors license key and warns on every build; 3.1.x is the Split License (free for OSS/personal and organizations under the revenue threshold — re-verify terms before any commercial release).
 - Site Admin org-content mutation = **View As act-as only** (Sprint 6, full act-as + dual attribution); no direct create/edit paths, no org dropdowns. Org + user admin stay direct as the bootstrap exception. → `20-feature-client-ui.md`.
 - AI idea drafting = **Sprint 7**; `Anthropic` package approved, single platform-level key, dedupe deferred to v2. → `20-feature-ai-idea-assist.md`.
+- Sprint 7's **comp gate passed 2026-08-16**: Direction **C "Draft Strip"** (`mockups/comp-c-review-11-ai-assist-c-draftstrip.html`), teal suggestion indicator, scope statement on its own Settings page, ghost-then-drop for refused turns. Four decisions, canonical in `20-feature-ai-idea-assist.md` → "UI Decisions". **Sprint 7 is now buildable.**
+- AI cost controls (user decisions, 2026-08-16): model **`claude-sonnet-5`** at **`low` effort**, **500,000 tokens per UTC day** as one **global** pool, degrade at the cap rather than error, usage tracked **per organization** so per-org keys (rule 30) can be metered without a backfill. The cap is a runaway stop, not a $50 guarantee — saturated daily it allows roughly $99/month, and the usage page is what makes real spend visible. → `20-feature-ai-idea-assist.md` rules 28a–28e.
 - New page/flow UI is **comp-first**.
 - Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/archive/sprint-04-qa-review-debt.md`.
 

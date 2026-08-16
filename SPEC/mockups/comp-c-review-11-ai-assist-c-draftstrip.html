@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Review 11C: AI Idea Assist (Draft Strip)</title>
+<style>
+  /* Same locked foundation as review-09/10 and 11A/11B.
+     Direction C = 11A's flow (chat modal → create modal, one 720px surface at a time) plus a slim
+     READ-ONLY draft strip above the composer. The strip is the whole idea: classification feedback
+     during the conversation without a second pane or any new chrome. */
+  :root{
+    --accent:#5b5fc7;--accent-deep:#444791;--accent-soft:#eef0fb;
+    --ink:#242424;--ink-2:#484644;--ink-3:#66615d;
+    --bg:#faf9f8;--surface:#fff;--line:#e4e2df;
+    --ok:#0e700e;--warn:#9a5b00;--err:#b10e1c;
+    --sug:#116b5e;--sug-soft:#e6f2f0;--sug-deep:#0c4f45;
+    --shadow:0 1px 2px rgba(0,0,0,.08);--shadow-float:0 18px 48px rgba(0,0,0,.22);
+    --radius-card:6px;--radius-btn:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  body{font-family:"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);font-size:14px;overflow-x:hidden}
+  button,input,select,textarea{font:inherit}
+  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600}
+  .comp-bar{min-height:46px;background:#33312e;color:#fff;padding:8px 18px;display:flex;gap:14px;align-items:center;position:sticky;top:0;z-index:80;flex-wrap:wrap}
+  .comp-bar strong{font:600 13px Georgia,serif;letter-spacing:.04em;white-space:nowrap}
+  .comp-bar .sep{width:1px;height:20px;background:#5a5754}
+  .comp-bar .lbl{font-size:11px;color:#a8a5a2;text-transform:uppercase;letter-spacing:.05em}
+  .mode-tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .mode-tabs button{background:transparent;color:#d1cfcc;border:1px solid #5a5754;border-radius:3px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .mode-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:8px 13px;min-height:36px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;background:transparent;color:var(--ink-2)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  input,select,textarea{border:1px solid #8a8886;border-radius:4px;background:#fff;color:var(--ink);padding:8px 10px;min-height:36px;width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{display:block;color:var(--ink-3);font-size:11.5px;font-weight:700;margin-bottom:5px}
+  .hint{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+
+  /* modal chrome — unchanged CreateModalShell */
+  .surface-backdrop{position:fixed;inset:46px 0 0 0;background:rgba(36,36,36,.28);z-index:40}
+  .modal-wrap{position:fixed;inset:46px 0 0 0;display:grid;place-items:center;z-index:50;padding:24px}
+  .modal{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-float);width:min(720px,100%);max-height:calc(100vh - 110px);display:flex;flex-direction:column}
+  .surface-head{padding:20px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:16px}
+  .surface-head .grow{flex:1;min-width:0}
+  .eyebrow{text-transform:uppercase;letter-spacing:.07em;color:var(--accent-deep);font-size:11px;font-weight:700;margin-bottom:5px}
+  .surface-head h2{font-size:22px;line-height:1.25}
+  .surface-head .meta{margin-top:6px;font-size:12px;color:var(--ink-3)}
+  .iconbtn{width:34px;height:34px;border:1px solid var(--line);border-radius:4px;background:#fff;cursor:pointer;color:var(--ink-2);display:grid;place-items:center;font-size:19px;flex:none}
+  .surface-body{padding:20px 24px 0;overflow:auto;flex:1;display:flex;flex-direction:column}
+  .surface-foot{padding:13px 24px;border-top:1px solid var(--line);display:flex;align-items:center;gap:9px;background:#fff}
+  .surface-foot .grow{flex:1}
+  .turns{font-size:11.5px;color:var(--ink-3)}
+
+  /* chat */
+  .transcript{display:flex;flex-direction:column;gap:15px;flex:1;min-height:240px}
+  .msg{display:flex;gap:11px;max-width:88%}
+  .msg .who{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px;font-weight:700}
+  .msg.bot .who{background:var(--accent-soft);color:var(--accent-deep)}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse}
+  .msg.user .who{background:var(--accent-deep);color:#fff}
+  .bubble{background:#f3f2f1;border-radius:10px;padding:10px 14px;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+  .msg.user .bubble{background:var(--accent);color:#fff}
+  .thinking{display:flex;gap:5px;align-items:center;padding:12px 14px}
+  .thinking i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);opacity:.4;animation:bl 1.2s infinite}
+  .thinking i:nth-child(2){animation-delay:.18s}.thinking i:nth-child(3){animation-delay:.36s}
+  @keyframes bl{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:.9;transform:translateY(-3px)}}
+  .sysnote{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:11px 14px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+  .sysnote svg{width:16px;height:16px;fill:var(--warn);flex:none;margin-top:1px}
+  .sysnote.err svg{fill:var(--err)}
+  .sysnote b{display:block;color:var(--ink);margin-bottom:2px}
+  .sysnote .redirect{color:var(--ink-3);font-style:italic}
+  .strikeghost{opacity:.45}
+  .strikeghost .bubble{background:repeating-linear-gradient(135deg,#f3f2f1,#f3f2f1 6px,#eceae8 6px,#eceae8 12px);color:var(--ink-3);text-decoration:line-through}
+
+  /* ============ THE DRAFT STRIP — what this direction is for ============ */
+  .strip{
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+    margin:16px -24px 0;padding:9px 24px;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    background:var(--sug-soft);
+  }
+  .strip .lead{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--sug-deep);white-space:nowrap}
+  .sugdot{width:7px;height:7px;border-radius:50%;background:var(--sug);flex:none}
+  .spill{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #bcdcd6;border-radius:13px;padding:3px 11px;font-size:12px;color:var(--sug-deep);white-space:nowrap}
+  .spill b{font-weight:700}
+  .spill.pending{background:transparent;border-style:dashed;border-color:#b7c3c1;color:var(--ink-3);font-style:italic}
+  .strip .tail{margin-left:auto;font-size:11.5px;color:var(--sug-deep);white-space:nowrap}
+  .strip.quiet{background:var(--bg)}
+  .strip.quiet .lead{color:var(--ink-3)}
+  .strip.dim{opacity:.5}
+  .strip .justnow{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sug-deep);background:#d3e9e4;border-radius:9px;padding:1px 6px}
+
+  .composer{display:flex;gap:9px;align-items:flex-end;padding:16px 0 20px}
+  .composer textarea{resize:none}
+
+  /* pre-filled form (identical treatment to 11A) */
+  .field{margin-bottom:16px}
+  .lblrow{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .lblrow label{margin:0}
+  .sugchip{display:inline-flex;align-items:center;gap:4px;background:var(--sug-soft);color:var(--sug-deep);border:1px solid #bcdcd6;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700;text-transform:uppercase}
+  .sugchip svg{width:10px;height:10px;fill:currentColor}
+  .sug-input{border-left:3px solid var(--sug);background:var(--sug-soft)}
+  .sug-clear{border:0;background:none;color:var(--ink-3);font-size:11px;cursor:pointer;text-decoration:underline;padding:0}
+  .formrow{display:flex;gap:14px}.formrow>*{flex:1}
+  .sugbanner{display:flex;gap:10px;align-items:flex-start;border:1px solid #bcdcd6;background:var(--sug-soft);border-radius:8px;padding:11px 14px;font-size:12.5px;color:var(--sug-deep);line-height:1.5;margin-bottom:18px}
+  .sugbanner svg{width:16px;height:16px;fill:var(--sug);flex:none;margin-top:1px}
+
+  .doc{max-width:920px;margin:0 auto;padding:30px 40px 60px}
+  .doc h1{font-size:28px;margin-bottom:6px}
+  .doc .lead2{color:var(--ink-3);font-size:14px;line-height:1.55;margin-bottom:20px;max-width:720px}
+  .doc h2{font-size:18px;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .doc p,.doc li{font-size:13.5px;line-height:1.6;color:var(--ink-2)}
+  .doc ul{margin:6px 0 6px 20px}.doc li{margin-bottom:5px}
+  .decision{border:1px solid var(--sug);background:var(--sug-soft);border-radius:8px;padding:14px 16px;margin:14px 0}
+  .decision .qh{font-weight:700;color:var(--sug-deep);font-size:13.5px;font-family:"Segoe UI",sans-serif;margin-bottom:5px}
+  .doc code{background:#f3f2f1;padding:1px 5px;border-radius:3px;font-size:12.5px}
+  table.cmp{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  table.cmp th,table.cmp td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  table.cmp th{background:var(--bg);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3);font-weight:700}
+  table.cmp td b{color:var(--sug-deep)}
+  .btn:focus-visible,.iconbtn:focus-visible,.mode-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>Review 11C — AI Idea Assist</strong>
+  <span class="sep"></span>
+  <span class="lbl">Direction C · Draft Strip (hybrid)</span>
+  <span class="sep"></span>
+  <div class="mode-tabs">
+    <button class="on" data-s="chat">1 · Drafting</button>
+    <button data-s="early">2 · Early turn</button>
+    <button data-s="pending">3 · Pending</button>
+    <button data-s="scope">4 · Out of scope</button>
+    <button data-s="form">5 · Pre-filled form</button>
+    <button data-s="doc">Notes &amp; comparison</button>
+  </div>
+</div>
+
+<!-- ============ 1 · DRAFTING ============ -->
+<section class="screen on" id="s-chat">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="modal">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Let's flesh out your idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="surface-body">
+        <div class="transcript">
+          <div class="msg bot"><div class="who">AI</div><div class="bubble">Hi! Tell me about your idea in your own words.</div></div>
+          <div class="msg user"><div class="who">NC</div><div class="bubble">Purchase approvals take forever. Three people sign off on anything over $500 and it's usually the same three.</div></div>
+          <div class="msg bot"><div class="who">AI</div><div class="bubble">That sounds like an approval-chain problem. Roughly how long does a typical $500 request sit, and which signoff is the bottleneck?</div></div>
+          <div class="msg user"><div class="who">NC</div><div class="bubble">Usually 4–5 days. Finance is the slow one — they batch reviews weekly.</div></div>
+          <div class="msg bot"><div class="who">AI</div><div class="bubble">Got it — I've drafted this as a Process Revision. If Finance moved to threshold-based auto-approve under $500, what should still get a human look?</div></div>
+        </div>
+
+        <!-- THE STRIP -->
+        <div class="strip">
+          <span class="lead"><span class="sugdot"></span>Drafting</span>
+          <span class="spill"><b>Process Revision</b> <span class="justnow">new</span></span>
+          <span class="spill">Impact <b>High</b></span>
+          <span class="spill pending">Priority not set yet</span>
+          <span class="tail">Title &amp; description drafted</span>
+        </div>
+
+        <div class="composer">
+          <textarea rows="2" placeholder="Describe your idea… (Enter to send, Shift+Enter for a new line)"></textarea>
+          <button class="btn primary">Send</button>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="turns grow">Turn 3 of 20</span>
+        <button class="btn subtle">Cancel</button>
+        <button class="btn">Skip &amp; fill manually</button>
+        <button class="btn primary">Continue to idea form →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · EARLY TURN ============ -->
+<section class="screen" id="s-early">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="modal">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Let's flesh out your idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="surface-body">
+        <div class="transcript">
+          <div class="msg bot"><div class="who">AI</div><div class="bubble">Hi! Tell me about your idea in your own words. What are you trying to build or improve?</div></div>
+          <div class="msg user"><div class="who">NC</div><div class="bubble">Purchase approvals take forever.</div></div>
+          <div class="msg bot"><div class="who">AI</div><div class="bubble">Tell me a bit more — what happens today, and where does it get stuck?</div></div>
+        </div>
+
+        <div class="strip quiet">
+          <span class="lead"><span class="sugdot" style="background:#b7c3c1"></span>Drafting</span>
+          <span class="spill pending">Nothing classified yet — keep going</span>
+        </div>
+
+        <div class="composer">
+          <textarea rows="2" placeholder="Describe your idea…"></textarea>
+          <button class="btn primary">Send</button>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="turns grow">Turn 1 of 20</span>
+        <button class="btn subtle">Cancel</button>
+        <button class="btn">Skip &amp; fill manually</button>
+        <button class="btn primary">Continue to idea form →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 · PENDING ============ -->
+<section class="screen" id="s-pending">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="modal">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Let's flesh out your idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="surface-body">
+        <div class="transcript">
+          <div class="msg user"><div class="who">NC</div><div class="bubble">Usually 4–5 days. Finance is the slow one — they batch reviews weekly.</div></div>
+          <div class="msg bot"><div class="who">AI</div><div class="bubble thinking"><i></i><i></i><i></i></div></div>
+        </div>
+
+        <div class="strip dim">
+          <span class="lead"><span class="sugdot"></span>Drafting</span>
+          <span class="spill"><b>Process Revision</b></span>
+          <span class="spill pending">Priority not set yet</span>
+          <span class="tail">updating…</span>
+        </div>
+
+        <div class="composer">
+          <textarea rows="2" placeholder="Describe your idea…" disabled></textarea>
+          <button class="btn" disabled>Send</button>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="turns grow">Thinking… <button class="btn subtle" style="padding:2px 6px;min-height:0">Cancel this turn</button></span>
+        <button class="btn">Skip &amp; fill manually</button>
+        <button class="btn primary" disabled>Continue to idea form →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · OUT OF SCOPE ============ -->
+<section class="screen" id="s-scope">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="modal">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Let's flesh out your idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="surface-body">
+        <div class="transcript">
+          <div class="msg bot"><div class="who">AI</div><div class="bubble">What should still get a human look?</div></div>
+          <div class="msg user strikeghost"><div class="who">NC</div><div class="bubble">write me a limerick about procurement</div></div>
+          <div class="sysnote">
+            <svg viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm.9 4.1v4.4a.9.9 0 11-1.8 0V6.1a.9.9 0 011.8 0zM10 13.2a1.1 1.1 0 110 2.2 1.1 1.1 0 010-2.2z"/></svg>
+            <div><b>That one's outside what I can help with here.</b>
+              <span class="redirect">I can only help draft ideas for Acme Robotics. Tell me about a process, tool, or workflow you'd like to see change.</span>
+              <div class="hint" style="margin-top:6px">Not added to the conversation. 2 more off-topic turns will end the chat.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="strip">
+          <span class="lead"><span class="sugdot"></span>Drafting</span>
+          <span class="spill"><b>Process Revision</b></span>
+          <span class="spill">Impact <b>High</b></span>
+          <span class="spill pending">Priority not set yet</span>
+          <span class="tail">unchanged</span>
+        </div>
+
+        <div class="composer">
+          <textarea rows="2" placeholder="Describe your idea…"></textarea>
+          <button class="btn primary">Send</button>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="turns grow">Turn 4 of 20 · 1 off-topic</span>
+        <button class="btn subtle">Cancel</button>
+        <button class="btn">Skip &amp; fill manually</button>
+        <button class="btn primary">Continue to idea form →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 · PRE-FILLED FORM ============ -->
+<section class="screen" id="s-form">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="modal">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Create an idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="surface-body" style="padding-bottom:20px">
+        <div class="sugbanner">
+          <svg viewBox="0 0 20 20"><path d="M10 1.6l2.3 4.9 5.3.7-3.9 3.7 1 5.3-4.7-2.6-4.7 2.6 1-5.3-3.9-3.7 5.3-.7z"/></svg>
+          <div><b>Nothing here is a surprise.</b> These are the values the strip showed while you were talking — all editable.</div>
+        </div>
+
+        <div class="field">
+          <div class="lblrow"><label for="t">Title *</label>
+            <span class="sugchip"><svg viewBox="0 0 20 20"><path d="M10 1.6l2.3 4.9 5.3.7-3.9 3.7 1 5.3-4.7-2.6-4.7 2.6 1-5.3-3.9-3.7 5.3-.7z"/></svg>Suggested</span>
+            <button class="sug-clear">clear</button></div>
+          <input id="t" class="sug-input" value="Auto-approve purchases under $500 to cut approval lead time">
+        </div>
+
+        <div class="field">
+          <div class="lblrow"><label for="d">Description *</label>
+            <span class="sugchip"><svg viewBox="0 0 20 20"><path d="M10 1.6l2.3 4.9 5.3.7-3.9 3.7 1 5.3-4.7-2.6-4.7 2.6 1-5.3-3.9-3.7 5.3-.7z"/></svg>Suggested</span>
+            <button class="sug-clear">clear</button></div>
+          <textarea id="d" rows="4" class="sug-input">Purchases over $500 require three signoffs, and Finance reviews them in a weekly batch — a typical request sits 4–5 days. A threshold-based auto-approve under $500 would remove the batch wait for most requests, keeping human review for higher-value purchases.</textarea>
+        </div>
+
+        <div class="formrow">
+          <div class="field">
+            <div class="lblrow"><label for="it">Idea Type *</label>
+              <span class="sugchip"><svg viewBox="0 0 20 20"><path d="M10 1.6l2.3 4.9 5.3.7-3.9 3.7 1 5.3-4.7-2.6-4.7 2.6 1-5.3-3.9-3.7 5.3-.7z"/></svg>Suggested</span></div>
+            <select id="it" class="sug-input"><option>Process Revision</option><option>Continuous Improvement</option></select>
+          </div>
+          <div class="field">
+            <div class="lblrow"><label for="bi">Business Impact *</label>
+              <span class="sugchip"><svg viewBox="0 0 20 20"><path d="M10 1.6l2.3 4.9 5.3.7-3.9 3.7 1 5.3-4.7-2.6-4.7 2.6 1-5.3-3.9-3.7 5.3-.7z"/></svg>Suggested</span></div>
+            <select id="bi" class="sug-input"><option>High</option><option>Medium</option></select>
+          </div>
+        </div>
+
+        <div class="formrow">
+          <div class="field">
+            <label for="p">Priority</label>
+            <select id="p"><option>Medium</option><option>High</option></select>
+            <div class="hint">Never classified during the chat — the strip said so, and it arrives plain here.</div>
+          </div>
+          <div class="field">
+            <label for="s">Status</label>
+            <select id="s"><option>New / Pending</option></select>
+            <div class="hint">Never suggested (rule 22).</div>
+          </div>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="grow"></span>
+        <button class="btn">Back to chat</button>
+        <button class="btn primary">Create idea</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NOTES ============ -->
+<section class="screen" id="s-doc">
+  <div class="doc">
+    <h1>Direction C — Draft Strip</h1>
+    <p class="lead2">
+      11A's flow exactly — one 720px surface at a time, chat then create modal, <code>CreateModalShell</code> unchanged — with a
+      slim <b>read-only</b> strip between the transcript and the composer. The strip shows only what the assistant has
+      <i>classified</i>: Idea Type, Business Impact, Priority. Title and description are summarised, never rendered in full.
+    </p>
+
+    <h2>Why read-only is the point</h2>
+    <p>
+      The expensive part of 11B isn't the second pane — it's that an editable draft needs per-field "suggested vs. user-edited"
+      state, and a rule for what happens when a later turn wants to overwrite something you changed. Make the strip read-only and
+      that entire problem disappears: it is a projection of the last response, nothing more. You still see the assistant
+      classifying in real time, which is the actual benefit 11B was buying.
+    </p>
+
+    <h2>What it settles</h2>
+    <ul>
+      <li><b>Suggestion indicator:</b> identical to 11A on the form — teal chip, tinted field, 3px left border. The strip uses the same teal so the two surfaces read as one idea.</li>
+      <li><b>Nothing is a surprise at handoff.</b> The form's banner says so explicitly. 11A's weakest point was that all correction work landed at the reveal; here you have had three turns of warning.</li>
+      <li><b>Out-of-scope:</b> the strip is annotated <i>unchanged</i> — the same "your off-topic turn moved nothing" proof 11B gets from its panel, in one word.</li>
+      <li><b>Pending:</b> the strip dims but stays readable, and Skip &amp; fill manually stays enabled (rule 3).</li>
+      <li><b>Not-yet-classified</b> is rendered explicitly ("Priority not set yet") rather than omitted, so the user can tell the difference between "the assistant chose nothing" and "the assistant hasn't got there".</li>
+    </ul>
+
+    <h2>Three-way comparison</h2>
+    <table class="cmp">
+      <tr><th>&nbsp;</th><th>A · Handoff</th><th>B · Live Draft</th><th>C · Draft Strip</th></tr>
+      <tr><td><b>New chrome</b></td><td>None</td><td>1080×660 two-pane sheet</td><td><b>None</b></td></tr>
+      <tr><td><b>Sees classification live</b></td><td>No</td><td>Yes, editable</td><td><b>Yes, read-only</b></td></tr>
+      <tr><td><b>Correct mid-conversation</b></td><td>No</td><td>Yes, directly</td><td>By talking to it</td></tr>
+      <tr><td><b>Per-field edit state</b></td><td>Not needed</td><td>Required</td><td><b>Not needed</b></td></tr>
+      <tr><td><b>Narrow viewport</b></td><td>Works</td><td>Unsolved — panel hidden &lt;900px</td><td><b>Wraps to 2 lines</b></td></tr>
+      <tr><td><b>Build cost</b></td><td>Lowest</td><td>Highest</td><td>Low</td></tr>
+    </table>
+
+    <div class="decision">
+      <div class="qh">Recommendation</div>
+      <p>
+        <b>C</b>, unless you specifically want to edit classification mid-conversation. It takes A's cost and risk profile and
+        removes A's one real weakness — that the user learns nothing until the reveal. B remains the right answer only if
+        correcting the Idea Type <i>while talking</i> turns out to matter, and that is a question real usage answers better than a comp.
+      </p>
+    </div>
+
+    <div class="decision">
+      <div class="qh">Still open regardless of direction</div>
+      <p>
+        Where the scope statement lives — 11A draws a Settings page, 11B a section in the Organization drawer. C doesn't
+        re-draw it; pick from those two. And whether the off-topic turn ghosts before it drops, or never renders at all.
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs = document.querySelectorAll('.mode-tabs button');
+  tabs.forEach(b => b.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+    document.getElementById('s-' + b.dataset.s).classList.add('on');
+    window.scrollTo(0, 0);
+  }));
+</script>
+</body>
+</html>

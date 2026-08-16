@@ -66,6 +66,36 @@ public sealed record StartViewAsResponseDto(
 /// <summary>Request body for `PUT /api/v1/auth/me/portrait` — Base64 of the raw chosen image file.</summary>
 public sealed record UpdatePortraitRequestDto(string ImageBase64);
 
+/// <summary>
+/// AI consumption for one organization over a window (`GET .../ai-assist/usage`).
+/// <c>EstimatedCost</c> is USD, computed server-side from the rates stored on each usage record.
+/// </summary>
+public sealed record AiUsageSummaryDto(
+    string OrganizationId,
+    string OrganizationName,
+    int Calls,
+    long InputTokens,
+    long OutputTokens,
+    long CacheReadInputTokens,
+    long CacheCreationInputTokens,
+    decimal EstimatedCost,
+    long TotalTokens);
+
+/// <summary>
+/// The usage report. <c>DailyTokenLimit</c> and <c>TokensUsedToday</c> are populated only on the
+/// platform-wide (Site Admin) report — the ceiling is platform-wide and is not an organization's
+/// business, so the org-scoped response omits them.
+/// </summary>
+public sealed record AiUsageReportDto(
+    DateTime FromUtc,
+    DateTime ToUtc,
+    List<AiUsageSummaryDto> Organizations,
+    long? DailyTokenLimit,
+    long? TokensUsedToday,
+    int TotalCalls,
+    long TotalTokens,
+    decimal TotalEstimatedCost);
+
 /// <summary>RFC 7807 problem-details envelope the API returns for every non-2xx response.</summary>
 public sealed record ProblemDetailsDto(string? Title, int? Status, string? Detail);
 

@@ -22,6 +22,17 @@ Two mechanisms do two different jobs, and conflating them is the failure mode th
 | **D-CREDS** | Where does the API key live? | **Single platform-level key in server configuration/secrets** for v1. The per-org override endpoints already specified in `SPEC/30-Contracts.md` stay **unimplemented** — see "Credentials" below. |
 | **D-PREFILL** | Which Idea fields may the assistant pre-fill? | **Title, Description, Idea Type, Business Impact, Priority**, as editable suggestions. User-Defined Field values and tag suggestions are **out of v1 scope**. |
 
+## UI Decisions (Comp-Resolved 2026-08-16)
+
+Locked from the comp round — `SPEC/mockups/comp-c-review-11-ai-assist-{a-handoff,b-livedraft,c-draftstrip}.html`. **Direction C is the built one**; A and B are rejected alternatives kept for history, like Comps A and B before them.
+
+| ID | Decision | Resolution |
+|---|---|---|
+| **D-SURFACE** | Where does drafting happen? | **Direction C — "Draft Strip".** One 720px surface at a time (chat modal → create modal), `CreateModalShell` unchanged, plus a slim **read-only** strip between transcript and composer showing what has been classified so far. Rejected: A (no strip — the user learns nothing until the handoff) and B (a two-pane editable sheet — needs new chrome, per-field suggested-vs-edited state, and has no narrow-viewport answer). |
+| **D-SUGGEST** | How is a suggested value marked? | **Teal**, never the indigo accent — indigo already means "active/selected" throughout Comp C and a suggestion is neither. On the form: a `Suggested` chip beside the label, a tinted field, and a 3px left border. On the strip: the same teal as pills. |
+| **D-SCOPEUI** | Where does an Org Admin edit the scope statement? | **A dedicated Settings page**, not the Organization detail drawer. Decisive reason: `Settings.razor` is `[Authorize(Roles = "SiteAdmin")]`, so the org drawer is unreachable for the Org Admin who owns this setting under rule 6. |
+| **D-REFUSED** | What does the user see when a turn is refused? | **Ghost-then-drop.** The message renders greyed and struck through for one beat with the redirect note beneath it, then disappears. Rejected: never rendering it, which is cleaner but makes typed input vanish with no acknowledgement and reads as a bug. |
+
 ---
 
 ## Problem Statement
@@ -52,6 +63,8 @@ The scripted chat collects prose and nothing else. Everything the user says abou
 6. An organization has a **scope statement**: optional free text, max 500 characters, editable by Org Admin (and Site Admin acting on that org). Empty is valid and means "no narrowing beyond Idea Types."
 7. In-scope is evaluated per user turn and returned by the model as `inScope`. The structural test is *"could this plausibly become an Idea of one of this organization's active Idea Types?"*; the scope statement narrows it further.
 8. When `inScope` is `false`, the client renders a **fixed, server-supplied redirect string** and the offending turn is **dropped from the transcript** rather than appended. Off-topic content must not accumulate in context, because accumulated off-topic context is what drifts a constrained assistant into a general one.
+
+    8a. *Presentation (D-REFUSED):* the refused message is shown **greyed and struck through for one beat**, with the redirect rendered as a system note — not as an assistant bubble, so refusals never read as conversation — then removed. It is never added to the history sent on the next turn; the ghost is a client-side acknowledgement only. The draft strip is annotated **unchanged**, since a refused turn moves nothing.
 9. The scope statement is org configuration, not user input to the model's instruction channel — it is placed in the system prompt by the server. It is written by an Org Admin, who is a trusted operator in this system; it is nonetheless length-capped and never concatenated with end-user text.
 10. Three consecutive out-of-scope turns close the chat with the redirect message and the Skip-to-form option. This bounds the cost of someone probing the boundary.
 
@@ -77,7 +90,9 @@ The scripted chat collects prose and nothing else. Everything the user says abou
 ### Pre-fill (D-PREFILL)
 
 19. The assistant may propose: `title`, `description`, `ideaTypeId`, `businessImpactId`, `priority`. All are optional in the response — an early turn may return only `nextQuestion`.
-20. Every proposed value arrives in `IdeaCreateModal` as an **editable default**, visually indicated as a suggestion. The user may change or clear any of them.
+20. Every proposed value arrives in `IdeaCreateModal` as an **editable default**, visually indicated as a suggestion (D-SUGGEST: teal chip, tinted field, 3px left border). The user may change or clear any of them.
+
+    20a. *During the conversation (D-SURFACE):* the classification values — Idea Type, Business Impact, Priority — are also shown live on a **read-only** draft strip above the composer, with values not yet chosen rendered explicitly ("Priority not set yet") rather than omitted, so "the assistant chose nothing" is distinguishable from "the assistant hasn't got there". The strip is a projection of the latest response and is **never editable**; editing happens on the create form, which is what keeps per-field suggested-vs-user-edited state out of v1.
 21. UDF values and tags are **out of v1 scope**. The resolved field set changes when the Idea Type changes, which makes the drafting loop materially more complex; deferred rather than half-built.
 22. Board and Status are **never** proposed — board is chosen before the chat opens, and status defaults to the board's left-most swimlane per existing idea rules.
 
@@ -90,9 +105,23 @@ The scripted chat collects prose and nothing else. Everything the user says abou
 27. Each call records an audit event: acting user, organization, board, turn count, token usage, and whether the turn was refused as out of scope. **Prompt and transcript content are not written to the audit log.**
 28. API keys are never returned by any endpoint, never logged, and never sent to the client.
 
+### Cost control (added 2026-08-16)
+
+The deployment key is shared by every organization (rule 29), so without a ceiling any one organization — or one defect — can spend the whole budget. These rules bound that and make the spend attributable.
+
+28a. **Daily token budget.** A configured ceiling on total tokens consumed across *all* organizations, measured on the **UTC day**. It is checked **before** each model call against the day's running total; when the total has reached the ceiling the endpoint returns `503` and the client degrades exactly as it does for an unconfigured key (rule 31). Because usage is only known after a call returns, overshoot is bounded by one in-flight turn — acceptable against a ceiling measured in hundreds of thousands of tokens. The ceiling is configuration, not hard-coded.
+
+28b. **The budget is a runaway stop, not a forecast.** It exists so a defect or an abusive user cannot run up an unbounded bill. It does not by itself hold a monthly figure — a daily ceiling bounds the month only at thirty times itself. Watching actual spend is the job of the usage surface in 28d, not of the cap.
+
+28c. **Per-organization usage attribution.** Every model call writes a usage record carrying the organization, the acting user, the board, the model id, the four token counts the provider reports, and the per-million rates applied at the time. **While a View As session is live the record is attributed to the impersonated user's organization** — the org whose work is being done — never to the administrator's (Site Admin has no organization). The rates are stored on the record rather than looked up at read time: usage is intended to support cost pass-through, and re-pricing history when configuration changes would corrupt a chargeback.
+
+28d. **Usage is visible in the product.** A Site Admin can see consumption for every organization; an Org Admin can see their own organization's and no other's. This is the surface that answers "who is heavy" and "what do we bill them".
+
+28e. Usage records carry **no prompt and no transcript content**, the same constraint rule 27 places on the audit log. They are a meter, not a log.
+
 ### Credentials (D-CREDS)
 
-29. v1 uses a **single deployment-level key** from server configuration (user-secrets locally, App Service configuration in Azure — see `SPEC/50-azure-deployment.md`). All organizations share it.
+29. v1 uses a **single deployment-level key** from server configuration (user-secrets locally, App Service configuration in Azure — see `SPEC/50-azure-deployment.md`). All organizations share it. The configuration key is **`Ai:ApiKey`**, alongside the other `Ai:*` settings the cost controls read; the environment-variable form is `Ai__ApiKey`, and `docker-compose.yml` binds it from `CLAUDE_API_KEY` in `.env`. It is a secret and never belongs in `appsettings*.json`.
 30. `SPEC/30-Contracts.md` already specifies `PUT`/`DELETE /api/v1/organizations/{organizationId}/ai-key` for a **per-org key overriding the deployment default**. Those contracts stay in the spec and stay **unimplemented in v1** — they are the "Org AI credentials" backlog item. This is a deliberate deferral, not an oversight: a future agent reading those contracts must not build them as part of this sprint.
 31. If no key is configured, the feature is **off**: the brainstorm modal falls back to its current scripted behavior and the API returns a clear "not configured" response rather than an error. The product must work with the feature dark.
 
@@ -107,8 +136,9 @@ The scripted chat collects prose and nothing else. Everything the user says abou
 
 Implementation detail, recorded here because it is behavior-affecting:
 
-- **Model:** `claude-opus-5`.
-- **Thinking:** adaptive (`thinking: {type: "adaptive"}`). Note that on this model thinking is on by default and `max_tokens` caps thinking *plus* response — size it accordingly.
+- **Model:** `claude-sonnet-5` (changed from `claude-opus-5`, 2026-08-16). **Why the cheaper tier is safe here:** rule 16 makes an invalid or cross-org classification *structurally impossible* — the per-request JSON Schema constrains `ideaTypeId` and `businessImpactId` to enums of the org's real active ids. Containment rests on the schema, not on model capability, so the model tier is a pure quality-versus-cost decision. The task itself — ask one follow-up question and pick from a handful of closed options — does not need frontier reasoning. The model id is configuration, so this can be re-tested against a larger model without a code change.
+- **Effort:** `output_config.effort`, starting at `low`. This is the single largest cost lever available: effort defaults to `high`, and on this model thinking is on by default and bills as output at 5× the input rate. Tune upward only if question quality demands it.
+- **Thinking:** adaptive (`thinking: {type: "adaptive"}`). Note that on this model thinking is on by default and `max_tokens` caps thinking *plus* response — size it accordingly. Do **not** disable thinking to save cost; lower the effort instead.
 - **Structured outputs:** `output_config.format` with the per-request JSON Schema described above. Not prefill (prefill returns 400 on current models), not prose parsing.
 - **Prompt caching:** the system prompt and the org catalog form a **stable prefix** — identical across every turn and every user in the organization — and carry the `cache_control` breakpoint. Only the transcript varies, and it sits after the breakpoint. Verify with `usage.cache_read_input_tokens`; a persistent zero means something volatile (a timestamp, a per-request id) has leaked into the prefix.
 - The vendor is reached through an Application-layer abstraction (`IIdeaDraftModel`) implemented in Infrastructure, so Application and Domain keep no vendor dependency.
@@ -118,8 +148,11 @@ Implementation detail, recorded here because it is behavior-affecting:
 | Entity | Change |
 |---|---|
 | `Organization` | `AiScopeStatement` — `nvarchar(500)`, nullable. Org-Admin editable. Empty/null = Idea Types alone define scope. |
+| `AiUsageRecord` *(new)* | One row per model call (rule 28c). Organization (**required** — the attribution axis), acting user, impersonated user, board, occurred-at, model id, the four token counts, the input/output rates applied, a key-source discriminator, and the call's outcome. Indexed on `(OrganizationId, OccurredAtUtc)` — both the budget check and every report read on that pair. |
 
-No other schema change in v1. The per-org AI key fields implied by the `ai-key` contracts are **not** added in this sprint (rule 30).
+The per-org AI key fields implied by the `ai-key` contracts are **not** added in this sprint (rule 30). `AiUsageRecord` nonetheless carries a **key-source discriminator**, always `Platform` in v1: when per-org keys do land, each org's own key can be metered separately with no backfill and no schema change to historical rows.
+
+**Why a dedicated table rather than the audit log.** Rule 27's audit event already records token usage, but it records it as accountability prose plus metadata. The budget check in 28a runs a `SUM` over the current UTC day on *every call*, and the usage surface aggregates by organization — neither should be parsing JSON out of audit rows. Both records are written: the audit event is the accountability trail, the usage record is the queryable meter. Neither is derived from the other.
 
 ## Non-Goals
 

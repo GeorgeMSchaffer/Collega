@@ -17,7 +17,7 @@
 
     Surface pattern (Sprint 2): the list owns selection; a row's Edit action opens the shared right
     slide-in DrawerShell (detail, with an Edit toggle → inline edit form + pinned footer), and "Add New"
-    opens the centered CreateModalShell. Manual reorder stays in the list rows. Both surfaces share one
+    opens the same right slide-in DrawerShell. Manual reorder stays in the list rows. Both surfaces share one
     form fragment and block dismissal mid-save.
 *@
 <div class="pagehead">
@@ -33,10 +33,8 @@
     }
     else
     {
-        <div class="backrow">
-            <BackButton />
-        </div>
         <div class="cmdbar">
+            <BackButton />
             <ListToolbar TItem="IdeaTypeOptionDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search idea types…" OnChanged="StateHasChanged" />
             @if (CanMutate)
             {
@@ -164,8 +162,8 @@
     }
 </DrawerShell>
 
-@* ---- Create modal (org-scoped view only) ---- *@
-<CreateModalShell IsOpen="_showCreate" OnClose="CloseCreate"
+@* ---- Create drawer (org-scoped view only) ---- *@
+<DrawerShell IsOpen="_showCreate" OnClose="CloseCreate"
                   Eyebrow="New idea type" Title="New idea type"
                   FooterContent="RenderCreateFooter">
     @if (_formError is not null)
@@ -173,7 +171,7 @@
         <div class="autherror" role="alert">@_formError</div>
     }
     @RenderTypeForm
-</CreateModalShell>
+</DrawerShell>
 
 @code {
     // Present on the Site-Admin org-scoped route; absent on the Org Admin route (org from the claim).
@@ -221,7 +219,7 @@
     private string? _error;      // page-level (load / reorder) errors
     private string? _formError;  // drawer/modal (create / edit / archive) errors
 
-    // Surface state. The drawer holds the currently opened type (null = closed); the create modal is
+    // Surface state. The drawer holds the currently opened type (null = closed); the create drawer is
     // separate. Only one surface is ever open at a time, so both share _form / _chosen / _editId.
     private IdeaTypeOptionDto? _selected;
     private bool _showCreate;
@@ -415,7 +413,7 @@
         }
     };
 
-    // ---- Shared create/edit form (rendered inside the drawer edit body and the create modal) ----
+    // ---- Shared create/edit form (rendered inside the drawer edit body and the create drawer) ----
     private RenderFragment RenderTypeForm => @<text>
         <div class="field">
             <label for="type-name">Name</label>
@@ -539,7 +537,7 @@
         <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Save idea type")</button>
     </text>;
 
-    // Create-modal action bar (passed as the shell footer).
+    // Create-drawer action bar (passed as the shell footer).
     private RenderFragment RenderCreateFooter => @<text>
         <button class="btn" @onclick="CloseCreate" disabled="@_busy">Cancel</button>
         <button class="btn primary" @onclick="Save" disabled="@_busy">@(_busy ? "Saving…" : "Create idea type")</button>

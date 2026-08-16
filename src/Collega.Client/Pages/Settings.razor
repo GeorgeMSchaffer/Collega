@@ -10,7 +10,7 @@
 @*
     Dedicated Site Admin organization list, converted to the List + Drawer pattern (Sprint 2, mirroring
     Ideas): each row opens the organization detail + inline edit in the shared right slide-in DrawerShell,
-    and "Add New" opens the create form in the shared centered CreateModalShell. The full-page
+    and "Add New" opens the create form in that same DrawerShell. The full-page
     OrganizationEdit component (/settings/organizations/new and the bare edit route) is retired; this page
     now claims /settings/organizations/{OrganizationId} so the drawer is URL-addressable and deep-linkable
     (parallel to /ideas/{id}). The per-row scoped links to Users/Statuses/Fields are other pages' routes
@@ -33,10 +33,8 @@
     }
     else
     {
-        <div class="backrow">
-            <BackButton />
-        </div>
         <div class="cmdbar">
+            <BackButton />
             <ListToolbar TItem="OrganizationListItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search organizations…" OnChanged="StateHasChanged" />
             <button class="btn primary" style="margin-left:auto" @onclick="OpenCreate">Add New</button>
         </div>
@@ -253,10 +251,10 @@
 </DrawerShell>
 
 @*
-    Create-organization modal. Chrome is the shared CreateModalShell; on success it closes and the list
+    Create-organization drawer. Chrome is the shared DrawerShell; on success it closes and the list
     reloads (no drawer auto-opens), mirroring the retired full-page create.
 *@
-<CreateModalShell IsOpen="_showCreate" OnClose="CancelCreate"
+<DrawerShell IsOpen="_showCreate" OnClose="CancelCreate"
                   Eyebrow="New organization" Title="Create an organization"
                   FooterContent="RenderCreateFooter">
     @if (_createError is not null)
@@ -301,7 +299,7 @@
             <input id="cr-contactlast" type="text" @bind="_create.PrimaryContactLastName" @bind:event="oninput" disabled="@_creating" />
         </div>
     </div>
-</CreateModalShell>
+</DrawerShell>
 
 @code {
     [Parameter] public string? OrganizationId { get; set; }
@@ -338,7 +336,7 @@
     private bool _archiving;
     private string? _archiveError;
 
-    // ---- Create modal state ----
+    // ---- Create drawer state ----
     private bool _showCreate;
     private readonly FormModel _create = new();
     private bool _creating;

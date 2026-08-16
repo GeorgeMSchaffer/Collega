@@ -31,6 +31,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Contoso Statuses", "Status CRUD org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
 
         var defaults = await ListStatusesAsync(client, org.OrganizationId);
         Assert.Equal(5, defaults.Count); // the 5 canonical default statuses
@@ -59,6 +60,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Fabrikam Statuses", "Defaulting org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
 
         var create = await client.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/statuses", new
         {
@@ -77,6 +79,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Tailspin Statuses", "Update org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
 
         var statuses = await ListStatusesAsync(client, org.OrganizationId);
         var target = statuses[0];
@@ -100,6 +103,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Northwind Statuses", "Reference guard org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
 
         // The default board opens with all 5 statuses as swimlanes, so every status is referenced.
         var statuses = await ListStatusesAsync(client, org.OrganizationId);
@@ -119,6 +123,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Wingtip Statuses", "Soft-delete org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
 
         var statuses = await ListStatusesAsync(client, org.OrganizationId);
         // Shrink the default board to the first two statuses so statuses[2..4] become unreferenced.
@@ -142,6 +147,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Adventure Statuses", "Floor org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
 
         var statuses = await ListStatusesAsync(client, org.OrganizationId);
         var first = statuses[0];
@@ -171,6 +177,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Contoso Boards", "Min-swimlane org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
         var statuses = await ListStatusesAsync(client, org.OrganizationId);
 
         var tooFew = await client.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/boards", new
@@ -206,7 +213,6 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
 
         // Read as the Site Admin: rule 25 restricts mutation only, and the Site Admin is the one
         // actor that can see both organizations' statuses — an Org Admin of either sees just its own.
-        await ViewAsAuth.StopActingAsync(client);
         var statusesA = await ListStatusesAsync(client, orgA.OrganizationId);
         var statusesB = await ListStatusesAsync(client, orgB.OrganizationId);
 
@@ -233,6 +239,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Subset Boards", "Subset org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
         var statuses = await ListStatusesAsync(client, org.OrganizationId);
 
         // Default board starts with all 5 statuses; narrow it to 3.
@@ -258,6 +265,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Reorder Boards", "Reorder org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
         var statuses = await ListStatusesAsync(client, org.OrganizationId);
 
         var s0 = statuses[0];
@@ -300,6 +308,7 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         using var client = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(client);
         var org = await CreateOrganizationAsync(client, "Reorder Guard Boards", "Reorder guard org.");
+        await ViewAsAuth.ActAsOrgAdminAsync(client, org.OrganizationId);
         var statuses = await ListStatusesAsync(client, org.OrganizationId);
 
         var create = await client.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/boards", new
@@ -406,15 +415,11 @@ public sealed class WorkflowConfigurationTests : IClassFixture<CollegaApiFactory
         await ViewAsAuth.StopActingAsync(client);
         var response = await client.PostAsJsonAsync("/api/v1/organizations", new { title, description });
         response.EnsureSuccessStatusCode();
-        var created = (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
-
-        // Rule 25: a Site Admin acting as themselves can bootstrap an organization but cannot then
-        // mutate its content. Elevating here — once, in the shared helper — leaves every test body
-        // unchanged while routing its mutations through View As, which is the path the product now
-        // requires and which nothing else covers end to end.
-        await ViewAsAuth.ActAsOrgAdminAsync(client, created.OrganizationId);
-
-        return created;
+        // Leaves the client acting as the Site Admin. Rule 25 means the caller cannot yet mutate
+        // this organization's content — a test that needs to must opt in with an explicit
+        // ViewAsAuth.ActAsOrgAdminAsync naming the organization it means. See ViewAsAuth's remarks
+        // for why this is opt-in rather than automatic.
+        return (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
     }
 
     // Rotates the seeded Site Admin's mandatory first-login password before use; shared so the

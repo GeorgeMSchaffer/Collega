@@ -1,0 +1,31 @@
+@*
+    ViewAsHeaderControl — the right-aligned page-header "View as…" affordance.
+
+    D-PLACE (locked 2026-08-11) specified TWO entry points: this one and the rail avatar-menu item.
+    Only the rail item shipped in Sprint 6, which left the feature reachable solely through a popover
+    at the bottom of a 64px rail — the user could not find it at all. Added in Sprint 6.5.
+
+    Reference comp: SPEC/mockups/comp-c-review-10-view-as.html — a right-aligned trigger in the page
+    header, described there as present "on every screen".
+
+    Rendered once by MainLayout rather than by each of the 14 pages that own a .pagehead. That is
+    what makes "every screen" true by construction instead of by 14 copies staying in sync, and it
+    is why the control is positioned against the header band rather than sitting in its flow.
+    It anchors to the crumbs line, which is empty on every page — BoardDetail is the only page with
+    right-side header content and that picker sits lower, aligned to the bottom of the header row.
+
+    Visibility is the caller's decision (MainLayout's _canViewAs): privileged role AND no session
+    already running. Those are mutually exclusive with ViewAsBanner, so the two never both occupy
+    the top of the page.
+*@
+
+<div class="viewas-anchor">
+    <button class="viewas-trigger" type="button" @onclick="OnOpen" title="Browse Collega as another user">
+        <FluentIcon Value="@(new Icons.Regular.Size16.Eye())" aria-hidden="true" />
+        <span>View as…</span>
+    </button>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnOpen { get; set; }
+}

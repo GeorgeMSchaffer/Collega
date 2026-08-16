@@ -38,6 +38,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var statusIds = GetBoardStatusIds(org.DefaultBoardId);
 
         var created = await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Reduce cycle time", description = "Streamline the intake flow.", priority = "High" });
@@ -58,6 +59,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var url = $"/api/v1/boards/{org.DefaultBoardId}/ideas";
 
         var longTitle = await admin.PostAsJsonAsync(url, new { title = new string('t', 151), description = "ok", priority = "Low" });
@@ -79,6 +81,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
         var response = await admin.PostAsJsonAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas",
             new { title = "ok", description = "ok", priority = "Low", statusId = Guid.NewGuid() });
@@ -94,6 +97,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
         var first = await CreateIdeaAsync(admin, org.DefaultBoardId,
             new { title = "First", description = "d", priority = "Low", tagNames = new[] { "Roadmap", "Quick Win" } });
@@ -121,6 +125,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
         var tooManyTags = Enumerable.Range(0, 11).Select(i => $"tag{i}").ToArray();
         var response = await admin.PostAsJsonAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas",
@@ -138,6 +143,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
         var member = await CreateUserAsync(admin, org.OrganizationId, "User");
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
         var resolved = await admin.PostAsJsonAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas",
             WithClassification(new { title = "Mentioned", description = "d", priority = "Low", mentionEmails = new[] { member.Email } }, org.OrganizationId));
@@ -157,9 +163,8 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         var orgB = await CreateOrganizationAsync(admin);
         var outsider = await CreateUserAsync(admin, orgB.OrganizationId, "User");
 
-        // The idea under test belongs to orgA, but the setup helper leaves us acting in orgB — the
-        // organization it created last. Re-target, so what the endpoint rejects is the foreign
-        // mention rather than the caller being out of scope for the board.
+        // Act as an admin of orgA specifically, so what the endpoint rejects is the foreign mention
+        // rather than the caller being out of scope for the board.
         await ViewAsAuth.ActAsOrgAdminAsync(admin, orgA.OrganizationId);
 
         var response = await admin.PostAsJsonAsync($"/api/v1/boards/{orgA.DefaultBoardId}/ideas",
@@ -176,6 +181,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Discuss", description = "d", priority = "Low" });
 
         var c1 = await CreateCommentAsync(admin, idea.IdeaId, "First comment");
@@ -202,6 +208,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Shared", description = "d", priority = "Low" });
 
         var author = await CreateUserAsync(admin, org.OrganizationId, "User");
@@ -228,6 +235,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Popular", description = "d", priority = "Low" });
 
         var member = await CreateUserAsync(admin, org.OrganizationId, "User");
@@ -258,6 +266,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var statusIds = GetBoardStatusIds(org.DefaultBoardId);
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Movable", description = "d", priority = "Low" });
 
@@ -288,6 +297,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var completeStatusId = GetStatusIdByName(org.OrganizationId, "Complete");
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Shipping", description = "d", priority = "Low" });
 
@@ -313,6 +323,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "RO test", description = "d", priority = "Low" });
 
         var readOnly = await CreateUserAsync(admin, org.OrganizationId, "ReadOnly");
@@ -376,6 +387,8 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
             assignees.Add((await CreateUserAsync(admin, org.OrganizationId, "User")).UserId);
         }
 
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
+
         // More than five assignees is rejected.
         var tooMany = await admin.PostAsJsonAsync($"/api/v1/boards/{org.DefaultBoardId}/ideas",
             new { title = "Crowded", description = "d", priority = "Low", assigneeUserIds = assignees });
@@ -435,6 +448,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         var idea = await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Doomed", description = "d", priority = "Low" });
 
         var member = await CreateUserAsync(admin, org.OrganizationId, "User");
@@ -462,11 +476,12 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
     {
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
-        // Ordering matters: the setup helper leaves us acting in the organization it created last,
-        // so orgA's idea is written while we are still scoped to orgA, and orgB's user afterwards.
         var orgA = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, orgA.OrganizationId);
         var ideaInA = await CreateIdeaAsync(admin, orgA.DefaultBoardId, new { title = "Secret", description = "d", priority = "Low" });
 
+        // Creating an organization is a Site Admin action, so the orgA session has to end first.
+        await ViewAsAuth.StopActingAsync(admin);
         var orgB = await CreateOrganizationAsync(admin);
         var outsider = await CreateUserAsync(admin, orgB.OrganizationId, "User");
         using var outsiderClient = await LoginAsync(outsider.Email);
@@ -487,6 +502,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Plain list idea", description = "d", priority = "Low" });
 
         using var response = await admin.GetAsync($"/api/v1/organizations/{org.OrganizationId}/ideas?page=1&pageSize=25&sortDirection=desc");
@@ -499,6 +515,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
         // A Text custom field, then two ideas carrying different values for it.
         var fieldResponse = await admin.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/field-definitions",
@@ -530,6 +547,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Tagged idea", description = "d", priority = "Low", tagNames = new[] { "Roadmap" } });
         await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Plain idea", description = "d", priority = "Low" });
 
@@ -548,6 +566,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
 
         var member = await CreateUserAsync(admin, org.OrganizationId, "User");
         using var memberClient = await LoginAsync(member.Email);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
         await CreateIdeaAsync(memberClient, org.DefaultBoardId, new { title = "Member authored", description = "d", priority = "Low" });
         await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Assigned to member", description = "d", priority = "Low", assigneeUserIds = new[] { member.UserId } });
@@ -569,6 +588,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
 
         var member = await CreateUserAsync(admin, org.OrganizationId, "User");
         using var memberClient = await LoginAsync(member.Email);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         await CreateIdeaAsync(memberClient, org.DefaultBoardId, new { title = "Member idea", description = "d", priority = "Low" });
         await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Admin idea", description = "d", priority = "Low" });
 
@@ -587,6 +607,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Zebra", description = "d", priority = "Low" });
         await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Apple", description = "d", priority = "Low" });
 
@@ -602,6 +623,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
         await CreateIdeaAsync(admin, org.DefaultBoardId, new { title = "Seed idea", description = "Has, a comma", priority = "High" });
 
         // Export returns CSV with the seeded idea and the required classification columns populated.
@@ -655,6 +677,11 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
 
+        // Act as an in-org admin so the 400 below can only be the row cap. As the Site Admin the
+        // import is refused outright (rule 25), which would assert the same status for a different
+        // reason and stop proving the cap.
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
+
         var csv = new System.Text.StringBuilder("Title,Description,Priority,Idea Type,Business Impact,Status\r\n");
         for (var i = 0; i < 5_001; i++)
         {
@@ -683,6 +710,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
         // A Dropdown UDF with two options.
         var fieldResponse = await admin.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/field-definitions",
@@ -721,6 +749,7 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
         using var admin = _factory.CreateClient();
         await AuthenticateAsSiteAdminAsync(admin);
         var org = await CreateOrganizationAsync(admin);
+        await ViewAsAuth.ActAsOrgAdminAsync(admin, org.OrganizationId);
 
         // A UDF whose name collides with the core "Priority" column.
         var field = await admin.PostAsJsonAsync($"/api/v1/organizations/{org.OrganizationId}/field-definitions",
@@ -827,15 +856,11 @@ public sealed class CollaborationTests : IClassFixture<CollegaApiFactory>
             description = "Collaboration test organization."
         });
         response.EnsureSuccessStatusCode();
-        var created = (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
-
-        // Rule 25: a Site Admin acting as themselves can bootstrap an organization but cannot then
-        // mutate its content. Elevating here — once, in the shared helper — leaves every test body
-        // unchanged while routing its mutations through View As, which is the path the product now
-        // requires and which nothing else covers end to end.
-        await ViewAsAuth.ActAsOrgAdminAsync(admin, created.OrganizationId);
-
-        return created;
+        // Leaves the client acting as the Site Admin. Rule 25 means the caller cannot yet mutate
+        // this organization's content — a test that needs to must opt in with an explicit
+        // ViewAsAuth.ActAsOrgAdminAsync naming the organization it means. See ViewAsAuth's remarks
+        // for why this is opt-in rather than automatic.
+        return (await response.Content.ReadFromJsonAsync<CreateOrgResponse>(Json))!;
     }
 
     private async Task<CreatedUser> CreateUserAsync(HttpClient admin, Guid organizationId, string role)

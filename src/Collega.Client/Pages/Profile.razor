@@ -98,16 +98,16 @@
             <EditForm Model="this" OnValidSubmit="ChangePasswordAsync" class="settings-form">
                 <div class="field">
                     <label for="current-password">Current password</label>
-                    <FluentTextField id="current-password" @bind-Value="_currentPassword" TextFieldType="TextFieldType.Password" Disabled="_savingPassword" Style="width:100%" />
+                    <PasswordField Id="current-password" @bind-Value="_currentPassword" Disabled="_savingPassword" AutoComplete="current-password" />
                 </div>
                 <div class="field-row">
                     <div class="field">
                         <label for="new-password">New password</label>
-                        <FluentTextField id="new-password" @bind-Value="_newPassword" TextFieldType="TextFieldType.Password" Disabled="_savingPassword" Style="width:100%" />
+                        <PasswordField Id="new-password" @bind-Value="_newPassword" Disabled="_savingPassword" AutoComplete="new-password" />
                     </div>
                     <div class="field">
                         <label for="confirm-password">Confirm new password</label>
-                        <FluentTextField id="confirm-password" @bind-Value="_confirmPassword" TextFieldType="TextFieldType.Password" Disabled="_savingPassword" Style="width:100%" />
+                        <PasswordField Id="confirm-password" @bind-Value="_confirmPassword" Disabled="_savingPassword" AutoComplete="new-password" />
                     </div>
                 </div>
                 <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Disabled="_savingPassword">

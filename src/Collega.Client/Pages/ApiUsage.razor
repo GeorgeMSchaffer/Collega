@@ -1,0 +1,210 @@
+@page "/settings/api"
+@attribute [Authorize(Roles = "OrgAdmin,SiteAdmin")]
+@inject ApiClient Api
+
+<PageTitle>API · Collega</PageTitle>
+
+@*
+    AI assist token consumption (SPEC/20-feature-client-ui.md → "Settings → API";
+    SPEC/20-feature-ai-idea-assist.md rules 28c–28e).
+
+    One page, two audiences, the same _siteAdminGlobal switch the admin list pages use:
+      Site Admin — every organization, plus today's usage against the platform-wide daily ceiling.
+      Org Admin  — their own organization only, and no ceiling: the cap governs one shared pool
+                   and is not an individual organization's business.
+
+    Read-only by design — a meter, not a management surface, so no drawer and no Add New. The server
+    decides what the caller may see; the role check here only picks which endpoint to call.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings">Settings</a> / API</div>
+    <h1>API usage</h1>
+    <p class="sub" style="margin-bottom:18px">
+        @(_siteAdminGlobal
+            ? "AI assist token consumption across every organization."
+            : "Your organization's AI assist token consumption.")
+    </p>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else
+    {
+        <div class="cmdbar">
+            <BackButton />
+            @if (_report is not null)
+            {
+                <span class="usage-window">@WindowLabel</span>
+            }
+        </div>
+
+        @if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+        else if (_report is null)
+        {
+            <div class="placeholder"><p>Usage could not be loaded.</p></div>
+        }
+        else
+        {
+            @* The ceiling is a Site Admin concern only — it governs the shared deployment key. *@
+            @if (_siteAdminGlobal && _report.DailyTokenLimit is > 0)
+            {
+                <div class="card budget">
+                    <div class="budget-head">
+                        <strong>Today's usage against the daily limit</strong>
+                        <span>@Compact(_report.TokensUsedToday ?? 0) / @Compact(_report.DailyTokenLimit.Value) tokens</span>
+                    </div>
+                    <div class="budget-track">
+                        <div class="budget-fill @BudgetClass" style="width:@BudgetWidth"></div>
+                    </div>
+                    <p class="budget-foot">
+                        Resets at midnight UTC. At the limit the assistant stops answering and the
+                        brainstorm falls back to its scripted prompts — filing an idea is never blocked.
+                    </p>
+                </div>
+            }
+
+            @if (_report.Organizations.Count == 0)
+            {
+                <div class="placeholder">
+                    <h3>No AI usage recorded</h3>
+                    <p>Nothing has been drafted with the assistant in this period.</p>
+                </div>
+            }
+            else
+            {
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                @if (_siteAdminGlobal) { <th>Organization</th> }
+                                <th>Conversations</th>
+                                <th>Input</th>
+                                <th>Output</th>
+                                <th>Cached</th>
+                                <th>Total tokens</th>
+                                <th>Estimated cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in _report.Organizations)
+                            {
+                                <tr>
+                                    @if (_siteAdminGlobal) { <td><strong>@row.OrganizationName</strong></td> }
+                                    <td>@row.Calls.ToString("N0")</td>
+                                    <td>@Compact(row.InputTokens)</td>
+                                    <td>@Compact(row.OutputTokens)</td>
+                                    <td>@Compact(row.CacheReadInputTokens + row.CacheCreationInputTokens)</td>
+                                    <td>@Compact(row.TotalTokens)</td>
+                                    <td>@row.EstimatedCost.ToString("C2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        @if (_siteAdminGlobal && _report.Organizations.Count > 1)
+                        {
+                            <tfoot>
+                                <tr class="totals">
+                                    <td><strong>All organizations</strong></td>
+                                    <td><strong>@_report.TotalCalls.ToString("N0")</strong></td>
+                                    <td colspan="3"></td>
+                                    <td><strong>@Compact(_report.TotalTokens)</strong></td>
+                                    <td><strong>@_report.TotalEstimatedCost.ToString("C2")</strong></td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            }
+
+            <div class="note">
+                Cost is estimated from the token rates recorded with each call, so it does not change if
+                pricing is reconfigured later. Cached input bills at a fraction of the normal input rate,
+                which is why an organization's cost can be lower than its token count suggests.
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private AiUsageReportDto? _report;
+    private bool _siteAdminGlobal;
+    private string? _organizationId;
+    private bool _loading = true;
+    private string? _error;
+
+    private double BudgetFraction =>
+        _report?.DailyTokenLimit is > 0
+            ? (double)(_report.TokensUsedToday ?? 0) / _report.DailyTokenLimit.Value
+            : 0;
+
+    private string BudgetWidth => $"{Math.Min(BudgetFraction, 1) * 100:0.#}%".Replace(',', '.');
+
+    private string? BudgetClass => BudgetFraction switch
+    {
+        >= 1 => "over",
+        >= 0.8 => "warn",
+        _ => null,
+    };
+
+    private string WindowLabel =>
+        _report is null ? string.Empty : $"{_report.FromUtc:MMM d} – {_report.ToUtc:MMM d, yyyy} UTC";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            var user = (await AuthStateTask).User;
+            _siteAdminGlobal = user.IsInRole("SiteAdmin");
+
+            // An Org Admin reads their own organization by id. The claim carries the *effective*
+            // identity, so during a View As session this is the impersonated user's organization —
+            // which is the one whose usage should be shown.
+            _organizationId = user.FindFirst("organizationId")?.Value;
+        }
+
+        await LoadAsync();
+        _loading = false;
+    }
+
+    private async Task LoadAsync()
+    {
+        if (!_siteAdminGlobal && string.IsNullOrEmpty(_organizationId))
+        {
+            _error = "Your account is not associated with an organization.";
+            return;
+        }
+
+        var result = _siteAdminGlobal
+            ? await Api.GetPlatformAiUsageAsync()
+            : await Api.GetOrganizationAiUsageAsync(_organizationId!);
+
+        if (result.Succeeded)
+        {
+            _report = result.Value;
+            _error = null;
+        }
+        else
+        {
+            _error = result.Error ?? "Could not load API usage.";
+        }
+    }
+
+    /// <summary>
+    /// Token counts run to millions, where the exact digits carry no meaning and hurt scanning.
+    /// Costs stay exact — those are money.
+    /// </summary>
+    private static string Compact(long value) => value switch
+    {
+        >= 1_000_000 => $"{value / 1_000_000d:0.##}M",
+        >= 10_000 => $"{value / 1_000d:0.#}k",
+        _ => value.ToString("N0"),
+    };
+}

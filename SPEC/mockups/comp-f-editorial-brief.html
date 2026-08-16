@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp F: Editorial Brief</title>
+<!--
+  ALTERNATE DIRECTION — not the locked design. Comp C "Fluent Editorial" remains locked
+  (SPEC/20-feature-client-ui.md). One of three alternates produced 2026-08-16 for review.
+
+  Thesis: an idea is a piece of WRITING before it is a row. The current shell can show you 22 idea
+  titles but gives the argument inside each one about 40 words of room. This direction inverts
+  that: the idea is a document, and the list is its table of contents.
+
+  Structural moves away from Comp C:
+    1. THE IDEA IS A PAGE, not a drawer — a 660px reading column with real typographic hierarchy,
+       room for background, proposal, and open questions.
+    2. MARGIN COMMENTS. Discussion is anchored to the paragraph it is about, in the right margin,
+       the way a document review works. Threads are not a pile at the bottom.
+    3. THE BOARD IS AN INDEX — statuses become sections of a contents page, with an outline rail
+       for jumping. Reading order, not spatial arrangement.
+    4. A STATE LINE at the top of every idea narrates where it is in plain language rather than
+       encoding it in chips ("In Review since Tuesday, waiting on Maya").
+    5. High-contrast ink on cream, serif display AND serif body copy, generous measure, one
+       restrained accent. Deliberately the quietest of the three alternates.
+
+  Trade-off to weigh: this is the strongest direction for the "flesh out an idea" half of the
+  product and the weakest for at-a-glance triage. The index screen is where that tension shows.
+
+  Accessibility: native submit buttons, real labels, text beside every colour cue, 16px+ body copy.
+-->
+<style>
+  :root{
+    --accent:#7c2d12; --accent-deep:#5a1f0c; --accent-soft:#fdf0e6;
+    /* All four ink steps clear 4.5:1 on --paper and --surface. A quiet direction is tempting to
+       build out of pale greys; at 10–14px they fail, so hierarchy here comes from size, case and
+       serif/sans contrast rather than from fading the text out. */
+    --ink:#1a1614; --ink-2:#3f3833; --ink-3:#5b524c; --ink-4:#6e645c;
+    --paper:#fdfbf7; --surface:#ffffff; --line:#e6dfd5; --line-2:#d3c9bc;
+    --ok:#15803d; --err:#b91c1c;
+    --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:"Segoe UI",Inter,-apple-system,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:15px;line-height:1.6}
+  h1,h2,h3,.display{font-family:var(--serif);font-weight:600;letter-spacing:-.012em;line-height:1.25}
+  button,[role=button],a[href]{cursor:pointer}
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:3px;border-radius:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  .comp-bar{background:#1a1614;color:#fff;padding:9px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:80;font-family:var(--sans)}
+  .comp-bar strong{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--serif)}
+  .comp-bar .tag{font-size:10.5px;background:#3f3833;color:#c9beb4;padding:2px 7px;border-radius:3px}
+  .comp-bar nav{display:flex;gap:5px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#c9beb4;border:1px solid #564c45;border-radius:3px;padding:4px 11px;font-size:11.5px;font-family:inherit;transition:background .18s,color .18s}
+  .comp-bar button:hover{background:#3f3833;color:#fff}
+  .comp-bar button.on{background:#e8a87c;border-color:#e8a87c;color:#1a1614;font-weight:650}
+  .screen{display:none}.screen.on{display:block}
+
+  /* ---- shell ---- */
+  .shell{display:grid;grid-template-columns:216px 1fr;min-height:calc(100vh - 42px)}
+  .nav{border-right:1px solid var(--line);padding:22px 18px;background:var(--paper);position:sticky;top:42px;height:calc(100vh - 42px);overflow:auto}
+  .nav .brand{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+  .nav .brand b{font-family:var(--serif);font-size:19px;letter-spacing:-.02em}
+  .nav .org{font-size:12px;color:var(--ink-3);padding-bottom:18px;margin-bottom:16px;border-bottom:1px solid var(--line);font-style:italic;font-family:var(--serif)}
+  .nav h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-4);font-weight:700;font-family:var(--sans);margin:18px 0 7px}
+  .nav a{display:block;padding:4px 0;color:var(--ink-2);text-decoration:none;font-size:14px;border-left:2px solid transparent;padding-left:11px;margin-left:-11px;transition:color .18s,border-color .18s}
+  .nav a:hover{color:var(--accent)}
+  .nav a.on{color:var(--accent-deep);border-left-color:var(--accent);font-weight:650}
+  .nav a .n{float:right;font-size:11.5px;color:var(--ink-4);font-variant-numeric:tabular-nums}
+  .nav .foot{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:9px}
+  .avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:inline-grid;place-items:center;font-size:10.5px;font-weight:700;font-family:var(--sans);flex:none}
+  .avatar.s{width:21px;height:21px;font-size:8.5px}
+  .nav .foot .nm{font-size:12.5px;font-weight:650;line-height:1.3}
+  .nav .foot .rl{font-size:11px;color:var(--ink-3)}
+
+  .main{min-width:0}
+  .topline{border-bottom:1px solid var(--line);padding:11px 40px;display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--ink-3);flex-wrap:wrap}
+  .topline a{color:var(--ink-3);text-decoration:none;display:inline-block;padding:4px 3px;margin:-4px -3px}
+  .topline a:hover{color:var(--accent)}
+  .topline .grow{flex:1}
+
+  .btn{border:1px solid var(--line-2);background:var(--surface);border-radius:3px;padding:6px 14px;font-size:13px;font-family:var(--sans);color:var(--ink);font-weight:600;transition:background .18s,border-color .18s}
+  .btn:hover{background:#f7f2ea;border-color:var(--ink-4)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep);border-color:var(--accent-deep)}
+  .btn.sm{padding:4px 10px;font-size:12px}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--accent)}
+  .btn.ghost:hover{background:var(--accent-soft)}
+
+  input[type=text],input[type=email],input[type=password],select,textarea{
+    border:1px solid var(--line-2);border-radius:3px;padding:9px 11px;font-size:15px;font-family:var(--sans);background:var(--surface);color:var(--ink);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{font-size:13px;font-weight:650;color:var(--ink-2);display:block;margin-bottom:6px}
+  .field{margin-bottom:16px}
+  .hint{font-size:12.5px;color:var(--ink-3);margin-top:5px}
+
+  /* ---- index (board as contents) ---- */
+  .idxwrap{padding:34px 40px 60px;max-width:900px}
+  .idxhead{margin-bottom:30px}
+  .idxhead .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-4);font-weight:700;margin-bottom:9px}
+  .idxhead h1{font-size:36px;margin-bottom:8px}
+  .idxhead p{font-size:16px;color:var(--ink-3);max-width:600px;line-height:1.65}
+  .idxtools{display:flex;gap:9px;align-items:center;margin:22px 0 0;padding-bottom:18px;border-bottom:2px solid var(--ink);flex-wrap:wrap}
+  .idxtools .grow{flex:1}
+  .idxtools input[type=text]{max-width:250px;padding:6px 10px;font-size:13.5px}
+  .idxtools select{width:auto;padding:6px 9px;font-size:13.5px}
+
+  .sec{margin-top:34px}
+  .sec>h2{font-size:14px;font-family:var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);font-weight:700;display:flex;align-items:baseline;gap:11px;padding-bottom:9px;border-bottom:1px solid var(--line-2)}
+  .sec>h2 .swatch{width:9px;height:9px;border-radius:50%;background:var(--lc);flex:none;align-self:center}
+  .sec>h2 .n{margin-left:auto;font-size:12px;color:var(--ink-4);font-weight:600;letter-spacing:0;text-transform:none}
+  .entry{display:flex;gap:20px;padding:16px 0;border-bottom:1px solid var(--line);align-items:baseline}
+  .entry:last-child{border-bottom:0}
+  .entry .num{font-family:var(--serif);font-size:14px;color:var(--ink-4);width:26px;flex:none;font-variant-numeric:tabular-nums}
+  .entry .body{flex:1;min-width:0}
+  .entry .t{font-family:var(--serif);font-size:19px;font-weight:600;color:var(--ink);text-decoration:none;line-height:1.3;display:block}
+  .entry .t:hover{color:var(--accent)}
+  .entry .dek{font-size:14.5px;color:var(--ink-3);margin-top:5px;line-height:1.55;max-width:620px}
+  .entry .line{font-size:12.5px;color:var(--ink-4);margin-top:8px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-family:var(--sans)}
+  .entry .line .sep{color:var(--ink-4)}
+  .entry .right{flex:none;text-align:right;width:104px;font-family:var(--sans)}
+  .entry .right .votes{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+  .entry .right .vl{font-size:11px;color:var(--ink-4);text-transform:uppercase;letter-spacing:.07em}
+  .prio{font-size:11.5px;font-weight:700;font-family:var(--sans)}
+  .prio.low{color:#6b615a}.prio.med{color:#0369a1}.prio.high{color:#b45309}.prio.crit{color:#b91c1c}
+
+  /* ---- document ---- */
+  .doc{display:grid;grid-template-columns:1fr 660px 300px 1fr;gap:0;padding:38px 30px 80px}
+  .doc>.col{grid-column:2}
+  .doc>.margin{grid-column:3;padding-left:34px}
+  .dochead{margin-bottom:26px}
+  .dochead .kicker{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-4);font-weight:700;margin-bottom:11px;font-family:var(--sans)}
+  .dochead h1{font-size:34px;line-height:1.2;margin-bottom:14px}
+  .stateline{font-size:14.5px;color:var(--ink-2);font-family:var(--serif);font-style:italic;padding:12px 0 13px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .stateline .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .stateline b{font-style:normal;font-weight:650}
+  .byline{font-size:13px;color:var(--ink-3);margin-top:12px;display:flex;align-items:center;gap:8px;font-family:var(--sans)}
+  .docbody{font-family:var(--serif);font-size:17.5px;line-height:1.72;color:var(--ink-2)}
+  .docbody h2{font-size:15px;font-family:var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);font-weight:700;margin:32px 0 12px}
+  .docbody p{margin-bottom:17px}
+  .docbody p.hl{background:var(--accent-soft);box-shadow:0 0 0 4px var(--accent-soft);border-radius:2px}
+  .docbody ul{margin:0 0 17px 22px}
+  .docbody li{margin-bottom:8px}
+  .docbody strong{color:var(--ink);font-weight:600}
+  .facts{border:1px solid var(--line);border-radius:4px;background:var(--surface);padding:16px 18px;margin:26px 0;font-family:var(--sans)}
+  .facts h3{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-4);font-weight:700;font-family:var(--sans);margin-bottom:12px}
+  .facts dl{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;font-size:13.5px;align-items:center}
+  .facts dt{color:var(--ink-3);font-size:12.5px}
+  .facts dd{font-weight:600}
+  .tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:3px;background:#f2ece3;color:var(--ink-3);border:1px solid var(--line);margin-right:4px;font-family:var(--sans)}
+
+  .mnote{border-left:2px solid var(--line-2);padding:0 0 0 14px;margin-bottom:26px;font-family:var(--sans)}
+  .mnote.anchored{border-left-color:var(--accent)}
+  .mnote .who{font-size:12.5px;font-weight:650;display:flex;align-items:center;gap:7px}
+  .mnote .when{font-size:11px;color:var(--ink-4);font-weight:400}
+  .mnote p{font-size:13.5px;color:var(--ink-2);line-height:1.55;margin-top:5px}
+  .mnote .rep{margin-top:9px;padding-left:12px;border-left:1px solid var(--line)}
+  .margin h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-4);font-weight:700;font-family:var(--sans);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .margin .addnote{margin-top:6px}
+  .margin .addnote textarea{font-size:13.5px;padding:8px 10px}
+
+  .docfoot{border-top:2px solid var(--ink);margin-top:38px;padding-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .docfoot .grow{flex:1}
+  .votebtn{border:1px solid var(--line-2);background:var(--surface);border-radius:3px;padding:7px 14px;font-family:var(--sans);font-size:13px;font-weight:650;display:inline-flex;align-items:center;gap:8px;color:var(--ink-2)}
+  .votebtn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+
+  /* ---- outline rail ---- */
+  .outline{position:sticky;top:56px}
+  .outline ol{list-style:none;counter-reset:o}
+  .outline li{counter-increment:o;font-size:12.5px;padding:4px 0 4px 12px;border-left:2px solid var(--line);font-family:var(--sans)}
+  .outline li.on{border-left-color:var(--accent);color:var(--accent-deep);font-weight:650}
+  .outline a{color:inherit;text-decoration:none}
+
+  /* ---- auth ---- */
+  .authwrap{min-height:calc(100vh - 42px);display:grid;place-items:center;padding:40px 20px}
+  .authcard{width:min(430px,100%)}
+  .authcard .brand{font-family:var(--serif);font-size:26px;letter-spacing:-.02em;margin-bottom:6px}
+  .authcard .rule{height:2px;background:var(--ink);margin:14px 0 22px}
+  .authcard h1{font-size:25px;margin-bottom:8px}
+  .authcard .sub{font-size:15px;color:var(--ink-3);margin-bottom:26px;line-height:1.6;font-family:var(--serif)}
+  .authcard .foot2{font-size:13px;color:var(--ink-3);margin-top:20px;line-height:1.8}
+  .authcard a{color:var(--accent);display:inline-block;padding:4px 2px;margin:-4px -2px}
+
+  .note{font-size:13px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:11px 15px;margin-top:26px;max-width:660px;line-height:1.6;font-family:var(--sans)}
+  .note b{color:var(--accent-deep)}
+
+  @media (max-width:1240px){.doc{grid-template-columns:1fr;padding:30px 26px 60px}.doc>.col,.doc>.margin{grid-column:1}.doc>.margin{padding-left:0;margin-top:34px;border-top:2px solid var(--ink);padding-top:20px}}
+  /* 16px minimum on form controls below 768px — anything smaller makes iOS Safari zoom on focus. */
+  @media (max-width:768px){input,select,textarea,.idxtools input[type=text],.idxtools select{font-size:16px!important}}
+  @media (max-width:900px){.shell{grid-template-columns:1fr}.nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}.idxwrap{padding:26px 22px 50px}}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>Comp F</strong><span class="tag">Editorial Brief</span><span class="tag">alternate — not locked</span>
+  <nav>
+    <button data-s="login" class="on">Sign in</button>
+    <button data-s="index">Board index</button>
+    <button data-s="doc">Idea document</button>
+    <button data-s="compose">Compose</button>
+    <button data-s="settings">Settings</button>
+  </nav>
+</div>
+
+<!-- ============ SIGN IN ============ -->
+<section class="screen on" id="s-login">
+  <div class="authwrap">
+    <div class="authcard">
+      <div class="brand">Collega</div>
+      <div style="font-size:13px;color:var(--ink-3);font-style:italic;font-family:var(--serif)">Where an idea gets written down properly.</div>
+      <div class="rule"></div>
+      <h1>Sign in</h1>
+      <p class="sub">One email, one account. We'll take you straight to your organization.</p>
+      <form>
+        <div class="field">
+          <label for="f-email">Email</label>
+          <input type="email" id="f-email" name="email" autocomplete="username" placeholder="you@yourcompany.com">
+        </div>
+        <div class="field">
+          <label for="f-pw">Password</label>
+          <input type="password" id="f-pw" name="password" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn primary" style="width:100%;padding:10px;font-size:15px">Sign in</button>
+      </form>
+      <p class="foot2">Have an invite code? <a href="#">Create an account</a>.<br>
+      Forgot your password? Ask your organization admin to reset it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BOARD INDEX ============ -->
+<section class="screen" id="s-index">
+  <div class="shell">
+    <aside class="nav">
+      <div class="brand"><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <h2>Boards</h2>
+      <a class="on" href="#">Ideas <span class="n">11</span></a>
+      <a href="#">Opportunities <span class="n">11</span></a>
+      <h2>Reading</h2>
+      <a href="#">Assigned to me <span class="n">6</span></a>
+      <a href="#">I wrote <span class="n">8</span></a>
+      <a href="#">Unread replies <span class="n">3</span></a>
+      <h2>Organization</h2>
+      <a href="#">People</a>
+      <a href="#">Statuses</a>
+      <a href="#">Idea types</a>
+      <div class="foot"><span class="avatar">OA</span><div><div class="nm">Olivia Administer</div><div class="rl">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topline"><a href="#">Acme Robotics</a> <span>/</span> <span>Ideas</span><span class="grow"></span><button class="btn sm">Export</button><button class="btn primary sm">Write an idea</button></div>
+      <div class="idxwrap">
+        <div class="idxhead">
+          <div class="kicker">Board</div>
+          <h1>Ideas</h1>
+          <p>Eleven ideas in play on the assembly-cell programme, ordered by where each one has got to. Newest activity fourteen minutes ago.</p>
+        </div>
+        <div class="idxtools">
+          <label for="f-q" style="margin:0;font-size:12.5px;color:var(--ink-3);font-weight:600">Find</label>
+          <input type="text" id="f-q" placeholder="Search title and body…">
+          <label for="f-sort" style="margin:0;font-size:12.5px;color:var(--ink-3);font-weight:600">Order by</label>
+          <select id="f-sort"><option>Status</option><option>Most discussed</option><option>Most upvoted</option><option>Recently changed</option></select>
+          <span class="grow"></span>
+          <button class="btn sm">Board view</button>
+        </div>
+
+        <section class="sec" style="--lc:#6b615a">
+          <h2><span class="swatch"></span>New / Pending<span class="n">3 ideas · none older than 6 days</span></h2>
+          <div class="entry"><span class="num">01</span><div class="body">
+            <a class="t" href="#">Standardize the intake checklist</a>
+            <p class="dek">Three teams each keep their own version of the intake form, and about a third of requests bounce back for missing information — usually the safety sign-off.</p>
+            <div class="line"><span>Continuous Improvement</span><span class="sep">·</span><span class="prio high">High priority</span><span class="sep">·</span><span>Noah Contributor</span><span class="sep">·</span><span>3 replies</span><span class="sep">·</span><span class="tag">cycle-time</span><span class="tag">quality</span></div>
+          </div><div class="right"><div class="votes">2</div><div class="vl">upvotes</div></div></div>
+          <div class="entry"><span class="num">02</span><div class="body">
+            <a class="t" href="#">Add proactive alerts</a>
+            <p class="dek">Notify the responsible team before a preventable delay becomes customer-visible, rather than after the fact.</p>
+            <div class="line"><span>Process Revision</span><span class="sep">·</span><span class="prio med">Medium priority</span><span class="sep">·</span><span>Maya Collaborator</span><span class="sep">·</span><span>1 reply</span><span class="sep">·</span><span class="tag">safety</span></div>
+          </div><div class="right"><div class="votes">1</div><div class="vl">upvote</div></div></div>
+          <div class="entry"><span class="num">03</span><div class="body">
+            <a class="t" href="#">Reduce manual handoffs</a>
+            <p class="dek">Map the current handoffs and automate the highest-friction transition.</p>
+            <div class="line"><span>Continuous Improvement</span><span class="sep">·</span><span class="prio low">Low priority</span><span class="sep">·</span><span>Olivia Administer</span><span class="sep">·</span><span>No replies yet</span></div>
+          </div><div class="right"><div class="votes">2</div><div class="vl">upvotes</div></div></div>
+        </section>
+
+        <section class="sec" style="--lc:#b45309">
+          <h2><span class="swatch"></span>In Review<span class="n">2 ideas · 1 waiting over a week</span></h2>
+          <div class="entry"><span class="num">04</span><div class="body">
+            <a class="t" href="#">Pilot a faster review path</a>
+            <p class="dek">Trial a lightweight review path for low-risk changes and measure the effect on cycle time before committing.</p>
+            <div class="line"><span>Process Revision</span><span class="sep">·</span><span class="prio crit">Critical priority</span><span class="sep">·</span><span>Olivia Administer</span><span class="sep">·</span><span style="color:var(--err);font-weight:600">Waiting 9 days</span></div>
+          </div><div class="right"><div class="votes">0</div><div class="vl">upvotes</div></div></div>
+          <div class="entry"><span class="num">05</span><div class="body">
+            <a class="t" href="#">Improve exception visibility</a>
+            <p class="dek">Surface recurring exceptions with enough context that someone can take ownership quickly.</p>
+            <div class="line"><span>Continuous Improvement</span><span class="sep">·</span><span class="prio low">Low priority</span><span class="sep">·</span><span>Maya Collaborator</span><span class="sep">·</span><span class="tag">automation</span></div>
+          </div><div class="right"><div class="votes">1</div><div class="vl">upvote</div></div></div>
+        </section>
+
+        <section class="sec" style="--lc:#0369a1">
+          <h2><span class="swatch"></span>In Progress<span class="n">2 ideas</span></h2>
+          <div class="entry"><span class="num">06</span><div class="body">
+            <a class="t" href="#">Automate weekly reporting</a>
+            <p class="dek">Generate the weekly operating summary from source data instead of hand-maintained spreadsheets.</p>
+            <div class="line"><span>Process Revision</span><span class="sep">·</span><span class="prio med">Medium priority</span><span class="sep">·</span><span>Noah Contributor</span><span class="sep">·</span><span class="tag">quality</span><span class="tag">safety</span></div>
+          </div><div class="right"><div class="votes">2</div><div class="vl">upvotes</div></div></div>
+          <div class="entry"><span class="num">07</span><div class="body">
+            <a class="t" href="#">Create a shared playbook</a>
+            <p class="dek">Capture the approved response steps and escalation points in one maintained playbook.</p>
+            <div class="line"><span>Continuous Improvement</span><span class="sep">·</span><span class="prio high">High priority</span><span class="sep">·</span><span>Olivia Administer</span></div>
+          </div><div class="right"><div class="votes">0</div><div class="vl">upvotes</div></div></div>
+        </section>
+
+        <section class="sec" style="--lc:#15803d">
+          <h2><span class="swatch"></span>Complete<span class="n">3 ideas · closed this month</span></h2>
+          <div class="entry"><span class="num">08</span><div class="body">
+            <a class="t" href="#">Roll out the proven workflow</a>
+            <p class="dek">Extend the successful pilot to the remaining teams with clear adoption measures.</p>
+            <div class="line"><span>Continuous Improvement</span><span class="sep">·</span><span>Noah Contributor</span><span class="sep">·</span><span style="color:var(--ok);font-weight:600">Closed Aug 14</span></div>
+          </div><div class="right"><div class="votes">2</div><div class="vl">upvotes</div></div></div>
+          <div class="entry"><span class="num">09</span><div class="body">
+            <a class="t" href="#">Measure time saved</a>
+            <p class="dek">Compare the new workflow with the baseline and publish the verified time savings.</p>
+            <div class="line"><span>Process Revision</span><span class="sep">·</span><span>Olivia Administer</span><span class="sep">·</span><span style="color:var(--ok);font-weight:600">Closed Aug 13</span></div>
+          </div><div class="right"><div class="votes">0</div><div class="vl">upvotes</div></div></div>
+        </section>
+
+        <div class="note"><b>The trade-off, stated plainly:</b> this index gives each idea its argument in one line of real prose, which is what makes a board readable by someone who wasn't in the room. It costs density — nine entries here occupy what a table gives twenty-two. The "Board view" button in the toolbar is the escape hatch, and whether that split is acceptable is the main thing to decide about this direction.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ IDEA DOCUMENT ============ -->
+<section class="screen" id="s-doc">
+  <div class="shell">
+    <aside class="nav">
+      <div class="brand"><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <h2>In this idea</h2>
+      <div class="outline">
+        <ol>
+          <li class="on"><a href="#">The problem</a></li>
+          <li><a href="#">What we propose</a></li>
+          <li><a href="#">What it would take</a></li>
+          <li><a href="#">Open questions</a></li>
+          <li><a href="#">Details</a></li>
+        </ol>
+      </div>
+      <h2>Nearby</h2>
+      <a href="#">← Reduce manual handoffs</a>
+      <a href="#">→ Add proactive alerts</a>
+      <div class="foot"><span class="avatar">OA</span><div><div class="nm">Olivia Administer</div><div class="rl">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topline"><a href="#">Acme Robotics</a> <span>/</span> <a href="#">Ideas</a> <span>/</span> <span>Standardize the intake checklist</span><span class="grow"></span><button class="btn sm">Edit</button><button class="btn primary sm">Move to In Review</button></div>
+      <div class="doc">
+        <div class="col">
+          <div class="dochead">
+            <div class="kicker">Idea 01 · Continuous Improvement</div>
+            <h1>Standardize the intake checklist</h1>
+            <div class="stateline"><span class="dot" style="background:#6b615a"></span><span><b>New / Pending</b> since Aug 15 — waiting on a reviewer. Two people have upvoted it; Olivia intends to move it to In Review after standup.</span></div>
+            <div class="byline"><span class="avatar s">NC</span>Written by Noah Contributor · Aug 15, 2026 · last edited 3 hours ago</div>
+          </div>
+
+          <div class="docbody">
+            <h2>The problem</h2>
+            <p class="hl">Three teams each keep their own version of the intake form. Because none of them is authoritative, roughly <strong>a third of intake requests come back for missing information</strong> — most often the safety sign-off or the affected production line. Each bounce costs about a day and a half of calendar time, and the requester usually has to chase it themselves.</p>
+            <p>The problem is not that people are careless. It is that the checklist a requester sees depends on which team they happened to ask, and none of those versions has been reconciled since the cell was reconfigured in March.</p>
+
+            <h2>What we propose</h2>
+            <p>One concise checklist, owned by the operations group, used by all three teams. Concretely:</p>
+            <ul>
+              <li>A single form with the fields all three variants share, plus the safety sign-off as a required section.</li>
+              <li>The affected line captured as a selection rather than free text, so it can be reported on later.</li>
+              <li>A short "what happens next" note at the end, so requesters stop asking for status by email.</li>
+            </ul>
+            <p>We would keep it to one page. The failure mode for checklists is length, and the current three exist partly because the original was too long to use.</p>
+
+            <h2>What it would take</h2>
+            <p>Reconciling the three variants is roughly a half-day workshop with one person from each team. Drafting and circulating the merged version is another day. The real cost is the follow-through — someone has to own it, and the teams have to actually retire their own copies.</p>
+
+            <h2>Open questions</h2>
+            <ul>
+              <li>Who owns the checklist once it exists? Operations is the obvious answer but has not agreed.</li>
+              <li>Do we need a variant for external contractors, or does the same form work with one extra field?</li>
+              <li>Does this block the faster-review-path pilot, or can they proceed independently?</li>
+            </ul>
+          </div>
+
+          <div class="facts">
+            <h3>Details</h3>
+            <dl>
+              <dt>Board</dt><dd>Ideas</dd>
+              <dt>Status</dt><dd><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:50%;background:#6b615a"></span>New / Pending</span></dd>
+              <dt>Idea type</dt><dd>Continuous Improvement</dd>
+              <dt>Priority</dt><dd><span class="prio high">High</span></dd>
+              <dt>Business impact</dt><dd>Operational efficiency</dd>
+              <dt>Assigned to</dt><dd><span class="avatar s">MC</span> <span class="avatar s">OA</span> Maya Collaborator, Olivia Administer</dd>
+              <dt>Tags</dt><dd><span class="tag">cycle-time</span><span class="tag">quality</span></dd>
+            </dl>
+          </div>
+
+          <div class="docfoot">
+            <button class="votebtn on" type="button"><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 3.5 12 8h4.4l-3.5 2.8 1.3 4.4L10 12.6 5.8 15.2l1.3-4.4L3.6 8H8Z"/></svg>Upvoted · 2</button>
+            <span style="font-size:12.5px;color:var(--ink-3)">Maya and you</span>
+            <span class="grow"></span>
+            <button class="btn">Edit</button>
+            <button class="btn primary">Move to In Review</button>
+          </div>
+        </div>
+
+        <aside class="margin" aria-label="Discussion">
+          <h3>Discussion · 3</h3>
+          <div class="mnote anchored">
+            <div class="who"><span class="avatar s">MC</span>Maya Collaborator <span class="when">2d</span></div>
+            <p>Can we fold the safety sign-off into the same checklist? It's the step people forget, and it's the one that actually stops the line.</p>
+            <div class="rep">
+              <div class="who"><span class="avatar s">NC</span>Noah Contributor <span class="when">1d</span></div>
+              <p>Yes — drafted it as section 4.</p>
+            </div>
+          </div>
+          <div class="mnote">
+            <div class="who"><span class="avatar s">OA</span>Olivia Administer <span class="when">3h</span></div>
+            <p>Reads right to me. I'll move it to In Review after standup unless someone objects.</p>
+          </div>
+          <div class="addnote">
+            <label for="f-note">Add a note</label>
+            <textarea id="f-note" rows="3" placeholder="Reply, or select a paragraph to comment on it directly…"></textarea>
+            <button class="btn primary sm" type="button" style="margin-top:8px">Post note</button>
+          </div>
+          <div class="note" style="margin-top:26px;font-size:12.5px"><b>Margin notes:</b> the highlighted paragraph carries Maya's comment. Discussion attaches to the sentence it is about instead of accumulating at the bottom, which is what makes a long idea reviewable.</div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPOSE ============ -->
+<section class="screen" id="s-compose">
+  <div class="shell">
+    <aside class="nav">
+      <div class="brand"><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <h2>Writing</h2>
+      <a class="on" href="#">Draft</a>
+      <a href="#">Details</a>
+      <a href="#">Who sees it</a>
+      <div style="margin-top:26px;font-size:12.5px;color:var(--ink-3);font-family:var(--serif);font-style:italic;line-height:1.6">A good idea here answers three things: what is wrong, what you propose, and what it would cost.</div>
+      <div class="foot"><span class="avatar">OA</span><div><div class="nm">Olivia Administer</div><div class="rl">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topline"><a href="#">Ideas</a> <span>/</span> <span>New idea</span><span class="grow"></span><span style="font-size:12px;color:var(--ink-4)">Draft saved 20s ago</span><button class="btn sm">Discard</button><button class="btn primary sm">Publish to board</button></div>
+      <div class="doc">
+        <div class="col">
+          <form>
+            <div class="field">
+              <label for="f-title">Title</label>
+              <input type="text" id="f-title" value="Standardize the intake checklist" style="font-family:var(--serif);font-size:26px;padding:8px 10px;font-weight:600">
+              <div class="hint">One sentence. What would change if this happened?</div>
+            </div>
+            <div class="field">
+              <label for="f-problem">The problem</label>
+              <textarea id="f-problem" rows="5" style="font-family:var(--serif);font-size:16.5px;line-height:1.65" placeholder="What is going wrong today, and how do you know?">Three teams each keep their own version of the intake form. Roughly a third of intake requests come back for missing information — most often the safety sign-off or the affected production line.</textarea>
+            </div>
+            <div class="field">
+              <label for="f-prop">What you propose</label>
+              <textarea id="f-prop" rows="5" style="font-family:var(--serif);font-size:16.5px;line-height:1.65" placeholder="What should we do instead?"></textarea>
+            </div>
+            <div class="field">
+              <label for="f-cost">What it would take <span style="font-weight:400;color:var(--ink-4)">(optional)</span></label>
+              <textarea id="f-cost" rows="3" style="font-family:var(--serif);font-size:16.5px;line-height:1.65" placeholder="Rough effort, dependencies, who needs to agree."></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="field"><label for="f-type">Idea type</label><select id="f-type"><option>Continuous Improvement</option><option>Process Revision</option></select></div>
+              <div class="field"><label for="f-prio">Priority</label><select id="f-prio"><option>High</option><option>Critical</option><option>Medium</option><option>Low</option></select></div>
+              <div class="field"><label for="f-board">Board</label><select id="f-board"><option>Ideas</option><option>Opportunities</option></select></div>
+              <div class="field"><label for="f-tags">Tags</label><input type="text" id="f-tags" value="cycle-time, quality"><div class="hint">Comma separated.</div></div>
+            </div>
+            <div class="docfoot">
+              <span style="font-size:12.5px;color:var(--ink-3)">Publishing puts this on the Ideas board in <b>New / Pending</b>.</span>
+              <span class="grow"></span>
+              <button type="button" class="btn">Save draft</button>
+              <button type="submit" class="btn primary">Publish to board</button>
+            </div>
+          </form>
+        </div>
+        <aside class="margin">
+          <h3>Guidance</h3>
+          <div class="mnote"><p style="margin-top:0">The structured prompts are the point of this direction. A free-form "Description" box produces one-line ideas that nobody can evaluate; three named questions produce something a reviewer can act on.</p></div>
+          <div class="mnote"><p style="margin-top:0">Every field is optional except title and type — the structure is a scaffold, not a gate. The published document simply omits the sections you left blank.</p></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section class="screen" id="s-settings">
+  <div class="shell">
+    <aside class="nav">
+      <div class="brand"><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <h2>Organization</h2>
+      <a href="#">People</a>
+      <a class="on" href="#">Statuses</a>
+      <a href="#">Idea types</a>
+      <a href="#">Custom fields</a>
+      <a href="#">Boards</a>
+      <div class="foot"><span class="avatar">OA</span><div><div class="nm">Olivia Administer</div><div class="rl">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topline"><a href="#">Acme Robotics</a> <span>/</span> <a href="#">Settings</a> <span>/</span> <span>Statuses</span><span class="grow"></span><button class="btn primary sm">Add status</button></div>
+      <div class="idxwrap">
+        <div class="idxhead">
+          <div class="kicker">Organization</div>
+          <h1>Statuses</h1>
+          <p>The stages an idea moves through at Acme Robotics. These become the sections of every board index and the lanes of every board view, in this order.</p>
+        </div>
+        <div style="border-top:2px solid var(--ink);margin-top:22px">
+          <div class="entry"><span class="num">01</span><div class="body">
+            <span style="display:inline-flex;align-items:center;gap:10px"><span style="width:11px;height:11px;border-radius:50%;background:#6b615a"></span><b style="font-family:var(--serif);font-size:18px">New / Pending</b></span>
+            <p class="dek">The default landing stage for a newly published idea. Cannot be removed while it holds ideas.</p>
+            <div class="line"><span>#6B615A</span><span class="sep">·</span><span>6 ideas</span><span class="sep">·</span><span>Default for new ideas</span></div>
+          </div><div class="right"><button class="btn ghost sm">Edit</button></div></div>
+          <div class="entry"><span class="num">02</span><div class="body">
+            <span style="display:inline-flex;align-items:center;gap:10px"><span style="width:11px;height:11px;border-radius:50%;background:#b45309"></span><b style="font-family:var(--serif);font-size:18px">In Review</b></span>
+            <p class="dek">Someone is reading it and will decide. Ideas here appear in reviewers' "waiting on me" list.</p>
+            <div class="line"><span>#B45309</span><span class="sep">·</span><span>4 ideas</span></div>
+          </div><div class="right"><button class="btn ghost sm">Edit</button></div></div>
+          <div class="entry"><span class="num">03</span><div class="body">
+            <span style="display:inline-flex;align-items:center;gap:10px"><span style="width:11px;height:11px;border-radius:50%;background:#0369a1"></span><b style="font-family:var(--serif);font-size:18px">In Progress</b></span>
+            <p class="dek">Agreed and being worked on.</p>
+            <div class="line"><span>#0369A1</span><span class="sep">·</span><span>4 ideas</span></div>
+          </div><div class="right"><button class="btn ghost sm">Edit</button></div></div>
+          <div class="entry"><span class="num">04</span><div class="body">
+            <span style="display:inline-flex;align-items:center;gap:10px"><span style="width:11px;height:11px;border-radius:50%;background:#7c3aed"></span><b style="font-family:var(--serif);font-size:18px">Client Review</b></span>
+            <p class="dek">With the requester for confirmation before closing.</p>
+            <div class="line"><span>#7C3AED</span><span class="sep">·</span><span>2 ideas</span></div>
+          </div><div class="right"><button class="btn ghost sm">Edit</button></div></div>
+          <div class="entry"><span class="num">05</span><div class="body">
+            <span style="display:inline-flex;align-items:center;gap:10px"><span style="width:11px;height:11px;border-radius:50%;background:#15803d"></span><b style="font-family:var(--serif);font-size:18px">Complete</b></span>
+            <p class="dek">Done and verified. Ideas here drop out of the default board index view.</p>
+            <div class="line"><span>#15803D</span><span class="sep">·</span><span>6 ideas</span></div>
+          </div><div class="right"><button class="btn ghost sm">Edit</button></div></div>
+        </div>
+        <p style="font-size:12.5px;color:var(--ink-3);margin-top:14px">Drag an entry to reorder, or focus it and press <b>Alt ↑</b> / <b>Alt ↓</b>.</p>
+
+        <div style="margin-top:38px;border-top:2px solid var(--ink);padding-top:22px;max-width:520px">
+          <h2 style="font-size:21px;margin-bottom:6px">Add a status</h2>
+          <p style="font-size:14px;color:var(--ink-3);margin-bottom:18px">It will appear at the end of the sequence. You can reorder afterwards.</p>
+          <form>
+            <div class="field"><label for="f-sname">Name</label><input type="text" id="f-sname" placeholder="e.g. Blocked" required></div>
+            <div class="field"><label for="f-sdesc">What it means <span style="font-weight:400;color:var(--ink-4)">(optional)</span></label><input type="text" id="f-sdesc" placeholder="One line, shown on the settings index and in tooltips."></div>
+            <div class="field"><label for="f-shex">Colour</label>
+              <div style="display:flex;gap:9px"><input type="text" id="f-shex" value="#7C2D12" style="flex:1;font-family:ui-monospace,Consolas,monospace"><input type="color" value="#7c2d12" aria-label="Pick colour visually" style="width:46px;height:40px;padding:3px"></div>
+              <div class="hint">Decorative only — the status name is always shown beside the colour.</div></div>
+            <button type="submit" class="btn primary">Add status</button>
+          </form>
+        </div>
+
+        <div class="note"><b>Note on this screen:</b> settings entries get the same one-line explanation treatment as ideas. "What does Client Review mean here?" is a real question in a tool where every organization defines its own stages, and there is currently nowhere to answer it.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.comp-bar button[data-s]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.comp-bar button[data-s]').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+      document.getElementById('s-'+b.dataset.s).classList.add('on');
+      window.scrollTo(0,0);
+    });
+  });
+</script>
+</body>
+</html>

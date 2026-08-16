@@ -1,5 +1,7 @@
 using Collega.Application.Abstractions;
+using Collega.Application.Ai;
 using Collega.Application.Common;
+using Collega.Domain.Ai;
 using Collega.Domain.Boards;
 using Collega.Domain.Comments;
 using Collega.Domain.Enums;
@@ -670,5 +672,52 @@ internal sealed class FakeImpersonationSessionRepository : IImpersonationSession
     {
         Sessions.Add(session);
         return Task.CompletedTask;
+    }
+}
+
+/// <summary>
+/// In-memory <see cref="IAiUsageRepository"/>. Aggregates from the same rows the service writes, so
+/// a test can assert the budget gate and the report against one another rather than against a stub
+/// number. Organization names are resolved from <see cref="Names"/>, mirroring the EF repository's
+/// second-pass lookup — there is no FK, so an unknown id is a deleted organization, not an error.
+/// </summary>
+internal sealed class FakeAiUsageRepository : IAiUsageRepository
+{
+    public List<AiUsageRecord> Records { get; } = new();
+
+    public Dictionary<Guid, string> Names { get; } = new();
+
+    public Task AddAsync(AiUsageRecord record, CancellationToken cancellationToken = default)
+    {
+        Records.Add(record);
+        return Task.CompletedTask;
+    }
+
+    public Task<long> GetTotalTokensSinceAsync(DateTime fromUtc, CancellationToken cancellationToken = default) =>
+        Task.FromResult(Records.Where(r => r.OccurredAtUtc >= fromUtc).Sum(r => (long)r.TotalTokens));
+
+    public Task<IReadOnlyList<AiUsageSummary>> GetUsageByOrganizationAsync(
+        DateTime fromUtc,
+        DateTime toUtc,
+        Guid? organizationId = null,
+        CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<AiUsageSummary> result = Records
+            .Where(r => r.OccurredAtUtc >= fromUtc && r.OccurredAtUtc <= toUtc)
+            .Where(r => organizationId is null || r.OrganizationId == organizationId)
+            .GroupBy(r => r.OrganizationId)
+            .Select(g => new AiUsageSummary(
+                g.Key,
+                Names.TryGetValue(g.Key, out var name) ? name : "(deleted organization)",
+                g.Count(),
+                g.Sum(r => (long)r.InputTokens),
+                g.Sum(r => (long)r.OutputTokens),
+                g.Sum(r => (long)r.CacheReadInputTokens),
+                g.Sum(r => (long)r.CacheCreationInputTokens),
+                g.Sum(r => r.EstimatedCost())))
+            .OrderByDescending(s => s.TotalTokens)
+            .ToList();
+
+        return Task.FromResult(result);
     }
 }

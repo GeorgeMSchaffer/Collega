@@ -92,6 +92,12 @@ Coverage required before this feature merges. The provider is never called from 
 - **No write path:** no AI endpoint creates, updates, or deletes an idea — asserted directly, since the guarantee is architectural rather than incidental.
 - **Audit records outcomes, not content:** the audit event carries actor/org/board/turn count/usage/out-of-scope flag, and asserts prompt and transcript text are **absent**.
 - **Contract alignment** with `30-Contracts.md` → "AI Idea Assist Contracts", including the `503`-when-unconfigured case.
+- **Daily token budget (rule 28a):** a call under the ceiling proceeds; at or over it returns `503` **without invoking the provider** — assert the faked `IIdeaDraftModel` was never called, since the point of the gate is to not spend; the window resets at the UTC day boundary, exercised through a controllable `IClock`.
+- **Usage attribution through View As (rule 28c)** — *the load-bearing one.* A Site Admin acting as a member of Acme records usage against **Acme**, never against no-organization. `ICurrentUserContext.OrganizationId` is the impersonated user's org (view-as rule 15) so this should hold naturally; assert it anyway, because a client-side instance of exactly this bug is what Sprint 6.5 item 13 was.
+- **Refused and failed turns still record usage** — an out-of-scope refusal and a provider failure both consumed tokens, and both must appear in the meter. A cap that only counts successes does not bound spend.
+- **Rates are captured on the record** — changing configured pricing does not re-price existing rows.
+- **Usage authorization:** Org Admin reads their own organization and is refused another; Site Admin reads any organization and the cross-org roll-up; plain User and Read Only are refused both routes.
+- **Usage records carry no prompt or transcript text** — same assertion shape as the audit-event case above.
 - **Live check (manual, not automated):** on a second turn in the same conversation, `usage.cache_read_input_tokens > 0`, confirming the org catalog sits in a stable cached prefix.
 
 ## Startup Safety

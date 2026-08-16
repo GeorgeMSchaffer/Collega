@@ -1,0 +1,102 @@
+﻿# Sprint 6.5: Bug fixes and element tweaks
+
+**Status:** **Complete (2026-08-15).** 13 items plus one closed with no change — all implemented, visually confirmed against a running client, and review-signed-off. 627 tests green.
+**Sequence:** runs **after Sprint 6, before Sprint 7** — see `SPEC/95-next-sprints.md`. Numbered 6.5 rather than renumbering 7 and 8, so existing cross-references to `sprint-07-*` and `sprint-08-*` stay valid.
+**When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
+
+## Precedence
+
+**This sprint supersedes all other sprints** (user decision, 2026-08-14). Sprints 7 (AI idea assist) and 8 (Azure deployment) do not start until this one completes. The reasoning is the same one behind `CLAUDE.md`'s pre-feature triage gate, applied at sprint scale: accumulated defects and rough edges get harder to attribute once more feature work lands on top of them, and Sprint 8 in particular ships whatever state the product is in to a real deployment.
+
+## Goal
+
+Clear the accumulated bug and tweak queue — correctness defects, UI/UX rough edges, and small element adjustments — rather than build new capability. This is a paydown sprint, not a feature sprint.
+
+## Intake
+
+**This file is the single home for items during this period.** `SPEC/Bug Triage.md` is emptied into it; per `CLAUDE.md`, an item promoted into a sprint plan is deleted from the queue rather than kept in both. Add new findings directly to the Scope table below.
+
+Two sources feed it:
+
+1. **User testing of Act As** — in progress. The Site Admin's org-content path changed substantially in Sprint 6 (View As became the only route to creating boards, ideas, comments and upvotes), so this is the first real exercise of that flow. Expect the bulk of the list to come from here.
+2. **Carried-over engineering items** — anything found during Sprint 6 that was deliberately not fixed inside an already-large diff.
+
+## Scope
+
+| # | Item | Source | Size | State |
+|---|---|---|---|---|
+| 1 | **`ViewAsAuth` test harness leaks impersonation state.** The five API-test `CreateOrganizationAsync` helpers end in `ActAsOrgAdminAsync`, so a test body silently continues as an Org Admin of whichever organization was created *last*. This already forced two workarounds inside the change that introduced it — `CollaborationTests` re-targets in one test and reorders org creation in another. It also injects an extra `OrgAdmin` into every test organization, so future assertions on membership, View As candidate lists, or notification fan-out will quietly include a phantom user. **Suggested fix:** the helper leaves the client as the Site Admin and tests opt into `ActAsOrgAdminAsync` explicitly. Measured blast radius: 5 test classes, 82 `CreateOrg*` call sites across 61 facts — which is why it was deferred rather than folded into Sprint 6. | Sprint 6 code review (2026-08-14) | Medium | **Fixed** |
+| 2 | **View As has only one of its two locked entry points — P1, it is why the feature reads as missing.** D-PLACE (locked 2026-08-11) specified a **page-header `View as…` control _and_ a rail avatar-menu item**, "both, for discoverability — it's the Site Admin's mutation path." Only the rail item was built (`Layout/NavRail.razor:70`, gated on `ShowViewAs`); no page-header control exists anywhere in the client, and that string is the sole `View as…` in the codebase. The only way in today is clicking the avatar at the bottom of the 64px rail and opening a popover — precisely the discoverability failure "both" was meant to prevent. The user could not find the feature on `dev` at all (2026-08-14), which is the bug report. **Scope confirmed narrow — the rail entry point works** (user-verified on `dev`, 2026-08-14): the drawer opens, the picker lists users, and a session starts. So nothing underneath is broken and this is *only* the missing second control, not a symptom of a deeper fault. **Not a design question either:** placement is already drawn in `SPEC/mockups/comp-c-review-10-view-as.html`. Reuse the existing `_canViewAs` gate from `Layout/MainLayout.razor:75-77` and the existing `OnOpenViewAs` callback rather than adding a second gate. | User testing (2026-08-14) | Small | Built, unreviewed |
+| 3 | **Password inputs need a show/hide toggle** on the right of the field. Affects `Login.razor:47`, `Register.razor:48`, `ChangePassword.razor:33/37/41`, `Profile.razor:101/106/110` (all `FluentTextField` + `TextFieldType.Password`) and `OrganizationUsers.razor:261` (a raw `<input type="password">`). Nine fields across five pages, two different input primitives — so extract one shared component rather than patching each site. | User testing (2026-08-14) | Small | Built, unreviewed |
+| 4 | **List-page command row is misaligned.** Every list page renders `<div class="backrow"><BackButton /></div>` above a separate `<div class="cmdbar">`, so Back sits on its own line above search. Wanted: one vertically-aligned row — **Back leftmost, then search, then "Add New" rightmost**. Identical markup on all five pages (`Settings`, `OrganizationUsers`, `StatusesAdmin`, `IdeaTypesAdmin`, `FieldDefinitionsAdmin`), so fix the shared CSS/structure once. | User testing (2026-08-14) | Small | Built, unreviewed |
+| 5 | **List-page content container is not full width.** The card/table wrapper on list pages does not fill the available width. | User testing (2026-08-14) | Small | Built, unreviewed |
+| 6 | **Seed output.** The auth and demo seed commands create users silently, so there is no way to see what exists for testing or debugging. Emit the created users (email + role + organization) at startup. This is also what closed the "seed a Site Admin per org" item below — the users were already there and correctly org-assigned; they just were not visible. | User testing (2026-08-14) | Small | Built, unreviewed |
+| 7 | **Create form becomes a right slide-in drawer on all list pages.** Today all five use the centered `CreateModalShell`; detail/edit already use `DrawerShell`. **This reverses a locked decision** — Comp C locked "right slide-in drawer (detail + inline edit) with a centered create modal" (`client/CLAUDE.md`, Sprint 2 rollout). User decision 2026-08-14: create becomes a drawer too. **Spec first** per `CLAUDE.md`: update `SPEC/20-feature-client-ui.md` and `src/Collega.Client/CLAUDE.md` before touching components. Note the original report named only the Orgs page as wrong; investigation showed all five are identical, so "make Orgs match the others" would have been a no-op — the reversal is the actual intent. | User testing (2026-08-14) | Medium | Built, unreviewed |
+
+### Items 8–13 — second intake round (2026-08-15)
+
+Intake reopened: six further findings from Act As testing. **Five of the six are one defect**, diagnosed below, not five independent gaps.
+
+| # | Item | Source | Size | State |
+|---|---|---|---|---|
+| 8 | **Idea list title should open the detail drawer.** `Pages/Ideas.razor` rendered the title as a plain `<div class="t">`; only the row's **Details** button opened the drawer. | User testing (2026-08-15) | Small | **Fixed** |
+| 9 | **Non-admins must see the Boards list and be able to open a board.** | User testing (2026-08-15) | — | **Fixed via item 13** |
+| 10 | **Non-admins must see the Ideas list and be able to add ideas.** | User testing (2026-08-15) | — | **Fixed via item 13** |
+| 11 | **Org Admins must be able to manage idea types for their org.** | User testing (2026-08-15) | — | **Fixed via item 13** |
+| 12 | **Org Admins must be able to manage custom fields for their org.** | User testing (2026-08-15) | — | **Fixed via item 13** |
+| 13 | **Root cause: the client's role never changes when a View As session starts.** See below. | Diagnosis (2026-08-15) | Small | **Fixed** |
+
+**Item 13 — diagnosis.** Items 9–12 all reproduce only *while acting as* another user; each page's own gate was already correct (`IdeaTypesAdmin`, `FieldDefinitionsAdmin`, `OrganizationUsers` all carry `[Authorize(Roles = "OrgAdmin,SiteAdmin")]`, `Boards`/`Ideas` carry a bare `[Authorize]`, and `SettingsHub` already has an `OrgAdmin` link block).
+
+Impersonation is a server-side session and the access token is **never reissued** (`30-Contracts.md`), so `GET /auth/me` is the only source of the effective identity — the contract says outright that this "is what makes every existing client surface render as the target sees it." But `CollegaAuthStateProvider` builds the `ClaimsPrincipal` from the *stored* `UserSummaryDto`, and `MainLayout.ReloadIdentityAsync` only assigned the fresh summary to a local field. It never called `RefreshUserAsync`, so the principal — and therefore every `[Authorize(Roles=…)]`, `<AuthorizeView Roles=…>` and `IsInRole()` in the client — kept describing the real administrator for the whole session.
+
+Verified against the running API: with a live session the JWT is byte-identical and carries **no role claim at all** (`sub`, `sstamp`, `iat`, `exp` only), while `/auth/me` correctly flips `SiteAdmin` → `OrgAdmin`. The server was right throughout; only the client's principal was stale. So a Site Admin acting as an Org Admin still saw `_isSiteAdmin == true`, which is what suppressed the Ideas create button, forced the cross-org read-only board/idea tables, set `CanMutate => !_isSiteAdmin` to false on the admin pages, and showed the Site Admin block of `SettingsHub` instead of the Org Admin one.
+
+**Consequence worth knowing:** now that the principal follows the impersonated user, a Site Admin who starts a session while sitting on `/settings/organizations` (which is `[Authorize(Roles = "SiteAdmin")]`) will be bounced off that page. That is rule 23 working as specified — the admin sees what the target sees — not a regression.
+
+### Item 1 — how it was resolved (2026-08-14)
+
+The five `CreateOrg*` helpers now return with the client still acting as the Site Admin, and each test that mutates org content opts in with its own `ViewAsAuth.ActAsOrgAdminAsync(client, <the organization it means>)`. 48 tests needed the opt-in; **37 org-creation call sites did not**, and those organizations no longer carry a phantom Org Admin — which is what the membership, candidate-list and fan-out assertions were at risk from.
+
+Both workarounds the leak had forced are gone: `CollaborationTests` no longer re-targets after a two-org setup, and `Idea_In_Other_Organization_Is_Not_Found_For_Scoped_User` no longer depends on the order its organizations are created in. `WorkflowConfigurationTests`' defensive `StopActingAsync` before a cross-org read is likewise unnecessary and removed.
+
+Two tests changed meaning rather than just actor, and say so inline: `Idea_Csv_Import_RejectsFileExceedingRowCap` (as the Site Admin its expected `400` would have come from rule 25, not the row cap) and `ReassignIdeaType_AdminSucceeds_UserForbidden` (whose "the Site Admin can" comment contradicted rule 25 as enforced since Sprint 6). `ViewAsAuth`'s own remarks now document the opt-in contract and why the convenience was a trap.
+
+### Closed with no change
+
+- **"Demo seed should seed a Site Admin per org, and users should be assigned to the org."** Already true, and partly impossible as written: `StartupSeeder` gives every demo org an OrgAdmin (`orgadmin@{slug}.demo.collega.test`) plus two Users, all correctly org-assigned, and a global demo Site Admin. **Site Admin is global by the product model and cannot belong to an organization** (`00-project-brief.md`, `10-requirements.md`), so a per-org Site Admin would be a model change, not a seed change. Confirmed with the user 2026-08-14: the real need was visibility, which is item 6.
+
+## Review pass (2026-08-15)
+
+Scope was `4ef133b..HEAD`, not just the follow-up commits: items 2–7 arrived as a single commit named "Work in progress update" that had never been reviewed.
+
+**Findings raised and fixed**
+
+1. **`aria-pressed` never rendered a valid value** (`PasswordField.razor`). Bound to the `bool` directly; Blazor omits a bool attribute when false and emits it valueless when true, so the toggle was never announced as a toggle. `NavRail.razor:40` already formatted `aria-expanded` to a lowercase string — the new component diverged from an existing in-repo answer. Fixed.
+2. **The reveal toggle was keyboard-unreachable** (`tabindex="-1"`), which made item 3's feature mouse-only. Removed, plus a `:focus-visible` ring — needed because the wrapper's `:focus-within` cannot say which of the two elements holds focus.
+3. **Item 6 had no test coverage.** `StartupSeederTests` passes `NullLogger`, whose `IsEnabled` returns false, so `LogSeededAccountsAsync` never executes under test. Accepted rather than fixed: the method is operator output, and it was instead **verified live** — the roster printed all 8 seeded accounts on a real boot.
+4. **Two drawers can open at once** on the five admin pages: no `OpenCreate` clears the detail-drawer state, and `DrawerShell` has no focus trap or `inert` background, so a keyboard user can Tab to "Add New" behind an open detail drawer. Unreachable by mouse (the backdrop intercepts). **Logged as residual** — see below.
+
+**Checked and cleared**
+
+- `DrawerShell` is a strict parameter superset of `CreateModalShell` (it adds `SubHeaderContent`), so item 7's swap could not drop a parameter.
+- All nine `<label for=…>` associations still match the `Id`s passed to `PasswordField`.
+- `LogSeededAccountsAsync` sits after the `if (!seedDemoData) return;` guard, so its Development-only claim holds.
+- `PasswordField`'s claim that reveal state cannot survive a reopened surface holds: `DrawerShell` renders nothing when closed, so the component is destroyed.
+- `MainLayout` now raises `AuthenticationStateChanged` on every app load. Traced both subscribers (`NavRail`, `SessionTimeoutGuard`) — both idempotent. Confirmed `GET /auth/me` returns `PortraitDataUrl` (`AuthService.ToSummary`), so refreshing the stored summary cannot wipe a user's portrait.
+- `.t` is used only on the new idea-title button, so its CSS reset cannot leak onto other elements.
+
+**Residual, not fixed**
+
+- Finding 4 above (two drawers at once via keyboard). Low severity and pre-dating this sprint in kind — previously the two surfaces were a drawer and a centered modal, so they were at least visually distinct; item 7 makes them occupy the same position. The real fix is a focus trap in `DrawerShell`, which is wider than this sprint.
+- Continuation-line indentation in the four `CreateModalShell` → `DrawerShell` swaps is now over-indented for the shorter tag name. Cosmetic only.
+
+## Definition of Done
+
+- [x] User confirms the intake list is closed
+- [x] Every item in the Scope table is fixed or explicitly deferred with a reason
+- [x] `dotnet build Collega.sln` clean and `dotnet test Collega.sln` green, run twice (this project has produced a false flakiness signal before — one green run is not evidence) — **622 green, twice, 2026-08-14.** Note what that does and does not prove: items 2–5 and 7 are UI changes with no automated coverage, so the suite shows nothing regressed, not that they render correctly. Items 4/5/7 still need the visual check below.
+- [x] Visual confirmation of items 2, 4, 5 and 7 against a running client — **done 2026-08-15**, driven with Playwright against the real client (`:5098`) and API (`:5103`) on PostgreSQL. Item 2: the header control renders top-right on the crumbs line and correctly gives way to the banner during a session. Item 4: `.backrow` is gone from all five pages and the command row is one line, Back → search → Add New (rightmost). Item 5: `.body` computes `max-width: none`, card 1456px of a 1600px viewport. Item 7: create opens a right-anchored `aside.drawer` with `section.modal` absent on all five admin pages — Organizations verified as Site Admin, and Users/Statuses/Idea Types/Fields as a real Org Admin, since Site Admin sees those as read-only cross-org views with no **Add New**. Items 8–13 were confirmed in the same pass.
+- [x] Any behavior change is reflected in the canonical `SPEC/*.md` first, then tests, then implementation — item 7's reversal was written into `20-feature-client-ui.md` and `src/Collega.Client/CLAUDE.md` before the components changed
+- [x] Code Reviewer sign-off — **2026-08-15**, over `4ef133b..HEAD` (the whole sprint, since the bulk of it landed as one unreviewed commit titled "Work in progress update"). Four findings raised, all resolved; see "Review pass" below.
+- [ ] `SPEC/implementation-agent-tracker.md` and `SPEC/95-next-sprints.md` updated

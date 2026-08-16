@@ -13,7 +13,7 @@
 
     List + Drawer (Sprint 2): the list owns selection and manual reorder; a row's Details action opens
     the shared DrawerShell (status detail with an Edit toggle → inline form + footer), and Add New opens
-    the shared CreateModalShell. The Site-Admin cross-org view stays read-only with per-org Manage links.
+    the shared DrawerShell. The Site-Admin cross-org view stays read-only with per-org Manage links.
 *@
 <div class="pagehead">
     <div class="crumbs"><a href="/settings">Settings</a> / Statuses</div>
@@ -28,10 +28,8 @@
     }
     else
     {
-        <div class="backrow">
-            <BackButton />
-        </div>
         <div class="cmdbar">
+            <BackButton />
             <ListToolbar TItem="StatusItemDto" State="_list" Region="ToolbarRegion.Search" Placeholder="Search statuses…" OnChanged="StateHasChanged" />
             @if (CanMutate)
             {
@@ -186,8 +184,8 @@
     }
 </DrawerShell>
 
-@* ---- Create modal (org-scoped view only) ---- *@
-<CreateModalShell IsOpen="_showCreate" OnClose="CloseCreate" Eyebrow="New status" Title="Create a status"
+@* ---- Create drawer (org-scoped view only) ---- *@
+<DrawerShell IsOpen="_showCreate" OnClose="CloseCreate" Eyebrow="New status" Title="Create a status"
                   FooterContent="RenderCreateFooter">
     @if (_createError is not null)
     {
@@ -210,7 +208,7 @@
             <input type="number" id="create-sort" @bind="_form.SortOrder" disabled="@_busy" style="width:100px" />
         </div>
     </div>
-</CreateModalShell>
+</DrawerShell>
 
 @code {
     // Present on the Site-Admin org-scoped route; absent on the Org Admin route (org from the claim).
@@ -242,7 +240,7 @@
     private FormModel _form = new();
     private string? _error;
 
-    // Drawer (detail + edit) + create-modal state.
+    // Drawer (detail + edit) + create-drawer state.
     private StatusItemDto? _selected;
     private bool _drawerEditing;
     private bool _showCreate;
@@ -254,7 +252,7 @@
     private int? _dragIndex;
     private int? _dragOverIndex;
 
-    // A drawer or create modal covers the list; reorder and Add New are gated while one is open.
+    // A detail or create drawer covers the list; reorder and Add New are gated while one is open.
     private bool _overlayOpen => _selected is not null || _showCreate;
 
     // Reordering is a per-org action; it's meaningless in the Site-Admin cross-org list, while an overlay
@@ -268,7 +266,7 @@
         <button class="btn primary" @onclick="SaveEdit" disabled="@_busy">@(_busy ? "Saving…" : "Save")</button>
     </text>;
 
-    // Create-modal action bar, passed as the modal footer.
+    // Create-drawer action bar, passed as the drawer footer.
     private RenderFragment RenderCreateFooter => @<text>
         <button class="btn" @onclick="CloseCreate" disabled="@_busy">Cancel</button>
         <button class="btn primary" @onclick="SaveCreate" disabled="@_busy">@(_busy ? "Creating…" : "Create")</button>
@@ -382,7 +380,7 @@
     private string OrganizationName(string organizationId) =>
         _organizationNames.TryGetValue(organizationId, out var name) ? name : "Organization";
 
-    // ---- Create modal ----
+    // ---- Create drawer ----
 
     private void StartCreate()
     {

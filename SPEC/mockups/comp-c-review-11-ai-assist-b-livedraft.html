@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Review 11B: AI Idea Assist (Live Draft)</title>
+<style>
+  /* Same locked foundation as review-09/10. Direction B collapses the two sequential surfaces into
+     one: conversation left, the idea taking shape right, create committed from the same sheet. */
+  :root{
+    --accent:#5b5fc7;--accent-deep:#444791;--accent-soft:#eef0fb;
+    --ink:#242424;--ink-2:#484644;--ink-3:#66615d;
+    --bg:#faf9f8;--surface:#fff;--line:#e4e2df;
+    --ok:#0e700e;--warn:#9a5b00;--err:#b10e1c;
+    --sug:#116b5e;--sug-soft:#e6f2f0;--sug-deep:#0c4f45;
+    --shadow:0 1px 2px rgba(0,0,0,.08);--shadow-float:0 18px 48px rgba(0,0,0,.22);
+    --radius-card:6px;--radius-btn:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  body{font-family:"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);font-size:14px;overflow-x:hidden}
+  button,input,select,textarea{font:inherit}
+  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600}
+  .comp-bar{min-height:46px;background:#33312e;color:#fff;padding:8px 18px;display:flex;gap:14px;align-items:center;position:sticky;top:0;z-index:80;flex-wrap:wrap}
+  .comp-bar strong{font:600 13px Georgia,serif;letter-spacing:.04em;white-space:nowrap}
+  .comp-bar .sep{width:1px;height:20px;background:#5a5754}
+  .comp-bar .lbl{font-size:11px;color:#a8a5a2;text-transform:uppercase;letter-spacing:.05em}
+  .mode-tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .mode-tabs button{background:transparent;color:#d1cfcc;border:1px solid #5a5754;border-radius:3px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .mode-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+
+  .shell{display:grid;grid-template-columns:64px minmax(0,1fr);min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
+  .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:grid;place-items:center;font:700 13px Georgia,serif;margin-bottom:14px}
+  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;gap:2px}
+  .rail a svg{width:20px;height:20px;fill:currentColor}.rail a span{font-size:8.5px;font-weight:600}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 20px}
+  .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:9px}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .sub{color:var(--ink-3);font-size:13.5px;line-height:1.5;max-width:640px}
+  .body{padding:24px 40px}
+
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:8px 13px;min-height:36px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;background:transparent;color:var(--ink-2)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  input,select,textarea{border:1px solid #8a8886;border-radius:4px;background:#fff;color:var(--ink);padding:8px 10px;min-height:36px;width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{display:block;color:var(--ink-3);font-size:11.5px;font-weight:700;margin-bottom:5px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
+  .hint{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+  .decision-note{margin-top:18px;border-left:3px solid var(--accent);background:var(--accent-soft);padding:11px 14px;color:var(--ink-2);font-size:12.5px;line-height:1.55;max-width:880px}
+
+  /* ---- Wide sheet: the one new surface this direction needs ---- */
+  .surface-backdrop{position:fixed;inset:46px 0 0 0;background:rgba(36,36,36,.28);z-index:40}
+  .modal-wrap{position:fixed;inset:46px 0 0 0;display:grid;place-items:center;z-index:50;padding:20px}
+  .sheet{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow-float);width:min(1080px,100%);height:min(660px,calc(100vh - 100px));display:flex;flex-direction:column;overflow:hidden}
+  .surface-head{padding:18px 24px 14px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:16px}
+  .surface-head .grow{flex:1;min-width:0}
+  .eyebrow{text-transform:uppercase;letter-spacing:.07em;color:var(--accent-deep);font-size:11px;font-weight:700;margin-bottom:5px}
+  .surface-head h2{font-size:22px;line-height:1.25}
+  .surface-head .meta{margin-top:5px;font-size:12px;color:var(--ink-3)}
+  .iconbtn{width:34px;height:34px;border:1px solid var(--line);border-radius:4px;background:#fff;cursor:pointer;color:var(--ink-2);display:grid;place-items:center;font-size:19px;flex:none}
+  .split{display:grid;grid-template-columns:minmax(0,1fr) 400px;flex:1;min-height:0}
+  .left{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+  .right{background:var(--bg);display:flex;flex-direction:column;min-height:0}
+  .surface-foot{padding:12px 24px;border-top:1px solid var(--line);display:flex;align-items:center;gap:9px;background:#fff}
+  .surface-foot .grow{flex:1}
+  .turns{font-size:11.5px;color:var(--ink-3)}
+
+  /* ---- Chat (left) ---- */
+  .transcript{padding:20px 22px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:14px}
+  .msg{display:flex;gap:10px;max-width:92%}
+  .msg .who{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:9.5px;font-weight:700}
+  .msg.bot .who{background:var(--accent-soft);color:var(--accent-deep)}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse}
+  .msg.user .who{background:var(--accent-deep);color:#fff}
+  .bubble{background:#f3f2f1;border-radius:10px;padding:9px 13px;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+  .msg.user .bubble{background:var(--accent);color:#fff}
+  .composer{display:flex;gap:9px;align-items:flex-end;padding:14px 22px;border-top:1px solid var(--line)}
+  .composer textarea{resize:none}
+  .thinking{display:flex;gap:5px;align-items:center;padding:11px 13px}
+  .thinking i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);opacity:.4;animation:bl 1.2s infinite}
+  .thinking i:nth-child(2){animation-delay:.18s}.thinking i:nth-child(3){animation-delay:.36s}
+  @keyframes bl{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:.9;transform:translateY(-3px)}}
+  .sysnote{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:11px 13px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+  .sysnote svg{width:16px;height:16px;fill:var(--warn);flex:none;margin-top:1px}
+  .sysnote.err svg{fill:var(--err)}
+  .sysnote b{display:block;color:var(--ink);margin-bottom:2px}
+  .sysnote .redirect{color:var(--ink-3);font-style:italic}
+  .strikeghost{opacity:.45}
+  .strikeghost .bubble{background:repeating-linear-gradient(135deg,#f3f2f1,#f3f2f1 6px,#eceae8 6px,#eceae8 12px);color:var(--ink-3);text-decoration:line-through}
+
+  /* ---- Live draft (right) ---- */
+  .draft-head{padding:15px 20px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+  .draft-head h3{font-size:14px;font-family:"Segoe UI",sans-serif;font-weight:700}
+  .draft-head .count{margin-left:auto;font-size:11px;color:var(--ink-3)}
+  .draft-body{padding:16px 20px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:15px}
+  .dfield{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:11px 13px}
+  .dfield.sug{border-color:#bcdcd6;border-left:3px solid var(--sug);background:var(--sug-soft)}
+  .dfield.empty{background:transparent;border-style:dashed;color:var(--ink-3)}
+  .dfield .k{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+  .dfield .k label{margin:0}
+  .dfield .v{font-size:13.5px;line-height:1.5;color:var(--ink);white-space:pre-wrap}
+  .dfield.empty .v{font-size:12.5px;color:var(--ink-3);font-style:italic}
+  .sugdot{width:7px;height:7px;border-radius:50%;background:var(--sug);flex:none}
+  .justnow{margin-left:auto;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sug-deep);background:#d3e9e4;border-radius:9px;padding:1px 7px;animation:fade 2.4s forwards}
+  @keyframes fade{0%,60%{opacity:1}100%{opacity:0}}
+  .editlink{border:0;background:none;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
+  .dfield .row{display:flex;align-items:center;gap:8px;margin-top:7px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent-deep)}
+  .locked{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-3);padding:2px 0}
+  .locked svg{width:13px;height:13px;fill:var(--ink-3)}
+
+  /* settings-in-drawer (this direction's answer to placement) */
+  .drawer{position:fixed;top:46px;right:0;bottom:0;width:min(620px,calc(100vw - 64px));background:var(--surface);border-left:1px solid var(--line);box-shadow:-12px 0 32px rgba(0,0,0,.16);z-index:50;display:flex;flex-direction:column}
+  .surface-body{padding:20px 24px;overflow:auto;flex:1}
+  .sechead{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin:22px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .sechead:first-child{margin-top:0}
+  .counter{font-size:11px;color:var(--ink-3);text-align:right;margin-top:4px}
+  .sugchip{display:inline-flex;align-items:center;gap:4px;background:var(--sug-soft);color:var(--sug-deep);border:1px solid #bcdcd6;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700;text-transform:uppercase}
+
+  .doc{max-width:920px;margin:0 auto;padding:30px 40px 60px}
+  .doc h1{font-size:28px;margin-bottom:6px}
+  .doc .lead{color:var(--ink-3);font-size:14px;line-height:1.55;margin-bottom:20px;max-width:720px}
+  .doc h2{font-size:18px;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .doc p,.doc li{font-size:13.5px;line-height:1.6;color:var(--ink-2)}
+  .doc ul{margin:6px 0 6px 20px}.doc li{margin-bottom:5px}
+  .decision{border:1px solid var(--sug);background:var(--sug-soft);border-radius:8px;padding:14px 16px;margin:14px 0}
+  .decision .qh{font-weight:700;color:var(--sug-deep);font-size:13.5px;font-family:"Segoe UI",sans-serif;margin-bottom:5px}
+  .doc code{background:#f3f2f1;padding:1px 5px;border-radius:3px;font-size:12.5px}
+  .btn:focus-visible,.iconbtn:focus-visible,.mode-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  @media(max-width:900px){.split{grid-template-columns:minmax(0,1fr)}.right{display:none}}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>Review 11B — AI Idea Assist</strong>
+  <span class="sep"></span>
+  <span class="lbl">Direction B · Live Draft</span>
+  <span class="sep"></span>
+  <div class="mode-tabs">
+    <button class="on" data-s="chat">1 · Drafting</button>
+    <button data-s="pending">2 · Pending turn</button>
+    <button data-s="scope">3 · Out of scope</button>
+    <button data-s="failed">4 · Failed turn</button>
+    <button data-s="edit">5 · Editing a suggestion</button>
+    <button data-s="settings">6 · Scope statement</button>
+    <button data-s="doc">Notes</button>
+  </div>
+</div>
+
+<!-- ============ 1 · DRAFTING ============ -->
+<section class="screen on" id="s-chat">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="sheet">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Let's flesh out your idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="split">
+        <div class="left">
+          <div class="transcript">
+            <div class="msg bot"><div class="who">AI</div><div class="bubble">Hi! Tell me about your idea in your own words.</div></div>
+            <div class="msg user"><div class="who">NC</div><div class="bubble">Purchase approvals take forever. Three people sign off on anything over $500 and it's usually the same three.</div></div>
+            <div class="msg bot"><div class="who">AI</div><div class="bubble">That sounds like an approval-chain problem. Roughly how long does a typical $500 request sit, and which signoff is the bottleneck?</div></div>
+            <div class="msg user"><div class="who">NC</div><div class="bubble">Usually 4–5 days. Finance is the slow one — they batch reviews weekly.</div></div>
+            <div class="msg bot"><div class="who">AI</div><div class="bubble">Got it — I've drafted this as a Process Revision. If Finance moved to threshold-based auto-approve under $500, what should still get a human look?</div></div>
+          </div>
+          <div class="composer">
+            <textarea rows="2" placeholder="Describe your idea… (Enter to send)"></textarea>
+            <button class="btn primary">Send</button>
+          </div>
+        </div>
+
+        <div class="right">
+          <div class="draft-head">
+            <span class="sugdot"></span>
+            <h3>Your idea so far</h3>
+            <span class="count">4 of 5 drafted</span>
+          </div>
+          <div class="draft-body">
+            <div class="dfield sug">
+              <div class="k"><span class="sugdot"></span><label>Title</label><span class="justnow">updated</span></div>
+              <div class="v">Auto-approve purchases under $500 to cut approval lead time</div>
+              <div class="row"><button class="editlink">Edit</button><button class="editlink">Clear</button></div>
+            </div>
+
+            <div class="dfield sug">
+              <div class="k"><span class="sugdot"></span><label>Description</label></div>
+              <div class="v">Purchases over $500 require three signoffs, and Finance reviews them in a weekly batch — a typical request sits 4–5 days.</div>
+              <div class="row"><button class="editlink">Edit</button><button class="editlink">Clear</button></div>
+            </div>
+
+            <div class="dfield sug">
+              <div class="k"><span class="sugdot"></span><label>Idea Type</label></div>
+              <div class="v"><span class="pill">Process Revision</span></div>
+              <div class="row"><button class="editlink">Change</button></div>
+            </div>
+
+            <div class="dfield sug">
+              <div class="k"><span class="sugdot"></span><label>Business Impact</label></div>
+              <div class="v"><span class="pill">High</span></div>
+              <div class="row"><button class="editlink">Change</button></div>
+            </div>
+
+            <div class="dfield empty">
+              <div class="k"><label>Priority</label></div>
+              <div class="v">Not drafted yet — keep talking, or set it yourself.</div>
+            </div>
+
+            <div class="locked">
+              <svg viewBox="0 0 20 20"><path d="M6 8V6a4 4 0 118 0v2h1v9H5V8zm2 0h4V6a2 2 0 10-4 0z"/></svg>
+              Status &amp; Board are set by the board, never suggested
+            </div>
+            <div class="locked">
+              <svg viewBox="0 0 20 20"><path d="M6 8V6a4 4 0 118 0v2h1v9H5V8zm2 0h4V6a2 2 0 10-4 0z"/></svg>
+              Custom fields &amp; tags aren't drafted in v1
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="turns grow">Turn 3 of 20</span>
+        <button class="btn subtle">Cancel</button>
+        <button class="btn">Skip &amp; fill manually</button>
+        <button class="btn primary">Review &amp; create →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · PENDING ============ -->
+<section class="screen" id="s-pending">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="sheet">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Let's flesh out your idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="split">
+        <div class="left">
+          <div class="transcript">
+            <div class="msg user"><div class="who">NC</div><div class="bubble">Usually 4–5 days. Finance is the slow one.</div></div>
+            <div class="msg bot"><div class="who">AI</div><div class="bubble thinking"><i></i><i></i><i></i></div></div>
+          </div>
+          <div class="composer">
+            <textarea rows="2" placeholder="Describe your idea…" disabled></textarea>
+            <button class="btn" disabled>Send</button>
+          </div>
+        </div>
+        <div class="right">
+          <div class="draft-head">
+            <span class="sugdot" style="opacity:.4"></span><h3>Your idea so far</h3>
+            <span class="count">updating…</span>
+          </div>
+          <div class="draft-body" style="opacity:.55">
+            <div class="dfield sug"><div class="k"><span class="sugdot"></span><label>Title</label></div>
+              <div class="v">Auto-approve purchases under $500 to cut approval lead time</div></div>
+            <div class="dfield sug"><div class="k"><span class="sugdot"></span><label>Description</label></div>
+              <div class="v">Purchases over $500 require three signoffs…</div></div>
+            <div class="dfield empty"><div class="k"><label>Idea Type</label></div><div class="v">Not drafted yet</div></div>
+            <div class="hint" style="text-align:center;margin-top:6px">The draft stays readable while a turn is in flight — it never blanks out.</div>
+          </div>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="turns grow">Thinking… <button class="btn subtle" style="padding:2px 6px;min-height:0">Cancel this turn</button></span>
+        <button class="btn">Skip &amp; fill manually</button>
+        <button class="btn primary">Review &amp; create →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 · OUT OF SCOPE ============ -->
+<section class="screen" id="s-scope">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="sheet">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Let's flesh out your idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="split">
+        <div class="left">
+          <div class="transcript">
+            <div class="msg bot"><div class="who">AI</div><div class="bubble">What should still get a human look?</div></div>
+            <div class="msg user strikeghost"><div class="who">NC</div><div class="bubble">write me a limerick about procurement</div></div>
+            <div class="sysnote">
+              <svg viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm.9 4.1v4.4a.9.9 0 11-1.8 0V6.1a.9.9 0 011.8 0zM10 13.2a1.1 1.1 0 110 2.2 1.1 1.1 0 010-2.2z"/></svg>
+              <div><b>That one's outside what I can help with here.</b>
+                <span class="redirect">I can only help draft ideas for Acme Robotics. Tell me about a process, tool, or workflow you'd like to see change.</span>
+                <div class="hint" style="margin-top:6px">Not added to the conversation. 2 more off-topic turns will end the chat.</div>
+              </div>
+            </div>
+          </div>
+          <div class="composer">
+            <textarea rows="2" placeholder="Describe your idea…"></textarea>
+            <button class="btn primary">Send</button>
+          </div>
+        </div>
+        <div class="right">
+          <div class="draft-head"><span class="sugdot"></span><h3>Your idea so far</h3><span class="count">4 of 5 drafted</span></div>
+          <div class="draft-body">
+            <div class="dfield sug"><div class="k"><span class="sugdot"></span><label>Title</label></div>
+              <div class="v">Auto-approve purchases under $500 to cut approval lead time</div></div>
+            <div class="dfield sug"><div class="k"><span class="sugdot"></span><label>Idea Type</label></div>
+              <div class="v"><span class="pill">Process Revision</span></div></div>
+            <div class="hint" style="text-align:center;margin-top:6px">
+              The draft is <b>untouched</b> by a refused turn — visible proof the off-topic text changed nothing.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="turns grow">Turn 4 of 20 · 1 off-topic</span>
+        <button class="btn subtle">Cancel</button>
+        <button class="btn">Skip &amp; fill manually</button>
+        <button class="btn primary">Review &amp; create →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · FAILED ============ -->
+<section class="screen" id="s-failed">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="sheet">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Let's flesh out your idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="split">
+        <div class="left">
+          <div class="transcript">
+            <div class="msg user"><div class="who">NC</div><div class="bubble">Usually 4–5 days. Finance is the slow one.</div></div>
+            <div class="sysnote err">
+              <svg viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm.9 4.1v4.4a.9.9 0 11-1.8 0V6.1a.9.9 0 011.8 0zM10 13.2a1.1 1.1 0 110 2.2 1.1 1.1 0 010-2.2z"/></svg>
+              <div><b>The assistant didn't answer that time.</b>
+                Your message was kept and your draft is unchanged.
+                <div style="margin-top:9px"><button class="btn" style="min-height:30px;padding:5px 11px">Retry</button></div>
+              </div>
+            </div>
+            <div class="msg bot"><div class="who">AI</div><div class="bubble">Anything else worth capturing — constraints, examples, or next steps?</div></div>
+          </div>
+          <div class="composer">
+            <textarea rows="2" placeholder="Describe your idea…"></textarea>
+            <button class="btn primary">Send</button>
+          </div>
+        </div>
+        <div class="right">
+          <div class="draft-head"><span class="sugdot"></span><h3>Your idea so far</h3><span class="count">4 of 5 drafted</span></div>
+          <div class="draft-body">
+            <div class="dfield sug"><div class="k"><span class="sugdot"></span><label>Title</label></div>
+              <div class="v">Auto-approve purchases under $500 to cut approval lead time</div></div>
+            <div class="dfield sug"><div class="k"><span class="sugdot"></span><label>Idea Type</label></div>
+              <div class="v"><span class="pill">Process Revision</span></div></div>
+            <div class="hint" style="text-align:center;margin-top:6px">
+              Degraded to basic mode — the draft holds what was already agreed. <b>Review &amp; create still works.</b>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="turns grow">Turn 3 of 20 · running in basic mode</span>
+        <button class="btn subtle">Cancel</button>
+        <button class="btn">Skip &amp; fill manually</button>
+        <button class="btn primary">Review &amp; create →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 · EDITING ============ -->
+<section class="screen" id="s-edit">
+  <div class="surface-backdrop"></div>
+  <div class="modal-wrap">
+    <div class="sheet">
+      <div class="surface-head">
+        <div class="grow"><div class="eyebrow">New idea</div><h2>Let's flesh out your idea</h2>
+          <div class="meta">Acme Robotics · Continuous Improvement board</div></div>
+        <button class="iconbtn">×</button>
+      </div>
+      <div class="split">
+        <div class="left">
+          <div class="transcript">
+            <div class="msg bot"><div class="who">AI</div><div class="bubble">Got it — I've drafted this as a Process Revision.</div></div>
+            <div class="msg user"><div class="who">NC</div><div class="bubble">Close, but call it "spend approval" not "purchase approval".</div></div>
+          </div>
+          <div class="composer">
+            <textarea rows="2" placeholder="Describe your idea…"></textarea>
+            <button class="btn primary">Send</button>
+          </div>
+        </div>
+        <div class="right">
+          <div class="draft-head"><span class="sugdot"></span><h3>Your idea so far</h3><span class="count">4 of 5 drafted</span></div>
+          <div class="draft-body">
+            <div class="dfield" style="border-color:var(--accent);border-left:3px solid var(--accent)">
+              <div class="k"><label style="color:var(--accent-deep)">Title — editing</label></div>
+              <input value="Auto-approve spend under $500 to cut approval lead time" autofocus>
+              <div class="row"><button class="btn primary" style="min-height:30px;padding:5px 11px">Save</button>
+                <button class="editlink">Cancel</button></div>
+              <div class="hint">Once you edit a field it's <b>yours</b> — the teal marker drops and later turns won't overwrite it.</div>
+            </div>
+            <div class="dfield sug"><div class="k"><span class="sugdot"></span><label>Description</label></div>
+              <div class="v">Purchases over $500 require three signoffs…</div></div>
+            <div class="dfield sug"><div class="k"><span class="sugdot"></span><label>Idea Type</label></div>
+              <div class="v"><span class="pill">Process Revision</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="surface-foot">
+        <span class="turns grow">Turn 4 of 20</span>
+        <button class="btn subtle">Cancel</button>
+        <button class="btn">Skip &amp; fill manually</button>
+        <button class="btn primary">Review &amp; create →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 · SCOPE STATEMENT (in the org drawer) ============ -->
+<section class="screen" id="s-settings">
+  <div class="shell">
+    <nav class="rail">
+      <span class="mark">CG</span>
+      <a><svg viewBox="0 0 20 20"><path d="M10 2L2 8v10h6v-6h4v6h6V8z"/></svg><span>Home</span></a>
+      <a><svg viewBox="0 0 20 20"><path d="M2 3h16v14H2zm2 3v9h4V6zm6 0v9h6V6z"/></svg><span>Boards</span></a>
+      <a><svg viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-3 11v2h6v-2a6 6 0 00-3-11zm-2 14h4v1H8z"/></svg><span>Ideas</span></a>
+      <a class="on"><svg viewBox="0 0 20 20"><path d="M10 6a4 4 0 100 8 4 4 0 000-8zm8 4l-2-1 1-2-2-2-2 1-1-2h-4l-1 2-2-1-2 2 1 2-2 1 2 1-1 2 2 2 2-1 1 2h4l1-2 2 1 2-2-1-2z"/></svg><span>Settings</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </nav>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs">Settings / Organizations</div>
+        <h1>Organizations</h1>
+        <p class="sub">Manage organizations across the platform.</p>
+      </div>
+      <div class="body"><div class="card" style="height:230px"></div></div>
+    </div>
+  </div>
+  <div class="surface-backdrop"></div>
+  <aside class="drawer">
+    <div class="surface-head">
+      <div class="grow"><div class="eyebrow">Organization</div><h2>Acme Robotics</h2>
+        <div class="meta">ACME-ROBOTICS-ADB31BA9 · Active</div></div>
+      <button class="iconbtn">×</button>
+    </div>
+    <div class="surface-body">
+      <div class="sechead">Details</div>
+      <div style="color:var(--ink-3);font-size:12.5px;line-height:1.6">Title, description, address, primary contact… <i>(existing drawer content, collapsed for this comp)</i></div>
+
+      <div class="sechead">AI assistant</div>
+      <div style="margin-bottom:14px">
+        <label for="sc">Scope statement <span style="font-weight:400;text-transform:none">(optional)</span></label>
+        <textarea id="sc" rows="3" maxlength="500">Business process improvement only — not IT support requests or HR matters.</textarea>
+        <div class="counter">78 / 500</div>
+        <div class="hint">Narrows what the assistant helps with. It can never widen scope beyond your active Idea Types.</div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label>Always in scope</label>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <span class="sugchip" style="background:var(--accent-soft);color:var(--accent-deep);border-color:#c9cdf0">Continuous Improvement</span>
+          <span class="sugchip" style="background:var(--accent-soft);color:var(--accent-deep);border-color:#c9cdf0">Process Revision</span>
+        </div>
+      </div>
+      <div>
+        <label>Users see this when a turn is refused</label>
+        <div class="sysnote">
+          <svg viewBox="0 0 20 20"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm.9 4.1v4.4a.9.9 0 11-1.8 0V6.1a.9.9 0 011.8 0zM10 13.2a1.1 1.1 0 110 2.2 1.1 1.1 0 010-2.2z"/></svg>
+          <div class="redirect">I can only help draft ideas for Acme Robotics. Tell me about a process, tool, or workflow you'd like to see change.</div>
+        </div>
+        <div class="hint">Server-supplied and fixed (rule 8).</div>
+      </div>
+    </div>
+    <div class="surface-foot"><span class="grow"></span><button class="btn">Cancel</button><button class="btn primary">Save</button></div>
+  </aside>
+</section>
+
+<!-- ============ NOTES ============ -->
+<section class="screen" id="s-doc">
+  <div class="doc">
+    <h1>Direction B — Live Draft</h1>
+    <p class="lead">
+      One surface instead of two. The conversation is on the left; the idea takes shape on the right as the assistant proposes
+      values. There is no handoff — <b>Review &amp; create</b> opens the normal create modal already filled, or commits straight
+      from here. The bet: seeing classification land while you talk is what teaches the user what this thing actually does.
+    </p>
+
+    <h2>What it settles</h2>
+    <ul>
+      <li><b>Suggestion indicator:</b> same teal vocabulary as Direction A, but carried by the draft card itself — a teal dot, tinted card, 3px left border. No chip is needed because the whole panel <i>is</i> the suggestion surface.</li>
+      <li><b>Suggestion vs. user edit:</b> editing a field drops the teal marker permanently and later turns won't overwrite it. Direction A can't express this — by the time you see the form the conversation is over.</li>
+      <li><b>Out-of-scope:</b> the draft panel visibly does <b>not</b> change. That is the strongest possible statement of rule 8 — the off-topic turn touched nothing.</li>
+      <li><b>Pending:</b> the draft dims but stays readable; it never blanks. Cancellable per rule 33.</li>
+      <li><b>Failed:</b> the draft holds everything already agreed, and Review &amp; create stays enabled — rule 32's "never blocked" made visible.</li>
+      <li><b>Scope statement:</b> a section inside the existing Organization drawer (deliberately the opposite choice from Direction A, so reviewing both settles the placement question).</li>
+    </ul>
+
+    <h2>What it costs</h2>
+    <ul>
+      <li>A <b>new surface</b>: a 1080×660 sheet. <code>CreateModalShell</code> is 720px and doesn't stretch to a two-pane layout, so this is genuinely new chrome to build, style, and make accessible.</li>
+      <li><b>Narrow viewports are unsolved.</b> Below 900px this comp hides the draft panel entirely — which means either a tab switcher or a fallback to Direction A's flow on mobile. Comp C's mobile pass is still open (`client/CLAUDE.md` → "Still undesigned"), so this direction inherits that debt.</li>
+      <li>More state to manage: per-field "suggested vs. user-edited" tracking that Direction A gets for free by only rendering once.</li>
+    </ul>
+
+    <div class="decision">
+      <div class="qh">The real question</div>
+      <p>Is the assistant's <i>classification</i> work worth showing live? If users mostly accept what it proposes, Direction A is
+      strictly cheaper. If they'll want to correct the Idea Type mid-conversation — which is exactly when correcting it is
+      cheapest — Direction B pays for its extra surface.</p>
+    </div>
+
+    <div class="decision">
+      <div class="qh">Hybrid worth considering</div>
+      <p>Direction A's flow with a slim <b>read-only</b> draft strip above the composer: shows the three classification values as
+      pills, no editing, no second pane. Most of B's feedback at close to A's cost. Say the word and I'll draw it as 11C.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs = document.querySelectorAll('.mode-tabs button');
+  tabs.forEach(b => b.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+    document.getElementById('s-' + b.dataset.s).classList.add('on');
+    window.scrollTo(0, 0);
+  }));
+</script>
+</body>
+</html>

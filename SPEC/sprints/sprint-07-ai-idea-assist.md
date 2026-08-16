@@ -22,13 +22,49 @@ This is a **post-MVP feature** pulled in by explicit user decision. Unlike Sprin
 ## Capacity
 | Role | Slices | Notes |
 |---|---|---|
-| Backend Developer | 2 | (1) `IIdeaDraftModel` abstraction + `AnthropicIdeaDraftModel` in Infrastructure + per-request schema construction; (2) `IdeaAssistService` in Application — retrieval assembly, scope gate, response validation, rate limiting, audit; API controller + `Organization.AiScopeStatement` migration |
-| UI/UX Developer | 1 | **Comp first** (see below), then the `IdeaBrainstormModal` rewrite + suggestion indicators in `IdeaCreateModal` + the org settings scope-statement field |
+| Backend Developer | 3 | (1) `IIdeaDraftModel` abstraction + `AnthropicIdeaDraftModel` in Infrastructure + per-request schema construction; (2) `IdeaAssistService` in Application — retrieval assembly, scope gate, response validation, rate limiting, audit; API controller + `Organization.AiScopeStatement` migration; (3) **cost control — `AiUsageRecord`, the daily token budget gate, and the two usage endpoints** (see the slice below) |
+| UI/UX Developer | 1 | Comp gate **passed 2026-08-16 (Direction C)** — build against `comp-c-review-11-ai-assist-c-draftstrip.html`: the `IdeaBrainstormModal` rewrite + read-only draft strip, suggestion indicators in `IdeaCreateModal`, and the scope-statement Settings page |
 | QA Developer | 1 | Contract tests, scope-gate matrix, schema-constraint tests, degradation paths, org-scoping |
 | Code Reviewer | 1 (mandatory) | Handles a third-party credential and an untrusted-content path — no fast-track |
 
+## Cost control slice (added 2026-08-16)
+
+**P0, not a nice-to-have.** The deployment key is shared by every organization, so until this lands there is no ceiling on what the feature can spend and no way to tell which organization spent it. Canonical rules: `20-feature-ai-idea-assist.md` 28a–28e; endpoints: `30-Contracts.md`.
+
+Decisions taken with the user (2026-08-16):
+
+| | |
+|---|---|
+| Model | **`claude-sonnet-5`**, down from the previously locked `claude-opus-5` — safe because rule 16 puts containment in the schema, not the model |
+| Ceiling | **500,000 tokens per UTC day, global** — one pool shared across all organizations |
+| At the ceiling | `503`; the client degrades to the scripted brainstorm via the path rule 31 already defines |
+| Tracking | Per organization, with rates stored per row so a future per-org key (rule 30) needs no backfill |
+| Surface | Settings → API; Site Admin sees every org, Org Admin sees their own |
+
+**Known and accepted:** 500k tokens/day is a runaway stop, not a $50/month guarantee — saturated every day at a typical input/output mix it would allow roughly $99/month on Sonnet 5. Only a monthly ceiling would hard-bound the month, and that was deliberately left out of scope. The usage page is what makes real spend visible.
+
+**Sequencing note.** This slice can be built **before** slices 1 and 2 — the entity, the budget gate and the usage endpoints stand alone. What cannot be wired until `IdeaAssistService` exists is the *call into* the gate and the recorder on each turn. Whoever builds slice 2 owns that wiring; the gate and recorder are waiting for it.
+
+**Promoted from P2:** "Prompt-cache verification" in the backlog below is a **cost control**, not an optimization. Sonnet 5's minimum cacheable prefix is 1024 tokens — if the system prompt plus org catalog falls short of it, caching silently does nothing and per-turn input cost roughly doubles with no error to notice.
+
 ## Comp-first gate
 Per the 2026-08-11 process decision, this flow gets a throwaway HTML comp in `SPEC/mockups/` for sign-off **before** production Blazor. The comp must settle: the suggestion indicator treatment on pre-filled `IdeaCreateModal` fields, the out-of-scope redirect presentation, the pending/failed turn states, and the org settings scope-statement field. Build on the locked review-09 detail-surface foundation.
+
+### ✅ Gate passed — signed off 2026-08-16
+
+Three directions were drawn and reviewed; **Direction C ("Draft Strip") is the build target.** The decisions are now canonical in `SPEC/20-feature-ai-idea-assist.md` → "UI Decisions (Comp-Resolved 2026-08-16)" — read them there, not here.
+
+| Comp | Direction | Outcome |
+|---|---|---|
+| `mockups/comp-c-review-11-ai-assist-c-draftstrip.html` | **C · Draft Strip** | **Chosen (D-SURFACE).** Build against this one. |
+| `mockups/comp-c-review-11-ai-assist-a-handoff.html` | A · Conversation → Handoff | Rejected — the user learns nothing until the handoff. Its **Settings-page treatment of the scope statement is the chosen one** (D-SCOPEUI). |
+| `mockups/comp-c-review-11-ai-assist-b-livedraft.html` | B · Live Draft | Rejected — new two-pane chrome, per-field edit state, no narrow-viewport answer. |
+
+Kept for history like Comps A and B before them; not implementation targets.
+
+**Four things the gate settled, all now spec rules:** the surface (D-SURFACE), the teal suggestion indicator (D-SUGGEST), the scope statement's home (D-SCOPEUI), and ghost-then-drop for refused turns (D-REFUSED, spec rule 8a).
+
+**What C buys the build:** because the strip is read-only, v1 needs **no per-field "suggested vs. user-edited" state and no overwrite rule** — the strip is a projection of the latest response, and all editing happens on the existing create form. That is the main reason it was chosen over B, and it should stay true; if a later change makes the strip editable, that state machine comes back with it.
 
 ## Sprint Backlog
 | Priority | Item | Notes |
@@ -41,7 +77,7 @@ Per the 2026-08-11 process decision, this flow gets a throwaway HTML comp in `SP
 | P0 | **Client: pre-filled create modal** | `IdeaCreateModal` accepts the draft (title, description, idea type, business impact, priority) as editable defaults with a suggestion indicator, replacing today's `InitialDescription`-only seam. |
 | P0 | **Degradation to scripted behavior** | Any timeout / rate limit / refusal / malformed response falls back to the current canned nudge for that turn with the user's text preserved. Verified by test, not by inspection. |
 | P1 | **`Organization.AiScopeStatement` + settings endpoints** | `nvarchar(500)` nullable + EF migration (generated against **Postgres** — this sprint runs after Sprint 5). `GET`/`PUT .../ai-assist/settings` per contract, Org Admin + Site Admin. |
-| P1 | **Org settings UI for the scope statement** | Field in organization settings with helper text explaining it narrows, and never widens, the Idea-Types boundary. |
+| P1 | **Org settings UI for the scope statement** | Its own Settings page (D-SCOPEUI), **not** the Organization drawer — that drawer is `[Authorize(Roles = "SiteAdmin")]` and so unreachable for the Org Admin who owns this setting. Helper text explains it narrows, and never widens, the Idea-Types boundary; shows the active Idea Types as the floor and previews the fixed redirect string. |
 | P1 | **Audit + rate limiting** | Audit event per call (actor, org, board, turn count, token usage, out-of-scope outcome) — **never prompt or transcript content**. Limits are configuration. |
 | P2 | **Prompt-cache verification** | Confirm the org catalog sits in a stable cached prefix — assert `cache_read_input_tokens > 0` on a second turn in a live check. A persistent zero means something volatile leaked into the prefix. |
 
