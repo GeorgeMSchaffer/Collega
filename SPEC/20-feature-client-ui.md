@@ -167,6 +167,17 @@ The Idea Detail Surface pattern above is **canonical for the admin management en
 
 Implementation: the drawer and modal chrome are the shared, presentation-only `Components/DrawerShell.razor` and `Components/CreateModalShell.razor` (extracted from the Ideas surface). Since 2026-08-14 the five admin entities render **both** create and detail/edit through `DrawerShell`; `CreateModalShell` remains in use by the Ideas create surface only. Per-entity content and validation stay in each page; entity-specific rules are preserved (e.g. Statuses' two-active floor and color picker, Idea Types' one-active-type floor and badge/field pickers, Custom Fields' type-immutable-on-edit and managed option list, Users' reset-temporary-password, Organizations' invite-code/logo/archive). Manual reorder (Statuses/Idea Types/Custom Fields) stays on the list rows, gated to the unfiltered single-page non-SiteAdmin view. The SiteAdmin cross-org "All …" views remain read-only with per-org Manage links (no drawer/create). The retired full-page routes are `/settings/organizations/new`, `/settings/users/new`, and the per-entity full-page edit routes; Organizations additionally makes its drawer URL-addressable at `/settings/organizations/{id}` (parallel to `/ideas/{id}`), while the other admin drawers use in-page open/close.
 
+### Settings → API (added 2026-08-16)
+
+A read-only page at `/settings/api` showing AI assist token consumption, reached from the Settings hub. It is the same page for two audiences, switching on role exactly as the admin list pages do for the Site-Admin cross-org views:
+
+- **Site Admin** — one row per organization, ordered by consumption, with a totals row and the current UTC day's usage against the configured daily ceiling.
+- **Org Admin** — their own organization only, with no ceiling shown; the cap is platform-wide and not an organization's business.
+
+Follows the standard list-page chrome: one command row (Back, then filters), full-width card, no create action. There is no drawer — nothing here is editable. Behavior and the endpoints behind it: `20-feature-ai-idea-assist.md` rules 28c–28e and `30-Contracts.md` → "AI Idea Assist Contracts".
+
+This is deliberately **not** a reporting subsystem. It exists because the AI assist feature spends real money against a shared key and that spend must be attributable. If a general reporting section is ever built, this page's data belongs in it.
+
 ### Session, Profile, Controls, and Icons (locked 2026-08-08)
 - My Profile contains an editable first/last-name section and a voluntary password-change section; email and role are read-only. A successful name update refreshes shell identity immediately.
 - Successful required and voluntary password changes clear client authentication and return to Login with confirmation. Re-login lands on Dashboard unless a separate normal return URL applies.

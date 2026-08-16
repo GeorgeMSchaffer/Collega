@@ -1,3 +1,4 @@
+using Collega.Domain.Ai;
 using Collega.Domain.Tags;
 using Collega.Domain.Upvotes;
 using Collega.Domain.Users;
@@ -56,5 +57,46 @@ public sealed class ModelConfigurationTests
 
         Assert.Equal(typeof(string), entity.FindProperty(nameof(User.Role))!.GetProviderClrType());
         Assert.Equal(typeof(string), entity.FindProperty(nameof(User.Status))!.GetProviderClrType());
+    }
+
+    /// <summary>
+    /// Every read of the meter filters on organization and time, or on time alone (the daily budget
+    /// gate, which runs before every model call). Without this index both become table scans on a
+    /// table that only grows.
+    /// </summary>
+    [Fact]
+    public void AiUsageRecord_IsIndexedOnOrganizationAndOccurredAt()
+    {
+        using var ctx = InMemoryContext.Create();
+        var indexes = ctx.Model.FindEntityType(typeof(AiUsageRecord))!.GetIndexes().ToList();
+
+        Assert.Contains(indexes, i => i.Properties.Select(p => p.Name)
+            .SequenceEqual(new[] { nameof(AiUsageRecord.OrganizationId), nameof(AiUsageRecord.OccurredAtUtc) }));
+        Assert.Contains(indexes, i => i.Properties.Count == 1
+            && i.Properties[0].Name == nameof(AiUsageRecord.OccurredAtUtc));
+    }
+
+    /// <summary>
+    /// Rates are decimal columns with real precision, not floats. Money read back as a rounded or
+    /// drifting figure would misstate what an organization owes.
+    /// </summary>
+    [Fact]
+    public void AiUsageRecord_StoresRatesAsDecimal_AndEnumsAsStrings()
+    {
+        using var ctx = InMemoryContext.Create();
+        var entity = ctx.Model.FindEntityType(typeof(AiUsageRecord))!;
+
+        // No value converter on the rates, so GetProviderClrType() is null and the CLR type is what
+        // reaches the provider — decimal, with explicit precision rather than the provider default.
+        foreach (var rate in new[] { nameof(AiUsageRecord.InputRatePerMillion), nameof(AiUsageRecord.OutputRatePerMillion) })
+        {
+            var property = entity.FindProperty(rate)!;
+            Assert.Equal(typeof(decimal), property.ClrType);
+            Assert.Equal(12, property.GetPrecision());
+            Assert.Equal(6, property.GetScale());
+        }
+
+        Assert.Equal(typeof(string), entity.FindProperty(nameof(AiUsageRecord.Outcome))!.GetProviderClrType());
+        Assert.Equal(typeof(string), entity.FindProperty(nameof(AiUsageRecord.KeySource))!.GetProviderClrType());
     }
 }

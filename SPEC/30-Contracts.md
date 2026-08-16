@@ -1309,7 +1309,7 @@ Error responses:
 - `403` caller is authenticated but not allowed to create ideas on this board
 - `404` board does not exist or is outside caller scope
 - `429` rate limit exceeded for this user or organization
-- `503` AI assist is not configured or the provider is unavailable — clients degrade to the scripted brainstorm chat rather than surfacing an error
+- `503` AI assist is not configured, the provider is unavailable, **or the deployment's daily token budget is exhausted** (`20-feature-ai-idea-assist.md` rule 28a) — clients degrade to the scripted brainstorm chat rather than surfacing an error. The three causes are deliberately indistinguishable to the client: all three mean "the assistant is unavailable, keep working without it."
 
 ### `GET /api/v1/organizations/{organizationId}/ai-assist/settings`
 Purpose: Read the organization's AI assist configuration for the settings UI.
@@ -1343,6 +1343,48 @@ Success response `200`:
 
 Error responses:
 - `400` request body is malformed or the statement exceeds 500 characters
+- `401` caller is not authenticated
+- `403` caller is authenticated but not allowed to administer this organization
+- `404` organization does not exist or is outside caller scope
+
+### `GET /api/v1/ai-assist/usage`
+Purpose: Platform-wide AI consumption, one row per organization — the Site Admin's view of who is spending what.
+
+Actors: **Site Admin only.** All other roles receive `403`.
+
+Query parameters:
+- `fromUtc` optional date — defaults to the first day of the current UTC month
+- `toUtc` optional date — defaults to now
+
+Behavior rules:
+- rows cover every organization with usage in the window, including archived ones (spend already incurred does not disappear when an org is archived)
+- cost is computed from the rates stored on each usage record, not from current configuration, so a pricing change never re-prices history
+
+Success response `200`:
+- `fromUtc`, `toUtc`
+- `dailyTokenLimit` integer — the configured ceiling (rule 28a)
+- `tokensUsedToday` integer — consumption against that ceiling for the current UTC day, across all organizations
+- `organizations` array, ordered by total tokens descending. Each entry:
+  - `organizationId` GUID string, `organizationName` string
+  - `calls` integer
+  - `inputTokens`, `outputTokens`, `cacheReadInputTokens`, `cacheCreationInputTokens` integers
+  - `estimatedCost` decimal — in USD, from the stored rates
+- `totals` object — the same numeric fields summed across organizations
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is not a Site Admin
+
+### `GET /api/v1/organizations/{organizationId}/ai-assist/usage`
+Purpose: One organization's AI consumption.
+
+Actors: Site Admin on any organization, and Org Admin **on their own organization only**. All other roles receive `403`.
+
+Query parameters: `fromUtc`, `toUtc` — same defaults as above.
+
+Success response `200`: a single organization entry in the shape above, plus `fromUtc` / `toUtc`. `dailyTokenLimit` and `tokensUsedToday` are **omitted** — the ceiling is platform-wide and is not an organization's business.
+
+Error responses:
 - `401` caller is not authenticated
 - `403` caller is authenticated but not allowed to administer this organization
 - `404` organization does not exist or is outside caller scope

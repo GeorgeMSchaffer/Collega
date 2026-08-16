@@ -40,10 +40,19 @@ Paydown sprint, 13 items over two intake rounds. Post-mortem: `sprints/archive/s
 
 The one finding worth carrying forward: **the client's `ClaimsPrincipal` must be refreshed from `/auth/me`, not just read into a local field.** Impersonation is a server-side session and the token is never reissued, so the principal is the only thing that can carry the effective role — and `[Authorize(Roles=…)]`, `<AuthorizeView Roles=…>` and `IsInRole()` all read it. `MainLayout.ReloadIdentityAsync` now calls `RefreshUserAsync`; without that every role-gated surface renders for the real administrator during a View As session. This is the client-side twin of Sprint 6's `ICurrentUserContext` rule.
 
+### Sprint 7 — in progress
+**Cost-control slice landed 2026-08-16, ahead of the feature it meters.** `AiUsageRecord` + `ai_usage_records`, `AiUsageService` (daily budget gate + per-org reports), `EfAiUsageRepository`, `GET /ai-assist/usage` and `GET /organizations/{id}/ai-assist/usage`, and **Settings → API** (`/settings/api`). Verified in the running app for Site Admin, Org Admin, and a Site Admin acting as an Org Admin — the last narrows to the impersonated user's organization, which is the attribution rule that matters.
+
+**What is still wired to nothing:** `IsWithinDailyBudgetAsync` and `RecordAsync` have no caller. Whoever builds the drafting slice owns calling the gate before the provider and the recorder after every turn — including refused and failed ones. Until then the page renders a real but always-empty report.
+
+Nothing else of Sprint 7 is built: no `IdeaAssistService`, no provider call, no comp-11C draft strip.
+
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Portrait image library = **ImageSharp** (`SixLabors.ImageSharp`, pinned **3.1.12**). Fully managed, no native assets — chosen 2026-08-13 specifically because SkiaSharp's package ships natives for Windows/macOS only and broke portrait upload on Linux App Service. **Stay on the 3.1.x line:** 4.x requires a Six Labors license key and warns on every build; 3.1.x is the Split License (free for OSS/personal and organizations under the revenue threshold — re-verify terms before any commercial release).
 - Site Admin org-content mutation = **View As act-as only** (Sprint 6, full act-as + dual attribution); no direct create/edit paths, no org dropdowns. Org + user admin stay direct as the bootstrap exception. → `20-feature-client-ui.md`.
 - AI idea drafting = **Sprint 7**; `Anthropic` package approved, single platform-level key, dedupe deferred to v2. → `20-feature-ai-idea-assist.md`.
+- Sprint 7's **comp gate passed 2026-08-16**: Direction **C "Draft Strip"** (`mockups/comp-c-review-11-ai-assist-c-draftstrip.html`), teal suggestion indicator, scope statement on its own Settings page, ghost-then-drop for refused turns. Four decisions, canonical in `20-feature-ai-idea-assist.md` → "UI Decisions". **Sprint 7 is now buildable.**
+- AI cost controls (user decisions, 2026-08-16): model **`claude-sonnet-5`** at **`low` effort**, **500,000 tokens per UTC day** as one **global** pool, degrade at the cap rather than error, usage tracked **per organization** so per-org keys (rule 30) can be metered without a backfill. The cap is a runaway stop, not a $50 guarantee — saturated daily it allows roughly $99/month, and the usage page is what makes real spend visible. → `20-feature-ai-idea-assist.md` rules 28a–28e.
 - New page/flow UI is **comp-first**.
 - Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/archive/sprint-04-qa-review-debt.md`.
 

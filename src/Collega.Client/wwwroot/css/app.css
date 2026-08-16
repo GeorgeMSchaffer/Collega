@@ -477,6 +477,23 @@ tr.reorderable.drag-over td { box-shadow: inset 0 2px 0 0 var(--accent); }
 }
 .placeholder h3 { font-family: var(--font-sans); font-size: 17px; margin-bottom: 8px; color: var(--ink); }
 
+/* ---- AI token budget meter (Settings → API) ----
+   The fill is a spend gauge, not a progress indicator, so it does not use the indigo accent:
+   neutral while there is headroom, then amber and red as the daily ceiling approaches. Same
+   reasoning as D-SUGGEST — a colour that already means something else must not be reused. */
+/* Full width rather than the 680px prose cap: this reads as a header for the table below it,
+   so the two cards must share an edge. */
+.budget { padding: 16px 18px; margin-bottom: 16px; }
+.budget-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; margin-bottom: 10px; }
+.budget-head span { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.budget-track { height: 8px; border-radius: 4px; background: #f0efed; overflow: hidden; }
+.budget-fill { height: 100%; background: var(--ink-3); transition: width .2s ease; }
+.budget-fill.warn { background: var(--warn); }
+.budget-fill.over { background: var(--err); }
+.budget-foot { font-size: 12px; color: var(--ink-3); line-height: 1.5; margin-top: 10px; }
+.usage-window { font-size: 12.5px; color: var(--ink-3); }
+tfoot .totals td { border-top: 1px solid var(--line); background: #faf9f8; }
+
 /* ---- Fluent UI Blazor component theming ----
    Fluent components are the interactive substrate; these rules pin their look to
    the locked comp (indigo accent, minimal radius, comp input/border colors)

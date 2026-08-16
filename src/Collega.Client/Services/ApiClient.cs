@@ -232,6 +232,16 @@ public sealed partial class ApiClient
     public Task<ApiResult<List<StatusItemDto>>> GetStatusesAsync(string organizationId, CancellationToken ct = default) =>
         GetAsync<List<StatusItemDto>>($"{BasePath}/organizations/{organizationId}/statuses", ct);
 
+    // ---- AI assist usage (SPEC/20-feature-ai-idea-assist.md rule 28d) ----
+
+    /// <summary>Platform-wide AI consumption by organization. Site Admin only; the server enforces it.</summary>
+    public Task<ApiResult<AiUsageReportDto>> GetPlatformAiUsageAsync(CancellationToken ct = default) =>
+        GetAsync<AiUsageReportDto>($"{BasePath}/ai-assist/usage", ct);
+
+    /// <summary>One organization's AI consumption. Site Admin any organization; Org Admin their own only.</summary>
+    public Task<ApiResult<AiUsageReportDto>> GetOrganizationAiUsageAsync(string organizationId, CancellationToken ct = default) =>
+        GetAsync<AiUsageReportDto>($"{BasePath}/organizations/{organizationId}/ai-assist/usage", ct);
+
     public Task<ApiResult<CreateStatusResultDto>> CreateStatusAsync(string organizationId, SaveStatusRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<CreateStatusResultDto>(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/statuses", body, ct);
 

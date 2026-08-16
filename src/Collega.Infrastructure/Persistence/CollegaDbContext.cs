@@ -1,3 +1,4 @@
+using Collega.Domain.Ai;
 using Collega.Domain.Auditing;
 using Collega.Domain.Impersonation;
 using Collega.Domain.Boards;
@@ -29,6 +30,13 @@ public sealed class CollegaDbContext : DbContext
     }
 
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
+
+    /// <summary>
+    /// AI token consumption, one row per model call. Separate from <see cref="AuditEvents"/> on
+    /// purpose — this one is aggregated on the hot path by the daily budget gate
+    /// (SPEC/20-feature-ai-idea-assist.md rule 28a).
+    /// </summary>
+    public DbSet<AiUsageRecord> AiUsageRecords => Set<AiUsageRecord>();
 
     public DbSet<ImpersonationSession> ImpersonationSessions => Set<ImpersonationSession>();
 
