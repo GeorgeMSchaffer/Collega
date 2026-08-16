@@ -35,8 +35,6 @@ Keep entries short. A symptom, where it happens, and — if you know it — the 
 
 ## TODO
 
-_Empty — **and intake is redirected while Sprint 6.5 is open.**_
+* **Two admin drawers can be open at once (keyboard only).** On the five admin list pages no `OpenCreate` clears the detail-drawer state, and `DrawerShell` has neither a focus trap nor `inert` background content, so tabbing to "Add New" behind an open detail drawer opens a second drawer over the first. Not reachable with a mouse — the backdrop intercepts. Carried out of Sprint 6.5's review (finding 4, 2026-08-15) rather than fixed there: the real remedy is a focus trap in `DrawerShell`, which is wider than a paydown sprint. Pre-existing in kind — before item 7 the two surfaces were a drawer and a centered modal, so at least they looked different.
 
-Per the user's decision (2026-08-14), this queue was emptied into **`SPEC/sprints/sprint-06.5-bug-fixes-and-tweaks.md`**, a dedicated bug-and-tweak sprint that supersedes all other sprints. Its Scope table is the single home for bugs and minor tweaks until it closes — add new findings there, not here, so items don't live in two places. The one item that was queued here (the `ViewAsAuth` test-harness leak) moved with it.
-
-This file resumes its normal role as the pre-feature queue once Sprint 6.5 is archived. The gating rule in `CLAUDE.md` is unchanged and now points at that sprint: clear it before starting new feature work.
+Intake returned here on 2026-08-15 when Sprint 6.5 was archived (`sprints/archive/sprint-06.5-bug-fixes-and-tweaks.md`); this is once again the pre-feature queue described above.

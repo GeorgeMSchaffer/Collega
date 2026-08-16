@@ -1,6 +1,6 @@
 ﻿# Sprint 6.5: Bug fixes and element tweaks
 
-**Status:** In Progress (started 2026-08-14) — **intake reopened 2026-08-15** for a second round from Act As testing. 13 items in scope plus one closed with no change; all implemented, none visually confirmed or reviewed. See the Scope table and "Items 8–13".
+**Status:** **Complete (2026-08-15).** 13 items plus one closed with no change — all implemented, visually confirmed against a running client, and review-signed-off. 627 tests green.
 **Sequence:** runs **after Sprint 6, before Sprint 7** — see `SPEC/95-next-sprints.md`. Numbered 6.5 rather than renumbering 7 and 8, so existing cross-references to `sprint-07-*` and `sprint-08-*` stay valid.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -66,6 +66,31 @@ Two tests changed meaning rather than just actor, and say so inline: `Idea_Csv_I
 
 - **"Demo seed should seed a Site Admin per org, and users should be assigned to the org."** Already true, and partly impossible as written: `StartupSeeder` gives every demo org an OrgAdmin (`orgadmin@{slug}.demo.collega.test`) plus two Users, all correctly org-assigned, and a global demo Site Admin. **Site Admin is global by the product model and cannot belong to an organization** (`00-project-brief.md`, `10-requirements.md`), so a per-org Site Admin would be a model change, not a seed change. Confirmed with the user 2026-08-14: the real need was visibility, which is item 6.
 
+## Review pass (2026-08-15)
+
+Scope was `4ef133b..HEAD`, not just the follow-up commits: items 2–7 arrived as a single commit named "Work in progress update" that had never been reviewed.
+
+**Findings raised and fixed**
+
+1. **`aria-pressed` never rendered a valid value** (`PasswordField.razor`). Bound to the `bool` directly; Blazor omits a bool attribute when false and emits it valueless when true, so the toggle was never announced as a toggle. `NavRail.razor:40` already formatted `aria-expanded` to a lowercase string — the new component diverged from an existing in-repo answer. Fixed.
+2. **The reveal toggle was keyboard-unreachable** (`tabindex="-1"`), which made item 3's feature mouse-only. Removed, plus a `:focus-visible` ring — needed because the wrapper's `:focus-within` cannot say which of the two elements holds focus.
+3. **Item 6 had no test coverage.** `StartupSeederTests` passes `NullLogger`, whose `IsEnabled` returns false, so `LogSeededAccountsAsync` never executes under test. Accepted rather than fixed: the method is operator output, and it was instead **verified live** — the roster printed all 8 seeded accounts on a real boot.
+4. **Two drawers can open at once** on the five admin pages: no `OpenCreate` clears the detail-drawer state, and `DrawerShell` has no focus trap or `inert` background, so a keyboard user can Tab to "Add New" behind an open detail drawer. Unreachable by mouse (the backdrop intercepts). **Logged as residual** — see below.
+
+**Checked and cleared**
+
+- `DrawerShell` is a strict parameter superset of `CreateModalShell` (it adds `SubHeaderContent`), so item 7's swap could not drop a parameter.
+- All nine `<label for=…>` associations still match the `Id`s passed to `PasswordField`.
+- `LogSeededAccountsAsync` sits after the `if (!seedDemoData) return;` guard, so its Development-only claim holds.
+- `PasswordField`'s claim that reveal state cannot survive a reopened surface holds: `DrawerShell` renders nothing when closed, so the component is destroyed.
+- `MainLayout` now raises `AuthenticationStateChanged` on every app load. Traced both subscribers (`NavRail`, `SessionTimeoutGuard`) — both idempotent. Confirmed `GET /auth/me` returns `PortraitDataUrl` (`AuthService.ToSummary`), so refreshing the stored summary cannot wipe a user's portrait.
+- `.t` is used only on the new idea-title button, so its CSS reset cannot leak onto other elements.
+
+**Residual, not fixed**
+
+- Finding 4 above (two drawers at once via keyboard). Low severity and pre-dating this sprint in kind — previously the two surfaces were a drawer and a centered modal, so they were at least visually distinct; item 7 makes them occupy the same position. The real fix is a focus trap in `DrawerShell`, which is wider than this sprint.
+- Continuation-line indentation in the four `CreateModalShell` → `DrawerShell` swaps is now over-indented for the shorter tag name. Cosmetic only.
+
 ## Definition of Done
 
 - [x] User confirms the intake list is closed
@@ -73,5 +98,5 @@ Two tests changed meaning rather than just actor, and say so inline: `Idea_Csv_I
 - [x] `dotnet build Collega.sln` clean and `dotnet test Collega.sln` green, run twice (this project has produced a false flakiness signal before — one green run is not evidence) — **622 green, twice, 2026-08-14.** Note what that does and does not prove: items 2–5 and 7 are UI changes with no automated coverage, so the suite shows nothing regressed, not that they render correctly. Items 4/5/7 still need the visual check below.
 - [x] Visual confirmation of items 2, 4, 5 and 7 against a running client — **done 2026-08-15**, driven with Playwright against the real client (`:5098`) and API (`:5103`) on PostgreSQL. Item 2: the header control renders top-right on the crumbs line and correctly gives way to the banner during a session. Item 4: `.backrow` is gone from all five pages and the command row is one line, Back → search → Add New (rightmost). Item 5: `.body` computes `max-width: none`, card 1456px of a 1600px viewport. Item 7: create opens a right-anchored `aside.drawer` with `section.modal` absent on all five admin pages — Organizations verified as Site Admin, and Users/Statuses/Idea Types/Fields as a real Org Admin, since Site Admin sees those as read-only cross-org views with no **Add New**. Items 8–13 were confirmed in the same pass.
 - [x] Any behavior change is reflected in the canonical `SPEC/*.md` first, then tests, then implementation — item 7's reversal was written into `20-feature-client-ui.md` and `src/Collega.Client/CLAUDE.md` before the components changed
-- [ ] Code Reviewer sign-off
+- [x] Code Reviewer sign-off — **2026-08-15**, over `4ef133b..HEAD` (the whole sprint, since the bulk of it landed as one unreviewed commit titled "Work in progress update"). Four findings raised, all resolved; see "Review pass" below.
 - [ ] `SPEC/implementation-agent-tracker.md` and `SPEC/95-next-sprints.md` updated

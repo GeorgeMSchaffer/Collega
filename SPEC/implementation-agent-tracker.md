@@ -13,16 +13,16 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-08-15 against `45ee623` (`feature/065-viewas-test-harness`, ahead of `dev` at `0858032`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-08-15 against `3c09afa` (`feature/065-viewas-test-harness`, 5 commits ahead of `dev` at `0858032`).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
 | MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening, User-Defined Fields, Idea-Type Fields. Done — do not restart. |
 | Blazor client | ~16 pages, 9 shared components in `src/Collega.Client/Components/` | Geist is the single typeface. |
 | Test suite | **622 green** (2026-08-15, run twice) | 113 Domain + 230 Application + 117 Infrastructure + 162 API. Five `PostgresProviderTests` need Docker (skip cleanly without it; CI excludes via `--filter "Category!=Container"`); 11 `Collega.E2E.Tests` skip without a running app. Re-run before trusting. |
-| Sprints | **1–6 complete** · **6.5 in progress, intake closed** · 7–8 blocked behind 6.5 | **Sprint 6.5 supersedes all other sprints** (user, 2026-08-14). All 7 items are implemented; **none has had Code Reviewer sign-off, and items 2/4/5/7 have had no visual confirmation** — they are UI changes no test covers. Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
+| Sprints | **1–6.5 complete** · **7 next** · 8 after it | Sprint 6.5 closed 2026-08-15 (13 items, visually confirmed and reviewed). **Sprint 7 (AI idea assist) opens with a comp-first gate, not code.** Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
-| Bug queue | **Redirected to Sprint 6.5 — 7 items, all implemented** | `SPEC/Bug Triage.md` is empty and points at `sprints/sprint-06.5-bug-fixes-and-tweaks.md`, the single home for bugs and tweaks until that sprint closes. Add findings there, not to the queue. |
+| Bug queue | **Back in `SPEC/Bug Triage.md` — 1 open item** | Intake returned there when 6.5 archived. Open: two admin drawers can be opened at once by keyboard (no focus trap in `DrawerShell`); mouse-unreachable. |
 | Local DB | `collega-postgres` (`postgres:16`), port **5432**, role `collega` | Standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas). Dev demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **If the API won't connect, check user-secrets for a stale SQL Server string** — see `src/Collega.API/CLAUDE.md`. |
 
 ### Sprint 5 — complete (merged `7c5a78b`)
@@ -34,6 +34,11 @@ View As, merged to `dev` at `c25eeda`; two code-review passes raised 8 then 9 fi
 The last open item, retiring Site Admin direct org-content mutation, closed 2026-08-14: enforcement moved server-side into the Application layer (`OrgContentMutationGuard`) rather than resting on client affordances, which were route-shaped and bypassable. A third review pass found two unguarded paths — `ReassignIdeaTypeAsync` and `ImportBoardIdeasAsync`, the latter letting a refused Site Admin bulk-create the same ideas by CSV — both fixed and covered. Detail: `sprints/archive/sprint-06-view-as.md` Definition of Done. Canonical: `20-feature-view-as.md` rules 25-26.
 
 **Product rule, stated by the user 2026-08-14 and now the reading of rules 25/25c/26:** *a Site Admin creates organizations and users for organizations; every other activity goes through Act As.* This resolved a real conflict — `20-feature-ideas-and-engagement.md` had said all authenticated users may upvote and comment, and that Site Admin may CSV-import ideas. Those three rules are now explicitly superseded **for the Site Admin role only** (Read Only users are members and keep both). Note the two CSV imports split: **user** import stays direct as bootstrap, **idea** import goes through View As.
+
+### Sprint 6.5 — complete (2026-08-15)
+Paydown sprint, 13 items over two intake rounds. Post-mortem: `sprints/archive/sprint-06.5-bug-fixes-and-tweaks.md`.
+
+The one finding worth carrying forward: **the client's `ClaimsPrincipal` must be refreshed from `/auth/me`, not just read into a local field.** Impersonation is a server-side session and the token is never reissued, so the principal is the only thing that can carry the effective role — and `[Authorize(Roles=…)]`, `<AuthorizeView Roles=…>` and `IsInRole()` all read it. `MainLayout.ReloadIdentityAsync` now calls `RefreshUserAsync`; without that every role-gated surface renders for the real administrator during a View As session. This is the client-side twin of Sprint 6's `ICurrentUserContext` rule.
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Portrait image library = **ImageSharp** (`SixLabors.ImageSharp`, pinned **3.1.12**). Fully managed, no native assets — chosen 2026-08-13 specifically because SkiaSharp's package ships natives for Windows/macOS only and broke portrait upload on Linux App Service. **Stay on the 3.1.x line:** 4.x requires a Six Labors license key and warns on every build; 3.1.x is the Split License (free for OSS/personal and organizations under the revenue threshold — re-verify terms before any commercial release).
