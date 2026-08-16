@@ -30,6 +30,22 @@ This is a **post-MVP feature** pulled in by explicit user decision. Unlike Sprin
 ## Comp-first gate
 Per the 2026-08-11 process decision, this flow gets a throwaway HTML comp in `SPEC/mockups/` for sign-off **before** production Blazor. The comp must settle: the suggestion indicator treatment on pre-filled `IdeaCreateModal` fields, the out-of-scope redirect presentation, the pending/failed turn states, and the org settings scope-statement field. Build on the locked review-09 detail-surface foundation.
 
+**Drafted 2026-08-16 — three directions, awaiting sign-off. Nothing is locked yet, so no Blazor may start.**
+
+| Comp | Direction | Shape |
+|---|---|---|
+| `mockups/comp-c-review-11-ai-assist-a-handoff.html` | **A · Conversation → Handoff** | Today's two sequential surfaces; the assistant's work appears at the handoff. No new chrome. |
+| `mockups/comp-c-review-11-ai-assist-b-livedraft.html` | **B · Live Draft** | One 1080×660 two-pane sheet; the idea takes shape beside the conversation and is editable in place. |
+| `mockups/comp-c-review-11-ai-assist-c-draftstrip.html` | **C · Draft Strip** | A's flow plus a slim **read-only** strip above the composer showing classification live. **Recommended.** |
+
+Common to all three: the suggestion indicator is **teal, not the indigo accent** — indigo already means "active/selected" throughout Comp C, and a suggestion is neither.
+
+**Still undecided after this round**, and needed before build:
+
+1. **Which direction.** C takes A's cost and risk while removing A's one real weakness (the user learns nothing until the reveal). B is only worth its extra surface if correcting the Idea Type *mid-conversation* matters — a question real usage answers better than a comp.
+2. **Where the scope statement lives.** A draws a dedicated Settings page; B draws a section in the Organization detail drawer. Pick one.
+3. **Whether the off-topic turn ghosts before it drops**, or never renders at all. Rule 8 says drop it from the transcript; rendering nothing is the literal reading but makes a user's typed message vanish unexplained. All three comps propose ghost-then-drop.
+
 ## Sprint Backlog
 | Priority | Item | Notes |
 |---|---|---|
