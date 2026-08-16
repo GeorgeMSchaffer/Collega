@@ -38,11 +38,14 @@
                         <div>
                             <b>That one's outside what I can help with here.</b>
                             <span class="redirect">@m.Text</span>
-                            @if (m.StrikesRemaining > 0)
+                            @if (!_closed)
                             {
+                                @* No count: the server owns the strike tally and the turn response
+                                   doesn't carry it, so naming a number here would be a guess — and
+                                   the guess was wrong (it said "1 more" after the first of three). *@
                                 <span class="subtle">
-                                    Not added to the conversation.
-                                    @m.StrikesRemaining more off-topic @(m.StrikesRemaining == 1 ? "turn" : "turns") will end the chat.
+                                    That message wasn't added to the conversation. Repeated off-topic
+                                    messages will end the chat.
                                 </span>
                             }
                         </div>
@@ -149,8 +152,6 @@
     {
         /// <summary>Struck-through for one beat before the turn is dropped (D-REFUSED).</summary>
         public bool Ghosted { get; init; }
-
-        public int StrikesRemaining { get; init; }
     }
 
     private readonly List<ChatMessage> _messages = new();
@@ -274,17 +275,22 @@
 
         if (!result.Succeeded || result.Value is null)
         {
-            // Any failure — 503, timeout, malformed — degrades for this turn with the user's text
-            // preserved. It is never surfaced as an error, because the assistant is optional.
-            _assistUnavailable = true;
+            // A 429 is not a dead assistant — it is a busy one. Degrade this turn, but don't latch
+            // the fallback, or one burst would leave the user on scripted prompts for the rest of
+            // the conversation even though the limit clears in seconds.
+            if (result.StatusCode != 429)
+            {
+                _assistUnavailable = true;
+            }
+
             AppendScriptedPrompt();
             return;
         }
 
-        ApplyTurn(result.Value);
+        await ApplyTurnAsync(result.Value);
     }
 
-    private void ApplyTurn(IdeaAssistTurnResponseDto turn)
+    private async Task ApplyTurnAsync(IdeaAssistTurnResponseDto turn)
     {
         _turnsRemaining = turn.TurnsRemaining;
 
@@ -299,13 +305,15 @@
                 _messages[offending] = _messages[offending] with { Ghosted = true };
             }
 
-            _messages.Add(new ChatMessage(false, turn.NextQuestion, MessageKind.Refusal)
-            {
-                StrikesRemaining = turn.ConversationClosed ? 0 : 1,
-            });
+            _messages.Add(new ChatMessage(false, turn.NextQuestion, MessageKind.Refusal));
 
             _stripNote = "unchanged";
             _closed = turn.ConversationClosed;
+
+            // The "then-drop" half of D-REFUSED. The ghost is an acknowledgement that the message was
+            // seen and rejected — leaving it up forever turns a one-beat signal into permanent
+            // clutter, and re-reads as though the message is still part of the conversation.
+            await DropGhostAsync();
             return;
         }
 
@@ -323,6 +331,21 @@
                 "That's plenty to work with — let's move to the idea form and finish up."));
         }
     }
+
+    /// <summary>
+    /// Holds the struck-through message for one beat, then removes it (D-REFUSED). Long enough to
+    /// read and register that it was rejected, short enough not to become part of the transcript.
+    /// </summary>
+    private async Task DropGhostAsync()
+    {
+        StateHasChanged();
+        await Task.Delay(GhostLingerMs);
+
+        _messages.RemoveAll(m => m.Ghosted);
+        StateHasChanged();
+    }
+
+    private const int GhostLingerMs = 2200;
 
     private static bool Changed(IdeaDraftDto before, IdeaDraftDto after) =>
         before.Title != after.Title

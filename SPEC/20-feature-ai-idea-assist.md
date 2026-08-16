@@ -102,6 +102,14 @@ The scripted chat collects prose and nothing else. Everything the user says abou
 24. Client-supplied ids are not trusted at commit, exactly as today. This rule exists so a future change cannot "optimize" the confirm step away.
 25. Everything retrieved is **untrusted data**, not instructions. Existing idea text, tag names, and (in v2) uploaded documents are authored by users and may contain injection attempts. Retrieved content is fenced in the prompt and explicitly labeled as data the assistant must not follow instructions from.
 26. Requests are rate limited per user and per organization. The limits are configuration, not hard-coded.
+
+    26a. *Mechanism.* A sliding window counted from the usage records of rule 28c, not a separate counter — they already carry organization, actor and timestamp, they are already written for every turn, and the tally is therefore correct across instances the moment a deployment scales past one. Keys: `Ai:RateLimit:WindowSeconds`, `Ai:RateLimit:PerUserCalls`, `Ai:RateLimit:PerOrganizationCalls`; non-positive disables, matching the budget convention.
+
+    26b. *The per-user allowance follows the real administrator, not the impersonated user.* Otherwise a Site Admin could reset their own quota by moving between View As targets, which would make the per-user limit decorative for exactly the account that needs it least.
+
+    26c. *Refused and failed turns count.* Rule 10's three-strikes close bounds a single conversation; this bounds the attempt to open many, so probing the boundary has to spend allowance.
+
+    26d. *Rate limiting answers `429` with `Retry-After`, never the `503` of rule 31.* The two mean opposite things to a client — "you asked too fast, come back shortly" versus "the assistant is gone, work without it" — and a client that cannot tell them apart will either give up on a working feature or hammer a dead endpoint. The gate runs **after** the availability check: with nothing to spend there is nothing to limit.
 27. Each call records an audit event: acting user, organization, board, turn count, token usage, and whether the turn was refused as out of scope. **Prompt and transcript content are not written to the audit log.**
 28. API keys are never returned by any endpoint, never logged, and never sent to the client.
 

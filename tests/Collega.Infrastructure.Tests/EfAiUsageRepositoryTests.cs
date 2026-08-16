@@ -166,6 +166,92 @@ public sealed class EfAiUsageRepositoryTests
         Assert.Equal(42, only.TotalTokens);
     }
 
+    // ---- Rate-limit counts (rule 26) ----
+
+    [Fact]
+    public async Task CountCallsSince_ReturnsOrganizationAndActorTallies()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repository = new EfAiUsageRepository(ctx);
+        var org = Guid.NewGuid();
+        var me = Guid.NewGuid();
+        var colleague = Guid.NewGuid();
+
+        Given(ctx, org, Noon, actorUserId: me);
+        Given(ctx, org, Noon, actorUserId: me);
+        Given(ctx, org, Noon, actorUserId: colleague);
+        await ctx.SaveChangesAsync();
+
+        var counts = await repository.CountCallsSinceAsync(org, me, Noon.AddMinutes(-1));
+
+        Assert.Equal(3, counts.OrganizationCalls);
+        Assert.Equal(2, counts.ActorCalls);
+    }
+
+    [Fact]
+    public async Task CountCallsSince_ExcludesOtherOrganizations()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repository = new EfAiUsageRepository(ctx);
+        var mine = Guid.NewGuid();
+        var actor = Guid.NewGuid();
+
+        Given(ctx, mine, Noon, actorUserId: actor);
+        Given(ctx, Guid.NewGuid(), Noon, actorUserId: actor);
+        await ctx.SaveChangesAsync();
+
+        var counts = await repository.CountCallsSinceAsync(mine, actor, Noon.AddMinutes(-1));
+
+        Assert.Equal(1, counts.OrganizationCalls);
+        Assert.Equal(1, counts.ActorCalls);
+    }
+
+    [Fact]
+    public async Task CountCallsSince_ExcludesCallsBeforeTheWindow()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repository = new EfAiUsageRepository(ctx);
+        var org = Guid.NewGuid();
+        var actor = Guid.NewGuid();
+
+        Given(ctx, org, Noon.AddMinutes(-5), actorUserId: actor);
+        Given(ctx, org, Noon, actorUserId: actor);
+        await ctx.SaveChangesAsync();
+
+        var counts = await repository.CountCallsSinceAsync(org, actor, Noon.AddMinutes(-1));
+
+        Assert.Equal(1, counts.OrganizationCalls);
+    }
+
+    [Fact]
+    public async Task CountCallsSince_IsZero_WhenNothingIsInTheWindow()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repository = new EfAiUsageRepository(ctx);
+
+        var counts = await repository.CountCallsSinceAsync(Guid.NewGuid(), Guid.NewGuid(), Noon);
+
+        Assert.Equal(0, counts.OrganizationCalls);
+        Assert.Equal(0, counts.ActorCalls);
+    }
+
+    /// <summary>A null actor still yields the organization tally — the org limit applies regardless.</summary>
+    [Fact]
+    public async Task CountCallsSince_HandlesANullActor()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repository = new EfAiUsageRepository(ctx);
+        var org = Guid.NewGuid();
+
+        Given(ctx, org, Noon, actorUserId: Guid.NewGuid());
+        await ctx.SaveChangesAsync();
+
+        var counts = await repository.CountCallsSinceAsync(org, null, Noon.AddMinutes(-1));
+
+        Assert.Equal(1, counts.OrganizationCalls);
+        Assert.Equal(0, counts.ActorCalls);
+    }
+
     [Fact]
     public async Task Add_StagesTheRecord_ForTheCallersUnitOfWork()
     {
@@ -193,8 +279,9 @@ public sealed class EfAiUsageRepositoryTests
         int input = 0,
         int output = 0,
         int cacheRead = 0,
-        int cacheWrite = 0) =>
-        ctx.AiUsageRecords.Add(Record(organizationId, occurredAtUtc, input, output, cacheRead, cacheWrite));
+        int cacheWrite = 0,
+        Guid? actorUserId = null) =>
+        ctx.AiUsageRecords.Add(Record(organizationId, occurredAtUtc, input, output, cacheRead, cacheWrite, actorUserId));
 
     private static AiUsageRecord Record(
         Guid organizationId,
@@ -202,7 +289,8 @@ public sealed class EfAiUsageRepositoryTests
         int input = 0,
         int output = 0,
         int cacheRead = 0,
-        int cacheWrite = 0) =>
+        int cacheWrite = 0,
+        Guid? actorUserId = null) =>
         AiUsageRecord.Create(
             organizationId,
             "claude-sonnet-5",
@@ -212,6 +300,7 @@ public sealed class EfAiUsageRepositoryTests
             inputRatePerMillion: 3.00m,
             outputRatePerMillion: 15.00m,
             AiCallOutcome.Succeeded,
+            actorUserId,
             cacheReadInputTokens: cacheRead,
             cacheCreationInputTokens: cacheWrite);
 }

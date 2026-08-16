@@ -58,6 +58,56 @@ public sealed class AiUsageService : IAiUsageService
     }
 
     /// <summary>
+    /// Enforces the per-user and per-organization request limits (rule 26). Called <b>before</b> the
+    /// provider, like the budget gate — a rate limit that only notices after the call has been paid
+    /// for is not a rate limit.
+    /// </summary>
+    /// <remarks>
+    /// <para>Counted from the usage records themselves rather than a separate counter: they already
+    /// carry organization, actor and timestamp, they are already written for every turn including
+    /// refused and failed ones, and — unlike an in-memory counter — the tally is correct across
+    /// instances the moment the deployment scales past one. The window is seconds wide, so the query
+    /// touches few rows.</para>
+    ///
+    /// <para>Because refused turns are counted, probing the scope boundary spends allowance. That is
+    /// deliberate: rule 10's three-strikes close bounds one conversation, this bounds the attempt to
+    /// open many.</para>
+    /// </remarks>
+    /// <exception cref="RateLimitedAppException">Either limit is exhausted for this window.</exception>
+    public async Task EnforceRateLimitAsync(Guid organizationId, CancellationToken cancellationToken = default)
+    {
+        if (!_limits.IsRateLimited)
+        {
+            return;
+        }
+
+        var window = TimeSpan.FromSeconds(_limits.RateLimitWindowSeconds);
+        var counts = await _usageRepository.CountCallsSinceAsync(
+            organizationId,
+            // The real administrator during a View As session, never the impersonated user —
+            // otherwise switching who you act as would reset your own allowance.
+            _currentUser.RealUserId,
+            _clock.UtcNow - window,
+            cancellationToken);
+
+        var retryAfter = Math.Max(1, _limits.RateLimitWindowSeconds);
+
+        if (_limits.PerUserCallsPerWindow > 0 && counts.ActorCalls >= _limits.PerUserCallsPerWindow)
+        {
+            throw new RateLimitedAppException(
+                "You've made too many assistant requests just now. Give it a moment and try again.",
+                retryAfter);
+        }
+
+        if (_limits.PerOrganizationCallsPerWindow > 0 && counts.OrganizationCalls >= _limits.PerOrganizationCallsPerWindow)
+        {
+            throw new RateLimitedAppException(
+                "Your organization has made too many assistant requests just now. Give it a moment and try again.",
+                retryAfter);
+        }
+    }
+
+    /// <summary>
     /// Meters one model call. Called after every turn — including refused and failed ones, which
     /// consumed tokens too (rule 28c).
     /// </summary>
@@ -98,6 +148,19 @@ public sealed class AiUsageService : IAiUsageService
         await _usageRepository.AddAsync(record, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// Recent outcomes for the current actor on one board. Scoped to the <b>real</b> actor for the
+    /// same reason the rate limit is: switching who you act as must not wipe your history.
+    /// </summary>
+    public Task<IReadOnlyList<AiCallOutcome>> GetRecentOutcomesAsync(
+        Guid organizationId,
+        Guid boardId,
+        int limit,
+        DateTime fromUtc,
+        CancellationToken cancellationToken = default) =>
+        _usageRepository.GetRecentOutcomesAsync(
+            organizationId, _currentUser.RealUserId, boardId, limit, fromUtc, cancellationToken);
 
     /// <summary>Platform-wide consumption, one entry per organization. Site Admin only.</summary>
     public async Task<AiUsageReport> GetPlatformUsageAsync(

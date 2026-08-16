@@ -55,7 +55,11 @@ internal sealed class UnconfiguredIdeaDraftModel : IIdeaDraftModel
 /// documented for this pattern; see CLAUDE.md's testing conventions ("EF Core tests use the
 /// InMemory provider, never a real database").
 /// </remarks>
-public sealed class CollegaApiFactory : WebApplicationFactory<Program>
+/// <remarks>
+/// Not sealed: <see cref="AiConfiguredApiFactory"/> derives from it to reach the paths behind AI
+/// availability, which are unreachable in a host running the feature dark.
+/// </remarks>
+public class CollegaApiFactory : WebApplicationFactory<Program>
 {
     // Fixed per factory INSTANCE (not regenerated inside ConfigureServices) because
     // WebApplicationFactory can invoke ConfigureWebHost/ConfigureServices more than once while

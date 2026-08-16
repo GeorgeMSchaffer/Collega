@@ -97,6 +97,11 @@ public sealed class IdeaAssistService : IIdeaAssistService
             throw new AiAssistUnavailableException();
         }
 
+        // Rate limits are 429, deliberately *not* folded into the 503 above: unavailable means "stop
+        // asking, work without it", rate-limited means "you asked too fast, try again shortly". A
+        // client that cannot tell those apart either gives up too early or retries a dead endpoint.
+        await _usage.EnforceRateLimitAsync(organizationId, cancellationToken);
+
         var userTurnCount = request.Transcript.Count(t => t.IsUser);
         var currentDraft = request.Draft ?? IdeaDraft.Empty;
 
@@ -125,8 +130,7 @@ public sealed class IdeaAssistService : IIdeaAssistService
             // The draft is returned unchanged and the client drops the offending turn rather than
             // appending it: accumulated off-topic context is what drifts a constrained assistant
             // into a general one (rule 8).
-            var strikes = CountTrailingOutOfScopeStrikes(request.Transcript) + 1;
-            var closed = strikes >= OutOfScopeStrikeLimit;
+            var closed = await IsThirdConsecutiveRefusalAsync(organizationId, request.BoardId, cancellationToken);
 
             return new IdeaAssistTurnResult(
                 InScope: false,
@@ -228,43 +232,59 @@ public sealed class IdeaAssistService : IIdeaAssistService
         }
 
         var trimmed = value.Trim();
-        return trimmed.Length <= maxLength ? trimmed : trimmed[..maxLength];
+
+        if (trimmed.Length <= maxLength)
+        {
+            return trimmed;
+        }
+
+        // Back off one if the cut would land between a surrogate pair. The schema caps length in code
+        // points and C# counts UTF-16 units, so the two disagree exactly where emoji appear — and a
+        // lone surrogate is an invalid string that would fail validation on the create form the user
+        // is about to submit.
+        var end = maxLength;
+        if (char.IsHighSurrogate(trimmed[end - 1]))
+        {
+            end--;
+        }
+
+        return trimmed[..end];
     }
 
     /// <summary>
-    /// Counts consecutive refusals at the end of the transcript. Refused user turns are dropped by
-    /// the client, so the only trace of a strike is the assistant's redirect — three of those in a
-    /// row with nothing between them means three consecutive out-of-scope turns.
+    /// Whether the refusal just recorded is the third consecutive one, closing the chat (rule 10).
     /// </summary>
-    private static int CountTrailingOutOfScopeStrikes(IReadOnlyList<IdeaAssistTurn> transcript)
+    /// <remarks>
+    /// <para><b>Read from the usage records, never from the transcript.</b> The client owns the
+    /// transcript, and it drops refused turns by design — so a strike count derived from it is both
+    /// absent in the normal case and trivially erasable by a caller probing the boundary. These rows
+    /// are written by the server on every turn and the caller cannot touch them.</para>
+    ///
+    /// <para>Called after the current turn has been recorded, so the newest row <i>is</i> this
+    /// refusal: three consecutive refused outcomes on this board, by this actor, means close.</para>
+    /// </remarks>
+    private async Task<bool> IsThirdConsecutiveRefusalAsync(
+        Guid organizationId,
+        Guid boardId,
+        CancellationToken cancellationToken)
     {
-        var strikes = 0;
+        var outcomes = await _usage.GetRecentOutcomesAsync(
+            organizationId,
+            boardId,
+            OutOfScopeStrikeLimit,
+            _clock.UtcNow - ConversationLookback,
+            cancellationToken);
 
-        for (var i = transcript.Count - 1; i >= 0; i--)
-        {
-            var entry = transcript[i];
-
-            if (entry.IsUser)
-            {
-                // The final user turn is the one being judged now; anything earlier breaks the run.
-                if (i == transcript.Count - 1)
-                {
-                    continue;
-                }
-
-                break;
-            }
-
-            if (!string.Equals(entry.Text?.Trim(), OutOfScopeRedirect, StringComparison.Ordinal))
-            {
-                break;
-            }
-
-            strikes++;
-        }
-
-        return strikes;
+        return outcomes.Count >= OutOfScopeStrikeLimit
+            && outcomes.Take(OutOfScopeStrikeLimit).All(o => o == AiCallOutcome.Refused);
     }
+
+    /// <summary>
+    /// How far back a strike still counts. A conversation is capped at 20 turns and runs in minutes,
+    /// so an hour is generous — but bounded, so yesterday's refusals don't close today's chat before
+    /// it starts.
+    /// </summary>
+    private static readonly TimeSpan ConversationLookback = TimeSpan.FromHours(1);
 
     private void ValidateTranscript(IReadOnlyList<IdeaAssistTurn> transcript)
     {

@@ -62,6 +62,9 @@ public sealed class AppExceptionHandler : IExceptionHandler
             AiAssistUnavailableException unavailable => (
                 StatusCodes.Status503ServiceUnavailable,
                 new ProblemDetails { Type = TypeFor(StatusCodes.Status503ServiceUnavailable), Title = "Service Unavailable", Status = StatusCodes.Status503ServiceUnavailable, Detail = unavailable.Message }),
+            RateLimitedAppException rateLimited => (
+                StatusCodes.Status429TooManyRequests,
+                new ProblemDetails { Type = TypeFor(StatusCodes.Status429TooManyRequests), Title = "Too Many Requests", Status = StatusCodes.Status429TooManyRequests, Detail = rateLimited.Message }),
             _ => (0, null)
         };
 
@@ -69,6 +72,13 @@ public sealed class AppExceptionHandler : IExceptionHandler
         {
             // Not one of ours — let the default AddProblemDetails() handler render it.
             return false;
+        }
+
+        // A 429 without Retry-After leaves a well-behaved client guessing and a badly-behaved one
+        // hammering. Set before the body is written — headers are already sent by then.
+        if (exception is RateLimitedAppException retryable)
+        {
+            httpContext.Response.Headers.RetryAfter = retryable.RetryAfterSeconds.ToString();
         }
 
         problemDetails.Instance = httpContext.Request.Path;

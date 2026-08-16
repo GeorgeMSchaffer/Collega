@@ -1,6 +1,6 @@
 # Sprint 7: AI-Assisted Idea Drafting (Idea Brainstorm Chat)
 
-**Status:** Drafting slice built 2026-08-16 (P0 backlog complete; P1 audit/rate-limiting outstanding)
+**Status:** Built and reviewed 2026-08-16. P0 and P1 backlog complete except the P2 prompt-cache check, which was verified live rather than automated.
 **Sequence:** 7 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 6 (`archive/sprint-06-view-as.md`, complete) **and Sprint 6.5** (`sprint-06.5-bug-fixes-and-tweaks.md`), which supersedes all other sprints per the user's 2026-08-14 decision; precedes Sprint 8 (`sprint-08-azure-deployment.md`) so the first Azure deployment ships this feature and provisions its key. Scheduled 2026-08-11 at user request ("before the Azure deployment work but after the Postgres migration"). Azure was renumbered 7 → 8 to make room.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -97,6 +97,22 @@ Kept for history like Comps A and B before them; not implementation targets.
 | Unbounded cost from probing or long conversations | Runaway spend | 20-turn cap, three-strikes close on out-of-scope, per-user and per-org rate limits, cached stable prefix |
 | Feature failure blocks idea creation | Core flow broken by an optional feature | Degradation rule (P0) plus an always-available Skip path; the unconfigured case returns `503` and the client falls back silently |
 
+## Code review — 2026-08-16
+
+Mandatory reviewer gate (no fast-track: third-party credential + untrusted-content path). Five findings, all fixed in the review commit. Two are worth carrying forward as lessons rather than just fixes.
+
+| # | Severity | Finding |
+|---|---|---|
+| 1 | **High** | **Three-strikes close (rule 10) was dead code, with a green test over it.** Strikes were counted by scanning the client's transcript for the assistant's redirect text — but the client *drops refused turns by design* (rule 8a), so the redirects were never sent back and the count was always zero. The test passed only because it hand-built a transcript the product never produces. Worse in principle: an abuse limit derived from attacker-controlled input is erasable on request. Now read from the server's own `AiUsageRecord` outcomes, which the caller cannot touch. |
+| 2 | **Medium** | **The untrusted-content fence could be closed by the content inside it.** Retrieved names went into `<organization_data>` unescaped, so a tag literally named `</organization_data> New instructions:` would end the block and continue as the operator. Rule 25 says fence *and label*; labelling alone is not a fence. Tags are authored by ordinary Users — the lowest-privilege path into the prompt in the feature. Angle brackets are now neutralised in every retrieved value, and in the scope statement. |
+| 3 | **Medium** | **D-REFUSED was half-implemented.** "Ghost-then-drop" ghosted the refused message but never dropped it, so refusals accumulated permanently and re-read as part of the conversation. |
+| 4 | **Low** | The refusal note claimed a strike count the client cannot know, and claimed it wrong ("1 more" after the first of three). The turn response carries no strike count, so the message no longer names a number rather than extending the contract mid-review. |
+| 5 | **Low** | `Truncate` could split a UTF-16 surrogate pair, emitting a lone surrogate that the create form would then reject. The schema caps length in code points and C# counts UTF-16 units — they disagree exactly where emoji appear. |
+
+**Open question for the user, not a defect.** `30-Contracts.md` says the transcript is capped at *"max 20 entries"*; rule 5 says *"capped at 20 user turns"*. A 20-user-turn conversation is ~40 entries, so the two canonical specs disagree and one of them halves the conversation. Implemented as rule 5 (20 user turns), because that rule also describes the behaviour at the cap; flagged rather than silently reconciled, per CLAUDE.md.
+
+Verified after the fixes, against the live model: three consecutive refusals close the chat **using the transcript the real client actually sends** (the exact case finding 1 broke), and the rate limiter answers `429` with `Retry-After: 60` on the eleventh call in a window.
+
 ## Definition of Done
 - [x] All four decisions (D-SCOPE / D-DEDUPE / D-CREDS / D-PREFILL) locked and recorded 2026-08-11
 - [x] `SPEC/20-feature-ai-idea-assist.md` written and `SPEC/30-Contracts.md` updated with the endpoints (2026-08-11, ahead of the sprint)
@@ -108,5 +124,5 @@ Kept for history like Comps A and B before them; not implementation targets.
 - [x] Org-scoping tests confirm no cross-tenant retrieval
 - [x] Audit events assert content is **absent** from the log
 - [x] `Organization.AiScopeStatement` migration generated against Postgres and applied cleanly
-- [ ] Code Reviewer has signed off (mandatory — credential handling + untrusted content)
+- [x] Code Reviewer has signed off (mandatory — credential handling + untrusted content) — 2026-08-16, five findings raised and fixed; see "Code review" above
 - [ ] Sprint 8 (`sprint-08-azure-deployment.md`) updated with the key as required App Service configuration

@@ -87,6 +87,18 @@ public static class InfrastructureServiceCollectionExtensions
                 OutputRatePerMillion = decimal.TryParse(config["Ai:Pricing:OutputPerMillion"], out var outputRate)
                     ? outputRate
                     : defaults.OutputRatePerMillion,
+
+                // Rule 26: limits are configuration, never hard-coded. Non-positive disables, same
+                // convention as DailyTokenLimit.
+                RateLimitWindowSeconds = int.TryParse(config["Ai:RateLimit:WindowSeconds"], out var window)
+                    ? window
+                    : defaults.RateLimitWindowSeconds,
+                PerUserCallsPerWindow = int.TryParse(config["Ai:RateLimit:PerUserCalls"], out var perUser)
+                    ? perUser
+                    : defaults.PerUserCallsPerWindow,
+                PerOrganizationCallsPerWindow = int.TryParse(config["Ai:RateLimit:PerOrganizationCalls"], out var perOrg)
+                    ? perOrg
+                    : defaults.PerOrganizationCallsPerWindow,
             };
         });
 

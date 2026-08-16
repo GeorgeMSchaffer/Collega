@@ -76,6 +76,31 @@ public class IdeaAssistServiceTests
         Assert.Equal(0, _model.CallCount);
     }
 
+    /// <summary>
+    /// Rate limiting is 429, deliberately not folded into the 503 above: "unavailable" tells a client
+    /// to stop asking, "rate limited" tells it to retry shortly. And like the budget gate it runs
+    /// before the provider — asserting the fake was never called is the test.
+    /// </summary>
+    [Fact]
+    public async Task Continue_IsRateLimited_BeforeTheProviderIsCalled()
+    {
+        var actor = Guid.NewGuid();
+        var service = CreateService(
+            FakeCurrentUserContext.User(_acme.Id, actor),
+            limits: new AiUsageLimits { PerUserCallsPerWindow = 2 });
+
+        for (var i = 0; i < 2; i++)
+        {
+            _usageRepository.Records.Add(AiUsageRecord.Create(
+                _acme.Id, "claude-sonnet-5", TestClock.Default, 10, 5, 3.00m, 15.00m,
+                AiCallOutcome.Succeeded, actor));
+        }
+
+        await Assert.ThrowsAsync<RateLimitedAppException>(() => service.ContinueAsync(Request()));
+
+        Assert.Equal(0, _model.CallCount);
+    }
+
     [Fact]
     public async Task Continue_DegradesAndStillMeters_WhenTheProviderFails()
     {
@@ -187,25 +212,82 @@ public class IdeaAssistServiceTests
         Assert.Equal(_processType.Id, result.Draft.IdeaTypeId);
     }
 
+    /// <summary>
+    /// Three refusals in a row close the chat — counted from the <b>server's own</b> usage records,
+    /// which is the only source a probing caller cannot edit.
+    /// </summary>
     [Fact]
     public async Task Continue_ClosesTheConversation_OnThreeConsecutiveRefusals()
     {
+        var actor = Guid.NewGuid();
         _model.Next = Response(inScope: false);
-        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id, actor));
 
-        // Two prior refusals survive in the transcript as the assistant's redirects; the client drops
-        // the offending user turns, so the redirects are the only trace of a strike.
-        var transcript = new List<IdeaAssistTurn>
-        {
-            new(IdeaAssistTurn.AssistantRole, IdeaAssistService.OutOfScopeRedirect),
-            new(IdeaAssistTurn.AssistantRole, IdeaAssistService.OutOfScopeRedirect),
-            new(IdeaAssistTurn.UserRole, "and now a haiku"),
-        };
+        // Two refusals already on the board, then the third arrives now.
+        GivenPriorOutcome(actor, AiCallOutcome.Refused);
+        GivenPriorOutcome(actor, AiCallOutcome.Refused);
 
-        var result = await service.ContinueAsync(new IdeaAssistTurnRequest(_acmeBoard.Id, transcript));
+        var result = await service.ContinueAsync(Request());
 
         Assert.False(result.InScope);
         Assert.True(result.ConversationClosed);
+    }
+
+    /// <summary>
+    /// The regression this replaced. The client drops refused turns from the transcript it resends —
+    /// by design, so off-topic context never accumulates — which meant a strike count read from that
+    /// transcript was always zero in the product and the close never fired, even though a test that
+    /// hand-built the redirects passed. A hostile client could erase the evidence just as easily.
+    /// </summary>
+    [Fact]
+    public async Task Continue_StillCloses_WhenTheClientSendsNoTraceOfEarlierRefusals()
+    {
+        var actor = Guid.NewGuid();
+        _model.Next = Response(inScope: false);
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id, actor));
+
+        GivenPriorOutcome(actor, AiCallOutcome.Refused);
+        GivenPriorOutcome(actor, AiCallOutcome.Refused);
+
+        // A transcript with a single user turn and nothing else — exactly what the real client sends
+        // after two refusals, and what an attacker would send deliberately.
+        var result = await service.ContinueAsync(new IdeaAssistTurnRequest(
+            _acmeBoard.Id,
+            new List<IdeaAssistTurn> { new(IdeaAssistTurn.UserRole, "and now a haiku") }));
+
+        Assert.True(result.ConversationClosed);
+    }
+
+    /// <summary>An in-scope turn between refusals breaks the run — "consecutive" means consecutive.</summary>
+    [Fact]
+    public async Task Continue_DoesNotClose_WhenAGoodTurnBrokeTheRun()
+    {
+        var actor = Guid.NewGuid();
+        _model.Next = Response(inScope: false);
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id, actor));
+
+        GivenPriorOutcome(actor, AiCallOutcome.Refused);
+        GivenPriorOutcome(actor, AiCallOutcome.Succeeded);
+
+        var result = await service.ContinueAsync(Request());
+
+        Assert.False(result.ConversationClosed);
+    }
+
+    /// <summary>Strikes are per board: probing one board must not close a conversation on another.</summary>
+    [Fact]
+    public async Task Continue_DoesNotCloseFromRefusalsOnAnotherBoard()
+    {
+        var actor = Guid.NewGuid();
+        _model.Next = Response(inScope: false);
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id, actor));
+
+        GivenPriorOutcome(actor, AiCallOutcome.Refused, boardId: Guid.NewGuid());
+        GivenPriorOutcome(actor, AiCallOutcome.Refused, boardId: Guid.NewGuid());
+
+        var result = await service.ContinueAsync(Request());
+
+        Assert.False(result.ConversationClosed);
     }
 
     [Fact]
@@ -454,6 +536,31 @@ public class IdeaAssistServiceTests
         Assert.Equal("Only warehouse operations.", _model.LastContext!.ScopeStatement);
     }
 
+    /// <summary>
+    /// Seeds an earlier turn as the server recorded it. Timestamps step backwards so ordering is
+    /// deterministic: the caller adds oldest-first, and the newest seeded row stays older than the
+    /// turn under test.
+    /// </summary>
+    private void GivenPriorOutcome(Guid actorUserId, AiCallOutcome outcome, Guid? boardId = null)
+    {
+        _priorTurnOffset++;
+
+        _usageRepository.Records.Add(AiUsageRecord.Create(
+            _acme.Id,
+            "claude-sonnet-5",
+            _clock.UtcNow.AddSeconds(-_priorTurnOffset),
+            inputTokens: 10,
+            outputTokens: 5,
+            inputRatePerMillion: 3.00m,
+            outputRatePerMillion: 15.00m,
+            outcome,
+            actorUserId,
+            onBehalfOfUserId: null,
+            boardId: boardId ?? _acmeBoard.Id));
+    }
+
+    private int _priorTurnOffset;
+
     private IdeaAssistTurnRequest Request(Guid? boardId = null, IdeaDraft? draft = null) =>
         new(
             boardId ?? _acmeBoard.Id,
@@ -480,9 +587,12 @@ public class IdeaAssistServiceTests
     private IdeaAssistService CreateService(
         FakeCurrentUserContext currentUser,
         long dailyTokenLimit = 500_000,
+        AiUsageLimits? limits = null,
         params IdeaType[] extraIdeaTypes)
     {
-        var limits = new AiUsageLimits { DailyTokenLimit = dailyTokenLimit };
+        // Rate limits default off in these tests so the drafting behaviour under test isn't shadowed
+        // by a limit; the limit itself has its own coverage in AiUsageServiceTests.
+        limits ??= new AiUsageLimits { DailyTokenLimit = dailyTokenLimit, PerUserCallsPerWindow = 0, PerOrganizationCallsPerWindow = 0 };
         var usage = new AiUsageService(_usageRepository, currentUser, _unitOfWork, _clock, limits);
 
         var builder = new IdeaAssistContextBuilder(

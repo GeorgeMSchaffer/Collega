@@ -87,6 +87,8 @@ Leaving it unset is a supported state, not a misconfiguration: the feature runs 
 
 The rest of the `Ai:*` section is not secret and has working defaults in code (`AiUsageLimits`): `Ai:DailyTokenLimit` (500000), `Ai:Model` (`claude-sonnet-5`), `Ai:Effort` (`low`), `Ai:Pricing:InputPerMillion` (3.00), `Ai:Pricing:OutputPerMillion` (15.00). A non-positive `Ai:DailyTokenLimit` disables the budget gate — local use only.
 
+Rate limits (rule 26 — configuration, never hard-coded): `Ai:RateLimit:WindowSeconds` (60), `Ai:RateLimit:PerUserCalls` (10), `Ai:RateLimit:PerOrganizationCalls` (60). Non-positive disables, same convention as the budget. Counted from the `ai_usage_records` rows themselves rather than an in-memory counter, so the tally stays correct the moment the deployment runs more than one instance — and so refused and failed turns count too.
+
 ## Conventions
 
 **Routing** — never write the version segment in a controller. [`ApiVersionRoutePrefixConvention`](Conventions/ApiVersionRoutePrefixConvention.cs) prefixes every controller with `api/v1`, so `[Route("auth")]` serves `/api/v1/auth`. Use plural-noun resource routes per `SPEC/30-Contracts.md`.
