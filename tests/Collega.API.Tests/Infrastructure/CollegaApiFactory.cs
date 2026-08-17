@@ -25,6 +25,24 @@ internal sealed class UnconfiguredIdeaDraftModel : IIdeaDraftModel
 }
 
 /// <summary>
+/// Closes the second route to a provider. <see cref="IIdeaDraftModelFactory"/> exists so Development
+/// tooling can run a caller-supplied system prompt, and it builds a <b>real</b> Anthropic-backed
+/// model — so leaving the production registration in place would let an integration test reach the
+/// network through the factory even though <see cref="IIdeaDraftModel"/> itself is stubbed.
+/// </summary>
+/// <remarks>
+/// Throws rather than returning <see cref="UnconfiguredIdeaDraftModel"/>: a test that resolves this
+/// has escaped the guard, and should fail loudly rather than quietly exercise a degradation path it
+/// did not mean to. The host runs as Development, so the factory's own environment refusal does not
+/// apply here — this replacement is what makes the guarantee hold.
+/// </remarks>
+internal sealed class UnreachableIdeaDraftModelFactory : IIdeaDraftModelFactory
+{
+    public IIdeaDraftModel CreateWithSystemPrompt(string systemPrompt) =>
+        throw new InvalidOperationException("Integration tests never build a provider-backed model.");
+}
+
+/// <summary>
 /// Shared integration-test harness for Collega.API. Boots the real ASP.NET Core
 /// host in-memory via <see cref="WebApplicationFactory{TEntryPoint}"/> so tests can
 /// exercise the actual request pipeline (routing, middleware, error handling)
@@ -110,6 +128,18 @@ public class CollegaApiFactory : WebApplicationFactory<Program>
             }
 
             services.AddSingleton<IIdeaDraftModel, UnconfiguredIdeaDraftModel>();
+
+            // The same rule, applied to the second way in. See UnreachableIdeaDraftModelFactory:
+            // the factory hands back a real provider-backed model, so stubbing IIdeaDraftModel alone
+            // would leave the network reachable through it.
+            var draftModelFactoryDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(IIdeaDraftModelFactory));
+            if (draftModelFactoryDescriptor is not null)
+            {
+                services.Remove(draftModelFactoryDescriptor);
+            }
+
+            services.AddSingleton<IIdeaDraftModelFactory, UnreachableIdeaDraftModelFactory>();
         });
 
         base.ConfigureWebHost(builder);
