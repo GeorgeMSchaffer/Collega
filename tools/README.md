@@ -53,7 +53,43 @@ dotnet run -- compare runs/baseline.json runs/variant-a.json
 
 # Re-read a saved sweep without spending anything
 dotnet run -- report runs/baseline.json
+
+# Capture every call as a runnable .http file plus its raw response
+dotnet run -- run --cases cases/ --repeat 1 --max-spend 0.10 --trace trace/
 ```
+
+### Seeing exactly what was sent — `--trace`
+
+Writes two files per model call into the trace directory:
+
+```
+trace/calibration-checklist.attempt-1.turn-01.http
+trace/calibration-checklist.attempt-1.turn-01.response.json
+```
+
+The `.http` file opens and runs in VS Code REST Client, JetBrains, or Visual Studio, and contains the
+whole request: the system prompt with its `cache_control` breakpoint, the full organization catalog, the
+message array, `output_config.effort`, and the per-request JSON schema with its closed option enums.
+Edit the body and re-send to try something by hand.
+
+**These are the real wire bytes**, captured from inside the SDK's handler pipeline rather than rebuilt
+from the inputs. That distinction is the same one that made this a .NET project instead of a script: a
+reconstruction would drift from what the product sends, and you would be debugging the reconstruction.
+Verified by replaying a traced body with `curl` — it returned a valid response *and* hit the prompt
+cache (`cache_read_input_tokens` non-zero), which only happens if the prefix matches byte for byte.
+
+Two deliberate departures from the captured request:
+
+- **The API key is never written.** `x-api-key` becomes `{{apiKey}}`, resolved from `Ai__ApiKey` via
+  `{{$processEnv}}`. A trace directory can be attached to a bug report without leaking a credential.
+- **`Content-Length` is omitted.** It described the body as sent, so a stale value would truncate or
+  reject the request the moment you edit anything. Every REST client computes it.
+
+The JSON is pretty-printed and left unescaped, so it is semantically identical to the bytes sent but not
+byte-identical — which matters only if you are counting bytes rather than reading or replaying.
+
+Traces are gitignored. They carry no key, but they do carry a full organization catalog and
+conversation, so share one on purpose rather than by accident.
 
 **Compare like with like.** `--prompt` loads a file once and uses it verbatim, so the catalog in that
 file is the catalog every case sees — the fixture no longer drives it. Comparing a `--prompt` run

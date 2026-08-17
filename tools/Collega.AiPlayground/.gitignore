@@ -6,3 +6,8 @@ prompts/
 # Run artifacts. Provenance lives inside each file (prompt label, model, effort), but they are
 # measurements of one moment against one model version, not something to carry forward in the repo.
 runs/
+
+# Wire traces. The API key is redacted to {{apiKey}} before writing, so these are safe to share
+# deliberately — but they still contain a full organization catalog and conversation, so they are not
+# committed by default. Attach one to a bug report on purpose, don't carry them along by accident.
+trace/

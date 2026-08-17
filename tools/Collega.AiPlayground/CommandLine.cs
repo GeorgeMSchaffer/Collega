@@ -12,6 +12,9 @@ public sealed class CommandLine
     public string? Fixture { get; private init; }
     public string? PromptFile { get; private init; }
     public string? JsonOut { get; private init; }
+
+    /// <summary>Directory for per-call <c>.http</c> and response files. Null disables tracing.</summary>
+    public string? TraceDirectory { get; private init; }
     public int Repeat { get; private init; } = 1;
     public decimal? MaxSpend { get; private init; }
     public bool Yes { get; private init; }
@@ -24,7 +27,7 @@ public sealed class CommandLine
             return new CommandLine();
         }
 
-        string? cases = null, fixture = null, prompt = null, jsonOut = null;
+        string? cases = null, fixture = null, prompt = null, jsonOut = null, trace = null;
         var fixtures = "fixtures";
         var repeat = 1;
         decimal? maxSpend = null;
@@ -49,6 +52,9 @@ public sealed class CommandLine
                     break;
                 case "--json":
                     jsonOut = Next(args, ref i);
+                    break;
+                case "--trace":
+                    trace = Next(args, ref i);
                     break;
                 case "--repeat":
                     repeat = int.Parse(Next(args, ref i));
@@ -84,6 +90,7 @@ public sealed class CommandLine
             Fixture = fixture,
             PromptFile = prompt,
             JsonOut = jsonOut,
+            TraceDirectory = trace,
             Repeat = repeat,
             MaxSpend = maxSpend,
             Yes = yes,

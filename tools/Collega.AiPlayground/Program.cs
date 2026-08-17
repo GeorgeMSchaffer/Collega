@@ -38,8 +38,10 @@ static int Usage()
               to create a variant.
 
           run --cases <dir|file> [--fixtures <dir>] [--prompt <file>] [--repeat N]
-              [--max-spend USD] [--json <file>]
+              [--max-spend USD] [--json <file>] [--trace <dir>]
               Run every case and score it. --prompt substitutes a prompt for the compiled one.
+              --trace writes every call as a runnable .http file plus its raw response, with the
+              API key redacted to a {{apiKey}} variable.
 
           compare <baseline.json> <variant.json>
               Per-dimension delta between two runs.
@@ -133,8 +135,22 @@ static async Task<int> RunAsync(CommandLine options)
         return 130;
     }
 
-    var model = new AnthropicIdeaDraftModel(limits, new AiCredentials { ApiKey = RequireApiKey() }, promptFactory);
-    var runner = new CaseRunner(model, fixtures);
+    // Tracing sits in the SDK's own handler pipeline, so what lands in the .http files is the request
+    // the product actually sent — not a reconstruction that could drift from it.
+    WireTrace? trace = null;
+    HttpClient? httpClient = null;
+
+    if (options.TraceDirectory is { Length: > 0 } traceDir)
+    {
+        trace = new WireTrace(traceDir);
+        httpClient = new HttpClient(new WireTraceHandler(trace, new HttpClientHandler()));
+        Console.Error.WriteLine($"tracing every call to '{traceDir}' (api key redacted).");
+    }
+
+    var model = new AnthropicIdeaDraftModel(
+        limits, new AiCredentials { ApiKey = RequireApiKey() }, promptFactory, httpClient);
+
+    var runner = new CaseRunner(model, fixtures, trace);
     var attempts = new List<AttemptResult>();
     var spent = 0m;
 
@@ -179,6 +195,11 @@ static async Task<int> RunAsync(CommandLine options)
         }));
 
         Console.Error.WriteLine($"wrote {jsonPath}");
+    }
+
+    if (trace is not null)
+    {
+        Console.Error.WriteLine($"wrote {trace.Written.Count} .http file(s) to '{options.TraceDirectory}'");
     }
 
     // Non-zero when anything failed, so this can gate a manual check without reading the table.

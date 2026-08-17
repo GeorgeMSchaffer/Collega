@@ -17,11 +17,16 @@ public sealed class CaseRunner
 {
     private readonly IIdeaDraftModel _model;
     private readonly IReadOnlyDictionary<string, IdeaAssistContext> _fixtures;
+    private readonly WireTrace? _trace;
 
-    public CaseRunner(IIdeaDraftModel model, IReadOnlyDictionary<string, IdeaAssistContext> fixtures)
+    public CaseRunner(
+        IIdeaDraftModel model,
+        IReadOnlyDictionary<string, IdeaAssistContext> fixtures,
+        WireTrace? trace = null)
     {
         _model = model;
         _fixtures = fixtures;
+        _trace = trace;
     }
 
     public async Task<AttemptResult> RunAsync(CaseFile testCase, int attempt, CancellationToken ct = default)
@@ -43,10 +48,18 @@ public sealed class CaseRunner
 
         int input = 0, output = 0, cacheRead = 0, cacheCreate = 0;
         IdeaDraftModelResponse? last = null;
+        var turnNumber = 0;
 
         foreach (var userTurn in testCase.Turns)
         {
             transcript.Add(new IdeaAssistTurn(IdeaAssistTurn.UserRole, userTurn));
+            turnNumber++;
+
+            if (_trace is not null)
+            {
+                // Set immediately before the call so the handler names the files after this turn.
+                _trace.CurrentLabel = $"{testCase.Id}.attempt-{attempt}.turn-{turnNumber:00}";
+            }
 
             try
             {

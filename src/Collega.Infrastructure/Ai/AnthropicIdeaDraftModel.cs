@@ -52,19 +52,34 @@ public sealed class AnthropicIdeaDraftModel : IIdeaDraftModel
     /// prefix, so it stays in code where both are reviewable. A variant that wins in the playground is
     /// hand-ported back into the builder.</para>
     /// </param>
+    /// <param name="httpClient">
+    /// Transport override. Null — which is all production ever passes — lets the SDK build its own.
+    /// <para>The playground supplies one carrying a tracing handler, so it can capture the exact bytes
+    /// on the wire and emit them as runnable <c>.http</c> files. Capturing rather than reconstructing
+    /// is the point: a rebuilt request would drift from what the product actually sends.</para>
+    /// </param>
     public AnthropicIdeaDraftModel(
         AiUsageLimits limits,
         AiCredentials credentials,
-        Func<IdeaAssistContext, string>? systemPromptFactory = null)
+        Func<IdeaAssistContext, string>? systemPromptFactory = null,
+        HttpClient? httpClient = null)
     {
         _limits = limits;
         _systemPromptFactory = systemPromptFactory ?? IdeaAssistPromptBuilder.BuildSystemPrompt;
 
         // No key is a supported state, not a misconfiguration (rule 31): the feature runs dark and
         // the product keeps working. Constructing no client at all makes that unambiguous.
-        _client = string.IsNullOrWhiteSpace(credentials.ApiKey)
-            ? null
-            : new AnthropicClient { ApiKey = credentials.ApiKey };
+        if (string.IsNullOrWhiteSpace(credentials.ApiKey))
+        {
+            _client = null;
+            return;
+        }
+
+        // HttpClient is init-only, and passing null explicitly would stop the SDK building its own —
+        // hence the branch rather than one initializer with a nullable value.
+        _client = httpClient is null
+            ? new AnthropicClient { ApiKey = credentials.ApiKey }
+            : new AnthropicClient { ApiKey = credentials.ApiKey, HttpClient = httpClient };
     }
 
     public bool IsConfigured => _client is not null;
