@@ -683,7 +683,8 @@ public class IdeaAssistServiceTests
             new FakeFieldDefinitionRepository(),
             _statuses,
             new FakeTagRepository(),
-            new FakeUserRepository());
+            new FakeUserRepository(),
+            new FakeAiPromptVersionRepository());
 
         return new IdeaAssistService(
             _model,

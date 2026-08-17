@@ -1,5 +1,6 @@
 using Collega.API.Validation;
 using Collega.Application.Ai;
+using Collega.Domain.Ai;
 using Collega.Domain.Ideas;
 using Collega.Domain.Organizations;
 
@@ -92,3 +93,60 @@ public sealed record AiAssistSettingsResponse(bool AiAssistAvailable, string? Sc
 /// reason for a <c>false</c> is withheld on purpose, matching the turn endpoint's opaque <c>503</c>.
 /// </summary>
 public sealed record AiAssistAvailabilityResponse(bool Available);
+
+/// <summary>
+/// Request shape for <c>PUT /ai-assist/prompt</c> (rules 34–36). The placeholder requirement is
+/// enforced on the entity rather than here, so every write path shares one rule — these attributes only
+/// catch the cheap cases before a round trip.
+/// </summary>
+public sealed class PublishAiPromptRequest
+{
+    [RequiredField]
+    [MaxLengthField(AiPromptVersion.BodyMaxLength)]
+    public string Body { get; set; } = string.Empty;
+
+    [RequiredField]
+    [MaxLengthField(AiPromptVersion.RedirectMaxLength)]
+    public string OutOfScopeRedirect { get; set; } = string.Empty;
+
+    [RequiredField]
+    [MaxLengthField(AiPromptVersion.RedirectMaxLength)]
+    public string ConversationClosedRedirect { get; set; } = string.Empty;
+}
+
+/// <summary>Request shape for <c>POST /ai-assist/prompt/probe</c>. The draft need not have been saved.</summary>
+public sealed class ProbeAiPromptRequest
+{
+    [RequiredField]
+    [MaxLengthField(AiPromptVersion.BodyMaxLength)]
+    public string Body { get; set; } = string.Empty;
+}
+
+/// <summary>Response for the prompt-management endpoints (rules 34–36).</summary>
+public sealed record AiPromptResponse(
+    string Body,
+    string OutOfScopeRedirect,
+    string ConversationClosedRedirect,
+    int? Version,
+    bool IsBuiltInDefault,
+    IReadOnlyList<AiPromptVersionResponse> Versions);
+
+/// <summary>One history row. Carries no body — the list is for choosing, not reading.</summary>
+public sealed record AiPromptVersionResponse(
+    int Version,
+    DateTime CreatedAtUtc,
+    Guid? CreatedByUserId,
+    string? CreatedByDisplayName,
+    bool IsActive);
+
+/// <summary>Advisory safety-probe outcomes (rule 37).</summary>
+public sealed record AiPromptProbeResponse(
+    IReadOnlyList<AiPromptProbeItemResponse> Probes,
+    int RefusedCount,
+    int TotalCount);
+
+public sealed record AiPromptProbeItemResponse(
+    string Id,
+    string Prompt,
+    bool Refused,
+    bool ExpectedRefused);

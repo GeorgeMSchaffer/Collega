@@ -42,9 +42,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IIdeaUpvoteRepository, EfIdeaUpvoteRepository>();
         services.AddScoped<IFieldDefinitionRepository, EfFieldDefinitionRepository>();
         services.AddScoped<IAiUsageRepository, EfAiUsageRepository>();
+        services.AddScoped<IAiPromptVersionRepository, EfAiPromptVersionRepository>();
         services.AddScoped<IAiUsageService, AiUsageService>();
         services.AddScoped<IdeaAssistContextBuilder>();
         services.AddScoped<IIdeaAssistService, IdeaAssistService>();
+        services.AddScoped<IAiPromptService, AiPromptService>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IStartupSeeder, StartupSeeder>();
 

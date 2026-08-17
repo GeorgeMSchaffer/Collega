@@ -1325,6 +1325,66 @@ Success response `200`:
 Error responses:
 - `401` caller is not authenticated
 
+### `GET /api/v1/ai-assist/prompt`
+Purpose: Read the active system-prompt template, the two redirect strings, and the version history (`20-feature-ai-idea-assist.md` rules 34–36).
+
+Behavior rules:
+- **Site Admin only.** Deployment configuration, not organization content — the same scope as the deployment API key (rule 29). Org Admin is refused
+- when no version is active, returns the built-in default with `version` of `null` and `isBuiltInDefault` true. An empty history is the normal initial state, not an error
+
+Success response `200`:
+- `body` string — the active template, including its `{{ORGANIZATION_CATALOG}}` and `{{SCOPE_STATEMENT}}` placeholders
+- `outOfScopeRedirect` string · `conversationClosedRedirect` string
+- `version` integer or null · `isBuiltInDefault` boolean
+- `versions` array, newest first: `version`, `createdAtUtc`, `createdByUserId`, `createdByDisplayName`, `isActive`
+
+Error responses: `401` unauthenticated · `403` caller is not a Site Admin
+
+### `PUT /api/v1/ai-assist/prompt`
+Purpose: Publish a new version.
+
+Request body:
+- `body` required string, max 20000 characters. **Must contain both `{{ORGANIZATION_CATALOG}}` and `{{SCOPE_STATEMENT}}`**
+- `outOfScopeRedirect` required string, max 500 characters
+- `conversationClosedRedirect` required string, max 500 characters
+
+Behavior rules:
+- appends a version and makes it active; earlier versions are never modified
+- writes an audit event recording actor and version number, never the body (rule 27)
+
+Success response `200`: same shape as the `GET`.
+
+Error responses:
+- `400` a placeholder is missing, or a field is empty or over length. The message names the missing placeholder
+- `401` unauthenticated · `403` caller is not a Site Admin
+
+### `POST /api/v1/ai-assist/prompt/versions/{version}/restore`
+Purpose: Republish an earlier version.
+
+Behavior rules:
+- publishes a **copy** of `{version}` as a new version rather than reactivating the old row, so history stays append-only and the restore is itself visible in it
+
+Success response `200`: same shape as the `GET`. Errors: `401` · `403` · `404` no such version.
+
+### `POST /api/v1/ai-assist/prompt/probe`
+Purpose: Run advisory safety probes against a draft template before publishing (rule 37).
+
+Request body: `body` required string — the **draft**, which need not have been saved.
+
+Behavior rules:
+- runs the injection, fence-closing and off-topic probes against a **synthetic catalog** — never a real organization's — and reports whether each was refused
+- **advisory only** — this endpoint never publishes anything and a failing probe never blocks a later `PUT`
+- subject to the global daily budget gate, but **not** per-organization rate limited and **not** recorded in the usage meter: both need an organization to attribute spend to and a Site Admin has none (`20-feature-ai-idea-assist.md` rule 37b). Bounded instead by construction — three fixed prompts, Site Admin only
+- a failed provider call returns `503` rather than reporting the probe as refused
+
+Success response `200`:
+- `probes` array: `id`, `prompt`, `refused` boolean, `expectedRefused` boolean
+- `refusedCount` integer · `totalCount` integer
+
+Error responses:
+- `400` the draft is missing a required placeholder · `401` · `403` not a Site Admin
+- `429` rate limit exceeded · `503` AI assist is unavailable or the daily budget is exhausted
+
 ### `GET /api/v1/organizations/{organizationId}/ai-assist/settings`
 Purpose: Read the organization's AI assist configuration for the settings UI.
 

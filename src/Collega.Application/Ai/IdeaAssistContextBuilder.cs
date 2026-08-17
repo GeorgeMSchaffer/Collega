@@ -34,6 +34,7 @@ public sealed class IdeaAssistContextBuilder
     private readonly IStatusRepository _statuses;
     private readonly ITagRepository _tags;
     private readonly IUserRepository _users;
+    private readonly IAiPromptVersionRepository _prompts;
 
     public IdeaAssistContextBuilder(
         IOrganizationRepository organizations,
@@ -42,7 +43,8 @@ public sealed class IdeaAssistContextBuilder
         IFieldDefinitionRepository fieldDefinitions,
         IStatusRepository statuses,
         ITagRepository tags,
-        IUserRepository users)
+        IUserRepository users,
+        IAiPromptVersionRepository prompts)
     {
         _organizations = organizations;
         _ideaTypes = ideaTypes;
@@ -51,6 +53,7 @@ public sealed class IdeaAssistContextBuilder
         _statuses = statuses;
         _tags = tags;
         _users = users;
+        _prompts = prompts;
     }
 
     public async Task<IdeaAssistContext> BuildAsync(
@@ -58,6 +61,10 @@ public sealed class IdeaAssistContextBuilder
         CancellationToken cancellationToken = default)
     {
         var organization = await _organizations.GetByIdAsync(organizationId, cancellationToken);
+
+        // One more read alongside the seven already here, so no caching and no invalidation to get
+        // wrong. Null is the normal state — nothing published yet — and means the built-in default.
+        var activePrompt = await _prompts.GetActiveAsync(cancellationToken);
 
         var ideaTypes = await _ideaTypes.ListByOrganizationAsync(organizationId, includeDeleted: false, cancellationToken);
         var businessImpacts = await _businessImpacts.ListByOrganizationAsync(organizationId, includeDeleted: false, cancellationToken);
@@ -104,6 +111,7 @@ public sealed class IdeaAssistContextBuilder
                 .ToList(),
             statuses.OrderBy(s => s.SortOrder).Select(s => s.Name).ToList(),
             tags,
-            members.Items.Select(u => $"{u.FirstName} {u.LastName}".Trim()).ToList());
+            members.Items.Select(u => $"{u.FirstName} {u.LastName}".Trim()).ToList(),
+            activePrompt is null ? AiPromptDefaults.Default : AiPromptDefaults.From(activePrompt));
     }
 }

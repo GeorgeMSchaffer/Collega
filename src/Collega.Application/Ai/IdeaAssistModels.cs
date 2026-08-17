@@ -60,6 +60,13 @@ public sealed record IdeaAssistTurnResult(
 /// never sends any of this; it is built from the caller's token claims alone, which is what makes
 /// cross-org retrieval structurally impossible rather than prompt-discouraged.
 /// </summary>
+/// <param name="Prompts">
+/// The prompt text in force — deployment-level, not organization-level, and the one member here that
+/// is not org-scoped. It rides on the context because that is the only object reaching
+/// <c>IdeaAssistPromptBuilder</c>, and because <c>IIdeaDraftModel</c> is a singleton that cannot resolve
+/// a scoped repository of its own. Defaults to the built-in set so every existing caller and test keeps
+/// working unchanged (rule 34).
+/// </param>
 public sealed record IdeaAssistContext(
     Guid OrganizationId,
     string OrganizationName,
@@ -68,8 +75,12 @@ public sealed record IdeaAssistContext(
     IReadOnlyList<IdeaAssistOption> BusinessImpacts,
     IReadOnlyList<string> Statuses,
     IReadOnlyList<string> Tags,
-    IReadOnlyList<string> MemberNames)
+    IReadOnlyList<string> MemberNames,
+    AiPromptSet? Prompts = null)
 {
+    /// <summary>Never null at the point of use: an unset value means the built-in default.</summary>
+    public AiPromptSet EffectivePrompts => Prompts ?? AiPromptDefaults.Default;
+
     /// <summary>Active idea-type ids — the closed enum the response schema is built from (rule 16).</summary>
     public IReadOnlyList<Guid> IdeaTypeIds => IdeaTypes.Select(t => t.Id).ToList();
 

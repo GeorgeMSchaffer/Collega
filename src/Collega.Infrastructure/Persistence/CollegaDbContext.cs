@@ -38,6 +38,9 @@ public sealed class CollegaDbContext : DbContext
     /// </summary>
     public DbSet<AiUsageRecord> AiUsageRecords => Set<AiUsageRecord>();
 
+    /// <summary>The only table without organization scoping — the prompt is deployment-wide (rule 34).</summary>
+    public DbSet<AiPromptVersion> AiPromptVersions => Set<AiPromptVersion>();
+
     public DbSet<ImpersonationSession> ImpersonationSessions => Set<ImpersonationSession>();
 
     public DbSet<Organization> Organizations => Set<Organization>();

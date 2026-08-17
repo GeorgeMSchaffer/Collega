@@ -1,5 +1,6 @@
 using Collega.Application.Abstractions;
 using Collega.Application.Ai;
+using Collega.Domain.Ai;
 using Collega.Domain.Auditing;
 using Collega.Domain.Enums;
 using Collega.Domain.Notifications;
@@ -220,5 +221,44 @@ internal sealed class FakeAccessTokenIssuer : IAccessTokenIssuer
         LastUserId = userId;
         LastSecurityStamp = securityStamp;
         return new AccessTokenResult($"token-{userId:N}", 3600);
+    }
+}
+
+/// <summary>
+/// Published prompt versions. Empty by default, which is the deployment's normal state and means the
+/// built-in default is in force — so existing tests keep exercising the compiled prompt unchanged.
+/// </summary>
+internal sealed class FakeAiPromptVersionRepository : IAiPromptVersionRepository
+{
+    private readonly List<AiPromptVersion> _versions = new();
+
+    public IReadOnlyList<AiPromptVersion> Versions => _versions;
+
+    public Task<AiPromptVersion?> GetActiveAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult(_versions.FirstOrDefault(v => v.IsActive));
+
+    public Task<IReadOnlyList<AiPromptVersion>> ListAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<AiPromptVersion>>(_versions.OrderByDescending(v => v.Version).ToList());
+
+    public Task<AiPromptVersion?> GetByVersionAsync(int version, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_versions.FirstOrDefault(v => v.Version == version));
+
+    public Task<int> GetMaxVersionAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult(_versions.Count == 0 ? 0 : _versions.Max(v => v.Version));
+
+    public Task AddAsync(AiPromptVersion version, CancellationToken cancellationToken = default)
+    {
+        _versions.Add(version);
+        return Task.CompletedTask;
+    }
+
+    public Task DeactivateAllAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (var version in _versions.Where(v => v.IsActive))
+        {
+            version.Deactivate();
+        }
+
+        return Task.CompletedTask;
     }
 }

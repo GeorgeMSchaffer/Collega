@@ -37,14 +37,17 @@ public sealed class IdeaAssistService : IIdeaAssistService
     public const int OutOfScopeStrikeLimit = 3;
 
     /// <summary>
-    /// The fixed redirect shown for a refused turn. Server-supplied and constant so the model can
-    /// never author the refusal text — a model-written refusal is a free-text channel by another name.
+    /// The fixed redirect shown for a refused turn. <b>Server-supplied</b> so the model can never author
+    /// the refusal text — a model-written refusal is a free-text channel by another name.
     /// </summary>
-    public const string OutOfScopeRedirect =
-        "I can only help with drafting ideas for your organization. What would you like to capture?";
+    /// <remarks>
+    /// Since 2026-08-17 the live values come from the active prompt version and are read off the context
+    /// (rule 34); these remain as the built-in default and the value used wherever nothing is published.
+    /// Editable by a Site Admin, still never by the model — that is the property that matters.
+    /// </remarks>
+    public const string OutOfScopeRedirect = AiPromptDefaults.OutOfScopeRedirect;
 
-    public const string ConversationClosedRedirect =
-        "Let's pick this up on the idea form instead — I've kept whatever we captured so far.";
+    public const string ConversationClosedRedirect = AiPromptDefaults.ConversationClosedRedirect;
 
     private readonly IIdeaDraftModel _model;
     private readonly IdeaAssistContextBuilder _contextBuilder;
@@ -149,7 +152,10 @@ public sealed class IdeaAssistService : IIdeaAssistService
             return new IdeaAssistTurnResult(
                 InScope: false,
                 ConversationClosed: closed,
-                NextQuestion: closed ? ConversationClosedRedirect : OutOfScopeRedirect,
+                // From the active prompt version, falling back to the built-in default (rule 34).
+                NextQuestion: closed
+                    ? context.EffectivePrompts.ConversationClosedRedirect
+                    : context.EffectivePrompts.OutOfScopeRedirect,
                 Draft: currentDraft,
                 // The client drops the offending user turn and renders the redirect as a system note
                 // rather than an assistant bubble (rule 8/8a), so the transcript shrinks by one and a

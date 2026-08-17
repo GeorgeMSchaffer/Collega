@@ -121,6 +121,112 @@ public sealed class AiAssistAvailabilityController : ControllerBase
 }
 
 /// <summary>
+/// Site-Admin management of the idea-assist prompt (SPEC/20-feature-ai-idea-assist.md rules 34–38).
+/// </summary>
+/// <remarks>
+/// <para>Deployment configuration, not organization content — the same scope as the API key in rule 29,
+/// which is why the route is not org-scoped and why this does not go through View As.</para>
+///
+/// <para>Role gating is enforced <b>again</b> in <see cref="IAiPromptService"/> rather than relying on
+/// the attribute here. The service check reads the effective role, so it also refuses a Site Admin who
+/// is currently acting as someone else — something the attribute alone would let through.</para>
+/// </remarks>
+[ApiController]
+[Route("ai-assist/prompt")]
+[Authorize(Roles = "SiteAdmin")]
+public sealed class AiPromptController : ControllerBase
+{
+    private readonly IAiPromptService _prompts;
+
+    public AiPromptController(IAiPromptService prompts)
+    {
+        _prompts = prompts;
+    }
+
+    /// <summary>The active prompt plus its version history. Returns the built-in default when none is published.</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(AiPromptResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Get(CancellationToken cancellationToken) =>
+        Ok(ToResponse(await _prompts.GetAsync(cancellationToken)));
+
+    /// <summary>Publishes a new version and makes it active.</summary>
+    [HttpPut]
+    [ProducesResponseType(typeof(AiPromptResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Publish(
+        [FromBody] PublishAiPromptRequest request,
+        CancellationToken cancellationToken)
+    {
+        var settings = await _prompts.PublishAsync(
+            new PublishAiPromptCommand(request.Body, request.OutOfScopeRedirect, request.ConversationClosedRedirect),
+            cancellationToken);
+
+        return Ok(ToResponse(settings));
+    }
+
+    /// <summary>Republishes an earlier version as a new one, keeping history append-only.</summary>
+    [HttpPost("versions/{version:int}/restore")]
+    [ProducesResponseType(typeof(AiPromptResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(int version, CancellationToken cancellationToken) =>
+        Ok(ToResponse(await _prompts.RestoreAsync(version, cancellationToken)));
+
+    /// <summary>Returns the deployment to the built-in default by standing every version down.</summary>
+    [HttpPost("reset")]
+    [ProducesResponseType(typeof(AiPromptResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Reset(CancellationToken cancellationToken) =>
+        Ok(ToResponse(await _prompts.ResetToDefaultAsync(cancellationToken)));
+
+    /// <summary>
+    /// Runs the advisory safety probes against a draft (rule 37). Never publishes, and a failing probe
+    /// never blocks a later publish.
+    /// </summary>
+    /// <remarks>
+    /// <c>503</c> here means the probes could not run — unconfigured, provider down, or out of daily
+    /// budget. It deliberately does not report "refused", because reporting an outage as a passed probe
+    /// is the one wrong answer this surface can give.
+    /// </remarks>
+    [HttpPost("probe")]
+    [ProducesResponseType(typeof(AiPromptProbeResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Probe(
+        [FromBody] ProbeAiPromptRequest request,
+        CancellationToken cancellationToken)
+    {
+        var report = await _prompts.ProbeAsync(request.Body, cancellationToken);
+
+        return Ok(new AiPromptProbeResponse(
+            report.Probes
+                .Select(p => new AiPromptProbeItemResponse(p.Id, p.Prompt, p.Refused, p.ExpectedRefused))
+                .ToList(),
+            report.RefusedCount,
+            report.TotalCount));
+    }
+
+    private static AiPromptResponse ToResponse(AiPromptSettings settings) => new(
+        settings.Body,
+        settings.OutOfScopeRedirect,
+        settings.ConversationClosedRedirect,
+        settings.Version,
+        settings.IsBuiltInDefault,
+        settings.Versions
+            .Select(v => new AiPromptVersionResponse(
+                v.Version, v.CreatedAtUtc, v.CreatedByUserId, v.CreatedByDisplayName, v.IsActive))
+            .ToList());
+}
+
+/// <summary>
 /// The organization's AI assist configuration — the scope statement an Org Admin tunes (D-SCOPE).
 /// Its own controller so the route sits under <c>organizations/{organizationId}</c>.
 /// </summary>
