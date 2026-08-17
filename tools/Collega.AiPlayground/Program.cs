@@ -18,6 +18,7 @@ try
         "dump-prompt" => DumpPrompt(options),
         "run" => await RunAsync(options),
         "compare" => Compare(options),
+        "report" => Report(options),
         _ => Usage(),
     };
 }
@@ -42,6 +43,10 @@ static int Usage()
 
           compare <baseline.json> <variant.json>
               Per-dimension delta between two runs.
+
+          report <run.json>
+              Re-render a saved run. Spends nothing — useful for re-reading a sweep, and for
+              checking the cache guard against a doctored file without paying for a real one.
 
         The API key is read from Ai__ApiKey, or ANTHROPIC_API_KEY.
         """);
@@ -186,6 +191,24 @@ static bool Confirm()
     Console.Error.Write("proceed? [y/N] ");
     var answer = Console.ReadLine();
     return string.Equals(answer?.Trim(), "y", StringComparison.OrdinalIgnoreCase);
+}
+
+static int Report(CommandLine options)
+{
+    if (options.Positional.Count < 1)
+    {
+        throw new InvalidOperationException("report needs a run file.");
+    }
+
+    var limits = Limits();
+    var report = JsonSerializer.Deserialize<RunReport>(
+        File.ReadAllText(options.Positional[0]),
+        new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+
+    Reporter.PrintRun(report, limits, Console.Out);
+
+    var cacheOk = report.Attempts.Count(a => !a.Errored) < 2 || report.Attempts.Sum(a => (long)a.CacheReadTokens) > 0;
+    return report.Attempts.All(a => a.Passed) && cacheOk ? 0 : 1;
 }
 
 static int Compare(CommandLine options)

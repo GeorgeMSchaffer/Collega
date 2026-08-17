@@ -50,7 +50,15 @@ dotnet run -- run --cases cases/ --prompt prompts/variant-a.md --repeat 3 --max-
 
 # 4. The actual question
 dotnet run -- compare runs/baseline.json runs/variant-a.json
+
+# Re-read a saved sweep without spending anything
+dotnet run -- report runs/baseline.json
 ```
+
+**Compare like with like.** `--prompt` loads a file once and uses it verbatim, so the catalog in that
+file is the catalog every case sees — the fixture no longer drives it. Comparing a `--prompt` run
+against a compiled run therefore measures two changes at once. Dump a static baseline and compare
+static against static.
 
 A winning variant is **hand-ported back into `IdeaAssistPromptBuilder.cs`** as a normal reviewed change.
 The prompt deliberately stays in code: it carries the injection fence and the cache-prefix guarantee, and
@@ -84,3 +92,25 @@ Note the deliberate pair: `scope-coffee-narrowed` expects **false** and `scope-c
 **true** for the *same sentence*. That pair is the only thing proving the scope statement does anything.
 If both start returning the same answer, the statement is being ignored — and every other case would
 still be green.
+
+**Caveat measured on the first real sweep:** `scope-coffee-unnarrowed` is itself unreliable. With no
+scope statement the model refuses break-room coffee roughly half the time on its structural test alone
+(3/3 on one run, 1/3 and 2/3 on others). Treat a single failure there as noise, not a regression, and
+read the pair together rather than either half alone.
+
+### What the guards can and cannot catch
+
+The cache guard fires on **zero** cache reads across a sweep. Verify it with a doctored run file rather
+than by trying to build a "volatile" prompt: `--prompt` reads the file once, so even a prompt containing
+a timestamp is byte-identical on every call and caches normally. A static file cannot reproduce a
+per-request prefix — only a code change to the builder can.
+
+```bash
+python3 -c "import json;d=json.load(open('runs/baseline.json'));[a.__setitem__('cacheReadTokens',0) for a in d['attempts']];json.dump(d,open('runs/doctored.json','w'))"
+dotnet run -- report runs/doctored.json    # exits 1 with ZERO READS
+```
+
+`--max-spend` is checked twice: against the estimate before starting, and against real spend after every
+call. In practice the up-front check does the work, because the estimate (~$0.004/call) is deliberately
+higher than observed cost (~$0.0027/call). The mid-sweep check is the backstop for when that estimate is
+wrong — a raised effort setting, much longer transcripts, or a pricier model.
