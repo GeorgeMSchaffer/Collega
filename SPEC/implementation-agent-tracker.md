@@ -13,14 +13,14 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-08-17 against `62bfa2f` (`dev`, not pushed; `main` still behind pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-08-17 against `88afb29` (local `dev`; `origin/dev` still at `14cae01`, `main` at `0f63b36` — both behind).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
 | MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening, User-Defined Fields, Idea-Type Fields. Done — do not restart. |
 | Blazor client | ~16 pages, 9 shared components in `src/Collega.Client/Components/` | Geist is the single typeface. |
 | Test suite | **778 green** (2026-08-17) | 131 Domain + 306 Application + 148 Infrastructure + 193 API. Infrastructure includes the `PostgresProviderTests` that need Docker — they **ran and passed** on 2026-08-17 rather than skipping. 11 `Collega.E2E.Tests` skip without a running app. Re-run before trusting. |
-| Sprints | **1–6.5 complete** · **7 next** · 8 after it | Sprint 6.5 closed 2026-08-15 (13 items, visually confirmed and reviewed). **Sprint 7 (AI idea assist) opens with a comp-first gate, not code.** Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
+| Sprints | **1–6.5 complete** · **7 in progress** · 7.5 then 8 after it | Sprint 6.5 closed 2026-08-15 (13 items, visually confirmed and reviewed). **Sprint 7.5 (operational logging) was scheduled 2026-08-17 and is blocked on the triage queue** — it precedes 8 so the first Azure deploy ships a usable log. Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
 | Bug queue | **Back in `SPEC/Bug Triage.md` — 1 open item** | Intake returned there when 6.5 archived. Open: two admin drawers can be opened at once by keyboard (no focus trap in `DrawerShell`); mouse-unreachable. |
 | Local DB | `collega-postgres` (`postgres:16`), port **5432**, role `collega` | Standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas). Dev demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **If the API won't connect, check user-secrets for a stale SQL Server string** — see `src/Collega.API/CLAUDE.md`. |
@@ -61,6 +61,7 @@ Verified live against the real model: classification from the org's own catalog,
 - AI idea drafting = **Sprint 7**; `Anthropic` package approved, single platform-level key, dedupe deferred to v2. → `20-feature-ai-idea-assist.md`.
 - Sprint 7's **comp gate passed 2026-08-16**: Direction **C "Draft Strip"** (`mockups/comp-c-review-11-ai-assist-c-draftstrip.html`), teal suggestion indicator, scope statement on its own Settings page, ghost-then-drop for refused turns. Four decisions, canonical in `20-feature-ai-idea-assist.md` → "UI Decisions". **Sprint 7 is now buildable.**
 - AI cost controls (user decisions, 2026-08-16): model **`claude-sonnet-5`** at **`low` effort**, **500,000 tokens per UTC day** as one **global** pool, degrade at the cap rather than error, usage tracked **per organization** so per-org keys (rule 30) can be metered without a backfill. The cap is a runaway stop, not a $50 guarantee — saturated daily it allows roughly $99/month, and the usage page is what makes real spend visible. → `20-feature-ai-idea-assist.md` rules 28a–28e.
+- Operational logging = **Serilog** (`Serilog.AspNetCore`, pinned **8.0.3**), approved 2026-08-17, scheduled as **Sprint 7.5**. Console everywhere; the **file sink is Development-only** — App Service and k8s both read stdout, and `50-kubernetes-deployment.md` runs 2 API replicas with no volume for API pods. Stay on the 8.0.x line: 9.x moves the primary TFM past net8.0, unlike every other pin here. One `PackageReference`, not four — it bundles the Console/File/Debug sinks and `Serilog.Settings.Configuration`. Blazor client logging is out of scope. → `sprints/sprint-07.5-operational-logging.md`.
 - New page/flow UI is **comp-first**.
 - Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/archive/sprint-04-qa-review-debt.md`.
 

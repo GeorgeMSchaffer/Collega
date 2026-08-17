@@ -25,7 +25,8 @@ Sprints run **strictly in order** — each builds on the previous sprint's merge
 | 6 | 5 | Built on the migrated Postgres code, and must land **before** deployment so the first Azure deploy ships View As. |
 | 6.5 | 6 | Pays down bugs and rough edges — chiefly from user testing of Act As, the flow Sprint 6 reshaped — before more feature work lands on top of them. Supersedes 7 and 8. |
 | 7 | 6, **6.5** | Its one schema addition must be generated against the final engine; must precede deployment so the first Azure deploy provisions its key. |
-| 8 | 5 **(hard)**, 6, **6.5**, 7 | **Hard dependency, not a preference:** the migration changes the deployment's database engine (Azure Database for PostgreSQL, not Azure SQL) and connection-string format. Deploying before Sprint 5 is implemented *and verified against a real Postgres instance* provisions the wrong target. Also waits on 6 and 7 so the deploy includes them. |
+| 7.5 | 7, **`SPEC/Bug Triage.md`** | Must precede deployment: `az webapp log tail` is the only window into a running App Service, and `SPEC/50-azure-deployment.md` already makes it the verification step — deploying first means debugging the first deploy blind. Additionally gated on the open triage queue; the user declined an exception on 2026-08-17. |
+| 8 | 5 **(hard)**, 6, **6.5**, 7, **7.5** | **Hard dependency, not a preference:** the migration changes the deployment's database engine (Azure Database for PostgreSQL, not Azure SQL) and connection-string format. Deploying before Sprint 5 is implemented *and verified against a real Postgres instance* provisions the wrong target. Also waits on 6, 7 and 7.5 so the deploy includes them and ships with a usable log. |
 
 Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint dependency — it sits there for scheduling convenience only.
 
@@ -39,6 +40,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 6 | View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin's only org-content mutation path) | `SPEC/sprints/archive/sprint-06-view-as.md` | **Complete (2026-08-14)** — 622 tests green at `a0ef22c`, now the tip of both `dev` and `main` | Medium |
 | 6.5 | Bug fixes and element tweaks — paydown sprint | `SPEC/sprints/archive/sprint-06.5-bug-fixes-and-tweaks.md` | **Complete (2026-08-15)** — 13 items across two intake rounds, visually confirmed and review-signed-off; 627 tests green | Medium |
 | 7 | AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, `Anthropic` package approved) | `SPEC/sprints/sprint-07-ai-idea-assist.md` | Not started | Medium |
+| 7.5 | Operational logging (Serilog, Development file sink, correlation IDs, secret-redaction suite; decisions locked and `Serilog.AspNetCore` approved 2026-08-17) | `SPEC/sprints/sprint-07.5-operational-logging.md` | Not started — **blocked on `SPEC/Bug Triage.md`** | Small–Medium |
 | 8 | Azure deployment (provision + first deploy + CI/CD) | `SPEC/sprints/sprint-08-azure-deployment.md` | Not started | Medium |
 
 Update the Status column here whenever a sprint file's own `Status:` line changes (Not started → In Progress → Complete), and move the file to `SPEC/sprints/archive/` once Complete.
