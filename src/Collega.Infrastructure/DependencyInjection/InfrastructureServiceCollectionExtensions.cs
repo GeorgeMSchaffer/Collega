@@ -118,4 +118,25 @@ public static class InfrastructureServiceCollectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Registers the Development-only factory that builds draft models carrying a caller-supplied
+    /// system prompt (see <see cref="AnthropicIdeaDraftModelFactory"/>).
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="AddInfrastructure"/> because it needs the host environment, which is
+    /// not configuration. Registered unconditionally and made inert by the flag rather than skipped
+    /// outside Development: a missing registration turns a routing regression into a resolution
+    /// failure at activation, where refusing inside the factory keeps the failure specific and the
+    /// capability equally dead.
+    /// </remarks>
+    public static IServiceCollection AddIdeaDraftModelFactory(this IServiceCollection services, bool isDevelopment)
+    {
+        services.AddSingleton<IIdeaDraftModelFactory>(sp => new AnthropicIdeaDraftModelFactory(
+            sp.GetRequiredService<AiUsageLimits>(),
+            sp.GetRequiredService<AiCredentials>(),
+            isDevelopment));
+
+        return services;
+    }
 }

@@ -93,6 +93,10 @@ Rate limits (rule 26 — configuration, never hard-coded): `Ai:RateLimit:WindowS
 
 **Routing** — never write the version segment in a controller. [`ApiVersionRoutePrefixConvention`](Conventions/ApiVersionRoutePrefixConvention.cs) prefixes every controller with `api/v1`, so `[Route("auth")]` serves `/api/v1/auth`. Use plural-noun resource routes per `SPEC/30-Contracts.md`.
 
+**Development-only surfaces** — mark a developer-tooling controller `[DevelopmentOnly]` and [`DevelopmentOnlyControllerConvention`](Conventions/DevelopmentOnlyControllerConvention.cs) drops it from the application model outside Development, so its routes are never registered, it 404s from routing before any filter or authentication runs, and it cannot appear in the OpenAPI document. **It is not an authorization mechanism** — such a controller still carries whatever `[Authorize]` it needs, because "only developers can reach it" is a claim about the environment, not the caller. Covered by `DevelopmentOnlyControllerConventionTests` (hermetic; it is the deterministic guard, since an end-to-end check must mutate the process-global `ASPNETCORE_ENVIRONMENT`).
+
+`AddIdeaDraftModelFactory(builder.Environment.IsDevelopment())` registers the matching Development-only `IIdeaDraftModelFactory`, which builds a draft model carrying a caller-supplied system prompt for prompt tooling. It refuses outside Development, so the capability stays dead even if the routing gate regresses. **Any test host must replace it** — see `UnreachableIdeaDraftModelFactory` in `CollegaApiFactory`; stubbing `IIdeaDraftModel` alone leaves the network reachable through the factory.
+
 **Errors** — every non-2xx response is a problem-details envelope. Throw the Application-layer `AppException` subtype and let [`AppExceptionHandler`](ErrorHandling/AppExceptionHandler.cs) map it; don't hand-build error responses in a controller.
 
 | Thrown | Status |
