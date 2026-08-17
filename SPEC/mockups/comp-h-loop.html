@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp H: Loop (mentions, notifications, activity)</title>
+<!--
+  FEATURE COMP — drawn in the LOCKED Comp C "Fluent Editorial" language, not an alternate direction.
+  Palette and chrome from comp-c-review-06-lockin-v5-final.html so only the FEATURE is under review.
+
+  Covers one of the improvements proposed 2026-08-16:
+    #3  @mentions and a real notification inbox — and with it, the activity feed that Home
+        currently advertises as "coming soon".
+
+  Why it is one feature and not three: a notification with nothing to notify about is empty, and an
+  activity feed nobody is addressed by is noise. Mentions are what give the feed a reason to
+  interrupt someone. Built together they form one loop: mention -> notification -> reply -> read.
+
+  COLOUR DISCIPLINE (SPEC/20-feature-client-ui.md — "colour has meaning, don't reuse the accent"):
+    Indigo --accent means "active / selected / primary action". This comp DOES use indigo for the
+    unread badge and unread markers, on the argument that an unread notification is precisely "a
+    primary action waiting for you" — an extension of the existing meaning rather than a second,
+    conflicting one. That is a judgement call and the reviewer should accept or reject it here.
+    The alternative, kept as a fallback if it is rejected: unread carries weight + a filled ink dot
+    + a left rule, with no hue at all. Nothing else in this comp introduces a colour.
+    A mention of you is marked with the words "mentioned you", never by colour alone.
+
+  Note on icons: the locked v5 mockup uses emoji in the rail; the shipped client uses inline SVG,
+  so these comps follow the implementation.
+-->
+<style>
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --ok-soft:#e7f2e7; --warn-soft:#f7ecdc; --err-soft:#fbe5e7;
+    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
+    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
+    --im-low-deep:#7d6270; --im-low-soft:#f2ecf0;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+    --radius-card:6px; --radius-btn:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}
+  h1,h2,.display{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  button,[role=button],a[href]{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  .comp-bar{background:#33312e;color:#fff;padding:9px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:60}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar .tag{font-size:10.5px;background:#5a5754;color:#e6e3e0;padding:2px 7px;border-radius:3px}
+  .comp-bar nav{display:flex;gap:5px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#d6d3d1;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:11.5px;font-family:inherit;transition:background .18s,color .18s}
+  .comp-bar button:hover{background:#4a4744;color:#fff}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .screen{display:none}.screen.on{display:block}
+
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 42px)}
+  /* Grid children default to min-width:auto, so wide content stretches the whole shell (and the
+     rail with it) instead of scrolling inside its own card. This is the fix. */
+  .shell>div{min-width:0}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
+  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
+  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;gap:2px;position:relative;transition:background .18s,color .18s}
+  .rail a span.lbl{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail a:hover{background:#f3f2f1}
+  .rail .push{flex:1}
+  .railbadge{position:absolute;top:3px;right:5px;min-width:17px;height:17px;border-radius:9px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px;border:1.5px solid var(--surface)}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none}
+  .avatar.s{width:24px;height:24px;font-size:9.5px}
+  .avatar.t{width:20px;height:20px;font-size:8.5px}
+
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
+  .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .pagehead .crumbs a{color:var(--ink-3);text-decoration:none;display:inline-block;padding:4px 2px;margin:-4px -2px}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .pagehead .sub{color:var(--ink-3);font-size:13.5px;max-width:660px;line-height:1.5}
+  .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .pagehead .row .grow{flex:1}
+  /* The tab row scrolls sideways on narrow screens rather than pushing the page wider. */
+  .ptabs{display:flex;gap:4px;margin-top:18px;overflow-x:auto;scrollbar-width:thin}
+  .ptabs a{flex:none}
+  .ptabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent;display:inline-flex;align-items:center;gap:7px}
+  .ptabs a.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .ptabs .cnt{font-size:11px;font-weight:700;background:#f3f2f1;color:var(--ink-3);border-radius:9px;padding:1px 7px}
+  .ptabs a.on .cnt{background:var(--accent-soft);color:var(--accent-deep)}
+  .body{padding:24px 40px 60px;max-width:1240px}
+
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;font-family:inherit;color:var(--ink);font-weight:600;transition:background .18s,border-color .18s}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep);border-color:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;color:var(--accent);background:transparent}
+  .btn.subtle:hover{background:var(--accent-soft)}
+  .btn.sm{padding:5px 10px;font-size:12px}
+
+  input[type=text],input[type=email],select,textarea{border:1px solid #8a8886;border-radius:var(--radius-btn);padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
+  .hint{font-size:12px;color:var(--ink-3);margin-top:5px;line-height:1.45}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
+  .card>h2{font-size:15px;padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .card>h2 .grow{flex:1}
+  .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:3px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .pill .dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)}
+
+  /* activity feed */
+  .feed{list-style:none}
+  .feed li{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid #f0efed;font-size:13.5px;align-items:flex-start}
+  .feed li:last-child{border-bottom:0}
+  .feed .ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;flex:none;background:#f3f2f1;color:var(--ink-2)}
+  .feed .txt{flex:1;line-height:1.5;min-width:0}
+  .feed .txt a{color:var(--ink);font-weight:600;text-decoration:none;display:inline-block;padding:3px 0}
+  .feed .txt a:hover{color:var(--accent)}
+  .feed .when{font-size:11.5px;color:var(--ink-3);white-space:nowrap;padding-top:2px}
+  .feed .quote{border-left:2px solid var(--line);padding-left:11px;margin-top:6px;font-size:12.5px;color:var(--ink-3);line-height:1.5}
+  .daysep{padding:8px 18px;background:#faf9f8;border-bottom:1px solid #f0efed;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700}
+
+  /* notification rows */
+  .nrow{display:flex;gap:12px;padding:14px 18px;border-bottom:1px solid #f0efed;align-items:flex-start;border-left:3px solid transparent;background:var(--surface)}
+  .nrow:last-child{border-bottom:0}
+  .nrow.unread{border-left-color:var(--accent);background:#fcfcfe}
+  .nrow.unread .head{font-weight:700}
+  .nrow.sel{background:var(--accent-soft)}
+  .nrow .head{font-size:13.5px;line-height:1.45}
+  .nrow .head a{color:var(--ink);text-decoration:none;display:inline-block;padding:3px 0}
+  .nrow .head a:hover{color:var(--accent)}
+  .nrow .sub{font-size:12.5px;color:var(--ink-3);margin-top:3px;line-height:1.5}
+  .nrow .why{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:4px}
+  .nrow.unread .why{color:var(--accent-deep)}
+  .nrow .grow{flex:1;min-width:0}
+  .nrow .acts{display:flex;gap:6px;flex-direction:column;align-items:flex-end}
+  .nrow .when{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+  .unreaddot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;margin-top:6px}
+
+  .mention{background:var(--accent-soft);color:var(--accent-deep);border-radius:3px;padding:0 4px;font-weight:600;white-space:nowrap}
+
+  /* comment composer + autocomplete */
+  .composer{position:relative}
+  .composer textarea{min-height:74px;resize:vertical}
+  .ac{position:absolute;left:0;right:0;bottom:calc(100% + 5px);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:0 6px 20px rgba(0,0,0,.14);overflow:hidden;z-index:5;max-width:340px}
+  .ac .h{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700;padding:8px 12px 5px}
+  .ac .it{display:flex;gap:9px;align-items:center;padding:7px 12px;font-size:13px}
+  .ac .it.on{background:var(--accent-soft)}
+  .ac .it .nm{font-weight:600}
+  .ac .it .em{font-size:11.5px;color:var(--ink-3)}
+  .ac .it .grow{flex:1;min-width:0}
+  .ac .f{border-top:1px solid var(--line);padding:7px 12px;font-size:11px;color:var(--ink-3)}
+  .kbd{font-family:ui-monospace,Consolas,monospace;font-size:10.5px;border:1px solid #d6d3d1;border-bottom-width:2px;border-radius:3px;padding:1px 4px;color:var(--ink-3)}
+
+  /* drawer */
+  .surface-backdrop{position:fixed;inset:0;background:rgba(36,36,36,.34);z-index:40}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:620px;max-width:100%;background:var(--surface);border-left:1px solid var(--line);z-index:41;display:flex;flex-direction:column;box-shadow:-4px 0 18px rgba(0,0,0,.10)}
+  .surface-head{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start}
+  .surface-head .grow{flex:1}
+  .surface-head .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700}
+  .surface-head h2{font-size:19px;margin-top:4px;line-height:1.3}
+  .surface-head .meta{font-size:12px;color:var(--ink-3);margin-top:5px}
+  .iconbtn{width:30px;height:30px;border-radius:4px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink-2);font-size:15px;flex:none}
+  .iconbtn:hover{background:#f3f2f1}
+  .surface-body{padding:18px 22px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:18px}
+  .secline{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;padding-bottom:7px;border-bottom:1px solid var(--line);margin-bottom:11px;display:flex;align-items:center;gap:9px}
+  .secline .grow{flex:1}
+  .cmt{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid #f0efed}
+  .cmt:last-of-type{border-bottom:0}
+  .cmt .who{font-weight:600;font-size:13px}
+  .cmt .when{font-size:11px;color:var(--ink-3);font-weight:400}
+  .cmt p{font-size:13.5px;color:var(--ink-2);margin-top:3px;line-height:1.55}
+  .cmt.newone{background:var(--accent-soft);margin:0 -22px;padding:11px 22px;border-left:3px solid var(--accent)}
+
+  /* preferences */
+  .prefrow{display:flex;gap:16px;padding:14px 18px;border-bottom:1px solid #f0efed;align-items:flex-start}
+  .prefrow:last-child{border-bottom:0}
+  .prefrow .grow{flex:1}
+  .prefrow .t{font-size:13.5px;font-weight:600}
+  .prefrow .d{font-size:12.5px;color:var(--ink-3);margin-top:3px;line-height:1.5}
+  .segbtns{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius-btn);overflow:hidden;flex:none}
+  .segbtns button{border:0;background:var(--surface);padding:6px 12px;font-size:12px;font-family:inherit;color:var(--ink-2);font-weight:600;border-right:1px solid var(--line)}
+  .segbtns button:last-child{border-right:0}
+  .segbtns button:hover{background:#f3f2f1}
+  .segbtns button.on{background:var(--accent);color:#fff}
+
+  .note{font-size:12.5px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 4px 4px 0;margin-top:20px;max-width:800px;line-height:1.55}
+  .note b{color:var(--accent-deep)}
+  .note.warnnote{border-left-color:var(--warn);background:var(--warn-soft)}
+  .note.warnnote b{color:var(--warn)}
+  .new{display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--accent-deep);background:var(--accent-soft);border:1px solid #d6d9f4;padding:1px 7px;border-radius:3px;vertical-align:middle}
+  .empty{padding:40px 20px;text-align:center;color:var(--ink-3)}
+  .empty h3{font-family:Georgia,serif;font-size:17px;color:var(--ink);margin-bottom:6px}
+  .empty p{font-size:13px;max-width:380px;margin:0 auto;line-height:1.55}
+
+  @media (max-width:768px){input,select,textarea{font-size:16px!important}}
+  @media (max-width:980px){.shell{grid-template-columns:1fr}.rail{flex-direction:row;justify-content:space-around;border-right:0;border-bottom:1px solid var(--line);padding:6px 0}.rail .mark,.rail .push{display:none}.body,.pagehead{padding-left:18px;padding-right:18px}.cols{grid-template-columns:1fr}.drawer{width:100%}}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>Comp H — Loop</strong><span class="tag">feature comp</span><span class="tag">locked Comp C language</span>
+  <nav>
+    <button data-s="home" class="on">Home + activity</button>
+    <button data-s="inbox">Notification inbox</button>
+    <button data-s="compose">@mention composer</button>
+    <button data-s="thread">Thread + unread</button>
+    <button data-s="prefs">Preferences</button>
+    <button data-s="empty">Empty state</button>
+  </nav>
+</div>
+
+<!-- ============ 1. HOME + ACTIVITY ============ -->
+<section class="screen on" id="s-home">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span class="lbl">Home</span></a>
+      <a href="#"><span class="railbadge">7</span><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a4.6 4.6 0 0 0-4.6 4.6v2.7L4 12.2a.9.9 0 0 0 .8 1.3h10.4a.9.9 0 0 0 .8-1.3l-1.4-2.9V6.6A4.6 4.6 0 0 0 10 2Zm-1.9 12.6a1.9 1.9 0 1 0 3.8 0Z"/></svg><span class="lbl">Inbox</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg><span class="lbl">Boards</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg><span class="lbl">Ideas</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.6 2.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7ZM10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Z"/></svg><span class="lbl">Settings</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <h1>Welcome back, Olivia</h1>
+        <p class="sub" style="margin-bottom:18px">Acme Robotics · <b>3 things</b> are waiting on you.</p>
+      </div>
+      <div class="body">
+        <div class="cols">
+          <div class="card">
+            <h2><span class="grow">Activity</span>
+              <span class="pill neutral">All boards</span>
+              <button class="btn subtle sm">Filter</button></h2>
+            <div class="daysep">Today</div>
+            <ul class="feed">
+              <li>
+                <span class="ic" style="background:var(--accent-soft);color:var(--accent-deep)"><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 1 0 4.6 14.5.9.9 0 0 0-1-1.5A6.2 6.2 0 1 1 16.2 10v.7a1.1 1.1 0 0 1-2.2 0V6.6a.9.9 0 0 0-1.7-.4 3.7 3.7 0 1 0 .3 4.9 2.9 2.9 0 0 0 5.4-1.4V10a8 8 0 0 0-8-8Zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></svg></span>
+                <div class="txt"><b>Maya Collaborator</b> mentioned you on <a href="#">Standardize the intake checklist</a>
+                  <div class="quote">Olivia — does <span class="mention">@Olivia Administer</span> want the safety sign-off folded in before we pilot this?</div>
+                </div>
+                <span class="when">14m</span>
+              </li>
+              <li>
+                <span class="ic"><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 4h12a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H8l-4 3V5a1 1 0 0 1 1-1Z"/></svg></span>
+                <div class="txt"><b>Noah Contributor</b> replied on <a href="#">Improve exception visibility</a>
+                  <div class="quote">Drafted it as section 4 — worth a review before we pilot.</div>
+                </div>
+                <span class="when">1h</span>
+              </li>
+              <li>
+                <span class="ic"><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.5 4.3a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 0 1-1.4-1.4L11.8 10 7.5 5.7a1 1 0 0 1 0-1.4Z"/></svg></span>
+                <div class="txt"><b>Noah Contributor</b> moved <a href="#">Automate weekly reporting</a> from In Review to <span class="pill neutral"><span class="dot" style="background:#5b5fc7"></span>In Progress</span></div>
+                <span class="when">3h</span>
+              </li>
+              <li>
+                <span class="ic"><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 3.5 12 8h4.4l-3.5 2.8 1.3 4.4L10 12.6 5.8 15.2l1.3-4.4L3.6 8H8Z"/></svg></span>
+                <div class="txt"><b>Maya Collaborator</b> upvoted <a href="#">Reduce manual handoffs</a></div>
+                <span class="when">5h</span>
+              </li>
+            </ul>
+            <div class="daysep">Yesterday</div>
+            <ul class="feed">
+              <li>
+                <span class="ic"><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 3a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H4a1 1 0 1 1 0-2h5V4a1 1 0 0 1 1-1Z"/></svg></span>
+                <div class="txt"><b>Noah Contributor</b> created <a href="#">Roll out the proven workflow</a></div>
+                <span class="when">yest 16:20</span>
+              </li>
+              <li>
+                <span class="ic"><svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 10a3.2 3.2 0 1 0 0-6.4A3.2 3.2 0 0 0 10 10Zm0 1.6c-3 0-5.4 1.6-5.4 3.6v.6a.8.8 0 0 0 .8.8h9.2a.8.8 0 0 0 .8-.8v-.6c0-2-2.4-3.6-5.4-3.6Z"/></svg></span>
+                <div class="txt"><b>Maya Collaborator</b> assigned <a href="#">Retire the legacy step</a> to Noah Contributor</div>
+                <span class="when">yest 14:02</span>
+              </li>
+            </ul>
+            <div style="padding:12px 18px;border-top:1px solid var(--line)"><button class="btn subtle sm">Load older activity</button></div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="card">
+              <h2><span class="grow">Waiting on you</span><span class="pill info">3</span></h2>
+              <div class="nrow unread" style="border-bottom:1px solid #f0efed">
+                <span class="avatar s">MC</span>
+                <div class="grow"><div class="why">Mentioned you</div><div class="head"><a href="#">Standardize the intake checklist</a></div><div class="sub">Maya asked you a direct question.</div></div>
+              </div>
+              <div class="nrow unread" style="border-bottom:1px solid #f0efed">
+                <span class="avatar s" style="background:#9a5b00">!</span>
+                <div class="grow"><div class="why">Assigned &amp; stalled</div><div class="head"><a href="#">Pilot a faster review path</a></div><div class="sub">9 days in In Review.</div></div>
+              </div>
+              <div class="nrow unread">
+                <span class="avatar s">NC</span>
+                <div class="grow"><div class="why">Reply to your comment</div><div class="head"><a href="#">Improve exception visibility</a></div><div class="sub">Noah answered your question.</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h2><span class="grow">Your boards</span></h2>
+              <div style="padding:6px 0">
+                <div class="nrow" style="border-bottom:1px solid #f0efed"><div class="grow"><div class="head"><a href="#">Ideas</a></div><div class="sub">11 ideas · 5 statuses</div></div></div>
+                <div class="nrow"><div class="grow"><div class="head"><a href="#">Opportunities</a></div><div class="sub">11 ideas · 5 statuses</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note"><b>This replaces the "Activity feed coming soon" placeholder.</b> Two panels, deliberately different: <b>Activity</b> is everything that happened and is passive; <b>Waiting on you</b> is the subset addressed to you and is the actual to-do list. Mixing them is the common mistake — a feed that includes both becomes something people stop reading, and then a mention buried in it is worse than no mention at all.</p></div>
+        <div class="note"><b>Feed entries quote their content.</b> "Maya commented" is not worth a click; the first line of what Maya said usually is. This is the cheapest thing that makes a feed read rather than skimmed.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. INBOX ============ -->
+<section class="screen" id="s-inbox">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span class="lbl">Home</span></a>
+      <a class="on" href="#" aria-current="page"><span class="railbadge">7</span><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a4.6 4.6 0 0 0-4.6 4.6v2.7L4 12.2a.9.9 0 0 0 .8 1.3h10.4a.9.9 0 0 0 .8-1.3l-1.4-2.9V6.6A4.6 4.6 0 0 0 10 2Zm-1.9 12.6a1.9 1.9 0 1 0 3.8 0Z"/></svg><span class="lbl">Inbox</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Z"/></svg><span class="lbl">Boards</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span class="lbl">Ideas</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.6 2.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg><span class="lbl">Settings</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="row"><div class="grow"><h1>Inbox</h1><p class="sub">Everything addressed to you, in one place. Reading an item here does not mark the idea as read for anyone else.</p></div>
+          <button class="btn">Mark all read</button><button class="btn subtle">Preferences</button></div>
+        <nav class="ptabs" aria-label="Inbox filter">
+          <a class="on" href="#" aria-current="page">All <span class="cnt">7</span></a>
+          <a href="#">Mentions <span class="cnt">2</span></a>
+          <a href="#">Assigned to me <span class="cnt">3</span></a>
+          <a href="#">Replies <span class="cnt">2</span></a>
+          <a href="#">Archived</a>
+        </nav>
+      </div>
+      <div class="body">
+        <div class="card">
+          <div class="daysep">Today</div>
+
+          <div class="nrow unread">
+            <span class="unreaddot" role="img" aria-label="Unread"></span>
+            <span class="avatar s">MC</span>
+            <div class="grow">
+              <div class="why"><svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 1 0 4.6 14.5.9.9 0 0 0-1-1.5A6.2 6.2 0 1 1 16.2 10v.7a1.1 1.1 0 0 1-2.2 0V6.6a.9.9 0 0 0-1.7-.4 3.7 3.7 0 1 0 .3 4.9 2.9 2.9 0 0 0 5.4-1.4V10a8 8 0 0 0-8-8Zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></svg>Maya Collaborator mentioned you</div>
+              <div class="head"><a href="#">Standardize the intake checklist</a> <span style="font-weight:400;color:var(--ink-3);font-size:12.5px">· Ideas board</span></div>
+              <div class="sub">"Olivia — does <span class="mention">@Olivia Administer</span> want the safety sign-off folded in before we pilot this?"</div>
+            </div>
+            <div class="acts"><span class="when">14m</span><div style="display:flex;gap:6px"><button class="btn sm">Reply</button><button class="btn sm">Archive</button></div></div>
+          </div>
+
+          <div class="nrow unread">
+            <span class="unreaddot" role="img" aria-label="Unread"></span>
+            <span class="avatar s" style="background:#9a5b00">!</span>
+            <div class="grow">
+              <div class="why"><svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15ZM9 6a1 1 0 1 1 2 0v4.2a1 1 0 1 1-2 0Zm1 9a1.15 1.15 0 1 1 0-2.3 1.15 1.15 0 0 1 0 2.3Z"/></svg>An idea assigned to you is stalled</div>
+              <div class="head"><a href="#">Pilot a faster review path</a> <span style="font-weight:400;color:var(--ink-3);font-size:12.5px">· Ideas board</span></div>
+              <div class="sub">9 days in In Review — this status flags after 5.</div>
+            </div>
+            <div class="acts"><span class="when">1h</span><div style="display:flex;gap:6px"><button class="btn sm">Open</button><button class="btn sm">Snooze</button></div></div>
+          </div>
+
+          <div class="nrow unread">
+            <span class="unreaddot" role="img" aria-label="Unread"></span>
+            <span class="avatar s">NC</span>
+            <div class="grow">
+              <div class="why"><svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 4h12a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H8l-4 3V5a1 1 0 0 1 1-1Z"/></svg>Noah Contributor replied to you</div>
+              <div class="head"><a href="#">Improve exception visibility</a> <span style="font-weight:400;color:var(--ink-3);font-size:12.5px">· Ideas board</span></div>
+              <div class="sub">"Drafted it as section 4 — worth a review before we pilot."</div>
+            </div>
+            <div class="acts"><span class="when">1h</span><div style="display:flex;gap:6px"><button class="btn sm">Reply</button><button class="btn sm">Archive</button></div></div>
+          </div>
+
+          <div class="daysep">Earlier this week</div>
+
+          <div class="nrow">
+            <span style="width:8px;flex:none"></span>
+            <span class="avatar s">MC</span>
+            <div class="grow">
+              <div class="why">Maya Collaborator assigned you</div>
+              <div class="head"><a href="#">Validate the customer feedback loop</a></div>
+              <div class="sub">Added you alongside Noah Contributor.</div>
+            </div>
+            <div class="acts"><span class="when">Mon</span></div>
+          </div>
+
+          <div class="nrow">
+            <span style="width:8px;flex:none"></span>
+            <span class="avatar s">NC</span>
+            <div class="grow">
+              <div class="why">Noah Contributor mentioned you</div>
+              <div class="head"><a href="#">Create a shared playbook</a></div>
+              <div class="sub">"<span class="mention">@Olivia Administer</span> can you confirm ops will own this?"</div>
+            </div>
+            <div class="acts"><span class="when">Mon</span></div>
+          </div>
+        </div>
+
+        <div class="note"><b>Every row says why you got it.</b> The small caps line ("mentioned you", "replied to you", "assigned you", "is stalled") is the notification's reason for existing, and it is text — never a coloured icon on its own. That line is also exactly what the preferences screen lets you switch off, so the two screens use one vocabulary.</p></div>
+        <div class="note"><b>Snooze rather than only archive.</b> The stalled-idea notification is the one people archive to make it go away and then forget. Snooze keeps it honest.</p></div>
+        <div class="note warnnote"><b>Unread uses indigo — flagging this for a decision.</b> The locked rule reserves indigo for "active / selected / primary action". The argument for using it here is that an unread notification <em>is</em> a pending primary action. If the reviewer disagrees, the fallback is weight plus a filled ink dot and a left rule, with no hue — it costs a little scannability and breaks no rule.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. COMPOSER ============ -->
+<section class="screen" id="s-compose">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span class="lbl">Home</span></a>
+      <a href="#"><span class="railbadge">7</span><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a4.6 4.6 0 0 0-4.6 4.6v2.7L4 12.2a.9.9 0 0 0 .8 1.3h10.4a.9.9 0 0 0 .8-1.3l-1.4-2.9V6.6A4.6 4.6 0 0 0 10 2Z"/></svg><span class="lbl">Inbox</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span class="lbl">Ideas</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Home</a> / Ideas</div><h1>Ideas</h1></div>
+      <div class="body"><div class="card" style="height:300px;display:grid;place-items:center;color:var(--ink-3);font-size:13px">Ideas list (dimmed behind the drawer)</div></div>
+    </div>
+  </div>
+  <div class="surface-backdrop"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="h-c-title">
+    <div class="surface-head">
+      <div class="grow"><div class="eyebrow">Ideas board</div><h2 id="h-c-title">Standardize the intake checklist</h2><div class="meta">Created by Noah Contributor · Aug 15, 2026</div></div>
+      <button class="iconbtn" aria-label="Close">×</button>
+    </div>
+    <div class="surface-body">
+      <div>
+        <div class="secline"><span class="grow">Discussion · 3</span></div>
+        <div class="cmt"><span class="avatar s">MC</span><div><div class="who">Maya Collaborator <span class="when">2d ago</span></div><p>Can we fold the safety sign-off into the same checklist? It's the step people forget.</p></div></div>
+        <div class="cmt"><span class="avatar s">NC</span><div><div class="who">Noah Contributor <span class="when">1d ago</span></div><p>Yes — drafted it as section 4. Worth a review before we pilot.</p></div></div>
+
+        <div style="margin-top:14px">
+          <label for="h-cmt">Add a comment</label>
+          <div class="composer">
+            <div class="ac" role="listbox" aria-label="People you can mention">
+              <div class="h">People in Acme Robotics</div>
+              <div class="it on" role="option" aria-selected="true"><span class="avatar t">MC</span><span class="grow"><span class="nm">Maya Collaborator</span> <span class="em">· maya@acme-robotics.test</span></span></div>
+              <div class="it" role="option" aria-selected="false"><span class="avatar t">NC</span><span class="grow"><span class="nm">Noah Contributor</span> <span class="em">· noah@acme-robotics.test</span></span></div>
+              <div class="it" role="option" aria-selected="false"><span class="avatar t" style="background:#5f5b56">AB</span><span class="grow"><span class="nm">Assignees on this idea</span> <span class="em">· 2 people</span></span></div>
+              <div class="f"><span class="kbd">↑</span> <span class="kbd">↓</span> to choose · <span class="kbd">↵</span> to insert · <span class="kbd">Esc</span> to dismiss</div>
+            </div>
+            <textarea id="h-cmt" aria-describedby="h-cmt-help">Good — before we pilot, @ma</textarea>
+          </div>
+          <div class="hint" id="h-cmt-help">Type <b>@</b> to mention someone. Only people in this organization can be mentioned, and mentioning does not grant access — a Read Only member still sees the idea read-only.</div>
+          <div style="display:flex;gap:9px;margin-top:10px;align-items:center">
+            <button class="btn primary sm" type="button">Comment</button>
+            <button class="btn sm" type="button">Cancel</button>
+            <span style="flex:1"></span>
+            <span style="font-size:12px;color:var(--ink-3)">Will notify: <b>Maya Collaborator</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</section>
+
+<!-- ============ 4. THREAD ============ -->
+<section class="screen" id="s-thread">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span class="lbl">Home</span></a>
+      <a href="#"><span class="railbadge">6</span><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a4.6 4.6 0 0 0-4.6 4.6v2.7L4 12.2a.9.9 0 0 0 .8 1.3h10.4a.9.9 0 0 0 .8-1.3l-1.4-2.9V6.6A4.6 4.6 0 0 0 10 2Z"/></svg><span class="lbl">Inbox</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span class="lbl">Ideas</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Inbox</a> / Standardize the intake checklist</div><h1>Ideas</h1></div>
+      <div class="body"><div class="card" style="height:300px;display:grid;place-items:center;color:var(--ink-3);font-size:13px">Opened from the Inbox — the drawer lands on the mention, not the top of the thread</div></div>
+    </div>
+  </div>
+  <div class="surface-backdrop"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="h-t-title">
+    <div class="surface-head">
+      <div class="grow"><div class="eyebrow">Ideas board</div><h2 id="h-t-title">Standardize the intake checklist</h2><div class="meta">Created by Noah Contributor · Aug 15, 2026</div></div>
+      <button class="iconbtn" aria-label="Close">×</button>
+    </div>
+    <div class="surface-body">
+      <div>
+        <div class="secline"><span class="grow">Discussion · 4</span><button class="btn subtle sm">Mark thread read</button></div>
+        <div class="cmt"><span class="avatar s">MC</span><div><div class="who">Maya Collaborator <span class="when">2d ago</span></div><p>Can we fold the safety sign-off into the same checklist? It's the step people forget.</p></div></div>
+        <div class="cmt"><span class="avatar s">NC</span><div><div class="who">Noah Contributor <span class="when">1d ago</span></div><p>Yes — drafted it as section 4. Worth a review before we pilot.</p></div></div>
+        <div class="cmt"><span class="avatar s">OA</span><div><div class="who">Olivia Administer <span class="when">5h ago</span></div><p>Reads right to me. Moving to In Review after standup.</p></div></div>
+
+        <div style="display:flex;align-items:center;gap:11px;margin:14px 0 2px">
+          <span style="height:1px;background:var(--accent);flex:1"></span>
+          <span style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--accent-deep)">New since you last read</span>
+          <span style="height:1px;background:var(--accent);flex:1"></span>
+        </div>
+
+        <div class="cmt newone"><span class="avatar s">MC</span><div><div class="who">Maya Collaborator <span class="when">14m ago</span></div><p>Olivia — does <span class="mention">@Olivia Administer</span> want the safety sign-off folded in before we pilot this?</p></div></div>
+
+        <div style="margin-top:16px">
+          <label for="h-reply">Reply</label>
+          <textarea id="h-reply" rows="3" placeholder="Write a reply…"></textarea>
+          <div style="display:flex;gap:9px;margin-top:10px"><button class="btn primary sm" type="button">Reply</button><button class="btn sm" type="button">Reply and mark read</button></div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</section>
+
+<!-- ============ 5. PREFERENCES ============ -->
+<section class="screen" id="s-prefs">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span class="lbl">Home</span></a>
+      <a href="#"><span class="railbadge">7</span><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a4.6 4.6 0 0 0-4.6 4.6v2.7L4 12.2a.9.9 0 0 0 .8 1.3h10.4a.9.9 0 0 0 .8-1.3l-1.4-2.9V6.6A4.6 4.6 0 0 0 10 2Z"/></svg><span class="lbl">Inbox</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span class="lbl">Ideas</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.6 2.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg><span class="lbl">Settings</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Settings</a> / Profile</div>
+        <h1>Notifications</h1>
+        <p class="sub">What reaches your inbox, and what also reaches your email. The reasons listed here are the same ones shown on every inbox row.</p>
+        <nav class="ptabs" aria-label="Profile sections"><a href="#">Profile</a><a href="#">Password</a><a class="on" href="#" aria-current="page">Notifications</a></nav>
+      </div>
+      <div class="body">
+        <div class="card" style="max-width:820px">
+          <h2><span class="grow">Notify me when…</span><span style="font-size:11.5px;color:var(--ink-3);font-weight:400;display:flex;gap:38px;padding-right:4px"><span>Inbox</span><span>Email</span></span></h2>
+
+          <div class="prefrow">
+            <div class="grow"><div class="t">Someone mentions me</div><div class="d">A comment containing <b>@your name</b>. This one cannot be switched off in the inbox — a direct question that silently disappears is worse than a notification you ignore.</div></div>
+            <div class="segbtns" role="group" aria-label="Inbox — someone mentions me"><button class="on" aria-pressed="true">Always</button></div>
+            <div class="segbtns" role="group" aria-label="Email — someone mentions me"><button class="on" aria-pressed="true">On</button><button aria-pressed="false">Off</button></div>
+          </div>
+
+          <div class="prefrow">
+            <div class="grow"><div class="t">Someone replies in a thread I'm in</div><div class="d">Any comment on an idea you have commented on.</div></div>
+            <div class="segbtns" role="group" aria-label="Inbox — replies"><button class="on" aria-pressed="true">On</button><button aria-pressed="false">Off</button></div>
+            <div class="segbtns" role="group" aria-label="Email — replies"><button aria-pressed="false">On</button><button class="on" aria-pressed="true">Off</button></div>
+          </div>
+
+          <div class="prefrow">
+            <div class="grow"><div class="t">An idea is assigned to me</div><div class="d">Including when you are added alongside other assignees.</div></div>
+            <div class="segbtns" role="group" aria-label="Inbox — assigned"><button class="on" aria-pressed="true">On</button><button aria-pressed="false">Off</button></div>
+            <div class="segbtns" role="group" aria-label="Email — assigned"><button class="on" aria-pressed="true">On</button><button aria-pressed="false">Off</button></div>
+          </div>
+
+          <div class="prefrow">
+            <div class="grow"><div class="t">An idea assigned to me goes stalled</div><div class="d">Uses the per-status <b>Flag after</b> threshold. Sends once, not daily.</div></div>
+            <div class="segbtns" role="group" aria-label="Inbox — stalled"><button class="on" aria-pressed="true">On</button><button aria-pressed="false">Off</button></div>
+            <div class="segbtns" role="group" aria-label="Email — stalled"><button aria-pressed="false">On</button><button class="on" aria-pressed="true">Off</button></div>
+          </div>
+
+          <div class="prefrow">
+            <div class="grow"><div class="t">Someone upvotes an idea I created</div><div class="d">Batched — one notification per idea per day at most.</div></div>
+            <div class="segbtns" role="group" aria-label="Inbox — upvotes"><button aria-pressed="false">On</button><button class="on" aria-pressed="true">Off</button></div>
+            <div class="segbtns" role="group" aria-label="Email — upvotes"><button aria-pressed="false">On</button><button class="on" aria-pressed="true">Off</button></div>
+          </div>
+
+          <div class="prefrow">
+            <div class="grow"><div class="t">Status changes on ideas I follow</div><div class="d">You automatically follow anything you create, comment on, or are assigned.</div></div>
+            <div class="segbtns" role="group" aria-label="Inbox — status changes"><button class="on" aria-pressed="true">On</button><button aria-pressed="false">Off</button></div>
+            <div class="segbtns" role="group" aria-label="Email — status changes"><button aria-pressed="false">On</button><button class="on" aria-pressed="true">Off</button></div>
+          </div>
+
+          <div style="padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center">
+            <button class="btn primary">Save preferences</button><button class="btn">Reset to defaults</button>
+          </div>
+        </div>
+
+        <div class="note warnnote"><b>Email is the risky column.</b> <code>SPEC/00-project-brief.md</code> defers guaranteed outbound email delivery, so the email switches here are a promise the platform has not made yet. Two honest options: ship the inbox first and hide the email column entirely, or ship it labelled best-effort. This comp shows the column so the decision is visible — it should not be built as drawn without that call being made.</p></div>
+        <div class="note"><b>Mentions are deliberately not fully switchable.</b> Everything else can be silenced. If a direct question can be silenced, mentions stop being reliable and people go back to email — which is the behaviour this feature exists to replace.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. EMPTY STATE ============ -->
+<section class="screen" id="s-empty">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span class="lbl">Home</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a4.6 4.6 0 0 0-4.6 4.6v2.7L4 12.2a.9.9 0 0 0 .8 1.3h10.4a.9.9 0 0 0 .8-1.3l-1.4-2.9V6.6A4.6 4.6 0 0 0 10 2Z"/></svg><span class="lbl">Inbox</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span class="lbl">Ideas</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="row"><div class="grow"><h1>Inbox</h1><p class="sub">Everything addressed to you, in one place.</p></div></div>
+        <nav class="ptabs" aria-label="Inbox filter"><a class="on" href="#" aria-current="page">All</a><a href="#">Mentions</a><a href="#">Assigned to me</a><a href="#">Replies</a><a href="#">Archived</a></nav>
+      </div>
+      <div class="body">
+        <div class="card">
+          <div class="empty">
+            <div style="width:48px;height:48px;border-radius:50%;background:#f3f2f1;display:grid;place-items:center;margin:0 auto 14px;color:var(--ink-3)">
+              <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg>
+            </div>
+            <h3>You're all caught up</h3>
+            <p>Nothing is waiting on you. New mentions, replies and assignments land here — and anything you archive stays available under <b>Archived</b>.</p>
+            <div style="margin-top:16px;display:flex;gap:9px;justify-content:center"><button class="btn">View archived</button><button class="btn subtle">Notification preferences</button></div>
+          </div>
+        </div>
+        <div class="note"><b>Worth designing on purpose.</b> For a new organization this is the <em>first</em> state of the inbox, not an edge case — and a permanently empty-looking inbox is how a notification feature dies quietly. Naming what will appear here, and where archived items went, does most of that work.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.comp-bar button[data-s]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.comp-bar button[data-s]').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+      document.getElementById('s-'+b.dataset.s).classList.add('on');
+      window.scrollTo(0,0);
+    });
+  });
+</script>
+</body>
+</html>

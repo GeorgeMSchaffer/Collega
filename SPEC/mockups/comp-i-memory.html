@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp I: Memory (links, decisions, sharing)</title>
+<!--
+  FEATURE COMP — drawn in the LOCKED Comp C "Fluent Editorial" language, not an alternate direction.
+  Palette and chrome from comp-c-review-06-lockin-v5-final.html so only the FEATURE is under review.
+
+  Covers three of the improvements proposed 2026-08-16:
+    #4  Idea linking — "duplicate of", "relates to", "supersedes", plus duplicate merge
+    #6  A decision record on close — outcome, decider, and the reasoning, required to close
+    #7  A scoped read-only share link per board
+
+  Why these three together: each one is about the board still making sense to someone who wasn't
+  there. Links say how ideas relate, decisions say why something stopped, and the share link is how
+  a person outside the organization reads either. Alone each is a nicety; together they are the
+  difference between a task list and an institutional record.
+
+  ORDER NOTE: #4 (linking) is the one with a deadline. Sprint 7 ships AI drafting with dedupe
+  DEFERRED TO V2 (SPEC/20-feature-ai-idea-assist.md). That means an assistant will start generating
+  near-duplicates into a system with no way to express "this is the same as that". Manual links are
+  both the stopgap and the training data an automated dedupe would later need.
+
+  COLOUR DISCIPLINE (SPEC/20-feature-client-ui.md — "colour has meaning, don't reuse the accent"):
+    - Indigo --accent stays "active / selected / primary action". Not reused.
+    - Link relationships get NO colour — they are typed text with a directional glyph. A colour per
+      relationship type would be five new meanings for something that reads perfectly as words.
+    - Decision outcomes reuse the EXISTING --ok (succeeded) and neutral (declined) treatments,
+      matching the "Counts as" vocabulary proposed in Comp G so the two features speak the same way.
+    - The share link's caution styling uses the existing --warn. No new tokens anywhere in this file.
+-->
+<style>
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --ok-soft:#e7f2e7; --warn-soft:#f7ecdc; --err-soft:#fbe5e7;
+    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
+    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
+    --im-low-deep:#7d6270; --im-low-soft:#f2ecf0;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+    --radius-card:6px; --radius-btn:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}
+  h1,h2,.display{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  button,[role=button],a[href]{cursor:pointer}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  .comp-bar{background:#33312e;color:#fff;padding:9px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:60}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar .tag{font-size:10.5px;background:#5a5754;color:#e6e3e0;padding:2px 7px;border-radius:3px}
+  .comp-bar nav{display:flex;gap:5px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#d6d3d1;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:11.5px;font-family:inherit;transition:background .18s,color .18s}
+  .comp-bar button:hover{background:#4a4744;color:#fff}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .screen{display:none}.screen.on{display:block}
+
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 42px)}
+  /* Grid children default to min-width:auto, so wide content stretches the whole shell (and the
+     rail with it) instead of scrolling inside its own card. This is the fix. */
+  .shell>div{min-width:0}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
+  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
+  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;gap:2px;transition:background .18s,color .18s}
+  .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail a:hover{background:#f3f2f1}
+  .rail .push{flex:1}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex:none}
+  .avatar.s{width:24px;height:24px;font-size:9.5px}
+
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
+  .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .pagehead .crumbs a{color:var(--ink-3);text-decoration:none;display:inline-block;padding:4px 2px;margin:-4px -2px}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .pagehead .sub{color:var(--ink-3);font-size:13.5px;max-width:680px;line-height:1.5}
+  .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .pagehead .row .grow{flex:1}
+  /* The tab row scrolls sideways on narrow screens rather than pushing the page wider. */
+  .ptabs{display:flex;gap:4px;margin-top:18px;overflow-x:auto;scrollbar-width:thin}
+  .ptabs a{flex:none}
+  .ptabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent}
+  .ptabs a.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .body{padding:24px 40px 60px;max-width:1240px}
+
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;font-family:inherit;color:var(--ink);font-weight:600;transition:background .18s,border-color .18s}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep);border-color:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;color:var(--accent);background:transparent}
+  .btn.subtle:hover{background:var(--accent-soft)}
+  .btn.danger{border-color:var(--line);color:var(--err)}
+  .btn.danger:hover{background:var(--err-soft)}
+  .btn.sm{padding:5px 10px;font-size:12px}
+  .btn.subtle.sm.inline{padding:4px 3px;font-size:12.5px}
+  .decision a{display:inline-block;padding:3px 0}
+
+  input[type=text],input[type=email],select,textarea{border:1px solid #8a8886;border-radius:var(--radius-btn);padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
+  .field{margin-bottom:15px}
+  .hint{font-size:12px;color:var(--ink-3);margin-top:5px;line-height:1.45}
+  .req{color:var(--err);font-weight:700}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow);overflow-x:auto}
+  .card>h2{font-size:15px;padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .card>h2 .grow{flex:1}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:3px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .pill .dot{width:7px;height:7px;border-radius:50%;flex:none}
+  .pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn)}
+  .pill.err{background:var(--err-soft);color:var(--err)}
+  .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
+  .im-high{background:var(--im-high-soft);color:var(--im-high-deep)}
+
+  /* links — typed text plus a directional glyph, no colour coding */
+  .linkrow{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f0efed}
+  .linkrow:last-child{border-bottom:0}
+  .linkrow .rel{font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:var(--ink-3);width:112px;flex:none;display:flex;align-items:center;gap:6px;padding-top:2px}
+  .linkrow .grow{flex:1;min-width:0}
+  .linkrow .t{font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:none;display:inline-block;padding:3px 0}
+  .linkrow .t:hover{color:var(--accent)}
+  .linkrow .m{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+  .linkrow .x{border:0;background:none;color:var(--ink-3);font-size:15px;padding:4px 9px;border-radius:4px;flex:none}
+  .linkrow .x:hover{background:#f3f2f1;color:var(--err)}
+
+  .suggestbox{border:1px dashed var(--line);border-radius:var(--radius-card);padding:13px 15px;background:#faf9f8}
+  .suggestbox .h{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--ink-3);margin-bottom:9px;display:flex;align-items:center;gap:7px}
+  .sugg{display:flex;gap:11px;align-items:center;padding:8px 0;border-bottom:1px solid #f0efed}
+  .sugg:last-child{border-bottom:0}
+  .sugg .grow{flex:1;min-width:0}
+  .sugg .t{font-size:13px;font-weight:600;color:var(--ink);text-decoration:none;display:inline-block;padding:4px 0}
+  .sugg .m{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+  .score{font-size:11px;font-weight:700;color:var(--ink-3);background:#f3f2f1;border-radius:9px;padding:1px 8px;white-space:nowrap}
+
+  /* decision record */
+  .decision{border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:0 var(--radius-card) var(--radius-card) 0;background:var(--ok-soft);padding:14px 16px}
+  .decision.declined{border-left-color:var(--ink-3);background:#f3f2f1}
+  .decision .h{display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap}
+  .decision .h .who{font-size:12px;color:var(--ink-2)}
+  .decision p{font-size:13.5px;line-height:1.6;color:var(--ink-2)}
+  .decision .q{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--ink-3);margin:11px 0 3px}
+
+  /* modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(36,36,36,.34);z-index:40;display:grid;place-items:center;padding:26px}
+  .modal{width:min(580px,100%);background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 34px rgba(0,0,0,.20);max-height:100%;display:flex;flex-direction:column}
+  .modal-head{padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+  .modal-head .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700}
+  .modal-head h2{font-size:20px;margin-top:5px}
+  .modal-head .sub{font-size:12.5px;color:var(--ink-3);margin-top:6px;line-height:1.5}
+  .modal-body{padding:18px 22px;overflow:auto}
+  .modal-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end;align-items:center}
+
+  /* drawer */
+  .surface-backdrop{position:fixed;inset:0;background:rgba(36,36,36,.34);z-index:40}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:620px;max-width:100%;background:var(--surface);border-left:1px solid var(--line);z-index:41;display:flex;flex-direction:column;box-shadow:-4px 0 18px rgba(0,0,0,.10)}
+  .surface-head{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start}
+  .surface-head .grow{flex:1}
+  .surface-head .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700}
+  .surface-head h2{font-size:19px;margin-top:4px;line-height:1.3}
+  .surface-head .meta{font-size:12px;color:var(--ink-3);margin-top:5px}
+  .iconbtn{width:30px;height:30px;border-radius:4px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink-2);font-size:15px;flex:none}
+  .iconbtn:hover{background:#f3f2f1}
+  .surface-body{padding:18px 22px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:18px}
+  .surface-foot{padding:13px 22px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end}
+  .secline{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;padding-bottom:7px;border-bottom:1px solid var(--line);margin-bottom:11px;display:flex;align-items:center;gap:9px}
+  .secline .grow{flex:1}
+  .kv{display:grid;grid-template-columns:132px 1fr;gap:11px;align-items:center;font-size:13px}
+  .kv dt{color:var(--ink-3);font-size:12px;font-weight:600}
+
+  /* share */
+  .linkbox{display:flex;gap:9px;align-items:center;background:#f3f2f1;border:1px solid var(--line);border-radius:var(--radius-btn);padding:9px 12px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:var(--ink-2);overflow-x:auto}
+  .linkbox .u{flex:1;white-space:nowrap}
+  .toggle{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid #f0efed}
+  .toggle:last-of-type{border-bottom:0}
+  .toggle input{width:auto;margin-top:3px;flex:none}
+  .toggle .grow{flex:1}
+  .toggle .t{font-size:13.5px;font-weight:600}
+  .toggle .d{font-size:12.5px;color:var(--ink-3);margin-top:3px;line-height:1.5}
+
+  .note{font-size:12.5px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 4px 4px 0;margin-top:20px;max-width:800px;line-height:1.55}
+  .note b{color:var(--accent-deep)}
+  .note.warnnote{border-left-color:var(--warn);background:var(--warn-soft)}
+  .note.warnnote b{color:var(--warn)}
+  .new{display:inline-flex;align-items:center;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:var(--accent-deep);background:var(--accent-soft);border:1px solid #d6d9f4;padding:1px 7px;border-radius:3px;vertical-align:middle}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-size:11.5px;font-weight:700;color:var(--ink-3);padding:10px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:11px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  td .t{font-weight:600;color:var(--ink);text-decoration:none;display:inline-block;padding:5px 0}
+  td .t:hover{color:var(--accent)}
+
+  @media (max-width:768px){input,select,textarea{font-size:16px!important}}
+  @media (max-width:980px){.shell{grid-template-columns:1fr}.rail{flex-direction:row;justify-content:space-around;border-right:0;border-bottom:1px solid var(--line);padding:6px 0}.rail .mark,.rail .push{display:none}.body,.pagehead{padding-left:18px;padding-right:18px}.drawer{width:100%}.linkrow{flex-wrap:wrap}.linkrow .rel{width:auto}.sharecols{grid-template-columns:1fr!important}
+    /* grid/flex children default to min-width:auto, so the nowrap share URL widens the whole page
+       instead of scrolling inside its own box. This is the fix. */
+    .sharecols>div,.sharecols>div>.card{min-width:0}.linkbox{overflow-x:auto}}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>Comp I — Memory</strong><span class="tag">feature comp</span><span class="tag">locked Comp C language</span>
+  <nav>
+    <button data-s="links" class="on">Linked ideas (#4)</button>
+    <button data-s="picker">Link picker (#4)</button>
+    <button data-s="merge">Merge duplicate (#4)</button>
+    <button data-s="close">Decision on close (#6)</button>
+    <button data-s="closed">Closed idea (#6)</button>
+    <button data-s="share">Share link (#7)</button>
+  </nav>
+</div>
+
+<!-- ============ 1. LINKED IDEAS ============ -->
+<section class="screen on" id="s-links">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span>Home</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg><span>Boards</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg><span>Ideas</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.6 2.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg><span>Settings</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Home</a> / Ideas</div><h1>Ideas</h1></div>
+      <div class="body"><div class="card" style="height:300px;display:grid;place-items:center;color:var(--ink-3);font-size:13px">Ideas list (dimmed behind the drawer)</div></div>
+    </div>
+  </div>
+  <div class="surface-backdrop"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="i-l-title">
+    <div class="surface-head">
+      <div class="grow"><div class="eyebrow">Ideas board · IDEA-118</div><h2 id="i-l-title">Standardize the intake checklist</h2><div class="meta">Created by Noah Contributor · Aug 15, 2026</div></div>
+      <button class="iconbtn" aria-label="Close">×</button>
+    </div>
+    <div class="surface-body">
+      <div>
+        <div class="secline"><span class="grow">Details</span></div>
+        <dl class="kv">
+          <dt>Status</dt><dd><span class="pill neutral"><span class="dot" style="background:#9a5b00"></span>In Review</span></dd>
+          <dt>Idea type</dt><dd>Continuous Improvement</dd>
+          <dt>Business impact</dt><dd><span class="pill im-high">High</span></dd>
+        </dl>
+      </div>
+
+      <div>
+        <div class="secline"><span class="grow">Linked ideas · 3 <span class="new">New</span></span><button class="btn subtle sm">+ Link an idea</button></div>
+
+        <div class="linkrow">
+          <span class="rel"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.5 5.5a3.5 3.5 0 0 1 5 0 1 1 0 0 1-1.4 1.4 1.5 1.5 0 0 0-2.2 0L8 8.9a1.5 1.5 0 0 0 2.1 2.1 1 1 0 0 1 1.4 1.4 3.5 3.5 0 0 1-5-4.9Zm3 9a3.5 3.5 0 0 1-5 0 3.5 3.5 0 0 1 0-5 1 1 0 0 1 1.4 1.4 1.5 1.5 0 0 0 0 2.2 1.5 1.5 0 0 0 2.2 0l1.9-1.9A1.5 1.5 0 0 0 9.9 9.1a1 1 0 1 1 1.4-1.4 3.5 3.5 0 0 1 0 5Z"/></svg>Relates to</span>
+          <div class="grow"><a class="t" href="#">Pilot a faster review path</a><div class="m">Ideas · In Review · linked by Olivia Administer, 2d ago</div></div>
+          <button class="x" aria-label="Remove link to Pilot a faster review path">×</button>
+        </div>
+
+        <div class="linkrow">
+          <span class="rel"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 6a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Zm0 4a1 1 0 0 1 1-1h10a1 1 0 0 1 0 2H5a1 1 0 0 1-1-1Zm1 3a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2Z"/></svg>Supersedes</span>
+          <div class="grow"><a class="t" href="#">Rewrite the intake form</a><div class="m">Opportunities · <span class="pill neutral" style="font-size:10.5px">Declined</span> · linked by Noah Contributor, 3d ago</div></div>
+          <button class="x" aria-label="Remove link to Rewrite the intake form">×</button>
+        </div>
+
+        <div class="linkrow">
+          <span class="rel"><svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7 3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7.8a1 1 0 0 0-.3-.7l-3.8-3.8a1 1 0 0 0-.7-.3Zm-3 4.5a1 1 0 0 0-1 1V15a2 2 0 0 0 2 2h6a1 1 0 1 0 0-2H6a1 1 0 0 1-1-1Z"/></svg>Duplicate of</span>
+          <div class="grow"><a class="t" href="#">One checklist for all intake requests</a><div class="m">Ideas · merged into this idea by Olivia Administer, 1d ago · 1 vote and 2 comments carried over</div></div>
+          <button class="x" aria-label="Remove link to One checklist for all intake requests">×</button>
+        </div>
+
+        <div class="suggestbox" style="margin-top:14px">
+          <div class="h"><svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 3.4 9.8l3.4 3.4a1 1 0 0 0 1.4-1.4l-3.4-3.4A5.5 5.5 0 0 0 9 3.5Zm-3.5 5.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z"/></svg>Possible duplicates — found by title and description overlap</div>
+          <div class="sugg">
+            <div class="grow"><a class="t" href="#">Field service enablement: Standardize the intake checklist</a><div class="m">Opportunities · New / Pending · created by Noah Contributor</div></div>
+            <span class="score">82% overlap</span>
+            <button class="btn sm">Link</button><button class="btn sm">Dismiss</button>
+          </div>
+          <div class="sugg">
+            <div class="grow"><a class="t" href="#">Intake form: require the affected line</a><div class="m">Ideas · Complete · created by Maya Collaborator</div></div>
+            <span class="score">54% overlap</span>
+            <button class="btn sm">Link</button><button class="btn sm">Dismiss</button>
+          </div>
+          <p class="hint" style="margin-top:9px">Suggestions are text overlap only — no model involved, nothing is linked automatically, and dismissing one is remembered per idea pair.</p>
+        </div>
+      </div>
+    </div>
+    <div class="surface-foot"><button class="btn">Cancel</button><button class="btn primary" type="submit">Save</button></div>
+  </aside>
+</section>
+
+<!-- ============ 2. LINK PICKER ============ -->
+<section class="screen" id="s-picker">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span>Home</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span>Ideas</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Home</a> / Ideas</div><h1>Ideas</h1></div>
+      <div class="body"><div class="card" style="height:300px;display:grid;place-items:center;color:var(--ink-3);font-size:13px">Ideas list</div></div>
+    </div>
+  </div>
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="i-p-title">
+      <div class="modal-head">
+        <div class="eyebrow">Standardize the intake checklist</div>
+        <h2 id="i-p-title">Link an idea</h2>
+        <p class="sub">Links are two-way. The matching inverse relationship is written on the other idea automatically.</p>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="i-rel">This idea… <span class="req" aria-hidden="true">*</span></label>
+          <select id="i-rel">
+            <option>relates to</option>
+            <option>is a duplicate of</option>
+            <option>supersedes</option>
+            <option>is blocked by</option>
+            <option>blocks</option>
+          </select>
+          <div class="hint">Inverse written on the other idea: <b>relates to</b> ↔ relates to · <b>is a duplicate of</b> ↔ has duplicate · <b>supersedes</b> ↔ superseded by · <b>is blocked by</b> ↔ blocks.</div>
+        </div>
+        <div class="field">
+          <label for="i-target">…this idea <span class="req" aria-hidden="true">*</span></label>
+          <input type="text" id="i-target" value="intake" aria-describedby="i-target-help" placeholder="Search by title or ID across all boards">
+          <div class="hint" id="i-target-help">Searches every board you can see in Acme Robotics. You cannot link across organizations.</div>
+        </div>
+        <div class="card" style="box-shadow:none">
+          <div class="sugg" style="padding:10px 14px;background:var(--accent-soft)">
+            <div class="grow"><a class="t" href="#">Field service enablement: Standardize the intake checklist</a><div class="m">IDEA-204 · Opportunities · New / Pending</div></div>
+            <span class="score">82% overlap</span>
+          </div>
+          <div class="sugg" style="padding:10px 14px">
+            <div class="grow"><a class="t" href="#">Intake form: require the affected line</a><div class="m">IDEA-090 · Ideas · Complete</div></div>
+          </div>
+          <div class="sugg" style="padding:10px 14px">
+            <div class="grow"><a class="t" href="#">Rewrite the intake form</a><div class="m">IDEA-051 · Opportunities · Declined</div></div>
+          </div>
+        </div>
+        <div class="field" style="margin-top:15px;margin-bottom:0">
+          <label for="i-why">Why they're linked <span style="font-weight:400;color:var(--ink-3)">(optional)</span></label>
+          <input type="text" id="i-why" placeholder="e.g. Same checklist, different team">
+          <div class="hint">Shown beneath the link. One line here saves the next person re-deriving the connection.</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span style="flex:1;font-size:12px;color:var(--ink-3)">Marking a duplicate does not merge — merging is a separate, confirmed step.</span>
+        <button class="btn">Cancel</button><button class="btn primary" type="submit">Add link</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. MERGE ============ -->
+<section class="screen" id="s-merge">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span>Home</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span>Ideas</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Home</a> / Ideas</div><h1>Ideas</h1></div>
+      <div class="body"><div class="card" style="height:300px;display:grid;place-items:center;color:var(--ink-3);font-size:13px">Ideas list</div></div>
+    </div>
+  </div>
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="i-m-title">
+      <div class="modal-head">
+        <div class="eyebrow">Merge duplicates</div>
+        <h2 id="i-m-title">Merge two ideas into one</h2>
+        <p class="sub">Everything from the merged idea moves to the one you keep. This is reversible for 30 days from the kept idea's history.</p>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Keep this idea</label>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <label style="display:flex;gap:10px;align-items:flex-start;border:1px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius-card);padding:11px 13px;margin:0;font-weight:400;cursor:pointer">
+              <input type="radio" name="i-keep" checked style="width:auto;margin-top:3px;flex:none">
+              <span><b style="font-size:13.5px">Standardize the intake checklist</b><br><span style="font-size:12px;color:var(--ink-3)">IDEA-118 · Ideas · In Review · 2 votes · 3 comments · created Aug 15</span></span>
+            </label>
+            <label style="display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--radius-card);padding:11px 13px;margin:0;font-weight:400;cursor:pointer">
+              <input type="radio" name="i-keep" style="width:auto;margin-top:3px;flex:none">
+              <span><b style="font-size:13.5px">One checklist for all intake requests</b><br><span style="font-size:12px;color:var(--ink-3)">IDEA-141 · Ideas · New / Pending · 1 vote · 2 comments · created Aug 16</span></span>
+            </label>
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--line);border-radius:var(--radius-card);padding:13px 15px;margin-bottom:15px">
+          <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--ink-3);margin-bottom:10px">What happens</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13px">
+            <li style="display:flex;gap:9px"><svg width="15" height="15" viewBox="0 0 20 20" fill="var(--ok)" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span><b>2 comments</b> move across, keeping their authors and timestamps.</span></li>
+            <li style="display:flex;gap:9px"><svg width="15" height="15" viewBox="0 0 20 20" fill="var(--ok)" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span><b>1 vote</b> moves across. Maya voted on both — she is counted once, so the total becomes <b>2</b>, not 3.</span></li>
+            <li style="display:flex;gap:9px"><svg width="15" height="15" viewBox="0 0 20 20" fill="var(--ok)" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span><b>Followers and assignees</b> are combined.</span></li>
+            <li style="display:flex;gap:9px"><svg width="15" height="15" viewBox="0 0 20 20" fill="var(--warn)" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M10 2.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15ZM9 6a1 1 0 1 1 2 0v4.2a1 1 0 1 1-2 0Zm1 9a1.15 1.15 0 1 1 0-2.3 1.15 1.15 0 0 1 0 2.3Z"/></svg><span>The merged idea's <b>description is not merged</b> — it is kept on the closed idea and quoted in a comment on the one you keep. Concatenating two descriptions produces something nobody wrote.</span></li>
+            <li style="display:flex;gap:9px"><svg width="15" height="15" viewBox="0 0 20 20" fill="var(--warn)" aria-hidden="true" style="flex:none;margin-top:2px"><path d="M10 2.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15ZM9 6a1 1 0 1 1 2 0v4.2a1 1 0 1 1-2 0Zm1 9a1.15 1.15 0 1 1 0-2.3 1.15 1.15 0 0 1 0 2.3Z"/></svg><span><b>Custom field values</b> that exist on both and disagree are kept from the idea you keep. Two conflicts here — <button class="btn subtle sm" type="button" style="padding:4px 4px">review them</button>.</span></li>
+          </ul>
+        </div>
+
+        <div style="background:var(--warn-soft);border-radius:var(--radius-btn);padding:11px 13px;font-size:12.5px;color:var(--warn);display:flex;gap:9px;align-items:flex-start">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="flex:none;margin-top:1px"><path d="M10 2.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15ZM9 6a1 1 0 1 1 2 0v4.2a1 1 0 1 1-2 0Zm1 9a1.15 1.15 0 1 1 0-2.3 1.15 1.15 0 0 1 0 2.3Z"/></svg>
+          <span><b>"One checklist for all intake requests" will be closed</b> as a duplicate and will stop appearing on the board. Its URL keeps working and redirects here.</span>
+        </div>
+      </div>
+      <div class="modal-foot"><button class="btn">Cancel</button><button class="btn primary" type="submit">Merge ideas</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. DECISION ON CLOSE ============ -->
+<section class="screen" id="s-close">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span>Home</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span>Ideas</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead"><div class="crumbs"><a href="#">Home</a> / Ideas</div><h1>Ideas</h1></div>
+      <div class="body"><div class="card" style="height:300px;display:grid;place-items:center;color:var(--ink-3);font-size:13px">Board — a card was just dragged into "Declined"</div></div>
+    </div>
+  </div>
+  <div class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="i-d-title">
+      <div class="modal-head">
+        <div class="eyebrow">Closing an idea</div>
+        <h2 id="i-d-title">Why is this being declined?</h2>
+        <p class="sub"><b>Rebuild the archive importer</b> is moving to <span class="pill neutral">Declined</span>, which closes it. One or two sentences here is the whole feature — in six months this is the only thing that explains the decision.</p>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="i-outcome">Outcome <span class="req" aria-hidden="true">*</span></label>
+          <select id="i-outcome">
+            <option>Declined — not worth the effort</option>
+            <option>Declined — solved another way</option>
+            <option>Declined — duplicate</option>
+            <option>Declined — out of scope</option>
+            <option>Declined — revisit later</option>
+          </select>
+          <div class="hint">The reason category is what makes "everything we said no to and why" a query rather than a reading exercise.</div>
+        </div>
+
+        <div class="field">
+          <label for="i-reason">Reasoning <span class="req" aria-hidden="true">*</span></label>
+          <textarea id="i-reason" rows="4" placeholder="What decided it?">Rebuilding costs about three weeks and the legacy importer only runs twice a year. Revisit if we move off the 2019 archive format — at that point the rebuild is unavoidable anyway.</textarea>
+          <div class="hint">Minimum 20 characters. "No" and "won't do" are what this field exists to prevent.</div>
+        </div>
+
+        <div class="field">
+          <label for="i-decider">Decided by</label>
+          <select id="i-decider"><option>Olivia Administer (you)</option><option>Noah Contributor</option><option>Maya Collaborator</option></select>
+          <div class="hint">Defaults to you. Change it when you are recording someone else's decision — a call made in a meeting, for instance.</div>
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label for="i-revisit">Revisit on <span style="font-weight:400;color:var(--ink-3)">(optional)</span></label>
+          <input type="text" id="i-revisit" placeholder="e.g. March 2027" style="max-width:240px">
+          <div class="hint">Sets a reminder for the decider. "Revisit later" without a date is how an idea disappears.</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span style="flex:1;font-size:12px;color:var(--ink-3)">The author and everyone following will be notified.</span>
+        <button class="btn">Cancel</button><button class="btn primary" type="submit">Decline and close</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. CLOSED IDEA ============ -->
+<section class="screen" id="s-closed">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span>Home</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span>Ideas</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Home</a> / <a href="#">Ideas</a> / Decisions</div>
+        <div class="row"><div class="grow"><h1>Decisions</h1><p class="sub">Every closed idea and the reasoning recorded when it closed. This page exists only because closing requires a reason — it is the payoff for that one required field.</p></div>
+          <button class="btn">Export CSV</button></div>
+        <nav class="ptabs" aria-label="View"><a href="#">List</a><a href="#">Board</a><a class="on" href="#" aria-current="page">Decisions</a></nav>
+      </div>
+      <div class="body">
+        <div style="display:flex;gap:9px;margin-bottom:16px;flex-wrap:wrap">
+          <select style="width:auto;padding:6px 10px;font-size:12.5px" aria-label="Filter by outcome"><option>All outcomes</option><option>Declined — not worth the effort</option><option>Declined — solved another way</option><option>Completed</option></select>
+          <select style="width:auto;padding:6px 10px;font-size:12.5px" aria-label="Filter by decider"><option>Anyone</option><option>Olivia Administer</option></select>
+          <input type="text" placeholder="Search reasoning…" style="width:auto;min-width:220px;padding:6px 10px;font-size:12.5px" aria-label="Search decision reasoning">
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card" style="padding:16px 18px">
+            <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:11px;flex-wrap:wrap">
+              <div style="flex:1;min-width:240px"><a class="t" href="#" style="font-size:16px;font-family:Georgia,serif;display:inline-block;padding:4px 0">Rebuild the archive importer</a>
+                <div style="font-size:12px;color:var(--ink-3);margin-top:3px">IDEA-077 · Ideas · created by Maya Collaborator, Aug 2</div></div>
+              <span class="pill neutral">Declined — not worth the effort</span>
+            </div>
+            <div class="decision declined">
+              <div class="h"><span class="avatar s">OA</span><span class="who">Decided by <b>Olivia Administer</b> · Aug 16, 2026</span><span style="flex:1"></span><span class="pill warn">Revisit March 2027</span></div>
+              <p>Rebuilding costs about three weeks and the legacy importer only runs twice a year. Revisit if we move off the 2019 archive format — at that point the rebuild is unavoidable anyway.</p>
+            </div>
+          </div>
+
+          <div class="card" style="padding:16px 18px">
+            <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:11px;flex-wrap:wrap">
+              <div style="flex:1;min-width:240px"><a class="t" href="#" style="font-size:16px;font-family:Georgia,serif;display:inline-block;padding:4px 0">Roll out the proven workflow</a>
+                <div style="font-size:12px;color:var(--ink-3);margin-top:3px">IDEA-063 · Ideas · created by Noah Contributor, Jul 28</div></div>
+              <span class="pill ok">Completed</span>
+            </div>
+            <div class="decision">
+              <div class="h"><span class="avatar s">NC</span><span class="who">Closed by <b>Noah Contributor</b> · Aug 14, 2026</span></div>
+              <p>Extended to all four teams. Cycle time on the pilot cohort dropped from 9 days to 5.5 over six weeks; the remaining teams matched it within a fortnight.</p>
+              <div class="q">What we'd do differently</div>
+              <p style="font-size:13px">Should have agreed the measure before the pilot rather than after — the first three weeks of data were not comparable.</p>
+            </div>
+          </div>
+
+          <div class="card" style="padding:16px 18px">
+            <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:11px;flex-wrap:wrap">
+              <div style="flex:1;min-width:240px"><a class="t" href="#" style="font-size:16px;font-family:Georgia,serif;display:inline-block;padding:4px 0">Rewrite the intake form</a>
+                <div style="font-size:12px;color:var(--ink-3);margin-top:3px">IDEA-051 · Opportunities · created by Olivia Administer, Jul 19</div></div>
+              <span class="pill neutral">Declined — solved another way</span>
+            </div>
+            <div class="decision declined">
+              <div class="h"><span class="avatar s">OA</span><span class="who">Decided by <b>Olivia Administer</b> · Aug 13, 2026</span></div>
+              <p>Superseded by the single-checklist approach, which covers the same ground without a form rewrite.</p>
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3);display:flex;align-items:center;gap:7px">
+                <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.5 5.5a3.5 3.5 0 0 1 5 0 1 1 0 0 1-1.4 1.4 1.5 1.5 0 0 0-2.2 0L8 8.9a1.5 1.5 0 0 0 2.1 2.1 1 1 0 0 1 1.4 1.4 3.5 3.5 0 0 1-5-4.9Z"/></svg>
+                Superseded by <a href="#" style="color:var(--accent);font-weight:600">Standardize the intake checklist</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note"><b>This is the whole argument for #6.</b> One required field at the moment of closing produces a page that neither Trello nor Jira gives you: a searchable record of what your organization decided and why. Note the third card — the decision links to the idea that replaced it, which only works because #4 exists. The two features are worth more together than apart.</p></div>
+        <div class="note warnnote"><b>Do not make this retroactive.</b> Ideas already closed have no decision recorded and never will. Backfilling by prompting on old ideas trains people to type "n/a" to dismiss a dialog, which poisons the field permanently. Show already-closed ideas here with "No decision recorded — closed before this was captured" and leave them alone.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. SHARE LINK ============ -->
+<section class="screen" id="s-share">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg><span>Home</span></a>
+      <a class="on" href="#" aria-current="page"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg><span>Boards</span></a>
+      <a href="#"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2Z"/></svg><span>Ideas</span></a>
+      <span class="push"></span><span class="avatar">OA</span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Boards</a> / <a href="#">Ideas</a> / Sharing</div>
+        <h1>Share this board</h1>
+        <p class="sub">A read-only link lets someone outside Acme Robotics see this board without an account. Org Admin only.</p>
+        <nav class="ptabs" aria-label="Board settings"><a href="#">Board</a><a href="#">Swimlanes</a><a class="on" href="#" aria-current="page">Sharing</a></nav>
+      </div>
+      <div class="body">
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start" class="sharecols">
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="card" style="padding:18px">
+              <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+                <div style="flex:1"><h2 style="font-size:16px;padding:0;border:0;display:block">Read-only link <span class="new">New</span></h2>
+                  <p style="font-size:12.5px;color:var(--ink-3);margin-top:4px">Anyone with this link can read the board. They cannot comment, vote, or see anything else in the organization.</p></div>
+                <label style="display:flex;align-items:center;gap:8px;margin:0;font-size:13px;white-space:nowrap"><input type="checkbox" checked style="width:auto">Enabled</label>
+              </div>
+              <div class="linkbox">
+                <span class="u">https://collega.app/s/ideas-acme/8f3c2a91d64b7e05</span>
+                <button class="btn sm" type="button">Copy</button>
+              </div>
+              <p class="hint">Created by Olivia Administer on Aug 16, 2026 · viewed 12 times · last viewed 2 hours ago</p>
+              <div style="display:flex;gap:9px;margin-top:13px"><button class="btn sm">Regenerate link</button><button class="btn danger sm">Revoke</button></div>
+            </div>
+
+            <div class="card" style="padding:18px">
+              <h2 style="font-size:16px;padding:0;border:0;display:block;margin-bottom:4px">What the link shows</h2>
+              <p style="font-size:12.5px;color:var(--ink-3);margin-bottom:6px">Default is the least revealing option in each case.</p>
+              <div class="toggle"><input type="checkbox" id="i-t1" checked><div class="grow"><label class="t" for="i-t1" style="margin:0">Idea titles and descriptions</label><div class="d">The board itself. Switching this off leaves nothing to share.</div></div></div>
+              <div class="toggle"><input type="checkbox" id="i-t2" checked><div class="grow"><label class="t" for="i-t2" style="margin:0">Statuses and swimlanes</label><div class="d">Where each idea sits.</div></div></div>
+              <div class="toggle"><input type="checkbox" id="i-t3"><div class="grow"><label class="t" for="i-t3" style="margin:0">People — authors, assignees, commenters</label><div class="d">Off by default. When off, names render as "A team member" and no email addresses appear anywhere.</div></div></div>
+              <div class="toggle"><input type="checkbox" id="i-t4"><div class="grow"><label class="t" for="i-t4" style="margin:0">Comments</label><div class="d">Off by default. Internal discussion is usually the part you did not mean to share.</div></div></div>
+              <div class="toggle"><input type="checkbox" id="i-t5"><div class="grow"><label class="t" for="i-t5" style="margin:0">Decision records on closed ideas</label><div class="d">Off by default. Useful for a client-facing summary, but reasoning is often blunt.</div></div></div>
+              <div class="toggle"><input type="checkbox" id="i-t6" checked><div class="grow"><label class="t" for="i-t6" style="margin:0">Vote counts</label><div class="d">Totals only — never who voted.</div></div></div>
+            </div>
+
+            <div class="card" style="padding:18px">
+              <h2 style="font-size:16px;padding:0;border:0;display:block;margin-bottom:12px">Limits</h2>
+              <div class="field"><label for="i-exp">Expires</label><select id="i-exp" style="max-width:280px"><option>In 30 days — Sep 15, 2026</option><option>In 7 days</option><option>In 90 days</option><option>Never (not recommended)</option></select>
+                <div class="hint">An expiring link is the difference between a share and a permanent public page somebody forgot about.</div></div>
+              <div class="field" style="margin-bottom:0"><label for="i-pw">Passphrase <span style="font-weight:400;color:var(--ink-3)">(optional)</span></label><input type="text" id="i-pw" placeholder="Leave blank for no passphrase" style="max-width:280px">
+                <div class="hint">Adds a second factor to a URL that is otherwise the only credential.</div></div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="card" style="padding:16px">
+              <h2 style="font-size:14px;padding:0;border:0;display:block;margin-bottom:10px">Preview as a visitor</h2>
+              <div style="border:1px solid var(--line);border-radius:var(--radius-card);overflow:hidden;font-size:11px">
+                <div style="background:#f3f2f1;padding:7px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px"><span style="width:16px;height:16px;border-radius:3px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:8px;font-weight:700;font-family:Georgia,serif">CG</span><b style="font-size:11px">Ideas · Acme Robotics</b><span style="margin-left:auto;font-size:9.5px;color:var(--ink-3)">Read only</span></div>
+                <div style="padding:9px 10px;display:flex;flex-direction:column;gap:6px">
+                  <div style="border:1px solid var(--line);border-left:2px solid #9a5b00;border-radius:3px;padding:6px 8px"><b style="font-size:10.5px">Pilot a faster review path</b><div style="color:var(--ink-3);font-size:9.5px;margin-top:2px">In Review · A team member</div></div>
+                  <div style="border:1px solid var(--line);border-left:2px solid #5f5b56;border-radius:3px;padding:6px 8px"><b style="font-size:10.5px">Standardize the intake checklist</b><div style="color:var(--ink-3);font-size:9.5px;margin-top:2px">New / Pending · A team member</div></div>
+                  <div style="border:1px solid var(--line);border-left:2px solid #0e700e;border-radius:3px;padding:6px 8px"><b style="font-size:10.5px">Roll out the proven workflow</b><div style="color:var(--ink-3);font-size:9.5px;margin-top:2px">Complete · A team member</div></div>
+                </div>
+              </div>
+              <p class="hint">Reflects the switches on the left. People are off, so names are masked.</p>
+              <button class="btn sm" style="margin-top:10px;width:100%">Open full preview</button>
+            </div>
+
+            <div class="card" style="padding:16px">
+              <h2 style="font-size:14px;padding:0;border:0;display:block;margin-bottom:10px">Access log</h2>
+              <table style="font-size:12px">
+                <tbody>
+                  <tr><td style="padding:6px 0;border:0">Today 14:02</td><td style="padding:6px 0;border:0;text-align:right;color:var(--ink-3)">2 views</td></tr>
+                  <tr><td style="padding:6px 0;border:0">Yesterday</td><td style="padding:6px 0;border:0;text-align:right;color:var(--ink-3)">7 views</td></tr>
+                  <tr><td style="padding:6px 0;border:0">Aug 14</td><td style="padding:6px 0;border:0;text-align:right;color:var(--ink-3)">3 views</td></tr>
+                </tbody>
+              </table>
+              <p class="hint">Counts only — no IP addresses or identities are stored for anonymous visitors.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="note warnnote"><b>This is the one proposal with a real security surface.</b> An unauthenticated, tokenized URL is a new way for organization-scoped data to leave the organization, and the role model has no concept of "not a member" today. Four things this comp takes a position on, all of which need confirming before any of it is specified: the token is the only credential unless a passphrase is set; expiry defaults to 30 days rather than never; people and comments are <b>off</b> by default; and creating a link is Org Admin only, never a User. Rejecting any one of those changes the feature.</p></div>
+        <div class="note"><b>Relationship to the Read Only role.</b> This is deliberately <em>not</em> the same thing. Read Only is a member of the organization with an account; a share link is for someone who will never have one — the client implied by the "Client Review" status. Conflating them would mean creating accounts for people you cannot onboard.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.comp-bar button[data-s]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.comp-bar button[data-s]').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+      document.getElementById('s-'+b.dataset.s).classList.add('on');
+      window.scrollTo(0,0);
+    });
+  });
+</script>
+</body>
+</html>
