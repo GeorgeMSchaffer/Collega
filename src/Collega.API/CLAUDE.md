@@ -48,7 +48,7 @@ cd src/Collega.API
 dotnet user-secrets set "SiteAdmin:Email" "admin@collega.local"
 dotnet user-secrets set "SiteAdmin:Password" "<your-password>"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
-  "Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=<your-password>"
+  "Host=localhost;Port=5432;Database=Collega;Username=collega;Password=<your-password>"
 ```
 
 Environment variables work too, with a **double** underscore: `SiteAdmin__Email`, `ConnectionStrings__DefaultConnection`, `Auth__AccessTokenLifetimeMinutes`.
