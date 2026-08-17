@@ -15,6 +15,8 @@
 .viewswitch .backgap { width: 10px; }
 .headctl { display: flex; gap: 8px; align-items: center; padding-bottom: 2px; }
 .headctl select { min-width: 180px; max-width: 260px; }
+/* Inline label for the board picker — sits beside the control, not above it as in a form grid. */
+.headctl .ctllabel { font-size: 13px; font-weight: 600; color: var(--ink-3); white-space: nowrap; }
 .viewswitch a {
   padding: 9px 14px;
   font-size: 13px;

@@ -37,9 +37,12 @@
         <div class="headctl">
             @if (_boards.Count > 1)
             {
-                @* Native select, so aria-label genuinely names it — unlike FluentTextField, whose real
-                   input sits behind a shadow boundary (see SPEC/Bug Triage.md). *@
-                <select id="boardpick" value="@BoardId" @onchange="OnBoardPicked" aria-label="Board">
+                @* A real visible <label for>, not aria-label: this is a native <select>, so the
+                   association actually reaches the control — unlike FluentTextField, whose real input
+                   sits behind a shadow boundary (see SPEC/Bug Triage.md). Only one naming mechanism,
+                   so what a screen reader announces is what is on screen. *@
+                <label class="ctllabel" for="boardpick">Board</label>
+                <select id="boardpick" value="@BoardId" @onchange="OnBoardPicked">
                     @foreach (var b in _boards)
                     {
                         <option value="@b.BoardId">@b.Name</option>
