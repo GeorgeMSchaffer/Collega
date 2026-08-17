@@ -42,6 +42,8 @@
 - user CSV import enforces Site Admin and Org Admin organization scope and rejects Site Admin as an imported role
 - invalid, duplicate, empty, oversized, and over-row-limit CSV imports return row-specific validation where applicable and create no users
 - user CSV import responses, logs, and audit events do not expose plaintext initial passwords or uploaded file contents
+- operational logs never contain plaintext passwords, reset or bearer tokens, AI prompt or transcript content, API keys, uploaded CSV contents, or request query strings
+- no test writes a log file: the integration harness disables the Development file sink and substitutes an in-memory sink
 - board creation rejects fewer than 2 swimlanes
 - new organization provisioning creates the canonical Idea Type and Business Impact options in the specified order
 - migration backfills existing ideas to `Continuous Improvement` and `Medium`
