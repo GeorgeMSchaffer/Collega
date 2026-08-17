@@ -81,7 +81,21 @@
       "PowerShell(docker inspect *)",
       "PowerShell(docker logs *)",
       "PowerShell(dotnet build *)",
-      "PowerShell(dotnet test *)"
+      "PowerShell(dotnet test *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega status *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega log *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega branch *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega diff *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega show *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega rev-parse *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega rev-list *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega ls-files *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega worktree list*)",
+      "Bash(git check-ignore *)",
+      "Bash(git grep *)",
+      "Bash(git ls-tree *)",
+      "Bash(git --no-pager log *)",
+      "Bash(git --no-pager diff *)"
     ],
     "additionalDirectories": [
       "/tmp"
