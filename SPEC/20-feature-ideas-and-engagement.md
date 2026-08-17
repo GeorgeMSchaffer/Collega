@@ -7,8 +7,8 @@ Users can create, discuss, organize, and support ideas within their organization
 | Decision | Resolution |
 |---|---|
 | Field model | `Priority` remains unchanged. `Idea Type` and `Business Impact` are dedicated, required, organization-scoped configurable fields. |
-| Initial values | Idea Type: `Continuous Improvement`, `Process Revision`. Business Impact: `Low` (`#16A34A`), `Medium` (`#2563EB`), `High` (`#D97706`), `Critical` (`#DC2626`). |
-| Defaults | The first active option by admin-controlled sort order is the default for new ideas and CSV rows that omit the field. Existing ideas retain their assigned values when options are reordered. |
+| Initial values | Idea Type: `Continuous Improvement`, `Process Revision`. Business Impact, in seeded sort order (**changed 2026-08-17, user decision — most severe first**): `Critical` (`#DC2626`), `High` (`#D97706`), `Medium` (`#2563EB`), `Low` (`#16A34A`). |
+| Defaults | Idea Type defaults to the first active option by admin-controlled sort order. **Business Impact does not** — it defaults to `Medium` where that option exists, falling back to the first active option where it does not. Decoupled 2026-08-17 when the seeded order was reversed: with `Critical` listed first, first-active would have pre-marked every new idea Critical and inflated reported severity through a default nobody chose. This mirrors `Priority`, which already hard-defaults to `Medium` rather than to first-in-list. Existing ideas retain their assigned values when options are reordered. |
 | Existing idea migration | Existing ideas are assigned `Continuous Improvement` and `Medium`. |
 | Option lifecycle | Options are soft-deleted. Existing ideas retain archived values, archived values cannot be newly selected, and the last active option cannot be deleted. |
 | Option appearance | Business Impact options have an admin-editable color used by chips. Idea Type options have a label and sort order only. |

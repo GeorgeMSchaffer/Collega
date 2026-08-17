@@ -144,6 +144,29 @@ The deployment key is shared by every organization (rule 29), so without a ceili
     32b. **First-turn bailout.** The pre-check is a page-load snapshot and cannot see the daily budget being exhausted mid-session (rule 28a) — which is the most likely real cause. So a `503` on the **first** turn of a conversation hands off to the create drawer immediately, carrying the user's typed text, rather than falling back to scripted nudges. Scripted nudges remain the fallback for a `503` on any *later* turn, where the user has already invested in the conversation and a sudden surface change would lose their place. The two mechanisms cover different failures and neither replaces the other.
 33. Model calls have a request timeout. The client shows a pending state and remains cancellable.
 
+### Managed prompt (added 2026-08-17, user decision)
+
+34. The system prompt and the two fixed redirect strings (rules 8 and 10) are **deployment configuration editable by a Site Admin**, not compiled constants. This is Site-Admin scope for the same reason the API key is (rule 29): it is one setting for the whole deployment, not organization content — so it does not conflict with the rule that a Site Admin touches organization content only through View As.
+
+35. What is editable is a **template**, not the finished prompt. Two placeholders are **required**, and a save omitting either is rejected:
+
+    - `{{ORGANIZATION_CATALOG}}` — the server renders the fenced, escaped catalog here (rules 11–12, 25).
+    - `{{SCOPE_STATEMENT}}` — the server renders the fenced scope block, or nothing when the organization has none. Required because a template omitting it would silently disable every organization's scope statement (rule 6) with no error anywhere.
+
+    **The escaping is not editable.** `Fence()` and the assembly of `<organization_data>` stay in code, so no edit can reintroduce the fence-closing defect the Sprint 7 review found. State the residual risk plainly: an admin **can** delete the prose instructing the model to distrust that block. The escaping survives; the instruction does not. Rule 37 exists for that.
+
+36. Versions are **immutable and appended**. Publishing writes a new version and moves the active pointer; restoring an earlier version publishes a **copy** of it as a new version rather than mutating history. With no active version the built-in default compiled into the product is used, so an empty table is the normal initial state and "reset to default" is simply deactivating all. Publishing writes an audit event recording actor and version number — **never the body**, preserving rule 27, since the body already lives in the version table.
+
+37. Publishing offers **advisory safety probes**: the injection, fence-closing and off-topic prompts are run against the draft and the outcomes shown before publish. They never block publishing. They exist because the failure mode here is not obvious — removing the scope instructions measurably *improves* classification while weakening refusal, so the dangerous edit is the one that feels like an improvement.
+
+    37a. Probes run against a **synthetic catalog**, never a real organization's. A Site Admin has no organization of their own; borrowing one would pick a winner arbitrarily and expose that organization's private option names to a platform admin. Synthetic also makes a probe run reproducible.
+
+    37c. **How much the probes actually prove — measured 2026-08-17, and less than they look.** Removing the scope sentence from the default template and probing it returned **3 of 3 refused**, identical to the unmodified default. Two reasons, both worth knowing before trusting a green run: the `inScope` **schema description independently defines scope**, so the prompt sentence is not load-bearing on its own (this is the strongest argument yet for the deferred schema-description work); and three probes is a low-powered instrument for an effect the playground measured at roughly 7%. Treat a passing run as *"nothing is grossly broken"*, never as *"this edit is safe"*. Real measurement is `tools/Collega.AiPlayground`, over a corpus, with repeats.
+
+    37b. *Metering.* The global daily budget gate (28a) applies, but probes are **not** per-organization rate limited and **not** written to the usage meter — both require an organization to attribute spend to, and `AiUsageRecord.OrganizationId` is deliberately required (28c). The exposure is bounded by construction instead: a fixed three prompts, Site Admin only, no loop. A probe call that fails is reported as unavailable rather than as a passed probe — turning an outage into a clean bill of health is the one wrong answer this surface can give.
+
+38. Editing the prompt changes the cached stable prefix, so the provider's prompt cache misses until it re-warms (rule 28's caching note). This is a one-off cost per publish, not a regression, and the editing surface says so.
+
 ---
 
 ## Model Configuration
