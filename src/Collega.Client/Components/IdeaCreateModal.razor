@@ -470,7 +470,14 @@
         if (impactsResult.Succeeded)
         {
             _businessImpacts = impactsResult.Value!.Where(b => !b.IsDeleted).OrderBy(b => b.SortOrder).ToList();
-            _businessImpactId = _businessImpacts.FirstOrDefault()?.BusinessImpactId ?? "";
+
+            // Medium by name, not first-in-list: the seeded order is most-severe-first, so taking the
+            // first option would pre-mark every new idea Critical and inflate reported severity through
+            // a default nobody chose. Matches Priority's fixed Medium default above. Falls back to
+            // first-active for an organization that renamed or removed Medium.
+            _businessImpactId = (_businessImpacts.FirstOrDefault(b =>
+                    string.Equals(b.Name, "Medium", StringComparison.OrdinalIgnoreCase))
+                ?? _businessImpacts.FirstOrDefault())?.BusinessImpactId ?? "";
         }
         var fieldsResult = await Api.GetActiveFieldDefinitionsAsync(organizationId);
         if (fieldsResult.Succeeded)

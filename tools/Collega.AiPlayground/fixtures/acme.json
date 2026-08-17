@@ -7,10 +7,10 @@
     { "name": "Process Revision", "fieldNames": ["Existing policy", "Proposed change", "Who is affected"] }
   ],
   "businessImpacts": [
-    { "name": "Low" },
-    { "name": "Medium" },
+    { "name": "Critical" },
     { "name": "High" },
-    { "name": "Critical" }
+    { "name": "Medium" },
+    { "name": "Low" }
   ],
   "statuses": ["New / Pending", "In Progress", "In Review", "Client Review", "Complete"],
   "tags": ["assembly", "safety", "tooling", "quality", "logistics"],
