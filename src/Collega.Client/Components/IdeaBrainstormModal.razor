@@ -169,6 +169,9 @@
     private bool _pending;
     private bool _closed;
     private bool _assistUnavailable;
+
+    // Whether the model has answered at all in this conversation. Gates the first-turn bailout (rule 32b).
+    private bool _hadModelTurn;
     private bool _wasOpen;
 
     /// <summary>
@@ -223,6 +226,7 @@
         _pending = false;
         _closed = false;
         _assistUnavailable = false;
+        _hadModelTurn = false;
     }
 
     /// <summary>
@@ -286,10 +290,23 @@
                 _assistUnavailable = true;
             }
 
+            // Rule 32b: a 503 before the assistant has said anything real means the user is looking at
+            // a chat that was never going to work. Hand them the create form with their text rather
+            // than the scripted prompts — the page-load pre-check (rule 32a) cannot catch this,
+            // because the daily budget is usually exhausted mid-session. Later turns keep the scripted
+            // fallback: by then the user has invested in the conversation and swapping the surface out
+            // from under them would lose their place.
+            if (result.StatusCode == 503 && !_hadModelTurn)
+            {
+                await Complete(TranscriptDraft());
+                return;
+            }
+
             AppendScriptedPrompt();
             return;
         }
 
+        _hadModelTurn = true;
         await ApplyTurnAsync(result.Value);
     }
 

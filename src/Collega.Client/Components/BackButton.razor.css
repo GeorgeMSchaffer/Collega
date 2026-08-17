@@ -1,0 +1,31 @@
+/* Back — a link, not a button (user decision 2026-08-17).
+   `.btn subtle` cleared only the border; the background stayed var(--surface), so Back read as a
+   card-coloured chip on every page it sat on. This inherits the surface behind it instead. */
+.backlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  /* Vertical padding is deliberate: it keeps the pointer target at ~28px without painting a box.
+     SPEC/Bug Triage.md already tracks sub-24px targets elsewhere — don't reintroduce one here. */
+  padding: 6px 2px;
+  margin: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.backlink:hover {
+  color: var(--accent-deep);
+  text-decoration: underline;
+}
+
+.backlink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

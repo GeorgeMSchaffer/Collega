@@ -294,6 +294,9 @@
     // Drawer + create modal state.
     private string? _openIdeaId;
     private bool _showBrainstorm;
+
+    // Page-load snapshot of AI assist availability (rule 32a). Optimistic default: see LoadAiAvailabilityAsync.
+    private bool _aiAvailable = true;
     private bool _showCreate;
     private string? _createBoardId;
     private string? _assistBoardId;
@@ -340,6 +343,8 @@
             _isSiteAdmin = user.IsInRole("SiteAdmin");
             _isReadOnly = user.IsInRole("ReadOnly");
         }
+
+        await LoadAiAvailabilityAsync();
 
         if (_isSiteAdmin)
         {
@@ -663,17 +668,37 @@
         StateHasChanged();
     }
 
-    // "Add New" opens the brainstorm chat first; its draft pre-fills the create form.
+    // "Add New" opens the brainstorm chat first; its draft pre-fills the create form. When the
+    // assistant is known to be down we skip straight to the form instead of opening a scripted chat
+    // the user has to escape from (rule 32a); a mid-session outage is caught by the modal's
+    // first-turn bailout (rule 32b), since _aiAvailable is only a page-load snapshot.
     private void OpenCreate()
     {
-        _createBoardId = null; // global list: the modal shows a board picker
+        _createBoardId = null; // global list: the create surface shows a board picker
         _seedDraft = null;
+
+        if (!_aiAvailable)
+        {
+            _showCreate = true;
+            return;
+        }
 
         // The assist endpoint is board-scoped for authorization and attribution, but retrieval is
         // organization-scoped — so from the global list any board the caller can see yields the same
         // catalog. No board at all means the chat stays scripted, which is a supported state.
         _assistBoardId = _boardNames.Keys.FirstOrDefault();
         _showBrainstorm = true;
+    }
+
+    /// <summary>
+    /// One cached read per page load (rule 32a) so "Add New" costs no extra round trip. A failed probe
+    /// is treated as available: the chat's own 503 path still degrades correctly, whereas assuming
+    /// unavailable would silently withhold a working feature over one flaky request.
+    /// </summary>
+    private async Task LoadAiAvailabilityAsync()
+    {
+        var result = await Api.GetAiAssistAvailabilityAsync();
+        _aiAvailable = !result.Succeeded || (result.Value?.Available ?? true);
     }
 
     private void CloseBrainstorm() => _showBrainstorm = false;

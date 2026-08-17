@@ -256,6 +256,13 @@ public sealed partial class ApiClient
         SendJsonAsync<IdeaAssistTurnResponseDto>(
             HttpMethod.Post, $"{BasePath}/boards/{boardId}/idea-assist/turns", request, ct);
 
+    /// <summary>
+    /// Whether to open the drafting chat or go straight to the create form (rule 32a). Open to any
+    /// authenticated user, unlike the admin-only settings read below.
+    /// </summary>
+    public Task<ApiResult<AiAssistAvailabilityDto>> GetAiAssistAvailabilityAsync(CancellationToken ct = default) =>
+        GetAsync<AiAssistAvailabilityDto>($"{BasePath}/ai-assist/availability", ct);
+
     /// <summary>Reads an organization's AI assist configuration. Never returns a key.</summary>
     public Task<ApiResult<AiAssistSettingsDto>> GetAiAssistSettingsAsync(string organizationId, CancellationToken ct = default) =>
         GetAsync<AiAssistSettingsDto>($"{BasePath}/organizations/{organizationId}/ai-assist/settings", ct);

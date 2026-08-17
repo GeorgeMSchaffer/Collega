@@ -138,6 +138,10 @@ The deployment key is shared by every organization (rule 29), so without a ceili
 ### Degradation
 
 32. Any model failure — timeout, rate limit, refusal, malformed response — degrades to the scripted-nudge behavior for that turn, with the user's typed text preserved. The user is never blocked from reaching the create form.
+
+    32a. **Pre-check (added 2026-08-17, user decision).** `+ New idea` must not open the chat at all when the assistant is known to be unavailable — a scripted chat the user has to escape from is a worse degraded path than the plain form. The client reads `GET /ai-assist/availability` once per page load and caches it; when it reports `false`, the create **drawer** opens directly and the chat is skipped. The endpoint returns a bare boolean and never distinguishes unconfigured from provider-down from budget-exhausted, for the same reason the turn endpoint's `503` does not (rule 31).
+
+    32b. **First-turn bailout.** The pre-check is a page-load snapshot and cannot see the daily budget being exhausted mid-session (rule 28a) — which is the most likely real cause. So a `503` on the **first** turn of a conversation hands off to the create drawer immediately, carrying the user's typed text, rather than falling back to scripted nudges. Scripted nudges remain the fallback for a `503` on any *later* turn, where the user has already invested in the conversation and a sudden surface change would lose their place. The two mechanisms cover different failures and neither replaces the other.
 33. Model calls have a request timeout. The client shows a pending state and remains cancellable.
 
 ---

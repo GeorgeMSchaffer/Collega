@@ -53,6 +53,49 @@ public class IdeaAssistServiceTests
     // ---- Availability and degradation (rules 31–32) ----
 
     [Fact]
+    public async Task IsAvailable_IsTrue_WhenConfiguredAndWithinBudget()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+
+        Assert.True(await service.IsAvailableAsync());
+    }
+
+    [Fact]
+    public async Task IsAvailable_IsFalse_WhenNoKeyIsConfigured()
+    {
+        _model.IsConfigured = false;
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+
+        Assert.False(await service.IsAvailableAsync());
+    }
+
+    /// <summary>
+    /// The case the page-load pre-check exists for is the one it cannot see coming: the budget is
+    /// exhausted mid-day, not at deploy time. This pins that the probe tracks the budget rather than
+    /// only key configuration — a probe that reported only "is a key set" would answer true all day
+    /// while every turn 503'd.
+    /// </summary>
+    [Fact]
+    public async Task IsAvailable_IsFalse_WhenTheDailyBudgetIsExhausted()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id), dailyTokenLimit: 1_000);
+        GivenTokensSpentToday(1_500);
+
+        Assert.False(await service.IsAvailableAsync());
+    }
+
+    /// <summary>The probe makes no provider call, so it must not be billable or rate limited.</summary>
+    [Fact]
+    public async Task IsAvailable_DoesNotCallTheProvider()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+
+        await service.IsAvailableAsync();
+
+        Assert.Equal(0, _model.CallCount);
+    }
+
+    [Fact]
     public async Task Continue_IsUnavailable_WhenNoKeyIsConfigured()
     {
         _model.IsConfigured = false;

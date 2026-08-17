@@ -4,8 +4,17 @@
  * avatars, page header) comes from wwwroot/css/app.css; these are the board-specific pieces.
  */
 
-/* ---- View switch (List / Swim Lanes) ---- */
-.viewswitch { display: flex; gap: 4px; margin-top: 18px; flex-wrap: wrap; }
+/* ---- Control row: Back · view switch · board picker · + New idea ----
+   One row since 2026-08-17 (SPEC/20-feature-client-ui.md → "Board header control row"). Back sits
+   leftmost to match the command bar on every other list/detail page; the picker and + New idea are
+   pushed right by .spacer. align-items keeps the tab underline and the controls on a shared
+   baseline; the row still wraps on narrow viewports. */
+.viewswitch { display: flex; gap: 4px; margin-top: 18px; flex-wrap: wrap; align-items: center; }
+.viewswitch .spacer { flex: 1 1 auto; }
+/* Separates Back from the tabs so it doesn't read as a third tab. */
+.viewswitch .backgap { width: 10px; }
+.headctl { display: flex; gap: 8px; align-items: center; padding-bottom: 2px; }
+.headctl select { min-width: 180px; max-width: 260px; }
 .viewswitch a {
   padding: 9px 14px;
   font-size: 13px;

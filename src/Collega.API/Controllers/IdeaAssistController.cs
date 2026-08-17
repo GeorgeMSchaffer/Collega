@@ -85,6 +85,42 @@ public sealed class IdeaAssistController : ControllerBase
 }
 
 /// <summary>
+/// Deployment-level availability of AI idea assist (rule 32a). Its own controller because the route is
+/// not org-scoped and, unlike <see cref="OrganizationAiAssistSettingsController"/>, is open to any
+/// authenticated user.
+/// </summary>
+[ApiController]
+[Route("ai-assist")]
+public sealed class AiAssistAvailabilityController : ControllerBase
+{
+    private readonly IIdeaAssistService _ideaAssist;
+
+    public AiAssistAvailabilityController(IIdeaAssistService ideaAssist)
+    {
+        _ideaAssist = ideaAssist;
+    }
+
+    /// <summary>
+    /// Whether the client should open the drafting chat or go straight to the create form.
+    /// </summary>
+    /// <remarks>
+    /// <para><b>Any authenticated user</b>, deliberately: creating ideas is a <c>User</c>-role activity,
+    /// so the admin-only settings endpoint could not answer this question for the people who need it.
+    /// Safe to widen because the response is one boolean — no key material, no org configuration, no
+    /// usage figures — and it makes no provider call, so it is neither metered nor rate limited.</para>
+    /// <para>It also never says <i>why</i>. Unconfigured, provider down and budget exhausted collapse
+    /// into one <c>false</c>, exactly as they collapse into one <c>503</c> on a turn (rule 31); a
+    /// client that could tell them apart would start treating them differently.</para>
+    /// </remarks>
+    [Authorize]
+    [HttpGet("availability")]
+    [ProducesResponseType(typeof(AiAssistAvailabilityResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetAvailability(CancellationToken cancellationToken) =>
+        Ok(new AiAssistAvailabilityResponse(await _ideaAssist.IsAvailableAsync(cancellationToken)));
+}
+
+/// <summary>
 /// The organization's AI assist configuration — the scope statement an Org Admin tunes (D-SCOPE).
 /// Its own controller so the route sits under <c>organizations/{organizationId}</c>.
 /// </summary>

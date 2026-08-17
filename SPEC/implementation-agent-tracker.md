@@ -13,13 +13,13 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-08-16 against `cc30ab2` (`dev`, pushed; `main` still at `4ef133b` pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-08-17 against `62bfa2f` (`dev`, not pushed; `main` still behind pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
 | MVP epics (T001–T067) | **Merged to `dev`** | Foundation→Hardening, User-Defined Fields, Idea-Type Fields. Done — do not restart. |
 | Blazor client | ~16 pages, 9 shared components in `src/Collega.Client/Components/` | Geist is the single typeface. |
-| Test suite | **627 green** (2026-08-15) | 113 Domain + 230 Application + 122 Infrastructure + 162 API. Infrastructure includes five `PostgresProviderTests` that need Docker — they **ran and passed** on 2026-08-15 rather than skipping; without Docker the count is 622. 11 `Collega.E2E.Tests` skip without a running app. Re-run before trusting. |
+| Test suite | **778 green** (2026-08-17) | 131 Domain + 306 Application + 148 Infrastructure + 193 API. Infrastructure includes the `PostgresProviderTests` that need Docker — they **ran and passed** on 2026-08-17 rather than skipping. 11 `Collega.E2E.Tests` skip without a running app. Re-run before trusting. |
 | Sprints | **1–6.5 complete** · **7 next** · 8 after it | Sprint 6.5 closed 2026-08-15 (13 items, visually confirmed and reviewed). **Sprint 7 (AI idea assist) opens with a comp-first gate, not code.** Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
 | Bug queue | **Back in `SPEC/Bug Triage.md` — 1 open item** | Intake returned there when 6.5 archived. Open: two admin drawers can be opened at once by keyboard (no focus trap in `DrawerShell`); mouse-unreachable. |

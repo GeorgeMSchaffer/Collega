@@ -132,6 +132,9 @@ public sealed record IdeaAssistTurnResponseDto(
 /// </summary>
 public sealed record AiAssistSettingsDto(bool AiAssistAvailable, string? ScopeStatement);
 
+/// <summary>Response for <c>GET /ai-assist/availability</c> (rule 32a).</summary>
+public sealed record AiAssistAvailabilityDto(bool Available);
+
 /// <summary>Body for <c>PUT /organizations/{id}/ai-assist/settings</c>. Null or empty clears the statement.</summary>
 public sealed record UpdateAiAssistSettingsRequestDto(string? ScopeStatement);
 

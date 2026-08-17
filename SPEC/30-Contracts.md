@@ -1311,6 +1311,20 @@ Error responses:
 - `429` rate limit exceeded for this user or organization
 - `503` AI assist is not configured, the provider is unavailable, **or the deployment's daily token budget is exhausted** (`20-feature-ai-idea-assist.md` rule 28a) — clients degrade to the scripted brainstorm chat rather than surfacing an error. The three causes are deliberately indistinguishable to the client: all three mean "the assistant is unavailable, keep working without it."
 
+### `GET /api/v1/ai-assist/availability`
+Purpose: Tell the client whether to open the drafting chat or go straight to the create form (`20-feature-ai-idea-assist.md` rule 32a).
+
+Behavior rules:
+- authorized for **any authenticated user** — unlike the org-scoped settings endpoint below, which is admin-only. Idea creation is a `User`-role activity, so an admin-only check could not serve this purpose
+- returns a bare boolean and **never** distinguishes unconfigured from provider-unavailable from budget-exhausted, matching the deliberate opacity of the turn endpoint's `503` (rule 31). It carries no key material, no org configuration, and no usage figures
+- reflects deployment key configuration and the current UTC day's budget at the moment of the call; it is a snapshot, not a subscription, so clients must still handle a `503` on a turn
+
+Success response `200`:
+- `available` boolean
+
+Error responses:
+- `401` caller is not authenticated
+
 ### `GET /api/v1/organizations/{organizationId}/ai-assist/settings`
 Purpose: Read the organization's AI assist configuration for the settings UI.
 

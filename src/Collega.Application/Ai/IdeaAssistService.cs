@@ -78,6 +78,16 @@ public sealed class IdeaAssistService : IIdeaAssistService
         _clock = clock;
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// Exactly the gate <see cref="ContinueAsync"/> applies before calling the provider, so the answer
+    /// cannot drift from the behaviour it predicts. No authorization beyond authentication and no
+    /// organization scope: it reports deployment state, reads nothing org-owned, and is metered by
+    /// neither the budget nor the rate limiter — it makes no provider call.
+    /// </remarks>
+    public async Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default) =>
+        _model.IsConfigured && await _usage.IsWithinDailyBudgetAsync(cancellationToken);
+
     public async Task<IdeaAssistTurnResult> ContinueAsync(
         IdeaAssistTurnRequest request,
         CancellationToken cancellationToken = default)

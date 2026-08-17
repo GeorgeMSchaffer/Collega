@@ -21,27 +21,36 @@
             <h1>@(_board?.Name ?? "Board")</h1>
             <p class="sub" style="margin-bottom:6px">Ideas organized by status. Drag cards between lanes to move them@(_canMove ? "." : " (moves are restricted to admins on this board).")</p>
         </div>
-        @if (_boards.Count > 1)
-        {
-            <div class="field" style="margin-bottom:14px;min-width:220px">
-                <label for="boardpick">Board</label>
-                <select id="boardpick" value="@BoardId" @onchange="OnBoardPicked" style="width:100%">
+    </div>
+    @*
+        One control row (user decision 2026-08-17): Back at the far left — matching every other
+        list/detail page, where it is the first item in the command bar — then the view switch, then
+        the board picker and + New idea pushed right by .spacer. The row wraps on narrow viewports
+        rather than overflowing.
+    *@
+    <div class="viewswitch">
+        <BackButton />
+        <span class="backgap"></span>
+        <a class="@(_view == View.List ? "on" : null)" @onclick="() => _view = View.List" role="button" tabindex="0">List</a>
+        <a class="@(_view == View.Swim ? "on" : null)" @onclick="() => _view = View.Swim" role="button" tabindex="0">Swim Lanes</a>
+        <span class="spacer"></span>
+        <div class="headctl">
+            @if (_boards.Count > 1)
+            {
+                @* Native select, so aria-label genuinely names it — unlike FluentTextField, whose real
+                   input sits behind a shadow boundary (see SPEC/Bug Triage.md). *@
+                <select id="boardpick" value="@BoardId" @onchange="OnBoardPicked" aria-label="Board">
                     @foreach (var b in _boards)
                     {
                         <option value="@b.BoardId">@b.Name</option>
                     }
                 </select>
-            </div>
-        }
-        <BackButton />
-        @if (CanMutate)
-        {
-            <button class="btn primary" style="margin-bottom:14px" @onclick="OpenCreate">+ New idea</button>
-        }
-    </div>
-    <div class="viewswitch">
-        <a class="@(_view == View.List ? "on" : null)" @onclick="() => _view = View.List" role="button" tabindex="0">List</a>
-        <a class="@(_view == View.Swim ? "on" : null)" @onclick="() => _view = View.Swim" role="button" tabindex="0">Swim Lanes</a>
+            }
+            @if (CanMutate)
+            {
+                <button class="btn primary" @onclick="OpenCreate">+ New idea</button>
+            }
+        </div>
     </div>
 </div>
 
@@ -322,6 +331,9 @@
     private string? _openIdeaId;
     private bool _showCreate;
     private bool _showBrainstorm;
+
+    // Page-load snapshot of AI assist availability (rule 32a). Optimistic default: see LoadAiAvailabilityAsync.
+    private bool _aiAvailable = true;
     private IdeaDraftDto? _seedDraft;
 
     // CSV export/import (T059/T060)
@@ -348,6 +360,19 @@
             _organizationId = user.FindFirst("organizationId")?.Value;
             _role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
         }
+
+        await LoadAiAvailabilityAsync();
+    }
+
+    /// <summary>
+    /// One cached read per page load (rule 32a) so "+ New idea" costs no extra round trip. A failed
+    /// probe is treated as available: the chat's own 503 path still degrades correctly, whereas
+    /// assuming unavailable would silently withhold a working feature over one flaky request.
+    /// </summary>
+    private async Task LoadAiAvailabilityAsync()
+    {
+        var result = await Api.GetAiAssistAvailabilityAsync();
+        _aiAvailable = !result.Succeeded || (result.Value?.Available ?? true);
     }
 
     protected override async Task OnParametersSetAsync()
@@ -474,10 +499,21 @@
         StateHasChanged();
     }
 
+    // Rule 32a: when the assistant is known to be down, skip the chat entirely rather than opening a
+    // scripted one the user has to escape from. _aiAvailable is a page-load snapshot, so a mid-session
+    // outage is caught by the brainstorm modal's first-turn bailout (rule 32b) instead.
     private void OpenCreate()
     {
         _seedDraft = null;
-        _showBrainstorm = true;
+
+        if (_aiAvailable)
+        {
+            _showBrainstorm = true;
+        }
+        else
+        {
+            _showCreate = true;
+        }
     }
 
     private void CloseBrainstorm() => _showBrainstorm = false;

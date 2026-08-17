@@ -86,3 +86,9 @@ public sealed class UpdateAiAssistSettingsRequest
 /// deployment key is configured — never the key, nor any part of one (rule 28).
 /// </summary>
 public sealed record AiAssistSettingsResponse(bool AiAssistAvailable, string? ScopeStatement);
+
+/// <summary>
+/// Response for <c>GET /ai-assist/availability</c> (rule 32a). One boolean and nothing else: the
+/// reason for a <c>false</c> is withheld on purpose, matching the turn endpoint's opaque <c>503</c>.
+/// </summary>
+public sealed record AiAssistAvailabilityResponse(bool Available);
