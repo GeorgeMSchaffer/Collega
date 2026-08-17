@@ -26,8 +26,12 @@ namespace Collega.Application.Ai;
 /// </remarks>
 public sealed class IdeaAssistService : IIdeaAssistService
 {
-    /// <summary>Rule 5. A conversation this long has stopped being idea drafting.</summary>
-    public const int MaxUserTurns = 20;
+    /// <summary>
+    /// Rule 5. A conversation this long has stopped being idea drafting. The cap counts transcript
+    /// <em>entries</em> — user and assistant combined — not user turns. Since a transcript alternates
+    /// and must end with a user entry, the largest valid request carries 19, so this is 10 user turns.
+    /// </summary>
+    public const int MaxTranscriptEntries = 20;
 
     /// <summary>Rule 10. Bounds the cost of someone probing the boundary.</summary>
     public const int OutOfScopeStrikeLimit = 3;
@@ -137,14 +141,18 @@ public sealed class IdeaAssistService : IIdeaAssistService
                 ConversationClosed: closed,
                 NextQuestion: closed ? ConversationClosedRedirect : OutOfScopeRedirect,
                 Draft: currentDraft,
-                TurnsRemaining: Math.Max(0, MaxUserTurns - userTurnCount));
+                // The client drops the offending user turn and renders the redirect as a system note
+                // rather than an assistant bubble (rule 8/8a), so the transcript shrinks by one and a
+                // refused turn costs no conversation budget.
+                TurnsRemaining: RemainingUserTurns(request.Transcript.Count - 1));
         }
 
         // Every id the model returned is re-checked against what was actually retrieved. The schema
         // already makes an out-of-org id structurally impossible; this is the belt to that braces,
         // and it is what the contract promises (line 1274).
         var draft = Sanitize(response.Draft, context, currentDraft);
-        var turnsRemaining = Math.Max(0, MaxUserTurns - userTurnCount);
+        // The client appends this reply, so the transcript it will hold is one longer than the request.
+        var turnsRemaining = RemainingUserTurns(request.Transcript.Count + 1);
 
         return new IdeaAssistTurnResult(
             InScope: true,
@@ -280,7 +288,7 @@ public sealed class IdeaAssistService : IIdeaAssistService
     }
 
     /// <summary>
-    /// How far back a strike still counts. A conversation is capped at 20 turns and runs in minutes,
+    /// How far back a strike still counts. A conversation is capped at 20 entries and runs in minutes,
     /// so an hour is generous — but bounded, so yesterday's refusals don't close today's chat before
     /// it starts.
     /// </summary>
@@ -293,21 +301,25 @@ public sealed class IdeaAssistService : IIdeaAssistService
             throw new ValidationAppException("transcript", new[] { "At least one message is required." });
         }
 
-        if (transcript.Count > MaxUserTurns * 2)
+        if (transcript.Count > MaxTranscriptEntries)
         {
-            throw new ValidationAppException("transcript", new[] { $"A conversation is capped at {MaxUserTurns} turns." });
+            throw new ValidationAppException("transcript", new[] { $"A conversation is capped at {MaxTranscriptEntries} transcript entries." });
         }
 
         if (!transcript[^1].IsUser)
         {
             throw new ValidationAppException("transcript", new[] { "The last message must be from the user." });
         }
-
-        if (transcript.Count(t => t.IsUser) > MaxUserTurns)
-        {
-            throw new ValidationAppException("transcript", new[] { $"A conversation is capped at {MaxUserTurns} turns." });
-        }
     }
+
+    /// <summary>
+    /// How many further user turns fit under rule 5, given the transcript length the client will hold
+    /// once this turn is applied. Each further turn costs a user entry plus the assistant reply that
+    /// comes back with it, and the request carrying turn <c>k</c> is <c>length + 2k - 1</c> entries
+    /// long — so the largest <c>k</c> with <c>length + 2k - 1 &lt;= 20</c> is <c>(21 - length) / 2</c>.
+    /// </summary>
+    private static int RemainingUserTurns(int transcriptLength) =>
+        Math.Max(0, (MaxTranscriptEntries + 1 - transcriptLength) / 2);
 
     /// <summary>
     /// Anyone who may create ideas in their organization may draft. Read Only is refused (rule: the

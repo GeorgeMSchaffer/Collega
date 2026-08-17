@@ -406,17 +406,54 @@ public class IdeaAssistServiceTests
             () => service.ContinueAsync(new IdeaAssistTurnRequest(_acmeBoard.Id, Array.Empty<IdeaAssistTurn>())));
     }
 
+    /// <summary>
+    /// Builds an alternating transcript of <paramref name="entries"/> entries, oldest-first, starting
+    /// and — when the count is odd — ending with a user entry, which is the shape the contract requires.
+    /// </summary>
+    private static List<IdeaAssistTurn> Transcript(int entries) => Enumerable
+        .Range(0, entries)
+        .Select(i => new IdeaAssistTurn(
+            i % 2 == 0 ? IdeaAssistTurn.UserRole : IdeaAssistTurn.AssistantRole,
+            $"entry {i}"))
+        .ToList();
+
     [Fact]
-    public async Task Continue_RejectsAConversationPastTheTurnCap()
+    public async Task Continue_RejectsATranscriptPastTheEntryCap()
     {
         var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
-        var transcript = Enumerable
-            .Range(0, IdeaAssistService.MaxUserTurns + 1)
-            .Select(i => new IdeaAssistTurn(IdeaAssistTurn.UserRole, $"turn {i}"))
-            .ToList();
+        var transcript = Transcript(IdeaAssistService.MaxTranscriptEntries + 1);
 
         await Assert.ThrowsAsync<ValidationAppException>(
             () => service.ContinueAsync(new IdeaAssistTurnRequest(_acmeBoard.Id, transcript)));
+    }
+
+    /// <summary>
+    /// The cap counts entries, not user turns. Eleven user entries is only eleven turns but twenty-one
+    /// entries once the assistant replies are interleaved, so it must be refused — under the previous
+    /// "20 user turns" reading this same transcript was accepted.
+    /// </summary>
+    [Fact]
+    public async Task Continue_CountsAssistantEntriesTowardTheCap()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+        var transcript = Transcript(21);
+
+        Assert.Equal(11, transcript.Count(t => t.IsUser));
+        await Assert.ThrowsAsync<ValidationAppException>(
+            () => service.ContinueAsync(new IdeaAssistTurnRequest(_acmeBoard.Id, transcript)));
+    }
+
+    [Fact]
+    public async Task Continue_AcceptsATranscriptAtTheEntryCap()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+
+        // 19 is the largest valid request: alternating and ending with a user entry means odd lengths.
+        var result = await service.ContinueAsync(
+            new IdeaAssistTurnRequest(_acmeBoard.Id, Transcript(19)));
+
+        Assert.Equal(0, result.TurnsRemaining);
+        Assert.True(result.ConversationClosed);
     }
 
     [Fact]
@@ -426,7 +463,8 @@ public class IdeaAssistServiceTests
 
         var result = await service.ContinueAsync(Request());
 
-        Assert.Equal(IdeaAssistService.MaxUserTurns - 1, result.TurnsRemaining);
+        // One user entry in, one assistant reply back: 2 of 20 entries used, so 9 user turns are left.
+        Assert.Equal(9, result.TurnsRemaining);
     }
 
     // ---- Audit content (rule 27) ----

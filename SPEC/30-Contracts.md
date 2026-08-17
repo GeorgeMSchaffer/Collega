@@ -1301,10 +1301,10 @@ Success response `200`:
   - `ideaTypeId` GUID string or null — an active idea type in this organization
   - `businessImpactId` GUID string or null — an active business impact in this organization
   - `priority` string or null, one of the `Priority` enum values
-- `turnsRemaining` integer
+- `turnsRemaining` integer — how many further **user** turns fit under the 20-entry cap, counted from the transcript as it will stand after this turn is applied
 
 Error responses:
-- `400` request body is malformed, violates field constraints, exceeds the 20-turn cap, or does not end with a `user` entry
+- `400` request body is malformed, violates field constraints, exceeds the 20-entry transcript cap, or does not end with a `user` entry
 - `401` caller is not authenticated
 - `403` caller is authenticated but not allowed to create ideas on this board
 - `404` board does not exist or is outside caller scope

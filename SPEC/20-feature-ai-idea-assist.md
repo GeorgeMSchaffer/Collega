@@ -56,7 +56,9 @@ The scripted chat collects prose and nothing else. Everything the user says abou
 2. Each user turn produces exactly one model call. The model returns a structured object (see "Response contract"); the client renders its `nextQuestion` as the assistant bubble.
 3. The user may leave the chat at any time via **Skip & fill manually**, which opens the create modal with whatever has been drafted so far (possibly nothing). This path must remain available and must never be gated on a successful model call.
 4. **Continue to idea form** hands the drafted fields to `IdeaCreateModal` as pre-filled, fully editable values. Nothing is committed at this point.
-5. A conversation is capped at **20 user turns**. On reaching the cap the assistant stops accepting input and offers only Continue / Skip.
+5. A conversation is capped at **20 transcript entries** — user and assistant messages combined — which is the cap `30-Contracts.md` states for the request body. Because a transcript alternates roles and must end with a user entry (rule 2), the largest valid request carries 19 entries, so the practical ceiling is **10 user turns**. On reaching the cap the assistant stops accepting input and offers only Continue / Skip.
+
+    5a. This rule previously read "20 user turns", which contradicted the contract's "max 20 entries" and described a conversation twice as long. Resolved 2026-08-17 in favour of the contract: the cap counts **entries**, not user turns. A refused turn is dropped from the transcript (rule 8) and therefore does not consume the budget.
 
 ### Scope gate (D-SCOPE)
 
