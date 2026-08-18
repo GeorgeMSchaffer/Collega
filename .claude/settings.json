@@ -102,6 +102,8 @@
     ]
   },
   "enabledPlugins": {
-    "agent-skills@addy-agent-skills": true
+    "agent-skills@addy-agent-skills": true,
+    "frontend-design@claude-plugins-official": true,
+    "azure-sql-developer@claude-plugins-official": true
   }
 }
