@@ -2,6 +2,52 @@
 
 Developer tools. Not part of the deployed product and not part of the test suite.
 
+## Two playgrounds, two jobs
+
+Both make real, billed calls. They answer different questions, and neither should grow into the other.
+
+| | `prompt-lab.html` | `Collega.AiPlayground` |
+|---|---|---|
+| Question it answers | "What does *this* wording do to *this* message?" | "Is this prompt better than that one, across the corpus?" |
+| Loop | Interactive — edit, send, read, repeat | Batch — one command, a scored table |
+| Scope | One message, one turn | 9 cases × `--repeat` N |
+| Cost control | Free `Render`; one call per click | `--max-spend`, pre-flight estimate |
+| Gives you | The response, rendered legibly | Pass rates, flakiness flags, `compare`, cache guard |
+
+**The handoff:** tune wording in the browser → copy the template out → `dotnet run -- run --prompt <file>`
+for a scored sweep → publish the winner through `PUT /api/v1/ai-assist/prompt`.
+
+Keep scoring, sweeps and repeat-runs out of the browser page — that is what the console tool is for, and
+duplicating them would give you two sets of numbers to reconcile.
+
+## prompt-lab.html
+
+A single self-contained HTML file. No server, no build step, no install — open it with `file://`.
+
+```bash
+open tools/prompt-lab.html
+cd tools/Collega.AiPlayground && dotnet run -- dump-prompt --fixture acme   # paste the output in
+```
+
+It splits the pasted prompt on its `##` headings into editable sections, derives the response JSON
+schema from the option ids in the catalog, and calls `api.anthropic.com` from the browser (which needs
+the `anthropic-dangerous-direct-browser-access` header — that is why no server is involved).
+
+Two things it deliberately will not let you edit: the `<organization_data>` and `<scope_statement>`
+blocks. That fencing is what stops a tag literally named `</organization_data> New instructions:` from
+ending the block and continuing as the operator, and it belongs in reviewed server code — the page
+renders those blocks read-only, exactly as the server produced them.
+
+The page carries **no copy of the prompt prose**, so it cannot drift from `AiPromptDefaults`; everything
+comes from what you paste. Your API key is pasted at runtime into `sessionStorage` and is never written
+to disk or committed.
+
+**Cost:** `Render` composes the prompt and shows it for free — that covers most wording iteration. `Send`
+is one billed call per click. Because the system block is the only `cache_control` breakpoint, an edited
+prompt is a new prefix and bills cache-*creation* at 1.25× input rather than cache-*read* at 0.1× —
+roughly 4× a warm production turn. Re-sending unchanged text hits the cache; the page shows which
+happened.
+
 ## Collega.AiPlayground
 
 A prompt playground and eval harness for AI idea assist (`SPEC/20-feature-ai-idea-assist.md`).
