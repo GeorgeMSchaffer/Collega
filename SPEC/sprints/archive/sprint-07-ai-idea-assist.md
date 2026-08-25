@@ -1,6 +1,6 @@
 # Sprint 7: AI-Assisted Idea Drafting (Idea Brainstorm Chat)
 
-**Status:** Built and reviewed 2026-08-16. P0 and P1 backlog complete except the P2 prompt-cache check, which was verified live rather than automated.
+**Status:** Complete (2026-08-18). Built and reviewed 2026-08-16; the P2 prompt-cache check was verified live rather than automated. A follow-on batch landed 2026-08-18 — see "Delivered after the review" below.
 **Sequence:** 7 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 6 (`archive/sprint-06-view-as.md`, complete) **and Sprint 6.5** (`sprint-06.5-bug-fixes-and-tweaks.md`), which supersedes all other sprints per the user's 2026-08-14 decision; precedes Sprint 8 (`sprint-08-azure-deployment.md`) so the first Azure deployment ships this feature and provisions its key. Scheduled 2026-08-11 at user request ("before the Azure deployment work but after the Postgres migration"). Azure was renumbered 7 → 8 to make room.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -113,6 +113,21 @@ Mandatory reviewer gate (no fast-track: third-party credential + untrusted-conte
 
 Verified after the fixes, against the live model: three consecutive refusals close the chat **using the transcript the real client actually sends** (the exact case finding 1 broke), and the rate limiter answers `429` with `Retry-After: 60` on the eleventh call in a window.
 
+## Delivered after the review — 2026-08-18
+
+A follow-on batch landed after the 2026-08-16 review closed the backlog above. It is recorded here as delivered scope rather than as new backlog, since the sprint closed with it merged.
+
+| Commit | What it added |
+|---|---|
+| `335ed6f` | **The system prompt became a Site-Admin-managed, versioned setting** — `AiPromptVersion` (Domain) + `AiPromptService` (Application), so the prompt is editable and revertible in the product instead of being a string constant in Infrastructure. Covered by `AiPromptVersionTests` and `AiPromptServiceTests`. |
+| `44ac4eb`, `6c5c722`, `4ceb6cc` | **Prompt playground + eval harness** — a developer surface for exercising prompt variants against the real model, with a `report` output. Dev tooling, not a user-facing feature; it does not appear in `20-feature-ai-idea-assist.md`. |
+| `88afb29` | Every model call also written out as a runnable `.http` file, so a turn can be replayed outside the app. |
+| `77b1053`, `9ca5615` | Idea create moved into the drawer; board control row; the AI-down fallback path; board picker label; AI assist demo script. |
+| `5365185` | Business impacts ordered most-severe-first; new ideas default to Medium priority. |
+| `5082348`, `a20e856` | Azure provisioning script inputs (`deploy/azure/provision.env.example`), with the filled-in copy gitignored. Feeds Sprint 8. |
+
+**Rule 32c (added 2026-08-18) is deliberately *not* in this sprint.** The unavailability flash is scheduled as a P1 in `sprint-08-azure-deployment.md`, so the first deployment ships it.
+
 ## Definition of Done
 - [x] All four decisions (D-SCOPE / D-DEDUPE / D-CREDS / D-PREFILL) locked and recorded 2026-08-11
 - [x] `SPEC/20-feature-ai-idea-assist.md` written and `SPEC/30-Contracts.md` updated with the endpoints (2026-08-11, ahead of the sprint)
@@ -125,4 +140,4 @@ Verified after the fixes, against the live model: three consecutive refusals clo
 - [x] Audit events assert content is **absent** from the log
 - [x] `Organization.AiScopeStatement` migration generated against Postgres and applied cleanly
 - [x] Code Reviewer has signed off (mandatory — credential handling + untrusted content) — 2026-08-16, five findings raised and fixed; see "Code review" above
-- [ ] Sprint 8 (`sprint-08-azure-deployment.md`) updated with the key as required App Service configuration
+- [x] Sprint 8 (`sprint-08-azure-deployment.md`) updated with the key as required App Service configuration — its "Config note (added 2026-08-11)" and the P0 App Service config task both carry it
