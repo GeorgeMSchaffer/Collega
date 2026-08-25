@@ -54,9 +54,9 @@ public sealed class WireTrace
         http.AppendLine($"# HTTP {statusCode} in {elapsedMs} ms. Response body: {Path.GetFileName(stem)}.response.json");
         http.AppendLine("#");
         http.AppendLine("# Runnable as-is in VS Code REST Client / JetBrains / Visual Studio, provided");
-        http.AppendLine("# Ai__ApiKey is set in the environment. The key is deliberately NOT in this file.");
+        http.AppendLine("# ANTHROPIC_API_KEY is set in the environment. The key is deliberately NOT in this file.");
         http.AppendLine();
-        http.AppendLine("@apiKey = {{$processEnv Ai__ApiKey}}");
+        http.AppendLine("@apiKey = {{$processEnv ANTHROPIC_API_KEY}}");
         http.AppendLine();
         http.AppendLine($"{method} {uri}");
 

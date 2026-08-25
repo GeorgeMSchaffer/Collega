@@ -108,7 +108,7 @@ public static class InfrastructureServiceCollectionExtensions
         // so this must never fail startup the way the SiteAdmin keys do.
         services.AddSingleton(sp => new AiCredentials
         {
-            ApiKey = sp.GetRequiredService<IConfiguration>()["Ai:ApiKey"],
+            ApiKey = sp.GetRequiredService<IConfiguration>()["ANTHROPIC_API_KEY"],
         });
 
         // Singleton: the model client is stateless and holds an HTTP client, so one per process.

@@ -61,7 +61,7 @@ redact() {
     case "$arg" in
       --admin-password|--deployment-token|--password)
         out+=("$arg"); mask_next=true ;;
-      ConnectionStrings__*=*|SiteAdmin__Password=*|Auth__TokenSigningKey=*|Ai__ApiKey=*)
+      ConnectionStrings__*=*|SiteAdmin__Password=*|Auth__TokenSigningKey=*|ANTHROPIC_API_KEY=*)
         out+=("${arg%%=*}=<redacted>") ;;
       *)
         out+=("$arg") ;;
@@ -107,7 +107,7 @@ echo "  subscription : $SUBSCRIPTION ($SUBSCRIPTION_ID)"
 echo "  resource grp : $RG in $LOC   (Static Web App in $SWA_LOC)"
 echo "  api          : $API_APP on $API_PLAN ($API_SKU)"
 echo "  database     : $PG_SERVER / $PG_DB"
-[[ -n "${AI_API_KEY:-}" ]] || warn "AI_API_KEY is empty — AI idea assist will run dark (supported; the API still boots)"
+[[ -n "${ANTHROPIC_API_KEY:-}" ]] || warn "ANTHROPIC_API_KEY is empty — AI idea assist will run dark (supported; the API still boots)"
 
 if ! $DRY_RUN; then
   read -r -p "  Proceed against this subscription? [y/N] " confirm
@@ -205,7 +205,9 @@ SETTINGS=(
   "SiteAdmin__Password=$SITEADMIN_PASSWORD"
   "Auth__TokenSigningKey=$SIGNING_KEY"
 )
-[[ -n "${AI_API_KEY:-}" ]] && SETTINGS+=("Ai__ApiKey=$AI_API_KEY")
+if [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
+  SETTINGS+=("ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY")
+fi
 
 if $DRY_RUN; then
   echo "  [dry-run] az webapp config appsettings set --name $API_APP --resource-group $RG --settings <5-6 settings, values redacted>"

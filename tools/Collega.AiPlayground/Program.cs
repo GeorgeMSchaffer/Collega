@@ -50,7 +50,7 @@ static int Usage()
               Re-render a saved run. Spends nothing — useful for re-reading a sweep, and for
               checking the cache guard against a doctored file without paying for a real one.
 
-        The API key is read from Ai__ApiKey, or ANTHROPIC_API_KEY.
+        The API key is read from ANTHROPIC_API_KEY.
         """);
 
     return 2;
@@ -80,13 +80,12 @@ static int DumpPrompt(CommandLine options)
 
 static string RequireApiKey()
 {
-    var key = Environment.GetEnvironmentVariable("Ai__ApiKey")
-        ?? Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
+    var key = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
 
     if (string.IsNullOrWhiteSpace(key))
     {
         throw new InvalidOperationException(
-            "No API key. Set one for this shell:\n\n    export Ai__ApiKey='<key>'\n");
+            "No API key. Set one for this shell:\n\n    export ANTHROPIC_API_KEY='<key>'\n");
     }
 
     return key;

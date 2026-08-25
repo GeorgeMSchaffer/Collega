@@ -78,7 +78,7 @@ After the Postgres migration, check stale SQL Server user-secrets — a leftover
 - **Hermetic:** no network, no filesystem, no `DateTime.Now`, no randomness. Inject `IClock` and fixed seeds.
 - `[Using Include="Xunit"]` is set in every `.csproj` — no `using Xunit;` needed.
 - `CollegaApiFactory` boots the real host via `WebApplicationFactory<Program>` with InMemory DbContext. `SiteAdmin` credentials must be supplied as real process environment variables, not through `ConfigureWebHost` — the fail-fast check runs before the factory's configuration hooks.
-- The integration harness blanks `Ai__ApiKey` and replaces `IIdeaDraftModel` with a throwing stub to prevent live Anthropic calls during tests.
+- The integration harness blanks `ANTHROPIC_API_KEY` and replaces `IIdeaDraftModel` with a throwing stub to prevent live Anthropic calls during tests.
 
 ## Working Rules
 

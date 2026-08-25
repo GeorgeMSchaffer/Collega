@@ -11,7 +11,7 @@ Three things silently break the demo if skipped. All three were true on a workin
 1. **Configure a key.** With none, the feature is dark and `+ New idea` skips the chat entirely, opening the create drawer instead (rule 32a). That is correct behaviour, but it is not the demo.
 
    ```bash
-   dotnet user-secrets set "Ai:ApiKey" "<key>" --project src/Collega.API
+   dotnet user-secrets set "ANTHROPIC_API_KEY" "<key>" --project src/Collega.API
    ```
 
    Verify: `GET /api/v1/ai-assist/availability` should return `{"available":true}` for any signed-in user. A **404** means the API predates the endpoint — restart it; hot reload cannot add a controller type. A **401** means you sent no token.
@@ -89,7 +89,7 @@ Without the statement this likely **passes** — it could plausibly be a Continu
 
 ## Degradation (rules 31–32)
 
-**11 — Unavailable at page load (rule 32a).** Clear `Ai:ApiKey`, restart the API, reload the board. `+ New idea` opens the create drawer directly — no chat, nothing to escape from.
+**11 — Unavailable at page load (rule 32a).** Clear `ANTHROPIC_API_KEY`, restart the API, reload the board. `+ New idea` opens the create drawer directly — no chat, nothing to escape from.
 
 **12 — Died mid-session (rule 32b).** Exhaust the daily budget, then open the chat and send a first turn. The `503` hands you straight to the create drawer carrying your typed text. A `503` on a *later* turn instead degrades to scripted nudges, because by then the user has invested in the conversation and swapping the surface would lose their place.
 

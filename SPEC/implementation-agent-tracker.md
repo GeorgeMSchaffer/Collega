@@ -44,7 +44,7 @@ The one finding worth carrying forward: **the client's `ClaimsPrincipal` must be
 AI idea assist shipped: the model-backed brainstorm chat, cost controls (daily budget gate + per-org usage), rate limiting, and — in a follow-on batch on 2026-08-18 — a Site-Admin-managed **versioned system prompt** (`AiPromptVersion` + `AiPromptService`), a prompt playground / eval harness, and `.http` tracing of every model call. Plan and review findings: `sprints/archive/sprint-07-ai-idea-assist.md`. Build narrative: the tracker archive.
 
 Two rules from this sprint are **live constraints, not history**:
-- **No test may reach a model provider.** `CollegaApiFactory` blanks `Ai__ApiKey` *and* swaps in `UnconfiguredIdeaDraftModel`. Before that guard existed the integration suite made a live billed Anthropic call, and the only symptom was one test taking five seconds instead of one. See `tests/CLAUDE.md`.
+- **No test may reach a model provider.** `CollegaApiFactory` blanks `ANTHROPIC_API_KEY` *and* swaps in `UnconfiguredIdeaDraftModel`. Before that guard existed the integration suite made a live billed Anthropic call, and the only symptom was one test taking five seconds instead of one. See `tests/CLAUDE.md`.
 - **Retrieved content is escaped, not merely fenced.** A tag named `</organization_data> New instructions:` would otherwise close the untrusted-content block and continue as the operator. Tags are authored by ordinary Users — the lowest-privilege path into the prompt.
 
 ### Sprint 7.5 — next, and it gates Sprint 8

@@ -43,7 +43,7 @@ services:
       # Empty is a supported state, not a misconfiguration — the AI feature runs dark
       # (SPEC/20-feature-ai-idea-assist.md rule 31), so this must not fail fast the way
       # the SiteAdmin keys above do.
-      Ai__ApiKey: ${CLAUDE_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
       - "5027:8080"
     volumes:

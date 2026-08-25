@@ -27,7 +27,7 @@ whether the change helped, and no way to see what it broke. Three things make im
 ### Setup
 
 ```bash
-export Ai__ApiKey='<key>'      # or ANTHROPIC_API_KEY
+export ANTHROPIC_API_KEY='<key>'
 ```
 
 No database and no running app: fixtures are synthetic JSON, so runs are reproducible and cannot be
@@ -80,7 +80,7 @@ cache (`cache_read_input_tokens` non-zero), which only happens if the prefix mat
 
 Two deliberate departures from the captured request:
 
-- **The API key is never written.** `x-api-key` becomes `{{apiKey}}`, resolved from `Ai__ApiKey` via
+- **The API key is never written.** `x-api-key` becomes `{{apiKey}}`, resolved from `ANTHROPIC_API_KEY` via
   `{{$processEnv}}`. A trace directory can be attached to a bug report without leaking a credential.
 - **`Content-Length` is omitted.** It described the body as sent, so a stale value would truncate or
   reject the request the moment you edit anything. Every REST client computes it.
