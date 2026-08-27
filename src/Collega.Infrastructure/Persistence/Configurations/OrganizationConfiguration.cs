@@ -38,7 +38,8 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
             .HasColumnName("logo_url")
             .HasMaxLength(Organization.LogoUrlMaxLength);
 
-        // Holds a resized-image data URI (client-side thumbnail), so it needs nvarchar(max).
+        // Holds a resized-image data URI (client-side thumbnail), so it is left unbounded — an
+        // unbounded string maps to Postgres text.
         builder.Property(o => o.LogoThumbnailUrl)
             .HasColumnName("logo_thumbnail_url");
 

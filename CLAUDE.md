@@ -64,7 +64,7 @@ Layered with strict boundaries — business rules live in Domain and Application
 
 Stack: .NET 8, ASP.NET Core API, Blazor (Fluent UI Blazor), EF Core, PostgreSQL 16 (Npgsql), xUnit.
 
-> **Database engine — Sprint 5 cutover.** PostgreSQL is the target engine, replacing SQL Server 2022. Scope: `SPEC/50-postgres-migration.md`; sprint wrapper: `SPEC/sprints/archive/sprint-05-postgres-migration.md`. If your checkout still references `Microsoft.EntityFrameworkCore.SqlServer`, the provider swap has not reached your branch yet — reconcile before assuming otherwise.
+> **Database engine: PostgreSQL 16** (Npgsql). The SQL Server cutover completed in Sprint 5 (merged `7c5a78b`, 2026-08-12); all specs and guides are reconciled to it as of 2026-08-27. Scope and post-mortem, kept for reference: `SPEC/50-postgres-migration.md`, `SPEC/sprints/archive/sprint-05-postgres-migration.md`. **Where SQL Server still appears in the repo it is deliberate** — comments explaining why code differs post-migration (collation, `LIKE` wildcards, index byte limits) and historical notes in archived documents. Don't "fix" those.
 
 Client design direction is **Comp C "Fluent Editorial"**, locked and documented in `SPEC/20-feature-client-ui.md` and `src/Collega.Client/CLAUDE.md` — read those before UI work rather than inferring from mockup filenames.
 

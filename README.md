@@ -4,7 +4,7 @@ Organization-scoped collaboration and idea-tracking tool. Organizations contain 
 
 **Stack:** .NET 8 · ASP.NET Core Web API · Blazor WebAssembly (Fluent UI Blazor) · EF Core · PostgreSQL 16 (Npgsql) · xUnit
 
-> **Database engine — Sprint 5 cutover.** PostgreSQL is the target engine, replacing SQL Server 2022. Setup below is written against it. Scope: [`SPEC/50-postgres-migration.md`](SPEC/50-postgres-migration.md); sprint wrapper: [`SPEC/sprints/archive/sprint-05-postgres-migration.md`](SPEC/sprints/archive/sprint-05-postgres-migration.md). If your checkout still references `Microsoft.EntityFrameworkCore.SqlServer`, the provider swap has not reached your branch yet.
+> **Database engine: PostgreSQL 16** (Npgsql), local container `collega-postgres` on port 5432. The SQL Server → PostgreSQL cutover completed in Sprint 5 (merged `7c5a78b`, 2026-08-12) and every document is reconciled to it; the migration's scope and post-mortem are kept for reference in [`SPEC/50-postgres-migration.md`](SPEC/50-postgres-migration.md) and [`SPEC/sprints/archive/sprint-05-postgres-migration.md`](SPEC/sprints/archive/sprint-05-postgres-migration.md).
 
 > **Implementation gate:** check [`SPEC/Bug Triage.md`](SPEC/Bug%20Triage.md) before starting feature work. Unresolved `TODO` items take priority unless the user explicitly approves an exception. See [`SPEC/implementation-agent-tracker.md`](SPEC/implementation-agent-tracker.md) for implementation status.
 
