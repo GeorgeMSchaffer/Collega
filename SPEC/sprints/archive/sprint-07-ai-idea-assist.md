@@ -1,6 +1,8 @@
 # Sprint 7: AI-Assisted Idea Drafting (Idea Brainstorm Chat)
 
-**Status:** Built and reviewed 2026-08-16. P0 and P1 backlog complete except the P2 prompt-cache check, which was verified live rather than automated.
+**Status:** **Complete (2026-08-27).** Built and reviewed 2026-08-16; closed 2026-08-27 when the last Definition-of-Done item landed (`Ai__ApiKey` named as App Service configuration in `SPEC/50-azure-deployment.md` §3 and in `sprint-08-azure-deployment.md`). P0 and P1 backlog complete except the P2 prompt-cache check, which was verified live rather than automated.
+
+**The one spec conflict this sprint raised is resolved (2026-08-27, user decision).** `30-Contracts.md` had capped the AI transcript at "max 20 entries" while `20-feature-ai-idea-assist.md` rule 5 capped it at "20 user turns" — a 20-turn conversation is ~40 entries, so the contract reading would have halved the feature to 10 turns. The shipped code already enforced rule 5 plus a 40-entry structural bound (`IdeaAssistService.ValidateTranscript`), so the contract was the party out of step and was corrected to "max 40 entries of which at most 20 may have `role` of `user`". No code change.
 **Sequence:** 7 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 6 (`archive/sprint-06-view-as.md`, complete) **and Sprint 6.5** (`sprint-06.5-bug-fixes-and-tweaks.md`), which supersedes all other sprints per the user's 2026-08-14 decision; precedes Sprint 8 (`sprint-08-azure-deployment.md`) so the first Azure deployment ships this feature and provisions its key. Scheduled 2026-08-11 at user request ("before the Azure deployment work but after the Postgres migration"). Azure was renumbered 7 → 8 to make room.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -125,4 +127,4 @@ Verified after the fixes, against the live model: three consecutive refusals clo
 - [x] Audit events assert content is **absent** from the log
 - [x] `Organization.AiScopeStatement` migration generated against Postgres and applied cleanly
 - [x] Code Reviewer has signed off (mandatory — credential handling + untrusted content) — 2026-08-16, five findings raised and fixed; see "Code review" above
-- [ ] Sprint 8 (`sprint-08-azure-deployment.md`) updated with the key as required App Service configuration
+- [x] Sprint 8 (`sprint-08-azure-deployment.md`) updated with the key as App Service configuration — 2026-08-27. Landed as **Optional**, not Required: unset is a supported state (rule 31) and the API must not fail startup without it. Named in `SPEC/50-azure-deployment.md` §3 alongside the non-secret `Ai:*` overrides.

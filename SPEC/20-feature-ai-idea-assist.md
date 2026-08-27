@@ -1,6 +1,6 @@
 # Feature: AI-Assisted Idea Drafting (Idea Brainstorm Chat)
 
-**Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/sprint-07-ai-idea-assist.md`) — after the Postgres migration (Sprint 5) and View As (Sprint 6), before Azure deployment (Sprint 8). Design decisions locked 2026-08-11 by user interview; `Anthropic` NuGet package approved by the user the same day.
+**Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/archive/sprint-07-ai-idea-assist.md`) — after the Postgres migration (Sprint 5) and View As (Sprint 6), before Azure deployment (Sprint 8). Design decisions locked 2026-08-11 by user interview; `Anthropic` NuGet package approved by the user the same day.
 
 ## Overview
 
@@ -56,7 +56,7 @@ The scripted chat collects prose and nothing else. Everything the user says abou
 2. Each user turn produces exactly one model call. The model returns a structured object (see "Response contract"); the client renders its `nextQuestion` as the assistant bubble.
 3. The user may leave the chat at any time via **Skip & fill manually**, which opens the create modal with whatever has been drafted so far (possibly nothing). This path must remain available and must never be gated on a successful model call.
 4. **Continue to idea form** hands the drafted fields to `IdeaCreateModal` as pre-filled, fully editable values. Nothing is committed at this point.
-5. A conversation is capped at **20 user turns**. On reaching the cap the assistant stops accepting input and offers only Continue / Skip.
+5. A conversation is capped at **20 user turns** — counted in *user* messages, not transcript entries, so a full conversation is ~40 entries and the contract bounds the array at 40 (`30-Contracts.md`). On reaching the cap the assistant stops accepting input and offers only Continue / Skip.
 
 ### Scope gate (D-SCOPE)
 
@@ -178,4 +178,4 @@ The per-org AI key fields implied by the `ai-key` contracts are **not** added in
 - `SPEC/20-feature-idea-type-fields.md` — Idea Types and per-type field resolution used as retrieval context.
 - `SPEC/20-feature-client-ui.md` — Comp C design direction; this feature is **comp-first** (2026-08-11 process decision) and needs a mockup for the suggestion-indicator treatment before production Blazor.
 - `SPEC/40-test-strategy.md` → "AI Idea Assist" — required coverage.
-- `SPEC/sprints/sprint-07-ai-idea-assist.md` — the sprint plan.
+- `SPEC/sprints/archive/sprint-07-ai-idea-assist.md` — the sprint plan.

@@ -7,14 +7,14 @@ Index of the sprint plan for remaining pre-MVP work as of 2026-08-10. This is **
 
 **Execution model note:** this project ships via role-based agents in isolated git worktrees (Backend Developer / QA Developer / UI/UX Developer / Code Reviewer — see `CLAUDE.md`'s "Multi-Agent Worktree Workflow"), not a human team with PTO. "Sprint" here means one coherent wave of agent work merged and verified together, not a calendar week. Capacity is expressed as slice count / role assignment, not points or days.
 
-**Explicitly out of scope for these sprints** (confirmed with the user): the uncommitted, in-progress `tests/Collega.E2E.Tests/` work — being driven separately, not scheduled here. Also out of scope: anything post-MVP (OAuth, SAML, self-service password reset, Org AI credentials, the Roadmaps/Sprints/Tasks brainstorm in `Bug Triage.md`'s `## IDEAS` section) — none of that is "pre-MVP."
+**Explicitly out of scope for these sprints** (confirmed with the user): the `tests/Collega.E2E.Tests/` work — driven separately, not scheduled here (it has since been committed; its 11 tests skip without a running app). Also out of scope: anything post-MVP (OAuth, SAML, self-service password reset, Org AI credentials, the Roadmap → Sprint → Issue concept, now specced post-MVP in `20-feature-issues-and-delivery.md`) — none of that is "pre-MVP."
 
 **Two post-MVP features have since been pulled in by explicit user decision** and are scheduled here despite not being pre-MVP: **View As** (Sprint 6, added 2026-08-11 — now load-bearing, since it is the Site Admin's only org-content mutation path) and **AI-assisted idea drafting** (Sprint 7, added 2026-08-11 — *not* load-bearing; the product works with it dark). Per-org AI credentials remain out of scope; AI idea assist v1 uses a single deployment-level key.
 
 ## Sequencing
 Sprints run **strictly in order** — each builds on the previous sprint's merged state, not in parallel.
 
-**Sprint 6.5 supersedes all other sprints** (user decision, 2026-08-14). It is a bug-and-tweak paydown sprint that runs after 6 and **before 7 and 8**, which do not start until it completes. It is numbered 6.5 rather than renumbering 7 and 8 so existing cross-references to `sprint-07-*` and `sprint-08-*` stay valid. Intake closed at 7 items (2026-08-14); it is now in **execution**.
+**Sprint 6.5 supersedes all other sprints** (user decision, 2026-08-14). It is a bug-and-tweak paydown sprint that runs after 6 and **before 7 and 8**, which do not start until it completes. It is numbered 6.5 rather than renumbering 7 and 8 so existing cross-references to `sprint-07-*` and `sprint-08-*` stay valid. **Complete 2026-08-15** at 13 items across two intake rounds; both 7 and 8 were unblocked by it.
 
 | # | Blocked by | Why that dependency exists |
 |---|---|---|
@@ -38,7 +38,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 5 | PostgreSQL migration (SQL Server → Postgres) | `SPEC/sprints/archive/sprint-05-postgres-migration.md` | Complete (2026-08-12) — merged `7c5a78b` | Small–Medium |
 | 6 | View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin's only org-content mutation path) | `SPEC/sprints/archive/sprint-06-view-as.md` | **Complete (2026-08-14)** — 622 tests green at `a0ef22c`, now the tip of both `dev` and `main` | Medium |
 | 6.5 | Bug fixes and element tweaks — paydown sprint | `SPEC/sprints/archive/sprint-06.5-bug-fixes-and-tweaks.md` | **Complete (2026-08-15)** — 13 items across two intake rounds, visually confirmed and review-signed-off; 627 tests green | Medium |
-| 7 | AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, `Anthropic` package approved) | `SPEC/sprints/sprint-07-ai-idea-assist.md` | Not started | Medium |
+| 7 | AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, `Anthropic` package approved) | `SPEC/sprints/archive/sprint-07-ai-idea-assist.md` | **Complete (2026-08-27)** — built and reviewed 2026-08-16 (five review findings, all fixed); closed when the AI key was named as App Service config and the transcript-cap conflict was resolved in favour of rule 5 (counted in user turns, not entries) | Medium |
 | 8 | Azure deployment (provision + first deploy + CI/CD) | `SPEC/sprints/sprint-08-azure-deployment.md` | Not started | Medium |
 
 Update the Status column here whenever a sprint file's own `Status:` line changes (Not started → In Progress → Complete), and move the file to `SPEC/sprints/archive/` once Complete.

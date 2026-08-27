@@ -8,6 +8,7 @@ Deliver the Collega MVP as a layered ASP.NET Core application with a Blazor clie
 - It previously carried a "Restart Baseline" telling readers to treat every slice as unstarted planned work. That was true when written and is false now; it was removed rather than left to mislead.
 - For what is actually built, read `SPEC/implementation-agent-tracker.md` → Current Status. For what is next, read `SPEC/95-next-sprints.md`.
 - Read this file for **layer design and technical approach** — the part that has not gone stale.
+- **Column types reconciled to PostgreSQL 2026-08-27**, closing the last item on `SPEC/50-postgres-migration.md`'s post-merge list. The prose had said PostgreSQL since the Sprint 5 cutover while the table outlines below were still written in SQL Server types. They now match what `20260812195251_InitialCreate` actually emits: `uuid`, `character varying(N)`, `text`, `boolean`, `timestamp with time zone`. Authoritative schema is the migration, not this outline.
 
 ## Scope Alignment
 - MVP in scope: authentication, organization and user management, boards, statuses, organization-managed Idea Type and Business Impact options, ideas, tags, comments, upvotes, mentions, audit events, and notification event definitions.
@@ -463,128 +464,128 @@ Validation gate:
 
 ### Table Outline
 #### `organizations`
-- `organization_id` uniqueidentifier primary key
-- `company_name` nvarchar(200)
-- `address` nvarchar(200)
-- `city` nvarchar(100)
-- `state` nvarchar(50)
-- `zip` nvarchar(20)
-- `phone` nvarchar(25)
-- `primary_contact_first_name` nvarchar(100)
-- `primary_contact_last_name` nvarchar(100)
-- `is_archived` bit
-- `created_at_utc` datetime2
-- `updated_at_utc` datetime2
+- `organization_id` uuid primary key
+- `company_name` character varying(200)
+- `address` character varying(200)
+- `city` character varying(100)
+- `state` character varying(50)
+- `zip` character varying(20)
+- `phone` character varying(25)
+- `primary_contact_first_name` character varying(100)
+- `primary_contact_last_name` character varying(100)
+- `is_archived` boolean
+- `created_at_utc` timestamp with time zone
+- `updated_at_utc` timestamp with time zone
 
 #### `users`
-- `user_id` uniqueidentifier primary key
-- `organization_id` uniqueidentifier nullable for Site Admin only
-- `first_name` nvarchar(100)
-- `last_name` nvarchar(100)
-- `email` nvarchar(320)
-- `normalized_email` nvarchar(320)
-- `password_hash` nvarchar(max)
-- `role` nvarchar(50)
-- `status` nvarchar(20)
-- `must_change_password` bit
+- `user_id` uuid primary key
+- `organization_id` uuid nullable for Site Admin only
+- `first_name` character varying(100)
+- `last_name` character varying(100)
+- `email` character varying(320)
+- `normalized_email` character varying(320)
+- `password_hash` text
+- `role` character varying(50)
+- `status` character varying(20)
+- `must_change_password` boolean
 - `failed_login_count` int
-- `lockout_window_start_utc` datetime2 nullable
-- `locked_until_utc` datetime2 nullable
-- `created_at_utc` datetime2
-- `updated_at_utc` datetime2
+- `lockout_window_start_utc` timestamp with time zone nullable
+- `locked_until_utc` timestamp with time zone nullable
+- `created_at_utc` timestamp with time zone
+- `updated_at_utc` timestamp with time zone
 
 #### `statuses`
-- `status_id` uniqueidentifier primary key
-- `organization_id` uniqueidentifier foreign key
-- `name` nvarchar(100)
-- `is_deleted` bit
-- `created_at_utc` datetime2
-- `updated_at_utc` datetime2
+- `status_id` uuid primary key
+- `organization_id` uuid foreign key
+- `name` character varying(100)
+- `is_deleted` boolean
+- `created_at_utc` timestamp with time zone
+- `updated_at_utc` timestamp with time zone
 
 #### `boards`
-- `board_id` uniqueidentifier primary key
-- `organization_id` uniqueidentifier foreign key
-- `name` nvarchar(150)
-- `allow_user_status_update` bit — controls whether the User role can move ideas on this board
-- `created_at_utc` datetime2
-- `updated_at_utc` datetime2
+- `board_id` uuid primary key
+- `organization_id` uuid foreign key
+- `name` character varying(150)
+- `allow_user_status_update` boolean — controls whether the User role can move ideas on this board
+- `created_at_utc` timestamp with time zone
+- `updated_at_utc` timestamp with time zone
 
 #### `board_swimlanes`
-- `board_id` uniqueidentifier foreign key
-- `status_id` uniqueidentifier foreign key
+- `board_id` uuid foreign key
+- `status_id` uuid foreign key
 - `display_order` int
 
 #### `ideas`
-- `idea_id` uniqueidentifier primary key
-- `organization_id` uniqueidentifier foreign key
-- `board_id` uniqueidentifier foreign key
-- `author_user_id` uniqueidentifier foreign key
-- `assignee_user_id` uniqueidentifier nullable foreign key
-- `status_id` uniqueidentifier foreign key
-- `title` nvarchar(150)
-- `description` nvarchar(4000)
-- `priority` nvarchar(20) — `Low`, `Medium`, `High`, or `Critical`
+- `idea_id` uuid primary key
+- `organization_id` uuid foreign key
+- `board_id` uuid foreign key
+- `author_user_id` uuid foreign key
+- `assignee_user_id` uuid nullable foreign key
+- `status_id` uuid foreign key
+- `title` character varying(150)
+- `description` character varying(4000)
+- `priority` character varying(20) — `Low`, `Medium`, `High`, or `Critical`
 - `due_date` date nullable
-- `is_deleted` bit — soft-delete; deleted ideas are excluded from board views and list queries
-- `created_at_utc` datetime2
-- `updated_at_utc` datetime2
+- `is_deleted` boolean — soft-delete; deleted ideas are excluded from board views and list queries
+- `created_at_utc` timestamp with time zone
+- `updated_at_utc` timestamp with time zone
 
 #### `tags`
-- `tag_id` uniqueidentifier primary key
-- `organization_id` uniqueidentifier foreign key
-- `name` nvarchar(100)
-- `normalized_name` nvarchar(100)
-- `created_at_utc` datetime2
+- `tag_id` uuid primary key
+- `organization_id` uuid foreign key
+- `name` character varying(100)
+- `normalized_name` character varying(100)
+- `created_at_utc` timestamp with time zone
 
 #### `idea_tags`
-- `idea_id` uniqueidentifier foreign key
-- `tag_id` uniqueidentifier foreign key
+- `idea_id` uuid foreign key
+- `tag_id` uuid foreign key
 
 #### `mentions`
-- `mention_id` uniqueidentifier primary key
-- `organization_id` uniqueidentifier foreign key
-- `idea_id` uniqueidentifier nullable
-- `comment_id` uniqueidentifier nullable
-- `mentioned_user_id` uniqueidentifier foreign key
-- `source_text` nvarchar(320)
-- `created_at_utc` datetime2
+- `mention_id` uuid primary key
+- `organization_id` uuid foreign key
+- `idea_id` uuid nullable
+- `comment_id` uuid nullable
+- `mentioned_user_id` uuid foreign key
+- `source_text` character varying(320)
+- `created_at_utc` timestamp with time zone
 
 #### `comments`
-- `comment_id` uniqueidentifier primary key
-- `idea_id` uniqueidentifier foreign key
-- `author_user_id` uniqueidentifier foreign key
-- `body` nvarchar(2000)
-- `created_at_utc` datetime2
-- `updated_at_utc` datetime2
+- `comment_id` uuid primary key
+- `idea_id` uuid foreign key
+- `author_user_id` uuid foreign key
+- `body` character varying(2000)
+- `created_at_utc` timestamp with time zone
+- `updated_at_utc` timestamp with time zone
 
 #### `upvotes`
-- `idea_id` uniqueidentifier foreign key
-- `user_id` uniqueidentifier foreign key
-- `created_at_utc` datetime2
+- `idea_id` uuid foreign key
+- `user_id` uuid foreign key
+- `created_at_utc` timestamp with time zone
 
 #### `audit_events`
-- `audit_event_id` uniqueidentifier primary key
-- `organization_id` uniqueidentifier nullable
-- `actor_user_id` uniqueidentifier nullable
-- `event_type` nvarchar(100)
-- `entity_type` nvarchar(100)
-- `entity_id` uniqueidentifier nullable
-- `message` nvarchar(500)
-- `metadata_json` nvarchar(max)
-- `occurred_at_utc` datetime2
+- `audit_event_id` uuid primary key
+- `organization_id` uuid nullable
+- `actor_user_id` uuid nullable
+- `event_type` character varying(100)
+- `entity_type` character varying(100)
+- `entity_id` uuid nullable
+- `message` character varying(500)
+- `metadata_json` text
+- `occurred_at_utc` timestamp with time zone
 
 #### `notification_events`
-- `notification_event_id` uniqueidentifier primary key
-- `organization_id` uniqueidentifier foreign key
-- `board_id` uniqueidentifier foreign key
-- `idea_id` uniqueidentifier foreign key
-- `actor_user_id` uniqueidentifier foreign key
-- `recipient_user_id` uniqueidentifier foreign key
-- `event_type` nvarchar(100)
-- `idea_link` nvarchar(500)
-- `message` nvarchar(500)
-- `metadata_json` nvarchar(max)
-- `occurred_at_utc` datetime2
+- `notification_event_id` uuid primary key
+- `organization_id` uuid foreign key
+- `board_id` uuid foreign key
+- `idea_id` uuid foreign key
+- `actor_user_id` uuid foreign key
+- `recipient_user_id` uuid foreign key
+- `event_type` character varying(100)
+- `idea_link` character varying(500)
+- `message` character varying(500)
+- `metadata_json` text
+- `occurred_at_utc` timestamp with time zone
 
 ### Suggested Constraints
 - unique normalized email across the system on `normalized_email`
@@ -761,32 +762,32 @@ New enum: `FieldType` (`Text=1`, `Number=2`, `Date=3`, `Boolean=4`, `Dropdown=5`
 
 ```
 field_definitions
-  - id uniqueidentifier PK
-  - organization_id uniqueidentifier FK → organizations
-  - name nvarchar(100)
-  - description nvarchar(500) nullable
+  - id uuid PK
+  - organization_id uuid FK → organizations
+  - name character varying(100)
+  - description character varying(500) nullable
   - field_type int (FieldType enum)
-  - is_required bit
+  - is_required boolean
   - display_order int
-  - is_deleted bit
-  - deleted_at_utc datetime2 nullable
-  - deleted_by_user_id uniqueidentifier nullable
-  - created_at_utc, updated_at_utc datetime2
+  - is_deleted boolean
+  - deleted_at_utc timestamp with time zone nullable
+  - deleted_by_user_id uuid nullable
+  - created_at_utc, updated_at_utc timestamp with time zone
 
 field_definition_options
-  - id uniqueidentifier PK
-  - field_definition_id uniqueidentifier FK → field_definitions (cascade delete)
-  - label nvarchar(200)
+  - id uuid PK
+  - field_definition_id uuid FK → field_definitions (cascade delete)
+  - label character varying(200)
   - display_order int
 
 idea_field_values
-  - id uniqueidentifier PK
-  - idea_id uniqueidentifier FK → ideas (cascade delete)
-  - field_definition_id uniqueidentifier FK → field_definitions
-  - value nvarchar(4000) nullable
-  - created_at_utc, updated_at_utc datetime2
+  - id uuid PK
+  - idea_id uuid FK → ideas (cascade delete)
+  - field_definition_id uuid FK → field_definitions
+  - value character varying(4000) nullable
+  - created_at_utc, updated_at_utc timestamp with time zone
 
-Unique index: field_definitions (organization_id, name) WHERE is_deleted = 0
+Unique index: field_definitions (organization_id, name) WHERE is_deleted = false
 Unique index: idea_field_values (idea_id, field_definition_id)
 Index:        idea_field_values (field_definition_id, value)
 ```

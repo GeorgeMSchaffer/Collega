@@ -1265,7 +1265,7 @@ Success response `200`:
 
 ## AI Idea Assist Contracts
 
-Behavior spec: `SPEC/20-feature-ai-idea-assist.md`. Sprint 7 (`SPEC/sprints/sprint-07-ai-idea-assist.md`). **Built 2026-08-16**, except the per-org `ai-key` endpoints below, which stay deliberately unimplemented (rule 30).
+Behavior spec: `SPEC/20-feature-ai-idea-assist.md`. Sprint 7 (`SPEC/sprints/archive/sprint-07-ai-idea-assist.md`). **Built 2026-08-16**, except the per-org `ai-key` endpoints below, which stay deliberately unimplemented (rule 30).
 
 Contract-wide rules for this section:
 - the caller's organization is resolved from the access token, never from the request body
@@ -1277,7 +1277,7 @@ Contract-wide rules for this section:
 Purpose: Advance the idea-drafting conversation by one turn and return the updated draft.
 
 Request body:
-- `transcript` required array, max 20 entries, ordered oldest-first. Each entry:
+- `transcript` required array, ordered oldest-first, **max 40 entries of which at most 20 may have `role` of `user`** — the cap is counted in *user turns*, not entries, per `20-feature-ai-idea-assist.md` rule 5; a full 20-turn conversation is ~40 entries. Both bounds are enforced server-side. Each entry:
   - `role` required string, one of `user`, `assistant`
   - `text` required string, max 4000 characters, trimmed before validation
 - `draft` optional object carrying the current draft so the model can revise rather than restate. Same shape as `draft` in the response; unknown or inactive ids are discarded server-side rather than rejected

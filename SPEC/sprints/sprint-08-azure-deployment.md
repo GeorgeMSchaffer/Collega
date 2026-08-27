@@ -1,9 +1,9 @@
 # Sprint 8: Azure Deployment (provision + first deploy + CI/CD)
 
 **Status:** Not started
-**Sequence:** 8 of 8 (last) — see `SPEC/95-next-sprints.md` for the full sequence. Renumbered from Sprint 7 on 2026-08-11 when AI-assisted idea drafting was scheduled ahead of it at user request. Starts after Sprint 7 (`sprint-07-ai-idea-assist.md`) is merged, so the first deployment ships both View As (Sprint 6) and AI idea assist. Sprint 6.5 (`sprint-06.5-bug-fixes-and-tweaks.md`) precedes both — it supersedes all other sprints per the user's 2026-08-14 decision, and it matters most here: this sprint is what puts the product in front of real users, so known defects should be paid down before it, not after. **Hard blocker:** does not start until Sprint 5 (`sprint-05-postgres-migration.md`) is **implemented in code and verified working** — not merely planned (the migration sets the deployment's DB engine).
+**Sequence:** 8 of 8 (last) — see `SPEC/95-next-sprints.md` for the full sequence. Renumbered from Sprint 7 on 2026-08-11 when AI-assisted idea drafting was scheduled ahead of it at user request. Starts after Sprint 7 (`archive/sprint-07-ai-idea-assist.md`, complete) is merged, so the first deployment ships both View As (Sprint 6) and AI idea assist. Sprint 6.5 (`sprint-06.5-bug-fixes-and-tweaks.md`) precedes both — it supersedes all other sprints per the user's 2026-08-14 decision, and it matters most here: this sprint is what puts the product in front of real users, so known defects should be paid down before it, not after. **Hard blocker:** does not start until Sprint 5 (`sprint-05-postgres-migration.md`) is **implemented in code and verified working** — not merely planned (the migration sets the deployment's DB engine).
 
-**Config note (added 2026-08-11):** Sprint 7 introduces a deployment-level AI API key. It must be provisioned as App Service configuration alongside the other secrets in this sprint's config task; the feature stays dark without it, which is a supported state rather than a failure.
+**Config note (added 2026-08-11; setting named 2026-08-27):** Sprint 7 shipped a deployment-level AI API key — `Ai__ApiKey`, listed under Optional in `SPEC/50-azure-deployment.md` §3. Provision it as an App Service **secret** alongside the others in this sprint's config task. The feature stays dark without it, which is a supported state rather than a failure, so it must never fail startup.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
 ## ⛔ Dependency gate — read first
@@ -24,7 +24,7 @@ Stand up Collega's three tiers on Azure per `SPEC/50-azure-deployment.md` (Stati
 | Priority | Item | Notes |
 |---|---|---|
 | P0 | Provision the three tiers | Resource group, **Azure Database for PostgreSQL Flexible Server (Burstable B1ms)**, App Service (Linux .NET 8), Static Web Apps (Free) — `SPEC/50-azure-deployment.md` §4–6 |
-| P0 | App Service configuration | Required settings (`ConnectionStrings__DefaultConnection` in Npgsql format, `SiteAdmin__Email/Password`) + recommended (`ASPNETCORE_ENVIRONMENT=Production`, `Cors__AllowedOrigins__0`, `Auth__TokenSigningKey`) — §3 |
+| P0 | App Service configuration | Required settings (`ConnectionStrings__DefaultConnection` in Npgsql format, `SiteAdmin__Email/Password`) + recommended (`ASPNETCORE_ENVIRONMENT=Production`, `Cors__AllowedOrigins__0`, `Auth__TokenSigningKey`) + **`Ai__ApiKey`** if AI idea assist ships lit rather than dark — §3 |
 | P0 | First deploy + boot verification | API connects to Postgres, runs migrations, seeds Site Admin; frontend loads and calls the API without CORS errors — §5–7 |
 | P0 | CI/CD pipeline wiring — **API** | `AZURE_WEBAPP_PUBLISH_PROFILE` secret + `AZURE_WEBAPP_NAME` variable; confirm push-to-`main` deploys — `SPEC/50-azure-api-cicd.md` |
 | P0 | CI/CD pipeline wiring — **client** | `.github/workflows/deploy-client.yml` (drafted 2026-08-13, never yet run) needs the `AZURE_STATIC_WEB_APPS_API_TOKEN` secret. **Create the SWA without `--source`** or Azure generates a competing workflow — `SPEC/50-azure-deployment.md` §6.2 |
