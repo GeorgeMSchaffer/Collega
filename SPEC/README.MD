@@ -4,6 +4,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 
 ## Product Behavior (canonical)
 
+- `decisions.md` — **dated log of decisions that constrain later work.** Read before reopening a settled question; supersessions are recorded rather than edited away.
 - `00-project-brief.md` — product model, stack, solution structure, architecture rules
 - `10-requirements.md` — requirement set
 - `30-Contracts.md` — **canonical API route and payload contracts**; authoritative for endpoint and payload details
@@ -50,10 +51,11 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 - `50-azure-deployment.md`, `50-azure-api-cicd.md` — Azure target (Sprint 8; renumbered from 7 on 2026-08-11)
 - `50-postgres-migration.md` — Postgres migration plan (Sprint 5)
 - `50-kubernetes-deployment.md` — Kubernetes deployment notes
+- `50-typescript-migration.md` — **the costed, sequenced plan for the .NET → TypeScript conversion** (Sprint 9; assembles the `wayfinder` map on `feature/068-typescript-conversion-map`). Its Wave A has a deadline earlier than the sprint: golden capture must run **before or during Sprint 8**, while the .NET API still exists.
 
 ## Supporting Material
 
-- `mockups/` — SVG/HTML UI mockups and throwaway review comps; `comp-c-*` is the live direction, `comp-a-*`/`comp-b-*` are rejected alternatives kept for history
+- `mockups/` — SVG/HTML UI mockups and throwaway review comps. **`comp-p-focus-roadmap.html` is the locked direction as of 2026-08-31** (structure locked, palette open — see `decisions.md`); earlier comps are kept for history.
 - `ui-ux-spec-template.md` — start here for a new client layout/interaction spec
 - `SPECKIT/specs/<NNN-feature>/spec.md` — spec-kit-style **downstream copies** of the canonical files; edit the canonical file first
 
