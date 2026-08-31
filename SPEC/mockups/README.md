@@ -66,23 +66,41 @@ All three comps demonstrate spec behaviors: globally unique email sign-in (no or
 - Use service patterns for dialogs and toasts during implementation rather than toggling dialog visibility directly.
 - Do not add manual script or stylesheet tags for the Fluent library; rely on package-provided assets and initializers.
 
+
 ## Redesign Comps for the TypeScript Conversion (2026-08-30)
 
 **These four comps are for a prospective stack conversion, not for the current Blazor app.** They exist to answer ticket `01` of the wayfinder map at `.scratch/typescript-conversion/map.md`, where Comp C "Fluent Editorial" is deliberately **unlocked** so the redesign can be argued on merit. Comp C remains the locked direction for the .NET client; nothing here changes that, and nothing here should be built against until ticket `01` is resolved.
 
-Each comp commits to a different design language *and* a different component library, so the comparison tests both at once. All four render identical seed content (Northwind Labs, 4 boards, 6 statuses, the same 12 ideas) across the same five surfaces — board, ideas list, idea detail, statuses admin, login — plus an app shell with board switcher, user menu, a toggleable View As banner, and an AI draft strip. Open in a browser; all interactions are live.
+All four render identical seed content (Northwind Labs, 4 boards, 6 statuses, the same 12 ideas) across the same core surfaces — board, ideas list, idea detail, statuses admin, login — plus an app shell with board switcher, user menu, a toggleable View As banner, and an AI draft strip. Open in a browser; all interactions are live.
 
-- `comp-j-command-deck.html` — **Command Deck** (Tailwind, hand-rolled primitives): dense, keyboard-first, dark-by-default, in the Linear/Height idiom. Real Cmd/Ctrl+K command palette, `J`/`K` selection movement, `U` to upvote. Grayscale ground with a single cyan accent.
-- `comp-k-material-workspace.html` — **Material Workspace** (Material Design 3 via CSS custom properties): navigation rail, rail-FAB, real MD3 color roles with independently correct light/dark schemes, five elevation levels, state layers and ripples. The argument that familiarity is a feature.
+- `comp-k-material-workspace.html` — **Material Workspace** (Material Design 3 via CSS custom properties): navigation rail, rail-FAB, real MD3 color roles with independently correct light and dark schemes, five elevation levels, state layers and ripples. The argument that familiarity is a feature.
 - `comp-l-canvas-board.html` — **Canvas Board** (Bootstrap 5.3, heavily re-themed): warm bone/sand ground with a terracotta accent, cards as physical objects, working drag-and-drop between columns with a keyboard-equivalent "Move to" menu. The argument that idea tracking should feel inviting.
 - `comp-m-editorial-continuum.html` — **Editorial Continuum** (Tailwind): Comp C's typographic language carried forward and freed from Fluent's component constraints. Geist for chrome, Fraunces for content headings, hierarchy from type rather than containers, idea detail as a magazine article. Teal reserved exclusively for AI affordances.
+- `comp-n-decision-desk.html` — **Decision Desk** (Tailwind, light only): the odd one out, and deliberately so. Makes a *product* argument rather than a visual one — that the hard problem in an idea tracker is deciding, not displaying. Carries six new feature concepts (below).
+
+### A retired comp
+
+`comp-j-command-deck.html` — **Command Deck**, dense and keyboard-first in the Linear/Height idiom, dark-by-default. **Rejected 2026-08-30**: a dark theme is not appropriate for a business application, and dark-first was integral to the direction rather than a setting on it, so the whole comp was retired rather than restyled. Recoverable from git history if the density argument is ever wanted again. Comp N replaced it.
+
+### Comp N's feature concepts
+
+Comp N proposes six things the product does not do today. They are the point of that comp, and they are separable from its visual direction:
+
+1. **Triage Mode** — a focused, one-idea-at-a-time review queue with a remaining count, momentum ordering, and decisive actions. Targets the real failure mode of an idea board: 200 ideas nobody grooms.
+2. **Duplicate clustering** — near-identical ideas grouped with a confidence badge and a merge flow that previews combined votes and comments.
+3. **Vote budget** — a finite number of votes per user per quarter, with a forced reclaim flow when exhausted, so upvotes carry signal instead of being free.
+4. **Decision records** — a written rationale required when declining or planning, which then lives on the idea permanently.
+5. **Momentum over totals** — upvote velocity sparklines and a sortable momentum column, so a fast-rising new idea can outrank a stale high total.
+6. **Commitment strip** — a roadmap band above the board tying it to what the org actually committed to this quarter.
+
+Assessed by their author for buildability: **decision records and the commitment strip are the strongest** — cheap, and they answer real organizational pain with no ML investment. **Triage Mode is the best structural idea** and is largely a filtered, ordered view over existing actions. **Momentum** needs a real velocity algorithm that resists gaming; the comp fakes it. **Duplicate clustering** is honest demo-ware — real similarity detection is the ML problem the spec already defers. **Vote budget is the most consequential and least free**, because it changes user behavior and needs policy decisions (reset timing, carryover, admin exemptions) before it is implementable.
+
+One critique from the same author worth keeping: requiring a rationale on **Plan** as well as Decline is probably more friction than it is worth. "Why did we reject this" is valuable; "why did we build this obviously good thing" much less so.
 
 ### Findings worth carrying into the decision
 
-Three critiques surfaced independently while the comps were built, and they are more useful than the comps themselves:
+1. **Board density is contested by the product's own roadmap.** Comps L and M each flagged, without prompting, that a spacious board fights the seeded idea "Faster board load for 500+ ideas." Two directions converging on this suggests the board and the idea-detail surface may want different density treatments regardless of which direction wins.
+2. **Comp N is not apples-to-apples with the others.** K, L and M argue about presentation; N argues about the job to be done. If its concepts land, the honest outcome may be "K's look with N's features" rather than picking one file. Ticket `01` carries Hybrid as a real option for exactly this reason.
+3. **A Tailwind trap worth remembering in the real build:** an element carrying both the `hidden` attribute and a `flex`/`grid` display class renders visible, because the display class overrides the UA `[hidden]{display:none}` rule. It silently exposed drawers, modals and banners on load in two separate comps. A global `[hidden]{display:none!important}` fixes it.
 
-1. **Board density is contested by the product's own roadmap.** Comps L and M each flagged, without prompting, that a spacious board surface fights the seeded idea "Faster board load for 500+ ideas." Two directions converging on this suggests the board and the idea-detail surface may want different density treatments regardless of which direction wins.
-2. **The real axis is who the primary user is.** Comp J's density serves someone who lives in the tool all day and reads as intimidating to an org admin triaging a handful of ideas weekly. Comp K's MD3 vocabulary is the inverse trade. That is a product question, not a taste question, and it should be settled before the look is.
-3. **A Tailwind trap worth remembering in the real build:** an element carrying both the `hidden` attribute and a `flex`/`grid` display class renders visible, because the display class overrides the UA `[hidden]{display:none}` rule. It silently exposed drawers, modals and banners on load. A global `[hidden]{display:none!important}` fixes it.
-
-Comps J and K were additionally verified by driving them in a real browser rather than by inspection, which caught several bugs that static review had missed.
+Comps K and N were verified by driving them in a real browser, which caught bugs static review missed. L and M were verified by inspection and JS parse only.

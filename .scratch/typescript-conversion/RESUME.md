@@ -69,24 +69,14 @@ Full detail and rationale in `map.md` under "Settled during charting".
 
 ---
 
-## In flight when this session ended (2026-08-30, ~20:50)
+## Comp status (settled 2026-08-30, nothing outstanding)
 
-**Comp J was rejected and is being replaced.** User feedback: *"I don't think a dark theme is appropriate for a business user type application."* Comp J was dark-first, so it is retired rather than restyled.
+**Comp J was rejected and has been deleted.** User feedback: *"I don't think a dark theme is appropriate for a business user type application."* Dark-first was integral to that direction rather than a setting on it, so the comp was retired rather than restyled. It is recoverable from git history at `0e2bd39`.
 
-Its replacement is **Comp N "Decision Desk"** at `SPEC/mockups/comp-n-decision-desk.html` — light-only, and carrying six novel *product* concepts rather than only a new look:
+**Comp N "Decision Desk"** replaced it — `SPEC/mockups/comp-n-decision-desk.html`, light only, browser-verified. Its argument is a product argument rather than a visual one: the hard problem is deciding, not displaying. It carries six new feature concepts (Triage Mode, duplicate clustering, vote budget, decision records, momentum over totals, commitment strip), all of which are **separable from its look** and are now Question C on ticket `01`.
 
-1. **Triage Mode** — focused one-idea-at-a-time review queue with decisive actions and a remaining-count
-2. **Duplicate clustering** — near-identical ideas grouped with a merge affordance
-3. **Vote budget** — finite votes per quarter, so upvotes carry signal
-4. **Decision records** — declining or planning requires a rationale that stays visible forever
-5. **Momentum** — upvote velocity sparkline, so fast-rising new ideas can outrank stale high totals
-6. **Commitment strip** — a roadmap band tying the board to what the org actually committed to
+Four comps stand: **K, L, M, N**. All indexed in `SPEC/mockups/README.md` with the buildability assessment of each of N's concepts.
 
-**If `comp-n-decision-desk.html` is missing, empty, or obviously truncated**, the build did not finish — rerun it. The full brief is recoverable from this list plus the shared seed data in any of the other three comps.
+## One estimate exists already
 
-**If it is present and complete**, then these three follow-ups were not done and still need doing:
-- [ ] Delete `SPEC/mockups/comp-j-command-deck.html`
-- [ ] Update the comps section of `SPEC/mockups/README.md` — replace J with N
-- [ ] Update ticket `01`'s option list — replace J with N, and note that the "who is the primary user?" question now has a fourth answer shape, since N argues the primary job is *deciding* rather than browsing
-
-The three surviving comps (K, L, M) are complete and committed.
+Ticket `12` carries a first-pass token estimate: **~1.5–2.5M to finish this map**, and **~15–30M to execute the conversion** if it is ever authorized. Low confidence on the multiplier, moderate on the slice count, deliberately not converted to currency. Tickets `04`, `09`, `10` and `01`-Question-C are what move it.
