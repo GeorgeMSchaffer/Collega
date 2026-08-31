@@ -1,47 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Comp C Review 1: Login &amp; Authentication</title>
 <style>
   :root{
-    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
-    --ink:#242424; --ink-2:#484644; --ink-3:#797672;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#5D6C7E;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
     --shadow:0 1px 2px rgba(0,0,0,.08);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
-  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
-  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f3f2f1}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:var(--accent-deep)}
   .btn.subtle{border-color:transparent;color:var(--accent)}
-  input[type=text],input[type=email],input[type=password]{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink);width:100%}
+  input[type=text],input[type=email],input[type=password]{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink);width:100%}
   input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
   input.invalid{border-color:var(--err)}
-  input:disabled{background:#f3f2f1;color:var(--ink-3)}
+  input:disabled{background:#F1F3F6;color:var(--ink-3)}
   label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
   .field{margin-bottom:15px}
   .field .errtext{font-size:12px;color:var(--err);margin-top:5px}
   .authwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:24px}
-  .authcard{width:430px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.10);padding:40px 44px}
+  .authcard{width:430px;background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,.10);padding:40px 44px}
   .authcard.wide{width:480px}
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
-  .brand .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;font-family:Georgia,serif}
-  .brand .name{font-family:Georgia,serif;font-size:19px;font-weight:600}
+  .brand .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .brand .name{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:19px;font-weight:600}
   .sub{font-size:13px;color:var(--ink-3);margin-bottom:20px;line-height:1.5}
-  .msg{border-radius:4px;padding:10px 13px;font-size:12.5px;margin-bottom:15px;border-left:3px solid}
-  .msg.err{background:#fbe5e7;color:var(--err);border-color:var(--err)}
+  .msg{border-radius:2px;padding:10px 13px;font-size:12.5px;margin-bottom:15px;border-left:3px solid}
+  .msg.err{background:#F8EFEF;color:var(--err);border-color:var(--err)}
   .msg.info{background:var(--accent-soft);color:var(--accent-deep);border-color:var(--accent)}
   .checklist{list-style:none;font-size:12.5px;margin:8px 0 15px}
   .checklist li{padding:2px 0;color:var(--ink-3)}
@@ -49,7 +53,7 @@
   .checklist li::before{content:"○ "}.checklist li.ok::before{content:"✓ "}
   .footnote{font-size:12px;color:var(--ink-3);text-align:center;margin-top:16px;line-height:1.5}
   .footnote a{color:var(--accent-deep);font-weight:600}
-  .code{font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:8px 11px;font-size:14px;letter-spacing:.02em;display:flex;justify-content:space-between;align-items:center}
+  .code{font-family:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;background:#F1F3F6;border:1px solid var(--line);border-radius:2px;padding:8px 11px;font-size:14px;letter-spacing:.02em;display:flex;justify-content:space-between;align-items:center}
   .kv{font-size:12.5px;color:var(--ink-2);display:grid;gap:6px;margin-top:12px}
   hr{border:none;border-top:1px solid var(--line);margin:18px 0}
 </style>

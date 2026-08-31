@@ -1,50 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Review 12B: Delivery IA "Phase Tabs"</title>
 <style>
   /* ===== Tokens copied verbatim from comp-c-review-06-lockin-v5-final (locked) ===== */
   :root{
-    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
-    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
-    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
-    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
-    --im-low-deep:#7d6270; --im-low-soft:#f2ecf0;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#3E4E60;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
+    --im-high-deep:#B64B4B; --im-high-soft:#F8EFEF;
+    --im-med-deep:#C97A7A; --im-med-soft:#F1F3F6;
+    --im-low-deep:#B64B4B; --im-low-soft:#F1F3F6;
     --shadow:0 1px 2px rgba(0,0,0,.08);
-    --radius-card:6px; --radius-btn:4px;
-    --ds-pending:#57534e; --ds-scoping:#7a3fb8; --ds-dev:#2f6fb0; --ds-review:#9a5b00; --ds-complete:#0e700e;
+    --radius-card:2px; --radius-btn:2px;
+    --ds-pending:#3E4E60; --ds-scoping:#5B7FA3; --ds-dev:#527292; --ds-review:#8A6D2E; --ds-complete:#457C4F;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
-  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
   .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px);position:relative}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
-  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
-  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
   .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
   .rail a.on{background:var(--accent-soft);color:var(--accent)}
-  .rail a:hover{background:#f3f2f1}
+  .rail a:hover{background:#F1F3F6}
   .rail .push{flex:1}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
   .avatar.s{width:24px;height:24px;font-size:9.5px}
   .avatarwrap{position:relative}
   .avatarbtn{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;line-height:0}
-  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
+  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
   .avatarmenu.show{display:block}
   .avatarmenu .who{padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.5}
   .avatarmenu .who strong{color:var(--ink);font-size:13px;display:block}
   .avatarmenu .item{display:block;padding:9px 14px;font-size:13px;color:var(--ink);text-decoration:none;cursor:pointer}
-  .avatarmenu .item:hover{background:#f3f2f1}
+  .avatarmenu .item:hover{background:#F1F3F6}
   .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
   .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
   .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
@@ -53,90 +57,90 @@
   .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
   .pagehead .row .grow{flex:1}
   /* B-SPECIFIC: the phase switch — one board, three lenses on the same items */
-  .phaseseg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-top:16px}
+  .phaseseg{display:inline-flex;border:1px solid var(--line);border-radius:2px;overflow:hidden;margin-top:16px}
   .phaseseg button{border:none;background:var(--surface);padding:9px 20px;font-size:13px;font-weight:700;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line);display:inline-flex;align-items:center;gap:7px}
   .phaseseg button:last-child{border-right:none}
   .phaseseg button.on{background:var(--accent);color:#fff}
-  .phaseseg .n{font-size:11px;font-weight:700;background:rgba(0,0,0,.07);border-radius:9px;padding:0 7px}
+  .phaseseg .n{font-size:11px;font-weight:700;background:rgba(0,0,0,.07);border-radius:2px;padding:0 7px}
   .phaseseg button.on .n{background:rgba(255,255,255,.24)}
   .viewswitch{display:flex;gap:4px;margin-top:14px;flex-wrap:wrap}
   .viewswitch a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent;cursor:pointer}
   .viewswitch a.on{color:var(--accent);border-bottom-color:var(--accent)}
   .body{padding:26px 40px;max-width:1240px}
   .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f3f2f1}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.sm{padding:4px 10px;font-size:12px}
   .btn.icon{padding:6px 10px}
-  input[type=text],select,textarea{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input[type=text],select,textarea{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
-  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
-  .pill.ok{background:#e7f2e7;color:var(--ok)}.pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:600}
+  .pill.ok{background:#F0F7F1;color:var(--ok)}.pill.neutral{background:#F1F3F6;color:var(--ink-2)}
   .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
-  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 4px 4px 0;margin-top:20px;max-width:840px;line-height:1.55}
-  .note.tradeoff{border-left-color:#9a5b00;background:#fdf6ec}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 2px 2px 0;margin-top:20px;max-width:840px;line-height:1.55}
+  .note.tradeoff{border-left-color:#8A6D2E;background:#F9F6EE}
   .note b{color:var(--ink)}
   .chipbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-  .chip{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
   .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
-  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:3px;white-space:nowrap}
+  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:2px;white-space:nowrap}
   .impact.high{background:var(--im-high-soft);color:var(--im-high-deep)}
   .impact.med{background:var(--im-med-soft);color:var(--im-med-deep)}
-  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px}
-  .prio-chip.high{background:#fbe5e7;color:var(--err)}
-  .prio-chip.med{background:#f7ecdc;color:var(--warn)}
-  .prio-chip.low{background:#e7f2e7;color:var(--ok)}
-  .effort{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;background:#e9edf3;color:#3d4a5c;border:1px solid #d7dee8;white-space:nowrap}
-  .tag{background:#f3f2f1;border-radius:3px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px}
+  .prio-chip.high{background:#F8EFEF;color:var(--err)}
+  .prio-chip.med{background:#F9F6EE;color:var(--warn)}
+  .prio-chip.low{background:#F0F7F1;color:var(--ok)}
+  .effort{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px;background:#F1F3F6;color:#527292;border:1px solid #D1DBE5;white-space:nowrap}
+  .tag{background:#F1F3F6;border-radius:2px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
   .age{font-size:11px;color:var(--ink-3)}
   .avatarstack{display:inline-flex;align-items:center}
   .avatarstack .avatar{margin-left:-6px;border:2px solid var(--surface)}
   .avatarstack .avatar:first-child{margin-left:0}
-  .up{border:1px solid var(--line);border-radius:4px;padding:5px 12px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:54px;text-align:center}
+  .up{border:1px solid var(--line);border-radius:2px;padding:5px 12px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:54px;text-align:center}
   .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
   .klanes{display:grid;grid-auto-flow:column;grid-auto-columns:262px;gap:14px;overflow-x:auto;padding-bottom:12px;align-items:start}
-  .klane{background:#f3f2f1;border-radius:var(--radius-card);padding:12px}
+  .klane{background:#F1F3F6;border-radius:var(--radius-card);padding:12px}
   .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;color:var(--ink-2);padding:2px 6px 12px}
   .klane h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--lc,var(--ink-3))}
   .klane h3 .grow{flex:1}
-  .klane .cnt{border-radius:10px;padding:0 8px;font-size:11px;background:#e4e2df}
+  .klane .cnt{border-radius:2px;padding:0 8px;font-size:11px;background:#DDE1E6}
   .kcard{background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow);padding:11px 13px;margin-bottom:9px;cursor:grab;border-left:3px solid var(--lc,transparent)}
   .kcard:hover{outline:1px solid var(--accent)}
   .kcard .t{font-weight:600;font-size:13.5px;margin-bottom:7px}
   .kcard .meta2{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px}
   .kcard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
   .kcard .meta .spacer{flex:1}
-  .kcard.promoted{background:#f8f8f7;border-left-color:#c8c6c4;box-shadow:none;cursor:default}
+  .kcard.promoted{background:#F7F9FB;border-left-color:#C5CBD3;box-shadow:none;cursor:default}
   .kcard.promoted .t{color:var(--ink-2)}
-  .inflight{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:#eaf1f8;color:#28587f;border:1px solid #d3e0ec}
+  .inflight{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:2px;background:#F1F3F6;color:#527292;border:1px solid #D1DBE5}
   .inflight .d{width:6px;height:6px;border-radius:50%;background:currentColor}
-  .shipped{background:#e7f2e7;color:var(--ok);border-color:#cfe6cf}
-  .rm{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px 2px 6px;border-radius:3px;background:#f3f2f1;color:var(--ink-2);white-space:nowrap}
-  .rm .sw{width:8px;height:8px;border-radius:2px;background:var(--rmc,#8a8886)}
-  .progressline{height:5px;border-radius:3px;background:#eceae8;overflow:hidden;margin-top:8px}
+  .shipped{background:#F0F7F1;color:var(--ok);border-color:#D1E6D5}
+  .rm{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px 2px 6px;border-radius:2px;background:#F1F3F6;color:var(--ink-2);white-space:nowrap}
+  .rm .sw{width:8px;height:8px;border-radius:2px;background:var(--rmc,#818E9C)}
+  .progressline{height:5px;border-radius:2px;background:#DDE1E6;overflow:hidden;margin-top:8px}
   .progressline i{display:block;height:100%;background:var(--ds-complete)}
   .tasklist{border:1px solid var(--line);border-radius:var(--radius-card);background:var(--surface);overflow:hidden}
-  .tasklist .thd{display:flex;align-items:center;gap:10px;padding:11px 15px;border-bottom:1px solid var(--line);background:#faf9f8}
+  .tasklist .thd{display:flex;align-items:center;gap:10px;padding:11px 15px;border-bottom:1px solid var(--line);background:#F7F9FB}
   .tasklist .thd .n{font-weight:700;font-size:13px}
   .tasklist .thd .grow{flex:1}
-  .task{display:flex;align-items:center;gap:11px;padding:10px 15px;border-bottom:1px solid #f0efed;font-size:13px}
+  .task{display:flex;align-items:center;gap:11px;padding:10px 15px;border-bottom:1px solid #F1F3F6;font-size:13px}
   .task:last-child{border-bottom:none}
-  .task .box{width:15px;height:15px;border-radius:3px;border:1.5px solid #8a8886;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+  .task .box{width:15px;height:15px;border-radius:2px;border:1.5px solid #818E9C;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
   .task.done .box{background:var(--ds-complete);border-color:var(--ds-complete)}
   .task.done .tt{color:var(--ink-3);text-decoration:line-through}
   .task .tt{flex:1}
-  .task .ts{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:10px;background:#f3f2f1;color:var(--ink-2)}
-  .task .ts.prog{background:#eaf1f8;color:#28587f}
-  .lineage{background:var(--accent-soft);border:1px solid #dcdef4;border-radius:8px;padding:14px 16px}
-  .lineage h3{font-family:Georgia,serif;font-size:14.5px;margin-bottom:3px;color:var(--accent-deep)}
+  .task .ts{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:2px;background:#F1F3F6;color:var(--ink-2)}
+  .task .ts.prog{background:#F1F3F6;color:#527292}
+  .lineage{background:var(--accent-soft);border:1px solid #F0F4F7;border-radius:2px;padding:14px 16px}
+  .lineage h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:14.5px;margin-bottom:3px;color:var(--accent-deep)}
   .lineage .cap{font-size:11.5px;color:var(--ink-3);margin-bottom:11px}
-  .linrow{display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);padding:5px 0;align-items:baseline;border-top:1px solid #e1e3f3}
+  .linrow{display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);padding:5px 0;align-items:baseline;border-top:1px solid #F0F4F7}
   .linrow:first-of-type{border-top:none}
   .linrow .lk{color:var(--ink-3);width:106px;font-weight:600;flex-shrink:0}
   .linrow .lv{color:var(--ink);font-weight:600}
   .linrow a{color:var(--accent-deep);font-weight:700;text-decoration:none}
   .outcome{border:1px solid var(--line);border-left:3px solid var(--ds-complete);border-radius:0 var(--radius-card) var(--radius-card) 0;background:var(--surface);padding:14px 16px}
-  .outcome h3{font-family:Georgia,serif;font-size:14.5px;margin-bottom:8px}
+  .outcome h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:14.5px;margin-bottom:8px}
   .outcome textarea{width:100%;min-height:56px;font-size:13px}
   .outcome .hint{font-size:11.5px;color:var(--ink-3);margin-top:7px}
   .sprintbar{display:flex;align-items:center;gap:20px;padding:15px 19px;flex-wrap:wrap;margin-bottom:16px}
@@ -144,20 +148,20 @@
   .sprintbar .goal .g-k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:3px}
   .sprintbar .goal .g-v{font-size:14px;color:var(--ink-2);line-height:1.45}
   .sprintbar .meta-blk{text-align:center}
-  .sprintbar .meta-blk .m-n{font-family:Georgia,serif;font-size:20px;color:var(--accent-deep)}
+  .sprintbar .meta-blk .m-n{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:20px;color:var(--accent-deep)}
   .sprintbar .meta-blk .m-l{font-size:11px;color:var(--ink-3)}
   .sprintbar .divider{width:1px;align-self:stretch;background:var(--line)}
-  .state-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:12px}
-  .state-pill.active{background:#e7f2e7;color:var(--ok)}
+  .state-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:2px}
+  .state-pill.active{background:#F0F7F1;color:var(--ok)}
   .state-pill .d{width:7px;height:7px;border-radius:50%;background:currentColor}
   /* roadmap lens as grouped lists (B keeps the list idiom of the locked board) */
   .rmgroup{margin-bottom:20px;border-radius:var(--radius-card);overflow:hidden;border:1px solid var(--line)}
-  .rmhd{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f3f2f1;border-bottom:1px solid var(--line)}
+  .rmhd{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#F1F3F6;border-bottom:1px solid var(--line)}
   .rmhd .sw{width:11px;height:11px;border-radius:2px;background:var(--rmc)}
   .rmhd .nm{font-weight:700;font-size:14px}
   .rmhd .dates{font-size:12px;color:var(--ink-3)}
   .rmhd .grow{flex:1}
-  .listrow{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #f0efed;background:var(--surface)}
+  .listrow{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #F1F3F6;background:var(--surface)}
   .listrow:last-child{border-bottom:none}
   .listrow .t{font-weight:600;font-size:13.5px;flex:1}
   .dsdot{width:8px;height:8px;border-radius:50%;background:var(--dsc);flex-shrink:0}
@@ -170,7 +174,7 @@
   .drawer .dhd .kick{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
   .drawer .dhd h2{font-size:21px;line-height:1.25}
   .drawer .dbd{padding:18px 24px;overflow:auto;flex:1}
-  .drawer .dft{padding:12px 24px;border-top:1px solid var(--line);background:#faf9f8;display:flex;gap:10px;align-items:center}
+  .drawer .dft{padding:12px 24px;border-top:1px solid var(--line);background:#F7F9FB;display:flex;gap:10px;align-items:center}
   .lensbar{display:flex;gap:4px;padding:0 24px;border-bottom:1px solid var(--line);background:var(--surface)}
   .lensbar a{padding:9px 13px;font-size:12.5px;font-weight:700;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent;cursor:pointer}
   .lensbar a.on{color:var(--accent);border-bottom-color:var(--accent)}
@@ -178,11 +182,11 @@
   .fact .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:4px}
   .fact .v{font-size:13.5px;font-weight:600}
   .factgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;margin-bottom:6px}
-  .crowd{display:flex;gap:12px;align-items:flex-start;border:1px solid #cfe6cf;background:#f2f9f2;border-radius:var(--radius-card);padding:13px 16px;max-width:640px}
+  .crowd{display:flex;gap:12px;align-items:flex-start;border:1px solid #D1E6D5;background:#F1F3F6;border-radius:var(--radius-card);padding:13px 16px;max-width:640px}
   .crowd .ic{font-size:18px;line-height:1}
   .crowd .tx{font-size:13px;line-height:1.55;color:var(--ink-2)}
   .crowd .tx strong{color:var(--ink)}
-  .btn:focus-visible,.rail a:focus-visible,.chip:focus-visible,.phaseseg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .btn:focus-visible,.rail a:focus-visible,.chip:focus-visible,.phaseseg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
 </style>
 </head>
 <body>
@@ -195,7 +199,7 @@
     <button data-s="road">3 · Roadmap lens</button>
     <button data-s="issue">4 · Issue drawer</button>
   </nav>
-  <span style="font-size:11.5px;color:#c8c6c4">Rail untouched — the phase switch lives on the board</span>
+  <span style="font-size:11.5px;color:#C5CBD3">Rail untouched — the phase switch lives on the board</span>
 </div>
 
 <!-- ========================= 1 · DISCOVERY LENS ========================= -->
@@ -226,7 +230,7 @@
       </div>
       <div class="body">
         <div class="klanes">
-          <div class="klane" style="--lc:#64748B">
+          <div class="klane" style="--lc:#5B7FA3">
             <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
             <div class="kcard"><div class="t">Move the safety briefing to video</div>
               <div class="meta2"><span class="prio-chip med">Med</span><span class="impact med">Efficiency</span></div>
@@ -235,19 +239,19 @@
               <div class="meta2"><span class="prio-chip low">Low</span><span class="impact high">Cost Reduction</span></div>
               <div class="meta"><span class="avatarstack"><span class="avatar s">AC</span></span><span class="spacer"></span><span class="age">6d</span><button class="up">▲ 28</button></div></div>
           </div>
-          <div class="klane" style="--lc:#D97706">
+          <div class="klane" style="--lc:#8A6D2E">
             <h3><span class="dot"></span><span class="grow">In Review</span><span class="cnt">3</span></h3>
             <div class="kcard"><div class="t">Kill the paper safety sign-off</div>
               <div class="meta2"><span class="prio-chip high">High</span><span class="impact high">Compliance</span></div>
               <div class="meta"><span class="avatarstack"><span class="avatar s">RP</span><span class="avatar s">JR</span></span><span class="spacer"></span><span class="age">2d</span><button class="up mine">▲ 41</button></div></div>
           </div>
-          <div class="klane" style="--lc:#2563EB">
+          <div class="klane" style="--lc:#5B7FA3">
             <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">2</span></h3>
             <div class="kcard"><div class="t">Standardise the shift-handover note</div>
               <div class="meta2"><span class="prio-chip med">Med</span><span class="impact med">Quality</span></div>
               <div class="meta"><span class="avatarstack"><span class="avatar s">TD</span></span><span class="spacer"></span><span class="age">9d</span><button class="up">▲ 9</button></div></div>
           </div>
-          <div class="klane" style="--lc:#16A34A">
+          <div class="klane" style="--lc:#457C4F">
             <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">6</span></h3>
             <div class="kcard promoted"><div class="t">Automate the new-hire equipment request</div>
               <div class="meta2"><span class="inflight"><span class="d"></span>In Development · Sprint 12</span></div>
@@ -311,32 +315,32 @@
           <div class="klane" style="--lc:var(--ds-pending)">
             <h3><span class="dot"></span><span class="grow">Pending</span><span class="cnt">1</span></h3>
             <div class="kcard"><div class="t">Kill the paper safety sign-off</div>
-              <div class="meta2"><span class="effort">Effort · High</span><span class="rm" style="--rmc:#2f6fb0"><span class="sw"></span>Onboarding</span></div>
+              <div class="meta2"><span class="effort">Effort · High</span><span class="rm" style="--rmc:#527292"><span class="sw"></span>Onboarding</span></div>
               <div class="meta"><span>☑ 0/4</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">RP</span></span></div>
               <div class="progressline"><i style="width:0%"></i></div></div>
           </div>
           <div class="klane" style="--lc:var(--ds-scoping)">
             <h3><span class="dot"></span><span class="grow">Scoping</span><span class="cnt">1</span></h3>
             <div class="kcard"><div class="t">Single sign-on for shop-floor tablets</div>
-              <div class="meta2"><span class="effort">Effort · High</span><span class="rm" style="--rmc:#7a3fb8"><span class="sw"></span>Shop floor</span></div>
+              <div class="meta2"><span class="effort">Effort · High</span><span class="rm" style="--rmc:#5B7FA3"><span class="sw"></span>Shop floor</span></div>
               <div class="meta"><span>☑ 1/4</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">AC</span></span></div>
               <div class="progressline"><i style="width:25%"></i></div></div>
           </div>
           <div class="klane" style="--lc:var(--ds-dev)">
             <h3><span class="dot"></span><span class="grow">Development</span><span class="cnt">2</span></h3>
             <div class="kcard"><div class="t">Automate the new-hire equipment request</div>
-              <div class="meta2"><span class="effort">Effort · Med</span><span class="rm" style="--rmc:#2f6fb0"><span class="sw"></span>Onboarding</span></div>
+              <div class="meta2"><span class="effort">Effort · Med</span><span class="rm" style="--rmc:#527292"><span class="sw"></span>Onboarding</span></div>
               <div class="meta"><span>☑ 3/5</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">RP</span><span class="avatar s">MO</span></span></div>
               <div class="progressline"><i style="width:60%"></i></div></div>
             <div class="kcard"><div class="t">Auto-fill the PPE size from the HR record</div>
-              <div class="meta2"><span class="effort">Effort · Low</span><span class="rm" style="--rmc:#2f6fb0"><span class="sw"></span>Onboarding</span></div>
+              <div class="meta2"><span class="effort">Effort · Low</span><span class="rm" style="--rmc:#527292"><span class="sw"></span>Onboarding</span></div>
               <div class="meta"><span>☑ 2/3</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">TD</span></span></div>
               <div class="progressline"><i style="width:66%"></i></div></div>
           </div>
           <div class="klane" style="--lc:var(--ds-review)">
             <h3><span class="dot"></span><span class="grow">Review</span><span class="cnt">1</span></h3>
             <div class="kcard"><div class="t">Consolidate the three invoice templates</div>
-              <div class="meta2"><span class="effort">Effort · Low</span><span class="rm" style="--rmc:#9a5b00"><span class="sw"></span>Billing cleanup</span></div>
+              <div class="meta2"><span class="effort">Effort · Low</span><span class="rm" style="--rmc:#8A6D2E"><span class="sw"></span>Billing cleanup</span></div>
               <div class="meta"><span>☑ 4/4</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">AC</span></span></div>
               <div class="progressline"><i style="width:100%"></i></div></div>
           </div>
@@ -378,7 +382,7 @@
         <div class="viewswitch"><a class="on">Grouped list</a><a>Timeline</a></div>
       </div>
       <div class="body">
-        <div class="rmgroup" style="--rmc:#2f6fb0">
+        <div class="rmgroup" style="--rmc:#527292">
           <div class="rmhd"><span class="sw"></span><span class="nm">Reduce onboarding time</span><span class="dates">Jul 1 – Sep 30 · D. Whitfield</span><span class="grow"></span><span class="pill neutral">4 of 7 delivered</span></div>
           <div class="listrow" style="--dsc:var(--ds-complete)"><span class="dsdot"></span><span class="dslabel">Complete</span><span class="t">Onboarding buddy assignment</span><span class="effort">Med</span><span class="pill ok">Outcome captured</span><span class="age">Sprint 11</span></div>
           <div class="listrow" style="--dsc:var(--ds-dev)"><span class="dsdot"></span><span class="dslabel">Development</span><span class="t">Automate the new-hire equipment request</span><span class="effort">Med</span><span class="pill neutral">☑ 3/5</span><span class="age">Sprint 12</span></div>
@@ -386,13 +390,13 @@
           <div class="listrow" style="--dsc:var(--ds-pending)"><span class="dsdot"></span><span class="dslabel">Pending</span><span class="t">Kill the paper safety sign-off</span><span class="effort">High</span><span class="pill neutral">☑ 0/4</span><span class="age">Sprint 12</span></div>
         </div>
 
-        <div class="rmgroup" style="--rmc:#9a5b00">
+        <div class="rmgroup" style="--rmc:#8A6D2E">
           <div class="rmhd"><span class="sw"></span><span class="nm">Billing cleanup</span><span class="dates">Aug 1 – Sep 15 · A. Chen</span><span class="grow"></span><span class="pill neutral">1 of 3 delivered</span></div>
           <div class="listrow" style="--dsc:var(--ds-review)"><span class="dsdot"></span><span class="dslabel">Review</span><span class="t">Consolidate the three invoice templates</span><span class="effort">Low</span><span class="pill neutral">☑ 4/4</span><span class="age">Sprint 12</span></div>
           <div class="listrow" style="--dsc:var(--ds-pending)"><span class="dsdot"></span><span class="dslabel">Pending</span><span class="t">Retire the legacy dunning letter</span><span class="effort">Med</span><span class="pill neutral">☑ 0/2</span><span class="age">Backlog</span></div>
         </div>
 
-        <div class="rmgroup" style="--rmc:#7a3fb8">
+        <div class="rmgroup" style="--rmc:#5B7FA3">
           <div class="rmhd"><span class="sw"></span><span class="nm">Shop floor modernisation</span><span class="dates">Aug 15 – Dec 31 · R. Patel</span><span class="grow"></span><span class="pill neutral">0 of 5 delivered</span></div>
           <div class="listrow" style="--dsc:var(--ds-scoping)"><span class="dsdot"></span><span class="dslabel">Scoping</span><span class="t">Single sign-on for shop-floor tablets</span><span class="effort">High</span><span class="pill neutral">☑ 1/4</span><span class="age">Sprint 12</span></div>
         </div>
@@ -444,7 +448,7 @@
           <div class="factgrid">
             <div class="fact"><div class="k">Delivery status</div><div class="v"><select style="width:100%"><option>Development</option><option>Review</option><option>Complete</option></select></div></div>
             <div class="fact"><div class="k">Sprint</div><div class="v"><select style="width:100%"><option>Sprint 12 · Aug 11–22</option><option>Sprint 13</option><option>Backlog</option></select></div></div>
-            <div class="fact"><div class="k">Roadmap</div><div class="v"><span class="rm" style="--rmc:#2f6fb0"><span class="sw"></span>Reduce onboarding time</span></div></div>
+            <div class="fact"><div class="k">Roadmap</div><div class="v"><span class="rm" style="--rmc:#527292"><span class="sw"></span>Reduce onboarding time</span></div></div>
             <div class="fact"><div class="k">Effort</div><div class="v">Medium</div></div>
           </div>
 

@@ -1,46 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Review 12C: Delivery IA "The Loop"</title>
 <style>
   /* ===== Tokens copied verbatim from comp-c-review-06-lockin-v5-final (locked) ===== */
   :root{
-    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
-    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
-    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
-    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#3E4E60;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
+    --im-high-deep:#B64B4B; --im-high-soft:#F8EFEF;
+    --im-med-deep:#C97A7A; --im-med-soft:#F1F3F6;
     --shadow:0 1px 2px rgba(0,0,0,.08);
-    --radius-card:6px; --radius-btn:4px;
-    --ds-pending:#57534e; --ds-scoping:#7a3fb8; --ds-dev:#2f6fb0; --ds-review:#9a5b00; --ds-complete:#0e700e;
+    --radius-card:2px; --radius-btn:2px;
+    --ds-pending:#3E4E60; --ds-scoping:#5B7FA3; --ds-dev:#527292; --ds-review:#8A6D2E; --ds-complete:#457C4F;
     /* AI suggestion token — locked as D-SUGGEST, teal, never the indigo accent */
-    --sug:#0f7b78; --sug-soft:#e6f4f3;
+    --sug:#4A7972; --sug-soft:#F1F6F5;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
-  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
   .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px);position:relative}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
-  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
-  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
   .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
   .rail a.on{background:var(--accent-soft);color:var(--accent)}
-  .rail a:hover{background:#f3f2f1}
+  .rail a:hover{background:#F1F3F6}
   .rail .push{flex:1}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
   .avatar.s{width:24px;height:24px;font-size:9.5px}
   .avatarwrap{position:relative}
   .avatarbtn{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;line-height:0}
-  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
+  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
   .avatarmenu.show{display:block}
   .avatarmenu .who{padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.5}
   .avatarmenu .who strong{color:var(--ink);font-size:13px;display:block}
@@ -56,34 +60,34 @@
   .viewswitch a.on{color:var(--accent);border-bottom-color:var(--accent)}
   .body{padding:24px 40px}
   .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f3f2f1}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.sm{padding:4px 10px;font-size:12px}
-  select,textarea,input[type=text]{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  select,textarea,input[type=text]{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
-  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
-  .pill.ok{background:#e7f2e7;color:var(--ok)}.pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:600}
+  .pill.ok{background:#F0F7F1;color:var(--ok)}.pill.neutral{background:#F1F3F6;color:var(--ink-2)}
   .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
-  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 4px 4px 0;margin-top:20px;max-width:900px;line-height:1.55}
-  .note.tradeoff{border-left-color:#9a5b00;background:#fdf6ec}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 2px 2px 0;margin-top:20px;max-width:900px;line-height:1.55}
+  .note.tradeoff{border-left-color:#8A6D2E;background:#F9F6EE}
   .note b{color:var(--ink)}
   .chipbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
-  .chip{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
   .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
-  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:3px;white-space:nowrap}
+  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:2px;white-space:nowrap}
   .impact.high{background:var(--im-high-soft);color:var(--im-high-deep)}
   .impact.med{background:var(--im-med-soft);color:var(--im-med-deep)}
-  .effort{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;background:#e9edf3;color:#3d4a5c;border:1px solid #d7dee8;white-space:nowrap}
-  .tag{background:#f3f2f1;border-radius:3px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .effort{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px;background:#F1F3F6;color:#527292;border:1px solid #D1DBE5;white-space:nowrap}
+  .tag{background:#F1F3F6;border-radius:2px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
   .age{font-size:11px;color:var(--ink-3)}
   .avatarstack{display:inline-flex;align-items:center}
   .avatarstack .avatar{margin-left:-6px;border:2px solid var(--surface)}
   .avatarstack .avatar:first-child{margin-left:0}
-  .up{border:1px solid var(--line);border-radius:4px;padding:4px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:48px;text-align:center}
+  .up{border:1px solid var(--line);border-radius:2px;padding:4px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:48px;text-align:center}
   .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
-  .rm{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px 2px 6px;border-radius:3px;background:#f3f2f1;color:var(--ink-2);white-space:nowrap}
-  .rm .sw{width:8px;height:8px;border-radius:2px;background:var(--rmc,#8a8886)}
+  .rm{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px 2px 6px;border-radius:2px;background:#F1F3F6;color:var(--ink-2);white-space:nowrap}
+  .rm .sw{width:8px;height:8px;border-radius:2px;background:var(--rmc,#818E9C)}
 
   /* ===== C-SPECIFIC: the lifecycle canvas ===== */
   .loop{display:grid;grid-template-columns:250px 26px repeat(3,minmax(190px,1fr)) 26px 230px;gap:0;align-items:start}
@@ -93,10 +97,10 @@
   .stagehd{display:flex;align-items:center;gap:7px;padding:0 3px 11px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2)}
   .stagehd .dot{width:9px;height:9px;border-radius:50%;background:var(--sc,var(--ink-3))}
   .stagehd .grow{flex:1}
-  .stagehd .cnt{border-radius:10px;padding:0 8px;font-size:11px;background:#e4e2df;font-weight:700;letter-spacing:0}
-  .stagebody{background:#f3f2f1;border-radius:var(--radius-card);padding:11px;min-height:150px}
-  .stagebody.wide{background:#f1f4f9}
-  .stagebody.end{background:#f0f6f0}
+  .stagehd .cnt{border-radius:2px;padding:0 8px;font-size:11px;background:#DDE1E6;font-weight:700;letter-spacing:0}
+  .stagebody{background:#F1F3F6;border-radius:var(--radius-card);padding:11px;min-height:150px}
+  .stagebody.wide{background:#F1F3F6}
+  .stagebody.end{background:#F1F3F6}
   /* the gate — a real divider, because the promotion decision is a real event */
   .gate{position:relative;align-self:stretch;min-height:330px}
   .gate .ln{position:absolute;left:50%;top:20px;bottom:0;border-left:2px dashed var(--accent);opacity:.55}
@@ -111,22 +115,22 @@
   .lcard .sub{font-size:10.5px;color:var(--ink-3);margin-top:5px}
   .dsband{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--dsc)}
   .dsband .d{width:6px;height:6px;border-radius:50%;background:currentColor}
-  .miniprog{height:4px;border-radius:3px;background:#eceae8;overflow:hidden;margin-top:7px}
+  .miniprog{height:4px;border-radius:2px;background:#DDE1E6;overflow:hidden;margin-top:7px}
   .miniprog i{display:block;height:100%;background:var(--ds-complete)}
-  .promotebtn{width:100%;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent-deep);border-radius:4px;padding:6px;font-size:11.5px;font-weight:700;cursor:pointer;margin-top:2px}
+  .promotebtn{width:100%;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent-deep);border-radius:2px;padding:6px;font-size:11.5px;font-weight:700;cursor:pointer;margin-top:2px}
   .grouphd{display:flex;align-items:center;gap:9px;padding:11px 14px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--rmc);border-radius:var(--radius-card);margin:22px 0 12px}
   .grouphd .nm{font-weight:700;font-size:14px}
   .grouphd .dates{font-size:12px;color:var(--ink-3)}
   .grouphd .grow{flex:1}
   /* promote gate modal */
   .overlay{position:absolute;inset:0;background:rgba(20,18,16,.45);display:flex;align-items:flex-start;justify-content:center;padding:46px 20px;z-index:40}
-  .modal{width:620px;max-width:100%;background:var(--surface);border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden}
+  .modal{width:620px;max-width:100%;background:var(--surface);border-radius:2px;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden}
   .modal .mhd{padding:19px 24px 14px;border-bottom:1px solid var(--line)}
   .modal .mhd .kick{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px}
   .modal .mhd h2{font-size:20px}
   .modal .mbd{padding:18px 24px;max-height:60vh;overflow:auto}
-  .modal .mft{padding:14px 24px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;background:#faf9f8}
-  .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .modal .mft{padding:14px 24px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;background:#F7F9FB}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
   .seg button{border:none;background:var(--surface);padding:8px 18px;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line)}
   .seg button:last-child{border-right:none}
   .seg button.on{background:var(--accent);color:#fff}
@@ -134,26 +138,26 @@
   .field{margin-bottom:15px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   /* AI-suggested tasks at the gate — teal, per D-SUGGEST */
-  .sugbox{border:1px solid #cfe6e5;background:var(--sug-soft);border-radius:var(--radius-card);overflow:hidden}
-  .sugbox .shd{display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid #cfe6e5;font-size:12px;font-weight:700;color:var(--sug)}
+  .sugbox{border:1px solid #D2E4E1;background:var(--sug-soft);border-radius:var(--radius-card);overflow:hidden}
+  .sugbox .shd{display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid #D2E4E1;font-size:12px;font-weight:700;color:var(--sug)}
   .sugbox .shd .grow{flex:1}
-  .sugrow{display:flex;align-items:center;gap:10px;padding:8px 13px;border-bottom:1px solid #dcecec;font-size:13px;background:rgba(255,255,255,.6)}
+  .sugrow{display:flex;align-items:center;gap:10px;padding:8px 13px;border-bottom:1px solid #D2E4E1;font-size:13px;background:rgba(255,255,255,.6)}
   .sugrow:last-child{border-bottom:none}
-  .sugrow .box{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--sug);background:var(--sug);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+  .sugrow .box{width:15px;height:15px;border-radius:2px;border:1.5px solid var(--sug);background:var(--sug);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
   .sugrow .tt{flex:1}
   .sugnote{font-size:11.5px;color:var(--sug);padding:8px 13px;background:rgba(255,255,255,.45)}
   /* outcome */
   .outcome{border:1px solid var(--line);border-left:3px solid var(--ds-complete);border-radius:0 var(--radius-card) var(--radius-card) 0;background:var(--surface);padding:16px 18px;max-width:720px}
-  .outcome h3{font-family:Georgia,serif;font-size:15px;margin-bottom:9px}
+  .outcome h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;margin-bottom:9px}
   .outcome .claimvs{display:flex;gap:30px;flex-wrap:wrap;margin-bottom:12px}
   .outcome .cv .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:5px}
   .outcome textarea{width:100%;min-height:70px;font-size:13px;line-height:1.5}
   .outcome .hint{font-size:11.5px;color:var(--ink-3);margin-top:8px}
-  .crowd{display:flex;gap:12px;align-items:flex-start;border:1px solid #cfe6cf;background:#f2f9f2;border-radius:var(--radius-card);padding:13px 16px;max-width:720px;margin-bottom:18px}
+  .crowd{display:flex;gap:12px;align-items:flex-start;border:1px solid #D1E6D5;background:#F1F3F6;border-radius:var(--radius-card);padding:13px 16px;max-width:720px;margin-bottom:18px}
   .crowd .ic{font-size:18px;line-height:1}
   .crowd .tx{font-size:13px;line-height:1.55;color:var(--ink-2)}
   .crowd .tx strong{color:var(--ink)}
-  .btn:focus-visible,.rail a:focus-visible,.chip:focus-visible,.lcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .btn:focus-visible,.rail a:focus-visible,.chip:focus-visible,.lcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
 </style>
 </head>
 <body>
@@ -166,7 +170,7 @@
     <button data-s="gate">3 · The promotion gate</button>
     <button data-s="ship">4 · Shipped &amp; outcome</button>
   </nav>
-  <span style="font-size:11.5px;color:#c8c6c4">One surface, whole lifecycle</span>
+  <span style="font-size:11.5px;color:#C5CBD3">One surface, whole lifecycle</span>
 </div>
 
 <!-- ========================= 1 · THE LOOP ========================= -->
@@ -196,10 +200,10 @@
 
         <div class="loop">
           <!-- DISCOVERY -->
-          <div class="stage" style="--sc:#64748B">
+          <div class="stage" style="--sc:#5B7FA3">
             <div class="stagehd"><span class="dot"></span><span class="grow">Discovery</span><span class="cnt">14</span></div>
             <div class="stagebody">
-              <div class="lcard" style="--sc:#b10e1c"><div class="t">Kill the paper safety sign-off</div>
+              <div class="lcard" style="--sc:#B64B4B"><div class="t">Kill the paper safety sign-off</div>
                 <div class="m"><span class="impact high">Compliance</span><span class="spacer"></span><button class="up mine">▲ 41</button></div>
                 <div class="sub">In Review · 12 comments</div>
                 <button class="promotebtn">🚀 Promote to Issue</button></div>
@@ -221,10 +225,10 @@
             <div class="stagehd"><span class="dot"></span><span class="grow">Committed</span><span class="cnt">3</span></div>
             <div class="stagebody wide">
               <div class="lcard" style="--sc:var(--ds-pending)"><div class="t">Retire the legacy dunning letter</div>
-                <div class="m"><span class="effort">Med</span><span class="rm" style="--rmc:#9a5b00"><span class="sw"></span>Billing</span></div>
+                <div class="m"><span class="effort">Med</span><span class="rm" style="--rmc:#8A6D2E"><span class="sw"></span>Billing</span></div>
                 <div class="sub">No sprint · promoted Aug 12</div></div>
               <div class="lcard" style="--sc:var(--ds-pending)"><div class="t">Kiosk check-in for contractors</div>
-                <div class="m"><span class="effort">High</span><span class="rm" style="--rmc:#7a3fb8"><span class="sw"></span>Shop floor</span></div>
+                <div class="m"><span class="effort">High</span><span class="rm" style="--rmc:#5B7FA3"><span class="sw"></span>Shop floor</span></div>
                 <div class="sub">No sprint · promoted Aug 9</div></div>
             </div>
           </div>
@@ -273,7 +277,7 @@
                 <div class="m" style="margin-top:7px"><span class="pill ok">Impact confirmed</span></div></div>
               <div class="lcard" style="--sc:var(--warn)"><div class="t">Onboarding buddy assignment</div>
                 <div class="sub" style="color:var(--ink-3)">Outcome not yet recorded — shipped 9 days ago</div>
-                <button class="promotebtn" style="border-color:var(--warn);background:#fdf6ec;color:var(--warn)">Record the outcome</button></div>
+                <button class="promotebtn" style="border-color:var(--warn);background:#F9F6EE;color:var(--warn)">Record the outcome</button></div>
             </div>
           </div>
         </div>
@@ -305,11 +309,11 @@
         <div class="viewswitch"><a>Flow</a><a class="on">By roadmap</a><a>Sprint board</a><a>Backlog</a></div>
       </div>
       <div class="body">
-        <div class="grouphd" style="--rmc:#2f6fb0"><span class="nm">Reduce onboarding time</span><span class="dates">Jul 1 – Sep 30 · D. Whitfield</span><span class="grow"></span><span class="pill neutral">4 of 7 delivered</span><button class="btn sm">Open</button></div>
+        <div class="grouphd" style="--rmc:#527292"><span class="nm">Reduce onboarding time</span><span class="dates">Jul 1 – Sep 30 · D. Whitfield</span><span class="grow"></span><span class="pill neutral">4 of 7 delivered</span><button class="btn sm">Open</button></div>
         <div class="loop">
-          <div class="stage" style="--sc:#64748B"><div class="stagehd"><span class="dot"></span><span class="grow">Discovery</span><span class="cnt">3</span></div>
+          <div class="stage" style="--sc:#5B7FA3"><div class="stagehd"><span class="dot"></span><span class="grow">Discovery</span><span class="cnt">3</span></div>
             <div class="stagebody">
-              <div class="lcard" style="--sc:#b10e1c"><div class="t">Kill the paper safety sign-off</div><div class="m"><span class="impact high">Compliance</span><span class="spacer"></span><button class="up mine">▲ 41</button></div><button class="promotebtn">🚀 Promote</button></div>
+              <div class="lcard" style="--sc:#B64B4B"><div class="t">Kill the paper safety sign-off</div><div class="m"><span class="impact high">Compliance</span><span class="spacer"></span><button class="up mine">▲ 41</button></div><button class="promotebtn">🚀 Promote</button></div>
             </div></div>
           <div class="gate"><span class="ln"></span><span class="lbl">Gate</span></div>
           <div class="stage" style="--sc:var(--ds-pending)"><div class="stagehd"><span class="dot"></span><span class="grow">Committed</span><span class="cnt">0</span></div>
@@ -330,9 +334,9 @@
             </div></div>
         </div>
 
-        <div class="grouphd" style="--rmc:#9a5b00;margin-top:30px"><span class="nm">Billing cleanup</span><span class="dates">Aug 1 – Sep 15 · A. Chen</span><span class="grow"></span><span class="pill neutral">1 of 3 delivered</span><button class="btn sm">Open</button></div>
+        <div class="grouphd" style="--rmc:#8A6D2E;margin-top:30px"><span class="nm">Billing cleanup</span><span class="dates">Aug 1 – Sep 15 · A. Chen</span><span class="grow"></span><span class="pill neutral">1 of 3 delivered</span><button class="btn sm">Open</button></div>
         <div class="loop">
-          <div class="stage" style="--sc:#64748B"><div class="stagehd"><span class="dot"></span><span class="grow">Discovery</span><span class="cnt">1</span></div>
+          <div class="stage" style="--sc:#5B7FA3"><div class="stagehd"><span class="dot"></span><span class="grow">Discovery</span><span class="cnt">1</span></div>
             <div class="stagebody"><div class="lcard"><div class="t">Self-serve invoice reprint</div><div class="m"><span class="impact med">Efficiency</span><span class="spacer"></span><button class="up">▲ 7</button></div></div></div></div>
           <div class="gate"><span class="ln"></span><span class="lbl">Gate</span></div>
           <div class="stage" style="--sc:var(--ds-pending)"><div class="stagehd"><span class="dot"></span><span class="grow">Committed</span><span class="cnt">1</span></div>

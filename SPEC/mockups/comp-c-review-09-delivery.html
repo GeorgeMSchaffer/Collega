@@ -1,52 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Review 09: Issues & Delivery</title>
 <style>
   /* ===== Tokens copied verbatim from comp-c-review-06-lockin-v5-final (locked) ===== */
   :root{
-    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
-    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
-    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
-    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
-    --im-low-deep:#7d6270; --im-low-soft:#f2ecf0;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#3E4E60;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
+    --im-high-deep:#B64B4B; --im-high-soft:#F8EFEF;
+    --im-med-deep:#C97A7A; --im-med-soft:#F1F3F6;
+    --im-low-deep:#B64B4B; --im-low-soft:#F1F3F6;
     --shadow:0 1px 2px rgba(0,0,0,.08);
-    --radius-card:6px; --radius-btn:4px;
+    --radius-card:2px; --radius-btn:2px;
     /* delivery-status colors (fixed set: Pending/Scoping/Development/Review/Complete) */
-    --ds-pending:#57534e; --ds-scoping:#7a3fb8; --ds-dev:#2f6fb0; --ds-review:#9a5b00; --ds-complete:#0e700e;
+    --ds-pending:#3E4E60; --ds-scoping:#5B7FA3; --ds-dev:#527292; --ds-review:#8A6D2E; --ds-complete:#457C4F;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
-  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
   .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;position:relative}
-  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
-  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
   .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
   .rail a.on{background:var(--accent-soft);color:var(--accent)}
-  .rail a:hover{background:#f3f2f1}
+  .rail a:hover{background:#F1F3F6}
   .rail .push{flex:1}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
   .avatar.s{width:24px;height:24px;font-size:9.5px}
-  .avatar.more{background:#e4e2df;color:var(--ink-2);font-weight:700}
+  .avatar.more{background:#DDE1E6;color:var(--ink-2);font-weight:700}
   .avatarwrap{position:relative}
   .avatarbtn{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;line-height:0}
-  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
+  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
   .avatarmenu.show{display:block}
   .avatarmenu .who{padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.5}
   .avatarmenu .who strong{color:var(--ink);font-size:13px;display:block}
   .avatarmenu .item{display:block;padding:9px 14px;font-size:13px;color:var(--ink);text-decoration:none;cursor:pointer}
-  .avatarmenu .item:hover{background:#f3f2f1}
+  .avatarmenu .item:hover{background:#F1F3F6}
   .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
   .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
   .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
@@ -59,63 +63,63 @@
   .viewswitch a.on{color:var(--accent);border-bottom-color:var(--accent)}
   .body{padding:26px 40px;max-width:1200px}
   .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f3f2f1}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:var(--accent-deep)}
   .btn.subtle{border-color:transparent;color:var(--accent)}
   .btn.danger{border-color:transparent;color:var(--err)}
-  input[type=text],input[type=email],input[type=password],input[type=date],select,textarea{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input[type=text],input[type=email],input[type=password],input[type=date],select,textarea{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
   label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
   .field{margin-bottom:15px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line)}
-  td{padding:12px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  td{padding:12px 16px;border-bottom:1px solid #F1F3F6;vertical-align:middle}
   tr:last-child td{border-bottom:none}
-  tr:hover td{background:#faf9f8}
-  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
-  .pill.ok{background:#e7f2e7;color:var(--ok)}.pill.warn{background:#f7ecdc;color:var(--warn)}
-  .pill.err{background:#fbe5e7;color:var(--err)}.pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  tr:hover td{background:#F7F9FB}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:600}
+  .pill.ok{background:#F0F7F1;color:var(--ok)}.pill.warn{background:#F9F6EE;color:var(--warn)}
+  .pill.err{background:#F8EFEF;color:var(--err)}.pill.neutral{background:#F1F3F6;color:var(--ink-2)}
   .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
   .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
-  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:760px;line-height:1.5}
-  .code{font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:2px 6px;font-size:11.5px}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 2px 2px 0;margin-top:18px;max-width:760px;line-height:1.5}
+  .code{font-family:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;background:#F1F3F6;border:1px solid var(--line);border-radius:2px;padding:2px 6px;font-size:11.5px}
   .btn:focus-visible,.rail a:focus-visible,.kcard:focus-visible,.up:focus-visible,.cmt:focus-visible,
   .chip:focus-visible,.avatarbtn:focus-visible,.avatarmenu .item:focus-visible,.tile:focus-visible,
-  .viewswitch a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .viewswitch a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
   .chipbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-  .chip{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
-  .chip:hover{background:#f3f2f1}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip:hover{background:#F1F3F6}
   .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
   /* shared chips */
-  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:2px;white-space:nowrap;flex-shrink:0}
   .impact.high{background:var(--im-high-soft);color:var(--im-high-deep)}
   .impact.med{background:var(--im-med-soft);color:var(--im-med-deep)}
   .impact.low{background:var(--im-low-soft);color:var(--im-low-deep)}
-  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap}
-  .prio-chip.high{background:#fbe5e7;color:var(--err)}
-  .prio-chip.med{background:#f7ecdc;color:var(--warn)}
-  .prio-chip.low{background:#e7f2e7;color:var(--ok)}
+  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px;flex-shrink:0;white-space:nowrap}
+  .prio-chip.high{background:#F8EFEF;color:var(--err)}
+  .prio-chip.med{background:#F9F6EE;color:var(--warn)}
+  .prio-chip.low{background:#F0F7F1;color:var(--ok)}
   /* NEW: Effort chip — deliberately a cool slate, distinct from priority(red/amber/green) & impact(pink) */
-  .effort{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap;background:#e9edf3;color:#3d4a5c;border:1px solid #d7dee8}
-  .effort.h{background:#dfe6f2;color:#334463}
-  .tag{background:#f3f2f1;border-radius:3px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .effort{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px;flex-shrink:0;white-space:nowrap;background:#F1F3F6;color:#527292;border:1px solid #D1DBE5}
+  .effort.h{background:#F0F4F7;color:#527292}
+  .tag{background:#F1F3F6;border-radius:2px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
   .tag.more{background:transparent;color:var(--accent-deep);font-weight:700}
   .age{font-size:11px;color:var(--ink-3);flex-shrink:0}
   .avatarstack{display:inline-flex;align-items:center;flex-shrink:0}
   .avatarstack .avatar{margin-left:-6px;border:2px solid var(--surface)}
   .avatarstack .avatar:first-child{margin-left:0}
-  .cmt{border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:600;color:var(--ink-2);flex-shrink:0}
-  .up{border:1px solid var(--line);border-radius:4px;padding:6px 13px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:56px;text-align:center;flex-shrink:0}
+  .cmt{border:1px solid var(--line);border-radius:2px;padding:6px 10px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:600;color:var(--ink-2);flex-shrink:0}
+  .up{border:1px solid var(--line);border-radius:2px;padding:6px 13px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:56px;text-align:center;flex-shrink:0}
   .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
   /* swimlanes — Flat treatment (locked) */
   .klanes{display:grid;grid-auto-flow:column;grid-auto-columns:270px;gap:16px;overflow-x:auto;padding-bottom:12px;align-items:start}
-  .klane{background:#f3f2f1;border-radius:var(--radius-card);padding:12px}
-  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;font-family:"Segoe UI",sans-serif;color:var(--ink-2);padding:2px 6px 12px}
+  .klane{background:#F1F3F6;border-radius:var(--radius-card);padding:12px}
+  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink-2);padding:2px 6px 12px}
   .klane h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--lc-deep,var(--ink-3));flex-shrink:0}
   .klane h3 .grow{flex:1}
-  .klane .cnt{border-radius:10px;padding:0 8px;font-size:11px;background:#e4e2df}
+  .klane .cnt{border-radius:2px;padding:0 8px;font-size:11px;background:#DDE1E6}
   .kcard{background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;cursor:grab;border-left:3px solid var(--lc-deep,transparent)}
   .kcard:hover{outline:1px solid var(--accent)}
   .kcard .top{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
@@ -126,41 +130,41 @@
   .kcard .meta .spacer{flex:1}
   .emptylane{color:var(--ink-3);font-size:12px;text-align:center;padding:22px 8px;font-style:italic}
   /* NEW: provenance breadcrumb on issue cards */
-  .fromidea{font-size:10.5px;color:var(--accent-deep);font-weight:700;text-decoration:none;background:var(--accent-soft);border-radius:3px;padding:1px 7px;white-space:nowrap}
-  .fromidea:hover{background:#e2e5f6}
+  .fromidea{font-size:10.5px;color:var(--accent-deep);font-weight:700;text-decoration:none;background:var(--accent-soft);border-radius:2px;padding:1px 7px;white-space:nowrap}
+  .fromidea:hover{background:#F0F4F7}
   /* NEW: sprint header strip */
   .sprintbar{display:flex;align-items:center;gap:18px;padding:16px 20px;flex-wrap:wrap;margin-bottom:18px}
   .sprintbar .goal{flex:1;min-width:200px}
   .sprintbar .goal .g-k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:3px}
   .sprintbar .goal .g-v{font-size:14px;color:var(--ink-2);line-height:1.45}
   .sprintbar .meta-blk{text-align:center}
-  .sprintbar .meta-blk .m-n{font-family:Georgia,serif;font-size:20px;color:var(--accent-deep)}
+  .sprintbar .meta-blk .m-n{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:20px;color:var(--accent-deep)}
   .sprintbar .meta-blk .m-l{font-size:11px;color:var(--ink-3)}
   .sprintbar .divider{width:1px;align-self:stretch;background:var(--line)}
-  .state-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:12px}
-  .state-pill.active{background:#e7f2e7;color:var(--ok)}
+  .state-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:2px}
+  .state-pill.active{background:#F0F7F1;color:var(--ok)}
   .state-pill.planned{background:var(--accent-soft);color:var(--accent-deep)}
-  .state-pill.completed{background:#f3f2f1;color:var(--ink-2)}
+  .state-pill.completed{background:#F1F3F6;color:var(--ink-2)}
   .state-pill .d{width:7px;height:7px;border-radius:50%;background:currentColor}
   /* NEW: modal overlay (promote gate) */
   .overlay{position:absolute;inset:0;background:rgba(20,18,16,.45);display:flex;align-items:flex-start;justify-content:center;padding:52px 20px;z-index:40}
   .overlay.hidden{display:none}
-  .modal{width:560px;max-width:100%;background:var(--surface);border-radius:10px;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden}
+  .modal{width:560px;max-width:100%;background:var(--surface);border-radius:2px;box-shadow:0 16px 48px rgba(0,0,0,.3);overflow:hidden}
   .modal .mhd{padding:20px 24px 15px;border-bottom:1px solid var(--line)}
   .modal .mhd .kick{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px}
   .modal .mhd h2{font-size:20px}
   .modal .mbd{padding:20px 24px}
-  .modal .mft{padding:15px 24px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;background:#faf9f8}
-  .seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .modal .mft{padding:15px 24px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;background:#F7F9FB}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
   .seg button{border:none;background:var(--surface);padding:8px 18px;font-size:13px;font-weight:600;color:var(--ink-2);cursor:pointer;border-right:1px solid var(--line)}
   .seg button:last-child{border-right:none}
   .seg button.on{background:var(--accent);color:#fff}
   .reqmark{color:var(--err);font-weight:700}
   /* NEW: lineage / provenance panel — the differentiator */
-  .lineage{background:var(--accent-soft);border:1px solid #dcdef4;border-radius:8px;padding:16px 18px}
-  .lineage h3{font-family:Georgia,serif;font-size:15px;margin-bottom:4px;color:var(--accent-deep)}
+  .lineage{background:var(--accent-soft);border:1px solid #F0F4F7;border-radius:2px;padding:16px 18px}
+  .lineage h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;margin-bottom:4px;color:var(--accent-deep)}
   .lineage .cap{font-size:11.5px;color:var(--ink-3);margin-bottom:13px}
-  .linrow{display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);padding:6px 0;align-items:baseline;border-top:1px solid #e1e3f3}
+  .linrow{display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);padding:6px 0;align-items:baseline;border-top:1px solid #F0F4F7}
   .linrow:first-of-type{border-top:none}
   .linrow .ic{color:var(--accent);flex-shrink:0;width:16px;text-align:center}
   .linrow .lk{color:var(--ink-3);flex-shrink:0;width:120px;font-weight:600}
@@ -185,12 +189,12 @@
   .tile{border-radius:var(--radius-card);overflow:hidden;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line)}
   .tile .band{height:5px}
   .tile .bd{padding:15px 17px}
-  .tile h3{font-family:Georgia,serif;font-size:16px;margin-bottom:5px}
+  .tile h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:16px;margin-bottom:5px}
   .tile p{font-size:12.5px;color:var(--ink-3);line-height:1.5}
-  .tile .prog{height:6px;border-radius:4px;background:#eceae8;margin:11px 0 8px;overflow:hidden}
+  .tile .prog{height:6px;border-radius:2px;background:#DDE1E6;margin:11px 0 8px;overflow:hidden}
   .tile .prog i{display:block;height:100%;background:var(--ds-complete)}
   .statgrid{display:flex;gap:28px;margin:4px 0 26px}
-  .stat .n{font-family:Georgia,serif;font-size:26px;color:var(--accent-deep)}
+  .stat .n{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:26px;color:var(--accent-deep)}
   .stat .l{font-size:12px;color:var(--ink-3)}
 </style>
 </head>
@@ -267,7 +271,7 @@
 
             <div style="font-size:12px;color:var(--ink-3);line-height:1.6;border-top:1px solid var(--line);padding-top:12px">
               Carried forward automatically: <strong>Priority</strong> Medium · <strong>Business Impact</strong> High · <strong>Idea Type</strong> Continuous Improvement · <strong>2 assignees</strong> · <strong>24 upvotes</strong> (snapshotted) · full comment thread.
-              Delivery status starts at <span class="pill" style="background:#eceae8;color:var(--ds-pending)">Pending</span>.
+              Delivery status starts at <span class="pill" style="background:#DDE1E6;color:var(--ds-pending)">Pending</span>.
             </div>
           </div>
           <div class="mft">
@@ -500,7 +504,7 @@
           <label style="font-size:12px;font-weight:600;color:var(--ink-3)">Description</label>
           <p class="prose" style="margin:6px 0 26px">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu. Scope this to the board view first; full-app theming is a follow-up.</p>
 
-          <h2 style="font-size:19px;margin:0 0 14px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif;font-weight:600">carried from the idea · 4 comments</span></h2>
+          <h2 style="font-size:19px;margin:0 0 14px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600">carried from the idea · 4 comments</span></h2>
           <div style="border-left:2px solid var(--line);padding-left:16px;margin-bottom:22px">
             <div style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:4px"><span class="avatar s">MP</span><span style="font-size:13px;font-weight:700">Mia Park</span><span style="font-size:12px;color:var(--ink-3)">during discovery · Jul 3</span></div><p style="font-size:14px;color:var(--ink-2);line-height:1.6">Can we scope this to the board view first? Full app theming is a bigger lift.</p></div>
             <div><div style="display:flex;align-items:center;gap:9px;margin-bottom:4px"><span class="avatar s">JR</span><span style="font-size:13px;font-weight:700">Jordan Reyes</span><span style="font-size:12px;color:var(--ink-3)">at promotion · Aug 10</span></div><p style="font-size:14px;color:var(--ink-2);line-height:1.6">Agreed — promoting with board-view scope. Assigning to Sprint 14.</p></div>

@@ -1,35 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Comp C: Fluent Editorial</title>
 <style>
   :root{
-    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
-    --ink:#242424; --ink-2:#484644; --ink-3:#797672;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#5D6C7E;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
     --shadow:0 1px 2px rgba(0,0,0,.08);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1,h2,.display{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2,.display{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
   /* comp chrome */
-  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
   /* shell: slim icon rail + content */
   .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
-  .rail .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
-  .rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
   .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
   .rail a.on{background:var(--accent-soft);color:var(--accent)}
-  .rail a:hover{background:#f3f2f1}
+  .rail a:hover{background:#F1F3F6}
   .rail .push{flex:1}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
   .avatar.s{width:24px;height:24px;font-size:9.5px}
@@ -46,34 +50,34 @@
   .ptabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent}
   .ptabs a.on{color:var(--accent);border-bottom-color:var(--accent)}
   .body{padding:26px 40px;max-width:1200px}
-  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f3f2f1}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:var(--accent-deep)}
   .btn.subtle{border-color:transparent;color:var(--accent)}
   .btn.danger{border-color:transparent;color:var(--err)}
-  input[type=text],input[type=email],input[type=password],select,textarea{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input[type=text],input[type=email],input[type=password],select,textarea{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
   label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:var(--shadow)}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line)}
-  td{padding:12px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  td{padding:12px 16px;border-bottom:1px solid #F1F3F6;vertical-align:middle}
   tr:last-child td{border-bottom:none}
-  tr:hover td{background:#faf9f8}
-  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
-  .pill.ok{background:#e7f2e7;color:var(--ok)}.pill.warn{background:#f7ecdc;color:var(--warn)}
-  .pill.err{background:#fbe5e7;color:var(--err)}.pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  tr:hover td{background:#F7F9FB}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:600}
+  .pill.ok{background:#F0F7F1;color:var(--ok)}.pill.warn{background:#F9F6EE;color:var(--warn)}
+  .pill.err{background:#F8EFEF;color:var(--err)}.pill.neutral{background:#F1F3F6;color:var(--ink-2)}
   .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
   .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
-  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:640px;line-height:1.5}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 2px 2px 0;margin-top:18px;max-width:640px;line-height:1.5}
   /* auth */
   .authwrap{min-height:calc(100vh - 46px);display:flex;align-items:center;justify-content:center;background:var(--bg)}
-  .authcard{width:420px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.10);padding:40px 44px}
+  .authcard{width:420px;background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,.10);padding:40px 44px}
   .authcard .field{margin-bottom:15px}
   .authcard input{width:100%}
-  .msg{border-radius:4px;padding:10px 13px;font-size:12.5px;margin-bottom:15px;border-left:3px solid}
-  .msg.err{background:#fbe5e7;color:var(--err);border-color:var(--err)}
+  .msg{border-radius:2px;padding:10px 13px;font-size:12.5px;margin-bottom:15px;border-left:3px solid}
+  .msg.err{background:#F8EFEF;color:var(--err);border-color:var(--err)}
   .msg.info{background:var(--accent-soft);color:var(--accent-deep);border-color:var(--accent)}
   .checklist{list-style:none;font-size:12.5px;margin:8px 0 15px}
   .checklist li{padding:2px 0;color:var(--ink-3)}
@@ -82,21 +86,21 @@
   /* board list-style lanes (editorial: rows within sections, less color) */
   .lanesec{margin-bottom:26px}
   .lanesec>h2{font-size:17px;display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
-  .lanesec>h2 .cnt{font-size:12px;color:var(--ink-3);font-family:"Segoe UI",sans-serif;font-weight:600}
-  .rowcard{display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid #f0efed;cursor:pointer}
+  .lanesec>h2 .cnt{font-size:12px;color:var(--ink-3);font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600}
+  .rowcard{display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid #F1F3F6;cursor:pointer}
   .rowcard:hover{background:var(--accent-soft)}
   .rowcard:last-child{border-bottom:none}
   .rowcard .t{font-weight:600;font-size:14px;flex:1;color:var(--ink)}
   .rowcard .t:hover{color:var(--accent)}
-  .rowcard .tag{font-size:11px;color:var(--ink-3);background:#f3f2f1;border-radius:3px;padding:1px 7px}
+  .rowcard .tag{font-size:11px;color:var(--ink-3);background:#F1F3F6;border-radius:2px;padding:1px 7px}
   .rowcard .due{font-size:12px;color:var(--ink-3)}
   .prio{width:8px;height:8px;border-radius:50%;flex-shrink:0}
   .prio.high{background:var(--err)}.prio.med{background:var(--warn)}.prio.low{background:var(--ok)}
-  .up{border:1px solid var(--line);border-radius:4px;padding:2px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:52px;text-align:center}
+  .up{border:1px solid var(--line);border-radius:2px;padding:2px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:52px;text-align:center}
   .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
   /* idea detail: full page editorial two-column */
   .ideahd{border-bottom:1px solid var(--line);background:var(--surface);padding:26px 40px}
-  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;font-family:"Segoe UI",sans-serif}
+  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .ideahd h1{font-size:30px;max-width:760px}
   .ideabody{display:grid;grid-template-columns:minmax(0,720px) 300px;gap:44px;padding:30px 40px}
   .prose{font-size:15px;line-height:1.7;color:var(--ink-2)}
@@ -104,22 +108,22 @@
   .fact{margin-bottom:18px}
   .fact .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:3px}
   .fact .v{font-size:14px;font-weight:600}
-  .comment{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f0efed}
+  .comment{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #F1F3F6}
   .comment .byline{display:flex;align-items:center;gap:9px;margin-bottom:6px}
   .comment .who{font-size:13px;font-weight:700}
   .comment .when{font-size:12px;color:var(--ink-3)}
   .comment p{font-size:14.5px;line-height:1.65;color:var(--ink-2)}
   .mention{color:var(--accent-deep);font-weight:700;border-bottom:1.5px solid var(--accent)}
   .charcount{font-size:11.5px;color:var(--ink-3);text-align:right;margin-top:4px}
-  .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;margin-bottom:28px}
+  .statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:2px;background:var(--surface);overflow:hidden;margin-bottom:28px}
   .stat{padding:18px 22px;border-right:1px solid var(--line)}
   .stat:last-child{border-right:none}
-  .stat .n{font-size:28px;font-family:Georgia,serif}
+  .stat .n{font-size:28px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .stat .l{font-size:12px;color:var(--ink-3);margin-top:2px}
   .hublist{max-width:760px}
   .hubrow{display:flex;gap:18px;padding:20px 0;border-bottom:1px solid var(--line);align-items:flex-start}
-  .hubrow .em{width:40px;height:40px;border-radius:8px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
-  .hubrow h3{font-size:16px;font-family:Georgia,serif;margin-bottom:3px}
+  .hubrow .em{width:40px;height:40px;border-radius:2px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+  .hubrow h3{font-size:16px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;margin-bottom:3px}
   .hubrow p{font-size:13px;color:var(--ink-3);line-height:1.55;max-width:480px}
   .hubrow .go{margin-left:auto;align-self:center}
 </style>
@@ -147,7 +151,7 @@
   <div class="authwrap">
     <div class="authcard">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px">
-        <span class="rail" style="all:unset"><span class="avatar" style="border-radius:8px;font-family:Georgia,serif">SN</span></span>
+        <span class="rail" style="all:unset"><span class="avatar" style="border-radius:2px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif">SN</span></span>
         <span class="display" style="font-size:19px">Collega</span>
       </div>
       <h1 style="font-size:22px;margin-bottom:6px">Sign in</h1>
@@ -405,7 +409,7 @@
           <div class="card">
             <div class="rowcard"><span class="prio high"></span><span class="t">Dark mode support</span><span class="tag">ui</span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div>
             <div class="rowcard"><span class="prio med"></span><span class="t">Bulk import from CSV</span><span class="tag">data</span><span class="avatar s">TD</span><button class="up">▲ 17</button></div>
-            <div class="rowcard"><span class="prio low"></span><span class="t">Keyboard shortcuts cheat sheet</span><span class="tag">docs</span><span class="avatar s" style="background:#c8c6c4">—</span><button class="up">▲ 6</button></div>
+            <div class="rowcard"><span class="prio low"></span><span class="t">Keyboard shortcuts cheat sheet</span><span class="tag">docs</span><span class="avatar s" style="background:#C5CBD3">—</span><button class="up">▲ 6</button></div>
             <div class="rowcard"><span class="prio med"></span><span class="t">Export board to PDF</span><span class="tag">reporting</span><span class="avatar s">JR</span><button class="up">▲ 5</button></div>
           </div>
         </div>
@@ -457,7 +461,7 @@
       <div class="ideabody">
         <div>
           <p class="prose" style="margin-bottom:30px">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu. Scope for the first pass is the board and idea views; admin surfaces can follow.</p>
-          <h2 style="font-size:19px;margin-bottom:16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif">4 comments</span></h2>
+          <h2 style="font-size:19px;margin-bottom:16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif">4 comments</span></h2>
           <div class="comment">
             <div class="byline"><span class="avatar s">MP</span><span class="who">Mia Park</span><span class="when">2 hours ago</span></div>
             <p><span class="mention">@Jordan Reyes</span> can we scope this to the board view first? Full app theming is a bigger lift and I'd rather ship the high-traffic surface early.</p>

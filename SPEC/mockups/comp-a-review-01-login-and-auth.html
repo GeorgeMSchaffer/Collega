@@ -1,53 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Review Comp 1: Login &amp; Authentication</title>
 <style>
   :root{
-    --accent:#1d4ed8; --accent-hover:#1e3a8a; --accent-soft:#dbeafe;
-    --ink:#0f172a; --ink-2:#334155; --ink-3:#64748b;
-    --bg:#f8fafc; --surface:#ffffff; --line:#d0d7de;
-    --ok:#166534; --warn:#9a3412; --err:#7f1d1d;
-    --radius:6px; --shadow:0 1px 2px rgba(15,23,42,.12),0 0 1px rgba(15,23,42,.14);
+    --accent:#5B7FA3; --accent-hover:#527292; --accent-soft:#F0F4F7;
+    --ink:#243447; --ink-2:#527292; --ink-3:#5B7FA3;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#D1DBE5;
+    --ok:#457C4F; --warn:#B64B4B; --err:#B64B4B;
+    --radius:2px; --shadow:0 1px 2px rgba(15,23,42,.12),0 0 1px rgba(15,23,42,.14);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  .comp-bar{background:#1e3a8a;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  .comp-bar{background:#527292;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
   .comp-bar strong{font-size:13px;letter-spacing:.04em}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#cbd5e1;border:1px solid #475569;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#D1DBE5;border:1px solid #527292;border-radius:2px;padding:4px 10px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}
   .screen.on{display:block}
-  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
-  .btn:hover{background:#f1f5f9}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--ink)}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
   .btn.primary:hover{background:var(--accent-hover)}
   .btn.subtle{border-color:transparent;color:var(--ink-2)}
-  input[type=text],input[type=email],input[type=password],select,textarea{border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input[type=text],input[type=email],input[type=password],select,textarea{border:1px solid var(--line);border-radius:2px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
-  input.invalid{border-color:var(--err);background:#fef2f2}
+  input.invalid{border-color:var(--err);background:#F8EFEF}
   label{font-size:12px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:4px}
   .field{margin-bottom:14px}
   .field .errtext{font-size:11.5px;color:var(--err);margin-top:4px}
-  .authwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#1e3a8a 0%,#1d4ed8 100%);padding:24px}
-  .authcard{width:420px;background:var(--surface);border-radius:10px;box-shadow:0 8px 28px rgba(15,23,42,.35);padding:36px}
+  .authwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#527292 0%,#5B7FA3 100%);padding:24px}
+  .authcard{width:420px;background:var(--surface);border-radius:2px;box-shadow:0 8px 28px rgba(15,23,42,.35);padding:36px}
   .authcard h1{text-align:center;font-size:17px;margin-bottom:4px}
   .sub{color:var(--ink-3);font-size:13px;margin-bottom:18px}
   .authcard .field input{width:100%}
-  .msg{border-radius:4px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start}
-  .msg.err{background:#fef2f2;color:#7f1d1d}.msg.info{background:#eff6ff;color:#1d4ed8}.msg.ok{background:#dcfce7;color:#166534}
+  .msg{border-radius:2px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;display:flex;gap:8px;align-items:flex-start}
+  .msg.err{background:#F8EFEF;color:#B64B4B}.msg.info{background:#F0F4F7;color:#5B7FA3}.msg.ok{background:#F0F7F1;color:#457C4F}
   .checklist{list-style:none;font-size:12px;margin:8px 0 14px}
   .checklist li{padding:2px 0;color:var(--ink-3)}
   .checklist li.ok{color:var(--ok)}
   .checklist li::before{content:"○ ";}
   .checklist li.ok::before{content:"✓ "}
   .logo{display:flex;align-items:center;gap:8px;font-weight:600;justify-content:center;margin-bottom:20px}
-  .logo .mark{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#1d4ed8,#1e3a8a);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+  .logo .mark{width:24px;height:24px;border-radius:2px;background:linear-gradient(135deg,#5B7FA3,#527292);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
   .divider{border:none;border-top:1px solid var(--line);margin:18px 0}
-  .code{font-family:ui-monospace,Consolas,monospace;background:#f1f5f9;border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:14px;letter-spacing:.03em;display:flex;justify-content:space-between;align-items:center}
+  .code{font-family:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;background:#F1F3F6;border:1px solid var(--line);border-radius:2px;padding:8px 10px;font-size:14px;letter-spacing:.03em;display:flex;justify-content:space-between;align-items:center}
   .footnote{font-size:11.5px;color:var(--ink-3);text-align:center;margin-top:16px}
   .footnote a{color:var(--accent)}
   .kv{font-size:12.5px;color:var(--ink-2);display:grid;gap:6px;margin-top:10px}
