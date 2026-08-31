@@ -133,13 +133,28 @@ nothing to structure.
 
 `comp-p-focus-roadmap.html` answers feedback item #1 in `SPEC/UI Feedback.md`: comp **D**'s
 Focus Desk layout carrying comp **N**'s multi-parent roadmap, styled per `DESIGN.md`.
-Five screens — Home, Roadmap, Issue, Grouping, Command palette — built on the same shared
-token layer as the comp O set.
+Ten screens — Login, Home, Ideas list, Board, Inspector, Roadmap, Issue, Grouping,
+Settings, Command palette — built on the same shared token layer as the comp O set. That
+is all of comp D restyled, plus comp N's roadmap trio. **Home is the landing screen**, and
+it carries written copy rather than placeholder text.
+
+**Two voices, kept apart.** Everything inside the app frame is product copy, written to be
+lifted into the real UI: a first-run strip explaining how an idea moves through the
+statuses, a definition under each KPI saying what it counts, and a standfirst on each panel
+saying how the list is ordered and why. Everything addressed to a reviewer of the comp —
+the screen list, the keyboard shortcuts, which screens carry open questions — sits in the
+chrome band above the app frame, outside the mock, so nobody has to guess which sentences
+would ship.
 
 What it keeps from each parent:
 
-- **From comp D** — the premise that Home answers *"what needs me now"*, not *"what exists"*:
-  KPI row, "Needs your attention" queue, activity feed, and the `Ctrl K` command palette.
+- **From comp D** — the premise that Home answers *"what needs me now"*, not *"what exists"*
+  (KPI row, "Needs your attention" queue, activity feed, `Ctrl K` palette), the **docked
+  inspector** as a third grid column rather than a modal, **inline create** beside the list
+  it adds to, and comp D's accessibility fixes carried over verbatim: native
+  `<button type="submit">`, `autocomplete="username"` paired with the password field, a real
+  `<label for>` on every filter and form control, and idea type written as text on every
+  board card rather than encoded in a coloured dot alone.
 - **From comp N** — multi-parent grouping: `18 memberships over 14 distinct issues`, a
   distinct-count beside every total, outcomes as a removable chip list on the issue, and a
   Grouping control whose checkboxes make add/remove (not move) the operation.
@@ -150,6 +165,11 @@ outcome at a glance. Comp P encodes **"shared" as a dashed border rather than a 
 not colour, so it survives greyscale, colour blindness and print, none of which a tint
 does. This is the one place the two rulebooks needed a genuinely new answer rather than a
 reconciliation, and it is worth keeping even if the Notion direction is dropped.
+
+**The measured cost of the direction.** `DESIGN.md`'s body-sm is 15px against comp D's
+12.5px, so the same table is taller: an Ideas row measures **67px** here against comp D's
+**57–59px**, and ten rows run **669px** against **584px** — about 15% more vertical space
+for the same page. Worth knowing before this direction is chosen, not after.
 
 Comp P uses comp N's mechanics because the feedback asked for them. **Outcome ↔ Issue
 cardinality remains the blocking Open Question** in `SPEC/20-feature-issues-and-delivery.md`

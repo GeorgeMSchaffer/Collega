@@ -387,18 +387,153 @@ tbody td:first-child,.road .bar{white-space:nowrap}
   border-top:1px solid var(--hairline);background:var(--canvas-soft);
   font-size:12px;color:var(--ink-muted)}
 
+/* ============================================================
+   Screens carried over from comp D: login, ideas list, board,
+   docked inspector, settings. Same token layer, no new colours.
+   ============================================================ */
+
+/* ===== auth ===== */
+.authwrap{display:grid;grid-template-columns:1.05fr .95fr;min-height:calc(100vh - 70px)}
+.authpitch{background:var(--secondary);color:#fff;padding:64px 56px;
+  display:flex;flex-direction:column;justify-content:center}
+.authpitch .mark{width:34px;height:34px;border-radius:var(--r-md);background:rgba(255,255,255,.14);
+  color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;
+  letter-spacing:-.02em;margin-bottom:var(--s-lg)}
+.authpitch h2{color:#fff;max-width:17ch;margin-bottom:var(--s-md)}
+.authpitch p{color:#c9d2f2;font-size:16px;line-height:1.5;max-width:48ch;margin:0 0 var(--s-lg)}
+.authpitch ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--s-sm)}
+.authpitch li{display:flex;align-items:flex-start;gap:10px;font-size:15px;line-height:1.33;color:#e4e8f7}
+.authpitch li svg{flex:none;margin-top:1px;color:var(--sky)}
+.authpitch .kbd{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.28);color:#fff}
+.authform{background:var(--canvas);padding:64px 56px;display:flex;
+  flex-direction:column;justify-content:center}
+.authform .in{width:100%;max-width:356px;margin:0 auto}
+.authform .sub{font-size:16px;line-height:1.5;color:var(--ink-muted);margin:var(--s-xs) 0 var(--s-lg)}
+.foot2{font-size:14px;line-height:1.43;color:var(--ink-muted);margin-top:var(--s-md)}
+
+/* ===== forms ===== */
+.field{margin-bottom:var(--s-md)}
+.field input,.field select,.field textarea{width:100%}
+.hint{font-size:14px;line-height:1.43;color:var(--ink-faint);margin-top:6px}
+.req{color:var(--orange)}
+
+/* ===== list filters — every control keeps a visible label ===== */
+.filters{display:flex;gap:var(--s-sm);flex-wrap:wrap;margin-bottom:var(--s-md);align-items:flex-end}
+.fw{min-width:158px}
+.fw.wide{flex:1;min-width:240px}
+.fw label{margin-bottom:6px}
+.fw input,.fw select{width:100%}
+thead th button{background:none;border:0;padding:0;font:inherit;color:inherit;letter-spacing:inherit;
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+
+/* ===== table footer / pagination ===== */
+.pgfoot{display:flex;align-items:center;gap:var(--s-sm);padding:10px var(--s-md);
+  border-top:1px solid var(--hairline);background:var(--canvas-soft);
+  font-size:14px;line-height:1.43;color:var(--ink-muted);flex-wrap:wrap}
+.pgfoot label{display:inline-block;margin:0;font-size:14px;text-transform:none;letter-spacing:0}
+.pgfoot select{width:auto;padding:var(--s-xxs) var(--s-xs);font-size:14px}
+
+/* ===== docked inspector — a third grid column, never an overlay ===== */
+.shell.insp{grid-template-columns:248px minmax(0,1fr) 404px}
+.inspector{background:var(--surface);border-left:1px solid var(--hairline);
+  display:flex;flex-direction:column;min-width:0}
+.insp-head{padding:var(--s-md) var(--s-lg);border-bottom:1px solid var(--hairline)}
+.insp-head .eyebrow{color:var(--ink-muted)}
+.insp-head h2{font-size:22px;font-weight:700;letter-spacing:-.25px;line-height:1.27;margin:6px 0}
+.insp-head .meta{font-size:14px;line-height:1.43;color:var(--ink-faint)}
+.insp-body{padding:var(--s-md) var(--s-lg);overflow:auto;
+  display:flex;flex-direction:column;gap:var(--s-lg)}
+.insp-foot{margin-top:auto;padding:var(--s-sm) var(--s-lg);border-top:1px solid var(--hairline);
+  display:flex;gap:var(--s-xs)}
+.sec-t{font-size:12px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;
+  color:var(--ink-muted);margin-bottom:var(--s-xs)}
+.cmt{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--hairline)}
+.cmt .who{font-size:14px;font-weight:600;line-height:1.43;margin-bottom:2px}
+.cmt .when{font-weight:400;color:var(--ink-faint);margin-left:6px}
+.cmt p{margin:0;font-size:15px;line-height:1.33;color:var(--ink-secondary)}
+
+/* the selected row reads as selected without relying on hue alone: a left rule
+   plus a soft ground, both of which survive greyscale. */
+tbody tr.sel td{background:var(--canvas-soft)}
+tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
+
+/* drag handle column in the status list */
+.hnd{color:var(--ink-faint);cursor:grab;line-height:0}
+
+/* overlapping avatars need a ring in the surface colour or the initials collide.
+   At 22px a -6px overlap eats 4px past the 2px ring, which clips the second
+   character of the initials; -4px leaves both readable. */
+.avstack .av{box-shadow:0 0 0 2px var(--surface)}
+.avstack .av.s{margin-left:-4px}
+.avstack .av.s:first-child{margin-left:0}
+
+/* keep the secondary line the same height whether or not it carries tags.
+   As inline content an inline-block tag sits on the baseline and drags the
+   line box down by the strut descender, so tagged rows ran a pixel taller
+   than untagged ones. A fixed-height flex line removes the difference. */
+.bd{display:flex;align-items:center;gap:6px;height:20px}
+.bd .tag{padding-top:0;padding-bottom:0;line-height:20px}
+
+/* board card footer: two fixed rows, not one wrapping row. With a single
+   flex-wrap row the long idea-type name pushes the upvote onto a third line
+   on some cards and not others, and lane heights go ragged. */
+.kcard .ft+.ft{margin-top:6px}
+
+/* ============================================================
+   Home copy layer. Two voices, kept apart on purpose:
+   product copy lives inside the app frame and is written to be
+   liftable into the real UI; anything addressed to a reviewer of
+   this comp lives in the chrome band above the frame instead.
+   ============================================================ */
+
+/* first-run guidance — product voice, dismissible, above the numbers */
+.tip{display:flex;align-items:flex-start;gap:var(--s-sm);background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-lg);padding:var(--s-sm) var(--s-md);
+  margin-bottom:var(--s-lg);font-size:15px;line-height:1.33;color:var(--ink-secondary)}
+.tip b{color:var(--ink)}
+.tip .btn{margin-left:auto;flex:none;align-self:center}
+
+/* what a KPI actually counts, under a rule so it reads as a definition
+   rather than more of the delta line above it */
+.kpi .why{font-size:14px;line-height:1.43;color:var(--ink-muted);
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--hairline)}
+
+/* a panel's standfirst: why this list exists and how it is ordered */
+.panel>h2:has(+.lede){border-bottom:0;padding-bottom:var(--s-xxs)}
+.panel>.lede{padding:0 var(--s-md) var(--s-sm);border-bottom:1px solid var(--hairline);
+  font-size:14px;line-height:1.43;color:var(--ink-muted)}
+
+/* the chrome band carries the reviewer's instructions, so it grows a list */
+.explore{align-items:flex-start;line-height:1.5;padding:var(--s-xs) var(--s-md)}
+.explore .how{display:flex;flex-wrap:wrap;gap:2px var(--s-md);margin-top:3px}
+.explore .how span{white-space:nowrap}
+.explore .k{border:1px solid #e0c9a6;border-radius:var(--r-xs);padding:0 4px;font-size:10.5px}
+.explore .how b{text-transform:none;letter-spacing:0;font-size:11.5px}
+
 </style>
 </head>
 <body>
 <nav class="switch" aria-label="Comp screens">
   <b>Comp P</b><span class="lbl">Focus Desk + multi-parent roadmap · DESIGN.md</span>
+  <button data-go="s-login">Login</button>
   <button data-go="s-home" aria-current="true">Home</button>
+  <button data-go="s-ideas">Ideas list</button>
+  <button data-go="s-board">Board</button>
+  <button data-go="s-inspect">Inspector</button>
   <button data-go="s-roadmap">Roadmap</button>
   <button data-go="s-issue">Issue</button>
   <button data-go="s-group">Grouping</button>
+  <button data-go="s-settings">Settings</button>
   <button data-go="s-palette">Command palette</button>
 </nav>
-<div class="explore"><b>Combination</b><span>Comp&nbsp;<b>D</b> Focus Desk layout + comp&nbsp;<b>N</b> multi-parent roadmap, styled per <b>DESIGN.md</b>. Multi-parent is still an <b>open</b> question in the spec — using comp&nbsp;N here is a layout choice, not a decision. Changes nothing in <code>SPEC/</code>.</span></div>
+<div class="explore"><b>How to read this</b><span>Comp&nbsp;<b>D</b>&rsquo;s Focus Desk carrying comp&nbsp;<b>N</b>&rsquo;s multi-parent roadmap, styled per <b>DESIGN.md</b>. Ten screens on one token layer; nothing in <code>SPEC/</code> changes.
+  <span class="how">
+    <span>&bull; The tab bar above switches screens.</span>
+    <span>&bull; <span class="k">Ctrl K</span> opens the palette from any screen, <span class="k">Esc</span> closes it.</span>
+    <span>&bull; The sidebar nav is live for the screens that exist.</span>
+    <span>&bull; <b>Roadmap</b> carries the open cardinality question &mdash; a layout choice, not a decision.</span>
+    <span>&bull; <b>Ideas list</b> carries the measured density cost of the 15px body.</span>
+  </span></span></div>
 
 <section class="screen" id="s-home" data-on="1"><div class="shell">
     <aside class="side">
@@ -406,15 +541,15 @@ tbody td:first-child,.road .bar{white-space:nowrap}
       <div class="org">Acme Robotics</div>
       <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
-      <button class="nav" aria-current="page"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <button class="nav" aria-current="page" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <button class="nav" data-go="s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
       <div class="navlbl">Configure</div>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <button class="nav" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
       <div class="push"></div>
       <div class="me"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
     </aside>
@@ -423,16 +558,21 @@ tbody td:first-child,.road .bar{white-space:nowrap}
       <button class="btn">View as…</button><button class="btn pri">New idea</button></div>
     <div class="work">
       <div class="pgh"><div class="grow"><h1>Good afternoon, Olivia</h1>
-        <div class="sub">Acme Robotics · 22 ideas across 2 boards · 16 delivery issues in flight</div></div></div>
+        <div class="sub">Here&rsquo;s what needs you today. Acme Robotics has 22 ideas across 2 boards and 16 delivery issues in flight &mdash; press <span class="kbd">Ctrl K</span> to jump straight to any of them.</div></div></div>
+      <div class="tip">
+        <div><b>New to Collega?</b> An idea moves New / Pending &rarr; In Review &rarr; In Progress &rarr; Client Review &rarr; Complete, and the people, comments and history stay attached the whole way. Start one from any board, or press <span class="kbd">Ctrl K</span> and type &ldquo;new idea&rdquo;.</div>
+        <button class="btn sm2">Got it</button>
+      </div>
       <div class="kpis">
-        <div class="kpi"><div class="k">Open ideas</div><div class="v num">14</div><div class="d">of 22 total</div></div>
-        <div class="kpi"><div class="k">Awaiting review</div><div class="v num">4</div><div class="d">2 over 7 days</div></div>
-        <div class="kpi"><div class="k">Assigned to me</div><div class="v num">6</div><div class="d">1 critical</div></div>
-        <div class="kpi"><div class="k">Completed · 30d</div><div class="v num">6</div><div class="d">+2 vs prior</div></div>
+        <div class="kpi"><div class="k">Open ideas</div><div class="v num">14</div><div class="d">of 22 total</div><div class="why">Anything not yet Complete or Archived, on any board you can see.</div></div>
+        <div class="kpi"><div class="k">Awaiting review</div><div class="v num">4</div><div class="d">2 over 7 days</div><div class="why">Sitting in In Review, waiting on a decision from a person.</div></div>
+        <div class="kpi"><div class="k">Assigned to me</div><div class="v num">6</div><div class="d">1 critical</div><div class="why">Open ideas with your name in the Assigned field.</div></div>
+        <div class="kpi"><div class="k">Completed · 30d</div><div class="v num">6</div><div class="d">+2 vs prior</div><div class="why">Reached Complete in the last 30 days, against the 30 days before it.</div></div>
       </div>
       <div class="cols">
         <div class="panel">
           <h2><span class="grow">Needs your attention</span><button class="btn sm2">View all</button></h2>
+          <div class="lede">Open ideas that are critical, high priority, or have gone a week without moving. Oldest first &mdash; a stalled idea is the failure mode, not a busy one.</div>
           <table>
             <thead><tr><th>Idea</th><th style="width:172px">Status</th><th style="width:120px">Priority</th><th style="width:64px">Age</th></tr></thead>
             <tbody>
@@ -453,6 +593,7 @@ tbody td:first-child,.road .bar{white-space:nowrap}
         </div>
         <div class="panel">
           <h2><span class="grow">Recent activity</span></h2>
+          <div class="lede">Everything anyone changed in Acme Robotics, newest first. You only see activity on boards you have access to.</div>
           <ul class="feed">
             <li><span class="av s">NC</span><span>Noah moved <b>Automate weekly reporting</b> to In Progress</span><span class="when">14m</span></li>
             <li><span class="av s">MC</span><span>Maya commented on <b>Improve exception visibility</b></span><span class="when">1h</span></li>
@@ -462,7 +603,7 @@ tbody td:first-child,.road .bar{white-space:nowrap}
           </ul>
         </div>
       </div>
-      <div class="note"><b>Home answers &ldquo;what needs me now&rdquo;, not &ldquo;what exists&rdquo;.</b> That is comp&nbsp;D&rsquo;s premise and it survives the restyle intact — the KPI row and the attention table are both filtered queries you can open, not dead-end summaries. What changes is the chrome: 40px tabular figures carry the KPIs, and status and priority both use the same dot-plus-label marker, so the two columns stop competing for attention.</div>
+      <div class="note"><b>Two voices, kept apart.</b> Everything inside the app frame is product copy, written to be lifted straight into the real UI: what each KPI counts, how the attention queue is ordered, and what a first-run user needs to know before touching anything. Everything addressed to a reviewer of this comp &mdash; the screen list, the keyboard shortcuts, which screens carry open questions &mdash; sits in the band above the frame, outside the mock, so nobody has to guess which sentences would ship. Comp&nbsp;D&rsquo;s premise survives intact underneath: Home answers &ldquo;what needs me now&rdquo;, not &ldquo;what exists&rdquo;, and every number here is a filtered query you can open.</div>
     </div>
   </div>
 </div></section>
@@ -473,15 +614,15 @@ tbody td:first-child,.road .bar{white-space:nowrap}
       <div class="org">Acme Robotics</div>
       <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
-      <button class="nav" aria-current="page"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <button class="nav" aria-current="page" data-go="s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
       <div class="navlbl">Configure</div>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <button class="nav" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
       <div class="push"></div>
       <div class="me"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
     </aside>
@@ -530,15 +671,15 @@ tbody td:first-child,.road .bar{white-space:nowrap}
       <div class="org">Acme Robotics</div>
       <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
-      <button class="nav" aria-current="page"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <button class="nav" aria-current="page" data-go="s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
       <div class="navlbl">Configure</div>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <button class="nav" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
       <div class="push"></div>
       <div class="me"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
     </aside>
@@ -591,15 +732,15 @@ tbody td:first-child,.road .bar{white-space:nowrap}
       <div class="org">Acme Robotics</div>
       <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
-      <button class="nav" aria-current="page"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <button class="nav" aria-current="page" data-go="s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
       <div class="navlbl">Configure</div>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <button class="nav" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
       <div class="push"></div>
       <div class="me"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
     </aside>
@@ -632,15 +773,15 @@ tbody td:first-child,.road .bar{white-space:nowrap}
       <div class="org">Acme Robotics</div>
       <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
-      <button class="nav" aria-current="page"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <button class="nav" aria-current="page" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
       <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <button class="nav" data-go="s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
       <div class="navlbl">Configure</div>
-      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <button class="nav" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
       <div class="push"></div>
       <div class="me"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
     </aside>
@@ -663,6 +804,367 @@ tbody td:first-child,.road .bar{white-space:nowrap}
     </div>
   </div>
 </section>
+
+<!-- ==================== LOGIN ==================== -->
+<section class="screen" id="s-login" data-on="0">
+  <div class="authwrap">
+    <div class="authpitch">
+      <div class="mark">CG</div>
+      <h2>Every idea your organization has, in one place.</h2>
+      <p>Collega tracks an idea from the first rough note through review, work, and delivery — with the people, comments, and history attached to it the whole way.</p>
+      <ul>
+        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>One account per person, scoped to your organization</span></li>
+        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>Boards, statuses and idea types you define yourself</span></li>
+        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>Keyboard-first: press <span class="kbd">Ctrl K</span> anywhere</span></li>
+      </ul>
+    </div>
+    <div class="authform"><div class="in">
+      <h1>Sign in</h1>
+      <p class="sub">One email, one account. We&rsquo;ll take you straight to your organization.</p>
+      <!-- NATIVE submit button: Enter submits. Carried from comp D, which fixed the live finding filed 2026-08-16. -->
+      <form>
+        <div class="field">
+          <label for="p-email">Email</label>
+          <input type="text" inputmode="email" id="p-email" name="email" autocomplete="username" placeholder="you@yourcompany.com">
+        </div>
+        <div class="field">
+          <label for="p-pw">Password</label>
+          <input type="password" id="p-pw" name="password" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn pri" style="width:100%;justify-content:center">Sign in</button>
+      </form>
+      <p class="foot2">Have an invite code? <a href="#">Create an account</a>.<br>
+      Forgot your password? Ask your organization admin to reset it.</p>
+      <div class="note"><b>Accessibility carried over unchanged.</b> Native <code>&lt;button type="submit"&gt;</code> so Enter submits; <code>autocomplete="username"</code> paired with the password field so password managers work; a real <code>&lt;label for&gt;</code> bound to a real <code>&lt;input&gt;</code>. The restyle touches paint, never markup — <b>#213183</b> for the pitch band and <b>#0075de</b> for the single blue action.</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ==================== IDEAS LIST ==================== -->
+<section class="screen" id="s-ideas" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" aria-current="page" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#">Home</a> / <b>Ideas</b></span><span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Scope"><button aria-pressed="true">All</button><button aria-pressed="false">Created by me</button><button aria-pressed="false">Assigned to me</button></div>
+      <button class="btn pri">New idea</button></div>
+    <div class="work">
+      <div class="pgh"><div class="grow"><h1>Ideas</h1>
+        <div class="sub">Every idea in Acme Robotics, across all boards.</div></div></div>
+      <!-- every filter keeps a real, visible label -->
+      <div class="filters">
+        <div class="fw wide"><label for="p-q">Search</label><input type="text" id="p-q" placeholder="Title, tag, assignee…"></div>
+        <div class="fw"><label for="p-board">Board</label><select id="p-board"><option>All boards</option><option>Ideas</option><option>Opportunities</option></select></div>
+        <div class="fw"><label for="p-type">Idea type</label><select id="p-type"><option>All types</option><option>Continuous Improvement</option><option>Process Revision</option></select></div>
+        <div class="fw"><label for="p-status">Status</label><select id="p-status"><option>All statuses</option><option>New / Pending</option><option>In Review</option><option>In Progress</option><option>Client Review</option><option>Complete</option></select></div>
+        <div class="fw"><label for="p-user">Person</label><select id="p-user"><option>Any user</option><option>Maya Collaborator</option><option>Noah Contributor</option><option>Olivia Administer</option></select></div>
+      </div>
+      <div class="panel">
+        <table>
+          <thead><tr>
+            <th style="width:31%"><button type="button">Title <svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 7 2 4h6Z"/></svg></button></th>
+            <th style="width:198px">Type</th><th style="width:158px">Status</th><th style="width:112px">Priority</th>
+            <th style="width:78px">Assigned</th><th style="width:96px"><button type="button">Created</button></th><th style="width:68px">Votes</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Standardize the intake checklist</a><div class="bd">Ideas · <span class="tag">cycle-time</span> <span class="tag">quality</span></div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td><span class="avstack"><span class="av s">MC</span><span class="av s">OA</span></span></td><td class="num">Aug 15</td><td class="num">2</td></tr>
+            <tr><td><a class="t" href="#">Add proactive alerts</a><div class="bd">Ideas · <span class="tag">safety</span></div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td><span class="avstack"><span class="av s">NC</span></span></td><td class="num">Aug 15</td><td class="num">1</td></tr>
+            <tr><td><a class="t" href="#">Pilot a faster review path</a><div class="bd">Ideas</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>In Review</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span></td>
+              <td><span class="faint">—</span></td><td class="num">Aug 15</td><td class="num">0</td></tr>
+            <tr><td><a class="t" href="#">Improve exception visibility</a><div class="bd">Ideas · <span class="tag">automation</span></div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>In Review</span></td>
+              <td><span class="marker"><span class="dot"></span>Low</span></td>
+              <td><span class="avstack"><span class="av s">NC</span></span></td><td class="num">Aug 15</td><td class="num">1</td></tr>
+            <tr><td><a class="t" href="#">Automate weekly reporting</a><div class="bd">Ideas · <span class="tag">quality</span> <span class="tag">safety</span></div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>In Progress</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td><span class="avstack"><span class="av s">MC</span><span class="av s">OA</span></span></td><td class="num">Aug 15</td><td class="num">2</td></tr>
+            <tr><td><a class="t" href="#">Create a shared playbook</a><div class="bd">Ideas</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>In Progress</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td><span class="faint">—</span></td><td class="num">Aug 15</td><td class="num">0</td></tr>
+            <tr><td><a class="t" href="#">Validate the customer feedback loop</a><div class="bd">Ideas · <span class="tag">cycle-time</span></div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Client Review</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span></td>
+              <td><span class="avstack"><span class="av s">NC</span></span></td><td class="num">Aug 15</td><td class="num">1</td></tr>
+            <tr><td><a class="t" href="#">Roll out the proven workflow</a><div class="bd">Ideas · <span class="tag">automation</span> <span class="tag">safety</span></div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td>
+              <td><span class="marker"><span class="dot"></span>Low</span></td>
+              <td><span class="avstack"><span class="av s">MC</span><span class="av s">OA</span></span></td><td class="num">Aug 15</td><td class="num">2</td></tr>
+            <tr><td><a class="t" href="#">Retire the legacy step</a><div class="bd">Ideas · <span class="tag">quality</span></div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td><span class="avstack"><span class="av s">NC</span></span></td><td class="num">Aug 15</td><td class="num">1</td></tr>
+            <tr><td><a class="t" href="#">Measure time saved</a><div class="bd">Ideas</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td><span class="faint">—</span></td><td class="num">Aug 15</td><td class="num">0</td></tr>
+          </tbody>
+        </table>
+        <div class="pgfoot">
+          <span class="num">Showing 1&ndash;10 of 22</span><span class="spacer"></span>
+          <label for="p-size">Rows per page</label>
+          <select id="p-size"><option>10</option><option>25</option><option>50</option></select>
+          <button class="btn sm2">Previous</button><button class="btn sm2">Next</button>
+        </div>
+      </div>
+      <div class="note"><b>Density under a 15px body.</b> DESIGN.md&rsquo;s body-sm is 15px against comp&nbsp;D&rsquo;s 12.5px, so the same ten rows are taller here: measured in the browser, a row is <b>67px</b> against comp&nbsp;D&rsquo;s <b>57&ndash;59px</b>, and these ten rows run <b>669px</b> against comp&nbsp;D&rsquo;s <b>584px</b>. That is about 15% more vertical space for the same page &mdash; the real cost of this direction, worth stating plainly rather than discovering after a build. Type, status and priority all use one dot-plus-label marker, so no column shouts louder than the others.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ==================== BOARD ==================== -->
+<section class="screen" id="s-board" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" aria-current="page" data-go="s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#">Boards</a> / <b>Ideas</b></span><span class="spacer"></span>
+      <div class="seg" role="group" aria-label="View"><button aria-pressed="false" data-go="s-ideas">List</button><button aria-pressed="true">Lanes</button></div>
+      <button class="btn">Export CSV</button><button class="btn pri">New idea</button></div>
+    <div class="work">
+      <div class="pgh"><div class="grow"><h1>Ideas</h1>
+        <div class="sub">Move a card with drag, or focus it and press <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span>. Both paths do the same thing.</div></div></div>
+      <div class="lanes">
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--sky)"></span><span class="t">New / Pending</span><span class="ct num">3</span></div>
+          <div class="kcard"><span class="t">Standardize the intake checklist</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span><span class="spacer"></span><span class="av s">MC</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up">&#9650; 2</button></div></div>
+          <div class="kcard"><span class="t">Add proactive alerts</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span><span class="spacer"></span><span class="av s">NC</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up">&#9650; 1</button></div></div>
+          <div class="kcard"><span class="t">Reduce manual handoffs</span>
+            <div class="ft"><span class="marker"><span class="dot"></span>Low</span><span class="spacer"></span><span class="faint" style="font-size:14px">Unassigned</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up mine">&#9650; 2</button></div></div>
+          <button class="btn ghost sm2" style="width:100%">+ Add idea</button>
+        </div>
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--purple)"></span><span class="t">In Review</span><span class="ct num">2</span></div>
+          <div class="kcard"><span class="t">Improve exception visibility</span>
+            <div class="ft"><span class="marker"><span class="dot"></span>Low</span><span class="spacer"></span><span class="av s">NC</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up">&#9650; 1</button></div></div>
+          <div class="kcard"><span class="t">Pilot a faster review path</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span><span class="spacer"></span><span class="faint" style="font-size:14px">Unassigned</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up">&#9650; 0</button></div></div>
+          <button class="btn ghost sm2" style="width:100%">+ Add idea</button>
+        </div>
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--orange)"></span><span class="t">In Progress</span><span class="ct num">2</span></div>
+          <div class="kcard"><span class="t">Automate weekly reporting</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span><span class="spacer"></span><span class="av s">MC</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up">&#9650; 2</button></div></div>
+          <div class="kcard"><span class="t">Create a shared playbook</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span><span class="spacer"></span><span class="faint" style="font-size:14px">Unassigned</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up">&#9650; 0</button></div></div>
+          <button class="btn ghost sm2" style="width:100%">+ Add idea</button>
+        </div>
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--pink)"></span><span class="t">Client Review</span><span class="ct num">1</span></div>
+          <div class="kcard"><span class="t">Validate the customer feedback loop</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span><span class="spacer"></span><span class="av s">NC</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up">&#9650; 1</button></div></div>
+          <div class="emptylane">Drop here to send an idea to the client</div>
+          <button class="btn ghost sm2" style="width:100%">+ Add idea</button>
+        </div>
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--green)"></span><span class="t">Complete</span><span class="ct num">3</span></div>
+          <div class="kcard"><span class="t">Roll out the proven workflow</span>
+            <div class="ft"><span class="marker"><span class="dot"></span>Low</span><span class="spacer"></span><span class="av s">MC</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up">&#9650; 2</button></div></div>
+          <div class="kcard"><span class="t">Retire the legacy step</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span><span class="spacer"></span><span class="av s">NC</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up">&#9650; 1</button></div></div>
+          <div class="kcard"><span class="t">Measure time saved</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span><span class="spacer"></span><span class="faint" style="font-size:14px">Unassigned</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up">&#9650; 0</button></div></div>
+          <button class="btn ghost sm2" style="width:100%">+ Add idea</button>
+        </div>
+      </div>
+      <div class="note"><b>Two fixes survive the restyle.</b> Idea type is written as text on every card rather than encoded in a coloured dot alone, and the page header states the keyboard equivalent for drag, so moving a card never requires a pointer. Every sticker colour on this screen &mdash; lane header, priority marker &mdash; is a dot with its own label beside it, which is the only use DESIGN.md allows colour to carry a category.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ==================== DOCKED INSPECTOR ==================== -->
+<section class="screen" id="s-inspect" data-on="0"><div class="shell insp">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" aria-current="page" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#">Home</a> / <b>Ideas</b></span><span class="spacer"></span><button class="btn pri">New idea</button></div>
+    <div class="work">
+      <div class="pgh"><div class="grow"><h1>Ideas</h1>
+        <div class="sub">The list stays live and scrollable while the inspector is open.</div></div></div>
+      <div class="panel">
+        <table>
+          <thead><tr><th style="width:44%">Title</th><th style="width:158px">Status</th><th style="width:112px">Priority</th><th style="width:78px">Assigned</th><th style="width:68px">Votes</th></tr></thead>
+          <tbody>
+            <tr class="sel"><td><a class="t" href="#">Standardize the intake checklist</a><div class="bd">Ideas · Continuous Improvement</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td><span class="avstack"><span class="av s">MC</span><span class="av s">OA</span></span></td><td class="num">2</td></tr>
+            <tr><td><a class="t" href="#">Add proactive alerts</a><div class="bd">Ideas · Process Revision</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td><span class="avstack"><span class="av s">NC</span></span></td><td class="num">1</td></tr>
+            <tr><td><a class="t" href="#">Pilot a faster review path</a><div class="bd">Ideas · Process Revision</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>In Review</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span></td>
+              <td><span class="faint">—</span></td><td class="num">0</td></tr>
+            <tr><td><a class="t" href="#">Automate weekly reporting</a><div class="bd">Ideas · Process Revision</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>In Progress</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td><span class="avstack"><span class="av s">MC</span></span></td><td class="num">2</td></tr>
+            <tr><td><a class="t" href="#">Create a shared playbook</a><div class="bd">Ideas · Continuous Improvement</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>In Progress</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td><span class="faint">—</span></td><td class="num">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><b>Docked, not modal.</b> The inspector is a third grid column, so background content is never covered and never needs <code>inert</code>. There is no focus trap to get wrong, Escape simply closes the column, and you can compare two ideas by arrowing down the list with the inspector open. The selected row is marked by a 3px rule in <b>#0075de</b> plus a soft ground — both readable in greyscale.</div>
+    </div>
+  </div>
+  <aside class="inspector" aria-label="Idea inspector">
+    <div class="insp-head">
+      <div class="eyebrow">Ideas board · #IDEA-118</div>
+      <h2>Standardize the intake checklist</h2>
+      <div class="meta">Created by Noah Contributor · Aug 15, 2026</div>
+    </div>
+    <div class="insp-body">
+      <dl class="kv">
+        <dt>Status</dt><dd><select aria-label="Status" style="width:auto"><option>New / Pending</option><option>In Review</option><option>In Progress</option></select></dd>
+        <dt>Type</dt><dd><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></dd>
+        <dt>Priority</dt><dd><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></dd>
+        <dt>Impact</dt><dd>Operational efficiency</dd>
+        <dt>Assigned</dt><dd><span class="avstack" style="display:inline-flex;vertical-align:middle"><span class="av s">MC</span><span class="av s">OA</span></span> Maya, Olivia</dd>
+        <dt>Outcomes</dt><dd><span class="tagrow"><span class="rmtag">Q3 · Cut intake rework</span><span class="rmtag">Q4 · One front door</span></span></dd>
+        <dt>Tags</dt><dd><span class="tagrow"><span class="tag">cycle-time</span><span class="tag">quality</span></span></dd>
+      </dl>
+      <div>
+        <div class="sec-t">Description</div>
+        <p class="prose" style="font-size:15px;line-height:1.33;margin:0">Use one concise checklist so requests arrive complete and ready for action. Today three teams each keep their own version, and roughly a third of intake requests bounce back for missing information.</p>
+      </div>
+      <div>
+        <div class="sec-t">Discussion · 3</div>
+        <div class="cmt"><span class="av s">MC</span><div><div class="who">Maya Collaborator <span class="when">2d ago</span></div><p>Can we fold the safety sign-off into the same checklist? It&rsquo;s the step people forget.</p></div></div>
+        <div class="cmt"><span class="av s">NC</span><div><div class="who">Noah Contributor <span class="when">1d ago</span></div><p>Yes — drafted it as section 4. Worth a review before we pilot.</p></div></div>
+        <div class="cmt"><span class="av s">OA</span><div><div class="who">Olivia Administer <span class="when">3h ago</span></div><p>Looks right. Moving to In Review after standup.</p></div></div>
+        <div class="field" style="margin:var(--s-sm) 0 0">
+          <label for="p-cmt">Add a comment</label>
+          <textarea id="p-cmt" rows="2" placeholder="Write a comment…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="insp-foot"><button class="btn pri" style="flex:1;justify-content:center">Save</button><button class="btn" data-go="s-ideas">Close</button></div>
+  </aside>
+</div></section>
+
+<!-- ==================== SETTINGS ==================== -->
+<section class="screen" id="s-settings" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#">Settings</a> / <b>Statuses</b></span><span class="spacer"></span><button class="btn pri">Add status</button></div>
+    <div class="work">
+      <div class="pgh"><div class="grow"><h1>Statuses</h1>
+        <div class="sub">The columns your boards group ideas by. Order here is the order on every board.</div></div></div>
+      <div class="cols" style="grid-template-columns:minmax(0,1fr) 356px">
+        <div class="panel">
+          <table>
+            <thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>New / Pending</b></td><td><span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span></td><td class="num">6</td><td class="num">1</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Review</b></td><td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span></td><td class="num">4</td><td class="num">2</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Progress</b></td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span></td><td class="num">4</td><td class="num">3</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Client Review</b></td><td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span></td><td class="num">2</td><td class="num">4</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Complete</b></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span></td><td class="num">6</td><td class="num">5</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot"><span>Reorder by dragging, or focus a row and press <span class="kbd">Alt &uarr;</span> / <span class="kbd">Alt &darr;</span>.</span></div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4;margin:0 0 var(--s-md)">Add status</h3>
+          <form>
+            <div class="field"><label for="p-sname">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname" required><div class="hint">Shown as a lane header on every board.</div></div>
+            <div class="field"><label for="p-shex">Colour</label>
+              <div style="display:flex;gap:var(--s-xs)"><input type="text" id="p-shex" value="#62aef0" style="flex:1"><input type="color" value="#62aef0" aria-label="Pick colour visually" style="width:44px;padding:2px;height:36px;flex:none"></div>
+              <div class="hint">Colour is decoration — the status name always shows beside it.</div></div>
+            <div class="field"><label for="p-sord">Position</label><select id="p-sord"><option>Last</option><option>First</option><option>After New / Pending</option></select></div>
+            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Add status</button>
+          </form>
+        </div>
+      </div>
+      <div class="note"><b>Create is inline, not a drawer.</b> A short create form sits beside the list it adds to, so the list stays visible for reference and there is no overlay to trap focus in. Longer edits still open the docked inspector. The swatch picker offers the DESIGN.md sticker palette by name, which is why the Colour column reads &ldquo;Sky&rdquo; rather than a hex value.</div>
+    </div>
+  </div>
+</div></section>
 
 <script>
   const screens = [...document.querySelectorAll('.screen')];
