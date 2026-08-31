@@ -129,6 +129,32 @@ DESIGN.md also analyses a **marketing site**, so several of its component specs 
 used exactly once, on the first-run empty state, which is the only screen in the app with
 nothing to structure.
 
+### Comp P: Focus Desk + multi-parent roadmap (2026-08-31)
+
+`comp-p-focus-roadmap.html` answers feedback item #1 in `SPEC/UI Feedback.md`: comp **D**'s
+Focus Desk layout carrying comp **N**'s multi-parent roadmap, styled per `DESIGN.md`.
+Five screens — Home, Roadmap, Issue, Grouping, Command palette — built on the same shared
+token layer as the comp O set.
+
+What it keeps from each parent:
+
+- **From comp D** — the premise that Home answers *"what needs me now"*, not *"what exists"*:
+  KPI row, "Needs your attention" queue, activity feed, and the `Ctrl K` command palette.
+- **From comp N** — multi-parent grouping: `18 memberships over 14 distinct issues`, a
+  distinct-count beside every total, outcomes as a removable chip list on the issue, and a
+  Grouping control whose checkboxes make add/remove (not move) the operation.
+
+**One thing had to be invented.** Comp N tints each outcome's bar; `DESIGN.md` forbids a
+structural fill from the sticker palette, and comp O-3 showed neutral bars alone lose the
+outcome at a glance. Comp P encodes **"shared" as a dashed border rather than a hue** —
+not colour, so it survives greyscale, colour blindness and print, none of which a tint
+does. This is the one place the two rulebooks needed a genuinely new answer rather than a
+reconciliation, and it is worth keeping even if the Notion direction is dropped.
+
+Comp P uses comp N's mechanics because the feedback asked for them. **Outcome ↔ Issue
+cardinality remains the blocking Open Question** in `SPEC/20-feature-issues-and-delivery.md`
+— rendering the multi-parent affordances is not a decision on it.
+
 ## Full-App Comps (2026-07-30)
 
 Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with Fluent UI Blazor components.
