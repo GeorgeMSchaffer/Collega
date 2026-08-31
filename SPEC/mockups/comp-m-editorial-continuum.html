@@ -1,0 +1,1098 @@
+<!--
+  COMP M — "Editorial Continuum"
+  Library: Tailwind CSS via the Play CDN (hand-rolled primitives, no component kit)
+
+  This comp argues that Collega's locked direction — Comp C "Fluent Editorial" —
+  should survive the Next.js rewrite, not be abandoned for it. Fluent UI's box-and-border
+  component vocabulary is gone; what's left is the underlying idea: ideas are documents,
+  read them, don't file them into boxes.
+
+  Design decisions:
+
+  1. Two typefaces, one job each. Geist (interface: nav, labels, meta, controls, body
+     copy in lists) and Fraunces (content headings only: idea titles, page titles, the
+     login headline). Headings get a serif with real optical weight; everything else
+     stays in the same sans the current app already uses, so the type system reads as
+     a continuation, not a rebrand.
+
+  2. Hierarchy from type, not containers. No card shadows, no filled chips, no boxed
+     kanban tiles. Board columns are separated by a single hairline rule; idea entries
+     are separated by whitespace and a title/meta size jump. Impact is communicated by
+     weight and tracking (CRITICAL is bold+wide, Low is quiet), not by a color scale —
+     that is where "restraint with color" is spent most visibly.
+
+  3. Status color is decorative, never load-bearing. Every status still gets its swatch
+     hex exactly as specified, but it appears as a small ringed dot next to the status
+     *name* in ink — never as colored text and never alone. That keeps every status
+     legible at AA+ contrast regardless of which of the six colors is in play, and
+     satisfies "don't convey status by color alone" for free.
+
+  4. The idea detail view is laid out like a magazine article: a measured column for
+     title/description/comments/activity, with a narrow fact-box rail (status, type,
+     impact, custom fields, tags, assignee, upvote) beside it instead of above it —
+     the reading column stays uninterrupted the way a boxed metadata card would not.
+     Comments render as an indented, threaded conversation with visible reply nesting,
+     not a repeated card list.
+
+  5. Teal is reserved exclusively for AI. It never appears on status, impact, or any
+     product chrome — only on the AI suggestion strip's dot, label, and Accept action —
+     so "an AI suggested this" reads as a single unambiguous signal. Dismissing a
+     suggestion collapses it with a ghost-then-drop transition (fade + height collapse)
+     rather than an instant unmount, per the existing app's treatment of refused
+     suggestions.
+
+  What I'm not sure serves the product: an editorial, whitespace-heavy board view is
+  a stronger *reading* experience than a scanning one — triage-under-load (the "500+
+  ideas" performance idea in this very seed set) is exactly the case where a denser,
+  more scannable kanban card might beat a typographic list. This direction optimizes
+  for the idea detail surface being excellent at the cost of the board surface being
+  merely good.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Collega — Comp M — Editorial Continuum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Geist', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+          display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
+        },
+        colors: {
+          paper: { DEFAULT: '#FBFAF7', alt: '#F4F1EA', deep: '#EDE8DE' },
+          ink: { 900: '#1C1917', 700: '#44403C' },
+          accent: { 600: '#B1451D', 700: '#9A3412', 800: '#7C2D12' },
+          teal: { 50: '#ECFDF9', 600: '#12857A', 700: '#0F766E', 800: '#0B5C56' },
+        },
+        maxWidth: { measure: '68ch' },
+      }
+    }
+  }
+</script>
+<style>
+  html { background: #FBFAF7; }
+  body { font-feature-settings: "kern" 1; }
+  :focus-visible { outline: 2px solid #9A3412; outline-offset: 2px; border-radius: 2px; }
+  select:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid #9A3412; outline-offset: 2px; }
+  .font-display { font-family: 'Fraunces', ui-serif, Georgia, serif; font-optical-sizing: auto; }
+  .sr-only-focusable:not(:focus) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  .ai-strip { transition: opacity .32s ease, max-height .32s ease, margin .32s ease, padding .32s ease, transform .28s ease; overflow: hidden; }
+  .ai-strip.ai-leaving { opacity: 0; transform: translateY(-4px); max-height: 0 !important; margin-top: 0 !important; margin-bottom: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; border-width: 0 !important; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2344403C'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.19l3.71-3.96a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.1rem center; background-size: 1.1em; }
+  ::selection { background: #EDE8DE; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="font-sans text-ink-900 bg-paper min-h-screen antialiased">
+
+<a href="#mainArea" class="sr-only-focusable fixed top-2 left-2 z-50 bg-ink-900 text-paper text-sm px-3 py-2 rounded">Skip to content</a>
+
+<!-- Review navigator: not part of the product, an aid for comparing the five required surfaces quickly -->
+<div class="bg-ink-900 text-paper text-xs px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-1" role="navigation" aria-label="Mockup surface navigator">
+  <span class="uppercase tracking-wide text-paper/60">Comp M navigator</span>
+  <button data-quicknav="board" class="hover:underline underline-offset-2">Board</button>
+  <button data-quicknav="list" class="hover:underline underline-offset-2">Ideas list</button>
+  <button data-quicknav="detail" class="hover:underline underline-offset-2">Idea detail</button>
+  <button data-quicknav="statuses" class="hover:underline underline-offset-2">Statuses admin</button>
+  <button data-quicknav="login" class="hover:underline underline-offset-2">Login</button>
+</div>
+
+<!-- ============================ LOGIN VIEW ============================ -->
+<div id="viewLogin" class="min-h-[80vh] flex items-center justify-center px-6 py-16">
+  <div class="w-full max-w-sm">
+    <p class="text-xs uppercase tracking-widest text-ink-700 mb-2">Northwind Labs</p>
+    <h1 class="font-display text-4xl mb-8">Sign in to Collega</h1>
+
+    <form id="loginForm" novalidate>
+      <div id="loginAlert" role="alert" hidden class="mb-6 border-l-2 border-accent-700 bg-paper-alt px-4 py-3 text-sm text-ink-900"></div>
+
+      <label for="loginEmail" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Email</label>
+      <input id="loginEmail" type="email" autocomplete="username" class="w-full bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-2 mb-5 text-base outline-none" placeholder="ada@northwindlabs.com" />
+
+      <label for="loginPassword" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Password</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" class="w-full bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-2 mb-2 text-base outline-none" placeholder="••••••••" />
+
+      <div class="flex justify-end mb-6">
+        <a href="#" class="text-xs text-ink-700 hover:text-ink-900 underline underline-offset-2">Forgot password?</a>
+      </div>
+
+      <button type="submit" id="loginSubmit" class="w-full bg-ink-900 text-paper py-2.5 text-sm font-medium tracking-wide hover:bg-accent-700 transition-colors">Sign in</button>
+
+      <p id="loginHint" class="mt-4 text-xs text-ink-700">Demo: any email containing <strong class="text-ink-900">ada@</strong> signs in. Anything else fails — three failed attempts trigger a temporary lockout, matching the app's real behavior.</p>
+    </form>
+  </div>
+</div>
+
+<!-- ============================ APP SHELL ============================ -->
+<div id="appShell" hidden>
+  <header class="border-b border-ink-900/10">
+    <div class="max-w-[1400px] mx-auto px-6 md:px-8 py-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <div class="flex items-baseline gap-2 shrink-0">
+        <span class="text-sm font-medium text-ink-900" id="orgNameLabel">Northwind Labs</span>
+        <span class="text-ink-700 text-sm">/</span>
+        <label for="boardSwitcher" class="sr-only">Switch board</label>
+        <select id="boardSwitcher" class="bg-transparent text-sm text-ink-700 hover:text-ink-900 pr-5 py-0.5 border-none outline-none cursor-pointer">
+          <option>Product Ideas</option>
+          <option>Platform Health</option>
+          <option>Customer Requests</option>
+          <option>Q4 Planning</option>
+        </select>
+      </div>
+
+      <nav aria-label="Primary" class="flex items-center gap-5 text-sm">
+        <button data-nav="board" class="nav-tab py-1 border-b-2 border-transparent hover:text-ink-900 text-ink-700" aria-current="page">Board</button>
+        <button data-nav="list" class="nav-tab py-1 border-b-2 border-transparent hover:text-ink-900 text-ink-700">Ideas</button>
+        <button data-nav="statuses" id="statusesTab" class="nav-tab py-1 border-b-2 border-transparent hover:text-ink-900 text-ink-700">Statuses</button>
+      </nav>
+
+      <div class="ml-auto flex items-center gap-4">
+        <button id="newIdeaOpenBtn" class="text-sm font-medium text-accent-700 hover:text-accent-800">+ New idea</button>
+
+        <div class="relative">
+          <button id="userMenuBtn" aria-haspopup="menu" aria-expanded="false" class="flex items-center gap-2 text-sm text-ink-900 hover:text-accent-700">
+            <span class="w-7 h-7 rounded-full border border-ink-900/20 flex items-center justify-center text-[11px] font-medium" id="userMenuInitials">AO</span>
+            <span id="userMenuName">Ada Okafor</span>
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 7l5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div id="userMenuPanel" role="menu" aria-label="User menu" hidden class="absolute right-0 mt-2 w-64 bg-paper border border-ink-900/10 shadow-lg py-2 z-30">
+            <p class="px-4 py-1 text-[11px] uppercase tracking-wide text-ink-700">Preview as (Site Admin capability)</p>
+            <button role="menuitem" class="viewas-pick w-full text-left px-4 py-1.5 text-sm hover:bg-paper-alt" data-user="ben">Ben Torres</button>
+            <button role="menuitem" class="viewas-pick w-full text-left px-4 py-1.5 text-sm hover:bg-paper-alt" data-user="priya">Priya Raman</button>
+            <button role="menuitem" class="viewas-pick w-full text-left px-4 py-1.5 text-sm hover:bg-paper-alt" data-user="marcus">Marcus Webb</button>
+            <button role="menuitem" class="viewas-pick w-full text-left px-4 py-1.5 text-sm hover:bg-paper-alt" data-user="lena">Lena Fischer</button>
+            <div class="border-t border-ink-900/10 my-2"></div>
+            <button role="menuitem" id="signOutBtn" class="w-full text-left px-4 py-1.5 text-sm hover:bg-paper-alt">Sign out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="viewAsBanner" role="status" hidden class="bg-ink-900 text-paper text-sm">
+      <div class="max-w-[1400px] mx-auto px-6 md:px-8 py-2 flex items-center justify-between gap-4">
+        <span>Viewing as <strong id="viewAsName">Ben Torres</strong> — you're seeing Collega as this user would. Their permissions apply, not yours.</span>
+        <button id="exitViewAsBtn" class="underline underline-offset-2 hover:no-underline shrink-0">Exit view as</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="mainArea" class="max-w-[1400px] mx-auto px-6 md:px-8 py-10">
+
+    <!-- ===================== BOARD VIEW ===================== -->
+    <section id="viewBoard" aria-labelledby="boardHeading">
+      <div class="flex items-baseline justify-between mb-8">
+        <h1 id="boardHeading" class="font-display text-3xl"><span id="boardTitle">Product Ideas</span></h1>
+        <p class="text-xs text-ink-700">Swimlanes by status</p>
+      </div>
+      <div id="boardColumns" class="flex gap-6 overflow-x-auto pb-4"></div>
+    </section>
+
+    <!-- ===================== LIST VIEW ===================== -->
+    <section id="viewList" hidden aria-labelledby="listHeading">
+      <h1 id="listHeading" class="font-display text-3xl mb-8">Ideas</h1>
+
+      <div class="flex flex-wrap items-end gap-x-6 gap-y-4 mb-6 pb-5 border-b border-ink-900/10">
+        <div class="flex-1 min-w-[200px]">
+          <label for="filterSearch" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Search</label>
+          <input id="filterSearch" type="search" placeholder="Search idea titles…" class="w-full bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-1.5 text-sm outline-none placeholder:text-ink-700" />
+        </div>
+        <div>
+          <label for="filterStatus" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Status</label>
+          <select id="filterStatus" class="bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-1.5 pr-6 text-sm outline-none"></select>
+        </div>
+        <div>
+          <label for="filterType" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Type</label>
+          <select id="filterType" class="bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-1.5 pr-6 text-sm outline-none">
+            <option value="all">All</option>
+            <option>Feature</option>
+            <option>Bug</option>
+            <option>Improvement</option>
+            <option>Research</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterTag" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Tag</label>
+          <select id="filterTag" class="bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-1.5 pr-6 text-sm outline-none"></select>
+        </div>
+        <div>
+          <label for="filterSort" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Sort</label>
+          <select id="filterSort" class="bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-1.5 pr-6 text-sm outline-none">
+            <option value="upvotes-desc">Most upvoted</option>
+            <option value="comments-desc">Most discussed</option>
+            <option value="impact">Impact</option>
+            <option value="title">Title A–Z</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
+      </div>
+
+      <p id="listCount" aria-live="polite" class="text-xs text-ink-700 mb-4"></p>
+      <ol id="listRows" class="divide-y divide-ink-900/10"></ol>
+    </section>
+
+    <!-- ===================== IDEA DETAIL VIEW ===================== -->
+    <section id="viewDetail" hidden aria-labelledby="detailTitle">
+      <button id="backBtn" class="text-sm text-ink-700 hover:text-ink-900 mb-8 inline-flex items-center gap-1">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M12 15l-5-5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="backBtnLabel">Back to board</span>
+      </button>
+
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-x-12 gap-y-10">
+        <article class="min-w-0">
+          <p class="text-xs uppercase tracking-wide text-ink-700 mb-2" id="detailByline"></p>
+          <h1 id="detailTitle" class="font-display text-4xl leading-tight mb-6"></h1>
+
+          <div id="detailAiStrip" class="ai-strip border border-teal-700/30 bg-teal-50 px-5 py-4 mb-8" hidden>
+            <p class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700 mb-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-teal-700" aria-hidden="true"></span> AI suggestion
+            </p>
+            <p class="italic text-[15px] leading-relaxed text-ink-900 max-w-measure">"Add a note on expected usage patterns — credit limits land very differently for a five-seat org than a five-hundred-seat one, and the research should say which we're optimizing for first."</p>
+            <div class="mt-3 flex gap-5">
+              <button class="ai-accept text-xs font-semibold text-teal-700 hover:text-teal-800 uppercase tracking-wide" data-target="detailDescription" data-append="true">Accept</button>
+              <button class="ai-dismiss text-xs text-ink-700 hover:text-ink-900 uppercase tracking-wide">Dismiss</button>
+            </div>
+          </div>
+
+          <div id="detailDescription" class="max-w-measure text-[16px] leading-relaxed text-ink-900 space-y-4"></div>
+
+          <hr class="border-ink-900/10 my-10" />
+
+          <h2 class="font-display text-2xl mb-5">Comments <span id="commentsCount" class="text-ink-700 text-lg"></span></h2>
+          <ul id="commentsList" class="space-y-6"></ul>
+          <button id="showMoreComments" hidden class="mt-6 text-sm text-accent-700 hover:text-accent-800 font-medium"></button>
+
+          <form id="commentForm" class="mt-8 max-w-measure">
+            <label for="commentInput" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Add a comment</label>
+            <textarea id="commentInput" rows="2" class="w-full bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-2 text-sm outline-none placeholder:text-ink-700" placeholder="Share your thinking…"></textarea>
+            <button type="submit" class="mt-2 text-sm font-medium text-ink-900 hover:text-accent-700">Post comment</button>
+          </form>
+
+          <hr class="border-ink-900/10 my-10" />
+
+          <h2 class="font-display text-2xl mb-5">Activity</h2>
+          <ol id="activityList" class="space-y-3 text-sm text-ink-700"></ol>
+        </article>
+
+        <aside class="space-y-6 text-sm lg:border-l lg:border-ink-900/10 lg:pl-8">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-ink-700 mb-2">Upvotes</p>
+            <button id="detailUpvoteBtn" class="upvote-btn flex items-center gap-2 text-2xl font-display text-ink-900 hover:text-accent-700" data-id="">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4l6 7h-4v5H8v-5H4l6-7z" fill="currentColor"/></svg>
+              <span data-upvote-count="">0</span>
+            </button>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-ink-700 mb-1">Status</p>
+            <p id="detailStatus" class="flex items-center gap-2 text-ink-900"></p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-ink-700 mb-1">Type</p>
+            <p id="detailType" class="text-ink-900"></p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-ink-700 mb-1">Business impact</p>
+            <p id="detailImpact"></p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-ink-700 mb-1">Target release</p>
+            <p id="detailRelease" class="text-ink-900"></p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-ink-700 mb-1">Effort estimate</p>
+            <p id="detailEffort" class="text-ink-900"></p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-ink-700 mb-1">Tags</p>
+            <p id="detailTags" class="text-ink-900"></p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-ink-700 mb-1">Assignee</p>
+            <p id="detailAssignee" class="flex items-center gap-2 text-ink-900"></p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===================== STATUSES ADMIN VIEW ===================== -->
+    <section id="viewStatuses" hidden aria-labelledby="statusesHeading">
+      <h1 id="statusesHeading" class="font-display text-3xl mb-2">Statuses</h1>
+      <p class="text-sm text-ink-700 mb-8 max-w-measure">Reorder statuses to change how they appear across every board's swimlanes. One status is marked default — new ideas start there.</p>
+      <ul id="statusList" class="divide-y divide-ink-900/10 max-w-2xl"></ul>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============================ NEW IDEA MODAL ============================ -->
+<div id="newIdeaModal" hidden class="fixed inset-0 z-40 flex items-start justify-center pt-16 md:pt-24 bg-ink-900/40 px-4">
+  <div role="dialog" aria-modal="true" aria-labelledby="newIdeaTitleHeading" class="bg-paper w-full max-w-xl p-8 max-h-[85vh] overflow-y-auto">
+    <div class="flex items-start justify-between mb-6">
+      <h2 id="newIdeaTitleHeading" class="font-display text-2xl">New idea</h2>
+      <button id="newIdeaCloseBtn" aria-label="Close" class="text-ink-700 hover:text-ink-900 text-xl leading-none">&times;</button>
+    </div>
+
+    <div id="createAiStrip" class="ai-strip border border-teal-700/30 bg-teal-50 px-5 py-4 mb-6">
+      <p class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700 mb-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-teal-700" aria-hidden="true"></span> AI suggestion
+      </p>
+      <p class="italic text-[15px] leading-relaxed text-ink-900">Title: "Dark mode for the board view"</p>
+      <p class="italic text-[15px] leading-relaxed text-ink-900 mt-1">Description: "Several users working in low-light environments have asked for a dark theme. Scope this to the board and idea detail surfaces first — the admin screens see far less continuous reading time."</p>
+      <div class="mt-3 flex gap-5">
+        <button id="createAiAccept" class="text-xs font-semibold text-teal-700 hover:text-teal-800 uppercase tracking-wide">Accept</button>
+        <button class="ai-dismiss text-xs text-ink-700 hover:text-ink-900 uppercase tracking-wide">Dismiss</button>
+      </div>
+    </div>
+
+    <form id="newIdeaForm">
+      <label for="newIdeaTitleInput" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Title</label>
+      <input id="newIdeaTitleInput" type="text" required class="w-full bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-2 mb-5 text-base outline-none" placeholder="Give it a clear, specific title" />
+
+      <label for="newIdeaDescInput" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Description</label>
+      <textarea id="newIdeaDescInput" rows="4" class="w-full bg-transparent border-b border-ink-900/30 focus:border-accent-700 py-2 mb-6 text-base outline-none" placeholder="What problem does this solve, and for whom?"></textarea>
+
+      <div class="flex items-center justify-end gap-5">
+        <button type="button" id="newIdeaCancelBtn" class="text-sm text-ink-700 hover:text-ink-900">Cancel</button>
+        <button type="submit" class="bg-ink-900 text-paper px-5 py-2 text-sm font-medium hover:bg-accent-700 transition-colors">Create idea</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------------------------------------------------------------
+  // Seed data
+  // ---------------------------------------------------------------------
+  var statuses = [
+    { id: 'new',        name: 'New',         color: '#6B7280', isDefault: true  },
+    { id: 'triage',     name: 'Triage',      color: '#F59E0B', isDefault: false },
+    { id: 'planned',    name: 'Planned',     color: '#3B82F6', isDefault: false },
+    { id: 'inprogress', name: 'In Progress', color: '#8B5CF6', isDefault: false },
+    { id: 'shipped',    name: 'Shipped',     color: '#10B981', isDefault: false },
+    { id: 'declined',   name: 'Declined',    color: '#EF4444', isDefault: false }
+  ];
+
+  var users = {
+    ada:    { name: 'Ada Okafor',   role: 'Org Admin', initials: 'AO' },
+    ben:    { name: 'Ben Torres',   role: 'User',       initials: 'BT' },
+    priya:  { name: 'Priya Raman',  role: 'User',       initials: 'PR' },
+    marcus: { name: 'Marcus Webb',  role: 'User',       initials: 'MW' },
+    lena:   { name: 'Lena Fischer', role: 'User',       initials: 'LF' }
+  };
+
+  var boards = ['Product Ideas', 'Platform Health', 'Customer Requests', 'Q4 Planning'];
+
+  var ideas = [
+    { id: 1, title: 'Single sign-on for enterprise customers', type: 'Feature', impact: 'Critical', status: 'planned', upvotes: 34, upvoted: false, comments: 8, tags: ['api','billing'], owner: 'ada',
+      description: [
+        "Several enterprise prospects have named SAML-based single sign-on as a blocking requirement during procurement. This proposal scopes SSO for the initial rollout: SAML 2.0 as the primary protocol, with org-level enforcement so an Org Admin can require it for every member.",
+        "Out of scope for v1: SCIM provisioning and per-user identity-provider overrides — both are natural follow-ups once the core flow is validated with our first enterprise customer."
+      ],
+      release: 'Q1 2027', effort: 'XL', createdDaysAgo: 22,
+      aiOn: true },
+    { id: 2, title: 'Board view drops swimlane order on refresh', type: 'Bug', impact: 'High', status: 'inprogress', upvotes: 12, upvoted: false, comments: 5, tags: ['performance'], owner: 'ben',
+      description: ["Reordering swimlanes on a board persists in memory but is never written back to the server, so a hard refresh silently reverts columns to their default order. Reported independently by three customers after a recent deploy.",
+        "Root cause looks isolated to the board layout endpoint not being called on drag end; a fix is in review."],
+      release: 'Aug 2026 patch', effort: 'S', createdDaysAgo: 9 },
+    { id: 3, title: 'Bulk edit ideas from the list view', type: 'Feature', impact: 'Medium', status: 'new', upvotes: 21, upvoted: false, comments: 3, tags: [], owner: 'priya',
+      description: ["Teams triaging a backlog of fifty or more ideas currently have to open each one individually to change status or tags. This proposes a selection mode on the ideas list — a checkbox per row, and a toolbar for bulk status change, tag add/remove, and reassignment."],
+      release: 'Unscheduled', effort: 'M', createdDaysAgo: 4 },
+    { id: 4, title: 'Keyboard navigation for the idea drawer', type: 'Improvement', impact: 'High', status: 'triage', upvotes: 18, upvoted: false, comments: 6, tags: ['accessibility'], owner: 'lena',
+      description: ["The idea detail surface is not fully operable by keyboard: focus escapes the panel while it's open, and there is no documented shortcut to close it. This is one of three findings from the accessibility paydown audit that block sign-off on the ideas experience."],
+      release: 'Unscheduled', effort: 'M', createdDaysAgo: 12 },
+    { id: 5, title: 'Export board to CSV', type: 'Feature', impact: 'Low', status: 'shipped', upvotes: 9, upvoted: false, comments: 2, tags: ['api'], owner: 'marcus',
+      description: ["Ships a plain CSV export of the current board — title, status, type, impact, tags, and owner — matching the columns visible in the list view's default sort. Filtered exports were considered but cut from v1 to ship the base case sooner."],
+      release: 'Shipped — v2.1', effort: 'S', createdDaysAgo: 40 },
+    { id: 6, title: 'Mobile board scrolling is janky on iOS', type: 'Bug', impact: 'High', status: 'triage', upvotes: 27, upvoted: false, comments: 11, tags: ['mobile','performance'], owner: 'ben',
+      description: ["Horizontal swimlane scrolling on iOS Safari stutters and occasionally scrolls the whole page instead of just the column, most noticeable on boards with six or more statuses.",
+        "Eleven comments and counting — this is our most-discussed open bug."],
+      release: 'Unscheduled', effort: 'M', createdDaysAgo: 6 },
+    { id: 7, title: 'Custom fields on idea types', type: 'Feature', impact: 'Critical', status: 'shipped', upvotes: 41, upvoted: false, comments: 14, tags: [], owner: 'ada',
+      description: ["Org Admins can now define custom fields per idea type — text, number, single-select, and date — and attach them to Feature, Bug, Improvement, or Research.",
+        "Fields appear on the idea detail surface below the standard metadata and are included in CSV export."],
+      release: 'Shipped — v2.4', effort: 'XL', createdDaysAgo: 55 },
+    { id: 8, title: 'Slack notifications for status changes', type: 'Feature', impact: 'Medium', status: 'new', upvotes: 16, upvoted: false, comments: 4, tags: ['api'], owner: 'priya',
+      description: ["Posts a message to a configured Slack channel whenever an idea's status changes, including the idea title, old and new status, and who made the change. Per-board channel mapping, not per-status — routing to different channels by status is a possible v2."],
+      release: 'Unscheduled', effort: 'M', createdDaysAgo: 3 },
+    { id: 9, title: 'Screen reader announces status column twice', type: 'Bug', impact: 'Medium', status: 'planned', upvotes: 7, upvoted: false, comments: 1, tags: ['accessibility'], owner: 'lena',
+      description: ["NVDA and VoiceOver both announce the swimlane column header twice when navigating into a column by heading — once from the visible heading element and once from a redundant label on the container. Removing the duplicate without losing the status color's text alternative is the fix."],
+      release: 'Q3 2026', effort: 'S', createdDaysAgo: 15 },
+    { id: 10, title: 'Per-org AI credit limits', type: 'Research', impact: 'High', status: 'new', upvotes: 5, upvoted: false, comments: 0, tags: ['billing'], owner: 'ada',
+      description: ["AI-assisted drafting is currently unmetered per organization, which makes cost forecasting difficult as adoption grows. This is a research spike into a credit-based limit: what a sensible default allotment looks like, how usage should be surfaced to Org Admins, and what happens at the limit — a hard stop, or a graceful degrade to manual entry."],
+      release: 'Unscheduled', effort: 'L', createdDaysAgo: 2, aiOn: true },
+    { id: 11, title: 'Archive stale ideas automatically', type: 'Improvement', impact: 'Low', status: 'declined', upvotes: 3, upvoted: false, comments: 2, tags: [], owner: 'marcus',
+      description: ["Proposed auto-archiving ideas untouched for 180+ days in a terminal status. Declined after discussion — teams use old declined ideas as a reference when a similar request resurfaces, and archiving made them harder to find."],
+      release: '—', effort: 'S', createdDaysAgo: 60 },
+    { id: 12, title: 'Faster board load for 500+ ideas', type: 'Improvement', impact: 'Critical', status: 'inprogress', upvotes: 31, upvoted: false, comments: 9, tags: ['performance'], owner: 'ben',
+      description: ["Boards past roughly 500 ideas take noticeably longer to render, since every swimlane loads eagerly on first paint.",
+        "This work virtualizes off-screen columns and paginates within a column past 50 ideas, cutting the largest customer board's load time from 4.1s to under 900ms in staging."],
+      release: 'Q3 2026', effort: 'L', createdDaysAgo: 8 }
+  ];
+
+  var commentPool = [
+    { u: 'priya',  t: "This lines up with two similar requests I've seen from the Customer Requests board — worth cross-linking." },
+    { u: 'marcus', t: "Any concern this conflicts with the work already in flight on the performance idea?" },
+    { u: 'lena',   t: "Flagging for the accessibility pass once this is closer to done — happy to help test with a screen reader." },
+    { u: 'ben',    t: "Reproduced this on my end too. Adding a bit more detail to the description above." },
+    { u: 'ada',    t: "Let's get this in front of the next planning review before committing to a release." }
+  ];
+
+  var commentsById = {
+    1: [
+      { u: 'ada',    t: "Procurement flagged this as a blocker for the Meridian deal, so I'd like to see this move to Planned this sprint." },
+      { u: 'ben',    t: "Confirmed SAML 2.0 covers what both Meridian and the Okonkwo Group are asking for. Neither has mentioned OIDC yet." },
+      { u: 'priya',  t: "Worth checking with Lena on the SSO enforcement toggle — does it live on the org settings page or somewhere new?", reply: true },
+      { u: 'lena',   t: "New settings page, scoped under Org Admin. I'll share a draft this week.", reply: true },
+      { u: 'marcus', t: "Is SCIM really out of scope for v1? Meridian's IT team asked about provisioning during the last call." },
+      { u: 'ada',    t: "Confirmed out of scope — we can revisit once SSO itself ships and we see real demand.", reply: true },
+      { u: 'ben',    t: "Moving this to Planned now that scope is settled." },
+      { u: 'priya',  t: "Linked the two related enterprise requests from Customer Requests to this idea for tracking." }
+    ]
+  };
+
+  var dayMs = 86400000;
+  var today = new Date('2026-08-30T09:00:00');
+  function daysAgoLabel(n) {
+    var d = new Date(today.getTime() - n * dayMs);
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+  }
+
+  function getComments(idea) {
+    if (commentsById[idea.id]) return commentsById[idea.id];
+    var out = [];
+    var n = idea.comments;
+    for (var i = 0; i < n; i++) out.push(commentPool[i % commentPool.length]);
+    return out;
+  }
+
+  function getActivity(idea) {
+    var out = [];
+    out.push({ who: users[idea.owner].name, action: 'opened this idea', when: daysAgoLabel(idea.createdDaysAgo) });
+    if (idea.status !== 'new') {
+      var st = statuses.find(function (s) { return s.id === idea.status; });
+      out.push({ who: users[idea.owner].name, action: 'moved status to ' + st.name, when: daysAgoLabel(Math.max(idea.createdDaysAgo - 3, 0)) });
+    }
+    if (idea.tags.length) {
+      out.push({ who: users[idea.owner].name, action: 'tagged ' + idea.tags.map(function (t) { return '#' + t; }).join(', '), when: daysAgoLabel(Math.max(idea.createdDaysAgo - 1, 0)) });
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------
+  var state = {
+    currentView: 'board',
+    previousDetailView: 'board',
+    currentBoard: 'Product Ideas',
+    openIdeaId: null,
+    viewAsUser: null,
+    loginAttempts: 0,
+    locked: false,
+    commentsExpanded: {},
+    filters: { status: 'all', type: 'all', tag: 'all', q: '', sort: 'upvotes-desc' },
+    nextIdeaId: 13
+  };
+
+  var tags = ['mobile', 'api', 'billing', 'accessibility', 'performance'];
+
+  // ---------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------
+  function statusById(id) { return statuses.find(function (s) { return s.id === id; }); }
+
+  function statusDot(color) {
+    return '<span class="inline-block w-2.5 h-2.5 rounded-full ring-1 ring-black/15 align-middle" style="background:' + color + '"></span>';
+  }
+
+  function statusInline(id) {
+    var s = statusById(id);
+    if (!s) return '';
+    return statusDot(s.color) + ' <span>' + s.name + '</span>';
+  }
+
+  function impactClasses(impact) {
+    switch (impact) {
+      case 'Critical': return 'font-bold uppercase tracking-wider text-ink-900';
+      case 'High':     return 'font-semibold uppercase tracking-wide text-ink-900';
+      case 'Medium':   return 'font-medium uppercase tracking-normal text-ink-700';
+      default:         return 'font-normal uppercase tracking-normal text-ink-700';
+    }
+  }
+
+  function tagText(list) {
+    if (!list.length) return '';
+    return list.map(function (t) { return '#' + t; }).join(' ');
+  }
+
+  function initialsFor(userKey) { return users[userKey].initials; }
+  function nameFor(userKey) { return users[userKey].name; }
+
+  function upvoteIconSvg(filled) {
+    return '<svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4l6 7h-4v5H8v-5H4l6-7z" fill="' + (filled ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+  }
+
+  function commentIconSvg() {
+    return '<svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 4h14v9H8l-4 3v-3H3V4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+  }
+
+  // ---------------------------------------------------------------------
+  // View switching
+  // ---------------------------------------------------------------------
+  var viewEls = {
+    board: document.getElementById('viewBoard'),
+    list: document.getElementById('viewList'),
+    detail: document.getElementById('viewDetail'),
+    statuses: document.getElementById('viewStatuses')
+  };
+  var navTabs = document.querySelectorAll('.nav-tab');
+
+  function showAppView(name) {
+    state.currentView = name;
+    Object.keys(viewEls).forEach(function (k) {
+      viewEls[k].hidden = (k !== name);
+    });
+    navTabs.forEach(function (btn) {
+      var active = btn.dataset.nav === name;
+      btn.classList.toggle('border-ink-900', active);
+      btn.classList.toggle('text-ink-900', active);
+      btn.classList.toggle('font-medium', active);
+      btn.classList.toggle('text-ink-700', !active);
+      if (active) btn.setAttribute('aria-current', 'page'); else btn.removeAttribute('aria-current');
+    });
+    if (name === 'board') renderBoard();
+    if (name === 'list') renderList();
+    if (name === 'statuses') renderStatuses();
+    document.getElementById('mainArea').focus && document.getElementById('mainArea').scrollIntoView({ block: 'start' });
+  }
+
+  function openIdea(id) {
+    state.previousDetailView = (state.currentView === 'detail') ? state.previousDetailView : state.currentView;
+    state.openIdeaId = id;
+    renderDetail();
+    Object.keys(viewEls).forEach(function (k) { viewEls[k].hidden = (k !== 'detail'); });
+    state.currentView = 'detail';
+    navTabs.forEach(function (btn) { btn.removeAttribute('aria-current'); btn.classList.remove('border-ink-900','text-ink-900','font-medium'); btn.classList.add('text-ink-700'); });
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+
+  // ---------------------------------------------------------------------
+  // Board render
+  // ---------------------------------------------------------------------
+  function boardEntryHtml(idea) {
+    var owner = users[idea.owner];
+    return '' +
+      '<li>' +
+        '<button class="idea-open text-left w-full group" data-id="' + idea.id + '">' +
+          '<h4 class="font-display text-lg leading-snug text-ink-900 group-hover:text-accent-700">' + idea.title + '</h4>' +
+        '</button>' +
+        '<p class="mt-1 text-xs text-ink-700"><span class="' + impactClasses(idea.impact) + '">' + idea.impact + '</span> &middot; ' + idea.type + '</p>' +
+        '<div class="mt-2 flex items-center gap-3 text-xs text-ink-700">' +
+          '<button class="upvote-btn inline-flex items-center gap-1 hover:text-accent-700 ' + (idea.upvoted ? 'text-accent-700 font-semibold' : '') + '" data-id="' + idea.id + '" aria-pressed="' + idea.upvoted + '" aria-label="Upvote">' +
+            upvoteIconSvg(idea.upvoted) + '<span data-upvote-count="' + idea.id + '">' + idea.upvotes + '</span>' +
+          '</button>' +
+          '<span class="inline-flex items-center gap-1">' + commentIconSvg() + idea.comments + '</span>' +
+          (idea.tags.length ? '<span class="truncate">' + tagText(idea.tags) + '</span>' : '') +
+          '<span class="ml-auto w-6 h-6 rounded-full border border-ink-900/20 flex items-center justify-center text-[10px] shrink-0" title="' + owner.name + '">' + owner.initials + '</span>' +
+        '</div>' +
+      '</li>';
+  }
+
+  function renderBoard() {
+    document.getElementById('boardTitle').textContent = state.currentBoard;
+    var container = document.getElementById('boardColumns');
+    if (state.currentBoard !== 'Product Ideas') {
+      container.innerHTML = '<p class="text-sm text-ink-700 py-16">No ideas yet on ' + state.currentBoard + '. This board is empty in the demo — try Product Ideas.</p>';
+      return;
+    }
+    container.innerHTML = statuses.map(function (s) {
+      var colIdeas = ideas.filter(function (i) { return i.status === s.id; });
+      return '' +
+        '<div class="flex-1 min-w-[240px] px-5 first:pl-0 border-l border-ink-900/10 first:border-l-0">' +
+          '<h3 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-700 mb-5">' +
+            statusDot(s.color) +
+            '<span>' + s.name + '</span>' +
+            '<span class="text-ink-700 font-normal normal-case tracking-normal">(' + colIdeas.length + ')</span>' +
+          '</h3>' +
+          '<ul class="space-y-6">' + (colIdeas.length ? colIdeas.map(boardEntryHtml).join('') : '<li class="text-xs text-ink-700 italic">No ideas</li>') + '</ul>' +
+        '</div>';
+    }).join('');
+  }
+
+  // ---------------------------------------------------------------------
+  // List render
+  // ---------------------------------------------------------------------
+  function listRowHtml(idea) {
+    var owner = users[idea.owner];
+    return '' +
+      '<li class="py-6 first:pt-0">' +
+        '<button class="idea-open text-left w-full group" data-id="' + idea.id + '">' +
+          '<h3 class="font-display text-2xl leading-snug text-ink-900 group-hover:text-accent-700">' + idea.title + '</h3>' +
+        '</button>' +
+        '<div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-ink-700">' +
+          '<span class="inline-flex items-center gap-1.5">' + statusInline(idea.status) + '</span>' +
+          '<span aria-hidden="true">&middot;</span>' +
+          '<span>' + idea.type + '</span>' +
+          '<span aria-hidden="true">&middot;</span>' +
+          '<span class="' + impactClasses(idea.impact) + '">' + idea.impact + '</span>' +
+          '<span aria-hidden="true">&middot;</span>' +
+          '<button class="upvote-btn inline-flex items-center gap-1 hover:text-accent-700 ' + (idea.upvoted ? 'text-accent-700 font-semibold' : '') + '" data-id="' + idea.id + '" aria-pressed="' + idea.upvoted + '" aria-label="Upvote">' +
+            upvoteIconSvg(idea.upvoted) + '<span data-upvote-count="' + idea.id + '">' + idea.upvotes + '</span>' +
+          '</button>' +
+          '<span>' + idea.comments + ' comments</span>' +
+          (idea.tags.length ? idea.tags.map(function (t) { return '<button class="tag-filter hover:text-accent-700 hover:underline underline-offset-2" data-tag="' + t + '">#' + t + '</button>'; }).join('') : '') +
+          '<span class="ml-auto">' + owner.name + '</span>' +
+        '</div>' +
+      '</li>';
+  }
+
+  function populateFilterSelects() {
+    var statusSel = document.getElementById('filterStatus');
+    statusSel.innerHTML = '<option value="all">All</option>' + statuses.map(function (s) { return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');
+    var tagSel = document.getElementById('filterTag');
+    tagSel.innerHTML = '<option value="all">All</option>' + tags.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+  }
+
+  function syncListControlsFromState() {
+    document.getElementById('filterSearch').value = state.filters.q;
+    document.getElementById('filterStatus').value = state.filters.status;
+    document.getElementById('filterType').value = state.filters.type;
+    document.getElementById('filterTag').value = state.filters.tag;
+    document.getElementById('filterSort').value = state.filters.sort;
+  }
+
+  var impactOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+  function renderList() {
+    var f = state.filters;
+    var result = ideas.filter(function (i) {
+      return (f.status === 'all' || i.status === f.status) &&
+             (f.type === 'all' || i.type === f.type) &&
+             (f.tag === 'all' || i.tags.indexOf(f.tag) !== -1) &&
+             (f.q === '' || i.title.toLowerCase().indexOf(f.q.toLowerCase()) !== -1);
+    });
+    result = result.slice();
+    switch (f.sort) {
+      case 'upvotes-desc': result.sort(function (a, b) { return b.upvotes - a.upvotes; }); break;
+      case 'comments-desc': result.sort(function (a, b) { return b.comments - a.comments; }); break;
+      case 'impact': result.sort(function (a, b) { return impactOrder[a.impact] - impactOrder[b.impact]; }); break;
+      case 'title': result.sort(function (a, b) { return a.title.localeCompare(b.title); }); break;
+      case 'status': result.sort(function (a, b) { return statuses.findIndex(function(s){return s.id===a.status;}) - statuses.findIndex(function(s){return s.id===b.status;}); }); break;
+    }
+    document.getElementById('listCount').textContent = result.length + ' of ' + ideas.length + ' ideas';
+    document.getElementById('listRows').innerHTML = result.length ? result.map(listRowHtml).join('') : '<li class="py-10 text-sm text-ink-700">No ideas match these filters.</li>';
+  }
+
+  // ---------------------------------------------------------------------
+  // Detail render
+  // ---------------------------------------------------------------------
+  function commentRowHtml(c, idx) {
+    return '' +
+      '<li class="' + (c.reply ? 'ml-8 pl-4 border-l border-ink-900/10' : '') + '">' +
+        '<p class="text-sm"><span class="font-medium text-ink-900">' + nameFor(c.u) + '</span> <span class="text-ink-700">&middot; ' + daysAgoLabel(idx + 1) + '</span></p>' +
+        '<p class="mt-1 text-[15px] leading-relaxed text-ink-900 max-w-measure">' + c.t + '</p>' +
+      '</li>';
+  }
+
+  function renderDetail() {
+    var idea = ideas.find(function (i) { return i.id === state.openIdeaId; });
+    if (!idea) return;
+    var owner = users[idea.owner];
+
+    document.getElementById('backBtnLabel').textContent = 'Back to ' + (state.previousDetailView === 'list' ? 'ideas' : 'board');
+    document.getElementById('detailByline').textContent = 'Opened by ' + owner.name + ' · ' + daysAgoLabel(idea.createdDaysAgo);
+    document.getElementById('detailTitle').textContent = idea.title;
+    document.getElementById('detailDescription').innerHTML = idea.description.map(function (p) { return '<p>' + p + '</p>'; }).join('');
+
+    var aiStrip = document.getElementById('detailAiStrip');
+    aiStrip.classList.remove('ai-leaving');
+    aiStrip.hidden = !idea.aiOn;
+
+    document.getElementById('detailUpvoteBtn').dataset.id = idea.id;
+    document.getElementById('detailUpvoteBtn').setAttribute('aria-pressed', idea.upvoted);
+    document.getElementById('detailUpvoteBtn').classList.toggle('text-accent-700', idea.upvoted);
+    var upvoteCountSpan = document.getElementById('detailUpvoteBtn').querySelector('[data-upvote-count]');
+    upvoteCountSpan.dataset.upvoteCount = idea.id;
+    upvoteCountSpan.textContent = idea.upvotes;
+
+    document.getElementById('detailStatus').innerHTML = statusInline(idea.status);
+    document.getElementById('detailType').textContent = idea.type;
+    document.getElementById('detailImpact').innerHTML = '<span class="' + impactClasses(idea.impact) + '">' + idea.impact + '</span>';
+    document.getElementById('detailRelease').textContent = idea.release;
+    document.getElementById('detailEffort').textContent = idea.effort;
+    document.getElementById('detailTags').textContent = idea.tags.length ? tagText(idea.tags) : '—';
+    document.getElementById('detailAssignee').innerHTML = '<span class="w-6 h-6 rounded-full border border-ink-900/20 flex items-center justify-center text-[10px] shrink-0">' + owner.initials + '</span><span>' + owner.name + '</span>';
+
+    var comments = getComments(idea);
+    document.getElementById('commentsCount').textContent = '(' + comments.length + ')';
+    var expanded = !!state.commentsExpanded[idea.id];
+    var initialCount = 4;
+    var toShow = expanded ? comments : comments.slice(0, initialCount);
+    document.getElementById('commentsList').innerHTML = toShow.length ? toShow.map(commentRowHtml).join('') : '<li class="text-sm text-ink-700 italic">No comments yet.</li>';
+    var moreBtn = document.getElementById('showMoreComments');
+    if (comments.length > initialCount && !expanded) {
+      moreBtn.hidden = false;
+      moreBtn.textContent = 'Show ' + (comments.length - initialCount) + ' more comments';
+    } else {
+      moreBtn.hidden = true;
+    }
+
+    document.getElementById('activityList').innerHTML = getActivity(idea).map(function (a) {
+      return '<li><span class="text-ink-900">' + a.who + '</span> ' + a.action + ' — ' + a.when + '</li>';
+    }).join('');
+  }
+
+  // ---------------------------------------------------------------------
+  // Statuses admin render
+  // ---------------------------------------------------------------------
+  function renderStatuses() {
+    document.getElementById('statusList').innerHTML = statuses.map(function (s, idx) {
+      return '' +
+        '<li class="flex items-center gap-4 py-4">' +
+          '<span class="w-4 h-4 rounded-full ring-1 ring-black/15 shrink-0" style="background:' + s.color + '" aria-hidden="true"></span>' +
+          '<span class="flex-1 text-base text-ink-900">' + s.name + '</span>' +
+          '<code class="text-xs text-ink-700">' + s.color + '</code>' +
+          '<button class="set-default text-xs uppercase tracking-wide px-2 py-1 ' + (s.isDefault ? 'text-accent-700 font-semibold' : 'text-ink-700 hover:text-ink-900') + '" data-id="' + s.id + '">' + (s.isDefault ? '● Default' : 'Set default') + '</button>' +
+          '<div class="flex flex-col gap-0.5">' +
+            '<button class="move-up text-ink-700 hover:text-ink-900 disabled:opacity-30 disabled:cursor-not-allowed" aria-label="Move ' + s.name + ' up" data-id="' + s.id + '" ' + (idx === 0 ? 'disabled' : '') + '>▲</button>' +
+            '<button class="move-down text-ink-700 hover:text-ink-900 disabled:opacity-30 disabled:cursor-not-allowed" aria-label="Move ' + s.name + ' down" data-id="' + s.id + '" ' + (idx === statuses.length - 1 ? 'disabled' : '') + '>▼</button>' +
+          '</div>' +
+        '</li>';
+    }).join('');
+  }
+
+  // ---------------------------------------------------------------------
+  // Upvote toggling
+  // ---------------------------------------------------------------------
+  function toggleUpvote(id) {
+    var idea = ideas.find(function (i) { return i.id === id; });
+    if (!idea) return;
+    idea.upvoted = !idea.upvoted;
+    idea.upvotes += idea.upvoted ? 1 : -1;
+    document.querySelectorAll('[data-upvote-count="' + id + '"]').forEach(function (el) { el.textContent = idea.upvotes; });
+    document.querySelectorAll('.upvote-btn[data-id="' + id + '"]').forEach(function (btn) {
+      btn.setAttribute('aria-pressed', idea.upvoted);
+      btn.classList.toggle('text-accent-700', idea.upvoted);
+      btn.classList.toggle('font-semibold', idea.upvoted);
+      var svg = btn.querySelector('svg path');
+      if (svg) svg.setAttribute('fill', idea.upvoted ? 'currentColor' : 'none');
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // AI strip ghost-then-drop
+  // ---------------------------------------------------------------------
+  function ghostDrop(el) {
+    if (!el) return;
+    el.style.maxHeight = el.scrollHeight + 'px';
+    el.style.marginTop = getComputedStyle(el).marginTop;
+    el.style.marginBottom = getComputedStyle(el).marginBottom;
+    // force reflow then collapse
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        el.classList.add('ai-leaving');
+      });
+    });
+    el.addEventListener('transitionend', function handler(e) {
+      if (e.propertyName === 'max-height') {
+        el.hidden = true;
+        el.removeEventListener('transitionend', handler);
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // View As
+  // ---------------------------------------------------------------------
+  function setViewAs(userKey) {
+    state.viewAsUser = userKey;
+    var u = users[userKey];
+    document.getElementById('viewAsBanner').hidden = false;
+    document.getElementById('viewAsName').textContent = u.name;
+    document.getElementById('userMenuName').textContent = u.name;
+    document.getElementById('userMenuInitials').textContent = u.initials;
+    document.getElementById('statusesTab').hidden = true; // impersonated users here are not Org Admins
+    if (state.currentView === 'statuses') showAppView('board');
+  }
+
+  function exitViewAs() {
+    state.viewAsUser = null;
+    document.getElementById('viewAsBanner').hidden = true;
+    document.getElementById('userMenuName').textContent = 'Ada Okafor';
+    document.getElementById('userMenuInitials').textContent = 'AO';
+    document.getElementById('statusesTab').hidden = false;
+  }
+
+  // ---------------------------------------------------------------------
+  // Login
+  // ---------------------------------------------------------------------
+  function resetLoginDemo() {
+    state.loginAttempts = 0;
+    state.locked = false;
+    document.getElementById('loginAlert').hidden = true;
+    document.getElementById('loginSubmit').disabled = false;
+    document.getElementById('loginEmail').disabled = false;
+    document.getElementById('loginPassword').disabled = false;
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+  }
+
+  function showLogin() {
+    document.getElementById('appShell').hidden = true;
+    document.getElementById('viewLogin').hidden = false;
+    resetLoginDemo();
+  }
+
+  function enterApp() {
+    document.getElementById('viewLogin').hidden = true;
+    document.getElementById('appShell').hidden = false;
+    exitViewAs();
+    showAppView('board');
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (state.locked) return;
+    var email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    var alertBox = document.getElementById('loginAlert');
+    if (email.indexOf('ada@') !== -1) {
+      enterApp();
+      return;
+    }
+    state.loginAttempts++;
+    var remaining = 3 - state.loginAttempts;
+    if (remaining > 0) {
+      alertBox.hidden = false;
+      alertBox.className = 'mb-6 border-l-2 border-accent-700 bg-paper-alt px-4 py-3 text-sm text-ink-900';
+      alertBox.textContent = 'Incorrect email or password. ' + remaining + ' attempt' + (remaining === 1 ? '' : 's') + ' remaining before a temporary lockout.';
+    } else {
+      state.locked = true;
+      alertBox.hidden = false;
+      alertBox.className = 'mb-6 border-l-2 border-accent-800 bg-paper-alt px-4 py-3 text-sm text-ink-900';
+      alertBox.textContent = 'Too many failed attempts. This account is temporarily locked for 15 minutes. Contact your Org Admin if you need it unlocked sooner.';
+      document.getElementById('loginSubmit').disabled = true;
+      document.getElementById('loginEmail').disabled = true;
+      document.getElementById('loginPassword').disabled = true;
+    }
+  });
+
+  // ---------------------------------------------------------------------
+  // New idea modal
+  // ---------------------------------------------------------------------
+  var lastFocusedBeforeModal = null;
+  function openNewIdeaModal() {
+    lastFocusedBeforeModal = document.activeElement;
+    document.getElementById('newIdeaModal').hidden = false;
+    document.getElementById('createAiStrip').hidden = false;
+    document.getElementById('createAiStrip').classList.remove('ai-leaving');
+    document.getElementById('newIdeaTitleInput').value = '';
+    document.getElementById('newIdeaDescInput').value = '';
+    document.getElementById('newIdeaTitleInput').focus();
+  }
+  function closeNewIdeaModal() {
+    document.getElementById('newIdeaModal').hidden = true;
+    if (lastFocusedBeforeModal) lastFocusedBeforeModal.focus();
+  }
+
+  document.getElementById('newIdeaOpenBtn').addEventListener('click', openNewIdeaModal);
+  document.getElementById('newIdeaCloseBtn').addEventListener('click', closeNewIdeaModal);
+  document.getElementById('newIdeaCancelBtn').addEventListener('click', closeNewIdeaModal);
+
+  document.getElementById('createAiAccept').addEventListener('click', function () {
+    document.getElementById('newIdeaTitleInput').value = 'Dark mode for the board view';
+    document.getElementById('newIdeaDescInput').value = 'Several users working in low-light environments have asked for a dark theme. Scope this to the board and idea detail surfaces first — the admin screens see far less continuous reading time.';
+    ghostDrop(document.getElementById('createAiStrip'));
+  });
+
+  document.getElementById('newIdeaForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var title = document.getElementById('newIdeaTitleInput').value.trim() || 'Untitled idea';
+    var desc = document.getElementById('newIdeaDescInput').value.trim() || 'No description provided yet.';
+    var id = state.nextIdeaId++;
+    var newIdea = {
+      id: id, title: title, type: 'Feature', impact: 'Medium', status: 'new',
+      upvotes: 0, upvoted: false, comments: 0, tags: [], owner: 'ada',
+      description: [desc], release: 'Unscheduled', effort: 'M', createdDaysAgo: 0
+    };
+    ideas.unshift(newIdea);
+    closeNewIdeaModal();
+    openIdea(id);
+  });
+
+  // Modal: escape to close, basic focus trap
+  document.getElementById('newIdeaModal').addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeNewIdeaModal(); return; }
+    if (e.key === 'Tab') {
+      var focusables = this.querySelectorAll('button, input, textarea, [href]');
+      if (!focusables.length) return;
+      var first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // ---------------------------------------------------------------------
+  // Comment form
+  // ---------------------------------------------------------------------
+  document.getElementById('commentForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var idea = ideas.find(function (i) { return i.id === state.openIdeaId; });
+    var text = document.getElementById('commentInput').value.trim();
+    if (!idea || !text) return;
+    if (!commentsById[idea.id]) commentsById[idea.id] = getComments(idea).slice();
+    commentsById[idea.id].push({ u: state.viewAsUser || 'ada', t: text });
+    idea.comments++;
+    state.commentsExpanded[idea.id] = true;
+    document.getElementById('commentInput').value = '';
+    renderDetail();
+    document.querySelectorAll('[data-upvote-count="' + idea.id + '"]');
+  });
+
+  // ---------------------------------------------------------------------
+  // User menu
+  // ---------------------------------------------------------------------
+  var userMenuBtn = document.getElementById('userMenuBtn');
+  var userMenuPanel = document.getElementById('userMenuPanel');
+  function closeUserMenu() {
+    userMenuPanel.hidden = true;
+    userMenuBtn.setAttribute('aria-expanded', 'false');
+  }
+  function toggleUserMenu() {
+    var open = userMenuPanel.hidden;
+    userMenuPanel.hidden = !open;
+    userMenuBtn.setAttribute('aria-expanded', String(open));
+    if (open) { var first = userMenuPanel.querySelector('button'); if (first) first.focus(); }
+  }
+  userMenuBtn.addEventListener('click', toggleUserMenu);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !userMenuPanel.hidden) { closeUserMenu(); userMenuBtn.focus(); }
+  });
+
+  // ---------------------------------------------------------------------
+  // Delegated click handling
+  // ---------------------------------------------------------------------
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+
+    var openBtn = t.closest('.idea-open');
+    if (openBtn) { openIdea(parseInt(openBtn.dataset.id, 10)); return; }
+
+    var upBtn = t.closest('.upvote-btn');
+    if (upBtn) { toggleUpvote(parseInt(upBtn.dataset.id, 10)); return; }
+
+    var tagBtn = t.closest('.tag-filter');
+    if (tagBtn) {
+      state.filters.tag = tagBtn.dataset.tag;
+      showAppView('list');
+      syncListControlsFromState();
+      renderList();
+      return;
+    }
+
+    var moveUp = t.closest('.move-up');
+    if (moveUp && !moveUp.disabled) {
+      var idU = moveUp.dataset.id;
+      var iU = statuses.findIndex(function (s) { return s.id === idU; });
+      if (iU > 0) { var tmp = statuses[iU - 1]; statuses[iU - 1] = statuses[iU]; statuses[iU] = tmp; renderStatuses(); }
+      return;
+    }
+    var moveDown = t.closest('.move-down');
+    if (moveDown && !moveDown.disabled) {
+      var idD = moveDown.dataset.id;
+      var iD = statuses.findIndex(function (s) { return s.id === idD; });
+      if (iD < statuses.length - 1) { var tmp2 = statuses[iD + 1]; statuses[iD + 1] = statuses[iD]; statuses[iD] = tmp2; renderStatuses(); }
+      return;
+    }
+    var setDefault = t.closest('.set-default');
+    if (setDefault) {
+      var idSD = setDefault.dataset.id;
+      statuses.forEach(function (s) { s.isDefault = (s.id === idSD); });
+      renderStatuses();
+      return;
+    }
+
+    var aiAccept = t.closest('.ai-accept');
+    if (aiAccept) {
+      var targetId = aiAccept.dataset.target;
+      var targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        var extra = document.createElement('p');
+        extra.textContent = aiAccept.closest('.ai-strip').querySelector('p.italic').textContent.replace(/^"|"$/g, '');
+        targetEl.appendChild(extra);
+      }
+      ghostDrop(aiAccept.closest('.ai-strip'));
+      return;
+    }
+    var aiDismiss = t.closest('.ai-dismiss');
+    if (aiDismiss) { ghostDrop(aiDismiss.closest('.ai-strip')); return; }
+
+    var showMore = t.closest('#showMoreComments');
+    if (showMore) {
+      state.commentsExpanded[state.openIdeaId] = true;
+      renderDetail();
+      return;
+    }
+
+    var navBtn = t.closest('[data-nav]');
+    if (navBtn) { showAppView(navBtn.dataset.nav); return; }
+
+    var quickNav = t.closest('[data-quicknav]');
+    if (quickNav) {
+      var target = quickNav.dataset.quicknav;
+      if (target === 'login') { showLogin(); return; }
+      if (document.getElementById('appShell').hidden) enterApp();
+      if (target === 'detail') { openIdea(1); return; }
+      showAppView(target);
+      return;
+    }
+
+    var viewAsPick = t.closest('.viewas-pick');
+    if (viewAsPick) { setViewAs(viewAsPick.dataset.user); closeUserMenu(); return; }
+
+    if (t.closest('#exitViewAsBtn')) { exitViewAs(); return; }
+    if (t.closest('#signOutBtn')) { closeUserMenu(); showLogin(); return; }
+
+    var backBtn = t.closest('#backBtn');
+    if (backBtn) { showAppView(state.previousDetailView); return; }
+
+    if (!t.closest('#userMenuBtn') && !t.closest('#userMenuPanel')) closeUserMenu();
+  });
+
+  // Board switcher
+  document.getElementById('boardSwitcher').addEventListener('change', function () {
+    state.currentBoard = this.value;
+    renderBoard();
+  });
+
+  // List filter controls
+  ['filterStatus','filterType','filterTag','filterSort'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', function () {
+      state.filters[id.replace('filter', '').toLowerCase()] = this.value;
+      renderList();
+    });
+  });
+  document.getElementById('filterSearch').addEventListener('input', function () {
+    state.filters.q = this.value;
+    renderList();
+  });
+
+  // ---------------------------------------------------------------------
+  // Init
+  // ---------------------------------------------------------------------
+  populateFilterSelects();
+  syncListControlsFromState();
+  showLogin();
+})();
+</script>
+</body>
+</html>

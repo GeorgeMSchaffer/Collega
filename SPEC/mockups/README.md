@@ -65,3 +65,24 @@ All three comps demonstrate spec behaviors: globally unique email sign-in (no or
 - Keep required provider components in root layout when implementing service-based UI: `FluentToastProvider`, `FluentDialogProvider`, `FluentMessageBarProvider`, `FluentTooltipProvider`, and `FluentKeyCodeProvider`.
 - Use service patterns for dialogs and toasts during implementation rather than toggling dialog visibility directly.
 - Do not add manual script or stylesheet tags for the Fluent library; rely on package-provided assets and initializers.
+
+## Redesign Comps for the TypeScript Conversion (2026-08-30)
+
+**These four comps are for a prospective stack conversion, not for the current Blazor app.** They exist to answer ticket `01` of the wayfinder map at `.scratch/typescript-conversion/map.md`, where Comp C "Fluent Editorial" is deliberately **unlocked** so the redesign can be argued on merit. Comp C remains the locked direction for the .NET client; nothing here changes that, and nothing here should be built against until ticket `01` is resolved.
+
+Each comp commits to a different design language *and* a different component library, so the comparison tests both at once. All four render identical seed content (Northwind Labs, 4 boards, 6 statuses, the same 12 ideas) across the same five surfaces — board, ideas list, idea detail, statuses admin, login — plus an app shell with board switcher, user menu, a toggleable View As banner, and an AI draft strip. Open in a browser; all interactions are live.
+
+- `comp-j-command-deck.html` — **Command Deck** (Tailwind, hand-rolled primitives): dense, keyboard-first, dark-by-default, in the Linear/Height idiom. Real Cmd/Ctrl+K command palette, `J`/`K` selection movement, `U` to upvote. Grayscale ground with a single cyan accent.
+- `comp-k-material-workspace.html` — **Material Workspace** (Material Design 3 via CSS custom properties): navigation rail, rail-FAB, real MD3 color roles with independently correct light/dark schemes, five elevation levels, state layers and ripples. The argument that familiarity is a feature.
+- `comp-l-canvas-board.html` — **Canvas Board** (Bootstrap 5.3, heavily re-themed): warm bone/sand ground with a terracotta accent, cards as physical objects, working drag-and-drop between columns with a keyboard-equivalent "Move to" menu. The argument that idea tracking should feel inviting.
+- `comp-m-editorial-continuum.html` — **Editorial Continuum** (Tailwind): Comp C's typographic language carried forward and freed from Fluent's component constraints. Geist for chrome, Fraunces for content headings, hierarchy from type rather than containers, idea detail as a magazine article. Teal reserved exclusively for AI affordances.
+
+### Findings worth carrying into the decision
+
+Three critiques surfaced independently while the comps were built, and they are more useful than the comps themselves:
+
+1. **Board density is contested by the product's own roadmap.** Comps L and M each flagged, without prompting, that a spacious board surface fights the seeded idea "Faster board load for 500+ ideas." Two directions converging on this suggests the board and the idea-detail surface may want different density treatments regardless of which direction wins.
+2. **The real axis is who the primary user is.** Comp J's density serves someone who lives in the tool all day and reads as intimidating to an org admin triaging a handful of ideas weekly. Comp K's MD3 vocabulary is the inverse trade. That is a product question, not a taste question, and it should be settled before the look is.
+3. **A Tailwind trap worth remembering in the real build:** an element carrying both the `hidden` attribute and a `flex`/`grid` display class renders visible, because the display class overrides the UA `[hidden]{display:none}` rule. It silently exposed drawers, modals and banners on load. A global `[hidden]{display:none!important}` fixes it.
+
+Comps J and K were additionally verified by driving them in a real browser rather than by inspection, which caught several bugs that static review had missed.

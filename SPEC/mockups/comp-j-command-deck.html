@@ -1,0 +1,1474 @@
+<!--
+  COMP J — "Command Deck"
+  Library: Tailwind CSS (Play CDN) + hand-rolled primitives. No component library.
+  Fonts: Inter (UI text) + JetBrains Mono (IDs, counts, tags, timestamps) via Google Fonts.
+
+  Design decisions committed to for this direction:
+  1. Grayscale ground, ONE accent (cyan). Status/impact color only ever appears as a small
+     swatch/dot next to a text label — never as a full colored badge background — so the
+     "one sharp accent" rule stays true and every colored dot is a decoration on top of text
+     that already carries the meaning (contrast-safe, not color-only).
+  2. Density over whitespace. Board cards and list rows use ~4-6px vertical rhythm, monospace
+     for anything scannable-as-data (idea IDs, upvote/comment counts, tags, timestamps), and a
+     persistent two-row app header so more of the viewport is idea data, not chrome.
+  3. Keyboard is a first-class input, not an add-on. Cmd/Ctrl+K opens a real command palette
+     (filters as you type, arrow keys + Enter, Esc to close). J/K move a visible selection
+     across board cards or list rows; Enter opens the drawer; U upvotes; / focuses the nearest
+     search box. Every shortcut is echoed as a <kbd> hint on the affordance it triggers.
+  4. Dark-first. All colors are authored as dark-mode defaults with explicit light overrides
+     (Tailwind `dark:` class strategy), not the other way around — the toggle in the header
+     flips a class on <html> and persists to localStorage.
+  5. Everything that looks clickable is clickable: board/list/drawer/statuses/login are one
+     page with real state, upvotes persist in memory, comments append, statuses reorder via
+     drag AND up/down buttons (keyboard-equivalent), and the AI draft strip actually fills the
+     title/description fields on Accept.
+
+  Open question for the team (not a defect in this comp, a product question): the density and
+  keyboard-first affordances here are aimed at power users who live in this tool all day. If a
+  meaningful share of Collega's actual users are occasional/casual (an org admin who logs in
+  once a week to triage), this direction may read as intimidating rather than efficient for
+  them — worth weighing against the other three comps with that audience in mind.
+-->
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Comp J — Command Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        },
+        colors: {
+          canvas: { DEFAULT: '#f4f4f5', dark: '#0a0a0b' },
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { color-scheme: dark; }
+  html.light-mode { color-scheme: light; }
+  * { scrollbar-width: thin; scrollbar-color: #52525b transparent; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #52525b; border-radius: 9999px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  body { font-feature-settings: "tnum" 1, "cv02" 1; }
+  /* Tailwind's .flex/.grid utilities (equal specificity, later in cascade) otherwise
+     beat the UA [hidden]{display:none} rule on elements that use both. */
+  [hidden] { display: none !important; }
+  kbd.key {
+    font-family: '"JetBrains Mono"', ui-monospace, monospace;
+    font-size: 10px;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    border-bottom-width: 2px;
+  }
+  [data-selected="true"] { outline: 2px solid #22d3ee; outline-offset: -2px; }
+  .drag-ghost { opacity: 0.4; }
+  @keyframes toast-in { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
+  .toast-anim { animation: toast-in 0.15s ease-out; }
+  .ai-glow { box-shadow: 0 0 0 1px rgba(34,211,238,0.35), 0 0 24px -6px rgba(34,211,238,0.35); }
+</style>
+</head>
+<body class="font-sans bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased">
+
+<a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-cyan-600 focus:text-white focus:px-3 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium">Skip to main content</a>
+
+<!-- ============================== VIEW AS BANNER ============================== -->
+<div id="view-as-banner" hidden class="sticky top-0 z-40 bg-amber-500 text-zinc-950 text-xs font-medium px-3 py-1.5 flex items-center justify-center gap-2">
+  <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17.5 3.5c.6-.6 1.6-.6 2.2 0l.8.8c.6.6.6 1.6 0 2.2L9 18l-4 1 1-4L17.5 3.5z"/></svg>
+  <span>Viewing as <strong id="view-as-name">Ben Torres</strong> (User) — actions are performed as this user.</span>
+  <button id="exit-view-as" class="ml-2 underline decoration-dotted underline-offset-2 hover:decoration-solid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-zinc-950 rounded">Exit</button>
+</div>
+
+<!-- ============================== APP HEADER ============================== -->
+<header class="sticky top-0 z-30 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur">
+  <div class="h-12 flex items-center gap-3 px-3">
+    <div class="flex items-center gap-2 pr-3 border-r border-zinc-200 dark:border-zinc-800 shrink-0">
+      <div class="w-6 h-6 rounded bg-cyan-600 dark:bg-cyan-400 grid place-items-center">
+        <span class="text-white dark:text-zinc-950 font-bold text-xs">C</span>
+      </div>
+      <span class="font-semibold text-sm tracking-tight hidden sm:inline">Northwind Labs</span>
+    </div>
+
+    <!-- Board switcher -->
+    <div class="relative shrink-0">
+      <button id="board-switcher-btn" aria-haspopup="listbox" aria-expanded="false" class="flex items-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+        <svg class="w-3.5 h-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="16" rx="1"/><rect x="12" y="4" width="4" height="10" rx="1"/><rect x="18" y="4" width="3" height="7" rx="1"/></svg>
+        <span id="board-switcher-label">Product Ideas</span>
+        <svg class="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <ul id="board-switcher-menu" role="listbox" aria-label="Switch board" hidden class="absolute left-0 mt-1 w-56 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl py-1 text-sm z-40">
+      </ul>
+    </div>
+
+    <!-- Surface tabs -->
+    <nav aria-label="Surfaces" class="hidden md:flex items-center gap-0.5 ml-1" id="surface-tabs" role="tablist">
+      <button role="tab" data-surface="board" aria-selected="true" class="surface-tab px-2.5 py-1.5 rounded-md text-sm font-medium">Board</button>
+      <button role="tab" data-surface="list" aria-selected="false" class="surface-tab px-2.5 py-1.5 rounded-md text-sm font-medium">Ideas List</button>
+      <button role="tab" data-surface="statuses" aria-selected="false" class="surface-tab px-2.5 py-1.5 rounded-md text-sm font-medium">Statuses</button>
+      <button role="tab" data-surface="login" aria-selected="false" class="surface-tab px-2.5 py-1.5 rounded-md text-sm font-medium">Login</button>
+    </nav>
+
+    <div class="flex-1"></div>
+
+    <!-- Command palette trigger -->
+    <button id="open-palette-btn" class="hidden sm:flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md px-2.5 py-1.5 min-w-[180px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <span>Jump to…</span>
+      <span class="ml-auto flex gap-0.5">
+        <kbd class="key bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600 text-zinc-600 dark:text-zinc-300">⌘</kbd><kbd class="key bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600 text-zinc-600 dark:text-zinc-300">K</kbd>
+      </span>
+    </button>
+
+    <!-- Theme toggle -->
+    <button id="theme-toggle" aria-pressed="false" aria-label="Toggle light and dark theme" title="Toggle theme" class="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+      <svg id="icon-sun" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg id="icon-moon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
+    </button>
+
+    <!-- User menu -->
+    <div class="relative">
+      <button id="user-menu-btn" aria-haspopup="menu" aria-expanded="false" class="flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+        <span class="w-6 h-6 rounded-full bg-zinc-700 dark:bg-zinc-700 text-white text-[10px] font-semibold grid place-items-center">AO</span>
+        <span class="hidden lg:inline text-sm font-medium">Ada Okafor</span>
+        <svg class="w-3 h-3 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div id="user-menu" role="menu" hidden class="absolute right-0 mt-1 w-64 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl py-1 text-sm z-40">
+        <div class="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
+          <div class="font-medium">Ada Okafor</div>
+          <div class="text-xs text-zinc-500">Org Admin · Northwind Labs</div>
+        </div>
+        <button role="menuitem" id="toggle-view-as" class="w-full text-left px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2">
+          <svg class="w-4 h-4 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span id="view-as-toggle-label">Demo: View As Ben Torres</span>
+        </button>
+        <button role="menuitem" class="w-full text-left px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 text-zinc-400 cursor-not-allowed" disabled aria-disabled="true">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+          Settings
+        </button>
+        <button role="menuitem" class="w-full text-left px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2 border-t border-zinc-100 dark:border-zinc-800">
+          <svg class="w-4 h-4 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          Sign out
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- mobile surface tabs -->
+  <nav aria-label="Surfaces (mobile)" class="flex md:hidden items-center gap-0.5 px-2 pb-1.5 overflow-x-auto" id="surface-tabs-mobile" role="tablist">
+    <button role="tab" data-surface="board" aria-selected="true" class="surface-tab-m whitespace-nowrap px-2.5 py-1 rounded-md text-xs font-medium">Board</button>
+    <button role="tab" data-surface="list" aria-selected="false" class="surface-tab-m whitespace-nowrap px-2.5 py-1 rounded-md text-xs font-medium">Ideas List</button>
+    <button role="tab" data-surface="statuses" aria-selected="false" class="surface-tab-m whitespace-nowrap px-2.5 py-1 rounded-md text-xs font-medium">Statuses</button>
+    <button role="tab" data-surface="login" aria-selected="false" class="surface-tab-m whitespace-nowrap px-2.5 py-1 rounded-md text-xs font-medium">Login</button>
+  </nav>
+</header>
+
+<main id="main-content">
+
+  <!-- ============================== BOARD SURFACE ============================== -->
+  <section id="surface-board" data-panel="board" role="tabpanel" aria-label="Board detail">
+    <div class="flex items-center gap-2 px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+      <div class="relative">
+        <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="board-search" type="text" placeholder="Filter this board…" aria-label="Filter board by title or tag"
+          class="pl-8 pr-14 py-1.5 text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 w-64 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400 placeholder:text-zinc-400">
+        <kbd class="key absolute right-2 top-1/2 -translate-y-1/2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600 text-zinc-500">/</kbd>
+      </div>
+      <span id="board-count" class="text-xs text-zinc-500 font-mono"></span>
+      <div class="flex-1"></div>
+      <div class="hidden lg:flex items-center gap-3 text-[11px] text-zinc-400 font-mono mr-2">
+        <span><kbd class="key bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600">J</kbd>/<kbd class="key bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600">K</kbd> move</span>
+        <span><kbd class="key bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600">↵</kbd> open</span>
+        <span><kbd class="key bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600">U</kbd> upvote</span>
+      </div>
+      <button id="new-idea-btn-board" class="flex items-center gap-1.5 text-sm font-medium bg-cyan-600 dark:bg-cyan-400 text-white dark:text-zinc-950 px-2.5 py-1.5 rounded-md hover:bg-cyan-700 dark:hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-300">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        New idea
+      </button>
+    </div>
+    <div id="board-columns" class="flex gap-2 overflow-x-auto px-3 py-3" style="height: calc(100vh - 152px);"></div>
+  </section>
+
+  <!-- ============================== LIST SURFACE ============================== -->
+  <section id="surface-list" data-panel="list" role="tabpanel" aria-label="Ideas list" hidden>
+    <div class="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+      <div class="relative">
+        <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="list-search" type="text" placeholder="Search ideas…" aria-label="Search ideas by title"
+          class="pl-8 pr-14 py-1.5 text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 w-56 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400 placeholder:text-zinc-400">
+        <kbd class="key absolute right-2 top-1/2 -translate-y-1/2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600 text-zinc-500">/</kbd>
+      </div>
+      <select id="filter-status" aria-label="Filter by status" class="text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400"></select>
+      <select id="filter-type" aria-label="Filter by type" class="text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+        <option value="all">All types</option>
+        <option>Feature</option><option>Bug</option><option>Improvement</option><option>Research</option>
+      </select>
+      <select id="filter-tag" aria-label="Filter by tag" class="text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+        <option value="all">All tags</option>
+        <option>mobile</option><option>api</option><option>billing</option><option>accessibility</option><option>performance</option>
+      </select>
+      <button id="filters-clear" class="text-xs text-zinc-500 hover:text-cyan-700 dark:hover:text-cyan-300 underline decoration-dotted underline-offset-2">Clear filters</button>
+      <span id="list-count" class="text-xs text-zinc-500 font-mono"></span>
+      <div class="flex-1"></div>
+      <button id="new-idea-btn-list" class="flex items-center gap-1.5 text-sm font-medium bg-cyan-600 dark:bg-cyan-400 text-white dark:text-zinc-950 px-2.5 py-1.5 rounded-md hover:bg-cyan-700 dark:hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-300">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        New idea
+      </button>
+    </div>
+    <div class="overflow-auto" style="height: calc(100vh - 152px);">
+      <table class="w-full text-sm border-collapse">
+        <thead class="sticky top-0 bg-zinc-100 dark:bg-zinc-900 text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide z-10">
+          <tr id="list-head-row"></tr>
+        </thead>
+        <tbody id="list-body" class="divide-y divide-zinc-100 dark:divide-zinc-800/70"></tbody>
+      </table>
+      <div id="list-empty" hidden class="text-center text-sm text-zinc-500 py-14">No ideas match these filters.</div>
+    </div>
+  </section>
+
+  <!-- ============================== STATUSES ADMIN SURFACE ============================== -->
+  <section id="surface-statuses" data-panel="statuses" role="tabpanel" aria-label="Statuses admin" hidden>
+    <div class="max-w-2xl mx-auto py-8 px-4">
+      <h1 class="text-lg font-semibold mb-1">Board statuses</h1>
+      <p class="text-sm text-zinc-500 mb-5">Order determines swimlane order on every board. Drag a row, or use the arrow buttons — one status must stay marked as default.</p>
+      <ul id="statuses-list" class="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden divide-y divide-zinc-200 dark:divide-zinc-800 bg-white dark:bg-zinc-900"></ul>
+      <button id="add-status-btn" class="mt-3 flex items-center gap-1.5 text-sm font-medium text-cyan-700 dark:text-cyan-300 hover:underline">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Add status
+      </button>
+    </div>
+  </section>
+
+  <!-- ============================== LOGIN SURFACE ============================== -->
+  <section id="surface-login" data-panel="login" role="tabpanel" aria-label="Login" hidden>
+    <div class="min-h-[calc(100vh-96px)] grid place-items-center bg-zinc-100 dark:bg-zinc-950 px-4 py-10">
+      <div class="w-full max-w-sm">
+        <div class="flex items-center gap-2 justify-center mb-6">
+          <div class="w-7 h-7 rounded bg-cyan-600 dark:bg-cyan-400 grid place-items-center">
+            <span class="text-white dark:text-zinc-950 font-bold text-sm">C</span>
+          </div>
+          <span class="font-semibold text-base tracking-tight">Collega</span>
+        </div>
+        <form id="login-form" class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 space-y-4" novalidate>
+          <div>
+            <h1 class="text-base font-semibold">Sign in to Northwind Labs</h1>
+            <p class="text-xs text-zinc-500 mt-0.5">Use your organization email and password.</p>
+          </div>
+          <div id="login-error" hidden role="alert" class="flex items-start gap-2 text-sm rounded-md border border-amber-300 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-300 px-3 py-2">
+            <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+            <span>Incorrect email or password. <strong>2 attempts remaining</strong> before this account is temporarily locked for 15 minutes.</span>
+          </div>
+          <div>
+            <label for="login-email" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">Email</label>
+            <input id="login-email" type="email" autocomplete="username" value="ada.okafor@northwindlabs.com" class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label for="login-password" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">Password</label>
+              <a href="#" class="text-xs text-cyan-700 dark:text-cyan-300 hover:underline" onclick="return false;">Forgot password?</a>
+            </div>
+            <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••••" class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+          </div>
+          <button type="submit" class="w-full bg-cyan-600 dark:bg-cyan-400 text-white dark:text-zinc-950 font-medium text-sm rounded-md py-2 hover:bg-cyan-700 dark:hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-300">
+            Sign in
+          </button>
+          <p class="text-[11px] text-center text-zinc-400">This demo form always shows the lockout hint on submit — no request is actually sent.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================== IDEA DETAIL DRAWER ============================== -->
+<div id="drawer-overlay" hidden class="fixed inset-0 bg-black/50 z-40"></div>
+<aside id="idea-drawer" hidden role="dialog" aria-modal="true" aria-labelledby="drawer-title" tabindex="-1"
+  class="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 z-50 flex flex-col shadow-2xl">
+  <div class="flex items-center gap-2 px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
+    <span id="drawer-id" class="font-mono text-xs text-zinc-400"></span>
+    <div class="flex-1"></div>
+    <span class="text-[11px] text-zinc-400 font-mono hidden sm:inline mr-1">Esc to close</span>
+    <button id="drawer-close" aria-label="Close idea detail" class="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+
+    <!-- AI draft strip (existing idea) -->
+    <div id="drawer-ai-strip" class="ai-glow rounded-lg border border-cyan-500/30 bg-cyan-50 dark:bg-cyan-500/5 px-3 py-2.5">
+      <div class="flex items-start gap-2">
+        <svg class="w-4 h-4 mt-0.5 text-cyan-700 dark:text-cyan-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 1.9 4.9L19 9.8l-4.9 1.9L12 17l-1.9-5.1-5.1-1.9 5.1-1.9L12 3ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg>
+        <div class="flex-1 text-sm">
+          <p class="font-medium text-cyan-800 dark:text-cyan-200">AI suggests a clearer title &amp; summary</p>
+          <p id="drawer-ai-suggestion-text" class="text-xs text-zinc-600 dark:text-zinc-400 mt-1"></p>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-2 pl-6">
+        <button id="drawer-ai-accept" class="text-xs font-medium bg-cyan-600 dark:bg-cyan-400 text-white dark:text-zinc-950 px-2.5 py-1 rounded-md hover:bg-cyan-700 dark:hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-300">Accept</button>
+        <button id="drawer-ai-dismiss" class="text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 px-2.5 py-1 rounded-md">Dismiss</button>
+      </div>
+    </div>
+
+    <div>
+      <label for="drawer-title-input" class="sr-only">Idea title</label>
+      <input id="drawer-title-input" class="w-full text-lg font-semibold bg-transparent border-0 border-b border-transparent hover:border-zinc-300 dark:hover:border-zinc-700 focus-visible:outline-none focus-visible:border-cyan-600 dark:focus-visible:border-cyan-400 py-1">
+      <div id="drawer-meta-line" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 mt-1"></div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 text-sm">
+      <div>
+        <label for="drawer-status" class="block text-xs font-medium text-zinc-500 mb-1">Status</label>
+        <select id="drawer-status" class="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400"></select>
+      </div>
+      <div>
+        <label for="drawer-type" class="block text-xs font-medium text-zinc-500 mb-1">Type</label>
+        <select id="drawer-type" class="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+          <option>Feature</option><option>Bug</option><option>Improvement</option><option>Research</option>
+        </select>
+      </div>
+      <div>
+        <label for="drawer-impact" class="block text-xs font-medium text-zinc-500 mb-1">Business impact</label>
+        <select id="drawer-impact" class="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+          <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+        </select>
+      </div>
+      <div>
+        <label for="drawer-assignee" class="block text-xs font-medium text-zinc-500 mb-1">Owner</label>
+        <select id="drawer-assignee" class="w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400"></select>
+      </div>
+    </div>
+
+    <div>
+      <label for="drawer-description" class="block text-xs font-medium text-zinc-500 mb-1">Description</label>
+      <textarea id="drawer-description" rows="4" class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400"></textarea>
+    </div>
+
+    <div>
+      <span class="block text-xs font-medium text-zinc-500 mb-1">Tags</span>
+      <div id="drawer-tags" class="flex flex-wrap gap-1.5"></div>
+    </div>
+
+    <div>
+      <span class="block text-xs font-medium text-zinc-500 mb-1.5">Custom fields</span>
+      <div class="grid grid-cols-2 gap-3 text-sm border border-zinc-200 dark:border-zinc-800 rounded-md p-2.5">
+        <div>
+          <span class="block text-[11px] text-zinc-400">Target release</span>
+          <span id="drawer-cf-release" class="font-mono text-xs"></span>
+        </div>
+        <div>
+          <span class="block text-[11px] text-zinc-400">Effort (points)</span>
+          <span id="drawer-cf-effort" class="font-mono text-xs"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 border-y border-zinc-200 dark:border-zinc-800 py-2.5">
+      <button id="drawer-upvote" class="flex items-center gap-1.5 text-sm font-medium px-2.5 py-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 hover:border-cyan-600 dark:hover:border-cyan-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        <span id="drawer-upvote-count" class="font-mono"></span>
+        <kbd class="key bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600 text-zinc-500 ml-1">U</kbd>
+      </button>
+      <span class="text-sm text-zinc-500 flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z"/></svg>
+        <span id="drawer-comment-count" class="font-mono"></span> comments
+      </span>
+    </div>
+
+    <div>
+      <h2 class="text-sm font-semibold mb-2">Comments</h2>
+      <ul id="drawer-comments" class="space-y-3"></ul>
+      <form id="drawer-comment-form" class="mt-3 flex gap-2">
+        <label for="drawer-comment-input" class="sr-only">Add a comment</label>
+        <input id="drawer-comment-input" type="text" placeholder="Add a comment…" class="flex-1 text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+        <button type="submit" class="text-sm font-medium bg-zinc-800 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md hover:bg-zinc-700 dark:hover:bg-zinc-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">Post</button>
+      </form>
+    </div>
+
+    <div>
+      <h2 class="text-sm font-semibold mb-2">Activity</h2>
+      <ul id="drawer-activity" class="space-y-2 text-xs text-zinc-500"></ul>
+    </div>
+  </div>
+</aside>
+
+<!-- ============================== NEW IDEA MODAL ============================== -->
+<div id="new-idea-overlay" hidden class="fixed inset-0 bg-black/50 z-40 grid place-items-center p-4">
+  <div id="new-idea-modal" role="dialog" aria-modal="true" aria-labelledby="new-idea-title" tabindex="-1" class="w-full max-w-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
+      <h1 id="new-idea-title" class="text-sm font-semibold">New idea</h1>
+      <div class="flex-1"></div>
+      <button id="new-idea-close" aria-label="Close new idea form" class="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="p-4 space-y-4">
+      <div class="ai-glow rounded-lg border border-cyan-500/30 bg-cyan-50 dark:bg-cyan-500/5 px-3 py-2.5">
+        <div class="flex items-start gap-2">
+          <svg class="w-4 h-4 mt-0.5 text-cyan-700 dark:text-cyan-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 1.9 4.9L19 9.8l-4.9 1.9L12 17l-1.9-5.1-5.1-1.9 5.1-1.9L12 3ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></svg>
+          <div class="flex-1 text-sm">
+            <p class="font-medium text-cyan-800 dark:text-cyan-200">AI draft, from your two-line prompt</p>
+            <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-1"><strong>Title:</strong> Add dark mode to the mobile companion app<br><strong>Description:</strong> Several field reps have asked for a dark theme in the mobile app to reduce glare during evening site visits. Suggested scope: system-preference detection with a manual override in Settings.</p>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-2 pl-6">
+          <button id="new-idea-ai-accept" class="text-xs font-medium bg-cyan-600 dark:bg-cyan-400 text-white dark:text-zinc-950 px-2.5 py-1 rounded-md hover:bg-cyan-700 dark:hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-300">Accept suggestion</button>
+          <button id="new-idea-ai-dismiss" class="text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 px-2.5 py-1 rounded-md">Dismiss</button>
+        </div>
+      </div>
+      <div>
+        <label for="new-idea-title-input" class="block text-xs font-medium text-zinc-500 mb-1">Title</label>
+        <input id="new-idea-title-input" class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400" placeholder="e.g. Add dark mode to the mobile app">
+      </div>
+      <div>
+        <label for="new-idea-desc-input" class="block text-xs font-medium text-zinc-500 mb-1">Description</label>
+        <textarea id="new-idea-desc-input" rows="3" class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400" placeholder="What problem does this solve?"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="new-idea-type-input" class="block text-xs font-medium text-zinc-500 mb-1">Type</label>
+          <select id="new-idea-type-input" class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+            <option>Feature</option><option>Bug</option><option>Improvement</option><option>Research</option>
+          </select>
+        </div>
+        <div>
+          <label for="new-idea-impact-input" class="block text-xs font-medium text-zinc-500 mb-1">Business impact</label>
+          <select id="new-idea-impact-input" class="w-full text-sm rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400">
+            <option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 px-4 py-3 border-t border-zinc-200 dark:border-zinc-800">
+      <button id="new-idea-cancel" class="text-sm font-medium px-3 py-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900">Cancel</button>
+      <button id="new-idea-submit" class="text-sm font-medium bg-cyan-600 dark:bg-cyan-400 text-white dark:text-zinc-950 px-3 py-1.5 rounded-md hover:bg-cyan-700 dark:hover:bg-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-300">Create idea</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== COMMAND PALETTE ============================== -->
+<div id="palette-overlay" hidden class="fixed inset-0 bg-black/50 z-[60] grid place-items-start justify-center pt-24 px-4">
+  <div id="palette" role="dialog" aria-modal="true" aria-label="Command palette" class="w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl overflow-hidden">
+    <div class="flex items-center gap-2 px-3 border-b border-zinc-200 dark:border-zinc-800">
+      <svg class="w-4 h-4 text-zinc-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="palette-input" type="text" placeholder="Search ideas, surfaces, actions…" aria-label="Command palette search" aria-controls="palette-list" aria-expanded="true" role="combobox" aria-autocomplete="list"
+        class="flex-1 bg-transparent border-0 py-3 text-sm focus:outline-none placeholder:text-zinc-400">
+      <kbd class="key bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600 text-zinc-500">Esc</kbd>
+    </div>
+    <ul id="palette-list" role="listbox" aria-label="Command results" class="max-h-80 overflow-y-auto py-1.5"></ul>
+    <div class="flex items-center gap-3 px-3 py-2 border-t border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-400 font-mono">
+      <span><kbd class="key bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600">↑</kbd><kbd class="key bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600 ml-0.5">↓</kbd> navigate</span>
+      <span><kbd class="key bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 border-b-zinc-400 dark:border-b-zinc-600">↵</kbd> select</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== TOAST ============================== -->
+<div id="toast" hidden role="status" aria-live="polite" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-medium px-3.5 py-2 rounded-lg shadow-xl toast-anim"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------------------------------------------------------------
+   * THEME
+   * ------------------------------------------------------------------- */
+  var root = document.documentElement;
+  function applyTheme(mode) {
+    if (mode === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light-mode');
+      document.getElementById('icon-sun').classList.remove('hidden');
+      document.getElementById('icon-moon').classList.add('hidden');
+      document.getElementById('theme-toggle').setAttribute('aria-pressed', 'true');
+    } else {
+      root.classList.add('dark');
+      root.classList.remove('light-mode');
+      document.getElementById('icon-sun').classList.add('hidden');
+      document.getElementById('icon-moon').classList.remove('hidden');
+      document.getElementById('theme-toggle').setAttribute('aria-pressed', 'false');
+    }
+    try { localStorage.setItem('cd-theme', mode); } catch (e) {}
+  }
+  var savedTheme = 'dark';
+  try { savedTheme = localStorage.getItem('cd-theme') || 'dark'; } catch (e) {}
+  applyTheme(savedTheme);
+  document.getElementById('theme-toggle').addEventListener('click', function () {
+    applyTheme(root.classList.contains('dark') ? 'light' : 'dark');
+  });
+
+  /* ---------------------------------------------------------------------
+   * DATA
+   * ------------------------------------------------------------------- */
+  var USERS = {
+    ada:   { name: 'Ada Okafor',   initials: 'AO', role: 'Org Admin' },
+    ben:   { name: 'Ben Torres',   initials: 'BT', role: 'User' },
+    priya: { name: 'Priya Raman',  initials: 'PR', role: 'User' },
+    marcus:{ name: 'Marcus Webb',  initials: 'MW', role: 'User' },
+    lena:  { name: 'Lena Fischer', initials: 'LF', role: 'User' },
+  };
+
+  var STATUSES = [
+    { id: 'new',        name: 'New',         color: '#6B7280', isDefault: true },
+    { id: 'triage',     name: 'Triage',      color: '#F59E0B', isDefault: false },
+    { id: 'planned',    name: 'Planned',     color: '#3B82F6', isDefault: false },
+    { id: 'inprogress', name: 'In Progress', color: '#8B5CF6', isDefault: false },
+    { id: 'shipped',    name: 'Shipped',     color: '#10B981', isDefault: false },
+    { id: 'declined',   name: 'Declined',    color: '#EF4444', isDefault: false },
+  ];
+
+  var IMPACT_COLOR = { Critical: '#EF4444', High: '#F59E0B', Medium: '#EAB308', Low: '#6B7280' };
+  var TYPE_ABBR = { Feature: 'FEAT', Bug: 'BUG', Improvement: 'IMPR', Research: 'RSCH' };
+  var BOARDS = ['Product Ideas', 'Platform Health', 'Customer Requests', 'Q4 Planning'];
+
+  var IDEAS = [
+    { id: 1041, title: 'Single sign-on for enterprise customers', type: 'Feature', impact: 'Critical', statusId: 'planned', upvotes: 34, comments: 8, tags: ['api', 'billing'], owner: 'ada', board: 'Product Ideas',
+      description: 'Enterprise buyers keep asking for SAML/OIDC SSO during procurement. This blocks two active deals over $80k ARR.', release: 'Q1 2027', effort: 13 },
+    { id: 1042, title: 'Board view drops swimlane order on refresh', type: 'Bug', impact: 'High', statusId: 'inprogress', upvotes: 12, comments: 5, tags: ['performance'], owner: 'ben', board: 'Product Ideas',
+      description: 'Reordered swimlanes revert to default status order after a hard refresh. Looks like the sort index isn’t persisted client-side.', release: 'Sprint 8', effort: 3 },
+    { id: 1043, title: 'Bulk edit ideas from the list view', type: 'Feature', impact: 'Medium', statusId: 'new', upvotes: 21, comments: 3, tags: [], owner: 'priya', board: 'Product Ideas',
+      description: 'Select multiple rows in the ideas list and change status, type, or tags in one action instead of opening each idea.', release: 'Unscheduled', effort: 8 },
+    { id: 1044, title: 'Keyboard navigation for the idea drawer', type: 'Improvement', impact: 'High', statusId: 'triage', upvotes: 18, comments: 6, tags: ['accessibility'], owner: 'lena', board: 'Product Ideas',
+      description: 'The idea detail drawer traps focus but Tab order skips the comment form. Needs a full keyboard-only pass.', release: 'Unscheduled', effort: 5 },
+    { id: 1045, title: 'Export board to CSV', type: 'Feature', impact: 'Low', statusId: 'shipped', upvotes: 9, comments: 2, tags: ['api'], owner: 'marcus', board: 'Product Ideas',
+      description: 'One-click export of the current board view (respecting active filters) to a CSV file.', release: 'Shipped v2.3', effort: 2 },
+    { id: 1046, title: 'Mobile board scrolling is janky on iOS', type: 'Bug', impact: 'High', statusId: 'triage', upvotes: 27, comments: 11, tags: ['mobile', 'performance'], owner: 'ben', board: 'Product Ideas',
+      description: 'Horizontal swimlane scroll stutters on iOS Safari when a column has 15+ cards. Likely a compositing layer issue.', release: 'Unscheduled', effort: 5 },
+    { id: 1047, title: 'Custom fields on idea types', type: 'Feature', impact: 'Critical', statusId: 'shipped', upvotes: 41, comments: 14, tags: [], owner: 'ada', board: 'Product Ideas',
+      description: 'Org admins can define custom fields per idea type (e.g. Target Release, Effort) shown on the detail drawer.', release: 'Shipped v2.1', effort: 21 },
+    { id: 1048, title: 'Slack notifications for status changes', type: 'Feature', impact: 'Medium', statusId: 'new', upvotes: 16, comments: 4, tags: ['api'], owner: 'priya', board: 'Product Ideas',
+      description: 'Post a message to a configured Slack channel whenever an idea changes status on a watched board.', release: 'Unscheduled', effort: 8 },
+    { id: 1049, title: 'Screen reader announces status column twice', type: 'Bug', impact: 'Medium', statusId: 'planned', upvotes: 7, comments: 1, tags: ['accessibility'], owner: 'lena', board: 'Product Ideas',
+      description: 'VoiceOver reads the swimlane header label twice when landing on the first card in a column.', release: 'Sprint 9', effort: 1 },
+    { id: 1050, title: 'Per-org AI credit limits', type: 'Research', impact: 'High', statusId: 'new', upvotes: 5, comments: 0, tags: ['billing'], owner: 'ada', board: 'Product Ideas',
+      description: 'Investigate metering AI draft-strip usage per organization and surfacing remaining credits in settings.', release: 'Unscheduled', effort: 5 },
+    { id: 1051, title: 'Archive stale ideas automatically', type: 'Improvement', impact: 'Low', statusId: 'declined', upvotes: 3, comments: 2, tags: [], owner: 'marcus', board: 'Product Ideas',
+      description: 'Auto-archive ideas with no activity for 180 days. Declined — org admins prefer to archive manually for now.', release: '—', effort: 3 },
+    { id: 1052, title: 'Faster board load for 500+ ideas', type: 'Improvement', impact: 'Critical', statusId: 'inprogress', upvotes: 31, comments: 9, tags: ['performance'], owner: 'ben', board: 'Product Ideas',
+      description: 'Boards with 500+ ideas take 4-6s to first paint. Plan is virtualized swimlane columns plus a lighter card payload.', release: 'Sprint 8', effort: 13 },
+  ];
+
+  var COMMENT_POOL = [
+    'This would unblock a deal we’re actively working.',
+    'Agreed — seeing this reported from three different customers this month.',
+    'Can we scope a smaller v1 first?',
+    'Linked this to the related research doc in the description.',
+    'Any update on timeline for this one?',
+    'Reproduced on staging, adding steps in a follow-up comment.',
+    'Marked as a dependency for the Q4 planning board.',
+    'This overlaps with idea #1047 — worth merging?',
+    'Design has a rough sketch for this if useful.',
+    'Confirmed fixed in the latest build, thanks for the quick turnaround.',
+    'Bumping — still relevant after the last roadmap review.',
+    'Flagging for accessibility review before this ships.',
+  ];
+  var COMMENT_AUTHORS = ['ada', 'ben', 'priya', 'marcus', 'lena'];
+
+  function genComments(idea) {
+    var out = [];
+    for (var i = 0; i < idea.comments; i++) {
+      var author = COMMENT_AUTHORS[(idea.id + i) % COMMENT_AUTHORS.length];
+      var text = COMMENT_POOL[(idea.id + i * 3) % COMMENT_POOL.length];
+      out.push({ author: author, text: text, when: (idea.comments - i) + 'd ago' });
+    }
+    return out;
+  }
+  IDEAS.forEach(function (idea) { idea._comments = genComments(idea); });
+
+  function genActivity(idea) {
+    var acts = [];
+    acts.push({ text: USERS[idea.owner].name + ' created this idea', when: '3w ago' });
+    if (idea.statusId !== 'new') {
+      acts.push({ text: 'Status changed New → Triage', when: '2w ago' });
+    }
+    if (['planned', 'inprogress', 'shipped', 'declined'].indexOf(idea.statusId) !== -1) {
+      acts.push({ text: 'Status changed Triage → ' + statusById(idea.statusId).name, when: '1w ago' });
+    }
+    if (idea.upvotes > 15) {
+      acts.push({ text: 'Reached ' + Math.floor(idea.upvotes / 5) * 5 + '+ upvotes', when: '4d ago' });
+    }
+    return acts;
+  }
+
+  function statusById(id) { for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i].id === id) return STATUSES[i]; return STATUSES[0]; }
+  function ideaById(id) { for (var i = 0; i < IDEAS.length; i++) if (IDEAS[i].id === id) return IDEAS[i]; return null; }
+
+  /* ---------------------------------------------------------------------
+   * STATE
+   * ------------------------------------------------------------------- */
+  var state = {
+    surface: 'board',
+    board: 'Product Ideas',
+    boardQuery: '',
+    listQuery: '',
+    listFilters: { status: 'all', type: 'all', tag: 'all' },
+    listSort: { key: 'upvotes', dir: 'desc' },
+    selectedIndex: 0,
+    drawerIdeaId: null,
+    votedIdeas: {},
+    viewAs: null,
+    paletteOpen: false,
+    paletteIndex: 0,
+    aiStripDismissed: {},
+    newIdeaAiAccepted: false,
+    lastFocused: null,
+  };
+
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.hidden = false;
+    el.classList.remove('toast-anim'); void el.offsetWidth; el.classList.add('toast-anim');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { el.hidden = true; }, 2200);
+  }
+
+  /* ---------------------------------------------------------------------
+   * BOARD SWITCHER
+   * ------------------------------------------------------------------- */
+  var boardMenu = document.getElementById('board-switcher-menu');
+  var boardBtn = document.getElementById('board-switcher-btn');
+  function renderBoardSwitcherMenu() {
+    boardMenu.innerHTML = '';
+    BOARDS.forEach(function (b) {
+      var li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      var active = b === state.board;
+      li.innerHTML = '<button class="w-full text-left px-3 py-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2' + (active ? ' font-medium' : '') + '">' +
+        (active ? '<svg class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>' : '<span class="w-3.5 h-3.5"></span>') +
+        '<span>' + b + '</span></button>';
+      li.querySelector('button').addEventListener('click', function () {
+        state.board = b;
+        document.getElementById('board-switcher-label').textContent = b;
+        closeBoardMenu();
+        renderBoardSwitcherMenu();
+        renderBoard();
+        renderList();
+        toast('Switched to ' + b);
+      });
+      boardMenu.appendChild(li);
+    });
+  }
+  function openBoardMenu() { boardMenu.hidden = false; boardBtn.setAttribute('aria-expanded', 'true'); }
+  function closeBoardMenu() { boardMenu.hidden = true; boardBtn.setAttribute('aria-expanded', 'false'); }
+  boardBtn.addEventListener('click', function () { boardMenu.hidden ? openBoardMenu() : closeBoardMenu(); });
+  document.addEventListener('click', function (e) {
+    if (!boardMenu.hidden && !boardMenu.contains(e.target) && e.target !== boardBtn) closeBoardMenu();
+  });
+
+  /* ---------------------------------------------------------------------
+   * USER MENU / VIEW AS
+   * ------------------------------------------------------------------- */
+  var userMenu = document.getElementById('user-menu');
+  var userMenuBtn = document.getElementById('user-menu-btn');
+  function openUserMenu() { userMenu.hidden = false; userMenuBtn.setAttribute('aria-expanded', 'true'); }
+  function closeUserMenu() { userMenu.hidden = true; userMenuBtn.setAttribute('aria-expanded', 'false'); }
+  userMenuBtn.addEventListener('click', function () { userMenu.hidden ? openUserMenu() : closeUserMenu(); });
+  document.addEventListener('click', function (e) {
+    if (!userMenu.hidden && !userMenu.contains(e.target) && e.target !== userMenuBtn && !userMenuBtn.contains(e.target)) closeUserMenu();
+  });
+
+  var banner = document.getElementById('view-as-banner');
+  var viewAsLabel = document.getElementById('view-as-toggle-label');
+  document.getElementById('toggle-view-as').addEventListener('click', function () {
+    state.viewAs = state.viewAs ? null : 'ben';
+    if (state.viewAs) {
+      banner.hidden = false;
+      document.getElementById('view-as-name').textContent = USERS[state.viewAs].name;
+      viewAsLabel.textContent = 'Demo: Exit View As';
+      toast('Now viewing as ' + USERS[state.viewAs].name);
+    } else {
+      banner.hidden = true;
+      viewAsLabel.textContent = 'Demo: View As Ben Torres';
+      toast('Exited View As');
+    }
+    closeUserMenu();
+  });
+  document.getElementById('exit-view-as').addEventListener('click', function () {
+    state.viewAs = null;
+    banner.hidden = true;
+    viewAsLabel.textContent = 'Demo: View As Ben Torres';
+    toast('Exited View As');
+  });
+
+  /* ---------------------------------------------------------------------
+   * SURFACE SWITCHING
+   * ------------------------------------------------------------------- */
+  var panels = ['board', 'list', 'statuses', 'login'];
+  function setSurface(name) {
+    state.surface = name;
+    panels.forEach(function (p) {
+      document.getElementById('surface-' + p).hidden = (p !== name);
+    });
+    Array.from(document.querySelectorAll('.surface-tab, .surface-tab-m')).forEach(function (btn) {
+      var active = btn.getAttribute('data-surface') === name;
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    styleTabs();
+    state.selectedIndex = 0;
+    applySelectionHighlight();
+  }
+  function styleTabs() {
+    Array.from(document.querySelectorAll('.surface-tab')).forEach(function (btn) {
+      var active = btn.getAttribute('aria-selected') === 'true';
+      btn.className = 'surface-tab px-2.5 py-1.5 rounded-md text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400 ' +
+        (active ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900');
+    });
+    Array.from(document.querySelectorAll('.surface-tab-m')).forEach(function (btn) {
+      var active = btn.getAttribute('aria-selected') === 'true';
+      btn.className = 'surface-tab-m whitespace-nowrap px-2.5 py-1 rounded-md text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400 ' +
+        (active ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900');
+    });
+  }
+  Array.from(document.querySelectorAll('.surface-tab, .surface-tab-m')).forEach(function (btn) {
+    btn.addEventListener('click', function () { setSurface(btn.getAttribute('data-surface')); });
+  });
+  styleTabs();
+
+  /* ---------------------------------------------------------------------
+   * BADGES / CHIPS (shared renderers)
+   * ------------------------------------------------------------------- */
+  function typeBadge(type, full) {
+    return '<span class="inline-flex items-center font-mono text-[10px] font-medium uppercase tracking-wide border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 rounded px-1 py-0.5" title="' + type + '">' + (full ? type : TYPE_ABBR[type]) + '</span>';
+  }
+  function impactDot(impact) {
+    return '<span class="inline-flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:' + IMPACT_COLOR[impact] + '"></span>' + impact + '</span>';
+  }
+  function statusDot(status) {
+    return '<span class="inline-flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300"><span class="w-2 h-2 rounded-full shrink-0" style="background:' + status.color + '"></span>' + status.name + '</span>';
+  }
+  function tagChip(tag) {
+    return '<span class="inline-flex items-center font-mono text-[10px] text-cyan-800 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-500/10 rounded px-1.5 py-0.5">#' + tag + '</span>';
+  }
+  function avatar(userKey, size) {
+    var u = USERS[userKey];
+    var s = size || 5;
+    return '<span class="inline-flex items-center justify-center rounded-full bg-zinc-700 text-white font-medium shrink-0" style="width:' + (s * 4) + 'px;height:' + (s * 4) + 'px;font-size:' + (s * 2) + 'px" title="' + u.name + '">' + u.initials + '</span>';
+  }
+  function upvoteCount(idea) {
+    var voted = !!state.votedIdeas[idea.id];
+    return idea.upvotes + (voted ? 1 : 0);
+  }
+
+  /* ---------------------------------------------------------------------
+   * BOARD RENDER
+   * ------------------------------------------------------------------- */
+  var boardSearch = document.getElementById('board-search');
+  boardSearch.addEventListener('input', function () { state.boardQuery = boardSearch.value; renderBoard(); });
+
+  function boardIdeas() {
+    return IDEAS.filter(function (i) { return i.board === state.board; });
+  }
+  function filteredBoardIdeas() {
+    var q = state.boardQuery.trim().toLowerCase();
+    return boardIdeas().filter(function (i) {
+      if (!q) return true;
+      return i.title.toLowerCase().indexOf(q) !== -1 || i.tags.join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  function renderBoard() {
+    var col = document.getElementById('board-columns');
+    col.innerHTML = '';
+    var ideas = filteredBoardIdeas();
+    document.getElementById('board-count').textContent = ideas.length + ' idea' + (ideas.length === 1 ? '' : 's');
+
+    if (boardIdeas().length === 0) {
+      col.innerHTML = '<div class="w-full grid place-items-center text-sm text-zinc-500 py-20">No ideas on <strong class="mx-1">' + state.board + '</strong> yet.</div>';
+      state.currentItems = [];
+      return;
+    }
+
+    var flat = [];
+    STATUSES.forEach(function (status) {
+      var group = ideas.filter(function (i) { return i.statusId === status.id; });
+      var column = document.createElement('div');
+      column.className = 'flex flex-col w-64 shrink-0 bg-zinc-50 dark:bg-zinc-900/60 rounded-lg border border-zinc-200 dark:border-zinc-800';
+      var header = document.createElement('div');
+      header.className = 'flex items-center gap-1.5 px-2.5 py-2 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 bg-zinc-50 dark:bg-zinc-900/90 rounded-t-lg';
+      header.innerHTML = '<span class="w-2 h-2 rounded-full shrink-0" style="background:' + status.color + '"></span>' +
+        '<span class="text-xs font-semibold">' + status.name + '</span>' +
+        '<span class="text-[11px] font-mono text-zinc-400 ml-auto">' + group.length + '</span>';
+      column.appendChild(header);
+      var body = document.createElement('div');
+      body.className = 'flex-1 overflow-y-auto p-1.5 space-y-1.5';
+      if (group.length === 0) {
+        body.innerHTML = '<p class="text-[11px] text-zinc-400 text-center py-4">No ideas</p>';
+      }
+      group.forEach(function (idea) {
+        var idx = flat.length;
+        flat.push(idea.id);
+        var card = document.createElement('article');
+        card.tabIndex = -1;
+        card.setAttribute('data-idea-id', idea.id);
+        card.setAttribute('data-select-index', idx);
+        card.setAttribute('data-open-idea', '1');
+        card.className = 'group cursor-pointer rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:border-cyan-500/60 px-2.5 py-2 text-sm';
+        var voted = !!state.votedIdeas[idea.id];
+        card.innerHTML =
+          '<div class="flex items-start justify-between gap-2">' +
+            '<p class="font-medium leading-snug line-clamp-2">' + idea.title + '</p>' +
+          '</div>' +
+          '<div class="flex items-center gap-2 mt-1.5 flex-wrap">' +
+            typeBadge(idea.type) + impactDot(idea.impact) +
+          '</div>' +
+          (idea.tags.length ? '<div class="flex flex-wrap gap-1 mt-1.5">' + idea.tags.map(tagChip).join('') + '</div>' : '') +
+          '<div class="flex items-center gap-3 mt-2 pt-1.5 border-t border-zinc-100 dark:border-zinc-800/70">' +
+            '<button data-upvote="1" data-idea-id="' + idea.id + '" aria-pressed="' + voted + '" aria-label="Upvote, ' + upvoteCount(idea) + ' votes" class="flex items-center gap-1 text-xs font-mono rounded px-1 -ml-1 ' + (voted ? 'text-cyan-700 dark:text-cyan-300' : 'text-zinc-500 hover:text-cyan-700 dark:hover:text-cyan-300') + '">' +
+              '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="' + (voted ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg>' + upvoteCount(idea) +
+            '</button>' +
+            '<span class="flex items-center gap-1 text-xs font-mono text-zinc-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10Z"/></svg>' + idea.comments + '</span>' +
+            '<span class="ml-auto">' + avatar(idea.owner, 5) + '</span>' +
+          '</div>';
+        body.appendChild(card);
+      });
+      column.appendChild(body);
+      col.appendChild(column);
+    });
+    state.currentItems = flat;
+    clampSelection();
+    applySelectionHighlight();
+  }
+
+  document.getElementById('board-columns').addEventListener('click', function (e) {
+    var upBtn = e.target.closest('[data-upvote]');
+    if (upBtn) { e.stopPropagation(); toggleUpvote(parseInt(upBtn.getAttribute('data-idea-id'), 10)); return; }
+    var card = e.target.closest('[data-open-idea]');
+    if (card) { openDrawer(parseInt(card.getAttribute('data-idea-id'), 10)); }
+  });
+
+  /* ---------------------------------------------------------------------
+   * LIST RENDER
+   * ------------------------------------------------------------------- */
+  var LIST_COLS = [
+    { key: 'id', label: 'ID', sortable: true, w: 'w-20' },
+    { key: 'title', label: 'Title', sortable: true },
+    { key: 'type', label: 'Type', sortable: true, w: 'w-24' },
+    { key: 'impact', label: 'Impact', sortable: true, w: 'w-24' },
+    { key: 'status', label: 'Status', sortable: true, w: 'w-32' },
+    { key: 'tags', label: 'Tags', sortable: false, w: 'w-40' },
+    { key: 'upvotes', label: 'Upvotes', sortable: true, w: 'w-20' },
+    { key: 'comments', label: 'Comments', sortable: true, w: 'w-24' },
+    { key: 'owner', label: 'Owner', sortable: true, w: 'w-16' },
+  ];
+  var IMPACT_ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+  function renderListHead() {
+    var row = document.getElementById('list-head-row');
+    row.innerHTML = '';
+    LIST_COLS.forEach(function (c) {
+      var th = document.createElement('th');
+      th.scope = 'col';
+      th.className = 'text-left px-3 py-2 font-medium ' + (c.w || '');
+      if (c.sortable) {
+        var active = state.listSort.key === c.key;
+        var btn = document.createElement('button');
+        btn.className = 'flex items-center gap-1 hover:text-zinc-900 dark:hover:text-zinc-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400 rounded' + (active ? ' text-zinc-900 dark:text-zinc-100' : '');
+        btn.setAttribute('aria-sort', active ? (state.listSort.dir === 'asc' ? 'ascending' : 'descending') : 'none');
+        btn.innerHTML = c.label + (active ? (state.listSort.dir === 'asc' ?
+          ' <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>' :
+          ' <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>') : '');
+        btn.addEventListener('click', function () {
+          if (state.listSort.key === c.key) state.listSort.dir = state.listSort.dir === 'asc' ? 'desc' : 'asc';
+          else state.listSort = { key: c.key, dir: 'asc' };
+          renderList();
+        });
+        th.appendChild(btn);
+      } else {
+        th.textContent = c.label;
+      }
+      row.appendChild(th);
+    });
+  }
+
+  var filterStatusSel = document.getElementById('filter-status');
+  filterStatusSel.innerHTML = '<option value="all">All statuses</option>' + STATUSES.map(function (s) { return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');
+
+  document.getElementById('list-search').addEventListener('input', function (e) { state.listQuery = e.target.value; renderList(); });
+  filterStatusSel.addEventListener('change', function (e) { state.listFilters.status = e.target.value; renderList(); });
+  document.getElementById('filter-type').addEventListener('change', function (e) { state.listFilters.type = e.target.value; renderList(); });
+  document.getElementById('filter-tag').addEventListener('change', function (e) { state.listFilters.tag = e.target.value; renderList(); });
+  document.getElementById('filters-clear').addEventListener('click', function () {
+    state.listQuery = ''; state.listFilters = { status: 'all', type: 'all', tag: 'all' };
+    document.getElementById('list-search').value = '';
+    filterStatusSel.value = 'all';
+    document.getElementById('filter-type').value = 'all';
+    document.getElementById('filter-tag').value = 'all';
+    renderList();
+  });
+
+  function listIdeas() {
+    var q = state.listQuery.trim().toLowerCase();
+    var f = state.listFilters;
+    var arr = IDEAS.filter(function (i) {
+      if (i.board !== state.board) return false;
+      if (q && i.title.toLowerCase().indexOf(q) === -1) return false;
+      if (f.status !== 'all' && i.statusId !== f.status) return false;
+      if (f.type !== 'all' && i.type !== f.type) return false;
+      if (f.tag !== 'all' && i.tags.indexOf(f.tag) === -1) return false;
+      return true;
+    });
+    var key = state.listSort.key, dir = state.listSort.dir === 'asc' ? 1 : -1;
+    arr.sort(function (a, b) {
+      var av, bv;
+      if (key === 'id') { av = a.id; bv = b.id; }
+      else if (key === 'title') { av = a.title.toLowerCase(); bv = b.title.toLowerCase(); }
+      else if (key === 'type') { av = a.type; bv = b.type; }
+      else if (key === 'impact') { av = IMPACT_ORDER[a.impact]; bv = IMPACT_ORDER[b.impact]; }
+      else if (key === 'status') { av = STATUSES.findIndex(function (s) { return s.id === a.statusId; }); bv = STATUSES.findIndex(function (s) { return s.id === b.statusId; }); }
+      else if (key === 'upvotes') { av = upvoteCount(a); bv = upvoteCount(b); }
+      else if (key === 'comments') { av = a.comments; bv = b.comments; }
+      else if (key === 'owner') { av = USERS[a.owner].name; bv = USERS[b.owner].name; }
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+    return arr;
+  }
+
+  function renderList() {
+    renderListHead();
+    var body = document.getElementById('list-body');
+    body.innerHTML = '';
+    var ideas = listIdeas();
+    document.getElementById('list-count').textContent = ideas.length + ' of ' + IDEAS.filter(function(i){return i.board===state.board;}).length;
+    document.getElementById('list-empty').hidden = ideas.length !== 0;
+
+    var flat = [];
+    ideas.forEach(function (idea, idx) {
+      flat.push(idea.id);
+      var status = statusById(idea.statusId);
+      var voted = !!state.votedIdeas[idea.id];
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-idea-id', idea.id);
+      tr.setAttribute('data-select-index', idx);
+      tr.setAttribute('data-open-idea', '1');
+      tr.className = 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900/60';
+      tr.innerHTML =
+        '<td class="px-3 py-2 font-mono text-xs text-zinc-400">#' + idea.id + '</td>' +
+        '<td class="px-3 py-2 font-medium">' + idea.title + '</td>' +
+        '<td class="px-3 py-2">' + typeBadge(idea.type) + '</td>' +
+        '<td class="px-3 py-2">' + impactDot(idea.impact) + '</td>' +
+        '<td class="px-3 py-2">' + statusDot(status) + '</td>' +
+        '<td class="px-3 py-2"><div class="flex flex-wrap gap-1">' + (idea.tags.length ? idea.tags.map(tagChip).join('') : '<span class="text-zinc-300 dark:text-zinc-700">—</span>') + '</div></td>' +
+        '<td class="px-3 py-2"><button data-upvote="1" data-idea-id="' + idea.id + '" aria-pressed="' + voted + '" aria-label="Upvote, ' + upvoteCount(idea) + ' votes" class="flex items-center gap-1 font-mono text-xs rounded ' + (voted ? 'text-cyan-700 dark:text-cyan-300' : 'text-zinc-500 hover:text-cyan-700 dark:hover:text-cyan-300') + '"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="' + (voted ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg>' + upvoteCount(idea) + '</button></td>' +
+        '<td class="px-3 py-2 font-mono text-xs text-zinc-500">' + idea.comments + '</td>' +
+        '<td class="px-3 py-2">' + avatar(idea.owner, 5) + '</td>';
+      body.appendChild(tr);
+    });
+    state.currentItems = flat;
+    clampSelection();
+    applySelectionHighlight();
+  }
+
+  document.getElementById('list-body').addEventListener('click', function (e) {
+    var upBtn = e.target.closest('[data-upvote]');
+    if (upBtn) { e.stopPropagation(); toggleUpvote(parseInt(upBtn.getAttribute('data-idea-id'), 10)); return; }
+    var row = e.target.closest('[data-open-idea]');
+    if (row) openDrawer(parseInt(row.getAttribute('data-idea-id'), 10));
+  });
+
+  /* ---------------------------------------------------------------------
+   * UPVOTE
+   * ------------------------------------------------------------------- */
+  function toggleUpvote(id) {
+    state.votedIdeas[id] = !state.votedIdeas[id];
+    toast(state.votedIdeas[id] ? 'Upvoted' : 'Upvote removed');
+    if (state.surface === 'board') renderBoard();
+    if (state.surface === 'list') renderList();
+    if (state.drawerIdeaId === id) renderDrawerVoteAndComments(ideaById(id));
+  }
+
+  /* ---------------------------------------------------------------------
+   * SELECTION (J/K) — shared between board cards & list rows
+   * ------------------------------------------------------------------- */
+  state.currentItems = [];
+  function clampSelection() {
+    if (state.selectedIndex >= state.currentItems.length) state.selectedIndex = Math.max(0, state.currentItems.length - 1);
+    if (state.selectedIndex < 0) state.selectedIndex = 0;
+  }
+  function applySelectionHighlight() {
+    document.querySelectorAll('[data-select-index]').forEach(function (el) { el.removeAttribute('data-selected'); });
+    if (!state.currentItems.length) return;
+    if (state.surface !== 'board' && state.surface !== 'list') return;
+    var el = document.querySelector('[data-select-index="' + state.selectedIndex + '"]');
+    if (el) {
+      el.setAttribute('data-selected', 'true');
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }
+  function moveSelection(delta) {
+    if (state.surface !== 'board' && state.surface !== 'list') return;
+    if (!state.currentItems.length) return;
+    state.selectedIndex = Math.max(0, Math.min(state.currentItems.length - 1, state.selectedIndex + delta));
+    applySelectionHighlight();
+  }
+  function openSelected() {
+    if (state.surface !== 'board' && state.surface !== 'list') return;
+    if (!state.currentItems.length) return;
+    openDrawer(state.currentItems[state.selectedIndex]);
+  }
+  function upvoteSelected() {
+    if (state.surface !== 'board' && state.surface !== 'list') return;
+    if (!state.currentItems.length) return;
+    toggleUpvote(state.currentItems[state.selectedIndex]);
+  }
+
+  /* ---------------------------------------------------------------------
+   * DRAWER
+   * ------------------------------------------------------------------- */
+  var drawer = document.getElementById('idea-drawer');
+  var drawerOverlay = document.getElementById('drawer-overlay');
+  var drawerTypeSel = document.getElementById('drawer-type');
+  var drawerStatusSel = document.getElementById('drawer-status');
+  var drawerAssigneeSel = document.getElementById('drawer-assignee');
+  drawerStatusSel.innerHTML = STATUSES.map(function (s) { return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');
+  drawerAssigneeSel.innerHTML = Object.keys(USERS).map(function (k) { return '<option value="' + k + '">' + USERS[k].name + '</option>'; }).join('');
+
+  var AI_SUGGESTIONS = {
+    1042: { title: 'Swimlane order resets after page refresh', desc: 'Reordering swimlanes on a board does not persist across a page reload — the column order silently reverts to the status default order, which is confusing after a manual reorder.' },
+    1044: { title: 'Full keyboard support for the idea detail drawer', desc: 'Ensure every control in the idea drawer — including the comment form — is reachable via Tab, with a visible focus ring and a working Escape-to-close.' },
+  };
+
+  function renderDrawer(idea) {
+    document.getElementById('drawer-id').textContent = '#' + idea.id;
+    document.getElementById('drawer-title-input').value = idea.title;
+    var metaLine = document.getElementById('drawer-meta-line');
+    metaLine.innerHTML = 'Created by ' + avatar(idea.owner, 4) + ' <span>' + USERS[idea.owner].name + '</span> <span class="text-zinc-300 dark:text-zinc-700">•</span> on ' + state.board;
+    drawerStatusSel.value = idea.statusId;
+    drawerTypeSel.value = idea.type;
+    document.getElementById('drawer-impact').value = idea.impact;
+    drawerAssigneeSel.value = idea.owner;
+    document.getElementById('drawer-description').value = idea.description;
+    document.getElementById('drawer-cf-release').textContent = idea.release;
+    document.getElementById('drawer-cf-effort').textContent = idea.effort;
+
+    var tagsWrap = document.getElementById('drawer-tags');
+    var ALL_TAGS = ['mobile', 'api', 'billing', 'accessibility', 'performance'];
+    tagsWrap.innerHTML = ALL_TAGS.map(function (t) {
+      var on = idea.tags.indexOf(t) !== -1;
+      return '<button type="button" data-tag="' + t + '" aria-pressed="' + on + '" class="font-mono text-[11px] rounded px-1.5 py-0.5 border ' + (on ? 'bg-cyan-50 dark:bg-cyan-500/10 border-cyan-400/50 text-cyan-800 dark:text-cyan-300' : 'border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300') + '">#' + t + '</button>';
+    }).join('');
+
+    // AI strip
+    var stripEl = document.getElementById('drawer-ai-strip');
+    var suggestion = AI_SUGGESTIONS[idea.id];
+    if (suggestion && !state.aiStripDismissed[idea.id]) {
+      stripEl.hidden = false;
+      document.getElementById('drawer-ai-suggestion-text').innerHTML = '<strong>Title:</strong> ' + suggestion.title;
+      stripEl.dataset.ideaId = idea.id;
+    } else {
+      stripEl.hidden = true;
+    }
+
+    renderDrawerVoteAndComments(idea);
+
+    var actList = document.getElementById('drawer-activity');
+    actList.innerHTML = genActivity(idea).map(function (a) {
+      return '<li class="flex items-start gap-2"><span class="w-1 h-1 rounded-full bg-zinc-400 mt-1.5 shrink-0"></span><span class="flex-1">' + a.text + '</span><span class="font-mono shrink-0">' + a.when + '</span></li>';
+    }).join('');
+  }
+
+  function renderDrawerVoteAndComments(idea) {
+    var voted = !!state.votedIdeas[idea.id];
+    document.getElementById('drawer-upvote').setAttribute('aria-pressed', voted);
+    document.getElementById('drawer-upvote').classList.toggle('text-cyan-700', voted);
+    document.getElementById('drawer-upvote').classList.toggle('dark:text-cyan-300', voted);
+    document.getElementById('drawer-upvote').classList.toggle('border-cyan-500', voted);
+    document.getElementById('drawer-upvote-count').textContent = upvoteCount(idea);
+    document.getElementById('drawer-comment-count').textContent = idea._comments.length;
+    var list = document.getElementById('drawer-comments');
+    if (!idea._comments.length) {
+      list.innerHTML = '<li class="text-xs text-zinc-400">No comments yet.</li>';
+    } else {
+      list.innerHTML = idea._comments.map(function (c) {
+        return '<li class="flex gap-2 text-sm">' + avatar(c.author, 5) +
+          '<div class="flex-1"><div class="flex items-baseline gap-2"><span class="font-medium text-xs">' + USERS[c.author].name + '</span><span class="text-[11px] text-zinc-400 font-mono">' + c.when + '</span></div>' +
+          '<p class="text-zinc-600 dark:text-zinc-400">' + c.text + '</p></div></li>';
+      }).join('');
+    }
+  }
+
+  var lastFocusedBeforeOverlay = null;
+  function openDrawer(id) {
+    var idea = ideaById(id);
+    if (!idea) return;
+    lastFocusedBeforeOverlay = document.activeElement;
+    state.drawerIdeaId = id;
+    renderDrawer(idea);
+    drawer.hidden = false;
+    drawerOverlay.hidden = false;
+    drawer.focus();
+  }
+  function closeDrawer() {
+    drawer.hidden = true;
+    drawerOverlay.hidden = true;
+    state.drawerIdeaId = null;
+    if (lastFocusedBeforeOverlay) lastFocusedBeforeOverlay.focus();
+  }
+  document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+  drawerOverlay.addEventListener('click', closeDrawer);
+
+  document.getElementById('drawer-upvote').addEventListener('click', function () {
+    if (state.drawerIdeaId) toggleUpvote(state.drawerIdeaId);
+  });
+  document.getElementById('drawer-status').addEventListener('change', function (e) {
+    var idea = ideaById(state.drawerIdeaId);
+    if (!idea) return;
+    idea.statusId = e.target.value;
+    toast('Status changed to ' + statusById(idea.statusId).name);
+    if (state.surface === 'board') renderBoard();
+    if (state.surface === 'list') renderList();
+  });
+  document.getElementById('drawer-tags').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-tag]');
+    if (!btn) return;
+    var idea = ideaById(state.drawerIdeaId);
+    var t = btn.getAttribute('data-tag');
+    var i = idea.tags.indexOf(t);
+    if (i === -1) idea.tags.push(t); else idea.tags.splice(i, 1);
+    renderDrawer(idea);
+    if (state.surface === 'board') renderBoard();
+    if (state.surface === 'list') renderList();
+  });
+  document.getElementById('drawer-ai-accept').addEventListener('click', function () {
+    var idea = ideaById(state.drawerIdeaId);
+    var s = AI_SUGGESTIONS[idea.id];
+    if (s) {
+      idea.title = s.title;
+      idea.description = s.desc;
+      document.getElementById('drawer-title-input').value = idea.title;
+      document.getElementById('drawer-description').value = idea.description;
+    }
+    state.aiStripDismissed[idea.id] = true;
+    document.getElementById('drawer-ai-strip').hidden = true;
+    toast('AI suggestion applied');
+    if (state.surface === 'board') renderBoard();
+    if (state.surface === 'list') renderList();
+  });
+  document.getElementById('drawer-ai-dismiss').addEventListener('click', function () {
+    state.aiStripDismissed[state.drawerIdeaId] = true;
+    document.getElementById('drawer-ai-strip').hidden = true;
+  });
+  document.getElementById('drawer-comment-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var input = document.getElementById('drawer-comment-input');
+    var text = input.value.trim();
+    if (!text) return;
+    var idea = ideaById(state.drawerIdeaId);
+    idea._comments.unshift({ author: 'ada', text: text, when: 'just now' });
+    idea.comments = idea._comments.length;
+    input.value = '';
+    renderDrawerVoteAndComments(idea);
+    toast('Comment posted');
+    if (state.surface === 'list') renderList();
+  });
+
+  // basic focus trap for drawer
+  drawer.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var focusable = Array.from(drawer.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])')).filter(function (el) { return el.offsetParent !== null; });
+    if (!focusable.length) return;
+    var first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  /* ---------------------------------------------------------------------
+   * NEW IDEA MODAL
+   * ------------------------------------------------------------------- */
+  var newIdeaOverlay = document.getElementById('new-idea-overlay');
+  var newIdeaModal = document.getElementById('new-idea-modal');
+  function openNewIdeaModal() {
+    lastFocusedBeforeOverlay = document.activeElement;
+    newIdeaOverlay.hidden = false;
+    document.getElementById('new-idea-title-input').value = '';
+    document.getElementById('new-idea-desc-input').value = '';
+    state.newIdeaAiAccepted = false;
+    newIdeaModal.querySelector('.ai-glow').hidden = false;
+    newIdeaModal.focus();
+  }
+  function closeNewIdeaModal() {
+    newIdeaOverlay.hidden = true;
+    if (lastFocusedBeforeOverlay) lastFocusedBeforeOverlay.focus();
+  }
+  document.getElementById('new-idea-btn-board').addEventListener('click', openNewIdeaModal);
+  document.getElementById('new-idea-btn-list').addEventListener('click', openNewIdeaModal);
+  document.getElementById('new-idea-close').addEventListener('click', closeNewIdeaModal);
+  document.getElementById('new-idea-cancel').addEventListener('click', closeNewIdeaModal);
+  newIdeaOverlay.addEventListener('click', function (e) { if (e.target === newIdeaOverlay) closeNewIdeaModal(); });
+  document.getElementById('new-idea-ai-accept').addEventListener('click', function () {
+    document.getElementById('new-idea-title-input').value = 'Add dark mode to the mobile companion app';
+    document.getElementById('new-idea-desc-input').value = 'Several field reps have asked for a dark theme in the mobile app to reduce glare during evening site visits. Suggested scope: system-preference detection with a manual override in Settings.';
+    newIdeaModal.querySelector('.ai-glow').hidden = true;
+    toast('AI draft applied');
+  });
+  document.getElementById('new-idea-ai-dismiss').addEventListener('click', function () {
+    newIdeaModal.querySelector('.ai-glow').hidden = true;
+  });
+  document.getElementById('new-idea-submit').addEventListener('click', function () {
+    var title = document.getElementById('new-idea-title-input').value.trim();
+    if (!title) { document.getElementById('new-idea-title-input').focus(); return; }
+    var nextId = Math.max.apply(null, IDEAS.map(function (i) { return i.id; })) + 1;
+    var newIdea = {
+      id: nextId, title: title,
+      type: document.getElementById('new-idea-type-input').value,
+      impact: document.getElementById('new-idea-impact-input').value,
+      statusId: 'new', upvotes: 0, comments: 0, tags: [], owner: 'ada', board: state.board,
+      description: document.getElementById('new-idea-desc-input').value.trim() || 'No description provided.',
+      release: 'Unscheduled', effort: '—',
+    };
+    newIdea._comments = [];
+    IDEAS.push(newIdea);
+    closeNewIdeaModal();
+    toast('Idea #' + nextId + ' created');
+    if (state.surface === 'board') renderBoard();
+    if (state.surface === 'list') renderList();
+  });
+  newIdeaModal.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var focusable = Array.from(newIdeaModal.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])')).filter(function (el) { return el.offsetParent !== null; });
+    if (!focusable.length) return;
+    var first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  /* ---------------------------------------------------------------------
+   * STATUSES ADMIN
+   * ------------------------------------------------------------------- */
+  var statusesList = document.getElementById('statuses-list');
+  var dragSrcIndex = null;
+
+  function renderStatuses() {
+    statusesList.innerHTML = '';
+    STATUSES.forEach(function (s, i) {
+      var li = document.createElement('li');
+      li.draggable = true;
+      li.setAttribute('data-index', i);
+      li.className = 'flex items-center gap-3 px-3 py-2.5 bg-white dark:bg-zinc-900';
+      li.innerHTML =
+        '<span class="cursor-grab text-zinc-400" aria-hidden="true" title="Drag to reorder">' +
+          '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/></svg>' +
+        '</span>' +
+        '<span class="w-3.5 h-3.5 rounded-full border border-black/10 dark:border-white/10 shrink-0" style="background:' + s.color + '" title="' + s.color + '"></span>' +
+        '<span class="font-mono text-[11px] text-zinc-400 w-16 shrink-0">' + s.color + '</span>' +
+        '<span class="flex-1 font-medium text-sm">' + s.name + '</span>' +
+        '<label class="flex items-center gap-1.5 text-xs text-zinc-500 shrink-0">' +
+          '<input type="radio" name="default-status" ' + (s.isDefault ? 'checked' : '') + ' data-default-radio="' + s.id + '" class="accent-cyan-600">' +
+          'Default' +
+        '</label>' +
+        '<div class="flex items-center gap-0.5 shrink-0">' +
+          '<button data-move="-1" data-index="' + i + '" aria-label="Move ' + s.name + ' up" ' + (i === 0 ? 'disabled' : '') + ' class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>' +
+          '<button data-move="1" data-index="' + i + '" aria-label="Move ' + s.name + ' down" ' + (i === STATUSES.length - 1 ? 'disabled' : '') + ' class="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-cyan-600 dark:focus-visible:outline-cyan-400"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>' +
+        '</div>';
+      statusesList.appendChild(li);
+    });
+  }
+  function moveStatus(from, to) {
+    if (to < 0 || to >= STATUSES.length) return;
+    var item = STATUSES.splice(from, 1)[0];
+    STATUSES.splice(to, 0, item);
+    renderStatuses();
+    renderBoard();
+    toast(item.name + ' moved');
+  }
+  statusesList.addEventListener('click', function (e) {
+    var moveBtn = e.target.closest('[data-move]');
+    if (moveBtn) {
+      var i = parseInt(moveBtn.getAttribute('data-index'), 10);
+      moveStatus(i, i + parseInt(moveBtn.getAttribute('data-move'), 10));
+    }
+  });
+  statusesList.addEventListener('change', function (e) {
+    var radio = e.target.closest('[data-default-radio]');
+    if (!radio) return;
+    STATUSES.forEach(function (s) { s.isDefault = (s.id === radio.getAttribute('data-default-radio')); });
+    toast(statusById(radio.getAttribute('data-default-radio')).name + ' set as default');
+  });
+  statusesList.addEventListener('dragstart', function (e) {
+    var li = e.target.closest('li');
+    dragSrcIndex = parseInt(li.getAttribute('data-index'), 10);
+    li.classList.add('drag-ghost');
+  });
+  statusesList.addEventListener('dragend', function (e) {
+    var li = e.target.closest('li');
+    if (li) li.classList.remove('drag-ghost');
+  });
+  statusesList.addEventListener('dragover', function (e) { e.preventDefault(); });
+  statusesList.addEventListener('drop', function (e) {
+    e.preventDefault();
+    var li = e.target.closest('li');
+    if (!li || dragSrcIndex === null) return;
+    var targetIndex = parseInt(li.getAttribute('data-index'), 10);
+    moveStatus(dragSrcIndex, targetIndex);
+    dragSrcIndex = null;
+  });
+  document.getElementById('add-status-btn').addEventListener('click', function () {
+    toast('Add-status form omitted from this comp — demonstrates the entry point only');
+  });
+
+  /* ---------------------------------------------------------------------
+   * LOGIN
+   * ------------------------------------------------------------------- */
+  document.getElementById('login-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    document.getElementById('login-error').hidden = false;
+    document.getElementById('login-password').focus();
+  });
+
+  /* ---------------------------------------------------------------------
+   * COMMAND PALETTE
+   * ------------------------------------------------------------------- */
+  var paletteOverlay = document.getElementById('palette-overlay');
+  var paletteInput = document.getElementById('palette-input');
+  var paletteList = document.getElementById('palette-list');
+
+  function paletteItems(q) {
+    q = q.trim().toLowerCase();
+    var items = [];
+    items.push({ group: 'Go to', label: 'Board detail', action: function () { setSurface('board'); } });
+    items.push({ group: 'Go to', label: 'Ideas list', action: function () { setSurface('list'); } });
+    items.push({ group: 'Go to', label: 'Statuses admin', action: function () { setSurface('statuses'); } });
+    items.push({ group: 'Go to', label: 'Login screen', action: function () { setSurface('login'); } });
+    items.push({ group: 'Actions', label: 'New idea', action: function () { openNewIdeaModal(); } });
+    items.push({ group: 'Actions', label: 'Toggle theme', action: function () { applyTheme(root.classList.contains('dark') ? 'light' : 'dark'); } });
+    items.push({ group: 'Actions', label: state.viewAs ? 'Exit View As' : 'Demo: View As Ben Torres', action: function () { document.getElementById('toggle-view-as').click(); } });
+    IDEAS.filter(function (i) { return i.board === state.board; }).forEach(function (idea) {
+      items.push({ group: 'Ideas', label: '#' + idea.id + '  ' + idea.title, action: function () { setSurface('list'); openDrawer(idea.id); } });
+    });
+    if (!q) return items;
+    return items.filter(function (it) { return it.label.toLowerCase().indexOf(q) !== -1 || it.group.toLowerCase().indexOf(q) !== -1; });
+  }
+
+  function renderPalette() {
+    var items = paletteItems(paletteInput.value);
+    state.paletteItems = items;
+    if (state.paletteIndex >= items.length) state.paletteIndex = Math.max(0, items.length - 1);
+    paletteList.innerHTML = '';
+    if (!items.length) {
+      paletteList.innerHTML = '<li class="px-3 py-6 text-center text-sm text-zinc-400">No matches.</li>';
+      return;
+    }
+    var lastGroup = null;
+    items.forEach(function (it, i) {
+      if (it.group !== lastGroup) {
+        var gh = document.createElement('li');
+        gh.setAttribute('role', 'presentation');
+        gh.className = 'px-3 pt-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-400';
+        gh.textContent = it.group;
+        paletteList.appendChild(gh);
+        lastGroup = it.group;
+      }
+      var li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.setAttribute('data-pidx', i);
+      li.setAttribute('aria-selected', i === state.paletteIndex ? 'true' : 'false');
+      li.className = 'mx-1.5 px-2.5 py-1.5 rounded-md text-sm cursor-pointer flex items-center justify-between ' + (i === state.paletteIndex ? 'bg-cyan-600 dark:bg-cyan-400 text-white dark:text-zinc-950' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800');
+      li.innerHTML = '<span class="truncate">' + it.label + '</span>';
+      paletteList.appendChild(li);
+    });
+  }
+
+  function openPalette() {
+    lastFocusedBeforeOverlay = document.activeElement;
+    state.paletteOpen = true;
+    state.paletteIndex = 0;
+    paletteInput.value = '';
+    paletteOverlay.hidden = false;
+    renderPalette();
+    paletteInput.focus();
+  }
+  function closePalette() {
+    state.paletteOpen = false;
+    paletteOverlay.hidden = true;
+    if (lastFocusedBeforeOverlay) lastFocusedBeforeOverlay.focus();
+  }
+  function togglePalette() { state.paletteOpen ? closePalette() : openPalette(); }
+  document.getElementById('open-palette-btn').addEventListener('click', openPalette);
+  paletteOverlay.addEventListener('click', function (e) { if (e.target === paletteOverlay) closePalette(); });
+  paletteInput.addEventListener('input', function () { state.paletteIndex = 0; renderPalette(); });
+  paletteInput.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); state.paletteIndex = Math.min((state.paletteItems || []).length - 1, state.paletteIndex + 1); renderPalette(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); state.paletteIndex = Math.max(0, state.paletteIndex - 1); renderPalette(); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      var item = (state.paletteItems || [])[state.paletteIndex];
+      if (item) { closePalette(); item.action(); }
+    }
+  });
+  paletteList.addEventListener('click', function (e) {
+    var li = e.target.closest('[data-pidx]');
+    if (!li) return;
+    var item = state.paletteItems[parseInt(li.getAttribute('data-pidx'), 10)];
+    if (item) { closePalette(); item.action(); }
+  });
+
+  /* ---------------------------------------------------------------------
+   * GLOBAL KEYBOARD SHORTCUTS
+   * ------------------------------------------------------------------- */
+  document.addEventListener('keydown', function (e) {
+    var active = document.activeElement;
+    var tag = active && active.tagName ? active.tagName.toLowerCase() : '';
+    var typing = tag === 'input' || tag === 'textarea' || (active && active.isContentEditable);
+
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      togglePalette();
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      if (state.paletteOpen) { closePalette(); return; }
+      if (!newIdeaOverlay.hidden) { closeNewIdeaModal(); return; }
+      if (state.drawerIdeaId) { closeDrawer(); return; }
+      if (!boardMenu.hidden) { closeBoardMenu(); return; }
+      if (!userMenu.hidden) { closeUserMenu(); return; }
+      return;
+    }
+
+    if (state.paletteOpen || !newIdeaOverlay.hidden) return;
+
+    if (typing) return;
+
+    if (e.key === '/') {
+      e.preventDefault();
+      if (state.surface === 'board') document.getElementById('board-search').focus();
+      else if (state.surface === 'list') document.getElementById('list-search').focus();
+      else openPalette();
+      return;
+    }
+
+    if (state.drawerIdeaId) return;
+
+    var k = e.key.toLowerCase();
+    if (k === 'j') { e.preventDefault(); moveSelection(1); }
+    else if (k === 'k') { e.preventDefault(); moveSelection(-1); }
+    else if (e.key === 'Enter') { openSelected(); }
+    else if (k === 'u') { e.preventDefault(); upvoteSelected(); }
+  });
+
+  /* ---------------------------------------------------------------------
+   * INIT
+   * ------------------------------------------------------------------- */
+  renderBoardSwitcherMenu();
+  renderBoard();
+  renderList();
+  renderStatuses();
+  setSurface('board');
+})();
+</script>
+</body>
+</html>
