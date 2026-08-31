@@ -204,11 +204,23 @@ Self-hosted from `wwwroot/fonts/geist-latin-variable.woff2` — a 29 KB latin-su
 
 > **Changed 2026-08-12 by user decision, superseding the original Comp C pairing.** This previously specified `"Segoe UI", -apple-system, Roboto, sans-serif` for body with `Georgia, "Times New Roman", serif` for headings and display text. That serif/sans contrast was the visual argument behind the name "Fluent Editorial" — with a single family it no longer exists, so the direction now reads as editorial through its layout, spacing and restraint rather than its typeface pairing. The reference comps under `SPEC/mockups/comp-c-*.html` still show the old Georgia headings and have **not** been re-rendered; where a comp and this section disagree on type, this section wins.
 
-### Color palette (from `SPEC/mockups/comp-c-fluent-editorial.html`)
-- Ink/neutrals: text `#242424`, secondary `#484644`, muted `#797672`.
-- Surfaces: background `#faf9f8`, cards/surface `#ffffff`, borders `#e4e2df`.
-- Brand/accent (indigo, not Comp A's blue): accent `#5b5fc7`, deep accent `#444791`, soft accent fill `#eef0fb`.
-- Semantic: success `#0e700e`, warning `#9a5b00`, error `#b10e1c`.
+### Color palette
+
+- Ink/neutrals: text `#243447`, secondary `#3E4E60`, muted `#5D6C7E`, faint `#818E9C`.
+- Surfaces: background `#F7F9FB`, cards/surface `#FFFFFF`, raised `#F1F3F6`, borders `#DDE1E6`, strong border `#C5CBD3`.
+- Brand/accent (desaturated blue): accent `#527292`, deep accent `#3E566F`, accent fill `#5B7FA3`, soft accent fill `#F0F4F7`, accent line `#D1DBE5`.
+- Semantic, each as a fill/ink pair: success `#6FAF7A` / `#457C4F`, warning `#C9A65C` / `#8A6D2E`, error `#C97A7A` / `#B64B4B`, teal `#5F9E93` / `#4A7972`.
+- Corner radius: `2px` throughout. Only avatars are round (`50%`).
+
+**Only `#243447` clears WCAG AA as body text (12.67:1).** The chromatic values sit at 2.3–4.2:1, so each is used **as a fill, chip, or lane marker only**, paired with its `-ink` for text. Every `-ink` is derived to clear 4.5:1 against its own soft tint — the worst case it actually renders on — not merely against white; deriving against white leaves chips at roughly 4.1:1 and fails the audit.
+
+**Never encode meaning in colour alone** — status, idea type and priority are always spelled out as text.
+
+> **Changed 2026-08-31 by user decision, superseding the original Comp C palette.** This previously specified warm neutrals (text `#242424`, background `#faf9f8`) with an indigo accent (`#5b5fc7`, deep `#444791`, soft `#eef0fb`) and semantic values `#0e700e` / `#9a5b00` / `#b10e1c`, taken from `comp-c-fluent-editorial.html`. The user rejected that direction as insufficiently business-professional and chose the palette above ("think Trello, Jira, Monday"), together with a reduction of all corner radii to `2px`. All 41 comps under `SPEC/mockups/comp-*.html` were re-rendered to this palette on the same date and **do** match this section.
+>
+> **`src/Collega.Client/wwwroot/css/app.css` has NOT been migrated** — the shipped Blazor client still renders the indigo/warm-neutral tokens and `6px`/`4px` radii. Until that migration lands, this section is the target and the stylesheet is the lag; where they disagree, this section wins. The migration is a separate work item and is not implied by this change.
+>
+> **One check the migration must make:** the `D-SUGGEST` teal (`--sug: #116b5e`, `SPEC/20-feature-ai-idea-assist.md`) exists specifically to be unmistakable against the accent. Indigo sat roughly 68° of hue from it; the new blue sits roughly 38° away. They remain separable by lightness — `#116b5e` is far darker and more saturated than `#527292` — but the margin has halved, so re-check the suggestion chip, tinted field and left border against the new accent before declaring the migration done.
 
 ## ERROR DISPLAY
 

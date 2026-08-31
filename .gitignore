@@ -76,3 +76,6 @@ nunit-*.xml
 # graphify derived artifacts (regenerate with `graphify update .`)
 graphify-out/
 *.graphify-bak
+
+# design-sync build output
+ds-bundle/
