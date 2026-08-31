@@ -6,18 +6,21 @@ Blocked by: 05
 
 ## Question
 
-"Introspect, then reshape" (decision 7) names an intent, not a scope. Reshaping is what forfeits "same data, same answers" as a correctness check, so every change has to earn its place individually.
+"Introspect, then reshape" names an intent, not a scope. Which reshapes are actually wanted?
 
-**Resolve by:** an explicit list of schema changes, each with a justification — and, just as importantly, the changes explicitly **not** being made.
+## Options — check each change you want made
 
-Candidates worth putting to the user:
+- [ ] **EF-flavored naming** — table casing, join-table names, FK naming conventions that read oddly in Prisma
+- [ ] **Audit and event tables** (`AuditEvent`, `NotificationEvent`) — currently shaped by EF conventions
+- [ ] **User-defined-field storage** (`FieldDefinition` / `FieldDefinitionOption` / `IdeaFieldValue`) — the classic EAV shape. The most likely place someone reaches for `jsonb` instead. **Biggest blast radius on this list.**
+- [ ] **`Status.Name` length cap** — `character varying(100)`, a judgment call recorded pre-Sprint-5 and worth re-confirming rather than inheriting silently
+- [ ] **Enum representation** — EF ints versus Prisma native Postgres enums
+- [ ] **Nothing optional** *(recommended until `05` lands)* — take only the reshapes that introspection *forces*, and defer the rest
 
-- EF-flavored naming that reads oddly in Prisma (table casing, join-table names, FK naming)
-- The audit and event tables (`AuditEvent`, `NotificationEvent`) — currently shaped by EF conventions
-- **User-defined-field storage** (`FieldDefinition` / `FieldDefinitionOption` / `IdeaFieldValue`) — the classic EAV shape, and the most likely place someone will want to reach for `jsonb` instead. Big decision, big blast radius.
-- `Status.Name` capped at `character varying(100)` — a judgment call recorded pre-Sprint-5 and worth re-confirming rather than inheriting silently
-- Anything the Sprint 5 post-mortem flagged as awkward under Postgres
+## The rule to apply
 
-Needs `05` first: some reshapes are **forced** (introspection loses something, so it must be re-expressed) and some are **optional** (someone would just prefer it). Until the research lands those two categories are indistinguishable, and only the second kind should be argued about.
+Every **optional** reshape widens the gap that `04`'s validation strategy has to cover. Forced reshapes are free — you have no choice. Optional ones are cheap to decide now and expensive to verify later. Bias hard toward "not now."
 
-Guidance to carry into the conversation: every optional reshape widens the gap that `04`'s validation strategy has to cover. Cheap to decide now, expensive to verify later.
+## Blocked by `05`
+
+Some reshapes are **forced** (introspection loses something, so it must be re-expressed by hand) and some are **optional** (someone would simply prefer it). Until the research in `05` lands, those two categories are indistinguishable — and only the second kind is worth arguing about. Do not resolve this ticket first.

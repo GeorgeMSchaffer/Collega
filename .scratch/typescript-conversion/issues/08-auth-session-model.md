@@ -6,19 +6,26 @@ Blocked by: 07
 
 ## Question
 
-Today: Blazor WASM holds a JWT and calls the API as a bearer token. The JWT signing key is ephemeral until Sprint 8 addresses it, and lockout is fixed-window (a judgment call settled for MVP).
+Blazor WASM holds a JWT and sends it as a bearer token. Next.js has a server side, which opens options Blazor never had. Where does the session live?
 
-Next.js changes the shape of the question, because a Next app has a server side that Blazor WASM never had:
+## Options — select one
 
-- **(a) Bearer token held client-side** — closest to today, smallest conceptual change, but the token is exposed to client JS.
-- **(b) httpOnly session cookie terminated at Next**, with Nest trusting a forwarded identity. Better security posture; introduces a trust relationship between the two apps that has to be got right.
-- **(c) Nest issues cookies directly**, Next stays a pure client. Simple trust model, but constrains cross-origin and deployment topology — interacts with `02`.
+- [ ] **A — Bearer token held client-side.** Closest to today, smallest conceptual change. The token is exposed to client JS.
+- [ ] **B — httpOnly session cookie terminated at Next**, Nest trusts a forwarded identity. Better security posture; introduces a trust relationship between the two apps that must be got right.
+- [ ] **C — Nest issues cookies directly**, Next stays a pure client. Simple trust model, but constrains cross-origin setup — interacts with `02`'s answer.
 
-Interacts hard with `07`: impersonation is a **server-side session where the token is never reissued**, so the effective role rides on something other than the token. Wherever the session lives, View As has to live compatibly. That dependency is why this is blocked rather than parallel.
+No recommendation until `07` reports. Impersonation is a **server-side session where the token is never reissued**, so the effective role rides on something other than the token — and whichever option wins has to carry that correctly. That dependency is the whole reason this ticket is blocked rather than parallel.
 
-Also in scope, all currently working and easy to drop on the floor during a rewrite:
+## Also in scope
 
-- First-login forced password change (`ChangePassword.razor`)
-- Session timeout (`SessionTimeoutGuard.razor`)
-- Fixed-window lockout and the temporary-reset flow
-- Email as a **globally unique** identifier system-wide, not per-org
+All currently working, all easy to drop on the floor during a rewrite:
+
+- [ ] First-login forced password change (`ChangePassword.razor`)
+- [ ] Session timeout (`SessionTimeoutGuard.razor`)
+- [ ] Fixed-window lockout and the admin-issued temporary-reset flow
+- [ ] Email as a **globally unique** identifier system-wide, not per-organization
+- [ ] The JWT signing key, currently ephemeral pending Sprint 8
+
+## Blocked by `07`
+
+`07` determines how ambient identity works in Nest and Next. Answer it first.

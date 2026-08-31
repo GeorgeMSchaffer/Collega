@@ -6,21 +6,22 @@ Blocked by: —
 
 ## Question
 
-Six .NET-specific subsystems need TypeScript counterparts. Five are routine substitutions:
+Everything currently shipping has a TypeScript counterpart. Is anything deliberately left behind to shrink the first cut?
 
-| Subsystem | TS counterpart | Risk |
-|---|---|---|
-| AI idea assist | Anthropic **TypeScript SDK** | Low — arguably better than the .NET path |
-| Portrait images | `sharp` | Low, but native — echoes the ImageSharp/SkiaSharp Linux lesson |
-| CSV import | `csv-parse` | Low |
-| Rate limiting | `@nestjs/throttler` | Low |
-| JWT auth | `@nestjs/jwt` | Low, but see `08` |
-| **View As impersonation** | request-scoped provider / `AsyncLocalStorage` | **High — see `07`** |
+## Options — check anything you want deferred or dropped
 
-Also unresolved: the prompt playground and eval harness that landed on `origin/dev` (`44ac4eb`, `6c5c722`, `88afb29`) and the versioned Site-Admin-managed AI prompt (`335ed6f`). These are recent, real, and absent from both tracker lineages' summaries — they need a disposition rather than being discovered mid-conversion.
+- [ ] **AI idea assist** → Anthropic TypeScript SDK. Low risk, arguably better than the .NET path.
+- [ ] **Prompt playground + eval harness** → recent arrivals on `origin/dev` (`44ac4eb`, `6c5c722`, `88afb29`) plus the versioned Site-Admin-managed prompt (`335ed6f`). Internal tooling; the most defensible thing to defer.
+- [ ] **Portrait images** → `sharp`. Low risk. Note this *removes* the ImageSharp 3.1.x licensing constraint entirely — a small win.
+- [ ] **CSV import** → `csv-parse`. Low risk. The product rule must survive: user import direct, idea import through View As.
+- [ ] **Rate limiting** → `@nestjs/throttler`. Low risk.
+- [ ] **JWT auth** → `@nestjs/jwt`. Low risk mechanically; see `08` for the real question.
+- [ ] **View As impersonation** → request-scoped provider or `AsyncLocalStorage`. **High risk — see `07`.** Deferring this means shipping without Site Admin support, which is probably not viable.
 
-Two further items with .NET-shaped answers: **ImageSharp's licensing constraint** (pinned to the 3.1.x Split License line) disappears entirely under `sharp`, which is a small win worth recording; and the **CSV import split** (user import direct, idea import through View As) is a product rule that must survive the port intact.
+**Recommended: check nothing** — everything ports, but View As gets its own slice rather than riding along inside the auth work.
 
-**Resolve by:** confirming everything ports, or naming what is deferred or dropped to shrink the first cut — with the consequence of each stated.
+## Background
+
+Five of the six subsystems are routine substitutions. View As is not, and the tracker flags its chokepoint as load-bearing twice. The playground and eval harness are the genuinely open question here: they landed recently, they are absent from both tracker lineages' summaries, and they are developer tooling rather than product surface — so they are the one place where "defer" is a reasonable answer rather than a retreat.
 
 Asked during charting, not answered.
