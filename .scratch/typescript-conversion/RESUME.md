@@ -66,3 +66,27 @@ The two research tickets are the obvious parallel work — they need no conversa
 Plan not build · motive is hiring + ecosystem so the whole stack moves · starts after Sprint 8 · estimated in agent-slices · Vitest + Playwright, not Cypress · big-bang cutover · Prisma introspect then reshape · Turborepo + pnpm with lint-enforced layer boundaries · UI is a redesign with Comp C unlocked.
 
 Full detail and rationale in `map.md` under "Settled during charting".
+
+---
+
+## In flight when this session ended (2026-08-30, ~20:50)
+
+**Comp J was rejected and is being replaced.** User feedback: *"I don't think a dark theme is appropriate for a business user type application."* Comp J was dark-first, so it is retired rather than restyled.
+
+Its replacement is **Comp N "Decision Desk"** at `SPEC/mockups/comp-n-decision-desk.html` — light-only, and carrying six novel *product* concepts rather than only a new look:
+
+1. **Triage Mode** — focused one-idea-at-a-time review queue with decisive actions and a remaining-count
+2. **Duplicate clustering** — near-identical ideas grouped with a merge affordance
+3. **Vote budget** — finite votes per quarter, so upvotes carry signal
+4. **Decision records** — declining or planning requires a rationale that stays visible forever
+5. **Momentum** — upvote velocity sparkline, so fast-rising new ideas can outrank stale high totals
+6. **Commitment strip** — a roadmap band tying the board to what the org actually committed to
+
+**If `comp-n-decision-desk.html` is missing, empty, or obviously truncated**, the build did not finish — rerun it. The full brief is recoverable from this list plus the shared seed data in any of the other three comps.
+
+**If it is present and complete**, then these three follow-ups were not done and still need doing:
+- [ ] Delete `SPEC/mockups/comp-j-command-deck.html`
+- [ ] Update the comps section of `SPEC/mockups/README.md` — replace J with N
+- [ ] Update ticket `01`'s option list — replace J with N, and note that the "who is the primary user?" question now has a fourth answer shape, since N argues the primary job is *deciding* rather than browsing
+
+The three surviving comps (K, L, M) are complete and committed.
