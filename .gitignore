@@ -79,3 +79,9 @@ graphify-out/
 
 # design-sync build output
 ds-bundle/
+
+# Playwright MCP scratch output
+.playwright-mcp/
+
+# Local secrets — never commit
+.env.local

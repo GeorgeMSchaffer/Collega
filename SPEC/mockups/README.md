@@ -81,6 +81,54 @@ Both carry the same five screens (Roadmap / Outcome detail / Issue / Grouping dr
 
 Each comp's final screen argues its own side *and* states its own cost, including the failure mode to watch for. No default is asserted in the spec — this is a genuine fork, and it is recorded as the one **blocking** Open Question in `SPEC/20-feature-issues-and-delivery.md`. Slice 1 does not depend on the answer and can be built while it is open.
 
+### Comp O: the DESIGN.md / Notion direction probe (2026-08-31)
+
+`DESIGN.md` (repo root) is an analysis of **Notion's** design language. These three comps
+apply it to Collega's own screens so the direction can be judged on real surfaces rather
+than in the abstract. They are an **exploration**: nothing in `SPEC/` was changed for them,
+the 41 comps A–N were not restyled, and the design system uploaded to Claude Design is
+untouched. Each file carries a banner saying so.
+
+- `comp-o-notion-01-board.html` — Board: swimlanes, list, first-run empty state
+- `comp-o-notion-02-idea-detail.html` — Idea detail, new-idea slideout, modal/toast + the three elevation levels
+- `comp-o-notion-03-delivery.html` — Sprint board, backlog table, roadmap
+
+All three are generated from one shared token layer, so they are provably the same system.
+Values are taken from the `DESIGN.md` front matter verbatim and were verified in-browser:
+Inter loaded, `heading-1` at 40px/−1px tracking, canvas `#f6f5f4`, primary `#0075de`,
+pill `9999px` CTAs, 12px cards, 8px utility buttons, 4px inputs.
+
+**It contradicts three locked decisions**, so adopting it is a real reversal, not a tweak:
+
+| | Locked | DESIGN.md |
+|---|---|---|
+| Corners | `2px` — "minimize rounded corners", 2026-08-07 | 12px cards, **pill `9999px`** CTAs |
+| Font | Geist, self-hosted, `SPEC/20-feature-client-ui.md` (2026-08-12) | NotionInter → Inter |
+| Accent | `#527292` (canonical 2026-08-31) | `#0075de` |
+
+What the probe settled:
+
+- **The two colour rulebooks reconcile.** DESIGN.md forbids colour that *structures* a
+  layout but explicitly permits the sticker palette as *category dots*; Collega forbids
+  colour that carries meaning *alone*. An 8px dot with the label always written beside it
+  satisfies both. Status lanes lose their tinted bands and read as plain type on the canvas.
+- **Idea detail is the best fit.** A single idea is a document, which is what this system
+  was drawn for. The heavy, tightly-tracked `heading-1` is an improvement here, not a translation.
+- **The backlog table needs no translation.** `ex-data-table-cell` maps straight onto Collega.
+- **The sprint board is where it strains.** 12px radii and generous padding fit fewer cards
+  above the fold than comp L.
+- **The roadmap pays the most.** With structural fills banned, outcome bars become neutral
+  chips and stop separating at a glance across a wide grid.
+- **Two things to fix before any adoption.** The pastel stickers (`#d6b6f6` purple in
+  particular) are close to invisible at 8px dot size and would need a deeper cut; and
+  elevation levels 0 and 1 are near-indistinguishable, which is fine on a marketing page
+  but leaves a dense app with no way to signal what is draggable.
+
+DESIGN.md also analyses a **marketing site**, so several of its component specs — `hero-band`,
+`pricing-plan-card`, `footer` — have no home in Collega. The single dark `#213183` band is
+used exactly once, on the first-run empty state, which is the only screen in the app with
+nothing to structure.
+
 ## Full-App Comps (2026-07-30)
 
 Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with Fluent UI Blazor components.
