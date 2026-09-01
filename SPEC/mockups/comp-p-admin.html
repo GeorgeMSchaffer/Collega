@@ -951,19 +951,25 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
     </aside>
   <div class="main">
     <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Statuses</b></span><span class="spacer"></span>
-      <button class="btn pri" data-roles="OrgAdmin">Add status</button>
-      <span class="deniedwrap" data-roles="User ReadOnly">
-        <button class="btn pri" aria-disabled="true" aria-describedby="p-why-add">Add status</button>
-        <span class="denied" id="p-why-add">Administrators only</span>
-      </span></div>
+      <button class="btn pri" data-roles="OrgAdmin">Add status</button></div>
     <div class="work">
       <div class="pgh" data-roles="SiteAdmin"><div class="grow"><h1>All statuses</h1>
         <div class="sub">Workflow statuses across every organization. Open an organization to change its statuses.</div></div></div>
-      <div class="pgh" data-roles="OrgAdmin User ReadOnly"><div class="grow"><h1>Statuses</h1>
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Statuses</h1>
         <div class="sub">The columns your boards group ideas by. Order here is the order on every board.</div></div></div>
 
-      <div class="filters" data-when="normal">
+      <div class="filters" data-when="normal" data-roles="SiteAdmin OrgAdmin">
         <div class="fw wide"><label for="p-st-q">Search</label><input type="search" id="p-st-q" placeholder="Search statuses&hellip;"></div>
+      </div>
+
+      <div data-roles="User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Administrators only</h3>
+          <p>Configuring statuses is an administrator's job, so this route is closed to members. Nothing here is hidden from you selectively &mdash; the whole page is out of scope for your role.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
       </div>
 
       <div data-roles="SiteAdmin">
@@ -1006,21 +1012,20 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
         <div class="note"><b>A cross-organization view is read-only on purpose.</b> A status belongs to one organization, so there is nothing coherent for a create button here to create. <b>Manage</b> carries you into the organization-scoped screen, which is where every change is made.</div>
       </div>
 
-      <div data-roles="OrgAdmin User ReadOnly">
+      <div data-roles="OrgAdmin">
       <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
         <div class="panel">
           <table data-when="normal">
             <thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
             <tbody>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>New / Pending</b></td><td><span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span></td><td class="num">6</td><td class="num">1</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-own">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Review</b></td><td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span></td><td class="num">4</td><td class="num">2</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-own">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Progress</b></td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span></td><td class="num">4</td><td class="num">3</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-own">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Client Review</b></td><td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span></td><td class="num">2</td><td class="num">4</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-own">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Complete</b></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span></td><td class="num">6</td><td class="num">5</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-own">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>New / Pending</b></td><td><span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span></td><td class="num">6</td><td class="num">1</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Review</b></td><td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span></td><td class="num">4</td><td class="num">2</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Progress</b></td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span></td><td class="num">4</td><td class="num">3</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Client Review</b></td><td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span></td><td class="num">2</td><td class="num">4</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Complete</b></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span></td><td class="num">6</td><td class="num">5</td><td><button class="btn ghost sm2">Edit</button></td></tr>
             </tbody>
           </table>
-          <div class="pgfoot" data-when="normal"><span data-roles="SiteAdmin OrgAdmin">Reorder by dragging, or focus a row and press <span class="kbd">Alt &uarr;</span> / <span class="kbd">Alt &darr;</span>.</span>
-            <span class="denied" id="p-why-edit-own" data-roles="User ReadOnly">Editing statuses is limited to administrators.</span></div>
+          <div class="pgfoot" data-when="normal"><span>Reorder by dragging, or focus a row and press <span class="kbd">Alt &uarr;</span> / <span class="kbd">Alt &darr;</span>.</span></div>
 
           <table data-when="loading" aria-busy="true">
             <thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
@@ -1037,9 +1042,8 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
             <div class="empty">
               <h3>No statuses yet</h3>
               <p>Statuses are the columns your boards group ideas by. Add the first one and every board in this organization gets that lane.</p>
-              <button class="btn pri" data-roles="SiteAdmin OrgAdmin">Add the first status</button>
-              <button class="btn" data-roles="SiteAdmin OrgAdmin">Use the five defaults</button>
-              <span class="denied" data-roles="User ReadOnly">An administrator sets these up.</span>
+              <button class="btn pri">Add the first status</button>
+              <button class="btn">Use the five defaults</button>
             </div>
           </div>
 
@@ -1049,7 +1053,7 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
           </div>
         </div>
 
-        <div class="card" data-roles="SiteAdmin OrgAdmin" style="width:356px">
+        <div class="card" style="width:356px">
           <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4;margin:0 0 var(--s-md)">Add status</h3>
           <form>
             <div class="field" data-when="normal empty loading"><label for="p-sname-own">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname-own" required><div class="hint">Shown as a lane header on every board.</div></div>
@@ -1094,45 +1098,41 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
   <div class="main">
     <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-statuses">All statuses</a> / <b>Acme Robotics</b></span>
       <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
-      <button class="btn pri" data-roles="SiteAdmin">Add status</button></div>
+      <span class="tag" data-roles="SiteAdmin">Read-only</span></div>
     <div class="work">
       <div data-roles="SiteAdmin">
         <div class="pgh"><div class="grow"><h1>Statuses</h1>
           <div class="sub">Acme Robotics &middot; the columns this organization&rsquo;s boards group ideas by.</div></div></div>
-        <div class="note" style="border-left-color:var(--secondary)"><b>Managing Acme Robotics.</b> You reached these statuses from the cross-organization list, so everything below belongs to Acme Robotics and to no other organization. <a href="#" data-go="s-statuses">Back to all statuses</a>.</div>
+        <div class="note" style="border-left-color:var(--secondary)"><b>Viewing Acme Robotics.</b> You reached these statuses from the cross-organization list, so everything below belongs to Acme Robotics and to no other organization. <a href="#" data-go="s-statuses">Back to all statuses</a>.</div>
         <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
         <div class="panel">
           <table data-when="normal">
-            <thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
+            <thead><tr><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
             <tbody>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>New / Pending</b></td><td><span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span></td><td class="num">6</td><td class="num">1</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Review</b></td><td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span></td><td class="num">4</td><td class="num">2</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Progress</b></td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span></td><td class="num">4</td><td class="num">3</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Client Review</b></td><td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span></td><td class="num">2</td><td class="num">4</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Complete</b></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span></td><td class="num">6</td><td class="num">5</td><td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button><button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
+              <tr><td><b>New / Pending</b></td><td><span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span></td><td class="num">6</td><td class="num">1</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
+              <tr><td><b>In Review</b></td><td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span></td><td class="num">4</td><td class="num">2</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
+              <tr><td><b>In Progress</b></td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span></td><td class="num">4</td><td class="num">3</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
+              <tr><td><b>Client Review</b></td><td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span></td><td class="num">2</td><td class="num">4</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
+              <tr><td><b>Complete</b></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span></td><td class="num">6</td><td class="num">5</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
             </tbody>
           </table>
-          <div class="pgfoot" data-when="normal"><span data-roles="SiteAdmin OrgAdmin">Reorder by dragging, or focus a row and press <span class="kbd">Alt &uarr;</span> / <span class="kbd">Alt &darr;</span>.</span>
-            <span class="denied" id="p-why-edit-org" data-roles="User ReadOnly">Editing statuses is limited to administrators.</span></div>
+          <div class="pgfoot" data-when="normal"><span><span class="denied" id="p-why-edit-org">Read-only. A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</span></span></div>
 
           <table data-when="loading" aria-busy="true">
-            <thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
+            <thead><tr><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
             <tbody>
-              <tr><td></td><td><span class="skel w60"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
-              <tr><td></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
-              <tr><td></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
-              <tr><td></td><td><span class="skel w60"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
-              <tr><td></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
             </tbody>
           </table>
 
           <div data-when="empty" style="padding:var(--s-lg)">
             <div class="empty">
-              <h3>No statuses yet</h3>
-              <p>Statuses are the columns your boards group ideas by. Add the first one and every board in this organization gets that lane.</p>
-              <button class="btn pri" data-roles="SiteAdmin OrgAdmin">Add the first status</button>
-              <button class="btn" data-roles="SiteAdmin OrgAdmin">Use the five defaults</button>
-              <span class="denied" data-roles="User ReadOnly">An administrator sets these up.</span>
+              <h3>This organization has no statuses</h3>
+              <p>Its boards have no lanes to group ideas by, so every board here is unusable until an administrator of this organization adds them.</p>
             </div>
           </div>
 
@@ -1142,28 +1142,21 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
           </div>
         </div>
 
-        <div class="card" data-roles="SiteAdmin OrgAdmin" style="width:356px">
-          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4;margin:0 0 var(--s-md)">Add status</h3>
-          <form>
-            <div class="field" data-when="normal empty loading"><label for="p-sname-org">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname-org" required><div class="hint">Shown as a lane header on every board.</div></div>
-            <div class="field bad" data-when="error"><label for="p-sname2-org">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname2-org" value="In Review" aria-describedby="p-sname2-msg-org" aria-invalid="true"><span class="msg" id="p-sname2-msg-org">A status called &ldquo;In Review&rdquo; already exists. Names are unique within an organization.</span></div>
-            <div class="field"><label for="p-shex-org">Colour</label>
-              <div style="display:flex;gap:var(--s-xs)"><input type="text" id="p-shex-org" value="#62aef0" style="flex:1"><input type="color" value="#62aef0" aria-label="Pick colour visually" style="width:44px;padding:2px;height:36px;flex:none"></div>
-              <div class="hint">Colour is decoration &mdash; the status name always shows beside it.</div></div>
-            <div class="field"><label for="p-sord-org">Position</label><select id="p-sord-org"><option>Last</option><option>First</option><option>After New / Pending</option></select></div>
-            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Add status</button>
-          </form>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4;margin:0 0 var(--s-md)">Why is this read-only?</h3>
+          <p class="sub">A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</p>
+          <a class="btn" href="comp-p-auth.html?screen=s-viewas&role=SiteAdmin">Open View As</a>
         </div>
       </div>
-        <div class="note"><b>The same screen, reached a different way.</b> This is the identical editor an Org Admin sees at <code>/settings/statuses</code> &mdash; the markup below is generated from one definition and rendered twice, so the two routes cannot drift apart. Only the banner and the breadcrumb differ, because only the way in differs.</div>
+        <div class="note"><b>The same screen, minus the ability to change it.</b> <code>StatusesAdmin.razor</code> computes <code>CanMutate</code> as <code>!isSiteAdmin</code>, so a Site Admin reads every organization&rsquo;s configuration and writes none of it. The table below is generated from the same definition as an Org Admin&rsquo;s <code>/settings/statuses</code>, rendered with mutation switched off &mdash; which is why the columns match and the controls do not.</div>
       </div>
       <div data-roles="OrgAdmin User ReadOnly">
         <div class="pgh"><div class="grow"><h1>Not available</h1>
-          <div class="sub">Organization-scoped settings routes belong to Site Admins.</div></div></div>
+          <div class="sub">This route is closed to your role.</div></div></div>
         <div class="empty">
-          <h3>This route is Site Admin only</h3>
-          <p>The <code>/settings/organizations/{id}/statuses</code> route exists so a Site Admin can manage an organization they are not a member of. Your own organization&rsquo;s statuses live at <b>Settings &rsaquo; Manage Statuses</b>.</p>
-          <a class="btn" href="#" data-go="s-statuses">Go to your statuses</a>
+          <h3>Site Admins only</h3>
+          <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's statuses live under <b>Settings</b>.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
         </div>
       </div>
     </div>

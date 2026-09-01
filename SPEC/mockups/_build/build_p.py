@@ -238,66 +238,59 @@ STATUS_ROWS = [("New / Pending", "sky", "Sky", 6), ("In Review", "purple", "Purp
                ("Complete", "green", "Green", 6)]
 
 
-def editor_st(sfx):
-    """The organization-scoped statuses editor.
+WHY_SITEADMIN = ("A Site Admin can read every organization&rsquo;s settings but change "
+                 "none of them. Use <b>View As</b> to act as a member of this "
+                 "organization, and the same control becomes live.")
+
+
+def editor_st(sfx, mutable=True):
+    """The organization-scoped statuses screen.
 
     Instantiated twice — once as an Org Admin's /settings/statuses and once as a
     Site Admin's /settings/organizations/{id}/statuses — because those routes
     render the same component. Emitting both from here is what keeps that true;
     two hand-written copies would drift on the first edit. `sfx` keeps the ids
     unique, since both instances live in the same document.
+
+    `mutable` mirrors StatusesAdmin.razor:234, `CanMutate => !_isSiteAdmin`: a
+    Site Admin sees this screen read-only, with the mutating controls disabled
+    and explained rather than absent, so the reason a Site Admin cannot edit is
+    discoverable at the point they try.
     """
+    if mutable:
+        act = ('<button class="btn ghost sm2">Edit</button>')
+    else:
+        act = (f'<button class="btn ghost sm2" aria-disabled="true" '
+               f'aria-describedby="p-why-edit-{sfx}">Edit</button>')
+    drag = ('<td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td>'
+            if mutable else "")
     rows = "\n".join(
-        f'              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td>'
+        f'              <tr>{drag}'
         f'<td><b>{name}</b></td>'
         f'<td><span class="marker"><span class="dot" style="background:var(--{tok})"></span>{label}</span></td>'
         f'<td class="num">{n}</td><td class="num">{i + 1}</td>'
-        f'<td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button>'
-        f'<button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" '
-        f'aria-describedby="p-why-edit-{sfx}">Edit</button></td></tr>'
+        f'<td>{act}</td></tr>'
         for i, (name, tok, label, n) in enumerate(STATUS_ROWS))
-    head = ('<thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th>Name</th>'
+    dragh = '<th style="width:36px"><span class="faint">Drag</span></th>' if mutable else ""
+    head = (f'<thead><tr>{dragh}<th>Name</th>'
             '<th style="width:168px">Colour</th><th style="width:74px">Ideas</th>'
             '<th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>')
     skel = "\n".join(
-        f'              <tr><td></td><td><span class="skel w{w}"></span></td><td><span class="skel w40"></span></td>'
+        f'              <tr>{"<td></td>" if mutable else ""}<td><span class="skel w{w}"></span></td><td><span class="skel w40"></span></td>'
         f'<td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>'
         for w in (60, 80, 40, 60, 80))
-    return f"""<div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
-        <div class="panel">
-          <table data-when="normal">
-            {head}
-            <tbody>
-{rows}
-            </tbody>
-          </table>
-          <div class="pgfoot" data-when="normal"><span data-roles="SiteAdmin OrgAdmin">Reorder by dragging, or focus a row and press <span class="kbd">Alt &uarr;</span> / <span class="kbd">Alt &darr;</span>.</span>
-            <span class="denied" id="p-why-edit-{sfx}" data-roles="User ReadOnly">Editing statuses is limited to administrators.</span></div>
-
-          <table data-when="loading" aria-busy="true">
-            {head}
-            <tbody>
-{skel}
-            </tbody>
-          </table>
-
-          <div data-when="empty" style="padding:var(--s-lg)">
-            <div class="empty">
-              <h3>No statuses yet</h3>
+    foot = ('Reorder by dragging, or focus a row and press '
+            '<span class="kbd">Alt &uarr;</span> / <span class="kbd">Alt &darr;</span>.'
+            if mutable else
+            f'<span class="denied" id="p-why-edit-{sfx}">Read-only. {WHY_SITEADMIN}</span>')
+    empty = ("""<h3>No statuses yet</h3>
               <p>Statuses are the columns your boards group ideas by. Add the first one and every board in this organization gets that lane.</p>
-              <button class="btn pri" data-roles="SiteAdmin OrgAdmin">Add the first status</button>
-              <button class="btn" data-roles="SiteAdmin OrgAdmin">Use the five defaults</button>
-              <span class="denied" data-roles="User ReadOnly">An administrator sets these up.</span>
-            </div>
-          </div>
-
-          <div data-when="error" style="padding:var(--s-lg)">
-            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load statuses.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
-            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
-          </div>
-        </div>
-
-        <div class="card" data-roles="SiteAdmin OrgAdmin" style="width:356px">
+              <button class="btn pri">Add the first status</button>
+              <button class="btn">Use the five defaults</button>"""
+             if mutable else
+             """<h3>This organization has no statuses</h3>
+              <p>Its boards have no lanes to group ideas by, so every board here is unusable until an administrator of this organization adds them.</p>""")
+    side = (f"""<div class="card" style="width:356px">
           <h3 {H3.replace("0 0 6px", "0 0 var(--s-md)")}>Add status</h3>
           <form>
             <div class="field" data-when="normal empty loading"><label for="p-sname-{sfx}">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname-{sfx}" required><div class="hint">Shown as a lane header on every board.</div></div>
@@ -308,11 +301,79 @@ def editor_st(sfx):
             <div class="field"><label for="p-sord-{sfx}">Position</label><select id="p-sord-{sfx}"><option>Last</option><option>First</option><option>After New / Pending</option></select></div>
             <button type="submit" class="btn pri" style="width:100%;justify-content:center">Add status</button>
           </form>
+        </div>"""
+            if mutable else
+            f"""<div class="card" style="width:356px">
+          <h3 {H3.replace("0 0 6px", "0 0 var(--s-md)")}>Why is this read-only?</h3>
+          <p class="sub">{WHY_SITEADMIN}</p>
+          <a class="btn" href="comp-p-auth.html?screen=s-viewas&role=SiteAdmin">Open View As</a>
+        </div>""")
+    return f"""<div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            {head}
+            <tbody>
+{rows}
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>{foot}</span></div>
+
+          <table data-when="loading" aria-busy="true">
+            {head}
+            <tbody>
+{skel}
+            </tbody>
+          </table>
+
+          <div data-when="empty" style="padding:var(--s-lg)">
+            <div class="empty">
+              {empty}
+            </div>
+          </div>
+
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load statuses.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
         </div>
+
+        {side}
       </div>"""
 
 
 EDITORS = {"st": editor_st}
+
+
+def guard(kind, entity, back="s-settings"):
+    """The route-level role gate, as its own screen state.
+
+    Every admin page except the hub and Profile carries
+    `[Authorize(Roles = "OrgAdmin,SiteAdmin")]`, and the organization-scoped
+    routes are Site-Admin-only on top of that. That is a redirect in the real
+    product, not a disabled button — so it renders as the whole screen rather
+    than as a denied control, which is the distinction the comp has to keep
+    visible: a refused *action* is disabled and explained, a refused *route*
+    is simply not there.
+    """
+    if kind == "ADMIN":
+        roles, title = "User ReadOnly", "Administrators only"
+        body = (f"<p>Configuring {entity} is an administrator's job, so this route is "
+                f"closed to members. Nothing here is hidden from you selectively &mdash; "
+                f"the whole page is out of scope for your role.</p>")
+    else:
+        roles, title = "OrgAdmin User ReadOnly", "Site Admins only"
+        body = (f"<p>The organization-scoped route exists so a Site Admin can inspect an "
+                f"organization they do not belong to. Your own organization's {entity} "
+                f"live under <b>Settings</b>.</p>")
+    return f"""<div data-roles="{roles}">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>{title}</h3>
+          {body}
+          <a class="btn" href="#" data-go="{back}">Back to Settings</a>
+        </div>
+      </div>"""
 
 
 def scope_bar(entity, back):
@@ -323,7 +384,7 @@ def scope_bar(entity, back):
     answerable from the sidebar, so it is stated on the page instead.
     """
     return (f'<div class="note" style="border-left-color:var(--secondary)">'
-            f'<b>Managing Acme Robotics.</b> You reached these {entity} from the '
+            f'<b>Viewing Acme Robotics.</b> You reached these {entity} from the '
             f'cross-organization list, so everything below belongs to Acme Robotics '
             f'and to no other organization. '
             f'<a href="#" data-go="{back}">Back to all {entity}</a>.</div>')
@@ -502,10 +563,12 @@ def build(comp):
     body = re.sub(r"@@DESK:(\w+)@@", lambda m: desk(m.group(1), comp), body)
     body = body.replace("@@PROFILE@@", profile())
     body = re.sub(r"@@ROLLUP:(\w+)@@", lambda m: rollup(m.group(1)), body)
-    body = re.sub(r"@@EDITOR:(\w+):(\w+)@@",
-                  lambda m: EDITORS[m.group(1)](m.group(2)), body)
+    body = re.sub(r"@@EDITOR:(\w+):(\w+):(rw|ro)@@",
+                  lambda m: EDITORS[m.group(1)](m.group(2), m.group(3) == "rw"), body)
     body = re.sub(r"@@SCOPEBAR:([\w-]+):([\w-]+)@@",
                   lambda m: scope_bar(m.group(1), m.group(2)), body)
+    body = re.sub(r"@@GUARD:(ADMIN|SITE):([\w -]+)@@",
+                  lambda m: guard(m.group(1), m.group(2)), body)
     assert "@@" not in body, f'unsubstituted token in {comp["frag"]}'
 
     # The first screen in a file is the one that opens; the rest start hidden.

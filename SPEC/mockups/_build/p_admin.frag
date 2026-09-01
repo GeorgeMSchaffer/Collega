@@ -110,25 +110,23 @@
 @@DESK:settings@@
   <div class="main">
     <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Statuses</b></span><span class="spacer"></span>
-      <button class="btn pri" data-roles="OrgAdmin">Add status</button>
-      <span class="deniedwrap" data-roles="User ReadOnly">
-        <button class="btn pri" aria-disabled="true" aria-describedby="p-why-add">Add status</button>
-        <span class="denied" id="p-why-add">Administrators only</span>
-      </span></div>
+      <button class="btn pri" data-roles="OrgAdmin">Add status</button></div>
     <div class="work">
       <div class="pgh" data-roles="SiteAdmin"><div class="grow"><h1>All statuses</h1>
         <div class="sub">Workflow statuses across every organization. Open an organization to change its statuses.</div></div></div>
-      <div class="pgh" data-roles="OrgAdmin User ReadOnly"><div class="grow"><h1>Statuses</h1>
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Statuses</h1>
         <div class="sub">The columns your boards group ideas by. Order here is the order on every board.</div></div></div>
 
-      <div class="filters" data-when="normal">
+      <div class="filters" data-when="normal" data-roles="SiteAdmin OrgAdmin">
         <div class="fw wide"><label for="p-st-q">Search</label><input type="search" id="p-st-q" placeholder="Search statuses&hellip;"></div>
       </div>
 
+      @@GUARD:ADMIN:statuses@@
+
       @@ROLLUP:st@@
 
-      <div data-roles="OrgAdmin User ReadOnly">
-      @@EDITOR:st:own@@
+      <div data-roles="OrgAdmin">
+      @@EDITOR:st:own:rw@@
       <div class="note"><b>Create is inline, not a drawer.</b> A short create form sits beside the list it adds to, so the list stays visible for reference and there is no overlay to trap focus in. Longer edits still open the docked inspector. The swatch picker offers the DESIGN.md sticker palette by name, which is why the Colour column reads &ldquo;Sky&rdquo; rather than a hex value.</div>
       <div class="note"><b>This screen is the worked example for the shared mechanisms.</b> The role control gates the create form and swaps every live Edit button for a disabled twin carrying a reason; the state control swaps the table for skeletons, an empty state, or a failed load. Denied controls use <code>aria-disabled</code> with <code>aria-describedby</code> rather than the <code>disabled</code> attribute, so they stay in the tab order and announce why they are refused.</div>
       </div>
@@ -141,24 +139,16 @@
   <div class="main">
     <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-statuses">All statuses</a> / <b>Acme Robotics</b></span>
       <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
-      <button class="btn pri" data-roles="SiteAdmin">Add status</button></div>
+      <span class="tag" data-roles="SiteAdmin">Read-only</span></div>
     <div class="work">
       <div data-roles="SiteAdmin">
         <div class="pgh"><div class="grow"><h1>Statuses</h1>
           <div class="sub">Acme Robotics &middot; the columns this organization&rsquo;s boards group ideas by.</div></div></div>
         @@SCOPEBAR:statuses:s-statuses@@
-        @@EDITOR:st:org@@
-        <div class="note"><b>The same screen, reached a different way.</b> This is the identical editor an Org Admin sees at <code>/settings/statuses</code> &mdash; the markup below is generated from one definition and rendered twice, so the two routes cannot drift apart. Only the banner and the breadcrumb differ, because only the way in differs.</div>
+        @@EDITOR:st:org:ro@@
+        <div class="note"><b>The same screen, minus the ability to change it.</b> <code>StatusesAdmin.razor</code> computes <code>CanMutate</code> as <code>!isSiteAdmin</code>, so a Site Admin reads every organization&rsquo;s configuration and writes none of it. The table below is generated from the same definition as an Org Admin&rsquo;s <code>/settings/statuses</code>, rendered with mutation switched off &mdash; which is why the columns match and the controls do not.</div>
       </div>
-      <div data-roles="OrgAdmin User ReadOnly">
-        <div class="pgh"><div class="grow"><h1>Not available</h1>
-          <div class="sub">Organization-scoped settings routes belong to Site Admins.</div></div></div>
-        <div class="empty">
-          <h3>This route is Site Admin only</h3>
-          <p>The <code>/settings/organizations/{id}/statuses</code> route exists so a Site Admin can manage an organization they are not a member of. Your own organization&rsquo;s statuses live at <b>Settings &rsaquo; Manage Statuses</b>.</p>
-          <a class="btn" href="#" data-go="s-statuses">Go to your statuses</a>
-        </div>
-      </div>
+      @@GUARD:SITE:statuses@@
     </div>
   </div>
 </div></section>
