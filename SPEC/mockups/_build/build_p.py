@@ -54,12 +54,45 @@ NAV = [
 ]
 
 
-def desk(active):
+# The signed-in identity per role. The role control has to move this too: a
+# switcher that changes what you can see but not who you are reads as a filter,
+# and reviewers were left looking at "Org Admin" while viewing as Site Admin.
+ME = [
+    ("SiteAdmin", "SA", "Sam Aldridge",      "Site Admin", "sam@collega.io"),
+    ("OrgAdmin",  "OA", "Olivia Administer", "Org Admin",  "olivia@acmerobotics.com"),
+    ("User",      "UM", "Umar Mensah",       "Member",     "umar@acmerobotics.com"),
+    ("ReadOnly",  "RV", "Rae Vance",         "Read Only",  "rae@acmerobotics.com"),
+]
+
+
+def resolve(target, comp):
+    """Rewrite a sidebar destination for the file it is being rendered into.
+
+    GO names bare screen ids, which only work in the file that defines them —
+    so Home, Boards, Ideas and the palette were silently inert in the three
+    files that don't own them, and Settings would have reloaded the admin file
+    on top of itself. Point a destination at its owning file, or strip the file
+    off when it is the current one.
+    """
+    if not target:
+        return None
+    sid = target.split("#")[-1] if ".html" in target else target
+    owner = next((c["file"] for c in COMPS
+                  if any(s == sid for s, _ in c["screens"])), None)
+    if owner is None:            # not built yet — leave it inert rather than broken
+        return target
+    return sid if owner == comp["file"] else f"{owner}#{sid}"
+
+
+def desk(active, comp):
     """The product sidebar, with `active` marked as the current page."""
     r = ['    <aside class="side">',
          '      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>',
-         '      <div class="org">Acme Robotics</div>',
-         '      <button class="palette" type="button" data-go="s-palette">'
+         # A Site Admin is not inside an organization until they pick one, so the
+         # org line names the scope rather than asserting a membership they lack.
+         '      <div class="org" data-roles="SiteAdmin">All organizations</div>',
+         '      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>',
+         f'      <button class="palette" type="button" data-go="{resolve("s-palette", comp)}">'
          '<span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>']
     for label, items in NAV:
         r.append(f'      <div class="navlbl">{label}</div>')
@@ -68,14 +101,232 @@ def desk(active):
             ct_html = f'<span class="ct num">{ct}</span>' if ct else ''
             ico = (f'<svg class="ic" width="15" height="15" viewBox="0 0 20 20" '
                    f'fill="currentColor" aria-hidden="true">{IC[key]}</svg>')
-            go = f' data-go="{GO[key]}"' if key in GO else ''
+            dest = resolve(GO.get(key), comp)
+            go = f' data-go="{dest}"' if dest else ''
             r.append(f'      <button class="nav"{cur}{go}>{ico}{text}{ct_html}</button>')
-    r += ['      <div class="push"></div>',
-          '      <div class="me"><span class="av">OA</span><div>'
-          '<div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div>'
-          '<div class="cap faint">Org Admin</div></div></div>',
-          '    </aside>']
+    r.append('      <div class="push"></div>')
+    for role, initials, name, label, _ in ME:
+        r.append(f'      <div class="me" data-roles="{role}"><span class="av">{initials}</span><div>'
+                 f'<div style="font-size:14px;font-weight:600;line-height:1.43">{name}</div>'
+                 f'<div class="cap faint">{label}</div></div></div>')
+    r.append('    </aside>')
     return "\n".join(r)
+
+
+H3 = ('style="font-size:20px;font-weight:600;letter-spacing:-.125px;'
+      'line-height:1.4;margin:0 0 6px"')
+
+
+def profile():
+    """Portrait and profile-details cards, one gated variant per role.
+
+    Generated rather than written out four times so it reads from the same ME
+    table as the sidebar. Hand-copying let the rail say "Site Admin" while the
+    form below still said "Olivia / Org Admin" — the two must not be able to drift.
+    """
+    out = []
+    for role, initials, name, label, email in ME:
+        s = role.lower()
+        first, last = name.split(" ", 1)
+        out.append(f"""<div data-roles="{role}">
+          <div class="card" style="margin-bottom:var(--s-md)">
+            <h3 {H3}>Portrait</h3>
+            <div class="sub" style="margin-bottom:var(--s-md)">Upload a GIF, JPEG, or PNG. It is resized to a small thumbnail and shown in place of your initials throughout Collega.</div>
+            <div style="display:flex;align-items:center;gap:var(--s-md);flex-wrap:wrap">
+              <span class="av" style="width:56px;height:56px;font-size:19px" aria-hidden="true">{initials}</span>
+              <div style="display:flex;gap:var(--s-xs);flex-wrap:wrap;align-items:center">
+                <label class="btn" for="p-portrait-{s}">Choose image&hellip;</label>
+                <input type="file" id="p-portrait-{s}" accept="image/gif,image/jpeg,image/png" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+                <button class="btn ghost">Remove portrait</button>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:var(--s-md)">
+            <h3 {H3}>Profile details</h3>
+            <div class="sub" style="margin-bottom:var(--s-md)">Your name appears throughout Collega.</div>
+            <form>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 var(--s-md)">
+                <div class="field"><label for="p-fname-{s}">First name</label><input type="text" id="p-fname-{s}" value="{first}"></div>
+                <div class="field"><label for="p-lname-{s}">Last name</label><input type="text" id="p-lname-{s}" value="{last}"></div>
+                <div class="field"><label for="p-email-{s}">Email</label><input type="text" id="p-email-{s}" value="{email}" readonly>
+                  <div class="hint">Email is your sign-in identity and cannot be changed here.</div></div>
+                <div class="field"><label for="p-role-{s}">Role</label><input type="text" id="p-role-{s}" value="{label}" readonly>
+                  <div class="hint">Your role is set by an administrator.</div></div>
+              </div>
+              <button type="submit" class="btn pri">Save profile</button>
+            </form>
+          </div>
+        </div>""")
+    return "\n        ".join(out)
+
+
+# ------------------------------------------------- cross-organization roll-ups
+#
+# StatusesAdmin.razor:307 — `_siteAdminGlobal = _isSiteAdmin && OrganizationId
+# is empty` — is the rule for all five configurable entities: the unscoped route
+# is a read-only roll-up across every organization for a Site Admin, and the
+# scoped editor for an Org Admin. Same component, two screens, chosen by role.
+#
+# The roll-up is therefore one shape rendered five times, so it is generated
+# from this table instead of being written out five times and drifting.
+
+ORGS = ["Acme Robotics", "Northwind Traders", "Contoso Health"]
+
+ROLLUPS = {
+    "st": {"noun": "statuses", "col": "Colour", "target": "s-org-statuses", "rows": [
+        ("New / Pending", 0, '<span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span>'),
+        ("In Review", 0, '<span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span>'),
+        ("Triage", 1, '<span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span>'),
+        ("Scheduled", 1, '<span class="marker"><span class="dot" style="background:var(--teal)"></span>Teal</span>'),
+        ("Intake", 2, '<span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span>'),
+        ("Signed off", 2, '<span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span>'),
+    ]},
+}
+
+
+def rollup(key):
+    """The Site-Admin cross-organization list for one entity.
+
+    Read-only by construction: the only action is Manage, which leaves for the
+    organization-scoped screen. There is deliberately no create control here —
+    a status belongs to an organization, so it cannot be made from a view that
+    is above all of them.
+    """
+    d = ROLLUPS[key]
+    noun = d["noun"]
+    rows = "\n".join(
+        f'              <tr><td><b>{name}</b></td><td>{ORGS[org]}</td><td>{detail}</td>'
+        f'<td><a class="btn ghost sm2" href="#" data-go="{d["target"]}">Manage</a></td></tr>'
+        for name, org, detail in d["rows"])
+    skel = "\n".join(
+        '              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td>'
+        '<td><span class="skel w40"></span></td><td></td></tr>' for _ in range(5))
+    return f"""<div data-roles="SiteAdmin">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:168px">{d["col"]}</th><th style="width:96px"></th></tr></thead>
+            <tbody>
+{rows}
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>{len(d["rows"])} {noun} across {len(ORGS)} organizations.</span></div>
+
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:168px">{d["col"]}</th><th style="width:96px"></th></tr></thead>
+            <tbody>
+{skel}
+            </tbody>
+          </table>
+
+          <div data-when="empty" style="padding:var(--s-lg)">
+            <div class="empty"><h3>No {noun} anywhere yet</h3>
+              <p>No organization has configured {noun}. Open an organization to set its {noun} up &mdash; they cannot be created from this cross-organization view.</p>
+              <a class="btn" href="#" data-go="s-orgs">Go to Organizations</a></div>
+          </div>
+
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load {noun}.</b> This view queries every organization in turn, so a single organization failing empties the whole list. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="note"><b>A cross-organization view is read-only on purpose.</b> A {noun[:-2] if noun.endswith("es") else noun[:-1]} belongs to one organization, so there is nothing coherent for a create button here to create. <b>Manage</b> carries you into the organization-scoped screen, which is where every change is made.</div>
+      </div>"""
+
+
+STATUS_ROWS = [("New / Pending", "sky", "Sky", 6), ("In Review", "purple", "Purple", 4),
+               ("In Progress", "orange", "Orange", 4), ("Client Review", "pink", "Pink", 2),
+               ("Complete", "green", "Green", 6)]
+
+
+def editor_st(sfx):
+    """The organization-scoped statuses editor.
+
+    Instantiated twice — once as an Org Admin's /settings/statuses and once as a
+    Site Admin's /settings/organizations/{id}/statuses — because those routes
+    render the same component. Emitting both from here is what keeps that true;
+    two hand-written copies would drift on the first edit. `sfx` keeps the ids
+    unique, since both instances live in the same document.
+    """
+    rows = "\n".join(
+        f'              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td>'
+        f'<td><b>{name}</b></td>'
+        f'<td><span class="marker"><span class="dot" style="background:var(--{tok})"></span>{label}</span></td>'
+        f'<td class="num">{n}</td><td class="num">{i + 1}</td>'
+        f'<td><button class="btn ghost sm2" data-roles="SiteAdmin OrgAdmin">Edit</button>'
+        f'<button class="btn ghost sm2" data-roles="User ReadOnly" aria-disabled="true" '
+        f'aria-describedby="p-why-edit-{sfx}">Edit</button></td></tr>'
+        for i, (name, tok, label, n) in enumerate(STATUS_ROWS))
+    head = ('<thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th>Name</th>'
+            '<th style="width:168px">Colour</th><th style="width:74px">Ideas</th>'
+            '<th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>')
+    skel = "\n".join(
+        f'              <tr><td></td><td><span class="skel w{w}"></span></td><td><span class="skel w40"></span></td>'
+        f'<td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>'
+        for w in (60, 80, 40, 60, 80))
+    return f"""<div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            {head}
+            <tbody>
+{rows}
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span data-roles="SiteAdmin OrgAdmin">Reorder by dragging, or focus a row and press <span class="kbd">Alt &uarr;</span> / <span class="kbd">Alt &darr;</span>.</span>
+            <span class="denied" id="p-why-edit-{sfx}" data-roles="User ReadOnly">Editing statuses is limited to administrators.</span></div>
+
+          <table data-when="loading" aria-busy="true">
+            {head}
+            <tbody>
+{skel}
+            </tbody>
+          </table>
+
+          <div data-when="empty" style="padding:var(--s-lg)">
+            <div class="empty">
+              <h3>No statuses yet</h3>
+              <p>Statuses are the columns your boards group ideas by. Add the first one and every board in this organization gets that lane.</p>
+              <button class="btn pri" data-roles="SiteAdmin OrgAdmin">Add the first status</button>
+              <button class="btn" data-roles="SiteAdmin OrgAdmin">Use the five defaults</button>
+              <span class="denied" data-roles="User ReadOnly">An administrator sets these up.</span>
+            </div>
+          </div>
+
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load statuses.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+
+        <div class="card" data-roles="SiteAdmin OrgAdmin" style="width:356px">
+          <h3 {H3.replace("0 0 6px", "0 0 var(--s-md)")}>Add status</h3>
+          <form>
+            <div class="field" data-when="normal empty loading"><label for="p-sname-{sfx}">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname-{sfx}" required><div class="hint">Shown as a lane header on every board.</div></div>
+            <div class="field bad" data-when="error"><label for="p-sname2-{sfx}">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname2-{sfx}" value="In Review" aria-describedby="p-sname2-msg-{sfx}" aria-invalid="true"><span class="msg" id="p-sname2-msg-{sfx}">A status called &ldquo;In Review&rdquo; already exists. Names are unique within an organization.</span></div>
+            <div class="field"><label for="p-shex-{sfx}">Colour</label>
+              <div style="display:flex;gap:var(--s-xs)"><input type="text" id="p-shex-{sfx}" value="#62aef0" style="flex:1"><input type="color" value="#62aef0" aria-label="Pick colour visually" style="width:44px;padding:2px;height:36px;flex:none"></div>
+              <div class="hint">Colour is decoration &mdash; the status name always shows beside it.</div></div>
+            <div class="field"><label for="p-sord-{sfx}">Position</label><select id="p-sord-{sfx}"><option>Last</option><option>First</option><option>After New / Pending</option></select></div>
+            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Add status</button>
+          </form>
+        </div>
+      </div>"""
+
+
+EDITORS = {"st": editor_st}
+
+
+def scope_bar(entity, back):
+    """The banner every organization-scoped screen carries.
+
+    A Site Admin editing an organization they are not a member of is the one
+    place in the product where "which organization am I changing?" is not
+    answerable from the sidebar, so it is stated on the page instead.
+    """
+    return (f'<div class="note" style="border-left-color:var(--secondary)">'
+            f'<b>Managing Acme Robotics.</b> You reached these {entity} from the '
+            f'cross-organization list, so everything below belongs to Acme Robotics '
+            f'and to no other organization. '
+            f'<a href="#" data-go="{back}">Back to all {entity}</a>.</div>')
 
 
 # ---------------------------------------------------------------- comp chrome
@@ -229,7 +480,8 @@ COMPS = [
                 "to admins only &mdash; switch the role control to see what each one shows.",
      "how": ["Actions a role cannot take render <b>disabled with a reason</b>, "
              "not hidden."],
-     "screens": [("s-settings", "Statuses")]},
+     "screens": [("s-settings", "Hub"), ("s-profile", "Profile"),
+                 ("s-statuses", "Statuses"), ("s-org-statuses", "Statuses · org")]},
     {"file": "comp-p-delivery.html", "area": "Delivery", "frag": "p_delivery.frag",
      "title": "Collega — Comp P: delivery and roadmap",
      "label": "Delivery and roadmap · not yet built",
@@ -247,7 +499,13 @@ COMPS = [
 
 def build(comp):
     body = (D / comp["frag"]).read_text()
-    body = re.sub(r"@@DESK:(\w+)@@", lambda m: desk(m.group(1)), body)
+    body = re.sub(r"@@DESK:(\w+)@@", lambda m: desk(m.group(1), comp), body)
+    body = body.replace("@@PROFILE@@", profile())
+    body = re.sub(r"@@ROLLUP:(\w+)@@", lambda m: rollup(m.group(1)), body)
+    body = re.sub(r"@@EDITOR:(\w+):(\w+)@@",
+                  lambda m: EDITORS[m.group(1)](m.group(2)), body)
+    body = re.sub(r"@@SCOPEBAR:([\w-]+):([\w-]+)@@",
+                  lambda m: scope_bar(m.group(1), m.group(2)), body)
     assert "@@" not in body, f'unsubstituted token in {comp["frag"]}'
 
     # The first screen in a file is the one that opens; the rest start hidden.
@@ -265,8 +523,30 @@ def build(comp):
         # claims to be shippable when it is not.
         return f'{tag} data-wip><div class="wip"><b>Not built</b>{wip}</div'
 
-    body = re.sub(r'(<section class="screen" id="(s-[a-z]+)")(?: data-on="[01]")?',
+    body = re.sub(r'(<section class="screen" id="(s-[a-z][a-z-]*)")(?: data-on="[01]")?',
                   open_tag, body)
+
+    # A screen the manifest names but the fragment never defines would silently
+    # vanish from the tab bar's reach; a screen the fragment defines but the
+    # manifest omits can never be opened. Both are easy to introduce when a file
+    # carries twenty-odd screens, and neither shows up in the rendered page.
+    # An unbalanced <div> inside one screen silently swallows the screens after
+    # it — the browser auto-closes at the section boundary and the page still
+    # renders, just wrong. Cheap to check, expensive to find by eye once a file
+    # carries twenty-odd screens.
+    for chunk in re.findall(r'<section class="screen".*?</section>', body, re.S):
+        sid = re.search(r'id="(s-[a-z][a-z-]*)"', chunk).group(1)
+        opened = len(re.findall(r"<div\b", chunk))
+        closed = len(re.findall(r"</div>", chunk))
+        assert opened == closed, (
+            f"{comp['frag']}: screen {sid} has {opened} <div> and {closed} </div>")
+
+    defined = set(re.findall(r'<section class="screen" id="(s-[a-z][a-z-]*)"', body))
+    listed = {sid for sid, _ in comp["screens"]}
+    assert defined == listed, (
+        f'{comp["frag"]}: fragment/manifest screen mismatch — '
+        f'only in fragment: {sorted(defined - listed)}, '
+        f'only in manifest: {sorted(listed - defined)}')
 
     html = PAGE.format(title=comp["title"], css=CSS,
                        body=chrome(comp, COMPS) + "\n" + body)
