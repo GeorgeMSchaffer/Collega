@@ -230,3 +230,122 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
 .explore .how span{white-space:nowrap}
 .explore .k{border:1px solid #e0c9a6;border-radius:var(--r-xs);padding:0 4px;font-size:10.5px}
 .explore .how b{text-transform:none;letter-spacing:0;font-size:11.5px}
+
+/* ============================================================
+   SHARED MECHANISMS
+   Role gating, state variants, denied actions, and not-yet-built
+   marking. Written once, used by every comp P file. Frozen after
+   this slice: a change belongs in an amendment slice, never
+   inside a per-file one.
+   ============================================================ */
+
+/* --- Role gating -------------------------------------------
+   data-role on <body> is the viewer's role; data-roles on any
+   element lists the roles allowed to see it. Untagged elements
+   are visible to everyone.
+
+   Written as a hide rule on the NON-matching case rather than a
+   show rule on the matching one, so an element that survives
+   keeps whatever display value it already had. A show rule would
+   have to guess between block, flex and table-cell, and would
+   flatten every grid child it touched.
+
+   !important is load-bearing, not laziness: a gated element frequently
+   carries an inline display style (display:flex on a wrapper, say), and an
+   inline style beats any stylesheet selector no matter how specific. Without
+   it the element stays visible for every role. This is the same failure that
+   makes an element with both [hidden] and a flex class render visible, and it
+   cost a screenshot to find here too.
+   ------------------------------------------------------------ */
+[data-role="SiteAdmin"] [data-roles]:not([data-roles~="SiteAdmin"]),
+[data-role="OrgAdmin"]  [data-roles]:not([data-roles~="OrgAdmin"]),
+[data-role="User"]      [data-roles]:not([data-roles~="User"]),
+[data-role="ReadOnly"]  [data-roles]:not([data-roles~="ReadOnly"]){display:none!important}
+
+/* --- State variants ----------------------------------------
+   data-state on a .screen; data-when on any block that belongs
+   to particular states only. Same non-matching-hide technique.
+   A block may list several: data-when="empty loading".
+   ------------------------------------------------------------ */
+.screen[data-state="normal"]  [data-when]:not([data-when~="normal"]),
+.screen[data-state="empty"]   [data-when]:not([data-when~="empty"]),
+.screen[data-state="loading"] [data-when]:not([data-when~="loading"]),
+.screen[data-state="error"]   [data-when]:not([data-when~="error"]){display:none!important}
+
+/* --- Denied actions ----------------------------------------
+   aria-disabled, never the disabled attribute. A disabled control
+   is removed from the tab order, so a keyboard or screen-reader
+   user meets neither the control nor the explanation for why it
+   is refused. aria-disabled keeps it focusable and announced;
+   aria-describedby points at the reason.
+   ------------------------------------------------------------ */
+[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+.btn[aria-disabled="true"]:hover{background:var(--surface)}
+.btn.pri[aria-disabled="true"]:hover{background:var(--primary)}
+.btn[aria-disabled="true"]:active{transform:none}
+
+/* the reason itself — an inline note tied to the control by id */
+.denied{display:inline-block;font-size:14px;line-height:1.43;color:var(--ink-muted);
+  font-style:italic}
+
+/* --- Empty states ------------------------------------------ */
+.empty{border:1px dashed var(--hairline);border-radius:var(--r-lg);
+  padding:var(--s-xl) var(--s-lg);text-align:center;background:var(--canvas-soft)}
+.empty h3{font-size:22px;font-weight:700;line-height:1.27;letter-spacing:-.25px;
+  color:var(--ink);margin-bottom:var(--s-xs)}
+.empty p{font-size:15px;line-height:1.33;color:var(--ink-muted);
+  max-width:46ch;margin:0 auto var(--s-md)}
+.empty .btn{margin:0 3px}
+
+/* --- Loading ------------------------------------------------
+   Skeletons rather than a spinner: they hold the row height, so
+   the page does not jump when data lands.
+   ------------------------------------------------------------ */
+.skel{display:block;height:12px;border-radius:var(--r-xs);background:var(--canvas-soft)}
+.skel+.skel{margin-top:7px}
+.skel.w40{width:40%}.skel.w60{width:60%}.skel.w80{width:80%}
+@media (prefers-reduced-motion:no-preference){
+  .skel{background:linear-gradient(90deg,var(--canvas-soft) 25%,#eceae7 37%,var(--canvas-soft) 63%);
+    background-size:400% 100%;animation:shimmer 1.4s ease infinite}
+  @keyframes shimmer{from{background-position:100% 0}to{background-position:0 0}}
+}
+
+/* --- Errors ------------------------------------------------- */
+.alert{display:flex;align-items:flex-start;gap:var(--s-sm);border-radius:var(--r-lg);
+  padding:var(--s-sm) var(--s-md);font-size:15px;line-height:1.33;
+  border:1px solid #f0c9c9;background:#fdf1f1;color:#7a1c1c}
+.alert b{font-weight:600}
+.field.bad input,.field.bad select,.field.bad textarea{border-color:#c0392b}
+.field .msg{display:block;margin-top:4px;font-size:14px;line-height:1.43;color:#8a2a20}
+
+/* --- Comp chrome: role and state controls -------------------
+   Reviewer-facing, so it sits in the band outside the app frame
+   alongside the screen tabs, never inside the product surface.
+   ------------------------------------------------------------ */
+.ctl{background:var(--ink);color:#a39e98;padding:0 14px var(--s-xs);display:flex;
+  gap:var(--s-md);align-items:center;flex-wrap:wrap;font-size:11.5px}
+.ctl .grp{display:flex;gap:5px;align-items:center}
+.ctl .cap2{text-transform:uppercase;letter-spacing:.07em;font-size:10.5px;color:#7d7873}
+.ctl button{background:transparent;border:1px solid #4a4a4a;color:#e6e6e6;
+  padding:1px 9px;border-radius:var(--r-full);font-size:11.5px;cursor:pointer}
+.ctl button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);
+  color:#fff;font-weight:600}
+
+/* --- Not-yet-built marking ---------------------------------
+   Reviewer voice again: a strip above the frame, so nothing
+   inside the app surface ever claims to be shippable when it is
+   not. Screens opt in with data-wip on the .screen.
+   ------------------------------------------------------------ */
+.wip{display:none;background:#fdf3e7;border-bottom:1px solid #f0ddc4;
+  color:var(--orange-deep);padding:var(--s-xs) var(--s-md);font-size:12px;line-height:1.43}
+.screen[data-wip] .wip{display:block}
+.wip b{text-transform:uppercase;letter-spacing:.07em;font-size:10.5px;margin-right:6px}
+
+/* cross-file links in the tab bar — same band, different destination */
+.switch .xfile{background:transparent;border:1px solid #4a4a4a;color:#e6e6e6;
+  padding:var(--s-xxs) 10px;border-radius:var(--r-full);font-size:12px;
+  text-decoration:none;line-height:1.43}
+.switch .xfile:hover{background:#2f2e2c;color:#fff}
+
+/* a denied control and its reason travel together */
+.deniedwrap{display:inline-flex;align-items:center;gap:var(--s-xs)}

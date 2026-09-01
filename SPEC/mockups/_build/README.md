@@ -54,3 +54,90 @@ reviewer trust that a comp matches its sources.
 - Static checks are not sufficient. Every layout bug found in these comps so far was
   invisible to HTML validation and only appeared in a screenshot. Serve the file and look
   at it.
+
+## The comp P set
+
+Four files, built from one manifest at the bottom of `build_p.py`:
+
+| File | Fragment | Area |
+|---|---|---|
+| `comp-p-focus-roadmap.html` | `p_core.frag` | Home, Boards, Board, Ideas, Inspector, palette |
+| `comp-p-auth.html` | `p_auth.frag` | Login, register, password, View As |
+| `comp-p-admin.html` | `p_admin.frag` | The `/settings/*` area |
+| `comp-p-delivery.html` | `p_delivery.frag` | Issue, Roadmap, Grouping — not yet built |
+
+Add a screen by adding a `<section class="screen" id="s-...">` to the right fragment and
+an entry to that comp's `screens` list. The builder owns which screen opens first, so a
+fragment never sets `data-on` itself.
+
+## Shared mechanisms
+
+These live in `extra.css` and are **frozen** — change them in a dedicated amendment, never
+inside a slice that is adding screens.
+
+### Role gating
+
+`data-role` on `<body>` is the viewer's role. `data-roles` on any element lists the roles
+allowed to see it; untagged elements are visible to everyone.
+
+```html
+<button class="btn pri" data-roles="SiteAdmin OrgAdmin">Add status</button>
+```
+
+The rule hides the *non-matching* case rather than showing the matching one, so a surviving
+element keeps its own `display`. It is `!important` on purpose: gated elements often carry
+an inline `display` style, and an inline style beats any selector.
+
+**Sizing gated grid columns.** `display:none` removes a grid *item*, never a grid *track*.
+A fixed `356px` column keeps its width after its only child is hidden, leaving dead space.
+Declare the track `auto` and put the width on the child instead.
+
+### State variants
+
+`data-state` on a `.screen` (`normal` / `empty` / `loading` / `error`); `data-when` on any
+block belonging to particular states. A block may list several: `data-when="normal empty"`.
+
+Tag **both** sides. A pristine field left untagged stays visible in the error state, and
+you get two of it — this is easy to miss and only shows in a screenshot.
+
+### Denied actions
+
+Use `aria-disabled="true"` with `aria-describedby` pointing at the reason. Never the
+`disabled` attribute: it removes the control from the tab order, so a keyboard or
+screen-reader user meets neither the control nor the explanation.
+
+```html
+<span class="deniedwrap" data-roles="User ReadOnly">
+  <button class="btn pri" aria-disabled="true" aria-describedby="p-why-add">Add status</button>
+  <span class="denied" id="p-why-add">Administrators only</span>
+</span>
+```
+
+### Not-yet-built marking
+
+Set `wip` on a comp in the manifest and every screen in that file gets a strip above the
+app frame. Reviewer voice, never product copy — nothing inside the frame claims to be
+shippable when it is not.
+
+## Checks the build runs for you
+
+- No stylesheet closes the `<style>` element.
+- CSS comment markers balance, and braces balance. A stray `*/` makes the parser discard
+  everything to the next `}`, so a whole rule vanishes while the file still reads fine.
+  That cost a browser session to find once; the assertion exists so it cannot recur.
+- Every `@@TOKEN@@` was substituted.
+
+## Checks the build cannot run for you
+
+Serve the files and look at them, at more than one role and state. Every layout bug found
+in this set so far — a gated control rendering twice, a grid track holding width after its
+child was hidden, a duplicated form field, five unlabelled checkboxes — passed every static
+check and was only visible in a screenshot.
+
+```bash
+cd SPEC/mockups && python3 -m http.server 8777
+# then e.g. http://127.0.0.1:8777/comp-p-admin.html?role=ReadOnly&state=loading
+```
+
+`?role=`, `?state=` and `?screen=` are honoured on load, and cross-file links carry the
+current role and state with them.

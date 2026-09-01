@@ -1,25 +1,3 @@
-<nav class="switch" aria-label="Comp screens">
-  <b>Comp P</b><span class="lbl">Focus Desk + multi-parent roadmap · DESIGN.md</span>
-  <button data-go="s-login">Login</button>
-  <button data-go="s-home" aria-current="true">Home</button>
-  <button data-go="s-ideas">Ideas list</button>
-  <button data-go="s-board">Board</button>
-  <button data-go="s-inspect">Inspector</button>
-  <button data-go="s-roadmap">Roadmap</button>
-  <button data-go="s-issue">Issue</button>
-  <button data-go="s-group">Grouping</button>
-  <button data-go="s-settings">Settings</button>
-  <button data-go="s-palette">Command palette</button>
-</nav>
-<div class="explore"><b>How to read this</b><span>Comp&nbsp;<b>D</b>&rsquo;s Focus Desk carrying comp&nbsp;<b>N</b>&rsquo;s multi-parent roadmap, styled per <b>DESIGN.md</b>. Ten screens on one token layer; nothing in <code>SPEC/</code> changes.
-  <span class="how">
-    <span>&bull; The tab bar above switches screens.</span>
-    <span>&bull; <span class="k">Ctrl K</span> opens the palette from any screen, <span class="k">Esc</span> closes it.</span>
-    <span>&bull; The sidebar nav is live for the screens that exist.</span>
-    <span>&bull; <b>Roadmap</b> carries the open cardinality question &mdash; a layout choice, not a decision.</span>
-    <span>&bull; <b>Ideas list</b> carries the measured density cost of the 15px body.</span>
-  </span></span></div>
-
 <section class="screen" id="s-home" data-on="1"><div class="shell">
 @@DESK:home@@
   <div class="main">
@@ -77,175 +55,7 @@
   </div>
 </div></section>
 
-<section class="screen" id="s-roadmap" data-on="0"><div class="shell">
-@@DESK:roadmap@@
-  <div class="main">
-    <div class="topbar"><span class="crumb">Delivery / <b>Roadmap</b></span><span class="spacer"></span>
-      <div class="seg"><button aria-pressed="true">Quarters</button><button aria-pressed="false">Sprints</button></div>
-      <button class="btn pri">Add outcome</button></div>
-    <div class="work">
-      <div class="pgh"><div class="grow"><h1>Roadmap</h1>
-        <div class="sub">Outcomes over time. An issue may serve every outcome it advances, so rows overlap.</div></div></div>
-      <div class="kpis">
-        <div class="kpi"><div class="k">Delivery issues</div><div class="v num">16</div><div class="d">the real set</div></div>
-        <div class="kpi"><div class="k">Grouped</div><div class="v num">14</div><div class="d">distinct issues</div></div>
-        <div class="kpi"><div class="k">Memberships</div><div class="v num">18</div><div class="d">4 issues serve two</div></div>
-        <div class="kpi"><div class="k">Not grouped</div><div class="v num">2</div><div class="d">no outcome, no bar</div></div>
-      </div>
-      <div class="roadwrap">
-        <div class="roadgrid">
-          <div class="hd">Outcome</div><div class="hd">Q3 2026</div><div class="hd">Q4 2026</div><div class="hd">Q1 2027</div><div class="hd">Q2 2027</div>
-          <div class="out">Cut reporting effort<small>5 issues · 3 done</small><span class="marks"><span class="shared-tag">2 shared</span></span></div>
-          <div><span class="barx"><span class="dot" style="background:var(--sky)"></span>Sprints 11–12</span></div>
-          <div><span class="barx shared"><span class="dot" style="background:var(--sky)"></span>Sprint 12 · shared</span></div><div></div><div></div>
-          <div class="out">Make review predictable<small>5 issues · 1 done</small><span class="marks"><span class="shared-tag">2 shared</span></span></div>
-          <div></div><div><span class="barx"><span class="dot" style="background:var(--teal)"></span>Sprint 12</span></div>
-          <div><span class="barx"><span class="dot" style="background:var(--teal)"></span>Sprints 13–15</span></div><div></div>
-          <div class="out">Standardize intake<small>5 issues · 1 done</small><span class="marks"><span class="shared-tag">2 shared</span></span></div>
-          <div></div><div><span class="barx shared"><span class="dot" style="background:var(--green)"></span>Sprint 12 · shared</span></div>
-          <div><span class="barx"><span class="dot" style="background:var(--green)"></span>Sprints 14–16</span></div>
-          <div><span class="barx"><span class="dot" style="background:var(--green)"></span>Sprints 17–18</span></div>
-          <div class="out">Retire legacy steps<small>3 issues · 0 done</small><span class="marks"><span class="shared-tag">2 shared</span></span></div>
-          <div></div><div></div><div><span class="barx shared"><span class="dot" style="background:var(--orange)"></span>Sprint 13 · shared</span></div>
-          <div><span class="barx"><span class="dot" style="background:var(--orange)"></span>Sprints 19–20</span></div>
-          <div class="out dim">Not grouped<small>2 issues · 0 done</small></div>
-          <div class="dim"></div><div class="dim"></div><div class="dim"></div><div class="dim faint">no outcome, no bar</div>
-        </div>
-        <div class="sum"><span>4 outcomes</span><span>rows sum to <b>18</b></span><span>distinct <b>14</b></span><span>+ 2 not grouped = <b>16</b></span><span class="warnflag">sum &ne; the delivery set</span></div>
-      </div>
-      <div class="note"><b>Shared is a border, not a hue.</b> Comp&nbsp;N tinted each outcome&rsquo;s bar; DESIGN.md forbids a structural fill from the sticker palette, and comp&nbsp;O-3 showed neutral bars alone lose the outcome at a glance. So the outcome keeps a category dot and <b>&ldquo;shared&rdquo; is carried by a dashed outline</b> — not a colour, so it survives greyscale, colour blindness and a printed page, none of which a tint does. Every total still needs its distinct-count beside it: <b>18 memberships over 14 issues</b> is a cover, not a partition.</div>
-    </div>
-  </div>
-</div></section>
 
-<section class="screen" id="s-issue" data-on="0"><div class="shell">
-@@DESK:roadmap@@
-  <div class="main">
-    <div class="topbar"><span class="crumb">Delivery / Sprint 12 / <b>CLG-114</b></span><span class="spacer"></span>
-      <button class="btn" data-go="s-roadmap">Back to roadmap</button><button class="btn pri">Save</button></div>
-    <div class="work">
-      <div class="pgh"><div class="grow">
-        <div class="chipbar" style="margin-bottom:var(--s-sm)"><span class="key">CLG-114</span>
-          <span class="marker"><span class="dot" style="background:var(--orange)"></span>Delivery</span>
-          <span class="marker"><span class="dot" style="background:var(--sky)"></span>Medium effort</span></div>
-        <h1>Automate weekly reporting</h1>
-        <div class="sub">Development · Sprint 12 · assigned to Marcus Green</div></div></div>
-      <div class="cols">
-        <div class="panel">
-          <h3><span class="grow">Tasks</span><span class="cap faint" style="font-weight:400">3 of 5 done</span></h3>
-          <div class="in">
-            <div class="task done"><input type="checkbox" checked><div class="grow"><span>Agree the report&rsquo;s column set with Ops</span><div class="who">Marcus Green · done 24 Aug</div></div></div>
-            <div class="task done"><input type="checkbox" checked><div class="grow"><span>Build the extract query</span><div class="who">Marcus Green · done 26 Aug</div></div></div>
-            <div class="task done"><input type="checkbox" checked><div class="grow"><span>Schedule the Friday 06:00 run</span><div class="who">Olivia Administer · done 28 Aug</div></div></div>
-            <div class="task"><input type="checkbox"><div class="grow"><span>Handle the empty-week edge case</span><div class="who">Marcus Green · in progress</div></div></div>
-            <div class="task"><input type="checkbox"><div class="grow"><span>Write the one-page runbook</span><div class="who">Unassigned</div></div></div>
-            <button class="addtask">+ Add task</button>
-          </div>
-        </div>
-        <div class="panel">
-          <h3>Delivery</h3>
-          <div class="in">
-            <dl class="kv">
-              <dt>Status</dt><dd>Development</dd>
-              <dt>Sprint</dt><dd>Sprint 12 <span class="badge">Active</span></dd>
-              <dt>Effort</dt><dd>Medium</dd>
-              <dt>Assignee</dt><dd>Marcus Green</dd>
-              <dt>Outcomes</dt><dd><div class="tagrow">
-                <span class="rmtag"><span class="dot" style="background:var(--sky)"></span>Cut reporting effort <x>&times;</x></span>
-                <span class="rmtag"><span class="dot" style="background:var(--green)"></span>Standardize intake <x>&times;</x></span>
-                <button class="btn sm2" data-go="s-group">+ add</button></div></dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-      <div class="note"><b>A list, not a value.</b> Outcome cannot sit in the same visual grammar as Sprint, because Sprint is one and Outcome is many. It needs chips, an add affordance, and a rule for the empty case: removing the last chip returns this issue to <em>Not grouped</em> — it is never silently orphaned. This is the affordance that only exists if multi-parent wins.</div>
-    </div>
-  </div>
-</div></section>
-
-<section class="screen" id="s-group" data-on="0"><div class="shell">
-@@DESK:roadmap@@
-  <div class="main">
-    <div class="topbar"><span class="crumb">Delivery / Sprint 12 / <b>CLG-114</b></span><span class="spacer"></span>
-      <button class="btn" data-go="s-issue">Back to issue</button></div>
-    <div class="work">
-      <div class="pgh"><div class="grow"><h1>Automate weekly reporting</h1>
-        <div class="sub">Choose every outcome this issue advances.</div></div></div>
-      <div class="panel" style="max-width:560px"><h3>Grouping</h3><div class="in">
-        <p class="sm muted" style="margin-bottom:var(--s-md)">Adding an outcome does not remove the others — this is an <b class="sec">add/remove</b>, never a move. Nothing is displaced.</p>
-        <ul class="tasks">
-          <li><span class="box on"></span><span class="dot" style="background:var(--sky)"></span><span class="grow">Cut reporting effort</span><span class="cap faint">5 issues</span></li>
-          <li><span class="box on"></span><span class="dot" style="background:var(--green)"></span><span class="grow">Standardize intake</span><span class="cap faint">5 issues</span></li>
-          <li><span class="box"></span><span class="dot" style="background:var(--teal)"></span><span class="grow">Make review predictable</span><span class="cap faint">5 issues</span></li>
-          <li><span class="box"></span><span class="dot" style="background:var(--orange)"></span><span class="grow">Retire legacy steps</span><span class="cap faint">3 issues</span></li>
-        </ul>
-        <div style="display:flex;gap:var(--s-sm);margin-top:var(--s-md);padding-top:var(--s-md);border-top:1px solid var(--hairline)">
-          <button class="btn pri" data-go="s-issue">Save grouping</button><button class="btn sec2" data-go="s-issue">Cancel</button></div>
-      </div></div>
-      <div class="note" style="max-width:560px"><b>Two selected, and that is legal.</b> Under single-parent this control would be a radio group and picking a second option would silently drop the first. The checkbox is the whole difference, and it is why the reverse migration is lossy: going multi&nbsp;&rarr;&nbsp;single later forces a human to choose which grouping survives.</div>
-    </div>
-  </div>
-</div></section>
-
-<section class="screen" id="s-palette" data-on="0">
-  <div class="shell" style="filter:blur(1.5px);opacity:.6" aria-hidden="true">
-@@DESK:home@@
-    <div class="main"><div class="topbar"><span class="crumb">Home / <b>Roadmap</b></span></div>
-      <div class="work"><div class="pgh"><h1>Roadmap</h1></div><div class="panel" style="height:300px"></div></div></div>
-  </div>
-  <div class="cp-back">
-    <div class="cp" role="dialog" aria-modal="true" aria-label="Command palette">
-      <div class="q"><span class="faint">⌕</span><input type="text" value="intake" aria-label="Search or run a command"></div>
-      <div class="grp">Ideas</div>
-      <div class="it on">Standardize the intake checklist <span class="faint" style="font-weight:400">· Ideas · New / Pending</span><span class="kbd">↵</span></div>
-      <div class="it">Standardize the intake form <span class="faint" style="font-weight:400">· CLG-229 · Delivery</span></div>
-      <div class="grp">Outcomes</div>
-      <div class="it"><span class="dot" style="background:var(--green)"></span>Standardize intake <span class="faint" style="font-weight:400">· 5 issues · 2 shared</span></div>
-      <div class="grp">Actions</div>
-      <div class="it">Create idea &ldquo;intake&rdquo;<span class="kbd">Ctrl N</span></div>
-      <div class="it">Add CLG-114 to an outcome…</div>
-      <div class="it">View as another user…</div>
-      <div class="cpfoot"><span><span class="kbd">↑</span> <span class="kbd">↓</span> navigate</span><span><span class="kbd">↵</span> open</span><span><span class="kbd">Esc</span> dismiss</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ==================== LOGIN ==================== -->
-<section class="screen" id="s-login" data-on="0">
-  <div class="authwrap">
-    <div class="authpitch">
-      <div class="mark">CG</div>
-      <h2>Every idea your organization has, in one place.</h2>
-      <p>Collega tracks an idea from the first rough note through review, work, and delivery — with the people, comments, and history attached to it the whole way.</p>
-      <ul>
-        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>One account per person, scoped to your organization</span></li>
-        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>Boards, statuses and idea types you define yourself</span></li>
-        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>Keyboard-first: press <span class="kbd">Ctrl K</span> anywhere</span></li>
-      </ul>
-    </div>
-    <div class="authform"><div class="in">
-      <h1>Sign in</h1>
-      <p class="sub">One email, one account. We&rsquo;ll take you straight to your organization.</p>
-      <!-- NATIVE submit button: Enter submits. Carried from comp D, which fixed the live finding filed 2026-08-16. -->
-      <form>
-        <div class="field">
-          <label for="p-email">Email</label>
-          <input type="text" inputmode="email" id="p-email" name="email" autocomplete="username" placeholder="you@yourcompany.com">
-        </div>
-        <div class="field">
-          <label for="p-pw">Password</label>
-          <input type="password" id="p-pw" name="password" autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn pri" style="width:100%;justify-content:center">Sign in</button>
-      </form>
-      <p class="foot2">Have an invite code? <a href="#">Create an account</a>.<br>
-      Forgot your password? Ask your organization admin to reset it.</p>
-      <div class="note"><b>Accessibility carried over unchanged.</b> Native <code>&lt;button type="submit"&gt;</code> so Enter submits; <code>autocomplete="username"</code> paired with the password field so password managers work; a real <code>&lt;label for&gt;</code> bound to a real <code>&lt;input&gt;</code>. The restyle touches paint, never markup — <b>#213183</b> for the pitch band and <b>#0075de</b> for the single blue action.</div>
-    </div></div>
-  </div>
-</section>
-
-<!-- ==================== IDEAS LIST ==================== -->
 <section class="screen" id="s-ideas" data-on="0"><div class="shell">
 @@DESK:ideas@@
   <div class="main">
@@ -336,6 +146,7 @@
 </div></section>
 
 <!-- ==================== BOARD ==================== -->
+
 <section class="screen" id="s-board" data-on="0"><div class="shell">
 @@DESK:boards@@
   <div class="main">
@@ -396,6 +207,7 @@
 </div></section>
 
 <!-- ==================== DOCKED INSPECTOR ==================== -->
+
 <section class="screen" id="s-inspect" data-on="0"><div class="shell insp">
 @@DESK:ideas@@
   <div class="main">
@@ -469,40 +281,28 @@
 </div></section>
 
 <!-- ==================== SETTINGS ==================== -->
-<section class="screen" id="s-settings" data-on="0"><div class="shell">
-@@DESK:settings@@
-  <div class="main">
-    <div class="topbar"><span class="crumb"><a href="#">Settings</a> / <b>Statuses</b></span><span class="spacer"></span><button class="btn pri">Add status</button></div>
-    <div class="work">
-      <div class="pgh"><div class="grow"><h1>Statuses</h1>
-        <div class="sub">The columns your boards group ideas by. Order here is the order on every board.</div></div></div>
-      <div class="cols" style="grid-template-columns:minmax(0,1fr) 356px">
-        <div class="panel">
-          <table>
-            <thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
-            <tbody>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>New / Pending</b></td><td><span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span></td><td class="num">6</td><td class="num">1</td><td><button class="btn ghost sm2">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Review</b></td><td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span></td><td class="num">4</td><td class="num">2</td><td><button class="btn ghost sm2">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>In Progress</b></td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span></td><td class="num">4</td><td class="num">3</td><td><button class="btn ghost sm2">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Client Review</b></td><td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span></td><td class="num">2</td><td class="num">4</td><td><button class="btn ghost sm2">Edit</button></td></tr>
-              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><b>Complete</b></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span></td><td class="num">6</td><td class="num">5</td><td><button class="btn ghost sm2">Edit</button></td></tr>
-            </tbody>
-          </table>
-          <div class="pgfoot"><span>Reorder by dragging, or focus a row and press <span class="kbd">Alt &uarr;</span> / <span class="kbd">Alt &darr;</span>.</span></div>
-        </div>
-        <div class="card">
-          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4;margin:0 0 var(--s-md)">Add status</h3>
-          <form>
-            <div class="field"><label for="p-sname">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname" required><div class="hint">Shown as a lane header on every board.</div></div>
-            <div class="field"><label for="p-shex">Colour</label>
-              <div style="display:flex;gap:var(--s-xs)"><input type="text" id="p-shex" value="#62aef0" style="flex:1"><input type="color" value="#62aef0" aria-label="Pick colour visually" style="width:44px;padding:2px;height:36px;flex:none"></div>
-              <div class="hint">Colour is decoration — the status name always shows beside it.</div></div>
-            <div class="field"><label for="p-sord">Position</label><select id="p-sord"><option>Last</option><option>First</option><option>After New / Pending</option></select></div>
-            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Add status</button>
-          </form>
-        </div>
-      </div>
-      <div class="note"><b>Create is inline, not a drawer.</b> A short create form sits beside the list it adds to, so the list stays visible for reference and there is no overlay to trap focus in. Longer edits still open the docked inspector. The swatch picker offers the DESIGN.md sticker palette by name, which is why the Colour column reads &ldquo;Sky&rdquo; rather than a hex value.</div>
+
+<section class="screen" id="s-palette" data-on="0">
+  <div class="shell" style="filter:blur(1.5px);opacity:.6" aria-hidden="true">
+@@DESK:home@@
+    <div class="main"><div class="topbar"><span class="crumb">Home / <b>Roadmap</b></span></div>
+      <div class="work"><div class="pgh"><h1>Roadmap</h1></div><div class="panel" style="height:300px"></div></div></div>
+  </div>
+  <div class="cp-back">
+    <div class="cp" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="q"><span class="faint">⌕</span><input type="text" value="intake" aria-label="Search or run a command"></div>
+      <div class="grp">Ideas</div>
+      <div class="it on">Standardize the intake checklist <span class="faint" style="font-weight:400">· Ideas · New / Pending</span><span class="kbd">↵</span></div>
+      <div class="it">Standardize the intake form <span class="faint" style="font-weight:400">· CLG-229 · Delivery</span></div>
+      <div class="grp">Outcomes</div>
+      <div class="it"><span class="dot" style="background:var(--green)"></span>Standardize intake <span class="faint" style="font-weight:400">· 5 issues · 2 shared</span></div>
+      <div class="grp">Actions</div>
+      <div class="it">Create idea &ldquo;intake&rdquo;<span class="kbd">Ctrl N</span></div>
+      <div class="it">Add CLG-114 to an outcome…</div>
+      <div class="it">View as another user…</div>
+      <div class="cpfoot"><span><span class="kbd">↑</span> <span class="kbd">↓</span> navigate</span><span><span class="kbd">↵</span> open</span><span><span class="kbd">Esc</span> dismiss</span></div>
     </div>
   </div>
-</div></section>
+</section>
+
+<!-- ==================== LOGIN ==================== -->
