@@ -1,0 +1,12 @@
+Quickstart
+
+
+
+
+
+
+
+
+COLLEGA_DATABASE_URL="postgres://db809444ac09fab0d4c89ff38bbc72ff22249d1b2c695c62a250f08a0126aab0:sk_BuvcG1sIUnSuiz4IJ18Fe@db.prisma.io:5432/postgres?sslmode=require"
+COLLEGA_POSTGRES_URL="postgres://db809444ac09fab0d4c89ff38bbc72ff22249d1b2c695c62a250f08a0126aab0:sk_BuvcG1sIUnSuiz4IJ18Fe@db.prisma.io:5432/postgres?sslmode=require"
+COLLEGA_PRISMA_DATABASE_URL="postgres://db809444ac09fab0d4c89ff38bbc72ff22249d1b2c695c62a250f08a0126aab0:sk_BuvcG1sIUnSuiz4IJ18Fe@db.prisma.io:5432/postgres?sslmode=require
