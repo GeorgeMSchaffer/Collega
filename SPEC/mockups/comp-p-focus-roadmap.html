@@ -629,6 +629,39 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
 /* a denied control and its reason travel together */
 .deniedwrap{display:inline-flex;align-items:center;gap:var(--s-xs)}
 
+/* ===== idea-type badge — the TypeBadge component, as it appears in a table ===== */
+.tbadge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:var(--r-xs);
+  font-size:14px;font-weight:600;line-height:1.43;background:var(--canvas-soft);color:var(--ink-muted)}
+
+/* ===== checkbox rows — the box sits on the text baseline, not above it ===== */
+.chk{display:inline-flex;align-items:center;gap:var(--s-xs);font-weight:400;cursor:pointer}
+.chk input{width:auto;margin:0}
+
+/* ===== field picker inside the idea-type create form =====
+   comp-c-review-09 used a two-pane add/remove picker. At comp P's 400px side
+   card that would be two 180px columns, so the same information — which fields,
+   in what order, which required — is expressed as one checkable list. */
+.pick{border:1px solid var(--hairline);border-radius:var(--r-sm);max-height:248px;overflow-y:auto}
+.pickrow{display:flex;align-items:center;gap:var(--s-xs);padding:8px var(--s-sm);
+  font-size:14px;line-height:1.43}
+.pickrow+.pickrow{border-top:1px solid var(--hairline)}
+.pickrow:hover{background:var(--canvas-soft)}
+.pickrow input{width:auto;margin:0;flex:none}
+.pickrow label{margin:0;font-weight:400;cursor:pointer}
+.pickrow .grow{flex:1}
+.pickrow .ty{color:var(--ink-faint);font-size:13px}
+.pickrow .reqtog{display:inline-flex;align-items:center;gap:5px;font-size:12px;
+  color:var(--ink-faint);width:78px;justify-content:flex-end}
+
+/* a fieldset legend styled as a field label */
+legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bottom:2px}
+
+/* move-up / move-down pairs sit tighter than free-standing icon buttons.
+   .iconbtn is display:grid, which is block-level — in a table cell that put
+   each arrow on its own line and tripled the row height. */
+.panel td .iconbtn{display:inline-grid;width:26px;height:26px;font-size:13px;
+  vertical-align:middle;margin-right:2px}
+
 </style>
 </head>
 <body data-role="OrgAdmin">

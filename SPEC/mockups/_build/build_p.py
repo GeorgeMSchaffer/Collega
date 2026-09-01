@@ -24,6 +24,21 @@ _bare = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
 assert "*/" not in _bare and "/*" not in _bare, "unbalanced CSS comment marker"
 assert _bare.count("{") == _bare.count("}"), "unbalanced CSS braces"
 
+# An undefined custom property is the quietest failure in the whole file:
+# `background:var(--accent-soft)` with no --accent-soft resolves to nothing, so
+# the element renders unstyled and the page still looks plausible. Both times it
+# happened here it took a screenshot to notice. Fail the build instead.
+DEFINED = set(re.findall(r"(--[a-z0-9-]+)\s*:", CSS))
+
+
+def check_vars(text, where):
+    used = set(re.findall(r"var\((--[a-z0-9-]+)", text))
+    missing = sorted(used - DEFINED)
+    assert not missing, f"{where}: undefined custom {'properties' if len(missing) > 1 else 'property'} {', '.join(missing)}"
+
+
+check_vars(CSS, "stylesheets")
+
 ROLES = ["SiteAdmin", "OrgAdmin", "User", "ReadOnly"]
 STATES = ["normal", "empty", "loading", "error"]
 
@@ -173,13 +188,24 @@ def profile():
 ORGS = ["Acme Robotics", "Northwind Traders", "Contoso Health"]
 
 ROLLUPS = {
-    "st": {"noun": "statuses", "col": "Colour", "target": "s-org-statuses", "rows": [
+    "st": {"noun": "statuses", "one": "status", "col": "Colour", "target": "s-org-statuses", "rows": [
         ("New / Pending", 0, '<span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span>'),
         ("In Review", 0, '<span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span>'),
         ("Triage", 1, '<span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span>'),
         ("Scheduled", 1, '<span class="marker"><span class="dot" style="background:var(--teal)"></span>Teal</span>'),
         ("Intake", 2, '<span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span>'),
         ("Signed off", 2, '<span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span>'),
+    ]},
+    "it": {"noun": "idea types", "one": "idea type", "col": "Fields on this type",
+           "target": "s-org-idea-types", "rows": [
+        ("Continuous Improvement", 0, "3 fields"), ("Process Revision", 0, "4 fields"),
+        ("Defect", 0, "8 fields"), ("Request", 1, "2 fields"),
+        ("Incident", 1, "5 fields"), ("Care Pathway Change", 2, "6 fields"),
+    ]},
+    "fd": {"noun": "fields", "one": "field", "col": "Type", "target": "s-org-fields", "rows": [
+        ("Budget", 0, "Number"), ("Impacted Team", 0, "Dropdown"),
+        ("Risk Level", 0, "Dropdown"), ("Freight Lane", 1, "Text"),
+        ("Ward", 2, "Dropdown"), ("Clinical Sign-off", 2, "Boolean"),
     ]},
 }
 
@@ -229,7 +255,7 @@ def rollup(key):
             <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
           </div>
         </div>
-        <div class="note"><b>A cross-organization view is read-only on purpose.</b> A {noun[:-2] if noun.endswith("es") else noun[:-1]} belongs to one organization, so there is nothing coherent for a create button here to create. <b>Manage</b> carries you into the organization-scoped screen, which is where every change is made.</div>
+        <div class="note"><b>A cross-organization view is read-only on purpose.</b> A {d["one"]} belongs to one organization, so there is nothing coherent for a create button here to create. <b>Manage</b> carries you into the organization-scoped screen, which is where every change is made.</div>
       </div>"""
 
 
@@ -341,7 +367,213 @@ def editor_st(sfx, mutable=True):
       </div>"""
 
 
-EDITORS = {"st": editor_st}
+def table_editor(spec, sfx, mutable=True):
+    """A configurable-entity screen, driven by `spec`.
+
+    Statuses, idea types, fields, users and boards are the same List + Drawer
+    page over different columns, so they share this one generator. `mutable`
+    carries the CanMutate rule; see editor_st for why.
+    """
+    noun = spec["noun"]
+    act = ('<button class="btn ghost sm2">Edit</button>' if mutable else
+           f'<button class="btn ghost sm2" aria-disabled="true" '
+           f'aria-describedby="p-why-edit-{sfx}">Edit</button>')
+    dragh = ('<th style="width:36px"><span class="faint">Drag</span></th>'
+             if mutable and spec.get("reorder") else "")
+    dragc = ('<td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td>'
+             if mutable and spec.get("reorder") else "")
+    # FieldDefinitionsAdmin reorders with paired icon buttons in the action cell
+    # rather than a drag handle, so ordering lives at the row's end, not its start.
+    mv = ('<button class="iconbtn" aria-label="Move up">&uarr;</button>'
+          '<button class="iconbtn" aria-label="Move down">&darr;</button> '
+          if mutable and spec.get("moves") else "")
+    actw = 148 if mv else 66
+    head = (f'<thead><tr>{dragh}{"".join(spec["cols"])}'
+            f'<th style="width:{actw}px"></th></tr></thead>')
+    rows = "\n".join(f'              <tr>{dragc}{"".join(r)}<td>{mv}{act}</td></tr>'
+                     for r in spec["rows"])
+    ncol = len(spec["cols"])
+    skel = "\n".join(
+        f'              <tr>{"<td></td>" if dragc else ""}'
+        + "".join(f'<td><span class="skel w{w}"></span></td>'
+                  for w in ([60, 80, 40, 60, 40][:ncol]))
+        + "<td></td></tr>" for _ in range(5))
+    foot = (spec.get("foot", f"{len(spec['rows'])} {noun}.") if mutable else
+            f'<span class="denied" id="p-why-edit-{sfx}">Read-only. {WHY_SITEADMIN}</span>')
+    empty = (spec["empty_rw"] if mutable else spec["empty_ro"])
+    side = (spec["create"].replace("@S@", sfx) if mutable else f"""<div class="card" style="width:356px">
+          <h3 {H3.replace("0 0 6px", "0 0 var(--s-md)")}>Why is this read-only?</h3>
+          <p class="sub">{WHY_SITEADMIN}</p>
+          <a class="btn" href="comp-p-auth.html?screen=s-viewas&role=SiteAdmin">Open View As</a>
+        </div>""")
+    return f"""<div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            {head}
+            <tbody>
+{rows}
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>{foot}</span></div>
+          <table data-when="loading" aria-busy="true">
+            {head}
+            <tbody>
+{skel}
+            </tbody>
+          </table>
+          <div data-when="empty" style="padding:var(--s-lg)"><div class="empty">
+              {empty}
+          </div></div>
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load {noun}.</b> {spec["error"]}</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        {side}
+      </div>"""
+
+
+def badge(icon, name, bg, fg):
+    return (f'<span class="tbadge" style="background:{bg};color:{fg}">'
+            f'<span aria-hidden="true">{icon}</span>{name}</span>')
+
+
+# The org's field catalogue. Idea types draw their field list from this, so the
+# two screens are generated from one table and cannot disagree about what exists.
+FIELDS = [
+    ("Budget", "Number", True, "&mdash;", False),
+    ("ROI Estimate", "Number", False, "&mdash;", False),
+    ("Impacted Team", "Dropdown", True, "Engineering, Ops, Support, Finance", False),
+    ("Target Release", "Date", False, "&mdash;", False),
+    ("Risk Level", "Dropdown", False, "Low, Medium, High", False),
+    ("Compliance Flag", "Boolean", False, "&mdash;", False),
+    ("Customer Ref", "Text", False, "&mdash;", False),
+    ("Reference URL", "URL", False, "&mdash;", False),
+    ("Legacy Cost Code", "Text", False, "&mdash;", True),
+]
+
+# Badge tints are literal, not tokens: a type's colour is org-chosen data at
+# runtime, so there is no token for it to be. The three below are tints of the
+# comp's sky / teal / orange stickers so they sit in the palette rather than
+# beside it.
+TYPES = [
+    ("&#128161;", "Continuous Improvement", "#E7F0FA", "#2B5C8C",
+     ["Budget", "ROI Estimate", "Impacted Team"], 2, 42),
+    ("&#128295;", "Process Revision", "#E8F3F0", "#2F6A5E",
+     ["Target Release", "Risk Level", "Compliance Flag", "Impacted Team"], 2, 18),
+    ("&#128030;", "Defect", "#FAEDE6", "#9A4B22",
+     [f[0] for f in FIELDS if not f[4]], 0, 7),
+]
+
+
+def _type_cells(icon, name, bg, fg, fields, req, n):
+    names = ", ".join(fields)
+    detail = (f'{len(fields)} fields <span class="faint">({req} required)</span>'
+              f'<div class="hint" style="margin-top:2px">{names}</div>')
+    return [f"<td>{badge(icon, name, bg, fg)}</td>", f"<td>{detail}</td>",
+            f'<td class="num">{n}</td>']
+
+
+IT_SPEC = {
+    "noun": "idea types", "reorder": True,
+    "cols": ['<th style="width:256px">Idea type</th>', "<th>Fields on this type</th>",
+             '<th style="width:74px">Ideas</th>'],
+    "rows": [_type_cells(*t) for t in TYPES],
+    "foot": ("Reorder by dragging &mdash; the order here is the order of the type "
+             "picker on idea create."),
+    "error": ("The request failed before anything was returned, so nothing here is "
+              "out of date &mdash; it is simply absent. Retrying is safe."),
+    "empty_rw": """<h3>No idea types yet</h3>
+              <p>Every idea is exactly one type, chosen at creation, so ideas cannot be created until at least one type exists.</p>
+              <button class="btn pri">Add the first idea type</button>""",
+    "empty_ro": """<h3>This organization has no idea types</h3>
+              <p>Every idea is exactly one type, so nobody here can create an idea until an administrator of this organization adds one.</p>""",
+    "create": """<div class="card" style="width:400px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">New idea type</h3>
+          <form>
+            <div class="field"><label for="p-tname-@S@">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-tname-@S@" required><div class="hint">Shown as a badge on cards, the ideas list, and idea detail.</div></div>
+            <div class="field"><label for="p-ticon-@S@">Badge</label>
+              <div style="display:flex;gap:var(--s-xs)"><input type="text" id="p-ticon-@S@" value="&#128161;" style="width:52px;text-align:center" aria-label="Badge icon"><input type="color" value="#eef2fb" aria-label="Badge colour" style="width:44px;padding:2px;height:36px;flex:none"><span class="tbadge" style="flex:1;justify-content:center">Preview</span></div></div>
+            <fieldset style="border:0;padding:0;margin:0 0 var(--s-md)">
+              <legend class="lbl">Fields on this type</legend>
+              <div class="hint" style="margin:0 0 var(--s-sm)">Pick from the organization&rsquo;s fields. A type&rsquo;s ideas show only the fields chosen here.</div>
+              <div class="pick">
+@PICK@
+              </div>
+            </fieldset>
+            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Create idea type</button>
+          </form>
+        </div>""",
+}
+
+
+FD_SPEC = {
+    "noun": "fields", "moves": True,
+    "cols": ["<th>Field</th>", '<th style="width:116px">Type</th>',
+             '<th style="width:88px">Required</th>', '<th style="width:230px">Options</th>'],
+    "rows": [[f'<td><b>{n}</b>'
+              + (' <span class="tag">Archived</span>' if arch else "") + "</td>",
+              f"<td>{t}</td>",
+              "<td>Yes</td>" if req else '<td><span class="faint">No</span></td>',
+              f'<td class="faint">{opts}</td>']
+             for n, t, req, opts, arch in FIELDS],
+    "foot": ("Reorder with the arrows &mdash; the order here is the order fields appear "
+             "on an idea. Archived fields stay on ideas that already use them."),
+    "error": ("The request failed before anything was returned, so nothing here is "
+              "out of date &mdash; it is simply absent. Retrying is safe."),
+    "empty_rw": """<h3>No custom fields yet</h3>
+              <p>Fields you define here become available to idea types, which choose the subset their ideas show. Nothing appears on an idea until a type picks it up.</p>
+              <button class="btn pri">Add the first field</button>""",
+    "empty_ro": """<h3>This organization has no custom fields</h3>
+              <p>Its ideas carry only the built-in fields. An administrator of this organization can add more.</p>""",
+    "create": """<div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">Add field</h3>
+          <form>
+            <div class="field" data-when="normal empty loading"><label for="p-fname-@S@">Label <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-fname-@S@" required><div class="hint">What the person filling in an idea sees beside the input.</div></div>
+            <div class="field bad" data-when="error"><label for="p-fname2-@S@">Label <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-fname2-@S@" value="Budget" aria-describedby="p-fname2-msg-@S@" aria-invalid="true"><span class="msg" id="p-fname2-msg-@S@">A field called &ldquo;Budget&rdquo; already exists. Labels are unique within an organization.</span></div>
+            <div class="field"><label for="p-ftype-@S@">Type</label><select id="p-ftype-@S@"><option>Text</option><option>Number</option><option>Date</option><option>Boolean</option><option>Dropdown</option><option>Multi-select</option><option>URL</option></select><div class="hint">Type is fixed once ideas hold values for the field.</div></div>
+            <div class="field"><label for="p-fopt-@S@">Options</label><textarea id="p-fopt-@S@" rows="3" placeholder="One per line"></textarea><div class="hint">Dropdown and multi-select only.</div></div>
+            <div class="field"><label class="chk" for="p-freq-@S@"><input type="checkbox" id="p-freq-@S@"> Required on every idea that shows it</label></div>
+            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Add field</button>
+          </form>
+        </div>""",
+}
+
+
+def _pick_rows():
+    """The field chooser inside the idea-type create form.
+
+    comp-c-review-09 used a two-pane add/remove picker; at comp P's 400px side
+    card that would be two 180px columns, so the same information is expressed
+    as one list with a per-field Required toggle. Archived fields are excluded —
+    a type cannot newly adopt a field the organization has retired.
+    """
+    out = []
+    for i, (n, t, _r, _o, arch) in enumerate(FIELDS):
+        if arch:
+            continue
+        s = f"@S@-{i}"
+        # Two independent checkboxes per row — on this type, and required on it —
+        # so neither can be nested inside the other's label. A single row-wide
+        # label with a static "Required" span read as an assertion that every
+        # field was required, which is the opposite of what it meant.
+        out.append(
+            f'                <div class="pickrow">'
+            f'<input type="checkbox" id="p-pf-{s}">'
+            f'<label class="grow" for="p-pf-{s}">{n}</label>'
+            f'<span class="ty">{t}</span>'
+            f'<span class="reqtog"><input type="checkbox" id="p-pr-{s}">'
+            f'<label for="p-pr-{s}">Required</label></span></div>')
+    return "\n".join(out)
+
+
+IT_SPEC["create"] = IT_SPEC["create"].replace("@PICK@", _pick_rows())
+
+EDITORS = {
+    "st": editor_st,
+    "it": lambda sfx, mutable=True: table_editor(IT_SPEC, sfx, mutable),
+    "fd": lambda sfx, mutable=True: table_editor(FD_SPEC, sfx, mutable),
+}
 
 
 def guard(kind, entity, back="s-settings"):
@@ -542,7 +774,9 @@ COMPS = [
      "how": ["Actions a role cannot take render <b>disabled with a reason</b>, "
              "not hidden."],
      "screens": [("s-settings", "Hub"), ("s-profile", "Profile"),
-                 ("s-statuses", "Statuses"), ("s-org-statuses", "Statuses · org")]},
+                 ("s-statuses", "Statuses"), ("s-org-statuses", "Statuses · org"),
+                 ("s-idea-types", "Idea types"), ("s-org-idea-types", "Idea types · org"),
+                 ("s-fields", "Fields"), ("s-org-fields", "Fields · org")]},
     {"file": "comp-p-delivery.html", "area": "Delivery", "frag": "p_delivery.frag",
      "title": "Collega — Comp P: delivery and roadmap",
      "label": "Delivery and roadmap · not yet built",
@@ -563,13 +797,19 @@ def build(comp):
     body = re.sub(r"@@DESK:(\w+)@@", lambda m: desk(m.group(1), comp), body)
     body = body.replace("@@PROFILE@@", profile())
     body = re.sub(r"@@ROLLUP:(\w+)@@", lambda m: rollup(m.group(1)), body)
+    # The id suffix is the entity key plus the fragment's own — "st-own",
+    # "fd-org". Fragments were passing bare "own"/"org", so every org-scoped
+    # editor in the file minted the same p-why-edit-org and the Edit buttons'
+    # aria-describedby resolved to whichever screen came first.
     body = re.sub(r"@@EDITOR:(\w+):(\w+):(rw|ro)@@",
-                  lambda m: EDITORS[m.group(1)](m.group(2), m.group(3) == "rw"), body)
-    body = re.sub(r"@@SCOPEBAR:([\w-]+):([\w-]+)@@",
+                  lambda m: EDITORS[m.group(1)](f"{m.group(1)}-{m.group(2)}",
+                                                m.group(3) == "rw"), body)
+    body = re.sub(r"@@SCOPEBAR:([\w -]+):([\w-]+)@@",
                   lambda m: scope_bar(m.group(1), m.group(2)), body)
     body = re.sub(r"@@GUARD:(ADMIN|SITE):([\w -]+)@@",
                   lambda m: guard(m.group(1), m.group(2)), body)
     assert "@@" not in body, f'unsubstituted token in {comp["frag"]}'
+    check_vars(body, comp["frag"])
 
     # The first screen in a file is the one that opens; the rest start hidden.
     # Owning this here means a fragment never has to keep it in sync.
@@ -616,6 +856,15 @@ def build(comp):
     (OUT / comp["file"]).write_text(html)
     print(f'{comp["file"]:28} {len(comp["screens"])} screens  '
           f'{len(html.splitlines()):5} lines  {len(html):7} bytes')
+
+    # A data-go naming a screen no file defines is inert — the click does
+    # nothing. While the set is still being built that is expected, so report it
+    # rather than failing; the last batch is done when this line stops printing.
+    known = {s for c in COMPS for s, _ in c["screens"]}
+    pending = sorted({t for t in re.findall(r'data-go="([a-z][a-z-]*)"', html)
+                      if t not in known})
+    if pending:
+        print(f'{"":28} not built yet: {", ".join(pending)}')
 
 
 for c in COMPS:

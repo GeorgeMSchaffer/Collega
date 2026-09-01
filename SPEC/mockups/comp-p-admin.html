@@ -629,6 +629,39 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
 /* a denied control and its reason travel together */
 .deniedwrap{display:inline-flex;align-items:center;gap:var(--s-xs)}
 
+/* ===== idea-type badge — the TypeBadge component, as it appears in a table ===== */
+.tbadge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:var(--r-xs);
+  font-size:14px;font-weight:600;line-height:1.43;background:var(--canvas-soft);color:var(--ink-muted)}
+
+/* ===== checkbox rows — the box sits on the text baseline, not above it ===== */
+.chk{display:inline-flex;align-items:center;gap:var(--s-xs);font-weight:400;cursor:pointer}
+.chk input{width:auto;margin:0}
+
+/* ===== field picker inside the idea-type create form =====
+   comp-c-review-09 used a two-pane add/remove picker. At comp P's 400px side
+   card that would be two 180px columns, so the same information — which fields,
+   in what order, which required — is expressed as one checkable list. */
+.pick{border:1px solid var(--hairline);border-radius:var(--r-sm);max-height:248px;overflow-y:auto}
+.pickrow{display:flex;align-items:center;gap:var(--s-xs);padding:8px var(--s-sm);
+  font-size:14px;line-height:1.43}
+.pickrow+.pickrow{border-top:1px solid var(--hairline)}
+.pickrow:hover{background:var(--canvas-soft)}
+.pickrow input{width:auto;margin:0;flex:none}
+.pickrow label{margin:0;font-weight:400;cursor:pointer}
+.pickrow .grow{flex:1}
+.pickrow .ty{color:var(--ink-faint);font-size:13px}
+.pickrow .reqtog{display:inline-flex;align-items:center;gap:5px;font-size:12px;
+  color:var(--ink-faint);width:78px;justify-content:flex-end}
+
+/* a fieldset legend styled as a field label */
+legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bottom:2px}
+
+/* move-up / move-down pairs sit tighter than free-standing icon buttons.
+   .iconbtn is display:grid, which is block-level — in a table cell that put
+   each arrow on its own line and tripled the row height. */
+.panel td .iconbtn{display:inline-grid;width:26px;height:26px;font-size:13px;
+  vertical-align:middle;margin-right:2px}
+
 </style>
 </head>
 <body data-role="OrgAdmin">
@@ -638,6 +671,10 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
   <button data-go="s-profile">Profile</button>
   <button data-go="s-statuses">Statuses</button>
   <button data-go="s-org-statuses">Statuses · org</button>
+  <button data-go="s-idea-types">Idea types</button>
+  <button data-go="s-org-idea-types">Idea types · org</button>
+  <button data-go="s-fields">Fields</button>
+  <button data-go="s-org-fields">Fields · org</button>
   <span class="lbl" style="margin-left:auto">Other areas</span>
   <a class="xfile" href="comp-p-focus-roadmap.html">Core</a>
   <a class="xfile" href="comp-p-auth.html">Auth</a>
@@ -1056,12 +1093,12 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
         <div class="card" style="width:356px">
           <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4;margin:0 0 var(--s-md)">Add status</h3>
           <form>
-            <div class="field" data-when="normal empty loading"><label for="p-sname-own">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname-own" required><div class="hint">Shown as a lane header on every board.</div></div>
-            <div class="field bad" data-when="error"><label for="p-sname2-own">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname2-own" value="In Review" aria-describedby="p-sname2-msg-own" aria-invalid="true"><span class="msg" id="p-sname2-msg-own">A status called &ldquo;In Review&rdquo; already exists. Names are unique within an organization.</span></div>
-            <div class="field"><label for="p-shex-own">Colour</label>
-              <div style="display:flex;gap:var(--s-xs)"><input type="text" id="p-shex-own" value="#62aef0" style="flex:1"><input type="color" value="#62aef0" aria-label="Pick colour visually" style="width:44px;padding:2px;height:36px;flex:none"></div>
+            <div class="field" data-when="normal empty loading"><label for="p-sname-st-own">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname-st-own" required><div class="hint">Shown as a lane header on every board.</div></div>
+            <div class="field bad" data-when="error"><label for="p-sname2-st-own">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-sname2-st-own" value="In Review" aria-describedby="p-sname2-msg-st-own" aria-invalid="true"><span class="msg" id="p-sname2-msg-st-own">A status called &ldquo;In Review&rdquo; already exists. Names are unique within an organization.</span></div>
+            <div class="field"><label for="p-shex-st-own">Colour</label>
+              <div style="display:flex;gap:var(--s-xs)"><input type="text" id="p-shex-st-own" value="#62aef0" style="flex:1"><input type="color" value="#62aef0" aria-label="Pick colour visually" style="width:44px;padding:2px;height:36px;flex:none"></div>
               <div class="hint">Colour is decoration &mdash; the status name always shows beside it.</div></div>
-            <div class="field"><label for="p-sord-own">Position</label><select id="p-sord-own"><option>Last</option><option>First</option><option>After New / Pending</option></select></div>
+            <div class="field"><label for="p-sord-st-own">Position</label><select id="p-sord-st-own"><option>Last</option><option>First</option><option>After New / Pending</option></select></div>
             <button type="submit" class="btn pri" style="width:100%;justify-content:center">Add status</button>
           </form>
         </div>
@@ -1109,14 +1146,14 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
           <table data-when="normal">
             <thead><tr><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
             <tbody>
-              <tr><td><b>New / Pending</b></td><td><span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span></td><td class="num">6</td><td class="num">1</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
-              <tr><td><b>In Review</b></td><td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span></td><td class="num">4</td><td class="num">2</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
-              <tr><td><b>In Progress</b></td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span></td><td class="num">4</td><td class="num">3</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
-              <tr><td><b>Client Review</b></td><td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span></td><td class="num">2</td><td class="num">4</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
-              <tr><td><b>Complete</b></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span></td><td class="num">6</td><td class="num">5</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-org">Edit</button></td></tr>
+              <tr><td><b>New / Pending</b></td><td><span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span></td><td class="num">6</td><td class="num">1</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-st-org">Edit</button></td></tr>
+              <tr><td><b>In Review</b></td><td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Purple</span></td><td class="num">4</td><td class="num">2</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-st-org">Edit</button></td></tr>
+              <tr><td><b>In Progress</b></td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Orange</span></td><td class="num">4</td><td class="num">3</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-st-org">Edit</button></td></tr>
+              <tr><td><b>Client Review</b></td><td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Pink</span></td><td class="num">2</td><td class="num">4</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-st-org">Edit</button></td></tr>
+              <tr><td><b>Complete</b></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Green</span></td><td class="num">6</td><td class="num">5</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-st-org">Edit</button></td></tr>
             </tbody>
           </table>
-          <div class="pgfoot" data-when="normal"><span><span class="denied" id="p-why-edit-org">Read-only. A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</span></span></div>
+          <div class="pgfoot" data-when="normal"><span><span class="denied" id="p-why-edit-st-org">Read-only. A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</span></span></div>
 
           <table data-when="loading" aria-busy="true">
             <thead><tr><th>Name</th><th style="width:168px">Colour</th><th style="width:74px">Ideas</th><th style="width:74px">Order</th><th style="width:66px"></th></tr></thead>
@@ -1156,6 +1193,467 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
         <div class="empty">
           <h3>Site Admins only</h3>
           <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's statuses live under <b>Settings</b>.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-idea-types" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Idea types</b></span><span class="spacer"></span>
+      <button class="btn pri" data-roles="OrgAdmin">New idea type</button></div>
+    <div class="work">
+      <div class="pgh" data-roles="SiteAdmin"><div class="grow"><h1>All idea types</h1>
+        <div class="sub">Idea types across every organization. Open an organization to change its types.</div></div></div>
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Idea types</h1>
+        <div class="sub">Every idea is exactly one type, chosen at creation. A type carries its own selection of the organization&rsquo;s fields, so an idea shows only the fields that matter to it.</div></div></div>
+
+      <div class="filters" data-when="normal" data-roles="SiteAdmin OrgAdmin">
+        <div class="fw wide"><label for="p-it-q">Search</label><input type="search" id="p-it-q" placeholder="Search idea types&hellip;"></div>
+      </div>
+
+      <div data-roles="User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Administrators only</h3>
+          <p>Configuring idea types is an administrator's job, so this route is closed to members. Nothing here is hidden from you selectively &mdash; the whole page is out of scope for your role.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+
+      <div data-roles="SiteAdmin">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:168px">Fields on this type</th><th style="width:96px"></th></tr></thead>
+            <tbody>
+              <tr><td><b>Continuous Improvement</b></td><td>Acme Robotics</td><td>3 fields</td><td><a class="btn ghost sm2" href="#" data-go="s-org-idea-types">Manage</a></td></tr>
+              <tr><td><b>Process Revision</b></td><td>Acme Robotics</td><td>4 fields</td><td><a class="btn ghost sm2" href="#" data-go="s-org-idea-types">Manage</a></td></tr>
+              <tr><td><b>Defect</b></td><td>Acme Robotics</td><td>8 fields</td><td><a class="btn ghost sm2" href="#" data-go="s-org-idea-types">Manage</a></td></tr>
+              <tr><td><b>Request</b></td><td>Northwind Traders</td><td>2 fields</td><td><a class="btn ghost sm2" href="#" data-go="s-org-idea-types">Manage</a></td></tr>
+              <tr><td><b>Incident</b></td><td>Northwind Traders</td><td>5 fields</td><td><a class="btn ghost sm2" href="#" data-go="s-org-idea-types">Manage</a></td></tr>
+              <tr><td><b>Care Pathway Change</b></td><td>Contoso Health</td><td>6 fields</td><td><a class="btn ghost sm2" href="#" data-go="s-org-idea-types">Manage</a></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>6 idea types across 3 organizations.</span></div>
+
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:168px">Fields on this type</th><th style="width:96px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+            </tbody>
+          </table>
+
+          <div data-when="empty" style="padding:var(--s-lg)">
+            <div class="empty"><h3>No idea types anywhere yet</h3>
+              <p>No organization has configured idea types. Open an organization to set its idea types up &mdash; they cannot be created from this cross-organization view.</p>
+              <a class="btn" href="#" data-go="s-orgs">Go to Organizations</a></div>
+          </div>
+
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load idea types.</b> This view queries every organization in turn, so a single organization failing empties the whole list. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="note"><b>A cross-organization view is read-only on purpose.</b> A idea type belongs to one organization, so there is nothing coherent for a create button here to create. <b>Manage</b> carries you into the organization-scoped screen, which is where every change is made.</div>
+      </div>
+
+      <div data-roles="OrgAdmin">
+      <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th style="width:256px">Idea type</th><th>Fields on this type</th><th style="width:74px">Ideas</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><span class="tbadge" style="background:#E7F0FA;color:#2B5C8C"><span aria-hidden="true">&#128161;</span>Continuous Improvement</span></td><td>3 fields <span class="faint">(2 required)</span><div class="hint" style="margin-top:2px">Budget, ROI Estimate, Impacted Team</div></td><td class="num">42</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><span class="tbadge" style="background:#E8F3F0;color:#2F6A5E"><span aria-hidden="true">&#128295;</span>Process Revision</span></td><td>4 fields <span class="faint">(2 required)</span><div class="hint" style="margin-top:2px">Target Release, Risk Level, Compliance Flag, Impacted Team</div></td><td class="num">18</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td><td><span class="tbadge" style="background:#FAEDE6;color:#9A4B22"><span aria-hidden="true">&#128030;</span>Defect</span></td><td>8 fields <span class="faint">(0 required)</span><div class="hint" style="margin-top:2px">Budget, ROI Estimate, Impacted Team, Target Release, Risk Level, Compliance Flag, Customer Ref, Reference URL</div></td><td class="num">7</td><td><button class="btn ghost sm2">Edit</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>Reorder by dragging &mdash; the order here is the order of the type picker on idea create.</span></div>
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th style="width:36px"><span class="faint">Drag</span></th><th style="width:256px">Idea type</th><th>Fields on this type</th><th style="width:74px">Ideas</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td></td><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td></td><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td></td><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td></td><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td></td><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+            </tbody>
+          </table>
+          <div data-when="empty" style="padding:var(--s-lg)"><div class="empty">
+              <h3>No idea types yet</h3>
+              <p>Every idea is exactly one type, chosen at creation, so ideas cannot be created until at least one type exists.</p>
+              <button class="btn pri">Add the first idea type</button>
+          </div></div>
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load idea types.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="card" style="width:400px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">New idea type</h3>
+          <form>
+            <div class="field"><label for="p-tname-it-own">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-tname-it-own" required><div class="hint">Shown as a badge on cards, the ideas list, and idea detail.</div></div>
+            <div class="field"><label for="p-ticon-it-own">Badge</label>
+              <div style="display:flex;gap:var(--s-xs)"><input type="text" id="p-ticon-it-own" value="&#128161;" style="width:52px;text-align:center" aria-label="Badge icon"><input type="color" value="#eef2fb" aria-label="Badge colour" style="width:44px;padding:2px;height:36px;flex:none"><span class="tbadge" style="flex:1;justify-content:center">Preview</span></div></div>
+            <fieldset style="border:0;padding:0;margin:0 0 var(--s-md)">
+              <legend class="lbl">Fields on this type</legend>
+              <div class="hint" style="margin:0 0 var(--s-sm)">Pick from the organization&rsquo;s fields. A type&rsquo;s ideas show only the fields chosen here.</div>
+              <div class="pick">
+                <div class="pickrow"><input type="checkbox" id="p-pf-it-own-0"><label class="grow" for="p-pf-it-own-0">Budget</label><span class="ty">Number</span><span class="reqtog"><input type="checkbox" id="p-pr-it-own-0"><label for="p-pr-it-own-0">Required</label></span></div>
+                <div class="pickrow"><input type="checkbox" id="p-pf-it-own-1"><label class="grow" for="p-pf-it-own-1">ROI Estimate</label><span class="ty">Number</span><span class="reqtog"><input type="checkbox" id="p-pr-it-own-1"><label for="p-pr-it-own-1">Required</label></span></div>
+                <div class="pickrow"><input type="checkbox" id="p-pf-it-own-2"><label class="grow" for="p-pf-it-own-2">Impacted Team</label><span class="ty">Dropdown</span><span class="reqtog"><input type="checkbox" id="p-pr-it-own-2"><label for="p-pr-it-own-2">Required</label></span></div>
+                <div class="pickrow"><input type="checkbox" id="p-pf-it-own-3"><label class="grow" for="p-pf-it-own-3">Target Release</label><span class="ty">Date</span><span class="reqtog"><input type="checkbox" id="p-pr-it-own-3"><label for="p-pr-it-own-3">Required</label></span></div>
+                <div class="pickrow"><input type="checkbox" id="p-pf-it-own-4"><label class="grow" for="p-pf-it-own-4">Risk Level</label><span class="ty">Dropdown</span><span class="reqtog"><input type="checkbox" id="p-pr-it-own-4"><label for="p-pr-it-own-4">Required</label></span></div>
+                <div class="pickrow"><input type="checkbox" id="p-pf-it-own-5"><label class="grow" for="p-pf-it-own-5">Compliance Flag</label><span class="ty">Boolean</span><span class="reqtog"><input type="checkbox" id="p-pr-it-own-5"><label for="p-pr-it-own-5">Required</label></span></div>
+                <div class="pickrow"><input type="checkbox" id="p-pf-it-own-6"><label class="grow" for="p-pf-it-own-6">Customer Ref</label><span class="ty">Text</span><span class="reqtog"><input type="checkbox" id="p-pr-it-own-6"><label for="p-pr-it-own-6">Required</label></span></div>
+                <div class="pickrow"><input type="checkbox" id="p-pf-it-own-7"><label class="grow" for="p-pf-it-own-7">Reference URL</label><span class="ty">URL</span><span class="reqtog"><input type="checkbox" id="p-pr-it-own-7"><label for="p-pr-it-own-7">Required</label></span></div>
+              </div>
+            </fieldset>
+            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Create idea type</button>
+          </form>
+        </div>
+      </div>
+      <div class="note"><b>Fields are chosen per type, not per idea.</b> The organization defines a catalogue of fields once; each type picks the ordered subset its ideas show, and marks which of them are required. That is why this screen and <a href="#" data-go="s-fields">Fields</a> are separate: one owns what exists, the other owns what each type uses.</div>
+      <div class="note"><b>Archiving is a soft delete.</b> Ideas already carrying an archived type keep their badge and still resolve their fields &mdash; the type simply leaves the create picker. The last remaining active type cannot be archived, because every idea must have one.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-idea-types" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-idea-types">All idea types</a> / <b>Acme Robotics</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
+      <span class="tag" data-roles="SiteAdmin">Read-only</span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Idea types</h1>
+          <div class="sub">Acme Robotics &middot; the types this organization&rsquo;s ideas are created as.</div></div></div>
+        <div class="note" style="border-left-color:var(--secondary)"><b>Viewing Acme Robotics.</b> You reached these idea types from the cross-organization list, so everything below belongs to Acme Robotics and to no other organization. <a href="#" data-go="s-idea-types">Back to all idea types</a>.</div>
+        <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th style="width:256px">Idea type</th><th>Fields on this type</th><th style="width:74px">Ideas</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="tbadge" style="background:#E7F0FA;color:#2B5C8C"><span aria-hidden="true">&#128161;</span>Continuous Improvement</span></td><td>3 fields <span class="faint">(2 required)</span><div class="hint" style="margin-top:2px">Budget, ROI Estimate, Impacted Team</div></td><td class="num">42</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-it-org">Edit</button></td></tr>
+              <tr><td><span class="tbadge" style="background:#E8F3F0;color:#2F6A5E"><span aria-hidden="true">&#128295;</span>Process Revision</span></td><td>4 fields <span class="faint">(2 required)</span><div class="hint" style="margin-top:2px">Target Release, Risk Level, Compliance Flag, Impacted Team</div></td><td class="num">18</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-it-org">Edit</button></td></tr>
+              <tr><td><span class="tbadge" style="background:#FAEDE6;color:#9A4B22"><span aria-hidden="true">&#128030;</span>Defect</span></td><td>8 fields <span class="faint">(0 required)</span><div class="hint" style="margin-top:2px">Budget, ROI Estimate, Impacted Team, Target Release, Risk Level, Compliance Flag, Customer Ref, Reference URL</div></td><td class="num">7</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-it-org">Edit</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span><span class="denied" id="p-why-edit-it-org">Read-only. A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</span></span></div>
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th style="width:256px">Idea type</th><th>Fields on this type</th><th style="width:74px">Ideas</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+            </tbody>
+          </table>
+          <div data-when="empty" style="padding:var(--s-lg)"><div class="empty">
+              <h3>This organization has no idea types</h3>
+              <p>Every idea is exactly one type, so nobody here can create an idea until an administrator of this organization adds one.</p>
+          </div></div>
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load idea types.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4;margin:0 0 var(--s-md)">Why is this read-only?</h3>
+          <p class="sub">A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</p>
+          <a class="btn" href="comp-p-auth.html?screen=s-viewas&role=SiteAdmin">Open View As</a>
+        </div>
+      </div>
+        <div class="note"><b>The same screen, minus the ability to change it.</b> <code>IdeaTypesAdmin.razor</code> computes <code>CanMutate</code> as <code>!isSiteAdmin</code>, so this table is generated from the same definition as an Org Admin&rsquo;s <code>/settings/idea-types</code>, rendered with mutation switched off.</div>
+      </div>
+      <div data-roles="OrgAdmin User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Site Admins only</h3>
+          <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's idea types live under <b>Settings</b>.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-fields" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Fields</b></span><span class="spacer"></span>
+      <button class="btn pri" data-roles="OrgAdmin">Add field</button></div>
+    <div class="work">
+      <div class="pgh" data-roles="SiteAdmin"><div class="grow"><h1>All fields</h1>
+        <div class="sub">User-defined fields across every organization. Open an organization to change its fields.</div></div></div>
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Fields</h1>
+        <div class="sub">The organization&rsquo;s catalogue of custom fields. Defining one here makes it available to idea types; nothing appears on an idea until a type picks it up.</div></div></div>
+
+      <div class="filters" data-when="normal" data-roles="SiteAdmin OrgAdmin">
+        <div class="fw wide"><label for="p-fd-q">Search</label><input type="search" id="p-fd-q" placeholder="Search fields&hellip;"></div>
+        <div class="fw"><label class="chk" for="p-fd-arch"><input type="checkbox" id="p-fd-arch" checked> Show archived</label></div>
+      </div>
+
+      <div data-roles="User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Administrators only</h3>
+          <p>Configuring fields is an administrator's job, so this route is closed to members. Nothing here is hidden from you selectively &mdash; the whole page is out of scope for your role.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+
+      <div data-roles="SiteAdmin">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:168px">Type</th><th style="width:96px"></th></tr></thead>
+            <tbody>
+              <tr><td><b>Budget</b></td><td>Acme Robotics</td><td>Number</td><td><a class="btn ghost sm2" href="#" data-go="s-org-fields">Manage</a></td></tr>
+              <tr><td><b>Impacted Team</b></td><td>Acme Robotics</td><td>Dropdown</td><td><a class="btn ghost sm2" href="#" data-go="s-org-fields">Manage</a></td></tr>
+              <tr><td><b>Risk Level</b></td><td>Acme Robotics</td><td>Dropdown</td><td><a class="btn ghost sm2" href="#" data-go="s-org-fields">Manage</a></td></tr>
+              <tr><td><b>Freight Lane</b></td><td>Northwind Traders</td><td>Text</td><td><a class="btn ghost sm2" href="#" data-go="s-org-fields">Manage</a></td></tr>
+              <tr><td><b>Ward</b></td><td>Contoso Health</td><td>Dropdown</td><td><a class="btn ghost sm2" href="#" data-go="s-org-fields">Manage</a></td></tr>
+              <tr><td><b>Clinical Sign-off</b></td><td>Contoso Health</td><td>Boolean</td><td><a class="btn ghost sm2" href="#" data-go="s-org-fields">Manage</a></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>6 fields across 3 organizations.</span></div>
+
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:168px">Type</th><th style="width:96px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+            </tbody>
+          </table>
+
+          <div data-when="empty" style="padding:var(--s-lg)">
+            <div class="empty"><h3>No fields anywhere yet</h3>
+              <p>No organization has configured fields. Open an organization to set its fields up &mdash; they cannot be created from this cross-organization view.</p>
+              <a class="btn" href="#" data-go="s-orgs">Go to Organizations</a></div>
+          </div>
+
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load fields.</b> This view queries every organization in turn, so a single organization failing empties the whole list. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="note"><b>A cross-organization view is read-only on purpose.</b> A field belongs to one organization, so there is nothing coherent for a create button here to create. <b>Manage</b> carries you into the organization-scoped screen, which is where every change is made.</div>
+      </div>
+
+      <div data-roles="OrgAdmin">
+      <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Field</th><th style="width:116px">Type</th><th style="width:88px">Required</th><th style="width:230px">Options</th><th style="width:148px"></th></tr></thead>
+            <tbody>
+              <tr><td><b>Budget</b></td><td>Number</td><td>Yes</td><td class="faint">&mdash;</td><td><button class="iconbtn" aria-label="Move up">&uarr;</button><button class="iconbtn" aria-label="Move down">&darr;</button> <button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>ROI Estimate</b></td><td>Number</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="iconbtn" aria-label="Move up">&uarr;</button><button class="iconbtn" aria-label="Move down">&darr;</button> <button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>Impacted Team</b></td><td>Dropdown</td><td>Yes</td><td class="faint">Engineering, Ops, Support, Finance</td><td><button class="iconbtn" aria-label="Move up">&uarr;</button><button class="iconbtn" aria-label="Move down">&darr;</button> <button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>Target Release</b></td><td>Date</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="iconbtn" aria-label="Move up">&uarr;</button><button class="iconbtn" aria-label="Move down">&darr;</button> <button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>Risk Level</b></td><td>Dropdown</td><td><span class="faint">No</span></td><td class="faint">Low, Medium, High</td><td><button class="iconbtn" aria-label="Move up">&uarr;</button><button class="iconbtn" aria-label="Move down">&darr;</button> <button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>Compliance Flag</b></td><td>Boolean</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="iconbtn" aria-label="Move up">&uarr;</button><button class="iconbtn" aria-label="Move down">&darr;</button> <button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>Customer Ref</b></td><td>Text</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="iconbtn" aria-label="Move up">&uarr;</button><button class="iconbtn" aria-label="Move down">&darr;</button> <button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>Reference URL</b></td><td>URL</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="iconbtn" aria-label="Move up">&uarr;</button><button class="iconbtn" aria-label="Move down">&darr;</button> <button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>Legacy Cost Code</b> <span class="tag">Archived</span></td><td>Text</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="iconbtn" aria-label="Move up">&uarr;</button><button class="iconbtn" aria-label="Move down">&darr;</button> <button class="btn ghost sm2">Edit</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>Reorder with the arrows &mdash; the order here is the order fields appear on an idea. Archived fields stay on ideas that already use them.</span></div>
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Field</th><th style="width:116px">Type</th><th style="width:88px">Required</th><th style="width:230px">Options</th><th style="width:148px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+            </tbody>
+          </table>
+          <div data-when="empty" style="padding:var(--s-lg)"><div class="empty">
+              <h3>No custom fields yet</h3>
+              <p>Fields you define here become available to idea types, which choose the subset their ideas show. Nothing appears on an idea until a type picks it up.</p>
+              <button class="btn pri">Add the first field</button>
+          </div></div>
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load fields.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">Add field</h3>
+          <form>
+            <div class="field" data-when="normal empty loading"><label for="p-fname-fd-own">Label <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-fname-fd-own" required><div class="hint">What the person filling in an idea sees beside the input.</div></div>
+            <div class="field bad" data-when="error"><label for="p-fname2-fd-own">Label <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-fname2-fd-own" value="Budget" aria-describedby="p-fname2-msg-fd-own" aria-invalid="true"><span class="msg" id="p-fname2-msg-fd-own">A field called &ldquo;Budget&rdquo; already exists. Labels are unique within an organization.</span></div>
+            <div class="field"><label for="p-ftype-fd-own">Type</label><select id="p-ftype-fd-own"><option>Text</option><option>Number</option><option>Date</option><option>Boolean</option><option>Dropdown</option><option>Multi-select</option><option>URL</option></select><div class="hint">Type is fixed once ideas hold values for the field.</div></div>
+            <div class="field"><label for="p-fopt-fd-own">Options</label><textarea id="p-fopt-fd-own" rows="3" placeholder="One per line"></textarea><div class="hint">Dropdown and multi-select only.</div></div>
+            <div class="field"><label class="chk" for="p-freq-fd-own"><input type="checkbox" id="p-freq-fd-own"> Required on every idea that shows it</label></div>
+            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Add field</button>
+          </form>
+        </div>
+      </div>
+      <div class="note"><b>Reordering uses buttons, not a drag handle.</b> Unlike statuses and idea types, this list reorders with paired arrows in the action cell &mdash; a difference inherited from <code>FieldDefinitionsAdmin.razor</code>, kept here because the comps are a port of what the product does, not a proposal to change it. Worth resolving one way or the other before the conversion builds it.</div>
+      <div class="note"><b>A field&rsquo;s type is fixed once it holds values.</b> Changing Number to Text would have to reinterpret every value already stored against it, so the type control locks as soon as any idea uses the field. Archiving is the way out: the field leaves the picker but stays readable on ideas that already carry it.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-fields" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-fields">All fields</a> / <b>Acme Robotics</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
+      <span class="tag" data-roles="SiteAdmin">Read-only</span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Fields</h1>
+          <div class="sub">Acme Robotics &middot; the custom fields this organization&rsquo;s idea types draw from.</div></div></div>
+        <div class="note" style="border-left-color:var(--secondary)"><b>Viewing Acme Robotics.</b> You reached these fields from the cross-organization list, so everything below belongs to Acme Robotics and to no other organization. <a href="#" data-go="s-fields">Back to all fields</a>.</div>
+        <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Field</th><th style="width:116px">Type</th><th style="width:88px">Required</th><th style="width:230px">Options</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><b>Budget</b></td><td>Number</td><td>Yes</td><td class="faint">&mdash;</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-fd-org">Edit</button></td></tr>
+              <tr><td><b>ROI Estimate</b></td><td>Number</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-fd-org">Edit</button></td></tr>
+              <tr><td><b>Impacted Team</b></td><td>Dropdown</td><td>Yes</td><td class="faint">Engineering, Ops, Support, Finance</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-fd-org">Edit</button></td></tr>
+              <tr><td><b>Target Release</b></td><td>Date</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-fd-org">Edit</button></td></tr>
+              <tr><td><b>Risk Level</b></td><td>Dropdown</td><td><span class="faint">No</span></td><td class="faint">Low, Medium, High</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-fd-org">Edit</button></td></tr>
+              <tr><td><b>Compliance Flag</b></td><td>Boolean</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-fd-org">Edit</button></td></tr>
+              <tr><td><b>Customer Ref</b></td><td>Text</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-fd-org">Edit</button></td></tr>
+              <tr><td><b>Reference URL</b></td><td>URL</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-fd-org">Edit</button></td></tr>
+              <tr><td><b>Legacy Cost Code</b> <span class="tag">Archived</span></td><td>Text</td><td><span class="faint">No</span></td><td class="faint">&mdash;</td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-fd-org">Edit</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span><span class="denied" id="p-why-edit-fd-org">Read-only. A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</span></span></div>
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Field</th><th style="width:116px">Type</th><th style="width:88px">Required</th><th style="width:230px">Options</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+            </tbody>
+          </table>
+          <div data-when="empty" style="padding:var(--s-lg)"><div class="empty">
+              <h3>This organization has no custom fields</h3>
+              <p>Its ideas carry only the built-in fields. An administrator of this organization can add more.</p>
+          </div></div>
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load fields.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4;margin:0 0 var(--s-md)">Why is this read-only?</h3>
+          <p class="sub">A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</p>
+          <a class="btn" href="comp-p-auth.html?screen=s-viewas&role=SiteAdmin">Open View As</a>
+        </div>
+      </div>
+        <div class="note"><b>The same screen, minus the ability to change it.</b> Generated from the same definition as an Org Admin&rsquo;s <code>/settings/fields</code> with mutation switched off, so the columns match and the controls do not.</div>
+      </div>
+      <div data-roles="OrgAdmin User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Site Admins only</h3>
+          <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's fields live under <b>Settings</b>.</p>
           <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
         </div>
       </div>

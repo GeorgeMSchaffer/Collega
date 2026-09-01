@@ -152,3 +152,98 @@
     </div>
   </div>
 </div></section>
+
+<section class="screen" id="s-idea-types" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Idea types</b></span><span class="spacer"></span>
+      <button class="btn pri" data-roles="OrgAdmin">New idea type</button></div>
+    <div class="work">
+      <div class="pgh" data-roles="SiteAdmin"><div class="grow"><h1>All idea types</h1>
+        <div class="sub">Idea types across every organization. Open an organization to change its types.</div></div></div>
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Idea types</h1>
+        <div class="sub">Every idea is exactly one type, chosen at creation. A type carries its own selection of the organization&rsquo;s fields, so an idea shows only the fields that matter to it.</div></div></div>
+
+      <div class="filters" data-when="normal" data-roles="SiteAdmin OrgAdmin">
+        <div class="fw wide"><label for="p-it-q">Search</label><input type="search" id="p-it-q" placeholder="Search idea types&hellip;"></div>
+      </div>
+
+      @@GUARD:ADMIN:idea types@@
+
+      @@ROLLUP:it@@
+
+      <div data-roles="OrgAdmin">
+      @@EDITOR:it:own:rw@@
+      <div class="note"><b>Fields are chosen per type, not per idea.</b> The organization defines a catalogue of fields once; each type picks the ordered subset its ideas show, and marks which of them are required. That is why this screen and <a href="#" data-go="s-fields">Fields</a> are separate: one owns what exists, the other owns what each type uses.</div>
+      <div class="note"><b>Archiving is a soft delete.</b> Ideas already carrying an archived type keep their badge and still resolve their fields &mdash; the type simply leaves the create picker. The last remaining active type cannot be archived, because every idea must have one.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-idea-types" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-idea-types">All idea types</a> / <b>Acme Robotics</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
+      <span class="tag" data-roles="SiteAdmin">Read-only</span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Idea types</h1>
+          <div class="sub">Acme Robotics &middot; the types this organization&rsquo;s ideas are created as.</div></div></div>
+        @@SCOPEBAR:idea types:s-idea-types@@
+        @@EDITOR:it:org:ro@@
+        <div class="note"><b>The same screen, minus the ability to change it.</b> <code>IdeaTypesAdmin.razor</code> computes <code>CanMutate</code> as <code>!isSiteAdmin</code>, so this table is generated from the same definition as an Org Admin&rsquo;s <code>/settings/idea-types</code>, rendered with mutation switched off.</div>
+      </div>
+      @@GUARD:SITE:idea types@@
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-fields" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Fields</b></span><span class="spacer"></span>
+      <button class="btn pri" data-roles="OrgAdmin">Add field</button></div>
+    <div class="work">
+      <div class="pgh" data-roles="SiteAdmin"><div class="grow"><h1>All fields</h1>
+        <div class="sub">User-defined fields across every organization. Open an organization to change its fields.</div></div></div>
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Fields</h1>
+        <div class="sub">The organization&rsquo;s catalogue of custom fields. Defining one here makes it available to idea types; nothing appears on an idea until a type picks it up.</div></div></div>
+
+      <div class="filters" data-when="normal" data-roles="SiteAdmin OrgAdmin">
+        <div class="fw wide"><label for="p-fd-q">Search</label><input type="search" id="p-fd-q" placeholder="Search fields&hellip;"></div>
+        <div class="fw"><label class="chk" for="p-fd-arch"><input type="checkbox" id="p-fd-arch" checked> Show archived</label></div>
+      </div>
+
+      @@GUARD:ADMIN:fields@@
+
+      @@ROLLUP:fd@@
+
+      <div data-roles="OrgAdmin">
+      @@EDITOR:fd:own:rw@@
+      <div class="note"><b>Reordering uses buttons, not a drag handle.</b> Unlike statuses and idea types, this list reorders with paired arrows in the action cell &mdash; a difference inherited from <code>FieldDefinitionsAdmin.razor</code>, kept here because the comps are a port of what the product does, not a proposal to change it. Worth resolving one way or the other before the conversion builds it.</div>
+      <div class="note"><b>A field&rsquo;s type is fixed once it holds values.</b> Changing Number to Text would have to reinterpret every value already stored against it, so the type control locks as soon as any idea uses the field. Archiving is the way out: the field leaves the picker but stays readable on ideas that already carry it.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-fields" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-fields">All fields</a> / <b>Acme Robotics</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
+      <span class="tag" data-roles="SiteAdmin">Read-only</span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Fields</h1>
+          <div class="sub">Acme Robotics &middot; the custom fields this organization&rsquo;s idea types draw from.</div></div></div>
+        @@SCOPEBAR:fields:s-fields@@
+        @@EDITOR:fd:org:ro@@
+        <div class="note"><b>The same screen, minus the ability to change it.</b> Generated from the same definition as an Org Admin&rsquo;s <code>/settings/fields</code> with mutation switched off, so the columns match and the controls do not.</div>
+      </div>
+      @@GUARD:SITE:fields@@
+    </div>
+  </div>
+</div></section>
