@@ -95,7 +95,17 @@
       "Bash(git grep *)",
       "Bash(git ls-tree *)",
       "Bash(git --no-pager log *)",
-      "Bash(git --no-pager diff *)"
+      "Bash(git --no-pager diff *)",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__read_page",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__claude-in-chrome__find",
+      "mcp__claude-in-chrome__read_console_messages"
     ],
     "additionalDirectories": [
       "/tmp"
