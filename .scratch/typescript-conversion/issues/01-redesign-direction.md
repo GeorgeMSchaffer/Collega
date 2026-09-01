@@ -1,7 +1,7 @@
 # 01 — Which redesign direction?
 
 Type: prototype
-Status: claimed
+Status: in progress — B and D answered 2026-09-01, A/C open
 Blocked by: —
 
 ## Question A — What is the primary job? *(answer this first)*
@@ -70,3 +70,81 @@ Verification status: K and N were driven in a real browser and had bugs fixed. L
 ## Consequence for the estimate
 
 Question C is the one that moves the number. A visual direction is re-expression work already inside the baseline. Every checked feature concept is **net-new scope on top of a rewrite**, and lands in `12` as additional slices rather than as part of the conversion.
+
+---
+
+## Resolution in progress (2026-09-01)
+
+### Question B — answered off-list
+
+**Neither K, L, M nor N. Carry Comp C "Fluent Editorial" forward into the rewrite.**
+
+The user reached for **Comp H "Loop"** as "the best". Comp H is not a direction — it is a *feature* comp (mentions → notification inbox → activity feed) from the 2026-08-16 round, deliberately drawn in the **locked Comp C language** so only the feature was under review. Asked which half they meant, they answered **both**.
+
+So C was unlocked for this effort and the user has re-chosen it on merit. That is a legitimate outcome of unlocking, not a failure to decide.
+
+Consequence: **Comp M is the closest listed comp** — it is explicitly "Comp C's typographic language carried forward and freed from Fluent's component constraints." Whether the rewrite reproduces C's look *through Fluent UI React* or *rebuilds it in Tailwind à la M* is now the live fork, and it is Question D rather than Question B.
+
+K, L and N are **not selected**. N's visual direction is out; its six feature concepts remain separately live under Question C.
+
+### Question C — one addition, from outside the list
+
+- [x] **Comp H's "Loop"** — @mentions, a real notification inbox, and the activity feed Home currently advertises as "coming soon". *Net-new scope on top of the rewrite, same as any N concept. Comp H's own argument is that these are one feature, not three: a notification with nothing to notify about is empty, and a feed nobody is addressed by is noise.*
+
+N's six concepts (Triage Mode, decision records, commitment strip, momentum, duplicate clustering, vote budget) are **still unanswered**.
+
+**Reframed 2026-09-01.** The first attempt offered bundled tiers ("the cheap three", "records and strip only", "none",
+"all six"). The user asked to see the outcomes instead, and on reflection the tier cut was invented for the convenience of
+asking — the concepts do not group that way, and bundling them hides that three are cheap volume while three carry risk
+that no slice count captures. Replaced with `SPEC/mockups/comp-01c-scope.html`, where each concept toggles independently
+and reports what it adds in entities, endpoints, surfaces and rough agent-slices.
+
+What the comp establishes, and what should survive into `12` regardless of which concepts are chosen:
+
+| Concept | Ent. | Endp. | Surf. | Slices | Unpriced risk |
+|---|---|---|---|---|---|
+| Loop (Comp H, already in scope) | 2 | 5 | 2 | 4 | — |
+| Decision records | 1 | 2 | 1 | 2 | — |
+| Commitment strip | 1 | 3 | 2 | 2 | — |
+| Triage Mode | 0 | 1 | 1 | 2 | — |
+| Momentum over totals | 1 | 1 | 0 | 3 | Needs a gaming-resistant velocity algorithm |
+| Duplicate clustering | 2 | 4 | 2 | 6 | Similarity detection is the ML problem SPEC defers |
+| Vote budget | 2 | 4 | 2 | 5 | Reset/carryover/exemption policy is undecided |
+
+Loop alone is 4 slices; all seven is 24. The three risk rows are the ones whose numbers should not be trusted — each needs
+a decision or an algorithm that does not exist yet.
+
+#### Round 1 answered (2026-09-01) — the three low-risk concepts are all IN
+
+- [x] **Decision records** — rationale required on **Decline only**, not on Plan. Permanent, visible to everyone, and it survives a later reopen.
+- [x] **Commitment strip** — roadmap band above every board, plus the admin surface that sets it.
+- [x] **Triage Mode** — no new entity; a filtered, ordered queue over actions that already exist.
+
+Running total with Comp H's Loop: **4 entities · 11 endpoints · 6 surfaces · ~10 agent-slices**, none of it carrying unpriced risk.
+
+Round 2 (momentum, duplicate clustering, vote budget — the three that do carry risk) asked separately.
+
+One finding from building it, worth carrying: **momentum is not free even in the schema.** The current design stores vote
+totals, not vote events, so "velocity" has nothing to compute over until vote history exists. That is a `06` (schema
+reshape) consequence, not just a UI feature.
+
+### Question D — answered
+
+**Rebuild Comp C's language in Tailwind, à la Comp M.** Not Fluent UI React.
+
+Verified before deciding, rather than assumed: Fluent UI React v9 (`@fluentui/react-components`) *does* support Next.js App Router SSR, but it requires the `fluentui-next-appdir-directive` SWC plugin over the `@griffel`/`@fluentui` paths plus `RendererProvider` + `SSRProvider` + `FluentProvider` at the root. The practical consequence is that everything under the provider becomes a client component, so React Server Components buy almost nothing — which lands directly on ticket `09`'s Next↔Nest boundary.
+
+Three reasons this went to Tailwind:
+
+1. **The motive argues against it.** The whole stack is moving for hiring + ecosystem reasons (settled decision 2). Carrying the React sibling of Fluent UI Blazor forward keeps the client inside the ecosystem being left.
+2. **RSC stays available.** Feeds `09`.
+3. **Comp M already proved it.** M *is* C's typography freed from Fluent's component constraints, so the rebuild has a worked reference rather than being speculative.
+
+Cost accepted: the component layer is hand-built rather than inherited, and Fluent's built-in accessibility is no longer free — it becomes work the plan has to price. Headless primitives (Radix/shadcn-style) were offered as a middle path and not taken; nothing stops the build using them for behaviour, and the plan should treat that as an open implementation detail rather than a closed door.
+
+**Sprint 7.5 is relevant here.** That sprint exists because three systemic accessibility defects — Enter submitting no form, `DrawerShell` never taking focus, `FluentTextField` having no accessible name — were invisible to a fully green suite. Two of the three are Fluent-shadow-DOM artifacts that a Tailwind rebuild simply will not inherit; the third (focus management) becomes *our* problem rather than a library's. Either way it is a finding for `12`, not a wash.
+
+### Still open on this ticket
+
+- **Question A** (primary job) — never answered; the user answered with a comp instead. Lower stakes now that B is settled, but it still feeds `03` and `12`.
+- **Question C** — N's six concepts.

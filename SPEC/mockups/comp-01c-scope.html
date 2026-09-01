@@ -1,0 +1,602 @@
+<!--
+  COMP 01C — "Scope Desk": what each Question C concept actually costs
+  Ticket: .scratch/typescript-conversion/issues/01-redesign-direction.md — Question C
+  Built 2026-09-01
+
+  THIS IS NOT A VISUAL DIRECTION. That question is closed:
+    Question B — carry Comp C "Fluent Editorial" forward.
+    Question D — rebuild it in Tailwind, a la Comp M. Not Fluent UI React.
+  So this comp is drawn in that settled language and does not argue about it.
+
+  What it IS: an instrument for answering Question C — which net-new feature concepts
+  get carried into the conversion plan. The original framing offered bundled tiers.
+  That cut was invented for the convenience of asking, not because the concepts group
+  that way, so this comp drops it: every concept toggles independently and the whole
+  app re-renders around it.
+
+  Seven toggles. Comp H's "Loop" is already in scope (chosen 2026-09-01) and starts on.
+  The other six come from Comp N and are undecided.
+
+  The scope readout is the point. A visual direction is re-expression work already
+  inside the ~61,000-line baseline. Every concept here is NET-NEW work on top of a
+  rewrite, and lands in ticket 12 as additional slices. So each toggle reports what it
+  adds in entities, endpoints and surfaces, and flags the three that carry unpriced
+  risk rather than just volume.
+
+  Known Tailwind trap, from the K/L/M/N round: an element with both the [hidden]
+  attribute and a flex/grid class renders visible. [hidden]{display:none!important}
+  is in the style block below and belongs in the real Next.js base styles on day one.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Collega — Question C scope comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Geist', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+          display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
+        },
+        colors: {
+          paper: { DEFAULT: '#FBFAF7', alt: '#F4F1EA', deep: '#EDE8DE' },
+          ink: { 900: '#1C1917', 700: '#44403C', 500: '#78716C' },
+          accent: { 50: '#FDF3EE', 600: '#B1451D', 700: '#9A3412', 800: '#7C2D12' },
+          teal: { 50: '#ECFDF9', 600: '#12857A', 700: '#0F766E', 800: '#0B5C56' },
+        },
+        maxWidth: { measure: '68ch' },
+      }
+    }
+  }
+</script>
+<style>
+  html { background: #FBFAF7; }
+  body { font-feature-settings: "kern" 1; }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid #9A3412; outline-offset: 2px; border-radius: 2px; }
+  .font-display { font-family: 'Fraunces', ui-serif, Georgia, serif; font-optical-sizing: auto; }
+  .sr-only-focusable:not(:focus) { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+  ::selection { background: #EDE8DE; }
+  .tog[aria-pressed="true"] { background:#FBFAF7; color:#1C1917; }
+  .tog[aria-pressed="true"] .dot { background:#0F766E; }
+  .tog[aria-pressed="false"] .dot { background:#78716C; }
+  .navtab[aria-current="page"] { border-color:#9A3412; color:#1C1917; }
+  .mention { background:#FDF3EE; color:#7C2D12; border-radius:3px; padding:0 4px; font-weight:600; }
+  .risk { background:#FEE2E2; color:#7F1D1D; }
+</style>
+</head>
+<body class="font-sans text-ink-900 bg-paper min-h-screen antialiased">
+
+<a href="#appShell" class="sr-only-focusable fixed top-2 left-2 z-50 bg-ink-900 text-paper text-sm px-3 py-2 rounded">Skip to content</a>
+
+<!-- ═══════════ SCOPE BAR — not part of the product ═══════════ -->
+<div class="bg-ink-900 text-paper sticky top-0 z-40">
+  <div class="px-4 md:px-6 py-3">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-3">
+      <span class="text-xs uppercase tracking-widest text-paper/50">Ticket 01 · Question C</span>
+      <span class="text-sm text-paper/90">Which net-new concepts go into the conversion plan?</span>
+      <span class="ml-auto text-xs text-paper/50">Toggle any combination — the app below re-renders.</span>
+    </div>
+
+    <div class="flex flex-wrap gap-2 mb-3" id="togRow"></div>
+
+    <div class="flex flex-wrap items-center gap-2 text-xs">
+      <span class="text-paper/50 uppercase tracking-wide mr-1">Presets</span>
+      <button data-preset="none"   class="px-2.5 py-1 rounded border border-paper/25 hover:bg-paper/10">Loop only</button>
+      <button data-preset="cheap2" class="px-2.5 py-1 rounded border border-paper/25 hover:bg-paper/10">+ Records &amp; strip</button>
+      <button data-preset="cheap3" class="px-2.5 py-1 rounded border border-paper/25 hover:bg-paper/10">+ Triage</button>
+      <button data-preset="all"    class="px-2.5 py-1 rounded border border-paper/25 hover:bg-paper/10">Everything</button>
+      <span class="ml-auto flex items-center gap-3">
+        <span class="text-paper/50">Screens</span>
+        <span class="flex flex-wrap gap-1" id="screenNav"></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="border-t border-paper/15 bg-black/25 px-4 md:px-6 py-2.5">
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs">
+      <span class="uppercase tracking-widest text-paper/50">Net-new on top of the rewrite</span>
+      <span><strong id="mEnt" class="text-base font-semibold">0</strong> <span class="text-paper/60">entities</span></span>
+      <span><strong id="mEnd" class="text-base font-semibold">0</strong> <span class="text-paper/60">endpoints</span></span>
+      <span><strong id="mSurf" class="text-base font-semibold">0</strong> <span class="text-paper/60">surfaces</span></span>
+      <span><strong id="mSlice" class="text-base font-semibold">0</strong> <span class="text-paper/60">agent-slices (rough)</span></span>
+      <span id="mRisk" class="px-2 py-0.5 rounded risk font-semibold" hidden></span>
+      <button id="detailToggle" class="ml-auto text-paper/70 hover:text-paper underline underline-offset-2">Show breakdown</button>
+    </div>
+    <div id="breakdown" hidden class="mt-3 overflow-x-auto">
+      <table class="w-full text-xs border-collapse min-w-[760px]">
+        <thead>
+          <tr class="text-paper/50 text-left uppercase tracking-wide">
+            <th class="py-1.5 pr-4 font-medium">Concept</th>
+            <th class="py-1.5 pr-4 font-medium">Adds</th>
+            <th class="py-1.5 pr-3 font-medium text-right">Ent.</th>
+            <th class="py-1.5 pr-3 font-medium text-right">Endp.</th>
+            <th class="py-1.5 pr-3 font-medium text-right">Surf.</th>
+            <th class="py-1.5 pr-4 font-medium text-right">Slices</th>
+            <th class="py-1.5 font-medium">Unpriced risk</th>
+          </tr>
+        </thead>
+        <tbody id="breakdownBody" class="align-top"></tbody>
+      </table>
+      <p class="text-paper/45 mt-2 leading-relaxed max-w-3xl">
+        Slice counts are order-of-magnitude, consistent with ticket 12's own confidence level — they show relative
+        weight and are not for quoting. "Unpriced risk" means the concept needs a decision or an algorithm that does
+        not exist yet, so its number is the least trustworthy thing on the row.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="appShell">
+  <header class="border-b border-ink-900/10 bg-paper">
+    <div class="max-w-[1400px] mx-auto px-6 md:px-8 py-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <div class="flex items-baseline gap-2 shrink-0">
+        <span class="text-sm font-medium">Northwind Labs</span>
+        <span class="text-ink-500 text-sm">/</span>
+        <label for="boardSwitcher" class="sr-only-focusable">Switch board</label>
+        <select id="boardSwitcher" class="bg-transparent text-sm text-ink-700 pr-5 py-0.5 border-none outline-none cursor-pointer">
+          <option>Product Ideas</option><option>Platform Health</option><option>Customer Requests</option>
+        </select>
+      </div>
+
+      <nav aria-label="Primary" class="flex items-center gap-5 text-sm" id="primaryNav"></nav>
+
+      <div class="ml-auto flex items-center gap-4">
+        <div id="votePill" hidden class="flex items-center gap-2 text-xs border border-ink-900/15 rounded-full px-3 py-1">
+          <span class="text-ink-700">Votes</span>
+          <strong id="voteCount">3 / 10</strong>
+          <span class="text-ink-500">left this quarter</span>
+        </div>
+        <button id="bellBtn" hidden class="relative text-ink-700 hover:text-ink-900" aria-label="Notifications, 3 unread">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a4.6 4.6 0 0 0-4.6 4.6v2.7L4 12.2a.9.9 0 0 0 .8 1.3h10.4a.9.9 0 0 0 .8-1.3l-1.4-2.9V6.6A4.6 4.6 0 0 0 10 2Zm-1.9 12.6a1.9 1.9 0 1 0 3.8 0Z"/></svg>
+          <span class="absolute -top-1.5 -right-1.5 bg-accent-700 text-paper text-[10px] leading-none rounded-full px-1.5 py-0.5 font-semibold">3</span>
+        </button>
+        <span class="text-sm text-ink-700">Ada Okafor</span>
+      </div>
+    </div>
+
+    <div id="commitStrip" hidden class="border-t border-ink-900/10 bg-paper-alt">
+      <div class="max-w-[1400px] mx-auto px-6 md:px-8 py-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+        <span class="text-[11px] uppercase tracking-widest text-ink-500 shrink-0">Committed · Q4 2026</span>
+        <div class="flex gap-2 flex-wrap" id="commitItems"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1400px] mx-auto px-6 md:px-8 py-8">
+
+    <section id="view-board">
+      <div class="flex flex-wrap items-baseline gap-4 mb-6">
+        <h1 class="font-display text-3xl">Product Ideas</h1>
+        <button id="enterTriage" hidden class="text-sm font-medium text-accent-700 hover:text-accent-800 border border-accent-700/40 rounded px-3 py-1">
+          Enter Triage Mode <span id="triageCount" class="text-ink-500"></span>
+        </button>
+      </div>
+      <div class="grid gap-px bg-ink-900/10 md:grid-cols-3 lg:grid-cols-6 border border-ink-900/10" id="boardCols"></div>
+    </section>
+
+    <section id="view-list" hidden>
+      <div class="flex flex-wrap items-baseline gap-4 mb-6">
+        <h1 class="font-display text-3xl">Ideas</h1>
+        <div class="ml-auto flex items-center gap-2 text-sm">
+          <label for="sortSel" class="text-ink-700">Sort by</label>
+          <select id="sortSel" class="bg-transparent border-b border-ink-900/25 py-1 pr-5 text-sm outline-none"></select>
+        </div>
+      </div>
+      <p id="momentumNote" hidden class="text-xs border-l-2 border-accent-700 bg-paper-alt px-3 py-2 mb-4 max-w-measure leading-relaxed">
+        Sorted by <strong>momentum</strong> — recent upvote velocity, not lifetime totals. Two newer ideas now outrank
+        older ones with bigger totals. <span class="text-ink-700">This comp fakes the algorithm; a real one has to resist gaming.</span>
+      </p>
+      <table class="w-full text-sm border-collapse">
+        <thead><tr class="text-left text-xs uppercase tracking-wide text-ink-500 border-b border-ink-900/15">
+          <th class="py-2 pr-4 font-medium">Idea</th>
+          <th class="py-2 pr-4 font-medium">Status</th>
+          <th class="py-2 pr-4 font-medium text-right">Votes</th>
+          <th class="py-2 pr-4 font-medium" id="momCol" hidden>Momentum</th>
+        </tr></thead>
+        <tbody id="listBody"></tbody>
+      </table>
+    </section>
+
+    <section id="view-detail" hidden>
+      <button data-nav="board" class="text-sm text-ink-700 hover:text-ink-900 mb-6">&larr; Back to board</button>
+      <div class="grid lg:grid-cols-[1fr_260px] gap-10">
+        <article class="max-w-measure">
+          <div id="dupeBanner" hidden class="border-l-2 border-accent-700 bg-paper-alt px-4 py-3 mb-6 text-sm">
+            <p class="font-semibold mb-1">Likely duplicate · 88% match</p>
+            <p class="text-ink-700 mb-2">“Faster board loading with 500+ ideas” looks like the same request.</p>
+            <button id="mergeBtn" class="text-xs font-semibold uppercase tracking-wide text-accent-700 hover:text-accent-800">Preview merge</button>
+          </div>
+
+          <p class="text-xs uppercase tracking-widest text-ink-500 mb-2">Improvement · Critical</p>
+          <h1 class="font-display text-4xl mb-5">Faster board load for 500+ ideas</h1>
+          <p class="text-ink-700 leading-relaxed mb-8">
+            Boards past roughly 500 ideas take several seconds to paint and the swimlanes jump as cards settle.
+            Worst on the Customer Requests board, which is the one customers actually see.
+          </p>
+
+          <div id="decisionRecord" hidden class="border border-ink-900/15 bg-paper-alt px-5 py-4 mb-8">
+            <p class="text-[11px] uppercase tracking-widest text-ink-500 mb-2">Decision record</p>
+            <p class="text-sm mb-2 leading-relaxed">Declined in April — judged to overlap with the platform performance work
+              committed for Q2. Reopened 12 Aug after that work shipped and the problem persisted.</p>
+            <p class="text-xs text-ink-500">Ada Okafor · Org Admin · 14 Apr 2026 · the record stays on the idea permanently,
+              including after it is reopened — which is the point</p>
+          </div>
+
+          <h2 class="text-xs uppercase tracking-widest text-ink-500 mb-3">Comments</h2>
+          <div class="space-y-4 mb-8" id="comments"></div>
+        </article>
+
+        <aside class="text-sm space-y-5">
+          <div><p class="text-[11px] uppercase tracking-widest text-ink-500 mb-1">Status</p>
+            <p class="flex items-center gap-2"><span class="w-2 h-2 rounded-full ring-1 ring-ink-900/20" style="background:#64748B"></span> New</p></div>
+          <div><p class="text-[11px] uppercase tracking-widest text-ink-500 mb-1">Upvotes</p>
+            <p><strong>42</strong> <span id="budgetNote" hidden class="text-ink-500 text-xs">· costs 1 of your 10</span></p></div>
+          <div id="momentumBox" hidden><p class="text-[11px] uppercase tracking-widest text-ink-500 mb-1">Momentum</p>
+            <div id="dSpark"></div><p class="text-xs text-ink-500 mt-1">+12 in the last week</p></div>
+          <div><p class="text-[11px] uppercase tracking-widest text-ink-500 mb-1">Actions</p>
+            <button id="declineBtn" class="text-accent-700 hover:text-accent-800 font-medium">Decline this idea</button></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="view-triage" hidden>
+      <div class="flex flex-wrap items-baseline gap-4 mb-2">
+        <h1 class="font-display text-3xl">Triage Mode</h1>
+        <p class="text-sm text-ink-700"><strong>6</strong> left in the queue</p>
+      </div>
+      <p class="text-sm text-ink-700 mb-8 max-w-measure leading-relaxed">One idea at a time, ordered by
+        <span id="triageOrder">most recent</span>. The point is to make “200 ungroomed ideas” a queue you can finish
+        rather than a wall you avoid.</p>
+      <div class="border border-ink-900/15 bg-white px-8 py-8 max-w-measure">
+        <p class="text-xs uppercase tracking-widest text-ink-500 mb-2">Bug · High</p>
+        <h2 class="font-display text-3xl mb-4">Mobile board scrolling is janky on iOS</h2>
+        <p class="text-ink-700 leading-relaxed mb-6">Scrolling a long swimlane on iOS Safari stutters badly and
+          occasionally jumps back to the top. Reported by three customers this month.</p>
+        <div id="tDupe" hidden class="text-xs border-l-2 border-accent-700 bg-paper-alt px-3 py-2 mb-6">
+          Clustered with “iOS board view janky when scrolling fast” · 91% match
+        </div>
+        <div class="flex flex-wrap gap-2 pt-5 border-t border-ink-900/10">
+          <button class="bg-ink-900 text-paper text-sm px-4 py-2 hover:bg-accent-700 transition-colors">Plan it</button>
+          <button id="triageDecline" class="border border-ink-900/25 text-sm px-4 py-2 hover:border-accent-700">Decline</button>
+          <button class="border border-ink-900/25 text-sm px-4 py-2 hover:border-accent-700">Skip</button>
+          <span id="triageRecordHint" hidden class="text-xs text-ink-500 self-center ml-2">Decline will ask for a rationale</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-inbox" hidden>
+      <h1 class="font-display text-3xl mb-2">Inbox</h1>
+      <p class="text-sm text-ink-700 mb-8 max-w-measure leading-relaxed">Everything addressed to you. Comp H's argument:
+        mentions, notifications and the activity feed are one feature, not three — a notification with nothing to notify
+        about is empty, and a feed nobody is addressed by is noise.</p>
+      <div class="grid lg:grid-cols-2 gap-10">
+        <div>
+          <h2 class="text-xs uppercase tracking-widest text-ink-500 mb-3">Waiting on you</h2>
+          <ul class="space-y-4" id="inboxList"></ul>
+        </div>
+        <div>
+          <h2 class="text-xs uppercase tracking-widest text-ink-500 mb-3">Activity</h2>
+          <ul class="space-y-3 text-sm text-ink-700" id="activityList"></ul>
+          <p class="text-xs text-ink-500 mt-4">Replaces the “Activity feed coming soon” placeholder Home advertises today.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="declineModal" hidden class="fixed inset-0 z-50 bg-ink-900/40 flex items-center justify-center px-4">
+  <div class="bg-paper max-w-lg w-full px-7 py-6" role="dialog" aria-modal="true" aria-labelledby="declineTitle">
+    <h2 id="declineTitle" class="font-display text-2xl mb-3">Decline this idea</h2>
+    <div id="declineWithRecord">
+      <label for="declineWhy" class="block text-xs uppercase tracking-wide text-ink-700 mb-1">Why? <span class="text-accent-700">Required</span></label>
+      <textarea id="declineWhy" rows="4" class="w-full border border-ink-900/25 px-3 py-2 text-sm outline-none focus:border-accent-700" placeholder="This stays on the idea permanently and is visible to everyone."></textarea>
+      <p class="text-xs text-ink-500 mt-2 leading-relaxed">Required on <strong>Decline</strong> only — not on Plan.
+        “Why did we reject this” is worth the friction; “why did we build this obviously good thing” is not.</p>
+    </div>
+    <p id="declineNoRecord" class="text-sm text-ink-700 leading-relaxed">The idea moves to Declined. No rationale is
+      captured, and in six months nobody will remember why.</p>
+    <div class="flex gap-2 justify-end mt-6">
+      <button data-close class="text-sm px-4 py-2 border border-ink-900/25">Cancel</button>
+      <button data-close class="text-sm px-4 py-2 bg-ink-900 text-paper">Decline</button>
+    </div>
+  </div>
+</div>
+
+<div id="mergeModal" hidden class="fixed inset-0 z-50 bg-ink-900/40 flex items-center justify-center px-4">
+  <div class="bg-paper max-w-lg w-full px-7 py-6" role="dialog" aria-modal="true" aria-labelledby="mergeTitle">
+    <h2 id="mergeTitle" class="font-display text-2xl mb-4">Merge duplicate ideas</h2>
+    <div class="text-sm space-y-2 mb-4">
+      <p class="flex justify-between gap-4 border-b border-ink-900/10 pb-2"><span>Faster board load for 500+ ideas</span><span class="text-ink-500 whitespace-nowrap">42 votes · 9 comments</span></p>
+      <p class="flex justify-between gap-4 border-b border-ink-900/10 pb-2"><span>Faster board loading with 500+ ideas</span><span class="text-ink-500 whitespace-nowrap">7 votes · 2 comments</span></p>
+      <p class="flex justify-between gap-4 font-semibold pt-1"><span>After merge</span><span class="whitespace-nowrap">47 votes · 11 comments</span></p>
+    </div>
+    <p class="text-xs text-ink-500 mb-5 leading-relaxed">Combined votes are de-duplicated by user — two people voted for
+      both, so 49 becomes 47. Detecting the match in the first place is the part this comp fakes.</p>
+    <div class="flex gap-2 justify-end">
+      <button data-close class="text-sm px-4 py-2 border border-ink-900/25">Cancel</button>
+      <button data-close class="text-sm px-4 py-2 bg-ink-900 text-paper">Merge</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CONCEPTS = {
+  loop:     { label:'Loop — mentions, inbox, activity', src:'Comp H', locked:true,
+              adds:'Notification + ActivityEvent entities, mention parsing and resolution, an inbox surface, an activity feed, per-user read state',
+              ent:2, end:5, surf:2, slice:4, risk:null },
+  records:  { label:'Decision records', src:'Comp N',
+              adds:'DecisionRecord entity, required rationale on Decline, permanent display on the idea',
+              ent:1, end:2, surf:1, slice:2, risk:null },
+  strip:    { label:'Commitment strip', src:'Comp N',
+              adds:'Commitment entity, an admin surface to set it, a band above every board',
+              ent:1, end:3, surf:2, slice:2, risk:null },
+  triage:   { label:'Triage Mode', src:'Comp N',
+              adds:'No new entity — a filtered, ordered queue over actions that already exist, plus one full-page surface',
+              ent:0, end:1, surf:1, slice:2, risk:null },
+  momentum: { label:'Momentum over totals', src:'Comp N',
+              adds:'Vote-event history (today the schema stores totals, not time), a velocity computation, a sortable column and sparkline',
+              ent:1, end:1, surf:0, slice:3, risk:'Needs a gaming-resistant velocity algorithm. The comp fakes it, and so does this estimate.' },
+  dupes:    { label:'Duplicate clustering', src:'Comp N',
+              adds:'Similarity detection, cluster storage, a merge flow that reconciles votes and comments',
+              ent:2, end:4, surf:2, slice:6, risk:'Real similarity detection is the ML problem SPEC already defers. Demo-ware until that is solved.' },
+  budget:   { label:'Vote budget', src:'Comp N',
+              adds:'Per-user quarterly allocation, spend tracking, a reclaim flow — and the policy behind all three',
+              ent:2, end:4, surf:2, slice:5, risk:'Changes user behaviour. Reset timing, carryover and admin exemptions are undecided policy, not code.' },
+};
+
+const PRESETS = {
+  none:   ['loop'],
+  cheap2: ['loop','records','strip'],
+  cheap3: ['loop','records','strip','triage'],
+  all:    Object.keys(CONCEPTS),
+};
+
+const state = { on: new Set(PRESETS.none), screen: 'board' };
+
+const STATUSES = [
+  {k:'new',        n:'New',         c:'#64748B'},
+  {k:'triage',     n:'Triage',      c:'#F59E0B'},
+  {k:'planned',    n:'Planned',     c:'#3B82F6'},
+  {k:'inprogress', n:'In Progress', c:'#8B5CF6'},
+  {k:'shipped',    n:'Shipped',     c:'#10B981'},
+  {k:'declined',   n:'Declined',    c:'#EF4444'},
+];
+
+const IDEAS = [
+  {id:'i1',  t:'Faster board load for 500+ ideas',         s:'new',        v:42, w:[2,3,5,8,12,12], dupe:true},
+  {id:'i2',  t:'Mobile board scrolling is janky on iOS',   s:'triage',     v:27, w:[1,1,2,4,7,11],  dupe:true},
+  {id:'i3',  t:'iOS board view janky when scrolling fast', s:'new',        v:11, w:[1,2,2,3,3,4],   dupe:true},
+  {id:'i4',  t:'Keyboard navigation for the idea drawer',  s:'triage',     v:18, w:[1,2,3,4,7,9]},
+  {id:'i5',  t:'Bulk CSV import for ideas',                s:'planned',    v:15, w:[3,3,2,2,2,1]},
+  {id:'i6',  t:'Slack notifications for mentions',         s:'new',        v:22, w:[1,2,4,6,9,14]},
+  {id:'i7',  t:'SSO with Entra ID',                        s:'planned',    v:38, w:[4,5,6,7,8,9]},
+  {id:'i8',  t:'Duplicate idea detection',                 s:'new',        v:13, w:[1,1,2,2,3,3]},
+  {id:'i9',  t:'Board filters that persist per user',      s:'inprogress', v:19, w:[2,2,3,3,4,5]},
+  {id:'i10', t:'CSV export of a board',                    s:'shipped',    v:24, w:[1,1,1,1,0,0]},
+  {id:'i11', t:'Export board to PDF',                      s:'declined',   v:6,  w:[1,1,1,0,0,0]},
+  {id:'i12', t:'Faster board loading with 500+ ideas',     s:'new',        v:7,  w:[1,1,2,2,2,3],   dupe:true},
+];
+
+const COMMITMENTS = [
+  {t:'SSO with Entra ID',      m:'Shipping Q4'},
+  {t:'Bulk CSV import',        m:'Shipping Q4'},
+  {t:'Board performance work', m:'In progress'},
+];
+
+const INBOX = [
+  {why:'Ben Torres mentioned you', on:'Faster board load for 500+ ideas',
+   q:'Ada — does <span class="mention">@Ada Okafor</span> want this folded into the Q4 performance work?'},
+  {why:'Priya Raman replied to you', on:'Keyboard navigation for the idea drawer',
+   q:'Agreed. I can take the focus-trap part if you take the Enter-to-submit part.'},
+  {why:'Status changed', on:'SSO with Entra ID', q:'Moved to Planned by Ada Okafor.'},
+];
+
+const ACTIVITY = [
+  'Ben Torres commented on <strong class="font-medium text-ink-900">Faster board load for 500+ ideas</strong>',
+  'Lena Fischer upvoted <strong class="font-medium text-ink-900">Slack notifications for mentions</strong>',
+  'Ada Okafor moved <strong class="font-medium text-ink-900">SSO with Entra ID</strong> to Planned',
+  'Marcus Webb created <strong class="font-medium text-ink-900">iOS board view janky when scrolling fast</strong>',
+  'Priya Raman commented on <strong class="font-medium text-ink-900">Keyboard navigation for the idea drawer</strong>',
+];
+
+const $ = id => document.getElementById(id);
+const on = k => state.on.has(k);
+const momentum = i => i.w[5]*2 + i.w[4];
+
+function renderToggles(){
+  $('togRow').innerHTML = Object.entries(CONCEPTS).map(([k,c]) => `
+    <button class="tog flex items-center gap-2 text-xs border border-paper/25 rounded px-2.5 py-1.5 hover:bg-paper/10 transition-colors"
+            data-tog="${k}" aria-pressed="${on(k) ? 'true' : 'false'}">
+      <span class="dot w-1.5 h-1.5 rounded-full" aria-hidden="true"></span>
+      <span>${c.label}</span>
+      <span class="${on(k) ? 'text-ink-500' : 'text-paper/40'}">${c.locked ? 'in scope' : c.src}</span>
+    </button>`).join('');
+}
+
+function renderScreenNav(){
+  const screens = [['board','Board'],['list','Ideas'],['detail','Idea detail']]
+    .concat(on('triage') ? [['triage','Triage']] : [])
+    .concat(on('loop')   ? [['inbox','Inbox']]   : []);
+  $('screenNav').innerHTML = screens.map(([k,n]) =>
+    `<button data-nav="${k}" class="px-2 py-0.5 rounded ${state.screen===k ? 'bg-paper text-ink-900' : 'hover:bg-paper/10'}">${n}</button>`).join('');
+  $('primaryNav').innerHTML = screens.filter(([k]) => k !== 'detail').map(([k,n]) =>
+    `<button data-nav="${k}" class="navtab py-1 border-b-2 border-transparent text-ink-700 hover:text-ink-900"
+      ${state.screen===k ? 'aria-current="page"' : ''}>${n}</button>`).join('');
+}
+
+function renderMetrics(){
+  const act = [...state.on].map(k => CONCEPTS[k]);
+  const sum = f => act.reduce((a,c) => a + c[f], 0);
+  $('mEnt').textContent = sum('ent');
+  $('mEnd').textContent = sum('end');
+  $('mSurf').textContent = sum('surf');
+  $('mSlice').textContent = sum('slice');
+
+  const risky = act.filter(c => c.risk);
+  const rEl = $('mRisk');
+  rEl.hidden = risky.length === 0;
+  if (risky.length) rEl.textContent = risky.length + ' concept' + (risky.length > 1 ? 's' : '') + ' carrying unpriced risk';
+
+  $('breakdownBody').innerHTML = Object.entries(CONCEPTS).map(([k,c]) => `
+    <tr class="border-t border-paper/10 ${on(k) ? '' : 'opacity-30'}">
+      <td class="py-2 pr-4 font-medium">${c.label}</td>
+      <td class="py-2 pr-4 text-paper/70">${c.adds}</td>
+      <td class="py-2 pr-3 text-right tabular-nums">${c.ent}</td>
+      <td class="py-2 pr-3 text-right tabular-nums">${c.end}</td>
+      <td class="py-2 pr-3 text-right tabular-nums">${c.surf}</td>
+      <td class="py-2 pr-4 text-right tabular-nums font-semibold">${c.slice}</td>
+      <td class="py-2">${c.risk ? `<span class="risk px-1.5 py-0.5 rounded font-medium">${c.risk}</span>` : '<span class="text-paper/30">—</span>'}</td>
+    </tr>`).join('');
+}
+
+function spark(w, cls){
+  const max = Math.max(...w, 1);
+  const pts = w.map((n,x) => `${x*11},${22 - (n/max)*20}`).join(' ');
+  return `<svg width="60" height="24" viewBox="0 0 56 24" class="${cls || ''}" aria-hidden="true">
+    <polyline points="${pts}" fill="none" stroke="#9A3412" stroke-width="1.5"/></svg>`;
+}
+
+function renderBoard(){
+  $('boardCols').innerHTML = STATUSES.map(s => {
+    const items = IDEAS.filter(i => i.s === s.k);
+    return `<div class="bg-paper p-3 min-h-[220px]">
+      <p class="flex items-center gap-2 text-xs font-medium mb-3">
+        <span class="w-2 h-2 rounded-full ring-1 ring-ink-900/20" style="background:${s.c}"></span>${s.n}
+        <span class="text-ink-500">${items.length}</span></p>
+      ${items.map(i => `
+        <button data-idea="${i.id}" class="block text-left w-full mb-3 group">
+          <span class="block text-sm leading-snug group-hover:text-accent-700">${i.t}</span>
+          <span class="flex items-center gap-2 text-xs text-ink-500 mt-1">
+            <span>${i.v} votes</span>
+            ${on('momentum') ? spark(i.w, 'inline-block align-middle') : ''}
+            ${on('dupes') && i.dupe ? '<span class="text-accent-700">· duplicate?</span>' : ''}
+          </span>
+        </button>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderList(){
+  const byMomentum = on('momentum') && $('sortSel').value === 'momentum';
+  const sorted = [...IDEAS].sort((a,b) => byMomentum ? momentum(b) - momentum(a) : b.v - a.v);
+  $('listBody').innerHTML = sorted.map(i => {
+    const st = STATUSES.find(s => s.k === i.s);
+    return `<tr class="border-b border-ink-900/10">
+      <td class="py-2.5 pr-4"><button data-idea="${i.id}" class="text-left hover:text-accent-700">${i.t}</button>
+        ${on('dupes') && i.dupe ? '<span class="ml-2 text-xs text-accent-700">duplicate?</span>' : ''}</td>
+      <td class="py-2.5 pr-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full ring-1 ring-ink-900/20" style="background:${st.c}"></span>${st.n}</span></td>
+      <td class="py-2.5 pr-4 text-right tabular-nums">${i.v}</td>
+      ${on('momentum') ? `<td class="py-2.5 pr-4">${spark(i.w)}</td>` : ''}
+    </tr>`;
+  }).join('');
+}
+
+function renderDetail(){
+  $('dupeBanner').hidden     = !on('dupes');
+  $('momentumBox').hidden    = !on('momentum');
+  $('budgetNote').hidden     = !on('budget');
+  $('decisionRecord').hidden = !on('records');
+  $('dSpark').innerHTML      = spark(IDEAS[0].w);
+  $('comments').innerHTML = [
+    {a:'Ben Torres', t: on('loop')
+      ? 'Ada — does <span class="mention">@Ada Okafor</span> want this folded into the Q4 performance work?'
+      : 'Does this get folded into the Q4 performance work?'},
+    {a:'Priya Raman', t:'Worth splitting the swimlane render from the fetch. Two different problems.'},
+  ].map(c => `<div><p class="text-xs text-ink-500 mb-1">${c.a}</p><p class="text-sm leading-relaxed">${c.t}</p></div>`).join('');
+}
+
+function renderInbox(){
+  $('inboxList').innerHTML = INBOX.map(n => `
+    <li class="border-l-2 border-accent-700 pl-3">
+      <p class="text-xs uppercase tracking-wide text-accent-800 font-semibold mb-0.5">${n.why}</p>
+      <p class="text-sm font-medium mb-1">${n.on}</p>
+      <p class="text-sm text-ink-700 leading-relaxed">${n.q}</p></li>`).join('');
+  $('activityList').innerHTML = ACTIVITY.map(a => `<li>${a}</li>`).join('');
+}
+
+function renderSort(){
+  const sel = $('sortSel');
+  const prev = sel.value;
+  sel.innerHTML = ['<option value="votes">Total votes</option>']
+    .concat(on('momentum') ? ['<option value="momentum">Momentum</option>'] : []).join('');
+  if (on('momentum') && prev === 'momentum') sel.value = 'momentum';
+  $('momCol').hidden = !on('momentum');
+  $('momentumNote').hidden = !(on('momentum') && sel.value === 'momentum');
+}
+
+function render(){
+  if ((state.screen === 'triage' && !on('triage')) || (state.screen === 'inbox' && !on('loop'))) state.screen = 'board';
+
+  renderToggles();
+  renderScreenNav();
+  renderMetrics();
+
+  $('commitStrip').hidden = !on('strip');
+  $('commitItems').innerHTML = COMMITMENTS.map(c =>
+    `<span class="text-xs border border-ink-900/15 bg-paper rounded px-2.5 py-1">${c.t} <span class="text-ink-500">· ${c.m}</span></span>`).join('');
+
+  $('votePill').hidden          = !on('budget');
+  $('bellBtn').hidden           = !on('loop');
+  $('enterTriage').hidden       = !on('triage');
+  $('triageCount').textContent  = on('triage') ? '· 6 waiting' : '';
+  $('tDupe').hidden             = !on('dupes');
+  $('triageRecordHint').hidden  = !on('records');
+  $('triageOrder').textContent  = on('momentum') ? 'momentum' : 'most recent';
+
+  ['board','list','detail','triage','inbox'].forEach(s => { $('view-' + s).hidden = state.screen !== s; });
+
+  renderSort();
+  renderBoard();
+  renderList();
+  renderDetail();
+  renderInbox();
+}
+
+document.addEventListener('click', e => {
+  const tog = e.target.closest('[data-tog]');
+  if (tog){ const k = tog.dataset.tog; state.on.has(k) ? state.on.delete(k) : state.on.add(k); render(); return; }
+
+  const pre = e.target.closest('[data-preset]');
+  if (pre){ state.on = new Set(PRESETS[pre.dataset.preset]); render(); return; }
+
+  const nav = e.target.closest('[data-nav]');
+  if (nav){ state.screen = nav.dataset.nav; render(); window.scrollTo({top:0}); return; }
+
+  if (e.target.closest('[data-idea]')){ state.screen = 'detail'; render(); window.scrollTo({top:0}); return; }
+
+  if (e.target.closest('#declineBtn') || e.target.closest('#triageDecline')){
+    $('declineWithRecord').hidden = !on('records');
+    $('declineNoRecord').hidden   = on('records');
+    $('declineModal').hidden = false;
+    return;
+  }
+  if (e.target.closest('#mergeBtn')){ $('mergeModal').hidden = false; return; }
+  if (e.target.closest('[data-close]')){ $('declineModal').hidden = true; $('mergeModal').hidden = true; return; }
+
+  if (e.target.closest('#detailToggle')){
+    const b = $('breakdown');
+    b.hidden = !b.hidden;
+    $('detailToggle').textContent = b.hidden ? 'Show breakdown' : 'Hide breakdown';
+    return;
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ $('declineModal').hidden = true; $('mergeModal').hidden = true; }
+});
+
+$('sortSel').addEventListener('change', render);
+
+render();
+</script>
+</body>
+</html>

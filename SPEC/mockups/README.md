@@ -104,3 +104,25 @@ One critique from the same author worth keeping: requiring a rationale on **Plan
 3. **A Tailwind trap worth remembering in the real build:** an element carrying both the `hidden` attribute and a `flex`/`grid` display class renders visible, because the display class overrides the UA `[hidden]{display:none}` rule. It silently exposed drawers, modals and banners on load in two separate comps. A global `[hidden]{display:none!important}` fixes it.
 
 Comps K and N were verified by driving them in a real browser, which caught bugs static review missed. L and M were verified by inspection and JS parse only.
+
+### A scope comp for Question C (2026-09-01)
+
+`comp-01c-scope.html` — **Scope Desk**. Not a visual direction; that question closed on 2026-09-01 when the user chose to
+**carry Comp C "Fluent Editorial" forward** (Question B) and **rebuild it in Tailwind rather than adopt Fluent UI React**
+(Question D). K, L and N are not selected. This comp is drawn in that settled language.
+
+It exists to answer ticket `01`'s **Question C** — which net-new feature concepts go into the conversion plan. The first
+framing offered bundled tiers; that cut was invented for the convenience of asking rather than because the concepts group
+that way, so this comp drops it. All seven concepts toggle **independently** (Comp N's six, plus Comp H's "Loop", which is
+already in scope) and the whole app re-renders around each one: the commitment strip appears above the board, Triage Mode
+joins the nav, sparklines and a momentum sort appear on the list, duplicate markers appear on cards, the vote pill appears
+in the header, and the Decline flow gains — or loses — its required rationale.
+
+The scope readout is the real content. Each concept reports what it adds in **entities, endpoints, surfaces and rough
+agent-slices**, because a visual direction is re-expression work already inside the ~61,000-line baseline while every one
+of these is net-new work on top of a rewrite. Three concepts are flagged as carrying **unpriced risk** — momentum needs a
+gaming-resistant velocity algorithm, duplicate clustering needs the similarity detection SPEC already defers, and vote
+budget needs policy decided before it is implementable. Loop only totals 4 slices; everything totals 24.
+
+Browser-verified: driven in Chrome, all seven toggles, both Decline variants, the momentum re-sort, and the edge case where
+disabling Triage while viewing it falls back to the board rather than a blank page.
