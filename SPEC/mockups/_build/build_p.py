@@ -781,7 +781,7 @@ def board_form(sfx, is_new=True):
     no_remove = (f'<button class="btn ghost sm2" aria-disabled="true" '
                  f'aria-describedby="p-floor-{sfx}">Remove</button>')
     rows_on = "\n".join(
-        f'            <div class="lane"><span class="dot" style="background:var(--{tok})"></span>'
+        f'            <div class="swimrow"><span class="dot" style="background:var(--{tok})"></span>'
         f'<span class="grow">{n}</span>'
         f'<button class="iconbtn" aria-label="Move {n} up"'
         f'{first_off if i == 0 else ""}>&uarr;</button>'
@@ -790,7 +790,7 @@ def board_form(sfx, is_new=True):
         + (no_remove if floor else '<button class="btn ghost sm2">Remove</button>')
         + "</div>" for i, (n, tok) in enumerate(on))
     rows_off = "\n".join(
-        f'            <div class="lane"><span class="dot" style="background:var(--{tok})"></span>'
+        f'            <div class="swimrow"><span class="dot" style="background:var(--{tok})"></span>'
         f'<span class="grow">{n}</span><button class="btn ghost sm2">Add</button></div>'
         for n, tok in (LANES_OFF + LANES_ON[2:] if is_new else LANES_OFF))
     floor_note = (f'<span class="denied" id="p-floor-{sfx}">A board needs at least two '
@@ -806,14 +806,14 @@ def board_form(sfx, is_new=True):
 
           <h3 style="font-size:16px;font-weight:600;margin:var(--s-lg) 0 var(--s-xs)">Swimlanes</h3>
           <div class="hint" style="margin:0 0 var(--s-md)">Pick from this organization&rsquo;s statuses. The order on the left is the left-to-right order of the board&rsquo;s columns.</div>
-          <div class="lanes">
+          <div class="swimpick">
             <div>
-              <div class="lanehd">On this board &mdash; in order</div>
+              <div class="swimhd">On this board &mdash; in order</div>
 {rows_on}
               {floor_note}{ends}
             </div>
             <div>
-              <div class="lanehd">Available statuses</div>
+              <div class="swimhd">Available statuses</div>
 {rows_off}
             </div>
           </div>
