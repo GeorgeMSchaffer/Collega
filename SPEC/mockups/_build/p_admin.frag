@@ -14,8 +14,8 @@
           <b>Organizations</b><div class="sub" style="margin-top:4px">Create organizations and manage each organization&rsquo;s configuration.</div></a>
         <a class="card" href="#" data-go="s-users" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Users</b> <span class="tag">Cross-org</span><div class="sub" style="margin-top:4px">View users across every organization, then open one to manage it.</div></a>
-        <a class="card" href="#" data-go="s-boards" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
-          <b>Boards</b> <span class="tag">Cross-org</span><div class="sub" style="margin-top:4px">View boards across every organization, then open one to work with it.</div></a>
+        <a class="card" href="comp-p-focus-roadmap.html#s-boards" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
+          <b>Boards</b> <span class="tag">Workspace</span><div class="sub" style="margin-top:4px">View boards across every organization, then open one to work with it. This one leaves Settings &mdash; a Site Admin reads boards from the workspace list, not from board administration.</div></a>
         <a class="card" href="#" data-go="s-statuses" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Statuses</b> <span class="tag">Cross-org</span><div class="sub" style="margin-top:4px">View statuses across every organization, then open one to manage it.</div></a>
         <a class="card" href="#" data-go="s-idea-types" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
@@ -31,7 +31,7 @@
 
         <a class="card" href="#" data-go="s-users" data-roles="OrgAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Users</b><div class="sub" style="margin-top:4px">Create, edit, and import users in your organization.</div></a>
-        <a class="card" href="#" data-go="s-boards" data-roles="OrgAdmin" style="color:inherit;text-decoration:none">
+        <a class="card" href="#" data-go="s-boards-admin" data-roles="OrgAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Boards</b><div class="sub" style="margin-top:4px">Create and configure boards in your organization.</div></a>
         <a class="card" href="#" data-go="s-statuses" data-roles="OrgAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Statuses</b><div class="sub" style="margin-top:4px">Configure the statuses used by your organization&rsquo;s boards.</div></a>
@@ -329,6 +329,115 @@
         @@IMPORT:org@@
       </div>
       @@GUARD:SITE:the user import@@
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-boards-admin" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Boards</b></span><span class="spacer"></span>
+      <a class="btn pri" href="#" data-go="s-board-new" data-roles="OrgAdmin">New board</a></div>
+    <div class="work">
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Boards</h1>
+        <div class="sub">The boards your organization tracks ideas on. Each one picks its own swimlanes from the shared set of statuses.</div></div></div>
+
+      <div class="filters" data-when="normal" data-roles="OrgAdmin">
+        <div class="fw wide"><label for="p-bd-q">Search</label><input type="search" id="p-bd-q" placeholder="Search boards&hellip;"></div>
+      </div>
+
+      @@GUARD:ADMIN:boards@@
+
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Boards</h1>
+          <div class="sub">There is no cross-organization board view.</div></div></div>
+        <div class="panel"><div class="in"><div class="empty">
+          <h3>This route has no Site Admin story</h3>
+          <p>Board administration is scoped to one organization, and a Site Admin belongs to none, so <code>/settings/boards</code> has no organization to list. The product agrees, and routes you elsewhere: the Settings hub sends a Site Admin to the workspace boards list rather than here.</p>
+          <a class="btn" href="comp-p-focus-roadmap.html#s-boards">Go to the boards list</a>
+          <a class="btn" href="#" data-go="s-org-boards">Open Acme Robotics&rsquo; boards</a>
+        </div></div></div>
+        <div class="note"><b>Shown because the route exists, not because it works.</b> Reaching this URL directly as a Site Admin renders an error in the product today &mdash; <code>BoardsAdmin.razor</code> reports &ldquo;Your account isn&rsquo;t associated with an organization.&rdquo; That is accurate but reads as a fault rather than a scoping rule, which is what this screen proposes replacing it with.</div>
+      </div>
+
+      <div data-roles="OrgAdmin">
+      @@EDITOR:bd:own:rw@@
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-boards" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-boards-admin">Boards</a> / <b>Acme Robotics</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
+      <span class="tag" data-roles="SiteAdmin">Read-only</span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Boards</h1>
+          <div class="sub">Acme Robotics &middot; the boards this organization tracks ideas on.</div></div></div>
+        @@SCOPEBAR:boards:s-boards-admin@@
+        @@EDITOR:bd:org:ro@@
+        <div class="note"><b>Read-only, unlike Users &middot; org.</b> A board is organization-owned content, so <code>SPEC/30-Contracts.md</code> refuses a Site Admin any change to it; user administration is the bootstrap exception and boards are not. <code>BoardsAdmin.razor</code> withholds both <b>New board</b> and the per-row <b>Edit</b> on both of its routes.</div>
+      </div>
+      @@GUARD:SITE:boards@@
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-board-new" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-boards-admin">Boards</a> / <b>New</b></span><span class="spacer"></span></div>
+    <div class="work">
+      @@GUARD:ADMIN:board creation@@
+      @@GUARD:REFUSED:board creation:s-boards-admin@@
+      <div data-roles="OrgAdmin">
+        <div class="pgh"><div class="grow"><h1>New board</h1>
+          <div class="sub">Name it, then choose which of this organization&rsquo;s statuses become its columns.</div></div></div>
+        @@BOARDFORM:new:new@@
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-board-edit" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-boards-admin">Boards</a> / <b>Product intake</b></span><span class="spacer"></span></div>
+    <div class="work">
+      @@GUARD:ADMIN:this board@@
+      @@GUARD:REFUSED:this board:s-boards-admin@@
+      <div data-roles="OrgAdmin">
+        <div class="pgh"><div class="grow"><h1>Edit board</h1>
+          <div class="sub">Product intake &middot; 4 swimlanes, drawn from this organization&rsquo;s statuses.</div></div></div>
+        @@BOARDFORM:edit:edit@@
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-board-new" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-org-boards">Acme Robotics</a> / <b>New</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span></div>
+    <div class="work">
+      @@GUARD:REFUSED:board creation:s-org-boards@@
+      @@GUARD:SITE:board creation@@
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-board-edit" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-org-boards">Acme Robotics</a> / <b>Product intake</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span></div>
+    <div class="work">
+      @@GUARD:REFUSED:this board:s-org-boards@@
+      @@GUARD:SITE:this board@@
     </div>
   </div>
 </div></section>

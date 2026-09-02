@@ -671,6 +671,20 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
    "copy this now, it is not shown again" — need their own weight. */
 .alert.warn{border-color:#e8d4a8;background:#fdf8ec;color:#6b4e12}
 
+/* ===== board swimlane picker =====
+   Two columns because only one of them is ordered: a board's swimlanes are an
+   ordered subset of the org's statuses, and the available pool has no order. */
+.lanes{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-lg);align-items:start}
+.lanehd{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:var(--s-xs)}
+.lane{display:flex;align-items:center;gap:var(--s-xs);padding:7px var(--s-sm);
+  border:1px solid var(--hairline);border-radius:var(--r-sm);margin-bottom:6px;
+  font-size:15px;background:var(--surface)}
+.lane .grow{flex:1;min-width:0}
+.lane .iconbtn{width:26px;height:26px;font-size:13px}
+.lane [aria-disabled="true"]{opacity:.4}
+@media (max-width:1180px){.lanes{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body data-role="OrgAdmin">

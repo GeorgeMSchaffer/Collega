@@ -671,6 +671,20 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
    "copy this now, it is not shown again" — need their own weight. */
 .alert.warn{border-color:#e8d4a8;background:#fdf8ec;color:#6b4e12}
 
+/* ===== board swimlane picker =====
+   Two columns because only one of them is ordered: a board's swimlanes are an
+   ordered subset of the org's statuses, and the available pool has no order. */
+.lanes{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-lg);align-items:start}
+.lanehd{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:var(--s-xs)}
+.lane{display:flex;align-items:center;gap:var(--s-xs);padding:7px var(--s-sm);
+  border:1px solid var(--hairline);border-radius:var(--r-sm);margin-bottom:6px;
+  font-size:15px;background:var(--surface)}
+.lane .grow{flex:1;min-width:0}
+.lane .iconbtn{width:26px;height:26px;font-size:13px}
+.lane [aria-disabled="true"]{opacity:.4}
+@media (max-width:1180px){.lanes{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body data-role="OrgAdmin">
@@ -688,6 +702,12 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
   <button data-go="s-org-users">Users · org</button>
   <button data-go="s-import">CSV import</button>
   <button data-go="s-org-import">CSV import · org</button>
+  <button data-go="s-boards-admin">Boards</button>
+  <button data-go="s-org-boards">Boards · org</button>
+  <button data-go="s-board-new">Board · new</button>
+  <button data-go="s-org-board-new">Board · new · org</button>
+  <button data-go="s-board-edit">Board · edit</button>
+  <button data-go="s-org-board-edit">Board · edit · org</button>
   <span class="lbl" style="margin-left:auto">Other areas</span>
   <a class="xfile" href="comp-p-focus-roadmap.html">Core</a>
   <a class="xfile" href="comp-p-auth.html">Auth</a>
@@ -750,8 +770,8 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
           <b>Organizations</b><div class="sub" style="margin-top:4px">Create organizations and manage each organization&rsquo;s configuration.</div></a>
         <a class="card" href="#" data-go="s-users" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Users</b> <span class="tag">Cross-org</span><div class="sub" style="margin-top:4px">View users across every organization, then open one to manage it.</div></a>
-        <a class="card" href="#" data-go="s-boards" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
-          <b>Boards</b> <span class="tag">Cross-org</span><div class="sub" style="margin-top:4px">View boards across every organization, then open one to work with it.</div></a>
+        <a class="card" href="comp-p-focus-roadmap.html#s-boards" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
+          <b>Boards</b> <span class="tag">Workspace</span><div class="sub" style="margin-top:4px">View boards across every organization, then open one to work with it. This one leaves Settings &mdash; a Site Admin reads boards from the workspace list, not from board administration.</div></a>
         <a class="card" href="#" data-go="s-statuses" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Statuses</b> <span class="tag">Cross-org</span><div class="sub" style="margin-top:4px">View statuses across every organization, then open one to manage it.</div></a>
         <a class="card" href="#" data-go="s-idea-types" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
@@ -767,7 +787,7 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
 
         <a class="card" href="#" data-go="s-users" data-roles="OrgAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Users</b><div class="sub" style="margin-top:4px">Create, edit, and import users in your organization.</div></a>
-        <a class="card" href="#" data-go="s-boards" data-roles="OrgAdmin" style="color:inherit;text-decoration:none">
+        <a class="card" href="#" data-go="s-boards-admin" data-roles="OrgAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Boards</b><div class="sub" style="margin-top:4px">Create and configure boards in your organization.</div></a>
         <a class="card" href="#" data-go="s-statuses" data-roles="OrgAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Statuses</b><div class="sub" style="margin-top:4px">Configure the statuses used by your organization&rsquo;s boards.</div></a>
@@ -2082,6 +2102,454 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
         <div class="empty">
           <h3>Site Admins only</h3>
           <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's the user import live under <b>Settings</b>.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-boards-admin" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Boards</b></span><span class="spacer"></span>
+      <a class="btn pri" href="#" data-go="s-board-new" data-roles="OrgAdmin">New board</a></div>
+    <div class="work">
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Boards</h1>
+        <div class="sub">The boards your organization tracks ideas on. Each one picks its own swimlanes from the shared set of statuses.</div></div></div>
+
+      <div class="filters" data-when="normal" data-roles="OrgAdmin">
+        <div class="fw wide"><label for="p-bd-q">Search</label><input type="search" id="p-bd-q" placeholder="Search boards&hellip;"></div>
+      </div>
+
+      <div data-roles="User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Administrators only</h3>
+          <p>Configuring boards is an administrator's job, so this route is closed to members. Nothing here is hidden from you selectively &mdash; the whole page is out of scope for your role.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Boards</h1>
+          <div class="sub">There is no cross-organization board view.</div></div></div>
+        <div class="panel"><div class="in"><div class="empty">
+          <h3>This route has no Site Admin story</h3>
+          <p>Board administration is scoped to one organization, and a Site Admin belongs to none, so <code>/settings/boards</code> has no organization to list. The product agrees, and routes you elsewhere: the Settings hub sends a Site Admin to the workspace boards list rather than here.</p>
+          <a class="btn" href="comp-p-focus-roadmap.html#s-boards">Go to the boards list</a>
+          <a class="btn" href="#" data-go="s-org-boards">Open Acme Robotics&rsquo; boards</a>
+        </div></div></div>
+        <div class="note"><b>Shown because the route exists, not because it works.</b> Reaching this URL directly as a Site Admin renders an error in the product today &mdash; <code>BoardsAdmin.razor</code> reports &ldquo;Your account isn&rsquo;t associated with an organization.&rdquo; That is accurate but reads as a fault rather than a scoping rule, which is what this screen proposes replacing it with.</div>
+      </div>
+
+      <div data-roles="OrgAdmin">
+      <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Board</th><th style="width:116px">Swimlanes</th><th style="width:180px">User status moves</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><b>Product intake</b></td><td class="num">5</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Allowed</span></td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>Customer commitments</b></td><td class="num">4</td><td><span class="marker"><span class="dot" style="background:var(--ink-faint)"></span>Admins only</span></td><td><button class="btn ghost sm2">Edit</button></td></tr>
+              <tr><td><b>Internal tooling</b></td><td class="num">3</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Allowed</span></td><td><button class="btn ghost sm2">Edit</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>A board&rsquo;s swimlanes are a subset of the organization&rsquo;s statuses, in an order chosen per board.</span></div>
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Board</th><th style="width:116px">Swimlanes</th><th style="width:180px">User status moves</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+            </tbody>
+          </table>
+          <div data-when="empty" style="padding:var(--s-lg)"><div class="empty">
+              <h3>No boards yet</h3>
+              <p>A board is where ideas get worked. Without one there is nowhere for an idea to go, so this is the first thing to set up.</p>
+              <button class="btn pri">Create the first board</button>
+          </div></div>
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load boards.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">New board</h3>
+          <p class="sub" style="margin:0 0 var(--s-md)">Creating a board is more than a name &mdash; you also choose which statuses become its swimlanes, and in what order. That happens on its own screen.</p>
+          <a class="btn pri" href="#" data-go="s-board-new" style="width:100%;justify-content:center">Create a board</a>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-boards" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-boards-admin">Boards</a> / <b>Acme Robotics</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
+      <span class="tag" data-roles="SiteAdmin">Read-only</span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Boards</h1>
+          <div class="sub">Acme Robotics &middot; the boards this organization tracks ideas on.</div></div></div>
+        <div class="note" style="border-left-color:var(--secondary)"><b>Viewing Acme Robotics.</b> You reached these boards from the cross-organization list, so everything below belongs to Acme Robotics and to no other organization. <a href="#" data-go="s-boards-admin">Back to all boards</a>.</div>
+        <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Board</th><th style="width:116px">Swimlanes</th><th style="width:180px">User status moves</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><b>Product intake</b></td><td class="num">5</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Allowed</span></td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-bd-org">Edit</button></td></tr>
+              <tr><td><b>Customer commitments</b></td><td class="num">4</td><td><span class="marker"><span class="dot" style="background:var(--ink-faint)"></span>Admins only</span></td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-bd-org">Edit</button></td></tr>
+              <tr><td><b>Internal tooling</b></td><td class="num">3</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Allowed</span></td><td><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-why-edit-bd-org">Edit</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span><span class="denied" id="p-why-edit-bd-org">Read-only. A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</span></span></div>
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Board</th><th style="width:116px">Swimlanes</th><th style="width:180px">User status moves</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+            </tbody>
+          </table>
+          <div data-when="empty" style="padding:var(--s-lg)"><div class="empty">
+              <h3>This organization has no boards</h3>
+              <p>Its members have nowhere to file an idea. An administrator of this organization can create one.</p>
+          </div></div>
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load boards.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4;margin:0 0 var(--s-md)">Why is this read-only?</h3>
+          <p class="sub">A Site Admin can read every organization&rsquo;s settings but change none of them. Use <b>View As</b> to act as a member of this organization, and the same control becomes live.</p>
+          <a class="btn" href="comp-p-auth.html?screen=s-viewas&role=SiteAdmin">Open View As</a>
+        </div>
+      </div>
+        <div class="note"><b>Read-only, unlike Users &middot; org.</b> A board is organization-owned content, so <code>SPEC/30-Contracts.md</code> refuses a Site Admin any change to it; user administration is the bootstrap exception and boards are not. <code>BoardsAdmin.razor</code> withholds both <b>New board</b> and the per-row <b>Edit</b> on both of its routes.</div>
+      </div>
+      <div data-roles="OrgAdmin User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Site Admins only</h3>
+          <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's boards live under <b>Settings</b>.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-board-new" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-boards-admin">Boards</a> / <b>New</b></span><span class="spacer"></span></div>
+    <div class="work">
+      <div data-roles="User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Administrators only</h3>
+          <p>Configuring board creation is an administrator's job, so this route is closed to members. Nothing here is hidden from you selectively &mdash; the whole page is out of scope for your role.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">Acme Robotics &middot; read access only.</div></div></div>
+        <div class="empty">
+          <h3>A Site Admin cannot create or change a board</h3>
+          <p>Boards are organization-owned content, and a Site Admin is refused every mutation of it. Reading board creation is fine; saving is not, so the form is absent rather than present and doomed.</p><p>Use <b>View As</b> to act as an administrator of this organization, and this screen becomes ordinary.</p><a class="btn" href="comp-p-auth.html?screen=s-viewas&amp;role=SiteAdmin">Open View As</a>
+          <a class="btn" href="#" data-go="s-boards-admin">Back to boards</a>
+        </div>
+      </div>
+      <div data-roles="OrgAdmin">
+        <div class="pgh"><div class="grow"><h1>New board</h1>
+          <div class="sub">Name it, then choose which of this organization&rsquo;s statuses become its columns.</div></div></div>
+        <div class="cols" style="grid-template-columns:minmax(0,1fr) 356px">
+        <div class="panel"><div class="in">
+          <div class="field"><label for="p-bname-new">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-bname-new" required></div>
+          <div class="field"><label class="chk" for="p-bmove-new"><input type="checkbox" id="p-bmove-new" checked> Let Users move ideas between statuses on this board</label>
+            <div class="hint">With this off, only administrators can change an idea&rsquo;s status here. Read Only accounts can never move anything, on any board.</div></div>
+
+          <h3 style="font-size:16px;font-weight:600;margin:var(--s-lg) 0 var(--s-xs)">Swimlanes</h3>
+          <div class="hint" style="margin:0 0 var(--s-md)">Pick from this organization&rsquo;s statuses. The order on the left is the left-to-right order of the board&rsquo;s columns.</div>
+          <div class="lanes">
+            <div>
+              <div class="lanehd">On this board &mdash; in order</div>
+            <div class="lane"><span class="dot" style="background:var(--sky)"></span><span class="grow">New / Pending</span><button class="iconbtn" aria-label="Move New / Pending up" aria-disabled="true">&uarr;</button><button class="iconbtn" aria-label="Move New / Pending down">&darr;</button><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-floor-new">Remove</button></div>
+            <div class="lane"><span class="dot" style="background:var(--purple)"></span><span class="grow">In Review</span><button class="iconbtn" aria-label="Move In Review up">&uarr;</button><button class="iconbtn" aria-label="Move In Review down" aria-disabled="true">&darr;</button><button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-floor-new">Remove</button></div>
+              <span class="denied" id="p-floor-new">A board needs at least two swimlanes, so the last two cannot be removed. Add a third to free them.</span>
+            </div>
+            <div>
+              <div class="lanehd">Available statuses</div>
+            <div class="lane"><span class="dot" style="background:var(--pink)"></span><span class="grow">Client Review</span><button class="btn ghost sm2">Add</button></div>
+            <div class="lane"><span class="dot" style="background:var(--brown)"></span><span class="grow">On hold</span><button class="btn ghost sm2">Add</button></div>
+            <div class="lane"><span class="dot" style="background:var(--orange)"></span><span class="grow">In Progress</span><button class="btn ghost sm2">Add</button></div>
+            <div class="lane"><span class="dot" style="background:var(--green)"></span><span class="grow">Complete</span><button class="btn ghost sm2">Add</button></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:var(--s-xs);margin-top:var(--s-lg)">
+            <button class="btn pri">Create board</button>
+            <a class="btn" href="#" data-go="s-boards-admin">Cancel</a>
+          </div>
+        </div></div>
+        <div class="card" style="align-self:start">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">New board</h3>
+          <p class="sub">A board groups ideas into columns. Which columns, and in what order, is what makes two boards in the same organization different from each other &mdash; they draw from one shared set of statuses.</p>
+          <p class="sub">Removing a swimlane does not delete the status, and does not delete the ideas sitting in it. Those ideas keep their status; they simply stop appearing on this board until the lane comes back.</p>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-board-edit" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-boards-admin">Boards</a> / <b>Product intake</b></span><span class="spacer"></span></div>
+    <div class="work">
+      <div data-roles="User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Administrators only</h3>
+          <p>Configuring this board is an administrator's job, so this route is closed to members. Nothing here is hidden from you selectively &mdash; the whole page is out of scope for your role.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">Acme Robotics &middot; read access only.</div></div></div>
+        <div class="empty">
+          <h3>A Site Admin cannot create or change a board</h3>
+          <p>Boards are organization-owned content, and a Site Admin is refused every mutation of it. Reading this board is fine; saving is not, so the form is absent rather than present and doomed.</p><p>Use <b>View As</b> to act as an administrator of this organization, and this screen becomes ordinary.</p><a class="btn" href="comp-p-auth.html?screen=s-viewas&amp;role=SiteAdmin">Open View As</a>
+          <a class="btn" href="#" data-go="s-boards-admin">Back to boards</a>
+        </div>
+      </div>
+      <div data-roles="OrgAdmin">
+        <div class="pgh"><div class="grow"><h1>Edit board</h1>
+          <div class="sub">Product intake &middot; 4 swimlanes, drawn from this organization&rsquo;s statuses.</div></div></div>
+        <div class="cols" style="grid-template-columns:minmax(0,1fr) 356px">
+        <div class="panel"><div class="in">
+          <div class="field"><label for="p-bname-edit">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-bname-edit" value="Product intake" required></div>
+          <div class="field"><label class="chk" for="p-bmove-edit"><input type="checkbox" id="p-bmove-edit" checked> Let Users move ideas between statuses on this board</label>
+            <div class="hint">With this off, only administrators can change an idea&rsquo;s status here. Read Only accounts can never move anything, on any board.</div></div>
+
+          <h3 style="font-size:16px;font-weight:600;margin:var(--s-lg) 0 var(--s-xs)">Swimlanes</h3>
+          <div class="hint" style="margin:0 0 var(--s-md)">Pick from this organization&rsquo;s statuses. The order on the left is the left-to-right order of the board&rsquo;s columns.</div>
+          <div class="lanes">
+            <div>
+              <div class="lanehd">On this board &mdash; in order</div>
+            <div class="lane"><span class="dot" style="background:var(--sky)"></span><span class="grow">New / Pending</span><button class="iconbtn" aria-label="Move New / Pending up" aria-disabled="true">&uarr;</button><button class="iconbtn" aria-label="Move New / Pending down">&darr;</button><button class="btn ghost sm2">Remove</button></div>
+            <div class="lane"><span class="dot" style="background:var(--purple)"></span><span class="grow">In Review</span><button class="iconbtn" aria-label="Move In Review up">&uarr;</button><button class="iconbtn" aria-label="Move In Review down">&darr;</button><button class="btn ghost sm2">Remove</button></div>
+            <div class="lane"><span class="dot" style="background:var(--orange)"></span><span class="grow">In Progress</span><button class="iconbtn" aria-label="Move In Progress up">&uarr;</button><button class="iconbtn" aria-label="Move In Progress down">&darr;</button><button class="btn ghost sm2">Remove</button></div>
+            <div class="lane"><span class="dot" style="background:var(--green)"></span><span class="grow">Complete</span><button class="iconbtn" aria-label="Move Complete up">&uarr;</button><button class="iconbtn" aria-label="Move Complete down" aria-disabled="true">&darr;</button><button class="btn ghost sm2">Remove</button></div>
+              
+            </div>
+            <div>
+              <div class="lanehd">Available statuses</div>
+            <div class="lane"><span class="dot" style="background:var(--pink)"></span><span class="grow">Client Review</span><button class="btn ghost sm2">Add</button></div>
+            <div class="lane"><span class="dot" style="background:var(--brown)"></span><span class="grow">On hold</span><button class="btn ghost sm2">Add</button></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:var(--s-xs);margin-top:var(--s-lg)">
+            <button class="btn pri">Save changes</button>
+            <a class="btn" href="#" data-go="s-boards-admin">Cancel</a>
+          </div>
+        </div></div>
+        <div class="card" style="align-self:start">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">Edit board</h3>
+          <p class="sub">A board groups ideas into columns. Which columns, and in what order, is what makes two boards in the same organization different from each other &mdash; they draw from one shared set of statuses.</p>
+          <p class="sub">Removing a swimlane does not delete the status, and does not delete the ideas sitting in it. Those ideas keep their status; they simply stop appearing on this board until the lane comes back.</p>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-board-new" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-org-boards">Acme Robotics</a> / <b>New</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">Acme Robotics &middot; read access only.</div></div></div>
+        <div class="empty">
+          <h3>A Site Admin cannot create or change a board</h3>
+          <p>Boards are organization-owned content, and a Site Admin is refused every mutation of it. Reading board creation is fine; saving is not, so the form is absent rather than present and doomed.</p><p>Use <b>View As</b> to act as an administrator of this organization, and this screen becomes ordinary.</p><a class="btn" href="comp-p-auth.html?screen=s-viewas&amp;role=SiteAdmin">Open View As</a>
+          <a class="btn" href="#" data-go="s-org-boards">Back to boards</a>
+        </div>
+      </div>
+      <div data-roles="OrgAdmin User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Site Admins only</h3>
+          <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's board creation live under <b>Settings</b>.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-board-edit" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-org-boards">Acme Robotics</a> / <b>Product intake</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">Acme Robotics &middot; read access only.</div></div></div>
+        <div class="empty">
+          <h3>A Site Admin cannot create or change a board</h3>
+          <p>Boards are organization-owned content, and a Site Admin is refused every mutation of it. Reading this board is fine; saving is not, so the form is absent rather than present and doomed.</p><p>Use <b>View As</b> to act as an administrator of this organization, and this screen becomes ordinary.</p><a class="btn" href="comp-p-auth.html?screen=s-viewas&amp;role=SiteAdmin">Open View As</a>
+          <a class="btn" href="#" data-go="s-org-boards">Back to boards</a>
+        </div>
+      </div>
+      <div data-roles="OrgAdmin User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Site Admins only</h3>
+          <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's this board live under <b>Settings</b>.</p>
           <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
         </div>
       </div>

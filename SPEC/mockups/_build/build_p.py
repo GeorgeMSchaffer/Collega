@@ -189,6 +189,9 @@ ORGS = ["Acme Robotics", "Northwind Traders", "Contoso Health"]
 
 # Row-cell shorthands, so the user tables below stay readable as data.
 EM = '<span class="faint">%s</span>'
+# An end-of-list arrow is refused, not removed — same rule as every other
+# denied control here: aria-disabled keeps it focusable.
+ADIS = ' aria-disabled="true"'
 PILL = '<span class="tag">%s</span>'
 OK = '<span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span>'
 OFF = '<span class="marker"><span class="dot" style="background:var(--ink-faint)"></span>Inactive</span>'
@@ -719,8 +722,108 @@ def user_import(sfx):
       </div>"""
 
 
+BOARDS = [
+    ("Product intake", 5, True), ("Customer commitments", 4, False),
+    ("Internal tooling", 3, True),
+]
+
+BD_SPEC = {
+    "noun": "boards",
+    "cols": ["<th>Board</th>", '<th style="width:116px">Swimlanes</th>',
+             '<th style="width:180px">User status moves</th>'],
+    "rows": [[f"<td><b>{n}</b></td>", f'<td class="num">{lanes}</td>',
+              "<td>" + (OK.replace("Active", "Allowed") if allow else
+                        OFF.replace("Inactive", "Admins only")) + "</td>"]
+             for n, lanes, allow in BOARDS],
+    "foot": ("A board&rsquo;s swimlanes are a subset of the organization&rsquo;s statuses, "
+             "in an order chosen per board."),
+    "error": ("The request failed before anything was returned, so nothing here is "
+              "out of date &mdash; it is simply absent. Retrying is safe."),
+    "empty_rw": """<h3>No boards yet</h3>
+              <p>A board is where ideas get worked. Without one there is nowhere for an idea to go, so this is the first thing to set up.</p>
+              <button class="btn pri">Create the first board</button>""",
+    "empty_ro": """<h3>This organization has no boards</h3>
+              <p>Its members have nowhere to file an idea. An administrator of this organization can create one.</p>""",
+    "create": """<div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">New board</h3>
+          <p class="sub" style="margin:0 0 var(--s-md)">Creating a board is more than a name &mdash; you also choose which statuses become its swimlanes, and in what order. That happens on its own screen.</p>
+          <a class="btn pri" href="#" data-go="s-board-new" style="width:100%;justify-content:center">Create a board</a>
+        </div>""",
+}
+
+LANES_ON = [("New / Pending", "sky"), ("In Review", "purple"),
+            ("In Progress", "orange"), ("Complete", "green")]
+LANES_OFF = [("Client Review", "pink"), ("On hold", "brown")]
+
+
+def board_form(sfx, is_new=True):
+    """Create / edit a board — name, the user-move switch, and the lane picker.
+
+    BoardEdit.razor serves four routes from one component (new/edit x scoped or
+    not), so this is generated once and instantiated per route. The lane picker
+    is two columns because order matters on the left and does not on the right:
+    a board's swimlanes are an *ordered* subset of the organization's statuses.
+    """
+    verb = "Create board" if is_new else "Save changes"
+    title = "New board" if is_new else "Edit board"
+    name = "" if is_new else ' value="Product intake"'
+    on = LANES_ON[:2] if is_new else LANES_ON
+    # The 2-swimlane minimum is a real rule the API enforces too. At the floor
+    # Remove is refused rather than removed, so the rule is discoverable at the
+    # point it bites — aria-disabled, not the disabled attribute, so it stays
+    # reachable and announces the reason.
+    floor = len(on) <= 2
+    rows_on = "\n".join(
+        f'            <div class="lane"><span class="dot" style="background:var(--{tok})"></span>'
+        f'<span class="grow">{n}</span>'
+        f'<button class="iconbtn" aria-label="Move {n} up"{ADIS if i == 0 else ""}>&uarr;</button>'
+        f'<button class="iconbtn" aria-label="Move {n} down"{ADIS if i == len(on) - 1 else ""}>&darr;</button>'
+        + (f'<button class="btn ghost sm2" aria-disabled="true" aria-describedby="p-floor-{sfx}">Remove</button>'
+           if floor else f'<button class="btn ghost sm2">Remove</button>')
+        + "</div>" for i, (n, tok) in enumerate(on))
+    rows_off = "\n".join(
+        f'            <div class="lane"><span class="dot" style="background:var(--{tok})"></span>'
+        f'<span class="grow">{n}</span><button class="btn ghost sm2">Add</button></div>'
+        for n, tok in (LANES_OFF + LANES_ON[2:] if is_new else LANES_OFF))
+    floor_note = (f'<span class="denied" id="p-floor-{sfx}">A board needs at least two '
+                  f'swimlanes, so the last two cannot be removed. Add a third to free them.</span>'
+                  if floor else "")
+    return f"""<div class="cols" style="grid-template-columns:minmax(0,1fr) 356px">
+        <div class="panel"><div class="in">
+          <div class="field"><label for="p-bname-{sfx}">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-bname-{sfx}"{name} required></div>
+          <div class="field"><label class="chk" for="p-bmove-{sfx}"><input type="checkbox" id="p-bmove-{sfx}" checked> Let Users move ideas between statuses on this board</label>
+            <div class="hint">With this off, only administrators can change an idea&rsquo;s status here. Read Only accounts can never move anything, on any board.</div></div>
+
+          <h3 style="font-size:16px;font-weight:600;margin:var(--s-lg) 0 var(--s-xs)">Swimlanes</h3>
+          <div class="hint" style="margin:0 0 var(--s-md)">Pick from this organization&rsquo;s statuses. The order on the left is the left-to-right order of the board&rsquo;s columns.</div>
+          <div class="lanes">
+            <div>
+              <div class="lanehd">On this board &mdash; in order</div>
+{rows_on}
+              {floor_note}
+            </div>
+            <div>
+              <div class="lanehd">Available statuses</div>
+{rows_off}
+            </div>
+          </div>
+
+          <div style="display:flex;gap:var(--s-xs);margin-top:var(--s-lg)">
+            <button class="btn pri">{verb}</button>
+            <a class="btn" href="#" data-go="s-boards-admin">Cancel</a>
+          </div>
+        </div></div>
+        <div class="card" style="align-self:start">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">{title}</h3>
+          <p class="sub">A board groups ideas into columns. Which columns, and in what order, is what makes two boards in the same organization different from each other &mdash; they draw from one shared set of statuses.</p>
+          <p class="sub">Removing a swimlane does not delete the status, and does not delete the ideas sitting in it. Those ideas keep their status; they simply stop appearing on this board until the lane comes back.</p>
+        </div>
+      </div>"""
+
+
 EDITORS = {
     "st": editor_st,
+    "bd": lambda sfx, mutable=True: table_editor(BD_SPEC, sfx, mutable),
     "us": lambda sfx, mutable=True: table_editor(US_SPEC, sfx, mutable),
     "it": lambda sfx, mutable=True: table_editor(IT_SPEC, sfx, mutable),
     "fd": lambda sfx, mutable=True: table_editor(FD_SPEC, sfx, mutable),
@@ -743,6 +846,26 @@ def guard(kind, entity, back="s-settings"):
         body = (f"<p>Configuring {entity} is an administrator's job, so this route is "
                 f"closed to members. Nothing here is hidden from you selectively &mdash; "
                 f"the whole page is out of scope for your role.</p>")
+    elif kind == "REFUSED":
+        # BoardEdit.razor's own _refused state, which deliberately renders the
+        # reason instead of the form — "never the form, which would otherwise
+        # render empty below the message and offer a Save that cannot work."
+        roles, title = "SiteAdmin", "A Site Admin cannot create or change a board"
+        body = (f"<p>Boards are organization-owned content, and a Site Admin is refused "
+                f"every mutation of it. Reading {entity} is fine; saving is not, so the "
+                f"form is absent rather than present and doomed.</p>"
+                f'<p>Use <b>View As</b> to act as an administrator of this organization, '
+                f"and this screen becomes ordinary.</p>"
+                f'<a class="btn" href="comp-p-auth.html?screen=s-viewas&amp;role=SiteAdmin">Open View As</a>')
+        return f"""<div data-roles="{roles}">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">Acme Robotics &middot; read access only.</div></div></div>
+        <div class="empty">
+          <h3>{title}</h3>
+          {body}
+          <a class="btn" href="#" data-go="{back}">Back to boards</a>
+        </div>
+      </div>"""
     else:
         roles, title = "OrgAdmin User ReadOnly", "Site Admins only"
         body = (f"<p>The organization-scoped route exists so a Site Admin can inspect an "
@@ -929,7 +1052,10 @@ COMPS = [
                  ("s-idea-types", "Idea types"), ("s-org-idea-types", "Idea types · org"),
                  ("s-fields", "Fields"), ("s-org-fields", "Fields · org"),
                  ("s-users", "Users"), ("s-org-users", "Users · org"),
-                 ("s-import", "CSV import"), ("s-org-import", "CSV import · org")]},
+                 ("s-import", "CSV import"), ("s-org-import", "CSV import · org"),
+                 ("s-boards-admin", "Boards"), ("s-org-boards", "Boards · org"),
+                 ("s-board-new", "Board · new"), ("s-org-board-new", "Board · new · org"),
+                 ("s-board-edit", "Board · edit"), ("s-org-board-edit", "Board · edit · org")]},
     {"file": "comp-p-delivery.html", "area": "Delivery", "frag": "p_delivery.frag",
      "title": "Collega — Comp P: delivery and roadmap",
      "label": "Delivery and roadmap · not yet built",
@@ -959,10 +1085,13 @@ def build(comp):
                                                 m.group(3) == "rw"), body)
     body = re.sub(r"@@INVITE:(\w+)@@", lambda m: invite(m.group(1)), body)
     body = re.sub(r"@@IMPORT:(\w+)@@", lambda m: user_import(m.group(1)), body)
+    body = re.sub(r"@@BOARDFORM:(\w+):(new|edit)@@",
+                  lambda m: board_form(m.group(1), m.group(2) == "new"), body)
     body = re.sub(r"@@SCOPEBAR:([\w -]+):([\w-]+)@@",
                   lambda m: scope_bar(m.group(1), m.group(2)), body)
-    body = re.sub(r"@@GUARD:(ADMIN|SITE):([\w -]+)@@",
-                  lambda m: guard(m.group(1), m.group(2)), body)
+    body = re.sub(r"@@GUARD:(ADMIN|SITE|REFUSED):([\w -]+)(?::([\w-]+))?@@",
+                  lambda m: guard(m.group(1), m.group(2),
+                                  m.group(3) or "s-settings"), body)
     assert "@@" not in body, f'unsubstituted token in {comp["frag"]}'
     check_vars(body, comp["frag"])
 
