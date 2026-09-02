@@ -150,6 +150,37 @@ token in `SPEC/mockups/_build/build_p.py`.
 
 ---
 
+## 2026-09-02 — Conversion slices merge to `dev`, not to an integration branch
+
+Considered a long-lived `typescript-conversion` branch acting as `dev` for the conversion,
+with feature branches merging into it and one merge to `dev` at cutover. **Rejected.**
+
+The isolation it offers is isolation that already exists. Both deploy workflows fire on
+`main` only (`deploy-client.yml` is further path-scoped to `src/Collega.Client/**`), so
+nothing ships from `dev` regardless of what lands there. The conversion tree is `apps/`,
+`packages/` and `tools/` — disjoint from `src/` by the plan's own layout. And there is no
+root `package.json` today, so the monorepo skeleton creates the root tooling rather than
+disrupting anyone's existing commands.
+
+Three costs decided it:
+
+- **Wave A cannot live on a conversion branch.** `tools/golden/` drives the *live .NET
+  API* and its deadline is Sprint 8's close. Sequestering it means the people changing
+  that API during Sprint 8 cannot run the capture as they go — and the corpus is the
+  oracle the whole validation strategy rests on.
+- **The shared files conflict continuously.** `implementation-agent-tracker.md`,
+  `30-Contracts.md`, `decisions.md` and the comps are edited by both .NET sprint work and
+  conversion work. §4.3 already requires the tracker to serialize on the merge; a
+  months-long branch turns every one of them into a recurring conflict.
+- **Cutover deletes the .NET solution.** That is the highest-risk change in the project.
+  It should land as its own reviewed slice against a current `dev`, not inside a merge
+  that has been diverging for months.
+
+**Consequence:** `dev` carries half-built TypeScript for the duration. That is accepted —
+`main` is the deploy gate, and per §7 the rollback unit is the deployment, not the code.
+
+---
+
 ## Earlier decisions
 
 Decisions made before this log existed are recorded in the documents they constrain —
