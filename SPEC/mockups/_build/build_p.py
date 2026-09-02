@@ -187,6 +187,12 @@ def profile():
 
 ORGS = ["Acme Robotics", "Northwind Traders", "Contoso Health"]
 
+# Row-cell shorthands, so the user tables below stay readable as data.
+EM = '<span class="faint">%s</span>'
+PILL = '<span class="tag">%s</span>'
+OK = '<span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span>'
+OFF = '<span class="marker"><span class="dot" style="background:var(--ink-faint)"></span>Inactive</span>'
+
 ROLLUPS = {
     "st": {"noun": "statuses", "one": "status", "col": "Colour", "target": "s-org-statuses", "rows": [
         ("New / Pending", 0, '<span class="marker"><span class="dot" style="background:var(--sky)"></span>Sky</span>'),
@@ -207,30 +213,52 @@ ROLLUPS = {
         ("Risk Level", 0, "Dropdown"), ("Freight Lane", 1, "Text"),
         ("Ward", 2, "Dropdown"), ("Clinical Sign-off", 2, "Boolean"),
     ]},
+    # Users is the odd one: more columns than the others, and its row action
+    # opens a detail drawer rather than leaving for the org-scoped screen —
+    # which is what OrganizationUsers.razor does on the global route.
+    "us": {"noun": "users", "one": "user", "target": "s-org-users", "act": "Details",
+           "cols": [("Email", 232), ("Role", 116), ("Status", 104)], "rows": [
+        ("Olivia Administer", 0, [EM % "olivia@acmerobotics.com", PILL % "Org Admin", OK]),
+        ("Umar Mensah", 0, [EM % "umar@acmerobotics.com", PILL % "User", OK]),
+        ("Rae Vance", 0, [EM % "rae@acmerobotics.com", PILL % "Read Only", OK]),
+        ("Nils Fabian", 1, [EM % "nils@northwind.example", PILL % "Org Admin", OK]),
+        ("Priya Raman", 1, [EM % "priya@northwind.example", PILL % "User", OFF]),
+        ("Dr Chen Wei", 2, [EM % "chen@contosohealth.example", PILL % "Org Admin", OK]),
+    ]},
 }
 
 
 def rollup(key):
     """The Site-Admin cross-organization list for one entity.
 
-    Read-only by construction: the only action is Manage, which leaves for the
-    organization-scoped screen. There is deliberately no create control here —
-    a status belongs to an organization, so it cannot be made from a view that
-    is above all of them.
+    Read-only by construction: the row action leaves for the organization-scoped
+    screen rather than editing in place. There is deliberately no create control
+    here — a status belongs to an organization, so it cannot be made from a view
+    that is above all of them.
     """
     d = ROLLUPS[key]
     noun = d["noun"]
+    # One detail column is the common case, so entries may name it as "col";
+    # users needs three and gives "cols" instead. Normalise to the list form.
+    cols = d.get("cols") or [(d["col"], 168)]
+    act = d.get("act", "Manage")
+    head = ('<thead><tr><th>Name</th><th style="width:212px">Organization</th>'
+            + "".join(f'<th style="width:{w}px">{h}</th>' for h, w in cols)
+            + '<th style="width:96px"></th></tr></thead>')
     rows = "\n".join(
-        f'              <tr><td><b>{name}</b></td><td>{ORGS[org]}</td><td>{detail}</td>'
-        f'<td><a class="btn ghost sm2" href="#" data-go="{d["target"]}">Manage</a></td></tr>'
+        f'              <tr><td><b>{name}</b></td><td>{ORGS[org]}</td>'
+        + "".join(f"<td>{c}</td>"
+                  for c in (detail if isinstance(detail, list) else [detail]))
+        + f'<td><a class="btn ghost sm2" href="#" data-go="{d["target"]}">{act}</a></td></tr>'
         for name, org, detail in d["rows"])
     skel = "\n".join(
         '              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td>'
-        '<td><span class="skel w40"></span></td><td></td></tr>' for _ in range(5))
+        + "".join('<td><span class="skel w40"></span></td>' for _ in cols)
+        + "<td></td></tr>" for _ in range(5))
     return f"""<div data-roles="SiteAdmin">
         <div class="panel">
           <table data-when="normal">
-            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:168px">{d["col"]}</th><th style="width:96px"></th></tr></thead>
+            {head}
             <tbody>
 {rows}
             </tbody>
@@ -238,7 +266,7 @@ def rollup(key):
           <div class="pgfoot" data-when="normal"><span>{len(d["rows"])} {noun} across {len(ORGS)} organizations.</span></div>
 
           <table data-when="loading" aria-busy="true">
-            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:168px">{d["col"]}</th><th style="width:96px"></th></tr></thead>
+            {head}
             <tbody>
 {skel}
             </tbody>
@@ -255,7 +283,7 @@ def rollup(key):
             <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
           </div>
         </div>
-        <div class="note"><b>A cross-organization view is read-only on purpose.</b> A {d["one"]} belongs to one organization, so there is nothing coherent for a create button here to create. <b>Manage</b> carries you into the organization-scoped screen, which is where every change is made.</div>
+        <div class="note"><b>A cross-organization view is read-only on purpose.</b> A {d["one"]} belongs to one organization, so there is nothing coherent for a create button here to create. <b>{act}</b> carries you into the organization-scoped screen, which is where every change is made.</div>
       </div>"""
 
 
@@ -375,9 +403,12 @@ def table_editor(spec, sfx, mutable=True):
     carries the CanMutate rule; see editor_st for why.
     """
     noun = spec["noun"]
-    act = ('<button class="btn ghost sm2">Edit</button>' if mutable else
+    # Most of these pages label the row action "Edit"; the users page opens a
+    # read-first drawer and labels it "Details".
+    label = spec.get("act", "Edit")
+    act = (f'<button class="btn ghost sm2">{label}</button>' if mutable else
            f'<button class="btn ghost sm2" aria-disabled="true" '
-           f'aria-describedby="p-why-edit-{sfx}">Edit</button>')
+           f'aria-describedby="p-why-edit-{sfx}">{label}</button>')
     dragh = ('<th style="width:36px"><span class="faint">Drag</span></th>'
              if mutable and spec.get("reorder") else "")
     dragc = ('<td><span class="hnd" aria-hidden="true">&#8942;&#8942;</span></td>'
@@ -569,8 +600,128 @@ def _pick_rows():
 
 IT_SPEC["create"] = IT_SPEC["create"].replace("@PICK@", _pick_rows())
 
+USERS = [
+    ("Olivia Administer", "olivia@acmerobotics.com", "Org Admin", True),
+    ("Umar Mensah", "umar@acmerobotics.com", "User", True),
+    ("Rae Vance", "rae@acmerobotics.com", "Read Only", True),
+    ("Tomas Beck", "tomas@acmerobotics.com", "User", True),
+    ("Jae-won Park", "jaewon@acmerobotics.com", "User", False),
+]
+
+US_SPEC = {
+    "noun": "users", "act": "Details",
+    "cols": ["<th>Name</th>", '<th style="width:264px">Email</th>',
+             '<th style="width:116px">Role</th>', '<th style="width:116px">Status</th>'],
+    "rows": [[f"<td><b>{n}</b></td>", f'<td class="faint">{e}</td>',
+              f'<td><span class="tag">{r}</span></td>',
+              f"<td>{OK if active else OFF}</td>"]
+             for n, e, r, active in USERS],
+    "foot": ("Selecting a row opens the docked inspector, which reads first and "
+             "edits on request &mdash; including the one-time temporary password."),
+    "error": ("The request failed before anything was returned, so nothing here is "
+              "out of date &mdash; it is simply absent. Retrying is safe."),
+    "empty_rw": """<h3>No users yet</h3>
+              <p>You are the only account in this organization. Add people directly, or share the invite code above so they can register themselves.</p>
+              <button class="btn pri">Add the first user</button>""",
+    "empty_ro": """<h3>This organization has no users</h3>
+              <p>Nobody can sign in to it yet.</p>""",
+    "create": """<div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">Add user</h3>
+          <form>
+            <div class="field"><label for="p-ufirst-@S@">First name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-ufirst-@S@" required></div>
+            <div class="field"><label for="p-ulast-@S@">Last name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-ulast-@S@" required></div>
+            <div class="field" data-when="normal empty loading"><label for="p-umail-@S@">Email <span class="req" aria-hidden="true">*</span></label><input type="email" id="p-umail-@S@" required><div class="hint">Their sign-in name. It cannot be changed later by the user themselves.</div></div>
+            <div class="field bad" data-when="error"><label for="p-umail2-@S@">Email <span class="req" aria-hidden="true">*</span></label><input type="email" id="p-umail2-@S@" value="umar@acmerobotics.com" aria-describedby="p-umail2-msg-@S@" aria-invalid="true"><span class="msg" id="p-umail2-msg-@S@">That email already belongs to an account. Email addresses are unique across Collega, not just within an organization.</span></div>
+            <div class="field"><label for="p-urole-@S@">Role</label><select id="p-urole-@S@"><option>User</option><option>Org Admin</option><option>Read Only</option></select></div>
+            <div class="note" style="margin:0 0 var(--s-md);font-size:14px">They get a generated password and must change it at first sign-in. It is shown once, here, after you create them.</div>
+            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Create user</button>
+          </form>
+        </div>""",
+}
+
+
+def invite(sfx):
+    """The organization's self-registration code.
+
+    Shown above the list on both mutating routes — a Site Admin on the
+    org-scoped route sees it too, which is the bootstrap exception (see the
+    note on s-org-users) rather than an oversight.
+    """
+    return f"""<div class="card" style="margin-bottom:var(--s-md)">
+        <h3 style="font-size:16px;font-weight:600;margin:0 0 4px">Invite code</h3>
+        <p class="sub" style="margin:0 0 var(--s-sm)">Share this so new members can register themselves into this organization. Regenerating it invalidates the old one immediately.</p>
+        <div style="display:flex;align-items:center;gap:var(--s-sm);flex-wrap:wrap">
+          <code class="invite" id="p-invite-{sfx}">ACME-7Q2F-K488</code>
+          <button class="btn">Regenerate</button>
+        </div>
+      </div>"""
+
+
+IMPORT_ROWS = [
+    (2, "tomas@acmerobotics.com", True, "Xq7-4mVt-92"),
+    (3, "jaewon@acmerobotics.com", True, "Bn3-9wKp-51"),
+    (4, "umar@acmerobotics.com", False, "Already has an account."),
+    (5, "not-an-address", False, "Not a valid email address."),
+    (6, "dana@acmerobotics.com", True, "Rk8-2hLm-77"),
+]
+
+
+def user_import(sfx):
+    """The CSV import screen: upload card, then a per-row outcome table.
+
+    The results table is the whole point of the page — it is the only place a
+    temporary password is ever shown, and it is shown once. That makes the
+    upload control the small half of the screen and the outcome the large one.
+    """
+    created = sum(1 for r in IMPORT_ROWS if r[2])
+    rejected = len(IMPORT_ROWS) - created
+    rows = "\n".join(
+        f'              <tr><td class="num">{n}</td><td class="faint">{email}</td>'
+        + (f'<td><span class="marker"><span class="dot" style="background:var(--green)"></span>Created</span></td>'
+           f'<td><code class="invite">{detail}</code></td>' if ok else
+           f'<td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Rejected</span></td>'
+           f'<td class="faint">{detail}</td>')
+        + "</tr>" for n, email, ok, detail in IMPORT_ROWS)
+    return f"""<div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div>
+          <div class="panel" data-when="normal error">
+            <div class="in">
+              <h3 style="font-size:16px;font-weight:600;margin:0 0 var(--s-sm)">Last import &mdash; 12 March, 09:41</h3>
+              <div class="tagrow" style="margin-bottom:var(--s-md)">
+                <span class="tag">{created} created</span><span class="tag">{rejected} rejected</span></div>
+              <table>
+                <thead><tr><th style="width:64px">Row</th><th>Email</th><th style="width:132px">Outcome</th><th style="width:264px">Temporary password / reason</th></tr></thead>
+                <tbody>
+{rows}
+                </tbody>
+              </table>
+              <div class="alert warn" role="status" style="margin-top:var(--s-md)"><span><b>Copy the temporary passwords now.</b> They are generated once and never shown again &mdash; a person whose password is lost here needs a fresh reset from their row on the users screen.</span></div>
+            </div>
+          </div>
+          <div class="panel" data-when="loading" aria-busy="true"><div class="in">
+            <span class="skel w40"></span><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span>
+          </div></div>
+          <div class="panel" data-when="empty"><div class="in"><div class="empty">
+            <h3>Nothing imported yet</h3>
+            <p>Choose a CSV to see each row&rsquo;s outcome here, with the temporary password for every account it creates.</p>
+          </div></div></div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">Choose a file</h3>
+          <div class="field">
+            <div><label class="btn" for="p-csv-{sfx}">Choose CSV&hellip;</label></div>
+            <input type="file" id="p-csv-{sfx}" accept=".csv" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+            <div class="hint" style="margin-top:var(--s-sm)">Columns: <code>firstName</code>, <code>lastName</code>, <code>email</code>, and optionally <code>role</code>. A missing role becomes <b>User</b>.</div>
+          </div>
+          <div class="field bad" data-when="error"><span class="msg" id="p-csv-msg-{sfx}">That file has no <code>email</code> column, so no row could be identified. Nothing was imported.</span></div>
+          <div class="note" style="margin:0;font-size:14px"><b>Valid rows are imported even when others fail.</b> A rejected row does not roll the rest back, so a partially bad file still gets you most of the way and the table names what to fix.</div>
+        </div>
+      </div>"""
+
+
 EDITORS = {
     "st": editor_st,
+    "us": lambda sfx, mutable=True: table_editor(US_SPEC, sfx, mutable),
     "it": lambda sfx, mutable=True: table_editor(IT_SPEC, sfx, mutable),
     "fd": lambda sfx, mutable=True: table_editor(FD_SPEC, sfx, mutable),
 }
@@ -776,7 +927,9 @@ COMPS = [
      "screens": [("s-settings", "Hub"), ("s-profile", "Profile"),
                  ("s-statuses", "Statuses"), ("s-org-statuses", "Statuses · org"),
                  ("s-idea-types", "Idea types"), ("s-org-idea-types", "Idea types · org"),
-                 ("s-fields", "Fields"), ("s-org-fields", "Fields · org")]},
+                 ("s-fields", "Fields"), ("s-org-fields", "Fields · org"),
+                 ("s-users", "Users"), ("s-org-users", "Users · org"),
+                 ("s-import", "CSV import"), ("s-org-import", "CSV import · org")]},
     {"file": "comp-p-delivery.html", "area": "Delivery", "frag": "p_delivery.frag",
      "title": "Collega — Comp P: delivery and roadmap",
      "label": "Delivery and roadmap · not yet built",
@@ -804,6 +957,8 @@ def build(comp):
     body = re.sub(r"@@EDITOR:(\w+):(\w+):(rw|ro)@@",
                   lambda m: EDITORS[m.group(1)](f"{m.group(1)}-{m.group(2)}",
                                                 m.group(3) == "rw"), body)
+    body = re.sub(r"@@INVITE:(\w+)@@", lambda m: invite(m.group(1)), body)
+    body = re.sub(r"@@IMPORT:(\w+)@@", lambda m: user_import(m.group(1)), body)
     body = re.sub(r"@@SCOPEBAR:([\w -]+):([\w-]+)@@",
                   lambda m: scope_bar(m.group(1), m.group(2)), body)
     body = re.sub(r"@@GUARD:(ADMIN|SITE):([\w -]+)@@",

@@ -247,3 +247,88 @@
     </div>
   </div>
 </div></section>
+
+<section class="screen" id="s-users" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Users</b></span><span class="spacer"></span>
+      <a class="btn" href="#" data-go="s-import" data-roles="OrgAdmin">Import CSV</a>
+      <button class="btn pri" data-roles="OrgAdmin">Add user</button></div>
+    <div class="work">
+      <div class="pgh" data-roles="SiteAdmin"><div class="grow"><h1>All users</h1>
+        <div class="sub">Every account across every organization. Open a person for their detail and password reset.</div></div></div>
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Users</h1>
+        <div class="sub">Acme Robotics &middot; who can sign in, and what each of them may do.</div></div></div>
+
+      <div class="filters" data-when="normal" data-roles="SiteAdmin OrgAdmin">
+        <div class="fw wide"><label for="p-us-q">Search</label><input type="search" id="p-us-q" placeholder="Search name or email&hellip;"></div>
+        <div class="fw"><label for="p-us-role">Role</label><select id="p-us-role"><option>Any role</option><option>Org Admin</option><option>User</option><option>Read Only</option></select></div>
+        <div class="fw"><label for="p-us-st">Status</label><select id="p-us-st"><option>Any status</option><option>Active</option><option>Inactive</option></select></div>
+      </div>
+
+      @@GUARD:ADMIN:users@@
+
+      @@ROLLUP:us@@
+
+      <div data-roles="OrgAdmin">
+      @@INVITE:own@@
+      @@EDITOR:us:own:rw@@
+      <div class="note"><b>Two ways in, and they are not equivalent.</b> Adding a person here creates the account and shows a generated password once; the invite code lets people create their own account against this organization. Regenerating the code does not affect anyone who already used it.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-users" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-users">All users</a> / <b>Acme Robotics</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
+      <a class="btn" href="#" data-go="s-org-import" data-roles="SiteAdmin">Import CSV</a>
+      <button class="btn pri" data-roles="SiteAdmin">Add user</button></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Users</h1>
+          <div class="sub">Acme Robotics &middot; who can sign in to this organization, and what each of them may do.</div></div></div>
+        @@SCOPEBAR:users:s-users@@
+        @@INVITE:org@@
+        @@EDITOR:us:org:rw@@
+        <div class="note"><b>This is the one org-scoped screen a Site Admin can change.</b> Statuses, idea types and fields are all read-only here &mdash; <code>SPEC/30-Contracts.md</code> refuses a Site Admin any mutation of organization-owned <em>content</em>. User and organization administration are the deliberate exception, because somebody has to be able to reset the password of an Org Admin who has locked themselves out. The server agrees: <code>UserService.AuthorizeOrganizationScopeAsync</code> admits a Site Admin to any organization.</div>
+        <div class="note"><b>So the read-only banner is absent on purpose.</b> A reviewer arriving from Statuses &middot; org will expect one. Its absence is the product rule, not a missed screen.</div>
+      </div>
+      @@GUARD:SITE:users@@
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-import" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-users">Users</a> / <b>Import</b></span><span class="spacer"></span></div>
+    <div class="work">
+      @@GUARD:ADMIN:the user import@@
+      <div data-roles="SiteAdmin OrgAdmin">
+        <div class="pgh"><div class="grow"><h1>Import users</h1>
+          <div class="sub">Create many accounts at once from a CSV. Every new account gets a temporary password and must change it at first sign-in.</div></div></div>
+        @@IMPORT:own@@
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-import" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-users">All users</a> / <a href="#" data-go="s-org-users">Acme Robotics</a> / <b>Import</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Import users</h1>
+          <div class="sub">Acme Robotics &middot; create many accounts at once from a CSV.</div></div></div>
+        @@SCOPEBAR:the user import:s-org-users@@
+        @@IMPORT:org@@
+      </div>
+      @@GUARD:SITE:the user import@@
+    </div>
+  </div>
+</div></section>

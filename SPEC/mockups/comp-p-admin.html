@@ -662,6 +662,15 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
 .panel td .iconbtn{display:inline-grid;width:26px;height:26px;font-size:13px;
   vertical-align:middle;margin-right:2px}
 
+/* ===== a credential shown once — invite code, temporary password ===== */
+.invite{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:14px;letter-spacing:.06em;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-xs);padding:3px 9px}
+
+/* A caution is not a failure. .alert is error-red; role="status" advisories —
+   "copy this now, it is not shown again" — need their own weight. */
+.alert.warn{border-color:#e8d4a8;background:#fdf8ec;color:#6b4e12}
+
 </style>
 </head>
 <body data-role="OrgAdmin">
@@ -675,6 +684,10 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
   <button data-go="s-org-idea-types">Idea types · org</button>
   <button data-go="s-fields">Fields</button>
   <button data-go="s-org-fields">Fields · org</button>
+  <button data-go="s-users">Users</button>
+  <button data-go="s-org-users">Users · org</button>
+  <button data-go="s-import">CSV import</button>
+  <button data-go="s-org-import">CSV import · org</button>
   <span class="lbl" style="margin-left:auto">Other areas</span>
   <a class="xfile" href="comp-p-focus-roadmap.html">Core</a>
   <a class="xfile" href="comp-p-auth.html">Auth</a>
@@ -1654,6 +1667,421 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
         <div class="empty">
           <h3>Site Admins only</h3>
           <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's fields live under <b>Settings</b>.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-users" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Users</b></span><span class="spacer"></span>
+      <a class="btn" href="#" data-go="s-import" data-roles="OrgAdmin">Import CSV</a>
+      <button class="btn pri" data-roles="OrgAdmin">Add user</button></div>
+    <div class="work">
+      <div class="pgh" data-roles="SiteAdmin"><div class="grow"><h1>All users</h1>
+        <div class="sub">Every account across every organization. Open a person for their detail and password reset.</div></div></div>
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Users</h1>
+        <div class="sub">Acme Robotics &middot; who can sign in, and what each of them may do.</div></div></div>
+
+      <div class="filters" data-when="normal" data-roles="SiteAdmin OrgAdmin">
+        <div class="fw wide"><label for="p-us-q">Search</label><input type="search" id="p-us-q" placeholder="Search name or email&hellip;"></div>
+        <div class="fw"><label for="p-us-role">Role</label><select id="p-us-role"><option>Any role</option><option>Org Admin</option><option>User</option><option>Read Only</option></select></div>
+        <div class="fw"><label for="p-us-st">Status</label><select id="p-us-st"><option>Any status</option><option>Active</option><option>Inactive</option></select></div>
+      </div>
+
+      <div data-roles="User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Administrators only</h3>
+          <p>Configuring users is an administrator's job, so this route is closed to members. Nothing here is hidden from you selectively &mdash; the whole page is out of scope for your role.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+
+      <div data-roles="SiteAdmin">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:232px">Email</th><th style="width:116px">Role</th><th style="width:104px">Status</th><th style="width:96px"></th></tr></thead>
+            <tbody>
+              <tr><td><b>Olivia Administer</b></td><td>Acme Robotics</td><td><span class="faint">olivia@acmerobotics.com</span></td><td><span class="tag">Org Admin</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><a class="btn ghost sm2" href="#" data-go="s-org-users">Details</a></td></tr>
+              <tr><td><b>Umar Mensah</b></td><td>Acme Robotics</td><td><span class="faint">umar@acmerobotics.com</span></td><td><span class="tag">User</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><a class="btn ghost sm2" href="#" data-go="s-org-users">Details</a></td></tr>
+              <tr><td><b>Rae Vance</b></td><td>Acme Robotics</td><td><span class="faint">rae@acmerobotics.com</span></td><td><span class="tag">Read Only</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><a class="btn ghost sm2" href="#" data-go="s-org-users">Details</a></td></tr>
+              <tr><td><b>Nils Fabian</b></td><td>Northwind Traders</td><td><span class="faint">nils@northwind.example</span></td><td><span class="tag">Org Admin</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><a class="btn ghost sm2" href="#" data-go="s-org-users">Details</a></td></tr>
+              <tr><td><b>Priya Raman</b></td><td>Northwind Traders</td><td><span class="faint">priya@northwind.example</span></td><td><span class="tag">User</span></td><td><span class="marker"><span class="dot" style="background:var(--ink-faint)"></span>Inactive</span></td><td><a class="btn ghost sm2" href="#" data-go="s-org-users">Details</a></td></tr>
+              <tr><td><b>Dr Chen Wei</b></td><td>Contoso Health</td><td><span class="faint">chen@contosohealth.example</span></td><td><span class="tag">Org Admin</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><a class="btn ghost sm2" href="#" data-go="s-org-users">Details</a></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>6 users across 3 organizations.</span></div>
+
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Name</th><th style="width:212px">Organization</th><th style="width:232px">Email</th><th style="width:116px">Role</th><th style="width:104px">Status</th><th style="width:96px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td><span class="skel w40"></span></td><td></td></tr>
+            </tbody>
+          </table>
+
+          <div data-when="empty" style="padding:var(--s-lg)">
+            <div class="empty"><h3>No users anywhere yet</h3>
+              <p>No organization has configured users. Open an organization to set its users up &mdash; they cannot be created from this cross-organization view.</p>
+              <a class="btn" href="#" data-go="s-orgs">Go to Organizations</a></div>
+          </div>
+
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load users.</b> This view queries every organization in turn, so a single organization failing empties the whole list. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="note"><b>A cross-organization view is read-only on purpose.</b> A user belongs to one organization, so there is nothing coherent for a create button here to create. <b>Details</b> carries you into the organization-scoped screen, which is where every change is made.</div>
+      </div>
+
+      <div data-roles="OrgAdmin">
+      <div class="card" style="margin-bottom:var(--s-md)">
+        <h3 style="font-size:16px;font-weight:600;margin:0 0 4px">Invite code</h3>
+        <p class="sub" style="margin:0 0 var(--s-sm)">Share this so new members can register themselves into this organization. Regenerating it invalidates the old one immediately.</p>
+        <div style="display:flex;align-items:center;gap:var(--s-sm);flex-wrap:wrap">
+          <code class="invite" id="p-invite-own">ACME-7Q2F-K488</code>
+          <button class="btn">Regenerate</button>
+        </div>
+      </div>
+      <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Name</th><th style="width:264px">Email</th><th style="width:116px">Role</th><th style="width:116px">Status</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><b>Olivia Administer</b></td><td class="faint">olivia@acmerobotics.com</td><td><span class="tag">Org Admin</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+              <tr><td><b>Umar Mensah</b></td><td class="faint">umar@acmerobotics.com</td><td><span class="tag">User</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+              <tr><td><b>Rae Vance</b></td><td class="faint">rae@acmerobotics.com</td><td><span class="tag">Read Only</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+              <tr><td><b>Tomas Beck</b></td><td class="faint">tomas@acmerobotics.com</td><td><span class="tag">User</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+              <tr><td><b>Jae-won Park</b></td><td class="faint">jaewon@acmerobotics.com</td><td><span class="tag">User</span></td><td><span class="marker"><span class="dot" style="background:var(--ink-faint)"></span>Inactive</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>Selecting a row opens the docked inspector, which reads first and edits on request &mdash; including the one-time temporary password.</span></div>
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Name</th><th style="width:264px">Email</th><th style="width:116px">Role</th><th style="width:116px">Status</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+            </tbody>
+          </table>
+          <div data-when="empty" style="padding:var(--s-lg)"><div class="empty">
+              <h3>No users yet</h3>
+              <p>You are the only account in this organization. Add people directly, or share the invite code above so they can register themselves.</p>
+              <button class="btn pri">Add the first user</button>
+          </div></div>
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load users.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">Add user</h3>
+          <form>
+            <div class="field"><label for="p-ufirst-us-own">First name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-ufirst-us-own" required></div>
+            <div class="field"><label for="p-ulast-us-own">Last name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-ulast-us-own" required></div>
+            <div class="field" data-when="normal empty loading"><label for="p-umail-us-own">Email <span class="req" aria-hidden="true">*</span></label><input type="email" id="p-umail-us-own" required><div class="hint">Their sign-in name. It cannot be changed later by the user themselves.</div></div>
+            <div class="field bad" data-when="error"><label for="p-umail2-us-own">Email <span class="req" aria-hidden="true">*</span></label><input type="email" id="p-umail2-us-own" value="umar@acmerobotics.com" aria-describedby="p-umail2-msg-us-own" aria-invalid="true"><span class="msg" id="p-umail2-msg-us-own">That email already belongs to an account. Email addresses are unique across Collega, not just within an organization.</span></div>
+            <div class="field"><label for="p-urole-us-own">Role</label><select id="p-urole-us-own"><option>User</option><option>Org Admin</option><option>Read Only</option></select></div>
+            <div class="note" style="margin:0 0 var(--s-md);font-size:14px">They get a generated password and must change it at first sign-in. It is shown once, here, after you create them.</div>
+            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Create user</button>
+          </form>
+        </div>
+      </div>
+      <div class="note"><b>Two ways in, and they are not equivalent.</b> Adding a person here creates the account and shows a generated password once; the invite code lets people create their own account against this organization. Regenerating the code does not affect anyone who already used it.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-users" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-users">All users</a> / <b>Acme Robotics</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span>
+      <a class="btn" href="#" data-go="s-org-import" data-roles="SiteAdmin">Import CSV</a>
+      <button class="btn pri" data-roles="SiteAdmin">Add user</button></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Users</h1>
+          <div class="sub">Acme Robotics &middot; who can sign in to this organization, and what each of them may do.</div></div></div>
+        <div class="note" style="border-left-color:var(--secondary)"><b>Viewing Acme Robotics.</b> You reached these users from the cross-organization list, so everything below belongs to Acme Robotics and to no other organization. <a href="#" data-go="s-users">Back to all users</a>.</div>
+        <div class="card" style="margin-bottom:var(--s-md)">
+        <h3 style="font-size:16px;font-weight:600;margin:0 0 4px">Invite code</h3>
+        <p class="sub" style="margin:0 0 var(--s-sm)">Share this so new members can register themselves into this organization. Regenerating it invalidates the old one immediately.</p>
+        <div style="display:flex;align-items:center;gap:var(--s-sm);flex-wrap:wrap">
+          <code class="invite" id="p-invite-org">ACME-7Q2F-K488</code>
+          <button class="btn">Regenerate</button>
+        </div>
+      </div>
+        <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div class="panel">
+          <table data-when="normal">
+            <thead><tr><th>Name</th><th style="width:264px">Email</th><th style="width:116px">Role</th><th style="width:116px">Status</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><b>Olivia Administer</b></td><td class="faint">olivia@acmerobotics.com</td><td><span class="tag">Org Admin</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+              <tr><td><b>Umar Mensah</b></td><td class="faint">umar@acmerobotics.com</td><td><span class="tag">User</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+              <tr><td><b>Rae Vance</b></td><td class="faint">rae@acmerobotics.com</td><td><span class="tag">Read Only</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+              <tr><td><b>Tomas Beck</b></td><td class="faint">tomas@acmerobotics.com</td><td><span class="tag">User</span></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Active</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+              <tr><td><b>Jae-won Park</b></td><td class="faint">jaewon@acmerobotics.com</td><td><span class="tag">User</span></td><td><span class="marker"><span class="dot" style="background:var(--ink-faint)"></span>Inactive</span></td><td><button class="btn ghost sm2">Details</button></td></tr>
+            </tbody>
+          </table>
+          <div class="pgfoot" data-when="normal"><span>Selecting a row opens the docked inspector, which reads first and edits on request &mdash; including the one-time temporary password.</span></div>
+          <table data-when="loading" aria-busy="true">
+            <thead><tr><th>Name</th><th style="width:264px">Email</th><th style="width:116px">Role</th><th style="width:116px">Status</th><th style="width:66px"></th></tr></thead>
+            <tbody>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+              <tr><td><span class="skel w60"></span></td><td><span class="skel w80"></span></td><td><span class="skel w40"></span></td><td><span class="skel w60"></span></td><td></td></tr>
+            </tbody>
+          </table>
+          <div data-when="empty" style="padding:var(--s-lg)"><div class="empty">
+              <h3>No users yet</h3>
+              <p>You are the only account in this organization. Add people directly, or share the invite code above so they can register themselves.</p>
+              <button class="btn pri">Add the first user</button>
+          </div></div>
+          <div data-when="error" style="padding:var(--s-lg)">
+            <div class="alert" role="alert"><span><b>Couldn&rsquo;t load users.</b> The request failed before anything was returned, so nothing here is out of date &mdash; it is simply absent. Retrying is safe.</span></div>
+            <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div>
+          </div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">Add user</h3>
+          <form>
+            <div class="field"><label for="p-ufirst-us-org">First name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-ufirst-us-org" required></div>
+            <div class="field"><label for="p-ulast-us-org">Last name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-ulast-us-org" required></div>
+            <div class="field" data-when="normal empty loading"><label for="p-umail-us-org">Email <span class="req" aria-hidden="true">*</span></label><input type="email" id="p-umail-us-org" required><div class="hint">Their sign-in name. It cannot be changed later by the user themselves.</div></div>
+            <div class="field bad" data-when="error"><label for="p-umail2-us-org">Email <span class="req" aria-hidden="true">*</span></label><input type="email" id="p-umail2-us-org" value="umar@acmerobotics.com" aria-describedby="p-umail2-msg-us-org" aria-invalid="true"><span class="msg" id="p-umail2-msg-us-org">That email already belongs to an account. Email addresses are unique across Collega, not just within an organization.</span></div>
+            <div class="field"><label for="p-urole-us-org">Role</label><select id="p-urole-us-org"><option>User</option><option>Org Admin</option><option>Read Only</option></select></div>
+            <div class="note" style="margin:0 0 var(--s-md);font-size:14px">They get a generated password and must change it at first sign-in. It is shown once, here, after you create them.</div>
+            <button type="submit" class="btn pri" style="width:100%;justify-content:center">Create user</button>
+          </form>
+        </div>
+      </div>
+        <div class="note"><b>This is the one org-scoped screen a Site Admin can change.</b> Statuses, idea types and fields are all read-only here &mdash; <code>SPEC/30-Contracts.md</code> refuses a Site Admin any mutation of organization-owned <em>content</em>. User and organization administration are the deliberate exception, because somebody has to be able to reset the password of an Org Admin who has locked themselves out. The server agrees: <code>UserService.AuthorizeOrganizationScopeAsync</code> admits a Site Admin to any organization.</div>
+        <div class="note"><b>So the read-only banner is absent on purpose.</b> A reviewer arriving from Statuses &middot; org will expect one. Its absence is the product rule, not a missed screen.</div>
+      </div>
+      <div data-roles="OrgAdmin User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Site Admins only</h3>
+          <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's users live under <b>Settings</b>.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-import" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-users">Users</a> / <b>Import</b></span><span class="spacer"></span></div>
+    <div class="work">
+      <div data-roles="User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Administrators only</h3>
+          <p>Configuring the user import is an administrator's job, so this route is closed to members. Nothing here is hidden from you selectively &mdash; the whole page is out of scope for your role.</p>
+          <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
+        </div>
+      </div>
+      <div data-roles="SiteAdmin OrgAdmin">
+        <div class="pgh"><div class="grow"><h1>Import users</h1>
+          <div class="sub">Create many accounts at once from a CSV. Every new account gets a temporary password and must change it at first sign-in.</div></div></div>
+        <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div>
+          <div class="panel" data-when="normal error">
+            <div class="in">
+              <h3 style="font-size:16px;font-weight:600;margin:0 0 var(--s-sm)">Last import &mdash; 12 March, 09:41</h3>
+              <div class="tagrow" style="margin-bottom:var(--s-md)">
+                <span class="tag">3 created</span><span class="tag">2 rejected</span></div>
+              <table>
+                <thead><tr><th style="width:64px">Row</th><th>Email</th><th style="width:132px">Outcome</th><th style="width:264px">Temporary password / reason</th></tr></thead>
+                <tbody>
+              <tr><td class="num">2</td><td class="faint">tomas@acmerobotics.com</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Created</span></td><td><code class="invite">Xq7-4mVt-92</code></td></tr>
+              <tr><td class="num">3</td><td class="faint">jaewon@acmerobotics.com</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Created</span></td><td><code class="invite">Bn3-9wKp-51</code></td></tr>
+              <tr><td class="num">4</td><td class="faint">umar@acmerobotics.com</td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Rejected</span></td><td class="faint">Already has an account.</td></tr>
+              <tr><td class="num">5</td><td class="faint">not-an-address</td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Rejected</span></td><td class="faint">Not a valid email address.</td></tr>
+              <tr><td class="num">6</td><td class="faint">dana@acmerobotics.com</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Created</span></td><td><code class="invite">Rk8-2hLm-77</code></td></tr>
+                </tbody>
+              </table>
+              <div class="alert warn" role="status" style="margin-top:var(--s-md)"><span><b>Copy the temporary passwords now.</b> They are generated once and never shown again &mdash; a person whose password is lost here needs a fresh reset from their row on the users screen.</span></div>
+            </div>
+          </div>
+          <div class="panel" data-when="loading" aria-busy="true"><div class="in">
+            <span class="skel w40"></span><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span>
+          </div></div>
+          <div class="panel" data-when="empty"><div class="in"><div class="empty">
+            <h3>Nothing imported yet</h3>
+            <p>Choose a CSV to see each row&rsquo;s outcome here, with the temporary password for every account it creates.</p>
+          </div></div></div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">Choose a file</h3>
+          <div class="field">
+            <div><label class="btn" for="p-csv-own">Choose CSV&hellip;</label></div>
+            <input type="file" id="p-csv-own" accept=".csv" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+            <div class="hint" style="margin-top:var(--s-sm)">Columns: <code>firstName</code>, <code>lastName</code>, <code>email</code>, and optionally <code>role</code>. A missing role becomes <b>User</b>.</div>
+          </div>
+          <div class="field bad" data-when="error"><span class="msg" id="p-csv-msg-own">That file has no <code>email</code> column, so no row could be identified. Nothing was imported.</span></div>
+          <div class="note" style="margin:0;font-size:14px"><b>Valid rows are imported even when others fail.</b> A rejected row does not roll the rest back, so a partially bad file still gets you most of the way and the table names what to fix.</div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-import" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-issue"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">16</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page" data-go="s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" data-roles="SiteAdmin"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-users">All users</a> / <a href="#" data-go="s-org-users">Acme Robotics</a> / <b>Import</b></span>
+      <span class="crumb" data-roles="OrgAdmin User ReadOnly"><a href="#" data-go="s-settings">Settings</a> / <b>Not available</b></span><span class="spacer"></span></div>
+    <div class="work">
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Import users</h1>
+          <div class="sub">Acme Robotics &middot; create many accounts at once from a CSV.</div></div></div>
+        <div class="note" style="border-left-color:var(--secondary)"><b>Viewing Acme Robotics.</b> You reached these the user import from the cross-organization list, so everything below belongs to Acme Robotics and to no other organization. <a href="#" data-go="s-org-users">Back to all the user import</a>.</div>
+        <div class="cols" style="grid-template-columns:minmax(0,1fr) auto">
+        <div>
+          <div class="panel" data-when="normal error">
+            <div class="in">
+              <h3 style="font-size:16px;font-weight:600;margin:0 0 var(--s-sm)">Last import &mdash; 12 March, 09:41</h3>
+              <div class="tagrow" style="margin-bottom:var(--s-md)">
+                <span class="tag">3 created</span><span class="tag">2 rejected</span></div>
+              <table>
+                <thead><tr><th style="width:64px">Row</th><th>Email</th><th style="width:132px">Outcome</th><th style="width:264px">Temporary password / reason</th></tr></thead>
+                <tbody>
+              <tr><td class="num">2</td><td class="faint">tomas@acmerobotics.com</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Created</span></td><td><code class="invite">Xq7-4mVt-92</code></td></tr>
+              <tr><td class="num">3</td><td class="faint">jaewon@acmerobotics.com</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Created</span></td><td><code class="invite">Bn3-9wKp-51</code></td></tr>
+              <tr><td class="num">4</td><td class="faint">umar@acmerobotics.com</td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Rejected</span></td><td class="faint">Already has an account.</td></tr>
+              <tr><td class="num">5</td><td class="faint">not-an-address</td><td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Rejected</span></td><td class="faint">Not a valid email address.</td></tr>
+              <tr><td class="num">6</td><td class="faint">dana@acmerobotics.com</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Created</span></td><td><code class="invite">Rk8-2hLm-77</code></td></tr>
+                </tbody>
+              </table>
+              <div class="alert warn" role="status" style="margin-top:var(--s-md)"><span><b>Copy the temporary passwords now.</b> They are generated once and never shown again &mdash; a person whose password is lost here needs a fresh reset from their row on the users screen.</span></div>
+            </div>
+          </div>
+          <div class="panel" data-when="loading" aria-busy="true"><div class="in">
+            <span class="skel w40"></span><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span>
+          </div></div>
+          <div class="panel" data-when="empty"><div class="in"><div class="empty">
+            <h3>Nothing imported yet</h3>
+            <p>Choose a CSV to see each row&rsquo;s outcome here, with the temporary password for every account it creates.</p>
+          </div></div></div>
+        </div>
+        <div class="card" style="width:356px">
+          <h3 style="font-size:20px;font-weight:600;letter-spacing:-.125px;margin:0 0 var(--s-md)">Choose a file</h3>
+          <div class="field">
+            <div><label class="btn" for="p-csv-org">Choose CSV&hellip;</label></div>
+            <input type="file" id="p-csv-org" accept=".csv" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+            <div class="hint" style="margin-top:var(--s-sm)">Columns: <code>firstName</code>, <code>lastName</code>, <code>email</code>, and optionally <code>role</code>. A missing role becomes <b>User</b>.</div>
+          </div>
+          <div class="field bad" data-when="error"><span class="msg" id="p-csv-msg-org">That file has no <code>email</code> column, so no row could be identified. Nothing was imported.</span></div>
+          <div class="note" style="margin:0;font-size:14px"><b>Valid rows are imported even when others fail.</b> A rejected row does not roll the rest back, so a partially bad file still gets you most of the way and the table names what to fix.</div>
+        </div>
+      </div>
+      </div>
+      <div data-roles="OrgAdmin User ReadOnly">
+        <div class="pgh"><div class="grow"><h1>Not available</h1>
+          <div class="sub">This route is closed to your role.</div></div></div>
+        <div class="empty">
+          <h3>Site Admins only</h3>
+          <p>The organization-scoped route exists so a Site Admin can inspect an organization they do not belong to. Your own organization's the user import live under <b>Settings</b>.</p>
           <a class="btn" href="#" data-go="s-settings">Back to Settings</a>
         </div>
       </div>
