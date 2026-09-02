@@ -405,3 +405,31 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
 .lane .iconbtn{width:26px;height:26px;font-size:13px}
 .lane [aria-disabled="true"]{opacity:.4}
 @media (max-width:1180px){.lanes{grid-template-columns:1fr}}
+
+/* ===== organization detail, AI settings, usage meter =====
+   The danger zone is separated by a rule and a warm ground rather than by red
+   text: the destructive control is the only red thing, so it stays the most
+   salient element in the block instead of competing with its own heading. */
+.dz{margin-top:var(--s-lg);padding-top:var(--s-md);border-top:1px solid var(--hairline)}
+.btn.warn{border-color:#e0b4b4;color:#8a2a20;background:#fdf6f6}
+.btn.warn:hover{border-color:#c0392b;background:#fbeaea}
+/* Visually hidden but focusable — a file input styled as its own label still
+   has to be reachable by keyboard, so it is offset, not display:none. */
+.vh{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.meter{height:10px;border-radius:var(--r-full);background:var(--canvas-soft);
+  border:1px solid var(--hairline);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--primary)}
+.meter.warn i{background:var(--orange)}
+.meter.over i{background:#c0392b}
+/* A row's actions are a flex group, not a run of inline text. Most rows hold
+   one button; an organization row holds four, and they wrap to a tidy 2x2
+   rather than overflowing the cell and clipping the last one. */
+.acts{display:flex;flex-wrap:wrap;gap:2px;align-items:center}
+.panel td.act{vertical-align:middle}
+.invite{white-space:nowrap}
+/* Figures tables right-align their numeric columns so magnitudes line up, and
+   set the totals row off with a rule and a ground. Scoped to .figures rather
+   than to .num, which is also used inline (sidebar counts) and on date cells
+   in the locked core file, where right-alignment is not wanted. */
+.panel.figures th.num,.panel.figures td.num{text-align:right}
+.panel.figures tfoot td{border-top:2px solid var(--hairline);background:var(--canvas-soft)}

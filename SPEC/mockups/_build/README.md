@@ -26,8 +26,8 @@ reviewer trust that a comp matches its sources.
 |---|---|
 | `tokens.css` | The `DESIGN.md` token layer — colour, type scale, radii, spacing. Shared by every comp. |
 | `extra.css` | Component and layout CSS built on those tokens. |
-| `build_p.py` | Assembles comp P. Substitutes `@@DESK:<screen>@@` with the generated sidebar, inlines the CSS, appends the screen-switching script. |
-| `p_focus.frag` | Comp P's screen markup — all ten screens. |
+| `build_p.py` | Assembles comp P. Substitutes the `@@…@@` tokens below, inlines the CSS, appends the screen-switching script. |
+| `p_core.frag`, `p_auth.frag`, `p_admin.frag`, `p_delivery.frag` | Comp P's screen markup, one fragment per output file. |
 | `build.py` | Assembles the three comp O files from the fragments below. |
 | `o1_board.frag`, `o2_idea.frag`, `o3_delivery.frag` | Comp O screen markup. |
 
@@ -69,6 +69,31 @@ Four files, built from one manifest at the bottom of `build_p.py`:
 Add a screen by adding a `<section class="screen" id="s-...">` to the right fragment and
 an entry to that comp's `screens` list. The builder owns which screen opens first, so a
 fragment never sets `data-on` itself.
+
+## Generators
+
+A fragment is mostly page chrome. Anything repeated across screens is a `@@TOKEN@@` that
+`build()` expands from a Python function, so the two or more places it appears cannot
+drift apart. That matters most for the eight org-scoped Site Admin mirrors: each is the
+same component as its own-org twin with `mutable=False`, generated once and instantiated
+twice rather than copied.
+
+| Token | Expands to |
+|---|---|
+| `@@DESK:<key>@@` | The sidebar, with `<key>` marked `aria-current="page"` |
+| `@@PROFILE@@` | The profile form |
+| `@@ROLLUP:<key>@@` | A Site Admin cross-organization list — read-only by construction |
+| `@@EDITOR:<entity>:<sfx>:rw\|ro@@` | A List + panel admin screen. `ro` is the Site Admin variant |
+| `@@SCOPEBAR:<entity>:<back>@@` | The "you are viewing Acme Robotics" banner |
+| `@@GUARD:ADMIN\|SITE\|REFUSED:<entity>[:<back>]@@` | The refusal a role sees instead of the page |
+| `@@INVITE:<sfx>@@`, `@@IMPORT:<sfx>@@` | Invite-code panel, CSV import screen |
+| `@@BOARDFORM:<sfx>:new\|edit@@` | The two-column swimlane picker |
+| `@@AIASSIST@@`, `@@AIPROMPT@@`, `@@USAGE@@` | The three AI/usage screens |
+
+**Suffixes must be unique per file.** Every generator mints ids from its `sfx`, so two
+instances sharing one suffix silently produce duplicate `id`s, and each control's
+`aria-describedby` then resolves to whichever screen the browser saw first. `@@EDITOR@@`
+guards against this by prefixing the entity key itself; the rest rely on the caller.
 
 ## Shared mechanisms
 
@@ -126,6 +151,12 @@ shippable when it is not.
   everything to the next `}`, so a whole rule vanishes while the file still reads fine.
   That cost a browser session to find once; the assertion exists so it cannot recur.
 - Every `@@TOKEN@@` was substituted.
+- Every `var(--custom-property)` used in a stylesheet or a fragment is actually defined.
+  A leftover token from a retired comp renders the element unstyled and nothing complains;
+  this caught two.
+- Any `data-go` target that no comp defines is reported as *not built yet*, so a screen
+  linking to a route nobody has written is visible in the build output rather than as a
+  dead click.
 
 ## Checks the build cannot run for you
 

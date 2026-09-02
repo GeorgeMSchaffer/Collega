@@ -441,3 +441,94 @@
     </div>
   </div>
 </div></section>
+
+<section class="screen" id="s-orgs" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>Organizations</b></span><span class="spacer"></span></div>
+    <div class="work">
+      @@GUARD:SITE:organizations@@
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Organizations</h1>
+          <div class="sub">Manage organizations across the platform.</div></div></div>
+
+        <div class="filters" data-when="normal">
+          <div class="fw wide"><label for="p-or-q">Search</label><input type="search" id="p-or-q" placeholder="Search organizations&hellip;"></div>
+          <div class="fw"><label for="p-or-st">Status</label><select id="p-or-st"><option>Active only</option><option>Active and archived</option><option>Archived only</option></select></div>
+        </div>
+
+        @@EDITOR:or:list:rw@@
+
+        <div class="note"><b>This is the one page a Site Admin can change.</b> Every other organization-scoped settings screen refuses them, because the content belongs to the organization. Organizations themselves belong to the platform, and someone has to be able to create the first one &mdash; so this page, user administration, and the AI prompt are the three exceptions.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-org-detail" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <a href="#" data-go="s-orgs">Organizations</a> / <b>Acme Robotics</b></span><span class="spacer"></span></div>
+    <div class="work">
+      @@GUARD:SITE:organizations@@
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>Organizations</h1>
+          <div class="sub">Manage organizations across the platform.</div></div></div>
+
+        <div class="filters" data-when="normal">
+          <div class="fw wide"><label for="p-od-q">Search</label><input type="search" id="p-od-q" placeholder="Search organizations&hellip;"></div>
+          <div class="fw"><label for="p-od-st">Status</label><select id="p-od-st"><option>Active only</option><option>Active and archived</option><option>Archived only</option></select></div>
+        </div>
+
+        @@EDITOR:od:detail:rw@@
+
+        <div class="note"><b>The same list, with one organization open.</b> <code>/settings/organizations/{id}</code> is not a second page &mdash; <code>Settings.razor</code> renders the identical list and opens a panel over it, which is why the list above is still live and still filterable. The panel is docked rather than overlaid, per the locked direction, so nothing is covered and there is no focus trap.</div>
+        <div class="note" style="border-left-color:var(--orange)"><b>One deviation: the scoped jumps moved into the panel.</b> <code>Settings.razor</code> puts Users, Statuses and Fields in every row, which works beside a drawer that covers the table. Beside a docked panel the table is 700px narrower and four controls per row either clip or stack four deep &mdash; both measured, neither acceptable. The panel is the better home for them anyway: it names the organization the jump applies to, and it can carry all five scoped pages rather than the three that fit in a row.</div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-ai-assist" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>AI Assist</b></span><span class="spacer"></span></div>
+    <div class="work">
+      @@GUARD:ADMIN:the assistant settings@@
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>AI Assist</h1>
+        <div class="sub">Tell the assistant what Acme Robotics wants ideas about, so it can stay on subject.</div></div></div>
+      @@AIASSIST@@
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-ai-prompt" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>AI Prompt</b></span><span class="spacer"></span>
+      <span class="tag" data-roles="SiteAdmin">Affects every organization</span></div>
+    <div class="work">
+      @@GUARD:SITE:the assistant instructions@@
+      <div data-roles="SiteAdmin">
+        <div class="pgh"><div class="grow"><h1>AI Prompt</h1>
+          <div class="sub">The instructions every organization&rsquo;s assistant runs under, with safety probes and version history.</div></div></div>
+        @@AIPROMPT@@
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section class="screen" id="s-api" data-on="0"><div class="shell">
+@@DESK:settings@@
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-settings">Settings</a> / <b>API</b></span><span class="spacer"></span>
+      <span class="tag">Read-only</span></div>
+    <div class="work">
+      @@GUARD:ADMIN:API usage@@
+      <div class="pgh" data-roles="SiteAdmin OrgAdmin"><div class="grow"><h1>API usage</h1>
+        <div class="sub">AI assist token consumption and estimated cost for today.</div></div></div>
+      @@USAGE@@
+      <div class="note" data-roles="SiteAdmin OrgAdmin"><b>A meter, not a management surface.</b> There is nothing to change here and no per-organization limit to set &mdash; the page exists to answer &ldquo;how much are we using, and is it about to stop?&rdquo; That is why it carries no denied controls: an absent action needs no explanation.</div>
+    </div>
+  </div>
+</div></section>
