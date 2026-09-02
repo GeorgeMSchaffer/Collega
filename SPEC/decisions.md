@@ -181,6 +181,27 @@ Three costs decided it:
 
 ---
 
+## 2026-09-02 — The board is a scrolling rail of fixed-width columns
+
+**Decided:** board swimlanes render as **288px columns in a horizontally scrolling
+rail**, each with its own ground, rather than as N equal fractions of the work column.
+
+**Why:** a board's swimlanes are chosen per board from the organization's statuses, with
+no upper bound. Dividing the available width means every status anyone adds makes every
+existing column narrower — at five lanes the titles already wrapped to two lines, and the
+failure is unbounded. A fixed column degrades by scrolling instead, which costs a gesture
+rather than legibility. Trello and Jira both took this trade.
+
+**Constraint that comes with it:** the *rail* scrolls, never the page. Verified at 1280px
+and 1440px.
+
+**Not a supersession.** The 2026-08-31 comp P lock enumerates what "structure" covers —
+the desk shell, the docked inspector, inline create, Home's question, the two voices, the
+dot-plus-label marker. Column arrangement inside the board is not in that list, so this
+refines the locked direction rather than reversing part of it.
+
+---
+
 ## Earlier decisions
 
 Decisions made before this log existed are recorded in the documents they constrain —

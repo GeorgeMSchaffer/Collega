@@ -176,22 +176,39 @@ tbody td{padding:var(--s-sm) var(--s-md);border-bottom:1px solid var(--hairline)
 tbody tr:last-child td{border-bottom:0}
 tbody tr:hover{background:var(--canvas-soft)}
 
-/* ============ board ============ */
+/* ============ board ============
+   Fixed-width columns in a horizontally scrolling rail — the Trello / Jira
+   arrangement — rather than N equal fractions of the work column.
+
+   Equal fractions look fine at five lanes and fail at eight. A board's
+   swimlanes are org-configured with no upper bound, so dividing the available
+   width means every status anyone adds makes every existing column narrower,
+   until the titles wrap to four lines. A fixed column degrades by scrolling
+   instead, which costs a gesture rather than legibility. Trello and Jira both
+   made this trade; the column width here (288px) sits between theirs.
+
+   The rail scrolls, never the page. */
 .cmdbar{display:flex;gap:var(--s-xs);align-items:center;margin-bottom:var(--s-md);flex-wrap:wrap}
-.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--s-md);align-items:start}
-.lane{min-width:0}
-.lanehd{display:flex;align-items:center;gap:var(--s-xs);padding:0 var(--s-xxs) 10px}
+.lanes{display:flex;gap:var(--s-sm);align-items:flex-start;overflow-x:auto;
+  overscroll-behavior-x:contain;padding-bottom:var(--s-sm)}
+/* The column is a container, not just a stack — it carries a ground so the
+   drop target has a visible edge, which a bare column of floating cards does
+   not. Cards keep the white surface, so they still read as objects on it. */
+.lane{flex:0 0 288px;min-width:0;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-lg);padding:var(--s-xs)}
+.lanehd{display:flex;align-items:center;gap:var(--s-xs);padding:6px var(--s-xs) 10px}
 .lanehd .t{font-size:15px;font-weight:600;line-height:1.33;letter-spacing:-.1px}
 .lanehd .ct{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-faint)}
-.kcard{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);
-  padding:var(--s-md);margin-bottom:var(--s-xs);cursor:grab}
+.kcard{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-md);
+  padding:10px var(--s-sm);margin-bottom:6px;cursor:grab}
 .kcard:hover{box-shadow:var(--e1)}
 .kcard .t{font-size:15px;font-weight:600;line-height:1.33;letter-spacing:-.1px;display:block;
-  margin-bottom:6px}
+  margin-bottom:8px}
 .kcard .d{font-size:14px;line-height:1.43;color:var(--ink-muted);margin:0 0 10px}
 .kcard .ft{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.emptylane{border:1px dashed var(--hairline);border-radius:var(--r-lg);padding:var(--s-md);
-  font-size:14px;line-height:1.43;color:var(--ink-faint);text-align:center}
+.emptylane{border:1px dashed var(--hairline);border-radius:var(--r-md);
+  padding:var(--s-sm) var(--s-md);font-size:14px;line-height:1.43;
+  color:var(--ink-faint);text-align:center;margin-bottom:6px}
 .up{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-full);
   padding:2px 10px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-secondary);
   cursor:pointer;margin-left:auto}
@@ -477,7 +494,11 @@ tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
 /* board card footer: two fixed rows, not one wrapping row. With a single
    flex-wrap row the long idea-type name pushes the upvote onto a third line
    on some cards and not others, and lane heights go ragged. */
-.kcard .ft+.ft{margin-top:6px}
+.kcard .ft+.ft{margin-top:4px}
+/* The add control belongs to the column's ground, not to the cards above it,
+   so it drops the card surface and sits flush in the container. */
+.lane>.btn{width:100%;justify-content:center;color:var(--ink-muted)}
+.lane>.btn:hover{background:var(--surface);color:var(--ink)}
 
 /* ============================================================
    Home copy layer. Two voices, kept apart on purpose:
@@ -698,9 +719,12 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
 .dz{margin-top:var(--s-lg);padding-top:var(--s-md);border-top:1px solid var(--hairline)}
 .btn.warn{border-color:#e0b4b4;color:#8a2a20;background:#fdf6f6}
 .btn.warn:hover{border-color:#c0392b;background:#fbeaea}
-/* Visually hidden but focusable — a file input styled as its own label still
-   has to be reachable by keyboard, so it is offset, not display:none. */
-.vh{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+/* Visually hidden, still in the accessibility tree. Used for a file input
+   styled as its own label, and for reasons that only a non-sighted user needs
+   spelled out. Clipped rather than display:none, which would remove it from
+   the tree and break the aria-describedby pointing at it. */
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap;border:0}
 .meter{height:10px;border-radius:var(--r-full);background:var(--canvas-soft);
   border:1px solid var(--hairline);overflow:hidden}
 .meter i{display:block;height:100%;background:var(--primary)}

@@ -166,22 +166,39 @@ tbody td{padding:var(--s-sm) var(--s-md);border-bottom:1px solid var(--hairline)
 tbody tr:last-child td{border-bottom:0}
 tbody tr:hover{background:var(--canvas-soft)}
 
-/* ============ board ============ */
+/* ============ board ============
+   Fixed-width columns in a horizontally scrolling rail — the Trello / Jira
+   arrangement — rather than N equal fractions of the work column.
+
+   Equal fractions look fine at five lanes and fail at eight. A board's
+   swimlanes are org-configured with no upper bound, so dividing the available
+   width means every status anyone adds makes every existing column narrower,
+   until the titles wrap to four lines. A fixed column degrades by scrolling
+   instead, which costs a gesture rather than legibility. Trello and Jira both
+   made this trade; the column width here (288px) sits between theirs.
+
+   The rail scrolls, never the page. */
 .cmdbar{display:flex;gap:var(--s-xs);align-items:center;margin-bottom:var(--s-md);flex-wrap:wrap}
-.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--s-md);align-items:start}
-.lane{min-width:0}
-.lanehd{display:flex;align-items:center;gap:var(--s-xs);padding:0 var(--s-xxs) 10px}
+.lanes{display:flex;gap:var(--s-sm);align-items:flex-start;overflow-x:auto;
+  overscroll-behavior-x:contain;padding-bottom:var(--s-sm)}
+/* The column is a container, not just a stack — it carries a ground so the
+   drop target has a visible edge, which a bare column of floating cards does
+   not. Cards keep the white surface, so they still read as objects on it. */
+.lane{flex:0 0 288px;min-width:0;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-lg);padding:var(--s-xs)}
+.lanehd{display:flex;align-items:center;gap:var(--s-xs);padding:6px var(--s-xs) 10px}
 .lanehd .t{font-size:15px;font-weight:600;line-height:1.33;letter-spacing:-.1px}
 .lanehd .ct{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-faint)}
-.kcard{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);
-  padding:var(--s-md);margin-bottom:var(--s-xs);cursor:grab}
+.kcard{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-md);
+  padding:10px var(--s-sm);margin-bottom:6px;cursor:grab}
 .kcard:hover{box-shadow:var(--e1)}
 .kcard .t{font-size:15px;font-weight:600;line-height:1.33;letter-spacing:-.1px;display:block;
-  margin-bottom:6px}
+  margin-bottom:8px}
 .kcard .d{font-size:14px;line-height:1.43;color:var(--ink-muted);margin:0 0 10px}
 .kcard .ft{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.emptylane{border:1px dashed var(--hairline);border-radius:var(--r-lg);padding:var(--s-md);
-  font-size:14px;line-height:1.43;color:var(--ink-faint);text-align:center}
+.emptylane{border:1px dashed var(--hairline);border-radius:var(--r-md);
+  padding:var(--s-sm) var(--s-md);font-size:14px;line-height:1.43;
+  color:var(--ink-faint);text-align:center;margin-bottom:6px}
 .up{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-full);
   padding:2px 10px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-secondary);
   cursor:pointer;margin-left:auto}

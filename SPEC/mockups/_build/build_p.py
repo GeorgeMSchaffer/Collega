@@ -796,8 +796,11 @@ def board_form(sfx, is_new=True):
     floor_note = (f'<span class="denied" id="p-floor-{sfx}">A board needs at least two '
                   f'swimlanes, so the last two cannot be removed. Add a third to free them.</span>'
                   if floor else "")
-    ends = (f'<span class="denied" id="p-first-{sfx}">Already first.</span>'
-            f'<span class="denied" id="p-last-{sfx}">Already last.</span>')
+    # Visually hidden, unlike the swimlane-floor note beside them. A disabled
+    # arrow at the top of the list is self-explanatory to anyone who can see
+    # where it sits; the sentence only has to exist for someone who cannot.
+    ends = (f'<span class="vh" id="p-first-{sfx}">Already first in the order.</span>'
+            f'<span class="vh" id="p-last-{sfx}">Already last in the order.</span>')
     return f"""<div class="cols" style="grid-template-columns:minmax(0,1fr) 356px">
         <div class="panel"><div class="in">
           <div class="field"><label for="p-bname-{sfx}">Name <span class="req" aria-hidden="true">*</span></label><input type="text" id="p-bname-{sfx}"{name} required></div>
