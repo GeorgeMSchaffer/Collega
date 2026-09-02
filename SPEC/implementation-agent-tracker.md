@@ -13,7 +13,7 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-08-25 against `a20e856` (`dev`, pushed; `main` 19 behind, pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-09-02 against `56d12c6` (`dev` = `feature/066-delivery-comps-and-spec`; **unpushed** — `origin/dev` 24 behind, `main` 45 behind).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
@@ -23,7 +23,8 @@ Before making any status, planning, or scope claim about this project — in thi
 | Sprints | **1–7 complete** · **7.5 next** · 8 after it | Sprint 7 closed 2026-08-18. **Sprint 7.5 is an accessibility/bug paydown that gates Sprint 8** — `sprints/sprint-07.5-accessibility-and-bug-paydown.md`. Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
 | Bug queue | **Empty — promoted into Sprint 7.5** | Ten items from the 2026-08-16 browser pass moved to `sprints/sprint-07.5-accessibility-and-bug-paydown.md` on 2026-08-25 and deleted from `SPEC/Bug Triage.md` per its Promote-and-delete rule. Intake reopens there when 7.5 archives. |
-| Comp P refresh | **Slices 0 and 3 done; 1, 2, 4 open** | Porting the shipped client to comp P's locked design so the TypeScript conversion has a settled baseline. `comp-p-admin.html` covers all 23 `/settings/*` routes at four roles; core, auth and delivery are still at their original screen counts. Sources and conventions: `SPEC/mockups/_build/README.md`. |
+| Comp P refresh | **Slices 0 and 3 done; 1, 2, 4 open** | Porting the shipped client to comp P's locked design so the TypeScript conversion has a settled baseline. `comp-p-admin.html` covers all 23 `/settings/*` routes at four roles; core, auth and delivery are still at their original screen counts. **Roadmap and grouping surfaces are stale** — built on multi-parent before the 2026-09-02 cardinality decision; regenerate from comp M. Sources: `SPEC/mockups/_build/README.md`. |
+| Issues & Delivery | **Specified, unbuilt** | Slice 1 (Delivery + Tasks) is P0 and buildable; Slice 2 (Outcomes + Roadmap) is P1 and no longer gated. `SPEC/20-feature-issues-and-delivery.md` — no blocking Open Question remains. |
 | Local DB | `collega-postgres` (`postgres:16`), port **5432**, role `collega` | Standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas). Dev demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **If the API won't connect, check user-secrets for a stale SQL Server string** — see `src/Collega.API/CLAUDE.md`. |
 
 ### Sprint 5 — complete (merged `7c5a78b`)
@@ -52,6 +53,7 @@ Two rules from this sprint are **live constraints, not history**:
 Accessibility and bug paydown: the ten `Bug Triage.md` items from the 2026-08-16 live browser pass, now the sprint's only home (`sprints/sprint-07.5-accessibility-and-bug-paydown.md`). Three are systemic and reach every form and drawer — Enter submits no form (no native submit control survives Fluent's shadow DOM), `DrawerShell` never takes focus (Escape dead, no containment, no restore), and `FluentTextField` has no accessible name. **These were invisible to a fully green suite**, which is why that sprint's QA slice verifies in a running browser rather than by test.
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
+- Outcome ↔ Issue cardinality = **single-parent**: an Issue sits under at most one Outcome (`Idea.OutcomeId`, nullable FK, `ON DELETE SET NULL`); no join table. Decided 2026-09-02 → `SPEC/decisions.md`.
 - Portrait image library = **ImageSharp** (`SixLabors.ImageSharp`, pinned **3.1.12**). Fully managed, no native assets — chosen 2026-08-13 specifically because SkiaSharp's package ships natives for Windows/macOS only and broke portrait upload on Linux App Service. **Stay on the 3.1.x line:** 4.x requires a Six Labors license key and warns on every build; 3.1.x is the Split License (free for OSS/personal and organizations under the revenue threshold — re-verify terms before any commercial release).
 - Site Admin org-content mutation = **View As act-as only** (Sprint 6, full act-as + dual attribution); no direct create/edit paths, no org dropdowns. Org + user admin stay direct as the bootstrap exception. → `20-feature-client-ui.md`.
 - AI idea drafting: single platform-level key (per-org keys stay unbuilt), dedupe deferred to v2, `Anthropic` package approved. The system prompt is a Site-Admin-managed versioned setting. → `20-feature-ai-idea-assist.md`.
@@ -66,6 +68,7 @@ User-owned, landed on `dev`: the `e2e/` Playwright suite (`7a92dda`). The AI-bra
 ## Notes For Next Agent
 - Read `SPEC/95-next-sprints.md` for current sprint scope, not the archive's original backlog.
 - Behavior authority is the numbered canonical specs — `SPEC/README.MD` indexes them; `SPEC/30-Contracts.md` is authoritative for endpoints and payloads. **`Specs Overview.md` is a derived summary, not an entrypoint to trust** — see its own header.
+- **This repo sits in iCloud-synced `~/Documents`, and file contents get evicted.** A `dataless` file (check `stat -f '%Sf'`) reads as empty or times out, and shows as ` M` in `git status` without anyone having edited it. Currently ~21 files under `SPEC/`, 44 under `tests/`, 175 of 188 under `e2e/`; `src/` is clean. To restore one, `rm` the placeholder then `git show <ref>:<path> >` it — unlinking is instant, overwriting in place hangs for minutes. Avoid commands that walk the whole object store (`git fetch`, `git push`, `git worktree add`); they time out. A fast-forward you are not standing on is safest as `git update-ref` after `git merge-base --is-ancestor`.
 
 ## Maintenance Rule
 This file answers **"what is true right now"** and nothing else. When updating it:

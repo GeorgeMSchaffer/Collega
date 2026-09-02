@@ -91,8 +91,6 @@ Beyond `SPEC/90-definition-of-done.md`:
 
 ## Open before this sprint can start
 
-- ~~**Outcome ↔ Issue cardinality**~~ — **answered 2026-09-02: single-parent.** E6 is
-  no longer blocked. See `SPEC/decisions.md`.
 - **Ticket `10`** (test suite fate) — was blocked on `04`, which is now answered.
 - **Tickets `01` (component library), `02`, `05`, `06`, `07`, `08`, `11`** on the
   conversion map.
