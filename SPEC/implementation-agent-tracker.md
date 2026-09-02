@@ -13,7 +13,7 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-09-02 against `56d12c6` (`dev` = `feature/066-delivery-comps-and-spec`; **unpushed** — `origin/dev` 24 behind, `main` 45 behind).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-09-02 against `2851aee` (`dev` = `feature/066-delivery-comps-and-spec`, pushed to `origin/dev`; `main` 46 behind, pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
