@@ -9,7 +9,7 @@ This feature closes that loop **inside Collega** by promoting an idea into a lig
 This spec covers the Roadmap → Sprint → Issue concept captured in `SPEC/Bug Triage.md` (IDEAS), delivered in two slices:
 
 - **Slice 1 — Delivery (P0).** The phase model, the promotion gate, Sprints, the fixed delivery statuses, provenance, and **Tasks** (a checklist on an Issue). This is the buildable unit.
-- **Slice 2 — Roadmap (P1).** **Outcomes**: theme grouping over time, sitting *beside* sprints as a lens rather than above them as a container. Specified here so the domain shape is settled, sequenced after Slice 1, and gated on one open question (see [Open Questions](#open-questions)).
+- **Slice 2 — Roadmap (P1).** **Outcomes**: theme grouping over time, sitting *beside* sprints as a lens rather than above them as a container. Specified here so the domain shape is settled and sequenced after Slice 1. The one question that gated it — Outcome ↔ Issue cardinality — is **decided: single-parent** (see [Design Decisions](#design-decisions-interview-resolved)).
 
 The Impact×Effort prioritization view, crowd-backlog auto-surfacing, and AI-assisted promotion remain **explicitly deferred** (see [Non-Goals](#non-goals) and [Future Considerations](#future-considerations-p1p2)). The guardrail throughout: every field and screen must earn its place by *closing the loop* or *preserving provenance*, never by matching a Jira feature.
 
@@ -35,7 +35,7 @@ The Impact×Effort prioritization view, crowd-backlog auto-surfacing, and AI-ass
 | Task assignee | A Task may carry an optional assignee, who **need not** be an assignee of the parent Issue — any active user in the org qualifies. This is the one place delivery work is divided between people; constraining it to the Issue's assignees would force spurious Issue assignments just to name a helper. |
 | Task state | Three states (`NotStarted`, `InProgress`, `Done`) rather than a bare checkbox, because "started but not finished" is the state a standup actually asks about. The `N of M done` rollup counts only `Done`. |
 | Roadmap model | An **Outcome** is a named, dated theme that Issues are grouped under — a lens, not a container. Every rollup (issue count, done count, sprint span, quarter placement) is **derived** at read time, never stored. An Outcome has no status field and no percent-complete field. |
-| Outcome ↔ Issue cardinality | **Open — pending comp review.** Single-parent (`Idea.OutcomeId`) vs. multi-parent (join table). See `SPEC/mockups/comp-m-roadmap-single.html` and `comp-n-roadmap-multi.html`, and the blocking Open Question below. Slice 2 is not buildable until this is answered; **nothing in Slice 1 depends on it.** |
+| Outcome ↔ Issue cardinality | **Decided 2026-09-02 — single-parent.** An Issue sits under **at most one** Outcome (`Idea.OutcomeId`, nullable). Chosen so roadmap arithmetic is honest by construction: counts partition the delivery set, totals sum, and "done" is unambiguous without a distinct-count anywhere. Rendered in `SPEC/mockups/comp-m-roadmap-single.html`; `comp-n-roadmap-multi.html` records the rejected multi-parent alternative. **Nothing in Slice 1 depended on this.** |
 | Sprint lifecycle | Explicit `Planned` → `Active` → `Completed` transitions (start/complete are actions, not date-derived), because completing a sprint must handle carry-over deterministically. |
 | Provenance | Nearly free because Issue *is* the Idea. Only new stored provenance fields are `PromotedAtUtc`, `PromotedByUserId`, and an `UpvoteCountAtPromotion` snapshot ("how much support did this have when we committed"). |
 | Board filtering | The ideation board (`/board/{boardId}`) filters to `Phase == Discovery`; promoted items leave it (no data loss — the row and its idea status are retained). Delivery items render on a new **Sprint board**. |
@@ -237,16 +237,18 @@ Invariants:
 - Soft-deleting an Outcome **never touches an Issue**; it only removes the grouping.
 - No status, no percent-complete, and no `SprintId` — an Outcome is orthogonal to sprints.
 
-**Outcome ↔ Issue linkage is deliberately unspecified pending the cardinality decision.** The two candidate shapes are:
+**Outcome ↔ Issue linkage is single-parent.** An Issue carries `Idea.OutcomeId` (nullable FK). Grouping it under an Outcome is a **move**, not an add: assigning a new Outcome clears the old one, and clearing it leaves the Issue ungrouped.
 
-| | Single-parent | Multi-parent |
+This was a genuine fork, resolved 2026-09-02. What the rejected shape would have cost, recorded so it is not re-argued:
+
+| | Single-parent (**chosen**) | Multi-parent (rejected) |
 |---|---|---|
 | Storage | `Idea.OutcomeId` (nullable FK) | `idea_outcomes` join table (`idea_id`, `outcome_id`, PK on both) |
 | Rollup arithmetic | Counts partition; totals sum to the delivery set | Counts overlap; every total needs a distinct-count beside it |
 | Reassignment | A move (leaves the old outcome) | An add/remove (may belong to both) |
 | Comp | `comp-m-roadmap-single.html` | `comp-n-roadmap-multi.html` |
 
-Everything else in Slice 2 is identical under either shape. Resolve the Open Question before writing the migration.
+The cost of the choice is real: work that genuinely serves two quarterly goals must pick one. The failure mode to watch for is **teams raising duplicate Issues** so two Outcomes can each claim the work — which would reintroduce exactly the provenance loss the phase model exists to prevent. If that appears in practice, single → multi is a cheap forward migration (copy the FK into the join table, drop the column); the reverse is lossy.
 
 ### New enums (Slice 1 / Slice 2)
 
@@ -305,10 +307,10 @@ Admin-only for management (in-scope OrgAdmin or SiteAdmin); read available to al
 | `UpdateAsync(orgId, id, cmd)` | Rename / re-describe / re-window / reassign owner |
 | `ReorderAsync(orgId, orderedIds)` | Roadmap row order |
 | `DeleteAsync(orgId, id)` | Soft-delete; grouped Issues are ungrouped, never deleted |
-| `SetIssueOutcomesAsync(ideaId, ...)` | Grouping mutation — **signature depends on the cardinality decision** (`outcomeId?` for single-parent, `IReadOnlyList<Guid>` for multi-parent) |
+| `SetIssueOutcomeAsync(ideaId, outcomeId?)` | Grouping mutation — sets or clears the Issue's single Outcome. A null `outcomeId` ungroups it; assigning a new one replaces any existing grouping. |
 | `GetRoadmapAsync(orgId, granularity)` | The roadmap grid: outcomes × time buckets (quarters or sprints), with derived spans |
 
-Rollups (`issueCount`, `doneCount`, derived sprint span, quarter placement) are computed in the query, never stored. Under multi-parent, every rollup response also carries a **distinct** issue count across all outcomes so the UI can state the overlap rather than silently double-count.
+Rollups (`issueCount`, `doneCount`, derived sprint span, quarter placement) are computed in the query, never stored. Because grouping is single-parent these are plain counts: no rollup carries a distinct-count beside it, and the per-outcome totals sum to the delivery set.
 
 ### Board & idea-list phase filtering
 
@@ -374,7 +376,7 @@ Creating a task on a `Discovery` item → `400`. A `taskId` whose parent is not 
 | `PUT` | `/organizations/{orgId}/outcomes/order` | Roadmap row order |
 | `DELETE` | `/organizations/{orgId}/outcomes/{id}` | Soft-delete; grouped Issues are ungrouped |
 | `GET` | `/organizations/{orgId}/roadmap` | Roadmap grid (`?granularity=quarter|sprint`) |
-| `PUT` | `/ideas/{ideaId}/outcomes` | Set an Issue's outcome grouping — **body shape depends on the cardinality decision** |
+| `PUT` | `/ideas/{ideaId}/outcomes` | Set an Issue's outcome grouping — body `{ "outcomeId": <guid|null> }`; null ungroups |
 
 ---
 
@@ -399,7 +401,7 @@ Layouts here are **directional**; the locked Comp C system (`SPEC/mockups/comp-c
 - **Delivery backlog** view: Delivery-phase Issues with no sprint, the source list admins pull from.
 - **Sprint admin**: create/edit/start/complete sprint; a rail "Delivery" (or "Sprints") destination is added to the 64px icon rail.
 - **Task checklist** on the Issue/Delivery lens: an ordered list under the description with an `N of M done` counter, per-row state control, optional assignee, drag-to-reorder, and an inline "+ Add task" affordance. Rendered in `comp-l-delivery-desk.html` (Issue screen). Read-only viewers see the list and the counter with no controls.
-- **Roadmap** (`/roadmap`, Slice 2): outcomes as rows against a quarter or sprint axis, each row showing its derived span, issue count, and done count; selecting a row lists its Issues. Rendered in `comp-m-roadmap-single.html` and `comp-n-roadmap-multi.html` — **these two comps differ only where the cardinality decision bites**, and exist to make that decision concrete.
+- **Roadmap** (`/roadmap`, Slice 2): outcomes as rows against a quarter or sprint axis, each row showing its derived span, issue count, and done count; selecting a row lists its Issues. Rendered in `comp-m-roadmap-single.html`, which is the chosen shape. `comp-n-roadmap-multi.html` is retained only as the record of the rejected alternative — do not build from it.
 - **Ideation board** unchanged except that promoted items no longer appear (phase filter).
 
 ---
@@ -457,7 +459,7 @@ Layouts here are **directional**; the locked Comp C system (`SPEC/mockups/comp-c
   - *Given* outcomes exist *When* the roadmap is read *Then* each row shows its derived issue count, done count, and sprint span — none of which is stored.
   - *Given* an Outcome is soft-deleted *Then* every Issue grouped under it survives, merely ungrouped.
   - *Given* an Issue's sprint changes *Then* its outcome grouping is unaffected, and vice versa.
-  - *Blocked on the cardinality Open Question* — not buildable until answered, and nothing in Slice 1 waits on it.
+  - *Given* an Issue is grouped under an Outcome *When* it is grouped under a different one *Then* it leaves the first — an Issue sits under at most one Outcome.
 
 ### Future Considerations (P1/P2)
 
@@ -479,10 +481,10 @@ Layouts here are **directional**; the locked Comp C system (`SPEC/mockups/comp-c
 - New table `issue_tasks` (snake_case) with `idea_id` (FK → `ideas`, `ON DELETE CASCADE` — a checklist has no meaning without its Issue, and it is the one place in this feature where cascade is correct), `title`, `assignee_user_id`, `state`, `sort_order`, `completed_at_utc`, `completed_by_user_id`, and audit columns. Index `(idea_id, sort_order)`.
 - Because every existing idea backfills to `Discovery` and no sprints exist, all ideation boards and idea flows are byte-for-byte unchanged post-migration; delivery surfaces are simply empty. No existing row gains a task.
 
-**EF migration `AddOutcomes` (Slice 2, after the cardinality decision):**
+**EF migration `AddOutcomes` (Slice 2):**
 - New table `outcomes` with `organization_id`, `name`, `description`, `target_start_date`, `target_end_date`, `owner_user_id`, `sort_order`, `is_deleted`, and audit columns. Index `(organization_id, sort_order)`.
-- **Plus exactly one of**, per the decision: `ideas.outcome_id` (guid, null, FK → `outcomes`, `ON DELETE SET NULL`) for single-parent, **or** a join table `idea_outcomes` (`idea_id`, `outcome_id`, composite PK, both FKs cascading) for multi-parent.
-- Do not write this migration until the Open Question is closed. Moving from single-parent to multi-parent later is a cheap forward migration (copy the FK into the join table, drop the column); moving the other way is lossy and needs a human to choose which grouping survives.
+- Plus `ideas.outcome_id` (guid, null, FK → `outcomes`, `ON DELETE SET NULL`) — single-parent, per the 2026-09-02 decision. There is no join table.
+- `ON DELETE SET NULL` rather than cascade: removing an Outcome must never delete an Issue, only ungroup it. Moving to multi-parent later, should the duplicate-Issue failure mode appear, is a cheap forward migration (copy the FK into the join table, drop the column); the reverse is lossy and needs a human to choose which grouping survives.
 - Touches only new/changed tables, so it should merge cleanly against `CollegaDbContextModelSnapshot` provided no other in-flight slice adds a concurrent migration.
 
 ---
@@ -502,7 +504,7 @@ Approving this spec requires these canonical edits *before* implementation (per 
 
 ## Open Questions
 
-- **[Product — BLOCKING for Slice 2]** **May an Issue sit under more than one Outcome?** Two comps exist to make this concrete: `SPEC/mockups/comp-m-roadmap-single.html` (at most one) and `comp-n-roadmap-multi.html` (many). *No default is asserted — this is a genuine fork.* Single-parent keeps roadmap arithmetic honest for free (counts partition, totals sum, "done" is unambiguous) at the cost of forcing a false choice when a piece of work genuinely serves two quarterly goals. Multi-parent matches how outcomes actually overlap, but every count on the page needs a distinct-count beside it or the roadmap overstates the work. **Slice 1 does not depend on this** — build it while the question is open.
+- **[Product — RESOLVED 2026-09-02]** **May an Issue sit under more than one Outcome?** **No — single-parent, at most one.** Roadmap arithmetic is then honest by construction: counts partition, totals sum, "done" is unambiguous, and no rollup needs a distinct-count. The accepted cost is that work genuinely serving two quarterly goals must pick one; the failure mode to watch is teams raising duplicate Issues so two Outcomes can each claim the work. `SPEC/mockups/comp-n-roadmap-multi.html` records the rejected alternative. **No open question blocks Slice 2 now.**
 - **[Product]** Should promotion be allowed from any Discovery status, or gated on the item first reaching a specific ideation status (e.g. `Complete`)? *Default (chosen): any Discovery status — the gate is the explicit decision, not the status.* An org-level "require status X before promote" is a P2 option. — non-blocking.
 - **[Product]** May a plain author self-promote, or only *request* promotion for an admin to confirm? *Default: author may self-promote (matches the deferred approval decision).* The P1 toggle can tighten this. — non-blocking.
 - **[Product]** On sprint completion, is backlog the right default for unfinished Issues, or should carry-over-to-next be the default? *Default: backlog; carry-over is P1.* — non-blocking.
@@ -522,4 +524,4 @@ Approving this spec requires these canonical edits *before* implementation (per 
 | **Tests** | Promotion (phase flip, required effort, re-promote reject), provenance snapshot, delivery-status transitions, sprint lifecycle + carry-over, phase filtering, return-to-discovery, task CRUD + state stamping + dense ordering + Discovery rejection + retention across return-to-discovery + non-blocking Complete, backward-compat (no-op for un-promoted orgs) | L — 4 days |
 | **Client (later wave)** | Promotion dialog, provenance panel, Sprint board + backlog, sprint admin, task checklist with drag-reorder, rail destination, phase filters | L — 6–8 days |
 | **Slice 1 backend total** | | **~12–14 dev-days** |
-| **Slice 2 — Outcomes & Roadmap** | `Outcome` entity, `IOutcomeService`, grouping mutation, derived roadmap query, 8 routes, roadmap grid UI, tests | M–L — **~5–7 dev-days**, *after* the cardinality decision |
+| **Slice 2 — Outcomes & Roadmap** | `Outcome` entity, `IOutcomeService`, grouping mutation, derived roadmap query, 8 routes, roadmap grid UI, tests | M–L — **~5–7 dev-days** |

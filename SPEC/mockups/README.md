@@ -51,7 +51,7 @@ Three new comps mix the strongest parts of the client's preferred set (D "Focus 
 - `comp-j-desk-slideout.html` — **Hybrid A: Desk + Slideout.** Comp D's shell, rail and lane board, with every create/edit surface converted to comp I's right-hand 620px slideout (`.drawer` + `.scrim`) instead of a route change or centred modal. Screens: board, new idea, idea detail, add status, invite user.
 - `comp-k-desk-loop.html` — **Hybrid B: Desk + Loop rail.** Comp D's shell with comp H's activity surface docked as a permanent 340px rail beside the idea (discussion / mentions / history tabs), so the debate never has to be reopened elsewhere. Screens: idea + rail, inbox, thread, preferences.
 - `comp-l-delivery-desk.html` — **Hybrid C: Delivery Desk.** Hybrid A plus the delivery surfaces. Screens: promote gate, sprint board, issue + tasks, backlog & planning, roadmap.
-- `comp-m-roadmap-single.html` / `comp-n-roadmap-multi.html` — **decision comps**, not directions. Same shell and token block; see the cardinality section below.
+- `comp-m-roadmap-single.html` / `comp-n-roadmap-multi.html` — **decision comps**, not directions. Same shell and token block. **Resolved 2026-09-02 in favour of comp M (single-parent);** comp N is kept as the record of the rejected alternative. See the cardinality section below.
 
 ### Delivery scope, reconciled
 
@@ -61,9 +61,9 @@ Where Comp L follows the spec, it follows it exactly: Idea and Issue are the sam
 
 **Task model (decided 2026-08-31, now canonical):** Tasks are checklist items belonging to an **Issue**; the Issue is the unit assigned to a sprint. A task therefore can never be stranded in a sprint its parent has left. First-class independently-assignable tasks were considered and rejected as too heavy for "Jira light".
 
-### Roadmap cardinality: comp M vs comp N (2026-08-31)
+### Roadmap cardinality: comp M vs comp N — **resolved, comp M** (2026-08-31, decided 2026-09-02)
 
-One question gates Slice 2: **may an Issue sit under more than one Outcome?** These two comps exist to settle it, and are **generated from a single template** so they differ *only* where that decision bites — diff them screen for screen and what you see is exactly what the choice costs.
+One question gated Slice 2: **may an Issue sit under more than one Outcome?** **The answer is no — single-parent, comp M.** These two comps exist to have settled it, and are **generated from a single template** so they differ *only* where that decision bites — diff them screen for screen and what you see is exactly what the choice cost.
 
 - `comp-m-roadmap-single.html` — **Single-parent.** An issue has one home. `Idea.OutcomeId`, one nullable FK.
 - `comp-n-roadmap-multi.html` — **Multi-parent.** An issue serves every outcome it advances. A join table.
@@ -79,7 +79,7 @@ Both carry the same five screens (Roadmap / Outcome detail / Issue / Grouping dr
 | Grouping action | A **move** — leaves the previous outcome | An **add/remove** — nothing is displaced |
 | Reversibility | single -> multi later is a cheap forward migration | multi -> single later is **lossy**; a human picks which grouping survives |
 
-Each comp's final screen argues its own side *and* states its own cost, including the failure mode to watch for. No default is asserted in the spec — this is a genuine fork, and it is recorded as the one **blocking** Open Question in `SPEC/20-feature-issues-and-delivery.md`. Slice 1 does not depend on the answer and can be built while it is open.
+Each comp's final screen argues its own side *and* states its own cost, including the failure mode to watch for. **Decided 2026-09-02: single-parent (comp M).** Roadmap arithmetic is honest by construction — counts partition, totals sum, "done" is unambiguous, and no rollup needs a distinct-count. The accepted cost is that work genuinely serving two quarterly goals must pick one; the failure mode to watch is teams raising duplicate Issues so two Outcomes can each claim the work. The Open Question in `SPEC/20-feature-issues-and-delivery.md` is closed, and Slice 2 is no longer gated. `SPEC/decisions.md` carries the full entry.
 
 ### Comp O: the DESIGN.md / Notion direction probe (2026-08-31)
 
@@ -171,9 +171,15 @@ reconciliation, and it is worth keeping even if the Notion direction is dropped.
 **57–59px**, and ten rows run **669px** against **584px** — about 15% more vertical space
 for the same page. Worth knowing before this direction is chosen, not after.
 
-Comp P uses comp N's mechanics because the feedback asked for them. **Outcome ↔ Issue
-cardinality remains the blocking Open Question** in `SPEC/20-feature-issues-and-delivery.md`
-— rendering the multi-parent affordances is not a decision on it.
+**Comp P now disagrees with the cardinality decision.** Comp P was built on comp N's
+multi-parent mechanics because the feedback asked for them, while the question was still
+open. It was decided **single-parent** on 2026-09-02, so comp P's roadmap surfaces are
+stale in three specific places: the Issue inspector shows an Outcomes **chip list** where
+single-parent allows one value, the command palette reports a **`2 shared`** count that
+cannot occur, and the roadmap carries the dashed **shared-bar** treatment and its
+`sum != the delivery set` ledger. Comp P's shell, IA, navigation and copy are unaffected
+and remain the locked direction; only the roadmap/grouping affordances need regenerating
+from comp M's mechanics. Do not hand-edit — `SPEC/mockups/_build/build_p.py` owns these files.
 
 ## Full-App Comps (2026-07-30)
 

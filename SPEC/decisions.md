@@ -9,6 +9,41 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-02 — Outcome ↔ Issue cardinality: single-parent
+
+**Decided:** an Issue sits under **at most one** Outcome. Storage is `Idea.OutcomeId`, a
+nullable FK with `ON DELETE SET NULL`. The `idea_outcomes` join table is rejected. Grouping
+is a **move**: assigning a new Outcome clears the old one. This closes the one blocking
+Open Question in `SPEC/20-feature-issues-and-delivery.md` and unblocks Slice 2 and E6.
+
+**Why:** roadmap arithmetic is then honest by construction. Counts partition the delivery
+set, per-outcome totals sum to it, and "done" is unambiguous — so no rollup anywhere needs
+a distinct-count beside it. Under multi-parent every total on the page is a cover rather
+than a partition, and the comps made that concrete: over the same 16 delivery issues, comp
+N produced 18 memberships over 14 distinct issues, so its ledger reads `sum != the delivery
+set`. It also smeared derived spans — a shared issue drags an outcome's bar into a quarter
+its own work does not start in — which is a second, less obvious tax nobody asked for.
+
+**What it costs:** work that genuinely serves two quarterly goals must pick one home. That
+is a real loss and was accepted knowingly. **The failure mode to watch for is teams raising
+duplicate Issues** so two Outcomes can each claim the work — which would reintroduce exactly
+the provenance loss the phase model exists to prevent. If that appears in practice, treat it
+as the signal to revisit, not as user error.
+
+**Reversibility:** single → multi is a cheap forward migration (copy the FK into the join
+table, drop the column). The reverse is lossy and needs a human to choose which grouping
+survives. Choosing the cheap-to-undo direction is part of why this side won.
+
+**Consequence — comp P is now stale in three places.** Comp P was built on comp N's
+multi-parent mechanics while this question was open, and remains the locked direction for
+shell, IA, navigation and copy. Its roadmap surfaces are not: the Issue inspector shows an
+Outcomes chip list, the command palette reports a `2 shared` count that cannot occur, and
+the roadmap carries the dashed shared-bar treatment and its `sum != the delivery set`
+ledger. Those need regenerating from comp M's mechanics via `SPEC/mockups/_build/build_p.py`.
+`comp-n-roadmap-multi.html` is retained only as the record of the rejected alternative.
+
+---
+
 ## 2026-08-31 — Golden capture (Wave A) starts now, not with Sprint 9
 
 **Decided:** Wave A of the TypeScript conversion — recording request/response pairs for all
