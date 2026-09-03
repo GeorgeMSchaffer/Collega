@@ -1,0 +1,59 @@
+{
+  "scenario": "statuses",
+  "step": "reorder.siteadmin",
+  "endpoint": "POST /organizations/{organizationId}/statuses/reorder",
+  "as": "SiteAdmin",
+  "kind": "denied",
+  "note": "Must name every active status exactly once, so it is bound from the list above.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/statuses/reorder",
+    "body": {
+      "orderedStatusIds": [
+        "320511a2-c8af-401f-9e06-f12cfa79b056",
+        "95953a86-b562-4067-bebf-839e2c50c811",
+        "c571c17d-ee9c-4e3b-ab3e-a221b8cea509",
+        "afed498b-5960-4e8d-8db3-a454956823a8",
+        "7872ad0a-8e98-406d-801a-c33c64dd9a48",
+        "8584b3a3-c7bf-4067-a7d9-64f0cd02c7a1"
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:13:06 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/organizations/1880682b-d876-4187-8aec-4d7678336f68/statuses/reorder",
+      "traceId": "0HNOA121UE4Q3:00000054"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/statuses/reorder",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

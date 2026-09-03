@@ -1,0 +1,45 @@
+{
+  "scenario": "businessimpacts",
+  "step": "delete.anonymous",
+  "endpoint": "DELETE /business-impacts/{businessImpactId}",
+  "as": "anonymous",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/business-impacts/62fb94e4-f9c2-4dda-83a0-2ebf166a0d55",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:13:04 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/business-impacts/62fb94e4-f9c2-4dda-83a0-2ebf166a0d55",
+      "traceId": "00-7ca1642e9e46285ce50377282c5afa8d-f05b0c1578a05d6d-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/business-impacts/<guid@create.orgadmin.body.businessImpactId>",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

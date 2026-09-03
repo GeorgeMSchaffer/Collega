@@ -1,0 +1,49 @@
+{
+  "scenario": "ideatypes",
+  "step": "fields.anonymous",
+  "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/fields",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "An empty selection is the meaningful edge: it clears the type's fields.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/idea-types/243c2f5c-2bb7-432b-87f2-5b5fa8e20e55/fields",
+    "body": {
+      "fields": []
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/1880682b-d876-4187-8aec-4d7678336f68/idea-types/243c2f5c-2bb7-432b-87f2-5b5fa8e20e55/fields",
+      "traceId": "00-48a7b87d26d4dcf3d2d69201369c789b-98f625466f80fc9d-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/idea-types/<guid@create.orgadmin.body.ideaTypeId>/fields",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "scenario": "ideatypes",
+  "step": "delete.readonly",
+  "endpoint": "DELETE /idea-types/{ideaTypeId}",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/idea-types/243c2f5c-2bb7-432b-87f2-5b5fa8e20e55",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to manage idea field options in this organization.",
+      "instance": "/api/v1/idea-types/243c2f5c-2bb7-432b-87f2-5b5fa8e20e55",
+      "traceId": "0HNOA121UE4Q2:00000046"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to manage idea field options in this organization.",
+      "instance": "/api/v1/idea-types/<guid@create.orgadmin.body.ideaTypeId>",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

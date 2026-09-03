@@ -1,0 +1,27 @@
+{
+  "scenario": "fielddefinitions",
+  "step": "delete.orgadmin",
+  "endpoint": "DELETE /organizations/{organizationId}/field-definitions/{id}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/field-definitions/9d930049-309a-4f19-9ca7-311fa68abcde",
+    "body": null
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

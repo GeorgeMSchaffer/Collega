@@ -1,0 +1,27 @@
+{
+  "scenario": "ideatypes",
+  "step": "delete.orgadmin",
+  "endpoint": "DELETE /idea-types/{ideaTypeId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/idea-types/243c2f5c-2bb7-432b-87f2-5b5fa8e20e55",
+    "body": null
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

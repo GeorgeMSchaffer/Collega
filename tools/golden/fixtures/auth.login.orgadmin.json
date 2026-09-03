@@ -21,7 +21,7 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 21:42:34 GMT",
+      "date": "Thu, 03 Sep 2026 22:13:03 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -30,8 +30,8 @@
       "expiresInSeconds": 28800,
       "requiresPasswordChange": false,
       "user": {
-        "userId": "f4785a47-a990-4771-a6b6-133119c413d8",
-        "organizationId": "d0c9223b-e133-49a9-b79d-4478f20f44dd",
+        "userId": "e1103612-662e-4307-a647-29bf88716582",
+        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
         "role": "OrgAdmin",
         "firstName": "Olivia",
         "lastName": "Administer",

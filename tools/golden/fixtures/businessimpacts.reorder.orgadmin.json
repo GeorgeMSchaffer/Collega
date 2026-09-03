@@ -1,0 +1,36 @@
+{
+  "scenario": "businessimpacts",
+  "step": "reorder.orgadmin",
+  "endpoint": "POST /organizations/{organizationId}/business-impacts/reorder",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/business-impacts/reorder",
+    "body": {
+      "orderedBusinessImpactIds": [
+        "9074c52e-29f3-49cf-8844-b70560c00a57",
+        "06f63600-4d57-499a-94c4-0a67eb4390c1",
+        "e62d78ec-a455-4ec5-9e85-4de91398c8ce",
+        "caa083c2-24bb-4f1c-94ef-2f08a2b57ea2",
+        "62fb94e4-f9c2-4dda-83a0-2ebf166a0d55"
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Thu, 03 Sep 2026 22:13:04 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

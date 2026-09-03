@@ -1,0 +1,35 @@
+{
+  "scenario": "tags",
+  "step": "suggest.search.siteadmin",
+  "endpoint": "GET /organizations/{organizationId}/tags",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/tags",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:13:06 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      "safety"
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      "safety"
+    ]
+  }
+}

@@ -134,28 +134,37 @@ function readVar(name: string, vars: Map<string, unknown>): unknown {
 }
 
 /**
- * The pointer subset used by "bind": $.body.id, $.body[0].id, $.headers.location.
+ * The pointer subset used by "bind": $.body.id, $.body[0].id, $.headers.location,
+ * and $.body[*].id to collect a field from every element — which the reorder
+ * endpoints need, since they demand the organization's full set of ids in one
+ * request and refuse anything less.
+ *
  * Deliberately not full JSONPath — a fixture corpus does not need a query language.
  */
 export function pluck(pointer: string, source: { body: unknown; headers: Record<string, string> }) {
   if (!pointer.startsWith("$.")) throw new Error(`bind pointer must start with "$.": ${pointer}`);
   const segments = pointer
     .slice(2)
-    .replace(/\[(\d+)\]/g, ".$1")
+    .replace(/\[(\d+|\*)\]/g, ".$1")
     .split(".")
     .filter(Boolean);
-  let node: unknown = source;
-  for (const segment of segments) {
-    if (node === null || node === undefined) {
-      throw new Error(`bind pointer ${pointer} hit ${String(node)} at "${segment}"`);
-    }
-    if (Array.isArray(node)) {
-      node = node[Number(segment)];
-      continue;
-    }
-    if (typeof node !== "object") throw new Error(`bind pointer ${pointer} ran past a leaf`);
-    node = (node as Record<string, unknown>)[segment];
+  const value = walk(segments, source, pointer);
+  if (value === undefined) throw new Error(`bind pointer ${pointer} resolved to undefined`);
+  return value;
+}
+
+function walk(segments: string[], node: unknown, pointer: string): unknown {
+  if (segments.length === 0) return node;
+  if (node === null || node === undefined) {
+    throw new Error(`bind pointer ${pointer} hit ${String(node)} at "${segments[0]}"`);
   }
-  if (node === undefined) throw new Error(`bind pointer ${pointer} resolved to undefined`);
-  return node;
+  const [head, ...rest] = segments;
+
+  if (head === "*") {
+    if (!Array.isArray(node)) throw new Error(`bind pointer ${pointer} used [*] on a non-array`);
+    return node.map((item) => walk(rest, item, pointer));
+  }
+  if (Array.isArray(node)) return walk(rest, node[Number(head)], pointer);
+  if (typeof node !== "object") throw new Error(`bind pointer ${pointer} ran past a leaf`);
+  return walk(rest, (node as Record<string, unknown>)[head], pointer);
 }

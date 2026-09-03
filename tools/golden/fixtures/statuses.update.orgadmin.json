@@ -1,0 +1,49 @@
+{
+  "scenario": "statuses",
+  "step": "update.orgadmin",
+  "endpoint": "PUT /statuses/{statusId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/statuses/8584b3a3-c7bf-4067-a7d9-64f0cd02c7a1",
+    "body": {
+      "name": "Golden Capture Renamed",
+      "color": "#8f3f6f"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:13:06 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "statusId": "8584b3a3-c7bf-4067-a7d9-64f0cd02c7a1",
+      "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+      "name": "Golden Capture Renamed",
+      "color": "#8f3f6f",
+      "sortOrder": 60,
+      "isDeleted": false
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "color": "#8f3f6f",
+      "isDeleted": false,
+      "name": "Golden Capture Renamed",
+      "organizationId": "<guid@org.body.organizationId>",
+      "sortOrder": 60,
+      "statusId": "<guid@create.orgadmin.body.statusId>"
+    }
+  }
+}

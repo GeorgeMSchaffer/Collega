@@ -1,0 +1,52 @@
+{
+  "scenario": "businessimpacts",
+  "step": "create.readonly",
+  "endpoint": "POST /organizations/{organizationId}/business-impacts",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/business-impacts",
+    "body": {
+      "name": "Golden Capture Impact",
+      "color": "#6f8f3f"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:13:04 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to manage idea field options in this organization.",
+      "instance": "/api/v1/organizations/1880682b-d876-4187-8aec-4d7678336f68/business-impacts",
+      "traceId": "0HNOA121UE4Q2:00000013"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to manage idea field options in this organization.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/business-impacts",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "scenario": "ideatypes",
+  "step": "list.siteadmin",
+  "endpoint": "GET /organizations/{organizationId}/idea-types",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/idea-types",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "ideaTypeId": "4985c209-e293-4360-a327-3038d30a022f",
+        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+        "name": "Continuous Improvement",
+        "sortOrder": 10,
+        "isDeleted": false,
+        "colorHex": null,
+        "icon": null,
+        "fieldMode": "AllActiveFields",
+        "fields": []
+      },
+      {
+        "ideaTypeId": "cbfc69a9-1031-4bb4-aa18-d9aeea9ddc3c",
+        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+        "name": "Process Revision",
+        "sortOrder": 20,
+        "isDeleted": false,
+        "colorHex": null,
+        "icon": null,
+        "fieldMode": "AllActiveFields",
+        "fields": []
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "colorHex": null,
+        "fieldMode": "AllActiveFields",
+        "fields": [],
+        "icon": null,
+        "ideaTypeId": "<guid@list.siteadmin.body[0].ideaTypeId>",
+        "isDeleted": false,
+        "name": "Continuous Improvement",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 10
+      },
+      {
+        "colorHex": null,
+        "fieldMode": "AllActiveFields",
+        "fields": [],
+        "icon": null,
+        "ideaTypeId": "<guid@list.siteadmin.body[1].ideaTypeId>",
+        "isDeleted": false,
+        "name": "Process Revision",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 20
+      }
+    ]
+  }
+}

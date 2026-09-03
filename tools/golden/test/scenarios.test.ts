@@ -59,3 +59,19 @@ test("pluck fails loudly rather than binding undefined", () => {
   assert.throws(() => pluck("$.body.nope", source), /resolved to undefined/);
   assert.throws(() => pluck("body.id", source), /must start with/);
 });
+
+test("pluck collects a field from every element, which the reorder endpoints need", () => {
+  const source = {
+    body: [{ statusId: "s1", name: "New" }, { statusId: "s2", name: "Done" }],
+    headers: {},
+  };
+  assert.deepEqual(pluck("$.body[*].statusId", source), ["s1", "s2"]);
+  assert.deepEqual(pluck("$.body[*]", source), source.body);
+});
+
+test("a projection over something that is not an array says so", () => {
+  assert.throws(
+    () => pluck("$.body[*].id", { body: { id: "one" }, headers: {} }),
+    /used \[\*\] on a non-array/,
+  );
+});

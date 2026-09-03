@@ -1,0 +1,31 @@
+{
+  "scenario": "ideatypes",
+  "step": "appearance.orgadmin",
+  "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/appearance",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/idea-types/243c2f5c-2bb7-432b-87f2-5b5fa8e20e55/appearance",
+    "body": {
+      "colorHex": "#3f6f8f",
+      "icon": "lightbulb"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

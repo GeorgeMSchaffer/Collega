@@ -1,0 +1,49 @@
+{
+  "scenario": "businessimpacts",
+  "step": "create.orgadmin",
+  "endpoint": "POST /organizations/{organizationId}/business-impacts",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/business-impacts",
+    "body": {
+      "name": "Golden Capture Impact",
+      "color": "#6f8f3f"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:13:04 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "businessImpactId": "62fb94e4-f9c2-4dda-83a0-2ebf166a0d55",
+      "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+      "name": "Golden Capture Impact",
+      "color": "#6f8f3f",
+      "sortOrder": 50,
+      "isDeleted": false
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "businessImpactId": "<guid@create.orgadmin.body.businessImpactId>",
+      "color": "#6f8f3f",
+      "isDeleted": false,
+      "name": "Golden Capture Impact",
+      "organizationId": "<guid@org.body.organizationId>",
+      "sortOrder": 50
+    }
+  }
+}

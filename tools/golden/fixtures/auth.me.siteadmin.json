@@ -14,12 +14,12 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 21:42:34 GMT",
+      "date": "Thu, 03 Sep 2026 22:13:03 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "userId": "49c34d6c-63f2-461f-bc2e-53d60524042b",
+      "userId": "d05a79b8-730a-4079-88ae-bda13fd50a0b",
       "organizationId": null,
       "role": "SiteAdmin",
       "firstName": "Sam",
