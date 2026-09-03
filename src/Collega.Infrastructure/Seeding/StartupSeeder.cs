@@ -373,6 +373,11 @@ public sealed class StartupSeeder : IStartupSeeder
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        // Counts every seeded idea in the organization, so each gets its own creation
+        // minute. Per-board numbering would tie idea 3 of one board with idea 3 of the
+        // next, and the organization-wide list would be back to an arbitrary tie-break.
+        var seededSoFar = 0;
+
         foreach (var board in boards)
         {
             if (seededBoardIds.Contains(board.Id))
@@ -423,8 +428,13 @@ public sealed class StartupSeeder : IStartupSeeder
                     assigneeUserIds: assigneeIds,
                     tagIds,
                     mentionUserIds: i % 4 == 0 ? new[] { contributors[(i + 1) % contributors.Count].Id } : noIds,
-                    nowUtc);
+                    // A minute apart, oldest first, rather than all on one instant. Boards sort by
+                    // creation time, and eleven ideas sharing one timestamp leave the order to the
+                    // database's tie-break — which reads as a board that shuffles itself, and makes
+                    // two identically seeded deployments disagree about what is on the first page.
+                    nowUtc.AddMinutes(-(boards.Count * IdeaScenarios.Length - seededSoFar)));
 
+                seededSoFar++;
                 ideas.Add(idea);
                 await _dbContext.Ideas.AddAsync(idea, cancellationToken);
 
@@ -438,9 +448,12 @@ public sealed class StartupSeeder : IStartupSeeder
                 ideasInStatus++;
             }
 
-            await AddDemoCommentAsync(ideas[0].Id, contributors[1].Id, "Thanks for raising this - I'll take a first look.", nowUtc, cancellationToken);
-            await AddDemoCommentAsync(ideas[0].Id, contributors[0].Id, "Agreed, let's prioritize it for the next review.", nowUtc, cancellationToken);
-            await AddDemoCommentAsync(ideas[1].Id, contributors[2].Id, "Following along - this would help my team too.", nowUtc, cancellationToken);
+            // Minutes apart, in the order they read as a conversation. Two comments on one
+            // idea sharing an instant leave their order to the database's tie-break, and a
+            // thread that reorders itself between reads is not a thread.
+            await AddDemoCommentAsync(ideas[0].Id, contributors[1].Id, "Thanks for raising this - I'll take a first look.", nowUtc.AddMinutes(-3), cancellationToken);
+            await AddDemoCommentAsync(ideas[0].Id, contributors[0].Id, "Agreed, let's prioritize it for the next review.", nowUtc.AddMinutes(-2), cancellationToken);
+            await AddDemoCommentAsync(ideas[1].Id, contributors[2].Id, "Following along - this would help my team too.", nowUtc.AddMinutes(-1), cancellationToken);
 
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
