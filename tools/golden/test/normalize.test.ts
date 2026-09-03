@@ -79,6 +79,19 @@ test("a password the API mints is redacted too, not just one we sent", () => {
   );
 });
 
+test("an invite code is a credential, and it rides on ordinary list responses", () => {
+  // OrganizationListItem / OrganizationDetail / CreateOrganizationResult /
+  // RegenerateInviteCodeResult. GET /organizations is a mandatory coverage cell,
+  // so this is not an endpoint anyone would have thought to flag.
+  const orgs = redact([
+    { id: "o1", name: "Acme Robotics", inviteCode: "ACME-7F31" },
+    { id: "o2", name: "Northwind", inviteCode: "NRTH-2B90" },
+  ]) as Record<string, unknown>[];
+  assert.equal(orgs[0].inviteCode, "<redacted>");
+  assert.equal(orgs[1].inviteCode, "<redacted>");
+  assert.equal(orgs[0].name, "Acme Robotics");
+});
+
 test("credentials never reach a fixture, at any depth", () => {
   const redacted = redact({
     email: "orgadmin@demo.collega.test",

@@ -27,10 +27,27 @@ const JWT = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g;
 /** Response headers worth pinning. The rest are transport noise that differs by stack. */
 export const HEADER_ALLOW_LIST = ["content-type", "location", "www-authenticate"];
 
-/** Request fields that are credentials. Never recorded, in any form. */
-const SECRET_FIELDS = new Set(
-  ["password", "newpassword", "currentpassword", "oldpassword", "temporarypassword", "accesstoken", "token", "secret", "apikey"],
-);
+/**
+ * Fields that are credentials, in a request or a response. Never recorded.
+ *
+ * `invitecode` earns its place the least obviously and matters the most: it is a
+ * standing, non-expiring credential that self-registers anyone into an
+ * organization, and it comes back on `GET /organizations` and
+ * `GET /organizations/{id}` — ordinary list responses that every capture hits,
+ * not an endpoint anyone would think to flag.
+ */
+const SECRET_FIELDS = new Set([
+  "password",
+  "newpassword",
+  "currentpassword",
+  "oldpassword",
+  "temporarypassword",
+  "invitecode",
+  "accesstoken",
+  "token",
+  "secret",
+  "apikey",
+]);
 
 export class Normalizer {
   #labels = new Map<string, string>();

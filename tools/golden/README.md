@@ -117,11 +117,23 @@ row. Both are in the coverage grid, so A2 will record them. Leaving that to a
 per-step `unstable` declaration would make it depend on every author
 remembering, for a field they have not met yet.
 
-This costs no coverage: `<redacted>` appears identically on both sides of a
-replay, so the field's presence and position stay pinned. A **null** secret is
+And **invite codes**, which are the least obvious and the most exposed: an
+invite code is a standing, non-expiring credential that self-registers anyone
+into an organization, and it rides on `GET /organizations` and
+`GET /organizations/{id}` — ordinary list responses in every capture, not an
+endpoint anyone would think to flag.
+
+This costs almost no coverage: `<redacted>` appears identically on both sides of
+a replay, so each field's presence and position stay pinned. A **null** secret is
 left alone on purpose — a rejected import row is issued no password, and a stack
 that starts issuing one there is a defect, not a secret. Emails are kept too:
 which identity made the call is the case.
+
+**The one thing it does cost**, stated so nobody assumes otherwise: since every
+redacted value reads the same, the corpus cannot see that a value *changed*. So
+`POST /organizations/{id}/invite-code/regenerate` is pinned as "returns an invite
+code, 200" but not as "returns a **different** one". That assertion belongs in a
+Vitest test against the service, and Wave C or D owes it one.
 
 ## Writing a scenario
 
