@@ -40,6 +40,14 @@ def check_vars(text, where):
 check_vars(CSS, "stylesheets")
 
 ROLES = ["SiteAdmin", "OrgAdmin", "User", "ReadOnly"]
+
+# A sibling builder (build_q.py) imports this module and overrides these to
+# render the same fragments under a different skin: the label in the chrome,
+# the web-font link, the stylesheet, and a hook run over the finished body.
+BRAND = "Comp P"
+FONT_LINK = ('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700'
+             '&display=swap" rel="stylesheet">')
+POST = None
 STATES = ["normal", "empty", "loading", "error"]
 
 IC = {
@@ -1225,7 +1233,7 @@ def chrome(comp, comps):
     reviewer copy stay in separate voices, per the settled decision.
     """
     r = ['<nav class="switch" aria-label="Comp screens">',
-         f'  <b>Comp P</b><span class="lbl">{comp["label"]}</span>']
+         f'  <b>{BRAND}</b><span class="lbl">{comp["label"]}</span>']
     for sid, text in comp["screens"]:
         cur = ' aria-current="true"' if sid == comp["screens"][0][0] else ''
         r.append(f'  <button data-go="{sid}"{cur}>{text}</button>')
@@ -1271,7 +1279,7 @@ PAGE = """<!DOCTYPE html>
 <title>{title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{font}
 <style>
 {css}
 </style>
@@ -1481,8 +1489,10 @@ def build(comp):
         f'only in fragment: {sorted(defined - listed)}, '
         f'only in manifest: {sorted(listed - defined)}')
 
-    html = PAGE.format(title=comp["title"], css=CSS,
-                       body=chrome(comp, COMPS) + "\n" + body)
+    body = chrome(comp, COMPS) + "\n" + body
+    if POST:
+        body = POST(body)
+    html = PAGE.format(title=comp["title"], css=CSS, font=FONT_LINK, body=body)
     (OUT / comp["file"]).write_text(html)
     print(f'{comp["file"]:28} {len(comp["screens"])} screens  '
           f'{len(html.splitlines()):5} lines  {len(html):7} bytes')
@@ -1497,5 +1507,6 @@ def build(comp):
         print(f'{"":28} not built yet: {", ".join(pending)}')
 
 
-for c in COMPS:
-    build(c)
+if __name__ == "__main__":
+    for c in COMPS:
+        build(c)

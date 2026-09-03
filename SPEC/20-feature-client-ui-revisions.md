@@ -12,6 +12,10 @@ Defines a batch of client UI bug fixes and structural revisions covering layout,
 
 ## Decision Log Addendum (2026-08-07)
 
+## Decision Log Addendum (2026-09-03)
+
+- Decision D6: **Comp P is the canonical shell and surface model** (`SPEC/decisions.md` 2026-09-03). For the TypeScript conversion, the 64px icon rail (Rail, below) becomes comp P's fixed left sidebar with grouped nav and a bottom identity block, and the List + Drawer pattern (D5) becomes list + **inline create** beside the list + the **docked inspector** for edits — no drawers, no create modal. D2 (route-based logout), D3 (unauthenticated shell) and D4's Home counts carry forward; D4's tile grid is replaced by comp P's Home. The shipped Blazor client keeps the rail and drawers until cutover. Authoritative description: `SPEC/20-feature-client-ui.md`.
+
 ## Decision Log Addendum (2026-08-10)
 
 - Decision D5: The admin management entities — Organizations, Users, Statuses, Idea Types, and Custom Fields — adopt the **List + Drawer** pattern canonically, matching the Ideas surface, replacing the earlier full-page-form (Organizations, Users) and inline-edit-card (Statuses, Idea Types, Custom Fields) patterns described under "Admin-Style Pages: List/Form Pattern" below (that section's list-column definitions remain current; its full-page/inline **edit** surface is superseded by the drawer). Each list row's **Details** action opens a right slide-in drawer (read view + Edit toggle → inline form + Save/Cancel footer); **Add New** opens a centered create modal. The drawer/modal chrome is the shared `Components/DrawerShell.razor` / `Components/CreateModalShell.razor` used by Ideas too. Full specification and the preserved per-entity rules/retired routes are in `SPEC/20-feature-client-ui.md` → "Admin entities use the same List + Drawer pattern". Delivered in Sprint 2 (`SPEC/sprints/archive/sprint-02-drawer-pattern-rollout.md`).
@@ -46,8 +50,8 @@ The header-bar and horizontal-menu description immediately below predates the ra
 - The protected rail icons are shown only for authenticated users with access to protected routes (unchanged).
 - Rail links navigate to list-entry pages: Home (`/`), Boards (`/boards`), Ideas (`/ideas`), Settings (`/settings`).
 
-### Rail (locked 2026-08-07)
-See `SPEC/20-feature-client-ui.md` NAVIGATION for the authoritative rail description and `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` for the reference implementation (supersedes `-v4-combined.html`).
+### Rail (locked 2026-08-07; superseded for the conversion by Decision D6)
+See `SPEC/20-feature-client-ui.md` NAVIGATION for the comp P sidebar that replaces it, and its *Superseded surfaces* section for the rail and `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` for the reference implementation (supersedes `-v4-combined.html`).
 
 ### Unauthenticated and Unauthorized Shell
 - Unauthenticated users can access `/login` and `/register`.

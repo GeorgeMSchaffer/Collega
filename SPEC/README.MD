@@ -56,7 +56,7 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 
 ## Supporting Material
 
-- `mockups/` — SVG/HTML UI mockups and throwaway review comps. **`comp-p-focus-roadmap.html` is the locked direction as of 2026-08-31** (structure locked, palette open — see `decisions.md`); earlier comps are kept for history.
+- `mockups/` — SVG/HTML UI mockups and throwaway review comps. **the comp P set (`comp-p-{focus-roadmap,auth,admin,delivery}.html`) is the canonical comp** — locked 2026-08-31, canonical 2026-09-03; structure locked, palette open; built on Tailwind CSS + shadcn/ui, and **comp Q (`comp-q-*.html`) is that rendering** (see `decisions.md`). Earlier comps are kept for history.
 - `ui-ux-spec-template.md` — start here for a new client layout/interaction spec
 - `SPECKIT/specs/<NNN-feature>/spec.md` — spec-kit-style **downstream copies** of the canonical files; edit the canonical file first
 

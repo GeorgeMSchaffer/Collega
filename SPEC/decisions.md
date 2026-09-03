@@ -9,6 +9,42 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-03 — Comp P is the canonical comp; the client is built on Tailwind CSS + shadcn/ui
+
+**Decided:** comp P is the canonical UI comp for the product and the target of the
+TypeScript conversion's Wave E — its structure, information architecture and copy model are
+what ships. The client is built on a framework rather than hand-rolled CSS: **Tailwind CSS
+v4 with shadcn/ui** (Radix primitives), the Next.js idiom, used as intended — its theme
+variables, its component set, its defaults for radius, type scale and control geometry. The
+user's words: *keep things as straightforward as possible and not reinvent a wheel.*
+
+**Comp Q is the rendering of that decision.** `SPEC/mockups/comp-q-*.html`, built by
+`SPEC/mockups/_build/build_q.py` from the *same fragments* as comp P, expands every
+semantic class into the utility string the matching shadcn/ui component renders and
+compiles Tailwind over the result — so the files are what a shadcn project would put in
+the DOM. Where the framework's defaults differ from comp P's hand-drawn values, comp Q
+takes the framework's: 14px UI text and 36px controls (denser than comp P's 15/16px),
+`--radius: 0.3rem` (shadcn's small preset), Badge / Card / Dialog / Sidebar / Command
+shapes, Geist (shadcn's default face). The docked inspector stays a layout column, not a
+Sheet, because the comp P lock says it is never a modal. The component map is the registry
+at the top of `build_q.py` and is summarised in `_build/README.md`.
+
+**Theme:** comp Q carries the business-professional palette chosen 2026-08-31 as shadcn
+theme variables. The palette remains open; changing it is one `:root` block in `q.css`.
+
+**What this closes:** conversion ticket `01` Question B (direction: comp P) and Question D
+(library: Tailwind + shadcn/ui — the map branch's 2026-09-01 Tailwind answer stands, with
+shadcn/ui named on top). `50-typescript-migration.md` constraint 9 and Wave E0 now say so.
+**Still open on ticket `01`:** Question C — Loop and comp N's decision records, commitment
+strip and triage mode as net-new scope. Nothing in E0–E5 waits on it.
+
+**Consequence:** `SPEC/20-feature-client-ui.md` is reconciled against comp P as of this
+date — sidebar shell, docked inspector, inline create, Tailwind + shadcn/ui — with the
+shipped Blazor client's rail-and-drawer surfaces recorded once under *Superseded surfaces*;
+that client runs unchanged until cutover. `CLAUDE.md`'s stack line names the framework.
+
+---
+
 ## 2026-09-02 — Outcome ↔ Issue cardinality: single-parent
 
 **Decided:** an Issue sits under **at most one** Outcome. Storage is `Idea.OutcomeId`, a

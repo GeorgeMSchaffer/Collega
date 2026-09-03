@@ -1,0 +1,3153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp Q: auth and identity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/*! tailwindcss v4.1.11 | MIT License | https://tailwindcss.com */
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+  :root, :host {
+    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --color-black: #000;
+    --color-white: #fff;
+    --spacing: 0.25rem;
+    --container-sm: 24rem;
+    --container-md: 28rem;
+    --text-xs: 0.75rem;
+    --text-xs--line-height: calc(1 / 0.75);
+    --text-sm: 0.875rem;
+    --text-sm--line-height: calc(1.25 / 0.875);
+    --text-base: 1rem;
+    --text-base--line-height: calc(1.5 / 1);
+    --text-lg: 1.125rem;
+    --text-lg--line-height: calc(1.75 / 1.125);
+    --text-xl: 1.25rem;
+    --text-xl--line-height: calc(1.75 / 1.25);
+    --text-2xl: 1.5rem;
+    --text-2xl--line-height: calc(2 / 1.5);
+    --text-3xl: 1.875rem;
+    --text-3xl--line-height: calc(2.25 / 1.875);
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --tracking-tight: -0.025em;
+    --tracking-wide: 0.025em;
+    --tracking-wider: 0.05em;
+    --leading-tight: 1.25;
+    --leading-snug: 1.375;
+    --leading-relaxed: 1.625;
+    --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    --default-transition-duration: 150ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    --default-font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --default-mono-font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  html, :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+    font-feature-settings: var(--default-font-feature-settings, normal);
+    font-variation-settings: var(--default-font-variation-settings, normal);
+    -webkit-tap-highlight-color: transparent;
+  }
+  hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  b, strong {
+    font-weight: bolder;
+  }
+  code, kbd, samp, pre {
+    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+    font-feature-settings: var(--default-mono-font-feature-settings, normal);
+    font-variation-settings: var(--default-mono-font-variation-settings, normal);
+    font-size: 1em;
+  }
+  small {
+    font-size: 80%;
+  }
+  sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sub {
+    bottom: -0.25em;
+  }
+  sup {
+    top: -0.5em;
+  }
+  table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  :-moz-focusring {
+    outline: auto;
+  }
+  progress {
+    vertical-align: baseline;
+  }
+  summary {
+    display: list-item;
+  }
+  ol, ul, menu {
+    list-style: none;
+  }
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    vertical-align: middle;
+  }
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+  button, input, select, optgroup, textarea, ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  :where(select:is([multiple], [size])) optgroup {
+    font-weight: bolder;
+  }
+  :where(select:is([multiple], [size])) optgroup option {
+    padding-inline-start: 20px;
+  }
+  ::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  ::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {
+    ::placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+  }
+  textarea {
+    resize: vertical;
+  }
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  ::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  ::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  ::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  ::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+  button, input:where([type="button"], [type="reset"], [type="submit"]), ::file-selector-button {
+    appearance: button;
+  }
+  ::-webkit-inner-spin-button, ::-webkit-outer-spin-button {
+    height: auto;
+  }
+  [hidden]:where(:not([hidden="until-found"])) {
+    display: none !important;
+  }
+}
+@layer utilities {
+  .visible {
+    visibility: visible;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  .absolute {
+    position: absolute;
+  }
+  .fixed {
+    position: fixed;
+  }
+  .relative {
+    position: relative;
+  }
+  .inset-0 {
+    inset: calc(var(--spacing) * 0);
+  }
+  .z-50 {
+    z-index: 50;
+  }
+  .m-0 {
+    margin: calc(var(--spacing) * 0);
+  }
+  .mx-1 {
+    margin-inline: calc(var(--spacing) * 1);
+  }
+  .mt-0\.5 {
+    margin-top: calc(var(--spacing) * 0.5);
+  }
+  .mt-1 {
+    margin-top: calc(var(--spacing) * 1);
+  }
+  .mt-2 {
+    margin-top: calc(var(--spacing) * 2);
+  }
+  .mt-3 {
+    margin-top: calc(var(--spacing) * 3);
+  }
+  .mt-4 {
+    margin-top: calc(var(--spacing) * 4);
+  }
+  .mt-6 {
+    margin-top: calc(var(--spacing) * 6);
+  }
+  .mt-auto {
+    margin-top: auto;
+  }
+  .mb-1 {
+    margin-bottom: calc(var(--spacing) * 1);
+  }
+  .mb-1\.5 {
+    margin-bottom: calc(var(--spacing) * 1.5);
+  }
+  .mb-2 {
+    margin-bottom: calc(var(--spacing) * 2);
+  }
+  .mb-4 {
+    margin-bottom: calc(var(--spacing) * 4);
+  }
+  .mb-6 {
+    margin-bottom: calc(var(--spacing) * 6);
+  }
+  .ml-1\.5 {
+    margin-left: calc(var(--spacing) * 1.5);
+  }
+  .ml-2 {
+    margin-left: calc(var(--spacing) * 2);
+  }
+  .block {
+    display: block;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .hidden {
+    display: none;
+  }
+  .inline-block {
+    display: inline-block;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .table {
+    display: table;
+  }
+  .size-2 {
+    width: calc(var(--spacing) * 2);
+    height: calc(var(--spacing) * 2);
+  }
+  .size-5 {
+    width: calc(var(--spacing) * 5);
+    height: calc(var(--spacing) * 5);
+  }
+  .size-7 {
+    width: calc(var(--spacing) * 7);
+    height: calc(var(--spacing) * 7);
+  }
+  .size-8 {
+    width: calc(var(--spacing) * 8);
+    height: calc(var(--spacing) * 8);
+  }
+  .h-3 {
+    height: calc(var(--spacing) * 3);
+  }
+  .h-8 {
+    height: calc(var(--spacing) * 8);
+  }
+  .h-9 {
+    height: calc(var(--spacing) * 9);
+  }
+  .h-fit {
+    height: fit-content;
+  }
+  .max-h-\[86vh\] {
+    max-height: 86vh;
+  }
+  .min-h-14 {
+    min-height: calc(var(--spacing) * 14);
+  }
+  .min-h-\[calc\(100vh-70px\)\] {
+    min-height: calc(100vh - 70px);
+  }
+  .w-64 {
+    width: calc(var(--spacing) * 64);
+  }
+  .w-72 {
+    width: calc(var(--spacing) * 72);
+  }
+  .w-\[118px\] {
+    width: 118px;
+  }
+  .w-\[400px\] {
+    width: 400px;
+  }
+  .w-\[min\(560px\,92vw\)\] {
+    width: min(560px, 92vw);
+  }
+  .w-\[min\(620px\,92vw\)\] {
+    width: min(620px, 92vw);
+  }
+  .w-\[min\(720px\,92vw\)\] {
+    width: min(720px, 92vw);
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-\[78\%\] {
+    max-width: 78%;
+  }
+  .max-w-\[1320px\] {
+    max-width: 1320px;
+  }
+  .min-w-0 {
+    min-width: calc(var(--spacing) * 0);
+  }
+  .min-w-40 {
+    min-width: calc(var(--spacing) * 40);
+  }
+  .min-w-60 {
+    min-width: calc(var(--spacing) * 60);
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .shrink-0 {
+    flex-shrink: 0;
+  }
+  .grow {
+    flex-grow: 1;
+  }
+  .animate-pulse {
+    animation: var(--animate-pulse);
+  }
+  .cursor-default {
+    cursor: default;
+  }
+  .cursor-grab {
+    cursor: grab;
+  }
+  .list-none {
+    list-style-type: none;
+  }
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .grid-cols-\[1\.05fr_\.95fr\] {
+    grid-template-columns: 1.05fr .95fr;
+  }
+  .grid-cols-\[1\.35fr_1fr\] {
+    grid-template-columns: 1.35fr 1fr;
+  }
+  .grid-cols-\[104px_1fr\] {
+    grid-template-columns: 104px 1fr;
+  }
+  .grid-cols-\[repeat\(auto-fill\,minmax\(220px\,1fr\)\)\] {
+    grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+  }
+  .flex-col {
+    flex-direction: column;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .items-end {
+    align-items: flex-end;
+  }
+  .items-start {
+    align-items: flex-start;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .gap-0\.5 {
+    gap: calc(var(--spacing) * 0.5);
+  }
+  .gap-1 {
+    gap: calc(var(--spacing) * 1);
+  }
+  .gap-1\.5 {
+    gap: calc(var(--spacing) * 1.5);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing) * 2);
+  }
+  .gap-2\.5 {
+    gap: calc(var(--spacing) * 2.5);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing) * 3);
+  }
+  .gap-4 {
+    gap: calc(var(--spacing) * 4);
+  }
+  .gap-6 {
+    gap: calc(var(--spacing) * 6);
+  }
+  .space-y-1 {
+    :where(& > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 1) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 1) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+  .gap-x-4 {
+    column-gap: calc(var(--spacing) * 4);
+  }
+  .gap-y-2 {
+    row-gap: calc(var(--spacing) * 2);
+  }
+  .divide-y {
+    :where(& > :not(:last-child)) {
+      --tw-divide-y-reverse: 0;
+      border-bottom-style: var(--tw-border-style);
+      border-top-style: var(--tw-border-style);
+      border-top-width: calc(1px * var(--tw-divide-y-reverse));
+      border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
+    }
+  }
+  .self-end {
+    align-self: flex-end;
+  }
+  .self-start {
+    align-self: flex-start;
+  }
+  .overflow-auto {
+    overflow: auto;
+  }
+  .overflow-hidden {
+    overflow: hidden;
+  }
+  .overflow-x-auto {
+    overflow-x: auto;
+  }
+  .rounded-full {
+    border-radius: calc(infinity * 1px);
+  }
+  .rounded-lg {
+    border-radius: calc(var(--radius) + 2px);
+  }
+  .rounded-md {
+    border-radius: var(--radius);
+  }
+  .rounded-sm {
+    border-radius: calc(var(--radius) - 2px);
+  }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
+  .border-y {
+    border-block-style: var(--tw-border-style);
+    border-block-width: 1px;
+  }
+  .border-t {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+  }
+  .border-r {
+    border-right-style: var(--tw-border-style);
+    border-right-width: 1px;
+  }
+  .border-b {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+  }
+  .border-l {
+    border-left-style: var(--tw-border-style);
+    border-left-width: 1px;
+  }
+  .border-l-4 {
+    border-left-style: var(--tw-border-style);
+    border-left-width: 4px;
+  }
+  .border-l-\[3px\] {
+    border-left-style: var(--tw-border-style);
+    border-left-width: 3px;
+  }
+  .border-dashed {
+    --tw-border-style: dashed;
+    border-style: dashed;
+  }
+  .border-destructive\/40 {
+    border-color: var(--destructive);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--destructive) 40%, transparent);
+    }
+  }
+  .border-destructive\/50 {
+    border-color: var(--destructive);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--destructive) 50%, transparent);
+    }
+  }
+  .border-input {
+    border-color: var(--input);
+  }
+  .border-primary {
+    border-color: var(--primary);
+  }
+  .border-sidebar-border {
+    border-color: var(--sidebar-border);
+  }
+  .border-transparent {
+    border-color: transparent;
+  }
+  .border-warning\/60 {
+    border-color: var(--warning);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--warning) 60%, transparent);
+    }
+  }
+  .border-l-primary {
+    border-left-color: var(--primary);
+  }
+  .border-l-teal {
+    border-left-color: var(--teal-brand);
+  }
+  .bg-background {
+    background-color: var(--background);
+  }
+  .bg-black\/60 {
+    background-color: color-mix(in srgb, #000 60%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-black) 60%, transparent);
+    }
+  }
+  .bg-card {
+    background-color: var(--card);
+  }
+  .bg-destructive\/5 {
+    background-color: var(--destructive);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--destructive) 5%, transparent);
+    }
+  }
+  .bg-muted {
+    background-color: var(--muted);
+  }
+  .bg-muted-foreground {
+    background-color: var(--muted-foreground);
+  }
+  .bg-muted\/30 {
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 30%, transparent);
+    }
+  }
+  .bg-muted\/50 {
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+    }
+  }
+  .bg-popover {
+    background-color: var(--popover);
+  }
+  .bg-primary {
+    background-color: var(--primary);
+  }
+  .bg-primary\/10 {
+    background-color: var(--primary);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+    }
+  }
+  .bg-secondary {
+    background-color: var(--secondary);
+  }
+  .bg-sidebar {
+    background-color: var(--sidebar);
+  }
+  .bg-teal\/10 {
+    background-color: var(--teal-brand);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--teal-brand) 10%, transparent);
+    }
+  }
+  .bg-transparent {
+    background-color: transparent;
+  }
+  .bg-warning\/10 {
+    background-color: var(--warning);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--warning) 10%, transparent);
+    }
+  }
+  .bg-warning\/15 {
+    background-color: var(--warning);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--warning) 15%, transparent);
+    }
+  }
+  .p-0 {
+    padding: calc(var(--spacing) * 0);
+  }
+  .p-1 {
+    padding: calc(var(--spacing) * 1);
+  }
+  .p-2 {
+    padding: calc(var(--spacing) * 2);
+  }
+  .p-3 {
+    padding: calc(var(--spacing) * 3);
+  }
+  .p-4 {
+    padding: calc(var(--spacing) * 4);
+  }
+  .p-6 {
+    padding: calc(var(--spacing) * 6);
+  }
+  .px-1 {
+    padding-inline: calc(var(--spacing) * 1);
+  }
+  .px-1\.5 {
+    padding-inline: calc(var(--spacing) * 1.5);
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing) * 2);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing) * 3);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+  .px-6 {
+    padding-inline: calc(var(--spacing) * 6);
+  }
+  .px-14 {
+    padding-inline: calc(var(--spacing) * 14);
+  }
+  .py-0\.5 {
+    padding-block: calc(var(--spacing) * 0.5);
+  }
+  .py-1\.5 {
+    padding-block: calc(var(--spacing) * 1.5);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing) * 2);
+  }
+  .py-2\.5 {
+    padding-block: calc(var(--spacing) * 2.5);
+  }
+  .py-3 {
+    padding-block: calc(var(--spacing) * 3);
+  }
+  .py-4 {
+    padding-block: calc(var(--spacing) * 4);
+  }
+  .py-10 {
+    padding-block: calc(var(--spacing) * 10);
+  }
+  .py-16 {
+    padding-block: calc(var(--spacing) * 16);
+  }
+  .pt-1 {
+    padding-top: calc(var(--spacing) * 1);
+  }
+  .pt-4 {
+    padding-top: calc(var(--spacing) * 4);
+  }
+  .pt-\[12vh\] {
+    padding-top: 12vh;
+  }
+  .pb-2 {
+    padding-bottom: calc(var(--spacing) * 2);
+  }
+  .pb-3 {
+    padding-bottom: calc(var(--spacing) * 3);
+  }
+  .text-center {
+    text-align: center;
+  }
+  .text-left {
+    text-align: left;
+  }
+  .text-right {
+    text-align: right;
+  }
+  .align-middle {
+    vertical-align: middle;
+  }
+  .font-mono {
+    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .text-base {
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+  }
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .text-\[0\.8rem\] {
+    font-size: 0.8rem;
+  }
+  .text-\[9px\] {
+    font-size: 9px;
+  }
+  .text-\[10px\] {
+    font-size: 10px;
+  }
+  .text-\[11px\] {
+    font-size: 11px;
+  }
+  .leading-none {
+    --tw-leading: 1;
+    line-height: 1;
+  }
+  .leading-relaxed {
+    --tw-leading: var(--leading-relaxed);
+    line-height: var(--leading-relaxed);
+  }
+  .font-medium {
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  .font-semibold {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .tracking-tight {
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .tracking-wide {
+    --tw-tracking: var(--tracking-wide);
+    letter-spacing: var(--tracking-wide);
+  }
+  .tracking-wider {
+    --tw-tracking: var(--tracking-wider);
+    letter-spacing: var(--tracking-wider);
+  }
+  .whitespace-nowrap {
+    white-space: nowrap;
+  }
+  .text-card-foreground {
+    color: var(--card-foreground);
+  }
+  .text-destructive {
+    color: var(--destructive);
+  }
+  .text-foreground {
+    color: var(--foreground);
+  }
+  .text-foreground\/80 {
+    color: var(--foreground);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--foreground) 80%, transparent);
+    }
+  }
+  .text-foreground\/90 {
+    color: var(--foreground);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--foreground) 90%, transparent);
+    }
+  }
+  .text-muted-foreground {
+    color: var(--muted-foreground);
+  }
+  .text-muted-foreground\/70 {
+    color: var(--muted-foreground);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
+    }
+  }
+  .text-popover-foreground {
+    color: var(--popover-foreground);
+  }
+  .text-primary {
+    color: var(--primary);
+  }
+  .text-primary-foreground {
+    color: var(--primary-foreground);
+  }
+  .text-secondary-foreground {
+    color: var(--secondary-foreground);
+  }
+  .text-sidebar-foreground {
+    color: var(--sidebar-foreground);
+  }
+  .text-sidebar-foreground\/70 {
+    color: var(--sidebar-foreground);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--sidebar-foreground) 70%, transparent);
+    }
+  }
+  .text-teal {
+    color: var(--teal-brand);
+  }
+  .lowercase {
+    text-transform: lowercase;
+  }
+  .uppercase {
+    text-transform: uppercase;
+  }
+  .italic {
+    font-style: italic;
+  }
+  .tabular-nums {
+    --tw-numeric-spacing: tabular-nums;
+    font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);
+  }
+  .line-through {
+    text-decoration-line: line-through;
+  }
+  .underline {
+    text-decoration-line: underline;
+  }
+  .opacity-50 {
+    opacity: 50%;
+  }
+  .shadow-lg {
+    --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .shadow-xs {
+    --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .filter {
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  }
+  .transition-colors {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .outline-none {
+    --tw-outline-style: none;
+    outline-style: none;
+  }
+  .select-none {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .before\:size-1\.5 {
+    &::before {
+      content: var(--tw-content);
+      width: calc(var(--spacing) * 1.5);
+      height: calc(var(--spacing) * 1.5);
+    }
+  }
+  .before\:rounded-full {
+    &::before {
+      content: var(--tw-content);
+      border-radius: calc(infinity * 1px);
+    }
+  }
+  .before\:bg-teal {
+    &::before {
+      content: var(--tw-content);
+      background-color: var(--teal-brand);
+    }
+  }
+  .before\:content-\[\'\'\] {
+    &::before {
+      content: var(--tw-content);
+      --tw-content: '';
+      content: var(--tw-content);
+    }
+  }
+  .first\:border-t-0 {
+    &:first-child {
+      border-top-style: var(--tw-border-style);
+      border-top-width: 0px;
+    }
+  }
+  .last\:border-0 {
+    &:last-child {
+      border-style: var(--tw-border-style);
+      border-width: 0px;
+    }
+  }
+  .hover\:border-primary {
+    &:hover {
+      @media (hover: hover) {
+        border-color: var(--primary);
+      }
+    }
+  }
+  .hover\:bg-accent {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--accent);
+      }
+    }
+  }
+  .hover\:bg-accent\/50 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--accent);
+        @supports (color: color-mix(in lab, red, red)) {
+          background-color: color-mix(in oklab, var(--accent) 50%, transparent);
+        }
+      }
+    }
+  }
+  .hover\:bg-destructive\/10 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--destructive);
+        @supports (color: color-mix(in lab, red, red)) {
+          background-color: color-mix(in oklab, var(--destructive) 10%, transparent);
+        }
+      }
+    }
+  }
+  .hover\:bg-primary\/90 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--primary);
+        @supports (color: color-mix(in lab, red, red)) {
+          background-color: color-mix(in oklab, var(--primary) 90%, transparent);
+        }
+      }
+    }
+  }
+  .hover\:bg-sidebar-accent {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--sidebar-accent);
+      }
+    }
+  }
+  .hover\:text-accent-foreground {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--accent-foreground);
+      }
+    }
+  }
+  .hover\:text-primary {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--primary);
+      }
+    }
+  }
+  .hover\:text-sidebar-accent-foreground {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--sidebar-accent-foreground);
+      }
+    }
+  }
+  .hover\:shadow-sm {
+    &:hover {
+      @media (hover: hover) {
+        --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+      }
+    }
+  }
+  .focus-visible\:ring-1 {
+    &:focus-visible {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .focus-visible\:ring-ring {
+    &:focus-visible {
+      --tw-ring-color: var(--ring);
+    }
+  }
+  .focus-visible\:outline-none {
+    &:focus-visible {
+      --tw-outline-style: none;
+      outline-style: none;
+    }
+  }
+  .aria-\[current\=page\]\:bg-sidebar-accent {
+    &[aria-current="page"] {
+      background-color: var(--sidebar-accent);
+    }
+  }
+  .aria-\[current\=page\]\:font-medium {
+    &[aria-current="page"] {
+      --tw-font-weight: var(--font-weight-medium);
+      font-weight: var(--font-weight-medium);
+    }
+  }
+  .aria-\[current\=page\]\:text-sidebar-accent-foreground {
+    &[aria-current="page"] {
+      color: var(--sidebar-accent-foreground);
+    }
+  }
+  .\[\&_a\]\:text-muted-foreground {
+    & a {
+      color: var(--muted-foreground);
+    }
+  }
+  .\[\&_a\:hover\]\:text-foreground {
+    & a:hover {
+      color: var(--foreground);
+    }
+  }
+  .\[\&_b\]\:font-medium {
+    & b {
+      --tw-font-weight: var(--font-weight-medium);
+      font-weight: var(--font-weight-medium);
+    }
+  }
+  .\[\&_b\]\:text-foreground {
+    & b {
+      color: var(--foreground);
+    }
+  }
+  .\[\&\>\.av\]\:ring-2 {
+    &>.av {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .\[\&\>\.av\]\:ring-background {
+    &>.av {
+      --tw-ring-color: var(--background);
+    }
+  }
+  .\[\&\>\.av\+\.av\]\:-ml-1 {
+    &>.av+.av {
+      margin-left: calc(var(--spacing) * -1);
+    }
+  }
+  .\[\&\>input\]\:min-w-0 {
+    &>input {
+      min-width: calc(var(--spacing) * 0);
+    }
+  }
+  .\[\&\>input\]\:flex-1 {
+    &>input {
+      flex: 1;
+    }
+  }
+  .\[\&\>span\]\:block {
+    &>span {
+      display: block;
+    }
+  }
+}
+:root {
+  --radius: 0.3rem;
+  --background: #F7F9FB;
+  --foreground: #243447;
+  --card: #FFFFFF;
+  --card-foreground: #243447;
+  --popover: #FFFFFF;
+  --popover-foreground: #243447;
+  --primary: #527292;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1F3F6;
+  --secondary-foreground: #3E4E60;
+  --muted: #F1F3F6;
+  --muted-foreground: #5D6C7E;
+  --accent: #F0F4F7;
+  --accent-foreground: #3E566F;
+  --destructive: #B64B4B;
+  --destructive-foreground: #FFFFFF;
+  --warning: #C9A65C;
+  --success: #6FAF7A;
+  --teal-brand: #5F9E93;
+  --border: #DDE1E6;
+  --input: #C5CBD3;
+  --ring: #5B7FA3;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #3E4E60;
+  --sidebar-primary: #527292;
+  --sidebar-accent: #F0F4F7;
+  --sidebar-accent-foreground: #3E566F;
+  --sidebar-border: #DDE1E6;
+  --sky: #5B7FA3;
+  --teal: #5F9E93;
+  --green: #6FAF7A;
+  --orange: #C9A65C;
+  --orange-deep: #8A6D2E;
+  --pink: #C97A7A;
+  --purple: #9A8AC4;
+  --purple-deep: #5B4F86;
+  --brown: #8A6D2E;
+  --sug: #116b5e;
+  --sug-soft: #e8f3f1;
+  --ink: var(--foreground);
+  --ink-secondary: #3E4E60;
+  --ink-muted: var(--muted-foreground);
+  --ink-faint: #818E9C;
+  --hairline: var(--border);
+  --canvas: #FFFFFF;
+  --canvas-soft: var(--muted);
+  --surface: var(--card);
+  --primary-active: #3E566F;
+  --on-primary: #FFFFFF;
+  --s-xxs: 4px;
+  --s-xs: 8px;
+  --s-sm: 12px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 28px;
+  --s-xxl: 32px;
+  --r-xs: calc(var(--radius) - 2px);
+  --r-sm: var(--radius);
+  --r-md: var(--radius);
+  --r-lg: calc(var(--radius) + 2px);
+  --r-xl: calc(var(--radius) + 6px);
+  --r-full: 9999px;
+  --e1: 0 1px 2px rgba(36,52,71,.06);
+  --e2: 0 8px 24px rgba(36,52,71,.14);
+  --font: var(--font-sans);
+}
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html, body {
+    margin: 0;
+  }
+  body {
+    background-color: var(--background);
+    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1 {
+    font-size: var(--text-2xl);
+    line-height: var(--tw-leading, var(--text-2xl--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  h2 {
+    font-size: var(--text-xl);
+    line-height: var(--tw-leading, var(--text-xl--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  h3 {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  p {
+    margin: calc(var(--spacing) * 0);
+    margin-bottom: calc(var(--spacing) * 4);
+  }
+  a {
+    color: var(--primary);
+    text-decoration-line: none;
+    &:hover {
+      @media (hover: hover) {
+        text-decoration-line: underline;
+      }
+    }
+  }
+  input[type=text], input[type=password], input[type=search], input[type=file], textarea, select {
+    display: flex;
+    height: calc(var(--spacing) * 9);
+    width: 100%;
+    border-radius: var(--radius);
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    border-color: var(--input);
+    background-color: var(--card);
+    padding-inline: calc(var(--spacing) * 3);
+    padding-block: calc(var(--spacing) * 1);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    &::placeholder {
+      color: var(--muted-foreground);
+    }
+    &:focus-visible {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+    &:focus-visible {
+      --tw-ring-color: var(--ring);
+    }
+    &:focus-visible {
+      --tw-outline-style: none;
+      outline-style: none;
+    }
+  }
+  textarea {
+    height: auto;
+    min-height: calc(var(--spacing) * 16);
+    resize: vertical;
+    padding-block: calc(var(--spacing) * 2);
+  }
+  input[type=file] {
+    padding-block: calc(var(--spacing) * 1.5);
+    &::file-selector-button {
+      margin-right: calc(var(--spacing) * 3);
+    }
+    &::file-selector-button {
+      border-radius: calc(var(--radius) - 2px);
+    }
+    &::file-selector-button {
+      border-style: var(--tw-border-style);
+      border-width: 0px;
+    }
+    &::file-selector-button {
+      background-color: var(--secondary);
+    }
+    &::file-selector-button {
+      padding-inline: calc(var(--spacing) * 2);
+    }
+    &::file-selector-button {
+      padding-block: calc(var(--spacing) * 0.5);
+    }
+    &::file-selector-button {
+      font-size: var(--text-xs);
+      line-height: var(--tw-leading, var(--text-xs--line-height));
+    }
+    &::file-selector-button {
+      --tw-font-weight: var(--font-weight-medium);
+      font-weight: var(--font-weight-medium);
+    }
+  }
+  input[type=checkbox], input[type=radio] {
+    width: calc(var(--spacing) * 4);
+    height: calc(var(--spacing) * 4);
+    accent-color: var(--primary);
+  }
+  label {
+    margin-bottom: calc(var(--spacing) * 1.5);
+    display: block;
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-leading: 1;
+    line-height: 1;
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  table {
+    width: 100%;
+    caption-side: bottom;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  thead th {
+    height: calc(var(--spacing) * 10);
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+    }
+    padding-inline: calc(var(--spacing) * 3);
+    text-align: left;
+    vertical-align: middle;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    color: var(--muted-foreground);
+  }
+  tbody td {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+    padding-inline: calc(var(--spacing) * 3);
+    padding-block: calc(var(--spacing) * 2.5);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td {
+    border-style: var(--tw-border-style);
+    border-width: 0px;
+  }
+  tbody tr:hover td {
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+    }
+  }
+  tfoot td {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 2px;
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+    }
+    padding-inline: calc(var(--spacing) * 3);
+    padding-block: calc(var(--spacing) * 2);
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  button {
+    font-family: inherit;
+  }
+  code {
+    border-radius: 0.25rem;
+    background-color: var(--muted);
+    padding-inline: calc(var(--spacing) * 1);
+    padding-block: calc(var(--spacing) * 0.5);
+    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+  }
+}
+@layer components {
+  .shell {
+    display: grid;
+    min-height: calc(100vh - 70px);
+    grid-template-columns: 256px minmax(0,1fr);
+  }
+  .shell.insp {
+    grid-template-columns: 256px minmax(0,1fr) 400px;
+  }
+  .main {
+    display: flex;
+    min-width: calc(var(--spacing) * 0);
+    flex-direction: column;
+  }
+  .screen {
+    display: none;
+  }
+  .screen[data-on="1"] {
+    display: block;
+  }
+  .brand .mark {
+    display: flex;
+    width: calc(var(--spacing) * 7);
+    height: calc(var(--spacing) * 7);
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    background-color: var(--primary);
+    font-size: 11px;
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-foreground);
+  }
+  .nav .ic {
+    width: calc(var(--spacing) * 4);
+    height: calc(var(--spacing) * 4);
+    flex-shrink: 0;
+  }
+  .nav .ct {
+    margin-left: auto;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+    --tw-numeric-spacing: tabular-nums;
+    font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);
+  }
+  .me .av {
+    width: calc(var(--spacing) * 8);
+    height: calc(var(--spacing) * 8);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .me .cap {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+  }
+  .palette .kbd {
+    margin-left: auto;
+  }
+  .pgh .sub, .card .sub, .authform .sub {
+    margin-top: calc(var(--spacing) * 1);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--muted-foreground);
+  }
+  .authform .sub {
+    margin-bottom: calc(var(--spacing) * 5);
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+  }
+  .panel > h2, .panel > h3 {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+    padding-inline: calc(var(--spacing) * 5);
+    padding-block: calc(var(--spacing) * 3);
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .panel > h2:has(+ .lede) {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 0px;
+    padding-bottom: calc(var(--spacing) * 1);
+  }
+  .panel > .lede {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+    padding-inline: calc(var(--spacing) * 5);
+    padding-bottom: calc(var(--spacing) * 3);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+  }
+  .panel > .in, .panel .in {
+    padding: calc(var(--spacing) * 5);
+  }
+  .panel table {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  .panel .t {
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  .panel td .iconbtn {
+    margin-right: calc(var(--spacing) * 0.5);
+    display: inline-flex;
+    width: calc(var(--spacing) * 7);
+    height: calc(var(--spacing) * 7);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .panel td.act {
+    vertical-align: middle;
+  }
+  .panel.figures th.num, .panel.figures td.num {
+    text-align: right;
+  }
+  .card > .title, .card .title {
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+    --tw-leading: 1;
+    line-height: 1;
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .kpi .k {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    --tw-tracking: var(--tracking-wide);
+    letter-spacing: var(--tracking-wide);
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+  .kpi .v {
+    margin-top: calc(var(--spacing) * 1);
+    font-size: var(--text-3xl);
+    line-height: var(--tw-leading, var(--text-3xl--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .kpi .d {
+    margin-top: calc(var(--spacing) * 0.5);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+  }
+  .kpi .why {
+    margin-top: calc(var(--spacing) * 2.5);
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+    padding-top: calc(var(--spacing) * 2.5);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+  }
+  .tip .btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    align-self: center;
+  }
+  .tip b {
+    color: var(--foreground);
+  }
+  tbody tr.sel td {
+    background-color: var(--muted);
+  }
+  tbody tr.sel td:first-child {
+    box-shadow: inset 3px 0 0 var(--primary);
+  }
+  thead th button {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 1);
+    background-color: transparent;
+    padding: calc(var(--spacing) * 0);
+    color: inherit;
+    font: inherit;
+  }
+  tbody td:first-child {
+    white-space: nowrap;
+  }
+  .wrap1 td:first-child {
+    white-space: normal;
+  }
+  .bd .tag {
+    white-space: nowrap;
+  }
+  .pgfoot label {
+    margin-bottom: calc(var(--spacing) * 0);
+    display: inline;
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-normal);
+  }
+  .pgfoot select {
+    height: calc(var(--spacing) * 8);
+    width: auto;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .seg button {
+    display: inline-flex;
+    height: calc(var(--spacing) * 7);
+    align-items: center;
+    justify-content: center;
+    border-radius: calc(var(--radius) - 2px);
+    padding-inline: calc(var(--spacing) * 3);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    color: var(--muted-foreground);
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+    &[aria-pressed="true"] {
+      background-color: var(--background);
+    }
+    &[aria-pressed="true"] {
+      color: var(--foreground);
+    }
+    &[aria-pressed="true"] {
+      --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+    border: 0;
+    background: transparent;
+  }
+  .feed li {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    padding-inline: calc(var(--spacing) * 5);
+    padding-block: calc(var(--spacing) * 3);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  .feed .when {
+    margin-left: auto;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    white-space: nowrap;
+    color: var(--muted-foreground);
+  }
+  .cmt {
+    display: flex;
+    gap: calc(var(--spacing) * 2.5);
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+    padding-block: calc(var(--spacing) * 2.5);
+  }
+  .cmt .who {
+    margin-bottom: calc(var(--spacing) * 0.5);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .cmt .when {
+    margin-left: calc(var(--spacing) * 1.5);
+    --tw-font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-normal);
+    color: var(--muted-foreground);
+  }
+  .cmt p {
+    margin: calc(var(--spacing) * 0);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--foreground);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--foreground) 90%, transparent);
+    }
+  }
+  .kv dt {
+    align-self: center;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    --tw-tracking: var(--tracking-wide);
+    letter-spacing: var(--tracking-wide);
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+  .kv dd {
+    margin: calc(var(--spacing) * 0);
+    --tw-leading: var(--leading-snug);
+    line-height: var(--leading-snug);
+  }
+  .lanehd .t {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .lanehd .ct {
+    margin-left: auto;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+    --tw-numeric-spacing: tabular-nums;
+    font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);
+  }
+  .kcard .t {
+    margin-bottom: calc(var(--spacing) * 2);
+    display: block;
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-leading: var(--leading-snug);
+    line-height: var(--leading-snug);
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  .kcard .ft {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 1.5);
+  }
+  .kcard .ft + .ft {
+    margin-top: calc(var(--spacing) * 1);
+  }
+  .kcard .key {
+    margin-bottom: calc(var(--spacing) * 1.5);
+  }
+  .lane > .btn {
+    margin-top: calc(var(--spacing) * 1);
+    width: 100%;
+    justify-content: center;
+    color: var(--muted-foreground);
+  }
+  .lane > .deniedwrap {
+    margin-top: calc(var(--spacing) * 1);
+    width: 100%;
+  }
+  .tprog {
+    margin-top: calc(var(--spacing) * 2);
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+  }
+  .tbar {
+    height: calc(var(--spacing) * 1);
+    flex: 1;
+    overflow: hidden;
+    border-radius: calc(infinity * 1px);
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    background-color: var(--muted);
+  }
+  .tbar i {
+    display: block;
+    height: 100%;
+    background-color: var(--muted-foreground);
+  }
+  .sprintbar .goal {
+    margin-top: calc(var(--spacing) * 1);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--foreground);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--foreground) 90%, transparent);
+    }
+  }
+  .sprintbar .dates {
+    text-align: right;
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    white-space: nowrap;
+  }
+  .task .who {
+    margin-top: calc(var(--spacing) * 0.5);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+  }
+  .task.done > .grow > span {
+    color: var(--muted-foreground);
+    text-decoration-line: line-through;
+  }
+  .roadgrid {
+    display: grid;
+    grid-template-columns: 238px repeat(4,minmax(0,1fr));
+    gap: 1px;
+    background-color: var(--border);
+  }
+  .roadgrid > div {
+    min-height: 52px;
+    background-color: var(--card);
+    padding-inline: calc(var(--spacing) * 4);
+    padding-block: calc(var(--spacing) * 3);
+  }
+  .roadgrid .hd {
+    min-height: calc(var(--spacing) * 0);
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 60%, transparent);
+    }
+    padding-inline: calc(var(--spacing) * 4);
+    padding-block: calc(var(--spacing) * 2);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    --tw-tracking: var(--tracking-wide);
+    letter-spacing: var(--tracking-wide);
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+  .roadgrid .out {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .roadgrid .out a {
+    color: var(--foreground);
+  }
+  .roadgrid .out small {
+    margin-top: calc(var(--spacing) * 0.5);
+    display: block;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-normal);
+    color: var(--muted-foreground);
+  }
+  .roadgrid .dim {
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+    }
+    color: var(--muted-foreground);
+  }
+  .sum b {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+  }
+  .insp-head h2 {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+    --tw-leading: var(--leading-tight);
+    line-height: var(--leading-tight);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .insp-head .meta {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+  }
+  .gate .insp-head, .chatm .insp-head {
+    padding-inline: calc(var(--spacing) * 0);
+    padding-top: calc(var(--spacing) * 0);
+  }
+  .chatm .insp-head {
+    padding-inline: calc(var(--spacing) * 6);
+    padding-top: calc(var(--spacing) * 5);
+  }
+  .gate .empty {
+    text-align: left;
+  }
+  .gate .count {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    color: var(--foreground);
+    --tw-numeric-spacing: tabular-nums;
+    font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);
+  }
+  .empty h3 {
+    margin-bottom: calc(var(--spacing) * 1);
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .empty p {
+    margin-inline: auto;
+    margin-bottom: calc(var(--spacing) * 4);
+    max-width: var(--container-md);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--muted-foreground);
+  }
+  .empty .btn {
+    margin-inline: calc(var(--spacing) * 0.5);
+  }
+  .field.bad input, .field.bad select, .field.bad textarea {
+    border-color: var(--destructive);
+  }
+  .field .msg {
+    margin-top: calc(var(--spacing) * 1);
+    display: block;
+  }
+  .field .hint {
+    margin-top: calc(var(--spacing) * 1.5);
+  }
+  .radioset label {
+    margin-bottom: calc(var(--spacing) * 0);
+    display: flex;
+    flex: 1;
+    cursor: pointer;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    border-radius: var(--radius);
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    padding-inline: calc(var(--spacing) * 3);
+    padding-block: calc(var(--spacing) * 2);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-normal);
+    &:has(*:is(input:checked)) {
+      border-color: var(--primary);
+    }
+    &:has(*:is(input:checked)) {
+      background-color: var(--accent);
+    }
+    &:has(*:is(input:checked)) {
+      --tw-font-weight: var(--font-weight-medium);
+      font-weight: var(--font-weight-medium);
+    }
+  }
+  .radioset input {
+    margin: calc(var(--spacing) * 0);
+    width: auto;
+  }
+  legend.lbl {
+    margin-bottom: calc(var(--spacing) * 1.5);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  .chk {
+    display: inline-flex;
+    cursor: pointer;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    --tw-font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-normal);
+  }
+  .chk input {
+    margin: calc(var(--spacing) * 0);
+    width: auto;
+  }
+  .pickrow label {
+    margin: calc(var(--spacing) * 0);
+    cursor: pointer;
+    --tw-font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-normal);
+  }
+  .pickrow .grow {
+    flex: 1;
+  }
+  .pickrow .ty {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+  }
+  .pickrow .reqtog {
+    display: inline-flex;
+    width: calc(var(--spacing) * 20);
+    align-items: center;
+    justify-content: flex-end;
+    gap: calc(var(--spacing) * 1);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--muted-foreground);
+  }
+  .pickrow label .ty {
+    margin-top: calc(var(--spacing) * 0.5);
+  }
+  .chip button {
+    background-color: transparent;
+    padding: calc(var(--spacing) * 0);
+    padding-inline: calc(var(--spacing) * 0.5);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--muted-foreground);
+    &:hover {
+      @media (hover: hover) {
+        color: var(--foreground);
+      }
+    }
+    border: 0;
+  }
+  .tstate.ro {
+    width: auto;
+  }
+  .cp .q input {
+    height: calc(var(--spacing) * 11);
+    border-style: var(--tw-border-style);
+    border-width: 0px;
+    background-color: transparent;
+    padding-inline: calc(var(--spacing) * 0);
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+    --tw-shadow: 0 0 #0000;
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    &:focus-visible {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .cp .it .kbd {
+    margin-left: auto;
+  }
+  .cp .it.on {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+  .bub .who {
+    margin-bottom: calc(var(--spacing) * 0.5);
+    font-size: 10px;
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    --tw-tracking: var(--tracking-wide);
+    letter-spacing: var(--tracking-wide);
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+  .thinking {
+    display: inline-flex;
+    gap: calc(var(--spacing) * 1);
+    padding-block: calc(var(--spacing) * 1);
+  }
+  .thinking i {
+    width: calc(var(--spacing) * 1.5);
+    height: calc(var(--spacing) * 1.5);
+    border-radius: calc(infinity * 1px);
+    background-color: var(--muted-foreground);
+  }
+  .strip .lead {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 1.5);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    color: var(--teal-brand);
+  }
+  .strip .lead::before {
+    content: "";
+    width: calc(var(--spacing) * 2);
+    height: calc(var(--spacing) * 2);
+    border-radius: calc(infinity * 1px);
+    background-color: var(--teal-brand);
+  }
+  .strip b {
+    color: var(--foreground);
+  }
+  .composer textarea {
+    flex: 1;
+  }
+  .authpitch .mark {
+    margin-bottom: calc(var(--spacing) * 6);
+    display: flex;
+    width: calc(var(--spacing) * 9);
+    height: calc(var(--spacing) * 9);
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    background-color: color-mix(in srgb, #fff 15%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-white) 15%, transparent);
+    }
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-foreground);
+  }
+  .authpitch h2 {
+    margin-bottom: calc(var(--spacing) * 4);
+    max-width: 17ch;
+    font-size: var(--text-2xl);
+    line-height: var(--tw-leading, var(--text-2xl--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    color: var(--primary-foreground);
+  }
+  .authpitch p {
+    margin-bottom: calc(var(--spacing) * 6);
+    max-width: 48ch;
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+    color: var(--primary-foreground);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--primary-foreground) 80%, transparent);
+    }
+  }
+  .authpitch ul {
+    margin: calc(var(--spacing) * 0);
+    display: flex;
+    list-style-type: none;
+    flex-direction: column;
+    gap: calc(var(--spacing) * 3);
+    padding: calc(var(--spacing) * 0);
+  }
+  .authpitch li {
+    display: flex;
+    align-items: flex-start;
+    gap: calc(var(--spacing) * 2.5);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--primary-foreground);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--primary-foreground) 90%, transparent);
+    }
+  }
+  .authpitch li svg {
+    margin-top: calc(var(--spacing) * 0.5);
+    flex-shrink: 0;
+    color: var(--primary-foreground);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--primary-foreground) 70%, transparent);
+    }
+  }
+  .authpitch .kbd {
+    border-color: color-mix(in srgb, #fff 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-white) 30%, transparent);
+    }
+    background-color: color-mix(in srgb, #fff 15%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-white) 15%, transparent);
+    }
+    color: var(--primary-foreground);
+  }
+  .authform .in {
+    margin-inline: auto;
+    width: 100%;
+    max-width: var(--container-sm);
+  }
+  .authform h1 {
+    font-size: var(--text-2xl);
+    line-height: var(--tw-leading, var(--text-2xl--line-height));
+  }
+  .authform .alert, .authform .authnote {
+    margin-bottom: calc(var(--spacing) * 4);
+  }
+  .authform input.mono {
+    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --tw-tracking: var(--tracking-wider);
+    letter-spacing: var(--tracking-wider);
+  }
+  .banner .btn {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .banner b {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .cand .em {
+    display: block;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-normal);
+    font-weight: var(--font-weight-normal);
+    color: var(--muted-foreground);
+  }
+  .vaorg + .cand {
+    border-top: 0;
+  }
+  .note b {
+    color: var(--foreground);
+  }
+  .note a {
+    text-decoration-line: underline;
+  }
+  .swimpick {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    align-items: flex-start;
+    gap: calc(var(--spacing) * 6);
+  }
+  .swimhd {
+    margin-bottom: calc(var(--spacing) * 2);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    --tw-tracking: var(--tracking-wide);
+    letter-spacing: var(--tracking-wide);
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+  .swimrow {
+    margin-bottom: calc(var(--spacing) * 1.5);
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    border-radius: var(--radius);
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    background-color: var(--card);
+    padding-inline: calc(var(--spacing) * 3);
+    padding-block: calc(var(--spacing) * 1.5);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  .swimrow .grow {
+    min-width: calc(var(--spacing) * 0);
+    flex: 1;
+  }
+  .swimrow .iconbtn {
+    width: calc(var(--spacing) * 7);
+    height: calc(var(--spacing) * 7);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .swimrow [aria-disabled="true"] {
+    opacity: 40%;
+  }
+  .hnd {
+    cursor: grab;
+    --tw-leading: 1;
+    line-height: 1;
+    color: var(--muted-foreground);
+  }
+  .meter {
+    height: calc(var(--spacing) * 2.5);
+    overflow: hidden;
+    border-radius: calc(infinity * 1px);
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    background-color: var(--muted);
+  }
+  .meter i {
+    display: block;
+    height: 100%;
+    background-color: var(--primary);
+  }
+  .meter.warn i {
+    background-color: var(--warning);
+  }
+  .meter.over i {
+    background-color: var(--destructive);
+  }
+  .acts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 0.5);
+  }
+  .invite {
+    display: inline-block;
+    border-radius: 0.25rem;
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    background-color: var(--muted);
+    padding-inline: calc(var(--spacing) * 2);
+    padding-block: calc(var(--spacing) * 0.5);
+    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-tracking: var(--tracking-wider);
+    letter-spacing: var(--tracking-wider);
+    white-space: nowrap;
+  }
+  .tbadge {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 1.5);
+    border-radius: var(--radius);
+    background-color: var(--muted);
+    padding-inline: calc(var(--spacing) * 2);
+    padding-block: calc(var(--spacing) * 0.5);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+    color: var(--muted-foreground);
+  }
+  .explore .how span, .explore .k {
+    font-size: 11px;
+  }
+}
+[data-role="SiteAdmin"] [data-roles]:not([data-roles~="SiteAdmin"]), [data-role="OrgAdmin"] [data-roles]:not([data-roles~="OrgAdmin"]), [data-role="User"] [data-roles]:not([data-roles~="User"]), [data-role="ReadOnly"] [data-roles]:not([data-roles~="ReadOnly"]) {
+  display: none !important;
+}
+.screen[data-state="normal"] [data-when]:not([data-when~="normal"]), .screen[data-state="empty"] [data-when]:not([data-when~="empty"]), .screen[data-state="loading"] [data-when]:not([data-when~="loading"]), .screen[data-state="error"] [data-when]:not([data-when~="error"]) {
+  display: none !important;
+}
+[aria-disabled="true"] {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+[hidden] {
+  display: none !important;
+}
+.switch {
+  background: #1f2933;
+  color: #fff;
+  padding: 8px 14px;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 42px;
+}
+.switch b {
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.switch .lbl {
+  font-size: 11.5px;
+  color: #93A6BC;
+  margin-right: 6px;
+}
+.switch button, .switch .xfile {
+  background: transparent;
+  border: 1px solid #46586E;
+  color: #D6DEE8;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1.4;
+}
+.switch button[aria-current="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+.switch .xfile:hover {
+  background: #2f3e4d;
+  color: #fff;
+}
+.ctl {
+  background: #1f2933;
+  color: #93A6BC;
+  padding: 0 14px 8px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+}
+.ctl .grp {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.ctl .cap2 {
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  font-size: 10.5px;
+  color: #7d8a99;
+}
+.ctl button {
+  background: transparent;
+  border: 1px solid #46586E;
+  color: #D6DEE8;
+  padding: 1px 9px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.ctl button[aria-pressed="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+.explore {
+  background: #F9F6EE;
+  border-bottom: 1px solid #EDE2C9;
+  color: #8A6D2E;
+  font-size: 11.5px;
+  padding: 8px 16px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+.explore b {
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  font-size: 10.5px;
+}
+.explore .how {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  margin-top: 3px;
+}
+.explore .how span {
+  white-space: nowrap;
+}
+.explore .how b {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11.5px;
+}
+.explore .k {
+  border: 1px solid #e0c9a6;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 10.5px;
+}
+.wip {
+  display: none;
+  background: #F9F6EE;
+  border-bottom: 1px solid #EDE2C9;
+  color: #8A6D2E;
+  padding: 8px 16px;
+  font-size: 12px;
+  line-height: 1.43;
+}
+.screen[data-wip] .wip {
+  display: block;
+}
+.wip b {
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  font-size: 10.5px;
+  margin-right: 6px;
+}
+@property --tw-space-y-reverse {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-divide-y-reverse {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-tracking {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ordinal {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-slashed-zero {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-figure {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-spacing {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-fraction {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: "*";
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-blur {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-brightness {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-contrast {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-grayscale {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-hue-rotate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-invert {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-opacity {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-saturate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-sepia {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-drop-shadow-size {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-content {
+  syntax: "*";
+  initial-value: "";
+  inherits: false;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
+      --tw-space-y-reverse: 0;
+      --tw-divide-y-reverse: 0;
+      --tw-border-style: solid;
+      --tw-leading: initial;
+      --tw-font-weight: initial;
+      --tw-tracking: initial;
+      --tw-ordinal: initial;
+      --tw-slashed-zero: initial;
+      --tw-numeric-figure: initial;
+      --tw-numeric-spacing: initial;
+      --tw-numeric-fraction: initial;
+      --tw-shadow: 0 0 #0000;
+      --tw-shadow-color: initial;
+      --tw-shadow-alpha: 100%;
+      --tw-inset-shadow: 0 0 #0000;
+      --tw-inset-shadow-color: initial;
+      --tw-inset-shadow-alpha: 100%;
+      --tw-ring-color: initial;
+      --tw-ring-shadow: 0 0 #0000;
+      --tw-inset-ring-color: initial;
+      --tw-inset-ring-shadow: 0 0 #0000;
+      --tw-ring-inset: initial;
+      --tw-ring-offset-width: 0px;
+      --tw-ring-offset-color: #fff;
+      --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-blur: initial;
+      --tw-brightness: initial;
+      --tw-contrast: initial;
+      --tw-grayscale: initial;
+      --tw-hue-rotate: initial;
+      --tw-invert: initial;
+      --tw-opacity: initial;
+      --tw-saturate: initial;
+      --tw-sepia: initial;
+      --tw-drop-shadow: initial;
+      --tw-drop-shadow-color: initial;
+      --tw-drop-shadow-alpha: 100%;
+      --tw-drop-shadow-size: initial;
+      --tw-content: "";
+    }
+  }
+}
+
+</style>
+</head>
+<body data-role="OrgAdmin">
+<nav class="switch" aria-label="Comp screens">
+  <b>Comp Q</b><span class="lbl">Auth, account, and View As</span>
+  <button data-go="s-login" aria-current="true">Login</button>
+  <button data-go="s-locked">Locked</button>
+  <button data-go="s-returned">Returned</button>
+  <button data-go="s-register">Register</button>
+  <button data-go="s-first-signin">First sign-in</button>
+  <button data-go="s-expiring">Session expiring</button>
+  <button data-go="s-viewas">View as</button>
+  <button data-go="s-viewing">Viewing as</button>
+  <span class="lbl" style="margin-left:auto">Other areas</span>
+  <a class="xfile" href="comp-q-focus-roadmap.html">Core</a>
+  <a class="xfile" href="comp-q-admin.html">Admin</a>
+  <a class="xfile" href="comp-q-delivery.html">Delivery</a>
+</nav>
+<div class="ctl">
+  <span class="grp px-3 py-1.5 text-xs font-medium text-muted-foreground"><span class="cap2">View as role</span>
+    <button type="button" data-role-set="SiteAdmin" aria-pressed="false">SiteAdmin</button>
+    <button type="button" data-role-set="OrgAdmin" aria-pressed="true">OrgAdmin</button>
+    <button type="button" data-role-set="User" aria-pressed="false">User</button>
+    <button type="button" data-role-set="ReadOnly" aria-pressed="false">ReadOnly</button>
+  </span>
+  <span class="grp px-3 py-1.5 text-xs font-medium text-muted-foreground"><span class="cap2">State</span>
+    <button type="button" data-state-set="normal" aria-pressed="true">normal</button>
+    <button type="button" data-state-set="empty" aria-pressed="false">empty</button>
+    <button type="button" data-state-set="loading" aria-pressed="false">loading</button>
+    <button type="button" data-state-set="error" aria-pressed="false">error</button>
+  </span>
+</div>
+<div class="explore"><b>How to read this</b><span>Everything that establishes who you are: signing in, joining an organization, changing a password, being signed out, and acting as someone else. The sign-in screens are anonymous, so the role control only matters from <b>Session expiring</b> onward.
+  <span class="how">
+    <span>&bull; The tab bar above switches screens; <b>Other areas</b> jumps to another file.</span>
+    <span>&bull; <b>View as role</b> and <b>State</b> re-render the current screen &mdash; they are live, not labels.</span>
+    <span>&bull; Role and state carry across files, so a link keeps you where you were.</span>
+    <span>&bull; View As is the <b>only</b> way a Site Admin edits organization content, so it is an identity surface, not a convenience.</span>
+    <span>&bull; On <b>Locked</b> the <b>error</b> state is an inactive account; on <b>Returned</b> the <b>empty</b> state is the changed-password notice.</span>
+    <span>&bull; Same fragments as comp P; every class is expanded to what the matching <b>shadcn/ui</b> component renders, and Tailwind is compiled over the result.</span>
+  </span></span></div>
+<!-- ==================== LOGIN ==================== -->
+
+<section class="screen" id="s-login" data-on="1">
+  <div class="authwrap grid min-h-[calc(100vh-70px)] grid-cols-[1.05fr_.95fr]">
+    <div class="authpitch flex flex-col justify-center bg-primary px-14 py-16 text-primary-foreground">
+      <div class="mark">CG</div>
+      <h2>Every idea your organization has, in one place.</h2>
+      <p>Collega tracks an idea from the first rough note through review, work, and delivery — with the people, comments, and history attached to it the whole way.</p>
+      <ul>
+        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>One account per person, scoped to your organization</span></li>
+        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>Boards, statuses and idea types you define yourself</span></li>
+        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>Keyboard-first: press <span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">Ctrl K</span> anywhere</span></li>
+      </ul>
+    </div>
+    <div class="authform flex flex-col justify-center bg-background px-14 py-16"><div class="in">
+      <h1>Sign in</h1>
+      <p class="sub">One email, one account. We&rsquo;ll take you straight to your organization.</p>
+      <div class="alert relative grid w-full gap-1 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-3 text-sm text-destructive [&>span]:block" role="alert" data-when="error"><span><b>Incorrect email or password.</b> Five failed attempts within 15 minutes lock the account for 15 minutes.</span></div>
+      <!-- NATIVE submit button: Enter submits. Carried from comp D, which fixed the live finding filed 2026-08-16. -->
+      <form>
+        <div class="field mb-4">
+          <label for="p-email">Email</label>
+          <input type="text" inputmode="email" id="p-email" name="email" autocomplete="username" placeholder="you@yourcompany.com">
+        </div>
+        <div class="field mb-4">
+          <label for="p-pw">Password</label>
+          <input type="password" id="p-pw" name="password" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" style="width:100%;justify-content:center" data-when="normal empty error">Sign in</button>
+        <button type="submit" class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" style="width:100%;justify-content:center" aria-disabled="true" aria-busy="true" data-when="loading">Signing in&hellip;</button>
+      </form>
+      <p class="foot2 mt-4 text-sm text-muted-foreground">Have an invite code? <a href="#" data-go="s-register">Create an account</a>.<br>
+      Forgot your password? Ask your organization admin to reset it.</p>
+      <div class="note mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"><b>Accessibility carried over unchanged.</b> Native <code>&lt;button type="submit"&gt;</code> so Enter submits; <code>autocomplete="username"</code> paired with the password field so password managers work; a real <code>&lt;label for&gt;</code> bound to a real <code>&lt;input&gt;</code>. The error names neither credential, and &ldquo;forgot your password&rdquo; is a sentence rather than a link that goes nowhere &mdash; there is no self-service reset, so nothing should pretend to be one.</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ==================== LOCKED / INACTIVE ==================== -->
+
+<section class="screen" id="s-locked" data-on="0">
+  <div class="authwrap grid min-h-[calc(100vh-70px)] grid-cols-[1.05fr_.95fr]">
+    <div class="authpitch flex flex-col justify-center bg-primary px-14 py-16 text-primary-foreground">
+      <div class="mark">CG</div>
+      <h2>Five tries, then a pause.</h2>
+      <p>A lock is a fixed 15-minute window, not a sliding one: it lifts on its own, and an administrator can issue a one-time temporary password if you cannot wait.</p>
+    </div>
+    <div class="authform flex flex-col justify-center bg-background px-14 py-16"><div class="in">
+      <h1>Sign in</h1>
+      <p class="sub">One email, one account. We&rsquo;ll take you straight to your organization.</p>
+      <div class="alert relative grid w-full gap-1 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-3 text-sm text-destructive [&>span]:block" role="alert" data-when="normal empty loading"><span><b>Account locked.</b> Five failed attempts within 15 minutes lock the account for 15 minutes &mdash; <span class="num tabular-nums">12:41</span> remaining, or your organization admin can issue a one-time temporary password.</span></div>
+      <div class="alert relative grid w-full gap-1 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-3 text-sm text-destructive [&>span]:block" role="alert" data-when="error"><span><b>This account is inactive.</b> Contact your organization admin to restore access.</span></div>
+      <form>
+        <div class="field mb-4">
+          <label for="p-lk-email">Email</label>
+          <input type="text" inputmode="email" id="p-lk-email" name="email" autocomplete="username" value="umar@acmerobotics.com">
+        </div>
+        <div class="field mb-4">
+          <label for="p-lk-pw">Password</label>
+          <input type="password" id="p-lk-pw" name="password" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" style="width:100%;justify-content:center">Sign in</button>
+      </form>
+      <p class="foot2 mt-4 text-sm text-muted-foreground">Have an invite code? <a href="#" data-go="s-register">Create an account</a>.</p>
+      <div class="note mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"><b>Two refusals, one form.</b> The lock (<code>429</code>) and an inactive account (<code>403</code>) both leave the form in place, because the server is the thing refusing and the form is how you find out it has stopped. The fifth bad attempt answers <code>429</code> directly rather than <code>401</code>-then-<code>429</code>, so a user never sees &ldquo;incorrect password&rdquo; on the try that locked them. Use the state control: <b>error</b> shows the inactive-account message.</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ==================== RETURNED TO SIGN-IN ==================== -->
+
+<section class="screen" id="s-returned" data-on="0">
+  <div class="authwrap grid min-h-[calc(100vh-70px)] grid-cols-[1.05fr_.95fr]">
+    <div class="authpitch flex flex-col justify-center bg-primary px-14 py-16 text-primary-foreground">
+      <div class="mark">CG</div>
+      <h2>Back to sign in, and told why.</h2>
+      <p>Every route back to this page carries its reason: an expired session, a changed password, or a freshly created account. A deliberate sign-out carries none &mdash; it is not an event you need explained.</p>
+    </div>
+    <div class="authform flex flex-col justify-center bg-background px-14 py-16"><div class="in">
+      <h1>Sign in</h1>
+      <p class="sub">One email, one account. We&rsquo;ll take you straight to your organization.</p>
+      <div class="authnote relative w-full rounded-lg border bg-card px-4 py-3 text-sm text-card-foreground" role="status" data-when="normal loading"><span>Your session expired. Sign in again to continue.</span></div>
+      <div class="authnote relative w-full rounded-lg border bg-card px-4 py-3 text-sm text-card-foreground" role="status" data-when="empty"><span>Your password was changed. Please sign in with your new password.</span></div>
+      <div class="alert relative grid w-full gap-1 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-3 text-sm text-destructive [&>span]:block" role="alert" data-when="error"><span><b>Incorrect email or password.</b> Five failed attempts within 15 minutes lock the account for 15 minutes.</span></div>
+      <form>
+        <div class="field mb-4">
+          <label for="p-rt-email">Email</label>
+          <input type="text" inputmode="email" id="p-rt-email" name="email" autocomplete="username" value="olivia@acmerobotics.com">
+        </div>
+        <div class="field mb-4">
+          <label for="p-rt-pw">Password</label>
+          <input type="password" id="p-rt-pw" name="password" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" style="width:100%;justify-content:center" data-when="normal empty error">Sign in</button>
+        <button type="submit" class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" style="width:100%;justify-content:center" aria-disabled="true" aria-busy="true" data-when="loading">Signing in&hellip;</button>
+      </form>
+      <p class="foot2 mt-4 text-sm text-muted-foreground">Have an invite code? <a href="#" data-go="s-register">Create an account</a>.<br>
+      Forgot your password? Ask your organization admin to reset it.</p>
+      <div class="note mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"><b>Three notices, one shape.</b> The session notice appears after 30 idle minutes, after the 8-hour absolute limit, or when the API rejects a stale token &mdash; and never after choosing Sign Out. The third string, shown after registering, reads <em>Your account was created. Sign in to get started.</em> All three are <code>role="status"</code>, not alerts: nothing went wrong.</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ==================== REGISTER ==================== -->
+
+<section class="screen" id="s-register" data-on="0">
+  <div class="authwrap grid min-h-[calc(100vh-70px)] grid-cols-[1.05fr_.95fr]">
+    <div class="authpitch flex flex-col justify-center bg-primary px-14 py-16 text-primary-foreground">
+      <div class="mark">CG</div>
+      <h2>Your invite code is your organization.</h2>
+      <p>There is no organization picker. The code your administrator gave you decides where your account lives, and it lands you in that organization as a member.</p>
+      <ul>
+        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>One email per account, across every organization</span></li>
+        <li><svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z"/></svg><span>A code can be regenerated by your admin at any time</span></li>
+      </ul>
+    </div>
+    <div class="authform flex flex-col justify-center bg-background px-14 py-16"><div class="in">
+      <h1>Create your account</h1>
+      <p class="sub">Enter the invite code from your organization admin. It decides which organization you join.</p>
+      <div class="alert relative grid w-full gap-1 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-3 text-sm text-destructive [&>span]:block" role="alert" data-when="error"><span><b>Registration failed.</b> Check your invite code and try again.</span></div>
+      <form>
+        <div class="field mb-4" data-when="normal empty loading">
+          <label for="p-rg-code">Invite code</label>
+          <input type="text" id="p-rg-code" name="inviteCode" class="mono font-mono tracking-wider" autocomplete="off" spellcheck="false" placeholder="ACME-7Q2K-9XZ4">
+        </div>
+        <div class="field bad mb-4" data-when="error">
+          <label for="p-rg-code-e">Invite code</label>
+          <input type="text" id="p-rg-code-e" name="inviteCode" class="mono font-mono tracking-wider" autocomplete="off" spellcheck="false" value="ACME-7Q2K-9XZ5" aria-describedby="p-rg-code-msg">
+          <span class="msg text-[0.8rem] font-medium text-destructive" id="p-rg-code-msg">This code isn&rsquo;t valid. Codes come from your organization admin and are case-sensitive.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--s-md)">
+          <div class="field mb-4"><label for="p-rg-first">First name</label><input type="text" id="p-rg-first" name="firstName" autocomplete="given-name"></div>
+          <div class="field mb-4"><label for="p-rg-last">Last name</label><input type="text" id="p-rg-last" name="lastName" autocomplete="family-name"></div>
+        </div>
+        <div class="field mb-4">
+          <label for="p-rg-email">Email</label>
+          <input type="text" inputmode="email" id="p-rg-email" name="email" autocomplete="username" placeholder="you@yourcompany.com">
+        </div>
+        <div class="field mb-4">
+          <label for="p-rg-pw">Password</label>
+          <input type="password" id="p-rg-pw" name="password" autocomplete="new-password">
+          <div class="hint text-[0.8rem] text-muted-foreground">At least 6 characters, with an uppercase letter, a lowercase letter, a number and a symbol.</div>
+        </div>
+        <button type="submit" class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" style="width:100%;justify-content:center" data-when="normal empty error">Create account</button>
+        <button type="submit" class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" style="width:100%;justify-content:center" aria-disabled="true" aria-busy="true" data-when="loading">Creating account&hellip;</button>
+      </form>
+      <p class="foot2 mt-4 text-sm text-muted-foreground">Already have an account? <a href="#" data-go="s-login">Sign in</a>.</p>
+      <div class="note mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"><b>The code never says which organization.</b> A wrong code, an archived organization, and an expired code all answer the same way, because the code is the only thing a stranger holds and the response must not confirm what it unlocks. An email already in use is the one distinct refusal (<code>409</code>). On success the page returns to Sign in carrying <em>Your account was created</em>.</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ==================== FIRST SIGN-IN: FORCED PASSWORD CHANGE ==================== -->
+
+<section class="screen" id="s-first-signin" data-on="0">
+  <div class="authwrap grid min-h-[calc(100vh-70px)] grid-cols-[1.05fr_.95fr]">
+    <div class="authpitch flex flex-col justify-center bg-primary px-14 py-16 text-primary-foreground">
+      <div class="mark">CG</div>
+      <h2>Choose your own password.</h2>
+      <p>You signed in with a temporary password issued by an administrator. It works exactly once and expires 24 hours after it was issued. Until you replace it, nothing else in Collega will open &mdash; the server refuses every other request, not just this page.</p>
+    </div>
+    <div class="authform flex flex-col justify-center bg-background px-14 py-16"><div class="in">
+      <h1>Change your password</h1>
+      <p class="sub">For security, choose a new password before continuing.</p>
+      <div class="alert relative grid w-full gap-1 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-3 text-sm text-destructive [&>span]:block" role="alert" data-when="error"><span><b>The new password and confirmation don&rsquo;t match.</b> Nothing has been changed.</span></div>
+      <form>
+        <div class="field mb-4">
+          <label for="p-fs-cur">Current password</label>
+          <input type="password" id="p-fs-cur" name="currentPassword" autocomplete="current-password">
+          <div class="hint text-[0.8rem] text-muted-foreground">The temporary password you just signed in with.</div>
+        </div>
+        <div class="field mb-4">
+          <label for="p-fs-new">New password</label>
+          <input type="password" id="p-fs-new" name="newPassword" autocomplete="new-password">
+          <div class="hint text-[0.8rem] text-muted-foreground">At least 6 characters, with an uppercase letter, a lowercase letter, a number and a symbol.</div>
+        </div>
+        <div class="field mb-4" data-when="normal empty loading">
+          <label for="p-fs-conf">Confirm new password</label>
+          <input type="password" id="p-fs-conf" name="confirmPassword" autocomplete="new-password">
+        </div>
+        <div class="field bad mb-4" data-when="error">
+          <label for="p-fs-conf-e">Confirm new password</label>
+          <input type="password" id="p-fs-conf-e" name="confirmPassword" autocomplete="new-password" value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" aria-describedby="p-fs-conf-msg">
+          <span class="msg text-[0.8rem] font-medium text-destructive" id="p-fs-conf-msg">Must match the new password exactly.</span>
+        </div>
+        <button type="submit" class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" style="width:100%;justify-content:center" data-when="normal empty error">Update password</button>
+        <button type="submit" class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" style="width:100%;justify-content:center" aria-disabled="true" aria-busy="true" data-when="loading">Saving&hellip;</button>
+      </form>
+      <p class="foot2 mt-4 text-sm text-muted-foreground">Saving signs you out. Sign in again with the new password and you will land on Home.</p>
+      <div class="note mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"><b>No sidebar, on purpose.</b> This is the one authenticated screen with no way out but through: the API refuses everything except <code>/auth/me</code> and this change while the flag is set, so a navigation rail here would be a rail of dead ends. It is also a new user&rsquo;s second interaction with the product, which is why Enter submitting matters more here than anywhere. The voluntary change lives under Settings &rsaquo; Profile and is a different screen.</div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ==================== SESSION EXPIRING ==================== -->
+
+<section class="screen" id="s-expiring" data-on="0">
+  <div class="shell" style="filter:blur(1.5px);opacity:.6" aria-hidden="true">
+    <aside class="side flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground">
+      <div class="brand flex items-center gap-2 px-2 py-3 text-base font-semibold text-foreground"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org px-2 pb-3 text-xs font-medium text-muted-foreground" data-roles="SiteAdmin">All organizations</div>
+      <div class="org px-2 pb-3 text-xs font-medium text-muted-foreground" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette mb-1 flex w-full items-center gap-2 rounded-md border bg-background px-2 py-1.5 text-sm text-muted-foreground shadow-xs hover:bg-accent" type="button" data-go="comp-q-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Workspace</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" aria-current="page" data-go="comp-q-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num tabular-nums">2</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num tabular-nums">22</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Delivery</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num tabular-nums">7</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Configure</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push flex-1"></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="SiteAdmin"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint text-xs text-muted-foreground/70">Site Admin</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="OrgAdmin"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint text-xs text-muted-foreground/70">Org Admin</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="User"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint text-xs text-muted-foreground/70">Member</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
+    </aside>
+    <div class="main"><div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span></div>
+      <div class="work max-w-[1320px] min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Good afternoon, Olivia</h1></div><div class="kpis mb-6 grid grid-cols-4 gap-3"><div class="kpi rounded-lg border bg-card p-4 text-card-foreground shadow-xs" style="height:120px"></div><div class="kpi rounded-lg border bg-card p-4 text-card-foreground shadow-xs"></div><div class="kpi rounded-lg border bg-card p-4 text-card-foreground shadow-xs"></div><div class="kpi rounded-lg border bg-card p-4 text-card-foreground shadow-xs"></div></div><div class="panel overflow-hidden rounded-lg border bg-card text-card-foreground shadow-xs" style="height:280px"></div></div></div>
+  </div>
+  <div class="cp-back fixed inset-0 z-50 grid items-start justify-center bg-black/60 pt-[12vh]">
+    <div class="gate h-fit w-[min(560px,92vw)] rounded-lg border bg-background p-6 shadow-lg" role="alertdialog" aria-modal="true" aria-labelledby="p-ex-title" aria-describedby="p-ex-body">
+      <div class="insp-head space-y-1 border-b px-6 py-4" style="padding-left:0;padding-right:0">
+        <div class="eyebrow text-xs font-medium uppercase tracking-wide text-muted-foreground">Still there?</div>
+        <h2 id="p-ex-title">Your session is about to expire</h2>
+      </div>
+      <p class="sm sec text-sm text-foreground/80" id="p-ex-body" style="margin:var(--s-md) 0">You will be signed out in <strong class="count" aria-live="polite">1:58</strong> due to inactivity.</p>
+      <p class="cap muted text-xs text-muted-foreground" style="margin:0 0 var(--s-md)">Any click, key, scroll or touch counts as activity, in this tab or another. Staying signed in resets the idle clock; it does not extend the eight-hour limit on a session.</p>
+      <div style="display:flex;gap:var(--s-xs);justify-content:flex-end">
+        <button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" data-go="s-returned">Sign out</button>
+        <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-go="comp-p-focus-roadmap.html#s-home">Stay signed in</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== VIEW AS: PICKER ==================== -->
+
+<section class="screen" id="s-viewas" data-on="0">
+  <div class="shell insp" data-roles="SiteAdmin OrgAdmin">
+    <aside class="side flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground">
+      <div class="brand flex items-center gap-2 px-2 py-3 text-base font-semibold text-foreground"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org px-2 pb-3 text-xs font-medium text-muted-foreground" data-roles="SiteAdmin">All organizations</div>
+      <div class="org px-2 pb-3 text-xs font-medium text-muted-foreground" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette mb-1 flex w-full items-center gap-2 rounded-md border bg-background px-2 py-1.5 text-sm text-muted-foreground shadow-xs hover:bg-accent" type="button" data-go="comp-q-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Workspace</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" aria-current="page" data-go="comp-q-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num tabular-nums">2</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num tabular-nums">22</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Delivery</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num tabular-nums">7</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Configure</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push flex-1"></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="SiteAdmin"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint text-xs text-muted-foreground/70">Site Admin</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="OrgAdmin"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint text-xs text-muted-foreground/70">Org Admin</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="User"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint text-xs text-muted-foreground/70">Member</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span><span class="spacer flex-1"></span>
+        <button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" aria-pressed="true">View as&hellip;</button><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2">New idea</button></div>
+      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+        <div class="pgh mb-6 flex flex-wrap items-end gap-4" data-roles="SiteAdmin"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Sam</h1>
+          <div class="sub">Two organizations, 41 ideas, 16 delivery issues. You are not a member of any of them &mdash; to change what they own, act as one of their administrators.</div></div></div>
+        <div class="pgh mb-6 flex flex-wrap items-end gap-4" data-roles="OrgAdmin"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Olivia</h1>
+          <div class="sub">Here&rsquo;s what needs you today. Acme Robotics has 22 ideas across 2 boards and 16 delivery issues in flight.</div></div></div>
+        <div class="note mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"><b>Two entry points, one surface.</b> The <em>View as&hellip;</em> control sits in the page header on every signed-in screen and again in the avatar menu; both open this docked picker. The list is server-filtered, so the client never reproduces the rule about who may act as whom: a Site Admin is offered every active user in every organization except other Site Admins, an Org Admin only their own organization. Inactive accounts stay visible and cannot be chosen.</div>
+      </div>
+    </div>
+    <aside class="inspector flex w-[400px] shrink-0 flex-col border-l bg-background" aria-label="View as another user">
+      <div class="insp-head space-y-1 border-b px-6 py-4">
+        <div class="eyebrow text-xs font-medium uppercase tracking-wide text-muted-foreground">View as</div>
+        <h2>View as another user</h2>
+        <div class="meta text-xs text-muted-foreground">Browse Collega exactly as they see it. A banner stays on screen the whole time; exit in one click.</div>
+      </div>
+      <div class="insp-body flex flex-1 flex-col gap-6 overflow-auto px-6 py-4">
+        <div class="field mb-4" style="margin:0">
+          <label for="p-va-q">Search users</label>
+          <input type="search" id="p-va-q" placeholder="Search by name or email" autocomplete="off">
+        </div>
+        <div data-when="loading" aria-busy="true"><span class="skel w60 mt-2 block h-3 animate-pulse rounded-md bg-primary/10"></span><span class="skel w80 mt-2 block h-3 animate-pulse rounded-md bg-primary/10"></span><span class="skel w40 mt-2 block h-3 animate-pulse rounded-md bg-primary/10"></span><span class="skel w80 mt-2 block h-3 animate-pulse rounded-md bg-primary/10"></span></div>
+        <div data-when="error"><div class="alert relative grid w-full gap-1 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-3 text-sm text-destructive [&>span]:block" role="alert"><span><b>Could not load users.</b> Retrying is safe.</span></div></div>
+        <p class="sm muted text-sm text-muted-foreground" data-when="empty" style="margin:0">No users match that search.</p>
+        <div data-when="normal">
+          <div class="vaorg mt-4 mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Acme Robotics</div>
+          <button class="cand flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"><span class="av s size-5 text-[9px] flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">OA</span><span class="grow min-w-0 flex-1"><b>Olivia Administer</b><span class="em">olivia@acmerobotics.com</span></span><span class="cap faint text-xs text-muted-foreground/70">Org Admin</span></button>
+          <button class="cand flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent" data-go="s-viewing"><span class="av s size-5 text-[9px] flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">NC</span><span class="grow min-w-0 flex-1"><b>Noah Contributor</b><span class="em">noah@acmerobotics.com</span></span><span class="cap faint text-xs text-muted-foreground/70">User</span></button>
+          <button class="cand flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"><span class="av s size-5 text-[9px] flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">MC</span><span class="grow min-w-0 flex-1"><b>Maya Collaborator</b><span class="em">maya@acmerobotics.com</span></span><span class="cap faint text-xs text-muted-foreground/70">User</span></button>
+          <button class="cand flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"><span class="av s size-5 text-[9px] flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">UM</span><span class="grow min-w-0 flex-1"><b>Umar Mensah</b><span class="em">umar@acmerobotics.com</span></span><span class="cap faint text-xs text-muted-foreground/70">User</span></button>
+          <button class="cand flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"><span class="av s size-5 text-[9px] flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><span class="grow min-w-0 flex-1"><b>Rae Vance</b><span class="em">rae@acmerobotics.com</span></span><span class="cap faint text-xs text-muted-foreground/70">Read Only</span></button>
+          <button class="cand flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent" aria-disabled="true" title="This account is inactive and cannot be viewed as."><span class="av s size-5 text-[9px] flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">JP</span><span class="grow min-w-0 flex-1"><b>Jordan Park</b><span class="em">jordan@acmerobotics.com</span></span><span class="cap faint text-xs text-muted-foreground/70">User &middot; inactive</span></button>
+          <div data-roles="SiteAdmin">
+            <div class="vaorg mt-4 mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Globex Industrial</div>
+            <button class="cand flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"><span class="av s size-5 text-[9px] flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">LT</span><span class="grow min-w-0 flex-1"><b>Lena Torres</b><span class="em">lena@globex.example</span></span><span class="cap faint text-xs text-muted-foreground/70">Org Admin</span></button>
+            <button class="cand flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"><span class="av s size-5 text-[9px] flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">DK</span><span class="grow min-w-0 flex-1"><b>Dev Kapoor</b><span class="em">dev@globex.example</span></span><span class="cap faint text-xs text-muted-foreground/70">User</span></button>
+            <button class="cand flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"><span class="av s size-5 text-[9px] flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">PS</span><span class="grow min-w-0 flex-1"><b>Priya Shah</b><span class="em">priya@globex.example</span></span><span class="cap faint text-xs text-muted-foreground/70">Read Only</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="insp-foot mt-auto flex gap-2 border-t px-6 py-3" style="align-items:center">
+        <span class="cap faint grow text-xs text-muted-foreground/70 min-w-0 flex-1" data-roles="SiteAdmin">Every organization, active users only. Other Site Admins are not offered.</span>
+        <span class="cap faint grow text-xs text-muted-foreground/70 min-w-0 flex-1" data-roles="OrgAdmin">Acme Robotics only, active users.</span>
+        <button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">Close</button>
+      </div>
+    </aside>
+  </div>
+  <div class="shell" data-roles="User ReadOnly">
+    <aside class="side flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground">
+      <div class="brand flex items-center gap-2 px-2 py-3 text-base font-semibold text-foreground"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org px-2 pb-3 text-xs font-medium text-muted-foreground" data-roles="SiteAdmin">All organizations</div>
+      <div class="org px-2 pb-3 text-xs font-medium text-muted-foreground" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette mb-1 flex w-full items-center gap-2 rounded-md border bg-background px-2 py-1.5 text-sm text-muted-foreground shadow-xs hover:bg-accent" type="button" data-go="comp-q-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Workspace</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" aria-current="page" data-go="comp-q-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num tabular-nums">2</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num tabular-nums">22</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Delivery</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num tabular-nums">7</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Configure</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push flex-1"></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="SiteAdmin"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint text-xs text-muted-foreground/70">Site Admin</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="OrgAdmin"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint text-xs text-muted-foreground/70">Org Admin</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="User"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint text-xs text-muted-foreground/70">Member</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span><span class="spacer flex-1"></span><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="User">New idea</button></div>
+      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+        <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Not available</h1><div class="sub">View As is not offered to members.</div></div></div>
+        <div class="empty rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center">
+          <h3>Acting as someone else is an administrator&rsquo;s tool</h3>
+          <p>Only a Site Admin or an Org Admin can browse Collega as another user. For your role the control is hidden <em>and</em> the route is refused &mdash; both, not either &mdash; so there is nothing here to find.</p>
+          <a class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" href="#" data-go="comp-p-focus-roadmap.html#s-home">Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== VIEWING AS: THE BANNER ==================== -->
+
+<section class="screen" id="s-viewing" data-on="0">
+  <div class="shell" data-roles="SiteAdmin OrgAdmin">
+    <aside class="side flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground">
+      <div class="brand flex items-center gap-2 px-2 py-3 text-base font-semibold text-foreground"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org px-2 pb-3 text-xs font-medium text-muted-foreground">Acme Robotics</div>
+      <button class="palette mb-1 flex w-full items-center gap-2 rounded-md border bg-background px-2 py-1.5 text-sm text-muted-foreground shadow-xs hover:bg-accent" type="button" data-go="comp-q-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Workspace</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" aria-current="page" data-go="comp-q-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num tabular-nums">2</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num tabular-nums">22</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Delivery</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num tabular-nums">7</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Configure</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push flex-1"></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">NC</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Noah Contributor</div><div class="cap faint text-xs text-muted-foreground/70">Member &middot; viewing as</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="banner flex items-center gap-4 border-b border-warning/60 bg-warning/15 px-6 py-2.5 text-sm" role="status" aria-live="polite" data-roles="OrgAdmin"><span><b>Viewing as Noah Contributor</b> &mdash; you&rsquo;re seeing exactly what they see. Anything you do is recorded as Olivia Administer acting as them.</span><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">Exit view-as</button></div>
+      <div class="banner flex items-center gap-4 border-b border-warning/60 bg-warning/15 px-6 py-2.5 text-sm" role="status" aria-live="polite" data-roles="SiteAdmin"><span><b>Viewing as Noah Contributor</b> &mdash; you&rsquo;re seeing exactly what they see. Anything you do is recorded as Sam Aldridge acting as them.</span><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">Exit view-as</button></div>
+      <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span><span class="spacer flex-1"></span><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2">New idea</button></div>
+      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+        <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Noah</h1>
+          <div class="sub">Here&rsquo;s what needs you today. Acme Robotics has 22 ideas across 2 boards and 16 delivery issues in flight &mdash; press <span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">Ctrl K</span> to jump straight to any of them.</div></div></div>
+        <div class="kpis mb-6 grid grid-cols-4 gap-3">
+          <div class="kpi rounded-lg border bg-card p-4 text-card-foreground shadow-xs"><div class="k">Open ideas</div><div class="v num tabular-nums">14</div><div class="d">of 22 total</div><div class="why">Anything not yet Complete or Archived, on any board you can see.</div></div>
+          <div class="kpi rounded-lg border bg-card p-4 text-card-foreground shadow-xs"><div class="k">Awaiting review</div><div class="v num tabular-nums">4</div><div class="d">2 over 7 days</div><div class="why">Sitting in In Review, waiting on a decision from a person.</div></div>
+          <div class="kpi rounded-lg border bg-card p-4 text-card-foreground shadow-xs"><div class="k">Assigned to me</div><div class="v num tabular-nums">3</div><div class="d">none critical</div><div class="why">Open ideas with your name in the Assigned field.</div></div>
+          <div class="kpi rounded-lg border bg-card p-4 text-card-foreground shadow-xs"><div class="k">Completed &middot; 30d</div><div class="v num tabular-nums">6</div><div class="d">+2 vs prior</div><div class="why">Reached Complete in the last 30 days, against the 30 days before it.</div></div>
+        </div>
+        <div class="note mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"><b>Act-as, not preview.</b> Every control on this page is live, because View As is the Site Admin&rsquo;s only way to change organization content. The rail shows Noah, the header&rsquo;s own <em>View as&hellip;</em> control is gone (a session cannot be nested), and role-gated surfaces render for Noah&rsquo;s role &mdash; which is why <em>Settings</em> would show him only his profile. The banner is drawn from the server&rsquo;s answer to <code>/auth/me</code>, never from remembered state, so an expired View As session (30 minutes idle, 2 hours absolute &mdash; the sign-in itself keeps its own 8-hour limit) cannot leave a stale banner behind. Authorship on anything saved is Noah&rsquo;s; the audit row names both people.</div>
+      </div>
+    </div>
+  </div>
+  <div class="shell" data-roles="User ReadOnly">
+    <aside class="side flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground">
+      <div class="brand flex items-center gap-2 px-2 py-3 text-base font-semibold text-foreground"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org px-2 pb-3 text-xs font-medium text-muted-foreground" data-roles="SiteAdmin">All organizations</div>
+      <div class="org px-2 pb-3 text-xs font-medium text-muted-foreground" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette mb-1 flex w-full items-center gap-2 rounded-md border bg-background px-2 py-1.5 text-sm text-muted-foreground shadow-xs hover:bg-accent" type="button" data-go="comp-q-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Workspace</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" aria-current="page" data-go="comp-q-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num tabular-nums">2</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num tabular-nums">22</span></button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Delivery</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num tabular-nums">7</span></button>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">Configure</div>
+      <button class="nav flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground" data-go="comp-q-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push flex-1"></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="SiteAdmin"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint text-xs text-muted-foreground/70">Site Admin</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="OrgAdmin"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint text-xs text-muted-foreground/70">Org Admin</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="User"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint text-xs text-muted-foreground/70">Member</div></div></div>
+      <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span><span class="spacer flex-1"></span><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="User">New idea</button></div>
+      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+        <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Not available</h1><div class="sub">View As is not offered to members.</div></div></div>
+        <div class="empty rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center">
+          <h3>Acting as someone else is an administrator&rsquo;s tool</h3>
+          <p>Only a Site Admin or an Org Admin can browse Collega as another user. For your role the control is hidden <em>and</em> the route is refused &mdash; both, not either &mdash; so there is nothing here to find.</p>
+          <a class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" href="#" data-go="comp-p-focus-roadmap.html#s-home">Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const screens = [...document.querySelectorAll('.screen')];
+  const tabs = [...document.querySelectorAll('.switch button[data-go]')];
+
+  function go(id) {
+    // A cross-file destination is "file.html#s-id" — follow it, carrying the
+    // current role and state so the switcher survives the navigation.
+    if (id.includes('.html')) {
+      const [file, frag] = id.split('#');
+      const p = new URLSearchParams({role: document.body.dataset.role});
+      if (frag) p.set('screen', frag);
+      const st = document.querySelector('.screen[data-on="1"]');
+      if (st && st.dataset.state && st.dataset.state !== 'normal') p.set('state', st.dataset.state);
+      window.location.href = file + '?' + p.toString();
+      return;
+    }
+    if (!document.getElementById(id)) return;
+    screens.forEach(s => s.dataset.on = (s.id === id) ? '1' : '0');
+    tabs.forEach(t => t.setAttribute('aria-current', String(t.dataset.go === id)));
+    window.scrollTo(0, 0);
+  }
+
+  function setRole(role) {
+    document.body.dataset.role = role;
+    document.querySelectorAll('[data-role-set]').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.dataset.roleSet === role)));
+  }
+
+  function setState(state) {
+    screens.forEach(s => s.dataset.state = state);
+    document.querySelectorAll('[data-state-set]').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.dataset.stateSet === state)));
+  }
+
+  document.addEventListener('click', e => {
+    const r = e.target.closest('[data-role-set]');
+    if (r) { setRole(r.dataset.roleSet); return; }
+    const s = e.target.closest('[data-state-set]');
+    if (s) { setState(s.dataset.stateSet); return; }
+    const t = e.target.closest('[data-go]');
+    if (t) { e.preventDefault(); go(t.dataset.go); }
+  });
+
+  document.addEventListener('keydown', e => {
+    // Guarded: not every file in the set carries a command palette.
+    const pal = document.getElementById('s-palette');
+    if (e.key === 'Escape' && pal && pal.dataset.on === '1') go(screens[0].id);
+    if (e.key === 'k' && (e.metaKey || e.ctrlKey) && pal) { e.preventDefault(); go('s-palette'); }
+  });
+
+  // Honour ?role= / ?state= / ?screen= so a cross-file link lands in context.
+  const q = new URLSearchParams(location.search);
+  setState(q.get('state') || 'normal');
+  setRole(q.get('role') || 'OrgAdmin');
+  if (q.get('screen')) go(q.get('screen'));
+</script>
+</body>
+</html>

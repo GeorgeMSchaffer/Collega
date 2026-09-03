@@ -192,11 +192,25 @@ in that file still carries the *not built* strip, because the product behind it 
 and unimplemented. `comp-n-roadmap-multi.html` is retained only as the record of the rejected
 alternative. Do not hand-edit — `SPEC/mockups/_build/build_p.py` owns these files.
 
+### Comp Q: comp P on Tailwind CSS + shadcn/ui (2026-09-03)
+
+`comp-q-{focus-roadmap,auth,admin,delivery}.html` is **comp P rendered by the framework the
+client is built on** — Tailwind CSS v4 + shadcn/ui (`SPEC/decisions.md` 2026-09-03, "not
+reinvent a wheel"). Built by `_build/build_q.py` from the *same fragments* as comp P, so the
+46 screens, four roles, four states, structure and copy are identical; every semantic class
+is expanded into what the matching shadcn component renders and Tailwind is compiled over
+the result. Where the framework's defaults differ from comp P's hand-drawn values, comp Q
+takes the framework's — 14px UI text, 36px controls, `--radius: 0.3rem`, Badge / Card /
+Dialog / Sidebar / Command shapes, Geist — which is the point of it. The theme carries the
+2026-08-31 palette as shadcn variables; the palette stays open and lives in one block of
+`_build/q.css`. Comp Q is the visual reference for the conversion's Wave E; comp P remains
+the source of structure and copy. The component map is in `_build/README.md`.
+
 ## Full-App Comps (2026-07-30)
 
 Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with Fluent UI Blazor components.
 
-**Selection (2026-07-30): Comp A "Command Center" is the chosen UI/UX layout for implementation**, restyled to use the typography and color palette from the SVG mockups (01–12): `"Segoe UI", Arial, sans-serif`, slate neutrals (`#0f172a`/`#334155`/`#64748b`), `#f8fafc` background, and `#1d4ed8`/`#1e3a8a` blue accent. See `SPEC/20-feature-client-ui.md` for the full design-direction spec. Comps B and C are retained as explored alternatives.
+**Superseded.** Comp A was selected on 2026-07-30 and Comp C on 2026-08-06; since 2026-08-31 the direction is comp P, made canonical on 2026-09-03 (`SPEC/decisions.md`). Kept for history: **Comp A "Command Center" was the chosen UI/UX layout for implementation**, restyled to use the typography and color palette from the SVG mockups (01–12): `"Segoe UI", Arial, sans-serif`, slate neutrals (`#0f172a`/`#334155`/`#64748b`), `#f8fafc` background, and `#1d4ed8`/`#1e3a8a` blue accent. See `SPEC/20-feature-client-ui.md` for the full design-direction spec. Comps B and C are retained as explored alternatives.
 
 - `comp-a-command-center.html` — **Command Center** (Jira-inspired): persistent left nav rail with grouped sections, breadcrumbs, dense data tables with command bars, KPI dashboard, swimlane board with priority edge accents, and a two-pane idea overlay (content + metadata sidebar). Best for power users and admin-heavy workflows.
 - `comp-b-board-first.html` — **Board First** (Trello-inspired): top app bar only (no sidebar), board tiles on Home, full-bleed colored board canvas, card-based org management, and a Trello-style idea overlay with side action buttons. Best for approachability and collaboration-first orgs.

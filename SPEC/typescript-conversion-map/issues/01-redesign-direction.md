@@ -1,7 +1,9 @@
 # 01 — Which redesign direction?
 
+> **Decided on B and D, 2026-09-03.** `SPEC/decisions.md` rules comp P canonical (withdrawing the Comp C answer below) and the client built on Tailwind CSS + shadcn/ui (confirming the Tailwind answer below, with shadcn/ui on top). Question C is still open. This file is kept as written.
+
 Type: prototype
-Status: in progress — B and D answered 2026-09-01, A/C open
+Status: B and D decided 2026-09-03 in `SPEC/decisions.md` (comp P, Tailwind + shadcn/ui); A/C open
 Blocked by: —
 
 ## Question A — What is the primary job? *(answer this first)*

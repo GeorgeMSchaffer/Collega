@@ -85,3 +85,9 @@ ds-bundle/
 
 # Local secrets — never commit
 .env.local
+
+# Comp Q build toolchain (SPEC/mockups/_build/tw); compiled CSS is inlined into the comps
+SPEC/mockups/_build/tw/node_modules
+SPEC/mockups/_build/tw/input.css
+SPEC/mockups/_build/tw/out.css
+SPEC/mockups/_build/__pycache__

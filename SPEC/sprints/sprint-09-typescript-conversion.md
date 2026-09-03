@@ -94,6 +94,5 @@ Beyond `SPEC/90-definition-of-done.md`:
 - **Ticket `10`** (test suite fate) — was blocked on `04`, which is now answered.
 - **Tickets `01` (component library), `02`, `05`, `06`, `07`, `08`, `11`** on the
   conversion map.
-- **Ticket `01` conflict** — the map (now at `SPEC/typescript-conversion-map/`, ported
-  2026-09-03) records a 2026-09-01 resolution that disagrees with the comp P lock on
-  direction and adds net-new scope. Needs a `decisions.md` entry either way.
+- **Ticket `01` Question C** — whether Loop and the three low-risk comp N concepts enter
+  as net-new scope. Direction and library were decided 2026-09-03 (comp P, Tailwind + shadcn/ui).

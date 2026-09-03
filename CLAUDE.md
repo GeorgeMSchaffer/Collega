@@ -81,7 +81,7 @@ Layered with strict boundaries — business rules live in Domain and Application
 ## Technology Stack
 - Node.js 24.x with Typescript 7.x
 - Frameworks
-    -- Frontend:  Next.js and CSS framework (decided later)
+    -- Frontend:  Next.js with Tailwind CSS v4 + shadcn/ui, used as intended (`SPEC/decisions.md` 2026-09-03; comp Q is the reference rendering)
     -- Backend:  Nest.js
     -- ORM: Prisma Posgress
     -- Database: 

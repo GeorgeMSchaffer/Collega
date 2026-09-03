@@ -1,0 +1,9 @@
+{
+  "name": "collega-comp-q-build",
+  "private": true,
+  "description": "Pinned Tailwind CSS toolchain for build_q.py. Run `npm ci` here once, then python3 ../build_q.py.",
+  "devDependencies": {
+    "@tailwindcss/cli": "4.1.11",
+    "tailwindcss": "4.1.11"
+  }
+}

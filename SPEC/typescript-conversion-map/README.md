@@ -13,7 +13,7 @@ and those win over a ticket's own `Status:` line, which was not updated after th
 
 | Ticket | Map says | Actually |
 |---|---|---|
-| `01` redesign direction | in progress | **UI half closed** by the comp P lock (`decisions.md` 2026-08-31). Questions C and D carry a **conflicting** 2026-09-01 resolution — see below. |
+| `01` redesign direction | in progress | **Questions B and D decided** 2026-09-03: comp P is canonical, built on Tailwind + shadcn/ui (`decisions.md`). The ticket's Question B answer (Comp C) is withdrawn; its Question D answer (Tailwind) stands, with shadcn/ui on top. **Question C** (net-new scope) still open. |
 | `02` deployment target | open | Open. |
 | `03` what ports | open | **Answered** 2026-08-31: everything ports, View As isolated. |
 | `04` validation strategy | open | **Answered** 2026-08-31: golden contract tests; Wave A runs before Sprint 8 closes. |
@@ -29,22 +29,15 @@ and those win over a ticket's own `Status:` line, which was not updated after th
 Also settled since the map was charted, and relevant to E6: Outcome ↔ Issue cardinality is
 **single-parent** (`decisions.md` 2026-09-02).
 
-## ⚠ Conflict to resolve before Wave E — not resolved by this port
+## Ticket `01` conflict — resolved 2026-09-03
 
-`issues/01-redesign-direction.md` carries a "Resolution in progress (2026-09-01)" section,
-written on the map branch **after** `decisions.md` locked comp P on 2026-08-31. The two
-disagree on three points and no one has reconciled them:
-
-| Point | `decisions.md` on `dev` (2026-08-31) | Ticket `01` on the map branch (2026-09-01) |
-|---|---|---|
-| Visual direction (Q B) | **Comp P** locked: structure, IA, copy; palette open. `DESIGN.md` token layer. | "Carry **Comp C** Fluent Editorial forward"; the map branch's comp M ("Editorial Continuum", a *different* file from `dev`'s `comp-m-roadmap-single.html`) is the closest reference. K, L, N not selected. |
-| Component library (Q D) | Open ("comp P is hand-rolled CSS on tokens and does not presume a library"). | **Answered: Tailwind rebuild, not Fluent UI React.** Reasoned; compatible with comp P, which is also hand-rolled on tokens. |
-| Net-new scope (Q C) | Open; the plan §6 says adopting any of comp N's concepts is additive. | **Loop, Decision records, Commitment strip, Triage Mode are IN** (~10 agent-slices, 4 entities, 11 endpoints, 6 surfaces). Momentum, duplicate clustering, vote budget still open. |
-
-Q D is a plain answer and can be adopted. Q B and Q C change what Wave E builds and what
-the estimate covers, so they need a decision recorded in `decisions.md` — either the
-2026-09-01 answers supersede the comp P lock, or they are withdrawn. Until then the plan
-stands as written and comp P remains the locked direction.
+`issues/01-redesign-direction.md` carries a "Resolution in progress (2026-09-01)" section
+written on the map branch after `decisions.md` had locked comp P. The user ruled on
+2026-09-03: **comp P is canonical**, built on **Tailwind CSS + shadcn/ui** — so the ticket's
+Question B answer (Comp C carried forward) is withdrawn and its Question D answer (Tailwind)
+stands, with shadcn/ui named on top. The ticket file is left as written; the decision log wins.
+Question C — Loop plus comp N's decision records, commitment strip and triage mode as net-new
+scope — is still an open question for the plan's estimate.
 
 ## What was not ported from `feature/068`, and why
 

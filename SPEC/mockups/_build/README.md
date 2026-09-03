@@ -11,6 +11,7 @@ next build overwrites it.
 
 ```bash
 python3 SPEC/mockups/_build/build_p.py   # -> comp-p-{focus-roadmap,auth,admin,delivery}.html
+python3 SPEC/mockups/_build/build_q.py   # -> comp-q-{focus-roadmap,auth,admin,delivery}.html  (needs `npm ci` in _build/tw once)
 python3 SPEC/mockups/_build/build.py     # -> comp-o-notion-01/02/03.html
 ```
 
@@ -26,7 +27,10 @@ reviewer trust that a comp matches its sources.
 |---|---|
 | `tokens.css` | The `DESIGN.md` token layer — colour, type scale, radii, spacing. Shared by every comp. |
 | `extra.css` | Component and layout CSS built on those tokens. |
-| `build_p.py` | Assembles comp P. Substitutes the `@@…@@` tokens below, inlines the CSS, appends the screen-switching script. |
+| `build_p.py` | Assembles comp P. Substitutes the `@@…@@` tokens below, inlines the CSS, appends the screen-switching script. Importable: `build_q.py` reuses it. |
+| `build_q.py` | Assembles **comp Q** — the same fragments on Tailwind CSS v4 + shadcn/ui. Holds the **component registry** (semantic class → the shadcn component and the utilities it renders), expands every class, then compiles Tailwind over the output and inlines it. |
+| `q.css` | Comp Q's stylesheet in the shape of a shadcn `globals.css`: the theme block, the theme variables (the 2026-08-31 palette, `--radius: 0.3rem`, Geist), a base layer, and the few layout rules the framework has no component for. |
+| `tw/` | The pinned Tailwind toolchain (`package.json` + lockfile). `npm ci` here once; `node_modules` and the compiled CSS are ignored. |
 | `p_core.frag`, `p_auth.frag`, `p_admin.frag`, `p_delivery.frag` | Comp P's screen markup, one fragment per output file. |
 | `build.py` | Assembles the three comp O files from the fragments below. |
 | `o1_board.frag`, `o2_idea.frag`, `o3_delivery.frag` | Comp O screen markup. |
@@ -54,6 +58,39 @@ reviewer trust that a comp matches its sources.
 - Static checks are not sufficient. Every layout bug found in these comps so far was
   invisible to HTML validation and only appeared in a screenshot. Serve the file and look
   at it.
+
+## Comp Q — the same screens on the framework
+
+Comp Q exists because the client is built on **Tailwind CSS v4 + shadcn/ui** (`SPEC/decisions.md`
+2026-09-03) and a comp drawn in hand-rolled CSS cannot show what the framework will do with
+comp P's structure. `build_q.py` reuses every fragment and generator unchanged, so structure
+and copy stay exactly comp P's; only the skin differs, and it differs by taking the
+framework's defaults — 14px UI text and 36px controls, `--radius: 0.3rem`, Badge / Card /
+Dialog / Sidebar / Command shapes, Geist. The docked inspector stays a layout column rather
+than a `Sheet`, because the comp P lock says it is never a modal.
+
+The generated files are what a shadcn project puts in the DOM: each semantic class is kept
+(the role and state mechanisms key off it) and the matching component's utility string is
+appended. The registry at the top of `build_q.py` is the component map; the short version:
+
+| Fragment class | shadcn/ui component |
+|---|---|
+| `side`, `brand`, `org`, `navlbl`, `nav`, `me` | `Sidebar`, `SidebarHeader`, `SidebarGroupLabel`, `SidebarMenuButton`, `SidebarFooter` |
+| `topbar`, `crumb` | `SidebarInset` header, `Breadcrumb` |
+| `btn` (+ `pri`, `sec2`, `ghost`, `warn`, `sm2`), `iconbtn` | `Button` variants outline / default / secondary / ghost / destructive-outline, sizes default / sm / icon |
+| `marker`, `rmtag`, `tag`, `badge`, `chip`, `key`, `kbd`, `archtag` | `Badge` secondary / outline, `Kbd` |
+| `panel`, `card`, `kpi`, `sprintbar`, `kcard` | `Card`, `CardHeader`, `CardDescription`, `CardContent` |
+| `table`, `pgfoot` | `Table`, `Pagination` |
+| inputs, `field`, `hint`, `msg`, `radioset`, `pick` | `Input`, `Textarea`, `Select`, `Label`, `Form*`, `RadioGroup`, `Checkbox` |
+| `seg`, `up` | `Tabs` list / `ToggleGroup`, `Toggle` |
+| `inspector`, `insp-*` | a docked `ResizablePanel` with `SheetHeader`/`SheetFooter` anatomy |
+| `cp-back`, `gate`, `chatm`, `cp` | `Dialog`, `DialogContent`, `CommandDialog` |
+| `alert`, `authnote`, `banner`, `skel`, `empty` | `Alert` (+ destructive), `Skeleton` |
+| `av`, `avstack` | `Avatar` |
+| `denied` + `aria-disabled` | `Button` disabled-with-reason (`Tooltip` in the build) |
+
+Anything not in the registry is a layout rule in `q.css`. The build is reproducible for a
+pinned Tailwind version: two runs produce identical files.
 
 ## The comp P set
 

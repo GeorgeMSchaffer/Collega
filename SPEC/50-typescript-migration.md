@@ -30,7 +30,7 @@ on 2026-08-31. Do not re-litigate these; re-open them explicitly if you must.
 | 6 | **Big-bang cutover** | Not a strangler. No shippable intermediate; one cutover. |
 | 7 | **Prisma introspect, then reshape** | `prisma db pull` from the live schema as a starting point, then deliberate changes. Not straight adoption, not greenfield. |
 | 8 | **Turborepo + pnpm workspaces** | `packages/{domain,application,infrastructure}` + `apps/{api,web}`, mirroring current project boundaries. Enforced by `eslint-plugin-boundaries` in the same lint run as everything else. |
-| 9 | **UI is a redesign** | Locked to **comp P** on 2026-08-31 (`SPEC/decisions.md`). Structure locked, palette open. Component library still open. |
+| 9 | **UI is comp P, on Tailwind + shadcn/ui** | Locked to **comp P** on 2026-08-31 and made canonical 2026-09-03 (`SPEC/decisions.md`). Structure locked, palette open. Built on **Tailwind CSS v4 + shadcn/ui**, used as intended; comp Q (`comp-q-*.html`) is the reference rendering and `build_q.py` carries the component map. |
 | 10 | **Golden contract tests** | Ticket `04`. Record all 81 endpoints against live .NET, replay against Nest. |
 | 11 | **HTTP-only Next ↔ Nest** | Ticket `09`. No direct `packages/application` imports from Next. |
 | 12 | **Everything ports; View As isolated** | Ticket `03`. Nothing deferred; impersonation gets its own slice. |
@@ -232,7 +232,7 @@ D1–D7 map one-to-one onto B1–B7, covering the 15 controllers and 81 endpoint
 
 | Slice | Owns | Comp P screens |
 |---|---|---|
-| **E0** Design system | `packages/design-system/**`, `apps/web/app/layout.tsx`, global tokens | **Must merge before E1–E6 start.** Tokens, the `marker` primitive, buttons, panels, tables, the docked-inspector shell |
+| **E0** Design system | `packages/design-system/**`, `apps/web/app/layout.tsx`, `globals.css` | **Must merge before E1–E6 start.** The shadcn/ui install: Tailwind v4, the theme (`_build/q.css` carried over as `globals.css`), and the components the registry in `build_q.py` names — Sidebar, Breadcrumb, Button, Badge, Card, Table, Input/Select/Textarea/Label/Form, Dialog, Command, Skeleton, Alert, Tabs, Toggle, Avatar, Tooltip, Resizable — plus the two mechanisms shadcn has no component for: the docked inspector column and the role/state gating attributes. |
 | **E1** | `apps/web/app/(auth)/**` | Login, first-login password change |
 | **E2** | `apps/web/app/(desk)/layout.tsx`, `components/nav/**` | Desk shell, sidebar, command palette |
 | **E3** | `apps/web/app/(desk)/ideas/**`, `boards/**` | Ideas list, board / lanes |
@@ -305,7 +305,7 @@ converted to currency — that needs current per-model pricing checked rather th
 | Open ticket | If answered differently |
 |---|---|
 | `10` test suite fate | Porting 16,900 lines of tests case-by-case is expensive; re-deriving from spec is cheaper and discards the edge cases that caught the Sprint 5 defects. Blocked on `04`, now answered, so this is takeable. |
-| `01` Question C | Comp N's six feature concepts (Triage Mode, duplicate clustering, vote budget, decision records, momentum over totals, commitment strip) are **net-new scope on top of the rewrite**, not part of it. Adopting any is additive. |
+| `01` Question C | Comp N's feature concepts and Comp H's Loop are **net-new scope on top of the rewrite**, not part of it. The map branch marked Loop, decision records, commitment strip and triage mode IN on 2026-09-01 (~10 agent-slices); that is not yet a recorded decision. Adopting any is additive. |
 | `06` reshape scope | A larger schema reshape inflates C1 and F3 and weakens F1's diff. |
 | `07` View As ambient identity | Drives B7 and S0.3. Flagged AFK-researchable on the map. |
 
@@ -344,12 +344,12 @@ assumed.
 ## 9. Before execution starts
 
 1. **Reconcile the branches.** Done 2026-09-03 — the map is at
-   `SPEC/typescript-conversion-map/`. What it surfaced is not done: ticket `01`
-   carries a 2026-09-01 resolution that conflicts with the comp P lock; see that
-   directory's `README.md`. Decide it before Wave E.
+   `SPEC/typescript-conversion-map/`. The ticket `01` conflict it surfaced was
+   decided the same day: comp P on Tailwind + shadcn/ui (`decisions.md`). Question C
+   (net-new scope) is the one part still open, and nothing in E0–E5 waits on it.
 2. **Schedule Wave A now.** It is the only piece with a deadline, and the deadline is set
    by Sprint 8's close, not by this plan.
 3. **Answer the Outcome ↔ Issue cardinality question** before Wave E6.
 4. **Take ticket `10`** — it was blocked on `04`, which is now answered.
-5. **Reconcile `SPEC/20-feature-client-ui.md`** against the comp P lock; it still
-   describes the Comp A / Fluent UI direction.
+5. **Reconcile `SPEC/20-feature-client-ui.md`** against the comp P lock — done
+   2026-09-03.
