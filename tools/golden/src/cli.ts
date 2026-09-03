@@ -14,8 +14,9 @@ import { writeFile } from "node:fs/promises";
 import { readInventory, ROLES, type Endpoint } from "./inventory.ts";
 import { loadScenarios } from "./scenarios.ts";
 import { Runner, type Exchange, type StepFailure } from "./runner.ts";
-import { readCorpus, writeCorpus } from "./corpus.ts";
+import { readCorpus, readManifest, writeCorpus } from "./corpus.ts";
 import { DEFAULT_BASE_PATH, DEFAULT_BASE_URL, readCredentials } from "./config.ts";
+import { explainMismatch, fingerprint } from "./fingerprint.ts";
 import { formatReport as formatCoverage, report as coverageReport } from "./coverage.ts";
 import { buildReport, formatReport as formatReplay } from "../replay/replay.ts";
 import { scaffoldScenarios } from "./scaffold.ts";
@@ -53,9 +54,11 @@ type RunSummary = {
   failures: StepFailure[];
   skipped: { scenario: string; step: string }[];
   surprises: { scenario: string; step: string; expected: number; actual: number }[];
+  /** The seeded state the run started from. */
+  seed: string;
 };
 
-async function run(args: Args, exchanges: Exchange[] = []): Promise<RunSummary> {
+async function run(args: Args, exchanges: Exchange[] = [], expectSeed?: string): Promise<RunSummary> {
   const { byId } = await endpointMap();
   const scenarios = await loadScenarios(PATHS.scenarios);
   const runner = new Runner({
@@ -65,7 +68,18 @@ async function run(args: Args, exchanges: Exchange[] = []): Promise<RunSummary> 
     stopOnError: args.flags.get("keep-going") !== "true",
   });
 
-  const summary: RunSummary = { failures: [], skipped: [], surprises: [] };
+  // Taken before any scenario runs, so it describes the seed rather than what
+  // the corpus did to it.
+  const summary: RunSummary = { failures: [], skipped: [], surprises: [], seed: await fingerprint(runner) };
+
+  if (
+    expectSeed !== undefined &&
+    expectSeed !== summary.seed &&
+    args.flags.get("skip-seed-check") !== "true"
+  ) {
+    throw new Error(explainMismatch(expectSeed, summary.seed));
+  }
+
   for (const scenario of scenarios) {
     process.stdout.write(`  ${scenario.name.padEnd(24)} `);
     const result = await runner.runScenario(scenario, byId);
@@ -141,6 +155,7 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
       stack: args.flags.get("stack") ?? "dotnet",
       baseUrl,
       basePath: args.flags.get("base-path") ?? DEFAULT_BASE_PATH,
+      seed: summary.seed,
     });
     console.log(
       `\nwrote ${manifest.fixtures} fixtures covering ${manifest.endpoints.length} endpoints ` +
@@ -155,8 +170,9 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
     const baseUrl = args.flags.get("base-url") ?? DEFAULT_BASE_URL;
     console.log(`replaying the corpus against ${baseUrl}`);
     const fixtures = await readCorpus(PATHS.fixtures);
+    const manifest = await readManifest(PATHS.fixtures);
     const exchanges: Exchange[] = [];
-    const summary = await run(args, exchanges);
+    const summary = await run(args, exchanges, manifest.seed);
     reportRun(summary);
 
     const report = buildReport(fixtures, exchanges);

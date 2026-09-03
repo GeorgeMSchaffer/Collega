@@ -23,6 +23,8 @@ export type CorpusManifest = {
   stack: string;
   baseUrl: string;
   basePath: string;
+  /** The seeded state the capture ran against; replay refuses a target that differs. */
+  seed: string;
   fixtures: number;
   scenarios: string[];
   /** Endpoint ids the corpus touches, for coverage reporting. */
@@ -91,6 +93,10 @@ export async function writeCorpus(
   };
   await writeFile(path.join(dir, "manifest.json"), `${JSON.stringify(full, null, 2)}\n`);
   return full;
+}
+
+export async function readManifest(dir: string): Promise<CorpusManifest> {
+  return JSON.parse(await readFile(path.join(dir, "manifest.json"), "utf8")) as CorpusManifest;
 }
 
 export async function readCorpus(dir: string): Promise<Fixture[]> {

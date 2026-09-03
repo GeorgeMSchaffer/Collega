@@ -81,6 +81,7 @@ test("a capture replayed against the same stack matches, despite fresh guids and
       stack: "stub",
       baseUrl: first.stub.url,
       basePath: first.stub.basePath,
+      seed: "test",
     });
     const fixtures = await readCorpus(dir);
     assert.equal(fixtures.length, SCENARIO.steps.length);
@@ -103,6 +104,7 @@ test("a changed response body is caught, and named by path", async () => {
       stack: "stub",
       baseUrl: first.stub.url,
       basePath: first.stub.basePath,
+      seed: "test",
     });
     const fixtures = await readCorpus(dir);
 
@@ -137,6 +139,7 @@ test("an id that stops matching the step that minted it is caught", async () => 
       stack: "stub",
       baseUrl: first.stub.url,
       basePath: first.stub.basePath,
+      seed: "test",
     });
     const fixtures = await readCorpus(dir);
 
@@ -164,6 +167,7 @@ test("no password reaches a fixture", async () => {
       stack: "stub",
       baseUrl: first.stub.url,
       basePath: first.stub.basePath,
+      seed: "test",
     });
     // The corpus is committed and capture runs against whatever GOLDEN_PASSWORD
     // points at, so a recorded login body would be a credential in git.
@@ -196,6 +200,7 @@ test("a changed status is reported on its own, not buried under body noise", asy
       stack: "stub",
       baseUrl: first.stub.url,
       basePath: first.stub.basePath,
+      seed: "test",
     });
     const fixtures = await readCorpus(dir);
     const changed = fixtures.map((f) =>
@@ -225,6 +230,7 @@ test("a step whose scenario died earlier is reported absent, not passed over", a
       stack: "stub",
       baseUrl: first.stub.url,
       basePath: first.stub.basePath,
+      seed: "test",
     });
     const fixtures = await readCorpus(dir);
     const partial: Exchange[] = first.result.exchanges.slice(0, 2);

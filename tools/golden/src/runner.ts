@@ -127,6 +127,15 @@ export class Runner {
     this.#tokens.clear();
   }
 
+  /** A read outside the corpus, for the seed fingerprint. Never recorded. */
+  async get(routePath: string, role: Role): Promise<unknown> {
+    const { status, headers, text } = await this.#fetch(this.#url(routePath), {
+      method: "GET",
+      headers: { accept: "application/json", authorization: `Bearer ${await this.tokenFor(role)}` },
+    });
+    return status === 200 ? parseBody(text, headers["content-type"]) : null;
+  }
+
   #url(routePath: string, query?: Record<string, string>): string {
     const base = this.#config.baseUrl.replace(/\/$/, "");
     const prefix = this.#config.basePath.replace(/\/$/, "");

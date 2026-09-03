@@ -49,6 +49,17 @@ const SECRET_FIELDS = new Set([
   "apikey",
 ]);
 
+/**
+ * Fields that change every request without meaning anything.
+ *
+ * `traceId` is the one that matters: ASP.NET puts it on every problem-details
+ * body, so it rides on every 400, 401, 403 and 404 in the corpus — which is most
+ * of the authorization cases, the ones worth pinning hardest. Its two shapes (a
+ * connection id like `0HNOA0E675RIH:00000001`, and a W3C traceparent) match no
+ * general pattern worth guessing at, so it is handled by name.
+ */
+const VOLATILE_FIELDS = new Set(["traceid", "requestid", "correlationid"]);
+
 export class Normalizer {
   #labels = new Map<string, string>();
   #used = new Set<string>();
@@ -83,7 +94,12 @@ export class Normalizer {
     if (input && typeof input === "object") {
       const out: Record<string, unknown> = {};
       for (const key of Object.keys(input as Record<string, unknown>).sort()) {
-        out[key] = this.value((input as Record<string, unknown>)[key], `${path}.${key}`);
+        const value = (input as Record<string, unknown>)[key];
+        // Kept as a placeholder rather than dropped, so the field's presence on
+        // every problem-details body is still part of what the corpus pins.
+        out[key] = VOLATILE_FIELDS.has(key.toLowerCase()) && value !== null
+          ? `<${key.toLowerCase()}>`
+          : this.value(value, `${path}.${key}`);
       }
       return out;
     }

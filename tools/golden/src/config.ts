@@ -10,12 +10,17 @@ import type { RoleCredentials } from "./runner.ts";
 export const DEFAULT_BASE_URL = "http://localhost:5000";
 export const DEFAULT_BASE_PATH = "/api/v1";
 
-/** Demo-seed accounts, matching SPEC/implementation-agent-tracker.md's local DB row. */
+/**
+ * Demo-seed accounts, as `StartupSeeder` actually creates them: the three
+ * organization roles are slug-scoped, and Acme Robotics is the organization the
+ * corpus works in. The convenience Site Admin belongs to no organization.
+ */
+const DEMO_ORG_SLUG = "acme-robotics";
 const DEMO_EMAILS: Record<Role, string> = {
   SiteAdmin: "siteadmin@demo.collega.test",
-  OrgAdmin: "orgadmin@demo.collega.test",
-  User: "user@demo.collega.test",
-  ReadOnly: "readonly@demo.collega.test",
+  OrgAdmin: `orgadmin@${DEMO_ORG_SLUG}.demo.collega.test`,
+  User: `user@${DEMO_ORG_SLUG}.demo.collega.test`,
+  ReadOnly: `readonly@${DEMO_ORG_SLUG}.demo.collega.test`,
 };
 
 function envKey(role: Role, field: "EMAIL" | "PASSWORD"): string {
