@@ -22,14 +22,20 @@ services:
       start_period: 5s
     restart: unless-stopped
 
-  # Placeholder — src/Collega.API/Dockerfile.dev does not exist yet. Not started by
-  # `docker compose up` (no default profile membership); add the real Dockerfile.dev
-  # before enabling the `full` profile.
+  # The API on the SDK image, for a machine with no working .NET install.
+  # `docker compose --profile full up -d api` — see src/Collega.API/CLAUDE.md.
   api:
     profiles: ["full"]
     build:
       context: .
       dockerfile: src/Collega.API/Dockerfile.dev
+      # The restore reaches nuget.org, so the build inherits the host's proxy when
+      # there is one. Harmless when there is not.
+      network: host
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-}
     container_name: collega-api
     depends_on:
       postgres:
@@ -47,7 +53,11 @@ services:
     ports:
       - "5027:8080"
     volumes:
-      - ./src/Collega.API:/app
+      # The whole repository, not just the API project: its .csproj references
+      # Application and Infrastructure by relative path, so a narrower mount
+      # cannot restore, let alone build.
+      - .:/src
+    working_dir: /src/src/Collega.API
     command: ["dotnet", "watch", "run", "--no-launch-profile"]
 
   # Placeholder — src/Collega.Client/Dockerfile.dev does not exist yet. Not started by

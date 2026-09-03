@@ -60,14 +60,32 @@ Non-Development startup must never apply the demo seed — `SPEC/40-test-strateg
 
 ```bash
 docker compose up -d postgres         # just PostgreSQL (also the default)
-docker compose --profile full up -d   # + the api/web placeholder services
+docker compose --profile full up -d   # + the API (see "Running the API in a container")
 docker compose down                   # stop; -v also deletes the volume and all data
 docker inspect -f '{{.State.Health.Status}}' collega-postgres
 ```
 
 `POSTGRES_HOST_PORT` (default `5432`) sets the host-side port mapping and `POSTGRES_USER` (default **`collega`**, per both `.env.example` and the `docker-compose.yml` fallback) the superuser. The name is deliberate — local, in-cluster (`SPEC/50-kubernetes-deployment.md`), and app connection strings all name the same role, so **there is no `postgres` role to connect as**; `psql -U postgres` fails with `role "postgres" does not exist`. Azure differs (`collegaadmin`) because its managed admin-user model dictates it. The healthcheck is `pg_isready`, which only proves the server is accepting connections — it does **not** authenticate, so a healthy container is not by itself evidence that your password is right.
 
-The `api` and `web` services are placeholders wired for `dotnet watch`, still referencing `Dockerfile.dev` paths that don't exist. They stay behind the `full` profile so they can't be started by accident. Add real `Dockerfile.dev` files to enable them.
+### Running the API in a container
+
+`api` is real as of 2026-09-03 (`src/Collega.API/Dockerfile.dev`) — for a machine with a broken, missing, or wrong-version .NET install. It runs `dotnet watch` on the SDK image against a bind mount of the **whole repository**, because the API's `.csproj` references Application and Infrastructure by relative path and a narrower mount cannot restore.
+
+```bash
+docker compose --profile full up -d api     # http://localhost:5027
+docker compose logs -f api
+```
+
+Migrations and seeding still happen on startup, so this is a complete local API. The `web` service is still a placeholder: no `src/Collega.Client/Dockerfile.dev` exists yet.
+
+**Behind a TLS-inspecting proxy** — a corporate one, or the agent proxy in a Claude Code remote session — `dotnet restore` fails inside the container with a certificate error even though it works on the host, because the host trusts the proxy's CA and a fresh container does not. Drop the CA in and rebuild:
+
+```bash
+cp /root/.ccr/ca-bundle.crt docker/proxy-ca/proxy.crt    # remote session
+docker compose --profile full build api
+```
+
+`docker/proxy-ca/*.crt` is gitignored; with no certificate present the build is unaffected. The build also runs with `network: host` and inherits `HTTP_PROXY`/`HTTPS_PROXY`, which is what lets the restore reach nuget.org through a proxy bound to localhost.
 
 **`password authentication failed for user "collega"` even with a correct `.env`** — `POSTGRES_PASSWORD` is applied only when the data directory is *first* initialized, so an old credential survives in an existing volume. Reset it in place without losing data; the official image initializes `pg_hba.conf` with `local all all trust`, so this exec over the Unix socket needs no password:
 

@@ -1,0 +1,38 @@
+# Development image for the API. Not a deployment artifact — it carries the whole
+# SDK and runs `dotnet watch`, because the point is to get a working API on a
+# machine whose .NET install is broken, missing, or the wrong version.
+#
+# The source is bind-mounted by docker-compose rather than copied in, so an edit
+# on the host is picked up by the watcher without a rebuild.
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+
+ARG HTTP_PROXY=""
+ARG HTTPS_PROXY=""
+ARG NO_PROXY=""
+ENV HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} NO_PROXY=${NO_PROXY}
+
+# Behind an inspecting proxy (a corporate one, or the agent proxy in a remote
+# session) NuGet fails TLS verification until the proxy's CA is trusted. Passing
+# the bundle in is optional; without it this is a no-op.
+COPY --chmod=0644 docker/proxy-ca/* /usr/local/share/ca-certificates/
+RUN update-ca-certificates >/dev/null 2>&1 || true
+
+# Restore against the solution's own project files first, so the layer is reused
+# until a .csproj changes rather than on every source edit.
+WORKDIR /build
+COPY Collega.sln global.json ./
+COPY src/Collega.Domain/*.csproj src/Collega.Domain/
+COPY src/Collega.Application/*.csproj src/Collega.Application/
+COPY src/Collega.Infrastructure/*.csproj src/Collega.Infrastructure/
+COPY src/Collega.API/*.csproj src/Collega.API/
+COPY src/Collega.Client/*.csproj src/Collega.Client/
+COPY tests/Collega.Domain.Tests/*.csproj tests/Collega.Domain.Tests/
+COPY tests/Collega.Application.Tests/*.csproj tests/Collega.Application.Tests/
+COPY tests/Collega.Infrastructure.Tests/*.csproj tests/Collega.Infrastructure.Tests/
+COPY tests/Collega.API.Tests/*.csproj tests/Collega.API.Tests/
+COPY tests/Collega.E2E.Tests/*.csproj tests/Collega.E2E.Tests/
+RUN dotnet restore src/Collega.API/Collega.API.csproj
+
+WORKDIR /app
+EXPOSE 8080
+CMD ["dotnet", "watch", "run", "--no-launch-profile"]

@@ -43,7 +43,7 @@ SITE_ADMIN_PASSWORD=<your-password>
 
 > `POSTGRES_USER` is `collega`, not `postgres` — the container creates exactly one login role and names it `collega`, so local, in-cluster, and app connection strings all name the same role. It is still the container's superuser, just not called `postgres`. `psql -U postgres` will fail with `role "postgres" does not exist`.
 
-> `SITE_ADMIN_*` in `.env` is consumed **only** by the `api` service in `docker-compose.yml`, which is still a placeholder. For local `dotnet run`, use user-secrets (next step).
+> `SITE_ADMIN_*` in `.env` is consumed **only** by the `api` service in `docker-compose.yml` (`docker compose --profile full up -d api`, which needs no local .NET at all — see `src/Collega.Infrastructure/CLAUDE.md`). For local `dotnet run`, use user-secrets (next step).
 
 ### 2. Configure the API's secrets
 

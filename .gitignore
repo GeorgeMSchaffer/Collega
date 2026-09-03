@@ -94,3 +94,6 @@ SPEC/mockups/_build/__pycache__
 
 # Golden harness: typecheck-only dependency, the harness itself runs on bare Node
 tools/golden/node_modules
+
+# Proxy CA certificates are environment-specific (see docker/proxy-ca/README.md)
+docker/proxy-ca/*.crt
