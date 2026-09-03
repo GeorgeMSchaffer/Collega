@@ -56,7 +56,7 @@ IC = {
 # "file.html#s-id" to cross into another comp file.
 GO = {
     "home": "s-home",
-    "boards": "s-board",
+    "boards": "s-boards",
     "ideas": "s-ideas",
     "roadmap": "comp-p-delivery.html#s-roadmap",
     "sprint": "comp-p-delivery.html#s-sprint",
@@ -1346,12 +1346,19 @@ COMPS = [
      "label": "Focus Desk · core workspace",
      "explore": "The surfaces every user touches, styled per <b>DESIGN.md</b>. "
                 "This file is the locked direction; the other three extend it to the "
-                "rest of the shipped product.",
+                "rest of the shipped product. Every screen here renders at four roles "
+                "and four states &mdash; a Site Admin reads everything and changes "
+                "nothing directly, a Read Only account votes and comments but never "
+                "edits.",
      "how": ["<span class=\"k\">Ctrl K</span> opens the palette from any screen, "
              "<span class=\"k\">Esc</span> closes it.",
-             "<b>Ideas list</b> carries the measured density cost of the 15px body."],
-     "screens": [("s-home", "Home"), ("s-ideas", "Ideas list"), ("s-board", "Board"),
-                 ("s-inspect", "Inspector"), ("s-palette", "Command palette")]},
+             "<b>Ideas list</b> carries the measured density cost of the 15px body.",
+             "<b>New idea</b>&rsquo;s empty state is the form opened while the assistant "
+             "is unavailable; <b>Brainstorm</b>&rsquo;s error state is a refused turn."],
+     "screens": [("s-home", "Home"), ("s-boards", "Boards"), ("s-board", "Board"),
+                 ("s-ideas", "Ideas list"), ("s-inspect", "Inspector"),
+                 ("s-create", "New idea"), ("s-brainstorm", "Brainstorm"),
+                 ("s-palette", "Command palette")]},
     {"file": "comp-p-auth.html", "area": "Auth", "frag": "p_auth.frag",
      "title": "Collega — Comp P: auth and identity",
      "label": "Auth, account, and View As",

@@ -816,6 +816,78 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
 .banner .btn{margin-left:auto;flex:none}
 .gate .count{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
 
+/* ===== core: suggestions, the brainstorm chat, create-form chips =====
+   The suggestion colour is teal on purpose. The primary blue already means
+   "active" or "selected" everywhere in the set, and a suggestion is neither;
+   it is a default the person has not accepted yet. Chip, tint and a 3px left
+   rule together, so the mark survives greyscale. */
+:root{--sug:#116b5e;--sug-soft:#e8f3f1}
+.sugchip{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-size:11px;
+  font-weight:600;letter-spacing:.125px;text-transform:uppercase;color:var(--sug)}
+.sugchip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sug)}
+.sug-input{background:var(--sug-soft);border-left:3px solid var(--sug)}
+.sug-clear{background:none;border:0;padding:0;margin-left:8px;font:inherit;font-size:12px;
+  font-weight:500;letter-spacing:0;text-transform:none;color:var(--sug);cursor:pointer;
+  text-decoration:underline}
+/* the chat is the one modal that is a conversation, and it is 720px so a
+   reply and the draft strip fit without wrapping every other word */
+.chatm{width:min(720px,92vw);max-height:86vh;background:var(--surface);border-radius:var(--r-xl);
+  box-shadow:var(--e2);display:flex;flex-direction:column;overflow:hidden}
+.chatm .insp-head{padding:var(--s-md) var(--s-lg)}
+.chat{padding:var(--s-md) var(--s-lg);overflow:auto;display:flex;flex-direction:column;gap:var(--s-sm)}
+.bub{max-width:78%;padding:var(--s-xs) var(--s-sm);border-radius:var(--r-lg);font-size:15px;line-height:1.33}
+.bub .who{font-size:11px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:2px}
+.bub.ai{align-self:flex-start;background:var(--canvas-soft)}
+.bub.me{align-self:flex-end;background:#eaf3fc}
+/* a refused turn: greyed and struck for one beat, then gone. Never a bubble
+   from the assistant, so a refusal never reads as conversation. */
+.bub.ghost{opacity:.55;text-decoration:line-through}
+.sysnote{align-self:stretch;font-size:14px;line-height:1.43;color:var(--ink-muted);
+  border:1px dashed var(--hairline);border-radius:var(--r-md);padding:var(--s-xs) var(--s-sm)}
+.thinking{display:inline-flex;gap:4px;padding:4px 0}
+.thinking i{width:6px;height:6px;border-radius:50%;background:var(--ink-faint)}
+/* the draft strip: read-only projection of the latest reply, between the
+   transcript and the composer. "Not set yet" is rendered, never omitted. */
+.strip{display:flex;gap:var(--s-md);align-items:center;flex-wrap:wrap;
+  padding:var(--s-xs) var(--s-lg);border-top:1px solid var(--hairline);
+  border-bottom:1px solid var(--hairline);background:var(--canvas-soft);
+  font-size:14px;line-height:1.43;color:var(--ink-muted)}
+.strip .lead{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--sug)}
+.strip .lead::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--sug)}
+.strip b{color:var(--ink)}
+.composer{display:flex;gap:var(--s-xs);align-items:flex-start;padding:var(--s-sm) var(--s-lg)}
+.composer textarea{flex:1}
+.chatfoot{display:flex;gap:var(--s-xs);align-items:center;padding:var(--s-sm) var(--s-lg);
+  border-top:1px solid var(--hairline)}
+/* an archived value is shown, muted and labelled; it is never silently dropped */
+.archtag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.125px;
+  text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--hairline);
+  border-radius:var(--r-xs);padding:0 5px;margin-left:6px;vertical-align:middle}
+/* removable chips for assignees and tags on the create form */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-full);padding:2px 8px;font-size:13px;
+  line-height:1.4}
+.chip button{background:none;border:0;padding:0 2px;font:inherit;font-size:14px;
+  color:var(--ink-faint);cursor:pointer}
+.chip button:hover{color:var(--ink)}
+/* the custom-field filter panel: one typed control per field */
+.ff{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--s-md)}
+.range{display:flex;align-items:center;gap:6px}
+.range input{min-width:0;flex:1}
+.filters>.btn{align-self:flex-end}
+input[type=file]{font-family:inherit;font-size:14px}
+/* tokens.css keeps a table's first column on one line, which is right for a
+   key and wrong for a title: a long title then pushes the last columns out of
+   the panel. Lists whose first column is prose opt back in to wrapping. */
+.wrap1 tbody td:first-child{white-space:normal}
+.topbar .crumb{white-space:nowrap}
+/* under a wrapping title the secondary line can no longer be a fixed 20px
+   flex line: it grows, wraps, and keeps each tag whole */
+.wrap1 .bd{height:auto;flex-wrap:wrap;margin-top:4px;line-height:1.43}
+.wrap1 .bd .tag{white-space:nowrap}
+
 </style>
 </head>
 <body data-role="OrgAdmin">
@@ -878,7 +950,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -966,7 +1038,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -1141,7 +1213,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -1287,7 +1359,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -1377,7 +1449,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -1525,7 +1597,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -1607,7 +1679,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -1750,7 +1822,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -1838,7 +1910,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -1987,7 +2059,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2089,7 +2161,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2170,7 +2242,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2253,7 +2325,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2351,7 +2423,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2433,7 +2505,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2519,7 +2591,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2605,7 +2677,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2653,7 +2725,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2701,7 +2773,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2794,7 +2866,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -2923,7 +2995,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -3003,7 +3075,7 @@ input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
@@ -3098,7 +3170,7 @@ Stay on that subject. If a request is unrelated, decline with the refusal messag
       <button class="palette" type="button" data-go="comp-p-focus-roadmap.html#s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
       <div class="navlbl">Workspace</div>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
-      <button class="nav" data-go="comp-p-focus-roadmap.html#s-board"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="comp-p-focus-roadmap.html#s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
       <button class="nav" data-go="comp-p-focus-roadmap.html#s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
       <div class="navlbl">Delivery</div>
       <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
