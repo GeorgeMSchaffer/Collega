@@ -3,7 +3,7 @@
 // If this fails, the harness is measuring itself.
 
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -119,6 +119,68 @@ test("a changed response body is caught, and named by path", async () => {
     assert.ok(
       failure?.mismatches.some((m) => m.path === "body.name" && m.kind === "missing"),
       `expected a missing body.name, got ${JSON.stringify(failure?.mismatches)}`,
+    );
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("an id that stops matching the step that minted it is caught", async () => {
+  // The expensive defect: the read comes back attached to a different board than
+  // the one just created. Same shape, same field types, wrong relation. Nothing
+  // inside a single response says it is wrong — only the earlier step does.
+  const first = await runAgainst();
+  const dir = await mkdtemp(path.join(tmpdir(), "golden-"));
+  try {
+    await writeCorpus(dir, first.result.exchanges, {
+      capturedAt: new Date().toISOString(),
+      stack: "stub",
+      baseUrl: first.stub.url,
+      basePath: first.stub.basePath,
+    });
+    const fixtures = await readCorpus(dir);
+
+    const drifted = await runAgainst({
+      mutate: (route, body) =>
+        /^\/boards\/[\w-]+$/.test(route) && "id" in body
+          ? { ...body, id: "cccccccc-4f89-11d3-9a0c-0305e82c3301" }
+          : body,
+    });
+    const report = buildReport(fixtures, drifted.result.exchanges);
+    const failure = report.results.find((r) => r.step === "read");
+    assert.equal(failure?.status, "body", "a wrong relation replayed as a match");
+    assert.ok(failure?.mismatches.some((m) => m.path === "body.id"));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("no password reaches a fixture", async () => {
+  const first = await runAgainst();
+  const dir = await mkdtemp(path.join(tmpdir(), "golden-"));
+  try {
+    await writeCorpus(dir, first.result.exchanges, {
+      capturedAt: new Date().toISOString(),
+      stack: "stub",
+      baseUrl: first.stub.url,
+      basePath: first.stub.basePath,
+    });
+    // The corpus is committed and capture runs against whatever GOLDEN_PASSWORD
+    // points at, so a recorded login body would be a credential in git.
+    const files = await readdir(dir);
+    for (const file of files) {
+      const text = await readFile(path.join(dir, file), "utf8");
+      assert.ok(
+        !text.includes(STUB_CREDENTIALS.OrgAdmin.password),
+        `${file} carries the password used to capture it`,
+      );
+    }
+    const login = (await readCorpus(dir)).find((f) => f.step === "login");
+    assert.equal((login?.request.body as Record<string, unknown>).password, "<redacted>");
+    assert.equal(
+      (login?.request.body as Record<string, unknown>).email,
+      STUB_CREDENTIALS.OrgAdmin.email,
+      "the identity is the point of the case and stays",
     );
   } finally {
     await rm(dir, { recursive: true, force: true });

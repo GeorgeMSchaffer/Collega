@@ -2,11 +2,20 @@
 //
 // Two runs of the same request differ in ways that are not behaviour: new GUIDs,
 // new timestamps, a fresh JWT. A diff that flags those is a diff nobody reads.
-// So both sides are normalized before comparison, and the normalization is
-// *aliasing* rather than blanking: the first GUID seen becomes <guid:1>, the
-// second <guid:2>, and a repeat of the first is <guid:1> again. Identity
-// relationships inside a response — "the board this idea belongs to is the board
-// I just created" — survive, which is most of what these fixtures are pinning.
+// So both sides are normalized before comparison — but *how* is the part that
+// decides whether this corpus can catch a relation bug.
+//
+// A GUID is labelled by where it was first seen: <guid@create.body.id>. Every
+// later appearance of that same value carries the same label, across steps,
+// because the normalizer lives for the whole scenario. So "the board on the idea
+// I just read is the board I just created" is pinned — if a rewrite returns a
+// different board there, that value was not seen before, it is labelled by its
+// own position instead, and the diff reports it.
+//
+// Ordinal labels (<guid:1>, <guid:2>) cannot do this. Two structurally identical
+// responses holding entirely different ids normalize to the same bytes, and the
+// most expensive class of defect this corpus exists to catch — a wrong relation,
+// a leak across organizations — passes as a match.
 
 export type Alias = { pattern: RegExp; label: string };
 
@@ -18,34 +27,46 @@ const JWT = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g;
 /** Response headers worth pinning. The rest are transport noise that differs by stack. */
 export const HEADER_ALLOW_LIST = ["content-type", "location", "www-authenticate"];
 
-export class Normalizer {
-  #guids = new Map<string, string>();
+/** Request fields that are credentials. Never recorded, in any form. */
+const SECRET_FIELDS = new Set(
+  ["password", "newpassword", "currentpassword", "oldpassword", "temporarypassword", "accesstoken", "token", "secret", "apikey"],
+);
 
-  /** Stable alias for one GUID, assigned in first-seen order. */
-  #guidAlias(value: string): string {
+export class Normalizer {
+  #labels = new Map<string, string>();
+  #used = new Set<string>();
+
+  /**
+   * Label for one GUID, by the position it was first seen at. Two different
+   * GUIDs first appearing at the same position — array siblings — are told
+   * apart by a suffix, so they never collapse into each other.
+   */
+  #label(value: string, path: string): string {
     const key = value.toLowerCase();
-    let alias = this.#guids.get(key);
-    if (alias === undefined) {
-      alias = `<guid:${this.#guids.size + 1}>`;
-      this.#guids.set(key, alias);
-    }
-    return alias;
+    const held = this.#labels.get(key);
+    if (held !== undefined) return held;
+
+    let label = `<guid@${path}>`;
+    for (let n = 2; this.#used.has(label); n++) label = `<guid@${path}#${n}>`;
+    this.#used.add(label);
+    this.#labels.set(key, label);
+    return label;
   }
 
-  string(value: string): string {
+  string(value: string, path = "?"): string {
     return value
       .replace(JWT, "<jwt>")
-      .replace(GUID, (m) => this.#guidAlias(m))
+      .replace(GUID, (m) => this.#label(m, path))
       .replace(ISO_TIMESTAMP, "<timestamp>");
   }
 
-  value(input: unknown): unknown {
-    if (typeof input === "string") return this.string(input);
-    if (Array.isArray(input)) return input.map((item) => this.value(item));
+  value(input: unknown, path = "body"): unknown {
+    if (typeof input === "string") return this.string(input, path);
+    if (Array.isArray(input)) return input.map((item, index) => this.value(item, `${path}[${index}]`));
     if (input && typeof input === "object") {
       const out: Record<string, unknown> = {};
       for (const key of Object.keys(input as Record<string, unknown>).sort()) {
-        out[key] = this.value((input as Record<string, unknown>)[key]);
+        out[key] = this.value((input as Record<string, unknown>)[key], `${path}.${key}`);
       }
       return out;
     }
@@ -53,14 +74,42 @@ export class Normalizer {
   }
 }
 
-/** Drop the paths a case declares unstable, e.g. "body.expiresAt" or "body.items[].code". */
+/**
+ * Strip credentials out of a recorded request body.
+ *
+ * The corpus is committed, and capture runs with whatever `GOLDEN_PASSWORD`
+ * points at — which is not always the demo seed. A login step's request body
+ * therefore carries a live password unless something takes it out, and nothing
+ * downstream needs it: replay re-derives its requests from the scenario files,
+ * so the recorded request is diagnostic only.
+ */
+export function redact(input: unknown): unknown {
+  if (Array.isArray(input)) return input.map((item) => redact(item));
+  if (input && typeof input === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+      out[key] = SECRET_FIELDS.has(key.toLowerCase()) ? "<redacted>" : redact(value);
+    }
+    return out;
+  }
+  return input;
+}
+
+/** Drop the paths a case declares unstable: "body.expiresAt", "body.items[].code". */
 export function omitPaths(input: unknown, paths: string[]): unknown {
   if (paths.length === 0) return input;
   let out = input;
-  for (const path of paths) {
-    out = omitOne(out, path.replace(/^body\.?/, "").split(".").filter(Boolean));
-  }
+  for (const path of paths) out = omitOne(out, segmentsOf(path));
   return out;
+}
+
+/** "body.items[].code" and "body.items.[].code" both mean "code in every item". */
+function segmentsOf(path: string): string[] {
+  return path
+    .replace(/^body\.?/, "")
+    .replace(/\[\]/g, ".[].")
+    .split(".")
+    .filter(Boolean);
 }
 
 function omitOne(node: unknown, segments: string[]): unknown {
@@ -82,11 +131,11 @@ function omitOne(node: unknown, segments: string[]): unknown {
   return copy;
 }
 
-export function normalizeHeaders(headers: Record<string, string>, n: Normalizer) {
+export function normalizeHeaders(headers: Record<string, string>, n: Normalizer, path = "headers") {
   const out: Record<string, string> = {};
   for (const name of HEADER_ALLOW_LIST) {
     const value = headers[name];
-    if (value !== undefined) out[name] = n.string(value);
+    if (value !== undefined) out[name] = n.string(value, `${path}.${name}`);
   }
   return out;
 }

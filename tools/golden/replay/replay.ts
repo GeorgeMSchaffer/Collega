@@ -5,8 +5,9 @@
 // In Wave F the same command is pointed at Nest and its failure list is the
 // remaining work (SPEC/50-typescript-migration.md, F1).
 
-import { normalizeExchange, type Fixture } from "../src/corpus.ts";
+import { groupByScenario, normalizeExchange, type Fixture } from "../src/corpus.ts";
 import { diff, formatMismatches, type Mismatch } from "../src/diff.ts";
+import { Normalizer } from "../src/normalize.ts";
 import type { Exchange } from "../src/runner.ts";
 
 export type CaseResult = {
@@ -24,10 +25,11 @@ export type ReplayReport = {
   results: CaseResult[];
 };
 
-/** Compare one recorded fixture against one fresh exchange. */
-export function compare(fixture: Fixture, actual: Exchange): CaseResult {
-  const expected = fixture.normalized ?? normalizeExchange(fixture);
-  const fresh = normalizeExchange({ ...actual, unstable: fixture.unstable });
+type Normalized = ReturnType<typeof normalizeExchange>;
+
+/** Compare one recorded fixture against one fresh, already-normalized response. */
+export function compare(fixture: Fixture, fresh: Normalized): CaseResult {
+  const expected = fixture.normalized;
   const base = {
     scenario: fixture.scenario,
     step: fixture.step,
@@ -58,7 +60,22 @@ export function compare(fixture: Fixture, actual: Exchange): CaseResult {
 }
 
 export function buildReport(fixtures: Fixture[], exchanges: Exchange[]): ReplayReport {
-  const byKey = new Map(exchanges.map((e) => [`${e.scenario}.${e.step}`, e]));
+  // The fresh run is normalized per scenario, exactly as the capture was, so an
+  // id carried from one step to the next is recognised on both sides. The
+  // recorded case's `unstable` list governs, so a drifting step cannot quietly
+  // widen what is ignored.
+  const unstableByKey = new Map(fixtures.map((f) => [`${f.scenario}.${f.step}`, f.unstable]));
+  const byKey = new Map<string, Normalized>();
+  for (const [, group] of groupByScenario(exchanges)) {
+    const normalizer = new Normalizer();
+    for (const exchange of group) {
+      const key = `${exchange.scenario}.${exchange.step}`;
+      byKey.set(
+        key,
+        normalizeExchange({ ...exchange, unstable: unstableByKey.get(key) ?? exchange.unstable }, normalizer),
+      );
+    }
+  }
   const results: CaseResult[] = [];
 
   for (const fixture of fixtures) {

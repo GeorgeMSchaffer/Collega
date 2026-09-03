@@ -6,7 +6,7 @@
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Exchange } from "./runner.ts";
-import { Normalizer, normalizeHeaders, omitPaths } from "./normalize.ts";
+import { Normalizer, normalizeHeaders, omitPaths, redact } from "./normalize.ts";
 
 export const CORPUS_VERSION = 1;
 
@@ -29,15 +29,34 @@ export type CorpusManifest = {
   endpoints: string[];
 };
 
-/** The comparable form of a response: normalized, with declared-unstable paths dropped. */
-export function normalizeExchange(exchange: Exchange) {
-  const normalizer = new Normalizer();
+/**
+ * The comparable form of a response: normalized, with declared-unstable paths dropped.
+ *
+ * The normalizer is passed in rather than made here, because it has to live for
+ * the whole scenario — that is what lets an id bound in one step be recognised
+ * in the next. Labels carry the step they were first seen in for the same reason.
+ */
+export function normalizeExchange(exchange: Exchange, normalizer: Normalizer) {
   const body = omitPaths(exchange.response.body, exchange.unstable);
   return {
     status: exchange.response.status,
-    headers: normalizeHeaders(exchange.response.headers, normalizer),
-    body: normalizer.value(body),
+    headers: normalizeHeaders(exchange.response.headers, normalizer, `${exchange.step}.headers`),
+    body: normalizer.value(body, `${exchange.step}.body`),
   };
+}
+
+/** Normalize a scenario's exchanges together, in the order they ran. */
+export function normalizeScenario(exchanges: Exchange[]) {
+  const normalizer = new Normalizer();
+  return exchanges.map((exchange) => normalizeExchange(exchange, normalizer));
+}
+
+export function groupByScenario(exchanges: Exchange[]): Map<string, Exchange[]> {
+  const groups = new Map<string, Exchange[]>();
+  for (const exchange of exchanges) {
+    groups.set(exchange.scenario, [...(groups.get(exchange.scenario) ?? []), exchange]);
+  }
+  return groups;
 }
 
 export function fixtureName(exchange: Exchange): string {
@@ -50,13 +69,17 @@ export async function writeCorpus(
   manifest: Omit<CorpusManifest, "corpusVersion" | "fixtures" | "scenarios" | "endpoints">,
 ): Promise<CorpusManifest> {
   await mkdir(dir, { recursive: true });
-  for (const exchange of exchanges) {
-    const fixture: Fixture = {
-      ...exchange,
-      corpusVersion: CORPUS_VERSION,
-      normalized: normalizeExchange(exchange),
-    };
-    await writeFile(path.join(dir, fixtureName(exchange)), `${JSON.stringify(fixture, null, 2)}\n`);
+  for (const [, group] of groupByScenario(exchanges)) {
+    const normalized = normalizeScenario(group);
+    for (const [index, exchange] of group.entries()) {
+      const fixture: Fixture = {
+        ...exchange,
+        request: { ...exchange.request, body: redact(exchange.request.body) },
+        corpusVersion: CORPUS_VERSION,
+        normalized: normalized[index],
+      };
+      await writeFile(path.join(dir, fixtureName(exchange)), `${JSON.stringify(fixture, null, 2)}\n`);
+    }
   }
   const full: CorpusManifest = {
     ...manifest,

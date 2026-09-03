@@ -53,24 +53,54 @@ accounts (`SPEC/implementation-agent-tracker.md`, Local DB).
 | `scenarios/` | A2 | What to ask, in what order, as whom. `auth.json` is the worked example. |
 | `fixtures/` | A2 | The corpus. Committed — it *is* the oracle. |
 
-## Normalization, and why aliasing rather than blanking
+## Normalization, and why labels rather than ordinals
 
 Two runs of the same request differ in ways that are not behaviour: new GUIDs, a
 new token, later timestamps. Blanking them all would hide real findings, because
 half of what these fixtures pin is *identity relationships* — that the board on
 the idea you just read is the board you just created.
 
-So GUIDs are aliased in first-seen order: the first becomes `<guid:1>`, the
-second `<guid:2>`, and a repeat of the first is `<guid:1>` again. Equal ids stay
-equal, different ids stay different, and which actual GUID the database minted
-stops mattering. Timestamps become `<timestamp>` and JWTs `<jwt>`, since neither
-carries a relationship worth pinning. Response headers are compared against an
-allow list, because `Date` and `Server` differ by stack and say nothing.
+So a GUID is labelled **by the position it was first seen at**, and the labels
+live for the whole scenario rather than for one response:
+
+```
+create → body.id          3f2504e0-…  →  <guid@create.body.id>
+read   → body.id          3f2504e0-…  →  <guid@create.body.id>   same value, same label
+read   → body.boardId     3f2504e0-…  →  <guid@create.body.id>
+read   → body.authorId    b1e0a5f2-…  →  <guid@read.body.authorId>
+```
+
+Replay a stack that returns a *different* board on that read and the value has
+not been seen before, so it is labelled by its own position instead and the diff
+reports `body.id`. That is the point: a wrong relation, or a leak across
+organizations, is the most expensive defect this corpus exists to catch, and it
+does not show up anywhere inside a single response.
+
+Ordinal aliases (`<guid:1>`, `<guid:2>`) cannot catch it. Two structurally
+identical responses holding entirely different ids normalize to identical bytes
+and replay reports a match. The harness used ordinals in its first draft; a test
+now pins the difference (`test/normalize.test.ts`, "a relationship that should
+hold across steps, and does not, is caught").
+
+Timestamps become `<timestamp>` and JWTs `<jwt>`, since neither carries a
+relationship worth pinning. Response headers are compared against an allow list,
+because `Date` and `Server` differ by stack and say nothing.
 
 Anything genuinely unstable beyond that — a generated invite code, an expiry —
-is declared per step in `unstable`, and dropped from both sides before the diff.
-Each of those is a small hole in the oracle, so keep the list short and say why
-in the step's `note`.
+is declared per step in `unstable`, and dropped from both sides before the diff:
+`"body.expiresAt"`, or `"body.items[].code"` to reach through an array. Each one
+is a small hole in the oracle, so keep the list short and say why in the step's
+`note`.
+
+## Credentials do not reach the corpus
+
+Recorded request bodies are **redacted** before they are written: `password`,
+`newPassword`, `currentPassword`, tokens and the like become `<redacted>`. The
+corpus is committed, and capture runs against whatever `GOLDEN_PASSWORD` points
+at — which is not always the demo seed — so a recorded login body would be a
+credential in git. Nothing downstream needs it: replay re-derives every request
+from the scenario files, and the stored request is diagnostic only. Emails are
+kept, since which identity made the call is the case.
 
 ## Writing a scenario
 
@@ -92,6 +122,15 @@ database**. That is the price of covering mutating endpoints at all.
 Scaffolded steps carry `"todo": true`. The runner skips them and `capture` exits
 non-zero while any remain, so a half-written corpus cannot quietly pass for a
 whole one.
+
+**Treat the scaffold's guesses as guesses.** It reads the controller's
+`[Authorize]` attribute, and most of this API's actions carry a bare one — so it
+proposes `success` for all four roles. That is often wrong: the role check
+frequently lives in the Application layer instead (`AiPromptService` refuses an
+impersonating Site Admin; `OrgContentMutationGuard` refuses direct org-content
+mutation outright), and the controller attribute cannot see it. Expect to correct
+a good number of scaffolded `success` cells to `denied`. The first capture will
+tell you which, as surprises.
 
 ## What "done" looks like for Wave A
 

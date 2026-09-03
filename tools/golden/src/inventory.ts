@@ -27,7 +27,10 @@ export type Endpoint = {
 };
 
 const VERB_ATTR = /^\s*\[Http(Get|Post|Put|Patch|Delete)(?:\("([^"]*)"\))?\]/;
-const AUTHORIZE_ATTR = /^\s*\[Authorize(?:\(Roles\s*=\s*"([^"]*)"\))?\]/;
+const AUTHORIZE_ATTR = /^\s*\[Authorize(?:\(Roles\s*=\s*"([^"]*)"\))?\]\s*$/;
+// Anything else inside [Authorize(...)] — a policy, a scheme — would be read as a
+// bare [Authorize] and quietly widen the roles this endpoint looks reachable by.
+const AUTHORIZE_UNKNOWN = /^\s*\[Authorize\(/;
 const ALLOW_ANONYMOUS = /^\s*\[AllowAnonymous\]/;
 const PRODUCES_ATTR = /StatusCodes\.Status(\d{3})/;
 const ACTION_SIGNATURE = /^\s*(?:public|internal)\s+(?:async\s+)?[\w<>,\[\]\s?]+\s+(\w+)\s*\(/;
@@ -39,6 +42,14 @@ function stripConstraints(route: string): string {
 
 function paramsOf(route: string): string[] {
   return [...route.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
+}
+
+function unreadableAuthorize(source: string, line: string): string {
+  return (
+    `${source}: cannot read ${line.trim()} — only [Authorize] and [Authorize(Roles = "...")] ` +
+    "are understood. Teach inventory.ts the new shape rather than letting it read as " +
+    "unrestricted, which would show the endpoint as reachable by roles it refuses."
+  );
 }
 
 const CLASS_DECL = /^\s*(?:public|internal)\s+(?:sealed\s+)?(?:partial\s+)?class\s+(\w+)\s*:/;
@@ -98,6 +109,8 @@ function parseController(source: string, text: string): Endpoint[] {
       if (classAuth) {
         pendingClass.authorized = true;
         pendingClass.authorize = classAuth[1] ?? null;
+      } else if (AUTHORIZE_UNKNOWN.test(line)) {
+        throw new Error(unreadableAuthorize(source, line));
       }
       continue;
     }
@@ -110,6 +123,9 @@ function parseController(source: string, text: string): Endpoint[] {
     if (ALLOW_ANONYMOUS.test(line)) {
       method.anonymous = true;
       continue;
+    }
+    if (!AUTHORIZE_ATTR.test(line) && AUTHORIZE_UNKNOWN.test(line)) {
+      throw new Error(unreadableAuthorize(source, line));
     }
     const authMatch = AUTHORIZE_ATTR.exec(line);
     if (authMatch) {
