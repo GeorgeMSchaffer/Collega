@@ -96,8 +96,13 @@ Beyond `SPEC/90-definition-of-done.md`:
 
 ## Open before this sprint can start
 
-- **Ticket `10`** (test suite fate) — was blocked on `04`, which is now answered.
-- **Tickets `01` (component library), `02`, `05`, `06`, `07`, `08`, `11`** on the
-  conversion map.
-- **Ticket `01` Question C** — whether Loop and the three low-risk comp N concepts enter
-  as net-new scope. Direction and library were decided 2026-09-03 (comp P, Tailwind + shadcn/ui).
+Answered 2026-09-03 and no longer gating: `01` (comp P on Tailwind + shadcn/ui, and
+Question C — Wave G), `02` (Vercel + Prisma Postgres), `10` (discard the .NET suite).
+All three are in `SPEC/decisions.md`.
+
+Still open on the conversion map:
+
+- **`05` Prisma introspection fidelity** and **`07` View As ambient identity** — the two
+  AFK research tickets. Neither has started. `06` (schema reshape scope) waits on `05`,
+  `08` (auth / session model) waits on `07`, and **`08` gates Wave 0**.
+- **`11` spec reconciliation.**

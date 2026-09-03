@@ -13,8 +13,8 @@ and those win over a ticket's own `Status:` line, which was not updated after th
 
 | Ticket | Map says | Actually |
 |---|---|---|
-| `01` redesign direction | in progress | **Questions B and D decided** 2026-09-03: comp P is canonical, built on Tailwind + shadcn/ui (`decisions.md`). The ticket's Question B answer (Comp C) is withdrawn; its Question D answer (Tailwind) stands, with shadcn/ui on top. **Question C** (net-new scope) still open. |
-| `02` deployment target | open | Open. |
+| `01` redesign direction | in progress | **Closed** 2026-09-03: comp P is canonical, built on Tailwind + shadcn/ui; and Question C is answered — Loop, decision records, commitment strip and Triage Mode are in as **Wave G** (starts when F1 is green), momentum / duplicate clustering / vote budget are not. The ticket's Question B answer (Comp C) is withdrawn; its Question D answer (Tailwind) stands, with shadcn/ui on top. |
+| `02` deployment target | open | **Answered** 2026-09-03: Vercel for both apps, Prisma Postgres in production. Nest runs serverless — no in-process state. |
 | `03` what ports | open | **Answered** 2026-08-31: everything ports, View As isolated. |
 | `04` validation strategy | open | **Answered** 2026-08-31: golden contract tests; Wave A runs before Sprint 8 closes. |
 | `05` Prisma introspection | open | Open (AFK research; not started). |
@@ -22,12 +22,15 @@ and those win over a ticket's own `Status:` line, which was not updated after th
 | `07` View As ambient identity | open | Open (AFK research; not started). |
 | `08` auth / session model | blocked by 07 | Open. |
 | `09` Next ↔ Nest boundary | open | **Answered** 2026-08-31: HTTP only. |
-| `10` test suite fate | blocked by 04 | Takeable — its blocker is answered. |
+| `10` test suite fate | blocked by 04 | **Answered** 2026-09-03: discard the .NET suite; golden contract tests plus fresh per-slice Vitest, written by a QA agent. |
 | `11` spec reconciliation | open | Open. |
 | `12` assemble the plan | blocked | **Done**: `SPEC/50-typescript-migration.md` + `SPEC/sprints/sprint-09-typescript-conversion.md`. |
 
 Also settled since the map was charted, and relevant to E6: Outcome ↔ Issue cardinality is
 **single-parent** (`decisions.md` 2026-09-02).
+
+Five tickets remain open: `05` and `07` (the AFK research pair, not started), `06` and `08`,
+which wait on them, and `11` (spec reconciliation).
 
 ## Ticket `01` conflict — resolved 2026-09-03
 

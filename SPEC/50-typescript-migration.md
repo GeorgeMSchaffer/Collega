@@ -17,8 +17,9 @@ unresolved conflict on ticket `01`.
 
 ## 1. What is settled
 
-Nine constraints were settled with the user during charting (2026-08-30) and three more
-on 2026-08-31. Do not re-litigate these; re-open them explicitly if you must.
+Nine constraints were settled with the user during charting (2026-08-30), three more
+on 2026-08-31, and three on 2026-09-03. Do not re-litigate these; re-open them explicitly
+if you must.
 
 | # | Constraint | Detail |
 |---|---|---|
@@ -34,6 +35,9 @@ on 2026-08-31. Do not re-litigate these; re-open them explicitly if you must.
 | 10 | **Golden contract tests** | Ticket `04`. Record all 81 endpoints against live .NET, replay against Nest. |
 | 11 | **HTTP-only Next ↔ Nest** | Ticket `09`. No direct `packages/application` imports from Next. |
 | 12 | **Everything ports; View As isolated** | Ticket `03`. Nothing deferred; impersonation gets its own slice. |
+| 13 | **The .NET test suite is discarded** | Ticket `10`, decided 2026-09-03. Behaviour is pinned by the golden corpus at the HTTP surface; each slice writes fresh Vitest coverage for its own layer, by a QA agent rather than by the agent that wrote the code. The accepted gap: 142 Domain + 324 Application unit assertions vanish until slices re-write them, and the corpus cannot see an invariant that never reaches an endpoint. |
+| 14 | **Vercel, with Prisma Postgres** | Ticket `02`, decided 2026-09-03. Nest runs as serverless functions: no long-lived in-process state, and every request pays a cold start. AI idea assist is where this bites first — its budget gate and per-organization usage counters must be storage-backed, not process-backed. |
+| 15 | **Net-new scope is Wave G, after F1** | Ticket `01` Question C, decided 2026-09-03. Loop, decision records, commitment strip and Triage Mode are in; momentum, duplicate clustering and vote budget are not. |
 
 ### The standing risk, restated
 
@@ -266,6 +270,35 @@ one value. **Answer this before E6 starts**, not during.
 
 F1, F2 and F3 parallelise. F4 needs all three. F5 lands last.
 
+### Wave G — Net-new scope ⇉ 3 · **starts when F1 is green**
+
+Decided 2026-09-03 (`SPEC/decisions.md`, ticket `01` Question C). This is the only
+part of the effort that is not a re-expression of something that already exists, and
+it is kept in its own wave for exactly that reason: **the golden corpus covers the
+port and nothing else.** New endpoints have no fixtures by definition, so each slice
+here carries a spec and its own Vitest coverage instead. Wave G never blocks F, and
+may ship on either side of cutover.
+
+| Slice | Owns | Cost |
+|---|---|---|
+| **G1–G4** Loop | mentions, notification inbox, activity feed — comp H's argument is that these are one feature, not three | 2 entities · 5 endpoints · 2 surfaces |
+| **G5–G6** Decision records | rationale required on **Decline only**, never on Plan; permanent, visible, surviving a reopen | 1 entity · 2 endpoints · 1 surface |
+| **G7–G8** Commitment strip | roadmap band above every board, plus the admin surface that sets it | 1 entity · 3 endpoints · 2 surfaces |
+| **G9–G10** Triage Mode | a filtered, ordered one-idea-at-a-time queue over actions that already exist | no new entity · 1 endpoint · 1 surface |
+
+**~10 slices, 4 entities, 11 endpoints, 6 surfaces**, none of it carrying unpriced risk.
+
+**Not in scope**, and not to be smuggled back in: momentum over totals (needs a
+gaming-resistant velocity algorithm, and the schema stores vote totals rather than vote
+events, so there is nothing to compute over), duplicate clustering (real similarity
+detection is the ML problem the spec already defers), and vote budget (reset, carryover
+and exemption policy are undecided). Ticket `01` round 2 is where those are asked.
+
+**The schema consequence, and it has a deadline.** Wave G's four entities want tables,
+and **the Prisma schema freezes after S0.2**. Either S0.2 lays them down or Wave G needs a
+schema amendment slice; decide that inside `06` (schema reshape scope) rather than
+discovering it in G1.
+
 ---
 
 ## 6. Estimate
@@ -282,9 +315,12 @@ integration debugging contained and Prisma collapses much of the Infrastructure 
 | D — API | 14–18 |
 | E — web | 16–20 |
 | F — validation + cutover | 8–10 |
+| G — net-new scope (decided 2026-09-03) | ~10 |
 | Review agents | ~1 per implementation slice |
 
-**Tokens: ~18–33M, centred near 22M.**
+**Tokens: ~18–33M for the port, centred near 22M**, plus Wave G's ~10 slices on top.
+G is priced separately on purpose: it is the part that could be cut without the
+conversion failing.
 
 Derivation, stated so it can be argued with rather than trusted:
 
@@ -309,10 +345,16 @@ converted to currency — that needs current per-model pricing checked rather th
 
 | Open ticket | If answered differently |
 |---|---|
-| `10` test suite fate | Porting 16,900 lines of tests case-by-case is expensive; re-deriving from spec is cheaper and discards the edge cases that caught the Sprint 5 defects. Blocked on `04`, now answered, so this is takeable. |
-| `01` Question C | Comp N's feature concepts and Comp H's Loop are **net-new scope on top of the rewrite**, not part of it. The map branch marked Loop, decision records, commitment strip and triage mode IN on 2026-09-01 (~10 agent-slices); that is not yet a recorded decision. Adopting any is additive. |
-| `06` reshape scope | A larger schema reshape inflates C1 and F3 and weakens F1's diff. |
-| `07` View As ambient identity | Drives B7 and S0.3. Flagged AFK-researchable on the map. |
+| `06` reshape scope | A larger schema reshape inflates C1 and F3 and weakens F1's diff. It also has to decide whether S0.2 lays down Wave G's four entities or Wave G buys a schema amendment slice. |
+| `07` View As ambient identity | Drives B7 and S0.3. Flagged AFK-researchable on the map. Not started. |
+| `05` Prisma introspection fidelity | Gates `06`. The risk it exists to measure is what introspection *cannot* see — global query filters, value converters, owned types. Organization scoping is very likely one of them, and it would vanish silently. Not started. |
+| `11` spec reconciliation | Lands as F5; does not gate earlier waves. |
+
+Answered 2026-09-03 and no longer open (`SPEC/decisions.md`): `01` Question C — Loop,
+decision records, commitment strip and Triage Mode are in, as **Wave G**; `10` — the .NET
+suite is discarded in favour of the golden corpus plus per-slice Vitest; `02` — Vercel
+with Prisma Postgres, which makes serverless Nest a design constraint rather than a
+deployment detail.
 
 ---
 
@@ -339,8 +381,10 @@ assumed.
 - **The 16,900-line C# test suite**, as C#. Its *coverage* is replaced by F1 + F2 +
   re-derived Vitest tests (ticket `10`).
 - **Sprint 7.5 and Sprint 8.** They run first, untouched, on .NET.
-- **The product's feature set.** The conversion re-expresses existing behaviour. New
-  features are `SPEC/ideas-inbox.md`'s business.
+- **The product's feature set** — with one bounded exception. The conversion itself
+  re-expresses existing behaviour; **Wave G** carries the four net-new features decided
+  on 2026-09-03 and starts only once F1 is green, so the oracle still covers the port
+  completely. Everything else new is `SPEC/ideas-inbox.md`'s business.
 - **Per-org AI credentials.** Already deliberately unimplemented (tracker rule 30); the
   conversion does not change that.
 

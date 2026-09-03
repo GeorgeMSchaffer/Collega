@@ -9,6 +9,65 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-03 — The conversion's remaining gates: net-new scope, the test suite, and where it deploys
+
+Three answers taken together, closing conversion tickets `01` Question C, `10` and `02`.
+
+### Ticket `01` Question C — Loop and the three low-risk concepts are IN, as their own wave
+
+**Decided:** Comp H's **Loop** (@mentions, a notification inbox, and the activity feed Home
+already advertises as "coming soon"), **decision records** (a written rationale required on
+Decline only, never on Plan; permanent, visible, surviving a reopen), the **commitment
+strip** (a roadmap band above every board plus the admin surface that sets it), and
+**Triage Mode** (a filtered, ordered one-idea-at-a-time queue over actions that already
+exist) enter the conversion's scope. The three that carry unpriced risk — momentum over
+totals, duplicate clustering, vote budget — do **not**, and stay in round 2.
+
+Cost, from `01`'s own table: **4 entities · 11 endpoints · 6 surfaces · ~10 agent-slices**,
+none of it carrying unpriced risk.
+
+**They are a wave of their own, and they do not blur into the port.** Wave G starts when
+**F1 is green** — the golden corpus replays clean against Nest — so what the corpus pins is
+a re-expression of the .NET API and nothing else. New endpoints have no golden fixtures by
+definition; each gets a spec and its own Vitest coverage instead. Wave G never blocks F,
+and it may ship on either side of cutover.
+
+**Why the reservation about scope does not apply here.** A conversion that also grows the
+product usually loses its oracle. These four keep it: they are additive surfaces, so the
+oracle covers the port completely and the new work is measured the ordinary way.
+
+### Ticket `10` — the .NET test suite is not ported
+
+**Decided:** the 16,900-line suite is **discarded**. Behaviour is pinned by the golden
+contract corpus at the HTTP surface (constraint 10), and each slice writes fresh **Vitest**
+coverage for its own layer — **written by a QA agent, never by the agent that wrote the
+code under test** (`CLAUDE.md`, and `SPEC/40-test-strategy.md`).
+
+**The gap this accepts, stated plainly:** unit-level Domain and Application assertions —
+142 + 324 tests — disappear on day one and come back only as each slice re-writes them.
+The golden corpus does not see an invariant that never reaches an endpoint. Sprint 5 is the
+standing warning: four Postgres defects were invisible to 561 green tests because the
+provider under test was not the provider that shipped. Slices whose logic is not fully
+observable through HTTP owe their QA pass more than a happy path.
+
+### Ticket `02` — Vercel, with Prisma Postgres
+
+**Decided:** the formal deployment target is **Vercel** for both apps, with **Prisma
+Postgres** in production — confirming what `CLAUDE.md`'s stack section already stated, and
+consistent with "ecosystem" as the conversion's motive.
+
+**The consequence to design against:** Vercel runs Nest as serverless functions. No
+long-lived in-process state — no in-memory rate-limit counters, no per-instance caches, no
+background timers — and every request pays a cold start. **AI idea assist is where this
+bites first**: its turns are the longest requests in the product, and its daily-budget gate
+and per-organization usage counters (rules 28a–28e) must be storage-backed rather than
+process-backed. Check it early in Wave D rather than discovering it at cutover.
+
+Sprint 8 deploys the **.NET** stack to Azure; that is not superseded by this and does not
+bind the TypeScript stack.
+
+---
+
 ## 2026-09-03 — Comp P is the canonical comp; the client is built on Tailwind CSS + shadcn/ui
 
 **Decided:** comp P is the canonical UI comp for the product and the target of the
@@ -37,6 +96,7 @@ theme variables. The palette remains open; changing it is one `:root` block in `
 shadcn/ui named on top). `50-typescript-migration.md` constraint 9 and Wave E0 now say so.
 **Still open on ticket `01`:** Question C — Loop and comp N's decision records, commitment
 strip and triage mode as net-new scope. Nothing in E0–E5 waits on it.
+*Answered later the same day — see the entry above: all four are in, as Wave G.*
 
 **Consequence:** `SPEC/20-feature-client-ui.md` is reconciled against comp P as of this
 date — sidebar shell, docked inspector, inline create, Tailwind + shadcn/ui — with the

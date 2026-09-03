@@ -1,7 +1,14 @@
 # 02 — Does the deployment target change?
 
+> **Answered 2026-09-03; see `SPEC/decisions.md`.** Vercel for both apps, Prisma Postgres in
+> production. The consequence to design against: Nest runs as serverless functions, so no
+> long-lived in-process state — AI idea assist's budget gate and usage counters must be
+> storage-backed, and its long turns are where cold starts and function limits bite first.
+> Sprint 8's Azure deployment of the .NET stack is unaffected and does not bind this.
+> This file is kept as written.
+
 Type: grilling
-Status: open
+Status: answered 2026-09-03 in `SPEC/decisions.md` (Vercel + Prisma Postgres)
 Blocked by: —
 
 ## Question

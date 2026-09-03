@@ -1,7 +1,13 @@
 # 10 — Port the assertions, or re-derive from spec?
 
+> **Answered 2026-09-03; see `SPEC/decisions.md`.** The suite is discarded. The golden
+> corpus pins the HTTP surface, and each slice writes fresh Vitest coverage for its own
+> layer, by a QA agent rather than by the agent that wrote the code. The accepted gap is
+> the 142 Domain + 324 Application unit assertions, which return only as slices re-write
+> them. This file is kept as written.
+
 Type: grilling
-Status: open
+Status: answered 2026-09-03 in `SPEC/decisions.md` (discard; golden tests + per-slice Vitest)
 Blocked by: 04
 
 ## Question

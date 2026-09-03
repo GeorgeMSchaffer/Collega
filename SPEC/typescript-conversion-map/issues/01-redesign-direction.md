@@ -1,9 +1,9 @@
 # 01 — Which redesign direction?
 
-> **Decided on B and D, 2026-09-03.** `SPEC/decisions.md` rules comp P canonical (withdrawing the Comp C answer below) and the client built on Tailwind CSS + shadcn/ui (confirming the Tailwind answer below, with shadcn/ui on top). Question C is still open. This file is kept as written.
+> **Decided 2026-09-03; this ticket is closed.** `SPEC/decisions.md` rules comp P canonical (withdrawing the Comp C answer below) and the client built on Tailwind CSS + shadcn/ui (confirming the Tailwind answer below, with shadcn/ui on top). **Question C is answered too:** Loop, decision records, commitment strip and Triage Mode are in — as **Wave G**, starting when F1 is green — and momentum, duplicate clustering and vote budget are not. Question A was never answered on its own; comp P settled it in practice. This file is kept as written.
 
 Type: prototype
-Status: B and D decided 2026-09-03 in `SPEC/decisions.md` (comp P, Tailwind + shadcn/ui); A/C open
+Status: closed 2026-09-03 in `SPEC/decisions.md` (comp P, Tailwind + shadcn/ui, Wave G scope)
 Blocked by: —
 
 ## Question A — What is the primary job? *(answer this first)*
