@@ -45,12 +45,12 @@ The API applies migrations on startup, so a fresh clone needs no manual `databas
 [`StartupSeeder`](Seeding/StartupSeeder.cs) runs on every boot and is idempotent.
 
 1. **Site Admin** — always, from the configured `SiteAdmin:Email` / `SiteAdmin:Password`. Created with `MustChangePassword: true`, so first login returns `requiresPasswordChange: true`. Seeding matches the configured account by normalized email (not "any Site Admin"), so a manually promoted Site Admin is never disturbed. The `resetSiteAdmin` path (dev/ops only, triggered by `--seed:auth=reset` — see [src/Collega.API/CLAUDE.md](../Collega.API/CLAUDE.md)) hard-deletes that configured account and recreates it, so the recreated Site Admin again has `MustChangePassword: true`. The delete is FK-safe: `AuditEvent`/`NotificationEvent.ActorUserId` are plain `Guid` columns with no navigation, and the Site Admin owns no org membership or authored org content.
-2. **Demo data** — `Development` only. Two organizations, each with one Org Admin and two User accounts at password `Abc123!` with no forced change. Each organization has two boards, and every board has 11 deterministic ideas distributed `3/2/2/1/3` in canonical status order. The global Site Admin remains outside every organization. The demo seed also creates a **convenience Site Admin** `siteadmin@demo.collega.test` / `Abc123!` (no forced change, distinct from the configured account) so the platform-admin perspective is testable without the configured Site Admin secret — Development-only, idempotent.
+2. **Demo data** — `Development` only. Two organizations, each with one Org Admin, two User and one Read Only account at password `Abc123!` with no forced change — one per role, so every perspective can be exercised. The Read Only account authors nothing: ideas, comments and upvotes are attributed to the three contributor accounts, and the board-content seed counts those three rather than "all users in the org". Demo accounts are checked individually on every Development boot, so an organization seeded before an account existed picks it up — which also means deleting one is undone by the next restart. Each organization has two boards, and every board has 11 deterministic ideas distributed `3/2/2/1/3` in canonical status order. The global Site Admin remains outside every organization. The demo seed also creates a **convenience Site Admin** `siteadmin@demo.collega.test` / `Abc123!` (no forced change, distinct from the configured account) so the platform-admin perspective is testable without the configured Site Admin secret — Development-only, idempotent.
 
 | Organization | Email pattern |
 |---|---|
-| Acme Robotics | `{orgadmin,user,user2}@acme-robotics.demo.collega.test` |
-| Blue Harbor Logistics | `{orgadmin,user,user2}@blue-harbor.demo.collega.test` |
+| Acme Robotics | `{orgadmin,user,user2,readonly}@acme-robotics.demo.collega.test` |
+| Blue Harbor Logistics | `{orgadmin,user,user2,readonly}@blue-harbor.demo.collega.test` |
 
 Non-Development startup must never apply the demo seed — `SPEC/40-test-strategy.md` gates this.
 
@@ -86,6 +86,8 @@ docker compose --profile full build api
 ```
 
 `docker/proxy-ca/*.crt` is gitignored; with no certificate present the build is unaffected. The build also runs with `network: host` and inherits `HTTP_PROXY`/`HTTPS_PROXY`, which is what lets the restore reach nuget.org through a proxy bound to localhost.
+
+**Confusing restore or build errors inside the container** usually mean host `obj/`/`bin/` directories are visible through the bind mount — they were produced by a different OS or architecture and the container cannot use them. `docker compose --profile full exec api dotnet clean` from inside, or delete them on the host.
 
 **`password authentication failed for user "collega"` even with a correct `.env`** — `POSTGRES_PASSWORD` is applied only when the data directory is *first* initialized, so an old credential survives in an existing volume. Reset it in place without losing data; the official image initializes `pg_hba.conf` with `local all all trust`, so this exec over the Unix socket needs no password:
 

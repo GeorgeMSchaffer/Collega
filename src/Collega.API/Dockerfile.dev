@@ -14,7 +14,7 @@ ENV HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} NO_PROXY=${NO_PROXY}
 # Behind an inspecting proxy (a corporate one, or the agent proxy in a remote
 # session) NuGet fails TLS verification until the proxy's CA is trusted. Passing
 # the bundle in is optional; without it this is a no-op.
-COPY --chmod=0644 docker/proxy-ca/* /usr/local/share/ca-certificates/
+COPY --chmod=0644 docker/proxy-ca/ /usr/local/share/ca-certificates/proxy-ca/
 RUN update-ca-certificates >/dev/null 2>&1 || true
 
 # Restore against the solution's own project files first, so the layer is reused
