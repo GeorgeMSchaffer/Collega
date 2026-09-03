@@ -58,6 +58,17 @@
 - Idea field option routes, idea delete behavior, and expanded board-card projections stay aligned with `30-Contracts.md`
 - User CSV template and import content types, request limits, response shape, and problem-details errors stay aligned with `30-Contracts.md`
 
+### What the golden corpus cannot pin — owed as unit tests
+The TypeScript conversion's golden corpus (`tools/golden/`) redacts credentials in both
+directions, so every redacted value reads alike and a *change* in one is invisible to a
+replay diff. These assertions therefore have to live in unit tests against the service,
+not in the corpus:
+- **Regenerating an organization's invite code returns a different code.** Against
+  `OrganizationService.RegenerateInviteCodeAsync` — assert the second result differs from
+  the first. Owed by whichever wave ports organization administration (C or D).
+- The same applies to any future endpoint whose contract is "this value changed": issuing
+  a temporary password twice, or a token rotation.
+
 ## Smoke Tests
 - Critical-path smoke test: sign in successfully, create a new board, and create a new idea
 - Smoke test success criteria:
