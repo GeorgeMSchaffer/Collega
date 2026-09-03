@@ -13,7 +13,7 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-09-03 against `cfd12ca` (`dev`, which now carries the comp P refresh, comp Q and the conversion map; `main` behind, pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-09-03 against `e728162` (`dev`, which now carries the comp P refresh, comp Q, the conversion map and the Wave A harness; `main` behind, pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
