@@ -91,3 +91,6 @@ SPEC/mockups/_build/tw/node_modules
 SPEC/mockups/_build/tw/input.css
 SPEC/mockups/_build/tw/out.css
 SPEC/mockups/_build/__pycache__
+
+# Golden harness: typecheck-only dependency, the harness itself runs on bare Node
+tools/golden/node_modules

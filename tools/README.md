@@ -2,6 +2,21 @@
 
 Developer tools. Not part of the deployed product and not part of the test suite.
 
+## golden
+
+The TypeScript conversion's capture and replay harness — Wave A of
+`SPEC/50-typescript-migration.md`. It records what the live .NET API answers for
+every endpoint and role, and replays that against whatever stands there later.
+Own README: `tools/golden/README.md`.
+
+**The capture has a deadline.** It has to run while the .NET API still exists;
+once Sprint 8 retires the stack, the conversion has no oracle at all.
+
+```bash
+node tools/golden/src/cli.ts inventory     # the 81 endpoints, read from the controllers
+node --test "tools/golden/test/*.test.ts"  # the harness's own tests
+```
+
 ## Collega.AiPlayground
 
 A prompt playground and eval harness for AI idea assist (`SPEC/20-feature-ai-idea-assist.md`).

@@ -22,11 +22,16 @@ longer possible and the conversion loses its only oracle.
 Wave A touches `tools/golden/` only — it collides with nothing in Sprint 7.5 or Sprint 8
 and can run alongside them. Schedule it against Sprint 8's calendar, not this one.
 
-| Slice | Owns |
-|---|---|
-| A1 capture harness | `tools/golden/` |
-| A2 golden corpus | `tools/golden/fixtures/` — 81 endpoints × 4 roles, error paths included |
-| A3 replay harness | `tools/golden/replay/` |
+| Slice | Owns | State |
+|---|---|---|
+| A1 capture harness | `tools/golden/` | **Done 2026-09-03** |
+| A2 golden corpus | `tools/golden/fixtures/` — 81 endpoints × 4 roles, error paths included | **Open — needs the running .NET API and a freshly seeded database** |
+| A3 replay harness | `tools/golden/replay/` | **Done 2026-09-03** |
+
+A2 is now the whole of Wave A's remaining risk. The harness generates the case grid
+(`golden scaffold`), refuses to record a case still marked `todo`, and reports coverage
+against the endpoint list it reads from the controllers — so what is left is filling in
+request bodies against a running API, and running the capture. `tools/golden/README.md`.
 
 ---
 

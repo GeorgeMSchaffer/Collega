@@ -170,9 +170,14 @@ with Sprint 7.5 / Sprint 8 feature work.
 
 | Slice | Owns | Notes |
 |---|---|---|
-| **A1** Capture harness | `tools/golden/` | Script that drives the live .NET API and records request/response pairs. Must cover all four roles — Site Admin, Org Admin, User, Read Only — because authorization is behaviour, not decoration. |
-| **A2** Golden corpus | `tools/golden/fixtures/` | Execute the capture across **81 endpoints × 4 roles**, including error paths and validation failures. Commit the fixtures. This is the oracle; if it is thin, the whole strategy is thin. |
-| **A3** Replay harness | `tools/golden/replay/` | Replays the corpus against a target base URL and diffs. Written now against .NET as a self-check (it must pass against the stack it recorded), pointed at Nest in Wave F. |
+| **A1** Capture harness | `tools/golden/` | **Built 2026-09-03.** Drives the live .NET API and records request/response pairs across all four roles — Site Admin, Org Admin, User, Read Only — because authorization is behaviour, not decoration. Zero-dependency TypeScript on Node's own type stripping; 36 self-tests. `tools/golden/README.md`. |
+| **A2** Golden corpus | `tools/golden/fixtures/` | **Not started — needs the running .NET API.** Execute the capture across **81 endpoints × 4 roles**, including error paths and validation failures. Commit the fixtures. This is the oracle; if it is thin, the whole strategy is thin. `golden scaffold` generates the full grid of cases; `golden coverage` reports the holes. |
+| **A3** Replay harness | `tools/golden/replay/` | **Built 2026-09-03.** Replays the corpus against a target base URL and diffs. Written now against .NET as a self-check (it must pass against the stack it recorded), pointed at Nest in Wave F. |
+
+The endpoint count above is not quoted, it is read: `golden inventory` parses
+`src/Collega.API/Controllers/*.cs` and reports 81 across 19 controllers, and the harness's
+tests fail if that stops being true. Coverage is measured against the same list, so a route
+the corpus never touches shows up as a hole rather than as silence.
 
 > **If Sprint 8 closes and Wave A has not run, the golden-test strategy is gone** and the
 > conversion proceeds with no oracle. Escalate rather than quietly proceeding.
