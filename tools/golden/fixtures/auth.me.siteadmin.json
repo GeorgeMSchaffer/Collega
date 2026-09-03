@@ -1,0 +1,51 @@
+{
+  "scenario": "auth",
+  "step": "me.siteadmin",
+  "endpoint": "GET /auth/me",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/auth/me",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 21:42:34 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "49c34d6c-63f2-461f-bc2e-53d60524042b",
+      "organizationId": null,
+      "role": "SiteAdmin",
+      "firstName": "Sam",
+      "lastName": "Sitewide",
+      "email": "siteadmin@demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": null,
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "siteadmin@demo.collega.test",
+      "firstName": "Sam",
+      "lastName": "Sitewide",
+      "organizationId": null,
+      "portraitDataUrl": null,
+      "role": "SiteAdmin",
+      "status": "Active",
+      "userId": "<guid@me.siteadmin.body.userId>",
+      "viewingAs": null
+    }
+  }
+}

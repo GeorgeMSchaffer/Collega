@@ -1,0 +1,86 @@
+{
+  "scenario": "auth",
+  "step": "viewas.start",
+  "endpoint": "POST /auth/view-as",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Both identities come back inline so the banner needs no follow-up GET /auth/me.",
+  "unstable": [
+    "body.startedAtUtc",
+    "body.expiresAtUtc"
+  ],
+  "request": {
+    "method": "POST",
+    "path": "/auth/view-as",
+    "body": {
+      "targetUserId": "381a4a74-6e32-499f-bf01-d7039d005155"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 21:42:35 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "impersonating": {
+        "userId": "381a4a74-6e32-499f-bf01-d7039d005155",
+        "organizationId": "d0c9223b-e133-49a9-b79d-4478f20f44dd",
+        "role": "User",
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "email": "user@acme-robotics.demo.collega.test",
+        "status": "Active",
+        "portraitDataUrl": null,
+        "viewingAs": null
+      },
+      "realUser": {
+        "userId": "49c34d6c-63f2-461f-bc2e-53d60524042b",
+        "organizationId": null,
+        "role": "SiteAdmin",
+        "firstName": "Sam",
+        "lastName": "Sitewide",
+        "email": "siteadmin@demo.collega.test",
+        "status": "Active",
+        "portraitDataUrl": null,
+        "viewingAs": null
+      },
+      "startedAtUtc": "2026-09-03T21:42:35.3037904Z",
+      "expiresAtUtc": "2026-09-03T23:42:35.3037904Z"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "impersonating": {
+        "email": "user@acme-robotics.demo.collega.test",
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+        "portraitDataUrl": null,
+        "role": "User",
+        "status": "Active",
+        "userId": "<guid@me.user.body.userId>",
+        "viewingAs": null
+      },
+      "realUser": {
+        "email": "siteadmin@demo.collega.test",
+        "firstName": "Sam",
+        "lastName": "Sitewide",
+        "organizationId": null,
+        "portraitDataUrl": null,
+        "role": "SiteAdmin",
+        "status": "Active",
+        "userId": "<guid@me.siteadmin.body.userId>",
+        "viewingAs": null
+      }
+    }
+  }
+}

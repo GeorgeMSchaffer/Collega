@@ -1,0 +1,51 @@
+{
+  "scenario": "auth",
+  "step": "me.orgadmin",
+  "endpoint": "GET /auth/me",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/auth/me",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 21:42:34 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "f4785a47-a990-4771-a6b6-133119c413d8",
+      "organizationId": "d0c9223b-e133-49a9-b79d-4478f20f44dd",
+      "role": "OrgAdmin",
+      "firstName": "Olivia",
+      "lastName": "Administer",
+      "email": "orgadmin@acme-robotics.demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": null,
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "orgadmin@acme-robotics.demo.collega.test",
+      "firstName": "Olivia",
+      "lastName": "Administer",
+      "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+      "portraitDataUrl": null,
+      "role": "OrgAdmin",
+      "status": "Active",
+      "userId": "<guid@login.orgadmin.body.user.userId>",
+      "viewingAs": null
+    }
+  }
+}

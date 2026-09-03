@@ -1,0 +1,49 @@
+{
+  "scenario": "auth",
+  "step": "viewas.candidates.user",
+  "endpoint": "GET /auth/view-as/candidates",
+  "as": "User",
+  "kind": "denied",
+  "note": "A member cannot act as anyone. Rule 25, SPEC/20-feature-view-as.md.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/auth/view-as/candidates",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 21:42:35 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to view as that user.",
+      "instance": "/api/v1/auth/view-as/candidates",
+      "traceId": "0HNOA0H1Q1J7Q:0000000A"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to view as that user.",
+      "instance": "/api/v1/auth/view-as/candidates",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

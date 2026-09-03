@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-09-03T21:42:35.363Z",
+  "stack": "dotnet",
+  "baseUrl": "http://127.0.0.1:5027",
+  "basePath": "/api/v1",
+  "seed": "3b95e96df018b8ff",
+  "corpusVersion": 1,
+  "fixtures": 16,
+  "scenarios": [
+    "auth"
+  ],
+  "endpoints": [
+    "DELETE /auth/view-as",
+    "GET /auth/me",
+    "GET /auth/view-as/candidates",
+    "POST /auth/login",
+    "POST /auth/view-as",
+    "PUT /auth/me"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "scenario": "auth",
+  "step": "me.readonly",
+  "endpoint": "GET /auth/me",
+  "as": "ReadOnly",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/auth/me",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 21:42:35 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "89e0e479-7f82-4789-b328-3f4c57e77b08",
+      "organizationId": "d0c9223b-e133-49a9-b79d-4478f20f44dd",
+      "role": "ReadOnly",
+      "firstName": "Rosa",
+      "lastName": "Observer",
+      "email": "readonly@acme-robotics.demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": null,
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "readonly@acme-robotics.demo.collega.test",
+      "firstName": "Rosa",
+      "lastName": "Observer",
+      "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+      "portraitDataUrl": null,
+      "role": "ReadOnly",
+      "status": "Active",
+      "userId": "<guid@me.readonly.body.userId>",
+      "viewingAs": null
+    }
+  }
+}

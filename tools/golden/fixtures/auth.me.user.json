@@ -1,0 +1,51 @@
+{
+  "scenario": "auth",
+  "step": "me.user",
+  "endpoint": "GET /auth/me",
+  "as": "User",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/auth/me",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 21:42:35 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "381a4a74-6e32-499f-bf01-d7039d005155",
+      "organizationId": "d0c9223b-e133-49a9-b79d-4478f20f44dd",
+      "role": "User",
+      "firstName": "Noah",
+      "lastName": "Contributor",
+      "email": "user@acme-robotics.demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": null,
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "user@acme-robotics.demo.collega.test",
+      "firstName": "Noah",
+      "lastName": "Contributor",
+      "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+      "portraitDataUrl": null,
+      "role": "User",
+      "status": "Active",
+      "userId": "<guid@me.user.body.userId>",
+      "viewingAs": null
+    }
+  }
+}
