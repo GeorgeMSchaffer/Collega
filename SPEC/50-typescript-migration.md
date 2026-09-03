@@ -6,11 +6,12 @@ Supersedes nothing; constrains the conversion effort when it is authorized.
 Converts Collega from .NET 8 / Blazor WASM / EF Core to Next.js + Nest.js + Prisma +
 Postgres on Vercel, per the stack recorded in `CLAUDE.md`.
 
-**Provenance.** This document assembles the `wayfinder` map charted 2026-08-30 at
-`.scratch/typescript-conversion/` on branch `feature/068-typescript-conversion-map` —
+**Provenance.** This document assembles the `wayfinder` map charted 2026-08-30 —
 its twelve tickets, its settled constraints, and its measured baseline. It is the
-artifact ticket `12` exists to produce. **The map and its tickets live on a different
-branch than this file**; reconcile the two before execution starts.
+artifact ticket `12` exists to produce. The map now lives beside this file at
+`SPEC/typescript-conversion-map/` (ported from `feature/068-typescript-conversion-map`
+on 2026-09-03); its `README.md` says which tickets this plan answers and names one
+unresolved conflict on ticket `01`.
 
 ---
 
@@ -342,9 +343,10 @@ assumed.
 
 ## 9. Before execution starts
 
-1. **Reconcile the branches.** The map and its twelve tickets are on
-   `feature/068-typescript-conversion-map`; this plan is on
-   `feature/066-delivery-comps-and-spec`. They should be on the same branch.
+1. **Reconcile the branches.** Done 2026-09-03 — the map is at
+   `SPEC/typescript-conversion-map/`. What it surfaced is not done: ticket `01`
+   carries a 2026-09-01 resolution that conflicts with the comp P lock; see that
+   directory's `README.md`. Decide it before Wave E.
 2. **Schedule Wave A now.** It is the only piece with a deadline, and the deadline is set
    by Sprint 8's close, not by this plan.
 3. **Answer the Outcome ↔ Issue cardinality question** before Wave E6.

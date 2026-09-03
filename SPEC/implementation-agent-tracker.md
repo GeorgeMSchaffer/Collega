@@ -13,7 +13,7 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-09-03 against `0acbe8e` (`claude/local-session-errors-igcnim`, branched from `dev` at `2851aee`; `main` 49 behind, pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-09-03 against `9b83be5` (`claude/local-session-errors-igcnim`, branched from `dev` at `2851aee`; `main` 49 behind, pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
@@ -24,6 +24,7 @@ Before making any status, planning, or scope claim about this project — in thi
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
 | Bug queue | **Empty — promoted into Sprint 7.5** | Ten items from the 2026-08-16 browser pass moved to `sprints/sprint-07.5-accessibility-and-bug-paydown.md` on 2026-08-25 and deleted from `SPEC/Bug Triage.md` per its Promote-and-delete rule. Intake reopens there when 7.5 archives. |
 | Comp P refresh | **Complete (2026-09-03)** | The shipped client ported to comp P's locked design, so the TypeScript conversion has a settled baseline: four files, 46 screens, every one at four roles and four states. `comp-p-focus-roadmap.html` (core, 8), `comp-p-auth.html` (8), `comp-p-admin.html` (23 `/settings/*` routes), `comp-p-delivery.html` (7 — specified, unbuilt, so it carries the *not built* strip). Delivery is regenerated on the single-parent decision. Sources and conventions: `SPEC/mockups/_build/README.md`. |
+| Conversion map | **Ported; ticket `01` conflict open** | `SPEC/typescript-conversion-map/` (from `feature/068`, 2026-09-03). Its `README.md` maps ticket status to `decisions.md` and names one conflict: a 2026-09-01 answer on the map branch (Comp C direction, Loop + three comp N concepts in scope) versus the 2026-08-31 comp P lock. Needs a decision before Wave E. `feature/068` also holds `src/prisma.md` with a credential — never merge it; rotate the key. |
 | Issues & Delivery | **Specified, unbuilt** | Slice 1 (Delivery + Tasks) is P0 and buildable; Slice 2 (Outcomes + Roadmap) is P1 and no longer gated. `SPEC/20-feature-issues-and-delivery.md` — no blocking Open Question remains. |
 | Local DB | `collega-postgres` (`postgres:16`), port **5432**, role `collega` | Standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas). Dev demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **If the API won't connect, check user-secrets for a stale SQL Server string** — see `src/Collega.API/CLAUDE.md`. |
 

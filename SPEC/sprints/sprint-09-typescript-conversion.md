@@ -94,5 +94,6 @@ Beyond `SPEC/90-definition-of-done.md`:
 - **Ticket `10`** (test suite fate) — was blocked on `04`, which is now answered.
 - **Tickets `01` (component library), `02`, `05`, `06`, `07`, `08`, `11`** on the
   conversion map.
-- **Branch reconciliation** — the map lives on `feature/068-typescript-conversion-map`,
-  the plan on `feature/066-delivery-comps-and-spec`.
+- **Ticket `01` conflict** — the map (now at `SPEC/typescript-conversion-map/`, ported
+  2026-09-03) records a 2026-09-01 resolution that disagrees with the comp P lock on
+  direction and adds net-new scope. Needs a `decisions.md` entry either way.

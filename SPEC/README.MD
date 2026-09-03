@@ -51,7 +51,8 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 - `50-azure-deployment.md`, `50-azure-api-cicd.md` — Azure target (Sprint 8; renumbered from 7 on 2026-08-11)
 - `50-postgres-migration.md` — Postgres migration plan (Sprint 5)
 - `50-kubernetes-deployment.md` — Kubernetes deployment notes
-- `50-typescript-migration.md` — **the costed, sequenced plan for the .NET → TypeScript conversion** (Sprint 9; assembles the `wayfinder` map on `feature/068-typescript-conversion-map`). Its Wave A has a deadline earlier than the sprint: golden capture must run **before or during Sprint 8**, while the .NET API still exists.
+- `typescript-conversion-map/` — the twelve conversion tickets and the charting map behind `50-typescript-migration.md`; its `README.md` records which tickets are answered and one open conflict on ticket `01`
+- `50-typescript-migration.md` — **the costed, sequenced plan for the .NET → TypeScript conversion** (Sprint 9; assembles the `wayfinder` map in `typescript-conversion-map/`). Its Wave A has a deadline earlier than the sprint: golden capture must run **before or during Sprint 8**, while the .NET API still exists.
 
 ## Supporting Material
 
