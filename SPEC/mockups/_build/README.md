@@ -79,18 +79,26 @@ appended. The registry at the top of `build_q.py` is the component map; the shor
 | `topbar`, `crumb` | `SidebarInset` header, `Breadcrumb` |
 | `btn` (+ `pri`, `sec2`, `ghost`, `warn`, `sm2`), `iconbtn` | `Button` variants outline / default / secondary / ghost / destructive-outline, sizes default / sm / icon |
 | `marker`, `rmtag`, `tag`, `badge`, `chip`, `key`, `kbd`, `archtag` | `Badge` secondary / outline, `Kbd` |
-| `panel`, `card`, `kpi`, `sprintbar`, `kcard` | `Card`, `CardHeader`, `CardDescription`, `CardContent` |
+| `panel`, `card`, `well`, `kpi`, `sprintbar`, `kcard`, `roadwrap` | `Card`, `CardHeader`, `CardDescription`, `CardContent` |
 | `table`, `pgfoot` | `Table`, `Pagination` |
 | inputs, `field`, `hint`, `msg`, `radioset`, `pick` | `Input`, `Textarea`, `Select`, `Label`, `Form*`, `RadioGroup`, `Checkbox` |
 | `seg`, `up` | `Tabs` list / `ToggleGroup`, `Toggle` |
 | `inspector`, `insp-*` | a docked `ResizablePanel` with `SheetHeader`/`SheetFooter` anatomy |
 | `cp-back`, `gate`, `chatm`, `cp` | `Dialog`, `DialogContent`, `CommandDialog` |
-| `alert`, `authnote`, `banner`, `skel`, `empty` | `Alert` (+ destructive), `Skeleton` |
+| `alert`, `authnote`, `banner`, `skel` (+ `w40`, `w60`, `w80`), `empty` | `Alert` (+ destructive), `Skeleton` |
 | `av`, `avstack` | `Avatar` |
 | `denied` + `aria-disabled` | `Button` disabled-with-reason (`Tooltip` in the build) |
 
-Anything not in the registry is a layout rule in `q.css`. The build is reproducible for a
+Anything not in the registry is a layout rule in `q.css`, and the build asserts it: every
+class the fragments use must resolve to registry utilities, to a sibling-dependent rule in
+`expand()`, or to a selector in `q.css`, or the run fails. The build is reproducible for a
 pinned Tailwind version: two runs produce identical files.
+
+Where a fragment has no header/content split, the padding shadcn puts on `CardHeader` and
+`CardContent` sits on the Card element itself; the rest of the Card utilities (`rounded-xl`,
+`border`, `shadow-sm`) are the primitive's own. `btn warn` is an outline-destructive
+treatment rather than shadcn's solid `destructive` variant, because it asks for
+confirmation rather than announcing a destructive act.
 
 ## The comp P set
 

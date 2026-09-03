@@ -35,6 +35,8 @@ BTN_VARIANT = {
     "pri":   "border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
     "sec2":  "border border-transparent bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
     "ghost": "border border-transparent hover:bg-accent hover:text-accent-foreground",
+    # not shadcn's stock destructive (solid bg-destructive): a warn button
+    # asks for confirmation, it does not announce a destructive act
     "warn":  "border border-destructive/40 bg-background text-destructive hover:bg-destructive/10",
 }
 BTN_SIZE = {None: "h-9 px-4 py-2", "sm2": "h-8 px-3 text-xs"}
@@ -60,13 +62,17 @@ REG = {
     "fw":      ("—", "min-w-40"),
     "wide":    ("—", "min-w-60 flex-1"),
     "kpis":    ("Card grid", "mb-6 grid grid-cols-4 gap-3"),
-    "kpi":     ("Card", "rounded-lg border bg-card p-4 text-card-foreground shadow-xs"),
+    # Card's own utilities are rounded-xl border shadow-sm; its padding lives on
+    # CardHeader/CardContent/CardFooter (px-6 inside a py-6 Card). Fragments that
+    # have no header/content split carry the equivalent padding on the Card itself.
+    "kpi":     ("Card", "rounded-xl border bg-card p-4 text-card-foreground shadow-sm"),
     "cols":    ("—", "grid grid-cols-[1.35fr_1fr] items-start gap-4"),
     "tip":     ("Alert", "mb-6 flex items-start gap-3 rounded-lg border bg-card px-4 py-3 text-sm"),
     "note":    ("Alert (reviewer note)", "mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"),
     # -- surfaces -----------------------------------------------------------
-    "panel":   ("Card", "overflow-hidden rounded-lg border bg-card text-card-foreground shadow-xs"),
-    "card":    ("Card", "rounded-lg border bg-card p-6 text-card-foreground shadow-xs"),
+    "panel":   ("Card", "overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm"),
+    "card":    ("Card", "rounded-xl border bg-card p-6 text-card-foreground shadow-sm"),
+    "well":    ("Card (muted)", "rounded-xl border bg-muted/40 p-6 text-card-foreground"),
     "empty":   ("Empty state", "rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center"),
     "inspector": ("Docked panel (ResizablePanel)", "flex w-[400px] shrink-0 flex-col border-l bg-background"),
     "insp-head": ("SheetHeader", "space-y-1 border-b px-6 py-4"),
@@ -91,10 +97,10 @@ REG = {
     "sug-clear": ("Button variant=link", "ml-2 text-xs text-teal underline"),
     "cand":      ("CommandItem (row button)", "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"),
     # -- badges and marks ---------------------------------------------------
-    "marker":  ("Badge variant=secondary", "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground"),
-    "rmtag":   ("Badge variant=secondary", "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground"),
+    "marker":  ("Badge variant=secondary", "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"),
+    "rmtag":   ("Badge variant=secondary", "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"),
     "tag":     ("Badge variant=outline", "inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground"),
-    "badge":   ("Badge variant=outline", "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold text-primary"),
+    "badge":   ("Badge variant=outline", "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium text-primary"),
     "chip":    ("Badge variant=secondary (removable)", "inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-xs"),
     "key":     ("Badge (mono)", "inline-block rounded-sm border bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium tabular-nums"),
     "kbd":     ("Kbd", "rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"),
@@ -104,13 +110,16 @@ REG = {
     "sugchip": ("Badge (suggested)", "ml-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-teal before:size-1.5 before:rounded-full before:bg-teal before:content-['']"),
     "sug-input": ("Input (suggested)", "border-l-[3px] border-l-teal bg-teal/10"),
     "archtag": ("Badge variant=outline", "ml-1.5 inline-block rounded-sm border px-1 align-middle text-[10px] uppercase text-muted-foreground"),
-    "tbadge":  ("Badge variant=secondary", "inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground"),
+    "tbadge":  ("Badge variant=secondary", "inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"),
     "invite":  ("Badge (mono)", "inline-block whitespace-nowrap rounded-sm border bg-muted px-2 py-0.5 font-mono text-xs tracking-wider"),
     # -- feedback -----------------------------------------------------------
     "alert":    ("Alert variant=destructive", "relative grid w-full gap-1 rounded-lg border border-destructive/50 bg-destructive/5 px-4 py-3 text-sm text-destructive [&>span]:block"),
     "warn":     ("Alert (default)", ""),  # resolved in expand(): .alert.warn / .btn.warn differ
     "authnote": ("Alert", "relative w-full rounded-lg border bg-card px-4 py-3 text-sm text-card-foreground"),
     "skel":     ("Skeleton", "mt-2 block h-3 animate-pulse rounded-md bg-primary/10"),
+    "w40":      ("Skeleton width", "w-[40%]"),
+    "w60":      ("Skeleton width", "w-[60%]"),
+    "w80":      ("Skeleton width", "w-[80%]"),
     "denied":   ("FormDescription (reason)", "text-xs italic text-muted-foreground"),
     "deniedwrap": ("—", "inline-flex items-center gap-2"),
     "sysnote":  ("Alert (system note)", "rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground"),
@@ -144,11 +153,11 @@ REG = {
     "lanes":    ("ScrollArea (horizontal)", "flex items-start gap-3 overflow-x-auto pb-3"),
     "lane":     ("—", "w-72 shrink-0 rounded-lg border bg-muted/50 p-2"),
     "lanehd":   ("—", "flex items-center gap-2 px-2 pt-1 pb-2"),
-    "kcard":    ("Card (compact)", "mb-1.5 cursor-grab rounded-lg border bg-card p-3 shadow-xs hover:shadow-sm"),
+    "kcard":    ("Card (compact)", "mb-1.5 cursor-grab rounded-xl border bg-card p-3 shadow-sm hover:shadow-md"),
     "emptylane": ("—", "mb-1.5 rounded-md border border-dashed px-3 py-2 text-center text-xs text-muted-foreground"),
-    "sprintbar": ("Card", "mb-4 flex items-center gap-4 rounded-lg border bg-card px-4 py-3 shadow-xs"),
+    "sprintbar": ("Card", "mb-4 flex items-center gap-4 rounded-xl border bg-card px-4 py-3 shadow-sm"),
     "task":     ("Checkbox row", "flex items-start gap-2.5 border-b py-3 text-sm last:border-0"),
-    "roadwrap": ("Card", "overflow-hidden rounded-lg border"),
+    "roadwrap": ("Card", "overflow-hidden rounded-xl border"),
     "barx":     ("Badge variant=outline", "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border bg-muted px-2 py-0.5 text-xs font-medium"),
     "sum":      ("Card footer", "flex flex-wrap gap-6 border-t bg-muted/50 px-4 py-2 text-sm text-muted-foreground"),
     # -- chat ---------------------------------------------------------------
@@ -177,9 +186,15 @@ REG = {
     "in":    ("CardContent", ""),      # styled in q.css (panel vs authform)
 }
 
+# Tokens resolved by expand() from a sibling, or by a compound selector in q.css.
+COMPOUND = {"btn", "alert", "bub", "warn", "s", "me", "ai", "ghost", "pri", "sec2", "sm2", "av"}
+SEEN = set()
+
+
 # Tokens whose utilities depend on a sibling token.
 def expand(classlist):
     toks = classlist.split()
+    SEEN.update(toks)
     s = set(toks)
     out = list(toks)
     if "btn" in s:
@@ -246,6 +261,15 @@ P.COMPS = COMPS
 if __name__ == "__main__":
     for c in COMPS:
         P.build(c)
+
+    # Every class a fragment uses must be answered by the registry, by a
+    # sibling-dependent rule, or by a rule in q.css — nothing renders bare.
+    sheet = (D / "q.css").read_text()
+    bare = sorted(t for t in SEEN
+                  if t not in COMPOUND
+                  and not REG.get(t, (None, ""))[1]
+                  and not re.search(r"\." + re.escape(t) + r"(?![\w-])", sheet))
+    assert not bare, f"classes with no styling: {bare}"
 
     # Compile Tailwind over the four generated files, then inline the result.
     # The stylesheet is shared, so it is compiled once.
