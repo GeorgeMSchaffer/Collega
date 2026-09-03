@@ -128,7 +128,13 @@ public sealed class EfUserRepository : IUserRepository
         }
 
         return await query
-            .OrderBy(u => u.FirstName).ThenBy(u => u.LastName)
+            // Email breaks the tie, so the order is total. Name alone is not unique across
+            // organizations — two orgs can hold a Jane Smith each — and under the cap below
+            // an arbitrary tie-break does not merely reorder the page, it decides which of
+            // the tied rows is on it at all. Email rather than Id because it is the stable
+            // identity: two deployments seeded from the same data agree on it, and their
+            // generated ids do not.
+            .OrderBy(u => u.FirstName).ThenBy(u => u.LastName).ThenBy(u => u.Email)
             // Capped. The picker is a live search, not a directory listing, and a Site Admin's query
             // spans every organization — uncapped, the first drawer open (which sends an empty
             // search) materialises every user in the deployment. Past the cap the admin narrows with

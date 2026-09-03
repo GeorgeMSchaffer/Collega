@@ -21,7 +21,8 @@ namespace Collega.Infrastructure.Seeding;
 /// already exists:
 /// 1. The global Site Admin, from environment-provided credentials, on first run only.
 /// 2. 2 demo organizations, each provisioned with the default statuses and two demo boards,
-///    plus one Org Admin and two User accounts at password `Abc123!`, none forced to change it.
+///    plus one Org Admin, two User and one Read Only account at password `Abc123!`, none forced
+///    to change it — one per role, so every perspective can be exercised.
 ///    Every demo board is populated with 11 ideas distributed 3/2/2/1/3 across its swimlanes.
 /// 3. A Development-only convenience Site Admin (siteadmin@demo.collega.test / `Abc123!`, no forced
 ///    change) so the platform-admin perspective can be tested without the configured Site Admin secret.
@@ -153,13 +154,19 @@ public sealed class StartupSeeder : IStartupSeeder
                 // Every organization — demo or real — starts with the default statuses and one board.
                 await _bootstrapService.ProvisionDefaultsAsync(organization.Id, now, actorUserId: null, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
-
-                await AddDemoUserAsync(organization.Id, "Olivia", "Administer", $"orgadmin@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.OrgAdmin, now, cancellationToken);
-                await AddDemoUserAsync(organization.Id, "Noah", "Contributor", $"user@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
-                await AddDemoUserAsync(organization.Id, "Maya", "Collaborator", $"user2@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
-
-                await _dbContext.SaveChangesAsync(cancellationToken);
             }
+
+            // Outside the creation branch, and each add is a no-op when the account
+            // exists, so an organization seeded by an earlier version picks up an
+            // account added later rather than staying a version behind.
+            await AddDemoUserAsync(organization.Id, "Olivia", "Administer", $"orgadmin@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.OrgAdmin, now, cancellationToken);
+            await AddDemoUserAsync(organization.Id, "Noah", "Contributor", $"user@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
+            await AddDemoUserAsync(organization.Id, "Maya", "Collaborator", $"user2@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
+            // The product has four roles and the demo seed covered three, so Read Only
+            // was the one perspective nothing could be exercised as — including the
+            // golden capture, which needs an account per role.
+            await AddDemoUserAsync(organization.Id, "Rosa", "Observer", $"readonly@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.ReadOnly, now, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
 
             await EnsureSecondDemoBoardAsync(organization.Id, now, cancellationToken);
             await SeedDemoBoardContentAsync(organization.Id, scenario, now, cancellationToken);
@@ -278,6 +285,12 @@ public sealed class StartupSeeder : IStartupSeeder
         DateTime nowUtc,
         CancellationToken cancellationToken)
     {
+        var normalizedEmail = EmailNormalizer.Normalize(email);
+        if (await _dbContext.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken))
+        {
+            return;
+        }
+
         var user = User.CreateOrganizationUser(organizationId, firstName, lastName, email, passwordHash, role, UserStatus.Active, mustChangePassword: false, nowUtc);
         await _dbContext.Users.AddAsync(user, cancellationToken);
     }
