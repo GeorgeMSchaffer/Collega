@@ -482,3 +482,40 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
 /* Outcome rows in the set-outcome picker carry a second line; the picker's
    own row rule assumes one. */
 .pickrow label .ty{margin-top:2px}
+
+/* ===== auth: notices, the view-as picker and its banner =====
+   A notice is not an alert. "Your session expired" and "your password was
+   changed" are things that went right, so they get a calm ground and
+   role="status", and the red alert stays reserved for a refusal. */
+.authnote{display:flex;gap:var(--s-sm);border-radius:var(--r-lg);padding:var(--s-sm) var(--s-md);
+  font-size:15px;line-height:1.33;border:1px solid #cfe0f5;background:#eef5fc;color:#163d66;
+  margin-bottom:var(--s-md)}
+.authform .alert{margin-bottom:var(--s-md)}
+/* tokens.css styles text and password inputs; a search input fell through to
+   the browser default, which showed as a thinner box in the picker and in
+   every admin list filter. Same box as text. */
+input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #dddddd;
+  border-radius:var(--r-xs);padding:6px;font-family:inherit;font-size:15px;line-height:1.33;
+  -webkit-appearance:none;appearance:none}
+/* invite codes are the one place the single-family rule bends: they are read
+   aloud and typed back, so fixed-width and spaced */
+.authform input.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em}
+/* candidate rows in the picker: a button, so the whole row is the target */
+.vaorg{font-size:12px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;
+  color:var(--ink-muted);margin:var(--s-md) 0 var(--s-xxs)}
+.cand{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;
+  border:0;border-top:1px solid var(--hairline);padding:10px 0;font-family:inherit;font-size:15px;
+  line-height:1.33;color:var(--ink);cursor:pointer}
+.vaorg+.cand{border-top:0}
+.cand:hover{background:var(--canvas-soft)}
+.cand .em{display:block;font-size:14px;line-height:1.43;color:var(--ink-faint);font-weight:400}
+.cand[aria-disabled="true"]{cursor:not-allowed}
+/* the persistent banner: amber because it is a caution that stays, and above
+   the topbar so it is the first thing on every screen for as long as the
+   session lasts. Not dismissable — there is no close, only exit. */
+.banner{display:flex;align-items:center;gap:var(--s-md);background:#fdf8ec;
+  border-bottom:1px solid #e8d4a8;color:#6b4e12;padding:10px var(--s-lg);
+  font-size:15px;line-height:1.33}
+.banner b{color:#4a350a}
+.banner .btn{margin-left:auto;flex:none}
+.gate .count{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}

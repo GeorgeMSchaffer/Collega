@@ -102,14 +102,23 @@ def resolve(target, comp):
     return sid if owner == comp["file"] else f"{owner}#{sid}"
 
 
-def desk(active, comp):
-    """The product sidebar, with `active` marked as the current page."""
+def desk(active, comp, acting=False):
+    """The product sidebar, with `active` marked as the current page.
+
+    `acting` renders the sidebar during a View As session: the org line and
+    the identity block belong to the impersonated user whatever the viewer's
+    real role, because that is what the shipped rail does (rule 23).
+    """
     r = ['    <aside class="side">',
-         '      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>',
-         # A Site Admin is not inside an organization until they pick one, so the
-         # org line names the scope rather than asserting a membership they lack.
-         '      <div class="org" data-roles="SiteAdmin">All organizations</div>',
-         '      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>',
+         '      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>']
+    if acting:
+        r.append('      <div class="org">Acme Robotics</div>')
+    else:
+        # A Site Admin is not inside an organization until they pick one, so the
+        # org line names the scope rather than asserting a membership they lack.
+        r.append('      <div class="org" data-roles="SiteAdmin">All organizations</div>')
+        r.append('      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>')
+    r += [
          f'      <button class="palette" type="button" data-go="{resolve("s-palette", comp)}">'
          '<span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>']
     for label, items in NAV:
@@ -123,10 +132,15 @@ def desk(active, comp):
             go = f' data-go="{dest}"' if dest else ''
             r.append(f'      <button class="nav"{cur}{go}>{ico}{text}{ct_html}</button>')
     r.append('      <div class="push"></div>')
-    for role, initials, name, label, _ in ME:
-        r.append(f'      <div class="me" data-roles="{role}"><span class="av">{initials}</span><div>'
-                 f'<div style="font-size:14px;font-weight:600;line-height:1.43">{name}</div>'
-                 f'<div class="cap faint">{label}</div></div></div>')
+    if acting:
+        r.append('      <div class="me"><span class="av">NC</span><div>'
+                 '<div style="font-size:14px;font-weight:600;line-height:1.43">Noah Contributor</div>'
+                 '<div class="cap faint">Member &middot; viewing as</div></div></div>')
+    else:
+        for role, initials, name, label, _ in ME:
+            r.append(f'      <div class="me" data-roles="{role}"><span class="av">{initials}</span><div>'
+                     f'<div style="font-size:14px;font-weight:600;line-height:1.43">{name}</div>'
+                     f'<div class="cap faint">{label}</div></div></div>')
     r.append('    </aside>')
     return "\n".join(r)
 
@@ -1342,10 +1356,17 @@ COMPS = [
      "title": "Collega — Comp P: auth and identity",
      "label": "Auth, account, and View As",
      "explore": "Everything that establishes who you are: signing in, joining an "
-                "organization, changing a password, and acting as someone else.",
+                "organization, changing a password, being signed out, and acting as "
+                "someone else. The sign-in screens are anonymous, so the role control "
+                "only matters from <b>Session expiring</b> onward.",
      "how": ["View As is the <b>only</b> way a Site Admin edits organization content, "
-             "so it is an identity surface, not a convenience."],
-     "screens": [("s-login", "Login")]},
+             "so it is an identity surface, not a convenience.",
+             "On <b>Locked</b> the <b>error</b> state is an inactive account; on "
+             "<b>Returned</b> the <b>empty</b> state is the changed-password notice."],
+     "screens": [("s-login", "Login"), ("s-locked", "Locked"), ("s-returned", "Returned"),
+                 ("s-register", "Register"), ("s-first-signin", "First sign-in"),
+                 ("s-expiring", "Session expiring"), ("s-viewas", "View as"),
+                 ("s-viewing", "Viewing as")]},
     {"file": "comp-p-admin.html", "area": "Admin", "frag": "p_admin.frag",
      "title": "Collega — Comp P: settings and administration",
      "label": "Settings and administration",
@@ -1388,6 +1409,7 @@ COMPS = [
 def build(comp):
     body = (D / comp["frag"]).read_text()
     body = re.sub(r"@@DESK:(\w+)@@", lambda m: desk(m.group(1), comp), body)
+    body = re.sub(r"@@DESKAS:(\w+)@@", lambda m: desk(m.group(1), comp, acting=True), body)
     body = body.replace("@@PROFILE@@", profile())
     body = re.sub(r"@@ROLLUP:(\w+)@@", lambda m: rollup(m.group(1)), body)
     # The id suffix is the entity key plus the fragment's own — "st-own",
