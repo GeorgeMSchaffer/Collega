@@ -13,7 +13,7 @@ Before making any status, planning, or scope claim about this project — in thi
 - When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue** — the spec or sprint file becomes its only home. Feature ideas live in `SPEC/ideas-inbox.md` and do not gate work.
 
 ## Current Status
-**Verified 2026-09-02 against `56d12c6` (`dev` = `feature/066-delivery-comps-and-spec`; **unpushed** — `origin/dev` 24 behind, `main` 45 behind).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
+**Verified 2026-09-03 against `0acbe8e` (`claude/local-session-errors-igcnim`, branched from `dev` at `2851aee`; `main` 49 behind, pending its PR).** Keep this section a table plus short blocks — see Maintenance Rule at the end of this file.
 
 | Area | State | Detail / authority |
 |---|---|---|
@@ -23,7 +23,7 @@ Before making any status, planning, or scope claim about this project — in thi
 | Sprints | **1–7 complete** · **7.5 next** · 8 after it | Sprint 7 closed 2026-08-18. **Sprint 7.5 is an accessibility/bug paydown that gates Sprint 8** — `sprints/sprint-07.5-accessibility-and-bug-paydown.md`. Index: `SPEC/95-next-sprints.md`. Plans: `SPEC/sprints/`; completed in `SPEC/sprints/archive/`. |
 | QA / code review | **Partially paid down** | Sprint 4 covered auth/CSV/UDF/idea-repository/client-auth. Collaboration/Comments, Events, Tenant Admin, Workflow Config, most client files and Domain entities were **never reviewed** — still open, and Sprint 6 touches authorization. Boundary: `sprints/archive/sprint-04-qa-review-debt.md`. |
 | Bug queue | **Empty — promoted into Sprint 7.5** | Ten items from the 2026-08-16 browser pass moved to `sprints/sprint-07.5-accessibility-and-bug-paydown.md` on 2026-08-25 and deleted from `SPEC/Bug Triage.md` per its Promote-and-delete rule. Intake reopens there when 7.5 archives. |
-| Comp P refresh | **Slices 0 and 3 done; 1, 2, 4 open** | Porting the shipped client to comp P's locked design so the TypeScript conversion has a settled baseline. `comp-p-admin.html` covers all 23 `/settings/*` routes at four roles; core, auth and delivery are still at their original screen counts. **Roadmap and grouping surfaces are stale** — built on multi-parent before the 2026-09-02 cardinality decision; regenerate from comp M. Sources: `SPEC/mockups/_build/README.md`. |
+| Comp P refresh | **Complete (2026-09-03)** | The shipped client ported to comp P's locked design, so the TypeScript conversion has a settled baseline: four files, 46 screens, every one at four roles and four states. `comp-p-focus-roadmap.html` (core, 8), `comp-p-auth.html` (8), `comp-p-admin.html` (23 `/settings/*` routes), `comp-p-delivery.html` (7 — specified, unbuilt, so it carries the *not built* strip). Delivery is regenerated on the single-parent decision. Sources and conventions: `SPEC/mockups/_build/README.md`. |
 | Issues & Delivery | **Specified, unbuilt** | Slice 1 (Delivery + Tasks) is P0 and buildable; Slice 2 (Outcomes + Roadmap) is P1 and no longer gated. `SPEC/20-feature-issues-and-delivery.md` — no blocking Open Question remains. |
 | Local DB | `collega-postgres` (`postgres:16`), port **5432**, role `collega` | Standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas). Dev demo Site Admin: `siteadmin@demo.collega.test` / `Abc123!`. **If the API won't connect, check user-secrets for a stale SQL Server string** — see `src/Collega.API/CLAUDE.md`. |
 

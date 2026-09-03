@@ -129,14 +129,23 @@ DESIGN.md also analyses a **marketing site**, so several of its component specs 
 used exactly once, on the first-run empty state, which is the only screen in the app with
 nothing to structure.
 
-### Comp P: Focus Desk + multi-parent roadmap (2026-08-31)
+### Comp P: Focus Desk, extended to the whole shipped client (2026-08-31 → 2026-09-03)
 
-`comp-p-focus-roadmap.html` answers feedback item #1 in `SPEC/UI Feedback.md`: comp **D**'s
-Focus Desk layout carrying comp **N**'s multi-parent roadmap, styled per `DESIGN.md`.
-Ten screens — Login, Home, Ideas list, Board, Inspector, Roadmap, Issue, Grouping,
-Settings, Command palette — built on the same shared token layer as the comp O set. That
-is all of comp D restyled, plus comp N's roadmap trio. **Home is the landing screen**, and
-it carries written copy rather than placeholder text.
+`comp-p-focus-roadmap.html` answered feedback item #1 in `SPEC/UI Feedback.md`: comp **D**'s
+Focus Desk layout carrying a roadmap, styled per `DESIGN.md`. It was locked as the UI
+direction on 2026-08-31 with ten screens, and then extended over the following three days
+into a four-file set covering every route the client ships — **46 screens, each rendered at
+four roles and four states** by the comp chrome's role and state controls:
+
+| File | Screens |
+|---|---|
+| `comp-p-focus-roadmap.html` | Home, Boards, Board, Ideas list, Inspector, New idea, Brainstorm, Command palette |
+| `comp-p-auth.html` | Login, Locked, Returned, Register, First sign-in, Session expiring, View as, Viewing as |
+| `comp-p-admin.html` | The 23 `/settings/*` routes, including the eight organization-scoped Site Admin mirrors |
+| `comp-p-delivery.html` | Sprint board, Backlog, Issue, Promote gate, Roadmap, Outcome, Set outcome — specified, unbuilt |
+
+All four are generated from `SPEC/mockups/_build/`; never hand-edit the HTML. **Home is the
+landing screen**, and it carries written copy rather than placeholder text.
 
 **Two voices, kept apart.** Everything inside the app frame is product copy, written to be
 lifted into the real UI: a first-run strip explaining how an idea moves through the

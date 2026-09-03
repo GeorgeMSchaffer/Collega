@@ -61,8 +61,8 @@ Four files, built from one manifest at the bottom of `build_p.py`:
 
 | File | Fragment | Area |
 |---|---|---|
-| `comp-p-focus-roadmap.html` | `p_core.frag` | Home, Boards, Board, Ideas, Inspector, palette |
-| `comp-p-auth.html` | `p_auth.frag` | Login, register, password, View As |
+| `comp-p-focus-roadmap.html` | `p_core.frag` | Home, Boards, Board, Ideas, Inspector, New idea, Brainstorm, palette |
+| `comp-p-auth.html` | `p_auth.frag` | Login, Locked, Returned, Register, First sign-in, Session expiring, View as, Viewing as |
 | `comp-p-admin.html` | `p_admin.frag` | The `/settings/*` area |
 | `comp-p-delivery.html` | `p_delivery.frag` | Sprint board, Backlog, Issue, Promote gate, Roadmap, Outcome, Set outcome — a design target for unbuilt product, so every screen carries the `wip` strip |
 
@@ -81,6 +81,7 @@ twice rather than copied.
 | Token | Expands to |
 |---|---|
 | `@@DESK:<key>@@` | The sidebar, with `<key>` marked `aria-current="page"` |
+| `@@DESKAS:<key>@@` | The same sidebar during a View As session — the impersonated identity, whatever the viewer's role |
 | `@@PROFILE@@` | The profile form |
 | `@@ROLLUP:<key>@@` | A Site Admin cross-organization list — read-only by construction |
 | `@@EDITOR:<entity>:<sfx>:rw\|ro@@` | A List + panel admin screen. `ro` is the Site Admin variant |
