@@ -92,15 +92,36 @@ is declared per step in `unstable`, and dropped from both sides before the diff:
 is a small hole in the oracle, so keep the list short and say why in the step's
 `note`.
 
+**Reading a failure list, one caveat.** Because labels are minted per scenario,
+a step that fails outright takes its ids with it: a *later* step that would have
+echoed one of them has nothing to match against, so it is labelled by its own
+position and reports a mismatch too. One broken step can therefore look like
+three. Triage a scenario's failures in step order and fix the first — the
+followers often go with it.
+
 ## Credentials do not reach the corpus
 
-Recorded request bodies are **redacted** before they are written: `password`,
-`newPassword`, `currentPassword`, tokens and the like become `<redacted>`. The
-corpus is committed, and capture runs against whatever `GOLDEN_PASSWORD` points
-at — which is not always the demo seed — so a recorded login body would be a
-credential in git. Nothing downstream needs it: replay re-derives every request
-from the scenario files, and the stored request is diagnostic only. Emails are
-kept, since which identity made the call is the case.
+Recorded bodies are **redacted in both directions** before they are written:
+`password`, `newPassword`, `currentPassword`, `temporaryPassword`, tokens and
+the like become `<redacted>`, at any depth and through arrays.
+
+Requests, because the corpus is committed and capture runs against whatever
+`GOLDEN_PASSWORD` points at — not always the demo seed — so a recorded login
+body would be a credential in git. Nothing downstream needs it: replay
+re-derives every request from the scenario files.
+
+Responses, because two endpoints in the 81 *mint* credentials —
+`POST /users/{userId}/temporary-password` returns a working password for a real
+account, and `POST /organizations/{id}/users/import` returns one per created
+row. Both are in the coverage grid, so A2 will record them. Leaving that to a
+per-step `unstable` declaration would make it depend on every author
+remembering, for a field they have not met yet.
+
+This costs no coverage: `<redacted>` appears identically on both sides of a
+replay, so the field's presence and position stay pinned. A **null** secret is
+left alone on purpose — a rejected import row is issued no password, and a stack
+that starts issuing one there is a defect, not a secret. Emails are kept too:
+which identity made the call is the case.
 
 ## Writing a scenario
 

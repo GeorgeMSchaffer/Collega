@@ -37,7 +37,7 @@ export type CorpusManifest = {
  * in the next. Labels carry the step they were first seen in for the same reason.
  */
 export function normalizeExchange(exchange: Exchange, normalizer: Normalizer) {
-  const body = omitPaths(exchange.response.body, exchange.unstable);
+  const body = omitPaths(redact(exchange.response.body), exchange.unstable);
   return {
     status: exchange.response.status,
     headers: normalizeHeaders(exchange.response.headers, normalizer, `${exchange.step}.headers`),
@@ -75,6 +75,7 @@ export async function writeCorpus(
       const fixture: Fixture = {
         ...exchange,
         request: { ...exchange.request, body: redact(exchange.request.body) },
+        response: { ...exchange.response, body: redact(exchange.response.body) },
         corpusVersion: CORPUS_VERSION,
         normalized: normalized[index],
       };

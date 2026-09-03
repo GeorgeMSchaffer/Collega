@@ -56,6 +56,29 @@ test("timestamps and tokens are flattened", () => {
   assert.equal(n.string("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln"), "<jwt>");
 });
 
+test("a password the API mints is redacted too, not just one we sent", () => {
+  // TemporaryPasswordResult and UserImportRowResult, the two response shapes in
+  // the 81 that hand back a working password for a real account.
+  const issued = redact({ temporaryPassword: "Tmp-4821!", mustChangePassword: true }) as Record<string, unknown>;
+  assert.equal(issued.temporaryPassword, "<redacted>");
+  assert.equal(issued.mustChangePassword, true, "the flag is behaviour and stays");
+
+  const imported = redact({
+    rows: [
+      { rowNumber: 1, email: "new@demo.collega.test", outcome: "Created", temporaryPassword: "Tmp-9930!" },
+      { rowNumber: 2, email: "bad", outcome: "Rejected", error: "Email is invalid.", temporaryPassword: null },
+    ],
+  }) as { rows: Record<string, unknown>[] };
+  assert.equal(imported.rows[0].temporaryPassword, "<redacted>");
+  assert.equal(imported.rows[0].outcome, "Created");
+  assert.equal(imported.rows[1].error, "Email is invalid.", "a rejection reason is the contract");
+  assert.equal(
+    imported.rows[1].temporaryPassword,
+    null,
+    "a rejected row is issued no password, and a stack that starts issuing one must not be hidden",
+  );
+});
+
 test("credentials never reach a fixture, at any depth", () => {
   const redacted = redact({
     email: "orgadmin@demo.collega.test",

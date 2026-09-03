@@ -75,20 +75,35 @@ export class Normalizer {
 }
 
 /**
- * Strip credentials out of a recorded request body.
+ * Strip credentials out of a recorded body, in either direction.
  *
  * The corpus is committed, and capture runs with whatever `GOLDEN_PASSWORD`
- * points at — which is not always the demo seed. A login step's request body
- * therefore carries a live password unless something takes it out, and nothing
- * downstream needs it: replay re-derives its requests from the scenario files,
- * so the recorded request is diagnostic only.
+ * points at — which is not always the demo seed. So a login step's *request*
+ * carries a live password, and nothing downstream needs it: replay re-derives
+ * its requests from the scenario files.
+ *
+ * Responses mint credentials too, and those are worse because they are new:
+ * `POST /users/{userId}/temporary-password` returns a working password for a
+ * real account, and `POST /organizations/{id}/users/import` returns one per
+ * imported row. Both are in the 81, so A2 will record them. Leaving that to a
+ * per-scenario `unstable` declaration would make it depend on every author
+ * remembering, for a field they have not met yet.
+ *
+ * Redaction costs no coverage: `<redacted>` appears identically on both sides
+ * of a replay, so the field's presence and shape are still pinned.
  */
 export function redact(input: unknown): unknown {
   if (Array.isArray(input)) return input.map((item) => redact(item));
   if (input && typeof input === "object") {
     const out: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
-      out[key] = SECRET_FIELDS.has(key.toLowerCase()) ? "<redacted>" : redact(value);
+      // A null secret is not a secret, it is an answer: a rejected import row
+      // gets no password, and a stack that starts issuing one there is a defect
+      // the corpus should catch rather than redact away.
+      out[key] =
+        SECRET_FIELDS.has(key.toLowerCase()) && value !== null && value !== undefined
+          ? "<redacted>"
+          : redact(value);
     }
     return out;
   }
