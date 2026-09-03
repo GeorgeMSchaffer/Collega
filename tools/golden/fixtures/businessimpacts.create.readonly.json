@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/business-impacts",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/business-impacts",
     "body": {
       "name": "Golden Capture Impact",
       "color": "#6f8f3f"
@@ -19,7 +19,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:52 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -30,8 +30,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage idea field options in this organization.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/business-impacts",
-      "traceId": "0HNOA1HBMQ175:00000043"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/business-impacts",
+      "traceId": "0HNOA1Q010GRT:00000043"
     }
   },
   "corpusVersion": 1,

@@ -19,14 +19,14 @@
     "status": 201,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "organizationId": "a12f2c51-ee48-4142-b827-d7788545c590",
+      "organizationId": "e52121a2-9404-4b2b-8947-125dbbbdea53",
       "inviteCode": "<redacted>",
-      "defaultBoardId": "9179b721-3b5d-440d-b4a4-dee0995e46cc",
+      "defaultBoardId": "71817fa3-05cd-4a96-942c-0528d70950c7",
       "defaultStatusCount": 5
     }
   },

@@ -8,9 +8,9 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/idea-type",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ideas/82331393-cc23-4f8d-98a1-c09ab7e59b88/idea-type",
     "body": {
-      "ideaTypeId": "9e22cf2f-6ed3-4940-be79-4c86ebde9716"
+      "ideaTypeId": "56630aed-7ff8-4830-8fc8-d69d666c4ec4"
     },
     "contentType": "application/json"
   },
@@ -19,7 +19,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -30,8 +30,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/idea-type",
-      "traceId": "0HNOA1HBMQ174:0000008E"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ideas/82331393-cc23-4f8d-98a1-c09ab7e59b88/idea-type",
+      "traceId": "0HNOA1Q010GRS:0000008E"
     }
   },
   "corpusVersion": 1,

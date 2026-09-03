@@ -77,7 +77,11 @@
       "as": "SiteAdmin",
       "kind": "success",
       "expect": 200,
-      "path": "/boards/{{boardId}}/ideas"
+      "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
     },
     {
       "id": "list.board.orgadmin",
@@ -86,6 +90,10 @@
       "kind": "success",
       "expect": 200,
       "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create.",
       "bind": {
         "seededIdeaId": "$.body.items[0].ideaId"
       }
@@ -96,7 +104,11 @@
       "as": "User",
       "kind": "success",
       "expect": 200,
-      "path": "/boards/{{boardId}}/ideas"
+      "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
     },
     {
       "id": "list.board.readonly",
@@ -104,7 +116,11 @@
       "as": "ReadOnly",
       "kind": "success",
       "expect": 200,
-      "path": "/boards/{{boardId}}/ideas"
+      "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
     },
     {
       "id": "list.board.anonymous",
@@ -112,7 +128,11 @@
       "as": "anonymous",
       "kind": "denied",
       "expect": 401,
-      "path": "/boards/{{boardId}}/ideas"
+      "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
     },
     {
       "id": "list.org.siteadmin",
@@ -120,7 +140,11 @@
       "as": "SiteAdmin",
       "kind": "success",
       "expect": 200,
-      "path": "/organizations/{{orgId}}/ideas"
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
     },
     {
       "id": "list.org.orgadmin",
@@ -128,7 +152,11 @@
       "as": "OrgAdmin",
       "kind": "success",
       "expect": 200,
-      "path": "/organizations/{{orgId}}/ideas"
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
     },
     {
       "id": "list.org.user",
@@ -136,7 +164,11 @@
       "as": "User",
       "kind": "success",
       "expect": 200,
-      "path": "/organizations/{{orgId}}/ideas"
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
     },
     {
       "id": "list.org.readonly",
@@ -144,7 +176,11 @@
       "as": "ReadOnly",
       "kind": "success",
       "expect": 200,
-      "path": "/organizations/{{orgId}}/ideas"
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
     },
     {
       "id": "list.org.anonymous",
@@ -152,7 +188,11 @@
       "as": "anonymous",
       "kind": "denied",
       "expect": 401,
-      "path": "/organizations/{{orgId}}/ideas"
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
     },
     {
       "id": "create.siteadmin",
@@ -702,7 +742,7 @@
       "kind": "denied",
       "expect": 403,
       "path": "/ideas/{{ownIdeaId}}",
-      "note": "Even its own author cannot delete an idea \u2014 deletion is administrative (SPEC/20-feature-ideas-and-engagement.md rule 16), which is not what the create and edit permissions would lead you to expect."
+      "note": "Even its own author cannot delete an idea \u2014 deletion is administrative (SPEC/20-feature-ideas-and-engagement.md, the Idea deletion row of the Board Enhancement Decisions table), which is not what the create and edit permissions would lead you to expect."
     }
   ]
 }

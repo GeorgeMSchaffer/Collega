@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions/c94d73fd-76ee-4371-b5f6-c621b8f1f76e",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/field-definitions/0f49bf41-b0e6-4afd-8cea-f126f3f4f186",
     "body": {
       "name": "Golden Capture Field Renamed",
       "fieldType": "Text",
@@ -19,7 +19,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -28,8 +28,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions/c94d73fd-76ee-4371-b5f6-c621b8f1f76e",
-      "traceId": "00-231f1b109be0b9d076bb3a85bd65e6c9-49a767cc17366045-00"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/field-definitions/0f49bf41-b0e6-4afd-8cea-f126f3f4f186",
+      "traceId": "00-798e4c972850e77142865566fc9887ff-c4a6776134eca580-00"
     }
   },
   "corpusVersion": 1,

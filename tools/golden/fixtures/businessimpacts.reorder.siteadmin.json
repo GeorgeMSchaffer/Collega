@@ -7,14 +7,14 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/business-impacts/reorder",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/business-impacts/reorder",
     "body": {
       "orderedBusinessImpactIds": [
-        "cf58d1d7-80a0-4469-917b-47ebcc683bfd",
-        "fcb0b2b7-b181-4206-b95c-0c9a17580560",
-        "ec75e7ba-f6c3-469d-a006-28795f2fcd57",
-        "fc57fc80-7ebc-4858-89a5-d7740a46a866",
-        "f187dc89-d8da-4fed-89c7-8f9be9359019"
+        "4cfad37c-9121-4fc1-b222-55cc89875d4c",
+        "120fbb1e-a476-421e-927d-5cd5d1e47296",
+        "fd3ecd94-d8dc-4bf0-a0c3-3d83d92504a4",
+        "3c71e1c5-1430-4bd6-8345-bd3d7708e3d1",
+        "87e5c847-c701-4bc3-9e94-634fb48b623f"
       ]
     },
     "contentType": "application/json"
@@ -24,7 +24,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:52 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -35,8 +35,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/business-impacts/reorder",
-      "traceId": "0HNOA1HBMQ175:00000047"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/business-impacts/reorder",
+      "traceId": "0HNOA1Q010GRT:00000047"
     }
   },
   "corpusVersion": 1,

@@ -15,7 +15,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:51 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -27,7 +27,7 @@
       "status": 403,
       "detail": "You are not allowed to view as that user.",
       "instance": "/api/v1/auth/view-as/candidates",
-      "traceId": "0HNOA1HBMQ175:00000026"
+      "traceId": "0HNOA1Q010GRT:00000026"
     }
   },
   "corpusVersion": 1,

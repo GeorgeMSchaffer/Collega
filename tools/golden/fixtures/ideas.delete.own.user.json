@@ -4,11 +4,11 @@
   "endpoint": "DELETE /ideas/{ideaId}",
   "as": "User",
   "kind": "denied",
-  "note": "Even its own author cannot delete an idea — deletion is administrative (SPEC/20-feature-ideas-and-engagement.md rule 16), which is not what the create and edit permissions would lead you to expect.",
+  "note": "Even its own author cannot delete an idea — deletion is administrative (SPEC/20-feature-ideas-and-engagement.md, the Idea deletion row of the Board Enhancement Decisions table), which is not what the create and edit permissions would lead you to expect.",
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/ideas/ea48dee9-1144-4007-aee0-0c4bcb4f6709",
+    "path": "/ideas/dca6784f-f7c4-47b7-b6a8-788d68a6df7c",
     "body": null
   },
   "response": {
@@ -16,7 +16,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -27,8 +27,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to delete ideas.",
-      "instance": "/api/v1/ideas/ea48dee9-1144-4007-aee0-0c4bcb4f6709",
-      "traceId": "0HNOA1HBMQ174:00000098"
+      "instance": "/api/v1/ideas/dca6784f-f7c4-47b7-b6a8-788d68a6df7c",
+      "traceId": "0HNOA1Q010GRS:00000098"
     }
   },
   "corpusVersion": 1,

@@ -7,19 +7,19 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/upvote/toggle",
+    "path": "/ideas/82331393-cc23-4f8d-98a1-c09ab7e59b88/upvote/toggle",
     "body": null
   },
   "response": {
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "ideaId": "0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+      "ideaId": "82331393-cc23-4f8d-98a1-c09ab7e59b88",
       "hasUpvoted": true,
       "upvoteCount": 3
     }

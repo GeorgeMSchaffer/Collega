@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users/import",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/users/import",
     "body": "------GoldenCaptureBoundary\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"users.csv\"\r\nContent-Type: text/csv\r\n\r\nfirstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n\r\n------GoldenCaptureBoundary--\r\n",
     "contentType": "multipart/form-data; boundary=----GoldenCaptureBoundary"
   },
@@ -16,7 +16,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -25,8 +25,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users/import",
-      "traceId": "00-90e4c8c2d50134b75d7b7d7228002296-e176ec6bd3ccb63b-00"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/users/import",
+      "traceId": "00-1cbb9d516b7dfd194ffe9028028db5c5-20de36638db1749f-00"
     }
   },
   "corpusVersion": 1,

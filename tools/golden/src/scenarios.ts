@@ -92,8 +92,19 @@ export function validateScenario(raw: unknown, file: string): Scenario {
       fail(`${where} kind must be one of ${[...KINDS].join(", ")}`);
     }
     if (typeof step.expect !== "number") fail(`${where} missing expect`);
-    if (step.body !== undefined && step.text !== undefined) {
-      fail(`${where} sets both body and text`);
+    const bodies = ["body", "text", "file"].filter((k) => step[k] !== undefined);
+    if (bodies.length > 1) fail(`${where} sets ${bodies.join(" and ")} — pick one`);
+    if (step.file !== undefined) {
+      const file = step.file as Record<string, unknown>;
+      for (const field of ["field", "filename", "contentType", "content"]) {
+        if (typeof file?.[field] !== "string") fail(`${where} file is missing ${field}`);
+      }
+    }
+    if (step.credentials !== undefined) {
+      const credentials = step.credentials as Record<string, unknown>;
+      for (const field of ["email", "password"]) {
+        if (typeof credentials?.[field] !== "string") fail(`${where} credentials is missing ${field}`);
+      }
     }
   }
   return { ...(s as unknown as Scenario), file };

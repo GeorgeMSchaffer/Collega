@@ -14,7 +14,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:51 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -24,7 +24,7 @@
       "status": 401,
       "detail": "No further details are available for this 401 response.",
       "instance": "/api/v1/auth/me",
-      "traceId": "00-5612d47fb1fa9db91caffaf202d95e57-3538e1d2911fba4b-00"
+      "traceId": "00-c065f4fe5330f650c84b25b131312e24-f9ba4f8388b36677-00"
     }
   },
   "corpusVersion": 1,

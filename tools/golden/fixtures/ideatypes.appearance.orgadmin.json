@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/idea-types/8fbef718-771f-464f-b43e-c9fa8398207e/appearance",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/idea-types/7a33bf99-d244-4cd4-89bf-63c6344a7aef/appearance",
     "body": {
       "colorHex": "#3f6f8f",
       "icon": "lightbulb"
@@ -17,7 +17,7 @@
   "response": {
     "status": 204,
     "headers": {
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "server": "Kestrel"
     },
     "body": null

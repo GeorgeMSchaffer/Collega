@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/users/dfb23311-4774-416e-98e4-3e53cbc75642",
+    "path": "/users/3b48f01c-397d-4c13-a0e7-a6c4ff2faf59",
     "body": {
       "firstName": "Golden",
       "lastName": "Subject Renamed",
@@ -22,7 +22,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:32 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:59 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -31,8 +31,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/users/dfb23311-4774-416e-98e4-3e53cbc75642",
-      "traceId": "00-7fcd0af6c34858a9289d8f5e6cb79170-47888cfc312c37f5-00"
+      "instance": "/api/v1/users/3b48f01c-397d-4c13-a0e7-a6c4ff2faf59",
+      "traceId": "00-1a9d1e93d8a30876c74dfb6a3a8609e7-b4bbd9cf2a5c4807-00"
     }
   },
   "corpusVersion": 1,

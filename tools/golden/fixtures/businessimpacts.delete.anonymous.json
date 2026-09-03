@@ -7,14 +7,14 @@
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/business-impacts/f187dc89-d8da-4fed-89c7-8f9be9359019",
+    "path": "/business-impacts/87e5c847-c701-4bc3-9e94-634fb48b623f",
     "body": null
   },
   "response": {
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:52 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -23,8 +23,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/business-impacts/f187dc89-d8da-4fed-89c7-8f9be9359019",
-      "traceId": "00-e029879876b29e6eee0300a5cc2191dd-78537d28a44e8f85-00"
+      "instance": "/api/v1/business-impacts/87e5c847-c701-4bc3-9e94-634fb48b623f",
+      "traceId": "00-946c1725bea9ff7ea3f3a26100f421be-2e4fadc1e594c2ae-00"
     }
   },
   "corpusVersion": 1,

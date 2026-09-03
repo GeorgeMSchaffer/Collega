@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/ideas/bbcb9c0b-25d7-4123-9b7d-971c14b58bca/comments",
+    "path": "/ideas/b40dc8dd-55e8-4dca-a919-39ca6529227c/comments",
     "body": {
       "body": ""
     },
@@ -17,7 +17,7 @@
     "status": 400,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -26,7 +26,7 @@
       "title": "One or more fields are invalid.",
       "status": 400,
       "detail": "The request failed validation. See the errors property for field-level details.",
-      "instance": "/api/v1/ideas/bbcb9c0b-25d7-4123-9b7d-971c14b58bca/comments",
+      "instance": "/api/v1/ideas/b40dc8dd-55e8-4dca-a919-39ca6529227c/comments",
       "errors": {
         "body": [
           "Body is required."

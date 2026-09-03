@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+    "path": "/comments/ea227229-e742-4134-a838-83b1a190f50d",
     "body": {
       "body": "Edited by its author."
     },
@@ -18,17 +18,17 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "commentId": "41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
-      "ideaId": "bbcb9c0b-25d7-4123-9b7d-971c14b58bca",
-      "authorUserId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+      "commentId": "ea227229-e742-4134-a838-83b1a190f50d",
+      "ideaId": "b40dc8dd-55e8-4dca-a919-39ca6529227c",
+      "authorUserId": "37814d81-af4a-41dd-8504-51e6a021ffef",
       "body": "Edited by its author.",
-      "createdAtUtc": "2026-09-03T22:40:27.018647Z",
-      "updatedAtUtc": "2026-09-03T22:40:27.0992658Z"
+      "createdAtUtc": "2026-09-03T22:55:54.263631Z",
+      "updatedAtUtc": "2026-09-03T22:55:54.3464949Z"
     }
   },
   "corpusVersion": 1,

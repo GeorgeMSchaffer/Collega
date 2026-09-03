@@ -4,17 +4,20 @@
   "endpoint": "GET /organizations/{organizationId}/ideas",
   "as": "anonymous",
   "kind": "denied",
-  "unstable": [],
+  "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned — see ideas.create.",
+  "unstable": [
+    "body.items[].dueDate"
+  ],
   "request": {
     "method": "GET",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ideas",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ideas",
     "body": null
   },
   "response": {
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -23,8 +26,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ideas",
-      "traceId": "00-da138b9bb8f61664bc874bfb89947b74-e0977fece6594a66-00"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ideas",
+      "traceId": "00-004ef91b371691c563f956d50c9c549c-c17a61ccdf36ef32-00"
     }
   },
   "corpusVersion": 1,

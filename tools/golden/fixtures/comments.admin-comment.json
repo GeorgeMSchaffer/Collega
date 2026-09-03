@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/ideas/bbcb9c0b-25d7-4123-9b7d-971c14b58bca/comments",
+    "path": "/ideas/b40dc8dd-55e8-4dca-a919-39ca6529227c/comments",
     "body": {
       "body": "A second comment, for an administrator to remove."
     },
@@ -17,13 +17,13 @@
     "status": 201,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "commentId": "661004ea-83d5-412d-8c4e-60e9096401a0",
-      "ideaId": "bbcb9c0b-25d7-4123-9b7d-971c14b58bca"
+      "commentId": "b53a3bee-445a-45ac-8194-d08ebc31c101",
+      "ideaId": "b40dc8dd-55e8-4dca-a919-39ca6529227c"
     }
   },
   "corpusVersion": 1,

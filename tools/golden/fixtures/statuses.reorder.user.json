@@ -8,15 +8,15 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/statuses/reorder",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/statuses/reorder",
     "body": {
       "orderedStatusIds": [
-        "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
-        "b9287126-9f16-4f79-8fce-48ffd3824b4c",
-        "80a03434-f54f-43c3-b6c3-b7b329c0134b",
-        "16d0ff65-931e-44b5-8afb-4cbd6562608c",
-        "61cded65-6906-441f-90c3-c15d76436e4a",
-        "32ee1373-484f-4ea3-8f17-16e75c233f7b"
+        "d8d1f314-cb41-496d-89d8-b311ec4ff2ea",
+        "4a5404e4-1dd0-41f7-a45e-573a76e7b759",
+        "e5b95219-236e-41cd-8922-6f7bd7ceb414",
+        "a1b53887-0097-4cbd-91ff-a12ae91df05a",
+        "a50aabeb-fa30-43d4-b89e-4134ea4d5d6e",
+        "9f3aecaa-e55b-4f54-a9d7-c8c1210a19c5"
       ]
     },
     "contentType": "application/json"
@@ -26,7 +26,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:31 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:58 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -37,8 +37,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage statuses in this organization.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/statuses/reorder",
-      "traceId": "0HNOA1HBMQ175:000000EA"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/statuses/reorder",
+      "traceId": "0HNOA1Q010GRT:000000EA"
     }
   },
   "corpusVersion": 1,

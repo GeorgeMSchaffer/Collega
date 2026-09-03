@@ -9,7 +9,7 @@
     "method": "POST",
     "path": "/auth/view-as",
     "body": {
-      "targetUserId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4"
+      "targetUserId": "37814d81-af4a-41dd-8504-51e6a021ffef"
     },
     "contentType": "application/json"
   },
@@ -18,7 +18,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:51 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -30,7 +30,7 @@
       "status": 403,
       "detail": "You are not allowed to view as that user.",
       "instance": "/api/v1/auth/view-as",
-      "traceId": "0HNOA1HBMQ174:00000028"
+      "traceId": "0HNOA1Q010GRS:00000028"
     }
   },
   "corpusVersion": 1,

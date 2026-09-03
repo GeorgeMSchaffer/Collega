@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+    "path": "/comments/ea227229-e742-4134-a838-83b1a190f50d",
     "body": {
       "body": "Edited by its author."
     },
@@ -18,7 +18,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -27,8 +27,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
-      "traceId": "00-ef589ae093f651d220743fec900c0ac0-51a4ee1a75c1459b-00"
+      "instance": "/api/v1/comments/ea227229-e742-4134-a838-83b1a190f50d",
+      "traceId": "00-8f800ea9578a9b55b6a652812ed17abe-51d01e43c36311d8-00"
     }
   },
   "corpusVersion": 1,

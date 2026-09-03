@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/users",
     "body": {
       "firstName": "Golden",
       "lastName": "Capture",
@@ -23,7 +23,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -34,8 +34,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage users in this organization.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users",
-      "traceId": "0HNOA1HBMQ175:000000C6"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/users",
+      "traceId": "0HNOA1Q010GRT:000000C6"
     }
   },
   "corpusVersion": 1,

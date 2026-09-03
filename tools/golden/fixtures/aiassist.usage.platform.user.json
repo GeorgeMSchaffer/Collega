@@ -14,7 +14,7 @@
     "status": 403,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:23 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:50 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -24,7 +24,7 @@
       "status": 403,
       "detail": "No further details are available for this 403 response.",
       "instance": "/api/v1/ai-assist/usage",
-      "traceId": "00-85e859d94915b86c24208efe88a8b768-b0c347ff4b501f20-00"
+      "traceId": "00-60ec7f6613271c02e5df6ebef694cc7c-084a781fc43771b1-00"
     }
   },
   "corpusVersion": 1,

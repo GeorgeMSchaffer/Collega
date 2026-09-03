@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/statuses",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/statuses",
     "body": {
       "name": "Golden Capture",
       "color": "#3f6f8f"
@@ -18,7 +18,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:31 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:58 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -27,8 +27,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/statuses",
-      "traceId": "00-7d93e8e1a4ceaa5112e104916c6581a5-7cc6288ed3646f37-00"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/statuses",
+      "traceId": "00-1f52fd24cd0f041bf303c6b82601c931-6e977271ebc95051-00"
     }
   },
   "corpusVersion": 1,

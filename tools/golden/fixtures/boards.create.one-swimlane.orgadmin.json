@@ -8,13 +8,13 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/boards",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/boards",
     "body": {
       "name": "One Lane",
       "allowUserStatusUpdate": true,
       "swimlanes": [
         {
-          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "statusId": "d8d1f314-cb41-496d-89d8-b311ec4ff2ea",
           "order": 0
         }
       ]
@@ -26,7 +26,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:52 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -37,13 +37,13 @@
       "title": "One or more fields are invalid.",
       "status": 400,
       "detail": "The request failed validation. See the errors property for field-level details.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/boards",
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/boards",
       "errors": {
         "swimlanes": [
           "A board must have at least 2 swimlanes."
         ]
       },
-      "traceId": "0HNOA1HBMQ174:00000035"
+      "traceId": "0HNOA1Q010GRS:00000035"
     }
   },
   "corpusVersion": 1,

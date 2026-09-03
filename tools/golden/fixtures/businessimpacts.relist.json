@@ -8,53 +8,53 @@
   "unstable": [],
   "request": {
     "method": "GET",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/business-impacts",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/business-impacts",
     "body": null
   },
   "response": {
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:52 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": [
       {
-        "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "businessImpactId": "4cfad37c-9121-4fc1-b222-55cc89875d4c",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "name": "Critical",
         "color": "#DC2626",
         "sortOrder": 10,
         "isDeleted": false
       },
       {
-        "businessImpactId": "fcb0b2b7-b181-4206-b95c-0c9a17580560",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "businessImpactId": "120fbb1e-a476-421e-927d-5cd5d1e47296",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "name": "High",
         "color": "#D97706",
         "sortOrder": 20,
         "isDeleted": false
       },
       {
-        "businessImpactId": "ec75e7ba-f6c3-469d-a006-28795f2fcd57",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "businessImpactId": "fd3ecd94-d8dc-4bf0-a0c3-3d83d92504a4",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "name": "Medium",
         "color": "#2563EB",
         "sortOrder": 30,
         "isDeleted": false
       },
       {
-        "businessImpactId": "fc57fc80-7ebc-4858-89a5-d7740a46a866",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "businessImpactId": "3c71e1c5-1430-4bd6-8345-bd3d7708e3d1",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "name": "Low",
         "color": "#16A34A",
         "sortOrder": 40,
         "isDeleted": false
       },
       {
-        "businessImpactId": "f187dc89-d8da-4fed-89c7-8f9be9359019",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "businessImpactId": "87e5c847-c701-4bc3-9e94-634fb48b623f",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "name": "Golden Capture Impact Renamed",
         "color": "#8f6f3f",
         "sortOrder": 50,

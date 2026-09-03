@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/statuses",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/statuses",
     "body": {
       "name": "Golden Capture",
       "color": "#3f6f8f"
@@ -18,12 +18,12 @@
     "status": 201,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:31 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:58 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "statusId": "32ee1373-484f-4ea3-8f17-16e75c233f7b",
+      "statusId": "9f3aecaa-e55b-4f54-a9d7-c8c1210a19c5",
       "name": "Golden Capture",
       "color": "#3f6f8f",
       "sortOrder": 60

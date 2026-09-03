@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/idea-types",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/idea-types",
     "body": {
       "name": "Golden Capture Type"
     },
@@ -17,13 +17,13 @@
     "status": 201,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "ideaTypeId": "8fbef718-771f-464f-b43e-c9fa8398207e",
-      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "ideaTypeId": "7a33bf99-d244-4cd4-89bf-63c6344a7aef",
+      "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
       "name": "Golden Capture Type",
       "sortOrder": 30,
       "isDeleted": false,

@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions/c94d73fd-76ee-4371-b5f6-c621b8f1f76e",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/field-definitions/0f49bf41-b0e6-4afd-8cea-f126f3f4f186",
     "body": null
   },
   "response": {
@@ -15,7 +15,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:27 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -26,8 +26,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage field definitions in this organization.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions/c94d73fd-76ee-4371-b5f6-c621b8f1f76e",
-      "traceId": "0HNOA1HBMQ175:0000006B"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/field-definitions/0f49bf41-b0e6-4afd-8cea-f126f3f4f186",
+      "traceId": "0HNOA1Q010GRT:0000006B"
     }
   },
   "corpusVersion": 1,

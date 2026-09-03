@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/idea-types/8fbef718-771f-464f-b43e-c9fa8398207e/appearance",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/idea-types/7a33bf99-d244-4cd4-89bf-63c6344a7aef/appearance",
     "body": {
       "colorHex": "#3f6f8f",
       "icon": "lightbulb"
@@ -18,7 +18,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -27,8 +27,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/idea-types/8fbef718-771f-464f-b43e-c9fa8398207e/appearance",
-      "traceId": "00-fe34d295f792973b76c5533f0f871788-31f2bdc8f2337fa3-00"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/idea-types/7a33bf99-d244-4cd4-89bf-63c6344a7aef/appearance",
+      "traceId": "00-e958190cb55c8646873ad4eb3050c9fc-11e717d05368e783-00"
     }
   },
   "corpusVersion": 1,

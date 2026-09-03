@@ -13,7 +13,7 @@
     "method": "POST",
     "path": "/auth/view-as",
     "body": {
-      "targetUserId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4"
+      "targetUserId": "37814d81-af4a-41dd-8504-51e6a021ffef"
     },
     "contentType": "application/json"
   },
@@ -21,14 +21,14 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:51 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
       "impersonating": {
-        "userId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "userId": "37814d81-af4a-41dd-8504-51e6a021ffef",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "role": "User",
         "firstName": "Golden",
         "lastName": "Capture",
@@ -38,8 +38,8 @@
         "viewingAs": null
       },
       "realUser": {
-        "userId": "d425f3b8-297f-4fb0-af5b-eb70848c0214",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "userId": "0fc3b0b5-6639-49a9-b0a2-bef9bd490043",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "role": "OrgAdmin",
         "firstName": "Olivia",
         "lastName": "Administer",
@@ -48,8 +48,8 @@
         "portraitDataUrl": null,
         "viewingAs": null
       },
-      "startedAtUtc": "2026-09-03T22:40:25.3502088Z",
-      "expiresAtUtc": "2026-09-04T00:40:25.3502088Z"
+      "startedAtUtc": "2026-09-03T22:55:52.6098428Z",
+      "expiresAtUtc": "2026-09-04T00:55:52.6098428Z"
     }
   },
   "corpusVersion": 1,

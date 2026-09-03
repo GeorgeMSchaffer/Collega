@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/invite-code/regenerate",
+    "path": "/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/invite-code/regenerate",
     "body": null
   },
   "response": {
@@ -16,7 +16,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -27,8 +27,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to administer organizations.",
-      "instance": "/api/v1/organizations/a12f2c51-ee48-4142-b827-d7788545c590/invite-code/regenerate",
-      "traceId": "0HNOA1HBMQ174:000000BA"
+      "instance": "/api/v1/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/invite-code/regenerate",
+      "traceId": "0HNOA1Q010GRS:000000BA"
     }
   },
   "corpusVersion": 1,

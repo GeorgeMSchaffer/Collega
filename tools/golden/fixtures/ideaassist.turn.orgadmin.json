@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/idea-assist/turns",
+    "path": "/boards/0d732c29-910b-468c-bb8c-97855f2d99be/idea-assist/turns",
     "body": {
       "transcript": [
         {
@@ -24,7 +24,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:27 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:54 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -35,8 +35,8 @@
       "title": "Service Unavailable",
       "status": 503,
       "detail": "AI assist is unavailable.",
-      "instance": "/api/v1/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/idea-assist/turns",
-      "traceId": "0HNOA1HBMQ174:00000074"
+      "instance": "/api/v1/boards/0d732c29-910b-468c-bb8c-97855f2d99be/idea-assist/turns",
+      "traceId": "0HNOA1Q010GRS:00000074"
     }
   },
   "corpusVersion": 1,

@@ -22,13 +22,13 @@
     "status": 201,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:30 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:57 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "userId": "ae0950b9-3ac7-4b49-8c56-c9eda74e839d",
-      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "userId": "97a24a66-c319-4e1a-8175-ccebc62f071b",
+      "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
       "email": "golden.registrant@acme-robotics.demo.collega.test",
       "role": "User",
       "status": "Active"

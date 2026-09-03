@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/statuses",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/statuses",
     "body": {
       "color": "#3f6f8f"
     },
@@ -18,7 +18,7 @@
     "status": 400,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:31 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:58 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -27,7 +27,7 @@
       "title": "One or more fields are invalid.",
       "status": 400,
       "detail": "The request failed validation. See the errors property for field-level details.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/statuses",
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/statuses",
       "errors": {
         "name": [
           "Name is required."

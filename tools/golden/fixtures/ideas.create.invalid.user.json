@@ -7,12 +7,12 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/ideas",
+    "path": "/boards/0d732c29-910b-468c-bb8c-97855f2d99be/ideas",
     "body": {
       "description": "No title.",
       "priority": "Medium",
-      "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
-      "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd"
+      "ideaTypeId": "1dff3ceb-70a1-4007-b3ae-bff66615fa73",
+      "businessImpactId": "4cfad37c-9121-4fc1-b222-55cc89875d4c"
     },
     "contentType": "application/json"
   },
@@ -20,7 +20,7 @@
     "status": 400,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -29,7 +29,7 @@
       "title": "One or more fields are invalid.",
       "status": 400,
       "detail": "The request failed validation. See the errors property for field-level details.",
-      "instance": "/api/v1/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/ideas",
+      "instance": "/api/v1/boards/0d732c29-910b-468c-bb8c-97855f2d99be/ideas",
       "errors": {
         "title": [
           "Title is required."

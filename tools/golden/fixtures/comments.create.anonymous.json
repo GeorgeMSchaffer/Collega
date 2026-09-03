@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/ideas/bbcb9c0b-25d7-4123-9b7d-971c14b58bca/comments",
+    "path": "/ideas/b40dc8dd-55e8-4dca-a919-39ca6529227c/comments",
     "body": {
       "body": "Recorded by the golden capture."
     },
@@ -18,7 +18,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -27,8 +27,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/ideas/bbcb9c0b-25d7-4123-9b7d-971c14b58bca/comments",
-      "traceId": "00-ed5a58db24239b7c722b284b6b8b2019-9d13cf791e73d050-00"
+      "instance": "/api/v1/ideas/b40dc8dd-55e8-4dca-a919-39ca6529227c/comments",
+      "traceId": "00-921460972b52c0de7700bbd9000fa12b-732769a92daee639-00"
     }
   },
   "corpusVersion": 1,

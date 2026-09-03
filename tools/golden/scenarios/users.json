@@ -26,7 +26,7 @@
         "lastName": "Subject",
         "email": "golden.subject@acme-robotics.demo.collega.test",
         "role": "User",
-        "initialPassword": "Abc123!"
+        "initialPassword": "{{userPassword}}"
       },
       "note": "Every case below acts on an account this scenario created, never a seeded one.",
       "bind": {

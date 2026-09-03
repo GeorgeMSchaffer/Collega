@@ -7,13 +7,13 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+    "path": "/ideas/82331393-cc23-4f8d-98a1-c09ab7e59b88",
     "body": {
       "title": "Golden capture idea, edited",
       "description": "Recorded by the golden capture.",
       "priority": "High",
-      "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
-      "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd"
+      "ideaTypeId": "1dff3ceb-70a1-4007-b3ae-bff66615fa73",
+      "businessImpactId": "4cfad37c-9121-4fc1-b222-55cc89875d4c"
     },
     "contentType": "application/json"
   },
@@ -21,26 +21,26 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "ideaId": "0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
-      "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+      "ideaId": "82331393-cc23-4f8d-98a1-c09ab7e59b88",
+      "boardId": "0d732c29-910b-468c-bb8c-97855f2d99be",
       "title": "Golden capture idea, edited",
       "description": "Recorded by the golden capture.",
       "priority": "High",
-      "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+      "ideaTypeId": "1dff3ceb-70a1-4007-b3ae-bff66615fa73",
       "ideaTypeName": "Continuous Improvement",
       "ideaTypeColorHex": null,
       "ideaTypeIcon": null,
-      "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd",
+      "businessImpactId": "4cfad37c-9121-4fc1-b222-55cc89875d4c",
       "businessImpactName": "Critical",
       "businessImpactColor": "#DC2626",
       "dueDate": null,
       "assignees": [],
-      "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+      "statusId": "d8d1f314-cb41-496d-89d8-b311ec4ff2ea",
       "statusName": "New / Pending",
       "tagNames": [],
       "mentions": [],

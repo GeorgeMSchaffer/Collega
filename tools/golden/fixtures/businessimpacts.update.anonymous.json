@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/business-impacts/f187dc89-d8da-4fed-89c7-8f9be9359019",
+    "path": "/business-impacts/87e5c847-c701-4bc3-9e94-634fb48b623f",
     "body": {
       "name": "Golden Capture Impact Renamed",
       "color": "#8f6f3f"
@@ -18,7 +18,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:52 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -27,8 +27,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/business-impacts/f187dc89-d8da-4fed-89c7-8f9be9359019",
-      "traceId": "00-9d35d620d9a168f013ca7fbae5eab308-46e96ddbccf9df69-00"
+      "instance": "/api/v1/business-impacts/87e5c847-c701-4bc3-9e94-634fb48b623f",
+      "traceId": "00-3990aa3f57e351fc05a0032f4dc98d21-2d48abbc8f4bdbaa-00"
     }
   },
   "corpusVersion": 1,

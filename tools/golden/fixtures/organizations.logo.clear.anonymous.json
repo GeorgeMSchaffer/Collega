@@ -7,14 +7,14 @@
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/logo",
+    "path": "/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/logo",
     "body": null
   },
   "response": {
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -23,8 +23,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/a12f2c51-ee48-4142-b827-d7788545c590/logo",
-      "traceId": "00-16e813d2e002b9086a31fc36d95a508a-8defa8d57a1b2a6a-00"
+      "instance": "/api/v1/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/logo",
+      "traceId": "00-4b403e132cf32f0c38aecb76aa691480-2cfcc5349e0b7805-00"
     }
   },
   "corpusVersion": 1,

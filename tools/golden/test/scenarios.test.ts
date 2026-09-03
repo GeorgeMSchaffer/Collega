@@ -75,3 +75,15 @@ test("a projection over something that is not an array says so", () => {
     /used \[\*\] on a non-array/,
   );
 });
+
+test("the upload and credential fields are checked like everything else", () => {
+  const base = { name: "x", steps: [{ ...ok.steps[0] }] };
+  const cases: [string, unknown][] = [
+    ["file without a filename", { ...base, steps: [{ ...ok.steps[0], file: { field: "csvFile" } }] }],
+    ["credentials without a password", { ...base, steps: [{ ...ok.steps[0], credentials: { email: "a@b" } }] }],
+    ["a file and a body together", { ...base, steps: [{ ...ok.steps[0], body: {}, file: { field: "f", filename: "f.csv", contentType: "text/csv", content: "a" } }] }],
+  ];
+  for (const [why, raw] of cases) {
+    assert.throws(() => validateScenario(raw, "bad.json"), /bad\.json/, `accepted ${why}`);
+  }
+});

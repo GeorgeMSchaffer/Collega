@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/idea-types/8fbef718-771f-464f-b43e-c9fa8398207e",
+    "path": "/idea-types/7a33bf99-d244-4cd4-89bf-63c6344a7aef",
     "body": {
       "name": "Golden Capture Type Renamed"
     },
@@ -18,7 +18,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -29,8 +29,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage idea field options in this organization.",
-      "instance": "/api/v1/idea-types/8fbef718-771f-464f-b43e-c9fa8398207e",
-      "traceId": "0HNOA1HBMQ174:000000A1"
+      "instance": "/api/v1/idea-types/7a33bf99-d244-4cd4-89bf-63c6344a7aef",
+      "traceId": "0HNOA1Q010GRS:000000A1"
     }
   },
   "corpusVersion": 1,

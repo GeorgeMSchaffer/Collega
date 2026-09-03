@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions",
+    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/field-definitions",
     "body": {
       "name": "Golden Capture Field",
       "fieldType": "Text",
@@ -19,7 +19,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -28,8 +28,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions",
-      "traceId": "00-45328196317592d06981c40b08ac0262-66fb68aad9b486a9-00"
+      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/field-definitions",
+      "traceId": "00-e4022078b3f79a10b1fca448e41f9c90-4a746d59a9f03d46-00"
     }
   },
   "corpusVersion": 1,

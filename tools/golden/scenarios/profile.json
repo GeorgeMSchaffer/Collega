@@ -188,7 +188,7 @@
         "lastName": "Rotator",
         "email": "golden.rotator@acme-robotics.demo.collega.test",
         "role": "User",
-        "initialPassword": "Abc123!"
+        "initialPassword": "{{userPassword}}"
       },
       "note": "Password changes run against an account the corpus creates. Changing a demo role's password invalidates its token and locks every later scenario out of it."
     },
@@ -204,7 +204,7 @@
       },
       "credentials": {
         "email": "golden.rotator@acme-robotics.demo.collega.test",
-        "password": "Abc123!"
+        "password": "{{userPassword}}"
       },
       "note": "A wrong current password is refused as 401, not as a validation failure."
     },
@@ -215,7 +215,7 @@
       "kind": "denied",
       "expect": 401,
       "body": {
-        "currentPassword": "Abc123!",
+        "currentPassword": "{{userPassword}}",
         "newPassword": "GoldenTemp!2026"
       }
     },
@@ -226,12 +226,12 @@
       "kind": "success",
       "expect": 204,
       "body": {
-        "currentPassword": "Abc123!",
+        "currentPassword": "{{userPassword}}",
         "newPassword": "GoldenTemp!2026"
       },
       "credentials": {
         "email": "golden.rotator@acme-robotics.demo.collega.test",
-        "password": "Abc123!"
+        "password": "{{userPassword}}"
       },
       "note": "The success path. The token that made this request is dead afterwards, which is the point of doing it as an account nothing else uses."
     },
@@ -246,7 +246,7 @@
         "firstName": "Golden",
         "lastName": "Registrant",
         "email": "golden.registrant@acme-robotics.demo.collega.test",
-        "password": "Abc123!"
+        "password": "{{userPassword}}"
       },
       "note": "Self-registration is anonymous by design \u2014 the invite code is the credential."
     },
@@ -261,7 +261,7 @@
         "firstName": "Golden",
         "lastName": "Refused",
         "email": "golden.refused@acme-robotics.demo.collega.test",
-        "password": "Abc123!"
+        "password": "{{userPassword}}"
       }
     },
     {
@@ -275,7 +275,7 @@
         "firstName": "Golden",
         "lastName": "Duplicate",
         "email": "{{userEmail}}",
-        "password": "Abc123!"
+        "password": "{{userPassword}}"
       },
       "note": "An email already in use is a conflict."
     }

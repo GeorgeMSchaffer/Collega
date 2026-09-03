@@ -32,7 +32,10 @@
       "kind": "success",
       "expect": 200,
       "path": "/boards/{{boardId}}/ideas",
-      "note": "A seeded idea, so the comment cases do not depend on the ideas scenario.",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "A seeded idea, so the comment cases do not depend on the ideas scenario. Seeded due dates move with the seeding date, so they are not pinned.",
       "bind": {
         "ideaId": "$.body.items[0].ideaId"
       }

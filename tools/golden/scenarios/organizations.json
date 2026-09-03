@@ -482,7 +482,7 @@
         "lastName": "Capture",
         "email": "golden.capture@acme-robotics.demo.collega.test",
         "role": "User",
-        "initialPassword": "Abc123!"
+        "initialPassword": "{{userPassword}}"
       },
       "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too \u2014 its own case is next, on its own email."
     },
@@ -498,7 +498,7 @@
         "lastName": "Capture",
         "email": "golden.capture@acme-robotics.demo.collega.test",
         "role": "User",
-        "initialPassword": "Abc123!"
+        "initialPassword": "{{userPassword}}"
       },
       "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too \u2014 its own case is next, on its own email."
     },
@@ -514,7 +514,7 @@
         "lastName": "Capture",
         "email": "golden.capture@acme-robotics.demo.collega.test",
         "role": "User",
-        "initialPassword": "Abc123!"
+        "initialPassword": "{{userPassword}}"
       },
       "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too \u2014 its own case is next, on its own email."
     },
@@ -530,7 +530,7 @@
         "lastName": "Capture",
         "email": "golden.capture@acme-robotics.demo.collega.test",
         "role": "User",
-        "initialPassword": "Abc123!"
+        "initialPassword": "{{userPassword}}"
       },
       "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too \u2014 its own case is next, on its own email.",
       "bind": {
@@ -549,7 +549,7 @@
         "lastName": "Bootstrap",
         "email": "golden.bootstrap@acme-robotics.demo.collega.test",
         "role": "User",
-        "initialPassword": "Abc123!"
+        "initialPassword": "{{userPassword}}"
       },
       "note": "A direct Site Admin creating a user, which rule 26 keeps out of View As: without it a new deployment would have nobody to act as."
     },

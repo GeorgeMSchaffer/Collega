@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/idea-assist/turns",
+    "path": "/boards/0d732c29-910b-468c-bb8c-97855f2d99be/idea-assist/turns",
     "body": {
       "transcript": [
         {
@@ -23,7 +23,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:27 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:54 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -32,8 +32,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/idea-assist/turns",
-      "traceId": "00-d30e1a14dc143ef6fc6884a30e3a08e9-08db7ab211a3ba06-00"
+      "instance": "/api/v1/boards/0d732c29-910b-468c-bb8c-97855f2d99be/idea-assist/turns",
+      "traceId": "00-1db2c84f96ed3866a0bc88b8f54ae8ab-9c03abb77ff27070-00"
     }
   },
   "corpusVersion": 1,

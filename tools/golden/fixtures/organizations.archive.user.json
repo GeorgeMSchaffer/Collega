@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/archive",
+    "path": "/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/archive",
     "body": null
   },
   "response": {
@@ -16,7 +16,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:30 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -27,8 +27,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "Only a Site Admin can perform this action.",
-      "instance": "/api/v1/organizations/a12f2c51-ee48-4142-b827-d7788545c590/archive",
-      "traceId": "0HNOA1HBMQ175:000000CB"
+      "instance": "/api/v1/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/archive",
+      "traceId": "0HNOA1Q010GRT:000000CB"
     }
   },
   "corpusVersion": 1,

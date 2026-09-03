@@ -15,41 +15,41 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:51 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": [
       {
-        "userId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+        "userId": "37814d81-af4a-41dd-8504-51e6a021ffef",
         "firstName": "Golden",
         "lastName": "Capture",
         "email": "user@acme-robotics.demo.collega.test",
         "role": "User",
         "status": "Active",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "organizationName": "Acme Robotics",
         "selectable": true
       },
       {
-        "userId": "fe224764-e1f0-4de0-a24f-44834649eb4f",
+        "userId": "bb201c36-2937-408a-955e-68e41682c0fe",
         "firstName": "Maya",
         "lastName": "Collaborator",
         "email": "user2@acme-robotics.demo.collega.test",
         "role": "User",
         "status": "Active",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "organizationName": "Acme Robotics",
         "selectable": true
       },
       {
-        "userId": "22b112f2-1686-4a06-89c3-38df384bf98f",
+        "userId": "30c0268a-0485-4d78-a96c-e0468d2a68d6",
         "firstName": "Rosa",
         "lastName": "Observer",
         "email": "readonly@acme-robotics.demo.collega.test",
         "role": "ReadOnly",
         "status": "Active",
-        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
         "organizationName": "Acme Robotics",
         "selectable": true
       }

@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+    "path": "/comments/ea227229-e742-4134-a838-83b1a190f50d",
     "body": {
       "body": "Edited by its author."
     },
@@ -19,7 +19,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -30,8 +30,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You can only edit your own comments.",
-      "instance": "/api/v1/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
-      "traceId": "0HNOA1HBMQ174:00000057"
+      "instance": "/api/v1/comments/ea227229-e742-4134-a838-83b1a190f50d",
+      "traceId": "0HNOA1Q010GRS:00000057"
     }
   },
   "corpusVersion": 1,

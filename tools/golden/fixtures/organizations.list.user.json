@@ -16,7 +16,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -28,7 +28,7 @@
       "status": 403,
       "detail": "Only a Site Admin can perform this action.",
       "instance": "/api/v1/organizations",
-      "traceId": "0HNOA1HBMQ174:000000B0"
+      "traceId": "0HNOA1Q010GRS:000000B0"
     }
   },
   "corpusVersion": 1,

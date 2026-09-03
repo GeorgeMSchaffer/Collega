@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/statuses/32ee1373-484f-4ea3-8f17-16e75c233f7b",
+    "path": "/statuses/9f3aecaa-e55b-4f54-a9d7-c8c1210a19c5",
     "body": {
       "name": "Golden Capture Renamed",
       "color": "#8f3f6f"
@@ -19,7 +19,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:40:31 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:58 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -30,8 +30,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage statuses in this organization.",
-      "instance": "/api/v1/statuses/32ee1373-484f-4ea3-8f17-16e75c233f7b",
-      "traceId": "0HNOA1HBMQ175:000000E7"
+      "instance": "/api/v1/statuses/9f3aecaa-e55b-4f54-a9d7-c8c1210a19c5",
+      "traceId": "0HNOA1Q010GRT:000000E7"
     }
   },
   "corpusVersion": 1,

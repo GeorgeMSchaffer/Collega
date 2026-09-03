@@ -7,19 +7,19 @@
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/logo",
+    "path": "/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/logo",
     "body": null
   },
   "response": {
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "organizationId": "a12f2c51-ee48-4142-b827-d7788545c590",
+      "organizationId": "e52121a2-9404-4b2b-8947-125dbbbdea53",
       "title": "Zz Golden Capture Org Renamed",
       "description": "Edited by the golden capture.",
       "inviteCode": "<redacted>",
@@ -34,8 +34,8 @@
       "primaryContactFirstName": null,
       "primaryContactLastName": null,
       "isArchived": false,
-      "createdAtUtc": "2026-09-03T22:40:30.24362Z",
-      "updatedAtUtc": "2026-09-03T22:40:30.4114046Z"
+      "createdAtUtc": "2026-09-03T22:55:57.445272Z",
+      "updatedAtUtc": "2026-09-03T22:55:57.6064738Z"
     }
   },
   "corpusVersion": 1,
