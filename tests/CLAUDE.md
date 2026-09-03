@@ -18,6 +18,8 @@ The PostgreSQL container is **not** required: EF Core tests use the InMemory pro
 
 ## Conventions
 
+- **Cover high-usage, high-impact code, not everything.** A full unit + E2E matrix is not the goal; `SPEC/40-test-strategy.md` says what must be covered.
+- **Tests come from a separate QA agent.** The agent that changed the code does not write its tests (see the multi-agent workflow in the root `CLAUDE.md`).
 - **Arrange / Act / Assert.** Cover happy path, boundary values, null input, invalid state.
 - **Hermetic.** No network, no filesystem, no `DateTime.Now`, no randomness. Inject `IClock` and fixed seeds instead — this is why Application and Domain take time as a dependency.
 - **InMemory provider only.** Never point a test at a real database — with the single, deliberate exception documented below.

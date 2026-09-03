@@ -16,6 +16,8 @@ Persistence and external integrations. Implements the abstractions defined in Ap
 
 DbContext + LINQ; `async`/`await` for all database I/O; EF Core migrations for every schema change. One `IEntityTypeConfiguration` per entity in `Persistence/Configurations/` — keep mapping out of `OnModelCreating`.
 
+Where SQL is written by hand (raw migration operations, `FromSql`, `ExecuteSql`): UPPERCASE keywords, lowercase table and column names, no `SELECT *`, meaningful aliases.
+
 Connection string key: `ConnectionStrings:DefaultConnection` (see [src/Collega.API/CLAUDE.md](../Collega.API/CLAUDE.md) for how to set it).
 
 ## Migrations

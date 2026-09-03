@@ -1,117 +1,59 @@
 # CLAUDE.md
 
-Guidance for Claude Code (claude.ai/code) working in this repository.
-
-This file carries only the rules that must be true *before* touching code. Reference detail lives closer to the code it describes — each `src/*` project, `tests/`, and `tests/Collega.E2E.Tests/` has its own `CLAUDE.md` covering that area's layout, conventions, commands, and gotchas. Read those when you work in them; don't duplicate them here.
-
+Rules that must hold before touching code. Area detail lives next to the code in that area's own `CLAUDE.md` (or `README.md`): read the one for the area you're in, and don't duplicate it here. New `apps/*` and `packages/*` get their own as they are created.
 
 ## Working Rules
 
-- Always seek clarification before implementing ambiguous or conflicting behavior. When possible use a question by question multiple choice format.
-- Use progressive disclosure. Information specific to project should be stored seperately and referenced as needed.
-- Keep commits focused on one change. Git History should look human writen and avoid refrences to Claude or Code generation.
-- Keep output concise when responding. 
-- For asking clarifcation prefer an interview format with multiple choice options 
-- Treat `SPEC/*.md` as the source of truth. If implementation changes behavior or contradicts the spec seek clarification.
-- Make surgical changes; avoid unrelated refactors.
-- Only comment the non-obivius.
-- Don't add error handling for scenarios that can't happen.
-- Do not create abstrctions unless they reduce complexity measurably and factories, also avoid interfaces for single implementations.
-- We do not need to cover everything with a full suite of unit and e2e tests.  Instead we want to focus on high usage, high impact code.  Also an agent that edited the coded, should not write tests for their own code, use a seperate QA engineer to create tests.
-- Use path aliases: `@/components`, `@/lib`, `@/server` instead of relative imports where possible.
+- `SPEC/*.md` is the source of truth. Read the relevant spec before describing or changing behavior, and update it first when behavior changes. If behavior is ambiguous or two canonical specs conflict, ask before implementing — one question at a time, multiple choice where possible.
+- Before any status or planning claim, re-read the Current Status section of `SPEC/implementation-agent-tracker.md` and run `git log --oneline -10` fresh. Never answer from memory.
+- Before starting feature work, clear the `TODO` items in `SPEC/Bug Triage.md` unless the user approves an exception.
+- Make surgical changes; no unrelated refactors. Comment only the non-obvious. No error handling for cases that can't happen. No abstractions, factories, or interfaces for a single implementation unless they measurably reduce complexity.
+- Never commit secrets or temporary files. One focused change per commit, written in a human voice with no reference to Claude or code generation.
+- Keep responses concise.
 
+## Specs
 
-## Coding Standards
+`SPEC/README.MD` indexes everything. The files that gate work:
 
-- Prefer clear, minimal code over broad rewrites.
-- SQL: UPPERCASE keywords, lowercase table/column names, no `SELECT *`, meaningful aliases.
-- Never commit secrets or temporary files.
+- `implementation-agent-tracker.md` — what's built, in progress, and next
+- `95-next-sprints.md` — remaining sprint scope; per-sprint files in `sprints/`, completed ones in `sprints/archive/`
+- `50-typescript-migration.md` — the conversion plan: target layout, wave order, collision model, cutover
+- `30-Contracts.md` — API routes and payloads; read before adding or changing an endpoint
+- `40-test-strategy.md`, `90-definition-of-done.md` — what must be covered and what "done" means
+- `decisions.md` — dated decisions; read before reopening a settled question
 
-## Build and Test
+`Specs Overview.md` is derived and non-canonical: where it disagrees with a canonical spec, the canonical spec wins. `ideas-inbox.md` gates nothing. `archive/` is history — don't read it unless asked. `SPECKIT/specs/*/spec.md` are downstream copies; edit the canonical file first.
 
-```bash
-npm run tests:unit #runs unit tests
-npm run tests:e2e #runs e2e test via Cypress
-npm run test #runs the whole suite
-dotnet test Collega.sln
-```
+## Stack and Architecture
 
-Running the API or Client, required configuration and secrets, seeding flags, migrations, and the local PostgreSQL container are all documented where they belong: `src/Collega.API/CLAUDE.md`, `src/Collega.Infrastructure/CLAUDE.md`, `src/Collega.Client/CLAUDE.md`, `tests/CLAUDE.md`, and `README.md`.
+Node.js 24 · TypeScript 7 · Next.js (`apps/web`) · Nest.js (`apps/api`) · Prisma on PostgreSQL · Vitest · Playwright · Vercel. Imports use path aliases (`@/components`, `@/lib`, `@/server`), not relative paths.
 
+Layered with strict boundaries, enforced by `eslint-plugin-boundaries`. Business rules live in `domain` and `application` only — never in controllers or UI components.
 
-## Repository State
-
-
-Repo layout beyond the `src/` and `tests/` projects:
-
-- `SPEC/implementation-agent-tracker.md` Use to track the current state of development with upcoming and completed features
-- `SPEC/` — canonical specs, the implementation tracker, and delivery/sprint plans (source of truth, see below)
-- `SPEC/archive/` — **superseded documents; don't read unless asked for history.** Several assert the project is unstarted, which was true when written and is not now. Nothing here is canonical or gates work.
-- `SPEC/mockups/` — SVG/HTML UI mockups and throwaway review comps
-- `SPEC/SPECKIT/specs/<NNN-feature>/spec.md` — derived downstream copies of canonical `SPEC/*.md`; edit the canonical file first
-
-
-## Source of Truth
-
-Canonical product behavior lives in `SPEC/*.md`. Read the relevant spec before describing or changing behavior. `SPEC/README.MD` indexes the full set; the ones that gate work:
-- `SPECT/decisions` - Records decision made with the date when it was made and a concise explantion.
-- `SPEC/ideas-inbox.md` — unrefined feature ideas. Not scheduled, not specified, and **does not gate work** — only picked up when the user asks.
-- `SPEC/implementation-agent-tracker.md` — not product behavior, but the authoritative log of what's built, in progress, and next.
-- `SPEC/95-next-sprints.md` — index for remaining pre-MVP sprint scope; per-sprint files live in `SPEC/sprints/` (completed ones in `SPEC/sprints/archive/`).
-- `SPEC/30-Contracts.md` — canonical API route/payload contracts. Read before adding or changing an endpoint.
-- `SPEC/40-test-strategy.md`, `SPEC/90-definition-of-done.md` — what must be covered, and what "done" means.
-
-`SPEC/Specs Overview.md` is a **derived, non-canonical** summary — useful for orientation, never for implementation. Where it disagrees with a canonical spec, the canonical spec wins; that is precedence, not a conflict to raise.
-
-If behavior is ambiguous, or **two canonical specs** conflict, ask before implementing.
-
-
-## Architecture
-
-Layered with strict boundaries — business rules live in Domain and Application, never in controllers or UI components. Each project's own `CLAUDE.md` has its layout and conventions.
-
-| Project | Role | Depends on |
+| Package | Role | Imports |
 |---|---|---|
-| `src/API` | HTTP host, request boundary | Application, Infrastructure |
-| `src/Application` | Use-case orchestration, authorization, validation | Domain |
-| `src/Domain` | Entities, enums, value objects, invariants | nothing |
-| `src/Prisma` | Persistence via Prisma / PostGress |  external integrations | implements Application/Domain abstractions |
-| `src/Web` | Blazor WebAssembly UI (Fluent UI Blazor) | — |
+| `packages/domain` | Entities, enums, invariants | nothing |
+| `packages/application` | Use cases, authorization, validation; owns the abstractions | `domain` |
+| `packages/infrastructure` | Prisma client, repositories, integrations | implements `application` / `domain` abstractions |
+| `packages/design-system` | Tokens and primitives from comp P | — |
+| `apps/api` | Nest.js; the only thing that talks to the database | `application`, `infrastructure` |
+| `apps/web` | Next.js; reaches the server over HTTP only | `design-system` |
 
-## Technology Stack
-- Node.js 24.x with Typescript 7.x
-- Frameworks
-    -- Frontend:  Next.js and CSS framework (decided later)
-    -- Backend:  Nest.js
-    -- ORM: Prisma Posgress
-    -- Database: 
-        -- Local:  Postgress on a docker container with persisten storage.
-        -- Prod:  Prisma Postgress on Vercel
-    -- Hosting: Vercal.
+Layout and layer rules: `SPEC/50-typescript-migration.md` §3. `prisma/schema.prisma` is the most contended file in the repo; see §4 before touching it.
 
-## Session, Branch, and Source Control
+**Legacy .NET tree.** `src/Collega.*`, `tests/`, and `Collega.sln` are the .NET 8 / Blazor solution the conversion replaces. It is the golden-capture oracle (`tools/golden/`) until cutover deletes it, so it stays buildable but gets no new features. Its per-project `CLAUDE.md` files still describe it; `dotnet test Collega.sln` is its check. The `e2e/` Playwright suite is kept through the conversion (`e2e/README.md`).
 
-- Use feature branches per work item, named `feature/<NNN>-<short-description>`.
-- Commit at logical checkpoints — completion of a feature or slice.
-- The flow should be: Feature Branch -> Dev Branch --> Main branch
+## Branches
+
+`feature/<NNN>-<short-description>` → `dev` → `main`. Conversion slices merge to `dev` directly, not to an integration branch (`decisions.md`, 2026-09-02). Commit at logical checkpoints — a finished feature or slice.
 
 ## Multi-Agent Worktree Workflow
 
- ### Agent Roles
+Epic-level work splits across role agents, each in its own worktree branched off `dev`:
 
-For epic-level work, split execution across role-based subagents, each in its own git worktree branched off `dev`:
+- **Backend Developer** — `packages/*` and `apps/api`.
+- **QA Developer** — tests for the same slice, per `SPEC/40-test-strategy.md`. The agent that wrote the code never writes its tests.
+- **UI/UX Developer** — `apps/web`. Only if the sprint file in `SPEC/sprints/` has a UI task, and never ahead of the API it depends on.
+- **Code Reviewer** — reviews each finished branch (diff, build, tests, spec conformance) before merge. A gate, not a parallel implementer.
 
-- **Backend Developer** — Domain/Application/Infrastructure/API tasks.
-- **QA Developer** — tests for the same slice, per `SPEC/40-test-strategy.md`.
-- **UI/UX Developer** — UI related tasks. 
-- **Code Reviewer** — gates the other three; reviews each finished branch (diff, build, tests, spec conformance) before it merges. Not a parallel implementer.
-
-### Multi Agent Rules
-
-
-- Each implementer gets its own worktree so they don't collide mid-flight.
-- A role sits out a round if the sprint has no task for it — check the sprint's own file in `SPEC/sprints/` before assigning UI/UX work, and don't parallelize downstream UI work early.
-- Code Reviewer must approve before merge.
-- Once merged into `dev`, delete both the worktree and the branch. Don't leave merged worktrees around.
-- This merges directly into `dev` per finished slice;
-- Update `SPEC/implementation-agent-tracker.md` as slices start and finish.
+Each approved slice merges directly into `dev`; then delete the worktree and branch. Update `SPEC/implementation-agent-tracker.md` as slices start and finish.
