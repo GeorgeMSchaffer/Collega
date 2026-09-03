@@ -1,0 +1,53 @@
+{
+  "scenario": "users",
+  "step": "update.anonymous",
+  "endpoint": "PUT /users/{userId}",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Also a role change, which is the interesting half of this endpoint.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/users/dfb23311-4774-416e-98e4-3e53cbc75642",
+    "body": {
+      "firstName": "Golden",
+      "lastName": "Subject Renamed",
+      "email": "golden.subject@acme-robotics.demo.collega.test",
+      "role": "ReadOnly",
+      "status": "Active"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:32 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/users/dfb23311-4774-416e-98e4-3e53cbc75642",
+      "traceId": "00-7fcd0af6c34858a9289d8f5e6cb79170-47888cfc312c37f5-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/users/<guid@create.body.userId>",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

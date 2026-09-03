@@ -1,0 +1,51 @@
+{
+  "scenario": "auth",
+  "step": "viewas.start.readonly",
+  "endpoint": "POST /auth/view-as",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/auth/view-as",
+    "body": {
+      "targetUserId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to view as that user.",
+      "instance": "/api/v1/auth/view-as",
+      "traceId": "0HNOA1HBMQ175:00000028"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to view as that user.",
+      "instance": "/api/v1/auth/view-as",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

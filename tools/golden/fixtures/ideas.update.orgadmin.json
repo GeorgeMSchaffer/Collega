@@ -1,0 +1,86 @@
+{
+  "scenario": "ideas",
+  "step": "update.orgadmin",
+  "endpoint": "PUT /ideas/{ideaId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+    "body": {
+      "title": "Golden capture idea, edited",
+      "description": "Recorded by the golden capture.",
+      "priority": "High",
+      "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+      "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "ideaId": "0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+      "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+      "title": "Golden capture idea, edited",
+      "description": "Recorded by the golden capture.",
+      "priority": "High",
+      "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+      "ideaTypeName": "Continuous Improvement",
+      "ideaTypeColorHex": null,
+      "ideaTypeIcon": null,
+      "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd",
+      "businessImpactName": "Critical",
+      "businessImpactColor": "#DC2626",
+      "dueDate": null,
+      "assignees": [],
+      "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+      "statusName": "New / Pending",
+      "tagNames": [],
+      "mentions": [],
+      "comments": [],
+      "upvoteCount": 0,
+      "hasUpvoted": false,
+      "commentCount": 0,
+      "fieldValues": []
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "assignees": [],
+      "boardId": "<guid@board.body[0].boardId>",
+      "businessImpactColor": "#DC2626",
+      "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+      "businessImpactName": "Critical",
+      "commentCount": 0,
+      "comments": [],
+      "description": "Recorded by the golden capture.",
+      "dueDate": null,
+      "fieldValues": [],
+      "hasUpvoted": false,
+      "ideaId": "<guid@create.user.body.ideaId>",
+      "ideaTypeColorHex": null,
+      "ideaTypeIcon": null,
+      "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+      "ideaTypeName": "Continuous Improvement",
+      "mentions": [],
+      "priority": "High",
+      "statusId": "<guid@statuses.body[0].statusId>",
+      "statusName": "New / Pending",
+      "tagNames": [],
+      "title": "Golden capture idea, edited",
+      "upvoteCount": 0
+    }
+  }
+}

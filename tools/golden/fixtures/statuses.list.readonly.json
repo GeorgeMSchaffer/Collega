@@ -7,53 +7,53 @@
   "unstable": [],
   "request": {
     "method": "GET",
-    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/statuses",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/statuses",
     "body": null
   },
   "response": {
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:13:06 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:31 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": [
       {
-        "statusId": "320511a2-c8af-401f-9e06-f12cfa79b056",
-        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+        "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
         "name": "New / Pending",
         "color": "#64748B",
         "sortOrder": 10,
         "isDeleted": false
       },
       {
-        "statusId": "95953a86-b562-4067-bebf-839e2c50c811",
-        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+        "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
         "name": "In Review",
         "color": "#D97706",
         "sortOrder": 20,
         "isDeleted": false
       },
       {
-        "statusId": "c571c17d-ee9c-4e3b-ab3e-a221b8cea509",
-        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+        "statusId": "80a03434-f54f-43c3-b6c3-b7b329c0134b",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
         "name": "In Progress",
         "color": "#2563EB",
         "sortOrder": 30,
         "isDeleted": false
       },
       {
-        "statusId": "afed498b-5960-4e8d-8db3-a454956823a8",
-        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+        "statusId": "16d0ff65-931e-44b5-8afb-4cbd6562608c",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
         "name": "Client Review",
         "color": "#7C3AED",
         "sortOrder": 40,
         "isDeleted": false
       },
       {
-        "statusId": "7872ad0a-8e98-406d-801a-c33c64dd9a48",
-        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+        "statusId": "61cded65-6906-441f-90c3-c15d76436e4a",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
         "name": "Complete",
         "color": "#16A34A",
         "sortOrder": 50,

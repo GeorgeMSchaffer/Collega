@@ -1,0 +1,49 @@
+{
+  "scenario": "organizations",
+  "step": "archive.readonly",
+  "endpoint": "POST /organizations/{organizationId}/archive",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "note": "Archives the organization this scenario created. Last, because it is terminal.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/archive",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:30 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Only a Site Admin can perform this action.",
+      "instance": "/api/v1/organizations/a12f2c51-ee48-4142-b827-d7788545c590/archive",
+      "traceId": "0HNOA1HBMQ174:000000CC"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Only a Site Admin can perform this action.",
+      "instance": "/api/v1/organizations/<guid@create.siteadmin.body.organizationId>/archive",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

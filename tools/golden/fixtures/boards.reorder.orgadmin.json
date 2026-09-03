@@ -1,0 +1,40 @@
+{
+  "scenario": "boards",
+  "step": "reorder.orgadmin",
+  "endpoint": "POST /boards/{boardId}/swimlanes/reorder",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Drag-and-drop persists immediately.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/5992257b-0013-4d21-b6da-64b1cf4a1463/swimlanes/reorder",
+    "body": {
+      "swimlanes": [
+        {
+          "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c",
+          "order": 0
+        },
+        {
+          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "order": 1
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

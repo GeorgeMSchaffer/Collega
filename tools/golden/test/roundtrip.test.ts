@@ -265,3 +265,30 @@ test("todo steps are skipped rather than captured", async () => {
     await stub.close();
   }
 });
+
+test("a case that no longer exists does not linger in the corpus", async () => {
+  // A renamed step would otherwise leave its old fixture behind, and replay would
+  // report it absent on every run from then on.
+  const first = await runAgainst();
+  const dir = await mkdtemp(path.join(tmpdir(), "golden-"));
+  try {
+    const manifest = {
+      capturedAt: new Date().toISOString(),
+      stack: "stub",
+      baseUrl: first.stub.url,
+      basePath: first.stub.basePath,
+      seed: "test",
+    };
+    await writeCorpus(dir, first.result.exchanges, manifest);
+    assert.equal((await readCorpus(dir)).length, SCENARIO.steps.length);
+
+    // Re-capture with one case gone, as a rename or deletion would leave it.
+    const fewer = first.result.exchanges.filter((e) => e.step !== "read");
+    await writeCorpus(dir, fewer, manifest);
+    const after = await readCorpus(dir);
+    assert.equal(after.length, fewer.length);
+    assert.equal(after.some((f) => f.step === "read"), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

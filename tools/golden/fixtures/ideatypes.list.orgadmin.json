@@ -7,21 +7,21 @@
   "unstable": [],
   "request": {
     "method": "GET",
-    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/idea-types",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/idea-types",
     "body": null
   },
   "response": {
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": [
       {
-        "ideaTypeId": "4985c209-e293-4360-a327-3038d30a022f",
-        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+        "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
         "name": "Continuous Improvement",
         "sortOrder": 10,
         "isDeleted": false,
@@ -31,8 +31,8 @@
         "fields": []
       },
       {
-        "ideaTypeId": "cbfc69a9-1031-4bb4-aa18-d9aeea9ddc3c",
-        "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+        "ideaTypeId": "9e22cf2f-6ed3-4940-be79-4c86ebde9716",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
         "name": "Process Revision",
         "sortOrder": 20,
         "isDeleted": false,

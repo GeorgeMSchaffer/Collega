@@ -1,0 +1,51 @@
+{
+  "scenario": "organizations",
+  "step": "users.create.orgadmin",
+  "endpoint": "POST /organizations/{organizationId}/users",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too — its own case is next, on its own email.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users",
+    "body": {
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "email": "golden.capture@acme-robotics.demo.collega.test",
+      "role": "User",
+      "initialPassword": "<redacted>"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "17738a09-ab29-4b45-95c2-89b8b91abc64",
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "email": "golden.capture@acme-robotics.demo.collega.test",
+      "role": "User",
+      "status": "Active"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "golden.capture@acme-robotics.demo.collega.test",
+      "organizationId": "<guid@org.body.organizationId>",
+      "role": "User",
+      "status": "Active",
+      "userId": "<guid@users.create.orgadmin.body.userId>"
+    }
+  }
+}

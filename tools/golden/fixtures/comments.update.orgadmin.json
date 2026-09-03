@@ -1,0 +1,52 @@
+{
+  "scenario": "comments",
+  "step": "update.orgadmin",
+  "endpoint": "PUT /comments/{commentId}",
+  "as": "OrgAdmin",
+  "kind": "denied",
+  "note": "Editing is the author's alone; an Org Admin may remove but not rewrite.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+    "body": {
+      "body": "Edited by its author."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You can only edit your own comments.",
+      "instance": "/api/v1/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+      "traceId": "0HNOA1HBMQ174:00000056"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You can only edit your own comments.",
+      "instance": "/api/v1/comments/<guid@create.user.body.commentId>",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

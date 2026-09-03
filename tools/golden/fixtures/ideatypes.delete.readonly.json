@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/idea-types/243c2f5c-2bb7-432b-87f2-5b5fa8e20e55",
+    "path": "/idea-types/8fbef718-771f-464f-b43e-c9fa8398207e",
     "body": null
   },
   "response": {
@@ -15,7 +15,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -26,8 +26,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage idea field options in this organization.",
-      "instance": "/api/v1/idea-types/243c2f5c-2bb7-432b-87f2-5b5fa8e20e55",
-      "traceId": "0HNOA121UE4Q2:00000046"
+      "instance": "/api/v1/idea-types/8fbef718-771f-464f-b43e-c9fa8398207e",
+      "traceId": "0HNOA1HBMQ174:000000AC"
     }
   },
   "corpusVersion": 1,

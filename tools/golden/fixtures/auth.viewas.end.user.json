@@ -1,0 +1,27 @@
+{
+  "scenario": "auth",
+  "step": "viewas.end.user",
+  "endpoint": "DELETE /auth/view-as",
+  "as": "User",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/auth/view-as",
+    "body": null
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

@@ -7,14 +7,14 @@
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/field-definitions/9d930049-309a-4f19-9ca7-311fa68abcde",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions/c94d73fd-76ee-4371-b5f6-c621b8f1f76e",
     "body": null
   },
   "response": {
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:27 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -23,8 +23,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/1880682b-d876-4187-8aec-4d7678336f68/field-definitions/9d930049-309a-4f19-9ca7-311fa68abcde",
-      "traceId": "00-fa917500edb484c826de86bcf32c6e07-bd1a992db623102f-00"
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions/c94d73fd-76ee-4371-b5f6-c621b8f1f76e",
+      "traceId": "00-9e61d103025e6eb7d5f3e0ec2a905fa0-faba33e539584285-00"
     }
   },
   "corpusVersion": 1,

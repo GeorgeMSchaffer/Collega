@@ -1,0 +1,56 @@
+{
+  "scenario": "comments",
+  "step": "create.empty.user",
+  "endpoint": "POST /ideas/{ideaId}/comments",
+  "as": "User",
+  "kind": "invalid",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/ideas/bbcb9c0b-25d7-4123-9b7d-971c14b58bca/comments",
+    "body": {
+      "body": ""
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/validation-error",
+      "title": "One or more fields are invalid.",
+      "status": 400,
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "instance": "/api/v1/ideas/bbcb9c0b-25d7-4123-9b7d-971c14b58bca/comments",
+      "errors": {
+        "body": [
+          "Body is required."
+        ]
+      }
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "errors": {
+        "body": [
+          "Body is required."
+        ]
+      },
+      "instance": "/api/v1/ideas/<guid@ideas.body.items[0].ideaId>/comments",
+      "status": 400,
+      "title": "One or more fields are invalid.",
+      "type": "https://collega.dev/problems/validation-error"
+    }
+  }
+}

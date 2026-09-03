@@ -1,0 +1,51 @@
+{
+  "scenario": "users",
+  "step": "create",
+  "endpoint": "POST /organizations/{organizationId}/users",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Every case below acts on an account this scenario created, never a seeded one.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users",
+    "body": {
+      "firstName": "Golden",
+      "lastName": "Subject",
+      "email": "golden.subject@acme-robotics.demo.collega.test",
+      "role": "User",
+      "initialPassword": "<redacted>"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:31 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "dfb23311-4774-416e-98e4-3e53cbc75642",
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "email": "golden.subject@acme-robotics.demo.collega.test",
+      "role": "User",
+      "status": "Active"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "golden.subject@acme-robotics.demo.collega.test",
+      "organizationId": "<guid@org.body.organizationId>",
+      "role": "User",
+      "status": "Active",
+      "userId": "<guid@create.body.userId>"
+    }
+  }
+}

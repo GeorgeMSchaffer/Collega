@@ -7,13 +7,13 @@
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/idea-types/243c2f5c-2bb7-432b-87f2-5b5fa8e20e55",
+    "path": "/idea-types/8fbef718-771f-464f-b43e-c9fa8398207e",
     "body": null
   },
   "response": {
     "status": 204,
     "headers": {
-      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
       "server": "Kestrel"
     },
     "body": null

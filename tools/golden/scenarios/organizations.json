@@ -1,0 +1,677 @@
+{
+  "name": "organizations",
+  "description": "Organization administration \u2014 the Site Admin's bootstrap surface.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "list.siteadmin",
+      "endpoint": "GET /organizations",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Only a Site Admin sees across organizations."
+    },
+    {
+      "id": "list.orgadmin",
+      "endpoint": "GET /organizations",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "note": "Only a Site Admin sees across organizations."
+    },
+    {
+      "id": "list.user",
+      "endpoint": "GET /organizations",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "note": "Only a Site Admin sees across organizations."
+    },
+    {
+      "id": "list.readonly",
+      "endpoint": "GET /organizations",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "note": "Only a Site Admin sees across organizations."
+    },
+    {
+      "id": "list.anonymous",
+      "endpoint": "GET /organizations",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "note": "Only a Site Admin sees across organizations."
+    },
+    {
+      "id": "create.orgadmin",
+      "endpoint": "POST /organizations",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "body": {
+        "title": "Zz Golden Capture Org",
+        "description": "Created by the golden capture."
+      },
+      "note": "Refusals first, so exactly one organization is created. Named to sort last."
+    },
+    {
+      "id": "create.user",
+      "endpoint": "POST /organizations",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "body": {
+        "title": "Zz Golden Capture Org",
+        "description": "Created by the golden capture."
+      },
+      "note": "Refusals first, so exactly one organization is created. Named to sort last."
+    },
+    {
+      "id": "create.readonly",
+      "endpoint": "POST /organizations",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "body": {
+        "title": "Zz Golden Capture Org",
+        "description": "Created by the golden capture."
+      },
+      "note": "Refusals first, so exactly one organization is created. Named to sort last."
+    },
+    {
+      "id": "create.anonymous",
+      "endpoint": "POST /organizations",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "body": {
+        "title": "Zz Golden Capture Org",
+        "description": "Created by the golden capture."
+      },
+      "note": "Refusals first, so exactly one organization is created. Named to sort last."
+    },
+    {
+      "id": "create.siteadmin",
+      "endpoint": "POST /organizations",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 201,
+      "body": {
+        "title": "Zz Golden Capture Org",
+        "description": "Created by the golden capture."
+      },
+      "note": "Refusals first, so exactly one organization is created. Named to sort last.",
+      "bind": {
+        "newOrgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "get.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}",
+      "note": "Administrators only \u2014 the record carries the invite code, which is why the corpus redacts it."
+    },
+    {
+      "id": "get.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}",
+      "note": "Administrators only \u2014 the record carries the invite code, which is why the corpus redacts it.",
+      "bind": {
+        "inviteCode": "$.body.inviteCode"
+      }
+    },
+    {
+      "id": "get.user",
+      "endpoint": "GET /organizations/{organizationId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}",
+      "note": "Administrators only \u2014 the record carries the invite code, which is why the corpus redacts it."
+    },
+    {
+      "id": "get.readonly",
+      "endpoint": "GET /organizations/{organizationId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}",
+      "note": "Administrators only \u2014 the record carries the invite code, which is why the corpus redacts it."
+    },
+    {
+      "id": "get.anonymous",
+      "endpoint": "GET /organizations/{organizationId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}",
+      "note": "Administrators only \u2014 the record carries the invite code, which is why the corpus redacts it."
+    },
+    {
+      "id": "update.orgadmin",
+      "endpoint": "PUT /organizations/{organizationId}",
+      "as": "OrgAdmin",
+      "kind": "missing",
+      "expect": 404,
+      "path": "/organizations/{{newOrgId}}",
+      "body": {
+        "title": "Zz Golden Capture Org Renamed",
+        "description": "Edited by the golden capture."
+      },
+      "note": "Against the organization this scenario created, never a seeded one."
+    },
+    {
+      "id": "update.user",
+      "endpoint": "PUT /organizations/{organizationId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}",
+      "body": {
+        "title": "Zz Golden Capture Org Renamed",
+        "description": "Edited by the golden capture."
+      },
+      "note": "Against the organization this scenario created, never a seeded one."
+    },
+    {
+      "id": "update.readonly",
+      "endpoint": "PUT /organizations/{organizationId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}",
+      "body": {
+        "title": "Zz Golden Capture Org Renamed",
+        "description": "Edited by the golden capture."
+      },
+      "note": "Against the organization this scenario created, never a seeded one."
+    },
+    {
+      "id": "update.anonymous",
+      "endpoint": "PUT /organizations/{organizationId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{newOrgId}}",
+      "body": {
+        "title": "Zz Golden Capture Org Renamed",
+        "description": "Edited by the golden capture."
+      },
+      "note": "Against the organization this scenario created, never a seeded one."
+    },
+    {
+      "id": "update.siteadmin",
+      "endpoint": "PUT /organizations/{organizationId}",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{newOrgId}}",
+      "body": {
+        "title": "Zz Golden Capture Org Renamed",
+        "description": "Edited by the golden capture."
+      },
+      "note": "Against the organization this scenario created, never a seeded one."
+    },
+    {
+      "id": "regenerate.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/invite-code/regenerate",
+      "as": "OrgAdmin",
+      "kind": "missing",
+      "expect": 404,
+      "path": "/organizations/{{newOrgId}}/invite-code/regenerate",
+      "note": "The corpus pins that a code comes back, not that it differs \u2014 see tools/golden/README.md."
+    },
+    {
+      "id": "regenerate.user",
+      "endpoint": "POST /organizations/{organizationId}/invite-code/regenerate",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}/invite-code/regenerate",
+      "note": "The corpus pins that a code comes back, not that it differs \u2014 see tools/golden/README.md."
+    },
+    {
+      "id": "regenerate.readonly",
+      "endpoint": "POST /organizations/{organizationId}/invite-code/regenerate",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}/invite-code/regenerate",
+      "note": "The corpus pins that a code comes back, not that it differs \u2014 see tools/golden/README.md."
+    },
+    {
+      "id": "regenerate.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/invite-code/regenerate",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{newOrgId}}/invite-code/regenerate",
+      "note": "The corpus pins that a code comes back, not that it differs \u2014 see tools/golden/README.md."
+    },
+    {
+      "id": "regenerate.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/invite-code/regenerate",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{newOrgId}}/invite-code/regenerate",
+      "note": "The corpus pins that a code comes back, not that it differs \u2014 see tools/golden/README.md."
+    },
+    {
+      "id": "logo.set.orgadmin",
+      "endpoint": "PUT /organizations/{organizationId}/logo",
+      "as": "OrgAdmin",
+      "kind": "missing",
+      "expect": 404,
+      "path": "/organizations/{{newOrgId}}/logo",
+      "body": {
+        "thumbnailDataUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "heightPx": 1
+      },
+      "note": "A one-pixel PNG: the case is the contract, not the picture."
+    },
+    {
+      "id": "logo.set.user",
+      "endpoint": "PUT /organizations/{organizationId}/logo",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}/logo",
+      "body": {
+        "thumbnailDataUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "heightPx": 1
+      },
+      "note": "A one-pixel PNG: the case is the contract, not the picture."
+    },
+    {
+      "id": "logo.set.readonly",
+      "endpoint": "PUT /organizations/{organizationId}/logo",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}/logo",
+      "body": {
+        "thumbnailDataUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "heightPx": 1
+      },
+      "note": "A one-pixel PNG: the case is the contract, not the picture."
+    },
+    {
+      "id": "logo.set.anonymous",
+      "endpoint": "PUT /organizations/{organizationId}/logo",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{newOrgId}}/logo",
+      "body": {
+        "thumbnailDataUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "heightPx": 1
+      },
+      "note": "A one-pixel PNG: the case is the contract, not the picture."
+    },
+    {
+      "id": "logo.set.siteadmin",
+      "endpoint": "PUT /organizations/{organizationId}/logo",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{newOrgId}}/logo",
+      "body": {
+        "thumbnailDataUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "heightPx": 1
+      },
+      "note": "A one-pixel PNG: the case is the contract, not the picture."
+    },
+    {
+      "id": "logo.clear.orgadmin",
+      "endpoint": "DELETE /organizations/{organizationId}/logo",
+      "as": "OrgAdmin",
+      "kind": "missing",
+      "expect": 404,
+      "path": "/organizations/{{newOrgId}}/logo"
+    },
+    {
+      "id": "logo.clear.user",
+      "endpoint": "DELETE /organizations/{organizationId}/logo",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}/logo"
+    },
+    {
+      "id": "logo.clear.readonly",
+      "endpoint": "DELETE /organizations/{organizationId}/logo",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}/logo"
+    },
+    {
+      "id": "logo.clear.anonymous",
+      "endpoint": "DELETE /organizations/{organizationId}/logo",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{newOrgId}}/logo"
+    },
+    {
+      "id": "logo.clear.siteadmin",
+      "endpoint": "DELETE /organizations/{organizationId}/logo",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{newOrgId}}/logo"
+    },
+    {
+      "id": "users.list.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/users",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/users",
+      "note": "The administrative roster, as against the member directory below."
+    },
+    {
+      "id": "users.list.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/users",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/users",
+      "note": "The administrative roster, as against the member directory below."
+    },
+    {
+      "id": "users.list.user",
+      "endpoint": "GET /organizations/{organizationId}/users",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/users",
+      "note": "The administrative roster, as against the member directory below."
+    },
+    {
+      "id": "users.list.readonly",
+      "endpoint": "GET /organizations/{organizationId}/users",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/users",
+      "note": "The administrative roster, as against the member directory below."
+    },
+    {
+      "id": "users.list.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/users",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/users",
+      "note": "The administrative roster, as against the member directory below."
+    },
+    {
+      "id": "members.list.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/members",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/members",
+      "note": "What the assignee picker reads, so every member may."
+    },
+    {
+      "id": "members.list.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/members",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/members",
+      "note": "What the assignee picker reads, so every member may."
+    },
+    {
+      "id": "members.list.user",
+      "endpoint": "GET /organizations/{organizationId}/members",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/members",
+      "note": "What the assignee picker reads, so every member may."
+    },
+    {
+      "id": "members.list.readonly",
+      "endpoint": "GET /organizations/{organizationId}/members",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/members",
+      "note": "What the assignee picker reads, so every member may."
+    },
+    {
+      "id": "members.list.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/members",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/members",
+      "note": "What the assignee picker reads, so every member may."
+    },
+    {
+      "id": "users.create.user",
+      "endpoint": "POST /organizations/{organizationId}/users",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/users",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "email": "golden.capture@acme-robotics.demo.collega.test",
+        "role": "User",
+        "initialPassword": "Abc123!"
+      },
+      "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too \u2014 its own case is next, on its own email."
+    },
+    {
+      "id": "users.create.readonly",
+      "endpoint": "POST /organizations/{organizationId}/users",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/users",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "email": "golden.capture@acme-robotics.demo.collega.test",
+        "role": "User",
+        "initialPassword": "Abc123!"
+      },
+      "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too \u2014 its own case is next, on its own email."
+    },
+    {
+      "id": "users.create.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/users",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/users",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "email": "golden.capture@acme-robotics.demo.collega.test",
+        "role": "User",
+        "initialPassword": "Abc123!"
+      },
+      "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too \u2014 its own case is next, on its own email."
+    },
+    {
+      "id": "users.create.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/users",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/organizations/{{orgId}}/users",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "email": "golden.capture@acme-robotics.demo.collega.test",
+        "role": "User",
+        "initialPassword": "Abc123!"
+      },
+      "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too \u2014 its own case is next, on its own email.",
+      "bind": {
+        "newUserId": "$.body.userId"
+      }
+    },
+    {
+      "id": "users.create.bootstrap.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/users",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/organizations/{{orgId}}/users",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Bootstrap",
+        "email": "golden.bootstrap@acme-robotics.demo.collega.test",
+        "role": "User",
+        "initialPassword": "Abc123!"
+      },
+      "note": "A direct Site Admin creating a user, which rule 26 keeps out of View As: without it a new deployment would have nobody to act as."
+    },
+    {
+      "id": "users.import.user",
+      "endpoint": "POST /organizations/{organizationId}/users/import",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/users/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "users.csv",
+        "contentType": "text/csv",
+        "content": "firstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n"
+      },
+      "note": "User import is bootstrap and stays direct, unlike idea import \u2014 rule 26 puts the two on opposite sides."
+    },
+    {
+      "id": "users.import.readonly",
+      "endpoint": "POST /organizations/{organizationId}/users/import",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/users/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "users.csv",
+        "contentType": "text/csv",
+        "content": "firstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n"
+      },
+      "note": "User import is bootstrap and stays direct, unlike idea import \u2014 rule 26 puts the two on opposite sides."
+    },
+    {
+      "id": "users.import.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/users/import",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/users/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "users.csv",
+        "contentType": "text/csv",
+        "content": "firstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n"
+      },
+      "note": "User import is bootstrap and stays direct, unlike idea import \u2014 rule 26 puts the two on opposite sides."
+    },
+    {
+      "id": "users.import.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/users/import",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/users/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "users.csv",
+        "contentType": "text/csv",
+        "content": "firstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n"
+      },
+      "note": "User import is bootstrap and stays direct, unlike idea import \u2014 rule 26 puts the two on opposite sides."
+    },
+    {
+      "id": "users.import.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/users/import",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/users/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "users.csv",
+        "contentType": "text/csv",
+        "content": "firstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n"
+      },
+      "note": "User import is bootstrap and stays direct, unlike idea import \u2014 rule 26 puts the two on opposite sides."
+    },
+    {
+      "id": "archive.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/archive",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}/archive",
+      "note": "Archives the organization this scenario created. Last, because it is terminal."
+    },
+    {
+      "id": "archive.user",
+      "endpoint": "POST /organizations/{organizationId}/archive",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}/archive",
+      "note": "Archives the organization this scenario created. Last, because it is terminal."
+    },
+    {
+      "id": "archive.readonly",
+      "endpoint": "POST /organizations/{organizationId}/archive",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{newOrgId}}/archive",
+      "note": "Archives the organization this scenario created. Last, because it is terminal."
+    },
+    {
+      "id": "archive.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/archive",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{newOrgId}}/archive",
+      "note": "Archives the organization this scenario created. Last, because it is terminal."
+    },
+    {
+      "id": "archive.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/archive",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/organizations/{{newOrgId}}/archive",
+      "note": "Archives the organization this scenario created. Last, because it is terminal."
+    }
+  ]
+}

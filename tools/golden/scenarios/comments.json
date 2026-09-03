@@ -1,0 +1,274 @@
+{
+  "name": "comments",
+  "description": "Comments on an idea. Read Only accounts are members and may comment.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "board",
+      "endpoint": "GET /organizations/{organizationId}/boards",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/boards",
+      "bind": {
+        "boardId": "$.body[0].boardId"
+      }
+    },
+    {
+      "id": "ideas",
+      "endpoint": "GET /boards/{boardId}/ideas",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas",
+      "note": "A seeded idea, so the comment cases do not depend on the ideas scenario.",
+      "bind": {
+        "ideaId": "$.body.items[0].ideaId"
+      }
+    },
+    {
+      "id": "list.siteadmin",
+      "endpoint": "GET /ideas/{ideaId}/comments",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{ideaId}}/comments"
+    },
+    {
+      "id": "list.orgadmin",
+      "endpoint": "GET /ideas/{ideaId}/comments",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{ideaId}}/comments"
+    },
+    {
+      "id": "list.user",
+      "endpoint": "GET /ideas/{ideaId}/comments",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{ideaId}}/comments"
+    },
+    {
+      "id": "list.readonly",
+      "endpoint": "GET /ideas/{ideaId}/comments",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{ideaId}}/comments"
+    },
+    {
+      "id": "list.anonymous",
+      "endpoint": "GET /ideas/{ideaId}/comments",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/ideas/{{ideaId}}/comments"
+    },
+    {
+      "id": "create.siteadmin",
+      "endpoint": "POST /ideas/{ideaId}/comments",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ideas/{{ideaId}}/comments",
+      "body": {
+        "body": "Recorded by the golden capture."
+      },
+      "note": "Read Only keeps commenting and upvoting \u2014 they are members, not spectators."
+    },
+    {
+      "id": "create.orgadmin",
+      "endpoint": "POST /ideas/{ideaId}/comments",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/ideas/{{ideaId}}/comments",
+      "body": {
+        "body": "Recorded by the golden capture."
+      },
+      "note": "Read Only keeps commenting and upvoting \u2014 they are members, not spectators."
+    },
+    {
+      "id": "create.user",
+      "endpoint": "POST /ideas/{ideaId}/comments",
+      "as": "User",
+      "kind": "success",
+      "expect": 201,
+      "path": "/ideas/{{ideaId}}/comments",
+      "body": {
+        "body": "Recorded by the golden capture."
+      },
+      "note": "Read Only keeps commenting and upvoting \u2014 they are members, not spectators.",
+      "bind": {
+        "userCommentId": "$.body.commentId"
+      }
+    },
+    {
+      "id": "create.readonly",
+      "endpoint": "POST /ideas/{ideaId}/comments",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 201,
+      "path": "/ideas/{{ideaId}}/comments",
+      "body": {
+        "body": "Recorded by the golden capture."
+      },
+      "note": "Read Only keeps commenting and upvoting \u2014 they are members, not spectators."
+    },
+    {
+      "id": "create.anonymous",
+      "endpoint": "POST /ideas/{ideaId}/comments",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/ideas/{{ideaId}}/comments",
+      "body": {
+        "body": "Recorded by the golden capture."
+      },
+      "note": "Read Only keeps commenting and upvoting \u2014 they are members, not spectators."
+    },
+    {
+      "id": "create.empty.user",
+      "endpoint": "POST /ideas/{ideaId}/comments",
+      "as": "User",
+      "kind": "invalid",
+      "expect": 400,
+      "path": "/ideas/{{ideaId}}/comments",
+      "body": {
+        "body": ""
+      }
+    },
+    {
+      "id": "update.siteadmin",
+      "endpoint": "PUT /comments/{commentId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/comments/{{userCommentId}}",
+      "body": {
+        "body": "Edited by its author."
+      },
+      "note": "Editing is the author's alone; an Org Admin may remove but not rewrite."
+    },
+    {
+      "id": "update.orgadmin",
+      "endpoint": "PUT /comments/{commentId}",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/comments/{{userCommentId}}",
+      "body": {
+        "body": "Edited by its author."
+      },
+      "note": "Editing is the author's alone; an Org Admin may remove but not rewrite."
+    },
+    {
+      "id": "update.user",
+      "endpoint": "PUT /comments/{commentId}",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/comments/{{userCommentId}}",
+      "body": {
+        "body": "Edited by its author."
+      },
+      "note": "Editing is the author's alone; an Org Admin may remove but not rewrite."
+    },
+    {
+      "id": "update.readonly",
+      "endpoint": "PUT /comments/{commentId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/comments/{{userCommentId}}",
+      "body": {
+        "body": "Edited by its author."
+      },
+      "note": "Editing is the author's alone; an Org Admin may remove but not rewrite."
+    },
+    {
+      "id": "update.anonymous",
+      "endpoint": "PUT /comments/{commentId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/comments/{{userCommentId}}",
+      "body": {
+        "body": "Edited by its author."
+      },
+      "note": "Editing is the author's alone; an Org Admin may remove but not rewrite."
+    },
+    {
+      "id": "delete.siteadmin",
+      "endpoint": "DELETE /comments/{commentId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/comments/{{userCommentId}}",
+      "note": "The refusals run first, so the author's delete is last and succeeds once."
+    },
+    {
+      "id": "delete.readonly",
+      "endpoint": "DELETE /comments/{commentId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/comments/{{userCommentId}}",
+      "note": "The refusals run first, so the author's delete is last and succeeds once."
+    },
+    {
+      "id": "delete.anonymous",
+      "endpoint": "DELETE /comments/{commentId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/comments/{{userCommentId}}",
+      "note": "The refusals run first, so the author's delete is last and succeeds once."
+    },
+    {
+      "id": "delete.user",
+      "endpoint": "DELETE /comments/{commentId}",
+      "as": "User",
+      "kind": "success",
+      "expect": 204,
+      "path": "/comments/{{userCommentId}}",
+      "note": "The refusals run first, so the author's delete is last and succeeds once."
+    },
+    {
+      "id": "admin-comment",
+      "endpoint": "POST /ideas/{ideaId}/comments",
+      "as": "User",
+      "kind": "success",
+      "expect": 201,
+      "path": "/ideas/{{ideaId}}/comments",
+      "body": {
+        "body": "A second comment, for an administrator to remove."
+      },
+      "bind": {
+        "otherCommentId": "$.body.commentId"
+      }
+    },
+    {
+      "id": "delete.byadmin.orgadmin",
+      "endpoint": "DELETE /comments/{commentId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/comments/{{otherCommentId}}",
+      "note": "An Org Admin may remove a comment they did not write, though not edit it."
+    }
+  ]
+}

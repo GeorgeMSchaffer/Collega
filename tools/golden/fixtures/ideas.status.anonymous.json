@@ -1,0 +1,49 @@
+{
+  "scenario": "ideas",
+  "step": "status.anonymous",
+  "endpoint": "POST /ideas/{ideaId}/status",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "This board allows members to move cards; that is a board setting.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/status",
+    "body": {
+      "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/status",
+      "traceId": "00-2de8a4f1121efda0b8d02498b8dabad4-a977562ff8fc8da0-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ideas/<guid@create.user.body.ideaId>/status",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "scenario": "organizations",
+  "step": "users.list.user",
+  "endpoint": "GET /organizations/{organizationId}/users",
+  "as": "User",
+  "kind": "denied",
+  "note": "The administrative roster, as against the member directory below.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to manage users in this organization.",
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users",
+      "traceId": "0HNOA1HBMQ174:000000C2"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to manage users in this organization.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/users",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

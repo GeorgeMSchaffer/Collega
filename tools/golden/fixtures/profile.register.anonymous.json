@@ -1,0 +1,51 @@
+{
+  "scenario": "profile",
+  "step": "register.anonymous",
+  "endpoint": "POST /auth/register",
+  "as": "anonymous",
+  "kind": "success",
+  "note": "Self-registration is anonymous by design — the invite code is the credential.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/auth/register",
+    "body": {
+      "inviteCode": "<redacted>",
+      "firstName": "Golden",
+      "lastName": "Registrant",
+      "email": "golden.registrant@acme-robotics.demo.collega.test",
+      "password": "<redacted>"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:30 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "ae0950b9-3ac7-4b49-8c56-c9eda74e839d",
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "email": "golden.registrant@acme-robotics.demo.collega.test",
+      "role": "User",
+      "status": "Active"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "golden.registrant@acme-robotics.demo.collega.test",
+      "organizationId": "<guid@org.body.organizationId>",
+      "role": "User",
+      "status": "Active",
+      "userId": "<guid@register.anonymous.body.userId>"
+    }
+  }
+}

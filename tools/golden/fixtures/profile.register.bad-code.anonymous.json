@@ -1,0 +1,61 @@
+{
+  "scenario": "profile",
+  "step": "register.bad-code.anonymous",
+  "endpoint": "POST /auth/register",
+  "as": "anonymous",
+  "kind": "invalid",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/auth/register",
+    "body": {
+      "inviteCode": "<redacted>",
+      "firstName": "Golden",
+      "lastName": "Refused",
+      "email": "golden.refused@acme-robotics.demo.collega.test",
+      "password": "<redacted>"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:30 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/validation-error",
+      "title": "One or more fields are invalid.",
+      "status": 400,
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "instance": "/api/v1/auth/register",
+      "errors": {
+        "inviteCode": "<redacted>"
+      },
+      "traceId": "0HNOA1HBMQ174:000000DB"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "errors": {
+        "inviteCode": "<redacted>"
+      },
+      "instance": "/api/v1/auth/register",
+      "status": 400,
+      "title": "One or more fields are invalid.",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/validation-error"
+    }
+  }
+}

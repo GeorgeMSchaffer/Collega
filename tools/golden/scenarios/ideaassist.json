@@ -1,0 +1,114 @@
+{
+  "name": "ideaassist",
+  "description": "The brainstorm turn endpoint, captured with assist dark.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "board",
+      "endpoint": "GET /organizations/{organizationId}/boards",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/boards",
+      "bind": {
+        "boardId": "$.body[0].boardId"
+      }
+    },
+    {
+      "id": "turn.siteadmin",
+      "endpoint": "POST /boards/{boardId}/idea-assist/turns",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{boardId}}/idea-assist/turns",
+      "body": {
+        "transcript": [
+          {
+            "role": "user",
+            "text": "We keep losing time on manual handoffs."
+          }
+        ]
+      },
+      "note": "503 is the contract when no model key is configured (rule 31), and it is the only answer this endpoint can have in a corpus: a live turn would be a billed, non-deterministic response, which tests/CLAUDE.md forbids outright. The authorization half is still pinned \u2014 who may ask at all."
+    },
+    {
+      "id": "turn.orgadmin",
+      "endpoint": "POST /boards/{boardId}/idea-assist/turns",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 503,
+      "path": "/boards/{{boardId}}/idea-assist/turns",
+      "body": {
+        "transcript": [
+          {
+            "role": "user",
+            "text": "We keep losing time on manual handoffs."
+          }
+        ]
+      },
+      "note": "503 is the contract when no model key is configured (rule 31), and it is the only answer this endpoint can have in a corpus: a live turn would be a billed, non-deterministic response, which tests/CLAUDE.md forbids outright. The authorization half is still pinned \u2014 who may ask at all."
+    },
+    {
+      "id": "turn.user",
+      "endpoint": "POST /boards/{boardId}/idea-assist/turns",
+      "as": "User",
+      "kind": "success",
+      "expect": 503,
+      "path": "/boards/{{boardId}}/idea-assist/turns",
+      "body": {
+        "transcript": [
+          {
+            "role": "user",
+            "text": "We keep losing time on manual handoffs."
+          }
+        ]
+      },
+      "note": "503 is the contract when no model key is configured (rule 31), and it is the only answer this endpoint can have in a corpus: a live turn would be a billed, non-deterministic response, which tests/CLAUDE.md forbids outright. The authorization half is still pinned \u2014 who may ask at all."
+    },
+    {
+      "id": "turn.readonly",
+      "endpoint": "POST /boards/{boardId}/idea-assist/turns",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{boardId}}/idea-assist/turns",
+      "body": {
+        "transcript": [
+          {
+            "role": "user",
+            "text": "We keep losing time on manual handoffs."
+          }
+        ]
+      },
+      "note": "503 is the contract when no model key is configured (rule 31), and it is the only answer this endpoint can have in a corpus: a live turn would be a billed, non-deterministic response, which tests/CLAUDE.md forbids outright. The authorization half is still pinned \u2014 who may ask at all."
+    },
+    {
+      "id": "turn.anonymous",
+      "endpoint": "POST /boards/{boardId}/idea-assist/turns",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/boards/{{boardId}}/idea-assist/turns",
+      "body": {
+        "transcript": [
+          {
+            "role": "user",
+            "text": "We keep losing time on manual handoffs."
+          }
+        ]
+      },
+      "note": "503 is the contract when no model key is configured (rule 31), and it is the only answer this endpoint can have in a corpus: a live turn would be a billed, non-deterministic response, which tests/CLAUDE.md forbids outright. The authorization half is still pinned \u2014 who may ask at all."
+    }
+  ]
+}

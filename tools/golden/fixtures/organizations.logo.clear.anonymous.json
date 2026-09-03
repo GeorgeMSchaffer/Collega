@@ -1,0 +1,45 @@
+{
+  "scenario": "organizations",
+  "step": "logo.clear.anonymous",
+  "endpoint": "DELETE /organizations/{organizationId}/logo",
+  "as": "anonymous",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/logo",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/a12f2c51-ee48-4142-b827-d7788545c590/logo",
+      "traceId": "00-16e813d2e002b9086a31fc36d95a508a-8defa8d57a1b2a6a-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/<guid@create.siteadmin.body.organizationId>/logo",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

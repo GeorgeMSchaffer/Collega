@@ -1,0 +1,55 @@
+{
+  "scenario": "ideas",
+  "step": "update.readonly",
+  "endpoint": "PUT /ideas/{ideaId}",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+    "body": {
+      "title": "Golden capture idea, edited",
+      "description": "Recorded by the golden capture.",
+      "priority": "High",
+      "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+      "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Read Only users cannot create or edit ideas.",
+      "instance": "/api/v1/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+      "traceId": "0HNOA1HBMQ174:00000088"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Read Only users cannot create or edit ideas.",
+      "instance": "/api/v1/ideas/<guid@create.user.body.ideaId>",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

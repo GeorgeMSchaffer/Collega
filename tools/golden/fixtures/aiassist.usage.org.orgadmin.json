@@ -1,0 +1,49 @@
+{
+  "scenario": "aiassist",
+  "step": "usage.org.orgadmin",
+  "endpoint": "GET /organizations/{organizationId}/ai-assist/usage",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ai-assist/usage",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:23 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "fromUtc": "2026-09-01T00:00:00Z",
+      "toUtc": "2026-09-03T22:40:24.3965072Z",
+      "organizations": [],
+      "dailyTokenLimit": null,
+      "tokensUsedToday": null,
+      "totalCalls": 0,
+      "totalTokens": 0,
+      "totalEstimatedCost": 0
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "dailyTokenLimit": null,
+      "fromUtc": "<timestamp>",
+      "organizations": [],
+      "toUtc": "<timestamp>",
+      "tokensUsedToday": null,
+      "totalCalls": 0,
+      "totalEstimatedCost": 0,
+      "totalTokens": 0
+    }
+  }
+}

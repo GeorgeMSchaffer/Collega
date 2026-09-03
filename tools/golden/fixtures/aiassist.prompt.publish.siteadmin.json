@@ -1,0 +1,66 @@
+{
+  "scenario": "aiassist",
+  "step": "prompt.publish.siteadmin",
+  "endpoint": "PUT /ai-assist/prompt",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/ai-assist/prompt",
+    "body": {
+      "body": "You are Collega's idea assistant. Recorded by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}",
+      "outOfScopeRedirect": "I can only help with ideas for this organization.",
+      "conversationClosedRedirect": "This conversation is closed."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:23 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "body": "You are Collega's idea assistant. Recorded by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}",
+      "outOfScopeRedirect": "I can only help with ideas for this organization.",
+      "conversationClosedRedirect": "This conversation is closed.",
+      "version": 1,
+      "isBuiltInDefault": false,
+      "versions": [
+        {
+          "version": 1,
+          "createdAtUtc": "2026-09-03T22:40:24.543939Z",
+          "createdByUserId": "02e01f4e-3c56-41ba-816c-af73f324f95f",
+          "createdByDisplayName": "Sam Sitewide",
+          "isActive": true
+        }
+      ]
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "body": "You are Collega's idea assistant. Recorded by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}",
+      "conversationClosedRedirect": "This conversation is closed.",
+      "isBuiltInDefault": false,
+      "outOfScopeRedirect": "I can only help with ideas for this organization.",
+      "version": 1,
+      "versions": [
+        {
+          "createdAtUtc": "<timestamp>",
+          "createdByDisplayName": "Sam Sitewide",
+          "createdByUserId": "<guid@prompt.publish.siteadmin.body.versions[0].createdByUserId>",
+          "isActive": true,
+          "version": 1
+        }
+      ]
+    }
+  }
+}

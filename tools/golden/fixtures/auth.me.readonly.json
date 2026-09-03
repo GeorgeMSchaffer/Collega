@@ -14,13 +14,13 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:13:03 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "userId": "f1c76708-8b73-41e3-9a9c-165898d829f0",
-      "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+      "userId": "22b112f2-1686-4a06-89c3-38df384bf98f",
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
       "role": "ReadOnly",
       "firstName": "Rosa",
       "lastName": "Observer",

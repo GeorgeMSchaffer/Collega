@@ -1,0 +1,73 @@
+{
+  "scenario": "boards",
+  "step": "get.readonly",
+  "endpoint": "GET /boards/{boardId}",
+  "as": "ReadOnly",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/boards/5992257b-0013-4d21-b6da-64b1cf4a1463",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "boardId": "5992257b-0013-4d21-b6da-64b1cf4a1463",
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "name": "Zz Golden Capture Board",
+      "allowUserStatusUpdate": true,
+      "swimlanes": [
+        {
+          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "statusName": "New / Pending",
+          "statusColor": "#64748B",
+          "order": 0,
+          "statusIsDeleted": false
+        },
+        {
+          "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c",
+          "statusName": "In Review",
+          "statusColor": "#D97706",
+          "order": 1,
+          "statusIsDeleted": false
+        }
+      ]
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "allowUserStatusUpdate": true,
+      "boardId": "<guid@create.orgadmin.body.boardId>",
+      "name": "Zz Golden Capture Board",
+      "organizationId": "<guid@org.body.organizationId>",
+      "swimlanes": [
+        {
+          "order": 0,
+          "statusColor": "#64748B",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusIsDeleted": false,
+          "statusName": "New / Pending"
+        },
+        {
+          "order": 1,
+          "statusColor": "#D97706",
+          "statusId": "<guid@statuses.body[1].statusId>",
+          "statusIsDeleted": false,
+          "statusName": "In Review"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "scenario": "boards",
+  "step": "create.orgadmin",
+  "endpoint": "POST /organizations/{organizationId}/boards",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Named to sort last: board lists come back by name, and a scenario that binds body[0] must get a seeded board rather than this one.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/boards",
+    "body": {
+      "name": "Zz Golden Capture Board",
+      "allowUserStatusUpdate": true,
+      "swimlanes": [
+        {
+          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "order": 0
+        },
+        {
+          "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c",
+          "order": 1
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "boardId": "5992257b-0013-4d21-b6da-64b1cf4a1463",
+      "name": "Zz Golden Capture Board",
+      "swimlanes": [
+        {
+          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "statusName": "New / Pending",
+          "statusColor": "#64748B",
+          "order": 0,
+          "statusIsDeleted": false
+        },
+        {
+          "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c",
+          "statusName": "In Review",
+          "statusColor": "#D97706",
+          "order": 1,
+          "statusIsDeleted": false
+        }
+      ]
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "boardId": "<guid@create.orgadmin.body.boardId>",
+      "name": "Zz Golden Capture Board",
+      "swimlanes": [
+        {
+          "order": 0,
+          "statusColor": "#64748B",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusIsDeleted": false,
+          "statusName": "New / Pending"
+        },
+        {
+          "order": 1,
+          "statusColor": "#D97706",
+          "statusId": "<guid@statuses.body[1].statusId>",
+          "statusIsDeleted": false,
+          "statusName": "In Review"
+        }
+      ]
+    }
+  }
+}

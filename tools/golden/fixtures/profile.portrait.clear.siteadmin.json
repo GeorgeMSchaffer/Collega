@@ -1,0 +1,51 @@
+{
+  "scenario": "profile",
+  "step": "portrait.clear.siteadmin",
+  "endpoint": "DELETE /auth/me/portrait",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/auth/me/portrait",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:30 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "02e01f4e-3c56-41ba-816c-af73f324f95f",
+      "organizationId": null,
+      "role": "SiteAdmin",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "email": "siteadmin@demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": null,
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "siteadmin@demo.collega.test",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "organizationId": null,
+      "portraitDataUrl": null,
+      "role": "SiteAdmin",
+      "status": "Active",
+      "userId": "<guid@me.update.siteadmin.body.userId>",
+      "viewingAs": null
+    }
+  }
+}

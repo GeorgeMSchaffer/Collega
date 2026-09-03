@@ -1,0 +1,53 @@
+{
+  "scenario": "users",
+  "step": "get.orgadmin",
+  "endpoint": "GET /users/{userId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/users/dfb23311-4774-416e-98e4-3e53cbc75642",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:32 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "dfb23311-4774-416e-98e4-3e53cbc75642",
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "firstName": "Golden",
+      "lastName": "Subject",
+      "email": "golden.subject@acme-robotics.demo.collega.test",
+      "role": "User",
+      "status": "Active",
+      "mustChangePassword": true,
+      "createdAtUtc": "2026-09-03T22:40:32.634811Z",
+      "updatedAtUtc": "2026-09-03T22:40:32.634811Z"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "createdAtUtc": "<timestamp>",
+      "email": "golden.subject@acme-robotics.demo.collega.test",
+      "firstName": "Golden",
+      "lastName": "Subject",
+      "mustChangePassword": true,
+      "organizationId": "<guid@org.body.organizationId>",
+      "role": "User",
+      "status": "Active",
+      "updatedAtUtc": "<timestamp>",
+      "userId": "<guid@create.body.userId>"
+    }
+  }
+}

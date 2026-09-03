@@ -1,0 +1,47 @@
+{
+  "scenario": "ideas",
+  "step": "import.anonymous",
+  "endpoint": "POST /boards/{boardId}/ideas/import",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "A member may bulk-create what they may create one at a time; Read Only may not, and a direct Site Admin is refused — the CSV path was the bypass that moved that guard server-side (rule 26).",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/ideas/import",
+    "body": "------GoldenCaptureBoundary\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"ideas.csv\"\r\nContent-Type: text/csv\r\n\r\nTitle,Description,Priority,Idea Type,Business Impact\nImported by capture,A row the corpus creates,Low,Continuous Improvement,Cost Saving\n\r\n------GoldenCaptureBoundary--\r\n",
+    "contentType": "multipart/form-data; boundary=----GoldenCaptureBoundary"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/ideas/import",
+      "traceId": "00-93f340be016b906f2976fea993eb37fa-4d4d0240d53f3d57-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/<guid@board.body[0].boardId>/ideas/import",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

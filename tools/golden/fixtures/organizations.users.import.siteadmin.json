@@ -1,0 +1,57 @@
+{
+  "scenario": "organizations",
+  "step": "users.import.siteadmin",
+  "endpoint": "POST /organizations/{organizationId}/users/import",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "User import is bootstrap and stays direct, unlike idea import — rule 26 puts the two on opposite sides.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users/import",
+    "body": "------GoldenCaptureBoundary\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"users.csv\"\r\nContent-Type: text/csv\r\n\r\nfirstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n\r\n------GoldenCaptureBoundary--\r\n",
+    "contentType": "multipart/form-data; boundary=----GoldenCaptureBoundary"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:30 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "createdCount": 1,
+      "rejectedCount": 0,
+      "rows": [
+        {
+          "rowNumber": 1,
+          "email": "imported.bycapture@acme-robotics.demo.collega.test",
+          "outcome": "created",
+          "error": null,
+          "temporaryPassword": "<redacted>"
+        }
+      ]
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "createdCount": 1,
+      "rejectedCount": 0,
+      "rows": [
+        {
+          "email": "imported.bycapture@acme-robotics.demo.collega.test",
+          "error": null,
+          "outcome": "created",
+          "rowNumber": 1,
+          "temporaryPassword": "<redacted>"
+        }
+      ]
+    }
+  }
+}

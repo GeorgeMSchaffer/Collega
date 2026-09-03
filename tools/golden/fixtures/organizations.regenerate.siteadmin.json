@@ -1,0 +1,36 @@
+{
+  "scenario": "organizations",
+  "step": "regenerate.siteadmin",
+  "endpoint": "POST /organizations/{organizationId}/invite-code/regenerate",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "The corpus pins that a code comes back, not that it differs — see tools/golden/README.md.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/invite-code/regenerate",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "inviteCode": "<redacted>"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "inviteCode": "<redacted>"
+    }
+  }
+}

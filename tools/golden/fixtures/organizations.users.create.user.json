@@ -1,0 +1,56 @@
+{
+  "scenario": "organizations",
+  "step": "users.create.user",
+  "endpoint": "POST /organizations/{organizationId}/users",
+  "as": "User",
+  "kind": "denied",
+  "note": "User administration is the bootstrap exception, so a direct Site Admin is allowed too — its own case is next, on its own email.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users",
+    "body": {
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "email": "golden.capture@acme-robotics.demo.collega.test",
+      "role": "User",
+      "initialPassword": "<redacted>"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to manage users in this organization.",
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users",
+      "traceId": "0HNOA1HBMQ174:000000C6"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to manage users in this organization.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/users",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

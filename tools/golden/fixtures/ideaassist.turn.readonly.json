@@ -1,0 +1,57 @@
+{
+  "scenario": "ideaassist",
+  "step": "turn.readonly",
+  "endpoint": "POST /boards/{boardId}/idea-assist/turns",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "note": "503 is the contract when no model key is configured (rule 31), and it is the only answer this endpoint can have in a corpus: a live turn would be a billed, non-deterministic response, which tests/CLAUDE.md forbids outright. The authorization half is still pinned — who may ask at all.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/idea-assist/turns",
+    "body": {
+      "transcript": [
+        {
+          "role": "user",
+          "text": "We keep losing time on manual handoffs."
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:27 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Read Only users cannot draft ideas.",
+      "instance": "/api/v1/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/idea-assist/turns",
+      "traceId": "0HNOA1HBMQ174:00000076"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Read Only users cannot draft ideas.",
+      "instance": "/api/v1/boards/<guid@board.body[0].boardId>/idea-assist/turns",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

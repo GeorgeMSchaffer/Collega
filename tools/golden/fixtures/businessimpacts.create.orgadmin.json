@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/business-impacts",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/business-impacts",
     "body": {
       "name": "Golden Capture Impact",
       "color": "#6f8f3f"
@@ -18,13 +18,13 @@
     "status": 201,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:13:04 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "businessImpactId": "62fb94e4-f9c2-4dda-83a0-2ebf166a0d55",
-      "organizationId": "1880682b-d876-4187-8aec-4d7678336f68",
+      "businessImpactId": "f187dc89-d8da-4fed-89c7-8f9be9359019",
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
       "name": "Golden Capture Impact",
       "color": "#6f8f3f",
       "sortOrder": 50,

@@ -1,0 +1,114 @@
+{
+  "scenario": "boards",
+  "step": "statuses",
+  "endpoint": "GET /organizations/{organizationId}/statuses",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Two statuses, because a board needs at least two swimlanes.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/statuses",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "New / Pending",
+        "color": "#64748B",
+        "sortOrder": 10,
+        "isDeleted": false
+      },
+      {
+        "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "In Review",
+        "color": "#D97706",
+        "sortOrder": 20,
+        "isDeleted": false
+      },
+      {
+        "statusId": "80a03434-f54f-43c3-b6c3-b7b329c0134b",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "In Progress",
+        "color": "#2563EB",
+        "sortOrder": 30,
+        "isDeleted": false
+      },
+      {
+        "statusId": "16d0ff65-931e-44b5-8afb-4cbd6562608c",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "Client Review",
+        "color": "#7C3AED",
+        "sortOrder": 40,
+        "isDeleted": false
+      },
+      {
+        "statusId": "61cded65-6906-441f-90c3-c15d76436e4a",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "Complete",
+        "color": "#16A34A",
+        "sortOrder": 50,
+        "isDeleted": false
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "color": "#64748B",
+        "isDeleted": false,
+        "name": "New / Pending",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 10,
+        "statusId": "<guid@statuses.body[0].statusId>"
+      },
+      {
+        "color": "#D97706",
+        "isDeleted": false,
+        "name": "In Review",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 20,
+        "statusId": "<guid@statuses.body[1].statusId>"
+      },
+      {
+        "color": "#2563EB",
+        "isDeleted": false,
+        "name": "In Progress",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 30,
+        "statusId": "<guid@statuses.body[2].statusId>"
+      },
+      {
+        "color": "#7C3AED",
+        "isDeleted": false,
+        "name": "Client Review",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 40,
+        "statusId": "<guid@statuses.body[3].statusId>"
+      },
+      {
+        "color": "#16A34A",
+        "isDeleted": false,
+        "name": "Complete",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 50,
+        "statusId": "<guid@statuses.body[4].statusId>"
+      }
+    ]
+  }
+}

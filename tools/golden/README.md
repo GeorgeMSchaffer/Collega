@@ -12,8 +12,10 @@ and replays that against whatever is standing there later. Today that is .NET
 itself, as a self-check. In Wave F it is Nest, and the failure list is the
 remaining work.
 
-**The capture has a deadline.** Once Sprint 8 closes and the .NET stack is
-retired, the recording cannot be made and the conversion has no oracle at all.
+**Captured 2026-09-03**: 447 cases over all 81 endpoints, replaying clean against
+a freshly seeded .NET instance. Re-capture only if the API changes — and only
+while it still exists. Once Sprint 8 retires the .NET stack the recording cannot
+be made again, and the conversion has no oracle at all.
 
 ## Running it
 
@@ -50,8 +52,8 @@ accounts (`SPEC/implementation-agent-tracker.md`, Local DB).
 | `src/coverage.ts` | A1 | Endpoint × role × case-kind coverage, including "happy path only". |
 | `src/scaffold.ts` | A1 | Generates the full grid of stubs so A2 is filling in blanks rather than remembering which of 405 cells it has not written. |
 | `replay/replay.ts` | A3 | Compare, report, exit non-zero. |
-| `scenarios/` | A2 | What to ask, in what order, as whom. `auth.json` is the worked example. |
-| `fixtures/` | A2 | The corpus. Committed — it *is* the oracle. |
+| `scenarios/` | A2 | What to ask, in what order, as whom. 447 cases over 15 files. |
+| `fixtures/` | A2 | The corpus: 447 recorded exchanges covering all 81 endpoints. Committed — it *is* the oracle. |
 
 ## Normalization, and why labels rather than ordinals
 
@@ -165,6 +167,22 @@ mutation outright), and the controller attribute cannot see it. Expect to correc
 a good number of scaffolded `success` cells to `denied`. The first capture will
 tell you which, as surprises.
 
+## The two gaps in the corpus, and why they are there
+
+`coverage --from fixtures` names them on every run rather than letting them pass
+unnoticed:
+
+- **`POST /auth/change-password` is captured at one role, not four.** A password
+  change invalidates the token that made it, so capturing it as a demo role
+  locks every later scenario out of that account — the first attempt did exactly
+  that, and the run ended with a lockout. It is captured instead against an
+  account the corpus creates for the purpose. Doing that four times over would
+  add four throwaway accounts to pin one shared code path.
+- **`GET /health` has no refusal case**, because it has no refusal: it is
+  anonymous by design, so a probe can report that authentication is down.
+
+Anything else this report names is a hole, not a decision.
+
 ## What "done" looks like for Wave A
 
 - Every one of the 81 endpoints has at least one case, at every role the
@@ -175,3 +193,25 @@ tell you which, as surprises.
 - `replay` against the .NET API the corpus was recorded from comes back clean.
   If it does not, the harness is measuring itself and the fixtures are worthless.
 - The fixtures are committed.
+
+## What the capture found in the product
+
+The first real run of this harness turned up four defects, all of the same
+shape — a list whose order is not total — plus one authorization surprise.
+Recorded here because the harness is likely to keep finding them:
+
+- **The View As picker** ordered by first and last name, and two organizations
+  can hold a Jane Smith each. Under that query's 200-row cap an arbitrary
+  tie-break does not merely reorder the page, it decides who is on it.
+- **The board's idea list** had no tie-break at all.
+- **The seed** stamped every idea in an organization with one creation instant,
+  and both comments on an idea with another, so even a correct sort had nothing
+  to sort by.
+- **`PUT /organizations/{id}/ai-assist/settings` accepts a direct Site Admin**,
+  which the settings screen in comp P does not offer and rule 25 would not
+  predict. The corpus records what the API does today; whether that is right is
+  a product question, and it is flagged rather than endorsed.
+
+The pattern is worth keeping in mind for Wave F: a replay diff on a list is
+usually an ordering defect rather than a data one, and ordering by a generated
+id is stable within one deployment but not between two seeded from the same data.

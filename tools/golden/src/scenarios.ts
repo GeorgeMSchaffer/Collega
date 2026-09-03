@@ -18,11 +18,26 @@ export type Step = {
   path?: string;
   query?: Record<string, string>;
   body?: unknown;
-  /** Raw body for non-JSON requests (CSV import). Mutually exclusive with body. */
+  /** Raw body for non-JSON requests. Mutually exclusive with body. */
   text?: string;
   contentType?: string;
+  /**
+   * A file upload. The two CSV import endpoints take an `IFormFile`, so a raw
+   * text body is answered 415 — they need real multipart.
+   */
+  file?: { field: string; filename: string; contentType: string; content: string };
   /** Who makes the request. "anonymous" sends no Authorization header. */
   as: Role | "anonymous";
+  /**
+   * Log in as this account instead of the configured one for `as`, and use that
+   * token. `as` still says which role the case is recorded under.
+   *
+   * Needed wherever a case changes the credential it authenticates with —
+   * changing a demo role's password invalidates its token and locks every later
+   * scenario out of that account. An account the corpus created itself is
+   * nobody else's dependency.
+   */
+  credentials?: { email: string; password: string };
   /** What this case is for: the happy path, a refusal, a validation failure. */
   kind: "success" | "denied" | "invalid" | "missing";
   /** Status the author expects. Capture warns loudly when the API disagrees. */

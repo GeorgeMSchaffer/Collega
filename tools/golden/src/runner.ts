@@ -14,6 +14,9 @@ import type { Endpoint, Role } from "./inventory.ts";
 
 export type RoleCredentials = { email: string; password: string };
 
+/** Fixed, so two captures of the same upload produce identical bytes. */
+const MULTIPART_BOUNDARY = "----GoldenCaptureBoundary";
+
 export type RunnerConfig = {
   baseUrl: string;
   /** Route prefix the stack serves under. .NET mounts every controller under /api/v1. */
@@ -99,11 +102,12 @@ export class Runner {
   }
 
   /** Log a role in once per run and hold its token. Login itself is also a captured step. */
-  async tokenFor(role: Role): Promise<string> {
-    const held = this.#tokens.get(role);
+  async tokenFor(role: Role, override?: RoleCredentials): Promise<string> {
+    const key = override ? `override:${override.email}` : role;
+    const held = this.#tokens.get(key);
     if (held !== undefined) return held;
 
-    const credentials = this.#config.credentials[role];
+    const credentials = override ?? this.#config.credentials[role];
     if (!credentials) throw new Error(`no credentials configured for role ${role}`);
     const { status, headers, text } = await this.#fetch(this.#url("/auth/login"), {
       method: "POST",
@@ -118,7 +122,7 @@ export class Runner {
     if (typeof token !== "string" || token === "") {
       throw new Error(`login as ${role} returned no accessToken`);
     }
-    this.#tokens.set(role, token);
+    this.#tokens.set(key, token);
     return token;
   }
 
@@ -214,12 +218,25 @@ export class Runner {
     const headers: Record<string, string> = { accept: "application/json" };
 
     if (step.as !== "anonymous") {
-      headers.authorization = `Bearer ${await this.tokenFor(step.as)}`;
+      const override = step.credentials
+        ? (interpolate(step.credentials, vars) as RoleCredentials)
+        : undefined;
+      headers.authorization = `Bearer ${await this.tokenFor(step.as, override)}`;
     }
 
     let body: string | undefined;
     let contentType: string | undefined;
-    if (step.text !== undefined) {
+    if (step.file !== undefined) {
+      // A fixed boundary, so two captures of the same step produce the same bytes.
+      const file = step.file;
+      body =
+        `--${MULTIPART_BOUNDARY}\r\n` +
+        `Content-Disposition: form-data; name="${file.field}"; filename="${file.filename}"\r\n` +
+        `Content-Type: ${file.contentType}\r\n\r\n` +
+        `${String(interpolate(file.content, vars))}\r\n` +
+        `--${MULTIPART_BOUNDARY}--\r\n`;
+      contentType = `multipart/form-data; boundary=${MULTIPART_BOUNDARY}`;
+    } else if (step.text !== undefined) {
       body = String(interpolate(step.text, vars));
       contentType = step.contentType ?? "text/csv";
     } else if (step.body !== undefined) {
@@ -250,7 +267,12 @@ export class Runner {
       request: {
         method: endpoint.verb,
         path: routePath,
-        body: body === undefined ? null : (step.text !== undefined ? body : JSON.parse(body)),
+        body:
+          body === undefined
+            ? null
+            : step.file !== undefined || step.text !== undefined
+              ? body
+              : JSON.parse(body),
         ...(contentType === undefined ? {} : { contentType }),
       },
       response: { status: response.status, headers: response.headers, body: parsed },

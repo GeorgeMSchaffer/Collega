@@ -1,0 +1,45 @@
+{
+  "scenario": "auth",
+  "step": "viewas.end.anonymous",
+  "endpoint": "DELETE /auth/view-as",
+  "as": "anonymous",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/auth/view-as",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:24 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/auth/view-as",
+      "traceId": "00-1da2e2377860fdc785c9e77948628365-038c57ec0064a727-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/auth/view-as",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

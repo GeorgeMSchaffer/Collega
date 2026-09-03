@@ -1,0 +1,41 @@
+{
+  "scenario": "comments",
+  "step": "create.orgadmin",
+  "endpoint": "POST /ideas/{ideaId}/comments",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Read Only keeps commenting and upvoting — they are members, not spectators.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/ideas/bbcb9c0b-25d7-4123-9b7d-971c14b58bca/comments",
+    "body": {
+      "body": "Recorded by the golden capture."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "commentId": "6182fc7c-4cb8-4c9c-90c5-7bbdc4c4dff0",
+      "ideaId": "bbcb9c0b-25d7-4123-9b7d-971c14b58bca"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "commentId": "<guid@create.orgadmin.body.commentId>",
+      "ideaId": "<guid@ideas.body.items[0].ideaId>"
+    }
+  }
+}

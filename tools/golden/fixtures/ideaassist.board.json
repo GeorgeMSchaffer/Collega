@@ -1,0 +1,75 @@
+{
+  "scenario": "ideaassist",
+  "step": "board",
+  "endpoint": "GET /organizations/{organizationId}/boards",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/boards",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:27 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "Ideas",
+        "allowUserStatusUpdate": true,
+        "swimlaneCount": 5
+      },
+      {
+        "boardId": "ce8a5939-6fe8-4d1d-ad32-a4b2bb2085ca",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "Opportunities",
+        "allowUserStatusUpdate": true,
+        "swimlaneCount": 5
+      },
+      {
+        "boardId": "5992257b-0013-4d21-b6da-64b1cf4a1463",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "Zz Golden Capture Board Renamed",
+        "allowUserStatusUpdate": false,
+        "swimlaneCount": 2
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "allowUserStatusUpdate": true,
+        "boardId": "<guid@board.body[0].boardId>",
+        "name": "Ideas",
+        "organizationId": "<guid@org.body.organizationId>",
+        "swimlaneCount": 5
+      },
+      {
+        "allowUserStatusUpdate": true,
+        "boardId": "<guid@board.body[1].boardId>",
+        "name": "Opportunities",
+        "organizationId": "<guid@org.body.organizationId>",
+        "swimlaneCount": 5
+      },
+      {
+        "allowUserStatusUpdate": false,
+        "boardId": "<guid@board.body[2].boardId>",
+        "name": "Zz Golden Capture Board Renamed",
+        "organizationId": "<guid@org.body.organizationId>",
+        "swimlaneCount": 2
+      }
+    ]
+  }
+}

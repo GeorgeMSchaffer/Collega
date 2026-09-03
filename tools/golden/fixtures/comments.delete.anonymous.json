@@ -1,0 +1,46 @@
+{
+  "scenario": "comments",
+  "step": "delete.anonymous",
+  "endpoint": "DELETE /comments/{commentId}",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "The refusals run first, so the author's delete is last and succeeds once.",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+      "traceId": "00-0acb0d63bc7fdc9a3089807ca2a80667-6f5ffa18e4a4e51b-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/comments/<guid@create.user.body.commentId>",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

@@ -8,12 +8,12 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/idea-types/reorder",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/idea-types/reorder",
     "body": {
       "orderedIdeaTypeIds": [
-        "4985c209-e293-4360-a327-3038d30a022f",
-        "cbfc69a9-1031-4bb4-aa18-d9aeea9ddc3c",
-        "243c2f5c-2bb7-432b-87f2-5b5fa8e20e55"
+        "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+        "9e22cf2f-6ed3-4940-be79-4c86ebde9716",
+        "8fbef718-771f-464f-b43e-c9fa8398207e"
       ]
     },
     "contentType": "application/json"
@@ -22,7 +22,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:13:05 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -31,8 +31,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/1880682b-d876-4187-8aec-4d7678336f68/idea-types/reorder",
-      "traceId": "00-ba7adabfad0f1ac048e5815012a4e7a3-1f1d3ccf555a19c8-00"
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/idea-types/reorder",
+      "traceId": "00-2025ba62487c38ffff6ca96b766c9078-7c7195150ad5c007-00"
     }
   },
   "corpusVersion": 1,

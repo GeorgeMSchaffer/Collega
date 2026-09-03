@@ -1,0 +1,77 @@
+{
+  "scenario": "ideas",
+  "step": "types",
+  "endpoint": "GET /organizations/{organizationId}/idea-types",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/idea-types",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:27 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "Continuous Improvement",
+        "sortOrder": 10,
+        "isDeleted": false,
+        "colorHex": null,
+        "icon": null,
+        "fieldMode": "AllActiveFields",
+        "fields": []
+      },
+      {
+        "ideaTypeId": "9e22cf2f-6ed3-4940-be79-4c86ebde9716",
+        "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+        "name": "Process Revision",
+        "sortOrder": 20,
+        "isDeleted": false,
+        "colorHex": null,
+        "icon": null,
+        "fieldMode": "AllActiveFields",
+        "fields": []
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "colorHex": null,
+        "fieldMode": "AllActiveFields",
+        "fields": [],
+        "icon": null,
+        "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+        "isDeleted": false,
+        "name": "Continuous Improvement",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 10
+      },
+      {
+        "colorHex": null,
+        "fieldMode": "AllActiveFields",
+        "fields": [],
+        "icon": null,
+        "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+        "isDeleted": false,
+        "name": "Process Revision",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 20
+      }
+    ]
+  }
+}

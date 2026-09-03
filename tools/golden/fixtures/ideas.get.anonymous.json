@@ -1,0 +1,45 @@
+{
+  "scenario": "ideas",
+  "step": "get.anonymous",
+  "endpoint": "GET /ideas/{ideaId}",
+  "as": "anonymous",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+      "traceId": "00-93c852262b6fcce943a262ce7c491d73-a4962b401aa020ce-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ideas/<guid@create.user.body.ideaId>",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "scenario": "organizations",
+  "step": "users.import.user",
+  "endpoint": "POST /organizations/{organizationId}/users/import",
+  "as": "User",
+  "kind": "denied",
+  "note": "User import is bootstrap and stays direct, unlike idea import — rule 26 puts the two on opposite sides.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users/import",
+    "body": "------GoldenCaptureBoundary\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"users.csv\"\r\nContent-Type: text/csv\r\n\r\nfirstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n\r\n------GoldenCaptureBoundary--\r\n",
+    "contentType": "multipart/form-data; boundary=----GoldenCaptureBoundary"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to manage users in this organization.",
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/users/import",
+      "traceId": "0HNOA1HBMQ175:000000C8"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to manage users in this organization.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/users/import",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

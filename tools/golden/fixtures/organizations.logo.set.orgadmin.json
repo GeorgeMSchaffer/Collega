@@ -1,0 +1,53 @@
+{
+  "scenario": "organizations",
+  "step": "logo.set.orgadmin",
+  "endpoint": "PUT /organizations/{organizationId}/logo",
+  "as": "OrgAdmin",
+  "kind": "missing",
+  "note": "A one-pixel PNG: the case is the contract, not the picture.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/logo",
+    "body": {
+      "thumbnailDataUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+      "heightPx": 1
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 404,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/not-found",
+      "title": "Not Found",
+      "status": 404,
+      "detail": "Organization not found.",
+      "instance": "/api/v1/organizations/a12f2c51-ee48-4142-b827-d7788545c590/logo",
+      "traceId": "0HNOA1HBMQ174:000000BC"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Organization not found.",
+      "instance": "/api/v1/organizations/<guid@create.siteadmin.body.organizationId>/logo",
+      "status": 404,
+      "title": "Not Found",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/not-found"
+    }
+  }
+}

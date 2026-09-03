@@ -1,0 +1,49 @@
+{
+  "scenario": "comments",
+  "step": "delete.siteadmin",
+  "endpoint": "DELETE /comments/{commentId}",
+  "as": "SiteAdmin",
+  "kind": "denied",
+  "note": "The refusals run first, so the author's delete is last and succeeds once.",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+      "traceId": "0HNOA1HBMQ174:00000058"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/comments/<guid@create.user.body.commentId>",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

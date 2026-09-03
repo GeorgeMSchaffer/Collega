@@ -1,0 +1,49 @@
+{
+  "scenario": "aiassist",
+  "step": "settings.update.readonly",
+  "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "note": "Recorded as the API answers today: a direct Site Admin is accepted here, which the settings screen in comp P does not offer and rule 25 would not predict. Flagged, not endorsed.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ai-assist/settings",
+    "body": {
+      "scopeStatement": "We build warehouse and shop-floor automation."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:23 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "No further details are available for this 403 response.",
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ai-assist/settings",
+      "traceId": "00-e0c8189d4d4caf70e30c0d1eb67871c9-45019550510bf856-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 403 response.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/ai-assist/settings",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4"
+    }
+  }
+}

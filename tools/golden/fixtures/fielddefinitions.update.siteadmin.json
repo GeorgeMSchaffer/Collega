@@ -7,7 +7,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/organizations/1880682b-d876-4187-8aec-4d7678336f68/field-definitions/9d930049-309a-4f19-9ca7-311fa68abcde",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions/c94d73fd-76ee-4371-b5f6-c621b8f1f76e",
     "body": {
       "name": "Golden Capture Field Renamed",
       "fieldType": "Text",
@@ -20,7 +20,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:13:04 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -31,8 +31,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
-      "instance": "/api/v1/organizations/1880682b-d876-4187-8aec-4d7678336f68/field-definitions/9d930049-309a-4f19-9ca7-311fa68abcde",
-      "traceId": "0HNOA121UE4Q2:00000026"
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/field-definitions/c94d73fd-76ee-4371-b5f6-c621b8f1f76e",
+      "traceId": "0HNOA1HBMQ174:00000065"
     }
   },
   "corpusVersion": 1,

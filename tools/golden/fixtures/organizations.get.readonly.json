@@ -1,0 +1,49 @@
+{
+  "scenario": "organizations",
+  "step": "get.readonly",
+  "endpoint": "GET /organizations/{organizationId}",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "note": "Administrators only — the record carries the invite code, which is why the corpus redacts it.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to administer organizations.",
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "traceId": "0HNOA1HBMQ174:000000B6"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to administer organizations.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

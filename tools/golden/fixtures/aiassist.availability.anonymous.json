@@ -1,0 +1,46 @@
+{
+  "scenario": "aiassist",
+  "step": "availability.anonymous",
+  "endpoint": "GET /ai-assist/availability",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Runs dark without a key, and saying so is the contract (rule 31).",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/ai-assist/availability",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:23 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ai-assist/availability",
+      "traceId": "00-6be8010cfe514b9836e577d0d3948d57-26bbc0aa8e59b1c0-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ai-assist/availability",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

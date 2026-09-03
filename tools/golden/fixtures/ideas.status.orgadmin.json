@@ -1,0 +1,31 @@
+{
+  "scenario": "ideas",
+  "step": "status.orgadmin",
+  "endpoint": "POST /ideas/{ideaId}/status",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "This board allows members to move cards; that is a board setting.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/status",
+    "body": {
+      "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

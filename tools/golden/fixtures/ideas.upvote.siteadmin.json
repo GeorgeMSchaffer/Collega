@@ -1,0 +1,48 @@
+{
+  "scenario": "ideas",
+  "step": "upvote.siteadmin",
+  "endpoint": "POST /ideas/{ideaId}/upvote/toggle",
+  "as": "SiteAdmin",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/upvote/toggle",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/upvote/toggle",
+      "traceId": "0HNOA1HBMQ175:0000008B"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/ideas/<guid@create.user.body.ideaId>/upvote/toggle",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

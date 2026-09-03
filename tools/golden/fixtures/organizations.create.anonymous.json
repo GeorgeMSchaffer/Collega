@@ -1,0 +1,50 @@
+{
+  "scenario": "organizations",
+  "step": "create.anonymous",
+  "endpoint": "POST /organizations",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Refusals first, so exactly one organization is created. Named to sort last.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations",
+    "body": {
+      "title": "Zz Golden Capture Org",
+      "description": "Created by the golden capture."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations",
+      "traceId": "00-8c7305ab6644b533987a5736b1d7aea8-9d1b8d500e752498-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

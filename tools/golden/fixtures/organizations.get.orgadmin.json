@@ -1,0 +1,68 @@
+{
+  "scenario": "organizations",
+  "step": "get.orgadmin",
+  "endpoint": "GET /organizations/{organizationId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Administrators only — the record carries the invite code, which is why the corpus redacts it.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "title": "Acme Robotics",
+      "description": "Industrial robotics and automation manufacturer.",
+      "inviteCode": "<redacted>",
+      "logoUrl": null,
+      "logoThumbnailUrl": null,
+      "logoHeightPx": null,
+      "address": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "phone": null,
+      "primaryContactFirstName": null,
+      "primaryContactLastName": null,
+      "isArchived": false,
+      "createdAtUtc": "2026-09-03T22:40:18.426103Z",
+      "updatedAtUtc": "2026-09-03T22:40:24.46491Z"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "address": null,
+      "city": null,
+      "createdAtUtc": "<timestamp>",
+      "description": "Industrial robotics and automation manufacturer.",
+      "inviteCode": "<redacted>",
+      "isArchived": false,
+      "logoHeightPx": null,
+      "logoThumbnailUrl": null,
+      "logoUrl": null,
+      "organizationId": "<guid@org.body.organizationId>",
+      "phone": null,
+      "primaryContactFirstName": null,
+      "primaryContactLastName": null,
+      "state": null,
+      "title": "Acme Robotics",
+      "updatedAtUtc": "<timestamp>",
+      "zip": null
+    }
+  }
+}

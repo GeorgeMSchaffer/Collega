@@ -1,0 +1,50 @@
+{
+  "scenario": "organizations",
+  "step": "update.anonymous",
+  "endpoint": "PUT /organizations/{organizationId}",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Against the organization this scenario created, never a seeded one.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590",
+    "body": {
+      "title": "Zz Golden Capture Org Renamed",
+      "description": "Edited by the golden capture."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/a12f2c51-ee48-4142-b827-d7788545c590",
+      "traceId": "00-d63c4a2cfaf8353ded46e5cad2321450-c81c1fd27d18646f-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/<guid@create.siteadmin.body.organizationId>",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

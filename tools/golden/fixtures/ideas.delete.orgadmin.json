@@ -1,0 +1,28 @@
+{
+  "scenario": "ideas",
+  "step": "delete.orgadmin",
+  "endpoint": "DELETE /ideas/{ideaId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Refusals first, so the successful delete happens once and last.",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+    "body": null
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

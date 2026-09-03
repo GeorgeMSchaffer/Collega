@@ -1,0 +1,41 @@
+{
+  "scenario": "aiassist",
+  "step": "settings.update.siteadmin",
+  "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Recorded as the API answers today: a direct Site Admin is accepted here, which the settings screen in comp P does not offer and rule 25 would not predict. Flagged, not endorsed.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ai-assist/settings",
+    "body": {
+      "scopeStatement": "We build warehouse and shop-floor automation."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:23 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "aiAssistAvailable": false,
+      "scopeStatement": "We build warehouse and shop-floor automation."
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "aiAssistAvailable": false,
+      "scopeStatement": "We build warehouse and shop-floor automation."
+    }
+  }
+}

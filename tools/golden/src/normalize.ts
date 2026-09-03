@@ -42,6 +42,7 @@ const SECRET_FIELDS = new Set([
   "currentpassword",
   "oldpassword",
   "temporarypassword",
+  "initialpassword",
   "invitecode",
   "accesstoken",
   "token",

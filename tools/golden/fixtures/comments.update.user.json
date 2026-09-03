@@ -1,0 +1,49 @@
+{
+  "scenario": "comments",
+  "step": "update.user",
+  "endpoint": "PUT /comments/{commentId}",
+  "as": "User",
+  "kind": "success",
+  "note": "Editing is the author's alone; an Org Admin may remove but not rewrite.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/comments/41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+    "body": {
+      "body": "Edited by its author."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:26 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "commentId": "41d2ef40-2d7e-4f75-88f4-ce2e96cc3943",
+      "ideaId": "bbcb9c0b-25d7-4123-9b7d-971c14b58bca",
+      "authorUserId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+      "body": "Edited by its author.",
+      "createdAtUtc": "2026-09-03T22:40:27.018647Z",
+      "updatedAtUtc": "2026-09-03T22:40:27.0992658Z"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "authorUserId": "<guid@ideas.body.items[1].assignees[0].userId>",
+      "body": "Edited by its author.",
+      "commentId": "<guid@create.user.body.commentId>",
+      "createdAtUtc": "<timestamp>",
+      "ideaId": "<guid@ideas.body.items[0].ideaId>",
+      "updatedAtUtc": "<timestamp>"
+    }
+  }
+}

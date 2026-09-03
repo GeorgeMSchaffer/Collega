@@ -3,7 +3,7 @@
 // One file per exchange, named by scenario and step, so a git diff on a
 // re-capture reads as "these cases changed" rather than one 3MB blob.
 
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Exchange } from "./runner.ts";
 import { Normalizer, normalizeHeaders, omitPaths, redact } from "./normalize.ts";
@@ -71,6 +71,18 @@ export async function writeCorpus(
   manifest: Omit<CorpusManifest, "corpusVersion" | "fixtures" | "scenarios" | "endpoints">,
 ): Promise<CorpusManifest> {
   await mkdir(dir, { recursive: true });
+
+  // Drop fixtures this capture did not produce. A renamed or deleted case would
+  // otherwise linger, and replay would report it absent on every run forever —
+  // a corpus that accumulates ghosts stops being a description of the API.
+  const keep = new Set(exchanges.map(fixtureName));
+  keep.add("manifest.json");
+  for (const existing of await readdir(dir).catch(() => [])) {
+    if (existing.endsWith(".json") && !keep.has(existing)) {
+      await rm(path.join(dir, existing));
+    }
+  }
+
   for (const [, group] of groupByScenario(exchanges)) {
     const normalized = normalizeScenario(group);
     for (const [index, exchange] of group.entries()) {

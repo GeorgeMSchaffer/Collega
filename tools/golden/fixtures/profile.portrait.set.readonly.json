@@ -1,0 +1,55 @@
+{
+  "scenario": "profile",
+  "step": "portrait.set.readonly",
+  "endpoint": "PUT /auth/me/portrait",
+  "as": "ReadOnly",
+  "kind": "success",
+  "note": "Everyone owns their own portrait.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/auth/me/portrait",
+    "body": {
+      "imageBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:30 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "22b112f2-1686-4a06-89c3-38df384bf98f",
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "role": "ReadOnly",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "email": "readonly@acme-robotics.demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAADUlEQVR4nGNh+M9QDwADlQGD5CrorAAAAABJRU5ErkJggg==",
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "readonly@acme-robotics.demo.collega.test",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "organizationId": "<guid@org.body.organizationId>",
+      "portraitDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAADUlEQVR4nGNh+M9QDwADlQGD5CrorAAAAABJRU5ErkJggg==",
+      "role": "ReadOnly",
+      "status": "Active",
+      "userId": "<guid@me.update.readonly.body.userId>",
+      "viewingAs": null
+    }
+  }
+}

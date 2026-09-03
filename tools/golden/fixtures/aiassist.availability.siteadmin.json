@@ -1,0 +1,36 @@
+{
+  "scenario": "aiassist",
+  "step": "availability.siteadmin",
+  "endpoint": "GET /ai-assist/availability",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Runs dark without a key, and saying so is the contract (rule 31).",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/ai-assist/availability",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:23 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "available": false
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "available": false
+    }
+  }
+}

@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/statuses/8584b3a3-c7bf-4067-a7d9-64f0cd02c7a1",
+    "path": "/statuses/32ee1373-484f-4ea3-8f17-16e75c233f7b",
     "body": null
   },
   "response": {
@@ -16,7 +16,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:13:06 GMT",
+      "date": "Thu, 03 Sep 2026 22:40:31 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -27,8 +27,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
-      "instance": "/api/v1/statuses/8584b3a3-c7bf-4067-a7d9-64f0cd02c7a1",
-      "traceId": "0HNOA121UE4Q2:00000057"
+      "instance": "/api/v1/statuses/32ee1373-484f-4ea3-8f17-16e75c233f7b",
+      "traceId": "0HNOA1HBMQ174:000000EC"
     }
   },
   "corpusVersion": 1,

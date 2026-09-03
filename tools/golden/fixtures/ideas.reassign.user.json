@@ -1,0 +1,52 @@
+{
+  "scenario": "ideas",
+  "step": "reassign.user",
+  "endpoint": "PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type",
+  "as": "User",
+  "kind": "denied",
+  "note": "Reassignment is administrative, and a Site Admin reaches it through View As.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/idea-type",
+    "body": {
+      "ideaTypeId": "9e22cf2f-6ed3-4940-be79-4c86ebde9716"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to reassign an idea's type.",
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0/idea-type",
+      "traceId": "0HNOA1HBMQ174:0000008F"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to reassign an idea's type.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/ideas/<guid@create.user.body.ideaId>/idea-type",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

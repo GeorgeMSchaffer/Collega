@@ -1,0 +1,48 @@
+{
+  "scenario": "organizations",
+  "step": "logo.clear.orgadmin",
+  "endpoint": "DELETE /organizations/{organizationId}/logo",
+  "as": "OrgAdmin",
+  "kind": "missing",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/logo",
+    "body": null
+  },
+  "response": {
+    "status": 404,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/not-found",
+      "title": "Not Found",
+      "status": 404,
+      "detail": "Organization not found.",
+      "instance": "/api/v1/organizations/a12f2c51-ee48-4142-b827-d7788545c590/logo",
+      "traceId": "0HNOA1HBMQ175:000000BE"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Organization not found.",
+      "instance": "/api/v1/organizations/<guid@create.siteadmin.body.organizationId>/logo",
+      "status": 404,
+      "title": "Not Found",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/not-found"
+    }
+  }
+}

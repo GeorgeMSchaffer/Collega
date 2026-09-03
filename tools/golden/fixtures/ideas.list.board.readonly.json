@@ -1,0 +1,761 @@
+{
+  "scenario": "ideas",
+  "step": "list.board.readonly",
+  "endpoint": "GET /boards/{boardId}/ideas",
+  "as": "ReadOnly",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/ideas",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "items": [
+        {
+          "ideaId": "bbcb9c0b-25d7-4123-9b7d-971c14b58bca",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Reduce manual handoffs",
+          "priority": "Low",
+          "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd",
+          "businessImpactName": "Critical",
+          "businessImpactColor": "#DC2626",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "statusName": "New / Pending",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 4,
+          "authorUserId": "d425f3b8-297f-4fb0-af5b-eb70848c0214",
+          "createdAtUtc": "2026-09-03T22:18:18.426103Z"
+        },
+        {
+          "ideaId": "0b417665-7298-4ed5-b82e-bfba9dba5e2e",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Add proactive alerts",
+          "priority": "Medium",
+          "ideaTypeId": "9e22cf2f-6ed3-4940-be79-4c86ebde9716",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "fcb0b2b7-b181-4206-b95c-0c9a17580560",
+          "businessImpactName": "High",
+          "businessImpactColor": "#D97706",
+          "dueDate": "2026-09-11",
+          "assignees": [
+            {
+              "userId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "safety"
+          ],
+          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "statusName": "New / Pending",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 1,
+          "authorUserId": "fe224764-e1f0-4de0-a24f-44834649eb4f",
+          "createdAtUtc": "2026-09-03T22:19:18.426103Z"
+        },
+        {
+          "ideaId": "7d3c06a3-7926-4888-a930-567282834be7",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Standardize the intake checklist",
+          "priority": "High",
+          "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "ec75e7ba-f6c3-469d-a006-28795f2fcd57",
+          "businessImpactName": "Medium",
+          "businessImpactColor": "#2563EB",
+          "dueDate": "2026-09-12",
+          "assignees": [
+            {
+              "userId": "fe224764-e1f0-4de0-a24f-44834649eb4f",
+              "firstName": "Maya",
+              "lastName": "Collaborator",
+              "displayName": "Maya Collaborator",
+              "isActive": true,
+              "portraitDataUrl": null
+            },
+            {
+              "userId": "d425f3b8-297f-4fb0-af5b-eb70848c0214",
+              "firstName": "Olivia",
+              "lastName": "Administer",
+              "displayName": "Olivia Administer",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "cycle-time",
+            "quality"
+          ],
+          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "statusName": "New / Pending",
+          "upvoteCount": 2,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+          "createdAtUtc": "2026-09-03T22:20:18.426103Z"
+        },
+        {
+          "ideaId": "68bedd75-a4ba-4d8e-aa8c-9f24fbd43d2c",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Pilot a faster review path",
+          "priority": "Critical",
+          "ideaTypeId": "9e22cf2f-6ed3-4940-be79-4c86ebde9716",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "fc57fc80-7ebc-4858-89a5-d7740a46a866",
+          "businessImpactName": "Low",
+          "businessImpactColor": "#16A34A",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c",
+          "statusName": "In Review",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "d425f3b8-297f-4fb0-af5b-eb70848c0214",
+          "createdAtUtc": "2026-09-03T22:21:18.426103Z"
+        },
+        {
+          "ideaId": "327b80c8-6ce4-4718-aa3f-7a445ff8f149",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Improve exception visibility",
+          "priority": "Low",
+          "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd",
+          "businessImpactName": "Critical",
+          "businessImpactColor": "#DC2626",
+          "dueDate": "2026-09-14",
+          "assignees": [
+            {
+              "userId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "automation"
+          ],
+          "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c",
+          "statusName": "In Review",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "fe224764-e1f0-4de0-a24f-44834649eb4f",
+          "createdAtUtc": "2026-09-03T22:22:18.426103Z"
+        },
+        {
+          "ideaId": "73811d55-aa02-426f-902f-d81d521cf1fb",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Automate weekly reporting",
+          "priority": "Medium",
+          "ideaTypeId": "9e22cf2f-6ed3-4940-be79-4c86ebde9716",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "fcb0b2b7-b181-4206-b95c-0c9a17580560",
+          "businessImpactName": "High",
+          "businessImpactColor": "#D97706",
+          "dueDate": "2026-09-15",
+          "assignees": [
+            {
+              "userId": "fe224764-e1f0-4de0-a24f-44834649eb4f",
+              "firstName": "Maya",
+              "lastName": "Collaborator",
+              "displayName": "Maya Collaborator",
+              "isActive": true,
+              "portraitDataUrl": null
+            },
+            {
+              "userId": "d425f3b8-297f-4fb0-af5b-eb70848c0214",
+              "firstName": "Olivia",
+              "lastName": "Administer",
+              "displayName": "Olivia Administer",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "quality",
+            "safety"
+          ],
+          "statusId": "80a03434-f54f-43c3-b6c3-b7b329c0134b",
+          "statusName": "In Progress",
+          "upvoteCount": 2,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+          "createdAtUtc": "2026-09-03T22:23:18.426103Z"
+        },
+        {
+          "ideaId": "800c12a9-a194-4ce8-9736-0a20847d7151",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Create a shared playbook",
+          "priority": "High",
+          "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "ec75e7ba-f6c3-469d-a006-28795f2fcd57",
+          "businessImpactName": "Medium",
+          "businessImpactColor": "#2563EB",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "80a03434-f54f-43c3-b6c3-b7b329c0134b",
+          "statusName": "In Progress",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "d425f3b8-297f-4fb0-af5b-eb70848c0214",
+          "createdAtUtc": "2026-09-03T22:24:18.426103Z"
+        },
+        {
+          "ideaId": "305bf6ad-da0f-4391-9e94-5358a5177c76",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Validate the customer feedback loop",
+          "priority": "Critical",
+          "ideaTypeId": "9e22cf2f-6ed3-4940-be79-4c86ebde9716",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "fc57fc80-7ebc-4858-89a5-d7740a46a866",
+          "businessImpactName": "Low",
+          "businessImpactColor": "#16A34A",
+          "dueDate": "2026-09-17",
+          "assignees": [
+            {
+              "userId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "cycle-time"
+          ],
+          "statusId": "16d0ff65-931e-44b5-8afb-4cbd6562608c",
+          "statusName": "Client Review",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "fe224764-e1f0-4de0-a24f-44834649eb4f",
+          "createdAtUtc": "2026-09-03T22:25:18.426103Z"
+        },
+        {
+          "ideaId": "9e93d6e4-e5cd-4961-a93b-ab8e9d9e452b",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Roll out the proven workflow",
+          "priority": "Low",
+          "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd",
+          "businessImpactName": "Critical",
+          "businessImpactColor": "#DC2626",
+          "dueDate": "2026-09-18",
+          "assignees": [
+            {
+              "userId": "fe224764-e1f0-4de0-a24f-44834649eb4f",
+              "firstName": "Maya",
+              "lastName": "Collaborator",
+              "displayName": "Maya Collaborator",
+              "isActive": true,
+              "portraitDataUrl": null
+            },
+            {
+              "userId": "d425f3b8-297f-4fb0-af5b-eb70848c0214",
+              "firstName": "Olivia",
+              "lastName": "Administer",
+              "displayName": "Olivia Administer",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "automation",
+            "safety"
+          ],
+          "statusId": "61cded65-6906-441f-90c3-c15d76436e4a",
+          "statusName": "Complete",
+          "upvoteCount": 2,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+          "createdAtUtc": "2026-09-03T22:26:18.426103Z"
+        },
+        {
+          "ideaId": "111d5631-0f77-498a-af45-4a4268b2ca42",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Measure time saved",
+          "priority": "Medium",
+          "ideaTypeId": "9e22cf2f-6ed3-4940-be79-4c86ebde9716",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "fcb0b2b7-b181-4206-b95c-0c9a17580560",
+          "businessImpactName": "High",
+          "businessImpactColor": "#D97706",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "61cded65-6906-441f-90c3-c15d76436e4a",
+          "statusName": "Complete",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "d425f3b8-297f-4fb0-af5b-eb70848c0214",
+          "createdAtUtc": "2026-09-03T22:27:18.426103Z"
+        },
+        {
+          "ideaId": "3a45cfa1-0881-434e-9097-ac3c466c1a58",
+          "boardId": "1d975c73-8220-44e0-99d8-f0b02c651c84",
+          "title": "Assembly cell reliability: Retire the legacy step",
+          "priority": "High",
+          "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "ec75e7ba-f6c3-469d-a006-28795f2fcd57",
+          "businessImpactName": "Medium",
+          "businessImpactColor": "#2563EB",
+          "dueDate": "2026-09-20",
+          "assignees": [
+            {
+              "userId": "33fe37ad-0e67-417c-8794-a1ae342c5ba4",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "quality"
+          ],
+          "statusId": "61cded65-6906-441f-90c3-c15d76436e4a",
+          "statusName": "Complete",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "fe224764-e1f0-4de0-a24f-44834649eb4f",
+          "createdAtUtc": "2026-09-03T22:28:18.426103Z"
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "totalCount": 11,
+      "sortBy": null,
+      "sortDirection": "asc"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "items": [
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#DC2626",
+          "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+          "businessImpactName": "Critical",
+          "commentCount": 4,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": null,
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[0].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "Low",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusName": "New / Pending",
+          "tagNames": [],
+          "title": "Assembly cell reliability: Reduce manual handoffs",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#D97706",
+          "businessImpactId": "<guid@impacts.body[1].businessImpactId>",
+          "businessImpactName": "High",
+          "commentCount": 1,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": "2026-09-11",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[1].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Medium",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusName": "New / Pending",
+          "tagNames": [
+            "safety"
+          ],
+          "title": "Assembly cell reliability: Add proactive alerts",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Maya Collaborator",
+              "firstName": "Maya",
+              "isActive": true,
+              "lastName": "Collaborator",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].authorUserId>"
+            },
+            {
+              "displayName": "Olivia Administer",
+              "firstName": "Olivia",
+              "isActive": true,
+              "lastName": "Administer",
+              "portraitDataUrl": null,
+              "userId": "<guid@org.body.userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#2563EB",
+          "businessImpactId": "<guid@impacts.body[2].businessImpactId>",
+          "businessImpactName": "Medium",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": "2026-09-12",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[2].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "High",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusName": "New / Pending",
+          "tagNames": [
+            "cycle-time",
+            "quality"
+          ],
+          "title": "Assembly cell reliability: Standardize the intake checklist",
+          "upvoteCount": 2
+        },
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#16A34A",
+          "businessImpactId": "<guid@impacts.body[3].businessImpactId>",
+          "businessImpactName": "Low",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": null,
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[3].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Critical",
+          "statusId": "<guid@statuses.body[1].statusId>",
+          "statusName": "In Review",
+          "tagNames": [],
+          "title": "Assembly cell reliability: Pilot a faster review path",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#DC2626",
+          "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+          "businessImpactName": "Critical",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": "2026-09-14",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[4].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "Low",
+          "statusId": "<guid@statuses.body[1].statusId>",
+          "statusName": "In Review",
+          "tagNames": [
+            "automation"
+          ],
+          "title": "Assembly cell reliability: Improve exception visibility",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Maya Collaborator",
+              "firstName": "Maya",
+              "isActive": true,
+              "lastName": "Collaborator",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].authorUserId>"
+            },
+            {
+              "displayName": "Olivia Administer",
+              "firstName": "Olivia",
+              "isActive": true,
+              "lastName": "Administer",
+              "portraitDataUrl": null,
+              "userId": "<guid@org.body.userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#D97706",
+          "businessImpactId": "<guid@impacts.body[1].businessImpactId>",
+          "businessImpactName": "High",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": "2026-09-15",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[5].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Medium",
+          "statusId": "<guid@statuses.body[2].statusId>",
+          "statusName": "In Progress",
+          "tagNames": [
+            "quality",
+            "safety"
+          ],
+          "title": "Assembly cell reliability: Automate weekly reporting",
+          "upvoteCount": 2
+        },
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#2563EB",
+          "businessImpactId": "<guid@impacts.body[2].businessImpactId>",
+          "businessImpactName": "Medium",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": null,
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[6].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "High",
+          "statusId": "<guid@statuses.body[2].statusId>",
+          "statusName": "In Progress",
+          "tagNames": [],
+          "title": "Assembly cell reliability: Create a shared playbook",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#16A34A",
+          "businessImpactId": "<guid@impacts.body[3].businessImpactId>",
+          "businessImpactName": "Low",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": "2026-09-17",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[7].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Critical",
+          "statusId": "<guid@statuses.body[3].statusId>",
+          "statusName": "Client Review",
+          "tagNames": [
+            "cycle-time"
+          ],
+          "title": "Assembly cell reliability: Validate the customer feedback loop",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Maya Collaborator",
+              "firstName": "Maya",
+              "isActive": true,
+              "lastName": "Collaborator",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].authorUserId>"
+            },
+            {
+              "displayName": "Olivia Administer",
+              "firstName": "Olivia",
+              "isActive": true,
+              "lastName": "Administer",
+              "portraitDataUrl": null,
+              "userId": "<guid@org.body.userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#DC2626",
+          "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+          "businessImpactName": "Critical",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": "2026-09-18",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[8].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "Low",
+          "statusId": "<guid@statuses.body[4].statusId>",
+          "statusName": "Complete",
+          "tagNames": [
+            "automation",
+            "safety"
+          ],
+          "title": "Assembly cell reliability: Roll out the proven workflow",
+          "upvoteCount": 2
+        },
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#D97706",
+          "businessImpactId": "<guid@impacts.body[1].businessImpactId>",
+          "businessImpactName": "High",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": null,
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[9].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Medium",
+          "statusId": "<guid@statuses.body[4].statusId>",
+          "statusName": "Complete",
+          "tagNames": [],
+          "title": "Assembly cell reliability: Measure time saved",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#2563EB",
+          "businessImpactId": "<guid@impacts.body[2].businessImpactId>",
+          "businessImpactName": "Medium",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "dueDate": "2026-09-20",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[10].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "High",
+          "statusId": "<guid@statuses.body[4].statusId>",
+          "statusName": "Complete",
+          "tagNames": [
+            "quality"
+          ],
+          "title": "Assembly cell reliability: Retire the legacy step",
+          "upvoteCount": 1
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "sortBy": null,
+      "sortDirection": "asc",
+      "totalCount": 11
+    }
+  }
+}

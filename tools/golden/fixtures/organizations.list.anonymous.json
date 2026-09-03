@@ -1,0 +1,46 @@
+{
+  "scenario": "organizations",
+  "step": "list.anonymous",
+  "endpoint": "GET /organizations",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Only a Site Admin sees across organizations.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations",
+      "traceId": "00-728c7d40711fe8ff46478adeef3fc404-e723a8d8024b1408-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "scenario": "organizations",
+  "step": "archive.anonymous",
+  "endpoint": "POST /organizations/{organizationId}/archive",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Archives the organization this scenario created. Last, because it is terminal.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/a12f2c51-ee48-4142-b827-d7788545c590/archive",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:30 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/a12f2c51-ee48-4142-b827-d7788545c590/archive",
+      "traceId": "00-aaac6343001d37b1a754bd10c07e38ec-e744371909ec0167-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/<guid@create.siteadmin.body.organizationId>/archive",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

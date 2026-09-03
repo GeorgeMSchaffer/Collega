@@ -165,3 +165,21 @@ test("a string that looks like a number is a type mismatch", () => {
   const mismatches = diff({ count: 3 }, { count: "3" });
   assert.equal(mismatches[0].kind, "type");
 });
+
+test("every password-shaped field in the API's contracts is redacted", () => {
+  // Grepped from src/Collega.API/Contracts and the Application models: these are
+  // the field names that carry a credential in or out. A new one added later is
+  // the gap this test exists to catch.
+  const carriers = {
+    password: "Abc123!",
+    currentPassword: "Abc123!",
+    newPassword: "Xyz789!",
+    initialPassword: "Abc123!",
+    temporaryPassword: "Tmp-1234!",
+    inviteCode: "ACME-ROBOTICS-D99AFA8B",
+  };
+  const redacted = redact(carriers) as Record<string, string>;
+  for (const field of Object.keys(carriers)) {
+    assert.equal(redacted[field], "<redacted>", `${field} reached the corpus in the clear`);
+  }
+});

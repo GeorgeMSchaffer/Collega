@@ -1,0 +1,62 @@
+{
+  "scenario": "boards",
+  "step": "update.siteadmin",
+  "endpoint": "PUT /boards/{boardId}",
+  "as": "SiteAdmin",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/boards/5992257b-0013-4d21-b6da-64b1cf4a1463",
+    "body": {
+      "name": "Zz Golden Capture Board Renamed",
+      "allowUserStatusUpdate": false,
+      "swimlanes": [
+        {
+          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "order": 0
+        },
+        {
+          "statusId": "b9287126-9f16-4f79-8fce-48ffd3824b4c",
+          "order": 1
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/boards/5992257b-0013-4d21-b6da-64b1cf4a1463",
+      "traceId": "0HNOA1HBMQ174:00000038"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/boards/<guid@create.orgadmin.body.boardId>",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

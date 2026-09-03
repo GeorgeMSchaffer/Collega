@@ -1,0 +1,50 @@
+{
+  "scenario": "aiassist",
+  "step": "prompt.publish.readonly",
+  "endpoint": "PUT /ai-assist/prompt",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/ai-assist/prompt",
+    "body": {
+      "body": "You are Collega's idea assistant. Recorded by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}",
+      "outOfScopeRedirect": "I can only help with ideas for this organization.",
+      "conversationClosedRedirect": "This conversation is closed."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:23 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "No further details are available for this 403 response.",
+      "instance": "/api/v1/ai-assist/prompt",
+      "traceId": "00-7680386823858c7e3ee3f40dd8001c5d-237bf8607811a9a8-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 403 response.",
+      "instance": "/api/v1/ai-assist/prompt",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4"
+    }
+  }
+}

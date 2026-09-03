@@ -1,0 +1,55 @@
+{
+  "scenario": "ideas",
+  "step": "import.user",
+  "endpoint": "POST /boards/{boardId}/ideas/import",
+  "as": "User",
+  "kind": "success",
+  "note": "A member may bulk-create what they may create one at a time; Read Only may not, and a direct Site Admin is refused — the CSV path was the bypass that moved that guard server-side (rule 26).",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/ideas/import",
+    "body": "------GoldenCaptureBoundary\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"ideas.csv\"\r\nContent-Type: text/csv\r\n\r\nTitle,Description,Priority,Idea Type,Business Impact\nImported by capture,A row the corpus creates,Low,Continuous Improvement,Cost Saving\n\r\n------GoldenCaptureBoundary--\r\n",
+    "contentType": "multipart/form-data; boundary=----GoldenCaptureBoundary"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "createdCount": 0,
+      "rejectedCount": 1,
+      "rows": [
+        {
+          "rowNumber": 1,
+          "title": "Imported by capture",
+          "outcome": "Rejected",
+          "error": "Business Impact 'Cost Saving' is not an active option."
+        }
+      ]
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "createdCount": 0,
+      "rejectedCount": 1,
+      "rows": [
+        {
+          "error": "Business Impact 'Cost Saving' is not an active option.",
+          "outcome": "Rejected",
+          "rowNumber": 1,
+          "title": "Imported by capture"
+        }
+      ]
+    }
+  }
+}

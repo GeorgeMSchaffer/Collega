@@ -1,0 +1,45 @@
+{
+  "scenario": "aiassist",
+  "step": "settings.get.readonly",
+  "endpoint": "GET /organizations/{organizationId}/ai-assist/settings",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ai-assist/settings",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:23 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "No further details are available for this 403 response.",
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/ai-assist/settings",
+      "traceId": "00-07e54bbb6b67aaca64ff6f4c65a48cc3-11468f9cc17398d3-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 403 response.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/ai-assist/settings",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4"
+    }
+  }
+}

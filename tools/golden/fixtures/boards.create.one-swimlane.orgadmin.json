@@ -1,0 +1,69 @@
+{
+  "scenario": "boards",
+  "step": "create.one-swimlane.orgadmin",
+  "endpoint": "POST /organizations/{organizationId}/boards",
+  "as": "OrgAdmin",
+  "kind": "invalid",
+  "note": "The two-swimlane minimum is a rule, not a suggestion.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/boards",
+    "body": {
+      "name": "One Lane",
+      "allowUserStatusUpdate": true,
+      "swimlanes": [
+        {
+          "statusId": "f915136d-a7e0-49e5-b3cb-6670e23d5f20",
+          "order": 0
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Thu, 03 Sep 2026 22:40:25 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/validation-error",
+      "title": "One or more fields are invalid.",
+      "status": 400,
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "instance": "/api/v1/organizations/737a4efa-dcb1-4e2e-8fa8-19eb31bfd543/boards",
+      "errors": {
+        "swimlanes": [
+          "A board must have at least 2 swimlanes."
+        ]
+      },
+      "traceId": "0HNOA1HBMQ174:00000035"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "errors": {
+        "swimlanes": [
+          "A board must have at least 2 swimlanes."
+        ]
+      },
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/boards",
+      "status": 400,
+      "title": "One or more fields are invalid.",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/validation-error"
+    }
+  }
+}

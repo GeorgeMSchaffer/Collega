@@ -1,0 +1,46 @@
+{
+  "scenario": "organizations",
+  "step": "create.siteadmin",
+  "endpoint": "POST /organizations",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Refusals first, so exactly one organization is created. Named to sort last.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations",
+    "body": {
+      "title": "Zz Golden Capture Org",
+      "description": "Created by the golden capture."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:29 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "organizationId": "a12f2c51-ee48-4142-b827-d7788545c590",
+      "inviteCode": "<redacted>",
+      "defaultBoardId": "9179b721-3b5d-440d-b4a4-dee0995e46cc",
+      "defaultStatusCount": 5
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "defaultBoardId": "<guid@create.siteadmin.body.defaultBoardId>",
+      "defaultStatusCount": 5,
+      "inviteCode": "<redacted>",
+      "organizationId": "<guid@create.siteadmin.body.organizationId>"
+    }
+  }
+}

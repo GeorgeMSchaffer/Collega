@@ -1,0 +1,61 @@
+{
+  "scenario": "users",
+  "step": "update.orgadmin",
+  "endpoint": "PUT /users/{userId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Also a role change, which is the interesting half of this endpoint.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/users/dfb23311-4774-416e-98e4-3e53cbc75642",
+    "body": {
+      "firstName": "Golden",
+      "lastName": "Subject Renamed",
+      "email": "golden.subject@acme-robotics.demo.collega.test",
+      "role": "ReadOnly",
+      "status": "Active"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:32 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "dfb23311-4774-416e-98e4-3e53cbc75642",
+      "organizationId": "737a4efa-dcb1-4e2e-8fa8-19eb31bfd543",
+      "firstName": "Golden",
+      "lastName": "Subject Renamed",
+      "email": "golden.subject@acme-robotics.demo.collega.test",
+      "role": "ReadOnly",
+      "status": "Active",
+      "mustChangePassword": true,
+      "createdAtUtc": "2026-09-03T22:40:32.634811Z",
+      "updatedAtUtc": "2026-09-03T22:40:33.0467325Z"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "createdAtUtc": "<timestamp>",
+      "email": "golden.subject@acme-robotics.demo.collega.test",
+      "firstName": "Golden",
+      "lastName": "Subject Renamed",
+      "mustChangePassword": true,
+      "organizationId": "<guid@org.body.organizationId>",
+      "role": "ReadOnly",
+      "status": "Active",
+      "updatedAtUtc": "<timestamp>",
+      "userId": "<guid@create.body.userId>"
+    }
+  }
+}

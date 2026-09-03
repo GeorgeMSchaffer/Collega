@@ -1,0 +1,59 @@
+{
+  "scenario": "ideas",
+  "step": "create.invalid.user",
+  "endpoint": "POST /boards/{boardId}/ideas",
+  "as": "User",
+  "kind": "invalid",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/ideas",
+    "body": {
+      "description": "No title.",
+      "priority": "Medium",
+      "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+      "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/validation-error",
+      "title": "One or more fields are invalid.",
+      "status": 400,
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "instance": "/api/v1/boards/1d975c73-8220-44e0-99d8-f0b02c651c84/ideas",
+      "errors": {
+        "title": [
+          "Title is required."
+        ]
+      }
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "errors": {
+        "title": [
+          "Title is required."
+        ]
+      },
+      "instance": "/api/v1/boards/<guid@board.body[0].boardId>/ideas",
+      "status": 400,
+      "title": "One or more fields are invalid.",
+      "type": "https://collega.dev/problems/validation-error"
+    }
+  }
+}

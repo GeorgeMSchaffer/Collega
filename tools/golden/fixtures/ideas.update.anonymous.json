@@ -1,0 +1,52 @@
+{
+  "scenario": "ideas",
+  "step": "update.anonymous",
+  "endpoint": "PUT /ideas/{ideaId}",
+  "as": "anonymous",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+    "body": {
+      "title": "Golden capture idea, edited",
+      "description": "Recorded by the golden capture.",
+      "priority": "High",
+      "ideaTypeId": "928208cc-df7a-44a7-9c17-9efb2628ae5b",
+      "businessImpactId": "cf58d1d7-80a0-4469-917b-47ebcc683bfd"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Thu, 03 Sep 2026 22:40:28 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ideas/0cb3f8f4-a2d9-48f0-bd9c-5051b73defa0",
+      "traceId": "00-f2fcc3363de66a4ef4ba247f389bb84e-776100db86b072e5-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ideas/<guid@create.user.body.ideaId>",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}
