@@ -64,7 +64,7 @@ Four files, built from one manifest at the bottom of `build_p.py`:
 | `comp-p-focus-roadmap.html` | `p_core.frag` | Home, Boards, Board, Ideas, Inspector, palette |
 | `comp-p-auth.html` | `p_auth.frag` | Login, register, password, View As |
 | `comp-p-admin.html` | `p_admin.frag` | The `/settings/*` area |
-| `comp-p-delivery.html` | `p_delivery.frag` | Issue, Roadmap, Grouping — not yet built |
+| `comp-p-delivery.html` | `p_delivery.frag` | Sprint board, Backlog, Issue, Promote gate, Roadmap, Outcome, Set outcome — a design target for unbuilt product, so every screen carries the `wip` strip |
 
 Add a screen by adding a `<section class="screen" id="s-...">` to the right fragment and
 an entry to that comp's `screens` list. The builder owns which screen opens first, so a

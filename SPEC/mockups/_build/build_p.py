@@ -59,12 +59,15 @@ GO = {
     "boards": "s-board",
     "ideas": "s-ideas",
     "roadmap": "comp-p-delivery.html#s-roadmap",
-    "sprint": "comp-p-delivery.html#s-issue",
+    "sprint": "comp-p-delivery.html#s-sprint",
+    "backlog": "comp-p-delivery.html#s-backlog",
     "settings": "comp-p-admin.html#s-settings",
 }
+# The backlog count is issues with no sprint (7), not the whole delivery set
+# (16) — the roadmap is where the full set is counted.
 NAV = [
     ("Workspace", [("home", "Home", ""), ("boards", "Boards", "2"), ("ideas", "Ideas", "22")]),
-    ("Delivery",  [("sprint", "Sprint board", ""), ("backlog", "Backlog", "16"), ("roadmap", "Roadmap", "")]),
+    ("Delivery",  [("sprint", "Sprint board", ""), ("backlog", "Backlog", "7"), ("roadmap", "Roadmap", "")]),
     ("Configure", [("settings", "Settings", "")]),
 ]
 
@@ -1369,11 +1372,16 @@ COMPS = [
             "<code>SPEC/20-feature-issues-and-delivery.md</code> but not implemented. "
             "These screens are a design target, not a record of what the product does.",
      "explore": "Delivery is the one area with no shipped implementation behind it. "
-                "Every screen here carries the strip above.",
-     "how": ["<b>Roadmap</b> carries the open cardinality question &mdash; a layout "
-             "choice, not a decision.",
-             "The Sprint board and the Promote-to-Issue gate are deliberately absent."],
-     "screens": [("s-roadmap", "Roadmap"), ("s-issue", "Issue"), ("s-group", "Grouping")]},
+                "Every screen here carries the strip above. An issue sits under "
+                "<b>at most one</b> outcome (decided 2026-09-02), so every roadmap "
+                "number is a plain count.",
+     "how": ["<b>Promote</b> is the gate from the Ideas board; open it as each role.",
+             "<b>Set outcome</b> is a radio group, and moving an issue is what the "
+             "warning on it is about."],
+     "screens": [("s-sprint", "Sprint board"), ("s-backlog", "Backlog"),
+                 ("s-issue", "Issue"), ("s-promote", "Promote gate"),
+                 ("s-roadmap", "Roadmap"), ("s-outcome", "Outcome"),
+                 ("s-group", "Set outcome")]},
 ]
 
 

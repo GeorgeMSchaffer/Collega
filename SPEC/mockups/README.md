@@ -171,15 +171,17 @@ reconciliation, and it is worth keeping even if the Notion direction is dropped.
 **57–59px**, and ten rows run **669px** against **584px** — about 15% more vertical space
 for the same page. Worth knowing before this direction is chosen, not after.
 
-**Comp P now disagrees with the cardinality decision.** Comp P was built on comp N's
-multi-parent mechanics because the feedback asked for them, while the question was still
-open. It was decided **single-parent** on 2026-09-02, so comp P's roadmap surfaces are
-stale in three specific places: the Issue inspector shows an Outcomes **chip list** where
-single-parent allows one value, the command palette reports a **`2 shared`** count that
-cannot occur, and the roadmap carries the dashed **shared-bar** treatment and its
-`sum != the delivery set` ledger. Comp P's shell, IA, navigation and copy are unaffected
-and remain the locked direction; only the roadmap/grouping affordances need regenerating
-from comp M's mechanics. Do not hand-edit — `SPEC/mockups/_build/build_p.py` owns these files.
+**Comp P's roadmap surfaces follow the cardinality decision.** Comp P was first built on
+comp N's multi-parent mechanics while the question was open. It was decided **single-parent**
+on 2026-09-02, and `comp-p-delivery.html` was regenerated from comp M's mechanics the next
+day: the Issue carries one Outcome value with a *Change* action, Set outcome is a radio group
+whose warning is about the move, the roadmap's bars form a staircase and its ledger reads
+`= the delivery set`, and the command palette no longer reports a shared count. The same
+pass added the screens the spec's Client UI section names — Sprint board, Backlog and
+planning, the Promote gate, and Outcome detail — at four roles and four states. Every screen
+in that file still carries the *not built* strip, because the product behind it is specified
+and unimplemented. `comp-n-roadmap-multi.html` is retained only as the record of the rejected
+alternative. Do not hand-edit — `SPEC/mockups/_build/build_p.py` owns these files.
 
 ## Full-App Comps (2026-07-30)
 

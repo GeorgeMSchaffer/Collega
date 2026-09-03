@@ -44,7 +44,7 @@
           <ul class="feed">
             <li><span class="av s">NC</span><span>Noah moved <b>Automate weekly reporting</b> to In Progress</span><span class="when">14m</span></li>
             <li><span class="av s">MC</span><span>Maya commented on <b>Improve exception visibility</b></span><span class="when">1h</span></li>
-            <li><span class="av s">OA</span><span>You added <b>Automate weekly reporting</b> to <b>Standardize intake</b></span><span class="when">2h</span></li>
+            <li><span class="av s">OA</span><span>You grouped <b>Automate weekly reporting</b> under <b>Cut reporting effort</b></span><span class="when">2h</span></li>
             <li><span class="av s">OA</span><span>You upvoted <b>Reduce manual handoffs</b></span><span class="when">3h</span></li>
             <li><span class="av s">NC</span><span>Noah created <b>Roll out the proven workflow</b></span><span class="when">yest</span></li>
           </ul>
@@ -258,7 +258,6 @@
         <dt>Priority</dt><dd><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></dd>
         <dt>Impact</dt><dd>Operational efficiency</dd>
         <dt>Assigned</dt><dd><span class="avstack" style="display:inline-flex;vertical-align:middle"><span class="av s">MC</span><span class="av s">OA</span></span> Maya, Olivia</dd>
-        <dt>Outcomes</dt><dd><span class="tagrow"><span class="rmtag">Q3 · Cut intake rework</span><span class="rmtag">Q4 · One front door</span></span></dd>
         <dt>Tags</dt><dd><span class="tagrow"><span class="tag">cycle-time</span><span class="tag">quality</span></span></dd>
       </dl>
       <div>
@@ -295,10 +294,10 @@
       <div class="it on">Standardize the intake checklist <span class="faint" style="font-weight:400">· Ideas · New / Pending</span><span class="kbd">↵</span></div>
       <div class="it">Standardize the intake form <span class="faint" style="font-weight:400">· CLG-229 · Delivery</span></div>
       <div class="grp">Outcomes</div>
-      <div class="it"><span class="dot" style="background:var(--green)"></span>Standardize intake <span class="faint" style="font-weight:400">· 5 issues · 2 shared</span></div>
+      <div class="it"><span class="dot" style="background:var(--green)"></span>Standardize intake <span class="faint" style="font-weight:400">· 3 issues · 0 done</span></div>
       <div class="grp">Actions</div>
       <div class="it">Create idea &ldquo;intake&rdquo;<span class="kbd">Ctrl N</span></div>
-      <div class="it">Add CLG-114 to an outcome…</div>
+      <div class="it">Set the outcome for CLG-114…</div>
       <div class="it">View as another user…</div>
       <div class="cpfoot"><span><span class="kbd">↑</span> <span class="kbd">↓</span> navigate</span><span><span class="kbd">↵</span> open</span><span><span class="kbd">Esc</span> dismiss</span></div>
     </div>

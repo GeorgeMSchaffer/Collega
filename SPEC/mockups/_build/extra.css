@@ -35,31 +35,27 @@
 .feed li:last-child{border-bottom:0}
 .feed .when{margin-left:auto;font-size:14px;color:var(--ink-faint);white-space:nowrap}
 
-/* ===== multi-parent roadmap (comp N mechanics) ===== */
+/* ===== roadmap (comp M mechanics: single-parent outcomes) ===== */
 .roadgrid{display:grid;grid-template-columns:238px repeat(4,minmax(0,1fr));gap:1px;
   background:var(--hairline)}
 .roadgrid>div{background:var(--surface);padding:var(--s-sm) var(--s-md);min-height:52px}
 .roadgrid .hd{background:var(--canvas-soft);font-size:12px;font-weight:600;letter-spacing:.125px;
   text-transform:uppercase;color:var(--ink-muted);min-height:0;padding:var(--s-xs) var(--s-md)}
 .roadgrid .out{font-size:15px;font-weight:600;line-height:1.33}
+.roadgrid .out a{color:inherit}
 .roadgrid .out small{display:block;font-size:14px;font-weight:400;color:var(--ink-faint);margin-top:2px}
 .roadgrid .dim{background:var(--canvas-soft);color:var(--ink-faint)}
 .roadwrap{border:1px solid var(--hairline);border-radius:var(--r-lg);overflow:hidden}
-/* Bars carry no structural fill — DESIGN.md forbids it. "Shared" is encoded in the
-   BORDER STYLE (dashed), which is not colour, so it survives greyscale and colour
-   blindness where a tint would not. The category dot names the outcome. */
+/* Bars carry no structural fill — DESIGN.md forbids it. The category dot names
+   the outcome, always with its label beside it. Under single-parent there is no
+   "shared" bar to encode: an issue has one home, so each bar is its own row's. */
 .barx{display:inline-flex;align-items:center;gap:6px;background:var(--canvas-soft);
   border:1px solid var(--hairline);border-radius:var(--r-full);padding:var(--s-xxs) var(--s-sm);
   font-size:12px;font-weight:600;color:var(--ink-secondary);white-space:nowrap}
-.barx.shared{border-style:dashed;border-color:var(--ink-faint);background:var(--surface)}
-.marks{display:block;margin-top:6px}
-.shared-tag{display:inline-flex;align-items:center;gap:4px;border:1px dashed var(--ink-faint);
-  border-radius:var(--r-full);padding:1px 7px;font-size:12px;font-weight:600;color:var(--ink-muted)}
 .sum{display:flex;gap:var(--s-lg);flex-wrap:wrap;background:var(--canvas-soft);
   border-top:1px solid var(--hairline);padding:var(--s-sm) var(--s-md);font-size:14px;
   color:var(--ink-muted)}
 .sum b{color:var(--ink);font-weight:600}
-.warnflag{color:var(--orange-deep);font-weight:600}
 
 /* ===== issue detail ===== */
 .key{display:inline-block;background:var(--canvas-soft);border:1px solid var(--hairline);
@@ -446,3 +442,43 @@ legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bott
    in the locked core file, where right-alignment is not wanted. */
 .panel.figures th.num,.panel.figures td.num{text-align:right}
 .panel.figures tfoot td{border-top:2px solid var(--hairline);background:var(--canvas-soft)}
+
+/* ===== delivery: sprint board, issue, promote gate =====
+   The sprint bar is the one place a sprint's identity lives on the board, so it
+   sits above the rail as a card rather than in the topbar, where it would
+   compete with the page actions. */
+.sprintbar{display:flex;align-items:center;gap:var(--s-md);background:var(--surface);
+  border:1px solid var(--hairline);border-radius:var(--r-lg);padding:var(--s-sm) var(--s-md);
+  margin-bottom:var(--s-md)}
+.sprintbar .goal{font-size:15px;line-height:1.33;color:var(--ink-secondary);margin-top:4px}
+.sprintbar .dates{text-align:right;font-size:15px;line-height:1.33;white-space:nowrap}
+/* A delivery card carries its key above the title and a task count below the
+   footer. The bar is a fact about the checklist, not a velocity proxy — the
+   spec is explicit — so it stays small and uncoloured except for its fill. */
+.kcard .key{margin-bottom:6px}
+.tprog{display:flex;align-items:center;gap:var(--s-xs);margin-top:8px;font-size:12px;
+  color:var(--ink-faint)}
+.tbar{flex:1;height:4px;border-radius:var(--r-full);background:var(--canvas-soft);
+  border:1px solid var(--hairline);overflow:hidden}
+.tbar i{display:block;height:100%;background:var(--ink-faint)}
+/* Three task states, not a checkbox: "started but not finished" is the state a
+   standup asks about. Read-only viewers get the same words as text. */
+.tstate{flex:none;width:118px;font-size:14px;padding:3px 6px}
+.tstate.ro{display:inline-block;font-size:14px;line-height:1.43;color:var(--ink-muted);
+  padding:3px 0}
+.task.done>.grow>span{text-decoration:line-through;color:var(--ink-faint)}
+/* The promote gate is a decision, so it is a dialog — the one modal in the
+   set. The docked-inspector rule is about editing, not about confirming. */
+.gate{width:min(560px,92vw);background:var(--surface);border-radius:var(--r-xl);
+  box-shadow:var(--e2);padding:var(--s-lg)}
+.gate .insp-head{border-bottom:1px solid var(--hairline)}
+.gate .empty{text-align:left}
+.radioset{display:flex;gap:var(--s-xs)}
+.radioset label{flex:1;display:flex;align-items:center;gap:var(--s-xs);border:1px solid var(--hairline);
+  border-radius:var(--r-sm);padding:var(--s-xs) var(--s-sm);font-size:15px;font-weight:400;
+  letter-spacing:0;text-transform:none;color:var(--ink);margin:0;cursor:pointer}
+.radioset label:has(input:checked){border-color:var(--primary);background:var(--canvas-soft);font-weight:600}
+.radioset input{width:auto;margin:0}
+/* Outcome rows in the set-outcome picker carry a second line; the picker's
+   own row rule assumes one. */
+.pickrow label .ty{margin-top:2px}
