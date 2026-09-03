@@ -422,6 +422,8 @@ Layouts here are **directional**; the locked Comp C system (`SPEC/mockups/comp-c
 | Group an Issue under an Outcome *(Slice 2)* | ✓ | ✓ | | |
 | View Tasks and the Roadmap | ✓ | ✓ | ✓ | ✓ |
 
+A Site Admin tick on a **mutating** row is exercised through View As, never directly: promotion, sprint and outcome management, delivery-status and grouping changes, and tasks are organization content under `20-feature-view-as.md` rules 25/25c. Direct Site Admin access to this feature is read-only. Reconciled 2026-09-03 against the standing product rule (tracker, 2026-08-14).
+
 ---
 
 ## Requirements

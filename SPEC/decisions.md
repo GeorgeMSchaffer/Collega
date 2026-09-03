@@ -41,6 +41,7 @@ Outcomes chip list, the command palette reports a `2 shared` count that cannot o
 the roadmap carries the dashed shared-bar treatment and its `sum != the delivery set`
 ledger. Those need regenerating from comp M's mechanics via `SPEC/mockups/_build/build_p.py`.
 `comp-n-roadmap-multi.html` is retained only as the record of the rejected alternative.
+*Regenerated 2026-09-03; see `SPEC/mockups/README.md`.*
 
 ---
 

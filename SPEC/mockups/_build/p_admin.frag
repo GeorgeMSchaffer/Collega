@@ -14,7 +14,7 @@
           <b>Organizations</b><div class="sub" style="margin-top:4px">Create organizations and manage each organization&rsquo;s configuration.</div></a>
         <a class="card" href="#" data-go="s-users" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Users</b> <span class="tag">Cross-org</span><div class="sub" style="margin-top:4px">View users across every organization, then open one to manage it.</div></a>
-        <a class="card" href="comp-p-focus-roadmap.html#s-boards" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
+        <a class="card" href="#" data-go="comp-p-focus-roadmap.html#s-boards" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
           <b>Boards</b> <span class="tag">Workspace</span><div class="sub" style="margin-top:4px">View boards across every organization, then open one to work with it. This one leaves Settings &mdash; a Site Admin reads boards from the workspace list, not from board administration.</div></a>
         <a class="card" href="#" data-go="s-statuses" data-roles="SiteAdmin" style="color:inherit;text-decoration:none">
           <b>Manage Statuses</b> <span class="tag">Cross-org</span><div class="sub" style="margin-top:4px">View statuses across every organization, then open one to manage it.</div></a>
@@ -354,7 +354,7 @@
         <div class="panel"><div class="in"><div class="empty">
           <h3>This route has no Site Admin story</h3>
           <p>Board administration is scoped to one organization, and a Site Admin belongs to none, so <code>/settings/boards</code> has no organization to list. The product agrees, and routes you elsewhere: the Settings hub sends a Site Admin to the workspace boards list rather than here.</p>
-          <a class="btn" href="comp-p-focus-roadmap.html#s-boards">Go to the boards list</a>
+          <a class="btn" href="#" data-go="comp-p-focus-roadmap.html#s-boards">Go to the boards list</a>
           <a class="btn" href="#" data-go="s-org-boards">Open Acme Robotics&rsquo; boards</a>
         </div></div></div>
         <div class="note"><b>Shown because the route exists, not because it works.</b> Reaching this URL directly as a Site Admin renders an error in the product today &mdash; <code>BoardsAdmin.razor</code> reports &ldquo;Your account isn&rsquo;t associated with an organization.&rdquo; That is accurate but reads as a fault rather than a scoping rule, which is what this screen proposes replacing it with.</div>

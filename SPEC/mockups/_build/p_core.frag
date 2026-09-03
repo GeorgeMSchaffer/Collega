@@ -30,12 +30,12 @@
         <div class="empty" data-roles="OrgAdmin User ReadOnly">
           <h3>No boards yet</h3>
           <p>Your organization doesn&rsquo;t have any boards to show. An Org Admin can create boards from Settings.</p>
-          <a class="btn pri" href="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Create a board</a>
+          <a class="btn pri" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Create a board</a>
         </div>
         <div class="empty" data-roles="SiteAdmin">
           <h3>No organizations yet</h3>
           <p>Nothing to show until an organization exists. Creating one provisions its default statuses and a first board.</p>
-          <a class="btn pri" href="comp-p-admin.html#s-orgs">Create an organization</a>
+          <a class="btn pri" href="#" data-go="comp-p-admin.html#s-orgs">Create an organization</a>
         </div>
       </div>
 
@@ -131,7 +131,7 @@
 @@DESK:boards@@
   <div class="main">
     <div class="topbar"><span class="crumb"><a href="#" data-go="s-home">Home</a> / <b>Boards</b></span><span class="spacer"></span>
-      <a class="btn" href="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Manage boards</a></div>
+      <a class="btn" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Manage boards</a></div>
     <div class="work">
       <div class="pgh"><div class="grow"><h1>Boards</h1>
         <div class="sub" data-roles="OrgAdmin User ReadOnly">Boards you can access. Selecting a board opens its swim lanes.</div>
@@ -143,7 +143,7 @@
       <div data-when="empty" class="empty">
         <h3>No boards yet</h3>
         <p>An organization admin can create boards under Settings. A new organization starts with one default board and five statuses.</p>
-        <a class="btn pri" href="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Create a board</a>
+        <a class="btn pri" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Create a board</a>
       </div>
 
       <div data-when="normal" class="panel">

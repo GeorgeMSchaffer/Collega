@@ -210,7 +210,7 @@
       <p class="cap muted" style="margin:0 0 var(--s-md)">Any click, key, scroll or touch counts as activity, in this tab or another. Staying signed in resets the idle clock; it does not extend the eight-hour limit on a session.</p>
       <div style="display:flex;gap:var(--s-xs);justify-content:flex-end">
         <button class="btn" data-go="s-returned">Sign out</button>
-        <button class="btn pri" data-go="s-viewing">Stay signed in</button>
+        <button class="btn pri" data-go="comp-p-focus-roadmap.html#s-home">Stay signed in</button>
       </div>
     </div>
   </div>
@@ -278,7 +278,7 @@
         <div class="empty">
           <h3>Acting as someone else is an administrator&rsquo;s tool</h3>
           <p>Only a Site Admin or an Org Admin can browse Collega as another user. For your role the control is hidden <em>and</em> the route is refused &mdash; both, not either &mdash; so there is nothing here to find.</p>
-          <a class="btn" href="comp-p-focus-roadmap.html#s-home">Back to Home</a>
+          <a class="btn" href="#" data-go="comp-p-focus-roadmap.html#s-home">Back to Home</a>
         </div>
       </div>
     </div>
@@ -303,7 +303,7 @@
           <div class="kpi"><div class="k">Assigned to me</div><div class="v num">3</div><div class="d">none critical</div><div class="why">Open ideas with your name in the Assigned field.</div></div>
           <div class="kpi"><div class="k">Completed &middot; 30d</div><div class="v num">6</div><div class="d">+2 vs prior</div><div class="why">Reached Complete in the last 30 days, against the 30 days before it.</div></div>
         </div>
-        <div class="note"><b>Act-as, not preview.</b> Every control on this page is live, because View As is the Site Admin&rsquo;s only way to change organization content. The rail shows Noah, the header&rsquo;s own <em>View as&hellip;</em> control is gone (a session cannot be nested), and role-gated surfaces render for Noah&rsquo;s role &mdash; which is why <em>Settings</em> would show him only his profile. The banner is drawn from the server&rsquo;s answer to <code>/auth/me</code>, never from remembered state, so an expired session (30 minutes idle, 2 hours absolute) cannot leave a stale banner behind. Authorship on anything saved is Noah&rsquo;s; the audit row names both people.</div>
+        <div class="note"><b>Act-as, not preview.</b> Every control on this page is live, because View As is the Site Admin&rsquo;s only way to change organization content. The rail shows Noah, the header&rsquo;s own <em>View as&hellip;</em> control is gone (a session cannot be nested), and role-gated surfaces render for Noah&rsquo;s role &mdash; which is why <em>Settings</em> would show him only his profile. The banner is drawn from the server&rsquo;s answer to <code>/auth/me</code>, never from remembered state, so an expired View As session (30 minutes idle, 2 hours absolute &mdash; the sign-in itself keeps its own 8-hour limit) cannot leave a stale banner behind. Authorship on anything saved is Noah&rsquo;s; the audit row names both people.</div>
       </div>
     </div>
   </div>
@@ -316,7 +316,7 @@
         <div class="empty">
           <h3>Acting as someone else is an administrator&rsquo;s tool</h3>
           <p>Only a Site Admin or an Org Admin can browse Collega as another user. For your role the control is hidden <em>and</em> the route is refused &mdash; both, not either &mdash; so there is nothing here to find.</p>
-          <a class="btn" href="comp-p-focus-roadmap.html#s-home">Back to Home</a>
+          <a class="btn" href="#" data-go="comp-p-focus-roadmap.html#s-home">Back to Home</a>
         </div>
       </div>
     </div>

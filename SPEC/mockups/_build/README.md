@@ -10,7 +10,7 @@ next build overwrites it.
 ## Running a build
 
 ```bash
-python3 SPEC/mockups/_build/build_p.py   # -> comp-p-focus-roadmap.html
+python3 SPEC/mockups/_build/build_p.py   # -> comp-p-{focus-roadmap,auth,admin,delivery}.html
 python3 SPEC/mockups/_build/build.py     # -> comp-o-notion-01/02/03.html
 ```
 

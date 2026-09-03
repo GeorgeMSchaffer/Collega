@@ -1088,7 +1088,7 @@ input[type=file]{font-family:inherit;font-size:14px}
         <div class="empty">
           <h3>Nothing waiting</h3>
           <p>Every committed issue is in a sprint. New issues arrive here when an idea is promoted from a board.</p>
-          <a class="btn" href="comp-p-focus-roadmap.html#s-board">Open the ideas board</a>
+          <a class="btn" href="#" data-go="comp-p-focus-roadmap.html#s-board">Open the ideas board</a>
         </div>
       </div>
 
@@ -1234,7 +1234,7 @@ input[type=file]{font-family:inherit;font-size:14px}
               <div class="cmt" style="border-top:0;padding-top:0"><span class="av s">MG</span><div><div class="who">Marcus Green <span class="when">14 Jul</span></div><p>Three hours every Friday, every coordinator. If we generate it from what we already store, the errors go too.</p></div></div>
               <div class="cmt"><span class="av s">MC</span><div><div class="who">Maya Collaborator <span class="when">16 Jul</span></div><p>Ops will want the same column set they have now, at least for the first quarter. Worth agreeing that before anything is built.</p></div></div>
               <div class="cmt"><span class="av s">OA</span><div><div class="who">Olivia Administer <span class="when">18 Aug</span></div><p>Promoting this &mdash; 14 votes and a clear scope. Marcus, it&rsquo;s yours.</p></div></div>
-              <div class="field" style="margin:var(--s-sm) 0 0" data-roles="OrgAdmin User">
+              <div class="field" style="margin:var(--s-sm) 0 0" data-roles="OrgAdmin User ReadOnly">
                 <label for="p-is-cmt">Add a comment</label>
                 <textarea id="p-is-cmt" rows="2" placeholder="Write a comment&hellip;"></textarea>
               </div>
@@ -1391,11 +1391,11 @@ input[type=file]{font-family:inherit;font-size:14px}
   <div class="main">
     <div class="topbar"><span class="crumb">Delivery / <b>Roadmap</b></span><span class="spacer"></span>
       <div class="seg" role="group" aria-label="Time axis" data-when="normal"><button aria-pressed="true">Quarters</button><button aria-pressed="false">Sprints</button></div>
-      <button class="btn pri" data-roles="OrgAdmin">Add outcome</button>
-      <span class="deniedwrap" data-roles="SiteAdmin">
+      <button class="btn pri" data-roles="OrgAdmin" data-when="normal">Add outcome</button>
+      <span class="deniedwrap" data-roles="SiteAdmin" data-when="normal">
         <button class="btn pri" aria-disabled="true" aria-describedby="p-why-rm-sa">Add outcome</button>
         <span class="denied" id="p-why-rm-sa">Act as an Acme Robotics administrator to change this</span></span>
-      <span class="deniedwrap" data-roles="User ReadOnly">
+      <span class="deniedwrap" data-roles="User ReadOnly" data-when="normal">
         <button class="btn pri" aria-disabled="true" aria-describedby="p-why-rm-m">Add outcome</button>
         <span class="denied" id="p-why-rm-m">Administrators only</span></span></div>
     <div class="work">
@@ -1415,7 +1415,8 @@ input[type=file]{font-family:inherit;font-size:14px}
           <h3>No outcomes yet</h3>
           <p>An outcome is a named, dated theme &mdash; &ldquo;cut reporting effort&rdquo; &mdash; that issues are grouped under. Acme Robotics has 16 delivery issues and nothing to group them by.</p>
           <button class="btn pri" data-roles="OrgAdmin">Add the first outcome</button>
-          <span class="deniedwrap" data-roles="SiteAdmin User ReadOnly"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-rm-e">Add the first outcome</button><span class="denied" id="p-why-rm-e">Administrators only</span></span>
+          <span class="deniedwrap" data-roles="SiteAdmin"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-rm-e-sa">Add the first outcome</button><span class="denied" id="p-why-rm-e-sa">Act as an Acme Robotics administrator to add one</span></span>
+          <span class="deniedwrap" data-roles="User ReadOnly"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-rm-e">Add the first outcome</button><span class="denied" id="p-why-rm-e">Administrators only</span></span>
         </div>
       </div>
 
@@ -1508,8 +1509,8 @@ input[type=file]{font-family:inherit;font-size:14px}
           <thead><tr><th style="width:96px">Key</th><th>Issue</th><th style="width:150px">Status</th><th style="width:100px">Sprint</th><th style="width:150px">Effort</th></tr></thead>
           <tbody>
             <tr><td><span class="key">CLG-103</span></td><td><a class="t" href="#">Measure time saved</a></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td><td class="num">11</td><td><span class="marker"><span class="dot"></span>Low</span></td></tr>
-            <tr><td><span class="key">CLG-127</span></td><td><a class="t" href="#">Publish the reporting data dictionary</a></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td><td class="num">11</td><td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td></tr>
-            <tr><td><span class="key">CLG-131</span></td><td><a class="t" href="#">Archive the manual Friday template</a></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td><td class="num">11</td><td><span class="marker"><span class="dot"></span>Low</span></td></tr>
+            <tr><td><span class="key">CLG-107</span></td><td><a class="t" href="#">Publish the reporting data dictionary</a></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td><td class="num">11</td><td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td></tr>
+            <tr><td><span class="key">CLG-111</span></td><td><a class="t" href="#">Archive the manual Friday template</a></td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td><td class="num">11</td><td><span class="marker"><span class="dot"></span>Low</span></td></tr>
             <tr><td><span class="key">CLG-114</span></td><td><a class="t" href="#" data-go="s-issue">Automate weekly reporting</a></td><td><span class="marker"><span class="dot" style="background:var(--sky)"></span>Development</span></td><td class="num">12</td><td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td></tr>
           </tbody>
         </table>
@@ -1586,7 +1587,8 @@ input[type=file]{font-family:inherit;font-size:14px}
     </div>
     <div class="insp-foot">
       <button class="btn pri" style="flex:1;justify-content:center" data-roles="OrgAdmin" data-go="s-issue">Move issue</button>
-      <span class="deniedwrap" data-roles="SiteAdmin User ReadOnly" style="flex:1"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-gr">Move issue</button><span class="denied" id="p-why-gr">Administrators only</span></span>
+      <span class="deniedwrap" data-roles="SiteAdmin" style="flex:1"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-gr-sa">Move issue</button><span class="denied" id="p-why-gr-sa">Act as an Acme Robotics administrator</span></span>
+      <span class="deniedwrap" data-roles="User ReadOnly" style="flex:1"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-gr">Move issue</button><span class="denied" id="p-why-gr">Administrators only</span></span>
       <button class="btn" data-go="s-issue">Cancel</button>
     </div>
   </aside>
