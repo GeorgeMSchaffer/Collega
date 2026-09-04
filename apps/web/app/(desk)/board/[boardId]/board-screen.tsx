@@ -178,7 +178,7 @@ export function BoardScreen({ boardId }: { boardId: string }) {
         open={columnOpen}
         inspector={
           creating ? (
-            <CreateIdeaPanel boardName={boardName} onClose={closeColumn} />
+            <CreateIdeaPanel boardId={boardId} boardName={boardName} onClose={closeColumn} />
           ) : selected ? (
             <IdeaInspector
               idea={selected}

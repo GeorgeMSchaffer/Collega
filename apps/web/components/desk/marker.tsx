@@ -15,10 +15,20 @@ export function Marker({
   color,
   children,
   className,
+  wrap,
 }: {
   color?: string | null;
   children: React.ReactNode;
   className?: string;
+  /**
+   * Let a long label run onto a second line instead of being clipped.
+   *
+   * A card and a table cell have a fixed width and truncate, which is right there — the full
+   * value is a click away. The inspector is where that click lands, and in its two-column
+   * facts grid at the docked width "Continuous Improvement" clips to "Continuous Improv…".
+   * The label *is* the meaning here, so it wraps rather than ellipsing.
+   */
+  wrap?: boolean;
 }) {
   return (
     <span className={cn("inline-flex max-w-full min-w-0 items-center gap-1.5 text-sm", className)}>
@@ -29,7 +39,7 @@ export function Marker({
           style={{ background: color }}
         />
       ) : null}
-      <span className="truncate">{children}</span>
+      <span className={wrap ? "min-w-0" : "truncate"}>{children}</span>
     </span>
   );
 }
