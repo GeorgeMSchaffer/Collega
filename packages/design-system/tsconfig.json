@@ -1,8 +1,18 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist"
+    // Browser package, not a Node one: it overrides the base module/lib/types the way
+    // tsconfig.base.json says apps/web does. It is also the one package consumed as
+    // source rather than through dist/ — see package.json "exports" and the
+    // transpilePackages note in apps/web/next.config.ts — so it never emits.
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": [],
+    "jsx": "react-jsx"
   },
-  "include": ["src/**/*.ts*"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

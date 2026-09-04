@@ -1,0 +1,182 @@
+/* ============================================================
+   Collega's theme, carried over from SPEC/mockups/_build/q.css.
+
+   q.css splits in two. Lines 1-156 are a shadcn globals.css: the
+   Tailwind import, the @theme block mapping semantic colour names onto
+   CSS variables, the variables themselves, and a base layer. That half
+   is this file, near-verbatim; the five deviations are marked DEVIATION
+   below and nothing else differs.
+
+   Lines 157-364 are @layer components (.btn, .panel, .marker, ...) and
+   the reviewer chrome (.switch, .ctl, .wip). q.css's own header says
+   those exist "only so the shared fragments can be rendered without a
+   React runtime". They are deliberately NOT carried over: React renders
+   the shadcn components in packages/design-system instead, and having
+   both would be two styling systems for one design.
+   ============================================================ */
+@import "tailwindcss" source(none);
+@import "tw-animate-css";
+
+/* DEVIATION 1: q.css pointed @source at the four generated comp HTML files. The app
+   scans its own tree and the design system's, and nothing else — default source
+   detection would walk up to the repo root and pull in the mockups. tw-animate-css
+   supplies the animate-in/out utilities the Radix-backed components use; Tailwind v4
+   dropped them from core and comp Q, being static, never needed them. */
+@source "../";
+@source "../../../packages/design-system/src";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-teal: var(--teal-brand);
+  /* DEVIATION 2: q.css defines --sug / --sug-soft in :root but never maps them into
+     the theme, so no utility can reach them. SPEC/20-feature-client-ui.md requires the
+     D-SUGGEST chip to pair #116b5e ink with its own #e8f3f1 tint — 5.6:1. Reaching for
+     --color-teal instead gives 2.7:1, the AA failure this pair exists to prevent. */
+  --color-sug: var(--sug);
+  --color-sug-soft: var(--sug-soft);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  /* DEVIATION 3: q.css named the families literally ("Geist"). next/font mints a scoped
+     family name at build time, so the stack has to go through the variables
+     app/layout.tsx puts on <html>; a literal "Geist" would silently never match. */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* The theme. shadcn's own dial: --radius is the one knob for corner
+   rounding (0.3rem is its "small" preset — the closest supported value
+   to the "minimize rounded corners" feedback), and every semantic
+   colour is a variable. The values are the business-professional
+   palette chosen 2026-08-31; the palette is still open, and changing it
+   means changing this block only. */
+:root {
+  /* DEVIATION 5: no dark palette has been specified, so pin the scheme rather than let
+     native controls and scrollbars render dark against a light page. */
+  color-scheme: light;
+
+  --radius: 0.3rem;
+  --background: #F7F9FB;
+  --foreground: #243447;
+  --card: #FFFFFF;
+  --card-foreground: #243447;
+  --popover: #FFFFFF;
+  --popover-foreground: #243447;
+  --primary: #527292;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1F3F6;
+  --secondary-foreground: #3E4E60;
+  --muted: #F1F3F6;
+  --muted-foreground: #5D6C7E;
+  --accent: #F0F4F7;
+  --accent-foreground: #3E566F;
+  --destructive: #B64B4B;
+  --destructive-foreground: #FFFFFF;
+  --warning: #C9A65C;
+  --success: #6FAF7A;
+  --teal-brand: #5F9E93;
+  --border: #DDE1E6;
+  --input: #C5CBD3;
+  --ring: #5B7FA3;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #3E4E60;
+  --sidebar-primary: #527292;
+  --sidebar-accent: #F0F4F7;
+  --sidebar-accent-foreground: #3E566F;
+  --sidebar-border: #DDE1E6;
+
+  /* Category dots. The fragments name them by comp P's sticker names;
+     here each is a value from the same palette, so the mapping is the
+     only thing that changes when the palette does. */
+  --sky: #5B7FA3;
+  --teal: #5F9E93;
+  --green: #6FAF7A;
+  --orange: #C9A65C;
+  --orange-deep: #8A6D2E;
+  --pink: #C97A7A;
+  --purple: #9A8AC4;
+  --purple-deep: #5B4F86;
+  --brown: #8A6D2E;
+  --sug: #116b5e;
+  --sug-soft: #e8f3f1;
+
+  /* Aliases the fragments reach for in inline styles. */
+  --ink: var(--foreground);
+  --ink-secondary: #3E4E60;
+  --ink-muted: var(--muted-foreground);
+  --ink-faint: #818E9C;
+  --hairline: var(--border);
+  --canvas: #FFFFFF;
+  --canvas-soft: var(--muted);
+  --surface: var(--card);
+  --primary-active: #3E566F;
+  --on-primary: #FFFFFF;
+  --s-xxs: 4px; --s-xs: 8px; --s-sm: 12px; --s-md: 16px; --s-lg: 24px; --s-xl: 28px; --s-xxl: 32px;
+  --r-xs: calc(var(--radius) - 2px); --r-sm: var(--radius); --r-md: var(--radius);
+  --r-lg: calc(var(--radius) + 2px); --r-xl: calc(var(--radius) + 6px); --r-full: 9999px;
+  --e1: 0 1px 2px rgba(36,52,71,.06);
+  --e2: 0 8px 24px rgba(36,52,71,.14);
+  --font: var(--font-sans);
+}
+
+@layer base {
+  * { border-color: var(--border); }
+  html, body { margin: 0; }
+  body { @apply bg-background text-foreground font-sans text-sm antialiased; }
+  h1 { @apply text-2xl font-semibold tracking-tight; }
+  h2 { @apply text-xl font-semibold tracking-tight; }
+  h3 { @apply text-lg font-semibold tracking-tight; }
+  p { @apply m-0 mb-4; }
+  a { @apply text-primary no-underline hover:underline; }
+  /* shadcn Input / Textarea / Select (native) */
+  input[type=text], input[type=password], input[type=search], input[type=file], textarea, select {
+    @apply flex h-9 w-full rounded-md border border-input bg-card px-3 py-1 text-sm shadow-xs
+           placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1
+           focus-visible:ring-ring;
+  }
+  textarea { @apply h-auto min-h-16 py-2 resize-y; }
+  input[type=file] { @apply py-1.5 file:mr-3 file:rounded-sm file:border-0 file:bg-secondary file:px-2 file:py-0.5 file:text-xs file:font-medium; }
+  input[type=checkbox], input[type=radio] { @apply size-4 accent-primary; }
+  /* shadcn Label */
+  label { @apply mb-1.5 block text-sm font-medium leading-none; }
+  table { @apply w-full caption-bottom text-sm border-collapse; }
+  thead th { @apply h-10 border-b bg-muted/40 px-3 text-left align-middle text-xs font-medium text-muted-foreground; }
+  tbody td { @apply border-b px-3 py-2.5 align-middle; }
+  tbody tr:last-child td { @apply border-0; }
+  tbody tr:hover td { @apply bg-muted/50; }
+  tfoot td { @apply border-t-2 bg-muted/40 px-3 py-2 font-medium; }
+  button { font-family: inherit; }
+  code { @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]; }
+
+  /* DEVIATION 4, from _build/README.md's day-one list: a display utility on an element
+     that also carries [hidden] beats the user-agent rule and the element renders. This
+     bit two comps. It sits below q.css's component layer rather than in its base. */
+  [hidden] { display: none !important; }
+}
