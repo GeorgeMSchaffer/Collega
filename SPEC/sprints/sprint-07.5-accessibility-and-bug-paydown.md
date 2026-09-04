@@ -1,6 +1,6 @@
 # Sprint 7.5: Accessibility and Bug Paydown
 
-**Status:** Not started
+**Status:** In Progress (started 2026-09-04) — baseline `dotnet test Collega.sln` green at 821 tests on `768e30c`
 **Sequence:** 7.5 of 8 — runs after Sprint 7 (`archive/sprint-07-ai-idea-assist.md`, complete) and **before Sprint 8** (`sprint-08-azure-deployment.md`). Scheduled 2026-08-25 at user request, same pattern as Sprint 6.5: a paydown wave that clears the pre-feature triage queue before the release that puts the product in front of real users.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 

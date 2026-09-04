@@ -40,7 +40,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 6 | View As (act-as impersonation; D-MODE locked 2026-08-11 = full act-as — now also the Site Admin's only org-content mutation path) | `SPEC/sprints/archive/sprint-06-view-as.md` | **Complete (2026-08-14)** — 622 tests green at `a0ef22c`, now the tip of both `dev` and `main` | Medium |
 | 6.5 | Bug fixes and element tweaks — paydown sprint | `SPEC/sprints/archive/sprint-06.5-bug-fixes-and-tweaks.md` | **Complete (2026-08-15)** — 13 items across two intake rounds, visually confirmed and review-signed-off; 627 tests green | Medium |
 | 7 | AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, `Anthropic` package approved) | `SPEC/sprints/archive/sprint-07-ai-idea-assist.md` | **Complete (2026-08-18)** — built and reviewed 2026-08-16; a follow-on batch on 2026-08-18 added the Site-Admin-managed versioned prompt, a prompt playground / eval harness, and `.http` call tracing | Medium |
-| 7.5 | Accessibility and bug paydown — the ten `Bug Triage.md` items from the 2026-08-16 browser pass | `SPEC/sprints/sprint-07.5-accessibility-and-bug-paydown.md` | Not started | Small–Medium |
+| 7.5 | Accessibility and bug paydown — the ten `Bug Triage.md` items from the 2026-08-16 browser pass | `SPEC/sprints/sprint-07.5-accessibility-and-bug-paydown.md` | **In Progress (2026-09-04)** | Small–Medium |
 | 8 | Azure deployment (provision + first deploy + CI/CD) | `SPEC/sprints/sprint-08-azure-deployment.md` | Not started | Medium |
 
 Update the Status column here whenever a sprint file's own `Status:` line changes (Not started → In Progress → Complete), and move the file to `SPEC/sprints/archive/` once Complete.
