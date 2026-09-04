@@ -25,23 +25,25 @@
         }
 
         <EditForm Model="this" OnValidSubmit="SubmitRegistration">
+            @* Enter submits from here, not from the Fluent button below — see .enter-submit in app.css. *@
+            <button type="submit" class="enter-submit" tabindex="-1" aria-hidden="true" disabled="@_busy"></button>
             <div class="field">
                 <label for="invite">Invite code</label>
-                <FluentTextField id="invite" @bind-Value="_inviteCode" Disabled="_busy" Style="width:100%" />
+                <FluentTextField id="invite" AriaLabel="Invite code" @bind-Value="_inviteCode" Disabled="_busy" Style="width:100%" />
             </div>
             <div class="formrow">
                 <div class="field">
                     <label for="first">First name</label>
-                    <FluentTextField id="first" @bind-Value="_firstName" Disabled="_busy" Style="width:100%" />
+                    <FluentTextField id="first" AriaLabel="First name" @bind-Value="_firstName" Disabled="_busy" Style="width:100%" />
                 </div>
                 <div class="field">
                     <label for="last">Last name</label>
-                    <FluentTextField id="last" @bind-Value="_lastName" Disabled="_busy" Style="width:100%" />
+                    <FluentTextField id="last" AriaLabel="Last name" @bind-Value="_lastName" Disabled="_busy" Style="width:100%" />
                 </div>
             </div>
             <div class="field">
                 <label for="email">Email</label>
-                <FluentTextField id="email" @bind-Value="_email" TextFieldType="TextFieldType.Email" Disabled="_busy" Style="width:100%" />
+                <FluentTextField id="email" AriaLabel="Email" @bind-Value="_email" TextFieldType="TextFieldType.Email" Disabled="_busy" Style="width:100%" />
             </div>
             <div class="field">
                 <label for="password">Password</label>

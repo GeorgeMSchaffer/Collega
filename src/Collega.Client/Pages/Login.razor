@@ -38,9 +38,11 @@
         }
 
         <EditForm Model="this" OnValidSubmit="SignIn">
+            @* Enter submits from here, not from the Fluent button below — see .enter-submit in app.css. *@
+            <button type="submit" class="enter-submit" tabindex="-1" aria-hidden="true" disabled="@_busy"></button>
             <div class="field">
                 <label for="email">Email</label>
-                <FluentTextField id="email" @bind-Value="_email" TextFieldType="TextFieldType.Email" Disabled="_busy" Style="width:100%" />
+                <FluentTextField id="email" AriaLabel="Email" @bind-Value="_email" TextFieldType="TextFieldType.Email" Disabled="_busy" Style="width:100%" />
             </div>
             <div class="field">
                 <label for="password">Password</label>

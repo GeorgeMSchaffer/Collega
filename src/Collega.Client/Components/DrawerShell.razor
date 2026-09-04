@@ -1,3 +1,6 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
 @*
     DrawerShell — reusable right slide-in drawer chrome (overlay + panel + header + body + footer).
 
@@ -6,6 +9,11 @@
     scrollable body, an optional pinned footer, and the three ways to dismiss (close button, overlay
     click, Escape). Visual design is locked in SPEC/mockups/comp-c-review-09-detail-surfaces.html —
     do not restyle here. Any entity/URL-specific logic stays in the host component.
+
+    It is also a modal surface, so opening it moves focus into the panel, disables the background
+    (js/drawerFocus.js) and closing returns focus to the control that opened it. Without that the
+    Escape handler below never sees a keystroke, and the background stays tabbable while
+    aria-modal="true" tells assistive technology it is hidden.
 
     On any dismiss the shell simply raises OnClose; the host decides whether to actually close (e.g.
     to block dismissal mid-save). Extracted from IdeaDrawer for reuse across the admin List+Drawer
@@ -37,7 +45,7 @@
 @if (IsOpen)
 {
     <div class="surface-backdrop open" @onclick="OnClose"></div>
-    <aside class="drawer open" role="dialog" aria-modal="true"
+    <aside @ref="_panel" class="drawer open" role="dialog" aria-modal="true"
            aria-labelledby="@(Title is not null ? _titleId : null)"
            tabindex="-1" @onkeydown="OnKeyDown">
         <header class="surface-head">
@@ -89,8 +97,35 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? FooterContent { get; set; }
 
-    // Stable per-instance id so the panel's aria-labelledby resolves without colliding across instances.
+    // Stable per-instance id so the panel's aria-labelledby resolves without colliding across
+    // instances. It doubles as the key drawerFocus.js files this drawer's background state under,
+    // which has to survive the panel element itself: on close Blazor has already removed it.
     private readonly string _titleId = $"drawer-title-{Guid.NewGuid():N}";
+
+    private ElementReference _panel;
+    private IJSObjectReference? _module;
+    private bool _activated;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen == _activated)
+        {
+            return;
+        }
+
+        _activated = IsOpen;
+        _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/drawerFocus.js");
+
+        if (IsOpen)
+        {
+            await _module.InvokeVoidAsync("activate", _titleId, _panel);
+            await _panel.FocusAsync();
+        }
+        else
+        {
+            await _module.InvokeVoidAsync("deactivate", _titleId);
+        }
+    }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
     {
@@ -98,5 +133,22 @@
         {
             await OnClose.InvokeAsync();
         }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is null)
+        {
+            return;
+        }
+
+        // A drawer can be torn down without IsOpen ever going false — its host page navigates away
+        // while it is open — and inert left behind on the shell would take the whole app with it.
+        if (_activated)
+        {
+            await _module.InvokeVoidAsync("deactivate", _titleId);
+        }
+
+        await _module.DisposeAsync();
     }
 }
