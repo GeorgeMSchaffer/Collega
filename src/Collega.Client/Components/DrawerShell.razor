@@ -105,6 +105,7 @@
     private ElementReference _panel;
     private IJSObjectReference? _module;
     private bool _activated;
+    private bool _disposed;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -115,6 +116,21 @@
 
         _activated = IsOpen;
         _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/drawerFocus.js");
+
+        // The import is the one slow await here, and the panel can be gone by the time it
+        // resolves — navigate away while a drawer is open and DisposeAsync has already run with
+        // _module still null, so it had nothing to unwind. Re-read the state rather than the
+        // captured IsOpen: activating against a detached panel inerts nothing and throws on focus.
+        if (_disposed)
+        {
+            await _module.DisposeAsync();
+            return;
+        }
+
+        if (_activated != IsOpen)
+        {
+            return;
+        }
 
         if (IsOpen)
         {
@@ -137,6 +153,10 @@
 
     public async ValueTask DisposeAsync()
     {
+        // Read by OnAfterRenderAsync after its import completes, which is how a teardown that
+        // lands mid-import still gets unwound.
+        _disposed = true;
+
         if (_module is null)
         {
             return;
