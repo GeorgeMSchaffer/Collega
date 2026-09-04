@@ -75,7 +75,10 @@
                 <div class="field-row">
                     <div class="field">
                         <label for="profile-email">Email</label>
-                        <FluentTextField id="profile-email" AriaLabel="Email" Value="@_email" ReadOnly="true" Style="width:100%" />
+                        @* Read-only, but still the username: it is the only account name on the page, so a
+                           password manager needs it to know which credential the change-password form below
+                           belongs to. *@
+                        <FluentTextField id="profile-email" AriaLabel="Email" AutoComplete="username" Value="@_email" ReadOnly="true" Style="width:100%" />
                     </div>
                     <div class="field">
                         <label for="profile-role">Role</label>

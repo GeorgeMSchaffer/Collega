@@ -145,3 +145,14 @@
 .prio-chip.low { background: #e7f2e7; color: var(--ok); }
 
 .emptylane { color: var(--ink-3); font-size: 12px; text-align: center; padding: 22px 8px; font-style: italic; }
+
+/* Narrow-viewport type floor (Sprint 7.5): nothing on a card below 12px. These sizes live here rather
+   than in app.css because scoped selectors outrank the global ones. Sizes only — the card layout is
+   unchanged, and the narrow-viewport layout pass is still open. */
+@media (max-width: 768px) {
+  .tag { font-size: 12px; }
+  .age { font-size: 12px; }
+  .kcard .meta { font-size: 12px; }
+  .kcard .meta2 .tag { font-size: 12px; }
+  .prio-chip { font-size: 12px; }
+}

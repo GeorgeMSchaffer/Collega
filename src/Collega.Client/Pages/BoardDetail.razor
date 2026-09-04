@@ -19,7 +19,12 @@
     <div class="row">
         <div class="grow">
             <h1>@(_board?.Name ?? "Board")</h1>
-            <p class="sub" style="margin-bottom:6px">Ideas organized by status. Drag cards between lanes to move them@(_canMove ? "." : " (moves are restricted to admins on this board).")</p>
+            @* Dragging is not the only way to move a card, and it was the only one named — which left a
+               keyboard user with no route at all. The drawer's Status control is the existing path; this
+               says so rather than inventing a keyboard drag. *@
+            <p class="sub" style="margin-bottom:6px">Ideas organized by status. @(_canMove
+                ? "Drag cards between lanes to move them, or open a card and change its Status."
+                : "Drag cards between lanes to move them (moves are restricted to admins on this board).")</p>
         </div>
     </div>
     @*
@@ -168,16 +173,18 @@
                                         {
                                             <span class="grip" title="Drag to move" role="img" aria-label="Drag to move idea"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" /></span>
                                         }
-                                        <span class="t" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">@i.Title</span>
-                                        @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
-                                        {
-                                            <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" IconOnly="true" />
-                                        }
+                                        <span class="t" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)" @onkeydown="e => ActivateCard(e, i.IdeaId)">@i.Title</span>
                                         <span class="prio-chip @PrioClass(i.Priority)">@PrioLabel(i.Priority)</span>
                                     </div>
-                                    @if (i.TagNames.Count > 0)
+                                    @* The type badge rides the tag row rather than the title row: now that it
+                                       carries its name as text, a 280px lane has no room for both. *@
+                                    @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName) || i.TagNames.Count > 0)
                                     {
                                         <div class="meta2">
+                                            @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
+                                            {
+                                                <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" Compact="true" />
+                                            }
                                             @foreach (var tag in i.TagNames.Take(3))
                                             {
                                                 <span class="tag">@tag</span>
@@ -239,12 +246,12 @@
                             @foreach (var idea in laneIdeas)
                             {
                                 var i = idea;
-                                <div class="rowcard" style="@CardStyle(lane)" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">
+                                <div class="rowcard" style="@CardStyle(lane)" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)" @onkeydown="e => ActivateCard(e, i.IdeaId)">
                                     <span class="prio @PrioClass(i.Priority)" title="@PrioLabel(i.Priority) priority"></span>
                                     <span class="t">@i.Title</span>
                                     @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
                                     {
-                                        <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" IconOnly="true" />
+                                        <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" Compact="true" />
                                     }
                                     @foreach (var tag in i.TagNames.Take(2))
                                     {
@@ -487,6 +494,17 @@
     // pushing ?idea={id} onto the current /board/{BoardId} route; closing drops the param.
     private void OpenIdea(string ideaId) =>
         Nav.NavigateTo($"/board/{BoardId}?idea={Uri.EscapeDataString(ideaId)}");
+
+    // Rows and cards are role="button" spans/divs, and a browser only synthesizes a click from Enter or
+    // Space on a native control — so without this the drawer, and with it the only keyboard route to
+    // moving an idea, was unreachable from the board.
+    private void ActivateCard(KeyboardEventArgs e, string ideaId)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            OpenIdea(ideaId);
+        }
+    }
 
     private void CloseDrawer() => Nav.NavigateTo($"/board/{BoardId}");
 
