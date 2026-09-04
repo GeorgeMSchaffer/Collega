@@ -31,11 +31,8 @@
 /* ---- Shared card bits ---- */
 .tag { font-size: 11px; color: var(--ink-3); background: #f3f2f1; border-radius: 4px; padding: 2px 8px; }
 .tag.more { background: transparent; color: var(--accent-deep); font-weight: 700; padding: 2px 2px; }
-.prio { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
-.prio.critical { background: #7a0d17; }
-.prio.high { background: var(--err); }
-.prio.med { background: var(--warn); }
-.prio.low { background: var(--ok); }
+/* The 8px .prio dot is gone: it carried priority in colour alone, with the name only on a
+   tooltip. List rows now use .prio-chip, the same named chip the swimlane cards already used. */
 .age { font-size: 11px; color: var(--ink-3); flex-shrink: 0; }
 .cmt-inline { font-size: 12px; color: var(--ink-2); flex-shrink: 0; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
 /* Fluent icon glyphs (upvote / comment count) render a fixed-size SVG in a child component, so reach it

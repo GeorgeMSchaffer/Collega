@@ -247,7 +247,10 @@
                             {
                                 var i = idea;
                                 <div class="rowcard" style="@CardStyle(lane)" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)" @onkeydown="e => ActivateCard(e, i.IdeaId)">
-                                    <span class="prio @PrioClass(i.Priority)" title="@PrioLabel(i.Priority) priority"></span>
+                                    @* Named, not just coloured: colour may never be the only carrier
+                                       of meaning (SPEC/decisions.md, 2026-08-31). Same treatment as
+                                       the swimlane card's chip. *@
+                                    <span class="prio-chip @PrioClass(i.Priority)">@PrioLabel(i.Priority)</span>
                                     <span class="t">@i.Title</span>
                                     @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
                                     {
