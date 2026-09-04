@@ -11,11 +11,25 @@
  * beside it — so each is `aria-hidden`.
  */
 
+import { EYE_PATH } from "@/components/viewas/eye-icon";
+import type { Role } from "@/lib/types";
+
 export interface NavItem {
   readonly label: string;
   readonly href?: string;
   readonly path: string;
   readonly built: boolean;
+  /**
+   * The roles the item is worth showing to. Absent means everybody, which is every item but
+   * one. Gating the rail is a convenience and never the authorization — the route behind an
+   * item refuses on its own — so an item shown to the wrong role costs discoverability, not
+   * access.
+   *
+   * Nothing reads this yet: `SidebarNav` in `components/nav/desk-shell.tsx` renders every
+   * item, and that file belongs to another slice. Wrapping the `<SidebarMenuItem>` there in
+   * `<ForRoles roles={item.roles ?? ROLES}>` is the one line that turns it on.
+   */
+  readonly roles?: readonly Role[];
 }
 
 export interface NavGroup {
@@ -58,6 +72,17 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: "Configure",
     items: [
+      {
+        // The second of the two entry points `SPEC/20-feature-view-as.md` D-PLACE locks; the
+        // first is the right-aligned control the desk strip renders on every screen. Both,
+        // deliberately: View As is the Site Admin's only path to creating organization
+        // content, and Sprint 6.5 exists because one entry point was not enough to find it.
+        label: "View as…",
+        href: "/view-as",
+        built: true,
+        roles: ["SiteAdmin", "OrgAdmin"],
+        path: EYE_PATH,
+      },
       {
         label: "Settings",
         built: false,
