@@ -139,6 +139,10 @@ function InspectorHeader({ className, ...props }: React.ComponentProps<"div">) {
 
 function InspectorTitle({ className, ...props }: React.ComponentProps<"h2">) {
   return (
+    // Content arrives as children through {...props}; the rule cannot see through a
+    // pass-through wrapper. The requirement is not waived, it moves to the caller — an
+    // InspectorTitle rendered empty is still a defect.
+    // eslint-disable-next-line jsx-a11y/heading-has-content
     <h2
       data-slot="inspector-title"
       className={cn("text-base font-semibold tracking-tight", className)}

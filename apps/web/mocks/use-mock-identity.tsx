@@ -68,7 +68,12 @@ export function MockIdentityProvider({ children }: { children: React.ReactNode }
   const [ready, setReady] = React.useState(false);
 
   React.useEffect(() => {
+    // localStorage does not exist during SSR, so the stored identity can only be read
+    // after mount. That costs one extra render, which is the accepted price of not
+    // rendering the wrong role first. useSyncExternalStore is the shape that would
+    // satisfy the rule properly; worth doing once the screens settle.
     const stored = readStored() ?? DEFAULT_MOCK_IDENTITY;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIdentityState(stored);
     writeCookie(stored);
     setReady(true);

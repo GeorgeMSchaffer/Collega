@@ -45,6 +45,8 @@ function PaginationLink({
   size?: "default" | "sm" | "icon";
 }) {
   return (
+    // Same pass-through case as InspectorTitle: children come via {...props}.
+    // eslint-disable-next-line jsx-a11y/anchor-has-content
     <a
       data-slot="pagination-link"
       aria-current={isActive ? "page" : undefined}
