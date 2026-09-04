@@ -104,6 +104,20 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // See DrawerShell: imported before anything opens so the module's focusin listener is
+        // already running when the invoking control is focused.
+        if (firstRender)
+        {
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/drawerFocus.js");
+
+            if (_disposed)
+            {
+                await _module.DisposeAsync();
+                _module = null;
+                return;
+            }
+        }
+
         if (IsOpen == _activated)
         {
             return;

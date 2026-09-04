@@ -109,6 +109,23 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // Import before anything opens, not on the first open. The module registers the focusin
+        // listener that remembers the invoking control, and StatusesAdmin and IdeaTypesAdmin
+        // disable that control in the very render that opens the drawer. Importing lazily
+        // registered the listener *after* that blur, so the first open of every page load had
+        // nothing to restore focus to — the interaction a user makes first.
+        if (firstRender)
+        {
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/drawerFocus.js");
+
+            if (_disposed)
+            {
+                await _module.DisposeAsync();
+                _module = null;
+                return;
+            }
+        }
+
         if (IsOpen == _activated)
         {
             return;
