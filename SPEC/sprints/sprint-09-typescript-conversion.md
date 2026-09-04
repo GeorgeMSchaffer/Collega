@@ -1,7 +1,9 @@
 # Sprint 9 — TypeScript Stack Conversion
 
-Status: **not scheduled.** Blocked by Sprint 7.5 and Sprint 8, per settled constraint 3.
-Written 2026-08-31.
+Status: **ACTIVE — this is the current sprint (2026-09-04).** Sprint 8 was cancelled and
+Sprint 7.5 closed the same day; .NET development has stopped. Wave 0 is unblocked — tickets
+`06` and `08` were decided 2026-09-04, and `08` was the last thing gating it.
+Written 2026-08-31, activated 2026-09-04.
 
 **Full plan, slice inventory, collision model, and estimate: `SPEC/50-typescript-migration.md`.**
 This file is the execution wrapper only — sequencing, role assignment, and the definition
@@ -9,18 +11,20 @@ of done. It deliberately does not restate the plan.
 
 ---
 
-## The one thing that does not wait for this sprint
+## Wave A is already done
 
-**Wave A (golden capture) runs before or during Sprint 8**, not here.
-**Started 2026-08-31** by decision — see `SPEC/decisions.md`. It is live work now,
-tracked against Sprint 8's calendar rather than this sprint's.
+**Complete 2026-09-03**: 447 cases over all 81 endpoints at four roles and anonymous,
+recorded from the live .NET API and replaying 447/447 clean. Committed under
+`tools/golden/` — it *is* the oracle.
 
-It records request/response pairs for all 81 endpoints across all four roles against the
-**live .NET API**. Once Sprint 8 closes and the .NET stack is retired, that capture is no
-longer possible and the conversion loses its only oracle.
+It ran ahead of this sprint deliberately, because it can only be recorded against a live
+.NET API. That deadline has not gone away, it has moved: **cutover deletes the .NET
+solution**, and after that the recording can never be made again. So until Wave F,
+`dotnet run` and `dotnet test` must keep working even though no development happens on
+them — a change that breaks the API's boot path is still a problem.
 
-Wave A touches `tools/golden/` only — it collides with nothing in Sprint 7.5 or Sprint 8
-and can run alongside them. Schedule it against Sprint 8's calendar, not this one.
+Re-capture only if the API surface changes, and against a freshly seeded database
+(`tools/golden/README.md` explains why, and how).
 
 | Slice | Owns | State |
 |---|---|---|

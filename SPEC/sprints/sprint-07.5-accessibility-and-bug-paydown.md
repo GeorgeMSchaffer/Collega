@@ -1,6 +1,6 @@
 # Sprint 7.5: Accessibility and Bug Paydown
 
-**Status:** In Progress (started 2026-09-04) — baseline `dotnet test Collega.sln` green at 821 tests on `768e30c`
+**Status:** **Closed 2026-09-04 — implemented, verification stood down.** All ten backlog items are built and committed, plus four more found during the work; `dotnet test Collega.sln` is green at 821. A third browser pass and a code review of slice 2 were outstanding and are **not being completed**: Sprint 8 was cancelled the same day, so the deployment this sprint existed to protect is not happening, and further verification of a client that Wave E deletes buys nothing. See `SPEC/decisions.md` 2026-09-04. Known-unverified items are listed there and carried into Wave E as requirements.
 **Sequence:** 7.5 of 8 — runs after Sprint 7 (`archive/sprint-07-ai-idea-assist.md`, complete) and **before Sprint 8** (`sprint-08-azure-deployment.md`). Scheduled 2026-08-25 at user request, same pattern as Sprint 6.5: a paydown wave that clears the pre-feature triage queue before the release that puts the product in front of real users.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 

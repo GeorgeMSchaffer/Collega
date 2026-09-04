@@ -9,6 +9,84 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-04 — .NET development stops; the conversion starts now
+
+**Decided:** no further feature, paydown or polish work on the .NET solution. **Sprint 9
+— the TypeScript conversion — is the active sprint**, starting at Wave 0.
+
+**The distinction that matters:** development stops, the stack stays **runnable**. The
+golden corpus can only be recorded against a live .NET API, and cutover deletes that API
+permanently. So `dotnet run` and `dotnet test` must keep working until Wave F, and a change
+that breaks the API's boot path is a problem even though nobody is developing on it.
+
+**Sprint 7.5 closes where it is: implemented, not fully verified.** All ten backlog items
+plus four found during the work are committed and the suite is green, but a third browser
+pass and a code review of its second slice were still outstanding. Both are stood down.
+The sprint existed so the first real-user deployment would not ship known accessibility
+defects; with Sprint 8 cancelled there is no such deployment, so continuing to verify a
+client that Wave E deletes buys nothing. What the work bought instead is a set of rules
+recorded surface-neutrally (`20-feature-client-ui.md:243`) that bind the comp P build, and
+that is the part which actually crosses over.
+
+**Known-unverified, carried into Wave E rather than fixed here** — these are Blazor
+defects and their value now is as requirements for the Next.js build:
+
+- List rows overflow at 375px. Pre-existing, aggravated by this sprint's additions.
+- The focus-restore and Space-scroll fixes are committed but never browser-confirmed.
+- Rail labels sit at 8.5px; `ChangePassword` has no username field for password managers.
+- The priority chip reads "Medium" where the sprint text said "Med".
+
+**What does not stop:** keeping the .NET stack buildable and bootable, and re-capturing the
+corpus if the API surface ever changes before cutover.
+
+---
+
+## 2026-09-04 — Sprint 8 is cancelled: the .NET stack is never deployed
+
+**Decided:** drop the Azure deployment entirely. Both applications and the database go to
+**Vercel** — `apps/web`, `apps/api`, and Prisma Postgres — and that happens at the end of
+the conversion, not before it. **Sprint 9 is now the next sprint.**
+
+**Why.** Sprint 8 was planned before the conversion was, and it would have provisioned
+Azure, shipped the Blazor client and the ASP.NET API to it, built CI/CD for both, and then
+been thrown away a sprint later when `02` sent the TypeScript stack to Vercel. Paying for a
+deployment target twice, and running the second migration under production traffic, is
+worse than not shipping the first one.
+
+**What this costs, stated plainly.** There is now **no production deployment until the
+conversion completes**. That is a long window with nothing running for real users, and the
+conversion is a big-bang rewrite of ~60,000 lines — so the first thing ever deployed will
+be the new stack, on its first day, rather than a known-good stack that was already up.
+Wave F's gate does not change and is now carrying more weight than it was designed for:
+F1 green — all 81 endpoints × 4 roles replaying clean — plus F2's adapted Playwright suite.
+
+**What is *not* affected.** The golden corpus was captured on 2026-09-03 and is committed,
+so the oracle survives the .NET stack regardless of whether it is ever deployed. Its
+standing rule still holds for a different reason: re-capture only while the .NET code still
+runs locally, because after cutover deletes it the recording can never be made again.
+
+**Consequences to carry:**
+
+- **Sprint 7.5's justification changes.** It exists so the first real-user deployment does
+  not ship known accessibility defects. There is now no such deployment. The work is not
+  wasted — the rules are recorded surface-neutrally in `20-feature-client-ui.md:243` and
+  bind the comp P build too — but it is now paydown on a client that Wave E deletes, and
+  that is worth knowing before anything further is spent on the Blazor UI.
+- **Rule 32c's AI-unavailable flash moves to Wave E.** It was parked in Sprint 8 so the
+  first deployment would ship it. Building it in Blazor now would be building into a client
+  that gets deleted, so it belongs in the Next.js create surface instead.
+- **`.github/workflows/deploy-api.yml` and `deploy-client.yml` are dead**, as are
+  `SPEC/50-azure-deployment.md`, `SPEC/50-azure-api-cicd.md` and
+  `SPEC/50-kubernetes-deployment.md`. Superseded, not deleted — they record what was
+  intended and why.
+
+**Supersedes** the deployment half of `95-next-sprints.md`'s sequencing, where Sprint 8 was
+the hard-gated final pre-MVP sprint. The gate it carried — that Sprint 5's Postgres
+migration must be verified against a real instance before deploying — is satisfied and now
+belongs to Wave F instead.
+
+---
+
 ## 2026-09-04 — The idea-type badge moves to the tag row on swimlane cards
 
 **Decided:** accept visible drift from comp C v5 on board cards. The idea-type badge

@@ -25,7 +25,7 @@ if you must.
 |---|---|---|
 | 1 | **Destination is a plan** | Charting produced this document. The build is a separate authorization. |
 | 2 | **Motive: hiring + ecosystem** | Not Blazor frustration. The *whole* stack moves, server included. The cheap client-only option was ruled out. |
-| 3 | **Starts after Sprint 8** | MVP ships on .NET first. Sprint 7.5 then Sprint 8 run to completion untouched. **One exception — see Wave A.** |
+| 3 | ~~**Starts after Sprint 8**~~ **Starts after Sprint 7.5** | Superseded 2026-09-04: Sprint 8 is cancelled and the .NET stack is never deployed, so there is no MVP-on-.NET to ship first. Wave A already ran. |
 | 4 | **Estimated in agent-slices** | Worktree-sized units on the existing multi-agent workflow, not developer-weeks. |
 | 5 | **Vitest + Playwright** | Not Cypress. The existing `e2e/` TypeScript Playwright suite is an asset and is kept. |
 | 6 | **Big-bang cutover** | Not a strangler. No shippable intermediate; one cutover. |
@@ -405,7 +405,8 @@ assumed.
   big-bang means.
 - **The 16,900-line C# test suite**, as C#. Its *coverage* is replaced by F1 + F2 +
   re-derived Vitest tests (ticket `10`).
-- **Sprint 7.5 and Sprint 8.** They run first, untouched, on .NET.
+- **Sprint 7.5.** Implemented on .NET before this starts. **Sprint 8 was cancelled**
+  2026-09-04 and the .NET stack is never deployed.
 - **The product's feature set** — with one bounded exception. The conversion itself
   re-expresses existing behaviour; **Wave G** carries the four net-new features decided
   on 2026-09-03 and starts only once F1 is green, so the oracle still covers the port
@@ -421,8 +422,11 @@ assumed.
    `SPEC/typescript-conversion-map/`. The ticket `01` conflict it surfaced was
    decided the same day: comp P on Tailwind + shadcn/ui (`decisions.md`). Question C
    (net-new scope) is the one part still open, and nothing in E0–E5 waits on it.
-2. **Schedule Wave A now.** It is the only piece with a deadline, and the deadline is set
-   by Sprint 8's close, not by this plan.
+2. ~~**Schedule Wave A now.**~~ **Done 2026-09-03** — 447 cases over all 81 endpoints,
+   committed. Its deadline was never Sprint 8's close (that sprint is cancelled); it is
+   cutover, which deletes the .NET solution and with it any ability to record again.
+   **Until then the .NET stack must stay runnable**, even though no further development
+   happens on it: a re-capture is only possible while the API still boots.
 3. **Answer the Outcome ↔ Issue cardinality question** before Wave E6.
 4. **Take ticket `10`** — it was blocked on `04`, which is now answered.
 5. **Reconcile `SPEC/20-feature-client-ui.md`** against the comp P lock — done

@@ -14,7 +14,7 @@ remaining work.
 
 **Captured 2026-09-03**: 447 cases over all 81 endpoints, replaying clean against
 a freshly seeded .NET instance. Re-capture only if the API changes — and only
-while it still exists. Once Sprint 8 retires the .NET stack the recording cannot
+while it still exists. Once cutover deletes the .NET solution the recording cannot
 be made again, and the conversion has no oracle at all.
 
 ## Running it

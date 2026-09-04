@@ -1,6 +1,27 @@
 # Sprint 8: Azure Deployment (provision + first deploy + CI/CD)
 
-**Status:** Not started
+> # ⛔ CANCELLED 2026-09-04 — never started, and will not be
+>
+> **The .NET stack is never deployed.** Both applications and the database go to **Vercel**
+> — `apps/web`, `apps/api`, Prisma Postgres — at the end of the TypeScript conversion.
+> See `SPEC/decisions.md` 2026-09-04. **Sprint 9 is now the next sprint.**
+>
+> This sprint would have provisioned Azure, deployed the Blazor client and ASP.NET API,
+> and built CI/CD for both, a sprint before ticket `02` sent the TypeScript stack to
+> Vercel. Standing that up to tear it down was the whole reason to drop it.
+>
+> **The one item that survives:** the P1 rule 32c AI-unavailable flash below. It was parked
+> here so the first deployment would ship it; it now belongs to **Wave E**, in the Next.js
+> create surface, because building it in Blazor is building into a client Wave E deletes.
+>
+> **Dead alongside it:** `.github/workflows/deploy-api.yml`, `deploy-client.yml`,
+> `SPEC/50-azure-deployment.md`, `SPEC/50-azure-api-cicd.md`,
+> `SPEC/50-kubernetes-deployment.md`, and `deploy/azure/**`. Kept, not deleted — they
+> record what was intended.
+>
+> The file is left as written below. Nothing in it gates anything.
+
+**Status:** Cancelled 2026-09-04 (never started)
 **Sequence:** 8 of 8 (last) — see `SPEC/95-next-sprints.md` for the full sequence. Renumbered from Sprint 7 on 2026-08-11 when AI-assisted idea drafting was scheduled ahead of it at user request. Sprint 7 (`archive/sprint-07-ai-idea-assist.md`) is **complete (2026-08-18)**, so the first deployment ships both View As (Sprint 6) and AI idea assist. **Starts after Sprint 7.5** (`sprint-07.5-accessibility-and-bug-paydown.md`, scheduled 2026-08-25), which clears the ten open triage items: paydown precedes deployment because this sprint is what puts the product in front of real users, so known defects should be fixed before it, not after. Sprint 6.5 (`archive/sprint-06.5-bug-fixes-and-tweaks.md`) set that precedent on 2026-08-14. **Hard blocker:** does not start until Sprint 5 (`sprint-05-postgres-migration.md`) is **implemented in code and verified working** — not merely planned (the migration sets the deployment's DB engine).
 
 **Config note (added 2026-08-11; key renamed 2026-08-25):** Sprint 7 introduces a deployment-level AI API key. The setting name is **`ANTHROPIC_API_KEY`** — renamed from `Ai__ApiKey` on 2026-08-25 per `20-feature-ai-idea-assist.md` rule 29a, so any older provisioning notes naming `Ai__ApiKey` are stale. It must be provisioned as App Service configuration alongside the other secrets in this sprint's config task; the feature stays dark without it, which is a supported state rather than a failure. `deploy/azure/provision.sh` already sets it under the new name and redacts it from its own echoed output.
