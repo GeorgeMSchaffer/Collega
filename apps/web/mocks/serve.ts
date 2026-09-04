@@ -16,6 +16,7 @@ import { USE_MOCK_API } from "./config";
 import { CASE_KINDS, type CaseKind, type Corpus, canonicalQuery, getCorpus } from "./corpus";
 import {
   DEFAULT_MOCK_IDENTITY,
+  MOCK_IDENTITIES,
   MOCK_IDENTITY_COOKIE,
   MOCK_IDENTITY_HEADER,
   type MockIdentity,
@@ -40,9 +41,20 @@ const DROPPED_HEADERS = new Set([
 
 const MOCK_PROBLEM_TYPE = "https://collega.dev/problems/mock-no-recording";
 
-function identityOf(request: Request): MockIdentity {
+/**
+ * Supplying no identity is fine and defaults; supplying one the corpus never recorded
+ * against is not. The identities are case-sensitive corpus values, so "Anonymous" and
+ * "SiteADMIN" are typos — and falling back to the default for a typo answers as a
+ * *different* role, which reads to the caller as "the product refused me" rather than
+ * "the mock did not understand you". Same reasoning as wantedKindOf below.
+ */
+function identityOf(request: Request): { ok: true; identity: MockIdentity } | { ok: false; supplied: string; source: string } {
   const header = request.headers.get(MOCK_IDENTITY_HEADER);
-  if (isMockIdentity(header)) return header;
+  if (header !== null) {
+    return isMockIdentity(header)
+      ? { ok: true, identity: header }
+      : { ok: false, supplied: header, source: MOCK_IDENTITY_HEADER };
+  }
 
   const cookie = request.headers.get("cookie");
   if (cookie) {
@@ -50,11 +62,37 @@ function identityOf(request: Request): MockIdentity {
       const [name, ...rest] = part.trim().split("=");
       if (name === MOCK_IDENTITY_COOKIE) {
         const value = decodeURIComponent(rest.join("="));
-        if (isMockIdentity(value)) return value;
+        return isMockIdentity(value)
+          ? { ok: true, identity: value }
+          : { ok: false, supplied: value, source: `cookie ${MOCK_IDENTITY_COOKIE}` };
       }
     }
   }
-  return DEFAULT_MOCK_IDENTITY;
+  return { ok: true, identity: DEFAULT_MOCK_IDENTITY };
+}
+
+/** An identity the corpus never recorded against — a caller-side typo, said plainly. */
+function unknownIdentity(supplied: string, source: string): Response {
+  const detail =
+    `${source} was "${supplied}", which is not one of the identities the corpus recorded: ` +
+    `${MOCK_IDENTITIES.join(", ")}. These are case-sensitive. Omit it to default to ` +
+    `${DEFAULT_MOCK_IDENTITY}.`;
+  console.warn(`[mock] ${detail}`);
+  return new Response(
+    JSON.stringify(
+      { type: MOCK_PROBLEM_TYPE, title: "Unknown mock identity", status: 400, detail },
+      null,
+      2,
+    ),
+    {
+      status: 400,
+      headers: {
+        "content-type": "application/problem+json; charset=utf-8",
+        "x-collega-mock-match": "unknown-identity",
+        "cache-control": "no-store",
+      },
+    },
+  );
 }
 
 /**
@@ -197,7 +235,9 @@ export async function serveFromCorpus(request: Request, basePathPrefix: string):
   const wanted = wantedKindOf(request, params);
   params.delete(MOCK_KIND_PARAM);
 
-  const identity = identityOf(request);
+  const resolved = identityOf(request);
+  if (!resolved.ok) return unknownIdentity(resolved.supplied, resolved.source);
+  const identity = resolved.identity;
   const path = url.pathname.startsWith(basePathPrefix)
     ? url.pathname.slice(basePathPrefix.length) || "/"
     : url.pathname;
