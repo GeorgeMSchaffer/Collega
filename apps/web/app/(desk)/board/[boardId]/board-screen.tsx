@@ -94,7 +94,9 @@ export function BoardScreen({ boardId }: { boardId: string }) {
     return statuses;
   }, [exactBoard, statuses]);
 
-  const items = ideas.data?.items ?? [];
+  // `?? []` would mint a fresh array every render, so the memo below would recompute
+  // on every keystroke rather than only when the data changes.
+  const items = React.useMemo(() => ideas.data?.items ?? [], [ideas.data]);
   const visible = React.useMemo(() => {
     const needle = search.trim().toLowerCase();
     return items.filter((idea) => {

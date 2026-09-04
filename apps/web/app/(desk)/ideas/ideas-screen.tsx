@@ -108,7 +108,9 @@ export function IdeasScreen() {
     organizationId ? `/organizations/${organizationId}/ideas${suffix}` : null,
   );
 
-  const items = ideas.data?.items ?? [];
+  // `?? []` would mint a fresh array every render, so the memo below would recompute
+  // on every keystroke rather than only when the data changes.
+  const items = React.useMemo(() => ideas.data?.items ?? [], [ideas.data]);
   const boardList = boards.data ?? [];
   const boardsById = new Map(boardList.map((board) => [board.boardId, board]));
   const statusesById = new Map(statuses.map((status) => [status.statusId, status]));
