@@ -34,16 +34,18 @@
             <div class="formrow">
                 <div class="field">
                     <label for="first">First name</label>
-                    <FluentTextField id="first" AriaLabel="First name" @bind-Value="_firstName" Disabled="_busy" Style="width:100%" />
+                    <FluentTextField id="first" AriaLabel="First name" AutoComplete="given-name" @bind-Value="_firstName" Disabled="_busy" Style="width:100%" />
                 </div>
                 <div class="field">
                     <label for="last">Last name</label>
-                    <FluentTextField id="last" AriaLabel="Last name" @bind-Value="_lastName" Disabled="_busy" Style="width:100%" />
+                    <FluentTextField id="last" AriaLabel="Last name" AutoComplete="family-name" @bind-Value="_lastName" Disabled="_busy" Style="width:100%" />
                 </div>
             </div>
             <div class="field">
                 <label for="email">Email</label>
-                <FluentTextField id="email" AriaLabel="Email" @bind-Value="_email" TextFieldType="TextFieldType.Email" Disabled="_busy" Style="width:100%" />
+                @* "username", not "email": it names the credential the new-password field below is
+                   saved against, so the browser offers to store the pair. *@
+                <FluentTextField id="email" AriaLabel="Email" AutoComplete="username" @bind-Value="_email" TextFieldType="TextFieldType.Email" Disabled="_busy" Style="width:100%" />
             </div>
             <div class="field">
                 <label for="password">Password</label>
