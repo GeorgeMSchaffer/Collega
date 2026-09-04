@@ -30,6 +30,8 @@ import {
 import Link from "next/link";
 import * as React from "react";
 
+import { USE_MOCK_API } from "@/mocks";
+
 import { CorpusNote } from "@/components/desk/notices";
 import { PageHeader } from "@/components/desk/page-header";
 import type { Role } from "@/lib/types";
@@ -204,7 +206,9 @@ export function ReadOnlyAside({
             </Button>
           )}
         </Guarded>
-        {probe ? (
+        {/* Scaffolding, and gated so it cannot outlive the mock: it fires a real refused
+            mutation, which is exactly what nobody wants on a production admin screen. */}
+        {probe && USE_MOCK_API ? (
           <>
             <p className="m-0 text-xs leading-relaxed text-muted-foreground">
               <span className="font-medium text-foreground">Recorded data</span> — the control
