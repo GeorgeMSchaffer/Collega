@@ -13,9 +13,9 @@
     "@collega/design-system": "workspace:*",
     "geist": "1.7.2",
     "next": "16.3.4",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "zod": "4.5.4"
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

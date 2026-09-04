@@ -7,6 +7,12 @@ packages:
 catalog:
   "@types/node": 22.20.1
   typescript: 5.9.3
+  # React and zod cross the app/design-system boundary. Two copies of React is two
+  # renderers; two copies of zod is two sets of instanceof checks — both fail at runtime
+  # with lint and typecheck green, which is why they are pinned here rather than per package.
+  react: 19.2.8
+  react-dom: 19.2.8
+  zod: 4.5.4
 
 # unrs-resolver (via eslint-import-resolver-typescript) ships prebuilt native binaries and
 # resolves correctly without running its install script, so it stays blocked rather than
