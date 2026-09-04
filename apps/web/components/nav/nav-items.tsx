@@ -28,11 +28,9 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: "Workspace",
     items: [
       {
-        // The desk Home — the *what needs me now* screen — belongs to the auth slice, which
-        // also owns `/`. Linking there from inside the desk would drop the shell, so Home
-        // sits under the not-built strip until that screen exists at a desk route.
         label: "Home",
-        built: false,
+        href: "/",
+        built: true,
         path: "M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z",
       },
       {
