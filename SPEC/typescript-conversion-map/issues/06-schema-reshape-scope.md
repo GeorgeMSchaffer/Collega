@@ -1,8 +1,18 @@
 # 06 — What actually changes in the schema?
 
+> **Unblocked 2026-09-04** by [`../findings/05-prisma-introspection.md`](../findings/05-prisma-introspection.md).
+> The forced/optional line the ticket says it needs can now be drawn, and the forced side is
+> short: **three partial unique indexes** re-added as raw SQL (introspection drops them and no
+> Prisma workflow warns), and **relation field names**, which introspection generates as
+> `impersonation_sessions_impersonation_sessions_real_user_idTousers` and are unusable as-is.
+> Everything else on the option list below is optional. One item changes category: **enum
+> representation** is not a preference for the two converters stored as `int`, since `0`/`1`/`2`
+> carry meaning defined only in C# and nothing in the schema records it. Still open for
+> decision.
+
 Type: grilling
-Status: open
-Blocked by: 05
+Status: open — unblocked 2026-09-04
+Blocked by: — (was 05, answered)
 
 ## Question
 

@@ -191,7 +191,7 @@ the corpus never touches shows up as a hole rather than as silence.
 | Slice | Owns |
 |---|---|
 | **S0.1** Monorepo skeleton | root configs, `turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, ESLint + `eslint-plugin-boundaries` rules, CI task graph |
-| **S0.2** Prisma introspect + reshape | `packages/infrastructure/prisma/**` — `db pull`, then the deliberate reshape; generated client; per-feature seed composition. **Freezes the schema.** |
+| **S0.2** Prisma introspect + reshape | `packages/infrastructure/prisma/**` — `db pull`, then the deliberate reshape; generated client; per-feature seed composition. Also owes the **three partial unique indexes** introspection drops, as raw SQL plus a test that fails if any is absent (`05`'s findings). **Freezes the schema.** |
 | **S0.3** Cross-cutting kernel | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` — error model, result types, pagination, auth guard skeleton, and the `AsyncLocalStorage` request context that View As will need |
 
 S0.3 exists so that seven feature agents do not each invent their own error shape. It is
@@ -345,9 +345,8 @@ converted to currency — that needs current per-model pricing checked rather th
 
 | Open ticket | If answered differently |
 |---|---|
-| `06` reshape scope | A larger schema reshape inflates C1 and F3 and weakens F1's diff. It also has to decide whether S0.2 lays down Wave G's four entities or Wave G buys a schema amendment slice. |
+| `06` reshape scope | A larger schema reshape inflates C1 and F3 and weakens F1's diff. It also has to decide whether S0.2 lays down Wave G's four entities or Wave G buys a schema amendment slice. Unblocked by `05`; the forced side is now known to be small. |
 | `07` View As ambient identity | Drives B7 and S0.3. Flagged AFK-researchable on the map. Not started. |
-| `05` Prisma introspection fidelity | Gates `06`. The risk it exists to measure is what introspection *cannot* see — global query filters, value converters, owned types. Organization scoping is very likely one of them, and it would vanish silently. Not started. |
 | `11` spec reconciliation | Lands as F5; does not gate earlier waves. |
 
 Answered 2026-09-03 and no longer open (`SPEC/decisions.md`): `01` Question C — Loop,
@@ -355,6 +354,17 @@ decision records, commitment strip and Triage Mode are in, as **Wave G**; `10` �
 suite is discarded in favour of the golden corpus plus per-slice Vitest; `02` — Vercel
 with Prisma Postgres, which makes serverless Nest a design constraint rather than a
 deployment detail.
+
+Answered 2026-09-04: `05`, by running introspection against a live database rather than
+reading documentation — `SPEC/typescript-conversion-map/findings/05-prisma-introspection.md`.
+The risk it existed to measure is **not there**: the codebase has no EF global query filters
+at all, so organization and soft-delete scoping is explicit Application-layer code that ports
+as ordinary logic a reviewer can see. Columns, keys, foreign keys and plain indexes round-trip
+exactly. What introspection loses is **three partial unique indexes**, silently — `db pull`
+says nothing and `migrate diff` reports an empty migration, because the engine does not model
+them. S0.2 owes them as raw SQL in the first migration, with a test that fails if any is
+absent; one of the three is what makes "at most one open View As session per user" a database
+guarantee rather than a race. That moves the estimate's risk on S0.2 down, not up.
 
 ---
 
