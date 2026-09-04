@@ -5,7 +5,9 @@ import {
   AlertDescription,
   AlertTitle,
   Button,
+  ForRoles,
   Kbd,
+  ROLES,
   RoleProvider,
   Sidebar,
   SidebarContent,
@@ -55,7 +57,11 @@ function SidebarNav() {
           <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
           <SidebarMenu>
             {group.items.map((item) => (
-              <SidebarMenuItem key={item.label}>
+              // Rule 9 of SPEC/20-feature-view-as.md is "hidden *and* refused — both, not
+              // either", and rule 23 says that while acting as someone the rail must show
+              // what they would see. An item with no `roles` is for everybody.
+              <ForRoles key={item.label} roles={item.roles ?? ROLES}>
+                <SidebarMenuItem>
                 {item.href ? (
                   // Home is "/", and every other route starts with it — so the prefix test
                   // that is right for "/boards" would mark Home active on every screen.
@@ -80,7 +86,8 @@ function SidebarNav() {
                     <span className="ml-auto text-xs">Not built</span>
                   </span>
                 )}
-              </SidebarMenuItem>
+                </SidebarMenuItem>
+              </ForRoles>
             ))}
           </SidebarMenu>
         </SidebarGroup>
