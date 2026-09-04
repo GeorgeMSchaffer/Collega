@@ -30,11 +30,20 @@ This file carries only the rules that must be true *before* touching code. Refer
 ## Build and Test
 
 ```bash
-npm run tests:unit #runs unit tests
-npm run tests:e2e #runs e2e test via Cypress
-npm run test #runs the whole suite
-dotnet test Collega.sln
+dotnet build Collega.sln
+dotnet test Collega.sln   # the whole suite: Domain, Application, Infrastructure, API
 ```
+
+`tests/Collega.E2E.Tests` is **Playwright for .NET**, skipped by default, so the line above
+compiles it without needing a browser or a running server. See `tests/CLAUDE.md`.
+
+There is no `package.json` and no npm script — the TypeScript stack does not exist yet. When it
+does, the commands live here alongside these, not instead of them, until cutover.
+
+**No local `dotnet`?** `docker compose --profile full up -d api` runs the API on the SDK image,
+migrations and seed included (`src/Collega.Infrastructure/CLAUDE.md`). Behind a TLS-inspecting
+proxy, drop the CA into `docker/proxy-ca/` first; the container build needs `--network host` and
+the proxy variables or NuGet restore fails.
 
 Running the API or Client, required configuration and secrets, seeding flags, migrations, and the local PostgreSQL container are all documented where they belong: `src/Collega.API/CLAUDE.md`, `src/Collega.Infrastructure/CLAUDE.md`, `src/Collega.Client/CLAUDE.md`, `tests/CLAUDE.md`, and `README.md`.
 
@@ -54,7 +63,7 @@ Repo layout beyond the `src/` and `tests/` projects:
 ## Source of Truth
 
 Canonical product behavior lives in `SPEC/*.md`. Read the relevant spec before describing or changing behavior. `SPEC/README.MD` indexes the full set; the ones that gate work:
-- `SPECT/decisions` - Records decision made with the date when it was made and a concise explantion.
+- `SPEC/decisions.md` — dated log of decisions that constrain later work, newest first, with enough of the reason that nobody reopens one by accident. Supersession is recorded, never edited away.
 - `SPEC/ideas-inbox.md` — unrefined feature ideas. Not scheduled, not specified, and **does not gate work** — only picked up when the user asks.
 - `SPEC/implementation-agent-tracker.md` — not product behavior, but the authoritative log of what's built, in progress, and next.
 - `SPEC/95-next-sprints.md` — index for remaining pre-MVP sprint scope; per-sprint files live in `SPEC/sprints/` (completed ones in `SPEC/sprints/archive/`).
@@ -72,22 +81,50 @@ Layered with strict boundaries — business rules live in Domain and Application
 
 | Project | Role | Depends on |
 |---|---|---|
-| `src/API` | HTTP host, request boundary | Application, Infrastructure |
-| `src/Application` | Use-case orchestration, authorization, validation | Domain |
-| `src/Domain` | Entities, enums, value objects, invariants | nothing |
-| `src/Prisma` | Persistence via Prisma / PostGress |  external integrations | implements Application/Domain abstractions |
-| `src/Web` | Blazor WebAssembly UI (Fluent UI Blazor) | — |
+| `src/Collega.API` | HTTP host, request boundary | Application, Infrastructure |
+| `src/Collega.Application` | Use-case orchestration, authorization, validation | Domain |
+| `src/Collega.Domain` | Entities, enums, value objects, invariants | nothing |
+| `src/Collega.Infrastructure` | Persistence via **EF Core** on PostgreSQL, plus external integrations | implements Application/Domain abstractions |
+| `src/Collega.Client` | Blazor WebAssembly UI (Fluent UI Blazor) | — |
+
+These are the real project names, and the layering — not the ORM or the language — is what the
+conversion preserves. `SPEC/50-typescript-migration.md` §4 maps each one onto its replacement.
 
 ## Technology Stack
-- Node.js 24.x with Typescript 7.x
-- Frameworks
-    -- Frontend:  Next.js with Tailwind CSS v4 + shadcn/ui, used as intended (`SPEC/decisions.md` 2026-09-03; comp Q is the reference rendering)
-    -- Backend:  Nest.js
-    -- ORM: Prisma Posgress
-    -- Database: 
-        -- Local:  Postgress on a docker container with persisten storage.
-        -- Prod:  Prisma Postgress on Vercel
-    -- Hosting: Vercal.
+
+**Two stacks are described below. Only the first one exists.** The whole application converts to
+TypeScript in Sprint 9 (`SPEC/50-typescript-migration.md`) — a big-bang rewrite of ~60,000 lines,
+not an incremental port — so until cutover, work against what is here and read the target as the
+destination it is. Writing code against the second table today is the drift this section exists to
+prevent.
+
+### What the code is today
+
+| | |
+|---|---|
+| Runtime | .NET 8 (`global.json` pins SDK 8.0.118) |
+| Backend | ASP.NET Core Web API |
+| Frontend | **Blazor WebAssembly**, Fluent UI Blazor — a client-side SPA, not Razor Pages |
+| ORM | **EF Core** (Npgsql), migrations in `src/Collega.Infrastructure/Persistence/Migrations` |
+| Database | PostgreSQL 16 — local in Docker with a persistent volume |
+| Tests | xUnit, plus Playwright for .NET in `tests/Collega.E2E.Tests` (skipped by default) |
+| Hosting | Azure, first deployed in Sprint 8 |
+
+### What it converts to, in Sprint 9
+
+| | |
+|---|---|
+| Runtime | Node.js 24.x, TypeScript |
+| Frontend | Next.js + Tailwind CSS v4 + shadcn/ui, used as intended (`SPEC/decisions.md` 2026-09-03; comp Q is the reference rendering) |
+| Backend | Nest.js, running serverless |
+| ORM | Prisma |
+| Database | PostgreSQL — Prisma Postgres in production |
+| Tests | The .NET suite is **discarded** (ticket `10`): the golden corpus in `tools/golden` plus fresh per-slice Vitest |
+| Hosting | Vercel |
+
+The cutover **deletes the .NET solution**. Nothing runs side by side, and `SPEC/decisions.md`
+2026-09-02 calls that the highest-risk change in the project. What survives it: `SPEC/`, the
+`tools/golden` corpus that is the conversion's only oracle, and the database itself.
 
 ## Session, Branch, and Source Control
 
