@@ -5,22 +5,30 @@
 @inject SessionTimeoutOptions Options
 @inject NavigationManager Nav
 
-<FluentDialog Hidden="@(!_warningVisible)"
-              Modal="true"
-              TrapFocus="true"
-              PreventScroll="true"
-              AriaLabelledby="session-warning-title"
-              AriaDescribedby="session-warning-description"
-              Class="session-warning-dialog">
-    <div class="session-warning-content">
-        <h2 id="session-warning-title">Your session is about to expire</h2>
-        <p id="session-warning-description">You will be signed out in <strong aria-live="polite">@CountdownText</strong> due to inactivity.</p>
-        <div class="session-warning-actions">
-            <FluentButton Appearance="Appearance.Accent" OnClick="StaySignedInAsync">Stay signed in</FluentButton>
-            <FluentButton Appearance="Appearance.Neutral" OnClick="SignOutAsync">Sign Out</FluentButton>
+@*
+    The component stays mounted while signed out — it owns the cross-tab logout listener and the
+    activity timer — but the dialog itself is only rendered for a signed-in session. It used to render
+    display:none on the login page, where an expiry warning can have nothing to warn about.
+*@
+@if (_authenticated)
+{
+    <FluentDialog Hidden="@(!_warningVisible)"
+                  Modal="true"
+                  TrapFocus="true"
+                  PreventScroll="true"
+                  AriaLabelledby="session-warning-title"
+                  AriaDescribedby="session-warning-description"
+                  Class="session-warning-dialog">
+        <div class="session-warning-content">
+            <h2 id="session-warning-title">Your session is about to expire</h2>
+            <p id="session-warning-description">You will be signed out in <strong aria-live="polite">@CountdownText</strong> due to inactivity.</p>
+            <div class="session-warning-actions">
+                <FluentButton Appearance="Appearance.Accent" OnClick="StaySignedInAsync">Stay signed in</FluentButton>
+                <FluentButton Appearance="Appearance.Neutral" OnClick="SignOutAsync">Sign Out</FluentButton>
+            </div>
         </div>
-    </div>
-</FluentDialog>
+    </FluentDialog>
+}
 
 @code {
     private readonly CancellationTokenSource _cancellation = new();
