@@ -39,7 +39,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import { Assignees } from "@/components/desk/assignees";
-import { IdeaInspector } from "@/components/desk/idea-inspector";
+import { IdeaInspector, type UnresolvedIdea } from "@/components/desk/idea-inspector";
 import { Marker } from "@/components/desk/marker";
 import { CreateIdeaPanel, NewIdeaAction } from "@/components/desk/new-idea";
 import { CorpusNote, ErrorNotice, LoadingRows, RefusalNotice } from "@/components/desk/notices";
@@ -146,9 +146,30 @@ export function IdeasScreen() {
   const selectedId = params.get("idea");
   const selected = items.find((idea) => idea.ideaId === selectedId) ?? null;
   const creating = params.get("create") === "1";
-  const columnOpen = selected !== null || creating;
+  // Keyed off the id, not the row: `/ideas/{ideaId}` redirects here for ids the recorded page
+  // does not contain, and the inspector can still resolve some of them from the detail
+  // endpoint. The ones it cannot, it reports back — and then the column closes and the notice
+  // lands on the page, because the spec is explicit that an inaccessible id opens the list
+  // "with a not-found/permission notice and no inspector".
+  const [unresolved, setUnresolved] = React.useState<{ id: string; reason: UnresolvedIdea } | null>(null);
+  // The verdict is only in force while it is still true. It is keyed by id, so selecting a
+  // different idea escapes it; and it is dropped the moment a row for that same id turns up —
+  // which is what happens on the page that holds it, or after a role switch refetches the list.
+  // Latching it outright would leave a stale "not here" over an idea that is plainly there.
+  const stillUnresolved = unresolved !== null && unresolved.id === selectedId && selected === null;
+  const columnOpen = (selectedId !== null && !stillUnresolved) || creating;
   const closeColumn = React.useCallback(() => router.push("/ideas"), [router]);
   useCloseOnEscape(columnOpen, closeColumn);
+
+  // Stable, and keyed by the id it is about: the callback is an effect dependency inside the
+  // column, and storing the id alongside the reason is what lets a *different* selection open
+  // the column again instead of inheriting the last one's verdict.
+  const reportUnresolved = React.useCallback(
+    (reason: UnresolvedIdea) => {
+      if (selectedId) setUnresolved({ id: selectedId, reason });
+    },
+    [selectedId],
+  );
 
   const state: ScreenState =
     stateOverride ??
@@ -196,13 +217,20 @@ export function IdeasScreen() {
         open={columnOpen}
         inspector={
           creating ? (
-            <CreateIdeaPanel boardName={boardList[0]?.name ?? "the board"} onClose={closeColumn} />
-          ) : selected ? (
-            <IdeaInspector
-              idea={selected}
-              boardName={boardsById.get(selected.boardId)?.name ?? "Unknown board"}
-              status={statusesById.get(selected.statusId)}
+            <CreateIdeaPanel
+              boardId={boardList[0]?.boardId}
+              boardName={boardList[0]?.name ?? "the board"}
               onClose={closeColumn}
+            />
+          ) : selectedId ? (
+            <IdeaInspector
+              ideaId={selectedId}
+              idea={selected}
+              boardName={selected ? boardsById.get(selected.boardId)?.name : undefined}
+              status={selected ? statusesById.get(selected.statusId) : undefined}
+              onClose={closeColumn}
+              rowsSettled={ideas.state !== "loading"}
+              onUnresolved={reportUnresolved}
             />
           ) : null
         }
@@ -291,6 +319,26 @@ export function IdeasScreen() {
               Clear filters
             </Button>
           </form>
+
+          {/* The column reported that there is no idea behind this id, and closed itself. It sits
+              above the table, not below it: somebody who followed a deep link needs to be told
+              why nothing opened, and twenty rows further down is out of sight. A refusal, a
+              failure and a gap in the recordings are three different facts and get three
+              different treatments — an advisory nothing can fix, an error worth retrying, and
+              scaffolding that goes away with the mock. */}
+          {stillUnresolved && unresolved ? (
+            unresolved.reason.kind === "not-recorded" ? (
+              <CorpusNote className="mb-4">{unresolved.reason.detail}</CorpusNote>
+            ) : (
+              <Alert
+                variant={unresolved.reason.kind === "refused" ? "warning" : "destructive"}
+                className="mb-4"
+              >
+                <AlertTitle>{unresolved.reason.title}</AlertTitle>
+                <AlertDescription>{unresolved.reason.detail}</AlertDescription>
+              </Alert>
+            )
+          ) : null}
 
           {narrowed ? (
             <CorpusNote className="mb-4">
@@ -452,16 +500,6 @@ export function IdeasScreen() {
               </Card>
             </When>
           </Screen>
-
-          {selectedId !== null && selected === null && ideas.state === "ready" ? (
-            <Alert className="mt-4">
-              <AlertTitle>That idea is not on this page</AlertTitle>
-              <AlertDescription>
-                The link points at an idea the recorded page does not contain, so there is
-                nothing to open.
-              </AlertDescription>
-            </Alert>
-          ) : null}
         </DeskWork>
       </InspectorLayout>
     </>

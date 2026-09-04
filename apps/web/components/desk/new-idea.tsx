@@ -1,17 +1,9 @@
 "use client";
 
-import {
-  Button,
-  DeniedAction,
-  ForRoles,
-  Inspector,
-  InspectorBody,
-  InspectorClose,
-  InspectorHeader,
-  InspectorTitle,
-} from "@collega/design-system";
+import { Button, DeniedAction, ForRoles } from "@collega/design-system";
 import Link from "next/link";
 
+import { CreateIdeaSurface } from "@/components/inspector/create-idea";
 import { useWorkspace } from "@/lib/workspace";
 
 /**
@@ -58,27 +50,18 @@ export function NewIdeaAction({ href }: { href: string }) {
 
 /**
  * Create opens the same docked column detail uses — comp P: *there is no create drawer*. The
- * form itself is the AI-assist and idea-detail slices' work; this holds the column open so
- * the action leads somewhere and the surface is established.
+ * surface itself lives in `components/inspector`; this is the name the list and the board
+ * mount. The brainstorm chat that replaces this form where AI assist is available is the
+ * AI-assist slice's, and opens into the same column.
  */
-export function CreateIdeaPanel({ boardName, onClose }: { boardName: string; onClose: () => void }) {
-  return (
-    <Inspector aria-label="New idea">
-      <InspectorHeader>
-        <div className="min-w-0">
-          <InspectorTitle>New idea</InspectorTitle>
-        </div>
-        <InspectorClose onClick={onClose} />
-      </InspectorHeader>
-      <InspectorBody>
-        <p className="m-0 text-sm leading-relaxed">
-          A new idea lands on <strong>{boardName}</strong> in the left-most lane.
-        </p>
-        <p className="m-0 rounded-lg border border-dashed bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
-          The capture form — and the brainstorm chat that replaces it where AI assist is
-          available — arrives with the idea slices. This column is the surface both open into.
-        </p>
-      </InspectorBody>
-    </Inspector>
-  );
+export function CreateIdeaPanel({
+  boardId,
+  boardName,
+  onClose,
+}: {
+  boardId?: string;
+  boardName: string;
+  onClose: () => void;
+}) {
+  return <CreateIdeaSurface boardId={boardId} boardName={boardName} onClose={onClose} />;
 }

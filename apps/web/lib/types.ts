@@ -110,3 +110,56 @@ export interface Member {
   readonly lastName: string;
   readonly email: string;
 }
+
+export interface BusinessImpact {
+  readonly businessImpactId: string;
+  readonly name: string;
+  readonly color: string | null;
+  readonly sortOrder: number;
+  readonly isDeleted: boolean;
+}
+
+/**
+ * `GET /ideas/{ideaId}`, which is the *only* payload carrying an idea's description.
+ *
+ * It is not a superset of the list row: it has no `authorUserId` and no `createdAtUtc`, so
+ * "created by" and the submission age can only ever come from the list. Neither shape alone
+ * fills the inspector, which is why the detail body reads both and says which it is showing.
+ */
+export interface IdeaDetail {
+  readonly ideaId: string;
+  readonly boardId: string;
+  readonly title: string;
+  readonly description: string | null;
+  readonly priority: Priority;
+  readonly ideaTypeId: string;
+  readonly ideaTypeName: string;
+  readonly ideaTypeColorHex: string | null;
+  readonly businessImpactId: string | null;
+  readonly businessImpactName: string | null;
+  readonly businessImpactColor: string | null;
+  readonly dueDate: string | null;
+  readonly assignees: readonly Assignee[];
+  readonly statusId: string;
+  readonly statusName: string;
+  readonly tagNames: readonly string[];
+  readonly upvoteCount: number;
+  readonly hasUpvoted: boolean;
+  readonly commentCount: number;
+}
+
+export interface IdeaComment {
+  readonly commentId: string;
+  readonly ideaId: string;
+  readonly authorUserId: string;
+  readonly body: string;
+  readonly createdAtUtc: string;
+  readonly updatedAtUtc: string;
+}
+
+/** What `POST /ideas/{ideaId}/upvote/toggle` answers with. */
+export interface UpvoteResult {
+  readonly ideaId: string;
+  readonly hasUpvoted: boolean;
+  readonly upvoteCount: number;
+}
