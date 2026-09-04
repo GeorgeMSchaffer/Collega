@@ -9,6 +9,47 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-04 — The conversion builds on `feature/typescript`, not on `dev`
+
+**Decided:** the conversion gets its own long-lived branch, `feature/typescript`, worked in
+the main tree. `dev` and `legacy/dotnet` hold the frozen .NET state. At cutover the branch
+merges to `dev`, then `dev` to `main`.
+
+**This supersedes the 2026-09-02 decision** ("Conversion slices merge to `dev`, not to an
+integration branch"), and it is worth saying why that reversal is legitimate rather than a
+drift. That decision's stated reason was that the tracker, `30-Contracts.md`, `decisions.md`
+and the comps would be edited by .NET sprint work **and** conversion work at once, so a
+months-long branch turns each into a recurring conflict. **.NET development stopped the same
+day this was decided**, so there is no second editor and the conflict it feared cannot occur.
+The half of that decision which still stands: cutover lands as its own reviewed slice, and
+`main` is the deploy gate.
+
+**Layout:**
+
+| Path | Branch | Purpose |
+|---|---|---|
+| `/home/user/Collega` | `feature/typescript` | Active work. All conversion slices land here. |
+| `/home/user/collega-dotnet` | `legacy/dotnet` | Pristine .NET, guaranteed free of half-built TypeScript. Run the API here to re-record the golden corpus. |
+
+**What this does and does not separate.** `feature/typescript` branches from `dev`, so it
+still *contains* `src/` and `tests/` — the separation is of history, not of files, until the
+cutover slice deletes them. The .NET stack therefore stays runnable in either tree. The
+second worktree exists so there is always one checkout that is unambiguously the old stack,
+which matters when the corpus is the only oracle and a polluted or half-converted tree would
+record the wrong thing.
+
+**Known cost, accepted:** `SPEC/` diverges between the two branches for the duration.
+Conversion work updates the tracker and this log on `feature/typescript`; `dev` keeps the
+2026-09-04 snapshot. Anyone reading specs from `dev` after today is reading a frozen copy.
+Cutover reconciles them in one merge, and ticket `11` (spec reconciliation, Wave F5) is
+already the slice that owns that.
+
+**Remote note:** this session's GitHub credentials accept `refs/heads/*` only — every tag
+push fails, lightweight or annotated. So `legacy/dotnet` is the archival marker rather than
+a tag. Do not delete that branch.
+
+---
+
 ## 2026-09-04 — .NET development stops; the conversion starts now
 
 **Decided:** no further feature, paydown or polish work on the .NET solution. **Sprint 9

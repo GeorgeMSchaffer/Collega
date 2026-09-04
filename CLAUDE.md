@@ -132,6 +132,20 @@ The cutover **deletes the .NET solution**. Nothing runs side by side, and `SPEC/
 - Commit at logical checkpoints — completion of a feature or slice.
 - The flow should be: Feature Branch -> Dev Branch --> Main branch
 
+**During the conversion (from 2026-09-04):** all work lands on **`feature/typescript`**,
+which is the main tree at `/home/user/Collega`. Conversion slices branch from it and merge
+back to it — not to `dev`. At cutover it merges to `dev`, then `dev` to `main`.
+
+| Path | Branch | What it is |
+|---|---|---|
+| `/home/user/Collega` | `feature/typescript` | Active work |
+| `/home/user/collega-dotnet` | `legacy/dotnet` | Frozen .NET. Run the API here to re-record the golden corpus |
+
+`legacy/dotnet` and `dev` both sit at `e8f6c4c`, the last .NET commit. **Never delete
+`legacy/dotnet`** — it is the archival marker, because this repo's credentials reject tag
+pushes. `SPEC/` diverges between the branches until cutover reconciles it; specs read from
+`dev` after 2026-09-04 are a frozen snapshot.
+
 ## Multi-Agent Worktree Workflow
 
  ### Agent Roles
