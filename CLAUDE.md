@@ -114,7 +114,8 @@ prevent.
 
 | | |
 |---|---|
-| Runtime | Node.js 24.x, TypeScript |
+| Runtime | Node.js **22.22.2** (what is installed and pinned in CI; `engines` allows >=22.18, so 24 is fine), TypeScript **5.9.3** |
+| *Note on versions* | This row previously read "Node 24.x, TypeScript 7.x". **TypeScript 7.x is not usable here**: 7.0.x is the native port, its `"."` export is `lib/version.cjs` exporting only `{version, versionMajorMinor}`, so the compiler API is gone and `typescript-eslint` declares `typescript >=4.8.4 <6.1.0`. Corrected 2026-09-04 after S0.1 tried to build against it. |
 | Frontend | Next.js + Tailwind CSS v4 + shadcn/ui, used as intended (`SPEC/decisions.md` 2026-09-03; comp Q is the reference rendering) |
 | Backend | Nest.js, running serverless |
 | ORM | Prisma |
