@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  // Placeholder: no sources yet. Replace with "include": ["src/**/*.ts"] when the first
+  // file lands — tsc errors TS18003 on an include that matches nothing.
+  "files": []
+}

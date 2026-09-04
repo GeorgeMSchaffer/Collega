@@ -1,0 +1,16 @@
+{
+  "name": "@collega/domain",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Entities, enums, value objects and invariants. Depends on nothing.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,28 @@
+packages:
+  - apps/*
+  - packages/*
+
+# One pinned version per shared tool. A slice adding a dependency to its own package uses
+# "catalog:" rather than a version range, so the workspace cannot drift apart.
+catalog:
+  "@types/node": 22.20.1
+  typescript: 5.9.3
+
+# unrs-resolver (via eslint-import-resolver-typescript) ships prebuilt native binaries and
+# resolves correctly without running its install script, so it stays blocked rather than
+# executing a postinstall on every machine and in CI.
+ignoredBuiltDependencies:
+  - unrs-resolver
+
+# Three npm islands are deliberately left out of the workspace. Each carries its own
+# package-lock.json, which pnpm will not read, and each has a toolchain reason to stay
+# independent. Install them with `npm ci` in their own directory; do not migrate them.
+#
+#   tools/golden/           The Wave A capture/replay harness runs on bare Node via type
+#                           stripping, so its tsconfig sets erasableSyntaxOnly, noEmit and
+#                           rewriteRelativeImportExtensions. tsconfig.base.json is the
+#                           opposite shape — decorators and emit, for Nest — so golden must
+#                           keep its own tsconfig and must not extend ours.
+#   e2e/                    Playwright suite with its own config and lockfile.
+#   SPEC/mockups/_build/tw  Tailwind CLI build for the comps, pinned to tailwindcss 4.1.11.
+#                           The app pins its own Tailwind separately; the two are unrelated.

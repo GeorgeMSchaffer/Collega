@@ -1,0 +1,34 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "globalDependencies": ["tsconfig.base.json", "tsconfig.eslint.json"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    // Packages are consumed through their built types, so a dependency has to be built
+    // before its dependents can be checked. The edge is also what puts the dependency's
+    // output in this task's cache key — without it a breaking change upstream replays as
+    // a cached pass downstream.
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    // Layer boundaries are a whole-workspace property, so lint runs once from the root
+    // where eslint-plugin-boundaries can see every package at its repo-relative path.
+    // A per-package lint task would classify each file against the wrong root.
+    "//#lint": {
+      "inputs": [
+        "eslint.config.js",
+        "tsconfig.eslint.json",
+        "apps/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+        "packages/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+        "apps/*/package.json",
+        "packages/*/package.json"
+      ]
+    }
+  }
+}

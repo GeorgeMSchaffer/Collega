@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+
+  // Resolution map for the lint run only — never extended by a package, never used to emit.
+  //
+  // eslint-plugin-boundaries classifies a dependency by its resolved path, so `@collega/*`
+  // has to resolve while linting. The workspace symlinks resolve through each package's
+  // "types" field to its dist/, which does not exist on a fresh clone, and an unresolved
+  // bare specifier reads as an external package rather than as a layer violation — the
+  // rule then passes silently. Mapping the aliases to source here makes the layer gate
+  // independent of build state. CI asserts the gate still fires (see ci.yml).
+  //
+  // Paths are resolved relative to this file, so they stay repo-root relative.
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "@collega/domain": ["./packages/domain/src/index.ts"],
+      "@collega/domain/*": ["./packages/domain/src/*"],
+      "@collega/application": ["./packages/application/src/index.ts"],
+      "@collega/application/*": ["./packages/application/src/*"],
+      "@collega/infrastructure": ["./packages/infrastructure/src/index.ts"],
+      "@collega/infrastructure/*": ["./packages/infrastructure/src/*"],
+      "@collega/design-system": ["./packages/design-system/src/index.ts"],
+      "@collega/design-system/*": ["./packages/design-system/src/*"]
+    }
+  },
+  "files": []
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@collega/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Next.js UI. Reaches the api over HTTP; imports design-system and nothing else.",
+  "dependencies": {
+    "@collega/design-system": "workspace:*"
+  }
+}

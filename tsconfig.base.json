@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "types": ["node"],
+
+    // Node-side default, correct for domain/application/infrastructure/api. Without
+    // "type": "module" in a package.json this emits CommonJS, which is what Nest expects.
+    // apps/web overrides both for Next.js.
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+
+    // Nest resolves constructor dependencies from decorator metadata, so both are required
+    // across the workspace rather than only in apps/api.
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+
+  // No "paths" here on purpose. Packages are compiled: each emits to its own dist/ and is
+  // consumed through the pnpm workspace symlink and its "types" field, so a dependency's
+  // types come from its build output. Aliasing @collega/* to source instead would put a
+  // sibling package's files outside the consumer's rootDir (TS6059) and fold them into the
+  // consumer's dist/. tsconfig.eslint.json carries a source mapping for lint only, where
+  // nothing is emitted.
+  "exclude": ["node_modules", "dist", ".next", ".turbo"]
+}
