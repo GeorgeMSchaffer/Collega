@@ -17,8 +17,8 @@ and those win over a ticket's own `Status:` line, which was not updated after th
 | `02` deployment target | open | **Answered** 2026-09-03: Vercel for both apps, Prisma Postgres in production. Nest runs serverless — no in-process state. |
 | `03` what ports | open | **Answered** 2026-08-31: everything ports, View As isolated. |
 | `04` validation strategy | open | **Answered** 2026-08-31: golden contract tests; Wave A runs before Sprint 8 closes. |
-| `05` Prisma introspection | open | Open (AFK research; not started). |
-| `06` schema reshape scope | blocked by 05 | Open. |
+| `05` Prisma introspection | open | **Answered** 2026-09-04 by running it: `findings/05-prisma-introspection.md`. No global query filters exist; columns, keys, FKs and plain indexes round-trip exactly; three partial unique indexes are lost silently. |
+| `06` schema reshape scope | blocked by 05 | **Unblocked** 2026-09-04. Open, with a defined job: re-add the three partial indexes as raw SQL, decide enum representation for all nine converters, rename introspected relation fields. |
 | `07` View As ambient identity | open | Open (AFK research; not started). |
 | `08` auth / session model | blocked by 07 | Open. |
 | `09` Next ↔ Nest boundary | open | **Answered** 2026-08-31: HTTP only. |
@@ -29,8 +29,8 @@ and those win over a ticket's own `Status:` line, which was not updated after th
 Also settled since the map was charted, and relevant to E6: Outcome ↔ Issue cardinality is
 **single-parent** (`decisions.md` 2026-09-02).
 
-Five tickets remain open: `05` and `07` (the AFK research pair, not started), `06` and `08`,
-which wait on them, and `11` (spec reconciliation).
+Four tickets remain open: `07` (the second of the AFK research pair), `08`, which waits on it,
+`06`, now unblocked and scoped by `05`'s findings, and `11` (spec reconciliation).
 
 ## Ticket `01` conflict — resolved 2026-09-03
 

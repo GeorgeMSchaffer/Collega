@@ -1,7 +1,15 @@
 # 05 — What survives `prisma db pull` from this schema?
 
+> **Answered 2026-09-04; findings in [`../findings/05-prisma-introspection.md`](../findings/05-prisma-introspection.md).**
+> Run against a live Postgres 16 carrying the schema the 11 migrations produce, not from
+> documentation. Short version: the risk this ticket told us to check first — organization
+> scoping hidden in a global query filter — **does not exist**; there are zero `HasQueryFilter`
+> occurrences. Tables, columns, keys, FKs and plain indexes round-trip exactly. What is lost is
+> **three partial unique indexes**, silently and in both directions, and the enum storage split
+> (seven as string, two as int) that `06` has to decide. This file is kept as written.
+
 Type: research
-Status: open
+Status: answered 2026-09-04 — see `findings/05-prisma-introspection.md`
 Blocked by: —
 
 ## Question
