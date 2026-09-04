@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 
+import { MockIdentityProvider } from "@/mocks";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,7 +24,12 @@ export default function RootLayout({
     // maps onto --font-sans / --font-mono. Fonts are self-hosted by the geist package,
     // so nothing is fetched at build or at render.
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
-      <body>{children}</body>
+      {/* The identity the mock answers as is chosen, not proved, and it has to be readable
+          from every screen — so the provider sits at the root rather than in the desk
+          shell. E1 replaces it with the real session; nothing below cares which it is. */}
+      <body>
+        <MockIdentityProvider>{children}</MockIdentityProvider>
+      </body>
     </html>
   );
 }
