@@ -4,7 +4,5 @@
     "rootDir": "./src",
     "outDir": "./dist"
   },
-  // Placeholder: no sources yet. S0.2 owns prisma/** here; Wave C fills src/.
-  // Replace with "include": ["src/**/*.ts"] when the first file lands.
-  "files": []
+  "include": ["src/**/*.ts"]
 }

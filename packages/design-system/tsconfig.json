@@ -4,7 +4,5 @@
     "rootDir": "./src",
     "outDir": "./dist"
   },
-  // Placeholder: no sources yet. E0 (Unit 2) fills src/ with the comp P tokens and
-  // primitives and sets jsx/lib for React. Replace with "include": ["src/**/*.ts*"] then.
-  "files": []
+  "include": ["src/**/*.ts*"]
 }
