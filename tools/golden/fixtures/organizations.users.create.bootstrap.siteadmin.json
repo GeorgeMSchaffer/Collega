@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/users",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/users",
     "body": {
       "firstName": "Golden",
       "lastName": "Bootstrap",
@@ -22,13 +22,13 @@
     "status": 201,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "userId": "d41cbe7c-0513-460f-9045-3169b418eab6",
-      "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+      "userId": "efcf203f-d610-4156-bdca-a2caa3dd4f57",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
       "email": "golden.bootstrap@acme-robotics.demo.collega.test",
       "role": "User",
       "status": "Active"

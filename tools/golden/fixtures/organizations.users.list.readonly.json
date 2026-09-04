@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "GET",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/users",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/users",
     "body": null
   },
   "response": {
@@ -16,7 +16,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -27,8 +27,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage users in this organization.",
-      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/users",
-      "traceId": "0HNOA1Q010GRT:000000C2"
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/users",
+      "traceId": "0HNOA71FOOKTK:000000C2"
     }
   },
   "corpusVersion": 1,

@@ -193,6 +193,12 @@ public sealed class IdeaAssistService : IIdeaAssistService
         string? scopeStatement,
         CancellationToken cancellationToken = default)
     {
+        // The scope statement is organization content, not platform configuration: it is what the
+        // assistant refuses off-topic requests against, one organization's subject matter in its own
+        // words. So it goes through View As like every other org-content mutation (rule 25). Reading
+        // it stays open to a direct Site Admin, as reads always are.
+        _currentUser.EnsureNotDirectSiteAdmin();
+
         var organization = await RequireAdministrableOrganizationAsync(organizationId, cancellationToken);
 
         if (scopeStatement is { Length: > Domain.Organizations.Organization.AiScopeStatementMaxLength })

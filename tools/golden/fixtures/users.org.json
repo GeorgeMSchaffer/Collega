@@ -15,13 +15,13 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:58 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:48 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "userId": "0fc3b0b5-6639-49a9-b0a2-bef9bd490043",
-      "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+      "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
       "role": "OrgAdmin",
       "firstName": "Golden",
       "lastName": "Capture",

@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/invite-code/regenerate",
+    "path": "/organizations/a313baf6-1d17-470d-99d2-6d565199a856/invite-code/regenerate",
     "body": null
   },
   "response": {
@@ -16,7 +16,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -27,8 +27,8 @@
       "title": "Not Found",
       "status": 404,
       "detail": "Organization not found.",
-      "instance": "/api/v1/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/invite-code/regenerate",
-      "traceId": "0HNOA1Q010GRT:000000B9"
+      "instance": "/api/v1/organizations/a313baf6-1d17-470d-99d2-6d565199a856/invite-code/regenerate",
+      "traceId": "0HNOA71FOOKTK:000000B9"
     }
   },
   "corpusVersion": 1,

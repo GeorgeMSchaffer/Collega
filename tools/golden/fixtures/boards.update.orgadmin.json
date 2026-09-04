@@ -7,17 +7,17 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/boards/ebf1f82c-e22f-464f-a1fc-5a52be6024ce",
+    "path": "/boards/53ad2530-e1b2-4346-9061-cba0a754822f",
     "body": {
       "name": "Zz Golden Capture Board Renamed",
       "allowUserStatusUpdate": false,
       "swimlanes": [
         {
-          "statusId": "d8d1f314-cb41-496d-89d8-b311ec4ff2ea",
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
           "order": 0
         },
         {
-          "statusId": "4a5404e4-1dd0-41f7-a45e-573a76e7b759",
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
           "order": 1
         }
       ]
@@ -28,25 +28,25 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:52 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:41 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "boardId": "ebf1f82c-e22f-464f-a1fc-5a52be6024ce",
-      "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+      "boardId": "53ad2530-e1b2-4346-9061-cba0a754822f",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
       "name": "Zz Golden Capture Board Renamed",
       "allowUserStatusUpdate": false,
       "swimlanes": [
         {
-          "statusId": "d8d1f314-cb41-496d-89d8-b311ec4ff2ea",
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
           "statusName": "New / Pending",
           "statusColor": "#64748B",
           "order": 0,
           "statusIsDeleted": false
         },
         {
-          "statusId": "4a5404e4-1dd0-41f7-a45e-573a76e7b759",
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
           "statusName": "In Review",
           "statusColor": "#D97706",
           "order": 1,

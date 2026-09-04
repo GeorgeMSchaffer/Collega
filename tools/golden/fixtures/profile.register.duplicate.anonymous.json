@@ -23,7 +23,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:57 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:47 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -35,7 +35,7 @@
       "status": 409,
       "detail": "Email is already in use.",
       "instance": "/api/v1/auth/register",
-      "traceId": "0HNOA1Q010GRT:000000DB"
+      "traceId": "0HNOA71FOOKTK:000000DB"
     }
   },
   "corpusVersion": 1,

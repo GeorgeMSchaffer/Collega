@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53",
+    "path": "/organizations/a313baf6-1d17-470d-99d2-6d565199a856",
     "body": {
       "title": "Zz Golden Capture Org Renamed",
       "description": "Edited by the golden capture."
@@ -20,7 +20,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -31,8 +31,8 @@
       "title": "Not Found",
       "status": 404,
       "detail": "Organization not found.",
-      "instance": "/api/v1/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53",
-      "traceId": "0HNOA1Q010GRS:000000B7"
+      "instance": "/api/v1/organizations/a313baf6-1d17-470d-99d2-6d565199a856",
+      "traceId": "0HNOA71FOOKTJ:000000B7"
     }
   },
   "corpusVersion": 1,

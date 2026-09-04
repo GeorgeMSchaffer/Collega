@@ -7,45 +7,45 @@
   "unstable": [],
   "request": {
     "method": "GET",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/business-impacts",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/business-impacts",
     "body": null
   },
   "response": {
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:54 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": [
       {
-        "businessImpactId": "4cfad37c-9121-4fc1-b222-55cc89875d4c",
-        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+        "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
         "name": "Critical",
         "color": "#DC2626",
         "sortOrder": 10,
         "isDeleted": false
       },
       {
-        "businessImpactId": "120fbb1e-a476-421e-927d-5cd5d1e47296",
-        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+        "businessImpactId": "82e95b94-5708-4385-89c0-cc5fa51b3264",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
         "name": "High",
         "color": "#D97706",
         "sortOrder": 20,
         "isDeleted": false
       },
       {
-        "businessImpactId": "fd3ecd94-d8dc-4bf0-a0c3-3d83d92504a4",
-        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+        "businessImpactId": "ab4dc497-aa72-4cbb-9146-cdeff9d956b6",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
         "name": "Medium",
         "color": "#2563EB",
         "sortOrder": 30,
         "isDeleted": false
       },
       {
-        "businessImpactId": "3c71e1c5-1430-4bd6-8345-bd3d7708e3d1",
-        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+        "businessImpactId": "f7d3a912-2de2-436f-86a9-bda801d77bc3",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
         "name": "Low",
         "color": "#16A34A",
         "sortOrder": 40,

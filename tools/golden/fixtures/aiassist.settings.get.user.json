@@ -7,14 +7,14 @@
   "unstable": [],
   "request": {
     "method": "GET",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ai-assist/settings",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ai-assist/settings",
     "body": null
   },
   "response": {
     "status": 403,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:50 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:40 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -23,8 +23,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "No further details are available for this 403 response.",
-      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ai-assist/settings",
-      "traceId": "00-9db321a91e53f8956f38d1484e4a461a-0ee55ab88a352812-00"
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ai-assist/settings",
+      "traceId": "00-b7a4407ae2232f6fab8158a8fd878681-180438baa71db2b7-00"
     }
   },
   "corpusVersion": 1,

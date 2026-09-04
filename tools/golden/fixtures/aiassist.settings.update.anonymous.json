@@ -4,11 +4,11 @@
   "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
   "as": "anonymous",
   "kind": "denied",
-  "note": "Recorded as the API answers today: a direct Site Admin is accepted here, which the settings screen in comp P does not offer and rule 25 would not predict. Flagged, not endorsed.",
+  "note": "The scope statement is organization content — it is what refuses off-topic requests, in one organization's own words — so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found.",
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ai-assist/settings",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ai-assist/settings",
     "body": {
       "scopeStatement": "We build warehouse and shop-floor automation."
     },
@@ -18,7 +18,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:50 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:40 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -27,8 +27,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ai-assist/settings",
-      "traceId": "00-dfd2a7eb6850e659bdbe9357a5a147ad-04f02db19f283400-00"
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ai-assist/settings",
+      "traceId": "00-551c0a898f7c8874d6364cc6733ef49a-d4c42fd281b32dbf-00"
     }
   },
   "corpusVersion": 1,

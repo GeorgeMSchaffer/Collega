@@ -8,15 +8,15 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/statuses/reorder",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/statuses/reorder",
     "body": {
       "orderedStatusIds": [
-        "d8d1f314-cb41-496d-89d8-b311ec4ff2ea",
-        "4a5404e4-1dd0-41f7-a45e-573a76e7b759",
-        "e5b95219-236e-41cd-8922-6f7bd7ceb414",
-        "a1b53887-0097-4cbd-91ff-a12ae91df05a",
-        "a50aabeb-fa30-43d4-b89e-4134ea4d5d6e",
-        "9f3aecaa-e55b-4f54-a9d7-c8c1210a19c5"
+        "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+        "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+        "8d4b935c-2709-418e-b151-6a5eb3449880",
+        "8aa88452-07f5-48c7-b087-64687efdb427",
+        "fa4869d2-bf67-4c11-b243-a1a20a3fc293",
+        "f92de280-3042-40c5-91ec-74877534de45"
       ]
     },
     "contentType": "application/json"
@@ -25,7 +25,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:58 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:47 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -34,8 +34,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/statuses/reorder",
-      "traceId": "00-16fd55aa7ebbe7178dfad704f4f44010-481c7cfac938f195-00"
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/statuses/reorder",
+      "traceId": "00-314110bffea3ae155f3502555f12f919-91e60982c5754c18-00"
     }
   },
   "corpusVersion": 1,

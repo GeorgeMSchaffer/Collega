@@ -7,13 +7,13 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/ideas/82331393-cc23-4f8d-98a1-c09ab7e59b88",
+    "path": "/ideas/5ea9641a-72ad-445a-921c-8de278e777b9",
     "body": {
       "title": "Golden capture idea, edited",
       "description": "Recorded by the golden capture.",
       "priority": "High",
-      "ideaTypeId": "1dff3ceb-70a1-4007-b3ae-bff66615fa73",
-      "businessImpactId": "4cfad37c-9121-4fc1-b222-55cc89875d4c"
+      "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+      "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60"
     },
     "contentType": "application/json"
   },
@@ -22,7 +22,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -33,8 +33,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
-      "instance": "/api/v1/ideas/82331393-cc23-4f8d-98a1-c09ab7e59b88",
-      "traceId": "0HNOA1Q010GRT:00000086"
+      "instance": "/api/v1/ideas/5ea9641a-72ad-445a-921c-8de278e777b9",
+      "traceId": "0HNOA71FOOKTK:00000086"
     }
   },
   "corpusVersion": 1,

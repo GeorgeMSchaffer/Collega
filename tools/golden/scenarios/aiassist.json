@@ -176,13 +176,13 @@
       "id": "settings.update.siteadmin",
       "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
       "as": "SiteAdmin",
-      "kind": "success",
-      "expect": 200,
+      "kind": "denied",
+      "expect": 403,
       "path": "/organizations/{{orgId}}/ai-assist/settings",
       "body": {
         "scopeStatement": "We build warehouse and shop-floor automation."
       },
-      "note": "Recorded as the API answers today: a direct Site Admin is accepted here, which the settings screen in comp P does not offer and rule 25 would not predict. Flagged, not endorsed."
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
     },
     {
       "id": "settings.update.orgadmin",
@@ -194,7 +194,7 @@
       "body": {
         "scopeStatement": "We build warehouse and shop-floor automation."
       },
-      "note": "Recorded as the API answers today: a direct Site Admin is accepted here, which the settings screen in comp P does not offer and rule 25 would not predict. Flagged, not endorsed."
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
     },
     {
       "id": "settings.update.user",
@@ -206,7 +206,7 @@
       "body": {
         "scopeStatement": "We build warehouse and shop-floor automation."
       },
-      "note": "Recorded as the API answers today: a direct Site Admin is accepted here, which the settings screen in comp P does not offer and rule 25 would not predict. Flagged, not endorsed."
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
     },
     {
       "id": "settings.update.readonly",
@@ -218,7 +218,7 @@
       "body": {
         "scopeStatement": "We build warehouse and shop-floor automation."
       },
-      "note": "Recorded as the API answers today: a direct Site Admin is accepted here, which the settings screen in comp P does not offer and rule 25 would not predict. Flagged, not endorsed."
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
     },
     {
       "id": "settings.update.anonymous",
@@ -230,7 +230,7 @@
       "body": {
         "scopeStatement": "We build warehouse and shop-floor automation."
       },
-      "note": "Recorded as the API answers today: a direct Site Admin is accepted here, which the settings screen in comp P does not offer and rule 25 would not predict. Flagged, not endorsed."
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
     },
     {
       "id": "prompt.get.siteadmin",

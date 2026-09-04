@@ -7,13 +7,13 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/boards/0d732c29-910b-468c-bb8c-97855f2d99be/ideas",
+    "path": "/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas",
     "body": {
       "title": "Golden capture idea",
       "description": "Recorded by the golden capture.",
       "priority": "Medium",
-      "ideaTypeId": "1dff3ceb-70a1-4007-b3ae-bff66615fa73",
-      "businessImpactId": "4cfad37c-9121-4fc1-b222-55cc89875d4c"
+      "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+      "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60"
     },
     "contentType": "application/json"
   },
@@ -21,18 +21,18 @@
     "status": 201,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "ideaId": "418d37a7-812c-4250-a837-a3ac15bae499",
-      "boardId": "0d732c29-910b-468c-bb8c-97855f2d99be",
-      "statusId": "d8d1f314-cb41-496d-89d8-b311ec4ff2ea",
+      "ideaId": "2086a0e2-ec7e-49b0-b377-9a99df020acc",
+      "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+      "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
       "title": "Golden capture idea",
       "priority": "Medium",
-      "ideaTypeId": "1dff3ceb-70a1-4007-b3ae-bff66615fa73",
-      "businessImpactId": "4cfad37c-9121-4fc1-b222-55cc89875d4c",
+      "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+      "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
       "dueDate": null
     }
   },

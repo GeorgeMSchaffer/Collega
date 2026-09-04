@@ -9,7 +9,7 @@
     "method": "POST",
     "path": "/auth/view-as",
     "body": {
-      "targetUserId": "37814d81-af4a-41dd-8504-51e6a021ffef"
+      "targetUserId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266"
     },
     "contentType": "application/json"
   },
@@ -17,7 +17,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:51 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:41 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -27,7 +27,7 @@
       "status": 401,
       "detail": "No further details are available for this 401 response.",
       "instance": "/api/v1/auth/view-as",
-      "traceId": "00-63095508b8734ccd0e6e5a06a317d686-cc6277f65de41ed7-00"
+      "traceId": "00-afd7d1a503c68df5cd16a8267d3b4bb8-3c7857d4b9e15f33-00"
     }
   },
   "corpusVersion": 1,

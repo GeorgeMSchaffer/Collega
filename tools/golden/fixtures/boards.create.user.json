@@ -8,17 +8,17 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/boards",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/boards",
     "body": {
       "name": "Zz Golden Capture Board",
       "allowUserStatusUpdate": true,
       "swimlanes": [
         {
-          "statusId": "d8d1f314-cb41-496d-89d8-b311ec4ff2ea",
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
           "order": 0
         },
         {
-          "statusId": "4a5404e4-1dd0-41f7-a45e-573a76e7b759",
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
           "order": 1
         }
       ]
@@ -30,7 +30,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:52 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:41 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -41,8 +41,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage boards in this organization.",
-      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/boards",
-      "traceId": "0HNOA1Q010GRT:00000033"
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/boards",
+      "traceId": "0HNOA71FOOKTK:00000033"
     }
   },
   "corpusVersion": 1,

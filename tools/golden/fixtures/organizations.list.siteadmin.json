@@ -15,14 +15,14 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
       "items": [
         {
-          "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+          "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
           "title": "Acme Robotics",
           "description": "Industrial robotics and automation manufacturer.",
           "inviteCode": "<redacted>",
@@ -33,7 +33,7 @@
           "isArchived": false
         },
         {
-          "organizationId": "2a9b0348-d2cb-4cbd-a440-03ef6e4ac93d",
+          "organizationId": "a02e29c4-81fd-4f04-b3c2-95c41d24cc9f",
           "title": "Blue Harbor Logistics",
           "description": "Regional freight and warehousing operator.",
           "inviteCode": "<redacted>",

@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/logo",
+    "path": "/organizations/a313baf6-1d17-470d-99d2-6d565199a856/logo",
     "body": {
       "thumbnailDataUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
       "heightPx": 1
@@ -20,7 +20,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -31,8 +31,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to administer organizations.",
-      "instance": "/api/v1/organizations/e52121a2-9404-4b2b-8947-125dbbbdea53/logo",
-      "traceId": "0HNOA1Q010GRT:000000BC"
+      "instance": "/api/v1/organizations/a313baf6-1d17-470d-99d2-6d565199a856/logo",
+      "traceId": "0HNOA71FOOKTK:000000BC"
     }
   },
   "corpusVersion": 1,

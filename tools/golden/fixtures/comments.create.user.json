@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/ideas/b40dc8dd-55e8-4dca-a919-39ca6529227c/comments",
+    "path": "/ideas/4a4bdb5c-2385-40b0-bd58-2e87d211db01/comments",
     "body": {
       "body": "Recorded by the golden capture."
     },
@@ -18,13 +18,13 @@
     "status": 201,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:43 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "commentId": "ea227229-e742-4134-a838-83b1a190f50d",
-      "ideaId": "b40dc8dd-55e8-4dca-a919-39ca6529227c"
+      "commentId": "7b257c52-55ba-4445-9a0d-6b763bd1bf33",
+      "ideaId": "4a4bdb5c-2385-40b0-bd58-2e87d211db01"
     }
   },
   "corpusVersion": 1,

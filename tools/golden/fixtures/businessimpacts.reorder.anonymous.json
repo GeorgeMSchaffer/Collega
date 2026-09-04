@@ -7,14 +7,14 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/business-impacts/reorder",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/business-impacts/reorder",
     "body": {
       "orderedBusinessImpactIds": [
-        "4cfad37c-9121-4fc1-b222-55cc89875d4c",
-        "120fbb1e-a476-421e-927d-5cd5d1e47296",
-        "fd3ecd94-d8dc-4bf0-a0c3-3d83d92504a4",
-        "3c71e1c5-1430-4bd6-8345-bd3d7708e3d1",
-        "87e5c847-c701-4bc3-9e94-634fb48b623f"
+        "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+        "82e95b94-5708-4385-89c0-cc5fa51b3264",
+        "ab4dc497-aa72-4cbb-9146-cdeff9d956b6",
+        "f7d3a912-2de2-436f-86a9-bda801d77bc3",
+        "afbf188c-bc8e-45d6-982f-b375aa5e4811"
       ]
     },
     "contentType": "application/json"
@@ -23,7 +23,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:52 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:42 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -32,8 +32,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/business-impacts/reorder",
-      "traceId": "00-e618853acc5fb602299ccefb16a00845-e8714313e3442796-00"
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/business-impacts/reorder",
+      "traceId": "00-45179a3f1e1b45e33808fe8092bb251d-9f5310045e3482b5-00"
     }
   },
   "corpusVersion": 1,

@@ -8,9 +8,9 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ideas/82331393-cc23-4f8d-98a1-c09ab7e59b88/idea-type",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ideas/5ea9641a-72ad-445a-921c-8de278e777b9/idea-type",
     "body": {
-      "ideaTypeId": "56630aed-7ff8-4830-8fc8-d69d666c4ec4"
+      "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f"
     },
     "contentType": "application/json"
   },
@@ -19,7 +19,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -30,8 +30,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to reassign an idea's type.",
-      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ideas/82331393-cc23-4f8d-98a1-c09ab7e59b88/idea-type",
-      "traceId": "0HNOA1Q010GRT:0000008F"
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ideas/5ea9641a-72ad-445a-921c-8de278e777b9/idea-type",
+      "traceId": "0HNOA71FOOKTK:0000008F"
     }
   },
   "corpusVersion": 1,

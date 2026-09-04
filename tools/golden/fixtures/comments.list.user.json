@@ -7,34 +7,34 @@
   "unstable": [],
   "request": {
     "method": "GET",
-    "path": "/ideas/b40dc8dd-55e8-4dca-a919-39ca6529227c/comments",
+    "path": "/ideas/4a4bdb5c-2385-40b0-bd58-2e87d211db01/comments",
     "body": null
   },
   "response": {
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:42 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
       "items": [
         {
-          "commentId": "4cd59d3d-9ab8-4903-9d58-53f0bb61a872",
-          "ideaId": "b40dc8dd-55e8-4dca-a919-39ca6529227c",
-          "authorUserId": "bb201c36-2937-408a-955e-68e41682c0fe",
+          "commentId": "b172cc17-33ab-4372-9950-80122df9d181",
+          "ideaId": "4a4bdb5c-2385-40b0-bd58-2e87d211db01",
+          "authorUserId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
           "body": "Thanks for raising this - I'll take a first look.",
-          "createdAtUtc": "2026-09-03T22:52:45.664938Z",
-          "updatedAtUtc": "2026-09-03T22:52:45.664938Z"
+          "createdAtUtc": "2026-09-04T03:52:30.134348Z",
+          "updatedAtUtc": "2026-09-04T03:52:30.134348Z"
         },
         {
-          "commentId": "aa7a380d-206c-493b-9ecb-026bf5de0b6e",
-          "ideaId": "b40dc8dd-55e8-4dca-a919-39ca6529227c",
-          "authorUserId": "0fc3b0b5-6639-49a9-b0a2-bef9bd490043",
+          "commentId": "cbf32e3f-4653-4276-85ff-c66110c8aeb3",
+          "ideaId": "4a4bdb5c-2385-40b0-bd58-2e87d211db01",
+          "authorUserId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
           "body": "Agreed, let's prioritize it for the next review.",
-          "createdAtUtc": "2026-09-03T22:53:45.664938Z",
-          "updatedAtUtc": "2026-09-03T22:53:45.664938Z"
+          "createdAtUtc": "2026-09-04T03:53:30.134348Z",
+          "updatedAtUtc": "2026-09-04T03:53:30.134348Z"
         }
       ],
       "page": 1,

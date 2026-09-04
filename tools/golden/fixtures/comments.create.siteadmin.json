@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/ideas/b40dc8dd-55e8-4dca-a919-39ca6529227c/comments",
+    "path": "/ideas/4a4bdb5c-2385-40b0-bd58-2e87d211db01/comments",
     "body": {
       "body": "Recorded by the golden capture."
     },
@@ -19,7 +19,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:42 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -30,8 +30,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
-      "instance": "/api/v1/ideas/b40dc8dd-55e8-4dca-a919-39ca6529227c/comments",
-      "traceId": "0HNOA1Q010GRT:00000052"
+      "instance": "/api/v1/ideas/4a4bdb5c-2385-40b0-bd58-2e87d211db01/comments",
+      "traceId": "0HNOA71FOOKTK:00000052"
     }
   },
   "corpusVersion": 1,

@@ -8,13 +8,13 @@
   "unstable": [],
   "request": {
     "method": "DELETE",
-    "path": "/comments/b53a3bee-445a-45ac-8194-d08ebc31c101",
+    "path": "/comments/5469aebb-ae2f-430b-8036-089e12bb9bc0",
     "body": null
   },
   "response": {
     "status": 204,
     "headers": {
-      "date": "Thu, 03 Sep 2026 22:55:53 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:43 GMT",
       "server": "Kestrel"
     },
     "body": null

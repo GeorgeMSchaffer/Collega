@@ -8,12 +8,12 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/idea-types/reorder",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/idea-types/reorder",
     "body": {
       "orderedIdeaTypeIds": [
-        "1dff3ceb-70a1-4007-b3ae-bff66615fa73",
-        "56630aed-7ff8-4830-8fc8-d69d666c4ec4",
-        "7a33bf99-d244-4cd4-89bf-63c6344a7aef"
+        "83ee3626-d19d-4537-a394-9e0d3233045d",
+        "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+        "46bd64e9-005f-4bf0-acc5-1f71ac5dbf0e"
       ]
     },
     "contentType": "application/json"
@@ -23,7 +23,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:56 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -34,8 +34,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage idea field options in this organization.",
-      "instance": "/api/v1/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/idea-types/reorder",
-      "traceId": "0HNOA1Q010GRS:000000A4"
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/idea-types/reorder",
+      "traceId": "0HNOA71FOOKTJ:000000A4"
     }
   },
   "corpusVersion": 1,

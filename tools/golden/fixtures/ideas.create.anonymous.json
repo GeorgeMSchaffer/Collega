@@ -7,13 +7,13 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/boards/0d732c29-910b-468c-bb8c-97855f2d99be/ideas",
+    "path": "/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas",
     "body": {
       "title": "Golden capture idea",
       "description": "Recorded by the golden capture.",
       "priority": "Medium",
-      "ideaTypeId": "1dff3ceb-70a1-4007-b3ae-bff66615fa73",
-      "businessImpactId": "4cfad37c-9121-4fc1-b222-55cc89875d4c"
+      "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+      "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60"
     },
     "contentType": "application/json"
   },
@@ -21,7 +21,7 @@
     "status": 401,
     "headers": {
       "content-type": "application/problem+json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
@@ -30,8 +30,8 @@
       "title": "Unauthorized",
       "status": 401,
       "detail": "No further details are available for this 401 response.",
-      "instance": "/api/v1/boards/0d732c29-910b-468c-bb8c-97855f2d99be/ideas",
-      "traceId": "00-9a64ba38c54123659eb81b46b4d823c4-837e651992a8dda1-00"
+      "instance": "/api/v1/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas",
+      "traceId": "00-0eb3e036a9ef3dfcaa82979e65ee0aad-8afc0f935c7e3172-00"
     }
   },
   "corpusVersion": 1,

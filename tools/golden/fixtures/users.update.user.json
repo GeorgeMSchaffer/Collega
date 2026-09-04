@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/users/3b48f01c-397d-4c13-a0e7-a6c4ff2faf59",
+    "path": "/users/abf6440e-49b7-4d56-916a-e331d971c8fa",
     "body": {
       "firstName": "Golden",
       "lastName": "Subject Renamed",
@@ -23,7 +23,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:59 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:48 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -34,8 +34,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "You are not allowed to manage this user.",
-      "instance": "/api/v1/users/3b48f01c-397d-4c13-a0e7-a6c4ff2faf59",
-      "traceId": "0HNOA1Q010GRT:000000FB"
+      "instance": "/api/v1/users/abf6440e-49b7-4d56-916a-e331d971c8fa",
+      "traceId": "0HNOA71FOOKTK:000000FB"
     }
   },
   "corpusVersion": 1,

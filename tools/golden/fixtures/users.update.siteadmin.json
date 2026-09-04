@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "PUT",
-    "path": "/users/3b48f01c-397d-4c13-a0e7-a6c4ff2faf59",
+    "path": "/users/abf6440e-49b7-4d56-916a-e331d971c8fa",
     "body": {
       "firstName": "Golden",
       "lastName": "Subject Renamed",
@@ -22,21 +22,21 @@
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:59 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:48 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
-      "userId": "3b48f01c-397d-4c13-a0e7-a6c4ff2faf59",
-      "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+      "userId": "abf6440e-49b7-4d56-916a-e331d971c8fa",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
       "firstName": "Golden",
       "lastName": "Subject Renamed",
       "email": "golden.subject@acme-robotics.demo.collega.test",
       "role": "ReadOnly",
       "status": "Active",
       "mustChangePassword": true,
-      "createdAtUtc": "2026-09-03T22:55:59.819083Z",
-      "updatedAtUtc": "2026-09-03T22:56:00.1744155Z"
+      "createdAtUtc": "2026-09-04T03:55:48.923437Z",
+      "updatedAtUtc": "2026-09-04T03:55:49.2037586Z"
     }
   },
   "corpusVersion": 1,

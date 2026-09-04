@@ -7,35 +7,35 @@
   "unstable": [],
   "request": {
     "method": "GET",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/boards",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/boards",
     "body": null
   },
   "response": {
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:54 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": [
       {
-        "boardId": "0d732c29-910b-468c-bb8c-97855f2d99be",
-        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+        "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
         "name": "Ideas",
         "allowUserStatusUpdate": true,
         "swimlaneCount": 5
       },
       {
-        "boardId": "e9ac1a54-b926-4da8-a4e0-bf0098842e01",
-        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+        "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
         "name": "Opportunities",
         "allowUserStatusUpdate": true,
         "swimlaneCount": 5
       },
       {
-        "boardId": "ebf1f82c-e22f-464f-a1fc-5a52be6024ce",
-        "organizationId": "198ab6bc-008b-4486-805e-42bbbfeaeac1",
+        "boardId": "53ad2530-e1b2-4346-9061-cba0a754822f",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
         "name": "Zz Golden Capture Board Renamed",
         "allowUserStatusUpdate": false,
         "swimlaneCount": 2

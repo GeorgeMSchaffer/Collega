@@ -7,20 +7,20 @@
   "unstable": [],
   "request": {
     "method": "GET",
-    "path": "/organizations/198ab6bc-008b-4486-805e-42bbbfeaeac1/ai-assist/usage",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ai-assist/usage",
     "body": null
   },
   "response": {
     "status": 200,
     "headers": {
       "content-type": "application/json; charset=utf-8",
-      "date": "Thu, 03 Sep 2026 22:55:50 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:40 GMT",
       "server": "Kestrel",
       "transfer-encoding": "chunked"
     },
     "body": {
       "fromUtc": "2026-09-01T00:00:00Z",
-      "toUtc": "2026-09-03T22:55:51.6140105Z",
+      "toUtc": "2026-09-04T03:55:41.3423221Z",
       "organizations": [],
       "dailyTokenLimit": null,
       "tokensUsedToday": null,

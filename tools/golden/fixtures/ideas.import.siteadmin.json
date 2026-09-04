@@ -8,7 +8,7 @@
   "unstable": [],
   "request": {
     "method": "POST",
-    "path": "/boards/0d732c29-910b-468c-bb8c-97855f2d99be/ideas/import",
+    "path": "/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas/import",
     "body": "------GoldenCaptureBoundary\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"ideas.csv\"\r\nContent-Type: text/csv\r\n\r\nTitle,Description,Priority,Idea Type,Business Impact\nImported by capture,A row the corpus creates,Low,Continuous Improvement,Cost Saving\n\r\n------GoldenCaptureBoundary--\r\n",
     "contentType": "multipart/form-data; boundary=----GoldenCaptureBoundary"
   },
@@ -17,7 +17,7 @@
     "headers": {
       "cache-control": "no-cache,no-store",
       "content-type": "application/problem+json",
-      "date": "Thu, 03 Sep 2026 22:55:55 GMT",
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
       "expires": "-1",
       "pragma": "no-cache",
       "server": "Kestrel",
@@ -28,8 +28,8 @@
       "title": "Forbidden",
       "status": 403,
       "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
-      "instance": "/api/v1/boards/0d732c29-910b-468c-bb8c-97855f2d99be/ideas/import",
-      "traceId": "0HNOA1Q010GRS:00000093"
+      "instance": "/api/v1/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas/import",
+      "traceId": "0HNOA71FOOKTJ:00000093"
     }
   },
   "corpusVersion": 1,

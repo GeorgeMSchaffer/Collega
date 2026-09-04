@@ -207,10 +207,13 @@ Recorded here because the harness is likely to keep finding them:
 - **The seed** stamped every idea in an organization with one creation instant,
   and both comments on an idea with another, so even a correct sort had nothing
   to sort by.
-- **`PUT /organizations/{id}/ai-assist/settings` accepts a direct Site Admin**,
+- **`PUT /organizations/{id}/ai-assist/settings` accepted a direct Site Admin**,
   which the settings screen in comp P does not offer and rule 25 would not
-  predict. The corpus records what the API does today; whether that is right is
-  a product question, and it is flagged rather than endorsed.
+  predict. It was the one finding that was not an ordering defect, and it was a
+  real one: the scope statement is organization content — it is what refuses
+  off-topic requests, in one organization's own words — and every other
+  org-content path already carried `EnsureNotDirectSiteAdmin`. Fixed; the corpus
+  now records the 403.
 
 The pattern is worth keeping in mind for Wave F: a replay diff on a list is
 usually an ordering defect rather than a data one, and ordering by a generated
