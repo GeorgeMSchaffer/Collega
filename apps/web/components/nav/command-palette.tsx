@@ -18,9 +18,9 @@ import { useWorkspace } from "@/lib/workspace";
 
 /**
  * Ctrl K / ⌘K from anywhere. `CommandDialog` is a Radix Dialog, so Escape closes it, focus
- * moves to the input on open and returns to whatever opened it on close, and the desk behind
- * it is inert while it is up — the four behaviours Sprint 7.5 found missing on the Blazor
- * drawers, none of them written here.
+ * moves to the input on open, and the desk behind it is inert while it is up — three of the
+ * four behaviours Sprint 7.5 found missing on the Blazor drawers, none of them written here.
+ * The fourth, returning focus to whatever opened it, is written here; see `useCommandPalette`.
  *
  * The boards in it are the real recorded boards, so the palette is a way to reach a board
  * rather than a demonstration of one.
@@ -30,14 +30,17 @@ export function CommandPalette({
   onOpenChange,
 }: {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (open: boolean, restoreFocus?: boolean) => void;
 }) {
   const router = useRouter();
   const boards = useWorkspace().boards.data ?? [];
 
   const go = React.useCallback(
     (href: string) => {
-      onOpenChange(false);
+      // Closing to go somewhere, so the focus restore is suppressed: putting focus back on
+      // the sidebar launcher a tick after arriving on a new page is not returning the
+      // keyboard user to where they were, it is taking them away from where they went.
+      onOpenChange(false, false);
       router.push(href);
     },
     [onOpenChange, router],
@@ -82,19 +85,56 @@ export function CommandPalette({
   );
 }
 
-/** Binds Ctrl K / ⌘K, and returns the open state so the launcher button shares it. */
+/**
+ * Binds Ctrl K / ⌘K, returns the open state so the launcher button shares it, and gives
+ * focus back to whatever opened the palette when it closes.
+ *
+ * Radix restores focus to a `DialogTrigger`, and this dialog has none — it is opened from a
+ * button in the sidebar and from a global key, with the open state held here. With no trigger
+ * to return to, Radix's close handler lands focus on `<body>`, which is the keyboard user
+ * losing their place: verified in Chromium, not assumed. So the element that had focus at the
+ * moment it opened is remembered and handed it back.
+ *
+ * The restore is deferred by a tick because Radix moves focus during the unmount that this
+ * same state change causes; focusing synchronously would simply be undone.
+ */
 export function useCommandPalette() {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpenState] = React.useState(false);
+  const opener = React.useRef<HTMLElement | null>(null);
+  const restore = React.useRef<number | null>(null);
+
+  const setOpen = React.useCallback((next: boolean, restoreFocus = true) => {
+    if (next) {
+      opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    } else {
+      const previous = opener.current;
+      opener.current = null;
+      if (restoreFocus && previous) {
+        restore.current = window.setTimeout(() => {
+          restore.current = null;
+          if (previous.isConnected) previous.focus();
+        }, 0);
+      }
+    }
+    setOpenState(next);
+  }, []);
+
+  React.useEffect(
+    () => () => {
+      if (restore.current !== null) window.clearTimeout(restore.current);
+    },
+    [],
+  );
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "k" || !(event.metaKey || event.ctrlKey)) return;
       event.preventDefault();
-      setOpen((value) => !value);
+      setOpen(!open);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [open, setOpen]);
 
   return { open, setOpen };
 }

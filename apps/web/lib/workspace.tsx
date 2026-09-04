@@ -32,6 +32,13 @@ export interface Workspace {
   /** Set when the API refused the organization record — a member or a read-only account. */
   readonly organizationRefusal: ApiError | null;
   /**
+   * How many organizations the platform holds. Only a Site Admin may ask, so it is null for
+   * everyone else — and null, not zero, because "not allowed to know" is not "none". It is
+   * published here rather than re-fetched by Home: the list is already being read to resolve
+   * a Site Admin's `organizationId`, and its total is the same number.
+   */
+  readonly organizationCount: number | null;
+  /**
    * Why the desk cannot be shown at all: no identity, or a Site Admin with no organization
    * to browse. The shell renders this in place of the page rather than every screen sitting
    * in a loading state that will never resolve.
@@ -94,6 +101,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     organizationId,
     organization: organization.data,
     organizationRefusal: organization.error?.isRefusal ? organization.error : null,
+    organizationCount: organizations.data?.totalCount ?? null,
     blocked: me.error
       ? {
           title: me.error.problem?.title ?? "Not signed in",
