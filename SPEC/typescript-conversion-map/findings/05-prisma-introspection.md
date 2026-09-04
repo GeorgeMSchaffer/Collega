@@ -2,8 +2,13 @@
 
 Findings for conversion ticket `05`. Answered 2026-09-04 by running it, not by
 reading documentation: `prisma db pull` against a real PostgreSQL 16 database
-carrying the schema the 11 EF migrations produce, then applying the result to a
+carrying the schema the five EF migrations produce, then applying the result to a
 second database and diffing the two.
+
+(**Five**, not the eleven `map.md` and `RESUME.md` report — that is the raw `.cs`
+count in `Persistence/Migrations/`, which includes five `.Designer.cs` files and
+the model snapshot. The migrations are `InitialCreate`, `AddImpersonationSessions`,
+`AddAiUsageRecords`, `AddOrganizationAiScopeStatement` and `AddAiPromptVersions`.)
 
 **Headline: introspection is far better than the ticket feared, and the one thing
 it loses is worse than the thing the ticket predicted.**
@@ -19,9 +24,17 @@ it loses is worse than the thing the ticket predicted.**
 
 ```bash
 prisma db pull                     # against the live EF-produced schema
-prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script
-psql -d prisma_roundtrip -f fresh.sql   # apply that DDL to an empty database
+
+# the DDL Prisma would generate from what it introspected
+prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > fresh.sql
+psql -d prisma_roundtrip -f fresh.sql   # apply it to an empty database
+
 # then diff pg_indexes and information_schema.columns between the two databases
+
+# and the claim below about silence — introspected schema vs. the database it came from
+prisma migrate diff --from-schema-datamodel prisma/schema.prisma --from-schema-datasource prisma/schema.prisma
+# → "This is an empty migration."  The three partial indexes are missing from one side
+#    and the engine reports no difference, because it does not model them.
 ```
 
 Reproducible: Postgres 16, Prisma CLI 6.19.3, the schema at `dev` as of
@@ -98,8 +111,10 @@ The `int` pair is the more dangerous: a column that reads as a plain `Int` where
 nothing in the schema will tell them.
 
 This is a `06` (schema reshape) decision, and the obvious one: promote all nine
-to native Postgres enums or to Prisma enums backed by the existing storage.
-Doing it during the reshape is cheap; doing it later is a data migration.
+to native Postgres enums or to Prisma enums backed by the existing storage. The
+`int` columns need a data migration either way — the point is that F3 already
+rewrites every row, so doing it there costs a `CASE` expression, while doing it
+afterwards costs a migration of its own against live data.
 
 ## Collation and case sensitivity
 
@@ -115,6 +130,8 @@ the risk is for whoever ports the queries — `LikePattern.cs` and the search pa
 in `EfUserRepository`, `EfIdeaRepository` and `FieldDefinitionConfiguration` —
 but none of it is schema, so `db pull` was never going to carry it and its loss
 is not silent: the code has to be rewritten deliberately.
+`EfOrganizationRepository` uses `ContainsCaseInsensitive` too and belongs on that
+list of ports to review.
 
 `FieldDefinitionConfiguration.cs:66` documents the same trap for uniqueness: the
 normalized-name column exists *because* Postgres compares case-sensitively.

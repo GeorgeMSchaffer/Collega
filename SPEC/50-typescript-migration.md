@@ -190,7 +190,7 @@ the corpus never touches shows up as a hole rather than as silence.
 
 | Slice | Owns |
 |---|---|
-| **S0.1** Monorepo skeleton | root configs, `turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, ESLint + `eslint-plugin-boundaries` rules, CI task graph. Also `tools/eslint-plugin-collega/` and the identity-chokepoint architecture test (`07` §7) — the layers that make "only the auth folder reads a credential" a lint failure rather than a convention |
+| **S0.1** Monorepo skeleton | root configs, `turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, ESLint + `eslint-plugin-boundaries` rules, CI task graph. `07` §7 **recommends** it also take `tools/eslint-plugin-collega/` and the identity-chokepoint architecture test — the layers that make "only the auth folder reads a credential" a lint failure rather than a convention. New scope, not yet a decision |
 | **S0.2** Prisma introspect + reshape | `packages/infrastructure/prisma/**` — `db pull`, then the deliberate reshape; generated client; per-feature seed composition. Also owes the **three partial unique indexes** introspection drops, as raw SQL plus a test that fails if any is absent (`05`'s findings). **Freezes the schema.** |
 | **S0.3** Cross-cutting kernel | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` — error model, result types, pagination, auth guard skeleton, and the `AsyncLocalStorage` request context that View As will need. `07` §4 specifies it: four files plus the `CurrentUserContext` port, with `attributeAudit`, `ensureNotDirectSiteAdmin` and the branded `Attribution` type alongside |
 
@@ -371,10 +371,11 @@ And `07`, as a recommendation with worked code —
 **`AsyncLocalStorage`**, not Nest request-scoped providers: a store seeded in middleware (a guard
 cannot open one — `canActivate` returns before the handler runs), filled by the auth guard, and
 read through a **singleton** provider with lazy getters implementing the `CurrentUserContext` port.
-Request scope loses because it bubbles through all 14 context-consuming Application services and
-every controller above them, because `Scope.REQUEST` is a Nest concept `packages/application` may
-not import under constraint 8, and because Wave B's tests would then need a Nest runtime Wave D
-has not built. Three consequences worth pulling forward: an absent store must **throw** rather
+Request scope loses because it bubbles through 14 of the 16 concrete Application services and 14
+of the 15 controllers above them; because `Scope.REQUEST` cannot cross constraint 8's boundary, so
+the lifetime rule protecting a property of `packages/application` would live entirely in
+`apps/api`, invisible from the code depending on it; and because Wave B's tests would then need a
+Nest runtime Wave D has not built. Three consequences worth pulling forward: an absent store must **throw** rather
 than read as anonymous, or `ensureNotDirectSiteAdmin` passes for background work; on Vercel the
 new hazard is **module-scope** identity caching, which serves one user's identity to the next in
 a warm container; and the chokepoint gets lint enforcement plus one exact-equality architecture

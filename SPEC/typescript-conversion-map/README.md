@@ -46,6 +46,18 @@ stands, with shadcn/ui named on top. The ticket file is left as written; the dec
 Question C — Loop plus comp N's decision records, commitment strip and triage mode as net-new
 scope — is still an open question for the plan's estimate.
 
+## Corrections to the ported files
+
+The ported files are verbatim and stay that way; errors found in them are recorded here.
+
+- **`map.md` and `RESUME.md` say "11 EF migrations". There are five** — `InitialCreate`,
+  `AddImpersonationSessions`, `AddAiUsageRecords`, `AddOrganizationAiScopeStatement`,
+  `AddAiPromptVersions`. Eleven is the raw `.cs` count in `Persistence/Migrations/`, which
+  includes the five `.Designer.cs` files and the model snapshot. Found while measuring `05`.
+- **`map.md` counts 30 Application services.** That is the `*Service*.cs` file count: 16
+  implementations and 14 interfaces. Use 16 when reasoning about the service graph — `07` §3.1
+  initially took 30 as the denominator and understated its own argument.
+
 ## What was not ported from `feature/068`, and why
 
 - `SPEC/mockups/comp-k-material-workspace.html`, `comp-l-canvas-board.html`,

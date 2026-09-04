@@ -3,10 +3,12 @@
 > **Answered 2026-09-04; findings in [`../findings/07-nest-ambient-identity.md`](../findings/07-nest-ambient-identity.md).**
 > **`AsyncLocalStorage`, not Nest request-scoped providers** — a store seeded in middleware,
 > filled by the auth guard, exposed to `packages/application` through a *singleton* provider with
-> lazy getters. Request scope loses on three counts: it bubbles through all 14 context-consuming
-> Application services and every controller above them, it is a `@nestjs/common` concept that
-> constraint 8 forbids `packages/application` from importing, and ALS is what the .NET system
-> already does one layer down (`IHttpContextAccessor` is `AsyncLocal<T>`). The client twin is
+> lazy getters. Request scope loses on three counts: it bubbles through 14 of the 16 concrete
+> Application services and 14 of the 15 controllers above them; the lifetime rule protecting a
+> property of `packages/application` would have to live entirely in `apps/api`, since
+> `Scope.REQUEST` cannot cross constraint 8's boundary (reachable via the module factory, but
+> invisible from the code it protects); and ALS is what the .NET system already does one layer
+> down, since `IHttpContextAccessor` is `AsyncLocal<T>`. The client twin is
 > answered structurally: an httpOnly cookie means the browser never holds a decodable principal.
 > The chokepoint is lint-enforced rather than documented. This file is kept as written.
 

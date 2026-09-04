@@ -27,16 +27,20 @@ Three reasons, in order of weight:
    `AsyncLocal<T>`. ALS is the direct port. Request-scoped DI is the novel mechanism, and this
    is a port.
 2. **Request-scoped providers are structurally wrong here.** Scope bubbles up the whole
-   injection chain in Nest. 14 of the 30 Application services take `ICurrentUserContext`
-   today, and every controller depends on one of those, so marking the context request-scoped
-   makes essentially the entire graph request-scoped — re-instantiated per request, on a
+   injection chain in Nest. **14 of the 16 concrete Application services** take
+   `ICurrentUserContext` today, and 14 of the 15 controllers depend on one of those, so marking
+   the context request-scoped makes essentially the entire graph request-scoped — re-instantiated per request, on a
    platform where every request may also pay a cold start (constraint 14). §3.1 has the
    detail, including why Nest's "durable providers" escape hatch is the wrong tool for
    identity specifically.
-3. **`packages/application` cannot import Nest.** Constraint 8's boundaries rule is
-   `application` imports `domain` only. A request-scoped provider is a Nest concept; ALS is a
-   Node concept behind a port the Application layer owns. Only one of those survives the lint
-   run.
+3. **The mechanism would end up in the wrong layer.** Constraint 8's boundaries rule is
+   `application` imports `domain` only, so `Scope.REQUEST` cannot appear in an Application
+   service. It is still *reachable* — the module's `useFactory` in `apps/api` can be
+   request-scoped, which is exactly how the contagion in reason 2 happens — so this is not a
+   hard block, and §3.1 says so. What it means is that the lifetime rule protecting a property
+   of `packages/application` would live entirely in `apps/api`, invisible from the code that
+   depends on it. ALS keeps the port in Application and the plumbing in the API layer, which is
+   where .NET already draws the line.
 
 **What follows from it, and is not optional:**
 
@@ -122,8 +126,11 @@ Concrete services: 14
   OrganizationService · StatusService · TagService · UserService · ViewAsService
 ```
 
-Those 14 are the busiest half of the 30, and all 15 controllers reach them. So "make the
-context request-scoped" is not a local decision about one provider; it converts the whole
+That is 14 of the **16** concrete services in the layer (30 is the file count — 16
+implementations plus 14 interfaces — and is the wrong denominator), and 14 of the 15 controllers
+reach them. `HealthController` is the exception at both ends: it injects nothing, deliberately,
+so a liveness probe answers even when the database does not. So "make the context
+request-scoped" is not a local decision about one provider; it converts the whole
 application graph to per-request instantiation. Concretely that means, on every request:
 a fresh DI sub-tree walk, fresh instances of those 14 services and everything *they* inject
 (repositories, the Prisma client wrapper, the clock, the audit writer), and — if
@@ -221,7 +228,11 @@ export class RequestContextMiddleware implements NestMiddleware {
 }
 ```
 
-Registered once in `apps/api/src/app.module.ts` (`configure(consumer) { consumer.apply(RequestContextMiddleware).forRoutes('*') }`).
+Registered once in `apps/api/src/app.module.ts`
+(`configure(consumer) { consumer.apply(RequestContextMiddleware).forRoutes('*path') }`).
+**`'*path'`, not `'*'`** — Nest 11 runs Express 5 and path-to-regexp v8, where a bare wildcard
+throws at boot. Every request must pass through this, so getting it wrong fails loudly, but it
+fails as a routing error rather than as anything to do with identity.
 `app.module.ts` is a contended artifact owned by Foundation — which is fine, because this is S0.3
 work, and S0.3 already exists to own "the `AsyncLocalStorage` request context that View As will
 need" (`SPEC/50-typescript-migration.md` §5, Wave 0).
@@ -257,9 +268,11 @@ import type { Role } from '@collega/domain/enums';
 
 /**
  * The identity the current request acts under. This is the SINGLE chokepoint for
- * "who is calling" — nothing outside apps/api/src/auth/ reads a token or a cookie,
- * which is what lets View As work without touching any authorization code
- * (SPEC/20-feature-view-as.md rules 4/4a).
+ * "who is calling" on the API side: nothing outside apps/api/src/auth/ and the token
+ * adapter reads a credential, which is what lets View As work without touching any
+ * authorization code (SPEC/20-feature-view-as.md rules 4/4a). apps/web has its own,
+ * separate chokepoint in lib/server/current-user.ts, which holds a credential but
+ * decides nothing — see findings 07 §6.
  *
  * Reading credentials elsewhere silently opts that code out of impersonation.
  * `collega/no-ambient-identity-read` makes that a lint error, not a convention.
@@ -361,10 +374,10 @@ export const SYSTEM_IDENTITY = null;
 
 ---
 
-## 5. Auth resolution: one query, not five
+## 5. Auth resolution: one query, not four
 
-The .NET path issues up to five sequential reads per authenticated request while impersonating
-(user, open session, target, target's organization, plus an occasional `LastSeenAt` write).
+The .NET path issues up to four sequential reads per authenticated request while impersonating
+(user, open session, target, target's organization), plus an occasional `LastSeenAt` write.
 On a long-lived host with a warm pool that was cheap. On Vercel + Prisma Postgres every one is a
 pooled network round trip on a function that may itself be cold. **Collapse it into one query**
 behind a single repository method:
@@ -379,6 +392,10 @@ findAuthenticationSubject(userId: string) {
       mustChangePassword: true, firstName: true, lastName: true, email: true,
       impersonationSessionsAsRealUser: {
         where: { endedAtUtc: null },
+        // `take: 1` is only deterministic while ux_impersonation_sessions_real_user_id_open
+        // exists — and `05` measured that introspection DROPS it. Until S0.2 re-adds it as raw
+        // SQL, two open rows are possible and this silently picks one. The orderBy is the belt.
+        orderBy: { startedAtUtc: 'desc' },
         take: 1,
         select: {
           id: true, startedAtUtc: true, lastSeenAtUtc: true, absoluteExpiresAtUtc: true,
@@ -420,7 +437,7 @@ decision happens inside Nest, on the identity resolved in §5.
 So the Next-side question is not "how does ambient identity work" — it is "where does the
 credential live, and how does the rendered identity stay honest". Those have crisp answers.
 
-### 6.2 Three request-context stories, precisely
+### 6.2 The request-context stories, precisely
 
 | Surface | Request context | Can read `cookies()` | Can *write* cookies | Verdict |
 |---|---|---|---|---|
@@ -562,6 +579,10 @@ Catches the import-shaped half outright:
   ignores: [
     'apps/api/src/auth/**',
     'apps/api/src/common/request-context/**',
+    // The token adapter, not the token *policy*. TokenAuthenticationService stays in
+    // packages/application and decides; this file only signs and verifies, exactly as
+    // Infrastructure/Security/JwtAccessTokenService.cs implements IAccessTokenValidator today.
+    'packages/infrastructure/src/security/jwt-access-token.service.ts',
     'apps/web/lib/server/current-user.ts',
     'apps/web/lib/server/api-client.ts',
   ],
@@ -610,7 +631,8 @@ export default {
       authorizationHeader:
         'The Authorization header is read only in apps/api/src/auth/.',
       jwtCall:
-        'Token verification/decoding happens only in apps/api/src/auth/.',
+        'Token verification/decoding happens only in the token adapter ' +
+        '(packages/infrastructure/src/security/). Everywhere else, ask CurrentUserContext.',
     },
   },
 
@@ -663,9 +685,11 @@ Scoped by the same `ignores` allowlist as layer 2. Two notes for whoever impleme
   noise and let the four allowlisted files be the only place it fires. Start narrow; widen on
   the first miss.
 - **Packaging:** `tools/eslint-plugin-collega/`, added to `pnpm-workspace.yaml`'s globs, alongside
-  `tools/golden/`. Owned by S0.1. ESLint 9 flat config, so it exports a plain object — no
-  `eslint-plugin-*` resolution magic and no separate CI step (constraint 8 wants it in the same
-  lint run).
+  `tools/golden/`. Owned by S0.1. Under ESLint 9 flat config the *plugin* is a plain object —
+  `{ rules: { 'no-ambient-identity-read': rule } }` — registered in `eslint.config.js` under the
+  `collega` key, which is what makes `collega/no-ambient-identity-read` resolve. The file sketched
+  above is the rule, not the plugin. No `eslint-plugin-*` resolution magic and no separate CI step
+  (constraint 8 wants it in the same lint run).
 
 ### 7.4 Layer 4 — one architecture test, as the belt
 
@@ -674,7 +698,9 @@ Sprint 6 Slice 0's manual audit turned into something that runs:
 
 ```ts
 // tools/arch/identity-chokepoint.test.ts
-const IDENTITY_READ = /\b(req|request)\.(user|claims|principal)\b|getStore\(\)|from ['"]next\/headers['"]|from ['"](jsonwebtoken|jose|@nestjs\/jwt)['"]/;
+// `requestContextStorage\.` rather than `getStore\(\)`: run-as.ts calls .run(), not .getStore(),
+// and an exact-equality assertion listing a file the regex cannot match fails on the first run.
+const IDENTITY_READ = /\b(req|request)\.(user|claims|principal)\b|requestContextStorage\.|from ['"]next\/headers['"]|from ['"](jsonwebtoken|jose|@nestjs\/jwt)['"]/;
 
 it('only the authentication chokepoint reads identity directly', async () => {
   const offenders = (await sourceFiles(['apps/**', 'packages/**']))
@@ -683,10 +709,11 @@ it('only the authentication chokepoint reads identity directly', async () => {
 
   expect(offenders).toEqual([
     'apps/api/src/auth/auth.guard.ts',
-    'apps/api/src/auth/token.service.ts',
     'apps/api/src/common/request-context/als-current-user-context.ts',
+    'apps/api/src/common/request-context/request-context.middleware.ts',
     'apps/api/src/common/request-context/run-as.ts',
     'apps/web/lib/server/current-user.ts',
+    'packages/infrastructure/src/security/jwt-access-token.service.ts',
   ]);
 });
 ```
@@ -701,19 +728,34 @@ actor id and skipping the attribution helper. A branded type does, at zero runti
 
 ```ts
 // packages/application/src/common/audit-attribution.ts
-declare const brand: unique symbol;
+
+// EXPORTED on purpose: an un-exported `unique symbol` in a type that crosses a package
+// boundary breaks `declaration: true` emit (TS4023), which this workspace uses.
+export declare const brand: unique symbol;
+
 export type Attribution = {
   readonly actorUserId: string | null;
   readonly onBehalfOfUserId: string | null;
   readonly [brand]: 'attributed';
 };
+
+/** The only producer. Not exported from the package index — `attributeAudit` is the public door. */
+const brandAttribution = (
+  actorUserId: string | null,
+  onBehalfOfUserId: string | null,
+): Attribution => ({ actorUserId, onBehalfOfUserId }) as Attribution;
 ```
 
-`AuditEvent.create` takes an `Attribution`, and `attributeAudit()` is the only function that can
-produce one. A service that wants to skip it cannot construct the value. This is the only place
-in the design where the type system, rather than lint, is the enforcement — and it is worth it,
-because the dual-attribution failure is silent and permanent: a wrong audit row is not detectable
-after the fact.
+`AuditEvent.create` takes an `Attribution`, and `attributeAudit()` is the only exported function
+that produces one. This is the only place in the design where the type system rather than lint
+does the work, and it is worth it because the dual-attribution failure is silent and permanent —
+a wrong audit row is not detectable after the fact.
+
+**Stated honestly, because §7.4 states the same thing about lint:** this is a speed bump, not a
+barrier. `{ actorUserId, onBehalfOfUserId } as Attribution` compiles, exactly as
+`brandAttribution` itself relies on. What the brand buys is that skipping attribution requires a
+deliberate cast, which a reviewer sees in the diff — the same standard as the architecture test,
+and the same reason.
 
 ---
 
@@ -816,15 +858,20 @@ on 2026-08-13. Two records:
   bypassable" — true of the UI and false of the API.
 - Even after it moved into the Application layer, a third review pass found **two unguarded
   paths**: `ReassignIdeaTypeAsync`, and `ImportBoardIdeasAsync`, which let a refused Site Admin
-  bulk-create by CSV the same ideas they had just been refused one at a time. Both were reachable
-  from Application code. A controller decorator would not have covered either.
+  bulk-create by CSV the same ideas they had just been refused one at a time. The recorded cause
+  is worth carrying forward, because it is a method the port will repeat: both "were enumerated
+  by hand off `IdeaService` rather than found through the `EnsureAdminScope` chokepoint the other
+  four services share, which is exactly how they were skipped"
+  (`SPEC/sprints/archive/sprint-06-view-as.md`). Both do have endpoints. The lesson is that a
+  hand-enumerated guard list on a large service is the thing that fails — not that the guard
+  belongs in a different layer.
 
 15 call sites port across 7 services (`IdeaService` alone carries 7, `CommentService` 3). Their
 coverage is not free:
 
 | Backstop | Covers | Gap |
 |---|---|---|
-| Golden corpus (Wave A, 447 cases × 4 roles + anonymous) | Every guarded path that has an endpoint. F1 fails on a regression. | An internal caller with no endpoint of its own — which is exactly how `ImportBoardIdeasAsync` slipped |
+| Golden corpus (Wave A, 447 cases over 81 endpoints at four roles and anonymous) | Every guarded path that has an endpoint. F1 fails on a regression. | An internal caller with no endpoint of its own. Also, and more likely: a path whose guard was simply never added, since the corpus records what the API *does*, so a missing guard is captured as a 201 and replayed as one |
 | Per-slice Vitest (ticket `10`, QA agent) | Whatever the QA agent enumerates | Only as good as the enumeration |
 
 **Recommendation for Wave B:** each B-slice's QA agent enumerates the org-content mutation
@@ -1080,14 +1127,14 @@ pooler makes the collapsed query fast enough is a measurement, not a design ques
 | Slice | Owns | From this document |
 |---|---|---|
 | **S0.1** monorepo skeleton | root configs, ESLint + boundaries | §7.1, §7.2, §7.3 (`tools/eslint-plugin-collega/`), §7.4 |
-| **S0.2** Prisma introspect + reshape | schema | Re-add `ux_impersonation_sessions_real_user_id_open` as raw SQL — `05` measured it and introspection **drops** it. Rule 5 (non-nestable) rests on it, and nothing in a Prisma workflow reports it missing (§13 #5) |
+| **S0.2** Prisma introspect + reshape | schema | Re-add `ux_impersonation_sessions_real_user_id_open` as raw SQL (one of three such indexes — see `05`). Introspection **drops** it, rule 5 (non-nestable) rests on it, and nothing in a Prisma workflow reports it missing (§13 #5) |
 | **S0.3** cross-cutting kernel | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` | §4 (all four files), §4.1 port, §7.5 branded `Attribution`, §8 `attributeAudit`, §9 `ensureNotDirectSiteAdmin`, §13 #1 measurement |
 | **B1** Organizations, Users, Auth | `packages/application/src/auth/**` | §5 `TokenAuthenticationService` port — the five checks, unchanged |
 | **B7** View As / impersonation | `packages/{domain,application}/src/impersonation/**` | `ViewAsService`, including its one deliberate exception: it authorizes against `realUserId` re-read from the database, never the acting identity |
 | **C1** repository adapters | `packages/infrastructure/src/repositories/**` | §5 `findAuthenticationSubject` single query; §13 #4 transaction-handle decision |
 | **D1 / D7** API | `apps/api/src/auth/**`, `apps/api/src/impersonation/**` | §10 hops 2–3; the guard is the only file that touches a credential |
 | **E0 / E2** design system, desk shell | `apps/web/lib/server/**`, `apps/web/app/(desk)/layout.tsx` | §6.3 `getCurrentUser()` with `cache()` + `no-store`; banner, rail avatar and the `View as…` control all read it |
-| **F1** golden replay | — | The corpus's 447 cases × 4 roles + anonymous is what proves §9's 15 call sites still refuse. It cannot see an internal caller with no endpoint (§9) |
+| **F1** golden replay | — | The corpus's 447 cases, over 81 endpoints at four roles and anonymous, prove §9's 15 call sites still refuse — but only where .NET already refused (§9) |
 
 ---
 
@@ -1114,7 +1161,8 @@ pooler makes the collapsed query fast enough is a measurement, not a design ques
 5. **`OrgContentMutationGuard`** — §9. A free function reading `currentUser.role`, kept in
    `packages/application`, never a Nest guard. The property that makes one guard cover both paths
    is that `role` is a plain field on the resolved identity, holding the target's role during a
-   session.
+   session. Its 15 call sites are hand-enumerated, which is how two were missed in .NET — so
+   Wave B's QA agents enumerate per feature rather than trusting one sweep (§9).
 
 Plus the two the brief predates: **serverless** (§12 — ALS is unaffected; module-scope caches are
 the new hazard; the session table stays a table) and **background work** (§11 — no request means
