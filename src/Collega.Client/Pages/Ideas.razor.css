@@ -55,3 +55,10 @@ tbody tr.selected td:first-child { box-shadow: inset 3px 0 var(--accent); }
 .udf-filterbar .filt input, .udf-filterbar .filt select { border: 1px solid var(--line); border-radius: var(--radius-btn); padding: 5px 8px; font-size: 13px; }
 .udf-filterbar .rangerow { display: flex; align-items: center; gap: 6px; }
 .udf-filterbar .rangerow input { width: 90px; }
+
+/* Narrow-viewport type floor (Sprint 7.5). These two filter groups set their own size, which outranks
+   the global floor in app.css, so they need it repeating — under 16px iOS Safari zooms on focus. */
+@media (max-width: 768px) {
+  .listfilters .tagfilter { font-size: 16px; }
+  .udf-filterbar .filt input, .udf-filterbar .filt select { font-size: 16px; }
+}

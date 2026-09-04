@@ -32,3 +32,8 @@
     font-size: 12px;
     line-height: 1;
 }
+
+/* Same 12px card floor as the rest of the swimlane micro-labels at narrow widths. */
+@media (max-width: 768px) {
+    .typebadge.compact { font-size: 12px; max-width: 104px; }
+}
