@@ -169,15 +169,17 @@
                                             <span class="grip" title="Drag to move" role="img" aria-label="Drag to move idea"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" /></span>
                                         }
                                         <span class="t" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">@i.Title</span>
-                                        @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
-                                        {
-                                            <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" IconOnly="true" />
-                                        }
                                         <span class="prio-chip @PrioClass(i.Priority)">@PrioLabel(i.Priority)</span>
                                     </div>
-                                    @if (i.TagNames.Count > 0)
+                                    @* The type badge rides the tag row rather than the title row: now that it
+                                       carries its name as text, a 280px lane has no room for both. *@
+                                    @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName) || i.TagNames.Count > 0)
                                     {
                                         <div class="meta2">
+                                            @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
+                                            {
+                                                <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" Compact="true" />
+                                            }
                                             @foreach (var tag in i.TagNames.Take(3))
                                             {
                                                 <span class="tag">@tag</span>
@@ -244,7 +246,7 @@
                                     <span class="t">@i.Title</span>
                                     @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
                                     {
-                                        <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" IconOnly="true" />
+                                        <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" Compact="true" />
                                     }
                                     @foreach (var tag in i.TagNames.Take(2))
                                     {

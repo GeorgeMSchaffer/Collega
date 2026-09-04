@@ -12,19 +12,23 @@
     vertical-align: middle;
 }
 
-.typebadge.icononly {
-    padding: 3px 7px;
-    gap: 0;
+/* Card form: same badge, less of it. The name is capped rather than dropped so the type is never
+   carried by colour alone; a longer name ellipsizes instead of pushing the card's title out. */
+.typebadge.compact {
+    padding: 3px 8px;
+    gap: 4px;
+    font-size: 11.5px;
+    max-width: 92px;
+    flex: none;
+}
+
+.typebadge .nm {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .typebadge .ic {
     font-size: 12px;
     line-height: 1;
-}
-
-.typebadge .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: currentColor;
 }
