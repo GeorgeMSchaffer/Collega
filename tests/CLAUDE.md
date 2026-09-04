@@ -21,6 +21,7 @@ The PostgreSQL container is **not** required: EF Core tests use the InMemory pro
 - **Arrange / Act / Assert.** Cover happy path, boundary values, null input, invalid state.
 - **Hermetic.** No network, no filesystem, no `DateTime.Now`, no randomness. Inject `IClock` and fixed seeds instead — this is why Application and Domain take time as a dependency.
 - **InMemory provider only.** Never point a test at a real database — with the single, deliberate exception documented below.
+- **A tie-break/ordering test must assert the concrete order, not "no duplicates or gaps across pages".** The InMemory provider's `OrderBy` is a stable sort over a deterministic, insertion-order enumeration, so when the sort key ties, that weaker assertion holds even with the tiebreaker column removed entirely — it just falls back to insertion order, which still pages without overlap. Assert the actual sequence a correct tiebreaker produces (e.g. ascending by id) instead; see `ListByBoard_Pagination_TieBreaksByIdAscending_WhenSortKeyTies` / `ListByOrganization_Pagination_IsStable_WhenSortKeyTies` in `Collega.Infrastructure.Tests/EfIdeaRepositoryTests.cs`.
 - **No duplicate setup.** Use builders/factories; extend the existing ones before adding another.
 - **Don't modify test projects unless the change requires it.**
 - `[Using Include="Xunit"]` is set in every `.csproj`, so no `using Xunit;` is needed.

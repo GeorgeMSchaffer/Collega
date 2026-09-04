@@ -539,19 +539,31 @@ public sealed class EfIdeaRepositoryTests
         Assert.Equal(new[] { "A-assigned", "Y-assigned" }, asc.Items.Select(i => i.Title).ToArray());
     }
 
+    /// <summary>
+    /// Asserts the concrete ordering the <c>.ThenBy(i =&gt; i.Id)</c> tiebreaker produces, not just "no
+    /// duplicates or gaps across pages" — see the remarks on
+    /// <see cref="ListByBoard_Pagination_TieBreaksByIdAscending_WhenSortKeyTies"/> for why the weaker
+    /// property is vacuous under the InMemory provider and would not catch a regression here.
+    /// </summary>
     [Fact]
     public async Task ListByOrganization_Pagination_IsStable_WhenSortKeyTies()
     {
         using var ctx = InMemoryContext.Create();
         var repo = new EfIdeaRepository(ctx);
         // Every idea shares the same CreatedAtUtc (TestClock.Default), so the primary sort key ties for
-        // all of them; the idea-id tiebreaker must keep paging deterministic and non-overlapping.
+        // all of them and the idea-id tiebreaker is the only thing left to decide both the order and,
+        // under paging, which idea lands on which page.
+        var ids = new List<Guid>();
         for (var i = 0; i < 7; i++)
         {
-            ctx.Ideas.Add(Build.Idea(_orgId, _boardId, _statusA, _author, title: $"Idea {i}"));
+            var idea = Build.Idea(_orgId, _boardId, _statusA, _author, title: $"Idea {i}");
+            ids.Add(idea.Id);
+            ctx.Ideas.Add(idea);
         }
 
         await ctx.SaveChangesAsync();
+
+        var expectedOrder = ids.OrderBy(id => id).ToList();
 
         var seen = new List<Guid>();
         for (var p = 1; p <= 3; p++)
@@ -561,7 +573,6 @@ public sealed class EfIdeaRepositoryTests
             seen.AddRange(page.Items.Select(i => i.Id));
         }
 
-        Assert.Equal(7, seen.Count);
-        Assert.Equal(7, seen.Distinct().Count());
+        Assert.Equal(expectedOrder, seen);
     }
 }
