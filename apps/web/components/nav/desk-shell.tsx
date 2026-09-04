@@ -4,6 +4,7 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
+  Button,
   Kbd,
   RoleProvider,
   Sidebar,
@@ -23,7 +24,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { useMockIdentity } from "@/mocks";
+import { USE_MOCK_API, useMockIdentity } from "@/mocks";
 import { WorkspaceProvider, useWorkspace, type Workspace } from "@/lib/workspace";
 import { AccountBlock } from "@/components/nav/account-block";
 import { CommandPalette, useCommandPalette } from "@/components/nav/command-palette";
@@ -56,7 +57,12 @@ function SidebarNav() {
             {group.items.map((item) => (
               <SidebarMenuItem key={item.label}>
                 {item.href ? (
-                  <SidebarMenuButton asChild isActive={pathname.startsWith(item.href)}>
+                  // Home is "/", and every other route starts with it — so the prefix test
+                  // that is right for "/boards" would mark Home active on every screen.
+                  <SidebarMenuButton
+                    asChild
+                    isActive={item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)}
+                  >
                     <Link href={item.href}>
                       <NavIcon path={item.path} />
                       {item.label}
@@ -110,19 +116,30 @@ function OrganizationLine() {
 /**
  * Nothing on the desk can load without an identity and an organization, so the two ways
  * those can fail are answered once here rather than by every screen sitting in a loading
- * state that will never resolve. E1 replaces the signed-out case with the return to Login
- * the auth spec describes; the panel is what stands in the meantime, and it is a refusal
- * rather than a failure because that is what it is.
+ * state that will never resolve. It is a refusal rather than a failure because that is what
+ * it is, and it offers the way out the auth spec names — `SPEC/20-feature-auth.md` #34: a
+ * token the API no longer recognises returns the viewer to Login.
  */
 function NoWorkspace({ blocked }: { blocked: NonNullable<Workspace["blocked"]> }) {
+  // The two blocks are different problems. An unrecognised identity is the expired session
+  // the auth spec sends back to Login (#34); a Site Admin with no organization to browse is
+  // signed in perfectly well and has nothing to sign in *to*, so it gets no such offer.
+  const { meError } = useWorkspace();
+
   return (
     <DeskWork>
       <Alert variant="warning" className="max-w-xl">
         <AlertTitle>{blocked.title}</AlertTitle>
         <AlertDescription>
-          {blocked.detail} Choose an identity in the band above to carry on.
+          {blocked.detail}
+          {USE_MOCK_API ? " Choose an identity in the band above to carry on." : ""}
         </AlertDescription>
       </Alert>
+      {meError ? (
+        <Button variant="outline" className="mt-4" asChild>
+          <Link href="/login?reason=session-expired">Go to sign in</Link>
+        </Button>
+      ) : null}
     </DeskWork>
   );
 }
