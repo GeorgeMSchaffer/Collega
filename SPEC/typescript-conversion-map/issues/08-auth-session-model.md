@@ -1,8 +1,19 @@
 # 08 — Auth and session model across Next + Nest
 
+> **Unblocked 2026-09-04** by [`../findings/07-nest-ambient-identity.md`](../findings/07-nest-ambient-identity.md) §6.4.
+> The finding that matters here: **the Nest-side design is identical under all three options** —
+> only the guard's first three lines differ — so this ticket is genuinely free to choose. Two
+> constraints it does impose: the credential must name **only the real user**, with effective
+> identity derived inside Nest per request from `impersonation_sessions` (rule 1); and **option B
+> is the one that can break that by accident**, because Next already knows the target from
+> `/auth/me` and forwarding *that* would make Next the impersonation authority — an `apps/web`
+> bug would become privilege escalation. If B is chosen, write "the forwarded credential names
+> the real user" into the decision, not into a comment. One input, not a decision: B and C both
+> make the Sprint 6.5 client-twin bug structurally impossible; A ports the temptation intact.
+
 Type: grilling
-Status: open
-Blocked by: 07
+Status: open — unblocked 2026-09-04
+Blocked by: — (was 07, answered)
 
 ## Question
 

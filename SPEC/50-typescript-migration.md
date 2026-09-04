@@ -190,9 +190,9 @@ the corpus never touches shows up as a hole rather than as silence.
 
 | Slice | Owns |
 |---|---|
-| **S0.1** Monorepo skeleton | root configs, `turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, ESLint + `eslint-plugin-boundaries` rules, CI task graph |
+| **S0.1** Monorepo skeleton | root configs, `turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, ESLint + `eslint-plugin-boundaries` rules, CI task graph. Also `tools/eslint-plugin-collega/` and the identity-chokepoint architecture test (`07` §7) — the layers that make "only the auth folder reads a credential" a lint failure rather than a convention |
 | **S0.2** Prisma introspect + reshape | `packages/infrastructure/prisma/**` — `db pull`, then the deliberate reshape; generated client; per-feature seed composition. Also owes the **three partial unique indexes** introspection drops, as raw SQL plus a test that fails if any is absent (`05`'s findings). **Freezes the schema.** |
-| **S0.3** Cross-cutting kernel | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` — error model, result types, pagination, auth guard skeleton, and the `AsyncLocalStorage` request context that View As will need |
+| **S0.3** Cross-cutting kernel | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` — error model, result types, pagination, auth guard skeleton, and the `AsyncLocalStorage` request context that View As will need. `07` §4 specifies it: four files plus the `CurrentUserContext` port, with `attributeAudit`, `ensureNotDirectSiteAdmin` and the branded `Attribution` type alongside |
 
 S0.3 exists so that seven feature agents do not each invent their own error shape. It is
 cheap insurance against the most expensive kind of rework.
@@ -346,7 +346,7 @@ converted to currency — that needs current per-model pricing checked rather th
 | Open ticket | If answered differently |
 |---|---|
 | `06` reshape scope | A larger schema reshape inflates C1 and F3 and weakens F1's diff. It also has to decide whether S0.2 lays down Wave G's four entities or Wave G buys a schema amendment slice. Unblocked by `05`; the forced side is now known to be small. |
-| `07` View As ambient identity | Drives B7 and S0.3. Flagged AFK-researchable on the map. Not started. |
+| `08` auth / session model | Picks where the session lives. Unblocked by `07`, which found the Nest-side design identical under all three options — so this moves `apps/web` and the auth guard's first three lines, and nothing else. |
 | `11` spec reconciliation | Lands as F5; does not gate earlier waves. |
 
 Answered 2026-09-03 and no longer open (`SPEC/decisions.md`): `01` Question C — Loop,
@@ -365,6 +365,20 @@ says nothing and `migrate diff` reports an empty migration, because the engine d
 them. S0.2 owes them as raw SQL in the first migration, with a test that fails if any is
 absent; one of the three is what makes "at most one open View As session per user" a database
 guarantee rather than a race. That moves the estimate's risk on S0.2 down, not up.
+
+And `07`, as a recommendation with worked code —
+`SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md`. Identity is ambient through
+**`AsyncLocalStorage`**, not Nest request-scoped providers: a store seeded in middleware (a guard
+cannot open one — `canActivate` returns before the handler runs), filled by the auth guard, and
+read through a **singleton** provider with lazy getters implementing the `CurrentUserContext` port.
+Request scope loses because it bubbles through all 14 context-consuming Application services and
+every controller above them, because `Scope.REQUEST` is a Nest concept `packages/application` may
+not import under constraint 8, and because Wave B's tests would then need a Nest runtime Wave D
+has not built. Three consequences worth pulling forward: an absent store must **throw** rather
+than read as anonymous, or `ensureNotDirectSiteAdmin` passes for background work; on Vercel the
+new hazard is **module-scope** identity caching, which serves one user's identity to the next in
+a warm container; and the chokepoint gets lint enforcement plus one exact-equality architecture
+test, because documentation did not prevent this bug class before.
 
 ---
 
