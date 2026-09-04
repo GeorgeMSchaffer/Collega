@@ -9,6 +9,34 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-04 — The idea-type badge moves to the tag row on swimlane cards
+
+**Decided:** accept visible drift from comp C v5 on board cards. The idea-type badge
+always renders its name, and on swimlane cards it moves from the title row down to the
+tag row, capped at 92px with an ellipsis and the full name on the tooltip.
+
+**Why there was no free option.** The badge was an empty coloured span with the name on a
+`title` tooltip — nothing for a screen reader, nothing reachable by touch, and colour
+carrying the meaning alone, which the 2026-08-31 rule forbids outright. Fixing it means
+rendering text, and text needs room. A 280px lane leaves about 225px of inner width; grip,
+title, a text badge and the priority chip on one row left the title around 36px. So the
+choice was which of the two to make unreadable, and the title is what people scan.
+
+**Scope of the drift:** swimlane and List cards only. Detail, admin and create surfaces
+already rendered the name and are unchanged. Comp C v5 never drew a text badge in this
+slot, so this refines a case the lock did not cover rather than reversing something it
+decided.
+
+**Short-lived by construction.** Wave E rebuilds the client on comp P, so this styling
+does not have to survive the conversion — but shipping a WCAG 1.4.1 failure into Sprint
+8's first real-user deployment would have, which is the trade this sprint exists to refuse.
+
+**Taken with it:** the List-view priority marker (`BoardDetail.razor:250`) had the identical
+defect and is fixed the same way, matching the swimlane chip that already renders `High` as
+text.
+
+---
+
 ## 2026-09-04 — The session lives in a cookie Nest issues; the reshape takes only what introspection forces
 
 The last two conversion tickets that gate Wave 0, closing `08` and `06`. Both were

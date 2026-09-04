@@ -41,6 +41,16 @@ Clear the ten open items in `SPEC/Bug Triage.md` — now promoted here and delet
 | **Drag-to-move has no advertised keyboard path** | The board header reads "Drag cards between lanes to move them"; cards are `draggable="true"` and the grip is `role="img"`. Status can be changed in the drawer, but nothing tells a keyboard user that. |
 | **Two small dead / stray surfaces** | "Forgot your password? **Contact your organization admin**" is an `<a href="#">` that does nothing when clicked; the session-expiry dialog markup renders on the signed-out login page (`display:none`, so cosmetic only). Also: table row title links are 16–17px tall, under the 24px target minimum. |
 
+## Found while doing the work
+
+Not in the backlog above; recorded here because this sprint's own subject area is where they surfaced.
+
+| Found | Disposition |
+|---|---|
+| **The List-view priority marker is colour-alone too.** `BoardDetail.razor:250` renders `<span class="prio critical" title="Critical priority"></span>` — an 8px coloured dot with the name only on a tooltip. The same defect as the P1 type badge, one line above it in the same file, and the same violation of `decisions.md` 2026-08-31. The sprint cites priority as the example done *right*, which is true of the swimlane `.prio-chip` and false of this one. | **Fixed in this sprint** (user decision, 2026-09-04): match the swimlane treatment so List rows carry priority as text. Closing one colour-alone defect while shipping its twin from the same file would have been incoherent. |
+| **`CreateModalShell` has `DrawerShell`'s modality defect, unfixed.** `CreateModalShell.razor:35-36` declares `role="dialog" aria-modal="true"` with `@onkeydown` on a `.modal-wrap` div that has no `tabindex` and never receives focus — so Escape is dead there too, with no `inert` and no focus restore. It hosts the brainstorm chat and the Ideas create modal, both of which `SPEC/20-feature-client-ui.md:211` requires to be dialogs Escape closes. | **Deferred.** P0-2 names `DrawerShell` only, and widening a paydown sprint mid-flight is how paydown sprints stop finishing. But after this merge the product's two modal families behave differently, so this is recorded rather than silent. **Becomes a `Bug Triage.md` item when this sprint archives and intake reopens.** |
+| **Cards were not keyboard-reachable at all**, so P2-6's premise was half wrong: the drawer path existed but could not be reached from the board by keyboard. Swimlane cards and List rows are `role="button"` elements with only `@onclick`, and browsers synthesise a click from Enter/Space only on native controls. | Fixed inside P2-6 — `ActivateCard` now handles Enter and Space. Advertising a path that could not be walked would have been worse than saying nothing. |
+
 ## Explicitly out of scope
 - The full narrow-viewport design pass (`src/Collega.Client/CLAUDE.md` → "Still undesigned"). Only the type-size floor is fixed here; the layout work is post-MVP.
 - Rule 32c's AI-unavailable flash — scheduled in Sprint 8 so the first deployment ships it.
