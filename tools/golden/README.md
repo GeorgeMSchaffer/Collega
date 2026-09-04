@@ -52,8 +52,9 @@ golden.bootstrap@…  golden.capture@…  golden.registrant@…
 golden.rotator@…    golden.subject@…  imported.bycapture@…
 ```
 
-25 users where the demo seed makes 19, 3 organizations where it makes 2, 47 ideas
-where it makes 44. So the corpus pollutes the very precondition it depends on: run
+25 users where the demo seed makes 10, 3 organizations where it makes 2, 47 ideas
+where it makes 44 — measured against a freshly recreated database, not inferred.
+So the corpus pollutes the very precondition it depends on: run
 capture twice without a reset and the second run records a *different* product.
 Replay is worse, because the extra rows land in list responses and report as
 diffs the target stack did not cause.
