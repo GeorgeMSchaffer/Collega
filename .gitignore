@@ -48,7 +48,14 @@ node_modules/
 dist/
 .next/
 .turbo/
-coverage/
+# Anchored to where test output actually lands, not bare: an unanchored `coverage/`
+# matches any directory of that name anywhere, and it silently swallowed the route at
+# apps/web/app/api/mock/coverage — `git add` skipped it without a word, so the endpoint
+# worked in its author's worktree and existed nowhere else. Same trap as the unanchored
+# [Bb]in/ patterns above.
+/coverage/
+apps/*/coverage/
+packages/*/coverage/
 *.tsbuildinfo
 .eslintcache
 
