@@ -9,6 +9,77 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-04 — The session lives in a cookie Nest issues; the reshape takes only what introspection forces
+
+The last two conversion tickets that gate Wave 0, closing `08` and `06`. Both were
+answerable only because the `05`/`07` research pair ran first — findings in
+`SPEC/typescript-conversion-map/findings/`.
+
+### `08` — Nest issues the session cookie directly; Next stays a pure client
+
+**Decided:** option C. Nest sets and clears an httpOnly, `Secure`, `SameSite` cookie on
+login, View As start and View As exit. Next holds no session of its own: it forwards the
+cookie and renders from `/auth/me`.
+
+**Why C over B.** Both put the credential in an httpOnly cookie, which is what makes the
+Sprint 6.5 client-twin bug *structurally* impossible rather than merely disciplined — the
+browser never holds a decodable principal, so there is nothing to cache stale. C wins on
+trust model. Under B, Next terminates the session and forwards an identity, and Next
+already knows the impersonation target from `/auth/me`; forwarding *that* would make Next
+the impersonation authority. It is the natural implementation and it is wrong, because
+Next is a client from the API's perspective — an `apps/web` bug would become privilege
+escalation, and rule 7 says the client can neither forge nor extend a session. C removes
+the temptation by removing the forwarding step.
+
+**Why not A.** A bearer token in client JS is the smallest conceptual change and it ports
+the exact defect that cost a sprint to find.
+
+**What comes with it:** cross-origin setup between the two Vercel apps is now in scope for
+S0.3 and E0 — the cookie must be issued for a domain both apps share, or the API must be
+reached through a path on the web app's origin. That is the cost C is being chosen with,
+not a surprise to discover later.
+
+**Non-negotiable, from `07`:** the cookie names **only the real user**. Effective identity
+is derived inside Nest, per request, from `impersonation_sessions`. This is rule 1, and it
+is what makes a captured credential carry no impersonation authority and makes idle
+expiry, central revocation and non-nestability enforceable at all.
+
+### `06` — forced reshapes only, plus the enum decision
+
+**Decided:** take what introspection forces, plus one deliberate change.
+
+Forced, because `05` measured them:
+- **The three partial unique indexes**, re-added as raw SQL in the first migration with a
+  test that fails if any is absent. `prisma db pull` drops them and `migrate diff` reports
+  an empty migration, so nothing in a normal Prisma workflow says they are gone. One of
+  them is what makes "at most one open View As session per user" a database guarantee
+  rather than a race.
+- **Relation field names.** Introspection generates
+  `impersonation_sessions_impersonation_sessions_real_user_idTousers`. Renaming touches
+  every query, so it happens before Wave B rather than during it.
+
+Deliberate, and the one optional change taken: **promote all nine enum converters.** Seven
+are stored as `string` and two as `int`, and the `int` pair is the reason — a column that
+reads as a plain `Int` where `0`, `1`, `2` carry meaning defined only in C#. The `int`
+columns need a data migration either way; F3 already rewrites every row, so doing it there
+costs a `CASE` expression, while doing it afterwards costs a migration of its own against
+live data.
+
+**Explicitly deferred:** EAV field storage (`FieldDefinition` / `FieldDefinitionOption` /
+`IdeaFieldValue`), audit and event table shapes, EF-flavored naming, the `Status.Name`
+length cap. The ticket's own rule applies — every optional reshape widens the gap F1's
+replay has to cover, and none of these has a reason beyond preference.
+
+**Consequence for Wave G, which `06` also had to settle** (`50-typescript-migration.md`
+§6): the Prisma schema freezes after S0.2, and Wave G's four net-new entities are not a
+forced reshape. So **S0.2 does not lay them down, and Wave G buys a schema amendment
+slice.** That follows from "forced only" rather than being a separate choice, and it is
+the cheaper error of the two — an amendment slice in Wave G costs a slice, whereas four
+speculative tables frozen into S0.2 would sit in every replay diff from F1 onward for a
+design that has not been drawn yet. Reversible until S0.2 starts, and only until then.
+
+---
+
 ## 2026-09-03 — The conversion's remaining gates: net-new scope, the test suite, and where it deploys
 
 Three answers taken together, closing conversion tickets `01` Question C, `10` and `02`.

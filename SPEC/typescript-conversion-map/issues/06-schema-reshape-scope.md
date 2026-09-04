@@ -10,9 +10,17 @@
 > carry meaning defined only in C# and nothing in the schema records it. Still open for
 > decision.
 
+> **Decided 2026-09-04: forced reshapes only, plus the enum decision.** See `SPEC/decisions.md`.
+> In — the three partial unique indexes as raw SQL with a test that fails if any is absent, the
+> relation renames, and **all nine enum converters promoted** (the `int` pair carries meaning
+> defined only in C#, and F3 already rewrites every row, so it costs a `CASE` expression there
+> and a migration of its own later). Out — EAV field storage, audit/event table shapes,
+> EF-flavored naming, the `Status.Name` cap. The ticket's own rule decided the deferrals: every
+> optional reshape widens the gap F1's replay has to cover.
+
 Type: grilling
-Status: open — unblocked 2026-09-04
-Blocked by: — (was 05, answered)
+Status: decided 2026-09-04 in `SPEC/decisions.md` (forced only, plus enums)
+Blocked by: —
 
 ## Question
 

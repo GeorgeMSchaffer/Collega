@@ -294,10 +294,12 @@ events, so there is nothing to compute over), duplicate clustering (real similar
 detection is the ML problem the spec already defers), and vote budget (reset, carryover
 and exemption policy are undecided). Ticket `01` round 2 is where those are asked.
 
-**The schema consequence, and it has a deadline.** Wave G's four entities want tables,
-and **the Prisma schema freezes after S0.2**. Either S0.2 lays them down or Wave G needs a
-schema amendment slice; decide that inside `06` (schema reshape scope) rather than
-discovering it in G1.
+**The schema consequence, and it had a deadline.** Wave G's four entities want tables, and
+**the Prisma schema freezes after S0.2**. Settled 2026-09-04 with `06`: S0.2 does **not**
+lay them down, so **Wave G buys a schema amendment slice**. Wave G's entities are net-new,
+not a forced reshape, and freezing four speculative tables into S0.2 would put them in
+every replay diff from F1 onward for a design nobody has drawn yet. Reversible until S0.2
+starts, and only until then.
 
 ---
 
@@ -345,9 +347,7 @@ converted to currency — that needs current per-model pricing checked rather th
 
 | Open ticket | If answered differently |
 |---|---|
-| `06` reshape scope | A larger schema reshape inflates C1 and F3 and weakens F1's diff. It also has to decide whether S0.2 lays down Wave G's four entities or Wave G buys a schema amendment slice. Unblocked by `05`; the forced side is now known to be small. |
-| `08` auth / session model | Picks where the session lives. Unblocked by `07`, which found the Nest-side design identical under all three options — so this moves `apps/web` and the auth guard's first three lines, and nothing else. |
-| `11` spec reconciliation | Lands as F5; does not gate earlier waves. |
+| `11` spec reconciliation | Lands as F5; does not gate earlier waves. **The only ticket still open.** |
 
 Answered 2026-09-03 and no longer open (`SPEC/decisions.md`): `01` Question C — Loop,
 decision records, commitment strip and Triage Mode are in, as **Wave G**; `10` — the .NET

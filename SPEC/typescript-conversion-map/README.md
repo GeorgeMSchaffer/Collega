@@ -18,9 +18,9 @@ and those win over a ticket's own `Status:` line, which was not updated after th
 | `03` what ports | open | **Answered** 2026-08-31: everything ports, View As isolated. |
 | `04` validation strategy | open | **Answered** 2026-08-31: golden contract tests; Wave A runs before Sprint 8 closes. |
 | `05` Prisma introspection | open | **Answered** 2026-09-04 by running it: `findings/05-prisma-introspection.md`. No global query filters exist; columns, keys, FKs and plain indexes round-trip exactly; three partial unique indexes are lost silently. |
-| `06` schema reshape scope | blocked by 05 | **Unblocked** 2026-09-04. Open, with a defined job: re-add the three partial indexes as raw SQL, decide enum representation for all nine converters, rename introspected relation fields. |
+| `06` schema reshape scope | blocked by 05 | **Decided** 2026-09-04: forced reshapes only, plus promoting all nine enum converters. Three partial indexes as raw SQL, relation renames, enums. EAV storage and the rest deferred. |
 | `07` View As ambient identity | open | **Answered** 2026-09-04: `findings/07-nest-ambient-identity.md`. `AsyncLocalStorage` behind a singleton port, seeded in middleware and filled by the auth guard; not Nest request-scoped providers. Chokepoint lint-enforced. |
-| `08` auth / session model | blocked by 07 | **Unblocked** 2026-09-04. Open, and genuinely free — the Nest design is the same under all three options; `07` §6.4 imposes only that the credential name the real user. |
+| `08` auth / session model | blocked by 07 | **Decided** 2026-09-04: option C — Nest issues the httpOnly session cookie directly, Next stays a pure client. Cross-origin setup is the accepted cost. **Wave 0 is no longer gated.** |
 | `09` Next ↔ Nest boundary | open | **Answered** 2026-08-31: HTTP only. |
 | `10` test suite fate | blocked by 04 | **Answered** 2026-09-03: discard the .NET suite; golden contract tests plus fresh per-slice Vitest, written by a QA agent. |
 | `11` spec reconciliation | open | Open. |
@@ -29,9 +29,9 @@ and those win over a ticket's own `Status:` line, which was not updated after th
 Also settled since the map was charted, and relevant to E6: Outcome ↔ Issue cardinality is
 **single-parent** (`decisions.md` 2026-09-02).
 
-Three tickets remain open, none of them blocked: `06` (schema reshape scope) and `08` (auth and
-session model), both unblocked on 2026-09-04 by the `05`/`07` research pair and both now
-decisions for the user rather than research, and `11` (spec reconciliation), which lands as F5.
+**One ticket remains open: `11` (spec reconciliation), which lands as F5 and gates nothing.**
+`06` and `08` were decided on 2026-09-04, the same day the `05`/`07` research pair that unblocked
+them was run. Wave 0 is no longer gated.
 
 The research findings live in `findings/`. They are measurements and recommendations, not
 decisions — a ticket's banner says which.

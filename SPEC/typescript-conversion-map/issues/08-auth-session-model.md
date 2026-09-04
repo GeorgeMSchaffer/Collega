@@ -1,6 +1,18 @@
 # 08 — Auth and session model across Next + Nest
 
-> **Unblocked 2026-09-04** by [`../findings/07-nest-ambient-identity.md`](../findings/07-nest-ambient-identity.md) §6.4.
+> **Decided 2026-09-04: option C — Nest issues the session cookie directly; Next stays a pure
+> client.** See `SPEC/decisions.md`. C and B share the httpOnly cookie that makes the Sprint 6.5
+> client-twin bug structurally impossible; C wins on trust model, because B's forwarding step is
+> where Next could become the impersonation authority. Cross-origin setup between the two Vercel
+> apps is the accepted cost, and is now S0.3/E0 scope. The cookie names **only the real user** —
+> effective identity is derived inside Nest, per request, from `impersonation_sessions`.
+> This closes the last ticket gating Wave 0. This file is kept as written.
+
+Type: grilling
+Status: decided 2026-09-04 in `SPEC/decisions.md` (option C)
+Blocked by: —
+
+> Context that produced the answer, from [`../findings/07-nest-ambient-identity.md`](../findings/07-nest-ambient-identity.md) §6.4.
 > The finding that matters here: **the Nest-side design is identical under all three options** —
 > only the guard's first three lines differ — so this ticket is genuinely free to choose. Two
 > constraints it does impose: the credential must name **only the real user**, with effective
@@ -10,10 +22,6 @@
 > bug would become privilege escalation. If B is chosen, write "the forwarded credential names
 > the real user" into the decision, not into a comment. One input, not a decision: B and C both
 > make the Sprint 6.5 client-twin bug structurally impossible; A ports the temptation intact.
-
-Type: grilling
-Status: open — unblocked 2026-09-04
-Blocked by: — (was 07, answered)
 
 ## Question
 
