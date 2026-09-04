@@ -7,21 +7,50 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/Dotnet.gitignore
 
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Ww][Ii][Nn]32/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
+# .NET build results. Anchored to the .NET tree on purpose: upstream Dotnet.gitignore leaves
+# these unanchored, which silently untracks any Node package that ships a bin/, obj/ or logs/
+# directory anywhere in the repo.
+src/**/[Dd]ebug/
+src/**/[Dd]ebugPublic/
+src/**/[Rr]elease/
+src/**/[Rr]eleases/
+src/**/x64/
+src/**/x86/
+src/**/[Ww][Ii][Nn]32/
+src/**/[Aa][Rr][Mm]/
+src/**/[Aa][Rr][Mm]64/
+src/**/bld/
+src/**/[Bb]in/
+src/**/[Oo]bj/
+src/**/[Ll]og/
+src/**/[Ll]ogs/
+tests/**/[Dd]ebug/
+tests/**/[Dd]ebugPublic/
+tests/**/[Rr]elease/
+tests/**/[Rr]eleases/
+tests/**/x64/
+tests/**/x86/
+tests/**/[Ww][Ii][Nn]32/
+tests/**/[Aa][Rr][Mm]/
+tests/**/[Aa][Rr][Mm]64/
+tests/**/bld/
+tests/**/[Bb]in/
+tests/**/[Oo]bj/
+tests/**/[Ll]og/
+tests/**/[Ll]ogs/
+# The one .csproj outside src/ and tests/. Named rather than globbed as tools/**, which
+# would put the unanchored-bin/ hazard back over tools/golden.
+tools/Collega.AiPlayground/[Bb]in/
+tools/Collega.AiPlayground/[Oo]bj/
+
+# Node / TypeScript build results
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+.eslintcache
 
 # .NET Core
 project.lock.json
