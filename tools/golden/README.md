@@ -40,6 +40,47 @@ Credentials come from the environment, never from a committed file:
 `GOLDEN_<ROLE>_EMAIL` individually. Emails default to the demo seed's four
 accounts (`SPEC/implementation-agent-tracker.md`, Local DB).
 
+### "Freshly seeded" is not the state you will find the database in
+
+Said three times above, so here is how to get it — and why you will need to.
+**A capture leaves its own accounts behind**, because two thirds of these
+scenarios create things. Observed on 2026-09-04 against a database that had been
+captured from once:
+
+```
+golden.bootstrap@…  golden.capture@…  golden.registrant@…
+golden.rotator@…    golden.subject@…  imported.bycapture@…
+```
+
+25 users where the demo seed makes 19, 3 organizations where it makes 2, 47 ideas
+where it makes 44. So the corpus pollutes the very precondition it depends on: run
+capture twice without a reset and the second run records a *different* product.
+Replay is worse, because the extra rows land in list responses and report as
+diffs the target stack did not cause.
+
+`StartupSeeder` is idempotent and runs on every boot, so a reset is drop, recreate,
+and start the API — migrations and seed both run on startup:
+
+```bash
+# the whole local database; POSTGRES_USER defaults to collega, and the app's
+# database is "Collega" with a capital C
+psql -h 127.0.0.1 -U collega -d postgres -c 'DROP DATABASE "Collega"'
+psql -h 127.0.0.1 -U collega -d postgres -c 'CREATE DATABASE "Collega" OWNER collega'
+# then boot the API and wait for /api/v1/health
+```
+
+`docker compose down -v` does the same thing more bluntly when Postgres is the
+compose service rather than a host install — it deletes the volume, so it also
+takes anything else you had in there.
+
+**Check before you trust a run**, rather than after:
+
+```bash
+psql -h 127.0.0.1 -U collega -d Collega -tAc \
+  "SELECT count(*) FROM users WHERE email LIKE 'golden%' OR email LIKE 'imported%'"
+# 0 means pristine; anything else means a previous capture is still in there
+```
+
 ## The pieces
 
 | Path | Slice | What it is |
