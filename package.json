@@ -1,0 +1,30 @@
+{
+  "name": "collega",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Collega monorepo — Next.js web, Nest.js api, and the layered packages between them.",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.18.0",
+    "pnpm": ">=10.33.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "check": "turbo run lint typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.1",
+    "eslint": "10.10.0",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-boundaries": "7.2.0",
+    "turbo": "2.10.12",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.69.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@collega/application",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Use-case orchestration, authorization and validation. Imports domain only.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@collega/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  // Placeholder: no sources yet. S0.3 adds src/common/**, Wave D adds the feature modules.
+  // Replace with "include": ["src/**/*.ts"] when the first file lands.
+  "files": []
+}
