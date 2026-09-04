@@ -26,8 +26,9 @@ public sealed class EfIdeaRepositoryTests
         DateOnly? dueBefore = null,
         string? sortBy = null,
         string? sortDirection = null,
+        int page = 1,
         int pageSize = 50) =>
-        new(boardId, new PageRequest(1, pageSize), search, statusId, tag, priority, dueBefore, sortBy, sortDirection);
+        new(boardId, new PageRequest(page, pageSize), search, statusId, tag, priority, dueBefore, sortBy, sortDirection);
 
     [Fact]
     public async Task GetById_ExcludesDeletedUnlessRequested_AndIncludesCollections()
@@ -153,6 +154,47 @@ public sealed class EfIdeaRepositoryTests
 
         Assert.Equal(5, page.TotalCount);
         Assert.Equal(2, page.Items.Count);
+    }
+
+    /// <summary>
+    /// Models <c>ListByOrganization_Pagination_IsStable_WhenSortKeyTies</c>, but asserts the stronger,
+    /// non-vacuous property. Under the EF Core InMemory provider, <c>OrderBy</c> is a stable sort, so a
+    /// "no duplicates across pages" assertion holds even with <c>.ThenBy(i =&gt; i.Id)</c> removed — it
+    /// just degrades to whatever stable order the provider already had (confirmed separately: that is
+    /// insertion order, unrelated to id order), and paging over *that* order is still gap-free. So this
+    /// pins the concrete, documented tiebreak instead: with every idea's primary sort key tied, the
+    /// three pages concatenated must equal ascending idea-id order — the one property that actually
+    /// requires the <c>.ThenBy(i =&gt; i.Id)</c> and fails without it.
+    /// </summary>
+    [Fact]
+    public async Task ListByBoard_Pagination_TieBreaksByIdAscending_WhenSortKeyTies()
+    {
+        using var ctx = InMemoryContext.Create();
+        var repo = new EfIdeaRepository(ctx);
+        // Every idea shares the same CreatedAtUtc (TestClock.Default), so the primary sort key ties for
+        // all of them and the idea-id tiebreaker is the only thing left to decide both the order and,
+        // under paging, which idea lands on which page.
+        var ids = new List<Guid>();
+        for (var i = 0; i < 7; i++)
+        {
+            var idea = Build.Idea(_orgId, _boardId, _statusA, _author, title: $"Idea {i}");
+            ids.Add(idea.Id);
+            ctx.Ideas.Add(idea);
+        }
+
+        await ctx.SaveChangesAsync();
+
+        var expectedOrder = ids.OrderBy(id => id).ToList();
+
+        var seen = new List<Guid>();
+        for (var p = 1; p <= 3; p++)
+        {
+            var page = await repo.ListByBoardAsync(
+                Filter(_boardId, sortBy: "createdat", sortDirection: "asc", page: p, pageSize: 3), default);
+            seen.AddRange(page.Items.Select(i => i.Id));
+        }
+
+        Assert.Equal(expectedOrder, seen);
     }
 
     [Fact]

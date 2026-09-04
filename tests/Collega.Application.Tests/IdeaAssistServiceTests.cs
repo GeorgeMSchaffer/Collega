@@ -591,6 +591,68 @@ public class IdeaAssistServiceTests
             () => service.SetScopeStatementAsync(_harbor.Id, "nope"));
     }
 
+    /// <summary>
+    /// The scope statement is organization content, not platform configuration (view-as rules 25-25b) —
+    /// a direct Site Admin must be refused and reach it through View As instead, exactly like every
+    /// other org-content mutation path.
+    /// </summary>
+    [Fact]
+    public async Task SetScopeStatement_IsRefused_ForADirectSiteAdmin()
+    {
+        var service = CreateService(FakeCurrentUserContext.SiteAdmin());
+
+        await Assert.ThrowsAsync<ForbiddenAppException>(
+            () => service.SetScopeStatementAsync(_acme.Id, "Only warehouse operations."));
+    }
+
+    /// <summary>
+    /// The guard fires before length validation: a direct Site Admin must get the refusal even with an
+    /// otherwise-invalid statement, not a validation error that would leak past the intended block.
+    /// </summary>
+    [Fact]
+    public async Task SetScopeStatement_RefusesADirectSiteAdmin_BeforeValidatingLength()
+    {
+        var service = CreateService(FakeCurrentUserContext.SiteAdmin());
+        var overlong = new string('x', Organization.AiScopeStatementMaxLength + 1);
+
+        await Assert.ThrowsAsync<ForbiddenAppException>(
+            () => service.SetScopeStatementAsync(_acme.Id, overlong));
+    }
+
+    /// <summary>
+    /// The View As case: <see cref="ICurrentUserContext.Role"/> reports the target's role during
+    /// impersonation, so the guard does not fire and a Site Admin acting as an Acme Org Admin can still
+    /// set the statement — this is the half that proves the guard did not also block the legitimate path.
+    /// </summary>
+    [Fact]
+    public async Task SetScopeStatement_Succeeds_ForASiteAdminInAViewAsSession()
+    {
+        var realAdmin = Guid.NewGuid();
+        var impersonated = Guid.NewGuid();
+        var context = FakeCurrentUserContext.OrgAdmin(_acme.Id, impersonated);
+        context.ImpersonatingRealUserId = realAdmin;
+
+        var service = CreateService(context);
+
+        var settings = await service.SetScopeStatementAsync(_acme.Id, "Only warehouse operations.");
+
+        Assert.Equal("Only warehouse operations.", settings.ScopeStatement);
+        Assert.Equal("Only warehouse operations.", _acme.AiScopeStatement);
+    }
+
+    /// <summary>Reads stay open to a direct Site Admin, as reads always are — only the write path is guarded.</summary>
+    [Fact]
+    public async Task GetSettings_Succeeds_ForADirectSiteAdmin()
+    {
+        _acme.SetAiScopeStatement("Only warehouse operations.", TestClock.Default, null);
+        var service = CreateService(FakeCurrentUserContext.SiteAdmin());
+
+        var settings = await service.GetSettingsAsync(_acme.Id);
+
+        Assert.True(settings.AiAssistAvailable);
+        Assert.Equal("Only warehouse operations.", settings.ScopeStatement);
+    }
+
     [Theory]
     [InlineData("User")]
     [InlineData("ReadOnly")]
