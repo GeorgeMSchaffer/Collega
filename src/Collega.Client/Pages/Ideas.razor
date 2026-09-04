@@ -42,7 +42,7 @@
             </div>
         }
         <div class="cmdbar">
-            <input type="text" placeholder="Search title & text fields…" value="@_search" @onchange="OnSearchChanged" style="width:280px" />
+            <input type="text" aria-label="Search ideas by title and text fields" placeholder="Search title & text fields…" value="@_search" @onchange="OnSearchChanged" style="width:280px" />
             @if (!string.IsNullOrWhiteSpace(_search))
             {
                 <button class="btn subtle" @onclick="ClearSearch">Clear</button>
@@ -233,7 +233,7 @@
                 <span class="info">Showing @RangeStart–@RangeEnd of @_total</span>
                 <span class="sizesel">
                     Rows per page
-                    <select value="@_pageSize" @onchange="OnPageSizeChanged">
+                    <select aria-label="Rows per page" value="@_pageSize" @onchange="OnPageSizeChanged">
                         <option value="25">25</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
