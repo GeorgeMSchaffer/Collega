@@ -1,0 +1,56 @@
+name: CI
+
+# Lint and typecheck the pnpm workspace. This is the repo's first automated check on pull
+# requests — deploy-api.yml and deploy-client.yml are push:main only and are kept as a record
+# of the cancelled Sprint 8, not as gates. No dotnet step: the .NET stack is frozen on
+# legacy/dotnet and nothing in this workspace touches it.
+
+on:
+  pull_request:
+  push:
+    branches: [feature/typescript]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reads the pinned version from package.json "packageManager".
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.2'
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint and typecheck
+        run: pnpm turbo run lint typecheck
+
+      # The layer rules classify a dependency by its resolved path, so anything that breaks
+      # alias resolution (a moved package, an edited tsconfig.eslint.json, a resolver
+      # upgrade) turns every cross-layer import into an unresolved external and the gate
+      # passes silently instead of failing. Assert it still rejects the edge constraint 11
+      # exists to prevent, rather than trusting a clean run to mean anything.
+      - name: Boundary rule still fires
+        run: |
+          set -euo pipefail
+          # Not a dot-directory: ESLint skips those by default, and the probe would pass
+          # for that reason rather than because the rule allowed it.
+          mkdir -p apps/web/boundary-guard packages/application/src
+          echo 'export const guard = "guard";' > packages/application/src/index.ts
+          echo 'import { guard } from "@collega/application"; export const x = guard;' \
+            > apps/web/boundary-guard/probe.ts
+          if pnpm exec eslint apps/web/boundary-guard/probe.ts; then
+            echo "::error::apps/web importing @collega/application did not fail lint — the layer gate is not working."
+            exit 1
+          fi
+          rm -rf apps/web/boundary-guard packages/application/src
