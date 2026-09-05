@@ -67,6 +67,9 @@ nunit-*.xml
 # with a `!` rule rather than deleting this one.
 node_modules/
 
+# Turborepo local task cache and logs
+.turbo/
+
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
 
