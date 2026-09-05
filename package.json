@@ -3,30 +3,25 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Collega monorepo — Next.js web, Nest.js api, and the layered packages between them.",
-  "packageManager": "pnpm@10.33.0",
+  "description": "Root tooling for the JavaScript/TypeScript satellites around the .NET application: the e2e Playwright suite, the golden-file harness, and the Tailwind build for the comps. The product itself is .NET 8 / ASP.NET Core / Blazor WebAssembly - see Collega.sln.",
+  "packageManager": "pnpm@12.3.4",
   "engines": {
-    "node": ">=22.18.0",
-    "pnpm": ">=10.33.0"
+    "node": ">=24.20.0",
+    "pnpm": ">=12.3.4"
   },
   "scripts": {
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "check": "turbo run lint typecheck"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.5",
+    "@biomejs/biome": "2.5.12",
     "@types/node": "26.4.1",
-    "eslint": "9.39.5",
-    "eslint-import-resolver-typescript": "4.4.5",
-    "eslint-plugin-boundaries": "7.2.0",
-    "eslint-plugin-jsx-a11y": "6.10.2",
-    "eslint-plugin-react-hooks": "7.1.1",
     "turbo": "2.10.12",
-    "typescript": "7.0.2",
-    "typescript-eslint": "8.69.0"
+    "typescript": "7.0.2"
   }
 }

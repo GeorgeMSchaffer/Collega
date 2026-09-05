@@ -1,0 +1,33 @@
+# pnpm workspace members.
+#
+# The application itself is .NET (src/Collega.*, built via Collega.sln) — these are
+# the JavaScript/TypeScript satellites around it, not the product.
+#
+#   e2e                     Playwright suite driving the Blazor client
+#   tools/golden            typecheck-only golden-file harness (runs on bare Node)
+#   SPEC/mockups/_build/tw  Tailwind CLI that compiles CSS inlined into the comps
+#
+# apps/* and packages/* are listed so a future workspace member is picked up without
+# editing this file. Both directories are currently empty of package.json files, so
+# pnpm skips them.
+packages:
+  - 'e2e'
+  - 'tools/golden'
+  - 'SPEC/mockups/_build/tw'
+  - 'apps/*'
+  - 'packages/*'
+
+# pnpm 12 refuses to run a dependency's install scripts unless it is named here.
+# Both of these are Tailwind's own native components, pulled in by @tailwindcss/cli
+# in SPEC/mockups/_build/tw: oxide is the Rust engine Tailwind cannot run without,
+# and parcel/watcher backs its --watch mode. Neither is optional for that toolchain.
+allowBuilds:
+  '@parcel/watcher': true
+  '@tailwindcss/oxide': true
+
+# pnpm 12 holds back very recently published versions by default as a supply-chain
+# measure. Playwright 1.63.0 is pinned deliberately, so it is excluded from that hold.
+minimumReleaseAgeExclude:
+  - '@playwright/test@1.63.0'
+  - playwright-core@1.63.0
+  - playwright@1.63.0
