@@ -9,6 +9,44 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-04 — The conversion builds the web shell first, on the recorded corpus
+
+**Decided:** invert the wave order. `apps/web` is built **before** the backend waves, against a
+mock served from the golden corpus, so design and interaction problems surface now rather than
+after Waves B–D have assumed them.
+
+**Why the architecture already allowed it.** Constraint 11 makes `apps/web` HTTP-only — it never
+imports `packages/*` — so it can run against a mock and swap to Nest by changing a base URL.
+`SPEC/30-Contracts.md` is canonical, so the shell is not inventing an API. And the corpus stores
+**raw recorded values**, not normalised placeholders, so its 447 responses serve directly.
+
+**The rule that makes it cheap rather than throwaway: the mock is a recording, not a fiction.**
+Where nothing was captured the mock answers **501** and the screen says so. Three grades are
+distinguished on screen and in headers: an **exact** match is the recorded bytes; a
+**substituted** match is the right endpoint shape at different ids, announced in
+`x-collega-mock-match` and refused outright under `COLLEGA_MOCK_STRICT=1`; and a miss is a
+problem document, never an invented body.
+
+**What that discipline actually caught**, none of which would have surfaced from a design review:
+- `GET /ideas/{ideaId}` was recorded against one idea that **appears in no list**, so every
+  clickable idea substitutes. The row and the detail are not superset/subset either — the row has
+  the author and date, the detail has the description. The panel merges only exact answers.
+- Org-scoped lists were captured against one organization, so a cross-org roll-up would have put
+  one tenant's rows under another's name. Substituted organizations are excluded and counted.
+- Nothing in the data says which statuses are terminal, so "open ideas" is not computable. The
+  attempt proved it: the fullest status recording ends with **"Golden Capture Renamed"**, a
+  capture artefact.
+
+**Deferred by this, deliberately:** S0.2 (Prisma) and S0.3 (kernel). S0.2 *freezes the schema*,
+and it is better frozen after the UI has had a chance to say the data shape is wrong.
+
+**Delivery (E6) is the one exception and is marked as such.** It has no recordings at all — it is
+specified but was never built — so it is a labelled static prototype with illustrative data and a
+persistent strip saying so. Labelled invention is a different thing from silent invention, and the
+label is what keeps the distinction honest.
+
+---
+
 ## 2026-09-04 — The conversion builds on `feature/typescript`, not on `dev`
 
 **Decided:** the conversion gets its own long-lived branch, `feature/typescript`, worked in
