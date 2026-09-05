@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test'
 
 /**
  * Collega browser E2E. Drives the Blazor WASM client (http://localhost:5098) against the live API
@@ -26,7 +26,5 @@ export default defineConfig({
     actionTimeout: 20_000,
     navigationTimeout: 45_000,
   },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-  ],
-});
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+})

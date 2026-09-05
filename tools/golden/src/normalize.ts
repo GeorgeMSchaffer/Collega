@@ -17,15 +17,14 @@
 // most expensive class of defect this corpus exists to catch — a wrong relation,
 // a leak across organizations — passes as a match.
 
-export type Alias = { pattern: RegExp; label: string };
+export type Alias = { pattern: RegExp; label: string }
 
-const GUID =
-  /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g;
-const ISO_TIMESTAMP = /\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?/g;
-const JWT = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g;
+const GUID = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g
+const ISO_TIMESTAMP = /\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?/g
+const JWT = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g
 
 /** Response headers worth pinning. The rest are transport noise that differs by stack. */
-export const HEADER_ALLOW_LIST = ["content-type", "location", "www-authenticate"];
+export const HEADER_ALLOW_LIST = ['content-type', 'location', 'www-authenticate']
 
 /**
  * Fields that are credentials, in a request or a response. Never recorded.
@@ -37,18 +36,18 @@ export const HEADER_ALLOW_LIST = ["content-type", "location", "www-authenticate"
  * not an endpoint anyone would think to flag.
  */
 const SECRET_FIELDS = new Set([
-  "password",
-  "newpassword",
-  "currentpassword",
-  "oldpassword",
-  "temporarypassword",
-  "initialpassword",
-  "invitecode",
-  "accesstoken",
-  "token",
-  "secret",
-  "apikey",
-]);
+  'password',
+  'newpassword',
+  'currentpassword',
+  'oldpassword',
+  'temporarypassword',
+  'initialpassword',
+  'invitecode',
+  'accesstoken',
+  'token',
+  'secret',
+  'apikey',
+])
 
 /**
  * Fields that change every request without meaning anything.
@@ -59,11 +58,11 @@ const SECRET_FIELDS = new Set([
  * connection id like `0HNOA0E675RIH:00000001`, and a W3C traceparent) match no
  * general pattern worth guessing at, so it is handled by name.
  */
-const VOLATILE_FIELDS = new Set(["traceid", "requestid", "correlationid"]);
+const VOLATILE_FIELDS = new Set(['traceid', 'requestid', 'correlationid'])
 
 export class Normalizer {
-  #labels = new Map<string, string>();
-  #used = new Set<string>();
+  #labels = new Map<string, string>()
+  #used = new Set<string>()
 
   /**
    * Label for one GUID, by the position it was first seen at. Two different
@@ -71,40 +70,42 @@ export class Normalizer {
    * apart by a suffix, so they never collapse into each other.
    */
   #label(value: string, path: string): string {
-    const key = value.toLowerCase();
-    const held = this.#labels.get(key);
-    if (held !== undefined) return held;
+    const key = value.toLowerCase()
+    const held = this.#labels.get(key)
+    if (held !== undefined) return held
 
-    let label = `<guid@${path}>`;
-    for (let n = 2; this.#used.has(label); n++) label = `<guid@${path}#${n}>`;
-    this.#used.add(label);
-    this.#labels.set(key, label);
-    return label;
+    let label = `<guid@${path}>`
+    for (let n = 2; this.#used.has(label); n++) label = `<guid@${path}#${n}>`
+    this.#used.add(label)
+    this.#labels.set(key, label)
+    return label
   }
 
-  string(value: string, path = "?"): string {
+  string(value: string, path = '?'): string {
     return value
-      .replace(JWT, "<jwt>")
+      .replace(JWT, '<jwt>')
       .replace(GUID, (m) => this.#label(m, path))
-      .replace(ISO_TIMESTAMP, "<timestamp>");
+      .replace(ISO_TIMESTAMP, '<timestamp>')
   }
 
-  value(input: unknown, path = "body"): unknown {
-    if (typeof input === "string") return this.string(input, path);
-    if (Array.isArray(input)) return input.map((item, index) => this.value(item, `${path}[${index}]`));
-    if (input && typeof input === "object") {
-      const out: Record<string, unknown> = {};
+  value(input: unknown, path = 'body'): unknown {
+    if (typeof input === 'string') return this.string(input, path)
+    if (Array.isArray(input))
+      return input.map((item, index) => this.value(item, `${path}[${index}]`))
+    if (input && typeof input === 'object') {
+      const out: Record<string, unknown> = {}
       for (const key of Object.keys(input as Record<string, unknown>).sort()) {
-        const value = (input as Record<string, unknown>)[key];
+        const value = (input as Record<string, unknown>)[key]
         // Kept as a placeholder rather than dropped, so the field's presence on
         // every problem-details body is still part of what the corpus pins.
-        out[key] = VOLATILE_FIELDS.has(key.toLowerCase()) && value !== null
-          ? `<${key.toLowerCase()}>`
-          : this.value(value, `${path}.${key}`);
+        out[key] =
+          VOLATILE_FIELDS.has(key.toLowerCase()) && value !== null
+            ? `<${key.toLowerCase()}>`
+            : this.value(value, `${path}.${key}`)
       }
-      return out;
+      return out
     }
-    return input;
+    return input
   }
 }
 
@@ -127,64 +128,64 @@ export class Normalizer {
  * of a replay, so the field's presence and shape are still pinned.
  */
 export function redact(input: unknown): unknown {
-  if (Array.isArray(input)) return input.map((item) => redact(item));
-  if (input && typeof input === "object") {
-    const out: Record<string, unknown> = {};
+  if (Array.isArray(input)) return input.map((item) => redact(item))
+  if (input && typeof input === 'object') {
+    const out: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
       // A null secret is not a secret, it is an answer: a rejected import row
       // gets no password, and a stack that starts issuing one there is a defect
       // the corpus should catch rather than redact away.
       out[key] =
         SECRET_FIELDS.has(key.toLowerCase()) && value !== null && value !== undefined
-          ? "<redacted>"
-          : redact(value);
+          ? '<redacted>'
+          : redact(value)
     }
-    return out;
+    return out
   }
-  return input;
+  return input
 }
 
 /** Drop the paths a case declares unstable: "body.expiresAt", "body.items[].code". */
 export function omitPaths(input: unknown, paths: string[]): unknown {
-  if (paths.length === 0) return input;
-  let out = input;
-  for (const path of paths) out = omitOne(out, segmentsOf(path));
-  return out;
+  if (paths.length === 0) return input
+  let out = input
+  for (const path of paths) out = omitOne(out, segmentsOf(path))
+  return out
 }
 
 /** "body.items[].code" and "body.items.[].code" both mean "code in every item". */
 function segmentsOf(path: string): string[] {
   return path
-    .replace(/^body\.?/, "")
-    .replace(/\[\]/g, ".[].")
-    .split(".")
-    .filter(Boolean);
+    .replace(/^body\.?/, '')
+    .replace(/\[\]/g, '.[].')
+    .split('.')
+    .filter(Boolean)
 }
 
 function omitOne(node: unknown, segments: string[]): unknown {
-  if (segments.length === 0 || node === null || node === undefined) return node;
-  const [head, ...rest] = segments;
+  if (segments.length === 0 || node === null || node === undefined) return node
+  const [head, ...rest] = segments
 
-  if (head === "[]") {
-    if (!Array.isArray(node)) return node;
-    return node.map((item) => omitOne(item, rest));
+  if (head === '[]') {
+    if (!Array.isArray(node)) return node
+    return node.map((item) => omitOne(item, rest))
   }
-  if (Array.isArray(node)) return node.map((item) => omitOne(item, segments));
-  if (typeof node !== "object") return node;
+  if (Array.isArray(node)) return node.map((item) => omitOne(item, segments))
+  if (typeof node !== 'object') return node
 
-  const obj = node as Record<string, unknown>;
-  if (!(head in obj)) return obj;
-  const copy = { ...obj };
-  if (rest.length === 0) delete copy[head];
-  else copy[head] = omitOne(copy[head], rest);
-  return copy;
+  const obj = node as Record<string, unknown>
+  if (!(head in obj)) return obj
+  const copy = { ...obj }
+  if (rest.length === 0) delete copy[head]
+  else copy[head] = omitOne(copy[head], rest)
+  return copy
 }
 
-export function normalizeHeaders(headers: Record<string, string>, n: Normalizer, path = "headers") {
-  const out: Record<string, string> = {};
+export function normalizeHeaders(headers: Record<string, string>, n: Normalizer, path = 'headers') {
+  const out: Record<string, string> = {}
   for (const name of HEADER_ALLOW_LIST) {
-    const value = headers[name];
-    if (value !== undefined) out[name] = n.string(value, `${path}.${name}`);
+    const value = headers[name]
+    if (value !== undefined) out[name] = n.string(value, `${path}.${name}`)
   }
-  return out;
+  return out
 }
