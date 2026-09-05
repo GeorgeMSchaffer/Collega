@@ -1,0 +1,7 @@
+{
+  "id": "scope-coffee-unnarrowed",
+  "fixture": "acme",
+  "note": "Same sentence as scope-coffee-narrowed, no scope statement. A break-room improvement could plausibly be a Continuous Improvement, so the structural test alone should let it through. Expecting true here is deliberate and may look wrong at a glance - it is the control for the pair. If this starts refusing, the prompt has become stricter than rule 7 says it should be, which is a real (if quiet) regression.",
+  "turns": ["We should get better coffee in the break room."],
+  "expect": { "inScope": true }
+}

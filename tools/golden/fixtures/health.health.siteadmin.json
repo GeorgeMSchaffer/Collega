@@ -1,0 +1,38 @@
+{
+  "scenario": "health",
+  "step": "health.siteadmin",
+  "endpoint": "GET /health",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Anonymous by design — a probe that needs a token cannot report that auth is down.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/health",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:43 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "status": "Healthy",
+      "timestampUtc": "2026-09-04T03:55:44.5626863Z"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "status": "Healthy",
+      "timestampUtc": "<timestamp>"
+    }
+  }
+}

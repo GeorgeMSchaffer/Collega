@@ -4,6 +4,9 @@
     <!-- Search predicates are internal seams so Collega.Infrastructure.Tests can assert on the SQL they
          generate — the InMemory provider the rest of the suite runs on cannot show LIKE/ESCAPE or case-folding. -->
     <InternalsVisibleTo Include="Collega.Infrastructure.Tests" />
+    <!-- The prompt playground renders the real compiled system prompt as the baseline to edit from.
+         Reading it through the internal builder is the point: a copy would drift from production. -->
+    <InternalsVisibleTo Include="Collega.AiPlayground" />
   </ItemGroup>
 
   <ItemGroup>

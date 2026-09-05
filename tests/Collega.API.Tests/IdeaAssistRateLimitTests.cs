@@ -28,6 +28,26 @@ public sealed class IdeaAssistRateLimitTests : IClassFixture<AiConfiguredApiFact
     }
 
     /// <summary>
+    /// The positive half of the availability probe (rule 32a), which the dark default harness cannot
+    /// express. Paired with <c>Availability_Is_False_When_The_Feature_Is_Dark</c>, this is what makes
+    /// the probe worth trusting: it tracks real deployment state in both directions rather than
+    /// returning a constant.
+    /// </summary>
+    [Fact]
+    public async Task Availability_Is_True_When_Assist_Is_Configured()
+    {
+        using var client = _factory.CreateClient();
+        await SiteAdminAuth.AuthenticateAsSiteAdminAsync(client);
+
+        var org = await CreateOrganizationAsync(client, "Available Robotics");
+        using var member = await CreateMemberClientAsync(client, org.OrganizationId, "User");
+
+        var body = await member.GetStringAsync("/api/v1/ai-assist/availability");
+
+        Assert.Contains("\"available\":true", body.Replace(" ", string.Empty), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Rate limiting is a distinct outcome from unavailability, and the wire says so: <c>429</c> with
     /// a <c>Retry-After</c>, not the <c>503</c> that means "stop asking". The default per-user limit
     /// is ten per window, so a burst past that trips it.

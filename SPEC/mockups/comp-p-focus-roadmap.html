@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp P: core workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN.md — "Notion Analysis" — applied verbatim.
+   Every value below is lifted from the front matter of
+   /DESIGN.md. Nothing here is Collega canon; see the banner.
+   ============================================================ */
+:root{
+  /* colors */
+  --primary:#0075de; --primary-active:#005bab; --secondary:#213183; --on-primary:#ffffff;
+  --canvas:#ffffff; --canvas-soft:#f6f5f4; --surface:#ffffff;
+  --ink:rgba(0,0,0,.95); --ink-secondary:#31302e; --ink-muted:#615d59; --ink-faint:#a39e98;
+  --hairline:#e6e6e6;
+  /* decorative sticker palette — dots + illustration only, never a fill or CTA */
+  --sky:#62aef0; --purple:#d6b6f6; --purple-deep:#391c57; --pink:#ff64c8;
+  --orange:#dd5b00; --orange-deep:#793400; --teal:#2a9d99; --green:#1aae39; --brown:#523410;
+  /* rounded */
+  --r-xs:4px; --r-sm:5px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-full:9999px;
+  /* spacing — 8px base */
+  --s-xxs:4px; --s-xs:8px; --s-sm:12px; --s-md:16px; --s-lg:24px; --s-xl:28px; --s-xxl:32px;
+  /* elevation — many near-transparent layers, never a hard cast */
+  --e1:rgba(0,0,0,.01) 0 .175px 1.041px, rgba(0,0,0,.02) 0 .8px 2.925px,
+       rgba(0,0,0,.027) 0 2.025px 7.847px, rgba(0,0,0,.04) 0 4px 18px;
+  --e2:rgba(0,0,0,.01) 0 .3px 1.4px, rgba(0,0,0,.02) 0 1.4px 4.4px,
+       rgba(0,0,0,.03) 0 3.4px 10.6px, rgba(0,0,0,.04) 0 9px 24px, rgba(0,0,0,.05) 0 23px 52px;
+  --font:"Inter",-apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--canvas-soft); color:var(--ink); font-family:var(--font);
+  font-size:16px; font-weight:400; line-height:1.5; letter-spacing:0;
+  font-feature-settings:"lnum" 1,"locl" 1;
+  -webkit-font-smoothing:antialiased;
+}
+/* ---- type scale: sizes, weights and tracking exactly as tabulated ---- */
+h1{font-size:40px;font-weight:700;line-height:1.1;letter-spacing:-1px;margin:0}
+h2{font-size:26px;font-weight:700;line-height:1.23;letter-spacing:-.625px;margin:0}
+h3{font-size:22px;font-weight:700;line-height:1.27;letter-spacing:-.25px;margin:0}
+.title{font-size:20px;font-weight:600;line-height:1.4;letter-spacing:-.125px}
+.sm{font-size:15px;font-weight:400;line-height:1.33}
+.cap{font-size:14px;font-weight:400;line-height:1.43}
+.eyebrow{font-size:12px;font-weight:600;line-height:1.33;letter-spacing:.125px}
+p{margin:0 0 var(--s-md)}
+a{color:var(--primary);text-decoration:none}
+a:hover{text-decoration:underline}
+.muted{color:var(--ink-muted)}
+.faint{color:var(--ink-faint)}
+.sec{color:var(--ink-secondary)}
+
+/* ============ comp chrome (not part of the design system) ============ */
+.switch{background:var(--ink);color:#fff;padding:var(--s-xs) 14px;display:flex;gap:7px;
+  align-items:center;flex-wrap:wrap;min-height:42px}
+.switch b{font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.switch .lbl{font-size:11.5px;color:#a39e98;margin-right:6px}
+.switch button{background:transparent;border:1px solid #4a4a4a;color:#e6e6e6;padding:var(--s-xxs) 10px;
+  border-radius:var(--r-full);font-size:12px;font-family:inherit;cursor:pointer}
+.switch button[aria-current="true"]{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+.explore{background:#fdf3e7;border-bottom:1px solid #f0ddc4;color:var(--orange-deep);
+  font-size:11.5px;padding:6px var(--s-md);display:flex;gap:var(--s-xs);align-items:center}
+.explore b{text-transform:uppercase;letter-spacing:.07em;font-size:10.5px}
+.screen{display:none}.screen[data-on="1"]{display:block}
+
+/* ============ app shell ============ */
+.shell{display:grid;grid-template-columns:248px 1fr;min-height:calc(100vh - 70px)}
+.side{background:var(--canvas);border-right:1px solid var(--hairline);
+  display:flex;flex-direction:column;padding:var(--s-sm) 10px}
+.brand{display:flex;align-items:center;gap:var(--s-xs);padding:6px var(--s-xs) var(--s-md)}
+.brand .mark{width:26px;height:26px;border-radius:var(--r-md);background:var(--ink);color:#fff;
+  display:grid;place-items:center;font-size:11px;font-weight:700;letter-spacing:-.02em}
+.brand b{font-size:16px;font-weight:600;letter-spacing:-.2px}
+.org{font-size:12px;font-weight:600;color:var(--ink-muted);padding:0 var(--s-xs) var(--s-md)}
+.navlbl{font-size:12px;font-weight:600;letter-spacing:.125px;color:var(--ink-faint);
+  padding:var(--s-md) var(--s-xs) var(--s-xxs);text-transform:uppercase}
+/* ex-app-shell-row: canvas bg, rounded.sm, padding sm/md, primary as active indicator */
+.nav{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--canvas);
+  border:0;border-radius:var(--r-sm);padding:var(--s-sm) var(--s-md);font-family:inherit;
+  font-size:15px;line-height:1.33;color:var(--ink-secondary);cursor:pointer;position:relative}
+.nav:hover{background:var(--canvas-soft)}
+.nav[aria-current="page"]{background:var(--canvas-soft);color:var(--ink);font-weight:600}
+.nav[aria-current="page"]::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;
+  border-radius:var(--r-full);background:var(--primary)}
+.nav .ct{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-faint)}
+.push{flex:1}
+.me{display:flex;align-items:center;gap:10px;padding:10px var(--s-xs);border-top:1px solid var(--hairline)}
+
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;align-items:center;gap:10px;background:var(--canvas);
+  border-bottom:1px solid var(--hairline);padding:10px var(--s-lg)}
+.crumb{font-size:15px;color:var(--ink-muted)}
+.crumb b{color:var(--ink);font-weight:600}
+.spacer{flex:1}
+.body{padding:var(--s-lg);max-width:1300px;width:100%}
+.pagehead{display:flex;align-items:flex-start;gap:var(--s-md);margin-bottom:var(--s-lg)}
+.pagehead p{margin:var(--s-xs) 0 0;color:var(--ink-muted);font-size:15px;line-height:1.33;max-width:70ch}
+
+/* ============ buttons ============ */
+/* button-utility — 8px, tight 4/14 padding, hairline border */
+.btn{background:var(--surface);color:var(--ink);border:1px solid var(--hairline);
+  border-radius:var(--r-md);padding:var(--s-xxs) 14px;font-family:inherit;font-size:16px;
+  font-weight:500;line-height:1.5;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--canvas-soft)}
+/* button-primary — the one blue action, fully pill */
+.btn.pri{background:var(--primary);color:var(--on-primary);border-color:var(--primary);
+  border-radius:var(--r-full);padding:var(--s-xs) var(--s-md)}
+.btn.pri:hover{background:var(--primary-active);border-color:var(--primary-active)}
+.btn.pri:active{background:var(--primary-active);transform:scale(.9)}
+/* button-secondary — white pill on the soft shadow */
+.btn.sec2{border-radius:var(--r-full);padding:var(--s-xs) var(--s-md);box-shadow:var(--e1)}
+.btn.sec2:active{transform:scale(.9)}
+.btn.sm2{font-size:14px;padding:2px 10px}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-muted)}
+.btn.ghost:hover{background:var(--canvas-soft);color:var(--ink)}
+.iconbtn{width:32px;height:32px;border-radius:var(--r-full);border:0;background:rgba(0,0,0,.05);
+  color:var(--ink-secondary);display:grid;place-items:center;cursor:pointer;font-size:14px}
+.iconbtn:active{transform:scale(.9)}
+
+/* ============ surfaces ============ */
+/* feature-card — 12px, 24px padding, flat by default (hairline only) */
+.card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);
+  padding:var(--s-lg)}
+.card.raised{box-shadow:var(--e1)}
+.card.flush{padding:0;overflow:hidden}
+.well{background:var(--canvas-soft);border:1px solid var(--hairline);border-radius:var(--r-xl);
+  padding:var(--s-xxl)}
+.modal{background:var(--surface);border-radius:var(--r-xl);padding:var(--s-lg);box-shadow:var(--e2)}
+.toast{background:var(--surface);border-radius:var(--r-xl);padding:var(--s-sm) var(--s-md);
+  box-shadow:var(--e2);font-size:15px;line-height:1.33;display:flex;align-items:center;gap:10px}
+
+/* ============ inputs — deliberately tight at 4px, never pill ============ */
+input[type=text],input[type=password],textarea,select{
+  background:var(--surface);color:var(--ink);border:1px solid #dddddd;border-radius:var(--r-xs);
+  padding:6px;font-family:inherit;font-size:15px;line-height:1.33}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--primary);box-shadow:var(--e1)}
+textarea{resize:vertical}
+label{display:block;font-size:12px;font-weight:600;letter-spacing:.125px;color:var(--ink-muted);
+  margin-bottom:var(--s-xxs)}
+.charcount{font-size:12px;color:var(--ink-faint);text-align:right;margin-top:2px}
+
+/* ============ badges, dots, chips ============ */
+/* badge-pill — white surface, primary text, eyebrow type */
+.badge{display:inline-flex;align-items:center;gap:5px;background:var(--surface);color:var(--primary);
+  border:1px solid var(--hairline);border-radius:var(--r-full);padding:var(--s-xxs) var(--s-xs);
+  font-size:12px;font-weight:600;line-height:1.33;letter-spacing:.125px}
+/* a category dot is the ONLY place a sticker colour is allowed to carry a category.
+   The label is always written beside it — colour never carries meaning alone. */
+.dot{width:8px;height:8px;border-radius:var(--r-full);background:var(--ink-faint);flex:none;display:inline-block}
+.marker{display:inline-flex;align-items:center;gap:6px;background:var(--canvas-soft);
+  border-radius:var(--r-sm);padding:2px var(--s-xs);font-size:12px;font-weight:600;
+  line-height:1.33;letter-spacing:.125px;color:var(--ink-secondary);white-space:nowrap}
+.tag{display:inline-block;background:var(--canvas-soft);color:var(--ink-muted);border-radius:var(--r-xs);
+  padding:2px 7px;font-size:12px;font-weight:500;line-height:1.33}
+.chipbar{display:flex;gap:var(--s-xs);flex-wrap:wrap;align-items:center}
+
+/* ============ avatars ============ */
+.av{width:28px;height:28px;border-radius:var(--r-full);background:var(--canvas-soft);
+  border:1px solid var(--hairline);display:grid;place-items:center;
+  font-size:11px;font-weight:600;color:var(--ink-secondary);flex:none}
+.av.s{width:22px;height:22px;font-size:9.5px}
+.avstack{display:flex}.avstack .av{margin-left:-6px}.avstack .av:first-child{margin-left:0}
+
+/* ============ data table — ex-data-table-cell ============ */
+table{width:100%;border-collapse:collapse;font-size:15px;line-height:1.33}
+thead th{background:var(--canvas-soft);text-align:left;font-size:12px;font-weight:600;
+  letter-spacing:.125px;text-transform:uppercase;color:var(--ink-muted);
+  padding:var(--s-sm) var(--s-md);border-bottom:1px solid var(--hairline)}
+tbody td{padding:var(--s-sm) var(--s-md);border-bottom:1px solid var(--hairline);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--canvas-soft)}
+
+/* ============ board ============
+   Fixed-width columns in a horizontally scrolling rail — the Trello / Jira
+   arrangement — rather than N equal fractions of the work column.
+
+   Equal fractions look fine at five lanes and fail at eight. A board's
+   swimlanes are org-configured with no upper bound, so dividing the available
+   width means every status anyone adds makes every existing column narrower,
+   until the titles wrap to four lines. A fixed column degrades by scrolling
+   instead, which costs a gesture rather than legibility. Trello and Jira both
+   made this trade; the column width here (288px) sits between theirs.
+
+   The rail scrolls, never the page. */
+.cmdbar{display:flex;gap:var(--s-xs);align-items:center;margin-bottom:var(--s-md);flex-wrap:wrap}
+.lanes{display:flex;gap:var(--s-sm);align-items:flex-start;overflow-x:auto;
+  overscroll-behavior-x:contain;padding-bottom:var(--s-sm)}
+/* The column is a container, not just a stack — it carries a ground so the
+   drop target has a visible edge, which a bare column of floating cards does
+   not. Cards keep the white surface, so they still read as objects on it. */
+.lane{flex:0 0 288px;min-width:0;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-lg);padding:var(--s-xs)}
+.lanehd{display:flex;align-items:center;gap:var(--s-xs);padding:6px var(--s-xs) 10px}
+.lanehd .t{font-size:15px;font-weight:600;line-height:1.33;letter-spacing:-.1px}
+.lanehd .ct{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-faint)}
+.kcard{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-md);
+  padding:10px var(--s-sm);margin-bottom:6px;cursor:grab}
+.kcard:hover{box-shadow:var(--e1)}
+.kcard .t{font-size:15px;font-weight:600;line-height:1.33;letter-spacing:-.1px;display:block;
+  margin-bottom:8px}
+.kcard .d{font-size:14px;line-height:1.43;color:var(--ink-muted);margin:0 0 10px}
+.kcard .ft{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.emptylane{border:1px dashed var(--hairline);border-radius:var(--r-md);
+  padding:var(--s-sm) var(--s-md);font-size:14px;line-height:1.43;
+  color:var(--ink-faint);text-align:center;margin-bottom:6px}
+.up{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-full);
+  padding:2px 10px;font-family:inherit;font-size:12px;font-weight:600;color:var(--ink-secondary);
+  cursor:pointer;margin-left:auto}
+.up.mine{border-color:var(--primary);color:var(--primary)}
+
+/* list view */
+.rowcard{display:flex;align-items:center;gap:10px;padding:var(--s-sm) var(--s-md);
+  border-bottom:1px solid var(--hairline)}
+.rowcard:last-child{border-bottom:0}
+.rowcard:hover{background:var(--canvas-soft)}
+.rowcard .t{font-size:15px;font-weight:500;line-height:1.33}
+.grow{flex:1;min-width:0}
+.lanesec{margin-bottom:var(--s-lg)}
+.lanesec>.hd{display:flex;align-items:center;gap:var(--s-xs);margin-bottom:10px}
+.lanesec>.hd .t{font-size:20px;font-weight:600;letter-spacing:-.125px;line-height:1.4}
+.lanesec>.hd .ct{font-size:12px;font-weight:600;color:var(--ink-faint)}
+
+/* ============ idea detail ============ */
+.ideabody{display:grid;grid-template-columns:minmax(0,1fr) 296px;gap:var(--s-xxl)}
+.facts{display:flex;flex-direction:column;gap:var(--s-md)}
+.fact .k{font-size:12px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;
+  color:var(--ink-muted);margin-bottom:var(--s-xxs)}
+.fact .v{font-size:15px;line-height:1.33}
+.fact .v select,.fact .v input{width:100%}
+.prose{font-size:16px;line-height:1.5;color:var(--ink-secondary)}
+.comment{padding:var(--s-md) 0;border-top:1px solid var(--hairline)}
+.comment .by{display:flex;align-items:center;gap:var(--s-xs);margin-bottom:6px}
+.comment .who{font-size:14px;font-weight:600;line-height:1.43}
+.comment .when{font-size:14px;color:var(--ink-faint);line-height:1.43}
+.comment p{margin:0;font-size:16px;line-height:1.5;color:var(--ink-secondary)}
+.mention{color:var(--primary);font-weight:500}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:520px;background:var(--surface);
+  box-shadow:var(--e2);padding:var(--s-lg);overflow:auto;z-index:5}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:4}
+
+/* ============ the one dark island — hero-band ============ */
+.hero{background:var(--secondary);color:var(--on-primary);border-radius:var(--r-xl);
+  padding:56px var(--s-xxl);position:relative;overflow:hidden;text-align:center}
+.hero h1{font-size:64px;font-weight:700;line-height:1.0;letter-spacing:-2.125px;
+  color:var(--on-primary);margin:0 0 var(--s-md)}
+.hero p{color:#c9d2f2;font-size:16px;line-height:1.5;max-width:52ch;margin:0 auto var(--s-lg)}
+.hero .ctas{display:flex;gap:var(--s-sm);justify-content:center}
+.hero .btn.sec2{background:var(--surface);color:var(--ink);border-color:transparent}
+.star{position:absolute;border-radius:var(--r-full);opacity:.9}
+
+/* ============ delivery ============ */
+.stat{display:flex;gap:var(--s-lg);flex-wrap:wrap;background:var(--surface);
+  border:1px solid var(--hairline);border-radius:var(--r-lg);padding:var(--s-sm) var(--s-md);
+  font-size:14px;line-height:1.43;color:var(--ink-muted);margin-bottom:var(--s-md)}
+.stat b{color:var(--ink);font-weight:600}
+.tasks{list-style:none;margin:0;padding:0}
+.tasks li{display:flex;align-items:center;gap:10px;padding:var(--s-xs) 0;
+  border-bottom:1px solid var(--hairline);font-size:15px;line-height:1.33}
+.tasks li:last-child{border-bottom:0}
+.tasks .box{width:16px;height:16px;border-radius:var(--r-xs);border:1.5px solid var(--ink-faint);flex:none}
+.tasks .box.on{background:var(--primary);border-color:var(--primary);position:relative}
+.tasks .box.on::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;
+  border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.tasks .done{color:var(--ink-faint);text-decoration:line-through}
+.road{display:grid;grid-template-columns:220px repeat(4,minmax(0,1fr));gap:1px;
+  background:var(--hairline);border:1px solid var(--hairline);border-radius:var(--r-lg);overflow:hidden}
+.road>div{background:var(--surface);padding:var(--s-sm) var(--s-md);min-height:44px}
+.road .hd{background:var(--canvas-soft);font-size:12px;font-weight:600;letter-spacing:.125px;
+  text-transform:uppercase;color:var(--ink-muted)}
+.road .out{font-size:15px;font-weight:600;line-height:1.33}
+.road .out small{display:block;font-size:12px;font-weight:400;color:var(--ink-faint);margin-top:2px}
+.bar{display:block;border-radius:var(--r-full);padding:var(--s-xxs) var(--s-sm);font-size:12px;
+  font-weight:600;color:var(--ink-secondary);background:var(--canvas-soft);
+  border:1px solid var(--hairline)}
+.note{background:var(--surface);border:1px solid var(--hairline);border-left:3px solid var(--primary);
+  border-radius:var(--r-md);padding:var(--s-sm) var(--s-md);font-size:14px;line-height:1.43;
+  color:var(--ink-secondary);margin-top:var(--s-md)}
+.note b{color:var(--ink)}
+.seg{display:inline-flex;background:var(--canvas-soft);border-radius:var(--r-md);padding:2px}
+.seg button{border:0;background:transparent;border-radius:6px;padding:var(--s-xxs) var(--s-sm);
+  font-family:inherit;font-size:14px;color:var(--ink-muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--e1)}
+
+/* board cards: let the footer flow left-to-right so every card wraps the same
+   way. With margin-left:auto the upvote jumps to its own row only on the wider
+   cards, which reads as inconsistency rather than rhythm. */
+.kcard .up{margin-left:0}
+
+/* identifiers must never break across lines */
+tbody td:first-child,.road .bar{white-space:nowrap}
+
+/* ===== Focus-desk layer (comp D idiom) rendered in DESIGN.md tokens ===== */
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"lnum" 1}
+.work{padding:var(--s-lg);flex:1;min-width:0;max-width:1320px}
+.pgh{display:flex;align-items:flex-end;gap:var(--s-md);margin-bottom:var(--s-lg);flex-wrap:wrap}
+.pgh .sub{font-size:15px;line-height:1.33;color:var(--ink-muted);margin-top:6px}
+
+/* command-palette launcher in the sidebar */
+.palette{display:flex;align-items:center;gap:var(--s-xs);width:100%;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-md);padding:var(--s-xs) var(--s-sm);
+  font-family:inherit;font-size:14px;color:var(--ink-faint);cursor:pointer;margin-bottom:var(--s-xs)}
+.palette:hover{background:var(--surface);box-shadow:var(--e1)}
+.kbd{border:1px solid var(--hairline);border-radius:var(--r-xs);padding:1px 5px;font-size:11px;
+  font-weight:600;color:var(--ink-muted);background:var(--surface)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s-sm);margin-bottom:var(--s-lg)}
+.kpi{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);
+  padding:var(--s-md)}
+.kpi .k{font-size:12px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;color:var(--ink-muted)}
+.kpi .v{font-size:40px;font-weight:700;line-height:1.1;letter-spacing:-1px;margin-top:var(--s-xxs)}
+.kpi .d{font-size:14px;line-height:1.43;color:var(--ink-faint);margin-top:2px}
+
+.cols{display:grid;grid-template-columns:1.35fr 1fr;gap:var(--s-md);align-items:start}
+.panel{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r-lg);overflow:hidden}
+.panel>h2,.panel>h3{font-size:20px;font-weight:600;line-height:1.4;letter-spacing:-.125px;
+  padding:var(--s-sm) var(--s-md);border-bottom:1px solid var(--hairline);
+  display:flex;align-items:center;gap:var(--s-xs)}
+.panel .in{padding:var(--s-md)}
+.panel table{font-size:15px}
+.panel .t{font-weight:500}
+.bd{font-size:14px;line-height:1.43;color:var(--ink-faint);margin-top:2px}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:flex;gap:var(--s-xs);align-items:center;padding:var(--s-sm) var(--s-md);
+  border-bottom:1px solid var(--hairline);font-size:15px;line-height:1.33}
+.feed li:last-child{border-bottom:0}
+.feed .when{margin-left:auto;font-size:14px;color:var(--ink-faint);white-space:nowrap}
+
+/* ===== roadmap (comp M mechanics: single-parent outcomes) ===== */
+.roadgrid{display:grid;grid-template-columns:238px repeat(4,minmax(0,1fr));gap:1px;
+  background:var(--hairline)}
+.roadgrid>div{background:var(--surface);padding:var(--s-sm) var(--s-md);min-height:52px}
+.roadgrid .hd{background:var(--canvas-soft);font-size:12px;font-weight:600;letter-spacing:.125px;
+  text-transform:uppercase;color:var(--ink-muted);min-height:0;padding:var(--s-xs) var(--s-md)}
+.roadgrid .out{font-size:15px;font-weight:600;line-height:1.33}
+.roadgrid .out a{color:inherit}
+.roadgrid .out small{display:block;font-size:14px;font-weight:400;color:var(--ink-faint);margin-top:2px}
+.roadgrid .dim{background:var(--canvas-soft);color:var(--ink-faint)}
+.roadwrap{border:1px solid var(--hairline);border-radius:var(--r-lg);overflow:hidden}
+/* Bars carry no structural fill — DESIGN.md forbids it. The category dot names
+   the outcome, always with its label beside it. Under single-parent there is no
+   "shared" bar to encode: an issue has one home, so each bar is its own row's. */
+.barx{display:inline-flex;align-items:center;gap:6px;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-full);padding:var(--s-xxs) var(--s-sm);
+  font-size:12px;font-weight:600;color:var(--ink-secondary);white-space:nowrap}
+.sum{display:flex;gap:var(--s-lg);flex-wrap:wrap;background:var(--canvas-soft);
+  border-top:1px solid var(--hairline);padding:var(--s-sm) var(--s-md);font-size:14px;
+  color:var(--ink-muted)}
+.sum b{color:var(--ink);font-weight:600}
+
+/* ===== issue detail ===== */
+.key{display:inline-block;background:var(--canvas-soft);border:1px solid var(--hairline);
+  border-radius:var(--r-sm);padding:2px var(--s-xs);font-size:12px;font-weight:600;
+  letter-spacing:.125px;font-variant-numeric:tabular-nums}
+.task{display:flex;gap:10px;align-items:flex-start;padding:var(--s-sm) 0;
+  border-bottom:1px solid var(--hairline);font-size:15px;line-height:1.33}
+.task:last-of-type{border-bottom:0}
+.task input{margin:2px 0 0;accent-color:var(--primary);width:16px;height:16px}
+.task .who{font-size:14px;color:var(--ink-faint);margin-top:2px}
+.task.done>.grow>span{color:var(--ink-faint);text-decoration:line-through}
+.addtask{margin-top:var(--s-sm);background:transparent;border:1px dashed var(--hairline);
+  border-radius:var(--r-md);padding:var(--s-xs) var(--s-sm);width:100%;font-family:inherit;
+  font-size:14px;color:var(--ink-muted);cursor:pointer}
+.addtask:hover{border-color:var(--primary);color:var(--primary)}
+.kv{margin:0;display:grid;grid-template-columns:104px 1fr;gap:var(--s-sm) var(--s-md);font-size:15px}
+.kv dt{font-size:12px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;
+  color:var(--ink-muted);align-self:center}
+.kv dd{margin:0;line-height:1.33}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px}
+.rmtag{display:inline-flex;align-items:center;gap:6px;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-full);padding:2px var(--s-xs);
+  font-size:12px;font-weight:600;color:var(--ink-secondary)}
+.rmtag x{cursor:pointer;color:var(--ink-faint);font-style:normal;font-weight:400}
+.rmtag x:hover{color:var(--primary)}
+
+/* ===== command palette ===== */
+.cp-back{position:fixed;inset:0;background:rgba(0,0,0,.28);display:grid;
+  place-items:start center;padding-top:12vh;z-index:6}
+.cp{width:min(620px,92vw);background:var(--surface);border-radius:var(--r-xl);
+  box-shadow:var(--e2);overflow:hidden}
+.cp .q{display:flex;align-items:center;gap:10px;padding:var(--s-md);
+  border-bottom:1px solid var(--hairline)}
+.cp .q input{flex:1;border:0;padding:0;font-size:20px;font-weight:600;letter-spacing:-.125px}
+.cp .q input:focus{box-shadow:none}
+.cp .grp{font-size:12px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;
+  color:var(--ink-faint);padding:var(--s-sm) var(--s-md) var(--s-xxs)}
+.cp .it{display:flex;align-items:center;gap:10px;margin:0 var(--s-xs);
+  padding:var(--s-xs) var(--s-sm);border-radius:var(--r-sm);font-size:15px;cursor:pointer}
+.cp .it:hover{background:var(--canvas-soft)}
+.cp .it.on{background:var(--canvas-soft);font-weight:600;position:relative}
+.cp .it.on::before{content:"";position:absolute;left:-2px;top:6px;bottom:6px;width:3px;
+  border-radius:var(--r-full);background:var(--primary)}
+.cp .it .kbd{margin-left:auto}
+.cpfoot{display:flex;gap:var(--s-md);padding:var(--s-sm) var(--s-md);margin-top:var(--s-xs);
+  border-top:1px solid var(--hairline);background:var(--canvas-soft);
+  font-size:12px;color:var(--ink-muted)}
+
+/* ============================================================
+   Screens carried over from comp D: login, ideas list, board,
+   docked inspector, settings. Same token layer, no new colours.
+   ============================================================ */
+
+/* ===== auth ===== */
+.authwrap{display:grid;grid-template-columns:1.05fr .95fr;min-height:calc(100vh - 70px)}
+.authpitch{background:var(--secondary);color:#fff;padding:64px 56px;
+  display:flex;flex-direction:column;justify-content:center}
+.authpitch .mark{width:34px;height:34px;border-radius:var(--r-md);background:rgba(255,255,255,.14);
+  color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;
+  letter-spacing:-.02em;margin-bottom:var(--s-lg)}
+.authpitch h2{color:#fff;max-width:17ch;margin-bottom:var(--s-md)}
+.authpitch p{color:#c9d2f2;font-size:16px;line-height:1.5;max-width:48ch;margin:0 0 var(--s-lg)}
+.authpitch ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--s-sm)}
+.authpitch li{display:flex;align-items:flex-start;gap:10px;font-size:15px;line-height:1.33;color:#e4e8f7}
+.authpitch li svg{flex:none;margin-top:1px;color:var(--sky)}
+.authpitch .kbd{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.28);color:#fff}
+.authform{background:var(--canvas);padding:64px 56px;display:flex;
+  flex-direction:column;justify-content:center}
+.authform .in{width:100%;max-width:356px;margin:0 auto}
+.authform .sub{font-size:16px;line-height:1.5;color:var(--ink-muted);margin:var(--s-xs) 0 var(--s-lg)}
+.foot2{font-size:14px;line-height:1.43;color:var(--ink-muted);margin-top:var(--s-md)}
+
+/* ===== forms ===== */
+.field{margin-bottom:var(--s-md)}
+.field input,.field select,.field textarea{width:100%}
+.hint{font-size:14px;line-height:1.43;color:var(--ink-faint);margin-top:6px}
+.req{color:var(--orange)}
+
+/* ===== list filters — every control keeps a visible label ===== */
+.filters{display:flex;gap:var(--s-sm);flex-wrap:wrap;margin-bottom:var(--s-md);align-items:flex-end}
+.fw{min-width:158px}
+.fw.wide{flex:1;min-width:240px}
+.fw label{margin-bottom:6px}
+.fw input,.fw select{width:100%}
+thead th button{background:none;border:0;padding:0;font:inherit;color:inherit;letter-spacing:inherit;
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+
+/* ===== table footer / pagination ===== */
+.pgfoot{display:flex;align-items:center;gap:var(--s-sm);padding:10px var(--s-md);
+  border-top:1px solid var(--hairline);background:var(--canvas-soft);
+  font-size:14px;line-height:1.43;color:var(--ink-muted);flex-wrap:wrap}
+.pgfoot label{display:inline-block;margin:0;font-size:14px;text-transform:none;letter-spacing:0}
+.pgfoot select{width:auto;padding:var(--s-xxs) var(--s-xs);font-size:14px}
+
+/* ===== docked inspector — a third grid column, never an overlay ===== */
+.shell.insp{grid-template-columns:248px minmax(0,1fr) 404px}
+.inspector{background:var(--surface);border-left:1px solid var(--hairline);
+  display:flex;flex-direction:column;min-width:0}
+.insp-head{padding:var(--s-md) var(--s-lg);border-bottom:1px solid var(--hairline)}
+.insp-head .eyebrow{color:var(--ink-muted)}
+.insp-head h2{font-size:22px;font-weight:700;letter-spacing:-.25px;line-height:1.27;margin:6px 0}
+.insp-head .meta{font-size:14px;line-height:1.43;color:var(--ink-faint)}
+.insp-body{padding:var(--s-md) var(--s-lg);overflow:auto;
+  display:flex;flex-direction:column;gap:var(--s-lg)}
+.insp-foot{margin-top:auto;padding:var(--s-sm) var(--s-lg);border-top:1px solid var(--hairline);
+  display:flex;gap:var(--s-xs)}
+.sec-t{font-size:12px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;
+  color:var(--ink-muted);margin-bottom:var(--s-xs)}
+.cmt{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--hairline)}
+.cmt .who{font-size:14px;font-weight:600;line-height:1.43;margin-bottom:2px}
+.cmt .when{font-weight:400;color:var(--ink-faint);margin-left:6px}
+.cmt p{margin:0;font-size:15px;line-height:1.33;color:var(--ink-secondary)}
+
+/* the selected row reads as selected without relying on hue alone: a left rule
+   plus a soft ground, both of which survive greyscale. */
+tbody tr.sel td{background:var(--canvas-soft)}
+tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--primary)}
+
+/* drag handle column in the status list */
+.hnd{color:var(--ink-faint);cursor:grab;line-height:0}
+
+/* overlapping avatars need a ring in the surface colour or the initials collide.
+   At 22px a -6px overlap eats 4px past the 2px ring, which clips the second
+   character of the initials; -4px leaves both readable. */
+.avstack .av{box-shadow:0 0 0 2px var(--surface)}
+.avstack .av.s{margin-left:-4px}
+.avstack .av.s:first-child{margin-left:0}
+
+/* keep the secondary line the same height whether or not it carries tags.
+   As inline content an inline-block tag sits on the baseline and drags the
+   line box down by the strut descender, so tagged rows ran a pixel taller
+   than untagged ones. A fixed-height flex line removes the difference. */
+.bd{display:flex;align-items:center;gap:6px;height:20px}
+.bd .tag{padding-top:0;padding-bottom:0;line-height:20px}
+
+/* board card footer: two fixed rows, not one wrapping row. With a single
+   flex-wrap row the long idea-type name pushes the upvote onto a third line
+   on some cards and not others, and lane heights go ragged. */
+.kcard .ft+.ft{margin-top:4px}
+/* The add control belongs to the column's ground, not to the cards above it,
+   so it drops the card surface and sits flush in the container. */
+.lane>.btn{width:100%;justify-content:center;color:var(--ink-muted)}
+.lane>.btn:hover{background:var(--surface);color:var(--ink)}
+
+/* ============================================================
+   Home copy layer. Two voices, kept apart on purpose:
+   product copy lives inside the app frame and is written to be
+   liftable into the real UI; anything addressed to a reviewer of
+   this comp lives in the chrome band above the frame instead.
+   ============================================================ */
+
+/* first-run guidance — product voice, dismissible, above the numbers */
+.tip{display:flex;align-items:flex-start;gap:var(--s-sm);background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-lg);padding:var(--s-sm) var(--s-md);
+  margin-bottom:var(--s-lg);font-size:15px;line-height:1.33;color:var(--ink-secondary)}
+.tip b{color:var(--ink)}
+.tip .btn{margin-left:auto;flex:none;align-self:center}
+
+/* what a KPI actually counts, under a rule so it reads as a definition
+   rather than more of the delta line above it */
+.kpi .why{font-size:14px;line-height:1.43;color:var(--ink-muted);
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--hairline)}
+
+/* a panel's standfirst: why this list exists and how it is ordered */
+.panel>h2:has(+.lede){border-bottom:0;padding-bottom:var(--s-xxs)}
+.panel>.lede{padding:0 var(--s-md) var(--s-sm);border-bottom:1px solid var(--hairline);
+  font-size:14px;line-height:1.43;color:var(--ink-muted)}
+
+/* the chrome band carries the reviewer's instructions, so it grows a list */
+.explore{align-items:flex-start;line-height:1.5;padding:var(--s-xs) var(--s-md)}
+.explore .how{display:flex;flex-wrap:wrap;gap:2px var(--s-md);margin-top:3px}
+.explore .how span{white-space:nowrap}
+.explore .k{border:1px solid #e0c9a6;border-radius:var(--r-xs);padding:0 4px;font-size:10.5px}
+.explore .how b{text-transform:none;letter-spacing:0;font-size:11.5px}
+
+/* ============================================================
+   SHARED MECHANISMS
+   Role gating, state variants, denied actions, and not-yet-built
+   marking. Written once, used by every comp P file. Frozen after
+   this slice: a change belongs in an amendment slice, never
+   inside a per-file one.
+   ============================================================ */
+
+/* --- Role gating -------------------------------------------
+   data-role on <body> is the viewer's role; data-roles on any
+   element lists the roles allowed to see it. Untagged elements
+   are visible to everyone.
+
+   Written as a hide rule on the NON-matching case rather than a
+   show rule on the matching one, so an element that survives
+   keeps whatever display value it already had. A show rule would
+   have to guess between block, flex and table-cell, and would
+   flatten every grid child it touched.
+
+   !important is load-bearing, not laziness: a gated element frequently
+   carries an inline display style (display:flex on a wrapper, say), and an
+   inline style beats any stylesheet selector no matter how specific. Without
+   it the element stays visible for every role. This is the same failure that
+   makes an element with both [hidden] and a flex class render visible, and it
+   cost a screenshot to find here too.
+   ------------------------------------------------------------ */
+[data-role="SiteAdmin"] [data-roles]:not([data-roles~="SiteAdmin"]),
+[data-role="OrgAdmin"]  [data-roles]:not([data-roles~="OrgAdmin"]),
+[data-role="User"]      [data-roles]:not([data-roles~="User"]),
+[data-role="ReadOnly"]  [data-roles]:not([data-roles~="ReadOnly"]){display:none!important}
+
+/* --- State variants ----------------------------------------
+   data-state on a .screen; data-when on any block that belongs
+   to particular states only. Same non-matching-hide technique.
+   A block may list several: data-when="empty loading".
+   ------------------------------------------------------------ */
+.screen[data-state="normal"]  [data-when]:not([data-when~="normal"]),
+.screen[data-state="empty"]   [data-when]:not([data-when~="empty"]),
+.screen[data-state="loading"] [data-when]:not([data-when~="loading"]),
+.screen[data-state="error"]   [data-when]:not([data-when~="error"]){display:none!important}
+
+/* --- Denied actions ----------------------------------------
+   aria-disabled, never the disabled attribute. A disabled control
+   is removed from the tab order, so a keyboard or screen-reader
+   user meets neither the control nor the explanation for why it
+   is refused. aria-disabled keeps it focusable and announced;
+   aria-describedby points at the reason.
+   ------------------------------------------------------------ */
+[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+.btn[aria-disabled="true"]:hover{background:var(--surface)}
+.btn.pri[aria-disabled="true"]:hover{background:var(--primary)}
+.btn[aria-disabled="true"]:active{transform:none}
+
+/* the reason itself — an inline note tied to the control by id */
+.denied{display:inline-block;font-size:14px;line-height:1.43;color:var(--ink-muted);
+  font-style:italic}
+
+/* --- Empty states ------------------------------------------ */
+.empty{border:1px dashed var(--hairline);border-radius:var(--r-lg);
+  padding:var(--s-xl) var(--s-lg);text-align:center;background:var(--canvas-soft)}
+.empty h3{font-size:22px;font-weight:700;line-height:1.27;letter-spacing:-.25px;
+  color:var(--ink);margin-bottom:var(--s-xs)}
+.empty p{font-size:15px;line-height:1.33;color:var(--ink-muted);
+  max-width:46ch;margin:0 auto var(--s-md)}
+.empty .btn{margin:0 3px}
+
+/* --- Loading ------------------------------------------------
+   Skeletons rather than a spinner: they hold the row height, so
+   the page does not jump when data lands.
+   ------------------------------------------------------------ */
+.skel{display:block;height:12px;border-radius:var(--r-xs);background:var(--canvas-soft)}
+.skel+.skel{margin-top:7px}
+.skel.w40{width:40%}.skel.w60{width:60%}.skel.w80{width:80%}
+@media (prefers-reduced-motion:no-preference){
+  .skel{background:linear-gradient(90deg,var(--canvas-soft) 25%,#eceae7 37%,var(--canvas-soft) 63%);
+    background-size:400% 100%;animation:shimmer 1.4s ease infinite}
+  @keyframes shimmer{from{background-position:100% 0}to{background-position:0 0}}
+}
+
+/* --- Errors ------------------------------------------------- */
+.alert{display:flex;align-items:flex-start;gap:var(--s-sm);border-radius:var(--r-lg);
+  padding:var(--s-sm) var(--s-md);font-size:15px;line-height:1.33;
+  border:1px solid #f0c9c9;background:#fdf1f1;color:#7a1c1c}
+.alert b{font-weight:600}
+.field.bad input,.field.bad select,.field.bad textarea{border-color:#c0392b}
+.field .msg{display:block;margin-top:4px;font-size:14px;line-height:1.43;color:#8a2a20}
+
+/* --- Comp chrome: role and state controls -------------------
+   Reviewer-facing, so it sits in the band outside the app frame
+   alongside the screen tabs, never inside the product surface.
+   ------------------------------------------------------------ */
+.ctl{background:var(--ink);color:#a39e98;padding:0 14px var(--s-xs);display:flex;
+  gap:var(--s-md);align-items:center;flex-wrap:wrap;font-size:11.5px}
+.ctl .grp{display:flex;gap:5px;align-items:center}
+.ctl .cap2{text-transform:uppercase;letter-spacing:.07em;font-size:10.5px;color:#7d7873}
+.ctl button{background:transparent;border:1px solid #4a4a4a;color:#e6e6e6;
+  padding:1px 9px;border-radius:var(--r-full);font-size:11.5px;cursor:pointer}
+.ctl button[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);
+  color:#fff;font-weight:600}
+
+/* --- Not-yet-built marking ---------------------------------
+   Reviewer voice again: a strip above the frame, so nothing
+   inside the app surface ever claims to be shippable when it is
+   not. Screens opt in with data-wip on the .screen.
+   ------------------------------------------------------------ */
+.wip{display:none;background:#fdf3e7;border-bottom:1px solid #f0ddc4;
+  color:var(--orange-deep);padding:var(--s-xs) var(--s-md);font-size:12px;line-height:1.43}
+.screen[data-wip] .wip{display:block}
+.wip b{text-transform:uppercase;letter-spacing:.07em;font-size:10.5px;margin-right:6px}
+
+/* cross-file links in the tab bar — same band, different destination */
+.switch .xfile{background:transparent;border:1px solid #4a4a4a;color:#e6e6e6;
+  padding:var(--s-xxs) 10px;border-radius:var(--r-full);font-size:12px;
+  text-decoration:none;line-height:1.43}
+.switch .xfile:hover{background:#2f2e2c;color:#fff}
+
+/* a denied control and its reason travel together */
+.deniedwrap{display:inline-flex;align-items:center;gap:var(--s-xs)}
+
+/* ===== idea-type badge — the TypeBadge component, as it appears in a table ===== */
+.tbadge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:var(--r-xs);
+  font-size:14px;font-weight:600;line-height:1.43;background:var(--canvas-soft);color:var(--ink-muted)}
+
+/* ===== checkbox rows — the box sits on the text baseline, not above it ===== */
+.chk{display:inline-flex;align-items:center;gap:var(--s-xs);font-weight:400;cursor:pointer}
+.chk input{width:auto;margin:0}
+
+/* ===== field picker inside the idea-type create form =====
+   comp-c-review-09 used a two-pane add/remove picker. At comp P's 400px side
+   card that would be two 180px columns, so the same information — which fields,
+   in what order, which required — is expressed as one checkable list. */
+.pick{border:1px solid var(--hairline);border-radius:var(--r-sm);max-height:248px;overflow-y:auto}
+.pickrow{display:flex;align-items:center;gap:var(--s-xs);padding:8px var(--s-sm);
+  font-size:14px;line-height:1.43}
+.pickrow+.pickrow{border-top:1px solid var(--hairline)}
+.pickrow:hover{background:var(--canvas-soft)}
+.pickrow input{width:auto;margin:0;flex:none}
+.pickrow label{margin:0;font-weight:400;cursor:pointer}
+.pickrow .grow{flex:1}
+.pickrow .ty{color:var(--ink-faint);font-size:13px}
+.pickrow .reqtog{display:inline-flex;align-items:center;gap:5px;font-size:12px;
+  color:var(--ink-faint);width:78px;justify-content:flex-end}
+
+/* a fieldset legend styled as a field label */
+legend.lbl{font-size:14px;font-weight:600;line-height:1.43;padding:0;margin-bottom:2px}
+
+/* move-up / move-down pairs sit tighter than free-standing icon buttons.
+   .iconbtn is display:grid, which is block-level — in a table cell that put
+   each arrow on its own line and tripled the row height. */
+.panel td .iconbtn{display:inline-grid;width:26px;height:26px;font-size:13px;
+  vertical-align:middle;margin-right:2px}
+
+/* ===== a credential shown once — invite code, temporary password ===== */
+.invite{display:inline-block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:14px;letter-spacing:.06em;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-xs);padding:3px 9px}
+
+/* A caution is not a failure. .alert is error-red; role="status" advisories —
+   "copy this now, it is not shown again" — need their own weight. */
+.alert.warn{border-color:#e8d4a8;background:#fdf8ec;color:#6b4e12}
+
+/* ===== board swimlane picker (settings) =====
+   Two columns because only one of them is ordered: a board's swimlanes are an
+   ordered subset of the org's statuses, and the available pool has no order.
+
+   Named swimpick/swimrow, NOT lanes/lane/lanehd — those belong to the board
+   screen in tokens.css, extra.css loads after it, and both stylesheets are
+   inlined into all four comps. Reusing the names silently collapsed the board's
+   five columns into two and laid its cards out sideways, in a file this slice
+   never opened. Board classes are off limits here. */
+.swimpick{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-lg);align-items:start}
+.swimhd{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:var(--s-xs)}
+.swimrow{display:flex;align-items:center;gap:var(--s-xs);padding:7px var(--s-sm);
+  border:1px solid var(--hairline);border-radius:var(--r-sm);margin-bottom:6px;
+  font-size:15px;background:var(--surface)}
+.swimrow .grow{flex:1;min-width:0}
+.swimrow .iconbtn{width:26px;height:26px;font-size:13px}
+.swimrow [aria-disabled="true"]{opacity:.4}
+@media (max-width:1180px){.swimpick{grid-template-columns:1fr}}
+
+/* ===== organization detail, AI settings, usage meter =====
+   The danger zone is separated by a rule and a warm ground rather than by red
+   text: the destructive control is the only red thing, so it stays the most
+   salient element in the block instead of competing with its own heading. */
+.dz{margin-top:var(--s-lg);padding-top:var(--s-md);border-top:1px solid var(--hairline)}
+.btn.warn{border-color:#e0b4b4;color:#8a2a20;background:#fdf6f6}
+.btn.warn:hover{border-color:#c0392b;background:#fbeaea}
+/* Visually hidden, still in the accessibility tree. Used for a file input
+   styled as its own label, and for reasons that only a non-sighted user needs
+   spelled out. Clipped rather than display:none, which would remove it from
+   the tree and break the aria-describedby pointing at it. */
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap;border:0}
+.meter{height:10px;border-radius:var(--r-full);background:var(--canvas-soft);
+  border:1px solid var(--hairline);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--primary)}
+.meter.warn i{background:var(--orange)}
+.meter.over i{background:#c0392b}
+/* A row's actions are a flex group, not a run of inline text. Most rows hold
+   one button; an organization row holds four, and they wrap to a tidy 2x2
+   rather than overflowing the cell and clipping the last one. */
+.acts{display:flex;flex-wrap:wrap;gap:2px;align-items:center}
+.panel td.act{vertical-align:middle}
+.invite{white-space:nowrap}
+/* Figures tables right-align their numeric columns so magnitudes line up, and
+   set the totals row off with a rule and a ground. Scoped to .figures rather
+   than to .num, which is also used inline (sidebar counts) and on date cells
+   in the locked core file, where right-alignment is not wanted. */
+.panel.figures th.num,.panel.figures td.num{text-align:right}
+.panel.figures tfoot td{border-top:2px solid var(--hairline);background:var(--canvas-soft)}
+
+/* ===== delivery: sprint board, issue, promote gate =====
+   The sprint bar is the one place a sprint's identity lives on the board, so it
+   sits above the rail as a card rather than in the topbar, where it would
+   compete with the page actions. */
+.sprintbar{display:flex;align-items:center;gap:var(--s-md);background:var(--surface);
+  border:1px solid var(--hairline);border-radius:var(--r-lg);padding:var(--s-sm) var(--s-md);
+  margin-bottom:var(--s-md)}
+.sprintbar .goal{font-size:15px;line-height:1.33;color:var(--ink-secondary);margin-top:4px}
+.sprintbar .dates{text-align:right;font-size:15px;line-height:1.33;white-space:nowrap}
+/* A delivery card carries its key above the title and a task count below the
+   footer. The bar is a fact about the checklist, not a velocity proxy — the
+   spec is explicit — so it stays small and uncoloured except for its fill. */
+.kcard .key{margin-bottom:6px}
+.tprog{display:flex;align-items:center;gap:var(--s-xs);margin-top:8px;font-size:12px;
+  color:var(--ink-faint)}
+.tbar{flex:1;height:4px;border-radius:var(--r-full);background:var(--canvas-soft);
+  border:1px solid var(--hairline);overflow:hidden}
+.tbar i{display:block;height:100%;background:var(--ink-faint)}
+/* Three task states, not a checkbox: "started but not finished" is the state a
+   standup asks about. Read-only viewers get the same words as text. */
+.tstate{flex:none;width:118px;font-size:14px;padding:3px 6px}
+.tstate.ro{display:inline-block;font-size:14px;line-height:1.43;color:var(--ink-muted);
+  padding:3px 0}
+.task.done>.grow>span{text-decoration:line-through;color:var(--ink-faint)}
+/* The promote gate is a decision, so it is a dialog — the one modal in the
+   set. The docked-inspector rule is about editing, not about confirming. */
+.gate{width:min(560px,92vw);background:var(--surface);border-radius:var(--r-xl);
+  box-shadow:var(--e2);padding:var(--s-lg)}
+.gate .insp-head{border-bottom:1px solid var(--hairline)}
+.gate .empty{text-align:left}
+.radioset{display:flex;gap:var(--s-xs)}
+.radioset label{flex:1;display:flex;align-items:center;gap:var(--s-xs);border:1px solid var(--hairline);
+  border-radius:var(--r-sm);padding:var(--s-xs) var(--s-sm);font-size:15px;font-weight:400;
+  letter-spacing:0;text-transform:none;color:var(--ink);margin:0;cursor:pointer}
+.radioset label:has(input:checked){border-color:var(--primary);background:var(--canvas-soft);font-weight:600}
+.radioset input{width:auto;margin:0}
+/* Outcome rows in the set-outcome picker carry a second line; the picker's
+   own row rule assumes one. */
+.pickrow label .ty{margin-top:2px}
+
+/* ===== auth: notices, the view-as picker and its banner =====
+   A notice is not an alert. "Your session expired" and "your password was
+   changed" are things that went right, so they get a calm ground and
+   role="status", and the red alert stays reserved for a refusal. */
+.authnote{display:flex;gap:var(--s-sm);border-radius:var(--r-lg);padding:var(--s-sm) var(--s-md);
+  font-size:15px;line-height:1.33;border:1px solid #cfe0f5;background:#eef5fc;color:#163d66;
+  margin-bottom:var(--s-md)}
+.authform .alert{margin-bottom:var(--s-md)}
+/* tokens.css styles text and password inputs; a search input fell through to
+   the browser default, which showed as a thinner box in the picker and in
+   every admin list filter. Same box as text. */
+input[type=search]{background:var(--surface);color:var(--ink);border:1px solid #dddddd;
+  border-radius:var(--r-xs);padding:6px;font-family:inherit;font-size:15px;line-height:1.33;
+  -webkit-appearance:none;appearance:none}
+/* invite codes are the one place the single-family rule bends: they are read
+   aloud and typed back, so fixed-width and spaced */
+.authform input.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em}
+/* candidate rows in the picker: a button, so the whole row is the target */
+.vaorg{font-size:12px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;
+  color:var(--ink-muted);margin:var(--s-md) 0 var(--s-xxs)}
+.cand{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;
+  border:0;border-top:1px solid var(--hairline);padding:10px 0;font-family:inherit;font-size:15px;
+  line-height:1.33;color:var(--ink);cursor:pointer}
+.vaorg+.cand{border-top:0}
+.cand:hover{background:var(--canvas-soft)}
+.cand .em{display:block;font-size:14px;line-height:1.43;color:var(--ink-faint);font-weight:400}
+.cand[aria-disabled="true"]{cursor:not-allowed}
+/* the persistent banner: amber because it is a caution that stays, and above
+   the topbar so it is the first thing on every screen for as long as the
+   session lasts. Not dismissable — there is no close, only exit. */
+.banner{display:flex;align-items:center;gap:var(--s-md);background:#fdf8ec;
+  border-bottom:1px solid #e8d4a8;color:#6b4e12;padding:10px var(--s-lg);
+  font-size:15px;line-height:1.33}
+.banner b{color:#4a350a}
+.banner .btn{margin-left:auto;flex:none}
+.gate .count{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+
+/* ===== core: suggestions, the brainstorm chat, create-form chips =====
+   The suggestion colour is teal on purpose. The primary blue already means
+   "active" or "selected" everywhere in the set, and a suggestion is neither;
+   it is a default the person has not accepted yet. Chip, tint and a 3px left
+   rule together, so the mark survives greyscale. */
+:root{--sug:#116b5e;--sug-soft:#e8f3f1}
+.sugchip{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-size:11px;
+  font-weight:600;letter-spacing:.125px;text-transform:uppercase;color:var(--sug)}
+.sugchip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sug)}
+.sug-input{background:var(--sug-soft);border-left:3px solid var(--sug)}
+.sug-clear{background:none;border:0;padding:0;margin-left:8px;font:inherit;font-size:12px;
+  font-weight:500;letter-spacing:0;text-transform:none;color:var(--sug);cursor:pointer;
+  text-decoration:underline}
+/* the chat is the one modal that is a conversation, and it is 720px so a
+   reply and the draft strip fit without wrapping every other word */
+.chatm{width:min(720px,92vw);max-height:86vh;background:var(--surface);border-radius:var(--r-xl);
+  box-shadow:var(--e2);display:flex;flex-direction:column;overflow:hidden}
+.chatm .insp-head{padding:var(--s-md) var(--s-lg)}
+.chat{padding:var(--s-md) var(--s-lg);overflow:auto;display:flex;flex-direction:column;gap:var(--s-sm)}
+.bub{max-width:78%;padding:var(--s-xs) var(--s-sm);border-radius:var(--r-lg);font-size:15px;line-height:1.33}
+.bub .who{font-size:11px;font-weight:600;letter-spacing:.125px;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:2px}
+.bub.ai{align-self:flex-start;background:var(--canvas-soft)}
+.bub.me{align-self:flex-end;background:#eaf3fc}
+/* a refused turn: greyed and struck for one beat, then gone. Never a bubble
+   from the assistant, so a refusal never reads as conversation. */
+.bub.ghost{opacity:.55;text-decoration:line-through}
+.sysnote{align-self:stretch;font-size:14px;line-height:1.43;color:var(--ink-muted);
+  border:1px dashed var(--hairline);border-radius:var(--r-md);padding:var(--s-xs) var(--s-sm)}
+.thinking{display:inline-flex;gap:4px;padding:4px 0}
+.thinking i{width:6px;height:6px;border-radius:50%;background:var(--ink-faint)}
+/* the draft strip: read-only projection of the latest reply, between the
+   transcript and the composer. "Not set yet" is rendered, never omitted. */
+.strip{display:flex;gap:var(--s-md);align-items:center;flex-wrap:wrap;
+  padding:var(--s-xs) var(--s-lg);border-top:1px solid var(--hairline);
+  border-bottom:1px solid var(--hairline);background:var(--canvas-soft);
+  font-size:14px;line-height:1.43;color:var(--ink-muted)}
+.strip .lead{display:inline-flex;align-items:center;gap:6px;font-weight:600;color:var(--sug)}
+.strip .lead::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--sug)}
+.strip b{color:var(--ink)}
+.composer{display:flex;gap:var(--s-xs);align-items:flex-start;padding:var(--s-sm) var(--s-lg)}
+.composer textarea{flex:1}
+.chatfoot{display:flex;gap:var(--s-xs);align-items:center;padding:var(--s-sm) var(--s-lg);
+  border-top:1px solid var(--hairline)}
+/* an archived value is shown, muted and labelled; it is never silently dropped */
+.archtag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.125px;
+  text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--hairline);
+  border-radius:var(--r-xs);padding:0 5px;margin-left:6px;vertical-align:middle}
+/* removable chips for assignees and tags on the create form */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--canvas-soft);
+  border:1px solid var(--hairline);border-radius:var(--r-full);padding:2px 8px;font-size:13px;
+  line-height:1.4}
+.chip button{background:none;border:0;padding:0 2px;font:inherit;font-size:14px;
+  color:var(--ink-faint);cursor:pointer}
+.chip button:hover{color:var(--ink)}
+/* the custom-field filter panel: one typed control per field */
+.ff{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--s-md)}
+.range{display:flex;align-items:center;gap:6px}
+.range input{min-width:0;flex:1}
+.filters>.btn{align-self:flex-end}
+input[type=file]{font-family:inherit;font-size:14px}
+/* tokens.css keeps a table's first column on one line, which is right for a
+   key and wrong for a title: a long title then pushes the last columns out of
+   the panel. Lists whose first column is prose opt back in to wrapping. */
+.wrap1 tbody td:first-child{white-space:normal}
+.topbar .crumb{white-space:nowrap}
+/* under a wrapping title the secondary line can no longer be a fixed 20px
+   flex line: it grows, wraps, and keeps each tag whole */
+.wrap1 .bd{height:auto;flex-wrap:wrap;margin-top:4px;line-height:1.43}
+.wrap1 .bd .tag{white-space:nowrap}
+
+</style>
+</head>
+<body data-role="OrgAdmin">
+<nav class="switch" aria-label="Comp screens">
+  <b>Comp P</b><span class="lbl">Focus Desk · core workspace</span>
+  <button data-go="s-home" aria-current="true">Home</button>
+  <button data-go="s-boards">Boards</button>
+  <button data-go="s-board">Board</button>
+  <button data-go="s-ideas">Ideas list</button>
+  <button data-go="s-inspect">Inspector</button>
+  <button data-go="s-create">New idea</button>
+  <button data-go="s-brainstorm">Brainstorm</button>
+  <button data-go="s-palette">Command palette</button>
+  <span class="lbl" style="margin-left:auto">Other areas</span>
+  <a class="xfile" href="comp-p-auth.html">Auth</a>
+  <a class="xfile" href="comp-p-admin.html">Admin</a>
+  <a class="xfile" href="comp-p-delivery.html">Delivery</a>
+</nav>
+<div class="ctl">
+  <span class="grp"><span class="cap2">View as role</span>
+    <button type="button" data-role-set="SiteAdmin" aria-pressed="false">SiteAdmin</button>
+    <button type="button" data-role-set="OrgAdmin" aria-pressed="true">OrgAdmin</button>
+    <button type="button" data-role-set="User" aria-pressed="false">User</button>
+    <button type="button" data-role-set="ReadOnly" aria-pressed="false">ReadOnly</button>
+  </span>
+  <span class="grp"><span class="cap2">State</span>
+    <button type="button" data-state-set="normal" aria-pressed="true">normal</button>
+    <button type="button" data-state-set="empty" aria-pressed="false">empty</button>
+    <button type="button" data-state-set="loading" aria-pressed="false">loading</button>
+    <button type="button" data-state-set="error" aria-pressed="false">error</button>
+  </span>
+</div>
+<div class="explore"><b>How to read this</b><span>The surfaces every user touches, styled per <b>DESIGN.md</b>. This file is the locked direction; the other three extend it to the rest of the shipped product. Every screen here renders at four roles and four states &mdash; a Site Admin reads everything and changes nothing directly, a Read Only account votes and comments but never edits.
+  <span class="how">
+    <span>&bull; The tab bar above switches screens; <b>Other areas</b> jumps to another file.</span>
+    <span>&bull; <b>View as role</b> and <b>State</b> re-render the current screen &mdash; they are live, not labels.</span>
+    <span>&bull; Role and state carry across files, so a link keeps you where you were.</span>
+    <span>&bull; <span class="k">Ctrl K</span> opens the palette from any screen, <span class="k">Esc</span> closes it.</span>
+    <span>&bull; <b>Ideas list</b> carries the measured density cost of the 15px body.</span>
+    <span>&bull; <b>New idea</b>&rsquo;s empty state is the form opened while the assistant is unavailable; <b>Brainstorm</b>&rsquo;s error state is a refused turn.</span>
+  </span></span></div>
+<!-- ==================== HOME ==================== -->
+
+<section class="screen" id="s-home" data-on="1"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" aria-current="page" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><b>Home</b></span><span class="spacer"></span>
+      <button class="btn" data-roles="SiteAdmin OrgAdmin" data-go="comp-p-auth.html#s-viewas">View as&hellip;</button>
+      <button class="btn pri" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
+      <span class="deniedwrap" data-roles="SiteAdmin"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-hn-sa">New idea</button><span class="denied" id="p-why-hn-sa">Act as a member of an organization to add ideas</span></span>
+      <span class="deniedwrap" data-roles="ReadOnly"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-hn-ro">New idea</button><span class="denied" id="p-why-hn-ro">Read-only accounts can&rsquo;t create ideas</span></span></div>
+    <div class="work">
+      <div class="pgh" data-roles="OrgAdmin"><div class="grow"><h1>Good afternoon, Olivia</h1>
+        <div class="sub">Here&rsquo;s what needs you today. Acme Robotics has 22 ideas across 2 boards and 16 delivery issues in flight &mdash; press <span class="kbd">Ctrl K</span> to jump straight to any of them.</div></div></div>
+      <div class="pgh" data-roles="User"><div class="grow"><h1>Good afternoon, Umar</h1>
+        <div class="sub">Here&rsquo;s what needs you today. Acme Robotics has 22 ideas across 2 boards and 16 delivery issues in flight &mdash; press <span class="kbd">Ctrl K</span> to jump straight to any of them.</div></div></div>
+      <div class="pgh" data-roles="ReadOnly"><div class="grow"><h1>Good afternoon, Rae</h1>
+        <div class="sub">Here&rsquo;s what&rsquo;s moving today. Acme Robotics has 22 ideas across 2 boards and 16 delivery issues in flight &mdash; press <span class="kbd">Ctrl K</span> to jump straight to any of them.</div></div></div>
+      <div class="pgh" data-roles="SiteAdmin"><div class="grow"><h1>Good afternoon, Sam</h1>
+        <div class="sub">Platform-wide activity across every organization. Two organizations, 41 ideas, 16 delivery issues. You are not a member of any of them &mdash; to change what they own, act as one of their administrators.</div></div></div>
+
+      <div data-when="error"><div class="alert" role="alert"><span><b>Couldn&rsquo;t load your boards.</b> Nothing has been changed. Retrying is safe.</span></div>
+        <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div></div>
+
+      <div data-when="loading" aria-busy="true">
+        <div class="kpis"><div class="kpi"><span class="skel w40"></span><span class="skel w60" style="margin-top:14px"></span></div><div class="kpi"><span class="skel w40"></span><span class="skel w60" style="margin-top:14px"></span></div><div class="kpi"><span class="skel w40"></span><span class="skel w60" style="margin-top:14px"></span></div><div class="kpi"><span class="skel w40"></span><span class="skel w60" style="margin-top:14px"></span></div></div>
+        <div class="cols"><div class="panel"><div class="in"><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span></div></div><div class="panel"><div class="in"><span class="skel w60"></span><span class="skel w80"></span></div></div></div>
+      </div>
+
+      <div data-when="empty">
+        <div class="empty" data-roles="OrgAdmin User ReadOnly">
+          <h3>No boards yet</h3>
+          <p>Your organization doesn&rsquo;t have any boards to show. An Org Admin can create boards from Settings.</p>
+          <a class="btn pri" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Create a board</a>
+        </div>
+        <div class="empty" data-roles="SiteAdmin">
+          <h3>No organizations yet</h3>
+          <p>Nothing to show until an organization exists. Creating one provisions its default statuses and a first board.</p>
+          <a class="btn pri" href="#" data-go="comp-p-admin.html#s-orgs">Create an organization</a>
+        </div>
+      </div>
+
+      <div data-when="normal" data-roles="OrgAdmin User ReadOnly">
+        <div class="tip">
+          <div><b>New to Collega?</b> An idea moves New / Pending &rarr; In Review &rarr; In Progress &rarr; Client Review &rarr; Complete, and the people, comments and history stay attached the whole way. Start one from any board, or press <span class="kbd">Ctrl K</span> and type &ldquo;new idea&rdquo;.</div>
+          <button class="btn sm2">Got it</button>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><div class="k">Open ideas</div><div class="v num">14</div><div class="d">of 22 total</div><div class="why">Anything not yet Complete or Archived, on any board you can see.</div></div>
+          <div class="kpi"><div class="k">Awaiting review</div><div class="v num">4</div><div class="d">2 over 7 days</div><div class="why">Sitting in In Review, waiting on a decision from a person.</div></div>
+          <div class="kpi"><div class="k">Assigned to me</div><div class="v num">6</div><div class="d">1 critical</div><div class="why">Open ideas with your name in the Assigned field.</div></div>
+          <div class="kpi"><div class="k">Completed &middot; 30d</div><div class="v num">6</div><div class="d">+2 vs prior</div><div class="why">Reached Complete in the last 30 days, against the 30 days before it.</div></div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <h2><span class="grow">Needs your attention</span><button class="btn sm2" data-go="s-ideas">View all</button></h2>
+            <div class="lede">Open ideas that are critical, high priority, or have gone a week without moving. Oldest first &mdash; a stalled idea is the failure mode, not a busy one.</div>
+            <table class="wrap1">
+              <thead><tr><th>Idea</th><th style="width:172px">Status</th><th style="width:120px">Priority</th><th style="width:64px">Age</th></tr></thead>
+              <tbody>
+                <tr><td><a class="t" href="#" data-go="s-inspect">Pilot a faster review path</a><div class="bd">Ideas · Process Revision</div></td>
+                  <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>In Review</span></td>
+                  <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span></td><td class="num">9d</td></tr>
+                <tr><td><a class="t" href="#" data-go="s-inspect">Validate the customer feedback loop</a><div class="bd">Ideas · Process Revision</div></td>
+                  <td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Client Review</span></td>
+                  <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span></td><td class="num">8d</td></tr>
+                <tr><td><a class="t" href="#" data-go="s-inspect">Standardize the intake checklist</a><div class="bd">Ideas · Continuous Improvement</div></td>
+                  <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></td>
+                  <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td><td class="num">6d</td></tr>
+                <tr><td><a class="t" href="#" data-go="s-inspect">Create a shared playbook</a><div class="bd">Ideas · Continuous Improvement</div></td>
+                  <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>In Progress</span></td>
+                  <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td><td class="num">5d</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <h2><span class="grow">Recent activity</span></h2>
+            <div class="lede">Everything anyone changed in Acme Robotics, newest first. You only see activity on boards you have access to.</div>
+            <ul class="feed">
+              <li><span class="av s">NC</span><span>Noah moved <b>Automate weekly reporting</b> to In Progress</span><span class="when">14m</span></li>
+              <li><span class="av s">MC</span><span>Maya commented on <b>Improve exception visibility</b></span><span class="when">1h</span></li>
+              <li><span class="av s">OA</span><span>Olivia grouped <b>Automate weekly reporting</b> under <b>Cut reporting effort</b></span><span class="when">2h</span></li>
+              <li><span class="av s">OA</span><span>Olivia upvoted <b>Reduce manual handoffs</b></span><span class="when">3h</span></li>
+              <li><span class="av s">NC</span><span>Noah created <b>Roll out the proven workflow</b></span><span class="when">yest</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div data-when="normal" data-roles="SiteAdmin">
+        <div class="kpis">
+          <div class="kpi"><div class="k">Organizations</div><div class="v num">2</div><div class="d">0 archived</div><div class="why">Every organization on this deployment, archived ones excluded.</div></div>
+          <div class="kpi"><div class="k">Boards</div><div class="v num">4</div><div class="d">across 2 organizations</div><div class="why">Every board anyone can reach; open one to read it.</div></div>
+          <div class="kpi"><div class="k">Open ideas</div><div class="v num">27</div><div class="d">of 41 total</div><div class="why">Anything not yet Complete or Archived, in any organization.</div></div>
+          <div class="kpi"><div class="k">Users</div><div class="v num">8</div><div class="d">1 inactive</div><div class="why">Every account, whatever its organization or role.</div></div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <h2><span class="grow">All boards</span><button class="btn sm2" data-go="s-boards">View all</button></h2>
+            <div class="lede">Every board in every organization, grouped by organization. Open one to read it; to change it, act as one of its administrators.</div>
+            <table class="wrap1">
+              <thead><tr><th>Board</th><th style="width:180px">Organization</th><th style="width:110px">Swimlanes</th></tr></thead>
+              <tbody>
+                <tr><td><a class="t" href="#" data-go="s-board">Ideas</a></td><td>Acme Robotics</td><td class="num">5</td></tr>
+                <tr><td><a class="t" href="#">Opportunities</a></td><td>Acme Robotics</td><td class="num">4</td></tr>
+                <tr><td><a class="t" href="#">Product ideas</a></td><td>Globex Industrial</td><td class="num">5</td></tr>
+                <tr><td><a class="t" href="#">Ops improvements</a></td><td>Globex Industrial</td><td class="num">3</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <h2><span class="grow">Recent activity</span></h2>
+            <div class="lede">Everything anyone changed, in any organization, newest first.</div>
+            <ul class="feed">
+              <li><span class="av s">NC</span><span>Noah moved <b>Automate weekly reporting</b> to In Progress <span class="faint">· Acme</span></span><span class="when">14m</span></li>
+              <li><span class="av s">LT</span><span>Lena created the board <b>Ops improvements</b> <span class="faint">· Globex</span></span><span class="when">40m</span></li>
+              <li><span class="av s">MC</span><span>Maya commented on <b>Improve exception visibility</b> <span class="faint">· Acme</span></span><span class="when">1h</span></li>
+              <li><span class="av s">SA</span><span>You created the organization <b>Globex Industrial</b></span><span class="when">yest</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="note"><b>Two voices, kept apart.</b> Everything inside the app frame is product copy, written to be lifted straight into the real UI: what each KPI counts, how the attention queue is ordered, and what a first-run user needs to know before touching anything. Everything addressed to a reviewer of this comp &mdash; the screen list, the keyboard shortcuts, which screens carry open questions &mdash; sits in the band above the frame, outside the mock, so nobody has to guess which sentences would ship. Comp&nbsp;D&rsquo;s premise survives intact underneath: Home answers &ldquo;what needs me now&rdquo;, not &ldquo;what exists&rdquo;, and every number here is a filtered query you can open. A Site Admin has no &ldquo;me&rdquo; inside any organization, so their Home is the one roll-up in the product.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ==================== BOARDS ==================== -->
+
+<section class="screen" id="s-boards" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" aria-current="page" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-home">Home</a> / <b>Boards</b></span><span class="spacer"></span>
+      <a class="btn" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Manage boards</a></div>
+    <div class="work">
+      <div class="pgh"><div class="grow"><h1>Boards</h1>
+        <div class="sub" data-roles="OrgAdmin User ReadOnly">Boards you can access. Selecting a board opens its swim lanes.</div>
+        <div class="sub" data-roles="SiteAdmin">Every board in every organization. Selecting a board opens its swim lanes, read-only.</div></div></div>
+
+      <div data-when="error"><div class="alert" role="alert"><span><b>Couldn&rsquo;t load boards.</b> Nothing has been changed. Retrying is safe.</span></div>
+        <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div></div>
+      <div data-when="loading" aria-busy="true" class="panel"><div class="in"><span class="skel w60"></span><span class="skel w80"></span><span class="skel w40"></span></div></div>
+      <div data-when="empty" class="empty">
+        <h3>No boards yet</h3>
+        <p>An organization admin can create boards under Settings. A new organization starts with one default board and five statuses.</p>
+        <a class="btn pri" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Create a board</a>
+      </div>
+
+      <div data-when="normal" class="panel">
+        <table class="wrap1">
+          <thead><tr><th>Board</th><th style="width:190px" data-roles="SiteAdmin">Organization</th><th style="width:120px">Swimlanes</th><th style="width:190px">User status moves</th><th style="width:96px"><span class="vh">Open</span></th></tr></thead>
+          <tbody>
+            <tr><td><a class="t" href="#" data-go="s-board">Ideas</a><div class="bd">Process ideas for the whole organization</div></td><td data-roles="SiteAdmin">Acme Robotics</td><td class="num">5</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Allowed</span></td><td><a class="btn sm2" href="#" data-go="s-board">Open</a></td></tr>
+            <tr><td><a class="t" href="#">Opportunities</a><div class="bd">Commercial and partnership leads</div></td><td data-roles="SiteAdmin">Acme Robotics</td><td class="num">4</td><td><span class="marker"><span class="dot"></span>Admins only</span></td><td><a class="btn sm2" href="#">Open</a></td></tr>
+            <tr data-roles="SiteAdmin"><td><a class="t" href="#">Product ideas</a><div class="bd">Feature requests from the field</div></td><td>Globex Industrial</td><td class="num">5</td><td><span class="marker"><span class="dot" style="background:var(--green)"></span>Allowed</span></td><td><a class="btn sm2" href="#">Open</a></td></tr>
+            <tr data-roles="SiteAdmin"><td><a class="t" href="#">Ops improvements</a><div class="bd">Plant-floor process changes</div></td><td>Globex Industrial</td><td class="num">3</td><td><span class="marker"><span class="dot"></span>Admins only</span></td><td><a class="btn sm2" href="#">Open</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note"><b>A list, not a command center.</b> Boards are created and configured under Settings, so this page has no create action; it exists so a member can find a board by name and see, before opening it, whether members may move cards on it. &ldquo;User status moves&rdquo; is the board&rsquo;s <code>AllowUserStatusUpdate</code> flag written as a marker with a label, never a bare colour. A Site Admin sees the same table with an Organization column and every organization&rsquo;s boards in it.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ==================== IDEAS LIST ==================== -->
+
+<section class="screen" id="s-ideas" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" aria-current="page" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-home">Home</a> / <b>Ideas</b></span><span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Scope" data-roles="OrgAdmin User ReadOnly"><button aria-pressed="true">All</button><button aria-pressed="false">Created by me</button><button aria-pressed="false">Assigned to me</button></div>
+      <button class="btn pri" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
+      <span class="deniedwrap" data-roles="SiteAdmin"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-in-sa">New idea</button><span class="denied" id="p-why-in-sa">Act as a member of an organization to add ideas</span></span>
+      <span class="deniedwrap" data-roles="ReadOnly"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-in-ro">New idea</button><span class="denied" id="p-why-in-ro">Read-only accounts can&rsquo;t create ideas</span></span></div>
+    <div class="work">
+      <div class="pgh"><div class="grow"><h1>Ideas</h1>
+        <div class="sub" data-roles="OrgAdmin User ReadOnly">Every idea in Acme Robotics, across all boards.</div>
+        <div class="sub" data-roles="SiteAdmin">Every idea in every organization, read-only from here. Act as a member to change one.</div></div></div>
+      <!-- every filter keeps a real, visible label -->
+      <div class="filters" data-roles="OrgAdmin User ReadOnly">
+        <div class="fw wide"><label for="p-q">Search</label><input type="search" id="p-q" placeholder="Title, description, people, status, or a custom field&hellip;"></div>
+        <div class="fw"><label for="p-board">Board</label><select id="p-board"><option>All boards</option><option>Ideas</option><option>Opportunities</option></select></div>
+        <div class="fw"><label for="p-type">Idea type</label><select id="p-type"><option>All types</option><option>Continuous Improvement</option><option>Process Revision</option></select></div>
+        <div class="fw"><label for="p-status">Status</label><select id="p-status"><option>All statuses</option><option>New / Pending</option><option>In Review</option><option>In Progress</option><option>Client Review</option><option>Complete</option></select></div>
+        <div class="fw"><label for="p-tag">Tag</label><input type="text" id="p-tag" placeholder="Tag&hellip;"></div>
+        <div class="fw"><label for="p-user">Person</label><select id="p-user"><option>Any user</option><option>Maya Collaborator</option><option>Noah Contributor</option><option>Olivia Administer</option></select></div>
+        <button class="btn" type="button" aria-expanded="true">Hide field filters (1)</button>
+      </div>
+      <div class="filters" data-roles="SiteAdmin">
+        <div class="fw wide"><label for="p-q-sa">Search</label><input type="search" id="p-q-sa" placeholder="Title, description, people, status, or a custom field&hellip;"></div>
+        <div class="fw"><label for="p-org-sa">Organization</label><select id="p-org-sa"><option>All organizations</option><option>Acme Robotics</option><option>Globex Industrial</option></select></div>
+      </div>
+      <div class="panel" data-when="normal" data-roles="OrgAdmin User ReadOnly" style="margin-bottom:var(--s-md)">
+        <h2><span class="grow">Custom fields</span><span class="cap faint" style="font-weight:400">1 active</span></h2>
+        <div class="lede">One control per field the organization defined, typed to match: a range for numbers and dates, any-of for multi-select. Unknown values are ignored rather than refused.</div>
+        <div class="in">
+          <div class="ff">
+            <div class="field" style="margin:0"><label for="p-ff-sav-min">Estimated savings</label><div class="range"><input type="text" inputmode="numeric" id="p-ff-sav-min" placeholder="min" value="5000" aria-label="Estimated savings, minimum"><span class="faint">&ndash;</span><input type="text" inputmode="numeric" id="p-ff-sav-max" placeholder="max" aria-label="Estimated savings, maximum"></div></div>
+            <div class="field" style="margin:0"><label for="p-ff-td-from">Target date</label><div class="range"><input type="text" id="p-ff-td-from" placeholder="from" aria-label="Target date, from"><span class="faint">&ndash;</span><input type="text" id="p-ff-td-to" placeholder="to" aria-label="Target date, to"></div></div>
+            <div class="field" style="margin:0"><label for="p-ff-vendor">Needs vendor</label><select id="p-ff-vendor"><option>Any</option><option>Yes</option><option>No</option></select></div>
+            <div class="field" style="margin:0"><label for="p-ff-region">Region</label><select id="p-ff-region"><option>Any</option><option>EMEA</option><option>Americas</option><option>APAC</option></select></div>
+          </div>
+          <div style="display:flex;gap:var(--s-xs);margin-top:var(--s-md)"><button class="btn pri">Apply filters</button><button class="btn">Clear filters</button></div>
+        </div>
+      </div>
+
+      <div data-when="error"><div class="alert" role="alert"><span><b>Couldn&rsquo;t load ideas.</b> Nothing has been changed. Retrying is safe.</span></div>
+        <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div></div>
+      <div data-when="loading" aria-busy="true" class="panel"><div class="in"><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span><span class="skel w40"></span><span class="skel w80"></span></div></div>
+      <div data-when="empty" class="empty">
+        <h3>No ideas match this filter</h3>
+        <p>Try a different filter, or clear the search.</p>
+        <button class="btn">Clear filters</button>
+      </div>
+
+      <div class="panel" data-when="normal">
+        <table class="wrap1">
+          <thead data-roles="OrgAdmin User ReadOnly"><tr>
+            <th style="width:28%"><button type="button" aria-sort="none">Title <svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 7 2 4h6Z"/></svg></button></th>
+            <th style="width:186px">Type</th><th style="width:150px"><button type="button">Status</button></th><th style="width:104px">Priority</th>
+            <th style="width:78px"><button type="button">Assigned</button></th><th style="width:96px"><button type="button" aria-sort="descending">Created <svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 7 2 4h6Z"/></svg></button></th><th style="width:68px">Votes</th>
+          </tr></thead>
+          <thead data-roles="SiteAdmin"><tr>
+            <th style="width:30%">Title</th><th style="width:150px">Organization</th>
+            <th style="width:186px">Type</th><th style="width:150px">Status</th><th style="width:104px">Priority</th>
+            <th style="width:96px">Created</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Standardize the intake checklist</a><div class="bd">Ideas · <span class="tag">cycle-time</span> <span class="tag">quality</span></div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="avstack"><span class="av s">MC</span><span class="av s">OA</span></span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">2</td></tr>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Add proactive alerts</a><div class="bd">Ideas · <span class="tag">safety</span></div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="avstack"><span class="av s">NC</span></span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">1</td></tr>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Pilot a faster review path</a><div class="bd">Ideas</div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>In Review</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="faint">—</span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">0</td></tr>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Improve exception visibility</a><div class="bd">Ideas · <span class="tag">automation</span></div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>In Review</span></td>
+              <td><span class="marker"><span class="dot"></span>Low</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="avstack"><span class="av s">NC</span></span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">1</td></tr>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Automate weekly reporting</a><div class="bd">Ideas · <span class="tag">quality</span> <span class="tag">safety</span></div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>In Progress</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="avstack"><span class="av s">MC</span><span class="av s">OA</span></span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">2</td></tr>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Create a shared playbook</a><div class="bd">Ideas</div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>In Progress</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="faint">—</span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">0</td></tr>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Validate the customer feedback loop</a><div class="bd">Ideas · <span class="tag">cycle-time</span></div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--pink)"></span>Client Review</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="avstack"><span class="av s">NC</span></span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">1</td></tr>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Roll out the proven workflow</a><div class="bd">Ideas · <span class="tag">automation</span> <span class="tag">safety</span></div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td>
+              <td><span class="marker"><span class="dot"></span>Low</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="avstack"><span class="av s">MC</span><span class="av s">OA</span></span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">2</td></tr>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Retire the legacy step</a><div class="bd">Ideas · <span class="tag">quality</span></div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="avstack"><span class="av s">NC</span></span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">1</td></tr>
+            <tr><td><a class="t" href="#" data-go="s-inspect">Measure time saved</a><div class="bd">Ideas</div></td><td data-roles="SiteAdmin">Acme Robotics</td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>Process Revision</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--green)"></span>Complete</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td data-roles="OrgAdmin User ReadOnly"><span class="faint">—</span></td><td class="num">Aug 15</td><td class="num" data-roles="OrgAdmin User ReadOnly">0</td></tr>
+          </tbody>
+        </table>
+        <div class="pgfoot">
+          <span class="num" data-roles="OrgAdmin User ReadOnly">Showing 1&ndash;10 of 22</span><span class="num" data-roles="SiteAdmin">Showing 1&ndash;10 of 41</span><span class="spacer"></span>
+          <label for="p-size">Rows per page</label>
+          <select id="p-size"><option>25</option><option>50</option><option>100</option><option>250</option></select>
+          <button class="btn sm2" aria-disabled="true">Previous</button><button class="btn sm2">Next</button>
+        </div>
+      </div>
+      <div class="note"><b>Density under a 15px body.</b> DESIGN.md&rsquo;s body-sm is 15px against comp&nbsp;D&rsquo;s 12.5px, so the same ten rows are taller here: measured in the browser, a row is <b>67px</b> against comp&nbsp;D&rsquo;s <b>57&ndash;59px</b>, and these ten rows run <b>669px</b> against comp&nbsp;D&rsquo;s <b>584px</b>. That is about 15% more vertical space for the same page &mdash; the real cost of this direction, worth stating plainly rather than discovering after a build. Type, status and priority all use one dot-plus-label marker, so no column shouts louder than the others. Page sizes are the spec&rsquo;s 25 / 50 / 100 / 250; the ten rows here are a measurement sample, not a page.</div>
+      <div class="note"><b>Every filter is server-side, and search reads every column.</b> Title, description, the people who raised or hold it, the status name, and the text of any custom field &mdash; one box, one query. A Site Admin gets search and an Organization filter and nothing else: no scope chips, because there is no &ldquo;me&rdquo; to scope to, and no sort, because the cross-organization list is a lookup, not a worklist.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ==================== BOARD ==================== -->
+
+<section class="screen" id="s-board" data-on="0"><div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" aria-current="page" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span><span class="spacer"></span>
+      <div class="seg" role="group" aria-label="View"><button aria-pressed="false" data-go="s-ideas">List</button><button aria-pressed="true">Lanes</button></div>
+      <label for="p-boardpick" class="vh">Board</label><select id="p-boardpick" style="width:auto"><option selected>Ideas</option><option>Opportunities</option></select>
+      <button class="btn">Export CSV</button>
+      <button class="btn" data-roles="OrgAdmin User" aria-expanded="true">Hide import</button>
+      <span class="deniedwrap" data-roles="SiteAdmin"><button class="btn" aria-disabled="true" aria-describedby="p-why-bi-sa">Import CSV</button><span class="denied" id="p-why-bi-sa">Through View As</span></span>
+      <button class="btn pri" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
+      <span class="deniedwrap" data-roles="SiteAdmin"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-bn-sa">New idea</button><span class="denied" id="p-why-bn-sa">Act as a member</span></span>
+      <span class="deniedwrap" data-roles="ReadOnly"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-bn-ro">New idea</button><span class="denied" id="p-why-bn-ro">Read-only account</span></span></div>
+    <div class="work">
+      <div class="pgh"><div class="grow"><h1>Ideas</h1>
+        <div class="sub" data-roles="OrgAdmin User">Move a card with drag, or focus it and press <span class="kbd">&larr;</span> <span class="kbd">&rarr;</span>. Both paths do the same thing. Members may move cards on this board; an administrator can turn that off per board.</div>
+        <div class="sub" data-roles="SiteAdmin ReadOnly">Cards open read-only for your role, and nothing here can be moved. Export is still yours &mdash; the CSV is a read.</div></div></div>
+      <div class="filters" data-when="normal">
+        <div class="fw wide"><label for="p-bq">Search</label><input type="search" id="p-bq" placeholder="Search title, tag, assignee&hellip;"></div>
+        <button class="btn" type="button">Clear</button>
+      </div>
+
+      <div data-when="error"><div class="alert" role="alert"><span><b>Moving the idea failed.</b> The card is back where it was. Retrying is safe.</span></div>
+        <div style="margin-top:var(--s-md)"><button class="btn">Retry</button></div></div>
+      <div data-when="loading" aria-busy="true" class="lanes">
+        <div class="lane"><div class="lanehd"><span class="skel w60"></span></div><div class="kcard"><span class="skel w80"></span><span class="skel w40"></span></div><div class="kcard"><span class="skel w60"></span><span class="skel w40"></span></div></div>
+        <div class="lane"><div class="lanehd"><span class="skel w60"></span></div><div class="kcard"><span class="skel w80"></span><span class="skel w40"></span></div></div>
+        <div class="lane"><div class="lanehd"><span class="skel w60"></span></div></div>
+        <div class="lane"><div class="lanehd"><span class="skel w60"></span></div></div>
+      </div>
+      <div data-when="empty">
+        <div class="lanes">
+          <div class="lane"><div class="lanehd"><span class="dot" style="background:var(--sky)"></span><span class="t">New / Pending</span><span class="ct num">0</span></div><div class="emptylane">No ideas</div></div>
+          <div class="lane"><div class="lanehd"><span class="dot" style="background:var(--purple)"></span><span class="t">In Review</span><span class="ct num">0</span></div><div class="emptylane">No ideas</div></div>
+          <div class="lane"><div class="lanehd"><span class="dot" style="background:var(--orange)"></span><span class="t">In Progress</span><span class="ct num">0</span></div><div class="emptylane">No ideas</div></div>
+          <div class="lane"><div class="lanehd"><span class="dot" style="background:var(--pink)"></span><span class="t">Client Review</span><span class="ct num">0</span></div><div class="emptylane">No ideas</div></div>
+          <div class="lane"><div class="lanehd"><span class="dot" style="background:var(--green)"></span><span class="t">Complete</span><span class="ct num">0</span></div><div class="emptylane">No ideas</div></div>
+        </div>
+        <div class="empty" style="margin-top:var(--s-md)">
+          <h3>No ideas on this board yet</h3>
+          <p data-roles="OrgAdmin User">Use &ldquo;New idea&rdquo; to add the first one. It lands in New / Pending, the left-most lane.</p>
+          <p data-roles="SiteAdmin ReadOnly">Nothing has been raised here yet.</p>
+          <button class="btn pri" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
+        </div>
+      </div>
+
+      <div data-when="normal">
+      <div class="lanes">
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--sky)"></span><span class="t">New / Pending</span><span class="ct num">3</span></div>
+          <div class="kcard" data-go="s-inspect"><span class="t">Standardize the intake checklist</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span><span class="spacer"></span><span class="av s">MC</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 2</button><span class="up" data-roles="SiteAdmin" title="Upvote counts are read-only for a Site Admin; use View as… to vote as a member">&#9650; 2</span></div></div>
+          <div class="kcard"><span class="t">Add proactive alerts</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span><span class="spacer"></span><span class="av s">NC</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 1</button><span class="up" data-roles="SiteAdmin">&#9650; 1</span></div></div>
+          <div class="kcard"><span class="t">Reduce manual handoffs</span>
+            <div class="ft"><span class="marker"><span class="dot"></span>Low</span><span class="spacer"></span><span class="faint" style="font-size:14px">Unassigned</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up mine" data-roles="OrgAdmin User ReadOnly" aria-label="Remove your upvote" aria-pressed="true">&#9650; 2</button><span class="up" data-roles="SiteAdmin">&#9650; 2</span></div></div>
+          <button class="btn ghost sm2" data-roles="OrgAdmin User" data-go="s-create">+ Add idea</button>
+        </div>
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--purple)"></span><span class="t">In Review</span><span class="ct num">2</span></div>
+          <div class="kcard"><span class="t">Improve exception visibility</span>
+            <div class="ft"><span class="marker"><span class="dot"></span>Low</span><span class="spacer"></span><span class="av s">NC</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 1</button><span class="up" data-roles="SiteAdmin">&#9650; 1</span></div></div>
+          <div class="kcard"><span class="t">Pilot a faster review path</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span><span class="spacer"></span><span class="faint" style="font-size:14px">Unassigned</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 0</button><span class="up" data-roles="SiteAdmin">&#9650; 0</span></div></div>
+          <button class="btn ghost sm2" data-roles="OrgAdmin User" data-go="s-create">+ Add idea</button>
+        </div>
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--orange)"></span><span class="t">In Progress</span><span class="ct num">2</span></div>
+          <div class="kcard"><span class="t">Automate weekly reporting</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span><span class="spacer"></span><span class="av s">MC</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 2</button><span class="up" data-roles="SiteAdmin">&#9650; 2</span></div></div>
+          <div class="kcard"><span class="t">Create a shared playbook</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span><span class="spacer"></span><span class="faint" style="font-size:14px">Unassigned</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 0</button><span class="up" data-roles="SiteAdmin">&#9650; 0</span></div></div>
+          <button class="btn ghost sm2" data-roles="OrgAdmin User" data-go="s-create">+ Add idea</button>
+        </div>
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--pink)"></span><span class="t">Client Review</span><span class="ct num">1</span></div>
+          <div class="kcard"><span class="t">Validate the customer feedback loop</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span><span class="spacer"></span><span class="av s">NC</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 1</button><span class="up" data-roles="SiteAdmin">&#9650; 1</span></div></div>
+          <div class="emptylane" data-roles="OrgAdmin User">Drop here to send an idea to the client</div>
+          <button class="btn ghost sm2" data-roles="OrgAdmin User" data-go="s-create">+ Add idea</button>
+        </div>
+        <div class="lane">
+          <div class="lanehd"><span class="dot" style="background:var(--green)"></span><span class="t">Complete</span><span class="ct num">3</span></div>
+          <div class="kcard"><span class="t">Roll out the proven workflow</span>
+            <div class="ft"><span class="marker"><span class="dot"></span>Low</span><span class="spacer"></span><span class="av s">MC</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 2</button><span class="up" data-roles="SiteAdmin">&#9650; 2</span></div></div>
+          <div class="kcard"><span class="t">Retire the legacy step</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span><span class="spacer"></span><span class="av s">NC</span></div><div class="ft"><span class="tag">Continuous Improvement</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 1</button><span class="up" data-roles="SiteAdmin">&#9650; 1</span></div></div>
+          <div class="kcard"><span class="t">Measure time saved</span>
+            <div class="ft"><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span><span class="spacer"></span><span class="faint" style="font-size:14px">Unassigned</span></div><div class="ft"><span class="tag">Process Revision</span><span class="spacer"></span><button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea">&#9650; 0</button><span class="up" data-roles="SiteAdmin">&#9650; 0</span></div></div>
+          <button class="btn ghost sm2" data-roles="OrgAdmin User" data-go="s-create">+ Add idea</button>
+        </div>
+      </div>
+
+      <div class="card" data-roles="OrgAdmin User" style="margin-top:var(--s-md);max-width:760px">
+        <div class="title" style="margin-bottom:4px">Import ideas from CSV</div>
+        <p class="sm muted" style="margin:0 0 var(--s-sm)">Columns: Title, Description, Priority, Idea Type, Business Impact, Status (optional), Due Date (optional), Tags (optional). Idea Type and Business Impact must match an active option by name. Each row creates a new idea. Tip: export first for the exact format.</p>
+        <div class="field" style="margin-bottom:var(--s-sm)"><label for="p-csv">CSV file</label><input type="file" id="p-csv" accept=".csv"></div>
+        <div class="alert warn" role="status"><span><b>Imported 12 ideas, 2 rejected.</b> Row 7 &ldquo;Fix the thing&rdquo; &mdash; Idea Type &ldquo;Quick Win&rdquo; is not an active option. Row 11 &ldquo;&rdquo; &mdash; Title is required.</span></div>
+      </div>
+      </div>
+
+      <div class="note"><b>Two fixes survive the restyle.</b> Idea type is written as text on every card rather than encoded in a coloured dot alone, and the page header states the keyboard equivalent for drag, so moving a card never requires a pointer. Every sticker colour on this screen &mdash; lane header, priority marker &mdash; is a dot with its own label beside it, which is the only use DESIGN.md allows colour to carry a category. The rail is 288px columns that scroll; the page does not. A Site Admin and a Read Only account see the same board with nothing to press but Export; whether a member may drag is the board&rsquo;s own setting, enforced by the server on the move rather than by hiding the handle.</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ==================== DOCKED INSPECTOR ==================== -->
+
+<section class="screen" id="s-inspect" data-on="0"><div class="shell insp">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" aria-current="page" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-home">Home</a> / <b>Ideas</b></span><span class="spacer"></span>
+      <button class="btn pri" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button></div>
+    <div class="work">
+      <div class="pgh"><div class="grow"><h1>Ideas</h1>
+        <div class="sub">The list stays live and scrollable while the inspector is open.</div></div></div>
+      <div class="panel">
+        <table class="wrap1">
+          <thead><tr><th style="width:44%">Title</th><th style="width:158px">Status</th><th style="width:112px">Priority</th><th style="width:78px">Assigned</th><th style="width:68px">Votes</th></tr></thead>
+          <tbody>
+            <tr class="sel"><td><a class="t" href="#">Standardize the intake checklist</a><div class="bd">Ideas · Continuous Improvement</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td><span class="avstack"><span class="av s">MC</span><span class="av s">OA</span></span></td><td class="num">2</td></tr>
+            <tr><td><a class="t" href="#">Add proactive alerts</a><div class="bd">Ideas · Process Revision</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td><span class="avstack"><span class="av s">NC</span></span></td><td class="num">1</td></tr>
+            <tr><td><a class="t" href="#">Pilot a faster review path</a><div class="bd">Ideas · Process Revision</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--purple)"></span>In Review</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>Critical</span></td>
+              <td><span class="faint">—</span></td><td class="num">0</td></tr>
+            <tr><td><a class="t" href="#">Automate weekly reporting</a><div class="bd">Ideas · Process Revision</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>In Progress</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></td>
+              <td><span class="avstack"><span class="av s">MC</span></span></td><td class="num">2</td></tr>
+            <tr><td><a class="t" href="#">Create a shared playbook</a><div class="bd">Ideas · Continuous Improvement</div></td>
+              <td><span class="marker"><span class="dot" style="background:var(--orange)"></span>In Progress</span></td>
+              <td><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></td>
+              <td><span class="faint">—</span></td><td class="num">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note"><b>Docked, not modal.</b> The inspector is a third grid column, so background content is never covered and never needs <code>inert</code>. There is no focus trap to get wrong, Escape simply closes the column, and you can compare two ideas by arrowing down the list with the inspector open. The selected row is marked by a 3px rule in <b>#0075de</b> plus a soft ground &mdash; both readable in greyscale.</div>
+      <div class="note"><b>Four roles, one panel.</b> An Org Admin gets everything, including the break-glass type reassignment and delete. A member edits, votes and comments. A Read Only account cannot edit but still votes and comments &mdash; engagement is deliberately kept open to them. A Site Admin can do none of it directly: not a member of the organization, so no vote, no comment, no edit, and the panel says so where each control would be.</div>
+    </div>
+  </div>
+  <aside class="inspector" aria-label="Idea inspector">
+    <div class="insp-head">
+      <div class="eyebrow">Ideas board · #IDEA-118 · New / Pending</div>
+      <h2>Standardize the intake checklist</h2>
+      <div class="meta">Created by Noah Contributor · Aug 15, 2026 · Ideas · High priority</div>
+    </div>
+    <div class="insp-body">
+      <div data-when="error"><div class="alert" role="alert"><span><b>This idea could not be loaded.</b> It may have been deleted, or it belongs to an organization you cannot see.</span></div></div>
+      <div data-when="loading" aria-busy="true"><p class="sm muted" style="margin:0 0 var(--s-sm)">Loading idea&hellip;</p><span class="skel w80"></span><span class="skel w60"></span><span class="skel w80"></span><span class="skel w40"></span></div>
+      <div data-when="normal empty" style="display:flex;flex-direction:column;gap:var(--s-lg)">
+        <dl class="kv">
+          <dt>Status</dt><dd><select aria-label="Move in board" style="width:auto" data-roles="OrgAdmin User"><option>New / Pending</option><option>In Review</option><option>In Progress</option><option>Client Review</option><option>Complete</option></select><span data-roles="SiteAdmin ReadOnly"><span class="marker"><span class="dot" style="background:var(--sky)"></span>New / Pending</span></span></dd>
+          <dt>Type</dt><dd><span class="marker"><span class="dot" style="background:var(--teal)"></span>Continuous Improvement</span> <button class="btn sm2" data-roles="OrgAdmin" style="margin-left:6px">Reassign&hellip;</button></dd>
+          <dt>Priority</dt><dd><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></dd>
+          <dt>Impact</dt><dd><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></dd>
+          <dt>Due date</dt><dd class="num">Sep 30, 2026</dd>
+          <dt>Assigned</dt><dd><span class="avstack" style="display:inline-flex;vertical-align:middle"><span class="av s">MC</span><span class="av s">OA</span></span> Maya, Olivia</dd>
+          <dt>Tags</dt><dd><span class="tagrow"><span class="tag">cycle-time</span><span class="tag">quality</span></span></dd>
+        </dl>
+        <div>
+          <div class="sec-t">Custom fields</div>
+          <dl class="kv">
+            <dt>Est. savings</dt><dd class="num">$12,400 / yr</dd>
+            <dt>Region</dt><dd>EMEA</dd>
+            <dt>Needs vendor</dt><dd>No</dd>
+            <dt>Vendor contact <span class="archtag">archived</span></dt><dd class="muted">ops-vendors@acme.example</dd>
+          </dl>
+        </div>
+        <div>
+          <div class="sec-t">Description</div>
+          <p class="prose" style="font-size:15px;line-height:1.33;margin:0">Use one concise checklist so requests arrive complete and ready for action. Today three teams each keep their own version, and roughly a third of intake requests bounce back for missing information.</p>
+        </div>
+        <div>
+          <div class="sec-t" style="display:flex;align-items:center;gap:var(--s-xs)"><span class="grow">Discussion · 3</span>
+            <button class="up" data-roles="OrgAdmin User ReadOnly" aria-label="Upvote this idea" style="margin:0">&#9650; 2</button>
+            <span class="up" data-roles="SiteAdmin" style="margin:0" title="Upvote counts are read-only for a Site Admin; use View as… to vote as a member">&#9650; 2</span></div>
+          <div class="cmt"><span class="av s">MC</span><div><div class="who">Maya Collaborator <span class="when">2d ago</span></div><p>Can we fold the safety sign-off into the same checklist? It&rsquo;s the step people forget.</p></div></div>
+          <div class="cmt"><span class="av s">NC</span><div><div class="who">Noah Contributor <span class="when">1d ago</span></div><p>Yes — drafted it as section 4. Worth a review before we pilot.</p></div></div>
+          <div class="cmt"><span class="av s">OA</span><div><div class="who">Olivia Administer <span class="when">3h ago</span></div><p>Looks right. Moving to In Review after standup.</p></div></div>
+          <div class="field" style="margin:var(--s-sm) 0 0" data-roles="OrgAdmin User ReadOnly">
+            <label for="p-cmt">Add a comment</label>
+            <textarea id="p-cmt" rows="2" placeholder="Join the discussion… type someone's email with @ to notify them" maxlength="2000"></textarea>
+            <div class="charcount">0 / 2000</div>
+          </div>
+          <p class="sm muted" style="margin:var(--s-sm) 0 0" data-roles="SiteAdmin">Commenting is available through <b>View as&hellip;</b> &mdash; a Site Admin is not a member of this organization, so a comment is posted as one of its users.</p>
+        </div>
+        <div class="dz" data-roles="OrgAdmin" style="margin-top:0">
+          <div class="sec-t">Danger zone</div>
+          <p class="sm muted" style="margin:0 0 var(--s-xs)">Delete this idea? This can&rsquo;t be undone. The board updates immediately.</p>
+          <button class="btn warn sm2">Delete idea</button>
+        </div>
+      </div>
+    </div>
+    <div class="insp-foot">
+      <button class="btn pri" style="flex:1;justify-content:center" data-roles="OrgAdmin User" data-when="normal empty">Edit idea</button>
+      <span class="deniedwrap" data-roles="SiteAdmin" data-when="normal empty" style="flex:1"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-ie-sa">Edit idea</button><span class="denied" id="p-why-ie-sa">Act as a member to edit</span></span>
+      <span class="deniedwrap" data-roles="ReadOnly" data-when="normal empty" style="flex:1"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-ie-ro">Edit idea</button><span class="denied" id="p-why-ie-ro">Read-only account</span></span>
+      <button class="btn" data-go="s-ideas">Close</button>
+    </div>
+  </aside>
+</div></section>
+
+<!-- ==================== NEW IDEA (docked) ==================== -->
+
+<section class="screen" id="s-create" data-on="0">
+  <div class="shell insp" data-roles="OrgAdmin User">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" aria-current="page" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span><span class="spacer"></span>
+      <div class="seg" role="group" aria-label="View"><button aria-pressed="false" data-go="s-ideas">List</button><button aria-pressed="true">Lanes</button></div></div>
+    <div class="work">
+      <div class="pgh"><div class="grow"><h1>Ideas</h1>
+        <div class="sub">The board stays where it is while the idea is written on the right. When it is saved, the card appears in New / Pending and the column closes.</div></div></div>
+      <div class="lanes" aria-hidden="true">
+        <div class="lane"><div class="lanehd"><span class="dot" style="background:var(--sky)"></span><span class="t">New / Pending</span><span class="ct num">3</span></div>
+          <div class="kcard"><span class="t">Standardize the intake checklist</span><div class="ft"><span class="marker"><span class="dot" style="background:var(--sky)"></span>High</span></div></div>
+          <div class="kcard"><span class="t">Add proactive alerts</span><div class="ft"><span class="marker"><span class="dot" style="background:var(--teal)"></span>Medium</span></div></div>
+          <div class="emptylane">New idea lands here</div></div>
+        <div class="lane"><div class="lanehd"><span class="dot" style="background:var(--purple)"></span><span class="t">In Review</span><span class="ct num">2</span></div>
+          <div class="kcard"><span class="t">Improve exception visibility</span><div class="ft"><span class="marker"><span class="dot"></span>Low</span></div></div></div>
+      </div>
+      <div class="note"><b>Docked create, three ways in.</b> The same column opens from <em>New idea</em>, from a lane&rsquo;s <em>+ Add idea</em>, and from the brainstorm chat&rsquo;s <em>Continue</em>. Only the last arrives with suggestions: the teal <em>Suggested</em> chip, tinted field and 3px left border mark a value the assistant proposed and nothing else, and each is an editable default rather than a decision. Switch the state control to <b>empty</b> to see the form opened directly when the assistant is unavailable &mdash; the flash is informational, names no cause, and never blocks the form.</div>
+    </div>
+  </div>
+  <aside class="inspector" aria-label="New idea">
+    <div class="insp-head">
+      <div class="eyebrow">New idea</div>
+      <h2>Create an idea</h2>
+      <div class="meta">Ideas board &middot; Acme Robotics</div>
+    </div>
+    <div class="insp-body" style="gap:0">
+      <div class="authnote" role="status" data-when="empty"><span>AI assist is currently unavailable. Fill in the idea manually &mdash; nothing else changes.</span></div>
+      <div class="alert" role="alert" data-when="error"><span><b>A title is required.</b> Idea Type and Business Impact are required too; everything else can wait.</span></div>
+      <div data-when="loading" aria-busy="true"><p class="sm muted" style="margin:0 0 var(--s-sm)">Loading&hellip;</p><span class="skel w60"></span><span class="skel w80"></span><span class="skel w40"></span></div>
+      <form data-when="normal empty error">
+        <div class="field" data-when="normal">
+          <label for="p-ct">Title <span class="req">*</span><span class="sugchip">Suggested</span><button type="button" class="sug-clear">clear</button></label>
+          <input type="text" id="p-ct" class="sug-input" maxlength="150" value="Automate the weekly Ops summary">
+          <div class="charcount">31 / 150</div>
+        </div>
+        <div class="field" data-when="empty">
+          <label for="p-ct-e">Title <span class="req">*</span></label>
+          <input type="text" id="p-ct-e" maxlength="150" placeholder="What's the idea?">
+          <div class="charcount">0 / 150</div>
+        </div>
+        <div class="field bad" data-when="error">
+          <label for="p-ct-x">Title <span class="req">*</span></label>
+          <input type="text" id="p-ct-x" maxlength="150" placeholder="What's the idea?" aria-describedby="p-ct-msg">
+          <span class="msg" id="p-ct-msg">A title is required.</span>
+        </div>
+        <div class="field" data-when="normal">
+          <label for="p-cd">Description <span class="req">*</span><span class="sugchip">Suggested</span><button type="button" class="sug-clear">clear</button></label>
+          <textarea id="p-cd" class="sug-input" rows="4" maxlength="4000">Coordinators rebuild the same weekly summary by hand every Friday. Generating it from the data we already hold removes roughly three hours a week for Ops and the transcription errors that come with it.</textarea>
+          <div class="hint">Type an email with @ to notify that person.</div>
+          <div class="charcount">198 / 4000</div>
+        </div>
+        <div class="field" data-when="empty error">
+          <label for="p-cd-e">Description <span class="req">*</span></label>
+          <textarea id="p-cd-e" rows="4" maxlength="4000" placeholder="Add context, motivation, or details…"></textarea>
+          <div class="hint">Type an email with @ to notify that person.</div>
+          <div class="charcount">0 / 4000</div>
+        </div>
+        <div class="field">
+          <label for="p-ctype">Idea type <span class="req">*</span><span class="sugchip" data-when="normal">Suggested</span></label>
+          <select id="p-ctype" class="sug-input" data-when="normal"><option>Continuous Improvement</option><option selected>Process Revision</option></select>
+          <select id="p-ctype-e" aria-label="Idea type" data-when="empty error"><option selected>Continuous Improvement</option><option>Process Revision</option></select>
+          <div class="hint">Set at creation and immutable after. It decides which custom fields appear below.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--s-sm)">
+          <div class="field">
+            <label for="p-cimp">Business impact <span class="req">*</span><span class="sugchip" data-when="normal">Suggested</span></label>
+            <select id="p-cimp" class="sug-input" data-when="normal"><option>Critical</option><option selected>High</option><option>Medium</option><option>Low</option></select>
+            <select id="p-cimp-e" aria-label="Business impact" data-when="empty error"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select>
+          </div>
+          <div class="field">
+            <label for="p-cpri">Priority<span class="sugchip" data-when="normal">Suggested</span></label>
+            <select id="p-cpri" class="sug-input" data-when="normal"><option>Critical</option><option selected>High</option><option>Medium</option><option>Low</option></select>
+            <select id="p-cpri-e" aria-label="Priority" data-when="empty error"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--s-sm)">
+          <div class="field"><label for="p-cst">Status</label><select id="p-cst"><option selected>New / Pending</option><option>In Review</option><option>In Progress</option><option>Client Review</option><option>Complete</option></select></div>
+          <div class="field"><label for="p-cdue">Due date</label><input type="text" id="p-cdue" placeholder="YYYY-MM-DD"></div>
+        </div>
+        <div class="field">
+          <label for="p-cas">Assigned to <span class="faint">(1 / 5)</span></label>
+          <div class="chips"><span class="chip"><span class="av s" style="width:18px;height:18px;font-size:8px">MG</span>Marcus Green<button type="button" aria-label="Remove assignee Marcus Green">&times;</button></span></div>
+          <select id="p-cas"><option>Add assignee&hellip;</option><option>Maya Collaborator</option><option>Noah Contributor</option><option>Olivia Administer</option><option>Umar Mensah</option></select>
+        </div>
+        <div class="field">
+          <label for="p-ctag">Tags <span class="faint">(2 / 10)</span></label>
+          <div class="chips"><span class="chip">quality<button type="button" aria-label="Remove tag quality">&times;</button></span><span class="chip">safety<button type="button" aria-label="Remove tag safety">&times;</button></span></div>
+          <div style="display:flex;gap:var(--s-xs)"><input type="text" id="p-ctag" placeholder="Add a tag" style="flex:1"><button type="button" class="btn">Add</button></div>
+          <div class="hint">Autocomplete starts at two characters; Enter or a comma adds one.</div>
+        </div>
+        <div class="sec-t" style="margin-top:var(--s-sm)">Custom fields</div>
+        <div class="field"><label for="p-cf-sav">Estimated savings <span class="req" title="Required">*</span></label><input type="text" inputmode="numeric" id="p-cf-sav" placeholder="Per year, in dollars"><div class="hint">Required for Process Revision.</div></div>
+        <div class="field"><label for="p-cf-reg">Region</label><select id="p-cf-reg"><option value="">&mdash; Select &mdash;</option><option>EMEA</option><option>Americas</option><option>APAC</option></select></div>
+        <div class="field"><label class="chk" for="p-cf-ven" style="display:inline-flex"><input type="checkbox" id="p-cf-ven">Needs vendor &mdash; Yes</label></div>
+      </form>
+    </div>
+    <div class="insp-foot">
+      <button class="btn pri" style="flex:1;justify-content:center" data-when="normal empty error" data-go="s-board">Create idea</button>
+      <button class="btn pri" style="flex:1;justify-content:center" aria-disabled="true" aria-busy="true" data-when="loading">Creating&hellip;</button>
+      <button class="btn" data-go="s-board">Cancel</button>
+    </div>
+  </aside>
+  </div>
+  <div class="shell" data-roles="SiteAdmin ReadOnly">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" aria-current="page" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span></div>
+      <div class="work">
+        <div class="pgh"><div class="grow"><h1>Not available</h1><div class="sub">Creating an idea is a member&rsquo;s action.</div></div></div>
+        <div class="empty">
+          <h3 data-roles="SiteAdmin">A Site Admin does not raise ideas directly</h3>
+          <p data-roles="SiteAdmin">Ideas are organization content. Use <b>View As</b> to act as a member of Acme Robotics and this form opens as normal.</p>
+          <h3 data-roles="ReadOnly">Read-only accounts cannot create ideas</h3>
+          <p data-roles="ReadOnly">You can read every idea, vote on it and join its discussion, and raise none. Ask an administrator to change your role if that is wrong.</p>
+          <a class="btn" href="#" data-go="s-board">Back to the board</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== BRAINSTORM CHAT ==================== -->
+
+<section class="screen" id="s-brainstorm" data-on="0">
+  <div data-roles="OrgAdmin User">
+  <div class="shell" style="filter:blur(1.5px);opacity:.6" aria-hidden="true">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" aria-current="page" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+    <div class="main"><div class="topbar"><span class="crumb">Boards / <b>Ideas</b></span></div>
+      <div class="work"><div class="pgh"><h1>Ideas</h1></div><div class="lanes"><div class="lane" style="height:320px"></div><div class="lane" style="height:320px"></div><div class="lane" style="height:320px"></div></div></div></div>
+  </div>
+  <div class="cp-back">
+    <div class="chatm" role="dialog" aria-modal="true" aria-labelledby="p-bs-title">
+      <div class="insp-head">
+        <div class="eyebrow">New idea</div>
+        <h2 id="p-bs-title">Let&rsquo;s flesh out your idea</h2>
+        <div class="meta">Chat it out &mdash; what you say becomes the idea.</div>
+      </div>
+      <div class="chat" aria-live="polite">
+        <div class="bub ai"><div class="who">AI</div>Hi! Tell me about your idea in your own words. What are you trying to build or improve?</div>
+        <div class="bub me" data-when="normal loading error"><div class="who">You</div>Coordinators rebuild the same weekly summary by hand every Friday. It takes each of them about three hours.</div>
+        <div class="bub ai" data-when="normal loading error"><div class="who">AI</div>Nice &mdash; what problem does this solve, and who feels it most? Is it the time, the errors, or both?</div>
+        <div class="bub me" data-when="normal"><div class="who">You</div>Both. Ops feels it most; the numbers get retyped and the errors show up in the Monday review.</div>
+        <div class="bub ai" data-when="normal"><div class="who">AI</div>Got it. How would you know this idea succeeded? What would change?</div>
+        <div class="bub me ghost" data-when="error"><div class="who">You</div>What&rsquo;s a good lasagna recipe?</div>
+        <div class="sysnote" data-when="error"><b>That one&rsquo;s outside what I can help with here.</b> Let&rsquo;s keep to process ideas for Acme Robotics. That message wasn&rsquo;t added to the conversation. Repeated off-topic messages will end the chat.</div>
+        <div class="bub ai" data-when="loading"><div class="who">AI</div><span class="thinking" aria-label="Thinking"><i></i><i></i><i></i></span></div>
+      </div>
+      <div class="strip">
+        <span class="lead">Drafting</span>
+        <span data-when="empty">Nothing classified yet</span>
+        <span data-when="normal loading error">Type <b>Process Revision</b></span>
+        <span data-when="normal loading error">Impact <b>High</b></span>
+        <span data-when="normal loading error">Priority not set yet</span>
+        <span class="faint" data-when="normal loading">just now</span>
+        <span class="faint" data-when="error">unchanged</span>
+      </div>
+      <div class="composer">
+        <label for="p-bs-in" class="vh">Your message</label>
+        <textarea id="p-bs-in" rows="2" placeholder="Describe your idea… (Enter to send, Shift+Enter for a new line)"></textarea>
+        <button class="btn pri" type="button">Send</button>
+      </div>
+      <div class="chatfoot">
+        <button class="btn" data-go="s-board">Cancel</button>
+        <span class="spacer"></span>
+        <button class="btn" data-go="s-create" title="Skip the chat and fill the form yourself">Skip &amp; fill manually</button>
+        <button class="btn pri" data-go="s-create" data-when="normal loading error">Continue to idea form &rarr;</button>
+        <button class="btn pri" aria-disabled="true" aria-describedby="p-bs-why" data-when="empty">Continue to idea form &rarr;</button>
+        <span class="denied vh" id="p-bs-why">Send at least one message first, or skip</span>
+      </div>
+    </div>
+  </div>
+  </div>
+  <div class="shell" data-roles="SiteAdmin ReadOnly">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" aria-current="page" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span></div>
+      <div class="work">
+        <div class="pgh"><div class="grow"><h1>Not available</h1><div class="sub">The idea assistant opens from New idea, which is a member&rsquo;s action.</div></div></div>
+        <div class="empty">
+          <h3>Nothing to brainstorm for this role</h3>
+          <p data-roles="SiteAdmin">Use <b>View As</b> to act as a member of Acme Robotics; the assistant then opens from New idea as normal.</p>
+          <p data-roles="ReadOnly">Read-only accounts cannot create ideas, so there is no draft to work on.</p>
+          <a class="btn" href="#" data-go="s-board">Back to the board</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== COMMAND PALETTE ==================== -->
+
+<section class="screen" id="s-palette" data-on="0">
+  <div class="shell" style="filter:blur(1.5px);opacity:.6" aria-hidden="true">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org" data-roles="SiteAdmin">All organizations</div>
+      <div class="org" data-roles="OrgAdmin User ReadOnly">Acme Robotics</div>
+      <button class="palette" type="button" data-go="s-palette"><span>⌕</span><span>Search or jump…</span><span class="kbd" style="margin-left:auto">Ctrl K</span></button>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" aria-current="page" data-go="s-home"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z"/></svg>Home</button>
+      <button class="nav" data-go="s-boards"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z"/></svg>Boards<span class="ct num">2</span></button>
+      <button class="nav" data-go="s-ideas"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a5 5 0 0 0-3 9v1.6a1.4 1.4 0 0 0 1.4 1.4h3.2a1.4 1.4 0 0 0 1.4-1.4V11A5 5 0 0 0 10 2ZM8.2 15.6h3.6v.8a1.4 1.4 0 0 1-1.4 1.4h-.8a1.4 1.4 0 0 1-1.4-1.4Z"/></svg>Ideas<span class="ct num">22</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav" data-go="comp-p-delivery.html#s-sprint"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z"/></svg>Sprint board</button>
+      <button class="nav" data-go="comp-p-delivery.html#s-backlog"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z"/></svg>Backlog<span class="ct num">7</span></button>
+      <button class="nav" data-go="comp-p-delivery.html#s-roadmap"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z"/></svg>Roadmap</button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" data-go="comp-p-admin.html#s-settings"><svg class="ic" width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 7.8a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4Zm-1.4-5.4a1 1 0 0 1 1-.8h.8a1 1 0 0 1 1 .8l.2 1.3 1.2.7 1.2-.5a1 1 0 0 1 1.2.4l.4.7a1 1 0 0 1-.2 1.3l-1 .8v1.4l1 .8a1 1 0 0 1 .2 1.3l-.4.7a1 1 0 0 1-1.2.4l-1.2-.5-1.2.7-.2 1.3a1 1 0 0 1-1 .8h-.8a1 1 0 0 1-1-.8l-.2-1.3-1.2-.7-1.2.5a1 1 0 0 1-1.2-.4l-.4-.7a1 1 0 0 1 .2-1.3l1-.8V8.1l-1-.8a1 1 0 0 1-.2-1.3l.4-.7a1 1 0 0 1 1.2-.4l1.2.5 1.2-.7Z"/></svg>Settings</button>
+      <div class="push"></div>
+      <div class="me" data-roles="SiteAdmin"><span class="av">SA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Sam Aldridge</div><div class="cap faint">Site Admin</div></div></div>
+      <div class="me" data-roles="OrgAdmin"><span class="av">OA</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Olivia Administer</div><div class="cap faint">Org Admin</div></div></div>
+      <div class="me" data-roles="User"><span class="av">UM</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Umar Mensah</div><div class="cap faint">Member</div></div></div>
+      <div class="me" data-roles="ReadOnly"><span class="av">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint">Read Only</div></div></div>
+    </aside>
+    <div class="main"><div class="topbar"><span class="crumb">Home / <b>Roadmap</b></span></div>
+      <div class="work"><div class="pgh"><h1>Roadmap</h1></div><div class="panel" style="height:300px"></div></div></div>
+  </div>
+  <div class="cp-back">
+    <div class="cp" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="q"><span class="faint">⌕</span><input type="text" value="intake" aria-label="Search or run a command"></div>
+      <div class="grp">Ideas</div>
+      <div class="it on">Standardize the intake checklist <span class="faint" style="font-weight:400">· Ideas · New / Pending</span><span class="kbd">↵</span></div>
+      <div class="it">Standardize the intake form <span class="faint" style="font-weight:400">· CLG-229 · Delivery</span></div>
+      <div class="grp">Outcomes</div>
+      <div class="it"><span class="dot" style="background:var(--green)"></span>Standardize intake <span class="faint" style="font-weight:400">· 3 issues · 0 done</span></div>
+      <div class="grp">Actions</div>
+      <div class="it" data-roles="OrgAdmin User">Create idea &ldquo;intake&rdquo;<span class="kbd">Ctrl N</span></div>
+      <div class="it" data-roles="OrgAdmin">Set the outcome for CLG-114…</div>
+      <div class="it" data-roles="SiteAdmin OrgAdmin">View as another user…</div>
+      <div class="cpfoot"><span><span class="kbd">↑</span> <span class="kbd">↓</span> navigate</span><span><span class="kbd">↵</span> open</span><span><span class="kbd">Esc</span> dismiss</span></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const screens = [...document.querySelectorAll('.screen')];
+  const tabs = [...document.querySelectorAll('.switch button[data-go]')];
+
+  function go(id) {
+    // A cross-file destination is "file.html#s-id" — follow it, carrying the
+    // current role and state so the switcher survives the navigation.
+    if (id.includes('.html')) {
+      const [file, frag] = id.split('#');
+      const p = new URLSearchParams({role: document.body.dataset.role});
+      if (frag) p.set('screen', frag);
+      const st = document.querySelector('.screen[data-on="1"]');
+      if (st && st.dataset.state && st.dataset.state !== 'normal') p.set('state', st.dataset.state);
+      window.location.href = file + '?' + p.toString();
+      return;
+    }
+    if (!document.getElementById(id)) return;
+    screens.forEach(s => s.dataset.on = (s.id === id) ? '1' : '0');
+    tabs.forEach(t => t.setAttribute('aria-current', String(t.dataset.go === id)));
+    window.scrollTo(0, 0);
+  }
+
+  function setRole(role) {
+    document.body.dataset.role = role;
+    document.querySelectorAll('[data-role-set]').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.dataset.roleSet === role)));
+  }
+
+  function setState(state) {
+    screens.forEach(s => s.dataset.state = state);
+    document.querySelectorAll('[data-state-set]').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.dataset.stateSet === state)));
+  }
+
+  document.addEventListener('click', e => {
+    const r = e.target.closest('[data-role-set]');
+    if (r) { setRole(r.dataset.roleSet); return; }
+    const s = e.target.closest('[data-state-set]');
+    if (s) { setState(s.dataset.stateSet); return; }
+    const t = e.target.closest('[data-go]');
+    if (t) { e.preventDefault(); go(t.dataset.go); }
+  });
+
+  document.addEventListener('keydown', e => {
+    // Guarded: not every file in the set carries a command palette.
+    const pal = document.getElementById('s-palette');
+    if (e.key === 'Escape' && pal && pal.dataset.on === '1') go(screens[0].id);
+    if (e.key === 'k' && (e.metaKey || e.ctrlKey) && pal) { e.preventDefault(); go('s-palette'); }
+  });
+
+  // Honour ?role= / ?state= / ?screen= so a cross-file link lands in context.
+  const q = new URLSearchParams(location.search);
+  setState(q.get('state') || 'normal');
+  setRole(q.get('role') || 'OrgAdmin');
+  if (q.get('screen')) go(q.get('screen'));
+</script>
+</body>
+</html>

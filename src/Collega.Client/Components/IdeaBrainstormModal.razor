@@ -162,10 +162,16 @@
     private string _draftText = "";
     private string _stripNote = "";
     private int _scriptedPromptIndex;
-    private int _turnsRemaining = 20;
+    // Rule 5 caps the transcript at 20 entries, which is 10 user turns on an empty conversation.
+    // The server is authoritative; this is only what we show before the first turn comes back.
+    private const int MaxUserTurns = 10;
+    private int _turnsRemaining = MaxUserTurns;
     private bool _pending;
     private bool _closed;
     private bool _assistUnavailable;
+
+    // Whether the model has answered at all in this conversation. Gates the first-turn bailout (rule 32b).
+    private bool _hadModelTurn;
     private bool _wasOpen;
 
     /// <summary>
@@ -216,10 +222,11 @@
         _draftText = "";
         _stripNote = "";
         _scriptedPromptIndex = 0;
-        _turnsRemaining = 20;
+        _turnsRemaining = MaxUserTurns;
         _pending = false;
         _closed = false;
         _assistUnavailable = false;
+        _hadModelTurn = false;
     }
 
     /// <summary>
@@ -283,10 +290,23 @@
                 _assistUnavailable = true;
             }
 
+            // Rule 32b: a 503 before the assistant has said anything real means the user is looking at
+            // a chat that was never going to work. Hand them the create form with their text rather
+            // than the scripted prompts — the page-load pre-check (rule 32a) cannot catch this,
+            // because the daily budget is usually exhausted mid-session. Later turns keep the scripted
+            // fallback: by then the user has invested in the conversation and swapping the surface out
+            // from under them would lose their place.
+            if (result.StatusCode == 503 && !_hadModelTurn)
+            {
+                await Complete(TranscriptDraft());
+                return;
+            }
+
             AppendScriptedPrompt();
             return;
         }
 
+        _hadModelTurn = true;
         await ApplyTurnAsync(result.Value);
     }
 

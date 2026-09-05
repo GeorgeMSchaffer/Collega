@@ -42,9 +42,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IIdeaUpvoteRepository, EfIdeaUpvoteRepository>();
         services.AddScoped<IFieldDefinitionRepository, EfFieldDefinitionRepository>();
         services.AddScoped<IAiUsageRepository, EfAiUsageRepository>();
+        services.AddScoped<IAiPromptVersionRepository, EfAiPromptVersionRepository>();
         services.AddScoped<IAiUsageService, AiUsageService>();
         services.AddScoped<IdeaAssistContextBuilder>();
         services.AddScoped<IIdeaAssistService, IdeaAssistService>();
+        services.AddScoped<IAiPromptService, AiPromptService>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IStartupSeeder, StartupSeeder>();
 
@@ -106,7 +108,7 @@ public static class InfrastructureServiceCollectionExtensions
         // so this must never fail startup the way the SiteAdmin keys do.
         services.AddSingleton(sp => new AiCredentials
         {
-            ApiKey = sp.GetRequiredService<IConfiguration>()["Ai:ApiKey"],
+            ApiKey = sp.GetRequiredService<IConfiguration>()["ANTHROPIC_API_KEY"],
         });
 
         // Singleton: the model client is stateless and holds an HTTP client, so one per process.

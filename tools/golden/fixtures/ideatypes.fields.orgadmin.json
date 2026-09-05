@@ -1,0 +1,31 @@
+{
+  "scenario": "ideatypes",
+  "step": "fields.orgadmin",
+  "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/fields",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "An empty selection is the meaningful edge: it clears the type's fields.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/idea-types/46bd64e9-005f-4bf0-acc5-1f71ac5dbf0e/fields",
+    "body": {
+      "fields": []
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

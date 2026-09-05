@@ -1,0 +1,120 @@
+{
+  "scenario": "organizations",
+  "step": "users.list.siteadmin",
+  "endpoint": "GET /organizations/{organizationId}/users",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "The administrative roster, as against the member directory below.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/users",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "items": [
+        {
+          "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+          "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+          "firstName": "Olivia",
+          "lastName": "Administer",
+          "email": "orgadmin@acme-robotics.demo.collega.test",
+          "role": "OrgAdmin",
+          "status": "Active"
+        },
+        {
+          "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+          "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+          "firstName": "Golden",
+          "lastName": "Capture",
+          "email": "user@acme-robotics.demo.collega.test",
+          "role": "User",
+          "status": "Active"
+        },
+        {
+          "userId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+          "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+          "firstName": "Maya",
+          "lastName": "Collaborator",
+          "email": "user2@acme-robotics.demo.collega.test",
+          "role": "User",
+          "status": "Active"
+        },
+        {
+          "userId": "8c461a04-30e1-4df1-8d01-c2367922bd33",
+          "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+          "firstName": "Rosa",
+          "lastName": "Observer",
+          "email": "readonly@acme-robotics.demo.collega.test",
+          "role": "ReadOnly",
+          "status": "Active"
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "totalCount": 4,
+      "sortBy": null,
+      "sortDirection": "asc"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "items": [
+        {
+          "email": "orgadmin@acme-robotics.demo.collega.test",
+          "firstName": "Olivia",
+          "lastName": "Administer",
+          "organizationId": "<guid@org.body.organizationId>",
+          "role": "OrgAdmin",
+          "status": "Active",
+          "userId": "<guid@org.body.userId>"
+        },
+        {
+          "email": "user@acme-robotics.demo.collega.test",
+          "firstName": "Golden",
+          "lastName": "Capture",
+          "organizationId": "<guid@org.body.organizationId>",
+          "role": "User",
+          "status": "Active",
+          "userId": "<guid@users.list.siteadmin.body.items[1].userId>"
+        },
+        {
+          "email": "user2@acme-robotics.demo.collega.test",
+          "firstName": "Maya",
+          "lastName": "Collaborator",
+          "organizationId": "<guid@org.body.organizationId>",
+          "role": "User",
+          "status": "Active",
+          "userId": "<guid@users.list.siteadmin.body.items[2].userId>"
+        },
+        {
+          "email": "readonly@acme-robotics.demo.collega.test",
+          "firstName": "Rosa",
+          "lastName": "Observer",
+          "organizationId": "<guid@org.body.organizationId>",
+          "role": "ReadOnly",
+          "status": "Active",
+          "userId": "<guid@users.list.siteadmin.body.items[3].userId>"
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "sortBy": null,
+      "sortDirection": "asc",
+      "totalCount": 4
+    }
+  }
+}

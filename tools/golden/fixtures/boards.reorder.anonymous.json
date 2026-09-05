@@ -1,0 +1,58 @@
+{
+  "scenario": "boards",
+  "step": "reorder.anonymous",
+  "endpoint": "POST /boards/{boardId}/swimlanes/reorder",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Drag-and-drop persists immediately.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/53ad2530-e1b2-4346-9061-cba0a754822f/swimlanes/reorder",
+    "body": {
+      "swimlanes": [
+        {
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+          "order": 0
+        },
+        {
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "order": 1
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:42 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/53ad2530-e1b2-4346-9061-cba0a754822f/swimlanes/reorder",
+      "traceId": "00-cfafc370dbabb9a65fe06f928b5aae4c-cb11a0f84f444e90-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/<guid@create.orgadmin.body.boardId>/swimlanes/reorder",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

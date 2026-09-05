@@ -41,16 +41,45 @@ public sealed class AnthropicIdeaDraftModel : IIdeaDraftModel
 
     private readonly AiUsageLimits _limits;
     private readonly AnthropicClient? _client;
+    private readonly Func<IdeaAssistContext, string> _systemPromptFactory;
 
-    public AnthropicIdeaDraftModel(AiUsageLimits limits, AiCredentials credentials)
+    /// <param name="systemPromptFactory">
+    /// How the system prompt is rendered. Defaults to <see cref="IdeaAssistPromptBuilder.BuildSystemPrompt"/>,
+    /// which is the only thing production ever passes — DI does not supply this argument.
+    /// <para>It exists for the prompt playground (<c>tools/Collega.AiPlayground</c>), which substitutes a
+    /// prompt read from a file so variants can be measured without a rebuild. Deliberately <b>not</b> a
+    /// configuration setting: the prompt carries the injection fence (rule 25) and is the cached stable
+    /// prefix, so it stays in code where both are reviewable. A variant that wins in the playground is
+    /// hand-ported back into the builder.</para>
+    /// </param>
+    /// <param name="httpClient">
+    /// Transport override. Null — which is all production ever passes — lets the SDK build its own.
+    /// <para>The playground supplies one carrying a tracing handler, so it can capture the exact bytes
+    /// on the wire and emit them as runnable <c>.http</c> files. Capturing rather than reconstructing
+    /// is the point: a rebuilt request would drift from what the product actually sends.</para>
+    /// </param>
+    public AnthropicIdeaDraftModel(
+        AiUsageLimits limits,
+        AiCredentials credentials,
+        Func<IdeaAssistContext, string>? systemPromptFactory = null,
+        HttpClient? httpClient = null)
     {
         _limits = limits;
+        _systemPromptFactory = systemPromptFactory ?? IdeaAssistPromptBuilder.BuildSystemPrompt;
 
         // No key is a supported state, not a misconfiguration (rule 31): the feature runs dark and
         // the product keeps working. Constructing no client at all makes that unambiguous.
-        _client = string.IsNullOrWhiteSpace(credentials.ApiKey)
-            ? null
-            : new AnthropicClient { ApiKey = credentials.ApiKey };
+        if (string.IsNullOrWhiteSpace(credentials.ApiKey))
+        {
+            _client = null;
+            return;
+        }
+
+        // HttpClient is init-only, and passing null explicitly would stop the SDK building its own —
+        // hence the branch rather than one initializer with a nullable value.
+        _client = httpClient is null
+            ? new AnthropicClient { ApiKey = credentials.ApiKey }
+            : new AnthropicClient { ApiKey = credentials.ApiKey, HttpClient = httpClient };
     }
 
     public bool IsConfigured => _client is not null;
@@ -83,7 +112,7 @@ public sealed class AnthropicIdeaDraftModel : IIdeaDraftModel
                 {
                     new()
                     {
-                        Text = IdeaAssistPromptBuilder.BuildSystemPrompt(context),
+                        Text = _systemPromptFactory(context),
                         CacheControl = new CacheControlEphemeral(),
                     },
                 },

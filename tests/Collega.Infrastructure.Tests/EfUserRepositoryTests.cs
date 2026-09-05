@@ -199,6 +199,56 @@ public sealed class EfUserRepositoryTests
         Assert.Empty(page.Items);
     }
 
+    /// <summary>
+    /// <see cref="EfUserRepository.SearchForImpersonationAsync"/> orders by first name then last name
+    /// then, since the change under test, email - so two users who tie on both names still resolve to
+    /// a single, total order instead of an arbitrary one. Under the 200-row cap an arbitrary tie-break
+    /// does not just reorder the page, it decides which of the tied rows is even on it.
+    /// </summary>
+    /// <remarks>
+    /// This only proves the tiebreak on the InMemory provider because <c>Enumerable.OrderBy</c>/
+    /// <c>ThenBy</c> is a documented <i>stable</i> sort: with no email tiebreak, two tied rows come
+    /// back in whatever order the InMemory provider enumerates them in - which, absent removals,
+    /// tracks insertion order. Seeding the earlier email second (so insertion order and the wanted
+    /// email order disagree) means a correct result can only come from the added
+    /// <c>ThenBy(u => u.Email)</c>, not from provider happenstance - the pre-fix query would return
+    /// insertion order and fail this assertion.
+    /// <para>
+    /// What this does <i>not</i> prove: that a real PostgreSQL server, without a full ORDER BY, would
+    /// vary its tie-break from run to run - Postgres gives no stability guarantee for ties the way LINQ
+    /// does, and that is the actual production failure mode this ordering fixes. That is not
+    /// practically reproducible in a unit test (it requires the query planner to pick different
+    /// physical scans across runs against the same data) and PostgresProviderTests.cs is reserved for
+    /// schema/DDL-level guarantees InMemory cannot model at all, not general query-result behaviour -
+    /// see tests/CLAUDE.md. The SQL-shape assertion pattern used for LIKE clauses in
+    /// SearchSqlGenerationTests.cs is not available here either without exposing the query as an
+    /// internal static helper the way EfUserRepository.ApplySearch already is, which is a production
+    /// change outside a QA pass. This test is the closest hermetic proxy: it exercises the real method
+    /// and fails without the fix.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public async Task SearchForImpersonation_BreaksNameTiesByEmail_ForATotalOrder()
+    {
+        using var ctx = InMemoryContext.Create();
+        var orgA = await SeedOrgAsync(ctx);
+        var orgB = await SeedOrgAsync(ctx);
+        var repo = new EfUserRepository(ctx);
+
+        // Same first and last name in two different organizations - ties FirstName/LastName exactly.
+        // Inserted with the alphabetically-later email first, so a stable sort with no further
+        // tiebreak would return insertion order (zoe, then abby) rather than the wanted email order.
+        await repo.AddAsync(Build.User(orgB, firstName: "Jane", lastName: "Smith", email: "zoe@example.com"));
+        await repo.AddAsync(Build.User(orgA, firstName: "Jane", lastName: "Smith", email: "abby@example.com"));
+        await ctx.SaveChangesAsync();
+
+        var results = await repo.SearchForImpersonationAsync(organizationId: null, search: null);
+
+        Assert.Equal(2, results.Count);
+        Assert.Equal("abby@example.com", results[0].Email);
+        Assert.Equal("zoe@example.com", results[1].Email);
+    }
+
     [Fact]
     public async Task ListByOrganization_SortsByEmailDescending()
     {

@@ -68,3 +68,32 @@ nunit-*.xml
 /publish/
 /client-publish/
 /collega-api.zip
+
+# Filled-in deployment inputs for deploy/azure/provision.sh — holds the database,
+# Site Admin and AI credentials. Only the .example copy is tracked.
+/deploy/azure/provision.env
+
+# graphify derived artifacts (regenerate with `graphify update .`)
+graphify-out/
+*.graphify-bak
+
+# design-sync build output
+ds-bundle/
+
+# Playwright MCP scratch output
+.playwright-mcp/
+
+# Local secrets — never commit
+.env.local
+
+# Comp Q build toolchain (SPEC/mockups/_build/tw); compiled CSS is inlined into the comps
+SPEC/mockups/_build/tw/node_modules
+SPEC/mockups/_build/tw/input.css
+SPEC/mockups/_build/tw/out.css
+SPEC/mockups/_build/__pycache__
+
+# Golden harness: typecheck-only dependency, the harness itself runs on bare Node
+tools/golden/node_modules
+
+# Proxy CA certificates are environment-specific (see docker/proxy-ca/README.md)
+docker/proxy-ca/*.crt

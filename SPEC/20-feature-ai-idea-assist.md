@@ -1,6 +1,6 @@
 # Feature: AI-Assisted Idea Drafting (Idea Brainstorm Chat)
 
-**Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/archive/sprint-07-ai-idea-assist.md`) — after the Postgres migration (Sprint 5) and View As (Sprint 6), before Azure deployment (Sprint 8). Design decisions locked 2026-08-11 by user interview; `Anthropic` NuGet package approved by the user the same day.
+**Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/sprint-07-ai-idea-assist.md`) — after the Postgres migration (Sprint 5) and View As (Sprint 6), before Azure deployment (Sprint 8). Design decisions locked 2026-08-11 by user interview; `Anthropic` NuGet package approved by the user the same day.
 
 ## Overview
 
@@ -56,7 +56,9 @@ The scripted chat collects prose and nothing else. Everything the user says abou
 2. Each user turn produces exactly one model call. The model returns a structured object (see "Response contract"); the client renders its `nextQuestion` as the assistant bubble.
 3. The user may leave the chat at any time via **Skip & fill manually**, which opens the create modal with whatever has been drafted so far (possibly nothing). This path must remain available and must never be gated on a successful model call.
 4. **Continue to idea form** hands the drafted fields to `IdeaCreateModal` as pre-filled, fully editable values. Nothing is committed at this point.
-5. A conversation is capped at **20 user turns** — counted in *user* messages, not transcript entries, so a full conversation is ~40 entries and the contract bounds the array at 40 (`30-Contracts.md`). On reaching the cap the assistant stops accepting input and offers only Continue / Skip.
+5. A conversation is capped at **20 transcript entries** — user and assistant messages combined — which is the cap `30-Contracts.md` states for the request body. Because a transcript alternates roles and must end with a user entry (rule 2), the largest valid request carries 19 entries, so the practical ceiling is **10 user turns**. On reaching the cap the assistant stops accepting input and offers only Continue / Skip.
+
+    5a. This rule previously read "20 user turns", which contradicted the contract's "max 20 entries" and described a conversation twice as long. Resolved 2026-08-17 in favour of the contract: the cap counts **entries**, not user turns. A refused turn is dropped from the transcript (rule 8) and therefore does not consume the budget.
 
 ### Scope gate (D-SCOPE)
 
@@ -129,14 +131,45 @@ The deployment key is shared by every organization (rule 29), so without a ceili
 
 ### Credentials (D-CREDS)
 
-29. v1 uses a **single deployment-level key** from server configuration (user-secrets locally, App Service configuration in Azure — see `SPEC/50-azure-deployment.md`). All organizations share it. The configuration key is **`Ai:ApiKey`**, alongside the other `Ai:*` settings the cost controls read; the environment-variable form is `Ai__ApiKey`, and `docker-compose.yml` binds it from `CLAUDE_API_KEY` in `.env`. It is a secret and never belongs in `appsettings*.json`.
+29. v1 uses a **single deployment-level key** from server configuration (user-secrets locally, App Service configuration in Azure — see `SPEC/50-azure-deployment.md`). All organizations share it. The configuration key is **`ANTHROPIC_API_KEY`** (user decision, 2026-08-25, replacing the vendor-neutral `Ai:ApiKey` — see rule 29a). It has no `:` segment, so the configuration key and the environment-variable form are the **same string**; there is no `__` mapping to get wrong. `docker-compose.yml` binds it from `ANTHROPIC_API_KEY` in `.env`. It is a secret and never belongs in `appsettings*.json`. The other `Ai:*` settings the cost controls read are unaffected and keep their names.
+
+    29a. **The key name is now provider-specific, deliberately.** It was `Ai:ApiKey` so that changing providers would be a spec-and-adapter change rather than a configuration change. That was reversed on 2026-08-25 because `ANTHROPIC_API_KEY` is the name the vendor's own tooling, SDKs and shells already export, so the neutral name meant every developer and every deployment maintained a second, redundant copy of the same secret under a different name. If a second provider is ever added, it gets its own provider-named key rather than a shared neutral one. **API contract fields stay vendor-neutral** (`aiApiKey`, `aiKeyConfigured`) — only the server-side configuration key changed, so no client contract breaks.
 30. `SPEC/30-Contracts.md` already specifies `PUT`/`DELETE /api/v1/organizations/{organizationId}/ai-key` for a **per-org key overriding the deployment default**. Those contracts stay in the spec and stay **unimplemented in v1** — they are the "Org AI credentials" backlog item. This is a deliberate deferral, not an oversight: a future agent reading those contracts must not build them as part of this sprint.
 31. If no key is configured, the feature is **off**: the brainstorm modal falls back to its current scripted behavior and the API returns a clear "not configured" response rather than an error. The product must work with the feature dark.
 
 ### Degradation
 
 32. Any model failure — timeout, rate limit, refusal, malformed response — degrades to the scripted-nudge behavior for that turn, with the user's typed text preserved. The user is never blocked from reaching the create form.
+
+    32a. **Pre-check (added 2026-08-17, user decision).** `+ New idea` must not open the chat at all when the assistant is known to be unavailable — a scripted chat the user has to escape from is a worse degraded path than the plain form. The client reads `GET /ai-assist/availability` once per page load and caches it; when it reports `false`, the create **drawer** opens directly and the chat is skipped. The endpoint returns a bare boolean and never distinguishes unconfigured from provider-down from budget-exhausted, for the same reason the turn endpoint's `503` does not (rule 31).
+
+    32b. **First-turn bailout.** The pre-check is a page-load snapshot and cannot see the daily budget being exhausted mid-session (rule 28a) — which is the most likely real cause. So a `503` on the **first** turn of a conversation hands off to the create drawer immediately, carrying the user's typed text, rather than falling back to scripted nudges. Scripted nudges remain the fallback for a `503` on any *later* turn, where the user has already invested in the conversation and a sudden surface change would lose their place. The two mechanisms cover different failures and neither replaces the other.
+
+    32c. **Say why the form appeared (added 2026-08-18, user decision).** Both paths above are silent: the user asks for the brainstorm chat and gets the plain form with no explanation, which reads as the feature being broken or missing rather than temporarily unavailable. So whenever the create drawer opens *because* the assistant is unavailable — the 32a skip or the 32b bailout — it shows a flash message stating that AI assist is currently unavailable and the idea can be filled in manually. Constraints: it is **informational, not an error** (nothing the user did failed and the form works normally); it **names no cause**, for the same reason 32a's endpoint returns a bare boolean and the turn endpoint returns an undifferentiated `503` (rule 31); it appears **only** on the unavailable paths, never when the drawer is opened normally or after a completed chat; and it never blocks the form, gates submission, or takes focus.
 33. Model calls have a request timeout. The client shows a pending state and remains cancellable.
+
+### Managed prompt (added 2026-08-17, user decision)
+
+34. The system prompt and the two fixed redirect strings (rules 8 and 10) are **deployment configuration editable by a Site Admin**, not compiled constants. This is Site-Admin scope for the same reason the API key is (rule 29): it is one setting for the whole deployment, not organization content — so it does not conflict with the rule that a Site Admin touches organization content only through View As.
+
+35. What is editable is a **template**, not the finished prompt. Two placeholders are **required**, and a save omitting either is rejected:
+
+    - `{{ORGANIZATION_CATALOG}}` — the server renders the fenced, escaped catalog here (rules 11–12, 25).
+    - `{{SCOPE_STATEMENT}}` — the server renders the fenced scope block, or nothing when the organization has none. Required because a template omitting it would silently disable every organization's scope statement (rule 6) with no error anywhere.
+
+    **The escaping is not editable.** `Fence()` and the assembly of `<organization_data>` stay in code, so no edit can reintroduce the fence-closing defect the Sprint 7 review found. State the residual risk plainly: an admin **can** delete the prose instructing the model to distrust that block. The escaping survives; the instruction does not. Rule 37 exists for that.
+
+36. Versions are **immutable and appended**. Publishing writes a new version and moves the active pointer; restoring an earlier version publishes a **copy** of it as a new version rather than mutating history. With no active version the built-in default compiled into the product is used, so an empty table is the normal initial state and "reset to default" is simply deactivating all. Publishing writes an audit event recording actor and version number — **never the body**, preserving rule 27, since the body already lives in the version table.
+
+37. Publishing offers **advisory safety probes**: the injection, fence-closing and off-topic prompts are run against the draft and the outcomes shown before publish. They never block publishing. They exist because the failure mode here is not obvious — removing the scope instructions measurably *improves* classification while weakening refusal, so the dangerous edit is the one that feels like an improvement.
+
+    37a. Probes run against a **synthetic catalog**, never a real organization's. A Site Admin has no organization of their own; borrowing one would pick a winner arbitrarily and expose that organization's private option names to a platform admin. Synthetic also makes a probe run reproducible.
+
+    37c. **How much the probes actually prove — measured 2026-08-17, and less than they look.** Removing the scope sentence from the default template and probing it returned **3 of 3 refused**, identical to the unmodified default. Two reasons, both worth knowing before trusting a green run: the `inScope` **schema description independently defines scope**, so the prompt sentence is not load-bearing on its own (this is the strongest argument yet for the deferred schema-description work); and three probes is a low-powered instrument for an effect the playground measured at roughly 7%. Treat a passing run as *"nothing is grossly broken"*, never as *"this edit is safe"*. Real measurement is `tools/Collega.AiPlayground`, over a corpus, with repeats.
+
+    37b. *Metering.* The global daily budget gate (28a) applies, but probes are **not** per-organization rate limited and **not** written to the usage meter — both require an organization to attribute spend to, and `AiUsageRecord.OrganizationId` is deliberately required (28c). The exposure is bounded by construction instead: a fixed three prompts, Site Admin only, no loop. A probe call that fails is reported as unavailable rather than as a passed probe — turning an outage into a clean bill of health is the one wrong answer this surface can give.
+
+38. Editing the prompt changes the cached stable prefix, so the provider's prompt cache misses until it re-warms (rule 28's caching note). This is a one-off cost per publish, not a regression, and the editing surface says so.
 
 ---
 
@@ -178,4 +211,4 @@ The per-org AI key fields implied by the `ai-key` contracts are **not** added in
 - `SPEC/20-feature-idea-type-fields.md` — Idea Types and per-type field resolution used as retrieval context.
 - `SPEC/20-feature-client-ui.md` — Comp C design direction; this feature is **comp-first** (2026-08-11 process decision) and needs a mockup for the suggestion-indicator treatment before production Blazor.
 - `SPEC/40-test-strategy.md` → "AI Idea Assist" — required coverage.
-- `SPEC/sprints/archive/sprint-07-ai-idea-assist.md` — the sprint plan.
+- `SPEC/sprints/sprint-07-ai-idea-assist.md` — the sprint plan.

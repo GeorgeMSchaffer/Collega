@@ -132,6 +132,44 @@ public sealed record IdeaAssistTurnResponseDto(
 /// </summary>
 public sealed record AiAssistSettingsDto(bool AiAssistAvailable, string? ScopeStatement);
 
+/// <summary>Response for <c>GET /ai-assist/availability</c> (rule 32a).</summary>
+public sealed record AiAssistAvailabilityDto(bool Available);
+
+/// <summary>The Site-Admin-managed prompt and its history (rules 34–36).</summary>
+public sealed record AiPromptDto(
+    string Body,
+    string OutOfScopeRedirect,
+    string ConversationClosedRedirect,
+    int? Version,
+    bool IsBuiltInDefault,
+    List<AiPromptVersionDto> Versions);
+
+public sealed record AiPromptVersionDto(
+    int Version,
+    DateTime CreatedAtUtc,
+    Guid? CreatedByUserId,
+    string? CreatedByDisplayName,
+    bool IsActive);
+
+public sealed record PublishAiPromptRequestDto(
+    string Body,
+    string OutOfScopeRedirect,
+    string ConversationClosedRedirect);
+
+public sealed record ProbeAiPromptRequestDto(string Body);
+
+/// <summary>Advisory safety-probe outcomes (rule 37).</summary>
+public sealed record AiPromptProbeDto(
+    List<AiPromptProbeItemDto> Probes,
+    int RefusedCount,
+    int TotalCount);
+
+public sealed record AiPromptProbeItemDto(
+    string Id,
+    string Prompt,
+    bool Refused,
+    bool ExpectedRefused);
+
 /// <summary>Body for <c>PUT /organizations/{id}/ai-assist/settings</c>. Null or empty clears the statement.</summary>
 public sealed record UpdateAiAssistSettingsRequestDto(string? ScopeStatement);
 

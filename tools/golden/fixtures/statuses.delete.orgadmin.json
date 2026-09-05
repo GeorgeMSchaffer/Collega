@@ -1,0 +1,28 @@
+{
+  "scenario": "statuses",
+  "step": "delete.orgadmin",
+  "endpoint": "DELETE /statuses/{statusId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Deletes the status this scenario created, never a seeded one.",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/statuses/f92de280-3042-40c5-91ec-74877534de45",
+    "body": null
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Fri, 04 Sep 2026 03:55:47 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

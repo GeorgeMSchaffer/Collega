@@ -1,0 +1,52 @@
+{
+  "scenario": "aiassist",
+  "step": "settings.update.siteadmin",
+  "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
+  "as": "SiteAdmin",
+  "kind": "denied",
+  "note": "The scope statement is organization content — it is what refuses off-topic requests, in one organization's own words — so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ai-assist/settings",
+    "body": {
+      "scopeStatement": "We build warehouse and shop-floor automation."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Fri, 04 Sep 2026 03:55:40 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ai-assist/settings",
+      "traceId": "0HNOA71FOOKTJ:0000000F"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/ai-assist/settings",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

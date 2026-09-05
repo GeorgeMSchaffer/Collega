@@ -1,0 +1,50 @@
+{
+  "scenario": "ideas",
+  "step": "import.siteadmin",
+  "endpoint": "POST /boards/{boardId}/ideas/import",
+  "as": "SiteAdmin",
+  "kind": "denied",
+  "note": "A member may bulk-create what they may create one at a time; Read Only may not, and a direct Site Admin is refused — the CSV path was the bypass that moved that guard server-side (rule 26).",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas/import",
+    "body": "------GoldenCaptureBoundary\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"ideas.csv\"\r\nContent-Type: text/csv\r\n\r\nTitle,Description,Priority,Idea Type,Business Impact\nImported by capture,A row the corpus creates,Low,Continuous Improvement,Cost Saving\n\r\n------GoldenCaptureBoundary--\r\n",
+    "contentType": "multipart/form-data; boundary=----GoldenCaptureBoundary"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas/import",
+      "traceId": "0HNOA71FOOKTJ:00000093"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/boards/<guid@board.body[0].boardId>/ideas/import",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

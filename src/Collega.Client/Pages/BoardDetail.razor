@@ -19,29 +19,46 @@
     <div class="row">
         <div class="grow">
             <h1>@(_board?.Name ?? "Board")</h1>
-            <p class="sub" style="margin-bottom:6px">Ideas organized by status. Drag cards between lanes to move them@(_canMove ? "." : " (moves are restricted to admins on this board).")</p>
+            @* Dragging is not the only way to move a card, and it was the only one named — which left a
+               keyboard user with no route at all. The drawer's Status control is the existing path; this
+               says so rather than inventing a keyboard drag. *@
+            <p class="sub" style="margin-bottom:6px">Ideas organized by status. @(_canMove
+                ? "Drag cards between lanes to move them, or open a card and change its Status."
+                : "Drag cards between lanes to move them (moves are restricted to admins on this board).")</p>
         </div>
-        @if (_boards.Count > 1)
-        {
-            <div class="field" style="margin-bottom:14px;min-width:220px">
-                <label for="boardpick">Board</label>
-                <select id="boardpick" value="@BoardId" @onchange="OnBoardPicked" style="width:100%">
+    </div>
+    @*
+        One control row (user decision 2026-08-17): Back at the far left — matching every other
+        list/detail page, where it is the first item in the command bar — then the view switch, then
+        the board picker and + New idea pushed right by .spacer. The row wraps on narrow viewports
+        rather than overflowing.
+    *@
+    <div class="viewswitch">
+        <BackButton />
+        <span class="backgap"></span>
+        <a class="@(_view == View.List ? "on" : null)" @onclick="() => _view = View.List" role="button" tabindex="0">List</a>
+        <a class="@(_view == View.Swim ? "on" : null)" @onclick="() => _view = View.Swim" role="button" tabindex="0">Swim Lanes</a>
+        <span class="spacer"></span>
+        <div class="headctl">
+            @if (_boards.Count > 1)
+            {
+                @* A real visible <label for>, not aria-label: this is a native <select>, so the
+                   association actually reaches the control — unlike FluentTextField, whose real input
+                   sits behind a shadow boundary (see SPEC/Bug Triage.md). Only one naming mechanism,
+                   so what a screen reader announces is what is on screen. *@
+                <label class="ctllabel" for="boardpick">Board</label>
+                <select id="boardpick" value="@BoardId" @onchange="OnBoardPicked">
                     @foreach (var b in _boards)
                     {
                         <option value="@b.BoardId">@b.Name</option>
                     }
                 </select>
-            </div>
-        }
-        <BackButton />
-        @if (CanMutate)
-        {
-            <button class="btn primary" style="margin-bottom:14px" @onclick="OpenCreate">+ New idea</button>
-        }
-    </div>
-    <div class="viewswitch">
-        <a class="@(_view == View.List ? "on" : null)" @onclick="() => _view = View.List" role="button" tabindex="0">List</a>
-        <a class="@(_view == View.Swim ? "on" : null)" @onclick="() => _view = View.Swim" role="button" tabindex="0">Swim Lanes</a>
+            }
+            @if (CanMutate)
+            {
+                <button class="btn primary" @onclick="OpenCreate">+ New idea</button>
+            }
+        </div>
     </div>
 </div>
 
@@ -156,16 +173,18 @@
                                         {
                                             <span class="grip" title="Drag to move" role="img" aria-label="Drag to move idea"><FluentIcon Value="@(new Icons.Regular.Size20.ReOrderDotsVertical())" /></span>
                                         }
-                                        <span class="t" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">@i.Title</span>
-                                        @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
-                                        {
-                                            <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" IconOnly="true" />
-                                        }
+                                        <span class="t" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)" @onkeydown="e => ActivateCard(e, i.IdeaId)">@i.Title</span>
                                         <span class="prio-chip @PrioClass(i.Priority)">@PrioLabel(i.Priority)</span>
                                     </div>
-                                    @if (i.TagNames.Count > 0)
+                                    @* The type badge rides the tag row rather than the title row: now that it
+                                       carries its name as text, a 280px lane has no room for both. *@
+                                    @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName) || i.TagNames.Count > 0)
                                     {
                                         <div class="meta2">
+                                            @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
+                                            {
+                                                <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" Compact="true" />
+                                            }
                                             @foreach (var tag in i.TagNames.Take(3))
                                             {
                                                 <span class="tag">@tag</span>
@@ -227,12 +246,15 @@
                             @foreach (var idea in laneIdeas)
                             {
                                 var i = idea;
-                                <div class="rowcard" style="@CardStyle(lane)" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)">
-                                    <span class="prio @PrioClass(i.Priority)" title="@PrioLabel(i.Priority) priority"></span>
+                                <div class="rowcard" style="@CardStyle(lane)" role="button" tabindex="0" @onclick="() => OpenIdea(i.IdeaId)" @onkeydown="e => ActivateCard(e, i.IdeaId)">
+                                    @* Named, not just coloured: colour may never be the only carrier
+                                       of meaning (SPEC/decisions.md, 2026-08-31). Same treatment as
+                                       the swimlane card's chip. *@
+                                    <span class="prio-chip @PrioClass(i.Priority)">@PrioLabel(i.Priority)</span>
                                     <span class="t">@i.Title</span>
                                     @if (!string.IsNullOrWhiteSpace(i.IdeaTypeName))
                                     {
-                                        <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" IconOnly="true" />
+                                        <TypeBadge Name="@i.IdeaTypeName" ColorHex="@i.IdeaTypeColorHex" Icon="@i.IdeaTypeIcon" Compact="true" />
                                     }
                                     @foreach (var tag in i.TagNames.Take(2))
                                     {
@@ -322,6 +344,9 @@
     private string? _openIdeaId;
     private bool _showCreate;
     private bool _showBrainstorm;
+
+    // Page-load snapshot of AI assist availability (rule 32a). Optimistic default: see LoadAiAvailabilityAsync.
+    private bool _aiAvailable = true;
     private IdeaDraftDto? _seedDraft;
 
     // CSV export/import (T059/T060)
@@ -348,6 +373,19 @@
             _organizationId = user.FindFirst("organizationId")?.Value;
             _role = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
         }
+
+        await LoadAiAvailabilityAsync();
+    }
+
+    /// <summary>
+    /// One cached read per page load (rule 32a) so "+ New idea" costs no extra round trip. A failed
+    /// probe is treated as available: the chat's own 503 path still degrades correctly, whereas
+    /// assuming unavailable would silently withhold a working feature over one flaky request.
+    /// </summary>
+    private async Task LoadAiAvailabilityAsync()
+    {
+        var result = await Api.GetAiAssistAvailabilityAsync();
+        _aiAvailable = !result.Succeeded || (result.Value?.Available ?? true);
     }
 
     protected override async Task OnParametersSetAsync()
@@ -460,6 +498,17 @@
     private void OpenIdea(string ideaId) =>
         Nav.NavigateTo($"/board/{BoardId}?idea={Uri.EscapeDataString(ideaId)}");
 
+    // Rows and cards are role="button" spans/divs, and a browser only synthesizes a click from Enter or
+    // Space on a native control — so without this the drawer, and with it the only keyboard route to
+    // moving an idea, was unreachable from the board.
+    private void ActivateCard(KeyboardEventArgs e, string ideaId)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            OpenIdea(ideaId);
+        }
+    }
+
     private void CloseDrawer() => Nav.NavigateTo($"/board/{BoardId}");
 
     // Fired after any drawer mutation (save / status move / upvote / delete). Re-fetch the board's ideas so
@@ -474,10 +523,21 @@
         StateHasChanged();
     }
 
+    // Rule 32a: when the assistant is known to be down, skip the chat entirely rather than opening a
+    // scripted one the user has to escape from. _aiAvailable is a page-load snapshot, so a mid-session
+    // outage is caught by the brainstorm modal's first-turn bailout (rule 32b) instead.
     private void OpenCreate()
     {
         _seedDraft = null;
-        _showBrainstorm = true;
+
+        if (_aiAvailable)
+        {
+            _showBrainstorm = true;
+        }
+        else
+        {
+            _showCreate = true;
+        }
     }
 
     private void CloseBrainstorm() => _showBrainstorm = false;

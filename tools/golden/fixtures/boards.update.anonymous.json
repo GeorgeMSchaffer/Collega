@@ -1,0 +1,59 @@
+{
+  "scenario": "boards",
+  "step": "update.anonymous",
+  "endpoint": "PUT /boards/{boardId}",
+  "as": "anonymous",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/boards/53ad2530-e1b2-4346-9061-cba0a754822f",
+    "body": {
+      "name": "Zz Golden Capture Board Renamed",
+      "allowUserStatusUpdate": false,
+      "swimlanes": [
+        {
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "order": 0
+        },
+        {
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+          "order": 1
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:41 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/53ad2530-e1b2-4346-9061-cba0a754822f",
+      "traceId": "00-80037a49ee01785c6ae2ecc3c3fe484d-edd9e37b7982c4c2-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/<guid@create.orgadmin.body.boardId>",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

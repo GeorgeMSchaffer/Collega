@@ -50,6 +50,12 @@
                     <strong>API</strong>
                     <span>AI assist token usage and cost by organization, against the daily limit.</span>
                 </a>
+                @* Site Admin only — deployment-wide configuration, deliberately absent from the
+                   OrgAdmin block below (rule 34). *@
+                <a class="settings-link" href="/settings/ai-prompt">
+                    <strong>AI Prompt</strong>
+                    <span>Edit the assistant's instructions for every organization, with history and rollback.</span>
+                </a>
             </Authorized>
         </AuthorizeView>
 

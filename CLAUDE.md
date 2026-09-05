@@ -4,33 +4,66 @@ Guidance for Claude Code (claude.ai/code) working in this repository.
 
 This file carries only the rules that must be true *before* touching code. Reference detail lives closer to the code it describes — each `src/*` project, `tests/`, and `tests/Collega.E2E.Tests/` has its own `CLAUDE.md` covering that area's layout, conventions, commands, and gotchas. Read those when you work in them; don't duplicate them here.
 
+
+## Working Rules
+
+- Always seek clarification before implementing ambiguous or conflicting behavior. When possible use a question by question multiple choice format.
+- Use progressive disclosure. Information specific to project should be stored seperately and referenced as needed.
+- Keep commits focused on one change. Git History should look human writen and avoid refrences to Claude or Code generation.
+- Keep output concise when responding. 
+- For asking clarifcation prefer an interview format with multiple choice options 
+- Treat `SPEC/*.md` as the source of truth. If implementation changes behavior or contradicts the spec seek clarification.
+- Make surgical changes; avoid unrelated refactors.
+- Only comment the non-obivius.
+- Don't add error handling for scenarios that can't happen.
+- Do not create abstrctions unless they reduce complexity measurably and factories, also avoid interfaces for single implementations.
+- We do not need to cover everything with a full suite of unit and e2e tests.  Instead we want to focus on high usage, high impact code.  Also an agent that edited the coded, should not write tests for their own code, use a seperate QA engineer to create tests.
+- Use path aliases: `@/components`, `@/lib`, `@/server` instead of relative imports where possible.
+
+
+## Coding Standards
+
+- Prefer clear, minimal code over broad rewrites.
+- SQL: UPPERCASE keywords, lowercase table/column names, no `SELECT *`, meaningful aliases.
+- Never commit secrets or temporary files.
+
+## Build and Test
+
+```bash
+dotnet build Collega.sln
+dotnet test Collega.sln   # the whole suite: Domain, Application, Infrastructure, API
+```
+
+`tests/Collega.E2E.Tests` is **Playwright for .NET**, skipped by default, so the line above
+compiles it without needing a browser or a running server. See `tests/CLAUDE.md`.
+
+There is no `package.json` and no npm script — the TypeScript stack does not exist yet. When it
+does, the commands live here alongside these, not instead of them, until cutover.
+
+**No local `dotnet`?** `docker compose --profile full up -d api` runs the API on the SDK image,
+migrations and seed included (`src/Collega.Infrastructure/CLAUDE.md`). Behind a TLS-inspecting
+proxy, drop the CA into `docker/proxy-ca/` first; the container build needs `--network host` and
+the proxy variables or NuGet restore fails.
+
+Running the API or Client, required configuration and secrets, seeding flags, migrations, and the local PostgreSQL container are all documented where they belong: `src/Collega.API/CLAUDE.md`, `src/Collega.Infrastructure/CLAUDE.md`, `src/Collega.Client/CLAUDE.md`, `tests/CLAUDE.md`, and `README.md`.
+
+
 ## Repository State
 
-Collega has a working solution with a large amount of implementation already merged — do not assume this is an early scaffold. **This file deliberately does not summarize implementation status**; any such summary goes stale, and a frozen snapshot here once caused a major planning error. `SPEC/implementation-agent-tracker.md`'s Current Status section is the single source of truth for "what's built" — read it fresh, per Ground-Truth Verification below.
 
 Repo layout beyond the `src/` and `tests/` projects:
 
+- `SPEC/implementation-agent-tracker.md` Use to track the current state of development with upcoming and completed features
 - `SPEC/` — canonical specs, the implementation tracker, and delivery/sprint plans (source of truth, see below)
 - `SPEC/archive/` — **superseded documents; don't read unless asked for history.** Several assert the project is unstarted, which was true when written and is not now. Nothing here is canonical or gates work.
 - `SPEC/mockups/` — SVG/HTML UI mockups and throwaway review comps
 - `SPEC/SPECKIT/specs/<NNN-feature>/spec.md` — derived downstream copies of canonical `SPEC/*.md`; edit the canonical file first
-- `FluentUiComps/` — an unrelated spike, **not part of Collega**; don't change it as part of Collega work
 
-`e2e/` — TypeScript Playwright browser suite (see `e2e/README.md`), separate from `tests/Collega.E2E.Tests` (Playwright for .NET). It was briefly deleted in `3c367f3` and **restored in `9301073`** (2026-08-12) after that removal was identified as a mistake; treat it as live.
-
-Verify a file or project actually exists before assuming a command will work or a slice is unbuilt.
-
-## Ground-Truth Verification
-
-Before any status, planning, or scope claim about this project — in this session or any future one — re-read `SPEC/implementation-agent-tracker.md`'s Current Status section AND run `git log --oneline -10` fresh in that same turn. Never answer from recollection, even within the same conversation and even when confident.
-
-This project routinely moves faster than any one conversation's memory of it; large batches land via parallel worktree agents, sometimes outside the thread asking the question. A large date jump, an unfamiliar recent commit, or "it's been a while since I checked" are signals to verify more, not less.
 
 ## Source of Truth
 
 Canonical product behavior lives in `SPEC/*.md`. Read the relevant spec before describing or changing behavior. `SPEC/README.MD` indexes the full set; the ones that gate work:
-
-- `SPEC/Bug Triage.md` — authoritative pre-feature bug/tweak queue, deliberately kept short. **Clear its `TODO` items before starting new features** unless the user explicitly approves an exception. After a fix passes focused validation, move the item to `SPEC/archive/bug-triage-completed.md` — never leave it in both. When an item is promoted into a canonical spec or a sprint plan, **delete it from the queue**; the spec or sprint file becomes its only home.
+- `SPEC/decisions.md` — dated log of decisions that constrain later work, newest first, with enough of the reason that nobody reopens one by accident. Supersession is recorded, never edited away.
 - `SPEC/ideas-inbox.md` — unrefined feature ideas. Not scheduled, not specified, and **does not gate work** — only picked up when the user asks.
 - `SPEC/implementation-agent-tracker.md` — not product behavior, but the authoritative log of what's built, in progress, and next.
 - `SPEC/95-next-sprints.md` — index for remaining pre-MVP sprint scope; per-sprint files live in `SPEC/sprints/` (completed ones in `SPEC/sprints/archive/`).
@@ -41,14 +74,6 @@ Canonical product behavior lives in `SPEC/*.md`. Read the relevant spec before d
 
 If behavior is ambiguous, or **two canonical specs** conflict, ask before implementing.
 
-## Product Model
-
-Collega is an organization-scoped collaboration/idea-tracking tool, conceptually similar to Trello/Jira: organizations contain users, boards, statuses, and ideas; boards organize ideas by status using swimlanes. Full model in `SPEC/00-project-brief.md` and `SPEC/10-requirements.md`.
-
-Two facts that constrain every change:
-
-- **Roles**, most to least privileged: **Site Admin** (global, not organization-owned) → **Org Admin** (own org only) → **User** → **Read Only**. Every non-Site-Admin user belongs to exactly one organization and one role; email is globally unique system-wide. Scope every query and mutation accordingly.
-- **Explicitly deferred — don't build without an explicit ask:** OAuth/SSO, SAML, reporting, guaranteed outbound email delivery, remember-this-device.
 
 ## Architecture
 
@@ -59,70 +84,71 @@ Layered with strict boundaries — business rules live in Domain and Application
 | `src/Collega.API` | HTTP host, request boundary | Application, Infrastructure |
 | `src/Collega.Application` | Use-case orchestration, authorization, validation | Domain |
 | `src/Collega.Domain` | Entities, enums, value objects, invariants | nothing |
-| `src/Collega.Infrastructure` | Persistence, external integrations | implements Application/Domain abstractions |
+| `src/Collega.Infrastructure` | Persistence via **EF Core** on PostgreSQL, plus external integrations | implements Application/Domain abstractions |
 | `src/Collega.Client` | Blazor WebAssembly UI (Fluent UI Blazor) | — |
 
-Stack: .NET 8, ASP.NET Core API, Blazor (Fluent UI Blazor), EF Core, PostgreSQL 16 (Npgsql), xUnit.
+These are the real project names, and the layering — not the ORM or the language — is what the
+conversion preserves. `SPEC/50-typescript-migration.md` §4 maps each one onto its replacement.
 
-> **Database engine: PostgreSQL 16** (Npgsql). The SQL Server cutover completed in Sprint 5 (merged `7c5a78b`, 2026-08-12); all specs and guides are reconciled to it as of 2026-08-27. Scope and post-mortem, kept for reference: `SPEC/50-postgres-migration.md`, `SPEC/sprints/archive/sprint-05-postgres-migration.md`. **Where SQL Server still appears in the repo it is deliberate** — comments explaining why code differs post-migration (collation, `LIKE` wildcards, index byte limits) and historical notes in archived documents. Don't "fix" those.
+## Technology Stack
 
-Client design direction is **Comp C "Fluent Editorial"**, locked and documented in `SPEC/20-feature-client-ui.md` and `src/Collega.Client/CLAUDE.md` — read those before UI work rather than inferring from mockup filenames.
+**Two stacks are described below. Only the first one exists.** The whole application converts to
+TypeScript in Sprint 9 (`SPEC/50-typescript-migration.md`) — a big-bang rewrite of ~60,000 lines,
+not an incremental port — so until cutover, work against what is here and read the target as the
+destination it is. Writing code against the second table today is the drift this section exists to
+prevent.
 
-## Working Rules
+### What the code is today
 
-- Treat `SPEC/*.md` as the source of truth. If implementation changes behavior, update the canonical spec first, then align tests and implementation.
-- Always seek clarification before implementing ambiguous or conflicting behavior.
-- Make surgical changes; avoid unrelated refactors.
-- Do not add NuGet packages without approval.
-- Keep business rules in Application/Domain; keep API controllers thin; keep Blazor components focused on rendering and user interaction.
-- Use DbContext + LINQ for data access; `async`/`await` for all database and I/O operations; EF Core migrations for schema changes.
-- Unit tests must be hermetic — no network, filesystem, `DateTime.Now`, or randomness. See `tests/CLAUDE.md`.
-- Stop any API or `dotnet watch` process you started before finishing.
+| | |
+|---|---|
+| Runtime | .NET 8 (`global.json` pins SDK 8.0.118) |
+| Backend | ASP.NET Core Web API |
+| Frontend | **Blazor WebAssembly**, Fluent UI Blazor — a client-side SPA, not Razor Pages |
+| ORM | **EF Core** (Npgsql), migrations in `src/Collega.Infrastructure/Persistence/Migrations` |
+| Database | PostgreSQL 16 — local in Docker with a persistent volume |
+| Tests | xUnit, plus Playwright for .NET in `tests/Collega.E2E.Tests` (skipped by default) |
+| Hosting | Azure, first deployed in Sprint 8 |
 
-## Coding Standards
+### What it converts to, in Sprint 9
 
-- Follow .NET runtime coding style (https://github.com/dotnet/runtime/tree/main/docs/coding-guidelines) and existing repo patterns.
-- Prefer clear, minimal code over broad rewrites.
-- SQL: UPPERCASE keywords, lowercase table/column names, no `SELECT *`, meaningful aliases.
-- Keep comments rare and only where the code needs clarification.
-- Never commit secrets or temporary files.
+| | |
+|---|---|
+| Runtime | Node.js 24.x, TypeScript |
+| Frontend | Next.js + Tailwind CSS v4 + shadcn/ui, used as intended (`SPEC/decisions.md` 2026-09-03; comp Q is the reference rendering) |
+| Backend | Nest.js, running serverless |
+| ORM | Prisma |
+| Database | PostgreSQL — Prisma Postgres in production |
+| Tests | The .NET suite is **discarded** (ticket `10`): the golden corpus in `tools/golden` plus fresh per-slice Vitest |
+| Hosting | Vercel |
 
-## Build and Test
-
-```bash
-dotnet build Collega.sln
-dotnet test Collega.sln
-```
-
-Running the API or Client, required configuration and secrets, seeding flags, migrations, and the local PostgreSQL container are all documented where they belong: `src/Collega.API/CLAUDE.md`, `src/Collega.Infrastructure/CLAUDE.md`, `src/Collega.Client/CLAUDE.md`, `tests/CLAUDE.md`, and `README.md`.
+The cutover **deletes the .NET solution**. Nothing runs side by side, and `SPEC/decisions.md`
+2026-09-02 calls that the highest-risk change in the project. What survives it: `SPEC/`, the
+`tools/golden` corpus that is the conversion's only oracle, and the database itself.
 
 ## Session, Branch, and Source Control
 
 - Use feature branches per work item, named `feature/<NNN>-<short-description>`.
 - Commit at logical checkpoints — completion of a feature or slice.
-
-After build and tests pass on a feature branch:
-
-1. Create a PR to `main`.
-2. Merge the feature branch into `dev`.
-3. Resolve conflicts using repo rules — server-side code: prefer `dev` where it moved ahead; `SPEC/` and `src/Collega.Client/`: prefer the feature branch.
-4. Push `dev`.
-5. Report the merge commit hash in your completion message.
+- The flow should be: Feature Branch -> Dev Branch --> Main branch
 
 ## Multi-Agent Worktree Workflow
+
+ ### Agent Roles
 
 For epic-level work, split execution across role-based subagents, each in its own git worktree branched off `dev`:
 
 - **Backend Developer** — Domain/Application/Infrastructure/API tasks.
 - **QA Developer** — tests for the same slice, per `SPEC/40-test-strategy.md`.
-- **UI/UX Developer** — Blazor components for client-facing scope. If a page or flow's layout isn't settled, produce a throwaway HTML comp in `SPEC/mockups/` for review first rather than writing production Blazor against an undecided design.
+- **UI/UX Developer** — UI related tasks. 
 - **Code Reviewer** — gates the other three; reviews each finished branch (diff, build, tests, spec conformance) before it merges. Not a parallel implementer.
 
-Rules:
+### Multi Agent Rules
+
 
 - Each implementer gets its own worktree so they don't collide mid-flight.
 - A role sits out a round if the sprint has no task for it — check the sprint's own file in `SPEC/sprints/` before assigning UI/UX work, and don't parallelize downstream UI work early.
 - Code Reviewer must approve before merge.
 - Once merged into `dev`, delete both the worktree and the branch. Don't leave merged worktrees around.
-- This merges directly into `dev` per finished slice; it skips the per-branch PR-to-`main` step above. That still happens once per epic, when exit criteria are met.
+- This merges directly into `dev` per finished slice;
 - Update `SPEC/implementation-agent-tracker.md` as slices start and finish.

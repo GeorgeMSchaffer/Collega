@@ -42,7 +42,7 @@ else if (State.TotalCount > 0)
         </span>
         <span class="sizesel">
             Rows per page
-            <select value="@State.PageSize" @onchange="OnPageSizeChanged">
+            <select aria-label="Rows per page" value="@State.PageSize" @onchange="OnPageSizeChanged">
                 @foreach (var option in State.PageSizeOptions)
                 {
                     <option value="@option">@option</option>

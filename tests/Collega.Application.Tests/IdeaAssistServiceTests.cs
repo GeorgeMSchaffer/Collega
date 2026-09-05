@@ -53,6 +53,49 @@ public class IdeaAssistServiceTests
     // ---- Availability and degradation (rules 31–32) ----
 
     [Fact]
+    public async Task IsAvailable_IsTrue_WhenConfiguredAndWithinBudget()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+
+        Assert.True(await service.IsAvailableAsync());
+    }
+
+    [Fact]
+    public async Task IsAvailable_IsFalse_WhenNoKeyIsConfigured()
+    {
+        _model.IsConfigured = false;
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+
+        Assert.False(await service.IsAvailableAsync());
+    }
+
+    /// <summary>
+    /// The case the page-load pre-check exists for is the one it cannot see coming: the budget is
+    /// exhausted mid-day, not at deploy time. This pins that the probe tracks the budget rather than
+    /// only key configuration — a probe that reported only "is a key set" would answer true all day
+    /// while every turn 503'd.
+    /// </summary>
+    [Fact]
+    public async Task IsAvailable_IsFalse_WhenTheDailyBudgetIsExhausted()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id), dailyTokenLimit: 1_000);
+        GivenTokensSpentToday(1_500);
+
+        Assert.False(await service.IsAvailableAsync());
+    }
+
+    /// <summary>The probe makes no provider call, so it must not be billable or rate limited.</summary>
+    [Fact]
+    public async Task IsAvailable_DoesNotCallTheProvider()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+
+        await service.IsAvailableAsync();
+
+        Assert.Equal(0, _model.CallCount);
+    }
+
+    [Fact]
     public async Task Continue_IsUnavailable_WhenNoKeyIsConfigured()
     {
         _model.IsConfigured = false;
@@ -406,17 +449,54 @@ public class IdeaAssistServiceTests
             () => service.ContinueAsync(new IdeaAssistTurnRequest(_acmeBoard.Id, Array.Empty<IdeaAssistTurn>())));
     }
 
+    /// <summary>
+    /// Builds an alternating transcript of <paramref name="entries"/> entries, oldest-first, starting
+    /// and — when the count is odd — ending with a user entry, which is the shape the contract requires.
+    /// </summary>
+    private static List<IdeaAssistTurn> Transcript(int entries) => Enumerable
+        .Range(0, entries)
+        .Select(i => new IdeaAssistTurn(
+            i % 2 == 0 ? IdeaAssistTurn.UserRole : IdeaAssistTurn.AssistantRole,
+            $"entry {i}"))
+        .ToList();
+
     [Fact]
-    public async Task Continue_RejectsAConversationPastTheTurnCap()
+    public async Task Continue_RejectsATranscriptPastTheEntryCap()
     {
         var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
-        var transcript = Enumerable
-            .Range(0, IdeaAssistService.MaxUserTurns + 1)
-            .Select(i => new IdeaAssistTurn(IdeaAssistTurn.UserRole, $"turn {i}"))
-            .ToList();
+        var transcript = Transcript(IdeaAssistService.MaxTranscriptEntries + 1);
 
         await Assert.ThrowsAsync<ValidationAppException>(
             () => service.ContinueAsync(new IdeaAssistTurnRequest(_acmeBoard.Id, transcript)));
+    }
+
+    /// <summary>
+    /// The cap counts entries, not user turns. Eleven user entries is only eleven turns but twenty-one
+    /// entries once the assistant replies are interleaved, so it must be refused — under the previous
+    /// "20 user turns" reading this same transcript was accepted.
+    /// </summary>
+    [Fact]
+    public async Task Continue_CountsAssistantEntriesTowardTheCap()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+        var transcript = Transcript(21);
+
+        Assert.Equal(11, transcript.Count(t => t.IsUser));
+        await Assert.ThrowsAsync<ValidationAppException>(
+            () => service.ContinueAsync(new IdeaAssistTurnRequest(_acmeBoard.Id, transcript)));
+    }
+
+    [Fact]
+    public async Task Continue_AcceptsATranscriptAtTheEntryCap()
+    {
+        var service = CreateService(FakeCurrentUserContext.User(_acme.Id));
+
+        // 19 is the largest valid request: alternating and ending with a user entry means odd lengths.
+        var result = await service.ContinueAsync(
+            new IdeaAssistTurnRequest(_acmeBoard.Id, Transcript(19)));
+
+        Assert.Equal(0, result.TurnsRemaining);
+        Assert.True(result.ConversationClosed);
     }
 
     [Fact]
@@ -426,7 +506,8 @@ public class IdeaAssistServiceTests
 
         var result = await service.ContinueAsync(Request());
 
-        Assert.Equal(IdeaAssistService.MaxUserTurns - 1, result.TurnsRemaining);
+        // One user entry in, one assistant reply back: 2 of 20 entries used, so 9 user turns are left.
+        Assert.Equal(9, result.TurnsRemaining);
     }
 
     // ---- Audit content (rule 27) ----
@@ -508,6 +589,68 @@ public class IdeaAssistServiceTests
 
         await Assert.ThrowsAsync<NotFoundAppException>(
             () => service.SetScopeStatementAsync(_harbor.Id, "nope"));
+    }
+
+    /// <summary>
+    /// The scope statement is organization content, not platform configuration (view-as rules 25-25b) —
+    /// a direct Site Admin must be refused and reach it through View As instead, exactly like every
+    /// other org-content mutation path.
+    /// </summary>
+    [Fact]
+    public async Task SetScopeStatement_IsRefused_ForADirectSiteAdmin()
+    {
+        var service = CreateService(FakeCurrentUserContext.SiteAdmin());
+
+        await Assert.ThrowsAsync<ForbiddenAppException>(
+            () => service.SetScopeStatementAsync(_acme.Id, "Only warehouse operations."));
+    }
+
+    /// <summary>
+    /// The guard fires before length validation: a direct Site Admin must get the refusal even with an
+    /// otherwise-invalid statement, not a validation error that would leak past the intended block.
+    /// </summary>
+    [Fact]
+    public async Task SetScopeStatement_RefusesADirectSiteAdmin_BeforeValidatingLength()
+    {
+        var service = CreateService(FakeCurrentUserContext.SiteAdmin());
+        var overlong = new string('x', Organization.AiScopeStatementMaxLength + 1);
+
+        await Assert.ThrowsAsync<ForbiddenAppException>(
+            () => service.SetScopeStatementAsync(_acme.Id, overlong));
+    }
+
+    /// <summary>
+    /// The View As case: <see cref="ICurrentUserContext.Role"/> reports the target's role during
+    /// impersonation, so the guard does not fire and a Site Admin acting as an Acme Org Admin can still
+    /// set the statement — this is the half that proves the guard did not also block the legitimate path.
+    /// </summary>
+    [Fact]
+    public async Task SetScopeStatement_Succeeds_ForASiteAdminInAViewAsSession()
+    {
+        var realAdmin = Guid.NewGuid();
+        var impersonated = Guid.NewGuid();
+        var context = FakeCurrentUserContext.OrgAdmin(_acme.Id, impersonated);
+        context.ImpersonatingRealUserId = realAdmin;
+
+        var service = CreateService(context);
+
+        var settings = await service.SetScopeStatementAsync(_acme.Id, "Only warehouse operations.");
+
+        Assert.Equal("Only warehouse operations.", settings.ScopeStatement);
+        Assert.Equal("Only warehouse operations.", _acme.AiScopeStatement);
+    }
+
+    /// <summary>Reads stay open to a direct Site Admin, as reads always are — only the write path is guarded.</summary>
+    [Fact]
+    public async Task GetSettings_Succeeds_ForADirectSiteAdmin()
+    {
+        _acme.SetAiScopeStatement("Only warehouse operations.", TestClock.Default, null);
+        var service = CreateService(FakeCurrentUserContext.SiteAdmin());
+
+        var settings = await service.GetSettingsAsync(_acme.Id);
+
+        Assert.True(settings.AiAssistAvailable);
+        Assert.Equal("Only warehouse operations.", settings.ScopeStatement);
     }
 
     [Theory]
@@ -602,7 +745,8 @@ public class IdeaAssistServiceTests
             new FakeFieldDefinitionRepository(),
             _statuses,
             new FakeTagRepository(),
-            new FakeUserRepository());
+            new FakeUserRepository(),
+            new FakeAiPromptVersionRepository());
 
         return new IdeaAssistService(
             _model,

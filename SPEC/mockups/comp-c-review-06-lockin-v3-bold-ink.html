@@ -1,34 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Lock-in V3: Bold Ink</title>
 <style>
   :root{
-    --accent:#5b5fc7; --accent-deep:#3a3d80; --accent-soft:#eef0fb;
-    --ink:#201f1d; --ink-2:#484644; --ink-3:#797672;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#5D6C7E;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
     --shadow:0 4px 14px rgba(20,16,10,.14);
-    --radius-card:10px; --radius-btn:6px;
+    --radius-card:2px; --radius-btn:2px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:700;letter-spacing:-.015em}
-  .comp-bar{background:#221f2e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:700;letter-spacing:-.015em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
   .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
-  .rail .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
-  .rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
   .rail a span{font-size:8.5px;font-weight:700;letter-spacing:.02em}
   .rail a.on{background:var(--accent);color:#fff}
-  .rail a:hover{background:#f3f2f1}
+  .rail a:hover{background:#F1F3F6}
   .rail .push{flex:1}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
   .avatar.s{width:24px;height:24px;font-size:9.5px}
@@ -44,105 +48,105 @@
   .ptabs a.on{color:var(--accent-deep);border-bottom-color:var(--accent)}
   .body{padding:26px 40px;max-width:1200px}
   .btn{border:1.5px solid var(--ink);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:700}
-  .btn:hover{background:#f3f2f1}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:var(--accent-deep);border-color:var(--accent-deep)}
   .btn.subtle{border-color:transparent;color:var(--accent-deep)}
   .btn.danger{border-color:transparent;color:var(--err)}
-  input[type=text],input[type=email],input[type=password],select,textarea{border:1.5px solid var(--ink-3);border-radius:6px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input[type=text],input[type=email],input[type=password],select,textarea{border:1.5px solid var(--ink-3);border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
   label{font-size:12.5px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:5px}
   .field{margin-bottom:15px}
   .card{background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--radius-card);box-shadow:var(--shadow)}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   th{text-align:left;font-size:12px;font-weight:700;color:var(--ink-3);padding:11px 16px;border-bottom:1.5px solid var(--ink)}
-  td{padding:12px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  td{padding:12px 16px;border-bottom:1px solid #F1F3F6;vertical-align:middle}
   tr:last-child td{border-bottom:none}
-  tr:hover td{background:#faf9f8}
-  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:700}
+  tr:hover td{background:#F7F9FB}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:700}
   .pill.ok{background:var(--ok);color:#fff}.pill.warn{background:var(--warn);color:#fff}
-  .pill.err{background:var(--err);color:#fff}.pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .pill.err{background:var(--err);color:#fff}.pill.neutral{background:#F1F3F6;color:var(--ink-2)}
   .pill.info{background:var(--accent);color:#fff}
   .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
-  .note{font-size:12px;color:var(--ink-2);border-left:4px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:680px;line-height:1.5}
-  .code{font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:2px 6px;font-size:11.5px}
+  .note{font-size:12px;color:var(--ink-2);border-left:4px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 2px 2px 0;margin-top:18px;max-width:680px;line-height:1.5}
+  .code{font-family:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;background:#F1F3F6;border:1px solid var(--line);border-radius:2px;padding:2px 6px;font-size:11.5px}
   /* home dashboard: solid color blocks */
   .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:30px}
   .tile{border-radius:var(--radius-card);overflow:hidden;cursor:pointer;box-shadow:var(--shadow);padding:18px;color:#fff}
-  .tile h3{font-family:Georgia,serif;font-size:16px;margin-bottom:5px}
+  .tile h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:16px;margin-bottom:5px}
   .tile p{font-size:12px;opacity:.85}
   .tile.newt{display:flex;align-items:center;justify-content:center;min-height:96px;border:1.5px dashed var(--ink-3);box-shadow:none;color:var(--ink-3);font-weight:700;background:transparent}
-  .feedrow{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #f0efed;font-size:13px}
+  .feedrow{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #F1F3F6;font-size:13px}
   .feedrow:last-child{border-bottom:none}
   .feedrow .when{margin-left:auto;color:var(--ink-3);font-size:12px}
   .feedrow a{color:var(--accent-deep);font-weight:700;text-decoration:none}
   .statgrid{display:flex;gap:28px;margin:4px 0 26px}
-  .stat .n{font-family:Georgia,serif;font-size:28px;font-weight:700;color:var(--accent-deep)}
+  .stat .n{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:28px;font-weight:700;color:var(--accent-deep)}
   .stat .l{font-size:12px;color:var(--ink-3)}
   /* auth */
   .authwrap{min-height:calc(100vh - 46px);display:flex;align-items:center;justify-content:center;background:var(--bg);padding:24px}
-  .authcard{width:430px;background:var(--surface);border:1.5px solid var(--ink);border-radius:12px;box-shadow:0 6px 22px rgba(20,16,10,.18);padding:6px 44px 40px;position:relative;overflow:hidden}
+  .authcard{width:430px;background:var(--surface);border:1.5px solid var(--ink);border-radius:2px;box-shadow:0 6px 22px rgba(20,16,10,.18);padding:6px 44px 40px;position:relative;overflow:hidden}
   .authcard::before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:var(--accent)}
   .brand{display:flex;align-items:center;gap:10px;margin:28px 0 22px}
-  .brand .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;font-family:Georgia,serif}
-  .brand .name{font-family:Georgia,serif;font-size:19px;font-weight:700}
+  .brand .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .brand .name{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:19px;font-weight:700}
   .sub{font-size:13px;color:var(--ink-3);margin-bottom:20px;line-height:1.5}
   .footnote{font-size:12px;color:var(--ink-3);text-align:center;margin-top:16px;line-height:1.5}
   .footnote a{color:var(--accent-deep);font-weight:700}
   /* board list */
   .lanesec{margin-bottom:26px}
   .lanesec>h2{font-size:17px;display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
-  .lanesec>h2 .cnt{font-size:12px;color:var(--ink-3);font-family:"Segoe UI",sans-serif;font-weight:700}
-  .rowcard{display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid #f0efed;cursor:pointer}
+  .lanesec>h2 .cnt{font-size:12px;color:var(--ink-3);font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:700}
+  .rowcard{display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid #F1F3F6;cursor:pointer}
   .rowcard:hover{background:var(--accent-soft)}
   .rowcard:last-child{border-bottom:none}
   .rowcard .t{font-weight:700;font-size:14px;flex:1;color:var(--ink)}
-  .rowcard .tag{font-size:11px;color:var(--ink-3);background:#f3f2f1;border-radius:3px;padding:1px 7px}
+  .rowcard .tag{font-size:11px;color:var(--ink-3);background:#F1F3F6;border-radius:2px;padding:1px 7px}
   .prio{width:9px;height:9px;border-radius:50%;flex-shrink:0}
   .prio.high{background:var(--err)}.prio.med{background:var(--warn)}.prio.low{background:var(--ok)}
-  .up{border:1.5px solid var(--ink);border-radius:4px;padding:2px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:52px;text-align:center}
+  .up{border:1.5px solid var(--ink);border-radius:2px;padding:2px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:52px;text-align:center}
   .up.mine{background:var(--accent);border-color:var(--accent);color:#fff}
   .viewswitch{display:flex;gap:4px;margin-top:18px;flex-wrap:wrap}
   .viewswitch a{padding:9px 14px;font-size:13px;font-weight:700;color:var(--ink-3);text-decoration:none;border-bottom:3px solid transparent;cursor:pointer}
   .viewswitch a.on{color:var(--accent-deep);border-bottom-color:var(--accent)}
   .kview{display:none}.kview.on{display:block}
   .klanes{display:grid;grid-auto-flow:column;grid-auto-columns:280px;gap:16px;overflow-x:auto;padding-bottom:12px;align-items:start}
-  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;font-family:"Segoe UI",sans-serif}
+  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .klane h3 .grow{flex:1}
-  .klane .cnt{border-radius:10px;padding:0 8px;font-size:11px;font-weight:700}
-  .kcard{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;cursor:grab;border:1px solid var(--line)}
+  .klane .cnt{border-radius:2px;padding:0 8px;font-size:11px;font-weight:700}
+  .kcard{background:var(--surface);border-radius:2px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;cursor:grab;border:1px solid var(--line)}
   .kcard:hover{outline:2px solid var(--accent)}
   .kcard .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
   .kcard .t{font-weight:700;font-size:13.5px;color:var(--ink);flex:1;min-width:0}
   .kcard .desc{font-size:11.5px;color:var(--ink-3);line-height:1.45;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .kcard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
   .kcard .meta .spacer{flex:1}
-  .kcard .tag{background:#f3f2f1;border-radius:3px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
-  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap;background:var(--lc-deep,var(--ink-2));color:#fff}
+  .kcard .tag{background:#F1F3F6;border-radius:2px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px;flex-shrink:0;white-space:nowrap;background:var(--lc-deep,var(--ink-2));color:#fff}
   /* variant A: flat, bold left rail */
-  .klane.va{background:#f3f2f1;border-radius:10px;padding:12px;border:1px solid var(--line)}
+  .klane.va{background:#F1F3F6;border-radius:2px;padding:12px;border:1px solid var(--line)}
   .klane.va h3{color:var(--lc-deep,var(--ink-2));padding:2px 6px 12px}
   .klane.va h3 .dot{width:11px;height:11px;border-radius:50%;background:var(--lc-deep,var(--ink-3));flex-shrink:0}
-  .klane.va .cnt{background:#e4e2df}
+  .klane.va .cnt{background:#DDE1E6}
   .klane.va .kcard{border-left:5px solid var(--lc-deep,transparent)}
   /* variant B: solid banded header */
-  .klane.vb{background:var(--surface);border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;padding-bottom:12px}
+  .klane.vb{background:var(--surface);border:1.5px solid var(--ink);border-radius:2px;overflow:hidden;padding-bottom:12px}
   .klane.vb h3{background:var(--lc-deep,#444);color:#fff;padding:13px 12px}
   .klane.vb .cnt{background:rgba(255,255,255,.28);color:#fff}
   .klane.vb .kcard{margin:12px 12px 0;box-shadow:none}
   .klane.vb .kcard:first-of-type{margin-top:12px}
-  .klane.vb .prio-chip{background:#f3f2f1;color:var(--ink-2)}
+  .klane.vb .prio-chip{background:#F1F3F6;color:var(--ink-2)}
   /* variant C: solid tinted column, deepest ink treatment */
-  .klane.vc{background:var(--lc-deep,#444);border-radius:10px;padding:14px}
+  .klane.vc{background:var(--lc-deep,#444);border-radius:2px;padding:14px}
   .klane.vc h3{color:#fff;padding:2px 4px 14px}
   .klane.vc h3 .dot{width:11px;height:11px;border-radius:50%;background:#fff;flex-shrink:0;opacity:.85}
   .klane.vc .cnt{background:rgba(255,255,255,.24);color:#fff}
   .klane.vc .kcard{box-shadow:0 4px 12px rgba(0,0,0,.3);border:none}
   .klane.vc .prio-chip{background:var(--lc-soft,#eee);color:var(--lc-deep,#333)}
-  .warnbanner{border-left:4px solid var(--warn);background:#f7ecdc;color:#6b4200;border-radius:0 4px 4px 0;padding:11px 15px;font-size:12.5px;margin-bottom:16px;max-width:680px;line-height:1.5}
+  .warnbanner{border-left:4px solid var(--warn);background:#F9F6EE;color:#8A6D2E;border-radius:0 2px 2px 0;padding:11px 15px;font-size:12.5px;margin-bottom:16px;max-width:680px;line-height:1.5}
   /* idea detail */
   .ideahd{border-bottom:2px solid var(--ink);background:var(--surface);padding:26px 40px}
-  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;font-family:"Segoe UI",sans-serif}
+  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .ideahd h1{font-size:31px;max-width:760px}
   .ideahd .byline{font-size:13px;color:var(--ink-3);margin:8px 0 4px}
   .ideabody{display:grid;grid-template-columns:minmax(0,720px) 300px;gap:44px;padding:30px 40px}
@@ -152,12 +156,12 @@
   .fact .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:5px}
   .fact .v{font-size:14px;font-weight:700}
   .fact select,.fact input{width:100%}
-  .comment{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f0efed}
+  .comment{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #F1F3F6}
   .comment .byline{display:flex;align-items:center;gap:9px;margin-bottom:6px}
   .comment .who{font-size:13px;font-weight:700}
   .comment .when{font-size:12px;color:var(--ink-3)}
   .comment p{font-size:14.5px;line-height:1.65;color:var(--ink-2)}
-  .mention{color:#fff;font-weight:700;background:var(--accent);border-radius:4px;padding:0 5px}
+  .mention{color:#fff;font-weight:700;background:var(--accent);border-radius:2px;padding:0 5px}
   .charcount{font-size:11.5px;color:var(--ink-3);text-align:right;margin-top:4px}
   .taglist{display:flex;gap:6px;flex-wrap:wrap;font-weight:400}
 </style>
@@ -207,8 +211,8 @@
         <h2 style="font-size:16px;margin-bottom:10px">Your boards</h2>
         <div class="tiles">
           <div class="tile" style="background:var(--accent-deep)"><h3>Product Ideas</h3><p>48 open · 9 assigned to you · active 12m ago</p></div>
-          <div class="tile" style="background:#7a4a1e"><h3>Platform Backlog</h3><p>31 open · 5 assigned to you · active 2h ago</p></div>
-          <div class="tile" style="background:#5c2f8f"><h3>Customer Feedback</h3><p>17 open · none assigned · active yesterday</p></div>
+          <div class="tile" style="background:#8A6D2E"><h3>Platform Backlog</h3><p>31 open · 5 assigned to you · active 2h ago</p></div>
+          <div class="tile" style="background:#527292"><h3>Customer Feedback</h3><p>17 open · none assigned · active yesterday</p></div>
           <div class="tile newt">+ Request a new board</div>
         </div>
         <h2 style="font-size:16px;margin-bottom:10px">Catching you up</h2>
@@ -295,7 +299,7 @@
           <div class="card">
             <div class="rowcard"><span class="prio high"></span><span class="t">Dark mode support</span><span class="tag">ui</span><span class="tag">theme</span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div>
             <div class="rowcard"><span class="prio med"></span><span class="t">Bulk import from CSV</span><span class="tag">data</span><span class="avatar s">TD</span><button class="up">▲ 17</button></div>
-            <div class="rowcard"><span class="prio low"></span><span class="t">Keyboard shortcuts cheat sheet</span><span class="tag">docs</span><span class="avatar s" style="background:#c8c6c4">—</span><button class="up">▲ 6</button></div>
+            <div class="rowcard"><span class="prio low"></span><span class="t">Keyboard shortcuts cheat sheet</span><span class="tag">docs</span><span class="avatar s" style="background:#C5CBD3">—</span><button class="up">▲ 6</button></div>
             <div class="rowcard"><span class="prio med"></span><span class="t">Export board to PDF</span><span class="tag">reporting</span><span class="avatar s">JR</span><button class="up">▲ 5</button></div>
           </div>
         </div>
@@ -329,29 +333,29 @@
       </div>
       <div class="body">
         <div class="klanes">
-          <div class="klane va" style="--lc-deep:#57534e;--lc-soft:#f1f0ee">
+          <div class="klane va" style="--lc-deep:#3E4E60;--lc-soft:#F1F3F6">
             <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
             <div class="kcard"><div class="top"><span class="t">Dark mode support</span><span class="prio-chip">High</span></div><p class="desc">Users working late hours want a dark theme that respects OS preference by default.</p><div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div></div>
             <div class="kcard"><div class="top"><span class="t">Bulk import from CSV</span><span class="prio-chip">Medium</span></div><p class="desc">Let admins bulk-create records by uploading a CSV file instead of one at a time.</p><div class="meta"><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 17</button></div></div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
           </div>
-          <div class="klane va" style="--lc-deep:#9a5b00;--lc-soft:#f7ecdc">
+          <div class="klane va" style="--lc-deep:#8A6D2E;--lc-soft:#F9F6EE">
             <h3><span class="dot"></span><span class="grow">In Review</span><span class="cnt">1</span></h3>
             <div class="kcard"><div class="top"><span class="t">Mobile responsive board</span><span class="prio-chip">High</span></div><p class="desc">Board columns overflow badly below 768px — flagged during review.</p><div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 20</button></div></div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
           </div>
-          <div class="klane va" style="--lc-deep:#2f6fb0;--lc-soft:#e6f0fa">
+          <div class="klane va" style="--lc-deep:#527292;--lc-soft:#F0F4F7">
             <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">3</span></h3>
             <div class="kcard"><div class="top"><span class="t">SSO via SAML</span><span class="prio-chip">High</span></div><p class="desc">Let enterprise customers sign in through their own identity provider.</p><div class="meta"><span class="tag">auth</span><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 31</button></div></div>
             <div class="kcard"><div class="top"><span class="t">Notification digest email</span><span class="prio-chip">Medium</span></div><p class="desc">A daily summary email instead of one email per notification event.</p><div class="meta"><span class="tag">notify</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up mine">▲ 12</button></div></div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
           </div>
-          <div class="klane va" style="--lc-deep:#7a3fb8;--lc-soft:#f1e8fb">
+          <div class="klane va" style="--lc-deep:#5B7FA3;--lc-soft:#F0F4F7">
             <h3><span class="dot"></span><span class="grow">Client Review</span><span class="cnt">1</span></h3>
             <div class="kcard"><div class="top"><span class="t">Org-scoped user search</span><span class="prio-chip">Medium</span></div><p class="desc">Feature-complete; awaiting Acme Corp stakeholder sign-off.</p><div class="meta"><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 14</button></div></div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
           </div>
-          <div class="klane va" style="--lc-deep:#0e700e;--lc-soft:#e7f2e7">
+          <div class="klane va" style="--lc-deep:#457C4F;--lc-soft:#F0F7F1">
             <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">1</span></h3>
             <div class="kcard" style="opacity:.75"><div class="top"><span class="t">Audit log for admin actions</span><span class="prio-chip">Low</span></div><p class="desc">A chronological log of every admin action, filterable by actor and date.</p><div class="meta"><span class="spacer"></span><span class="avatar s">JR</span><button class="up">▲ 8</button></div></div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
@@ -375,29 +379,29 @@
       </div>
       <div class="body">
         <div class="klanes">
-          <div class="klane vb" style="--lc-deep:#57534e">
+          <div class="klane vb" style="--lc-deep:#3E4E60">
             <h3><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
             <div class="kcard"><div class="top"><span class="t">Dark mode support</span><span class="prio-chip">High</span></div><p class="desc">Users working late hours want a dark theme that respects OS preference by default.</p><div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div></div>
             <div class="kcard"><div class="top"><span class="t">Bulk import from CSV</span><span class="prio-chip">Medium</span></div><p class="desc">Let admins bulk-create records by uploading a CSV file instead of one at a time.</p><div class="meta"><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 17</button></div></div>
             <div style="padding:0 12px"><button class="btn subtle" style="width:100%">+ Add idea</button></div>
           </div>
-          <div class="klane vb" style="--lc-deep:#9a5b00">
+          <div class="klane vb" style="--lc-deep:#8A6D2E">
             <h3><span class="grow">In Review</span><span class="cnt">1</span></h3>
             <div class="kcard"><div class="top"><span class="t">Mobile responsive board</span><span class="prio-chip">High</span></div><p class="desc">Board columns overflow badly below 768px — flagged during review.</p><div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 20</button></div></div>
             <div style="padding:0 12px"><button class="btn subtle" style="width:100%">+ Add idea</button></div>
           </div>
-          <div class="klane vb" style="--lc-deep:#2f6fb0">
+          <div class="klane vb" style="--lc-deep:#527292">
             <h3><span class="grow">In Progress</span><span class="cnt">3</span></h3>
             <div class="kcard"><div class="top"><span class="t">SSO via SAML</span><span class="prio-chip">High</span></div><p class="desc">Let enterprise customers sign in through their own identity provider.</p><div class="meta"><span class="tag">auth</span><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 31</button></div></div>
             <div class="kcard"><div class="top"><span class="t">Notification digest email</span><span class="prio-chip">Medium</span></div><p class="desc">A daily summary email instead of one email per notification event.</p><div class="meta"><span class="tag">notify</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up mine">▲ 12</button></div></div>
             <div style="padding:0 12px"><button class="btn subtle" style="width:100%">+ Add idea</button></div>
           </div>
-          <div class="klane vb" style="--lc-deep:#7a3fb8">
+          <div class="klane vb" style="--lc-deep:#5B7FA3">
             <h3><span class="grow">Client Review</span><span class="cnt">1</span></h3>
             <div class="kcard"><div class="top"><span class="t">Org-scoped user search</span><span class="prio-chip">Medium</span></div><p class="desc">Feature-complete; awaiting Acme Corp stakeholder sign-off.</p><div class="meta"><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 14</button></div></div>
             <div style="padding:0 12px"><button class="btn subtle" style="width:100%">+ Add idea</button></div>
           </div>
-          <div class="klane vb" style="--lc-deep:#0e700e">
+          <div class="klane vb" style="--lc-deep:#457C4F">
             <h3><span class="grow">Complete</span><span class="cnt">1</span></h3>
             <div class="kcard" style="opacity:.75"><div class="top"><span class="t">Audit log for admin actions</span><span class="prio-chip">Low</span></div><p class="desc">A chronological log of every admin action, filterable by actor and date.</p><div class="meta"><span class="spacer"></span><span class="avatar s">JR</span><button class="up">▲ 8</button></div></div>
             <div style="padding:0 12px"><button class="btn subtle" style="width:100%">+ Add idea</button></div>
@@ -421,29 +425,29 @@
       </div>
       <div class="body">
         <div class="klanes">
-          <div class="klane vc" style="--lc-deep:#57534e;--lc-soft:#f1f0ee">
+          <div class="klane vc" style="--lc-deep:#3E4E60;--lc-soft:#F1F3F6">
             <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
             <div class="kcard"><div class="top"><span class="t">Dark mode support</span><span class="prio-chip">High</span></div><p class="desc">Users working late hours want a dark theme that respects OS preference by default.</p><div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div></div>
             <div class="kcard"><div class="top"><span class="t">Bulk import from CSV</span><span class="prio-chip">Medium</span></div><p class="desc">Let admins bulk-create records by uploading a CSV file instead of one at a time.</p><div class="meta"><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 17</button></div></div>
             <button class="btn subtle" style="width:100%;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)">+ Add idea</button>
           </div>
-          <div class="klane vc" style="--lc-deep:#9a5b00;--lc-soft:#f7ecdc">
+          <div class="klane vc" style="--lc-deep:#8A6D2E;--lc-soft:#F9F6EE">
             <h3><span class="dot"></span><span class="grow">In Review</span><span class="cnt">1</span></h3>
             <div class="kcard"><div class="top"><span class="t">Mobile responsive board</span><span class="prio-chip">High</span></div><p class="desc">Board columns overflow badly below 768px — flagged during review.</p><div class="meta"><span class="tag">ui</span><span class="spacer"></span><span class="avatar s">TD</span><button class="up">▲ 20</button></div></div>
             <button class="btn subtle" style="width:100%;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)">+ Add idea</button>
           </div>
-          <div class="klane vc" style="--lc-deep:#2f6fb0;--lc-soft:#e6f0fa">
+          <div class="klane vc" style="--lc-deep:#527292;--lc-soft:#F0F4F7">
             <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">3</span></h3>
             <div class="kcard"><div class="top"><span class="t">SSO via SAML</span><span class="prio-chip">High</span></div><p class="desc">Let enterprise customers sign in through their own identity provider.</p><div class="meta"><span class="tag">auth</span><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 31</button></div></div>
             <div class="kcard"><div class="top"><span class="t">Notification digest email</span><span class="prio-chip">Medium</span></div><p class="desc">A daily summary email instead of one email per notification event.</p><div class="meta"><span class="tag">notify</span><span class="spacer"></span><span class="avatar s">JR</span><button class="up mine">▲ 12</button></div></div>
             <button class="btn subtle" style="width:100%;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)">+ Add idea</button>
           </div>
-          <div class="klane vc" style="--lc-deep:#7a3fb8;--lc-soft:#f1e8fb">
+          <div class="klane vc" style="--lc-deep:#5B7FA3;--lc-soft:#F0F4F7">
             <h3><span class="dot"></span><span class="grow">Client Review</span><span class="cnt">1</span></h3>
             <div class="kcard"><div class="top"><span class="t">Org-scoped user search</span><span class="prio-chip">Medium</span></div><p class="desc">Feature-complete; awaiting Acme Corp stakeholder sign-off.</p><div class="meta"><span class="spacer"></span><span class="avatar s">AL</span><button class="up">▲ 14</button></div></div>
             <button class="btn subtle" style="width:100%;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)">+ Add idea</button>
           </div>
-          <div class="klane vc" style="--lc-deep:#0e700e;--lc-soft:#e7f2e7">
+          <div class="klane vc" style="--lc-deep:#457C4F;--lc-soft:#F0F7F1">
             <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">1</span></h3>
             <div class="kcard" style="opacity:.85"><div class="top"><span class="t">Audit log for admin actions</span><span class="prio-chip">Low</span></div><p class="desc">A chronological log of every admin action, filterable by actor and date.</p><div class="meta"><span class="spacer"></span><span class="avatar s">JR</span><button class="up">▲ 8</button></div></div>
             <button class="btn subtle" style="width:100%;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)">+ Add idea</button>
@@ -476,7 +480,7 @@
           <input type="text" style="width:100%;margin:6px 0 20px;font-size:18px;padding:10px 12px" value="Dark mode support">
           <label style="font-size:12px;font-weight:700;color:var(--ink-3)">Description</label>
           <textarea style="width:100%;min-height:100px;margin-top:6px" class="prose">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu.</textarea>
-          <h2 style="font-size:19px;margin:30px 0 16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif;font-weight:700">4 comments</span></h2>
+          <h2 style="font-size:19px;margin:30px 0 16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:700">4 comments</span></h2>
           <div class="comment"><div class="byline"><span class="avatar s">MP</span><span class="who">Mia Park</span><span class="when">2 hours ago</span></div><p><span class="mention">@Jordan Reyes</span> can we scope this to the board view first? Full app theming is a bigger lift.</p></div>
           <div class="comment"><div class="byline"><span class="avatar s">TD</span><span class="who">Tom Diaz</span><span class="when">1 hour ago</span></div><p>+1 — the Fluent design tokens should make this straightforward.</p></div>
           <div style="display:flex;gap:12px">

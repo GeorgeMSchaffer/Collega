@@ -1,0 +1,49 @@
+{
+  "scenario": "profile",
+  "step": "portrait.set.anonymous",
+  "endpoint": "PUT /auth/me/portrait",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Everyone owns their own portrait.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/auth/me/portrait",
+    "body": {
+      "imageBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:47 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/auth/me/portrait",
+      "traceId": "00-bdb336edad4f2ec0de89f19817f2e3ca-e3347f71335c8fbd-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/auth/me/portrait",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

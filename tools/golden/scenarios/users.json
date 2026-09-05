@@ -1,0 +1,202 @@
+{
+  "name": "users",
+  "description": "Reading and administering a single user.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "create",
+      "endpoint": "POST /organizations/{organizationId}/users",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/organizations/{{orgId}}/users",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Subject",
+        "email": "golden.subject@acme-robotics.demo.collega.test",
+        "role": "User",
+        "initialPassword": "{{userPassword}}"
+      },
+      "note": "Every case below acts on an account this scenario created, never a seeded one.",
+      "bind": {
+        "subjectUserId": "$.body.userId"
+      }
+    },
+    {
+      "id": "get.siteadmin",
+      "endpoint": "GET /users/{userId}",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/users/{{subjectUserId}}"
+    },
+    {
+      "id": "get.orgadmin",
+      "endpoint": "GET /users/{userId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/users/{{subjectUserId}}"
+    },
+    {
+      "id": "get.user",
+      "endpoint": "GET /users/{userId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/users/{{subjectUserId}}"
+    },
+    {
+      "id": "get.readonly",
+      "endpoint": "GET /users/{userId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/users/{{subjectUserId}}"
+    },
+    {
+      "id": "get.anonymous",
+      "endpoint": "GET /users/{userId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/users/{{subjectUserId}}"
+    },
+    {
+      "id": "update.user",
+      "endpoint": "PUT /users/{userId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/users/{{subjectUserId}}",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Subject Renamed",
+        "email": "golden.subject@acme-robotics.demo.collega.test",
+        "role": "ReadOnly",
+        "status": "Active"
+      },
+      "note": "Also a role change, which is the interesting half of this endpoint."
+    },
+    {
+      "id": "update.readonly",
+      "endpoint": "PUT /users/{userId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/users/{{subjectUserId}}",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Subject Renamed",
+        "email": "golden.subject@acme-robotics.demo.collega.test",
+        "role": "ReadOnly",
+        "status": "Active"
+      },
+      "note": "Also a role change, which is the interesting half of this endpoint."
+    },
+    {
+      "id": "update.anonymous",
+      "endpoint": "PUT /users/{userId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/users/{{subjectUserId}}",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Subject Renamed",
+        "email": "golden.subject@acme-robotics.demo.collega.test",
+        "role": "ReadOnly",
+        "status": "Active"
+      },
+      "note": "Also a role change, which is the interesting half of this endpoint."
+    },
+    {
+      "id": "update.siteadmin",
+      "endpoint": "PUT /users/{userId}",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/users/{{subjectUserId}}",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Subject Renamed",
+        "email": "golden.subject@acme-robotics.demo.collega.test",
+        "role": "ReadOnly",
+        "status": "Active"
+      },
+      "note": "Also a role change, which is the interesting half of this endpoint."
+    },
+    {
+      "id": "update.orgadmin",
+      "endpoint": "PUT /users/{userId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/users/{{subjectUserId}}",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Subject Renamed",
+        "email": "golden.subject@acme-robotics.demo.collega.test",
+        "role": "ReadOnly",
+        "status": "Active"
+      },
+      "note": "Also a role change, which is the interesting half of this endpoint."
+    },
+    {
+      "id": "temporary-password.user",
+      "endpoint": "POST /users/{userId}/temporary-password",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/users/{{subjectUserId}}/temporary-password",
+      "note": "Returns a working password, which is why the corpus redacts it."
+    },
+    {
+      "id": "temporary-password.readonly",
+      "endpoint": "POST /users/{userId}/temporary-password",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/users/{{subjectUserId}}/temporary-password",
+      "note": "Returns a working password, which is why the corpus redacts it."
+    },
+    {
+      "id": "temporary-password.anonymous",
+      "endpoint": "POST /users/{userId}/temporary-password",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/users/{{subjectUserId}}/temporary-password",
+      "note": "Returns a working password, which is why the corpus redacts it."
+    },
+    {
+      "id": "temporary-password.siteadmin",
+      "endpoint": "POST /users/{userId}/temporary-password",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/users/{{subjectUserId}}/temporary-password",
+      "note": "Returns a working password, which is why the corpus redacts it."
+    },
+    {
+      "id": "temporary-password.orgadmin",
+      "endpoint": "POST /users/{userId}/temporary-password",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/users/{{subjectUserId}}/temporary-password",
+      "note": "Returns a working password, which is why the corpus redacts it."
+    }
+  ]
+}

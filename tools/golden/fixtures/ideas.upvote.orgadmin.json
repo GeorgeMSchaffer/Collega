@@ -1,0 +1,39 @@
+{
+  "scenario": "ideas",
+  "step": "upvote.orgadmin",
+  "endpoint": "POST /ideas/{ideaId}/upvote/toggle",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/ideas/5ea9641a-72ad-445a-921c-8de278e777b9/upvote/toggle",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "ideaId": "5ea9641a-72ad-445a-921c-8de278e777b9",
+      "hasUpvoted": true,
+      "upvoteCount": 1
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "hasUpvoted": true,
+      "ideaId": "<guid@create.user.body.ideaId>",
+      "upvoteCount": 1
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "scenario": "boards",
+  "step": "list.siteadmin",
+  "endpoint": "GET /organizations/{organizationId}/boards",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/boards",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:41 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "Ideas",
+        "allowUserStatusUpdate": true,
+        "swimlaneCount": 5
+      },
+      {
+        "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "Opportunities",
+        "allowUserStatusUpdate": true,
+        "swimlaneCount": 5
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "allowUserStatusUpdate": true,
+        "boardId": "<guid@list.siteadmin.body[0].boardId>",
+        "name": "Ideas",
+        "organizationId": "<guid@org.body.organizationId>",
+        "swimlaneCount": 5
+      },
+      {
+        "allowUserStatusUpdate": true,
+        "boardId": "<guid@list.siteadmin.body[1].boardId>",
+        "name": "Opportunities",
+        "organizationId": "<guid@org.body.organizationId>",
+        "swimlaneCount": 5
+      }
+    ]
+  }
+}

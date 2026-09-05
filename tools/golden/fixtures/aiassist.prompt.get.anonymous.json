@@ -1,0 +1,46 @@
+{
+  "scenario": "aiassist",
+  "step": "prompt.get.anonymous",
+  "endpoint": "GET /ai-assist/prompt",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "The built-in default until something is published over it.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/ai-assist/prompt",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:40 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ai-assist/prompt",
+      "traceId": "00-5c8fe3f7f8d14cb5700033d16910721e-eac935b33afe7ad4-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/ai-assist/prompt",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

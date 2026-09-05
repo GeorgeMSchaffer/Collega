@@ -4,9 +4,14 @@
 @inject ApiClient Api
 
 @*
-    Centered create-idea modal (SPEC/20-feature-client-ui.md → "Idea Detail Surface", locked 2026-08-10;
-    comp SPEC/mockups/comp-c-review-09-detail-surfaces.html "Form layover"). Opened from the Ideas list
-    and board headers. On success it closes and returns control to the host (no drawer auto-opens).
+    Create-idea surface (SPEC/20-feature-client-ui.md → "Idea Detail Surface"). Opened from the Ideas
+    list and board headers. On success it closes and returns control to the host (no detail drawer
+    auto-opens).
+
+    Renders in the right slide-in DrawerShell since 2026-08-17 (user decision), not the centered
+    CreateModalShell it used from 2026-08-10. That completes the 2026-08-14 admin-create move, so every
+    list/detail surface now creates, reads and edits through the same right-edge drawer. The type name
+    is kept as-is to hold the change surgical; it is a drawer despite the "Modal" in the name.
 
     Priority is included even though the review comp omits it, because the create contract
     (SPEC/30-Contracts.md POST /boards/{boardId}/ideas) requires it.
@@ -19,14 +24,14 @@
 *@
 
 @*
-    Chrome (overlay, centered card, header, scroll body, footer, and dismissal) is delegated to the
-    reusable CreateModalShell; everything below is Idea-specific content. Cancel is passed as OnClose so
-    the modal can block dismissal mid-create.
+    Chrome (overlay, right panel, header, scroll body, footer, and dismissal) is delegated to the
+    reusable DrawerShell — the same shell IdeaDrawer and the five admin pages use; everything below is
+    Idea-specific content. Cancel is passed as OnClose so the surface can block dismissal mid-create.
 *@
-<CreateModalShell IsOpen="Open" OnClose="Cancel"
-                  Eyebrow="New idea" Title="Create an idea"
-                  Meta="@(_boardName is { Length: > 0 } ? _boardName : "Choose a board")"
-                  FooterContent="RenderFooter">
+<DrawerShell IsOpen="Open" OnClose="Cancel"
+             Eyebrow="New idea" Title="Create an idea"
+             Meta="@(_boardName is { Length: > 0 } ? _boardName : "Choose a board")"
+             FooterContent="RenderFooter">
     @if (_error is not null)
     {
         <div class="autherror" role="alert">@_error</div>
@@ -196,10 +201,10 @@
                         }
                     </div>
     }
-</CreateModalShell>
+</DrawerShell>
 
 @code {
-    // Modal action bar, passed as the shell footer.
+    // Create action bar, passed as the shell footer.
     private RenderFragment RenderFooter => @<text>
         <button class="btn" @onclick="Cancel" disabled="@_creating">Cancel</button>
         <button class="btn primary" @onclick="Create" disabled="@(_creating || !_hasBoard || _loadingContext)">
@@ -465,7 +470,14 @@
         if (impactsResult.Succeeded)
         {
             _businessImpacts = impactsResult.Value!.Where(b => !b.IsDeleted).OrderBy(b => b.SortOrder).ToList();
-            _businessImpactId = _businessImpacts.FirstOrDefault()?.BusinessImpactId ?? "";
+
+            // Medium by name, not first-in-list: the seeded order is most-severe-first, so taking the
+            // first option would pre-mark every new idea Critical and inflate reported severity through
+            // a default nobody chose. Matches Priority's fixed Medium default above. Falls back to
+            // first-active for an organization that renamed or removed Medium.
+            _businessImpactId = (_businessImpacts.FirstOrDefault(b =>
+                    string.Equals(b.Name, "Medium", StringComparison.OrdinalIgnoreCase))
+                ?? _businessImpacts.FirstOrDefault())?.BusinessImpactId ?? "";
         }
         var fieldsResult = await Api.GetActiveFieldDefinitionsAsync(organizationId);
         if (fieldsResult.Succeeded)

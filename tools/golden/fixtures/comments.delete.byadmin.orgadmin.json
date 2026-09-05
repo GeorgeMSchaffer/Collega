@@ -1,0 +1,28 @@
+{
+  "scenario": "comments",
+  "step": "delete.byadmin.orgadmin",
+  "endpoint": "DELETE /comments/{commentId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "An Org Admin may remove a comment they did not write, though not edit it.",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/comments/5469aebb-ae2f-430b-8036-089e12bb9bc0",
+    "body": null
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Fri, 04 Sep 2026 03:55:43 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

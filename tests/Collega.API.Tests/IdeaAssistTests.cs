@@ -93,6 +93,77 @@ public sealed class IdeaAssistTests : IClassFixture<CollegaApiFactory>
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    // ---- Availability probe (rule 32a) ----
+
+    /// <summary>
+    /// The whole point of the probe is that a plain <c>User</c> can call it: creating ideas is a
+    /// User-role activity, and the org-scoped settings endpoint is OrgAdmin/SiteAdmin only, so it could
+    /// never have answered this question for the people who need it. ReadOnly is included because the
+    /// endpoint reports deployment state and gates nothing — it is not an authorization boundary.
+    /// </summary>
+    [Theory]
+    [InlineData("User")]
+    [InlineData("ReadOnly")]
+    [InlineData("OrgAdmin")]
+    public async Task Availability_Is_Readable_By_Any_Authenticated_Member(string role)
+    {
+        using var client = _factory.CreateClient();
+        await SiteAdminAuth.AuthenticateAsSiteAdminAsync(client);
+
+        var org = await CreateOrganizationAsync(client, $"Assist Availability {role} Robotics");
+        using var member = await CreateMemberClientAsync(client, org.OrganizationId, role);
+
+        var response = await member.GetAsync("/api/v1/ai-assist/availability");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    /// <summary>
+    /// The default harness runs the feature dark, so this also pins that the probe agrees with the
+    /// turn endpoint: both report unavailable for the same deployment, which is what lets the client
+    /// trust the probe instead of provoking a 503 to find out.
+    /// </summary>
+    [Fact]
+    public async Task Availability_Is_False_When_The_Feature_Is_Dark()
+    {
+        using var client = _factory.CreateClient();
+        await SiteAdminAuth.AuthenticateAsSiteAdminAsync(client);
+
+        var org = await CreateOrganizationAsync(client, "Assist Dark Robotics");
+        using var member = await CreateMemberClientAsync(client, org.OrganizationId, "User");
+
+        var body = await member.GetStringAsync("/api/v1/ai-assist/availability");
+
+        Assert.Contains("\"available\":false", body.Replace(" ", string.Empty), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>The probe must not leak <i>why</i> it is false — see rule 31's deliberate opacity.</summary>
+    [Fact]
+    public async Task Availability_Reports_Only_A_Boolean()
+    {
+        using var client = _factory.CreateClient();
+        await SiteAdminAuth.AuthenticateAsSiteAdminAsync(client);
+
+        var org = await CreateOrganizationAsync(client, "Assist Opaque Robotics");
+        using var member = await CreateMemberClientAsync(client, org.OrganizationId, "User");
+
+        var body = await member.GetStringAsync("/api/v1/ai-assist/availability");
+        using var parsed = System.Text.Json.JsonDocument.Parse(body);
+
+        var properties = parsed.RootElement.EnumerateObject().Select(p => p.Name).ToList();
+        Assert.Equal(new[] { "available" }, properties.Select(p => p.ToLowerInvariant()));
+    }
+
+    [Fact]
+    public async Task Availability_Is_Unauthorized_For_Anonymous_Callers()
+    {
+        using var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1/ai-assist/availability");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     [Fact]
     public async Task Turn_Rejects_A_Transcript_That_Does_Not_End_With_A_User_Entry()
     {

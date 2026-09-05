@@ -1,0 +1,13 @@
+{
+  "id": "impact-inference",
+  "fixture": "acme",
+  "note": "Customers threatening to leave over repeated mis-shipments should not land as Low or Medium. Scored on impact rather than type, because impact is the judgement being tested.",
+  "turns": [
+    "Twice this month we shipped to the wrong address because the address field lets you free-type over the validated one. Two customers are threatening to leave."
+  ],
+  "expect": {
+    "inScope": true,
+    "businessImpact": "Critical",
+    "titleSet": true
+  }
+}

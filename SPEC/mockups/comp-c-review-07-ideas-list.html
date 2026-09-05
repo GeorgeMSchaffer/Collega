@@ -1,50 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Review 07: Ideas List</title>
 <style>
   /* Tokens, rail, and component classes copied verbatim from comp-c-review-06-lockin-v5-final.html — do not re-derive. */
   :root{
-    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
-    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
-    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
-    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
-    --im-low-deep:#7d6270; --im-low-soft:#f2ecf0;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#3E4E60;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
+    --im-high-deep:#B64B4B; --im-high-soft:#F8EFEF;
+    --im-med-deep:#C97A7A; --im-med-soft:#F1F3F6;
+    --im-low-deep:#B64B4B; --im-low-soft:#F1F3F6;
     --shadow:0 1px 2px rgba(0,0,0,.08);
-    --radius-card:6px; --radius-btn:4px;
+    --radius-card:2px; --radius-btn:2px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
-  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
   .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;position:relative}
-  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
-  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
   .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
   .rail a.on{background:var(--accent-soft);color:var(--accent)}
-  .rail a:hover{background:#f3f2f1}
+  .rail a:hover{background:#F1F3F6}
   .rail .push{flex:1}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
   .avatar.s{width:24px;height:24px;font-size:9.5px}
-  .avatar.more{background:#e4e2df;color:var(--ink-2);font-weight:700}
+  .avatar.more{background:#DDE1E6;color:var(--ink-2);font-weight:700}
   .avatarwrap{position:relative}
   .avatarbtn{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;line-height:0}
-  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
+  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
   .avatarmenu.show{display:block}
   .avatarmenu .who{padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.5}
   .avatarmenu .who strong{color:var(--ink);font-size:13px;display:block}
   .avatarmenu .item{display:block;padding:9px 14px;font-size:13px;color:var(--ink);text-decoration:none;cursor:pointer}
-  .avatarmenu .item:hover{background:#f3f2f1}
+  .avatarmenu .item:hover{background:#F1F3F6}
   .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
   .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
   .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
@@ -54,29 +58,29 @@
   .pagehead .row .grow{flex:1}
   .body{padding:26px 40px;max-width:1200px}
   .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f3f2f1}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:var(--accent-deep)}
   .btn.subtle{border-color:transparent;color:var(--accent)}
-  input[type=text]{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input[type=text]{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
-  select{border:1px solid #8a8886;border-radius:4px;padding:6px 9px;font-size:12.5px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  select{border:1px solid #818E9C;border-radius:2px;padding:6px 9px;font-size:12.5px;font-family:inherit;background:var(--surface);color:var(--ink)}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line)}
-  td{padding:12px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  td{padding:12px 16px;border-bottom:1px solid #F1F3F6;vertical-align:middle}
   tr:last-child td{border-bottom:none}
-  tr:hover td{background:#faf9f8}
+  tr:hover td{background:#F7F9FB}
   .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
-  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:760px;line-height:1.5}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 2px 2px 0;margin-top:18px;max-width:760px;line-height:1.5}
   /* focus-visible: every interactive control gets a visible keyboard focus ring */
   .btn:focus-visible,.rail a:focus-visible,tr:focus-visible,
   .chip:focus-visible,.avatarbtn:focus-visible,.avatarmenu .item:focus-visible,
-  .pager button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .pager button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
   /* filter chips — same component as Board List's chipbar in v5 */
   .chipbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-  .chip{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
-  .chip:hover{background:#f3f2f1}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip:hover{background:#F1F3F6}
   .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .chip.on:hover{background:var(--accent-deep)}
   .avatarstack{display:inline-flex;align-items:center;flex-shrink:0}
@@ -95,9 +99,9 @@
   .pager .navbtns{display:flex;gap:6px}
   .pager .navbtns button{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:5px 12px;font-size:12.5px;cursor:pointer;color:var(--ink-2)}
   .pager .navbtns button:disabled{opacity:.4;cursor:default}
-  .pager .navbtns button:not(:disabled):hover{background:#f3f2f1}
+  .pager .navbtns button:not(:disabled):hover{background:#F1F3F6}
   .emptystate{border:1.5px dashed var(--line);border-radius:var(--radius-card);padding:60px 24px;text-align:center;color:var(--ink-3)}
-  .emptystate h3{font-family:Georgia,serif;font-size:16px;color:var(--ink-2);margin-bottom:6px;font-weight:600}
+  .emptystate h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:16px;color:var(--ink-2);margin-bottom:6px;font-weight:600}
   .emptystate p{font-size:13px;margin-bottom:18px}
 </style>
 </head>
@@ -146,7 +150,7 @@
                 <td class="t-cell"><div class="t">Dark mode support</div><div class="board">Product Ideas</div></td>
                 <td><div class="who-cell"><span class="avatar s">TD</span>Tom Diaz</div></td>
                 <td><span class="avatarstack"><span class="avatar s">MP</span><span class="avatar s">JR</span><span class="avatar s">TD</span><span class="avatar s more">+1</span></span></td>
-                <td><span class="statusdot"><span class="d" style="background:#2f6fb0"></span>In Progress</span></td>
+                <td><span class="statusdot"><span class="d" style="background:#527292"></span>In Progress</span></td>
                 <td>Jul 2, 2026</td>
                 <td><button class="btn subtle">Details</button></td>
               </tr>
@@ -154,7 +158,7 @@
                 <td class="t-cell"><div class="t">Bulk import from CSV</div><div class="board">Product Ideas</div></td>
                 <td><div class="who-cell"><span class="avatar s">TD</span>Tom Diaz</div></td>
                 <td><span class="avatarstack"><span class="avatar s">TD</span><span class="avatar s">JR</span></span></td>
-                <td><span class="statusdot"><span class="d" style="background:#57534e"></span>New / Pending</span></td>
+                <td><span class="statusdot"><span class="d" style="background:#3E4E60"></span>New / Pending</span></td>
                 <td>Aug 6, 2026</td>
                 <td><button class="btn subtle">Details</button></td>
               </tr>
@@ -162,7 +166,7 @@
                 <td class="t-cell"><div class="t">SSO via SAML</div><div class="board">Platform Backlog</div></td>
                 <td><div class="who-cell"><span class="avatar s">AL</span>Ana Liu</div></td>
                 <td><span class="avatarstack"><span class="avatar s">AL</span><span class="avatar s">JR</span></span></td>
-                <td><span class="statusdot"><span class="d" style="background:#2f6fb0"></span>In Progress</span></td>
+                <td><span class="statusdot"><span class="d" style="background:#527292"></span>In Progress</span></td>
                 <td>Jul 29, 2026</td>
                 <td><button class="btn subtle">Details</button></td>
               </tr>
@@ -170,7 +174,7 @@
                 <td class="t-cell"><div class="t">Mobile responsive board</div><div class="board">Platform Backlog</div></td>
                 <td><div class="who-cell"><span class="avatar s">JR</span>Jordan Reyes</div></td>
                 <td><span class="avatarstack"><span class="avatar s">TD</span></span></td>
-                <td><span class="statusdot"><span class="d" style="background:#9a5b00"></span>In Review</span></td>
+                <td><span class="statusdot"><span class="d" style="background:#8A6D2E"></span>In Review</span></td>
                 <td>Aug 2, 2026</td>
                 <td><button class="btn subtle">Details</button></td>
               </tr>
@@ -178,7 +182,7 @@
                 <td class="t-cell"><div class="t">Notification digest email</div><div class="board">Platform Backlog</div></td>
                 <td><div class="who-cell"><span class="avatar s">JR</span>Jordan Reyes</div></td>
                 <td><span class="avatarstack"><span class="avatar s">JR</span></span></td>
-                <td><span class="statusdot"><span class="d" style="background:#2f6fb0"></span>In Progress</span></td>
+                <td><span class="statusdot"><span class="d" style="background:#527292"></span>In Progress</span></td>
                 <td>Aug 3, 2026</td>
                 <td><button class="btn subtle">Details</button></td>
               </tr>
@@ -186,7 +190,7 @@
                 <td class="t-cell"><div class="t">Org-scoped user search</div><div class="board">Customer Feedback</div></td>
                 <td><div class="who-cell"><span class="avatar s">AL</span>Ana Liu</div></td>
                 <td><span class="avatarstack"><span class="avatar s">AL</span><span class="avatar s">JR</span></span></td>
-                <td><span class="statusdot"><span class="d" style="background:#7a3fb8"></span>Client Review</span></td>
+                <td><span class="statusdot"><span class="d" style="background:#5B7FA3"></span>Client Review</span></td>
                 <td>Aug 1, 2026</td>
                 <td><button class="btn subtle">Details</button></td>
               </tr>
@@ -194,7 +198,7 @@
                 <td class="t-cell"><div class="t">Audit log for admin actions</div><div class="board">Product Ideas</div></td>
                 <td><div class="who-cell"><span class="avatar s">JR</span>Jordan Reyes</div></td>
                 <td><span class="avatarstack"><span class="avatar s">JR</span></span></td>
-                <td><span class="statusdot"><span class="d" style="background:#0e700e"></span>Complete</span></td>
+                <td><span class="statusdot"><span class="d" style="background:#457C4F"></span>Complete</span></td>
                 <td>Jul 8, 2026</td>
                 <td><button class="btn subtle">Details</button></td>
               </tr>
@@ -206,7 +210,7 @@
           <span class="sizesel">Rows per page <select><option>25</option><option>50</option><option>100</option><option>250</option></select></span>
           <span class="navbtns"><button disabled>‹ Previous</button><button disabled>Next ›</button></span>
         </div>
-        <div class="note">Columns match <span class="code" style="font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:2px 6px;font-size:11.5px">SPEC/20-feature-client-ui-revisions.md</span>'s Ideas Page spec exactly (Title, Created By, Assigned To, Status, Created Date). Since this list spans every board, the board name is shown as a secondary line under the title rather than as its own column — a judgment call, not a spec requirement. Search and pagination are server-side per the Uniform List Conventions; no per-board endpoint exists yet for this query shape (only <span class="code" style="font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:2px 6px;font-size:11.5px">GET /api/v1/boards/{boardId}/ideas</span> in SPEC/30-Contracts.md) — flagged as an open API-contract gap, not resolved by this comp.</div>
+        <div class="note">Columns match <span class="code" style="font-family:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;background:#F1F3F6;border:1px solid var(--line);border-radius:2px;padding:2px 6px;font-size:11.5px">SPEC/20-feature-client-ui-revisions.md</span>'s Ideas Page spec exactly (Title, Created By, Assigned To, Status, Created Date). Since this list spans every board, the board name is shown as a secondary line under the title rather than as its own column — a judgment call, not a spec requirement. Search and pagination are server-side per the Uniform List Conventions; no per-board endpoint exists yet for this query shape (only <span class="code" style="font-family:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;background:#F1F3F6;border:1px solid var(--line);border-radius:2px;padding:2px 6px;font-size:11.5px">GET /api/v1/boards/{boardId}/ideas</span> in SPEC/30-Contracts.md) — flagged as an open API-contract gap, not resolved by this comp.</div>
       </div>
     </div>
   </div>

@@ -81,13 +81,61 @@
       "PowerShell(docker inspect *)",
       "PowerShell(docker logs *)",
       "PowerShell(dotnet build *)",
-      "PowerShell(dotnet test *)"
+      "PowerShell(dotnet test *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega status *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega log *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega branch *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega diff *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega show *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega rev-parse *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega rev-list *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega ls-files *)",
+      "Bash(git -C /Users/gms/Documents/code/Collega worktree list*)",
+      "Bash(git check-ignore *)",
+      "Bash(git grep *)",
+      "Bash(git ls-tree *)",
+      "Bash(git --no-pager log *)",
+      "Bash(git --no-pager diff *)",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__read_page",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__claude-in-chrome__find",
+      "mcp__claude-in-chrome__read_console_messages"
     ],
     "additionalDirectories": [
       "/tmp"
     ]
   },
   "enabledPlugins": {
-    "agent-skills@addy-agent-skills": true
+    "agent-skills@addy-agent-skills": true,
+    "frontend-design@claude-plugins-official": true,
+    "azure-sql-developer@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/gms/.local/bin/graphify hook-guard search"
+          }
+        ]
+      },
+      {
+        "matcher": "Read|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/gms/.local/bin/graphify hook-guard read"
+          }
+        ]
+      }
+    ]
   }
 }

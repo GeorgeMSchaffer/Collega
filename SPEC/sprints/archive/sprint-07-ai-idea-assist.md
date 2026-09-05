@@ -1,8 +1,6 @@
 # Sprint 7: AI-Assisted Idea Drafting (Idea Brainstorm Chat)
 
-**Status:** **Complete (2026-08-27).** Built and reviewed 2026-08-16; closed 2026-08-27 when the last Definition-of-Done item landed (`Ai__ApiKey` named as App Service configuration in `SPEC/50-azure-deployment.md` §3 and in `sprint-08-azure-deployment.md`). P0 and P1 backlog complete except the P2 prompt-cache check, which was verified live rather than automated.
-
-**The one spec conflict this sprint raised is resolved (2026-08-27, user decision).** `30-Contracts.md` had capped the AI transcript at "max 20 entries" while `20-feature-ai-idea-assist.md` rule 5 capped it at "20 user turns" — a 20-turn conversation is ~40 entries, so the contract reading would have halved the feature to 10 turns. The shipped code already enforced rule 5 plus a 40-entry structural bound (`IdeaAssistService.ValidateTranscript`), so the contract was the party out of step and was corrected to "max 40 entries of which at most 20 may have `role` of `user`". No code change.
+**Status:** Complete (2026-08-18). Built and reviewed 2026-08-16; the P2 prompt-cache check was verified live rather than automated. A follow-on batch landed 2026-08-18 — see "Delivered after the review" below.
 **Sequence:** 7 of 8 — see `SPEC/95-next-sprints.md` for the full sequence. Starts after Sprint 6 (`archive/sprint-06-view-as.md`, complete) **and Sprint 6.5** (`sprint-06.5-bug-fixes-and-tweaks.md`), which supersedes all other sprints per the user's 2026-08-14 decision; precedes Sprint 8 (`sprint-08-azure-deployment.md`) so the first Azure deployment ships this feature and provisions its key. Scheduled 2026-08-11 at user request ("before the Azure deployment work but after the Postgres migration"). Azure was renumbered 7 → 8 to make room.
 **When complete:** move this file to `SPEC/sprints/archive/`, set Status to `Complete` with the completion date, and update `SPEC/95-next-sprints.md`'s index.
 
@@ -73,7 +71,7 @@ Kept for history like Comps A and B before them; not implementation targets.
 |---|---|---|
 | P0 | **`IIdeaDraftModel` abstraction (Application) + Anthropic implementation (Infrastructure)** | Vendor stays out of Application/Domain per the architecture rules. Model `claude-opus-5`, adaptive thinking, structured outputs. Key read from configuration; feature is off (not broken) when absent. |
 | P0 | **Per-request JSON Schema from retrieval** | `ideaTypeId` / `businessImpactId` are enums of the org's real active option ids; `additionalProperties: false`; title/description length-capped to the domain maxima. **This is the containment mechanism** — do not substitute prompt instructions for it. |
-| P0 | **`IdeaAssistService` (Application)** | Assembles retrieval context scoped to the caller's org claim; applies the scope gate; validates every returned id against the retrieved set before it reaches the client; enforces the 20-turn cap and the three-strikes close. |
+| P0 | **`IdeaAssistService` (Application)** | Assembles retrieval context scoped to the caller's org claim; applies the scope gate; validates every returned id against the retrieved set before it reaches the client; enforces the 20-entry transcript cap and the three-strikes close. |
 | P0 | **`POST /api/v1/boards/{boardId}/idea-assist/turns`** | Per the contract. Read Only refused. Rate limited per user and per org. `503` (not an error surface) when unconfigured. |
 | P0 | **Client: brainstorm modal rewrite** | Swap `_NextAssistantPrompt` for the API call; render `nextQuestion`; drop out-of-scope turns from the transcript; preserve **Skip & fill manually** as an always-available, never-gated path; pending + failed-turn states. |
 | P0 | **Client: pre-filled create modal** | `IdeaCreateModal` accepts the draft (title, description, idea type, business impact, priority) as editable defaults with a suggestion indicator, replacing today's `InitialDescription`-only seam. |
@@ -96,7 +94,7 @@ Kept for history like Comps A and B before them; not implementation targets.
 | Cross-org data leak through retrieval | Critical tenant-isolation breach | Context assembled server-side from the token's org claim only; client sends no context; returned ids re-validated against the retrieved set before reaching the client; org-scoping tests mirror the existing service-level suite |
 | Prompt injection via existing idea/tag text | Assistant follows attacker instructions from stored content | Retrieved content fenced and labeled as untrusted data; the model has no tool access and no write path, so the blast radius is a bad suggestion the user can see and edit |
 | Deployment key leaks into logs, audit, or client | Credential compromise | Key never returned by any endpoint, never logged, never sent to the client; audit records outcomes and usage, not content; Code Reviewer verifies |
-| Unbounded cost from probing or long conversations | Runaway spend | 20-turn cap, three-strikes close on out-of-scope, per-user and per-org rate limits, cached stable prefix |
+| Unbounded cost from probing or long conversations | Runaway spend | 20-entry transcript cap, three-strikes close on out-of-scope, per-user and per-org rate limits, cached stable prefix |
 | Feature failure blocks idea creation | Core flow broken by an optional feature | Degradation rule (P0) plus an always-available Skip path; the unconfigured case returns `503` and the client falls back silently |
 
 ## Code review — 2026-08-16
@@ -111,9 +109,24 @@ Mandatory reviewer gate (no fast-track: third-party credential + untrusted-conte
 | 4 | **Low** | The refusal note claimed a strike count the client cannot know, and claimed it wrong ("1 more" after the first of three). The turn response carries no strike count, so the message no longer names a number rather than extending the contract mid-review. |
 | 5 | **Low** | `Truncate` could split a UTF-16 surrogate pair, emitting a lone surrogate that the create form would then reject. The schema caps length in code points and C# counts UTF-16 units — they disagree exactly where emoji appear. |
 
-**Open question for the user, not a defect.** `30-Contracts.md` says the transcript is capped at *"max 20 entries"*; rule 5 says *"capped at 20 user turns"*. A 20-user-turn conversation is ~40 entries, so the two canonical specs disagree and one of them halves the conversation. Implemented as rule 5 (20 user turns), because that rule also describes the behaviour at the cap; flagged rather than silently reconciled, per CLAUDE.md.
+**Resolved 2026-08-17 by user decision: `30-Contracts.md`'s "max 20 entries" wins.** `30-Contracts.md` said the transcript is capped at *"max 20 entries"*; rule 5 said *"capped at 20 user turns"* — ~40 entries, so one of the two halved the conversation. It was built to rule 5 and flagged rather than silently reconciled, per CLAUDE.md; the user chose the contract. Rule 5 now counts entries, giving **10 user turns** rather than 20, since a transcript alternates and must end with a user entry (largest valid request: 19 entries). Three Application tests cover the boundary, including one that pins the reversal: an 11-user-entry transcript is 21 entries once assistant replies are interleaved and is now refused, where the old reading accepted it.
 
 Verified after the fixes, against the live model: three consecutive refusals close the chat **using the transcript the real client actually sends** (the exact case finding 1 broke), and the rate limiter answers `429` with `Retry-After: 60` on the eleventh call in a window.
+
+## Delivered after the review — 2026-08-18
+
+A follow-on batch landed after the 2026-08-16 review closed the backlog above. It is recorded here as delivered scope rather than as new backlog, since the sprint closed with it merged.
+
+| Commit | What it added |
+|---|---|
+| `335ed6f` | **The system prompt became a Site-Admin-managed, versioned setting** — `AiPromptVersion` (Domain) + `AiPromptService` (Application), so the prompt is editable and revertible in the product instead of being a string constant in Infrastructure. Covered by `AiPromptVersionTests` and `AiPromptServiceTests`. |
+| `44ac4eb`, `6c5c722`, `4ceb6cc` | **Prompt playground + eval harness** — a developer surface for exercising prompt variants against the real model, with a `report` output. Dev tooling, not a user-facing feature; it does not appear in `20-feature-ai-idea-assist.md`. |
+| `88afb29` | Every model call also written out as a runnable `.http` file, so a turn can be replayed outside the app. |
+| `77b1053`, `9ca5615` | Idea create moved into the drawer; board control row; the AI-down fallback path; board picker label; AI assist demo script. |
+| `5365185` | Business impacts ordered most-severe-first; new ideas default to Medium priority. |
+| `5082348`, `a20e856` | Azure provisioning script inputs (`deploy/azure/provision.env.example`), with the filled-in copy gitignored. Feeds Sprint 8. |
+
+**Rule 32c (added 2026-08-18) is deliberately *not* in this sprint.** The unavailability flash is scheduled as a P1 in `sprint-08-azure-deployment.md`, so the first deployment ships it.
 
 ## Definition of Done
 - [x] All four decisions (D-SCOPE / D-DEDUPE / D-CREDS / D-PREFILL) locked and recorded 2026-08-11
@@ -127,4 +140,4 @@ Verified after the fixes, against the live model: three consecutive refusals clo
 - [x] Audit events assert content is **absent** from the log
 - [x] `Organization.AiScopeStatement` migration generated against Postgres and applied cleanly
 - [x] Code Reviewer has signed off (mandatory — credential handling + untrusted content) — 2026-08-16, five findings raised and fixed; see "Code review" above
-- [x] Sprint 8 (`sprint-08-azure-deployment.md`) updated with the key as App Service configuration — 2026-08-27. Landed as **Optional**, not Required: unset is a supported state (rule 31) and the API must not fail startup without it. Named in `SPEC/50-azure-deployment.md` §3 alongside the non-secret `Ai:*` overrides.
+- [x] Sprint 8 (`sprint-08-azure-deployment.md`) updated with the key as required App Service configuration — its "Config note (added 2026-08-11)" and the P0 App Service config task both carry it

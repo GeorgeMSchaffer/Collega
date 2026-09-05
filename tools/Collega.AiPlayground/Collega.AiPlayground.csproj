@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Prompt playground and eval harness for AI idea assist. NOT a test project: it deliberately makes
+    real, billed calls to the model provider, which tests/CLAUDE.md forbids for anything under tests/.
+    `dotnet test` never executes it. See tools/README.md.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Collega.AiPlayground</RootNamespace>
+    <AssemblyName>Collega.AiPlayground</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The whole point: exercise the real prompt builder, the real per-request schema, and the real
+         provider adapter. No new packages — the Anthropic SDK arrives transitively from here. -->
+    <ProjectReference Include="..\..\src\Collega.Infrastructure\Collega.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="cases\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

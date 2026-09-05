@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Collega — Comp M: Roadmap, single-parent outcomes</title>
+<style>
+  :root{
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#5D6C7E; --ink-4:#818E9C;
+    --bg:#F7F9FB; --surface:#FFFFFF; --surface-2:#F1F3F6;
+    --line:#DDE1E6; --line-2:#C5CBD3;
+    --accent:#527292; --accent-deep:#3E566F; --accent-fill:#5B7FA3;
+    --accent-soft:#F0F4F7; --accent-line:#D1DBE5;
+    --teal:#5F9E93;  --teal-ink:#4A7972;  --teal-soft:#F1F6F5;  --teal-line:#D2E4E1;
+    --green:#6FAF7A; --green-ink:#457C4F; --green-soft:#F0F7F1; --green-line:#D1E6D5;
+    --amber:#C9A65C; --amber-ink:#8A6D2E; --amber-soft:#F9F6EE; --amber-line:#EDE2C9;
+    --red:#C97A7A;   --red-ink:#B64B4B;   --red-soft:#F8EFEF;   --red-line:#EACCCC;
+    --r:2px;
+    --sans:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em}
+  button{font-family:inherit;font-size:inherit;cursor:pointer}
+  a{color:var(--accent)}
+
+  .switch{background:var(--ink);color:#fff;padding:8px 14px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-height:42px}
+  .switch b{font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  .switch .cap{font-size:11.5px;color:#93A6BC;margin-right:6px}
+  .switch button{background:transparent;border:1px solid #46586E;color:#D6DEE8;padding:4px 10px;border-radius:var(--r);font-size:12px}
+  .switch button[aria-current="true"]{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff;font-weight:600}
+
+  /* deferred-scope banner — these surfaces explore Non-Goals of the canonical spec */
+  .explore{background:var(--amber-soft);border-bottom:1px solid var(--amber-line);color:var(--amber-ink);
+    font-size:11.5px;padding:6px 16px;display:flex;gap:8px;align-items:center}
+  .explore b{text-transform:uppercase;letter-spacing:.07em;font-size:10.5px}
+
+  .shell{display:grid;grid-template-columns:212px 1fr;min-height:calc(100vh - 70px)}
+  .side{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px}
+  .brand{display:flex;align-items:center;gap:9px;padding:4px 6px 14px}
+  .mark{width:26px;height:26px;background:var(--accent-fill);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;border-radius:var(--r)}
+  .org{font-size:11.5px;color:var(--ink-3);padding:0 6px 12px}
+  .navlbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-4);font-weight:700;padding:10px 6px 5px}
+  .nav{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--r);color:var(--ink-2);font-size:13px;border:0;background:transparent;width:100%;text-align:left}
+  .nav .ct{margin-left:auto;font-size:11px;color:var(--ink-4)}
+  .nav:hover{background:var(--surface-2)}
+  .nav[aria-current="page"]{background:var(--accent-soft);color:var(--accent-deep);font-weight:600;box-shadow:inset 2px 0 0 var(--accent-fill)}
+  .push{margin-top:auto}
+  .me{display:flex;align-items:center;gap:9px;padding:10px 6px 2px;border-top:1px solid var(--line)}
+  .av{width:26px;height:26px;border-radius:50%;background:var(--accent-deep);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:700;flex:none}
+  .av.sm{width:21px;height:21px;font-size:8.5px}
+
+  .main{min-width:0;display:flex;flex-direction:column}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--line);padding:0 22px;display:flex;align-items:center;gap:12px;height:46px;flex:none}
+  .crumb{font-size:12.5px;color:var(--ink-3)}
+  .crumb b{color:var(--ink);font-weight:600}
+  .spacer{flex:1}
+  .btn{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);padding:6px 12px;border-radius:var(--r);font-size:12.5px;font-weight:500}
+  .btn:hover{background:var(--surface-2)}
+  .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.pri:hover{background:var(--accent-deep);border-color:var(--accent-deep)}
+  .btn.sm{padding:3px 8px;font-size:11.5px}
+  .seg{display:flex;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden}
+  .seg button{border:0;background:var(--surface);color:var(--ink-3);padding:5px 11px;font-size:12.5px}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+
+  .body{padding:20px 22px 34px}
+  .pagehead{display:flex;align-items:flex-end;gap:14px;margin-bottom:8px}
+  .pagehead h1{font-size:21px}
+  .pagehead p{margin:5px 0 0;font-size:12.5px;color:var(--ink-3)}
+
+  /* phase pill — Discovery vs Delivery, the spec's core distinction */
+  .phase{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:2px 8px;border-radius:var(--r);border:1px solid}
+  .phase.disc{color:var(--ink-3);background:var(--surface-2);border-color:var(--line-2)}
+  .phase.deliv{color:var(--teal-ink);background:var(--teal-soft);border-color:var(--teal-line)}
+
+  .sprintbar{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--teal);border-radius:var(--r);padding:11px 14px;margin-bottom:16px}
+  .sprintbar h2{font-size:15px}
+  .sprintbar .goal{font-size:12.5px;color:var(--ink-2)}
+  .sprintbar .dates{font-size:11.5px;color:var(--ink-3);font-family:var(--mono)}
+  .state{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:2px 8px;border-radius:var(--r);border:1px solid}
+  .state.active{color:var(--green-ink);background:var(--green-soft);border-color:var(--green-line)}
+  .state.planned{color:var(--ink-3);background:var(--surface-2);border-color:var(--line-2)}
+  .state.done{color:var(--accent-deep);background:var(--accent-soft);border-color:var(--accent-line)}
+
+  .lanes{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:10px;align-items:start}
+  .lane{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-width:0}
+  .lane>h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);padding:9px 11px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;border-top:2px solid var(--lc,var(--line-2))}
+  .lane>h3 .ct{margin-left:auto;background:var(--surface-2);color:var(--ink-3);font-size:10.5px;padding:1px 6px;border-radius:var(--r);font-weight:600}
+  .stack{padding:9px;display:flex;flex-direction:column;gap:8px}
+  .card{background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--lc,var(--line-2));border-radius:var(--r);padding:10px;text-align:left;width:100%;display:block}
+  .card:hover{border-color:var(--line-2);background:var(--surface-2)}
+  .card h4{font-size:13px;line-height:1.35}
+  .key{font-family:var(--mono);font-size:10.5px;color:var(--ink-4);letter-spacing:.02em}
+  .cardmeta{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-3);margin-top:8px}
+  .cardmeta .r{margin-left:auto;display:flex;gap:5px;align-items:center}
+  .chip{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:var(--r);border:1px solid}
+  .chip.low{color:var(--ink-3);border-color:var(--line-2);background:var(--surface-2)}
+  .chip.med{color:var(--accent-deep);border-color:var(--accent-line);background:var(--accent-soft)}
+  .chip.high{color:var(--amber-ink);border-color:var(--amber-line);background:var(--amber-soft)}
+  /* task progress on a delivery card — the checklist model, surfaced as a count */
+  .tasks{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-3);margin-top:7px}
+  .bar{flex:1;height:5px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--green)}
+
+  table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);font-size:13px}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700;padding:8px 11px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+  td{padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:var(--surface-2)}
+
+  .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+  .panel>h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);padding:10px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .panel>h3 .grow{flex:1}
+  .panel .in{padding:13px}
+  .kv{display:grid;grid-template-columns:128px 1fr;gap:9px 11px;font-size:12.5px;margin:0}
+  .kv dt{color:var(--ink-3);font-size:11.5px;font-weight:600}
+  .kv dd{margin:0;color:var(--ink-2)}
+
+  /* task checklist — tasks live ON the issue, per the approved model */
+  .task{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .task:last-of-type{border-bottom:0}
+  .task input{margin-top:3px;flex:none;accent-color:var(--green-ink)}
+  .task .grow{flex:1;min-width:0}
+  .task .who{font-size:11px;color:var(--ink-3);margin-top:2px}
+  .task.done .grow>span{text-decoration:line-through;color:var(--ink-4)}
+  .addtask{margin-top:9px;border:1px dashed var(--line-2);background:transparent;color:var(--ink-3);padding:7px;border-radius:var(--r);font-size:12px;width:100%}
+  .addtask:hover{background:var(--surface-2);color:var(--accent-deep)}
+
+  /* roadmap timeline */
+  .road{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow-x:auto}
+  .roadgrid{display:grid;grid-template-columns:180px repeat(4,minmax(130px,1fr));min-width:740px}
+  .roadgrid>div{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:10px 12px;font-size:12.5px}
+  .roadgrid>div:nth-child(5n){border-right:0}
+  .roadgrid .hd{background:var(--surface-2);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700}
+  .roadgrid .out{font-weight:600;color:var(--ink);font-size:12.5px}
+  .roadgrid .out small{display:block;font-weight:400;color:var(--ink-3);font-size:11px;margin-top:2px}
+  .barx{border-radius:var(--r);padding:4px 8px;font-size:11.5px;font-weight:600;border:1px solid}
+  .barx.b{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-deep)}
+  .barx.t{background:var(--teal-soft);border-color:var(--teal-line);color:var(--teal-ink)}
+  .barx.g{background:var(--green-soft);border-color:var(--green-line);color:var(--green-ink)}
+  .barx.a{background:var(--amber-soft);border-color:var(--amber-line);color:var(--amber-ink)}
+
+  .scrim{position:fixed;inset:0;background:rgba(36,52,71,.34);z-index:40}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:620px;max-width:100%;background:var(--surface);border-left:1px solid var(--line);z-index:41;display:flex;flex-direction:column;box-shadow:-4px 0 18px rgba(36,52,71,.12)}
+  .dhead{padding:15px 22px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start;flex:none}
+  .dhead .grow{flex:1}
+  .eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:700}
+  .dhead h2{font-size:18px;margin-top:4px;line-height:1.3}
+  .dhead .meta{font-size:12px;color:var(--ink-3);margin-top:5px}
+  .iconbtn{width:29px;height:29px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink-2);font-size:15px;flex:none}
+  .dbody{padding:18px 22px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:17px}
+  .dfoot{padding:13px 22px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end;align-items:center;flex:none}
+  .dfoot .hint{margin-right:auto;font-size:11.5px;color:var(--ink-3)}
+  .secline{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700;padding-bottom:7px;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .field{display:block;margin-bottom:14px}
+  .field>span{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+  .field .help{font-weight:400;color:var(--ink-3);font-size:11.5px;margin-top:4px;display:block}
+  .req{color:var(--red-ink);font-weight:700}
+  input[type=text],input[type=date],select,textarea{width:100%;font-family:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);padding:7px 9px}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  textarea{min-height:72px;resize:vertical}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .radioset{display:flex;gap:8px}
+  .radioset label{flex:1;border:1px solid var(--line-2);border-radius:var(--r);padding:8px 10px;font-size:12.5px;display:flex;gap:7px;align-items:center}
+  .radioset label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent-deep);font-weight:600}
+
+  .note{background:var(--accent-soft);border-left:2px solid var(--accent-fill);padding:11px 13px;font-size:12px;color:var(--ink-2);border-radius:0 var(--r) var(--r) 0}
+  .note b{color:var(--accent-deep)}
+  .prov{background:var(--teal-soft);border-left:2px solid var(--teal);padding:11px 13px;font-size:12px;color:var(--ink-2);border-radius:0 var(--r) var(--r) 0}
+  .prov b{color:var(--teal-ink)}
+  .screen{display:none}
+  .screen[data-on="1"]{display:block}
+  .dim{opacity:.55}
+  @media (max-width:980px){
+    .shell{grid-template-columns:1fr}
+    .side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+    .lanes{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:minmax(200px,1fr);overflow-x:auto}
+    .cols{grid-template-columns:1fr}
+    .drawer{width:100%}
+  }
+
+  /* ---- roadmap-comp additions ---- */
+  .stat{display:flex;flex-wrap:wrap;gap:0 18px;align-items:baseline;background:var(--surface);border:1px solid var(--line);
+    border-left:2px solid var(--accent-fill);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:var(--ink-2)}
+  .stat b{font-family:var(--mono);color:var(--ink);font-size:13px;font-weight:500}
+  .stat .flag{color:var(--amber-ink);font-weight:600}
+  .tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 7px;border-radius:var(--r);
+    border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent-deep);white-space:nowrap}
+  .tag.t{border-color:var(--teal-line);background:var(--teal-soft);color:var(--teal-ink)}
+  .tag.g{border-color:var(--green-line);background:var(--green-soft);color:var(--green-ink)}
+  .tag.a{border-color:var(--amber-line);background:var(--amber-soft);color:var(--amber-ink)}
+  .tag.mute{border-color:var(--line-2);background:var(--surface-2);color:var(--ink-3)}
+  .tag x{font-style:normal;color:inherit;opacity:.6;font-size:13px;line-height:1;cursor:pointer}
+  .tag x:hover{opacity:1}
+  .tagrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .addtag{border:1px dashed var(--line-2);background:transparent;color:var(--ink-3);padding:2px 8px;border-radius:var(--r);font-size:11px;font-weight:600}
+  .addtag:hover{background:var(--surface-2);color:var(--accent-deep)}
+  .warn{background:var(--amber-soft);border-left:2px solid var(--amber);padding:11px 13px;font-size:12px;color:var(--ink-2);border-radius:0 var(--r) var(--r) 0}
+  .warn b{color:var(--amber-ink)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  .checkrow{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .checkrow:last-child{border-bottom:0}
+  .checkrow input{margin-top:3px;flex:none;accent-color:var(--accent)}
+  .checkrow .grow{flex:1;min-width:0}
+  .checkrow .sub{display:block;font-size:11.5px;color:var(--ink-3);margin-top:2px}
+  .roadgrid .out .marks{display:block;font-weight:400;font-size:10.5px;margin-top:3px}
+  .sum{display:flex;gap:14px;align-items:baseline;padding:10px 14px;background:var(--surface-2);border-top:1px solid var(--line);
+    font-size:12px;color:var(--ink-2);font-family:var(--mono)}
+  .sum b{color:var(--ink);font-weight:500}
+  .ledger{font-family:var(--mono);font-size:12.5px}
+  .ledger td:last-child,.ledger th:last-child{text-align:right}
+  .ledger tfoot td{font-weight:600;background:var(--surface-2);border-top:1px solid var(--line-2)}
+  .verdict{background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--teal);border-radius:var(--r);padding:14px 16px}
+  .verdict h4{font-size:13px;margin-bottom:7px}
+  .verdict p{margin:0 0 9px;font-size:12.5px;color:var(--ink-2)}
+  .verdict p:last-child{margin-bottom:0}
+  ul.tight{margin:0;padding-left:17px;font-size:12.5px;color:var(--ink-2)}
+  ul.tight li{margin-bottom:6px}
+  ul.tight li:last-child{margin-bottom:0}
+
+</style>
+</head>
+<body>
+<nav class="switch" aria-label="Comp screens">
+  <b>COMP M</b>
+  <span class="cap">An issue sits under at most one outcome</span>
+  <button data-go="s-road" aria-current="true">Roadmap</button>
+  <button data-go="s-outcome">Outcome detail</button>
+  <button data-go="s-issue">Issue</button>
+  <button data-go="s-group">Grouping drawer</button>
+  <button data-go="s-math">What it costs</button>
+</nav>
+<div class="explore"><b>Slice 2</b><span>Roadmap is in scope per the reconciled spec (2026-08-31) but <b>blocked</b> on one question: may an Issue sit under more than one Outcome? This comp answers &ldquo;at most one&rdquo;. Compare against its sibling before deciding.</span></div>
+<section class="screen" id="s-road" data-on="1">  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="navlbl">Discovery</div>
+      <button class="nav">Boards</button>
+      <button class="nav">Ideas<span class="ct">42</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav">Sprint board</button>
+      <button class="nav">Backlog<span class="ct">2</span></button>
+      <button class="nav" aria-current="page">Roadmap</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12px;font-weight:600">Olivia Administer</div>
+        <div style="font-size:10.5px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main"><div class="topbar"><span class="crumb">Delivery / <b>Roadmap</b></span><span class="spacer"></span><div class="seg"><button aria-pressed="true">Quarters</button><button aria-pressed="false">Sprints</button></div><button class="btn pri">Add outcome</button></div><div class="body"><div class="pagehead"><div><h1>Roadmap</h1><p>Outcomes over time. Sprints stay flat underneath — an outcome groups issues, it does not own them.</p></div></div><div class="stat"><span>Delivery issues <b>16</b></span><span>Grouped <b>14</b></span><span>Not grouped <b>2</b></span><span>Memberships <b>14</b></span><span style="color:var(--green-ink);font-weight:600">Every issue counted exactly once</span></div><div class="road"><div class="roadgrid"><div class="hd">Outcome</div><div class="hd">Q3 2026</div><div class="hd">Q4 2026</div><div class="hd">Q1 2027</div><div class="hd">Q2 2027</div><div class="out">Cut reporting effort<small>4 issues · 3 done</small></div><div><span class="barx b">Sprints 11–12</span></div><div></div><div></div><div></div><div class="out">Make review predictable<small>5 issues · 1 done</small></div><div></div><div><span class="barx t">Sprint 12</span></div><div><span class="barx t">Sprints 13–15</span></div><div></div><div class="out">Standardize intake<small>3 issues · 0 done</small></div><div></div><div></div><div><span class="barx g">Sprints 14–16</span></div><div><span class="barx g">Sprints 17–18</span></div><div class="out">Retire legacy steps<small>2 issues · 0 done</small></div><div></div><div></div><div></div><div><span class="barx a">Sprints 19–20</span></div></div><div class="roadgrid" style="border-top:1px solid var(--line)"><div class="out dim">Not grouped<small>2 issues · 0 done</small></div><div class="dim"></div><div class="dim"></div><div class="dim"></div><div class="dim" style="font-size:11.5px;color:var(--ink-4)">no outcome, no bar</div></div><div class="sum"><span>4 outcomes</span><span>rows sum to <b>14</b></span><span>+ 2 not grouped = <b>16</b></span><span>= the delivery set</span></div></div><div class="note" style="margin-top:16px"><b>Single-parent.</b> An issue has one home. Every count on this page is a plain count — the rows partition the delivery set, so they sum to it and &ldquo;3 done of 4&rdquo; means what it appears to mean. The bars form a staircase because each outcome&rsquo;s derived span is drawn only from issues that belong to it alone.</div></div></div>
+  </div>
+</section>
+<section class="screen" id="s-outcome" data-on="0">  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="navlbl">Discovery</div>
+      <button class="nav">Boards</button>
+      <button class="nav">Ideas<span class="ct">42</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav">Sprint board</button>
+      <button class="nav">Backlog<span class="ct">2</span></button>
+      <button class="nav" aria-current="page">Roadmap</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12px;font-weight:600">Olivia Administer</div>
+        <div style="font-size:10.5px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main"><div class="topbar"><span class="crumb">Delivery / Roadmap / <b>Cut reporting effort</b></span><span class="spacer"></span><button class="btn">Edit outcome</button><button class="btn pri" data-go="s-group">Group an issue</button></div><div class="body"><div class="pagehead"><div><h1>Cut reporting effort</h1><p>4 issues · 3 done · Sprints 11–12</p></div></div><div class="panel"><h3>Issues grouped under this outcome<span class="grow"></span><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11.5px;color:var(--ink-3)">derived — nothing here is stored on the outcome</span></h3><table><thead><tr><th>Key</th><th>Issue</th><th>Status</th><th>Sprint</th><th>Other outcomes</th></tr></thead><tbody><tr><td class="key">CLG-103</td><td>Measure time saved</td><td><span class="tag g">Complete</span></td><td class="key">11</td><td><span style="color:var(--ink-4);font-size:11.5px">—</span></td></tr><tr><td class="key">CLG-127</td><td>Publish the reporting data dictionary</td><td><span class="tag g">Complete</span></td><td class="key">11</td><td><span style="color:var(--ink-4);font-size:11.5px">—</span></td></tr><tr><td class="key">CLG-131</td><td>Archive the manual Friday template</td><td><span class="tag g">Complete</span></td><td class="key">11</td><td><span style="color:var(--ink-4);font-size:11.5px">—</span></td></tr><tr><td class="key">CLG-114</td><td>Automate weekly reporting</td><td><span class="tag t">Development</span></td><td class="key">12</td><td><span style="color:var(--ink-4);font-size:11.5px">—</span></td></tr></tbody></table></div><div class="note" style="margin-top:16px"><b>Every row belongs here and nowhere else.</b> The list is exactly this outcome&rsquo;s work, so &ldquo;3 of 4 done&rdquo; is a fact about the outcome rather than about one of several overlapping views of it. Moving an issue out of this list is a move, not a copy — see the grouping drawer.</div></div></div>
+  </div>
+</section>
+<section class="screen" id="s-issue" data-on="0">  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="navlbl">Discovery</div>
+      <button class="nav">Boards</button>
+      <button class="nav">Ideas<span class="ct">42</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav">Sprint board</button>
+      <button class="nav">Backlog<span class="ct">2</span></button>
+      <button class="nav" aria-current="page">Roadmap</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12px;font-weight:600">Olivia Administer</div>
+        <div style="font-size:10.5px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main"><div class="topbar"><span class="crumb">Delivery / Sprint 12 / <b>CLG-114</b></span><span class="spacer"></span><button class="btn" data-go="s-road">Back to roadmap</button><button class="btn pri">Save</button></div><div class="body"><div class="pagehead"><div><div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span class="key">CLG-114</span><span class="phase deliv">Delivery</span><span class="chip med">Medium effort</span></div><h1>Automate weekly reporting</h1><p>Development · Sprint 12 · assigned to Marcus Green</p></div></div><div class="cols"><div><div class="panel"><h3>Tasks<span class="grow"></span><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11.5px;color:var(--ink-3)">3 of 5 done</span></h3><div class="in"><div class="task done"><input type="checkbox" checked><div class="grow"><span>Agree the report&rsquo;s column set with Ops</span><div class="who">Marcus Green · done 24 Aug</div></div></div><div class="task done"><input type="checkbox" checked><div class="grow"><span>Build the extract query</span><div class="who">Marcus Green · done 26 Aug</div></div></div><div class="task done"><input type="checkbox" checked><div class="grow"><span>Schedule the Friday 06:00 run</span><div class="who">Olivia Administer · done 28 Aug</div></div></div><div class="task"><input type="checkbox"><div class="grow"><span>Handle the empty-week edge case</span><div class="who">Marcus Green · in progress</div></div></div><div class="task"><input type="checkbox"><div class="grow"><span>Write the one-page runbook</span><div class="who">Unassigned</div></div></div><button class="addtask">+ Add task</button></div></div><div class="note" style="margin-top:14px"><b>One outcome, same weight as Sprint.</b> The field reads and behaves exactly like the sprint picker directly above it — one value, changed by picking another. Nothing on this page has to explain overlap, because there is none.</div></div><div><div class="panel"><h3>Delivery</h3><div class="in"><dl class="kv"><dt>Status</dt><dd>Development</dd><dt>Sprint</dt><dd>Sprint 12 <span class="state active">Active</span></dd><dt>Effort</dt><dd>Medium</dd><dt>Assignee</dt><dd>Marcus Green</dd><dt>Outcome</dt><dd><span class="tag">Cut reporting effort</span> <button class="btn sm" data-go="s-group" style="margin-left:6px">Change</button></dd></dl></div></div><div class="prov" style="margin-top:14px"><b>Provenance.</b> Raised by Marcus Green · 14 Jul 2026 · 14 upvotes at promotion (17 now) · promoted by Olivia Administer, 18 Aug 2026.</div></div></div></div></div>
+  </div>
+</section>
+<section class="screen" id="s-group" data-on="0">  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="navlbl">Discovery</div>
+      <button class="nav">Boards</button>
+      <button class="nav">Ideas<span class="ct">42</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav">Sprint board</button>
+      <button class="nav">Backlog<span class="ct">2</span></button>
+      <button class="nav" aria-current="page">Roadmap</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12px;font-weight:600">Olivia Administer</div>
+        <div style="font-size:10.5px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main"><div class="topbar"><span class="crumb">Delivery / Sprint 12 / <b>CLG-114</b></span><span class="spacer"></span><button class="btn" data-go="s-road">Back to roadmap</button><button class="btn pri">Save</button></div><div class="body"><div class="pagehead"><div><div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><span class="key">CLG-114</span><span class="phase deliv">Delivery</span><span class="chip med">Medium effort</span></div><h1>Automate weekly reporting</h1><p>Development · Sprint 12 · assigned to Marcus Green</p></div></div><div class="cols"><div><div class="panel"><h3>Tasks<span class="grow"></span><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11.5px;color:var(--ink-3)">3 of 5 done</span></h3><div class="in"><div class="task done"><input type="checkbox" checked><div class="grow"><span>Agree the report&rsquo;s column set with Ops</span><div class="who">Marcus Green · done 24 Aug</div></div></div><div class="task done"><input type="checkbox" checked><div class="grow"><span>Build the extract query</span><div class="who">Marcus Green · done 26 Aug</div></div></div><div class="task done"><input type="checkbox" checked><div class="grow"><span>Schedule the Friday 06:00 run</span><div class="who">Olivia Administer · done 28 Aug</div></div></div><div class="task"><input type="checkbox"><div class="grow"><span>Handle the empty-week edge case</span><div class="who">Marcus Green · in progress</div></div></div><div class="task"><input type="checkbox"><div class="grow"><span>Write the one-page runbook</span><div class="who">Unassigned</div></div></div><button class="addtask">+ Add task</button></div></div><div class="note" style="margin-top:14px"><b>One outcome, same weight as Sprint.</b> The field reads and behaves exactly like the sprint picker directly above it — one value, changed by picking another. Nothing on this page has to explain overlap, because there is none.</div></div><div><div class="panel"><h3>Delivery</h3><div class="in"><dl class="kv"><dt>Status</dt><dd>Development</dd><dt>Sprint</dt><dd>Sprint 12 <span class="state active">Active</span></dd><dt>Effort</dt><dd>Medium</dd><dt>Assignee</dt><dd>Marcus Green</dd><dt>Outcome</dt><dd><span class="tag">Cut reporting effort</span> <button class="btn sm" data-go="s-group" style="margin-left:6px">Change</button></dd></dl></div></div><div class="prov" style="margin-top:14px"><b>Provenance.</b> Raised by Marcus Green · 14 Jul 2026 · 14 upvotes at promotion (17 now) · promoted by Olivia Administer, 18 Aug 2026.</div></div></div></div></div>
+  </div>
+<div class="scrim" data-go="s-issue"></div><aside class="drawer" role="dialog" aria-modal="true"><div class="dhead"><div class="grow"><div class="eyebrow">Set outcome</div><h2>CLG-114 · Automate weekly reporting</h2><div class="meta">Delivery · Sprint 12 · Development</div></div><button class="iconbtn" data-go="s-issue" aria-label="Close">&times;</button></div><div class="dbody"><div><div class="secline">Outcome</div><div class="field"><span>Which outcome does CLG-114 serve?</span><label class="checkrow"><input type="radio" name="oc" checked><span class="grow"><b style="font-weight:600">Cut reporting effort</b><span class="sub">4 issues · 3 done · Sprints 11–12</span></span></label><label class="checkrow"><input type="radio" name="oc"><span class="grow"><b style="font-weight:600">Make review predictable</b><span class="sub">5 issues · 1 done · Sprints 12–15</span></span></label><label class="checkrow"><input type="radio" name="oc"><span class="grow"><b style="font-weight:600">Standardize intake</b><span class="sub">3 issues · 0 done · Sprints 14–18</span></span></label><label class="checkrow"><input type="radio" name="oc"><span class="grow"><b style="font-weight:600">Retire legacy steps</b><span class="sub">2 issues · 0 done · Sprints 19–20</span></span></label><label class="checkrow"><input type="radio" name="oc"><span class="grow"><b style="font-weight:600">Not grouped</b><span class="sub">no outcome</span></span></label><span class="help">One outcome per issue. Picking another moves it.</span></div></div><div class="warn"><b>This is a move, not an addition.</b> Selecting <em>Standardize intake</em> removes CLG-114 from <em>Cut reporting effort</em>, dropping that outcome to 3 issues · 3 done — which would then read as finished while the work it depends on is still in Development. That is the honest cost of a single home.</div><div class="note"><b>Why it is still worth it.</b> Because outcomes partition the delivery set, every number on the roadmap is a plain count. No distinct-count, no overlap disclaimer, no double-moved progress bar. The model is one nullable column.</div></div><div class="dfoot"><span class="hint">Changing the outcome writes one audit event.</span><button class="btn" data-go="s-issue">Cancel</button><button class="btn pri" data-go="s-issue">Move issue</button></div></aside></section>
+<section class="screen" id="s-math" data-on="0">  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="navlbl">Discovery</div>
+      <button class="nav">Boards</button>
+      <button class="nav">Ideas<span class="ct">42</span></button>
+      <div class="navlbl">Delivery</div>
+      <button class="nav">Sprint board</button>
+      <button class="nav">Backlog<span class="ct">2</span></button>
+      <button class="nav" aria-current="page">Roadmap</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12px;font-weight:600">Olivia Administer</div>
+        <div style="font-size:10.5px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main"><div class="topbar"><span class="crumb">Delivery / Roadmap / <b>What this option costs</b></span><span class="spacer"></span></div><div class="body"><div class="pagehead"><div><h1>Single-parent</h1><p>An issue sits under at most one outcome.</p></div></div><div class="panel" style="margin-bottom:16px"><h3>The same 16 delivery issues, counted this way</h3><table class="ledger"><thead><tr><th>Outcome</th><th>Issues</th><th>Done</th></tr></thead><tbody><tr><td>Cut reporting effort</td><td>4</td><td>3</td></tr><tr><td>Make review predictable</td><td>5</td><td>1</td></tr><tr><td>Standardize intake</td><td>3</td><td>0</td></tr><tr><td>Retire legacy steps</td><td>2</td><td>0</td></tr><tr><td>Not grouped</td><td>2</td><td>0</td></tr></tbody><tfoot><tr><td>Total</td><td>16</td><td>4</td></tr></tfoot></table><div class="in" style="border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-2)">The column is a <b>partition</b>. Rows sum to the delivery set, so a total is a count and nothing needs a footnote.</div></div><div class="grid2"><div class="panel"><h3>What you get</h3><div class="in"><ul class="tight"><li>Every roadmap number is a plain count. No distinct-count beside any total, ever.</li><li>&ldquo;3 of 4 done&rdquo; is a fact about the outcome, not about one of several overlapping views.</li><li>Derived spans form a clean staircase — an outcome&rsquo;s bar covers only its own work.</li><li>One nullable FK (<span class="key">ideas.outcome_id</span>). No join table, no distinct-count queries, no dedupe in any rollup.</li><li>&ldquo;Which outcome is this for?&rdquo; always has one answer, so nobody has to arbitrate a list.</li></ul></div></div><div class="panel"><h3>What it costs</h3><div class="in"><ul class="tight"><li>Work that genuinely serves two goals must be filed under one, and the roadmap then records a fiction.</li><li>Moving an issue silently drops another outcome&rsquo;s count — an outcome can read as finished because its dependency was reassigned, not completed.</li><li>Teams route around it: duplicate issues get raised so both outcomes can claim the work, which is exactly the provenance loss this feature exists to prevent.</li><li>The forced choice is invisible after the fact. Nothing records that CLG-114 also served intake.</li></ul></div></div></div><div class="verdict" style="margin-top:16px"><h4>What this option is betting</h4><p>That an honest, un-footnoted roadmap is worth more than an exactly accurate one — and that when work genuinely serves two goals, naming the <em>primary</em> one is a useful discipline rather than a lie.</p><p>The bet fails if teams start raising duplicate issues to get around the single slot. Watch for that: it is the specific failure mode, and it converts a modelling shortcut into the provenance loss this whole feature was built to stop.</p><p><b>Migration note:</b> single &rarr; multi later is a cheap forward migration (copy the column into a join table, drop the column). This option is the reversible one.</p></div></div></div>
+  </div>
+</section>
+<script>
+  const screens = [...document.querySelectorAll('.screen')];
+  const tabs = [...document.querySelectorAll('.switch button')];
+  function go(id){
+    screens.forEach(s => s.dataset.on = (s.id === id) ? '1' : '0');
+    tabs.forEach(t => t.setAttribute('aria-current', String(t.dataset.go === id)));
+    window.scrollTo(0,0);
+  }
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-go]');
+    if (t) { e.preventDefault(); go(t.dataset.go); }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.querySelector('.screen[data-on="1"] .drawer')) go('s-issue');
+  });
+</script>
+</body>
+</html>

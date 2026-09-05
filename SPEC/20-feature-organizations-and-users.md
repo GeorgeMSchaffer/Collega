@@ -48,7 +48,7 @@ All organization text fields are trimmed before validation and persistence.
 ## Organization AI Credentials
 AI-assisted idea creation (see `SPEC/20-feature-ideas-and-engagement.md`) authenticates every model call with an API key. The deployment supplies a default key, and an organization may optionally supply its own to move that consumption onto its own vendor account.
 
-1. The deployment supplies a default AI API key through configuration (`Ai__ApiKey`), read at startup from environment-provided configuration in the same manner as the seed Site Admin credentials.
+1. The deployment supplies a default AI API key through configuration (`ANTHROPIC_API_KEY`), read at startup from environment-provided configuration in the same manner as the seed Site Admin credentials.
 2. Each organization may optionally store its own AI API key. When present, it is used for every AI call made in that organization's scope.
 3. Key precedence for any AI call is: the organization's own key when configured, otherwise the deployment default key.
 4. When neither an organization key nor a deployment default key is configured, AI-assisted idea creation is unavailable for that organization. The feature must degrade to the manual idea form with an explanatory message rather than presenting a failing action.

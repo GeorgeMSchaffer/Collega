@@ -256,6 +256,36 @@ public sealed partial class ApiClient
         SendJsonAsync<IdeaAssistTurnResponseDto>(
             HttpMethod.Post, $"{BasePath}/boards/{boardId}/idea-assist/turns", request, ct);
 
+    /// <summary>
+    /// Whether to open the drafting chat or go straight to the create form (rule 32a). Open to any
+    /// authenticated user, unlike the admin-only settings read below.
+    /// </summary>
+    public Task<ApiResult<AiAssistAvailabilityDto>> GetAiAssistAvailabilityAsync(CancellationToken ct = default) =>
+        GetAsync<AiAssistAvailabilityDto>($"{BasePath}/ai-assist/availability", ct);
+
+    // ---- Site-Admin prompt management (rules 34-38). Deployment-wide, not org-scoped. ----
+
+    public Task<ApiResult<AiPromptDto>> GetAiPromptAsync(CancellationToken ct = default) =>
+        GetAsync<AiPromptDto>($"{BasePath}/ai-assist/prompt", ct);
+
+    public Task<ApiResult<AiPromptDto>> PublishAiPromptAsync(
+        PublishAiPromptRequestDto request,
+        CancellationToken ct = default) =>
+        SendJsonAsync<AiPromptDto>(HttpMethod.Put, $"{BasePath}/ai-assist/prompt", request, ct);
+
+    public Task<ApiResult<AiPromptDto>> RestoreAiPromptAsync(int version, CancellationToken ct = default) =>
+        SendJsonAsync<AiPromptDto>(
+            HttpMethod.Post, $"{BasePath}/ai-assist/prompt/versions/{version}/restore", new { }, ct);
+
+    public Task<ApiResult<AiPromptDto>> ResetAiPromptAsync(CancellationToken ct = default) =>
+        SendJsonAsync<AiPromptDto>(HttpMethod.Post, $"{BasePath}/ai-assist/prompt/reset", new { }, ct);
+
+    /// <summary>Advisory only — never publishes, and a failing probe never blocks a publish.</summary>
+    public Task<ApiResult<AiPromptProbeDto>> ProbeAiPromptAsync(
+        ProbeAiPromptRequestDto request,
+        CancellationToken ct = default) =>
+        SendJsonAsync<AiPromptProbeDto>(HttpMethod.Post, $"{BasePath}/ai-assist/prompt/probe", request, ct);
+
     /// <summary>Reads an organization's AI assist configuration. Never returns a key.</summary>
     public Task<ApiResult<AiAssistSettingsDto>> GetAiAssistSettingsAsync(string organizationId, CancellationToken ct = default) =>
         GetAsync<AiAssistSettingsDto>($"{BasePath}/organizations/{organizationId}/ai-assist/settings", ct);

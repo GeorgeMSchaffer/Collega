@@ -26,21 +26,28 @@ namespace Collega.Application.Ai;
 /// </remarks>
 public sealed class IdeaAssistService : IIdeaAssistService
 {
-    /// <summary>Rule 5. A conversation this long has stopped being idea drafting.</summary>
-    public const int MaxUserTurns = 20;
+    /// <summary>
+    /// Rule 5. A conversation this long has stopped being idea drafting. The cap counts transcript
+    /// <em>entries</em> — user and assistant combined — not user turns. Since a transcript alternates
+    /// and must end with a user entry, the largest valid request carries 19, so this is 10 user turns.
+    /// </summary>
+    public const int MaxTranscriptEntries = 20;
 
     /// <summary>Rule 10. Bounds the cost of someone probing the boundary.</summary>
     public const int OutOfScopeStrikeLimit = 3;
 
     /// <summary>
-    /// The fixed redirect shown for a refused turn. Server-supplied and constant so the model can
-    /// never author the refusal text — a model-written refusal is a free-text channel by another name.
+    /// The fixed redirect shown for a refused turn. <b>Server-supplied</b> so the model can never author
+    /// the refusal text — a model-written refusal is a free-text channel by another name.
     /// </summary>
-    public const string OutOfScopeRedirect =
-        "I can only help with drafting ideas for your organization. What would you like to capture?";
+    /// <remarks>
+    /// Since 2026-08-17 the live values come from the active prompt version and are read off the context
+    /// (rule 34); these remain as the built-in default and the value used wherever nothing is published.
+    /// Editable by a Site Admin, still never by the model — that is the property that matters.
+    /// </remarks>
+    public const string OutOfScopeRedirect = AiPromptDefaults.OutOfScopeRedirect;
 
-    public const string ConversationClosedRedirect =
-        "Let's pick this up on the idea form instead — I've kept whatever we captured so far.";
+    public const string ConversationClosedRedirect = AiPromptDefaults.ConversationClosedRedirect;
 
     private readonly IIdeaDraftModel _model;
     private readonly IdeaAssistContextBuilder _contextBuilder;
@@ -73,6 +80,16 @@ public sealed class IdeaAssistService : IIdeaAssistService
         _unitOfWork = unitOfWork;
         _clock = clock;
     }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Exactly the gate <see cref="ContinueAsync"/> applies before calling the provider, so the answer
+    /// cannot drift from the behaviour it predicts. No authorization beyond authentication and no
+    /// organization scope: it reports deployment state, reads nothing org-owned, and is metered by
+    /// neither the budget nor the rate limiter — it makes no provider call.
+    /// </remarks>
+    public async Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default) =>
+        _model.IsConfigured && await _usage.IsWithinDailyBudgetAsync(cancellationToken);
 
     public async Task<IdeaAssistTurnResult> ContinueAsync(
         IdeaAssistTurnRequest request,
@@ -135,16 +152,23 @@ public sealed class IdeaAssistService : IIdeaAssistService
             return new IdeaAssistTurnResult(
                 InScope: false,
                 ConversationClosed: closed,
-                NextQuestion: closed ? ConversationClosedRedirect : OutOfScopeRedirect,
+                // From the active prompt version, falling back to the built-in default (rule 34).
+                NextQuestion: closed
+                    ? context.EffectivePrompts.ConversationClosedRedirect
+                    : context.EffectivePrompts.OutOfScopeRedirect,
                 Draft: currentDraft,
-                TurnsRemaining: Math.Max(0, MaxUserTurns - userTurnCount));
+                // The client drops the offending user turn and renders the redirect as a system note
+                // rather than an assistant bubble (rule 8/8a), so the transcript shrinks by one and a
+                // refused turn costs no conversation budget.
+                TurnsRemaining: RemainingUserTurns(request.Transcript.Count - 1));
         }
 
         // Every id the model returned is re-checked against what was actually retrieved. The schema
         // already makes an out-of-org id structurally impossible; this is the belt to that braces,
         // and it is what the contract promises (line 1274).
         var draft = Sanitize(response.Draft, context, currentDraft);
-        var turnsRemaining = Math.Max(0, MaxUserTurns - userTurnCount);
+        // The client appends this reply, so the transcript it will hold is one longer than the request.
+        var turnsRemaining = RemainingUserTurns(request.Transcript.Count + 1);
 
         return new IdeaAssistTurnResult(
             InScope: true,
@@ -169,6 +193,12 @@ public sealed class IdeaAssistService : IIdeaAssistService
         string? scopeStatement,
         CancellationToken cancellationToken = default)
     {
+        // The scope statement is organization content, not platform configuration: it is what the
+        // assistant refuses off-topic requests against, one organization's subject matter in its own
+        // words. So it goes through View As like every other org-content mutation (rule 25). Reading
+        // it stays open to a direct Site Admin, as reads always are.
+        _currentUser.EnsureNotDirectSiteAdmin();
+
         var organization = await RequireAdministrableOrganizationAsync(organizationId, cancellationToken);
 
         if (scopeStatement is { Length: > Domain.Organizations.Organization.AiScopeStatementMaxLength })
@@ -280,7 +310,7 @@ public sealed class IdeaAssistService : IIdeaAssistService
     }
 
     /// <summary>
-    /// How far back a strike still counts. A conversation is capped at 20 turns and runs in minutes,
+    /// How far back a strike still counts. A conversation is capped at 20 entries and runs in minutes,
     /// so an hour is generous — but bounded, so yesterday's refusals don't close today's chat before
     /// it starts.
     /// </summary>
@@ -293,21 +323,25 @@ public sealed class IdeaAssistService : IIdeaAssistService
             throw new ValidationAppException("transcript", new[] { "At least one message is required." });
         }
 
-        if (transcript.Count > MaxUserTurns * 2)
+        if (transcript.Count > MaxTranscriptEntries)
         {
-            throw new ValidationAppException("transcript", new[] { $"A conversation is capped at {MaxUserTurns} turns." });
+            throw new ValidationAppException("transcript", new[] { $"A conversation is capped at {MaxTranscriptEntries} transcript entries." });
         }
 
         if (!transcript[^1].IsUser)
         {
             throw new ValidationAppException("transcript", new[] { "The last message must be from the user." });
         }
-
-        if (transcript.Count(t => t.IsUser) > MaxUserTurns)
-        {
-            throw new ValidationAppException("transcript", new[] { $"A conversation is capped at {MaxUserTurns} turns." });
-        }
     }
+
+    /// <summary>
+    /// How many further user turns fit under rule 5, given the transcript length the client will hold
+    /// once this turn is applied. Each further turn costs a user entry plus the assistant reply that
+    /// comes back with it, and the request carrying turn <c>k</c> is <c>length + 2k - 1</c> entries
+    /// long — so the largest <c>k</c> with <c>length + 2k - 1 &lt;= 20</c> is <c>(21 - length) / 2</c>.
+    /// </summary>
+    private static int RemainingUserTurns(int transcriptLength) =>
+        Math.Max(0, (MaxTranscriptEntries + 1 - transcriptLength) / 2);
 
     /// <summary>
     /// Anyone who may create ideas in their organization may draft. Read Only is refused (rule: the

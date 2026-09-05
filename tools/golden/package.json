@@ -1,0 +1,19 @@
+{
+  "name": "@collega/golden",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Wave A capture and replay harness: records the .NET API's HTTP surface, replays it against Nest.",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "golden": "node src/cli.ts",
+    "test": "node --test \"test/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "typescript": "^5.9.2"
+  }
+}

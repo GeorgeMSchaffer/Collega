@@ -78,11 +78,15 @@ public class CollegaApiFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("SiteAdmin__Password", "Test123!Password");
 
         // Blank the AI credential. WebApplicationFactory runs as Development, so the host loads the
-        // developer's user-secrets — and a developer with a real Ai:ApiKey there would have the suite
-        // make live, billed model calls on every run. Environment variables outrank user-secrets in
-        // the default configuration chain, so this wins. The IIdeaDraftModel override below makes the
-        // guarantee independent of that ordering; both are deliberate.
-        Environment.SetEnvironmentVariable("Ai__ApiKey", string.Empty);
+        // developer's user-secrets — and a developer with a real ANTHROPIC_API_KEY there would have
+        // the suite make live, billed model calls on every run. Environment variables outrank
+        // user-secrets in the default configuration chain, so this wins. The IIdeaDraftModel override
+        // below makes the guarantee independent of that ordering; both are deliberate.
+        //
+        // ANTHROPIC_API_KEY is the name the vendor's own tooling exports, so it is far more likely to
+        // be present in a developer's shell than the old vendor-neutral Ai__ApiKey ever was. That
+        // makes this line more load-bearing after the 2026-08-25 rename, not less.
+        Environment.SetEnvironmentVariable("ANTHROPIC_API_KEY", string.Empty);
     }
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
