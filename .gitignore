@@ -59,9 +59,16 @@ nunit-*.xml
 .DS_Store
 **/.DS_Store
 
+# Node dependencies, anywhere in the tree.
+# This is a pnpm workspace (apps/*, packages/*), so every workspace member gets
+# its own node_modules alongside the root one. No leading slash means this matches
+# at any depth, which the previous path-by-path rules did not.
+# If a vendored dependency ever genuinely must be committed, negate it explicitly
+# with a `!` rule rather than deleting this one.
+node_modules/
+
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
-/e2e/node_modules
 
 # Local deploy staging dirs from SPEC/50-azure-deployment.md §5.3 and §6.2. CI publishes to the
 # same names, but running those steps by hand drops a full build output at the repo root.
@@ -87,13 +94,11 @@ ds-bundle/
 .env.local
 
 # Comp Q build toolchain (SPEC/mockups/_build/tw); compiled CSS is inlined into the comps
-SPEC/mockups/_build/tw/node_modules
 SPEC/mockups/_build/tw/input.css
 SPEC/mockups/_build/tw/out.css
 SPEC/mockups/_build/__pycache__
 
 # Golden harness: typecheck-only dependency, the harness itself runs on bare Node
-tools/golden/node_modules
 
 # Proxy CA certificates are environment-specific (see docker/proxy-ca/README.md)
 docker/proxy-ca/*.crt
