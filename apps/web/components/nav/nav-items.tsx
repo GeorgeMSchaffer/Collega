@@ -25,11 +25,15 @@ export interface NavItem {
    * item refuses on its own — so an item shown to the wrong role costs discoverability, not
    * access.
    *
-   * Nothing reads this yet: `SidebarNav` in `components/nav/desk-shell.tsx` renders every
-   * item, and that file belongs to another slice. Wrapping the `<SidebarMenuItem>` there in
-   * `<ForRoles roles={item.roles ?? ROLES}>` is the one line that turns it on.
    */
   readonly roles?: readonly Role[];
+
+  /**
+   * A screen that renders but is a drawing: illustrative data, no API behind it. Reachable,
+   * because an unreachable prototype cannot be reviewed — but labelled in the rail as well as
+   * on the screen, so it is never mistaken for a shipped feature sitting beside real ones.
+   */
+  readonly prototype?: boolean;
 }
 
 export interface NavGroup {
@@ -64,9 +68,9 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: "Delivery",
     items: [
-      { label: "Sprint board", built: false, path: "M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z" },
-      { label: "Backlog", built: false, path: "M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z" },
-      { label: "Roadmap", built: false, path: "M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z" },
+      { label: "Sprint board", href: "/delivery", built: true, prototype: true, path: "M4 3h12v2H4Zm0 4h8v2H4Zm0 4h12v2H4Zm0 4h6v2H4Z" },
+      { label: "Backlog", href: "/delivery/backlog", built: true, prototype: true, path: "M4 5h12v2H4Zm0 4h12v2H4Zm0 4h8v2H4Z" },
+      { label: "Roadmap", href: "/delivery/roadmap", built: true, prototype: true, path: "M3 5.5 7.5 4l5 1.5L17 4v10.5L12.5 16l-5-1.5L3 16Zm5 1.1v7.2l4 1.2V7.8Z" },
     ],
   },
   {

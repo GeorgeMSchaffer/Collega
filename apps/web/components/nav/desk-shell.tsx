@@ -75,6 +75,12 @@ function SidebarNav() {
                       {item.label === "Boards" && boardCount > 0 ? (
                         <SidebarMenuBadge>{boardCount}</SidebarMenuBadge>
                       ) : null}
+                      {/* A prototype is reachable but says so here too. The strip on the
+                          screen is the fuller warning; this stops the rail implying the
+                          screen is real while a reviewer is still scanning it. */}
+                      {item.prototype ? (
+                        <span className="ml-auto text-xs text-muted-foreground">Prototype</span>
+                      ) : null}
                     </Link>
                   </SidebarMenuButton>
                 ) : (
