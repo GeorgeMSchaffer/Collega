@@ -279,7 +279,7 @@
     private RenderFragment RenderFieldForm => @<text>
         <div class="field">
             <label for="fd-name">Name</label>
-            <FluentTextField id="fd-name" @bind-Value="_form.Name" Disabled="_busy" Maxlength="100" Style="width:100%" />
+            <FluentTextField id="fd-name" AriaLabel="Name" @bind-Value="_form.Name" Disabled="_busy" Maxlength="100" Style="width:100%" />
         </div>
         <div class="field">
             <label for="fd-desc">Description</label>

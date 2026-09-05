@@ -58,4 +58,62 @@ public sealed class OrganizationTests
         org.Archive(TestClock.Now.AddDays(1), Guid.NewGuid()); // no throw
         Assert.True(org.IsArchived);
     }
+
+    // ---- AI assist scope statement (SPEC/20-feature-ai-idea-assist.md rules 6, 9) ----
+
+    [Fact]
+    public void SetAiScopeStatement_TrimsAndStores()
+    {
+        var org = Organization.Create("Acme", "Desc", "ACME-1", TestClock.Now);
+
+        org.SetAiScopeStatement("  Only warehouse operations.  ", TestClock.Now, null);
+
+        Assert.Equal("Only warehouse operations.", org.AiScopeStatement);
+    }
+
+    /// <summary>
+    /// Clearing is a legitimate choice, not an unset state: an empty statement means "no narrowing
+    /// beyond the active Idea Types", which is a valid configuration an Org Admin may want back.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void SetAiScopeStatement_ClearsOnEmptyInput(string? input)
+    {
+        var org = Organization.Create("Acme", "Desc", "ACME-1", TestClock.Now);
+        org.SetAiScopeStatement("Something", TestClock.Now, null);
+
+        org.SetAiScopeStatement(input, TestClock.Now, null);
+
+        Assert.Null(org.AiScopeStatement);
+    }
+
+    [Fact]
+    public void SetAiScopeStatement_RejectsAnOverlongStatement()
+    {
+        var org = Organization.Create("Acme", "Desc", "ACME-1", TestClock.Now);
+        var tooLong = new string('x', Organization.AiScopeStatementMaxLength + 1);
+
+        Assert.Throws<ArgumentException>(() => org.SetAiScopeStatement(tooLong, TestClock.Now, null));
+    }
+
+    [Fact]
+    public void SetAiScopeStatement_AcceptsExactlyTheMaximum()
+    {
+        var org = Organization.Create("Acme", "Desc", "ACME-1", TestClock.Now);
+        var atLimit = new string('x', Organization.AiScopeStatementMaxLength);
+
+        org.SetAiScopeStatement(atLimit, TestClock.Now, null);
+
+        Assert.Equal(atLimit, org.AiScopeStatement);
+    }
+
+    [Fact]
+    public void Organization_HasNoScopeStatementUntilOneIsSet()
+    {
+        var org = Organization.Create("Acme", "Desc", "ACME-1", TestClock.Now);
+
+        Assert.Null(org.AiScopeStatement);
+    }
 }

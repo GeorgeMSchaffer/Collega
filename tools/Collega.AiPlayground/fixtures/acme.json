@@ -1,0 +1,18 @@
+{
+  "name": "acme",
+  "organizationName": "Acme Robotics",
+  "scopeStatement": null,
+  "ideaTypes": [
+    { "name": "Continuous Improvement", "fieldNames": ["Current state", "Proposed state", "Estimated saving"] },
+    { "name": "Process Revision", "fieldNames": ["Existing policy", "Proposed change", "Who is affected"] }
+  ],
+  "businessImpacts": [
+    { "name": "Critical" },
+    { "name": "High" },
+    { "name": "Medium" },
+    { "name": "Low" }
+  ],
+  "statuses": ["New / Pending", "In Progress", "In Review", "Client Review", "Complete"],
+  "tags": ["assembly", "safety", "tooling", "quality", "logistics"],
+  "memberNames": ["Dana Whitfield", "Marcus Oyelaran", "Priya Raghunathan"]
+}

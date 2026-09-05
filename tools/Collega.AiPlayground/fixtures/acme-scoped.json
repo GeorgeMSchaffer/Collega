@@ -1,0 +1,21 @@
+{
+  "name": "acme-scoped",
+
+  "//": "Identical to acme except the scope statement is set. The demo seed leaves it empty, so without this fixture the scope gate only ever applies its structural test and rules 7-9 go unmeasured.",
+
+  "organizationName": "Acme Robotics",
+  "scopeStatement": "Only ideas about manufacturing floor operations, equipment, and safety. Not HR, benefits, or office facilities.",
+  "ideaTypes": [
+    { "name": "Continuous Improvement", "fieldNames": ["Current state", "Proposed state", "Estimated saving"] },
+    { "name": "Process Revision", "fieldNames": ["Existing policy", "Proposed change", "Who is affected"] }
+  ],
+  "businessImpacts": [
+    { "name": "Critical" },
+    { "name": "High" },
+    { "name": "Medium" },
+    { "name": "Low" }
+  ],
+  "statuses": ["New / Pending", "In Progress", "In Review", "Client Review", "Complete"],
+  "tags": ["assembly", "safety", "tooling", "quality", "logistics"],
+  "memberNames": ["Dana Whitfield", "Marcus Oyelaran", "Priya Raghunathan"]
+}

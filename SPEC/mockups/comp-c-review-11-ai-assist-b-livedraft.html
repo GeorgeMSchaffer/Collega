@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Review 11B: AI Idea Assist (Live Draft)</title>
@@ -8,32 +12,32 @@
   /* Same locked foundation as review-09/10. Direction B collapses the two sequential surfaces into
      one: conversation left, the idea taking shape right, create committed from the same sheet. */
   :root{
-    --accent:#5b5fc7;--accent-deep:#444791;--accent-soft:#eef0fb;
-    --ink:#242424;--ink-2:#484644;--ink-3:#66615d;
-    --bg:#faf9f8;--surface:#fff;--line:#e4e2df;
-    --ok:#0e700e;--warn:#9a5b00;--err:#b10e1c;
-    --sug:#116b5e;--sug-soft:#e6f2f0;--sug-deep:#0c4f45;
+    --accent:#5B7FA3;--accent-deep:#527292;--accent-soft:#F1F3F6;
+    --ink:#243447;--ink-2:#3E4E60;--ink-3:#5D6C7E;
+    --bg:#F7F9FB;--surface:#fff;--line:#DDE1E6;
+    --ok:#457C4F;--warn:#8A6D2E;--err:#B64B4B;
+    --sug:#4A7972;--sug-soft:#F1F6F5;--sug-deep:#4A7972;
     --shadow:0 1px 2px rgba(0,0,0,.08);--shadow-float:0 18px 48px rgba(0,0,0,.22);
-    --radius-card:6px;--radius-btn:4px;
+    --radius-card:2px;--radius-btn:2px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   [hidden]{display:none!important}
-  body{font-family:"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);font-size:14px;overflow-x:hidden}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;overflow-x:hidden}
   button,input,select,textarea{font:inherit}
-  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600}
-  .comp-bar{min-height:46px;background:#33312e;color:#fff;padding:8px 18px;display:flex;gap:14px;align-items:center;position:sticky;top:0;z-index:80;flex-wrap:wrap}
+  h1,h2,h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600}
+  .comp-bar{min-height:46px;background:#243447;color:#fff;padding:8px 18px;display:flex;gap:14px;align-items:center;position:sticky;top:0;z-index:80;flex-wrap:wrap}
   .comp-bar strong{font:600 13px Georgia,serif;letter-spacing:.04em;white-space:nowrap}
-  .comp-bar .sep{width:1px;height:20px;background:#5a5754}
-  .comp-bar .lbl{font-size:11px;color:#a8a5a2;text-transform:uppercase;letter-spacing:.05em}
+  .comp-bar .sep{width:1px;height:20px;background:#3E4E60}
+  .comp-bar .lbl{font-size:11px;color:#A4ADB7;text-transform:uppercase;letter-spacing:.05em}
   .mode-tabs{display:flex;gap:6px;flex-wrap:wrap}
-  .mode-tabs button{background:transparent;color:#d1cfcc;border:1px solid #5a5754;border-radius:3px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .mode-tabs button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap}
   .mode-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
 
   .shell{display:grid;grid-template-columns:64px minmax(0,1fr);min-height:calc(100vh - 46px)}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
-  .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:grid;place-items:center;font:700 13px Georgia,serif;margin-bottom:14px}
-  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;gap:2px}
+  .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:grid;place-items:center;font:700 13px Georgia,serif;margin-bottom:14px}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;gap:2px}
   .rail a svg{width:20px;height:20px;fill:currentColor}.rail a span{font-size:8.5px;font-weight:600}
   .rail a.on{background:var(--accent-soft);color:var(--accent)}
   .push{flex:1}
@@ -45,11 +49,11 @@
   .body{padding:24px 40px}
 
   .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:8px 13px;min-height:36px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}
-  .btn:hover{background:#f3f2f1}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:var(--accent-deep)}
   .btn.subtle{border-color:transparent;background:transparent;color:var(--ink-2)}
   .btn:disabled{opacity:.5;cursor:not-allowed}
-  input,select,textarea{border:1px solid #8a8886;border-radius:4px;background:#fff;color:var(--ink);padding:8px 10px;min-height:36px;width:100%}
+  input,select,textarea{border:1px solid #818E9C;border-radius:2px;background:#fff;color:var(--ink);padding:8px 10px;min-height:36px;width:100%}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
   label{display:block;color:var(--ink-3);font-size:11.5px;font-weight:700;margin-bottom:5px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
@@ -65,7 +69,7 @@
   .eyebrow{text-transform:uppercase;letter-spacing:.07em;color:var(--accent-deep);font-size:11px;font-weight:700;margin-bottom:5px}
   .surface-head h2{font-size:22px;line-height:1.25}
   .surface-head .meta{margin-top:5px;font-size:12px;color:var(--ink-3)}
-  .iconbtn{width:34px;height:34px;border:1px solid var(--line);border-radius:4px;background:#fff;cursor:pointer;color:var(--ink-2);display:grid;place-items:center;font-size:19px;flex:none}
+  .iconbtn{width:34px;height:34px;border:1px solid var(--line);border-radius:2px;background:#fff;cursor:pointer;color:var(--ink-2);display:grid;place-items:center;font-size:19px;flex:none}
   .split{display:grid;grid-template-columns:minmax(0,1fr) 400px;flex:1;min-height:0}
   .left{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
   .right{background:var(--bg);display:flex;flex-direction:column;min-height:0}
@@ -80,7 +84,7 @@
   .msg.bot .who{background:var(--accent-soft);color:var(--accent-deep)}
   .msg.user{align-self:flex-end;flex-direction:row-reverse}
   .msg.user .who{background:var(--accent-deep);color:#fff}
-  .bubble{background:#f3f2f1;border-radius:10px;padding:9px 13px;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+  .bubble{background:#F1F3F6;border-radius:2px;padding:9px 13px;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
   .msg.user .bubble{background:var(--accent);color:#fff}
   .composer{display:flex;gap:9px;align-items:flex-end;padding:14px 22px;border-top:1px solid var(--line)}
   .composer textarea{resize:none}
@@ -88,32 +92,32 @@
   .thinking i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);opacity:.4;animation:bl 1.2s infinite}
   .thinking i:nth-child(2){animation-delay:.18s}.thinking i:nth-child(3){animation-delay:.36s}
   @keyframes bl{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:.9;transform:translateY(-3px)}}
-  .sysnote{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:11px 13px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+  .sysnote{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:11px 13px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
   .sysnote svg{width:16px;height:16px;fill:var(--warn);flex:none;margin-top:1px}
   .sysnote.err svg{fill:var(--err)}
   .sysnote b{display:block;color:var(--ink);margin-bottom:2px}
   .sysnote .redirect{color:var(--ink-3);font-style:italic}
   .strikeghost{opacity:.45}
-  .strikeghost .bubble{background:repeating-linear-gradient(135deg,#f3f2f1,#f3f2f1 6px,#eceae8 6px,#eceae8 12px);color:var(--ink-3);text-decoration:line-through}
+  .strikeghost .bubble{background:repeating-linear-gradient(135deg,#F1F3F6,#F1F3F6 6px,#DDE1E6 6px,#DDE1E6 12px);color:var(--ink-3);text-decoration:line-through}
 
   /* ---- Live draft (right) ---- */
   .draft-head{padding:15px 20px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
-  .draft-head h3{font-size:14px;font-family:"Segoe UI",sans-serif;font-weight:700}
+  .draft-head h3{font-size:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:700}
   .draft-head .count{margin-left:auto;font-size:11px;color:var(--ink-3)}
   .draft-body{padding:16px 20px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:15px}
-  .dfield{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:11px 13px}
-  .dfield.sug{border-color:#bcdcd6;border-left:3px solid var(--sug);background:var(--sug-soft)}
+  .dfield{background:var(--surface);border:1px solid var(--line);border-radius:2px;padding:11px 13px}
+  .dfield.sug{border-color:#D2E4E1;border-left:3px solid var(--sug);background:var(--sug-soft)}
   .dfield.empty{background:transparent;border-style:dashed;color:var(--ink-3)}
   .dfield .k{display:flex;align-items:center;gap:7px;margin-bottom:5px}
   .dfield .k label{margin:0}
   .dfield .v{font-size:13.5px;line-height:1.5;color:var(--ink);white-space:pre-wrap}
   .dfield.empty .v{font-size:12.5px;color:var(--ink-3);font-style:italic}
   .sugdot{width:7px;height:7px;border-radius:50%;background:var(--sug);flex:none}
-  .justnow{margin-left:auto;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sug-deep);background:#d3e9e4;border-radius:9px;padding:1px 7px;animation:fade 2.4s forwards}
+  .justnow{margin-left:auto;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sug-deep);background:#D2E4E1;border-radius:2px;padding:1px 7px;animation:fade 2.4s forwards}
   @keyframes fade{0%,60%{opacity:1}100%{opacity:0}}
   .editlink{border:0;background:none;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
   .dfield .row{display:flex;align-items:center;gap:8px;margin-top:7px}
-  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent-deep)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent-deep)}
   .locked{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-3);padding:2px 0}
   .locked svg{width:13px;height:13px;fill:var(--ink-3)}
 
@@ -123,7 +127,7 @@
   .sechead{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin:22px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
   .sechead:first-child{margin-top:0}
   .counter{font-size:11px;color:var(--ink-3);text-align:right;margin-top:4px}
-  .sugchip{display:inline-flex;align-items:center;gap:4px;background:var(--sug-soft);color:var(--sug-deep);border:1px solid #bcdcd6;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700;text-transform:uppercase}
+  .sugchip{display:inline-flex;align-items:center;gap:4px;background:var(--sug-soft);color:var(--sug-deep);border:1px solid #D2E4E1;border-radius:2px;padding:1px 8px;font-size:10px;font-weight:700;text-transform:uppercase}
 
   .doc{max-width:920px;margin:0 auto;padding:30px 40px 60px}
   .doc h1{font-size:28px;margin-bottom:6px}
@@ -131,9 +135,9 @@
   .doc h2{font-size:18px;margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
   .doc p,.doc li{font-size:13.5px;line-height:1.6;color:var(--ink-2)}
   .doc ul{margin:6px 0 6px 20px}.doc li{margin-bottom:5px}
-  .decision{border:1px solid var(--sug);background:var(--sug-soft);border-radius:8px;padding:14px 16px;margin:14px 0}
-  .decision .qh{font-weight:700;color:var(--sug-deep);font-size:13.5px;font-family:"Segoe UI",sans-serif;margin-bottom:5px}
-  .doc code{background:#f3f2f1;padding:1px 5px;border-radius:3px;font-size:12.5px}
+  .decision{border:1px solid var(--sug);background:var(--sug-soft);border-radius:2px;padding:14px 16px;margin:14px 0}
+  .decision .qh{font-weight:700;color:var(--sug-deep);font-size:13.5px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;margin-bottom:5px}
+  .doc code{background:#F1F3F6;padding:1px 5px;border-radius:2px;font-size:12.5px}
   .btn:focus-visible,.iconbtn:focus-visible,.mode-tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media(max-width:900px){.split{grid-template-columns:minmax(0,1fr)}.right{display:none}}
 </style>
@@ -474,8 +478,8 @@
       <div style="margin-bottom:14px">
         <label>Always in scope</label>
         <div style="display:flex;gap:7px;flex-wrap:wrap">
-          <span class="sugchip" style="background:var(--accent-soft);color:var(--accent-deep);border-color:#c9cdf0">Continuous Improvement</span>
-          <span class="sugchip" style="background:var(--accent-soft);color:var(--accent-deep);border-color:#c9cdf0">Process Revision</span>
+          <span class="sugchip" style="background:var(--accent-soft);color:var(--accent-deep);border-color:#D1DBE5">Continuous Improvement</span>
+          <span class="sugchip" style="background:var(--accent-soft);color:var(--accent-deep);border-color:#D1DBE5">Process Revision</span>
         </div>
       </div>
       <div>

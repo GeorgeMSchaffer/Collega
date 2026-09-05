@@ -35,6 +35,36 @@ public sealed class AiUsageLimits
     public decimal OutputRatePerMillion { get; init; } = 15.00m;
 
     /// <summary>
+    /// The sliding window rate limits are measured over (rule 26). Sixty seconds by default: long
+    /// enough to smooth a burst of typing, short enough that a legitimate user who trips a limit is
+    /// waiting seconds rather than minutes.
+    /// </summary>
+    public int RateLimitWindowSeconds { get; init; } = 60;
+
+    /// <summary>
+    /// Calls one user may make per window. Ten is generous for a person typing — a drafting turn
+    /// takes several seconds of reading and thinking — and tight enough to stop a script.
+    /// </summary>
+    /// <remarks>
+    /// Counted against the <b>real</b> actor, not the impersonated user: an administrator must not be
+    /// able to reset their own allowance by hopping between View As targets.
+    /// </remarks>
+    public int PerUserCallsPerWindow { get; init; } = 10;
+
+    /// <summary>
+    /// Calls one organization may make per window, across all its users. Bounds a whole org's burst
+    /// independently of how many accounts it spreads the traffic over.
+    /// </summary>
+    public int PerOrganizationCallsPerWindow { get; init; } = 60;
+
+    /// <summary>
+    /// Whether rate limiting is in force. Non-positive disables it, matching
+    /// <see cref="IsEnforced"/> — useful locally, never intended for a deployment.
+    /// </summary>
+    public bool IsRateLimited => RateLimitWindowSeconds > 0
+        && (PerUserCallsPerWindow > 0 || PerOrganizationCallsPerWindow > 0);
+
+    /// <summary>
     /// Whether a ceiling is in force at all. A non-positive limit disables the gate — useful for a
     /// local environment, never intended for a deployment.
     /// </summary>

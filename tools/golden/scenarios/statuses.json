@@ -1,0 +1,374 @@
+{
+  "name": "statuses",
+  "description": "The organization's status catalog: read by everyone, changed by the Org Admin.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "list.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses"
+    },
+    {
+      "id": "list.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses",
+      "bind": {
+        "statusIds": "$.body[*].statusId",
+        "firstStatusId": "$.body[0].statusId"
+      }
+    },
+    {
+      "id": "list.user",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses"
+    },
+    {
+      "id": "list.readonly",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses"
+    },
+    {
+      "id": "list.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/statuses"
+    },
+    {
+      "id": "list.deleted.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses",
+      "query": {
+        "includeDeleted": "true"
+      },
+      "note": "The include-deleted view is an administrator affordance; who may ask is the case."
+    },
+    {
+      "id": "list.deleted.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses",
+      "query": {
+        "includeDeleted": "true"
+      },
+      "note": "The include-deleted view is an administrator affordance; who may ask is the case."
+    },
+    {
+      "id": "list.deleted.user",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses",
+      "query": {
+        "includeDeleted": "true"
+      },
+      "note": "The include-deleted view is an administrator affordance; who may ask is the case."
+    },
+    {
+      "id": "list.deleted.readonly",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses",
+      "query": {
+        "includeDeleted": "true"
+      },
+      "note": "The include-deleted view is an administrator affordance; who may ask is the case."
+    },
+    {
+      "id": "list.deleted.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/statuses",
+      "query": {
+        "includeDeleted": "true"
+      },
+      "note": "The include-deleted view is an administrator affordance; who may ask is the case."
+    },
+    {
+      "id": "create.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/statuses",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/statuses",
+      "body": {
+        "name": "Golden Capture",
+        "color": "#3f6f8f"
+      }
+    },
+    {
+      "id": "create.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/statuses",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/organizations/{{orgId}}/statuses",
+      "body": {
+        "name": "Golden Capture",
+        "color": "#3f6f8f"
+      },
+      "bind": {
+        "newStatusId": "$.body.statusId"
+      }
+    },
+    {
+      "id": "create.user",
+      "endpoint": "POST /organizations/{organizationId}/statuses",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/statuses",
+      "body": {
+        "name": "Golden Capture",
+        "color": "#3f6f8f"
+      }
+    },
+    {
+      "id": "create.readonly",
+      "endpoint": "POST /organizations/{organizationId}/statuses",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/statuses",
+      "body": {
+        "name": "Golden Capture",
+        "color": "#3f6f8f"
+      }
+    },
+    {
+      "id": "create.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/statuses",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/statuses",
+      "body": {
+        "name": "Golden Capture",
+        "color": "#3f6f8f"
+      }
+    },
+    {
+      "id": "create.invalid.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/statuses",
+      "as": "OrgAdmin",
+      "kind": "invalid",
+      "expect": 400,
+      "path": "/organizations/{{orgId}}/statuses",
+      "body": {
+        "color": "#3f6f8f"
+      },
+      "note": "A status with no name."
+    },
+    {
+      "id": "update.siteadmin",
+      "endpoint": "PUT /statuses/{statusId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/statuses/{{newStatusId}}",
+      "body": {
+        "name": "Golden Capture Renamed",
+        "color": "#8f3f6f"
+      }
+    },
+    {
+      "id": "update.orgadmin",
+      "endpoint": "PUT /statuses/{statusId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/statuses/{{newStatusId}}",
+      "body": {
+        "name": "Golden Capture Renamed",
+        "color": "#8f3f6f"
+      }
+    },
+    {
+      "id": "update.user",
+      "endpoint": "PUT /statuses/{statusId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/statuses/{{newStatusId}}",
+      "body": {
+        "name": "Golden Capture Renamed",
+        "color": "#8f3f6f"
+      }
+    },
+    {
+      "id": "update.readonly",
+      "endpoint": "PUT /statuses/{statusId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/statuses/{{newStatusId}}",
+      "body": {
+        "name": "Golden Capture Renamed",
+        "color": "#8f3f6f"
+      }
+    },
+    {
+      "id": "update.anonymous",
+      "endpoint": "PUT /statuses/{statusId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/statuses/{{newStatusId}}",
+      "body": {
+        "name": "Golden Capture Renamed",
+        "color": "#8f3f6f"
+      }
+    },
+    {
+      "id": "relist",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses",
+      "note": "Re-read after the create: reorder must name every active status, including the new one.",
+      "bind": {
+        "statusIds": "$.body[*].statusId"
+      }
+    },
+    {
+      "id": "reorder.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/statuses/reorder",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/statuses/reorder",
+      "body": {
+        "orderedStatusIds": "{{statusIds}}"
+      },
+      "note": "Must name every active status exactly once, so it is bound from the list above."
+    },
+    {
+      "id": "reorder.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/statuses/reorder",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/organizations/{{orgId}}/statuses/reorder",
+      "body": {
+        "orderedStatusIds": "{{statusIds}}"
+      },
+      "note": "Must name every active status exactly once, so it is bound from the list above."
+    },
+    {
+      "id": "reorder.user",
+      "endpoint": "POST /organizations/{organizationId}/statuses/reorder",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/statuses/reorder",
+      "body": {
+        "orderedStatusIds": "{{statusIds}}"
+      },
+      "note": "Must name every active status exactly once, so it is bound from the list above."
+    },
+    {
+      "id": "reorder.readonly",
+      "endpoint": "POST /organizations/{organizationId}/statuses/reorder",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/statuses/reorder",
+      "body": {
+        "orderedStatusIds": "{{statusIds}}"
+      },
+      "note": "Must name every active status exactly once, so it is bound from the list above."
+    },
+    {
+      "id": "reorder.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/statuses/reorder",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/statuses/reorder",
+      "body": {
+        "orderedStatusIds": "{{statusIds}}"
+      },
+      "note": "Must name every active status exactly once, so it is bound from the list above."
+    },
+    {
+      "id": "delete.siteadmin",
+      "endpoint": "DELETE /statuses/{statusId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/statuses/{{newStatusId}}",
+      "note": "Deletes the status this scenario created, never a seeded one."
+    },
+    {
+      "id": "delete.orgadmin",
+      "endpoint": "DELETE /statuses/{statusId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/statuses/{{newStatusId}}",
+      "note": "Deletes the status this scenario created, never a seeded one."
+    },
+    {
+      "id": "delete.user",
+      "endpoint": "DELETE /statuses/{statusId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/statuses/{{newStatusId}}",
+      "note": "Deletes the status this scenario created, never a seeded one."
+    },
+    {
+      "id": "delete.readonly",
+      "endpoint": "DELETE /statuses/{statusId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/statuses/{{newStatusId}}",
+      "note": "Deletes the status this scenario created, never a seeded one."
+    },
+    {
+      "id": "delete.anonymous",
+      "endpoint": "DELETE /statuses/{statusId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/statuses/{{newStatusId}}",
+      "note": "Deletes the status this scenario created, never a seeded one."
+    }
+  ]
+}

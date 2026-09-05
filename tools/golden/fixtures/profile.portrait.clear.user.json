@@ -1,0 +1,51 @@
+{
+  "scenario": "profile",
+  "step": "portrait.clear.user",
+  "endpoint": "DELETE /auth/me/portrait",
+  "as": "User",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/auth/me/portrait",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:47 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+      "role": "User",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "email": "user@acme-robotics.demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": null,
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "user@acme-robotics.demo.collega.test",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "organizationId": "<guid@org.body.organizationId>",
+      "portraitDataUrl": null,
+      "role": "User",
+      "status": "Active",
+      "userId": "<guid@me.update.user.body.userId>",
+      "viewingAs": null
+    }
+  }
+}

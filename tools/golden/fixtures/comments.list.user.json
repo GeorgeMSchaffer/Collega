@@ -1,0 +1,79 @@
+{
+  "scenario": "comments",
+  "step": "list.user",
+  "endpoint": "GET /ideas/{ideaId}/comments",
+  "as": "User",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/ideas/4a4bdb5c-2385-40b0-bd58-2e87d211db01/comments",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:42 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "items": [
+        {
+          "commentId": "b172cc17-33ab-4372-9950-80122df9d181",
+          "ideaId": "4a4bdb5c-2385-40b0-bd58-2e87d211db01",
+          "authorUserId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+          "body": "Thanks for raising this - I'll take a first look.",
+          "createdAtUtc": "2026-09-04T03:52:30.134348Z",
+          "updatedAtUtc": "2026-09-04T03:52:30.134348Z"
+        },
+        {
+          "commentId": "cbf32e3f-4653-4276-85ff-c66110c8aeb3",
+          "ideaId": "4a4bdb5c-2385-40b0-bd58-2e87d211db01",
+          "authorUserId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+          "body": "Agreed, let's prioritize it for the next review.",
+          "createdAtUtc": "2026-09-04T03:53:30.134348Z",
+          "updatedAtUtc": "2026-09-04T03:53:30.134348Z"
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "totalCount": 2,
+      "sortBy": "createdAtUtc",
+      "sortDirection": "asc"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "items": [
+        {
+          "authorUserId": "<guid@ideas.body.items[1].authorUserId>",
+          "body": "Thanks for raising this - I'll take a first look.",
+          "commentId": "<guid@list.siteadmin.body.items[0].commentId>",
+          "createdAtUtc": "<timestamp>",
+          "ideaId": "<guid@ideas.body.items[0].ideaId>",
+          "updatedAtUtc": "<timestamp>"
+        },
+        {
+          "authorUserId": "<guid@org.body.userId>",
+          "body": "Agreed, let's prioritize it for the next review.",
+          "commentId": "<guid@list.siteadmin.body.items[1].commentId>",
+          "createdAtUtc": "<timestamp>",
+          "ideaId": "<guid@ideas.body.items[0].ideaId>",
+          "updatedAtUtc": "<timestamp>"
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "sortBy": "createdAtUtc",
+      "sortDirection": "asc",
+      "totalCount": 2
+    }
+  }
+}

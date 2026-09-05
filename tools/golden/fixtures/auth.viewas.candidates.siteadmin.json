@@ -1,0 +1,210 @@
+{
+  "scenario": "auth",
+  "step": "viewas.candidates.siteadmin",
+  "endpoint": "GET /auth/view-as/candidates",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Binds the first candidate for the start step below.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/auth/view-as/candidates",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:41 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "email": "user@acme-robotics.demo.collega.test",
+        "role": "User",
+        "status": "Active",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "organizationName": "Acme Robotics",
+        "selectable": true
+      },
+      {
+        "userId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+        "firstName": "Maya",
+        "lastName": "Collaborator",
+        "email": "user2@acme-robotics.demo.collega.test",
+        "role": "User",
+        "status": "Active",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "organizationName": "Acme Robotics",
+        "selectable": true
+      },
+      {
+        "userId": "ab3c3c68-bb41-459f-a9f3-463d56f24a13",
+        "firstName": "Maya",
+        "lastName": "Collaborator",
+        "email": "user2@blue-harbor.demo.collega.test",
+        "role": "User",
+        "status": "Active",
+        "organizationId": "a02e29c4-81fd-4f04-b3c2-95c41d24cc9f",
+        "organizationName": "Blue Harbor Logistics",
+        "selectable": true
+      },
+      {
+        "userId": "f92d2e47-0da8-41a7-b448-4851596c5828",
+        "firstName": "Noah",
+        "lastName": "Contributor",
+        "email": "user@blue-harbor.demo.collega.test",
+        "role": "User",
+        "status": "Active",
+        "organizationId": "a02e29c4-81fd-4f04-b3c2-95c41d24cc9f",
+        "organizationName": "Blue Harbor Logistics",
+        "selectable": true
+      },
+      {
+        "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+        "firstName": "Olivia",
+        "lastName": "Administer",
+        "email": "orgadmin@acme-robotics.demo.collega.test",
+        "role": "OrgAdmin",
+        "status": "Active",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "organizationName": "Acme Robotics",
+        "selectable": true
+      },
+      {
+        "userId": "e652f9dd-1633-4e0e-a210-996e7f8e2cd0",
+        "firstName": "Olivia",
+        "lastName": "Administer",
+        "email": "orgadmin@blue-harbor.demo.collega.test",
+        "role": "OrgAdmin",
+        "status": "Active",
+        "organizationId": "a02e29c4-81fd-4f04-b3c2-95c41d24cc9f",
+        "organizationName": "Blue Harbor Logistics",
+        "selectable": true
+      },
+      {
+        "userId": "8c461a04-30e1-4df1-8d01-c2367922bd33",
+        "firstName": "Rosa",
+        "lastName": "Observer",
+        "email": "readonly@acme-robotics.demo.collega.test",
+        "role": "ReadOnly",
+        "status": "Active",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "organizationName": "Acme Robotics",
+        "selectable": true
+      },
+      {
+        "userId": "596dd96f-eaa4-4c3b-9731-34b21eeaacbe",
+        "firstName": "Rosa",
+        "lastName": "Observer",
+        "email": "readonly@blue-harbor.demo.collega.test",
+        "role": "ReadOnly",
+        "status": "Active",
+        "organizationId": "a02e29c4-81fd-4f04-b3c2-95c41d24cc9f",
+        "organizationName": "Blue Harbor Logistics",
+        "selectable": true
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "email": "user@acme-robotics.demo.collega.test",
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+        "organizationName": "Acme Robotics",
+        "role": "User",
+        "selectable": true,
+        "status": "Active",
+        "userId": "<guid@me.user.body.userId>"
+      },
+      {
+        "email": "user2@acme-robotics.demo.collega.test",
+        "firstName": "Maya",
+        "lastName": "Collaborator",
+        "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+        "organizationName": "Acme Robotics",
+        "role": "User",
+        "selectable": true,
+        "status": "Active",
+        "userId": "<guid@viewas.candidates.siteadmin.body[1].userId>"
+      },
+      {
+        "email": "user2@blue-harbor.demo.collega.test",
+        "firstName": "Maya",
+        "lastName": "Collaborator",
+        "organizationId": "<guid@viewas.candidates.siteadmin.body[2].organizationId>",
+        "organizationName": "Blue Harbor Logistics",
+        "role": "User",
+        "selectable": true,
+        "status": "Active",
+        "userId": "<guid@viewas.candidates.siteadmin.body[2].userId>"
+      },
+      {
+        "email": "user@blue-harbor.demo.collega.test",
+        "firstName": "Noah",
+        "lastName": "Contributor",
+        "organizationId": "<guid@viewas.candidates.siteadmin.body[2].organizationId>",
+        "organizationName": "Blue Harbor Logistics",
+        "role": "User",
+        "selectable": true,
+        "status": "Active",
+        "userId": "<guid@viewas.candidates.siteadmin.body[3].userId>"
+      },
+      {
+        "email": "orgadmin@acme-robotics.demo.collega.test",
+        "firstName": "Olivia",
+        "lastName": "Administer",
+        "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+        "organizationName": "Acme Robotics",
+        "role": "OrgAdmin",
+        "selectable": true,
+        "status": "Active",
+        "userId": "<guid@login.orgadmin.body.user.userId>"
+      },
+      {
+        "email": "orgadmin@blue-harbor.demo.collega.test",
+        "firstName": "Olivia",
+        "lastName": "Administer",
+        "organizationId": "<guid@viewas.candidates.siteadmin.body[2].organizationId>",
+        "organizationName": "Blue Harbor Logistics",
+        "role": "OrgAdmin",
+        "selectable": true,
+        "status": "Active",
+        "userId": "<guid@viewas.candidates.siteadmin.body[5].userId>"
+      },
+      {
+        "email": "readonly@acme-robotics.demo.collega.test",
+        "firstName": "Rosa",
+        "lastName": "Observer",
+        "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+        "organizationName": "Acme Robotics",
+        "role": "ReadOnly",
+        "selectable": true,
+        "status": "Active",
+        "userId": "<guid@me.readonly.body.userId>"
+      },
+      {
+        "email": "readonly@blue-harbor.demo.collega.test",
+        "firstName": "Rosa",
+        "lastName": "Observer",
+        "organizationId": "<guid@viewas.candidates.siteadmin.body[2].organizationId>",
+        "organizationName": "Blue Harbor Logistics",
+        "role": "ReadOnly",
+        "selectable": true,
+        "status": "Active",
+        "userId": "<guid@viewas.candidates.siteadmin.body[7].userId>"
+      }
+    ]
+  }
+}

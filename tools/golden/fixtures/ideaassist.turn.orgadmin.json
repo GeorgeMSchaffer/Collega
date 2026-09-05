@@ -1,0 +1,57 @@
+{
+  "scenario": "ideaassist",
+  "step": "turn.orgadmin",
+  "endpoint": "POST /boards/{boardId}/idea-assist/turns",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "503 is the contract when no model key is configured (rule 31), and it is the only answer this endpoint can have in a corpus: a live turn would be a billed, non-deterministic response, which tests/CLAUDE.md forbids outright. The authorization half is still pinned — who may ask at all.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/182df148-cf57-4bba-ade8-99286b6c1181/idea-assist/turns",
+    "body": {
+      "transcript": [
+        {
+          "role": "user",
+          "text": "We keep losing time on manual handoffs."
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 503,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/service-unavailable",
+      "title": "Service Unavailable",
+      "status": 503,
+      "detail": "AI assist is unavailable.",
+      "instance": "/api/v1/boards/182df148-cf57-4bba-ade8-99286b6c1181/idea-assist/turns",
+      "traceId": "0HNOA71FOOKTJ:00000074"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 503,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "AI assist is unavailable.",
+      "instance": "/api/v1/boards/<guid@board.body[0].boardId>/idea-assist/turns",
+      "status": 503,
+      "title": "Service Unavailable",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/service-unavailable"
+    }
+  }
+}

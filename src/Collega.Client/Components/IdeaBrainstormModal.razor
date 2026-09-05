@@ -1,40 +1,122 @@
 @using Microsoft.AspNetCore.Components.Web
+@inject ApiClient Api
 
 @*
-    IdeaBrainstormModal — a ChatGPT-style chat box that fronts the create-idea flow. Opened from the
-    global Ideas list's "Add New" action. The user describes their idea conversationally; each message
-    they send becomes a bubble, and scripted assistant prompts nudge them for more detail. There is no
-    live LLM behind it — the transcript of the user's own messages is what gets carried forward as the
-    seed Description on the new-idea form (IdeaCreateModal.InitialDescription). Built to be upgradeable
-    to a real model later: swap _NextAssistantPrompt for a model call and pass through its replies.
+    IdeaBrainstormModal — the AI-assisted drafting chat that fronts the create-idea flow.
+    Direction C "Draft Strip" (D-SURFACE), built against SPEC/mockups/comp-c-review-11-ai-assist-c-draftstrip.html.
 
-    Reuses CreateModalShell for chrome so it matches the create/detail surfaces
-    (SPEC/mockups/comp-c-review-09-detail-surfaces.html).
+    One 720px surface at a time (chat modal → create modal), CreateModalShell unchanged, plus a slim
+    READ-ONLY strip between transcript and composer showing what has been classified so far. The strip
+    being read-only is the whole reason this direction was chosen over B: because nothing on it can be
+    edited, v1 needs no per-field suggested-vs-user-edited state and no overwrite rule. All editing
+    happens on the create form. If the strip ever becomes editable, that state machine comes back with it.
+
+    Degradation is the normal case, not the error case (SPEC/20-feature-ai-idea-assist.md rules 31-32).
+    An unconfigured key, a provider failure, and an exhausted token budget all arrive as the same 503,
+    and all fall back to the scripted nudge with the user's text preserved. "Skip & fill manually" is
+    never gated on a successful model call.
 
     Public contract:
-      Open       : whether the modal is shown.
-      OnCancel   : dismissed without continuing.
-      OnComplete : fired with the combined transcript text when the user continues to the idea form.
+      Open         : whether the modal is shown.
+      BoardId      : the board the conversation is scoped to. Null keeps the chat scripted.
+      OnCancel     : dismissed without continuing.
+      OnComplete   : fired with the draft when the user continues to the idea form.
 *@
 <CreateModalShell IsOpen="Open" OnClose="Cancel"
                   Eyebrow="New idea" Title="Let's flesh out your idea"
-                  Meta="Chat it out — your notes become the idea's description."
+                  Meta="Chat it out — what you say becomes the idea."
                   FooterContent="RenderFooter">
     <div class="chat">
         <div class="transcript">
             @foreach (var m in _messages)
             {
-                <div class="msg @(m.FromUser ? "user" : "bot")">
-                    <div class="who">@(m.FromUser ? "You" : "Assistant")</div>
-                    <div class="bubble">@m.Text</div>
+                @if (m.Kind == MessageKind.Refusal)
+                {
+                    @* A refusal renders as a system note, never an assistant bubble — refusals must not
+                       read as conversation (rule 8a). *@
+                    <div class="sysnote" role="status">
+                        <div>
+                            <b>That one's outside what I can help with here.</b>
+                            <span class="redirect">@m.Text</span>
+                            @if (!_closed)
+                            {
+                                @* No count: the server owns the strike tally and the turn response
+                                   doesn't carry it, so naming a number here would be a guess — and
+                                   the guess was wrong (it said "1 more" after the first of three). *@
+                                <span class="subtle">
+                                    That message wasn't added to the conversation. Repeated off-topic
+                                    messages will end the chat.
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="msg @(m.FromUser ? "user" : "bot") @(m.Ghosted ? "strikeghost" : null)">
+                        <div class="who">@(m.FromUser ? "You" : "AI")</div>
+                        <div class="bubble">@m.Text</div>
+                    </div>
+                }
+            }
+
+            @if (_pending)
+            {
+                <div class="msg bot">
+                    <div class="who">AI</div>
+                    <div class="thinking" aria-label="Thinking"><i></i><i></i><i></i></div>
                 </div>
             }
         </div>
 
+        @* The draft strip. Values not yet chosen render explicitly as "not set yet" rather than being
+           omitted, so "the assistant chose nothing" stays distinguishable from "the assistant hasn't
+           got there yet" (rule 20a). *@
+        <div class="strip @(HasAnySuggestion ? null : "quiet")">
+            <span class="lead"><span class="sugdot"></span>Drafting</span>
+
+            @if (HasAnySuggestion)
+            {
+                @if (_draft.IdeaTypeId is { Length: > 0 })
+                {
+                    <span class="spill"><b>@NameFor(_ideaTypes, _draft.IdeaTypeId)</b></span>
+                }
+                else
+                {
+                    <span class="spill pending">Type not set yet</span>
+                }
+
+                @if (_draft.BusinessImpactId is { Length: > 0 })
+                {
+                    <span class="spill">Impact <b>@NameFor(_businessImpacts, _draft.BusinessImpactId)</b></span>
+                }
+                else
+                {
+                    <span class="spill pending">Impact not set yet</span>
+                }
+
+                @if (_draft.Priority is { Length: > 0 })
+                {
+                    <span class="spill">Priority <b>@_draft.Priority</b></span>
+                }
+                else
+                {
+                    <span class="spill pending">Priority not set yet</span>
+                }
+
+                <span class="tail">@_stripNote</span>
+            }
+            else
+            {
+                <span class="spill pending">Nothing classified yet</span>
+            }
+        </div>
+
         <div class="composer">
-            <textarea rows="2" placeholder="Describe your idea… (Enter to send, Shift+Enter for a new line)"
-                      @bind="_draft" @bind:event="oninput" @onkeydown="OnKeyDown"></textarea>
-            <button class="btn primary" @onclick="Send" disabled="@string.IsNullOrWhiteSpace(_draft)">Send</button>
+            <textarea rows="2" placeholder="@ComposerPlaceholder" disabled="@InputDisabled"
+                      @bind="_draftText" @bind:event="oninput" @onkeydown="OnKeyDown"></textarea>
+            <button class="btn primary" @onclick="SendAsync"
+                    disabled="@(InputDisabled || string.IsNullOrWhiteSpace(_draftText))">Send</button>
         </div>
     </div>
 </CreateModalShell>
@@ -42,25 +124,61 @@
 @code {
     private RenderFragment RenderFooter => @<text>
         <button class="btn subtle" @onclick="Cancel">Cancel</button>
-        <button class="btn" @onclick="() => Complete(string.Empty)" title="Skip the chat and fill the form yourself">Skip &amp; fill manually</button>
-        <button class="btn primary" @onclick="() => Complete(Transcript())" disabled="@(!HasUserInput)">
+        @* Never gated on a successful model call — the user must always be able to reach the form (rule 3). *@
+        <button class="btn" @onclick="() => Complete(TranscriptDraft())" title="Skip the chat and fill the form yourself">Skip &amp; fill manually</button>
+        <button class="btn primary" @onclick="() => Complete(_draft)" disabled="@(!HasUserInput)">
             Continue to idea form →
         </button>
     </text>;
 
     [Parameter] public bool Open { get; set; }
-    [Parameter] public EventCallback OnCancel { get; set; }
-    [Parameter] public EventCallback<string> OnComplete { get; set; }
 
-    private sealed record ChatMessage(bool FromUser, string Text);
+    /// <summary>
+    /// The board the conversation is scoped to. The assist endpoint is board-scoped for authorization
+    /// and attribution; retrieval itself is organization-scoped, so any board the caller can see gives
+    /// the same catalog. Null means no board is known — the chat stays scripted.
+    /// </summary>
+    [Parameter] public string? BoardId { get; set; }
+
+    /// <summary>The organization whose idea types and impacts label the strip.</summary>
+    [Parameter] public string? OrganizationId { get; set; }
+
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<IdeaDraftDto> OnComplete { get; set; }
+
+    private enum MessageKind { Chat, Refusal }
+
+    private sealed record ChatMessage(bool FromUser, string Text, MessageKind Kind = MessageKind.Chat)
+    {
+        /// <summary>Struck-through for one beat before the turn is dropped (D-REFUSED).</summary>
+        public bool Ghosted { get; init; }
+    }
 
     private readonly List<ChatMessage> _messages = new();
-    private string _draft = "";
-    private int _promptIndex;
+    private List<IdeaTypeOptionDto> _ideaTypes = new();
+    private List<BusinessImpactOptionDto> _businessImpacts = new();
+
+    private IdeaDraftDto _draft = new();
+    private string _draftText = "";
+    private string _stripNote = "";
+    private int _scriptedPromptIndex;
+    // Rule 5 caps the transcript at 20 entries, which is 10 user turns on an empty conversation.
+    // The server is authoritative; this is only what we show before the first turn comes back.
+    private const int MaxUserTurns = 10;
+    private int _turnsRemaining = MaxUserTurns;
+    private bool _pending;
+    private bool _closed;
+    private bool _assistUnavailable;
+
+    // Whether the model has answered at all in this conversation. Gates the first-turn bailout (rule 32b).
+    private bool _hadModelTurn;
     private bool _wasOpen;
 
-    // Scripted assistant nudges, cycled after each user message to encourage a fuller description.
-    private static readonly string[] AssistantPrompts =
+    /// <summary>
+    /// The fallback the product ships with the feature dark. These are also what a failed turn falls
+    /// back to, so a provider outage reads as a slightly less clever assistant rather than a broken one.
+    /// </summary>
+    private static readonly string[] ScriptedPrompts =
     {
         "Nice — what problem does this solve, and who feels it most?",
         "Got it. How would you know this idea succeeded? What would change?",
@@ -70,17 +188,25 @@
     private const string Greeting =
         "Hi! Tell me about your idea in your own words. What are you trying to build or improve?";
 
-    private bool HasUserInput => _messages.Any(m => m.FromUser);
+    private bool HasUserInput => _messages.Any(m => m.FromUser && !m.Ghosted);
 
-    protected override void OnParametersSet()
+    private bool HasAnySuggestion =>
+        _draft.IdeaTypeId is { Length: > 0 } || _draft.BusinessImpactId is { Length: > 0 }
+        || _draft.Priority is { Length: > 0 };
+
+    private bool InputDisabled => _pending || _closed;
+
+    private string ComposerPlaceholder => _closed
+        ? "Continue to the idea form to finish up."
+        : "Describe your idea… (Enter to send, Shift+Enter for a new line)";
+
+    protected override async Task OnParametersSetAsync()
     {
         if (Open && !_wasOpen)
         {
             _wasOpen = true;
-            _messages.Clear();
-            _messages.Add(new ChatMessage(false, Greeting));
-            _draft = "";
-            _promptIndex = 0;
+            Reset();
+            await LoadCatalogAsync();
         }
         else if (!Open)
         {
@@ -88,39 +214,226 @@
         }
     }
 
-    private void Send()
+    private void Reset()
     {
-        var text = _draft.Trim();
-        if (string.IsNullOrEmpty(text))
+        _messages.Clear();
+        _messages.Add(new ChatMessage(false, Greeting));
+        _draft = new IdeaDraftDto();
+        _draftText = "";
+        _stripNote = "";
+        _scriptedPromptIndex = 0;
+        _turnsRemaining = MaxUserTurns;
+        _pending = false;
+        _closed = false;
+        _assistUnavailable = false;
+        _hadModelTurn = false;
+    }
+
+    /// <summary>
+    /// Loads the option names the strip labels ids with. A failure here costs the strip its labels,
+    /// not the conversation — so it is deliberately not surfaced.
+    /// </summary>
+    private async Task LoadCatalogAsync()
+    {
+        if (OrganizationId is not { Length: > 0 })
         {
             return;
         }
+
+        var types = await Api.GetIdeaTypesAsync(OrganizationId);
+        if (types.Succeeded)
+        {
+            _ideaTypes = types.Value!;
+        }
+
+        var impacts = await Api.GetBusinessImpactsAsync(OrganizationId);
+        if (impacts.Succeeded)
+        {
+            _businessImpacts = impacts.Value!;
+        }
+    }
+
+    private async Task SendAsync()
+    {
+        var text = _draftText.Trim();
+        if (string.IsNullOrEmpty(text) || InputDisabled)
+        {
+            return;
+        }
+
         _messages.Add(new ChatMessage(true, text));
-        _draft = "";
-        _messages.Add(new ChatMessage(false, AssistantPrompts[_promptIndex % AssistantPrompts.Length]));
-        _promptIndex++;
+        _draftText = "";
+
+        // No board, or the assistant already told us it is unavailable: don't keep asking. One failed
+        // call per conversation is diagnosis; a call per turn is just latency the user pays for.
+        if (BoardId is not { Length: > 0 } || _assistUnavailable)
+        {
+            AppendScriptedPrompt();
+            return;
+        }
+
+        _pending = true;
+        StateHasChanged();
+
+        var request = new IdeaAssistTurnRequestDto(BuildTranscript(), _draft);
+        var result = await Api.ContinueIdeaAssistAsync(BoardId, request);
+
+        _pending = false;
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            // A 429 is not a dead assistant — it is a busy one. Degrade this turn, but don't latch
+            // the fallback, or one burst would leave the user on scripted prompts for the rest of
+            // the conversation even though the limit clears in seconds.
+            if (result.StatusCode != 429)
+            {
+                _assistUnavailable = true;
+            }
+
+            // Rule 32b: a 503 before the assistant has said anything real means the user is looking at
+            // a chat that was never going to work. Hand them the create form with their text rather
+            // than the scripted prompts — the page-load pre-check (rule 32a) cannot catch this,
+            // because the daily budget is usually exhausted mid-session. Later turns keep the scripted
+            // fallback: by then the user has invested in the conversation and swapping the surface out
+            // from under them would lose their place.
+            if (result.StatusCode == 503 && !_hadModelTurn)
+            {
+                await Complete(TranscriptDraft());
+                return;
+            }
+
+            AppendScriptedPrompt();
+            return;
+        }
+
+        _hadModelTurn = true;
+        await ApplyTurnAsync(result.Value);
+    }
+
+    private async Task ApplyTurnAsync(IdeaAssistTurnResponseDto turn)
+    {
+        _turnsRemaining = turn.TurnsRemaining;
+
+        if (!turn.InScope)
+        {
+            // Ghost-then-drop: the offending turn is struck through with the redirect beneath it, then
+            // removed. It is never sent again — accumulated off-topic context is what drifts a
+            // constrained assistant into a general one (rule 8).
+            var offending = _messages.FindLastIndex(m => m.FromUser && !m.Ghosted);
+            if (offending >= 0)
+            {
+                _messages[offending] = _messages[offending] with { Ghosted = true };
+            }
+
+            _messages.Add(new ChatMessage(false, turn.NextQuestion, MessageKind.Refusal));
+
+            _stripNote = "unchanged";
+            _closed = turn.ConversationClosed;
+
+            // The "then-drop" half of D-REFUSED. The ghost is an acknowledgement that the message was
+            // seen and rejected — leaving it up forever turns a one-beat signal into permanent
+            // clutter, and re-reads as though the message is still part of the conversation.
+            await DropGhostAsync();
+            return;
+        }
+
+        var previous = _draft;
+        _draft = turn.Draft;
+        _stripNote = Changed(previous, _draft) ? "just now" : "unchanged";
+
+        _messages.Add(new ChatMessage(false, turn.NextQuestion));
+        _closed = turn.ConversationClosed;
+
+        if (_closed)
+        {
+            _messages.Add(new ChatMessage(
+                false,
+                "That's plenty to work with — let's move to the idea form and finish up."));
+        }
+    }
+
+    /// <summary>
+    /// Holds the struck-through message for one beat, then removes it (D-REFUSED). Long enough to
+    /// read and register that it was rejected, short enough not to become part of the transcript.
+    /// </summary>
+    private async Task DropGhostAsync()
+    {
+        StateHasChanged();
+        await Task.Delay(GhostLingerMs);
+
+        _messages.RemoveAll(m => m.Ghosted);
+        StateHasChanged();
+    }
+
+    private const int GhostLingerMs = 2200;
+
+    private static bool Changed(IdeaDraftDto before, IdeaDraftDto after) =>
+        before.Title != after.Title
+        || before.Description != after.Description
+        || before.IdeaTypeId != after.IdeaTypeId
+        || before.BusinessImpactId != after.BusinessImpactId
+        || before.Priority != after.Priority;
+
+    private void AppendScriptedPrompt()
+    {
+        _messages.Add(new ChatMessage(false, ScriptedPrompts[_scriptedPromptIndex % ScriptedPrompts.Length]));
+        _scriptedPromptIndex++;
+    }
+
+    /// <summary>
+    /// Ghosted turns are excluded: a refused message is a client-side acknowledgement only and is
+    /// never added to the history sent on the next turn (rule 8a).
+    /// </summary>
+    private List<IdeaAssistTurnDto> BuildTranscript() =>
+        _messages
+            .Where(m => !m.Ghosted && m.Kind == MessageKind.Chat)
+            .Select(m => new IdeaAssistTurnDto(m.FromUser ? "user" : "assistant", m.Text))
+            .ToList();
+
+    private string NameFor<T>(List<T> options, string? id) where T : class
+    {
+        if (id is not { Length: > 0 })
+        {
+            return "—";
+        }
+
+        return options switch
+        {
+            List<IdeaTypeOptionDto> types => types.FirstOrDefault(t => t.IdeaTypeId == id)?.Name ?? "Selected",
+            List<BusinessImpactOptionDto> impacts => impacts.FirstOrDefault(i => i.BusinessImpactId == id)?.Name ?? "Selected",
+            _ => "Selected",
+        };
     }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !e.ShiftKey)
         {
-            // Fluent/Blazor fires keydown before the two-way bind flush on Enter, so _draft is already
-            // current here via @bind:event="oninput".
-            Send();
-            await Task.CompletedTask;
+            // Fluent/Blazor fires keydown before the two-way bind flush on Enter, so _draftText is
+            // already current here via @bind:event="oninput".
+            await SendAsync();
         }
     }
 
-    // The seed Description is the user's own words only — assistant nudges are conversational scaffolding,
-    // not content.
-    private string Transcript() =>
-        string.Join("\n\n", _messages.Where(m => m.FromUser).Select(m => m.Text));
+    /// <summary>
+    /// The description falls back to the user's own words when the assistant proposed none — the seam
+    /// the scripted chat has always had, kept for the degraded path.
+    /// </summary>
+    private IdeaDraftDto TranscriptDraft() => new(
+        Description: string.Join(
+            "\n\n",
+            _messages.Where(m => m.FromUser && !m.Ghosted).Select(m => m.Text)));
 
-    private async Task Complete(string text)
+    private async Task Complete(IdeaDraftDto draft)
     {
         _wasOpen = false;
-        await OnComplete.InvokeAsync(text);
+
+        if (string.IsNullOrWhiteSpace(draft.Description))
+        {
+            draft = draft with { Description = TranscriptDraft().Description };
+        }
+
+        await OnComplete.InvokeAsync(draft);
     }
 
     private async Task Cancel()

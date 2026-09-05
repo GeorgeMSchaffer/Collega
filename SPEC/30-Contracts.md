@@ -1265,7 +1265,7 @@ Success response `200`:
 
 ## AI Idea Assist Contracts
 
-Behavior spec: `SPEC/20-feature-ai-idea-assist.md`. Scheduled as Sprint 7 (`SPEC/sprints/sprint-07-ai-idea-assist.md`) — **not implemented yet**.
+Behavior spec: `SPEC/20-feature-ai-idea-assist.md`. Sprint 7 (`SPEC/sprints/archive/sprint-07-ai-idea-assist.md`). **Built 2026-08-16**, except the per-org `ai-key` endpoints below, which stay deliberately unimplemented (rule 30).
 
 Contract-wide rules for this section:
 - the caller's organization is resolved from the access token, never from the request body
@@ -1277,7 +1277,7 @@ Contract-wide rules for this section:
 Purpose: Advance the idea-drafting conversation by one turn and return the updated draft.
 
 Request body:
-- `transcript` required array, max 20 entries, ordered oldest-first. Each entry:
+- `transcript` required array, ordered oldest-first, **max 40 entries of which at most 20 may have `role` of `user`** — the cap is counted in *user turns*, not entries, per `20-feature-ai-idea-assist.md` rule 5; a full 20-turn conversation is ~40 entries. Both bounds are enforced server-side. Each entry:
   - `role` required string, one of `user`, `assistant`
   - `text` required string, max 4000 characters, trimmed before validation
 - `draft` optional object carrying the current draft so the model can revise rather than restate. Same shape as `draft` in the response; unknown or inactive ids are discarded server-side rather than rejected
@@ -1301,15 +1301,89 @@ Success response `200`:
   - `ideaTypeId` GUID string or null — an active idea type in this organization
   - `businessImpactId` GUID string or null — an active business impact in this organization
   - `priority` string or null, one of the `Priority` enum values
-- `turnsRemaining` integer
+- `turnsRemaining` integer — how many further **user** turns fit under the 20-entry cap, counted from the transcript as it will stand after this turn is applied
 
 Error responses:
-- `400` request body is malformed, violates field constraints, exceeds the 20-turn cap, or does not end with a `user` entry
+- `400` request body is malformed, violates field constraints, exceeds the 20-entry transcript cap, or does not end with a `user` entry
 - `401` caller is not authenticated
 - `403` caller is authenticated but not allowed to create ideas on this board
 - `404` board does not exist or is outside caller scope
 - `429` rate limit exceeded for this user or organization
 - `503` AI assist is not configured, the provider is unavailable, **or the deployment's daily token budget is exhausted** (`20-feature-ai-idea-assist.md` rule 28a) — clients degrade to the scripted brainstorm chat rather than surfacing an error. The three causes are deliberately indistinguishable to the client: all three mean "the assistant is unavailable, keep working without it."
+
+### `GET /api/v1/ai-assist/availability`
+Purpose: Tell the client whether to open the drafting chat or go straight to the create form (`20-feature-ai-idea-assist.md` rule 32a).
+
+Behavior rules:
+- authorized for **any authenticated user** — unlike the org-scoped settings endpoint below, which is admin-only. Idea creation is a `User`-role activity, so an admin-only check could not serve this purpose
+- returns a bare boolean and **never** distinguishes unconfigured from provider-unavailable from budget-exhausted, matching the deliberate opacity of the turn endpoint's `503` (rule 31). It carries no key material, no org configuration, and no usage figures
+- reflects deployment key configuration and the current UTC day's budget at the moment of the call; it is a snapshot, not a subscription, so clients must still handle a `503` on a turn
+
+Success response `200`:
+- `available` boolean
+
+Error responses:
+- `401` caller is not authenticated
+
+### `GET /api/v1/ai-assist/prompt`
+Purpose: Read the active system-prompt template, the two redirect strings, and the version history (`20-feature-ai-idea-assist.md` rules 34–36).
+
+Behavior rules:
+- **Site Admin only.** Deployment configuration, not organization content — the same scope as the deployment API key (rule 29). Org Admin is refused
+- when no version is active, returns the built-in default with `version` of `null` and `isBuiltInDefault` true. An empty history is the normal initial state, not an error
+
+Success response `200`:
+- `body` string — the active template, including its `{{ORGANIZATION_CATALOG}}` and `{{SCOPE_STATEMENT}}` placeholders
+- `outOfScopeRedirect` string · `conversationClosedRedirect` string
+- `version` integer or null · `isBuiltInDefault` boolean
+- `versions` array, newest first: `version`, `createdAtUtc`, `createdByUserId`, `createdByDisplayName`, `isActive`
+
+Error responses: `401` unauthenticated · `403` caller is not a Site Admin
+
+### `PUT /api/v1/ai-assist/prompt`
+Purpose: Publish a new version.
+
+Request body:
+- `body` required string, max 20000 characters. **Must contain both `{{ORGANIZATION_CATALOG}}` and `{{SCOPE_STATEMENT}}`**
+- `outOfScopeRedirect` required string, max 500 characters
+- `conversationClosedRedirect` required string, max 500 characters
+
+Behavior rules:
+- appends a version and makes it active; earlier versions are never modified
+- writes an audit event recording actor and version number, never the body (rule 27)
+
+Success response `200`: same shape as the `GET`.
+
+Error responses:
+- `400` a placeholder is missing, or a field is empty or over length. The message names the missing placeholder
+- `401` unauthenticated · `403` caller is not a Site Admin
+
+### `POST /api/v1/ai-assist/prompt/versions/{version}/restore`
+Purpose: Republish an earlier version.
+
+Behavior rules:
+- publishes a **copy** of `{version}` as a new version rather than reactivating the old row, so history stays append-only and the restore is itself visible in it
+
+Success response `200`: same shape as the `GET`. Errors: `401` · `403` · `404` no such version.
+
+### `POST /api/v1/ai-assist/prompt/probe`
+Purpose: Run advisory safety probes against a draft template before publishing (rule 37).
+
+Request body: `body` required string — the **draft**, which need not have been saved.
+
+Behavior rules:
+- runs the injection, fence-closing and off-topic probes against a **synthetic catalog** — never a real organization's — and reports whether each was refused
+- **advisory only** — this endpoint never publishes anything and a failing probe never blocks a later `PUT`
+- subject to the global daily budget gate, but **not** per-organization rate limited and **not** recorded in the usage meter: both need an organization to attribute spend to and a Site Admin has none (`20-feature-ai-idea-assist.md` rule 37b). Bounded instead by construction — three fixed prompts, Site Admin only
+- a failed provider call returns `503` rather than reporting the probe as refused
+
+Success response `200`:
+- `probes` array: `id`, `prompt`, `refused` boolean, `expectedRefused` boolean
+- `refusedCount` integer · `totalCount` integer
+
+Error responses:
+- `400` the draft is missing a required placeholder · `401` · `403` not a Site Admin
+- `429` rate limit exceeded · `503` AI assist is unavailable or the daily budget is exhausted
 
 ### `GET /api/v1/organizations/{organizationId}/ai-assist/settings`
 Purpose: Read the organization's AI assist configuration for the settings UI.

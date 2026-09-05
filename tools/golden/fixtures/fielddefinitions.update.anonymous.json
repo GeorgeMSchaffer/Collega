@@ -1,0 +1,50 @@
+{
+  "scenario": "fielddefinitions",
+  "step": "update.anonymous",
+  "endpoint": "PUT /organizations/{organizationId}/field-definitions/{id}",
+  "as": "anonymous",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/field-definitions/669cc969-5fba-4dee-a3d6-a072799faa63",
+    "body": {
+      "name": "Golden Capture Field Renamed",
+      "fieldType": "Text",
+      "isRequired": true
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:43 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/field-definitions/669cc969-5fba-4dee-a3d6-a072799faa63",
+      "traceId": "00-e77595b07239ce2ac40498dc7a2924e9-4fffa7e433214529-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/field-definitions/<guid@create.orgadmin.body.fieldDefinitionId>",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

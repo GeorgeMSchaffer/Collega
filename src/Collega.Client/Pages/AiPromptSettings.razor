@@ -1,0 +1,301 @@
+@page "/settings/ai-prompt"
+@attribute [Authorize(Roles = "SiteAdmin")]
+@inject ApiClient Api
+
+<PageTitle>AI prompt · Collega</PageTitle>
+
+@*
+    Site-Admin editing of the idea-assist system prompt and its two redirect strings
+    (SPEC/20-feature-ai-idea-assist.md rules 34-38).
+
+    Its own Settings page rather than a drawer, matching AiAssistSettings.razor: this is a long-form
+    text editor with a history list beside it, which a 620px drawer serves badly.
+
+    Two things this page must keep saying out loud, because neither is visible in the text itself:
+    the placeholders are required and the server owns what goes in them, and removing the scope
+    instructions makes the assistant *look* better while refusing less — which is what the probes are
+    for. See the guidance block below.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings">Settings</a> / AI prompt</div>
+    <h1>AI prompt</h1>
+    <p class="sub" style="margin-bottom:18px">
+        The instructions the idea assistant follows, for every organization on this deployment.
+    </p>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else
+    {
+        <div class="cmdbar"><BackButton /></div>
+
+        @if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+
+        @if (_notice is not null)
+        {
+            <div class="notice" role="status">@_notice</div>
+        }
+
+        <div class="card formcard">
+            <h3 class="sect">Instructions</h3>
+            <p class="sub">
+                Two placeholders are required and are filled in by the server, not by you.
+                <code>@CatalogPlaceholder</code> becomes this organization's idea types and business
+                impacts, escaped so nothing written by a user can pose as an instruction.
+                <code>@ScopePlaceholder</code> becomes the organization's scope statement, or nothing when
+                it has none — remove it and every organization's scope statement is silently ignored.
+            </p>
+
+            <div class="field">
+                <label for="prompt-body">System prompt <span class="charlim">@_body.Length / @BodyMax</span></label>
+                <textarea id="prompt-body" rows="22" maxlength="@BodyMax" @bind="_body" @bind:event="oninput"
+                          disabled="@_busy" spellcheck="false"></textarea>
+            </div>
+
+            @if (MissingPlaceholders.Count > 0)
+            {
+                <div class="autherror" role="alert">
+                    Missing required placeholder@(MissingPlaceholders.Count > 1 ? "s" : ""):
+                    @string.Join(", ", MissingPlaceholders)
+                </div>
+            }
+
+            <div class="field">
+                <label for="prompt-refused">Message shown for a refused message</label>
+                <input id="prompt-refused" type="text" maxlength="@RedirectMax" @bind="_outOfScope"
+                       @bind:event="oninput" disabled="@_busy" />
+            </div>
+
+            <div class="field">
+                <label for="prompt-closed">Message shown when the chat closes after repeated refusals</label>
+                <input id="prompt-closed" type="text" maxlength="@RedirectMax" @bind="_closed"
+                       @bind:event="oninput" disabled="@_busy" />
+            </div>
+
+            <p class="sub warn">
+                Removing or weakening the <strong>Scope</strong> instructions tends to make classification
+                <em>better</em> while making the assistant refuse less — including refusing prompt-injection
+                attempts. The probes below are a smoke test, not a safety certificate: three prompts will
+                catch gross breakage and will <strong>miss</strong> a subtle weakening. For a real answer,
+                run the prompt through <code>tools/Collega.AiPlayground</code> over the full corpus.
+            </p>
+
+            <div class="actions">
+                <button class="btn" @onclick="RunProbesAsync" disabled="@(_busy || MissingPlaceholders.Count > 0)">
+                    @(_probing ? "Running…" : "Run safety probes")
+                </button>
+                <button class="btn primary" @onclick="PublishAsync" disabled="@(_busy || !CanPublish)">
+                    @(_publishing ? "Publishing…" : "Publish")
+                </button>
+                <span style="margin-left:auto"></span>
+                <button class="btn subtle" @onclick="ResetAsync" disabled="@(_busy || _prompt?.IsBuiltInDefault == true)">
+                    Reset to built-in default
+                </button>
+            </div>
+
+            <p class="sub">
+                Publishing changes the cached prompt prefix, so the next turn or two cost about twice as
+                much while the provider's cache re-warms. That is expected, and it settles by itself.
+            </p>
+        </div>
+
+        @if (_probe is not null)
+        {
+            <div class="card formcard">
+                <h3 class="sect">Safety probes — @_probe.RefusedCount of @_probe.TotalCount refused</h3>
+                <p class="sub">
+                    Advisory only. These never block publishing, and they run against a fictional catalog,
+                    not any organization's real data. <strong>All three refusing does not mean an edit is
+                    safe</strong> — it means nothing obvious broke.
+                </p>
+                <table class="grid">
+                    <tbody>
+                        @foreach (var probe in _probe.Probes)
+                        {
+                            <tr>
+                                <td class="@(probe.Refused == probe.ExpectedRefused ? "ok" : "bad")">
+                                    @(probe.Refused ? "refused" : "ALLOWED")
+                                </td>
+                                <td>@probe.Prompt</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <div class="card formcard">
+            <h3 class="sect">History</h3>
+            @if (_prompt is null || _prompt.Versions.Count == 0)
+            {
+                <p class="sub">Nothing published yet — the assistant is running the built-in default.</p>
+            }
+            else
+            {
+                <table class="grid">
+                    <tbody>
+                        @foreach (var version in _prompt.Versions)
+                        {
+                            <tr>
+                                <td>v@version.Version @(version.IsActive ? "(active)" : "")</td>
+                                <td>@version.CreatedAtUtc.ToLocalTime().ToString("g")</td>
+                                <td>@(version.CreatedByDisplayName ?? "—")</td>
+                                <td>
+                                    @if (!version.IsActive)
+                                    {
+                                        <button class="btn subtle" @onclick="() => RestoreAsync(version.Version)"
+                                                disabled="@_busy">Restore</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    // Mirrors AiPromptVersion's constants. Duplicated rather than shared because the client does not
+    // reference Domain; the server re-validates, so drift shows as a rejected save, not bad data.
+    private const int BodyMax = 20_000;
+    private const int RedirectMax = 500;
+    private const string CatalogPlaceholder = "{{ORGANIZATION_CATALOG}}";
+    private const string ScopePlaceholder = "{{SCOPE_STATEMENT}}";
+
+    private AiPromptDto? _prompt;
+    private AiPromptProbeDto? _probe;
+
+    private string _body = "";
+    private string _outOfScope = "";
+    private string _closed = "";
+
+    private bool _loading = true;
+    private bool _publishing;
+    private bool _probing;
+    private string? _error;
+    private string? _notice;
+
+    private bool _busy => _publishing || _probing;
+
+    private List<string> MissingPlaceholders
+    {
+        get
+        {
+            var missing = new List<string>();
+            if (!_body.Contains(CatalogPlaceholder, StringComparison.Ordinal)) missing.Add(CatalogPlaceholder);
+            if (!_body.Contains(ScopePlaceholder, StringComparison.Ordinal)) missing.Add(ScopePlaceholder);
+            return missing;
+        }
+    }
+
+    private bool CanPublish =>
+        MissingPlaceholders.Count == 0
+        && !string.IsNullOrWhiteSpace(_body)
+        && !string.IsNullOrWhiteSpace(_outOfScope)
+        && !string.IsNullOrWhiteSpace(_closed);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var result = await Api.GetAiPromptAsync();
+        _loading = false;
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            _error = result.Error ?? "Could not load the AI prompt.";
+            return;
+        }
+
+        Apply(result.Value);
+    }
+
+    private void Apply(AiPromptDto prompt)
+    {
+        _prompt = prompt;
+        _body = prompt.Body;
+        _outOfScope = prompt.OutOfScopeRedirect;
+        _closed = prompt.ConversationClosedRedirect;
+        _error = null;
+    }
+
+    private async Task PublishAsync()
+    {
+        _publishing = true;
+        _notice = null;
+        var result = await Api.PublishAiPromptAsync(new PublishAiPromptRequestDto(_body, _outOfScope, _closed));
+        _publishing = false;
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            _error = result.Error ?? "Could not publish the prompt.";
+            return;
+        }
+
+        Apply(result.Value);
+        _notice = $"Published version {result.Value.Version}.";
+    }
+
+    private async Task RestoreAsync(int version)
+    {
+        _publishing = true;
+        _notice = null;
+        var result = await Api.RestoreAiPromptAsync(version);
+        _publishing = false;
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            _error = result.Error ?? "Could not restore that version.";
+            return;
+        }
+
+        Apply(result.Value);
+        _notice = $"Restored version {version} as version {result.Value.Version}.";
+    }
+
+    private async Task ResetAsync()
+    {
+        _publishing = true;
+        _notice = null;
+        var result = await Api.ResetAiPromptAsync();
+        _publishing = false;
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            _error = result.Error ?? "Could not reset the prompt.";
+            return;
+        }
+
+        Apply(result.Value);
+        _notice = "Reset to the built-in default.";
+    }
+
+    private async Task RunProbesAsync()
+    {
+        _probing = true;
+        _probe = null;
+        _notice = null;
+        var result = await Api.ProbeAiPromptAsync(new ProbeAiPromptRequestDto(_body));
+        _probing = false;
+
+        if (!result.Succeeded || result.Value is null)
+        {
+            // Deliberately not reported as "probes passed" — a provider outage must never read as a
+            // clean bill of health (rule 37b).
+            _error = result.Error ?? "The probes could not run. AI assist may be unavailable or out of budget.";
+            return;
+        }
+
+        _probe = result.Value;
+    }
+}

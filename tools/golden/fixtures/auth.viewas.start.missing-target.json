@@ -1,0 +1,55 @@
+{
+  "scenario": "auth",
+  "step": "viewas.start.missing-target",
+  "endpoint": "POST /auth/view-as",
+  "as": "SiteAdmin",
+  "kind": "invalid",
+  "note": "A missing target is 400, not the 404 an empty Guid used to produce.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/auth/view-as",
+    "body": {},
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:41 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/validation-error",
+      "title": "One or more fields are invalid.",
+      "status": 400,
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "instance": "/api/v1/auth/view-as",
+      "errors": {
+        "targetUserId": [
+          "Target User Id is required."
+        ]
+      }
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "The request failed validation. See the errors property for field-level details.",
+      "errors": {
+        "targetUserId": [
+          "Target User Id is required."
+        ]
+      },
+      "instance": "/api/v1/auth/view-as",
+      "status": 400,
+      "title": "One or more fields are invalid.",
+      "type": "https://collega.dev/problems/validation-error"
+    }
+  }
+}

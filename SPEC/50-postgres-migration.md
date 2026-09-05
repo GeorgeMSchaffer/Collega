@@ -77,12 +77,12 @@ Effort in agent-days (1 agent-day = one focused session from partial to build-cl
 
 ## Documentation fan-out
 
-`SPEC/50-azure-deployment.md` is **already updated** (targets Azure Database for PostgreSQL — Flexible Server, Burstable B1ms). Still to reconcile when this migration merges: `SPEC/00-project-brief.md`, `CLAUDE.md` (stack table + Local SQL Server section + docker-compose notes), `SPEC/50-technical-implementation-plan.md`, `SPEC/50-kubernetes-deployment.md`, `SPEC/20-feature-issues-and-delivery.md`, and `SPEC/50-azure-api-cicd.md` (check its build/deploy steps for any SQL-specific assumptions). `85-implementation-timeline.md` was archived 2026-08-11 and is deliberately **excluded** — do not reconcile archived documents.
+**Complete as of 2026-08-27 — every document on this list is reconciled.** `SPEC/50-azure-deployment.md` (Azure Database for PostgreSQL Flexible Server, Burstable B1ms), `SPEC/00-project-brief.md`, `CLAUDE.md`, and `SPEC/50-kubernetes-deployment.md` were done with or shortly after the merge. `SPEC/50-technical-implementation-plan.md` was the last one and closed 2026-08-27: its prose had read PostgreSQL since the cutover while its table outlines were still written in `uniqueidentifier`/`nvarchar`/`bit`/`datetime2` — now `uuid`/`character varying(N)`/`text`/`boolean`/`timestamp with time zone`, matching what `20260812195251_InitialCreate` emits. `SPEC/20-feature-issues-and-delivery.md` and `SPEC/50-azure-api-cicd.md` needed no change; both are engine-neutral. `85-implementation-timeline.md` was archived 2026-08-11 and is deliberately **excluded** — do not reconcile archived documents.
 
 ## Open items requiring a human decision before implementation
 
 - ~~**NuGet approvals**~~ — approved 2026-08-11 (`Npgsql.EntityFrameworkCore.PostgreSQL` + Testcontainers/Postgres test package).
-- **Target Postgres version & host:** local `postgres:16` in compose is assumed and the Azure guide now targets **Azure Database for PostgreSQL Flexible Server (Burstable B1ms)**; confirm this over a self-hosted/K8s host (`SPEC/50-kubernetes-deployment.md` still describes SQL Server and is not yet reconciled).
+- **Target Postgres version & host:** local `postgres:16` in compose is assumed and the Azure guide now targets **Azure Database for PostgreSQL Flexible Server (Burstable B1ms)**; confirm this over a self-hosted/K8s host (`SPEC/50-kubernetes-deployment.md` has since been reconciled and targets PostgreSQL 16 in-cluster).
 - ~~**Timing vs. Sprint 4**~~ — scheduled 2026-08-11 as **Sprint 5**, immediately after Sprint 4, in `SPEC/95-next-sprints.md` (`SPEC/sprints/archive/sprint-05-postgres-migration.md`). Runs last so the engine swap starts from Sprint 4's reviewed, stable code.
 
 ## Field-definition name uniqueness — RESOLVED (2026-08-12)

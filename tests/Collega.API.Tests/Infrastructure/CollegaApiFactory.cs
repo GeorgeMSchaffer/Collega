@@ -1,9 +1,28 @@
+using Collega.Application.Abstractions;
+using Collega.Application.Ai;
 using Collega.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Collega.API.Tests.Infrastructure;
+
+/// <summary>
+/// A draft model that is never configured, so the integration host can exercise the drafting
+/// endpoints without a provider. <see cref="ContinueAsync"/> throws rather than returning a canned
+/// answer: a test that somehow reaches it has escaped the guard, and should fail loudly.
+/// </summary>
+internal sealed class UnconfiguredIdeaDraftModel : IIdeaDraftModel
+{
+    public bool IsConfigured => false;
+
+    public Task<IdeaDraftModelResponse> ContinueAsync(
+        IdeaAssistContext context,
+        IReadOnlyList<IdeaAssistTurn> transcript,
+        IdeaDraft currentDraft,
+        CancellationToken cancellationToken = default) =>
+        throw new IdeaDraftModelException("Integration tests never call a model provider.");
+}
 
 /// <summary>
 /// Shared integration-test harness for Collega.API. Boots the real ASP.NET Core
@@ -36,7 +55,11 @@ namespace Collega.API.Tests.Infrastructure;
 /// documented for this pattern; see CLAUDE.md's testing conventions ("EF Core tests use the
 /// InMemory provider, never a real database").
 /// </remarks>
-public sealed class CollegaApiFactory : WebApplicationFactory<Program>
+/// <remarks>
+/// Not sealed: <see cref="AiConfiguredApiFactory"/> derives from it to reach the paths behind AI
+/// availability, which are unreachable in a host running the feature dark.
+/// </remarks>
+public class CollegaApiFactory : WebApplicationFactory<Program>
 {
     // Fixed per factory INSTANCE (not regenerated inside ConfigureServices) because
     // WebApplicationFactory can invoke ConfigureWebHost/ConfigureServices more than once while
@@ -53,6 +76,17 @@ public sealed class CollegaApiFactory : WebApplicationFactory<Program>
         // them — see the ConfigureAppConfiguration-vs-environment-variables note above.
         Environment.SetEnvironmentVariable("SiteAdmin__Email", "siteadmin@collega.test");
         Environment.SetEnvironmentVariable("SiteAdmin__Password", "Test123!Password");
+
+        // Blank the AI credential. WebApplicationFactory runs as Development, so the host loads the
+        // developer's user-secrets — and a developer with a real ANTHROPIC_API_KEY there would have
+        // the suite make live, billed model calls on every run. Environment variables outrank
+        // user-secrets in the default configuration chain, so this wins. The IIdeaDraftModel override
+        // below makes the guarantee independent of that ordering; both are deliberate.
+        //
+        // ANTHROPIC_API_KEY is the name the vendor's own tooling exports, so it is far more likely to
+        // be present in a developer's shell than the old vendor-neutral Ai__ApiKey ever was. That
+        // makes this line more load-bearing after the 2026-08-25 rename, not less.
+        Environment.SetEnvironmentVariable("ANTHROPIC_API_KEY", string.Empty);
     }
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
@@ -68,6 +102,18 @@ public sealed class CollegaApiFactory : WebApplicationFactory<Program>
 
             services.AddDbContext<CollegaDbContext>(options =>
                 options.UseInMemoryDatabase(_inMemoryDatabaseName));
+
+            // No test may reach a model provider — the same rule that keeps every other test off a
+            // real database. Replacing the registration outright means it holds even if the
+            // configuration chain changes, and it makes the drafting endpoints exercise their
+            // degradation path (rule 31), which is the behaviour worth covering here anyway.
+            var draftModelDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IIdeaDraftModel));
+            if (draftModelDescriptor is not null)
+            {
+                services.Remove(draftModelDescriptor);
+            }
+
+            services.AddSingleton<IIdeaDraftModel, UnconfiguredIdeaDraftModel>();
         });
 
         base.ConfigureWebHost(builder);

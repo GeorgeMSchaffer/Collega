@@ -1,0 +1,92 @@
+{
+  "scenario": "organizations",
+  "step": "list.siteadmin",
+  "endpoint": "GET /organizations",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Only a Site Admin sees across organizations.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "items": [
+        {
+          "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+          "title": "Acme Robotics",
+          "description": "Industrial robotics and automation manufacturer.",
+          "inviteCode": "<redacted>",
+          "city": null,
+          "state": null,
+          "phone": null,
+          "logoThumbnailUrl": null,
+          "isArchived": false
+        },
+        {
+          "organizationId": "a02e29c4-81fd-4f04-b3c2-95c41d24cc9f",
+          "title": "Blue Harbor Logistics",
+          "description": "Regional freight and warehousing operator.",
+          "inviteCode": "<redacted>",
+          "city": null,
+          "state": null,
+          "phone": null,
+          "logoThumbnailUrl": null,
+          "isArchived": false
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "totalCount": 2,
+      "sortBy": null,
+      "sortDirection": "asc"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "items": [
+        {
+          "city": null,
+          "description": "Industrial robotics and automation manufacturer.",
+          "inviteCode": "<redacted>",
+          "isArchived": false,
+          "logoThumbnailUrl": null,
+          "organizationId": "<guid@org.body.organizationId>",
+          "phone": null,
+          "state": null,
+          "title": "Acme Robotics"
+        },
+        {
+          "city": null,
+          "description": "Regional freight and warehousing operator.",
+          "inviteCode": "<redacted>",
+          "isArchived": false,
+          "logoThumbnailUrl": null,
+          "organizationId": "<guid@list.siteadmin.body.items[1].organizationId>",
+          "phone": null,
+          "state": null,
+          "title": "Blue Harbor Logistics"
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "sortBy": null,
+      "sortDirection": "asc",
+      "totalCount": 2
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/Collega.API/Collega.API.csproj"],
+      "port": 5103
+    },
+    {
+      "name": "client",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/Collega.Client/Collega.Client.csproj"],
+      "port": 5098
+    }
+  ]
+}

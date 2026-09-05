@@ -1,0 +1,46 @@
+{
+  "scenario": "ideas",
+  "step": "export.anonymous",
+  "endpoint": "GET /boards/{boardId}/ideas/export",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "CSV, not JSON — the corpus pins the text body as recorded.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas/export",
+    "body": null
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas/export",
+      "traceId": "00-348557e44fa9a5977c8bfb683fa75095-da1b9c093f535a48-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/<guid@board.body[0].boardId>/ideas/export",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

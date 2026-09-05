@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Review 12A: Delivery IA "Rail Split"</title>
+<style>
+  /* ===== Tokens copied verbatim from comp-c-review-06-lockin-v5-final (locked) ===== */
+  :root{
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#3E4E60;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
+    --im-high-deep:#B64B4B; --im-high-soft:#F8EFEF;
+    --im-med-deep:#C97A7A; --im-med-soft:#F1F3F6;
+    --im-low-deep:#B64B4B; --im-low-soft:#F1F3F6;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+    --radius-card:2px; --radius-btn:2px;
+    /* delivery-status colors — carried from comp-c-review-09-delivery */
+    --ds-pending:#3E4E60; --ds-scoping:#5B7FA3; --ds-dev:#527292; --ds-review:#8A6D2E; --ds-complete:#457C4F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .screen{display:none}.screen.on{display:block}
+  .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
+  .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:4px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:12px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
+  .rail a.on{background:var(--accent-soft);color:var(--accent)}
+  .rail a:hover{background:#F1F3F6}
+  .rail .push{flex:1}
+  /* A-SPECIFIC: the rail is split into two labelled worlds */
+  .railgroup{font-size:7.5px;font-weight:800;letter-spacing:.09em;color:#A4ADB7;text-transform:uppercase;margin:9px 0 2px}
+  .railrule{width:30px;height:1px;background:var(--line);margin:5px 0 2px}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .avatar.s{width:24px;height:24px;font-size:9.5px}
+  .avatarwrap{position:relative}
+  .avatarbtn{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;line-height:0}
+  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
+  .avatarmenu.show{display:block}
+  .avatarmenu .who{padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.5}
+  .avatarmenu .who strong{color:var(--ink);font-size:13px;display:block}
+  .avatarmenu .item{display:block;padding:9px 14px;font-size:13px;color:var(--ink);text-decoration:none;cursor:pointer}
+  .avatarmenu .item:hover{background:#F1F3F6}
+  .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
+  .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
+  .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
+  .pagehead h1{font-size:26px;margin-bottom:4px}
+  .pagehead .sub{color:var(--ink-3);font-size:13.5px;max-width:700px;line-height:1.5}
+  .pagehead .row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .pagehead .row .grow{flex:1}
+  .viewswitch{display:flex;gap:4px;margin-top:18px;flex-wrap:wrap}
+  .viewswitch a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent;cursor:pointer}
+  .viewswitch a.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .body{padding:26px 40px;max-width:1240px}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#F1F3F6}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-deep)}
+  .btn.subtle{border-color:transparent;color:var(--accent)}
+  .btn.sm{padding:4px 10px;font-size:12px}
+  input[type=text],select,textarea{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:600}
+  .pill.ok{background:#F0F7F1;color:var(--ok)}.pill.warn{background:#F9F6EE;color:var(--warn)}
+  .pill.neutral{background:#F1F3F6;color:var(--ink-2)}
+  .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
+  .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 2px 2px 0;margin-top:20px;max-width:840px;line-height:1.55}
+  .note.tradeoff{border-left-color:#8A6D2E;background:#F9F6EE}
+  .note b{color:var(--ink)}
+  .chipbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  /* shared chips */
+  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:2px;white-space:nowrap;flex-shrink:0}
+  .impact.high{background:var(--im-high-soft);color:var(--im-high-deep)}
+  .impact.med{background:var(--im-med-soft);color:var(--im-med-deep)}
+  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px;flex-shrink:0}
+  .prio-chip.high{background:#F8EFEF;color:var(--err)}
+  .prio-chip.med{background:#F9F6EE;color:var(--warn)}
+  .prio-chip.low{background:#F0F7F1;color:var(--ok)}
+  .effort{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px;background:#F1F3F6;color:#527292;border:1px solid #D1DBE5;white-space:nowrap}
+  .tag{background:#F1F3F6;border-radius:2px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .age{font-size:11px;color:var(--ink-3)}
+  .avatarstack{display:inline-flex;align-items:center}
+  .avatarstack .avatar{margin-left:-6px;border:2px solid var(--surface)}
+  .avatarstack .avatar:first-child{margin-left:0}
+  .up{border:1px solid var(--line);border-radius:2px;padding:5px 12px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:54px;text-align:center}
+  .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
+  /* swimlanes — Flat treatment (locked) */
+  .klanes{display:grid;grid-auto-flow:column;grid-auto-columns:262px;gap:14px;overflow-x:auto;padding-bottom:12px;align-items:start}
+  .klane{background:#F1F3F6;border-radius:var(--radius-card);padding:12px}
+  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink-2);padding:2px 6px 12px}
+  .klane h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--lc,var(--ink-3))}
+  .klane h3 .grow{flex:1}
+  .klane .cnt{border-radius:2px;padding:0 8px;font-size:11px;background:#DDE1E6}
+  .kcard{background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow);padding:11px 13px;margin-bottom:9px;cursor:grab;border-left:3px solid var(--lc,transparent)}
+  .kcard:hover{outline:1px solid var(--accent)}
+  .kcard .t{font-weight:600;font-size:13.5px;margin-bottom:7px}
+  .kcard .meta2{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+  .kcard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
+  .kcard .meta .spacer{flex:1}
+  /* PROMOTED-BUT-VISIBLE card (crowd loop) — muted, not gone */
+  .kcard.promoted{background:#F7F9FB;border-left-color:#C5CBD3;box-shadow:none;cursor:default}
+  .kcard.promoted .t{color:var(--ink-2)}
+  .inflight{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:2px;background:#F1F3F6;color:#527292;border:1px solid #D1DBE5}
+  .inflight .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .shipped{background:#F0F7F1;color:var(--ok);border-color:#D1E6D5}
+  /* roadmap identity chip — per-roadmap colour is IDENTITY (like a status colour), never a state colour */
+  .rm{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px 2px 6px;border-radius:2px;background:#F1F3F6;color:var(--ink-2);white-space:nowrap}
+  .rm .sw{width:8px;height:8px;border-radius:2px;background:var(--rmc,#818E9C)}
+  /* child tasks */
+  .tasklist{border:1px solid var(--line);border-radius:var(--radius-card);background:var(--surface);overflow:hidden}
+  .tasklist .thd{display:flex;align-items:center;gap:10px;padding:11px 15px;border-bottom:1px solid var(--line);background:#F7F9FB}
+  .tasklist .thd .n{font-weight:700;font-size:13px}
+  .tasklist .thd .grow{flex:1}
+  .task{display:flex;align-items:center;gap:11px;padding:10px 15px;border-bottom:1px solid #F1F3F6;font-size:13px}
+  .task:last-child{border-bottom:none}
+  .task .box{width:15px;height:15px;border-radius:2px;border:1.5px solid #818E9C;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#fff}
+  .task.done .box{background:var(--ds-complete);border-color:var(--ds-complete)}
+  .task.done .tt{color:var(--ink-3);text-decoration:line-through}
+  .task .tt{flex:1}
+  .task .ts{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 7px;border-radius:2px;background:#F1F3F6;color:var(--ink-2)}
+  .task .ts.prog{background:#F1F3F6;color:#527292}
+  .progressline{height:5px;border-radius:2px;background:#DDE1E6;overflow:hidden;margin-top:8px}
+  .progressline i{display:block;height:100%;background:var(--ds-complete)}
+  /* provenance */
+  .lineage{background:var(--accent-soft);border:1px solid #F0F4F7;border-radius:2px;padding:15px 17px}
+  .lineage h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;margin-bottom:3px;color:var(--accent-deep)}
+  .lineage .cap{font-size:11.5px;color:var(--ink-3);margin-bottom:12px}
+  .linrow{display:flex;gap:10px;font-size:12.5px;color:var(--ink-2);padding:6px 0;align-items:baseline;border-top:1px solid #F0F4F7}
+  .linrow:first-of-type{border-top:none}
+  .linrow .lk{color:var(--ink-3);width:118px;font-weight:600;flex-shrink:0}
+  .linrow .lv{color:var(--ink);font-weight:600}
+  .linrow a{color:var(--accent-deep);font-weight:700;text-decoration:none}
+  /* outcome capture */
+  .outcome{border:1px solid var(--line);border-left:3px solid var(--ds-complete);border-radius:0 var(--radius-card) var(--radius-card) 0;background:var(--surface);padding:15px 18px}
+  .outcome h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;margin-bottom:8px}
+  .outcome .claimvs{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:11px}
+  .outcome .cv .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:4px}
+  .outcome textarea{width:100%;min-height:64px;font-size:13px;line-height:1.5}
+  .outcome .hint{font-size:11.5px;color:var(--ink-3);margin-top:7px}
+  /* crowd-loop notification */
+  .crowd{display:flex;gap:12px;align-items:flex-start;border:1px solid #D1E6D5;background:#F1F3F6;border-radius:var(--radius-card);padding:13px 16px;max-width:640px}
+  .crowd .ic{font-size:18px;line-height:1}
+  .crowd .tx{font-size:13px;line-height:1.55;color:var(--ink-2)}
+  .crowd .tx strong{color:var(--ink)}
+  /* sprint strip */
+  .sprintbar{display:flex;align-items:center;gap:20px;padding:15px 19px;flex-wrap:wrap;margin-bottom:16px}
+  .sprintbar .goal{flex:1;min-width:210px}
+  .sprintbar .goal .g-k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:3px}
+  .sprintbar .goal .g-v{font-size:14px;color:var(--ink-2);line-height:1.45}
+  .sprintbar .meta-blk{text-align:center}
+  .sprintbar .meta-blk .m-n{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:20px;color:var(--accent-deep)}
+  .sprintbar .meta-blk .m-l{font-size:11px;color:var(--ink-3)}
+  .sprintbar .divider{width:1px;align-self:stretch;background:var(--line)}
+  .state-pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:2px}
+  .state-pill.active{background:#F0F7F1;color:var(--ok)}
+  .state-pill.planned{background:var(--accent-soft);color:var(--accent-deep)}
+  .state-pill .d{width:7px;height:7px;border-radius:50%;background:currentColor}
+  /* roadmap timeline */
+  .tl{border:1px solid var(--line);border-radius:var(--radius-card);background:var(--surface);overflow:hidden}
+  .tl .tlhd{display:grid;grid-template-columns:250px 1fr;border-bottom:1px solid var(--line);background:#F7F9FB}
+  .tl .tlhd .lbl{padding:10px 15px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);border-right:1px solid var(--line)}
+  .tl .months{display:grid;grid-template-columns:repeat(3,1fr)}
+  .tl .months div{padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);border-left:1px solid #F1F3F6}
+  .tl .months div:first-child{border-left:none}
+  .tlrow{display:grid;grid-template-columns:250px 1fr;border-bottom:1px solid #F1F3F6}
+  .tlrow:last-child{border-bottom:none}
+  .tlrow .rmcell{padding:13px 15px;border-right:1px solid var(--line)}
+  .tlrow .rmcell .nm{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:7px}
+  .tlrow .rmcell .nm .sw{width:9px;height:9px;border-radius:2px;background:var(--rmc)}
+  .tlrow .rmcell .mt{font-size:11.5px;color:var(--ink-3);margin-top:4px;line-height:1.45}
+  .track{position:relative;padding:14px 12px;display:flex;flex-direction:column;gap:7px;background:
+     repeating-linear-gradient(to right,transparent 0,transparent calc(33.33% - 1px),#F1F3F6 calc(33.33% - 1px),#F1F3F6 33.33%)}
+  .bar{display:inline-flex;align-items:center;gap:7px;border-radius:2px;padding:4px 11px;font-size:12px;font-weight:600;background:#F1F3F6;color:var(--ink-2);width:fit-content;max-width:60%;border-left:3px solid var(--dsc,#818E9C)}
+  .bar .st{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--dsc)}
+  .sprintmark{position:absolute;top:0;bottom:0;width:0;border-left:1.5px dashed #A4ADB7}
+  .sprintmark span{position:absolute;top:2px;left:4px;font-size:9px;font-weight:700;color:#A4ADB7;white-space:nowrap}
+  .listrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #F1F3F6;background:var(--surface)}
+  .listrow:last-child{border-bottom:none}
+  .listrow .t{font-weight:600;font-size:13.5px;flex:1}
+  .sectionhd{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);padding:11px 16px;background:#F1F3F6;border-radius:var(--radius-card) var(--radius-card) 0 0}
+  .sectionhd .dot{width:9px;height:9px;border-radius:50%;background:var(--lc)}
+  .sectionhd .grow{flex:1}
+  .ideahd{border-bottom:1px solid var(--line);background:var(--surface);padding:24px 40px}
+  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px}
+  .ideahd h1{font-size:28px;max-width:760px}
+  .ideahd .byline{font-size:13px;color:var(--ink-3);margin:8px 0 4px}
+  .actionbar{display:flex;align-items:center;gap:10px;margin-top:15px;flex-wrap:wrap}
+  .ideabody{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:36px;padding:26px 40px}
+  .facts{border-left:1px solid var(--line);padding-left:26px}
+  .fact{margin-bottom:17px}
+  .fact .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:5px}
+  .fact .v{font-size:14px;font-weight:600}
+  .prose{font-size:14.5px;line-height:1.7;color:var(--ink-2)}
+  .btn:focus-visible,.rail a:focus-visible,.kcard:focus-visible,.chip:focus-visible,.avatarbtn:focus-visible,
+  .viewswitch a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="comp-bar">
+  <strong>REVIEW 12A · RAIL SPLIT</strong>
+  <nav id="tabs">
+    <button data-s="disc" class="on">1 · Discovery board</button>
+    <button data-s="sprint">2 · Sprint board</button>
+    <button data-s="road">3 · Roadmaps</button>
+    <button data-s="issue">4 · Issue detail</button>
+  </nav>
+  <span style="font-size:11.5px;color:#C5CBD3">Two worlds, both first-class in the rail</span>
+</div>
+
+<!-- ========================= 1 · DISCOVERY BOARD ========================= -->
+<section class="screen on" id="s-disc">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <span class="railgroup">Discover</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a class="on" href="#" aria-current="page">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <span class="railrule"></span>
+      <span class="railgroup">Deliver</span>
+      <a href="#">🗺️<span>Roadmaps</span></a>
+      <a href="#">🏃<span>Sprints</span></a>
+      <a href="#">📥<span>Backlog</span></a>
+      <span class="push"></span>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="avatarwrap"><button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>Org Admin · Acme Manufacturing</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div></span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Boards</a> / Process Improvement</div>
+        <div class="row"><div class="grow"><h1>Process Improvement</h1>
+          <p class="sub">Ideation board. Promoted items stay visible but read-only — the people who upvoted them keep watching.</p></div>
+          <button class="btn primary">+ New idea</button></div>
+        <div class="viewswitch"><a class="on">Swim Lanes</a><a>List</a><a>Configure</a></div>
+      </div>
+      <div class="body">
+        <div class="klanes">
+          <div class="klane" style="--lc:#5B7FA3">
+            <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
+            <div class="kcard"><div class="t">Move the safety briefing to video</div>
+              <div class="meta2"><span class="prio-chip med">Med</span><span class="impact med">Efficiency</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">MO</span></span><span class="spacer"></span><span class="age">3d</span><button class="up">▲ 12</button></div></div>
+            <div class="kcard"><div class="t">Vendor scorecard in the portal</div>
+              <div class="meta2"><span class="prio-chip low">Low</span><span class="impact high">Cost Reduction</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">AC</span></span><span class="spacer"></span><span class="age">6d</span><button class="up">▲ 28</button></div></div>
+          </div>
+          <div class="klane" style="--lc:#8A6D2E">
+            <h3><span class="dot"></span><span class="grow">In Review</span><span class="cnt">3</span></h3>
+            <div class="kcard"><div class="t">Kill the paper safety sign-off</div>
+              <div class="meta2"><span class="prio-chip high">High</span><span class="impact high">Compliance</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">RP</span><span class="avatar s">JR</span></span><span class="spacer"></span><span class="age">2d</span><button class="up mine">▲ 41</button></div></div>
+          </div>
+          <div class="klane" style="--lc:#5B7FA3">
+            <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">2</span></h3>
+            <div class="kcard"><div class="t">Standardise the shift-handover note</div>
+              <div class="meta2"><span class="prio-chip med">Med</span><span class="impact med">Quality</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">TD</span></span><span class="spacer"></span><span class="age">9d</span><button class="up">▲ 9</button></div></div>
+          </div>
+          <div class="klane" style="--lc:#457C4F">
+            <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">6</span></h3>
+            <!-- THE CROWD LOOP: promoted items are muted, not deleted -->
+            <div class="kcard promoted"><div class="t">Automate the new-hire equipment request</div>
+              <div class="meta2"><span class="inflight"><span class="d"></span>In Development · Sprint 12</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">MO</span></span><span class="spacer"></span><span class="age">Promoted Aug 8</span><button class="up mine">▲ 34</button></div></div>
+            <div class="kcard promoted"><div class="t">Onboarding buddy assignment</div>
+              <div class="meta2"><span class="inflight shipped"><span class="d"></span>Shipped Aug 8</span></div>
+              <div class="meta"><span class="avatarstack"><span class="avatar s">AC</span></span><span class="spacer"></span><span class="age">Sprint 11</span><button class="up mine">▲ 27</button></div></div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px">
+          <div class="crowd"><span class="ic">🎉</span><div class="tx">
+            <strong>Your idea shipped.</strong> “Onboarding buddy assignment” completed in Sprint 11 on Aug 8.
+            You and <strong>26 others</strong> upvoted it. <a href="#" style="color:var(--accent-deep);font-weight:700;text-decoration:none">See what was delivered →</a>
+          </div></div>
+          <p style="font-size:12px;color:var(--ink-3);margin-top:7px">Notification sent to every upvoter — the one thing neither Trello nor Jira does.</p>
+        </div>
+
+        <div class="note"><b>Approach A — Rail Split.</b> Discovery and Delivery are two labelled worlds in the 64px rail. Everything is one click from anywhere; nothing is nested under a noun it doesn’t belong to. Roadmaps and Sprints get top-level standing, matching how admins actually think about them.</div>
+        <div class="note tradeoff"><b>Trade-off.</b> The rail goes from 4 destinations to 7 plus two group labels — it is now the tallest element on the page and the visual weight says “this is two applications sharing a login.” That is precisely the impression the one-row-two-phases model exists to avoid. Also the first thing to break at narrow viewports, which are still undesigned.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 2 · SPRINT BOARD ========================= -->
+<section class="screen" id="s-sprint">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <span class="railgroup">Discover</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <span class="railrule"></span>
+      <span class="railgroup">Deliver</span>
+      <a href="#">🗺️<span>Roadmaps</span></a>
+      <a class="on" href="#" aria-current="page">🏃<span>Sprints</span></a>
+      <a href="#">📥<span>Backlog</span></a>
+      <span class="push"></span>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="avatarwrap"><button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>Org Admin · Acme Manufacturing</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div></span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Sprints</a> / Sprint 12</div>
+        <div class="row"><div class="grow"><h1>Sprint 12</h1>
+          <p class="sub">Delivery statuses are a fixed set and never mix with the org’s ideation swimlanes.</p></div>
+          <button class="btn">Edit sprint</button><button class="btn primary">Complete sprint</button></div>
+        <div class="viewswitch"><a class="on">Board</a><a>List</a><a>Backlog</a></div>
+      </div>
+      <div class="body">
+        <div class="card sprintbar">
+          <div class="goal"><div class="g-k">Sprint goal</div><div class="g-v">Ship the new-hire checklist end to end, including the equipment request.</div></div>
+          <div class="divider"></div>
+          <div class="meta-blk"><div class="m-n">Aug 11–22</div><div class="m-l">2 weeks · 4 days left</div></div>
+          <div class="divider"></div>
+          <div class="meta-blk"><div class="m-n">5</div><div class="m-l">issues</div></div>
+          <div class="divider"></div>
+          <div><span class="state-pill active"><span class="d"></span>Active</span></div>
+        </div>
+
+        <div class="klanes">
+          <div class="klane" style="--lc:var(--ds-pending)">
+            <h3><span class="dot"></span><span class="grow">Pending</span><span class="cnt">1</span></h3>
+            <div class="kcard"><div class="t">Kill the paper safety sign-off</div>
+              <div class="meta2"><span class="effort">Effort · High</span><span class="rm" style="--rmc:#527292"><span class="sw"></span>Onboarding</span></div>
+              <div class="meta"><span>☑ 0/4 tasks</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">RP</span></span></div>
+              <div class="progressline"><i style="width:0%"></i></div></div>
+          </div>
+          <div class="klane" style="--lc:var(--ds-scoping)">
+            <h3><span class="dot"></span><span class="grow">Scoping</span><span class="cnt">1</span></h3>
+            <div class="kcard"><div class="t">Single sign-on for shop-floor tablets</div>
+              <div class="meta2"><span class="effort">Effort · High</span><span class="rm" style="--rmc:#5B7FA3"><span class="sw"></span>Shop floor</span></div>
+              <div class="meta"><span>☑ 1/4 tasks</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">AC</span></span></div>
+              <div class="progressline"><i style="width:25%"></i></div></div>
+          </div>
+          <div class="klane" style="--lc:var(--ds-dev)">
+            <h3><span class="dot"></span><span class="grow">Development</span><span class="cnt">2</span></h3>
+            <div class="kcard"><div class="t">Automate the new-hire equipment request</div>
+              <div class="meta2"><span class="effort">Effort · Med</span><span class="rm" style="--rmc:#527292"><span class="sw"></span>Onboarding</span></div>
+              <div class="meta"><span>☑ 3/5 tasks</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">RP</span><span class="avatar s">MO</span></span></div>
+              <div class="progressline"><i style="width:60%"></i></div></div>
+            <div class="kcard"><div class="t">Auto-fill the PPE size from the HR record</div>
+              <div class="meta2"><span class="effort">Effort · Low</span><span class="rm" style="--rmc:#527292"><span class="sw"></span>Onboarding</span></div>
+              <div class="meta"><span>☑ 2/3 tasks</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">TD</span></span></div>
+              <div class="progressline"><i style="width:66%"></i></div></div>
+          </div>
+          <div class="klane" style="--lc:var(--ds-review)">
+            <h3><span class="dot"></span><span class="grow">Review</span><span class="cnt">1</span></h3>
+            <div class="kcard"><div class="t">Consolidate the three invoice templates</div>
+              <div class="meta2"><span class="effort">Effort · Low</span><span class="rm" style="--rmc:#8A6D2E"><span class="sw"></span>Billing cleanup</span></div>
+              <div class="meta"><span>☑ 4/4 tasks</span><span class="spacer"></span><span class="avatarstack"><span class="avatar s">AC</span></span></div>
+              <div class="progressline"><i style="width:100%"></i></div></div>
+          </div>
+          <div class="klane" style="--lc:var(--ds-complete)">
+            <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">0</span></h3>
+            <p style="color:var(--ink-3);font-size:12px;text-align:center;padding:20px 8px;font-style:italic">Nothing yet</p>
+          </div>
+        </div>
+        <div class="note"><b>Two independent groupings on one card.</b> The roadmap chip (identity colour, like a status colour) says <i>what outcome this serves</i>; the sprint says <i>when we’re doing it</i>. Carry-over on sprint completion moves only the sprint link — the roadmap link never breaks.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 3 · ROADMAPS ========================= -->
+<section class="screen" id="s-road">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <span class="railgroup">Discover</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <span class="railrule"></span>
+      <span class="railgroup">Deliver</span>
+      <a class="on" href="#" aria-current="page">🗺️<span>Roadmaps</span></a>
+      <a href="#">🏃<span>Sprints</span></a>
+      <a href="#">📥<span>Backlog</span></a>
+      <span class="push"></span>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="avatarwrap"><button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>Org Admin · Acme Manufacturing</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div></span>
+    </aside>
+    <div>
+      <div class="pagehead">
+        <div class="crumbs"><a href="#">Roadmaps</a></div>
+        <div class="row"><div class="grow"><h1>Roadmaps</h1>
+          <p class="sub">Outcome themes with their own dates and owners. Sprints run underneath them, not inside them.</p></div>
+          <button class="btn primary">+ New roadmap</button></div>
+        <div class="viewswitch"><a class="on">Timeline</a><a>List</a></div>
+      </div>
+      <div class="body">
+        <div class="chipbar"><span class="chip on">Q3 2026</span><span class="chip">Q4 2026</span><span class="chip">All</span><span style="flex:1"></span><span style="font-size:12px;color:var(--ink-3)">Dashed lines = sprint boundaries</span></div>
+        <div class="tl">
+          <div class="tlhd"><div class="lbl">Roadmap</div><div class="months"><div>July</div><div>August</div><div>September</div></div></div>
+
+          <div class="tlrow" style="--rmc:#527292">
+            <div class="rmcell"><div class="nm"><span class="sw"></span>Reduce onboarding time</div>
+              <div class="mt">Jul 1 – Sep 30 · D. Whitfield<br>4 of 7 issues delivered</div></div>
+            <div class="track">
+              <span class="sprintmark" style="left:42%"><span>S12</span></span>
+              <span class="sprintmark" style="left:58%"><span>S13</span></span>
+              <span class="bar" style="--dsc:var(--ds-complete);margin-left:2%">Onboarding buddy assignment <span class="st">Complete</span></span>
+              <span class="bar" style="--dsc:var(--ds-dev);margin-left:32%">Automate the new-hire equipment request <span class="st">Development</span></span>
+              <span class="bar" style="--dsc:var(--ds-pending);margin-left:38%">Kill the paper safety sign-off <span class="st">Pending</span></span>
+            </div>
+          </div>
+
+          <div class="tlrow" style="--rmc:#8A6D2E">
+            <div class="rmcell"><div class="nm"><span class="sw"></span>Billing cleanup</div>
+              <div class="mt">Aug 1 – Sep 15 · A. Chen<br>1 of 3 issues delivered</div></div>
+            <div class="track">
+              <span class="sprintmark" style="left:42%"><span>S12</span></span>
+              <span class="sprintmark" style="left:58%"><span>S13</span></span>
+              <span class="bar" style="--dsc:var(--ds-review);margin-left:34%">Consolidate the three invoice templates <span class="st">Review</span></span>
+            </div>
+          </div>
+
+          <div class="tlrow" style="--rmc:#5B7FA3">
+            <div class="rmcell"><div class="nm"><span class="sw"></span>Shop floor modernisation</div>
+              <div class="mt">Aug 15 – Dec 31 · R. Patel<br>0 of 5 issues delivered</div></div>
+            <div class="track">
+              <span class="sprintmark" style="left:42%"><span>S12</span></span>
+              <span class="sprintmark" style="left:58%"><span>S13</span></span>
+              <span class="bar" style="--dsc:var(--ds-scoping);margin-left:36%">Single sign-on for shop-floor tablets <span class="st">Scoping</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="note"><b>Orthogonality, drawn.</b> Issues sit on roadmap rows; sprints cross them as vertical boundaries. One issue can be pulled into Sprint 13 without leaving its roadmap, and an unfinished issue returning to the backlog stays on the row where a stakeholder expects it.</div>
+        <div class="note tradeoff"><b>Trade-off.</b> Progress is deliberately shown as <i>4 of 7 issues delivered</i>, not a percentage — with T-shirt effort there is nothing honest to sum. Anyone who asks for a % here is asking for story points.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 4 · ISSUE DETAIL ========================= -->
+<section class="screen" id="s-issue">
+  <div class="shell">
+    <aside class="rail">
+      <span class="mark">CG</span>
+      <span class="railgroup">Discover</span>
+      <a href="#">🏠<span>Home</span></a>
+      <a href="#">📋<span>Boards</span></a>
+      <a href="#">💡<span>Ideas</span></a>
+      <span class="railrule"></span>
+      <span class="railgroup">Deliver</span>
+      <a href="#">🗺️<span>Roadmaps</span></a>
+      <a class="on" href="#" aria-current="page">🏃<span>Sprints</span></a>
+      <a href="#">📥<span>Backlog</span></a>
+      <span class="push"></span>
+      <a href="#">⚙️<span>Settings</span></a>
+      <span class="avatarwrap"><button class="avatarbtn"><span class="avatar">JR</span></button>
+        <div class="avatarmenu"><div class="who"><strong>Jordan Reyes</strong>Org Admin · Acme Manufacturing</div><a class="item" href="#">Profile</a><a class="item" href="#">Sign Out</a></div></span>
+    </aside>
+    <div>
+      <div class="ideahd">
+        <div class="crumbs" style="font-size:12px;color:var(--ink-3);margin-bottom:9px"><a href="#" style="color:var(--ink-3);text-decoration:none">Sprints</a> / <a href="#" style="color:var(--ink-3);text-decoration:none">Sprint 12</a> / ISSUE-128</div>
+        <div class="kicker">Delivery · Development · Sprint 12</div>
+        <h1>Automate the new-hire equipment request</h1>
+        <p class="byline">Originated as an idea by <strong>Maria Ortiz</strong> on Jul 2 · promoted by <strong>Jordan Reyes</strong> on Aug 8</p>
+        <div class="actionbar">
+          <select style="font-weight:600"><option>Development</option><option>Pending</option><option>Scoping</option><option>Review</option><option>Complete</option></select>
+          <button class="btn">Sprint 12 ▾</button>
+          <button class="btn">Roadmap: Onboarding ▾</button>
+          <span style="flex:1"></span>
+          <button class="btn">Return to Discovery</button>
+        </div>
+      </div>
+      <div class="ideabody">
+        <div>
+          <p class="prose" style="margin-bottom:22px">New hires wait four to six days for a laptop because the request is a paper form that walks between three desks. Automating the request against the HR record should collapse that to same-day.</p>
+
+          <div class="tasklist" style="margin-bottom:22px">
+            <div class="thd"><span class="n">Tasks</span><span class="pill neutral">3 of 5 complete</span><span class="grow"></span><button class="btn sm">+ Add task</button></div>
+            <div class="task done"><span class="box">✓</span><span class="tt">Map the current request path</span><span class="avatar s">AC</span></div>
+            <div class="task done"><span class="box">✓</span><span class="tt">Draft the form schema</span><span class="avatar s">MO</span></div>
+            <div class="task done"><span class="box">✓</span><span class="tt">Equipment-catalog API endpoint</span><span class="avatar s">RP</span></div>
+            <div class="task"><span class="box"></span><span class="tt">Wire the approval notification</span><span class="ts prog">In progress</span><span class="avatar s">RP</span></div>
+            <div class="task"><span class="box"></span><span class="tt">Backfill the open paper requests</span><span class="ts">Open</span><span class="avatar s">TD</span></div>
+          </div>
+          <p style="font-size:12px;color:var(--ink-3);margin:-14px 0 22px">Tasks are their own lightweight entity — status, assignee, sprint. They are <b>not</b> ideas: no upvotes, no Business Impact, never in idea search. Parent status is set by a human, never rolled up.</p>
+
+          <div class="outcome">
+            <h3>Outcome</h3>
+            <div class="claimvs">
+              <div class="cv"><div class="k">Impact claimed at proposal</div><span class="impact high">Cost Reduction · High</span></div>
+              <div class="cv"><div class="k">Outcome</div><span class="pill neutral">Captured when this reaches Complete</span></div>
+            </div>
+            <textarea placeholder="What actually changed? (optional — but this is what makes next quarter's prioritisation honest)"></textarea>
+            <p class="hint">Prompted, never required. A required field here gets filled with “done” and poisons the data.</p>
+          </div>
+        </div>
+
+        <aside class="facts">
+          <div class="lineage" style="margin-bottom:20px">
+            <h3>Where this came from</h3>
+            <p class="cap">No retyping. Same row, later phase.</p>
+            <div class="linrow"><span class="lk">Proposed by</span><span class="lv">Maria Ortiz · Jul 2</span></div>
+            <div class="linrow"><span class="lk">Support</span><span class="lv">34 upvotes at promotion · 37 now</span></div>
+            <div class="linrow"><span class="lk">Business impact</span><span class="lv">Cost Reduction · High</span></div>
+            <div class="linrow"><span class="lk">Ideation status</span><span class="lv">Complete <span style="font-weight:400;color:var(--ink-3)">(frozen)</span></span></div>
+            <div class="linrow"><span class="lk">Debate</span><span class="lv"><a href="#">18 comments →</a></span></div>
+          </div>
+          <div class="fact"><div class="k">Effort</div><div class="v">Medium</div></div>
+          <div class="fact"><div class="k">Roadmap</div><div class="v"><span class="rm" style="--rmc:#527292"><span class="sw"></span>Reduce onboarding time</span></div></div>
+          <div class="fact"><div class="k">Sprint</div><div class="v">Sprint 12 · Aug 11–22</div></div>
+          <div class="fact"><div class="k">Assignees</div><div class="v"><span class="avatarstack"><span class="avatar s">RP</span><span class="avatar s">MO</span></span></div></div>
+          <div class="fact"><div class="k">Tags</div><div class="v"><span class="tag">onboarding</span> <span class="tag">hr-systems</span></div></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('#tabs button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('s-'+b.dataset.s).classList.add('on');
+  }));
+  document.querySelectorAll('.avatarbtn').forEach(btn=>{
+    btn.addEventListener('click', e=>{ e.stopPropagation();
+      const menu=btn.nextElementSibling;
+      document.querySelectorAll('.avatarmenu.show').forEach(m=>{if(m!==menu)m.classList.remove('show');});
+      menu.classList.toggle('show'); });
+  });
+  document.addEventListener('click', ()=>document.querySelectorAll('.avatarmenu.show').forEach(m=>m.classList.remove('show')));
+</script>
+</body>
+</html>

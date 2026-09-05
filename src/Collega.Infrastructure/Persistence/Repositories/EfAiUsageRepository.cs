@@ -43,6 +43,51 @@ public sealed class EfAiUsageRepository : IAiUsageRepository
                 cancellationToken);
     }
 
+    /// <summary>
+    /// One round trip for both counts. Filtering on organization first lets the
+    /// <c>(organization_id, occurred_at_utc)</c> index do the work; the window is seconds wide, so
+    /// the rows it selects are few and the actor tally over them is cheap.
+    /// </summary>
+    public async Task<AiCallCounts> CountCallsSinceAsync(
+        Guid organizationId,
+        Guid? actorUserId,
+        DateTime fromUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var counts = await _dbContext.AiUsageRecords
+            .AsNoTracking()
+            .Where(r => r.OrganizationId == organizationId && r.OccurredAtUtc >= fromUtc)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                OrganizationCalls = g.Count(),
+                ActorCalls = g.Count(r => actorUserId != null && r.ActorUserId == actorUserId),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return counts is null
+            ? AiCallCounts.None
+            : new AiCallCounts(counts.OrganizationCalls, counts.ActorCalls);
+    }
+
+    public async Task<IReadOnlyList<AiCallOutcome>> GetRecentOutcomesAsync(
+        Guid organizationId,
+        Guid? actorUserId,
+        Guid boardId,
+        int limit,
+        DateTime fromUtc,
+        CancellationToken cancellationToken = default) =>
+        await _dbContext.AiUsageRecords
+            .AsNoTracking()
+            .Where(r => r.OrganizationId == organizationId
+                        && r.BoardId == boardId
+                        && r.ActorUserId == actorUserId
+                        && r.OccurredAtUtc >= fromUtc)
+            .OrderByDescending(r => r.OccurredAtUtc)
+            .Take(limit)
+            .Select(r => r.Outcome)
+            .ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<AiUsageSummary>> GetUsageByOrganizationAsync(
         DateTime fromUtc,
         DateTime toUtc,

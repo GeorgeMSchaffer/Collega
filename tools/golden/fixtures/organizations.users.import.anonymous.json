@@ -1,0 +1,47 @@
+{
+  "scenario": "organizations",
+  "step": "users.import.anonymous",
+  "endpoint": "POST /organizations/{organizationId}/users/import",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "User import is bootstrap and stays direct, unlike idea import — rule 26 puts the two on opposite sides.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/users/import",
+    "body": "------GoldenCaptureBoundary\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"users.csv\"\r\nContent-Type: text/csv\r\n\r\nfirstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n\r\n------GoldenCaptureBoundary--\r\n",
+    "contentType": "multipart/form-data; boundary=----GoldenCaptureBoundary"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/users/import",
+      "traceId": "00-3cf6884646f4782af1b4cf3ce8a1cb46-30dccd0ed6b07bb7-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/users/import",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

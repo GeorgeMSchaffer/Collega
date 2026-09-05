@@ -166,57 +166,69 @@ modelBuilder.Entity<IdeaFieldValue>()
 Creates three new tables; no backfill required because null/empty is the correct default for existing ideas.
 
 ```sql
--- FieldDefinitions
-CREATE TABLE FieldDefinitions (
-    Id               UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    OrganizationId   UNIQUEIDENTIFIER NOT NULL,
-    Name             NVARCHAR(100)    NOT NULL,
-    Description      NVARCHAR(500)    NULL,
-    FieldType        INT              NOT NULL,
-    IsRequired       BIT              NOT NULL DEFAULT 0,
-    DisplayOrder     INT              NOT NULL DEFAULT 0,
-    IsDeleted        BIT              NOT NULL DEFAULT 0,
-    DeletedAtUtc     DATETIME2        NULL,
-    DeletedByUserId  UNIQUEIDENTIFIER NULL,
-    CreatedAtUtc     DATETIME2        NOT NULL,
-    UpdatedAtUtc     DATETIME2        NULL,
-    CONSTRAINT FK_FieldDefinitions_Organizations FOREIGN KEY (OrganizationId) REFERENCES Organizations(Id)
+-- field_definitions
+CREATE TABLE field_definitions (
+    id                  uuid                     NOT NULL PRIMARY KEY,
+    organization_id     uuid                     NOT NULL,
+    name                character varying(100)   NOT NULL,
+    normalized_name     character varying(100)   NOT NULL,
+    description         character varying(500)   NULL,
+    field_type          integer                  NOT NULL,
+    is_required         boolean                  NOT NULL DEFAULT false,
+    display_order       integer                  NOT NULL DEFAULT 0,
+    is_deleted          boolean                  NOT NULL DEFAULT false,
+    deleted_at_utc      timestamp with time zone NULL,
+    deleted_by_user_id  uuid                     NULL,
+    created_at_utc      timestamp with time zone NOT NULL,
+    updated_at_utc      timestamp with time zone NOT NULL,
+    created_by_user_id  uuid                     NULL,
+    updated_by_user_id  uuid                     NULL,
+    CONSTRAINT fk_field_definitions_organizations_organization_id
+        FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE RESTRICT
 );
+
+CREATE INDEX ix_field_definitions_organization_id_display_order
+    ON field_definitions (organization_id, display_order);
 
 CREATE UNIQUE INDEX ux_field_definitions_organization_id_normalized_name
     ON field_definitions (organization_id, normalized_name)
     WHERE is_deleted = false;
 
--- FieldDefinitionOptions
-CREATE TABLE FieldDefinitionOptions (
-    Id                UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    FieldDefinitionId UNIQUEIDENTIFIER NOT NULL,
-    Label             NVARCHAR(200)    NOT NULL,
-    DisplayOrder      INT              NOT NULL DEFAULT 0,
-    CONSTRAINT FK_FieldDefinitionOptions_FieldDefinitions
-        FOREIGN KEY (FieldDefinitionId) REFERENCES FieldDefinitions(Id) ON DELETE CASCADE
+-- field_definition_options
+CREATE TABLE field_definition_options (
+    id                   uuid                   NOT NULL PRIMARY KEY,
+    field_definition_id  uuid                   NOT NULL,
+    label                character varying(200) NOT NULL,
+    display_order        integer                NOT NULL DEFAULT 0,
+    CONSTRAINT fk_field_definition_options_field_definitions_field_definit
+        FOREIGN KEY (field_definition_id) REFERENCES field_definitions (id) ON DELETE CASCADE
 );
 
--- IdeaFieldValues
-CREATE TABLE IdeaFieldValues (
-    Id                UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
-    IdeaId            UNIQUEIDENTIFIER NOT NULL,
-    FieldDefinitionId UNIQUEIDENTIFIER NOT NULL,
-    Value             NVARCHAR(4000)   NULL,
-    CreatedAtUtc      DATETIME2        NOT NULL,
-    UpdatedAtUtc      DATETIME2        NULL,
-    CONSTRAINT FK_IdeaFieldValues_Ideas
-        FOREIGN KEY (IdeaId) REFERENCES Ideas(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_IdeaFieldValues_FieldDefinitions
-        FOREIGN KEY (FieldDefinitionId) REFERENCES FieldDefinitions(Id)
+CREATE INDEX ix_field_definition_options_field_definition_id_display_order
+    ON field_definition_options (field_definition_id, display_order);
+
+-- idea_field_values
+CREATE TABLE idea_field_values (
+    id                   uuid                     NOT NULL PRIMARY KEY,
+    idea_id              uuid                     NOT NULL,
+    field_definition_id  uuid                     NOT NULL,
+    value                character varying(4000)  NULL,
+    created_at_utc       timestamp with time zone NOT NULL,
+    updated_at_utc       timestamp with time zone NOT NULL,
+    created_by_user_id   uuid                     NULL,
+    updated_by_user_id   uuid                     NULL,
+    CONSTRAINT fk_idea_field_values_ideas_idea_id
+        FOREIGN KEY (idea_id) REFERENCES ideas (id) ON DELETE CASCADE,
+    CONSTRAINT fk_idea_field_values_field_definitions_field_definition_id
+        FOREIGN KEY (field_definition_id) REFERENCES field_definitions (id) ON DELETE RESTRICT
 );
 
-CREATE UNIQUE INDEX UIX_IdeaFieldValues_IdeaField
-    ON IdeaFieldValues (IdeaId, FieldDefinitionId);
-
-CREATE INDEX IX_IdeaFieldValues_Filter
-    ON IdeaFieldValues (FieldDefinitionId, Value);
+CREATE UNIQUE INDEX ux_idea_field_values_idea_id_field_definition_id
+    ON idea_field_values (idea_id, field_definition_id);
 ```
+
+> **This listing is illustrative; `Persistence/Migrations/20260812195251_InitialCreate.cs` is authoritative.** Two details are easy to get wrong from the prose above: `normalized_name` (not `name`) carries the uniqueness guarantee, because PostgreSQL compares case-sensitively and the pre-Sprint-5 index relied on SQL Server's case-insensitive default collation; and the partial index `WHERE is_deleted = false` is what lets a soft-deleted definition's name be reused. Keys are generated by the application, not by a column default.
+
 
 ---
 

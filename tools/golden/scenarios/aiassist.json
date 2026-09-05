@@ -1,0 +1,474 @@
+{
+  "name": "aiassist",
+  "description": "AI idea assist: availability, the versioned system prompt, per-organization scope and usage.",
+  "bind": {
+    "ORGANIZATION_CATALOG": "{{ORGANIZATION_CATALOG}}",
+    "SCOPE_STATEMENT": "{{SCOPE_STATEMENT}}"
+  },
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "availability.siteadmin",
+      "endpoint": "GET /ai-assist/availability",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Runs dark without a key, and saying so is the contract (rule 31)."
+    },
+    {
+      "id": "availability.orgadmin",
+      "endpoint": "GET /ai-assist/availability",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Runs dark without a key, and saying so is the contract (rule 31)."
+    },
+    {
+      "id": "availability.user",
+      "endpoint": "GET /ai-assist/availability",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "note": "Runs dark without a key, and saying so is the contract (rule 31)."
+    },
+    {
+      "id": "availability.readonly",
+      "endpoint": "GET /ai-assist/availability",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "note": "Runs dark without a key, and saying so is the contract (rule 31)."
+    },
+    {
+      "id": "availability.anonymous",
+      "endpoint": "GET /ai-assist/availability",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "note": "Runs dark without a key, and saying so is the contract (rule 31)."
+    },
+    {
+      "id": "usage.platform.siteadmin",
+      "endpoint": "GET /ai-assist/usage",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200
+    },
+    {
+      "id": "usage.platform.orgadmin",
+      "endpoint": "GET /ai-assist/usage",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403
+    },
+    {
+      "id": "usage.platform.user",
+      "endpoint": "GET /ai-assist/usage",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403
+    },
+    {
+      "id": "usage.platform.readonly",
+      "endpoint": "GET /ai-assist/usage",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403
+    },
+    {
+      "id": "usage.platform.anonymous",
+      "endpoint": "GET /ai-assist/usage",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401
+    },
+    {
+      "id": "usage.org.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/usage",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/ai-assist/usage"
+    },
+    {
+      "id": "usage.org.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/usage",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/ai-assist/usage"
+    },
+    {
+      "id": "usage.org.user",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/usage",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ai-assist/usage"
+    },
+    {
+      "id": "usage.org.readonly",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/usage",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ai-assist/usage"
+    },
+    {
+      "id": "usage.org.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/usage",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/ai-assist/usage"
+    },
+    {
+      "id": "settings.get.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/settings",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/ai-assist/settings"
+    },
+    {
+      "id": "settings.get.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/settings",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/ai-assist/settings"
+    },
+    {
+      "id": "settings.get.user",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/settings",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ai-assist/settings"
+    },
+    {
+      "id": "settings.get.readonly",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/settings",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ai-assist/settings"
+    },
+    {
+      "id": "settings.get.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/ai-assist/settings",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/ai-assist/settings"
+    },
+    {
+      "id": "settings.update.siteadmin",
+      "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ai-assist/settings",
+      "body": {
+        "scopeStatement": "We build warehouse and shop-floor automation."
+      },
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
+    },
+    {
+      "id": "settings.update.orgadmin",
+      "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/ai-assist/settings",
+      "body": {
+        "scopeStatement": "We build warehouse and shop-floor automation."
+      },
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
+    },
+    {
+      "id": "settings.update.user",
+      "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ai-assist/settings",
+      "body": {
+        "scopeStatement": "We build warehouse and shop-floor automation."
+      },
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
+    },
+    {
+      "id": "settings.update.readonly",
+      "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ai-assist/settings",
+      "body": {
+        "scopeStatement": "We build warehouse and shop-floor automation."
+      },
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
+    },
+    {
+      "id": "settings.update.anonymous",
+      "endpoint": "PUT /organizations/{organizationId}/ai-assist/settings",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/ai-assist/settings",
+      "body": {
+        "scopeStatement": "We build warehouse and shop-floor automation."
+      },
+      "note": "The scope statement is organization content \u2014 it is what refuses off-topic requests, in one organization's own words \u2014 so a direct Site Admin is refused and reaches it through View As (rule 25). The capture originally recorded 200 here; that was the bug this corpus found."
+    },
+    {
+      "id": "prompt.get.siteadmin",
+      "endpoint": "GET /ai-assist/prompt",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "The built-in default until something is published over it."
+    },
+    {
+      "id": "prompt.get.orgadmin",
+      "endpoint": "GET /ai-assist/prompt",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "note": "The built-in default until something is published over it."
+    },
+    {
+      "id": "prompt.get.user",
+      "endpoint": "GET /ai-assist/prompt",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "note": "The built-in default until something is published over it."
+    },
+    {
+      "id": "prompt.get.readonly",
+      "endpoint": "GET /ai-assist/prompt",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "note": "The built-in default until something is published over it."
+    },
+    {
+      "id": "prompt.get.anonymous",
+      "endpoint": "GET /ai-assist/prompt",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "note": "The built-in default until something is published over it."
+    },
+    {
+      "id": "prompt.publish.orgadmin",
+      "endpoint": "PUT /ai-assist/prompt",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "body": {
+        "body": "You are Collega's idea assistant. Recorded by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}",
+        "outOfScopeRedirect": "I can only help with ideas for this organization.",
+        "conversationClosedRedirect": "This conversation is closed."
+      }
+    },
+    {
+      "id": "prompt.publish.user",
+      "endpoint": "PUT /ai-assist/prompt",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "body": {
+        "body": "You are Collega's idea assistant. Recorded by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}",
+        "outOfScopeRedirect": "I can only help with ideas for this organization.",
+        "conversationClosedRedirect": "This conversation is closed."
+      }
+    },
+    {
+      "id": "prompt.publish.readonly",
+      "endpoint": "PUT /ai-assist/prompt",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "body": {
+        "body": "You are Collega's idea assistant. Recorded by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}",
+        "outOfScopeRedirect": "I can only help with ideas for this organization.",
+        "conversationClosedRedirect": "This conversation is closed."
+      }
+    },
+    {
+      "id": "prompt.publish.anonymous",
+      "endpoint": "PUT /ai-assist/prompt",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "body": {
+        "body": "You are Collega's idea assistant. Recorded by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}",
+        "outOfScopeRedirect": "I can only help with ideas for this organization.",
+        "conversationClosedRedirect": "This conversation is closed."
+      }
+    },
+    {
+      "id": "prompt.publish.siteadmin",
+      "endpoint": "PUT /ai-assist/prompt",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "body": {
+        "body": "You are Collega's idea assistant. Recorded by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}",
+        "outOfScopeRedirect": "I can only help with ideas for this organization.",
+        "conversationClosedRedirect": "This conversation is closed."
+      },
+      "bind": {
+        "publishedVersion": "$.body.version"
+      }
+    },
+    {
+      "id": "prompt.probe.orgadmin",
+      "endpoint": "POST /ai-assist/prompt/probe",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "body": {
+        "body": "You are Collega's idea assistant. Probed by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}"
+      },
+      "note": "503 on purpose: the capture runs with no model key, so assist is dark (rule 31). Recording a live model call would put a billed request in the corpus and make replay non-deterministic \u2014 tests/CLAUDE.md forbids reaching a provider at all."
+    },
+    {
+      "id": "prompt.probe.user",
+      "endpoint": "POST /ai-assist/prompt/probe",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "body": {
+        "body": "You are Collega's idea assistant. Probed by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}"
+      },
+      "note": "503 on purpose: the capture runs with no model key, so assist is dark (rule 31). Recording a live model call would put a billed request in the corpus and make replay non-deterministic \u2014 tests/CLAUDE.md forbids reaching a provider at all."
+    },
+    {
+      "id": "prompt.probe.readonly",
+      "endpoint": "POST /ai-assist/prompt/probe",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "body": {
+        "body": "You are Collega's idea assistant. Probed by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}"
+      },
+      "note": "503 on purpose: the capture runs with no model key, so assist is dark (rule 31). Recording a live model call would put a billed request in the corpus and make replay non-deterministic \u2014 tests/CLAUDE.md forbids reaching a provider at all."
+    },
+    {
+      "id": "prompt.probe.anonymous",
+      "endpoint": "POST /ai-assist/prompt/probe",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "body": {
+        "body": "You are Collega's idea assistant. Probed by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}"
+      },
+      "note": "503 on purpose: the capture runs with no model key, so assist is dark (rule 31). Recording a live model call would put a billed request in the corpus and make replay non-deterministic \u2014 tests/CLAUDE.md forbids reaching a provider at all."
+    },
+    {
+      "id": "prompt.probe.siteadmin",
+      "endpoint": "POST /ai-assist/prompt/probe",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 503,
+      "body": {
+        "body": "You are Collega's idea assistant. Probed by the golden capture.\n{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}"
+      },
+      "note": "503 on purpose: the capture runs with no model key, so assist is dark (rule 31). Recording a live model call would put a billed request in the corpus and make replay non-deterministic \u2014 tests/CLAUDE.md forbids reaching a provider at all."
+    },
+    {
+      "id": "prompt.restore.orgadmin",
+      "endpoint": "POST /ai-assist/prompt/versions/{version}/restore",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ai-assist/prompt/versions/{{publishedVersion}}/restore"
+    },
+    {
+      "id": "prompt.restore.user",
+      "endpoint": "POST /ai-assist/prompt/versions/{version}/restore",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ai-assist/prompt/versions/{{publishedVersion}}/restore"
+    },
+    {
+      "id": "prompt.restore.readonly",
+      "endpoint": "POST /ai-assist/prompt/versions/{version}/restore",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ai-assist/prompt/versions/{{publishedVersion}}/restore"
+    },
+    {
+      "id": "prompt.restore.anonymous",
+      "endpoint": "POST /ai-assist/prompt/versions/{version}/restore",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/ai-assist/prompt/versions/{{publishedVersion}}/restore"
+    },
+    {
+      "id": "prompt.restore.siteadmin",
+      "endpoint": "POST /ai-assist/prompt/versions/{version}/restore",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ai-assist/prompt/versions/{{publishedVersion}}/restore"
+    },
+    {
+      "id": "prompt.reset.orgadmin",
+      "endpoint": "POST /ai-assist/prompt/reset",
+      "as": "OrgAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "note": "Back to the compiled default, so a re-capture starts where this one did."
+    },
+    {
+      "id": "prompt.reset.user",
+      "endpoint": "POST /ai-assist/prompt/reset",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "note": "Back to the compiled default, so a re-capture starts where this one did."
+    },
+    {
+      "id": "prompt.reset.readonly",
+      "endpoint": "POST /ai-assist/prompt/reset",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "note": "Back to the compiled default, so a re-capture starts where this one did."
+    },
+    {
+      "id": "prompt.reset.anonymous",
+      "endpoint": "POST /ai-assist/prompt/reset",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "note": "Back to the compiled default, so a re-capture starts where this one did."
+    },
+    {
+      "id": "prompt.reset.siteadmin",
+      "endpoint": "POST /ai-assist/prompt/reset",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Back to the compiled default, so a re-capture starts where this one did."
+    }
+  ]
+}

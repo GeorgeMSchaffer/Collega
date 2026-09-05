@@ -696,6 +696,42 @@ internal sealed class FakeAiUsageRepository : IAiUsageRepository
     public Task<long> GetTotalTokensSinceAsync(DateTime fromUtc, CancellationToken cancellationToken = default) =>
         Task.FromResult(Records.Where(r => r.OccurredAtUtc >= fromUtc).Sum(r => (long)r.TotalTokens));
 
+    public Task<AiCallCounts> CountCallsSinceAsync(
+        Guid organizationId,
+        Guid? actorUserId,
+        DateTime fromUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var inWindow = Records
+            .Where(r => r.OrganizationId == organizationId && r.OccurredAtUtc >= fromUtc)
+            .ToList();
+
+        return Task.FromResult(new AiCallCounts(
+            inWindow.Count,
+            inWindow.Count(r => actorUserId is not null && r.ActorUserId == actorUserId)));
+    }
+
+    public Task<IReadOnlyList<AiCallOutcome>> GetRecentOutcomesAsync(
+        Guid organizationId,
+        Guid? actorUserId,
+        Guid boardId,
+        int limit,
+        DateTime fromUtc,
+        CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<AiCallOutcome> outcomes = Records
+            .Where(r => r.OrganizationId == organizationId
+                        && r.BoardId == boardId
+                        && r.ActorUserId == actorUserId
+                        && r.OccurredAtUtc >= fromUtc)
+            .OrderByDescending(r => r.OccurredAtUtc)
+            .Take(limit)
+            .Select(r => r.Outcome)
+            .ToList();
+
+        return Task.FromResult(outcomes);
+    }
+
     public Task<IReadOnlyList<AiUsageSummary>> GetUsageByOrganizationAsync(
         DateTime fromUtc,
         DateTime toUtc,

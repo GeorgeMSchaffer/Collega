@@ -48,7 +48,7 @@ cd src/Collega.API
 dotnet user-secrets set "SiteAdmin:Email" "admin@collega.local"
 dotnet user-secrets set "SiteAdmin:Password" "<your-password>"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
-  "Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=<your-password>"
+  "Host=localhost;Port=5432;Database=Collega;Username=collega;Password=<your-password>"
 ```
 
 Environment variables work too, with a **double** underscore: `SiteAdmin__Email`, `ConnectionStrings__DefaultConnection`, `Auth__AccessTokenLifetimeMinutes`.
@@ -74,18 +74,22 @@ Optional: `Auth:TokenSigningKey` (base64; a random per-process key is generated 
 
 ### AI idea assist configuration
 
-`Ai:ApiKey` is the single deployment-level Anthropic key every organization shares (`SPEC/20-feature-ai-idea-assist.md` rule 29). It is a **secret** — user-secrets locally, App Service configuration in Azure, never `appsettings*.json`:
+`ANTHROPIC_API_KEY` is the single deployment-level Anthropic key every organization shares (`SPEC/20-feature-ai-idea-assist.md` rule 29; renamed from `Ai:ApiKey` on 2026-08-25 per rule 29a). It has no `:` segment, so the configuration key and the environment-variable name are the **same string** — there is no `__` mapping to get wrong. It is a **secret** — the environment, user-secrets locally, App Service configuration in Azure, never `appsettings*.json`:
 
 ```bash
 cd src/Collega.API
-dotnet user-secrets set "Ai:ApiKey" "sk-ant-..."
+dotnet user-secrets set "ANTHROPIC_API_KEY" "sk-ant-..."
 ```
+
+An exported `ANTHROPIC_API_KEY` in your shell is picked up as-is by the environment-variable configuration provider, which outranks user-secrets. That is the point of the rename — one copy of the key, under the name the vendor's own tooling already uses. It also means the integration suite must actively blank it (see `tests/CLAUDE.md`).
 
 Leaving it unset is a supported state, not a misconfiguration: the feature runs dark (rule 31), so unlike `SiteAdmin:*` it must never fail startup.
 
-`docker-compose.yml`'s `api` service binds it from `CLAUDE_API_KEY` in `.env` — that path only applies under `docker compose --profile full`. **`dotnet run` does not read `.env`**, so a key set only there will look configured and behave as absent.
+`docker-compose.yml`'s `api` service binds it from `ANTHROPIC_API_KEY` in `.env` — that path only applies under `docker compose --profile full`, and **`dotnet run` does not read `.env`**.
 
 The rest of the `Ai:*` section is not secret and has working defaults in code (`AiUsageLimits`): `Ai:DailyTokenLimit` (500000), `Ai:Model` (`claude-sonnet-5`), `Ai:Effort` (`low`), `Ai:Pricing:InputPerMillion` (3.00), `Ai:Pricing:OutputPerMillion` (15.00). A non-positive `Ai:DailyTokenLimit` disables the budget gate — local use only.
+
+Rate limits (rule 26 — configuration, never hard-coded): `Ai:RateLimit:WindowSeconds` (60), `Ai:RateLimit:PerUserCalls` (10), `Ai:RateLimit:PerOrganizationCalls` (60). Non-positive disables, same convention as the budget. Counted from the `ai_usage_records` rows themselves rather than an in-memory counter, so the tally stays correct the moment the deployment runs more than one instance — and so refused and failed turns count too.
 
 ## Conventions
 

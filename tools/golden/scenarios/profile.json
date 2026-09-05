@@ -1,0 +1,283 @@
+{
+  "name": "profile",
+  "description": "Self-service identity: profile, portrait, password, and registration.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "me.update.siteadmin",
+      "endpoint": "PUT /auth/me",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Capture"
+      },
+      "note": "Everyone owns their own name, Read Only included."
+    },
+    {
+      "id": "me.update.orgadmin",
+      "endpoint": "PUT /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Capture"
+      },
+      "note": "Everyone owns their own name, Read Only included."
+    },
+    {
+      "id": "me.update.user",
+      "endpoint": "PUT /auth/me",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Capture"
+      },
+      "note": "Everyone owns their own name, Read Only included."
+    },
+    {
+      "id": "me.update.readonly",
+      "endpoint": "PUT /auth/me",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Capture"
+      },
+      "note": "Everyone owns their own name, Read Only included."
+    },
+    {
+      "id": "me.update.anonymous",
+      "endpoint": "PUT /auth/me",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Capture"
+      },
+      "note": "Everyone owns their own name, Read Only included."
+    },
+    {
+      "id": "invite",
+      "endpoint": "GET /organizations/{organizationId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}",
+      "note": "Registration needs a live invite code, and variables do not cross scenarios.",
+      "bind": {
+        "inviteCode": "$.body.inviteCode"
+      }
+    },
+    {
+      "id": "portrait.set.siteadmin",
+      "endpoint": "PUT /auth/me/portrait",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "body": {
+        "imageBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      },
+      "note": "Everyone owns their own portrait."
+    },
+    {
+      "id": "portrait.set.orgadmin",
+      "endpoint": "PUT /auth/me/portrait",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "body": {
+        "imageBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      },
+      "note": "Everyone owns their own portrait."
+    },
+    {
+      "id": "portrait.set.user",
+      "endpoint": "PUT /auth/me/portrait",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "body": {
+        "imageBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      },
+      "note": "Everyone owns their own portrait."
+    },
+    {
+      "id": "portrait.set.readonly",
+      "endpoint": "PUT /auth/me/portrait",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "body": {
+        "imageBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      },
+      "note": "Everyone owns their own portrait."
+    },
+    {
+      "id": "portrait.set.anonymous",
+      "endpoint": "PUT /auth/me/portrait",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "body": {
+        "imageBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      },
+      "note": "Everyone owns their own portrait."
+    },
+    {
+      "id": "portrait.clear.siteadmin",
+      "endpoint": "DELETE /auth/me/portrait",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200
+    },
+    {
+      "id": "portrait.clear.orgadmin",
+      "endpoint": "DELETE /auth/me/portrait",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200
+    },
+    {
+      "id": "portrait.clear.user",
+      "endpoint": "DELETE /auth/me/portrait",
+      "as": "User",
+      "kind": "success",
+      "expect": 200
+    },
+    {
+      "id": "portrait.clear.readonly",
+      "endpoint": "DELETE /auth/me/portrait",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200
+    },
+    {
+      "id": "portrait.clear.anonymous",
+      "endpoint": "DELETE /auth/me/portrait",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401
+    },
+    {
+      "id": "subject",
+      "endpoint": "POST /organizations/{organizationId}/users",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/organizations/{{orgId}}/users",
+      "body": {
+        "firstName": "Golden",
+        "lastName": "Rotator",
+        "email": "golden.rotator@acme-robotics.demo.collega.test",
+        "role": "User",
+        "initialPassword": "{{userPassword}}"
+      },
+      "note": "Password changes run against an account the corpus creates. Changing a demo role's password invalidates its token and locks every later scenario out of it."
+    },
+    {
+      "id": "change-password.wrong.user",
+      "endpoint": "POST /auth/change-password",
+      "as": "User",
+      "kind": "denied",
+      "expect": 401,
+      "body": {
+        "currentPassword": "not-the-password",
+        "newPassword": "GoldenTemp!2026"
+      },
+      "credentials": {
+        "email": "golden.rotator@acme-robotics.demo.collega.test",
+        "password": "{{userPassword}}"
+      },
+      "note": "A wrong current password is refused as 401, not as a validation failure."
+    },
+    {
+      "id": "change-password.anonymous.anonymous",
+      "endpoint": "POST /auth/change-password",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "body": {
+        "currentPassword": "{{userPassword}}",
+        "newPassword": "GoldenTemp!2026"
+      }
+    },
+    {
+      "id": "change-password.user",
+      "endpoint": "POST /auth/change-password",
+      "as": "User",
+      "kind": "success",
+      "expect": 204,
+      "body": {
+        "currentPassword": "{{userPassword}}",
+        "newPassword": "GoldenTemp!2026"
+      },
+      "credentials": {
+        "email": "golden.rotator@acme-robotics.demo.collega.test",
+        "password": "{{userPassword}}"
+      },
+      "note": "The success path. The token that made this request is dead afterwards, which is the point of doing it as an account nothing else uses."
+    },
+    {
+      "id": "register.anonymous",
+      "endpoint": "POST /auth/register",
+      "as": "anonymous",
+      "kind": "success",
+      "expect": 201,
+      "body": {
+        "inviteCode": "{{inviteCode}}",
+        "firstName": "Golden",
+        "lastName": "Registrant",
+        "email": "golden.registrant@acme-robotics.demo.collega.test",
+        "password": "{{userPassword}}"
+      },
+      "note": "Self-registration is anonymous by design \u2014 the invite code is the credential."
+    },
+    {
+      "id": "register.bad-code.anonymous",
+      "endpoint": "POST /auth/register",
+      "as": "anonymous",
+      "kind": "invalid",
+      "expect": 400,
+      "body": {
+        "inviteCode": "NOT-A-REAL-CODE",
+        "firstName": "Golden",
+        "lastName": "Refused",
+        "email": "golden.refused@acme-robotics.demo.collega.test",
+        "password": "{{userPassword}}"
+      }
+    },
+    {
+      "id": "register.duplicate.anonymous",
+      "endpoint": "POST /auth/register",
+      "as": "anonymous",
+      "kind": "missing",
+      "expect": 409,
+      "body": {
+        "inviteCode": "{{inviteCode}}",
+        "firstName": "Golden",
+        "lastName": "Duplicate",
+        "email": "{{userEmail}}",
+        "password": "{{userPassword}}"
+      },
+      "note": "An email already in use is a conflict."
+    }
+  ]
+}

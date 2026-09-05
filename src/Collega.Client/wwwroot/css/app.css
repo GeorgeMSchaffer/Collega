@@ -136,6 +136,22 @@ label {
 }
 .field { margin-bottom: 15px; }
 
+/* Native submit control carried by every EditForm purely so Enter submits it: browsers only do
+   implicit submission from a native submit button, and the visible Fluent one keeps its real
+   <button> in shadow DOM. Kept off-screen rather than display:none so it stays a rendered
+   control, and out of the tab order so it costs no keyboard stop. */
+.enter-submit {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* ---- Surfaces ---- */
 .card {
   background: var(--surface);
@@ -477,6 +493,84 @@ tr.reorderable.drag-over td { box-shadow: inset 0 2px 0 0 var(--accent); }
 }
 .placeholder h3 { font-family: var(--font-sans); font-size: 17px; margin-bottom: 8px; color: var(--ink); }
 
+/* ---- AI assist: the suggestion colour (D-SUGGEST, locked 2026-08-16) ----
+   Teal, deliberately NOT the indigo accent. Indigo means "active / selected / primary action"
+   everywhere in Comp C, and an assistant suggestion is neither — it is a proposal the user has not
+   acted on. Overloading the accent would make both meanings unreadable, so a suggestion gets its own
+   token. Apply the same test before introducing any further state colour. */
+:root {
+  --sug: #116b5e;
+  --sug-soft: #e6f2f0;
+  --sug-deep: #0c4f45;
+  --sug-line: #bcdcd6;
+}
+
+/* The read-only draft strip: what the assistant has classified so far, between transcript and
+   composer. Read-only is the whole point of Direction C — because nothing here is editable, v1 needs
+   no per-field suggested-vs-user-edited state and no overwrite rule. If this ever becomes editable,
+   that state machine comes back with it. */
+.strip {
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  margin: 16px -22px 0; padding: 9px 22px;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  background: var(--sug-soft);
+}
+.strip .lead {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--sug-deep); white-space: nowrap;
+}
+.sugdot { width: 7px; height: 7px; border-radius: 50%; background: var(--sug); flex: none; }
+.spill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff; border: 1px solid var(--sug-line); border-radius: 13px;
+  padding: 3px 11px; font-size: 12px; color: var(--sug-deep); white-space: nowrap;
+}
+.spill b { font-weight: 700; }
+/* "Not set yet" is rendered explicitly rather than omitted, so "the assistant chose nothing" stays
+   distinguishable from "the assistant hasn't got there yet" (rule 20a). */
+.spill.pending { background: transparent; border-style: dashed; border-color: #b7c3c1; color: var(--ink-3); font-style: italic; }
+.strip .tail { margin-left: auto; font-size: 11.5px; color: var(--sug-deep); white-space: nowrap; }
+.strip.quiet { background: var(--bg); }
+.strip.quiet .lead { color: var(--ink-3); }
+
+/* Ghost-then-drop (D-REFUSED): a refused message renders greyed and struck through for one beat with
+   the redirect beneath it, then disappears. Never rendering it is cleaner but makes typed input
+   vanish with no acknowledgement, which reads as a bug. */
+.strikeghost { opacity: .45; }
+.strikeghost .bubble {
+  background: repeating-linear-gradient(135deg, #f3f2f1, #f3f2f1 6px, #eceae8 6px, #eceae8 12px);
+  color: var(--ink-3); text-decoration: line-through;
+}
+/* A refusal is a system note, never an assistant bubble — refusals must not read as conversation. */
+.sysnote {
+  display: flex; gap: 10px; align-items: flex-start;
+  border: 1px solid var(--line); background: var(--bg); border-radius: 8px;
+  padding: 11px 14px; font-size: 12.5px; color: var(--ink-2); line-height: 1.55;
+}
+.sysnote b { display: block; color: var(--ink); margin-bottom: 2px; }
+.sysnote .redirect { color: var(--ink-3); font-style: italic; }
+.sysnote .subtle { display: block; margin-top: 6px; font-size: 11.5px; color: var(--ink-3); }
+
+/* Suggestion indicators on the create form — same teal, so strip and form read as one idea. */
+.lblrow { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.lblrow label { margin: 0; }
+.sugchip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--sug-soft); color: var(--sug-deep); border: 1px solid var(--sug-line);
+  border-radius: 10px; padding: 1px 8px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+}
+.sug-input { border-left: 3px solid var(--sug); background: var(--sug-soft); }
+.sug-clear { border: 0; background: none; color: var(--ink-3); font-size: 11px; cursor: pointer; text-decoration: underline; padding: 0; }
+
+/* Pending turn — three dots while the model is working. */
+.thinking { display: flex; gap: 5px; align-items: center; padding: 12px 14px; }
+.thinking i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-3); opacity: .4; animation: bl 1.2s infinite; }
+.thinking i:nth-child(2) { animation-delay: .18s; }
+.thinking i:nth-child(3) { animation-delay: .36s; }
+@keyframes bl { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: .9; transform: translateY(-3px); } }
+
 /* ---- AI token budget meter (Settings → API) ----
    The fill is a spend gauge, not a progress indicator, so it does not use the indigo accent:
    neutral while there is headroom, then amber and red as the daily ceiling approaches. Same
@@ -632,6 +726,19 @@ fluent-text-field:focus-within::part(root) { border-color: var(--accent); outlin
 
   /* Account popover opens upward, above the bottom bar. */
   .avatarmenu { position: fixed; left: auto; right: 8px; bottom: 64px; top: auto; }
+
+  /*
+    Type-size floor. Sizes only — the narrow-viewport layout pass is a separate, still-open piece of
+    design work. Two thresholds: 16px on anything the user types into, because iOS Safari zooms the
+    whole page when a focused control is smaller than that; and 12px on the card micro-labels, which
+    were as low as 9.5px. Set on body rather than html so the framework's few rem-based sizes (the
+    load spinner, the error banner) keep their proportions.
+  */
+  body { font-size: 16px; }
+  input[type=text], input[type=email], input[type=password], input[type=number],
+  input[type=date], input[type=url], input[type=search], select, textarea { font-size: 16px; }
+  fluent-text-field::part(control) { font-size: 16px; }
+  .avatar.s { font-size: 12px; }
 
   /* Content spacing + headings */
   .body { padding: 18px 16px; }

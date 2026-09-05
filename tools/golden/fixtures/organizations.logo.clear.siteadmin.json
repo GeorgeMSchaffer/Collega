@@ -1,0 +1,67 @@
+{
+  "scenario": "organizations",
+  "step": "logo.clear.siteadmin",
+  "endpoint": "DELETE /organizations/{organizationId}/logo",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/organizations/a313baf6-1d17-470d-99d2-6d565199a856/logo",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "organizationId": "a313baf6-1d17-470d-99d2-6d565199a856",
+      "title": "Zz Golden Capture Org Renamed",
+      "description": "Edited by the golden capture.",
+      "inviteCode": "<redacted>",
+      "logoUrl": null,
+      "logoThumbnailUrl": null,
+      "logoHeightPx": null,
+      "address": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "phone": null,
+      "primaryContactFirstName": null,
+      "primaryContactLastName": null,
+      "isArchived": false,
+      "createdAtUtc": "2026-09-04T03:55:46.82392Z",
+      "updatedAtUtc": "2026-09-04T03:55:47.0788283Z"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "address": null,
+      "city": null,
+      "createdAtUtc": "<timestamp>",
+      "description": "Edited by the golden capture.",
+      "inviteCode": "<redacted>",
+      "isArchived": false,
+      "logoHeightPx": null,
+      "logoThumbnailUrl": null,
+      "logoUrl": null,
+      "organizationId": "<guid@create.siteadmin.body.organizationId>",
+      "phone": null,
+      "primaryContactFirstName": null,
+      "primaryContactLastName": null,
+      "state": null,
+      "title": "Zz Golden Capture Org Renamed",
+      "updatedAtUtc": "<timestamp>",
+      "zip": null
+    }
+  }
+}

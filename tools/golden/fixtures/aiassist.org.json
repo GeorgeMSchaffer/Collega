@@ -1,0 +1,52 @@
+{
+  "scenario": "aiassist",
+  "step": "org",
+  "endpoint": "GET /auth/me",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Binds this organization for the steps below; ids are per-seed.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/auth/me",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:40 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+      "role": "OrgAdmin",
+      "firstName": "Olivia",
+      "lastName": "Administer",
+      "email": "orgadmin@acme-robotics.demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": null,
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "orgadmin@acme-robotics.demo.collega.test",
+      "firstName": "Olivia",
+      "lastName": "Administer",
+      "organizationId": "<guid@org.body.organizationId>",
+      "portraitDataUrl": null,
+      "role": "OrgAdmin",
+      "status": "Active",
+      "userId": "<guid@org.body.userId>",
+      "viewingAs": null
+    }
+  }
+}

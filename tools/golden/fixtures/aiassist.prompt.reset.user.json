@@ -1,0 +1,46 @@
+{
+  "scenario": "aiassist",
+  "step": "prompt.reset.user",
+  "endpoint": "POST /ai-assist/prompt/reset",
+  "as": "User",
+  "kind": "denied",
+  "note": "Back to the compiled default, so a re-capture starts where this one did.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/ai-assist/prompt/reset",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:40 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "No further details are available for this 403 response.",
+      "instance": "/api/v1/ai-assist/prompt/reset",
+      "traceId": "00-48ed4879b7820fc5a1814b4f239f1c10-73cb11a0b0686657-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 403 response.",
+      "instance": "/api/v1/ai-assist/prompt/reset",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.4"
+    }
+  }
+}

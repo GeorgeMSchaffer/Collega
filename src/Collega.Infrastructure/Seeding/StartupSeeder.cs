@@ -21,7 +21,8 @@ namespace Collega.Infrastructure.Seeding;
 /// already exists:
 /// 1. The global Site Admin, from environment-provided credentials, on first run only.
 /// 2. 2 demo organizations, each provisioned with the default statuses and two demo boards,
-///    plus one Org Admin and two User accounts at password `Abc123!`, none forced to change it.
+///    plus one Org Admin, two User and one Read Only account at password `Abc123!`, none forced
+///    to change it — one per role, so every perspective can be exercised.
 ///    Every demo board is populated with 11 ideas distributed 3/2/2/1/3 across its swimlanes.
 /// 3. A Development-only convenience Site Admin (siteadmin@demo.collega.test / `Abc123!`, no forced
 ///    change) so the platform-admin perspective can be tested without the configured Site Admin secret.
@@ -36,6 +37,9 @@ public sealed class StartupSeeder : IStartupSeeder
     private const string DemoSiteAdminEmail = "siteadmin@demo.collega.test";
 
     private static readonly int[] IdeasPerStatus = { 3, 2, 2, 1, 3 };
+
+    /// <summary>Org Admin plus two Users. The Read Only account authors nothing.</summary>
+    private const int DemoContributorsPerOrganization = 3;
 
     private static readonly DemoIdeaScenario[] IdeaScenarios =
     {
@@ -153,13 +157,19 @@ public sealed class StartupSeeder : IStartupSeeder
                 // Every organization — demo or real — starts with the default statuses and one board.
                 await _bootstrapService.ProvisionDefaultsAsync(organization.Id, now, actorUserId: null, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
-
-                await AddDemoUserAsync(organization.Id, "Olivia", "Administer", $"orgadmin@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.OrgAdmin, now, cancellationToken);
-                await AddDemoUserAsync(organization.Id, "Noah", "Contributor", $"user@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
-                await AddDemoUserAsync(organization.Id, "Maya", "Collaborator", $"user2@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
-
-                await _dbContext.SaveChangesAsync(cancellationToken);
             }
+
+            // Outside the creation branch, and each add is a no-op when the account
+            // exists, so an organization seeded by an earlier version picks up an
+            // account added later rather than staying a version behind.
+            await AddDemoUserAsync(organization.Id, "Olivia", "Administer", $"orgadmin@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.OrgAdmin, now, cancellationToken);
+            await AddDemoUserAsync(organization.Id, "Noah", "Contributor", $"user@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
+            await AddDemoUserAsync(organization.Id, "Maya", "Collaborator", $"user2@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.User, now, cancellationToken);
+            // The product has four roles and the demo seed covered three, so Read Only
+            // was the one perspective nothing could be exercised as — including the
+            // golden capture, which needs an account per role.
+            await AddDemoUserAsync(organization.Id, "Rosa", "Observer", $"readonly@{scenario.Slug}.demo.collega.test", demoPasswordHash, Role.ReadOnly, now, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
 
             await EnsureSecondDemoBoardAsync(organization.Id, now, cancellationToken);
             await SeedDemoBoardContentAsync(organization.Id, scenario, now, cancellationToken);
@@ -278,6 +288,12 @@ public sealed class StartupSeeder : IStartupSeeder
         DateTime nowUtc,
         CancellationToken cancellationToken)
     {
+        var normalizedEmail = EmailNormalizer.Normalize(email);
+        if (await _dbContext.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken))
+        {
+            return;
+        }
+
         var user = User.CreateOrganizationUser(organizationId, firstName, lastName, email, passwordHash, role, UserStatus.Active, mustChangePassword: false, nowUtc);
         await _dbContext.Users.AddAsync(user, cancellationToken);
     }
@@ -316,14 +332,16 @@ public sealed class StartupSeeder : IStartupSeeder
             .OrderBy(b => b.SortOrder)
             .ToListAsync(cancellationToken);
 
-        var users = await _dbContext.Users
-            .Where(u => u.OrganizationId == organizationId)
+        // Only the accounts that can author content: the demo Read Only user exists to
+        // be viewed as and to read, not to write ideas and comments.
+        var contributors = await _dbContext.Users
+            .Where(u => u.OrganizationId == organizationId && (u.Role == Role.OrgAdmin || u.Role == Role.User))
             .OrderBy(u => u.Role == Role.OrgAdmin ? 0 : 1)
             .ThenBy(u => u.Email)
             .ToListAsync(cancellationToken);
 
         // Nothing to hang ideas off if the org's provisioned defaults are incomplete.
-        if (statuses.Count != IdeasPerStatus.Length || ideaTypes.Count == 0 || businessImpacts.Count == 0 || users.Count != 3)
+        if (statuses.Count != IdeasPerStatus.Length || ideaTypes.Count == 0 || businessImpacts.Count == 0 || contributors.Count != DemoContributorsPerOrganization)
         {
             return;
         }
@@ -355,6 +373,11 @@ public sealed class StartupSeeder : IStartupSeeder
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        // Counts every seeded idea in the organization, so each gets its own creation
+        // minute. Per-board numbering would tie idea 3 of one board with idea 3 of the
+        // next, and the organization-wide list would be back to an arbitrary tie-break.
+        var seededSoFar = 0;
+
         foreach (var board in boards)
         {
             if (seededBoardIds.Contains(board.Id))
@@ -385,7 +408,7 @@ public sealed class StartupSeeder : IStartupSeeder
                 var assigneeCount = i % 3;
                 var tagCount = i % 3;
                 var assigneeIds = Enumerable.Range(1, assigneeCount)
-                    .Select(offset => users[(i + offset) % users.Count].Id)
+                    .Select(offset => contributors[(i + offset) % contributors.Count].Id)
                     .ToArray();
                 var tagIds = Enumerable.Range(0, tagCount)
                     .Select(offset => boardTags[(i + offset) % boardTags.Count].Id)
@@ -401,28 +424,36 @@ public sealed class StartupSeeder : IStartupSeeder
                     ideaTypeId: ideaTypes[i % ideaTypes.Count].Id,
                     businessImpactId: businessImpacts[i % businessImpacts.Count].Id,
                     dueDate: i % 3 == 0 ? null : DateOnly.FromDateTime(nowUtc).AddDays(7 + i),
-                    authorUserId: users[i % users.Count].Id,
+                    authorUserId: contributors[i % contributors.Count].Id,
                     assigneeUserIds: assigneeIds,
                     tagIds,
-                    mentionUserIds: i % 4 == 0 ? new[] { users[(i + 1) % users.Count].Id } : noIds,
-                    nowUtc);
+                    mentionUserIds: i % 4 == 0 ? new[] { contributors[(i + 1) % contributors.Count].Id } : noIds,
+                    // A minute apart, oldest first, rather than all on one instant. Boards sort by
+                    // creation time, and eleven ideas sharing one timestamp leave the order to the
+                    // database's tie-break — which reads as a board that shuffles itself, and makes
+                    // two identically seeded deployments disagree about what is on the first page.
+                    nowUtc.AddMinutes(-(boards.Count * IdeaScenarios.Length - seededSoFar)));
 
+                seededSoFar++;
                 ideas.Add(idea);
                 await _dbContext.Ideas.AddAsync(idea, cancellationToken);
 
                 for (var upvoteIndex = 0; upvoteIndex < i % 3; upvoteIndex++)
                 {
                     await _dbContext.IdeaUpvotes.AddAsync(
-                        IdeaUpvote.Create(idea.Id, users[(i + upvoteIndex + 1) % users.Count].Id, nowUtc),
+                        IdeaUpvote.Create(idea.Id, contributors[(i + upvoteIndex + 1) % contributors.Count].Id, nowUtc),
                         cancellationToken);
                 }
 
                 ideasInStatus++;
             }
 
-            await AddDemoCommentAsync(ideas[0].Id, users[1].Id, "Thanks for raising this - I'll take a first look.", nowUtc, cancellationToken);
-            await AddDemoCommentAsync(ideas[0].Id, users[0].Id, "Agreed, let's prioritize it for the next review.", nowUtc, cancellationToken);
-            await AddDemoCommentAsync(ideas[1].Id, users[2].Id, "Following along - this would help my team too.", nowUtc, cancellationToken);
+            // Minutes apart, in the order they read as a conversation. Two comments on one
+            // idea sharing an instant leave their order to the database's tie-break, and a
+            // thread that reorders itself between reads is not a thread.
+            await AddDemoCommentAsync(ideas[0].Id, contributors[1].Id, "Thanks for raising this - I'll take a first look.", nowUtc.AddMinutes(-3), cancellationToken);
+            await AddDemoCommentAsync(ideas[0].Id, contributors[0].Id, "Agreed, let's prioritize it for the next review.", nowUtc.AddMinutes(-2), cancellationToken);
+            await AddDemoCommentAsync(ideas[1].Id, contributors[2].Id, "Following along - this would help my team too.", nowUtc.AddMinutes(-1), cancellationToken);
 
             await _dbContext.SaveChangesAsync(cancellationToken);
         }

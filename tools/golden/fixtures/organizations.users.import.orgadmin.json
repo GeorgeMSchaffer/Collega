@@ -1,0 +1,57 @@
+{
+  "scenario": "organizations",
+  "step": "users.import.orgadmin",
+  "endpoint": "POST /organizations/{organizationId}/users/import",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "User import is bootstrap and stays direct, unlike idea import — rule 26 puts the two on opposite sides.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/users/import",
+    "body": "------GoldenCaptureBoundary\r\nContent-Disposition: form-data; name=\"csvFile\"; filename=\"users.csv\"\r\nContent-Type: text/csv\r\n\r\nfirstName,lastName,email,role\nImported,Bycapture,imported.bycapture@acme-robotics.demo.collega.test,User\n\r\n------GoldenCaptureBoundary--\r\n",
+    "contentType": "multipart/form-data; boundary=----GoldenCaptureBoundary"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "createdCount": 0,
+      "rejectedCount": 1,
+      "rows": [
+        {
+          "rowNumber": 1,
+          "email": "imported.bycapture@acme-robotics.demo.collega.test",
+          "outcome": "rejected",
+          "error": "Email is already in use.",
+          "temporaryPassword": null
+        }
+      ]
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "createdCount": 0,
+      "rejectedCount": 1,
+      "rows": [
+        {
+          "email": "imported.bycapture@acme-robotics.demo.collega.test",
+          "error": "Email is already in use.",
+          "outcome": "rejected",
+          "rowNumber": 1,
+          "temporaryPassword": null
+        }
+      ]
+    }
+  }
+}

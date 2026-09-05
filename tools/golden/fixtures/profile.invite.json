@@ -1,0 +1,68 @@
+{
+  "scenario": "profile",
+  "step": "invite",
+  "endpoint": "GET /organizations/{organizationId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Registration needs a live invite code, and variables do not cross scenarios.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+      "title": "Acme Robotics",
+      "description": "Industrial robotics and automation manufacturer.",
+      "inviteCode": "<redacted>",
+      "logoUrl": null,
+      "logoThumbnailUrl": null,
+      "logoHeightPx": null,
+      "address": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "phone": null,
+      "primaryContactFirstName": null,
+      "primaryContactLastName": null,
+      "isArchived": false,
+      "createdAtUtc": "2026-09-04T03:55:30.134348Z",
+      "updatedAtUtc": "2026-09-04T03:55:41.443053Z"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "address": null,
+      "city": null,
+      "createdAtUtc": "<timestamp>",
+      "description": "Industrial robotics and automation manufacturer.",
+      "inviteCode": "<redacted>",
+      "isArchived": false,
+      "logoHeightPx": null,
+      "logoThumbnailUrl": null,
+      "logoUrl": null,
+      "organizationId": "<guid@org.body.organizationId>",
+      "phone": null,
+      "primaryContactFirstName": null,
+      "primaryContactLastName": null,
+      "state": null,
+      "title": "Acme Robotics",
+      "updatedAtUtc": "<timestamp>",
+      "zip": null
+    }
+  }
+}

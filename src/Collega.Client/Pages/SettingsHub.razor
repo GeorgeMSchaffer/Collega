@@ -42,9 +42,19 @@
                     <strong>Manage User-Defined Fields</strong>
                     <span>View fields across every organization, then open one to manage it.</span>
                 </a>
+                <a class="settings-link" href="/settings/ai-assist">
+                    <strong>AI Assist</strong>
+                    <span>Tune an organization's assistant scope. Act as a member to configure theirs.</span>
+                </a>
                 <a class="settings-link" href="/settings/api">
                     <strong>API</strong>
                     <span>AI assist token usage and cost by organization, against the daily limit.</span>
+                </a>
+                @* Site Admin only — deployment-wide configuration, deliberately absent from the
+                   OrgAdmin block below (rule 34). *@
+                <a class="settings-link" href="/settings/ai-prompt">
+                    <strong>AI Prompt</strong>
+                    <span>Edit the assistant's instructions for every organization, with history and rollback.</span>
                 </a>
             </Authorized>
         </AuthorizeView>
@@ -70,6 +80,10 @@
                 <a class="settings-link" href="/settings/fields">
                     <strong>Manage User-Defined Fields</strong>
                     <span>Configure the fields your organization captures on ideas.</span>
+                </a>
+                <a class="settings-link" href="/settings/ai-assist">
+                    <strong>AI Assist</strong>
+                    <span>Tune what the idea assistant will and won't discuss for your organization.</span>
                 </a>
                 <a class="settings-link" href="/settings/api">
                     <strong>API</strong>

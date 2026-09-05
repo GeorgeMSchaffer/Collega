@@ -1,0 +1,35 @@
+{
+  "scenario": "ideatypes",
+  "step": "reorder.orgadmin",
+  "endpoint": "POST /organizations/{organizationId}/idea-types/reorder",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Every active idea type, exactly once.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/idea-types/reorder",
+    "body": {
+      "orderedIdeaTypeIds": [
+        "83ee3626-d19d-4537-a394-9e0d3233045d",
+        "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+        "46bd64e9-005f-4bf0-acc5-1f71ac5dbf0e"
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

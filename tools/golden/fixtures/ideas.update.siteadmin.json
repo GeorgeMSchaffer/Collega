@@ -1,0 +1,55 @@
+{
+  "scenario": "ideas",
+  "step": "update.siteadmin",
+  "endpoint": "PUT /ideas/{ideaId}",
+  "as": "SiteAdmin",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/ideas/5ea9641a-72ad-445a-921c-8de278e777b9",
+    "body": {
+      "title": "Golden capture idea, edited",
+      "description": "Recorded by the golden capture.",
+      "priority": "High",
+      "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+      "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/ideas/5ea9641a-72ad-445a-921c-8de278e777b9",
+      "traceId": "0HNOA71FOOKTK:00000086"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/ideas/<guid@create.user.body.ideaId>",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

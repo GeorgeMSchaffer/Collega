@@ -4,7 +4,7 @@ Organization-scoped collaboration and idea-tracking tool. Organizations contain 
 
 **Stack:** .NET 8 · ASP.NET Core Web API · Blazor WebAssembly (Fluent UI Blazor) · EF Core · PostgreSQL 16 (Npgsql) · xUnit
 
-> **Database engine — Sprint 5 cutover.** PostgreSQL is the target engine, replacing SQL Server 2022. Setup below is written against it. Scope: [`SPEC/50-postgres-migration.md`](SPEC/50-postgres-migration.md); sprint wrapper: [`SPEC/sprints/archive/sprint-05-postgres-migration.md`](SPEC/sprints/archive/sprint-05-postgres-migration.md). If your checkout still references `Microsoft.EntityFrameworkCore.SqlServer`, the provider swap has not reached your branch yet.
+> **Database engine: PostgreSQL 16** (Npgsql), local container `collega-postgres` on port 5432. The SQL Server → PostgreSQL cutover completed in Sprint 5 (merged `7c5a78b`, 2026-08-12) and every document is reconciled to it; the migration's scope and post-mortem are kept for reference in [`SPEC/50-postgres-migration.md`](SPEC/50-postgres-migration.md) and [`SPEC/sprints/archive/sprint-05-postgres-migration.md`](SPEC/sprints/archive/sprint-05-postgres-migration.md).
 
 > **Implementation gate:** check [`SPEC/Bug Triage.md`](SPEC/Bug%20Triage.md) before starting feature work. Unresolved `TODO` items take priority unless the user explicitly approves an exception. See [`SPEC/implementation-agent-tracker.md`](SPEC/implementation-agent-tracker.md) for implementation status.
 
@@ -34,14 +34,16 @@ Then edit `.env` and set a real password. PostgreSQL enforces no complexity rule
 
 ```dotenv
 POSTGRES_PASSWORD=<your-password>
-POSTGRES_USER=postgres
+POSTGRES_USER=collega
 POSTGRES_HOST_PORT=5432
 
 SITE_ADMIN_EMAIL=admin@collega.local
 SITE_ADMIN_PASSWORD=<your-password>
 ```
 
-> `SITE_ADMIN_*` in `.env` is consumed **only** by the `api` service in `docker-compose.yml`, which is still a placeholder. For local `dotnet run`, use user-secrets (next step).
+> `POSTGRES_USER` is `collega`, not `postgres` — the container creates exactly one login role and names it `collega`, so local, in-cluster, and app connection strings all name the same role. It is still the container's superuser, just not called `postgres`. `psql -U postgres` will fail with `role "postgres" does not exist`.
+
+> `SITE_ADMIN_*` in `.env` is consumed **only** by the `api` service in `docker-compose.yml` (`docker compose --profile full up -d api`, which needs no local .NET at all — see `src/Collega.Infrastructure/CLAUDE.md`). For local `dotnet run`, use user-secrets (next step).
 
 ### 2. Configure the API's secrets
 
@@ -52,7 +54,7 @@ cd src/Collega.API
 dotnet user-secrets init
 dotnet user-secrets set "SiteAdmin:Email" "admin@collega.local"
 dotnet user-secrets set "SiteAdmin:Password" "<your-password>"
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=<your-password>"
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=Collega;Username=collega;Password=<your-password>"
 ```
 
 The connection-string secret overrides the placeholder in `appsettings.Development.json`, which is committed and must never hold a real password.
@@ -62,7 +64,7 @@ Environment variables work as an alternative (note the **double** underscore):
 ```bash
 export SiteAdmin__Email='admin@collega.local'
 export SiteAdmin__Password='<your-password>'
-export ConnectionStrings__DefaultConnection='Host=localhost;Port=5432;Database=Collega;Username=postgres;Password=<your-password>'
+export ConnectionStrings__DefaultConnection='Host=localhost;Port=5432;Database=Collega;Username=collega;Password=<your-password>'
 ```
 
 ### 3. Start PostgreSQL
@@ -227,13 +229,15 @@ Two environment caveats worth knowing:
 **`Configuration keys 'SiteAdmin:Email' and 'SiteAdmin:Password' are required at startup`**
 Step 2 was skipped, or you set them for the wrong project. Verify with `cd src/Collega.API && dotnet user-secrets list`.
 
-**`password authentication failed for user "postgres"` even though the password in `.env` is correct**
+**`password authentication failed for user "collega"` even though the password in `.env` is correct**
 `POSTGRES_PASSWORD` is applied **only when the data directory is first initialized**. If the container was ever created with a different or empty password, the old credential persists in the volume. Reset it in place without losing data — the official image initializes `pg_hba.conf` with `local all all trust`, so this exec over the Unix socket needs no password:
 
 ```bash
 docker exec -it collega-postgres \
-  psql -U postgres -c "ALTER USER postgres WITH PASSWORD '<your-password>';"
+  psql -U collega -d postgres -c "ALTER USER collega WITH PASSWORD '<your-password>';"
 ```
+
+`-d postgres` is required: `psql` defaults to a database named after the user, and there is no `collega` database — the app's database is `Collega`.
 
 To start over instead (**destroys all local data**): `docker compose down -v`.
 

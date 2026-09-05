@@ -4,6 +4,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 
 ## Product Behavior (canonical)
 
+- `decisions.md` — **dated log of decisions that constrain later work.** Read before reopening a settled question; supersessions are recorded rather than edited away.
 - `00-project-brief.md` — product model, stack, solution structure, architecture rules
 - `10-requirements.md` — requirement set
 - `30-Contracts.md` — **canonical API route and payload contracts**; authoritative for endpoint and payload details
@@ -50,10 +51,12 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 - `50-azure-deployment.md`, `50-azure-api-cicd.md` — Azure target (Sprint 8; renumbered from 7 on 2026-08-11)
 - `50-postgres-migration.md` — Postgres migration plan (Sprint 5)
 - `50-kubernetes-deployment.md` — Kubernetes deployment notes
+- `typescript-conversion-map/` — the twelve conversion tickets and the charting map behind `50-typescript-migration.md`; its `README.md` records which tickets are answered and one open conflict on ticket `01`
+- `50-typescript-migration.md` — **the costed, sequenced plan for the .NET → TypeScript conversion** (Sprint 9; assembles the `wayfinder` map in `typescript-conversion-map/`). Its Wave A has a deadline earlier than the sprint: golden capture must run **before or during Sprint 8**, while the .NET API still exists.
 
 ## Supporting Material
 
-- `mockups/` — SVG/HTML UI mockups and throwaway review comps; `comp-c-*` is the live direction, `comp-a-*`/`comp-b-*` are rejected alternatives kept for history
+- `mockups/` — SVG/HTML UI mockups and throwaway review comps. **the comp P set (`comp-p-{focus-roadmap,auth,admin,delivery}.html`) is the canonical comp** — locked 2026-08-31, canonical 2026-09-03; structure locked, palette open; built on Tailwind CSS + shadcn/ui, and **comp Q (`comp-q-*.html`) is that rendering** (see `decisions.md`). Earlier comps are kept for history.
 - `ui-ux-spec-template.md` — start here for a new client layout/interaction spec
 - `SPECKIT/specs/<NNN-feature>/spec.md` — spec-kit-style **downstream copies** of the canonical files; edit the canonical file first
 
