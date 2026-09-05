@@ -21,6 +21,26 @@ Collega is a collaboration and project management tool for submitting, tracking,
 - Read Only users can comment and upvote, but cannot edit ideas or board configuration.
 - In Development, startup seed creates exactly 2 demo organizations. Each owns one Org Admin and two User accounts initialized with demo password `Abc123!` and no forced password change, plus two example boards. Every board contains 11 deterministic ideas distributed `3/2/2/1/3` in canonical status order, with organization-consistent authors, assignees, tags, comments, and upvotes. The single global Site Admin remains outside all organizations.
 - Ideas require Priority, an organization-configured Idea Type, and an organization-configured Business Impact; due date remains optional.
+- **A demo seed must be able to populate the platform so every feature can be shown.** The
+  Development seed above is the minimum; the demo seed is a superset and exists so a walkthrough
+  never has to say "imagine there were more of these". It must produce, at least:
+  - **Ideas spread across every status**, not clustered in one — including whatever the board's
+    terminal status is, so a completed item can be shown.
+  - **Multiple boards**, each with **multiple idea types**, so type filtering and the type badge
+    have something to distinguish.
+  - **An application administrator**, whose credentials come from **`DEMO_SEED_USERNAME`** and
+    **`DEMO_SEED_PASSWORD`** in the environment — never a literal in source, never committed.
+    `.env.example` carries the keys with placeholder values only.
+  - Enough variation in author, assignee, tag, comment and upvote for the engagement surfaces to
+    look inhabited rather than empty.
+
+  **Owned by S0.2** (`SPEC/50-typescript-migration.md`), whose slice already covers per-feature
+  seed composition. The .NET `StartupSeeder` is frozen and is not extended for this.
+
+  Two things this requirement is deliberately *not*: it is not the golden corpus, which is a
+  recording used as a test oracle and must stay pinned to what was captured; and it is not
+  production data — the seed stays Development-only, as the existing rule requires.
+
 - Every organization retains at least one active Idea Type and one active Business Impact. Admins control option sort order, and option deletion is soft-delete only. The first active option by sort order is the default **for Idea Type**; **Business Impact defaults to `Medium`** (falling back to first-active when no option is named `Medium`) — see `20-feature-ideas-and-engagement.md` → Defaults, changed 2026-08-17 when the seeded impact order was reversed to most-severe-first.
 - Idea assignment is optional and supports up to five distinct users. Newly selected assignees must be active users in the idea's organization; inactive historical assignees remain visible but cannot be newly selected. The idea author and in-scope admins can change assignments.
 - Board cards are compact and display title, priority, Business Impact chip, up to three tags plus `+N`, up to three assigned-user personas plus `+N`, viewer-local submission age, current-user upvote state/count, and comment count. Clicking the title opens Idea Detail; clicking comments opens Idea Detail focused on the comment composer.
