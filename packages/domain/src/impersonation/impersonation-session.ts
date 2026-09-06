@@ -68,7 +68,7 @@ export function startImpersonationSession(
   // Defence in depth. Authorization refuses this earlier with a 403; the invariant is restated
   // here so the entity cannot represent a nonsensical state regardless of how it is reached.
   if (input.realUserId === input.targetUserId) {
-    throw new Error('A user cannot act as themselves.')
+    throw new ImpersonationDomainError('targetUserId', 'A user cannot act as themselves.')
   }
 
   return {

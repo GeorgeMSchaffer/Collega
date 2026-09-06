@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { ImpersonationEndReason, Role, UserStatus } from '@collega/domain/enums'
 import {
   endImpersonationSession,
+  ImpersonationDomainError,
   type ImpersonationSession,
   isImpersonationSessionActiveAt,
   startImpersonationSession,
@@ -20,6 +21,7 @@ import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
+  ValidationError,
 } from '../common/index.js'
 import type { ViewAsCandidate, ViewAsSessionResult } from './models.js'
 import type {
@@ -110,7 +112,8 @@ export class ViewAsService {
 
     this.ensureMayActAs(realUser, realRole, target, targetOrganization)
 
-    const session = startImpersonationSession(
+    const session = runDomain(
+      startImpersonationSession,
       { id: randomUUID(), realUserId: realUser.id, targetUserId: target.id },
       now,
     )
@@ -375,4 +378,25 @@ function isOpenSessionUniqueViolation(error: unknown): boolean {
     current = current.cause
   }
   return false
+}
+
+/**
+ * Wraps a domain transition so an `ImpersonationDomainError` (a plain-Error invariant violation -
+ * packages/domain imports nothing, so it cannot throw the kernel's `ValidationError` itself)
+ * surfaces as a proper field-level 400 rather than an unhandled 500, mirroring
+ * ideas/idea.service.ts's `runDomain`. Unreachable today - `ensureMayActAs` already refuses a
+ * self-target with a 403 before this is called - but the domain's own checks are defence in
+ * depth, and a defence with no translation degrades straight to a 500 if that ever stops holding.
+ */
+function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T, ...args: Args): T {
+  try {
+    return fn(...args)
+  } catch (error) {
+    if (error instanceof ImpersonationDomainError) {
+      throw new ValidationError('One or more fields are invalid.', {
+        [error.field]: [error.message],
+      })
+    }
+    throw error
+  }
 }
