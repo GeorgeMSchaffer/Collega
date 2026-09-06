@@ -9,6 +9,45 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-06 — Wave B conventions: commits, validation errors, and house style
+
+Settled after reviewing the first three partitions together, which had each answered these
+differently while individually looking correct. Recorded here because Waves B4-B7 and C
+will copy whatever the first three did.
+
+**Commits go through `UnitOfWork.saveChanges()`, explicitly.** Not repository autocommit.
+This is not a preference: the .NET application layer calls `SaveChangesAsync` **59 times
+across twelve services**, and behaviour is pinned by the corpus. `StatusService.Reorder` is
+the clearest case — the C# loops over the statuses and commits **once, after the loop**,
+which is the only reason a reorder is atomic. B1 ported this faithfully; B2 and B3 assumed
+autocommit, and B2's reorder can therefore leave a partially reordered catalog if it fails
+mid-loop, while its own docstring promises atomicity. Wave C1 builds repositories against
+this contract, so it had to be settled before C1 starts.
+
+**Domain invariant failures must become `ValidationError`, thrown from the application
+layer, with field-keyed failures.** A bare `Error` escaping a service is a 500, and the
+corpus records **eight 400s and no 500s at all**. The recorded body is field-keyed —
+`{"errors": {"firstName": ["First Name is required."]}}` — so both the **field key** and the
+**message text** are pinned, not just the status code.
+
+Note the C# domain's own `ArgumentException` is a *defensive backstop*, not the path that
+produces those 400s: `AppExceptionHandler` explicitly passes non-`AppException` through to
+the default renderer. The 400 comes from a `ValidationAppException` raised **before** the
+domain is reached. Port that shape, not the backstop.
+
+B3's `IdeaDomainError` + `runDomain()` translation wrapper is the reference implementation.
+B1 had no domain error type at all; B2 defined `*InvariantError` classes and never caught
+them.
+
+**House style, so seven partitions read as one codebase.** Import the kernel by package
+specifier (`@collega/application/common`), not a relative path. Generate ids with
+`randomUUID` imported from `node:crypto`, not the global. Take dependencies as a positional
+constructor, not a `deps` object. Name the audit port `auditEvents`. None of these is better
+than its alternative; being the same is what has value, and the first three partitions
+produced three answers to each.
+
+---
+
 ## 2026-09-06 — Entity ids are generated in the application layer, not the domain
 
 **Decided:** `crypto.randomUUID()` in the application service, passed into the domain
