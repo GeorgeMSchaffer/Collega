@@ -1,0 +1,23 @@
+// Prisma-backed repository adapters, reachable as @collega/infrastructure/repositories.
+// One class per entity, each satisfying every feature port that names it - see the slice report
+// (SPEC/implementation-agent-tracker.md, Wave C1) for the full port -> adapter map.
+
+export * from './ai-prompt-version.repository.js'
+export * from './ai-usage.repository.js'
+export * from './board.repository.js'
+export * from './business-impact.repository.js'
+export * from './comment.repository.js'
+export * from './field-definition.repository.js'
+export * from './idea.repository.js'
+export * from './idea-classification.repository.js'
+export * from './idea-field-values.repository.js'
+export * from './idea-lookup.repository.js'
+export * from './idea-type.repository.js'
+export * from './idea-upvote.repository.js'
+export * from './impersonation-session.repository.js'
+export * from './notification-event.repository.js'
+export * from './organization.repository.js'
+export * from './organization-existence-lookup.repository.js'
+export * from './status.repository.js'
+export * from './tag.repository.js'
+export * from './user.repository.js'
