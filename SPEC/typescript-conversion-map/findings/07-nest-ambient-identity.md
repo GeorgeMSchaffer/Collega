@@ -541,6 +541,16 @@ With two constraints that `07` does impose, and one input:
 
 ## 7. Mechanical enforcement of the chokepoint
 
+> **Superseded as to mechanism, 2026-09-06 — the argument below stands, the tool changed.**
+> This section was written against ESLint. The ESLint stack was removed on 2026-09-05 in
+> favour of Biome, which cannot load an ESLint plugin, so layers 1–3 are expressed as
+> `biome.json` `noRestrictedImports` overrides instead (`SPEC/decisions.md`). Layer 4, the
+> exact-equality architecture test, is unaffected and is the layer that does not depend on a
+> linter at all. **S0.1 delivered the layer-boundary half on Biome and proved it fires
+> (`tools/boundaries/`); S0.3 owns the identity-chokepoint half.** Read `paths` vs
+> `patterns` in that decision entry before writing the override — the obvious form silently
+> matches nothing.
+
 The ticket's framing is right: documentation did not prevent this class of bug. Four layers,
 cheapest first. Layers 1–2 are configuration. Layer 3 is ~70 lines. Layer 4 is ~15.
 

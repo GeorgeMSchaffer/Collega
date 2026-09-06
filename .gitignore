@@ -70,6 +70,11 @@ node_modules/
 # Turborepo local task cache and logs
 .turbo/
 
+# TypeScript workspace build output. Every apps/* and packages/* project compiles to
+# dist/ via `tsc -p tsconfig.json`; Next.js writes .next/.
+dist/
+.next/
+
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
 

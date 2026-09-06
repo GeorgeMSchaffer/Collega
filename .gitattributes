@@ -1,2 +1,26 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Biome formats to LF and has no per-platform mode, so a CRLF working copy makes
+# `pnpm lint` fail on every line of every file on Windows - where core.autocrlf=true
+# would otherwise hand out CRLF. Pin the checkout for everything Biome and the Node
+# toolchain touch, so the working copy matches the blob on every platform.
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.mjs   text eol=lf
+*.cjs   text eol=lf
+*.json  text eol=lf
+*.jsonc text eol=lf
+*.css   text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.prisma text eol=lf
+
+# Shell scripts are broken by CRLF outright.
+*.sh    text eol=lf
+
+# Windows-only scripts want their native endings.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf

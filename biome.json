@@ -7,10 +7,15 @@
   },
   "files": {
     "includes": [
+      "apps/**/*.ts",
+      "apps/**/*.tsx",
+      "packages/**/*.ts",
+      "packages/**/*.tsx",
       "e2e/**/*.ts",
       "tools/golden/**/*.ts",
       "!**/node_modules",
       "!**/dist",
+      "!**/.next",
       "!**/bin",
       "!**/obj",
       "!**/playwright-report",
@@ -36,5 +41,179 @@
       "semicolons": "asNeeded",
       "trailingCommas": "all"
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["packages/domain/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@collega/application",
+                      "@collega/application/*",
+                      "@collega/infrastructure",
+                      "@collega/infrastructure/*",
+                      "@collega/design-system",
+                      "@collega/design-system/*",
+                      "@collega/api",
+                      "@collega/api/*",
+                      "@collega/web",
+                      "@collega/web/*"
+                    ],
+                    "message": "packages/domain imports nothing. Push the dependency up into application. SPEC/50-typescript-migration.md section 3."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/application/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@collega/infrastructure",
+                      "@collega/infrastructure/*",
+                      "@collega/design-system",
+                      "@collega/design-system/*",
+                      "@collega/api",
+                      "@collega/api/*",
+                      "@collega/web",
+                      "@collega/web/*"
+                    ],
+                    "message": "packages/application imports @collega/domain only. Depend on an abstraction and let infrastructure implement it. SPEC/50-typescript-migration.md section 3."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/infrastructure/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@collega/design-system",
+                      "@collega/design-system/*",
+                      "@collega/api",
+                      "@collega/api/*",
+                      "@collega/web",
+                      "@collega/web/*"
+                    ],
+                    "message": "packages/infrastructure implements application and domain abstractions. It renders nothing and must not depend on its host."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/design-system/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@collega/domain",
+                      "@collega/domain/*",
+                      "@collega/application",
+                      "@collega/application/*",
+                      "@collega/infrastructure",
+                      "@collega/infrastructure/*",
+                      "@collega/api",
+                      "@collega/api/*",
+                      "@collega/web",
+                      "@collega/web/*"
+                    ],
+                    "message": "packages/design-system is presentation only - tokens and primitives from comp P."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@collega/domain",
+                      "@collega/domain/*",
+                      "@collega/application",
+                      "@collega/application/*",
+                      "@collega/infrastructure",
+                      "@collega/infrastructure/*",
+                      "@collega/api",
+                      "@collega/api/*"
+                    ],
+                    "message": "apps/web reaches the server over HTTP only. Import @collega/design-system, or call the API. This is constraint 11, and the lint error is what stops it eroding - SPEC/50-typescript-migration.md section 4.3."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/api/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@collega/design-system",
+                      "@collega/design-system/*",
+                      "@collega/web",
+                      "@collega/web/*"
+                    ],
+                    "message": "apps/api renders nothing and must not depend on the client."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

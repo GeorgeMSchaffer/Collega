@@ -32,7 +32,7 @@ if you must.
 | 5 | **Vitest + Playwright** | Not Cypress. The existing `e2e/` TypeScript Playwright suite is an asset and is kept. |
 | 6 | **Big-bang cutover** | Not a strangler. No shippable intermediate; one cutover. |
 | 7 | **Prisma introspect, then reshape** | `prisma db pull` from the live schema as a starting point, then deliberate changes. Not straight adoption, not greenfield. |
-| 8 | **Turborepo + pnpm workspaces** | `packages/{domain,application,infrastructure}` + `apps/{api,web}`, mirroring current project boundaries. Enforced by `eslint-plugin-boundaries` in the same lint run as everything else. |
+| 8 | **Turborepo + pnpm workspaces** | `packages/{domain,application,infrastructure}` + `apps/{api,web}`, mirroring current project boundaries. Enforced in the same lint run as everything else — by **Biome `noRestrictedImports` overrides** since 2026-09-06, not `eslint-plugin-boundaries` (`decisions.md`). |
 | 9 | **UI is comp P, on Tailwind + shadcn/ui** | Locked to **comp P** on 2026-08-31 and made canonical 2026-09-03 (`SPEC/decisions.md`). Structure locked, palette open. Built on **Tailwind CSS v4 + shadcn/ui**, used as intended; comp Q (`comp-q-*.html`) is the reference rendering and `build_q.py` carries the component map. |
 | 10 | **Golden contract tests** | Ticket `04`. Record all 81 endpoints against live .NET, replay against Nest. |
 | 11 | **HTTP-only Next ↔ Nest** | Ticket `09`. No direct `packages/application` imports from Next. |
@@ -96,10 +96,14 @@ collega/
 │   │   └── prisma/schema.prisma     ← single most contended file in the repo
 │   └── design-system/               tokens + primitives from comp P
 ├── e2e/                        existing Playwright suite, kept
-└── tools/golden/               capture + replay harness (Wave A)
+└── tools/
+    ├── golden/                 capture + replay harness (Wave A) — the oracle
+    └── boundaries/             asserts the layer lint above actually fires
 ```
 
-Layer rules, enforced by `eslint-plugin-boundaries` rather than convention:
+Layer rules, enforced by lint rather than convention — `biome.json` carries one
+`noRestrictedImports` override per layer, and `tools/boundaries/boundaries.test.ts` asserts
+the full matrix in both directions:
 
 - `domain` imports nothing.
 - `application` imports `domain` only.
@@ -107,6 +111,10 @@ Layer rules, enforced by `eslint-plugin-boundaries` rather than convention:
 - `apps/api` imports `application` + `infrastructure`.
 - **`apps/web` imports `design-system` only.** It reaches the server over HTTP. A lint
   error, not a code review note, is what stops constraint 11 from eroding.
+
+The overrides must use `patterns` with a `group` covering both `@collega/<pkg>` and
+`@collega/<pkg>/*`. `paths` matches exact specifiers only, so it blocks the bare package and
+silently allows every subpath import — which, given section 4.2, is all of them.
 
 ---
 
@@ -195,7 +203,7 @@ the corpus never touches shows up as a hole rather than as silence.
 
 | Slice | Owns |
 |---|---|
-| **S0.1** Monorepo skeleton | root configs, `turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, ESLint + `eslint-plugin-boundaries` rules, CI task graph. `07` §7 **recommends** it also take `tools/eslint-plugin-collega/` and the identity-chokepoint architecture test — the layers that make "only the auth folder reads a credential" a lint failure rather than a convention. New scope, not yet a decision |
+| **S0.1** Monorepo skeleton | root configs, `turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, the Biome layer-boundary overrides and the `tools/boundaries` test over them, CI task graph. **Done 2026-09-06.** The identity chokepoint that `07` §7 pairs with this — "only the auth folder reads a credential" as a lint failure, plus its exact-equality architecture test — moves to **S0.3**, which owns the auth guard skeleton it constrains |
 | **S0.2** Prisma introspect + reshape | `packages/infrastructure/prisma/**` — `db pull`, then the deliberate reshape; generated client; per-feature seed composition. Also owes the **three partial unique indexes** introspection drops, as raw SQL plus a test that fails if any is absent (`05`'s findings). **Freezes the schema.** |
 | **S0.3** Cross-cutting kernel | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` — error model, result types, pagination, auth guard skeleton, and the `AsyncLocalStorage` request context that View As will need. `07` §4 specifies it: four files plus the `CurrentUserContext` port, with `attributeAudit`, `ensureNotDirectSiteAdmin` and the branded `Attribution` type alongside |
 

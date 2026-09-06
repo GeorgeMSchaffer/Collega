@@ -1,0 +1,28 @@
+{
+  "name": "@collega/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Entities, enums, value objects and invariants. Depends on nothing.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*/index.d.ts",
+      "default": "./dist/*/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "3.2.4"
+  }
+}

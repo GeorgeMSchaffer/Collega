@@ -9,6 +9,38 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-06 — Layer boundaries are enforced by Biome, not eslint-plugin-boundaries
+
+**Decided:** the layer rules in `50-typescript-migration.md` section 3 are enforced by
+`noRestrictedImports` overrides in `biome.json`, one per layer. **Supersedes** the plan's
+three references to `eslint-plugin-boundaries` and ticket `07` section 7's
+`tools/eslint-plugin-collega/`, which named a mechanism rather than a requirement.
+
+**Why:** the ESLint stack was deliberately removed on 2026-09-05 (`6fd75d5`) in favour of
+Biome, which cannot load an ESLint plugin. Restoring ESLint just for the boundary rules
+would mean two lint tools in the task graph, so the requirement moved to the tool that is
+actually there. The requirement is unchanged and is the point: **a lint error, not a code
+review note**, is what stops constraint 11 eroding.
+
+**The trap this walked into, recorded because it is not obvious.** The first version used
+`noRestrictedImports` `paths`, which matches exact specifiers only. It correctly blocked
+`@collega/application` and silently allowed `@collega/application/ideas` — and section 4.2
+mandates subpath exports, so every real import would have evaded it. The config read as
+correct and enforced nothing. The working form is `patterns` with a `group` listing both
+`@collega/<pkg>` and `@collega/<pkg>/*`.
+
+**So the enforcement is itself tested.** `tools/boundaries/boundaries.test.ts` asserts the
+full 6x5 matrix — every illegal import is reported and every legal one is not — using the
+subpath form specifically, because the bare specifier was never the one that leaked. A lint
+rule that stops firing is worse than no rule, since it is read as a guarantee. This is the
+same lesson as the list-endpoint tie-break test that sat green and worthless.
+
+**Consequence for ticket `07`.** The identity chokepoint keeps its lint enforcement, now as
+a Biome override, and keeps the exact-equality architecture test the finding already
+required. S0.3 owns both.
+
+---
+
 ## 2026-09-04 — .NET development stops; the conversion starts now
 
 **Decided:** no further feature, paydown or polish work on the .NET solution. **Sprint 9

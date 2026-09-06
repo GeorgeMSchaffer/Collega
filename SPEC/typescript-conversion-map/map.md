@@ -29,7 +29,7 @@ These are standing constraints on the whole effort, decided with the user before
 | 5 | **Vitest + Playwright** | *Not* Cypress. Corrected by the user during charting. The existing `e2e/` TypeScript Playwright suite is an asset and is kept. |
 | 6 | **Big-bang cutover** | Not a strangler. No shippable intermediate; one cutover. |
 | 7 | **Prisma introspect, then reshape** | `prisma db pull` from the live schema as a starting point, then deliberate schema changes. Not a straight adoption, not greenfield. |
-| 8 | **Turborepo + pnpm workspaces** | Layered packages `packages/{domain,application,infrastructure}` + `apps/{api,web}`, mirroring the current project boundaries. Enforcement via `eslint-plugin-boundaries` (same lint run as everything else, rather than a separate CI step). |
+| 8 | **Turborepo + pnpm workspaces** | Layered packages `packages/{domain,application,infrastructure}` + `apps/{api,web}`, mirroring the current project boundaries. Enforcement in the same lint run as everything else, rather than a separate CI step. **Superseded 2026-09-06** as to mechanism only: `eslint-plugin-boundaries` gave way to Biome `noRestrictedImports` overrides when the ESLint stack was removed (`SPEC/decisions.md`). The requirement is unchanged. |
 | 9 | **UI is a redesign** | Comp C "Fluent Editorial" is *unlocked* for this effort. Component library is open — evaluated by comp, not assumed. |
 
 ### Standing risk, recorded at charting time

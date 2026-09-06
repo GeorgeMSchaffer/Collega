@@ -1,0 +1,21 @@
+{
+  "name": "@collega/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Nest.js host - the only thing that talks to the database. Imports application and infrastructure.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@collega/application": "workspace:*",
+    "@collega/domain": "workspace:*",
+    "@collega/infrastructure": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "3.2.4"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@collega/application",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Use-case orchestration, authorization and validation. Depends on domain only.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*/index.d.ts",
+      "default": "./dist/*/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@collega/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "3.2.4"
+  }
+}

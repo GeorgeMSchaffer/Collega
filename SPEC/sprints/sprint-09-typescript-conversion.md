@@ -91,8 +91,9 @@ Beyond `SPEC/90-definition-of-done.md`:
 - **F1 green** — all 81 endpoints × 4 roles replay clean against Nest. This is the gate;
   nothing cuts over before it.
 - **F2 green** — the adapted Playwright suite passes against the comp P UI.
-- Layer boundaries pass lint (`eslint-plugin-boundaries`), including the rule that
-  `apps/web` never imports `packages/application`.
+- Layer boundaries pass lint — `biome.json` overrides since 2026-09-06 (`decisions.md`),
+  including the rule that `apps/web` never imports `packages/application`, and
+  `tools/boundaries` asserting that those overrides actually fire.
 - The standard demo seed (2 orgs, **10 users**, 4 boards, 44 ideas) exists in the new stack.
   Ten is 2 orgs × 4 accounts (one Org Admin, two User, one Read Only) plus the configured
   Site Admin and the Development-only convenience Site Admin.
