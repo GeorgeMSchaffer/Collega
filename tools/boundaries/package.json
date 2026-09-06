@@ -1,0 +1,14 @@
+{
+  "name": "@collega/boundaries",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Architecture test asserting that biome.json actually enforces the layer rules in SPEC/50-typescript-migration.md section 3.",
+  "scripts": {
+    "test": "node --test \"*.test.ts\""
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "typescript": "7.0.2"
+  }
+}

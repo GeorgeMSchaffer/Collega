@@ -3,19 +3,35 @@
   "ui": "stream",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", "out/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**",
+        "out/**"
+      ]
     },
     "typecheck": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": []
     },
     "test": {
-      "dependsOn": ["^build"],
-      "outputs": ["playwright-report/**", "test-results/**"]
-    },
-    "lint": {
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": []
+    },
+    "collega-e2e#test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "playwright-report/**",
+        "test-results/**"
+      ],
+      "cache": false
     }
   }
 }

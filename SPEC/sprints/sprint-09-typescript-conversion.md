@@ -47,7 +47,7 @@ throughput.
 | Wave | What | Max concurrent | Starts when |
 |---|---|---:|---|
 | A | Golden capture | 2 | **Complete 2026-09-03** — ran ahead, against the live .NET API |
-| 0 | Foundation: monorepo, Prisma schema, kernel | **1 (serial)** | **Unblocked 2026-09-04** when `08` was decided |
+| 0 | Foundation: monorepo, Prisma schema, kernel | **1 (serial)** | **Complete 2026-09-06** — S0.1, S0.2, S0.3 all merged |
 | B | Domain + Application, 7 feature partitions | 7 | S0.3 merged |
 | C | Infrastructure: repositories, integrations | 2 | S0.2 merged |
 | D | API, mirroring B's partition | 7 | per-partition, as each B*n* merges |
@@ -73,6 +73,16 @@ a parallel implementer.
 **Recommended concurrency: 3–5 implementers plus 1 reviewer**, not the collision ceiling.
 The ceiling says what is *safe*; the reviewer says what is *sustainable*.
 
+## Wave 0 — complete 2026-09-06
+
+| Slice | Delivered |
+|---|---|
+| **S0.1** | Six workspace packages with subpath exports, `tsconfig.base.json`, the Biome layer-boundary overrides, and `tools/boundaries` asserting the 6x5 matrix fires in both directions. Also fixed two things that made the gate meaningless: `pnpm check` ran lint in **zero** packages, and Biome's LF formatting against a CRLF checkout failed every file on Windows. |
+| **S0.2** | 25 models introspected, **9 enums promoted**, and the **three partial unique indexes hand-written** into the baseline — `db pull` drops them silently and `migrate diff` reports an empty migration. `packages/infrastructure/test/partial-indexes.test.ts` fails if any goes missing. The whole baseline was applied to a scratch database and diffed against the original. **The schema is now frozen.** |
+| **S0.3** | The `CurrentUserContext` port, the `AsyncLocalStorage` store, its singleton lazy-getter adapter, `runAs`, the request-context middleware, the auth guard skeleton, the branded `Attribution` type with `attributeAudit`, `ensureNotDirectSiteAdmin`, the error model and pagination — plus the nine domain enums and the identity chokepoint (Biome override + `tools/arch/identity-chokepoint.test.ts`). |
+
+**Wave B and Wave C are now unblocked.**
+
 ## Standing rules for every slice
 
 1. **Own your globs.** An agent that needs to edit a path it does not own stops and
@@ -91,8 +101,9 @@ Beyond `SPEC/90-definition-of-done.md`:
 - **F1 green** — all 81 endpoints × 4 roles replay clean against Nest. This is the gate;
   nothing cuts over before it.
 - **F2 green** — the adapted Playwright suite passes against the comp P UI.
-- Layer boundaries pass lint (`eslint-plugin-boundaries`), including the rule that
-  `apps/web` never imports `packages/application`.
+- Layer boundaries pass lint — `biome.json` overrides since 2026-09-06 (`decisions.md`),
+  including the rule that `apps/web` never imports `packages/application`, and
+  `tools/boundaries` asserting that those overrides actually fire.
 - The standard demo seed (2 orgs, **10 users**, 4 boards, 44 ideas) exists in the new stack.
   Ten is 2 orgs × 4 accounts (one Org Admin, two User, one Read Only) plus the configured
   Site Admin and the Development-only convenience Site Admin.

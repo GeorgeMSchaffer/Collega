@@ -1,0 +1,19 @@
+{
+  "name": "@collega/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Next.js client. Reaches the server over HTTP only - it may import @collega/design-system and nothing else from the workspace.",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@collega/design-system": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "3.2.4"
+  }
+}

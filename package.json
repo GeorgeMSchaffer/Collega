@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Root tooling for the JavaScript/TypeScript satellites around the .NET application: the e2e Playwright suite, the golden-file harness, and the Tailwind build for the comps. The product itself is .NET 8 / ASP.NET Core / Blazor WebAssembly - see Collega.sln.",
+  "description": "Collega monorepo. Mid-conversion (Sprint 9): apps/* and packages/* are the TypeScript stack being built, src/Collega.* is the .NET application it replaces - see SPEC/50-typescript-migration.md.",
   "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=24.20.0",
@@ -15,8 +15,9 @@
     "format": "biome format --write .",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "check": "turbo run lint typecheck"
+    "test": "turbo run test --filter=!collega-e2e",
+    "test:e2e": "turbo run test --filter=collega-e2e",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",

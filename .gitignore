@@ -70,6 +70,20 @@ node_modules/
 # Turborepo local task cache and logs
 .turbo/
 
+# TypeScript workspace build output. Every apps/* and packages/* project compiles to
+# dist/ via `tsc -p tsconfig.json`; Next.js writes .next/.
+dist/
+.next/
+
+# Prisma's generated client. Regenerated from schema.prisma by `pnpm db:generate`;
+# committing it means a stale client can disagree with the schema without anyone noticing.
+packages/infrastructure/src/generated/
+
+# Scratch dirs tools/boundaries writes inside each layer to probe the lint rules. They are
+# cleaned up on exit, but an interrupted run leaks them - and they must live inside the layer
+# for biome.json's override globs to match, so they cannot go anywhere tidier.
+.boundary-*/
+
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
 

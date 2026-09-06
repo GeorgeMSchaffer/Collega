@@ -1,29 +1,50 @@
 # pnpm workspace members.
 #
-# The application itself is .NET (src/Collega.*, built via Collega.sln) — these are
-# the JavaScript/TypeScript satellites around it, not the product.
+# The product is mid-conversion (Sprint 9). Two stacks are present at once:
 #
-#   e2e                     Playwright suite driving the Blazor client
-#   tools/golden            typecheck-only golden-file harness (runs on bare Node)
+#   apps/api                Nest.js host            | the TypeScript stack the
+#   apps/web                Next.js client          | conversion is building.
+#   packages/domain         entities, invariants    | Layer rules are enforced by
+#   packages/application    use cases, authz        | biome.json overrides and
+#   packages/infrastructure Prisma, integrations    | asserted by tools/boundaries.
+#   packages/design-system  comp P primitives       |
+#
+#   src/Collega.*           the .NET application being replaced, built via Collega.sln.
+#                           It must stay runnable until Wave F - the golden corpus can
+#                           only be re-recorded while the .NET API still boots.
+#
+#   e2e                     Playwright suite; kept, adapted to comp P in F2
+#   tools/golden            capture and replay harness - the conversion's only oracle
+#   tools/boundaries        architecture test over the layer-boundary lint
+#   tools/arch              architecture tests lint cannot express
 #   SPEC/mockups/_build/tw  Tailwind CLI that compiles CSS inlined into the comps
 #
-# apps/* and packages/* are listed so a future workspace member is picked up without
-# editing this file. Both directories are currently empty of package.json files, so
-# pnpm skips them.
+# apps/* and packages/* are globbed so a new workspace member is picked up without
+# editing this file.
 packages:
   - 'e2e'
   - 'tools/golden'
+  - 'tools/boundaries'
+  - 'tools/arch'
   - 'SPEC/mockups/_build/tw'
   - 'apps/*'
   - 'packages/*'
 
-# pnpm 12 refuses to run a dependency's install scripts unless it is named here.
-# Both of these are Tailwind's own native components, pulled in by @tailwindcss/cli
-# in SPEC/mockups/_build/tw: oxide is the Rust engine Tailwind cannot run without,
-# and parcel/watcher backs its --watch mode. Neither is optional for that toolchain.
+# pnpm 12 refuses to run a dependency's install scripts unless it is named here, and
+# every one of these fetches a native binary its tool cannot run without.
+# oxide and parcel/watcher are Tailwind's, pulled in by @tailwindcss/cli in
+# SPEC/mockups/_build/tw: oxide is the Rust engine, parcel/watcher backs --watch.
 allowBuilds:
   '@parcel/watcher': true
   '@tailwindcss/oxide': true
+  # Vitest's bundler. Its postinstall fetches the platform-native binary; without it
+  # every package's `test` script fails before running a single test.
+  esbuild: true
+  # Prisma's postinstall downloads the query and schema engines and generates the client.
+  # Without it every database call fails at import time, not at query time.
+  '@prisma/client': true
+  '@prisma/engines': true
+  prisma: true
 
 # pnpm 12 holds back very recently published versions by default as a supply-chain
 # measure. Playwright 1.63.0 is pinned deliberately, so it is excluded from that hold.

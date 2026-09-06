@@ -1,0 +1,495 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model EFMigrationsHistory {
+  MigrationId    String @id(map: "PK___EFMigrationsHistory") @db.VarChar(150)
+  ProductVersion String @db.VarChar(32)
+
+  @@map("__EFMigrationsHistory")
+}
+
+model ai_prompt_versions {
+  id                           String   @id(map: "PK_ai_prompt_versions") @db.Uuid
+  version                      Int      @unique(map: "ux_ai_prompt_versions_version")
+  body                         String   @db.VarChar(20000)
+  out_of_scope_redirect        String   @db.VarChar(500)
+  conversation_closed_redirect String   @db.VarChar(500)
+  is_active                    Boolean
+  created_at_utc               DateTime @db.Timestamptz(6)
+  created_by_user_id           String?  @db.Uuid
+}
+
+model ai_usage_records {
+  id                          String        @id(map: "PK_ai_usage_records") @db.Uuid
+  organization_id             String        @db.Uuid
+  actor_user_id               String?       @db.Uuid
+  on_behalf_of_user_id        String?       @db.Uuid
+  board_id                    String?       @db.Uuid
+  occurred_at_utc             DateTime      @db.Timestamptz(6)
+  model                       String        @db.VarChar(100)
+  input_tokens                Int
+  output_tokens               Int
+  cache_read_input_tokens     Int
+  cache_creation_input_tokens Int
+  input_rate_per_million      Decimal       @db.Decimal(12, 6)
+  output_rate_per_million     Decimal       @db.Decimal(12, 6)
+  key_source                  AiKeySource
+  outcome                     AiCallOutcome
+
+  @@index([occurred_at_utc], map: "ix_ai_usage_records_occurred_at_utc")
+  @@index([organization_id, occurred_at_utc], map: "ix_ai_usage_records_organization_id_occurred_at_utc")
+}
+
+model audit_events {
+  id                   String   @id(map: "PK_audit_events") @db.Uuid
+  organization_id      String?  @db.Uuid
+  actor_user_id        String?  @db.Uuid
+  event_type           String   @db.VarChar(100)
+  entity_type          String   @db.VarChar(100)
+  entity_id            String?  @db.Uuid
+  message              String   @db.VarChar(1000)
+  metadata_json        String?
+  occurred_at_utc      DateTime @db.Timestamptz(6)
+  on_behalf_of_user_id String?  @db.Uuid
+
+  @@index([occurred_at_utc], map: "ix_audit_events_occurred_at_utc")
+  @@index([organization_id], map: "ix_audit_events_organization_id")
+}
+
+model board_swimlanes {
+  id            String   @id(map: "PK_board_swimlanes") @db.Uuid
+  board_id      String   @db.Uuid
+  status_id     String   @db.Uuid
+  display_order Int
+  boards        boards   @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_board_swimlanes_boards_board_id")
+  statuses      statuses @relation(fields: [status_id], references: [id], onUpdate: NoAction, map: "FK_board_swimlanes_statuses_status_id")
+
+  @@unique([board_id, status_id], map: "ux_board_swimlanes_board_id_status_id")
+  @@index([status_id], map: "IX_board_swimlanes_status_id")
+}
+
+model boards {
+  id                       String            @id(map: "PK_boards") @db.Uuid
+  organization_id          String            @db.Uuid
+  name                     String            @db.VarChar(150)
+  allow_user_status_update Boolean
+  created_at_utc           DateTime          @db.Timestamptz(6)
+  updated_at_utc           DateTime          @db.Timestamptz(6)
+  created_by_user_id       String?           @db.Uuid
+  updated_by_user_id       String?           @db.Uuid
+  board_swimlanes          board_swimlanes[]
+  organizations            organizations     @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_boards_organizations_organization_id")
+
+  @@index([organization_id], map: "ix_boards_organization_id")
+}
+
+model business_impacts {
+  id                 String        @id(map: "PK_business_impacts") @db.Uuid
+  organization_id    String        @db.Uuid
+  name               String        @db.VarChar(100)
+  color              String        @db.VarChar(20)
+  sort_order         Int
+  is_deleted         Boolean
+  created_at_utc     DateTime      @db.Timestamptz(6)
+  updated_at_utc     DateTime      @db.Timestamptz(6)
+  created_by_user_id String?       @db.Uuid
+  updated_by_user_id String?       @db.Uuid
+  organizations      organizations @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_business_impacts_organizations_organization_id")
+  ideas              ideas[]
+
+  @@index([organization_id, sort_order], map: "ix_business_impacts_organization_id_sort_order")
+}
+
+model comment_mentions {
+  id                String   @id(map: "PK_comment_mentions") @db.Uuid
+  comment_id        String   @db.Uuid
+  mentioned_user_id String   @db.Uuid
+  comments          comments @relation(fields: [comment_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_comment_mentions_comments_comment_id")
+  users             users    @relation(fields: [mentioned_user_id], references: [id], onUpdate: NoAction, map: "FK_comment_mentions_users_mentioned_user_id")
+
+  @@unique([comment_id, mentioned_user_id], map: "ux_comment_mentions_comment_id_mentioned_user_id")
+  @@index([mentioned_user_id], map: "IX_comment_mentions_mentioned_user_id")
+}
+
+model comments {
+  id                 String             @id(map: "PK_comments") @db.Uuid
+  idea_id            String             @db.Uuid
+  author_user_id     String             @db.Uuid
+  body               String             @db.VarChar(2000)
+  created_at_utc     DateTime           @db.Timestamptz(6)
+  updated_at_utc     DateTime           @db.Timestamptz(6)
+  created_by_user_id String?            @db.Uuid
+  updated_by_user_id String?            @db.Uuid
+  comment_mentions   comment_mentions[]
+  ideas              ideas              @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_comments_ideas_idea_id")
+
+  @@index([idea_id, created_at_utc], map: "ix_comments_idea_id_created_at_utc")
+}
+
+model field_definition_options {
+  id                  String            @id(map: "PK_field_definition_options") @db.Uuid
+  field_definition_id String            @db.Uuid
+  label               String            @db.VarChar(200)
+  display_order       Int
+  field_definitions   field_definitions @relation(fields: [field_definition_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_field_definition_options_field_definitions_field_definition~")
+
+  @@index([field_definition_id, display_order], map: "ix_field_definition_options_field_definition_id_display_order")
+}
+
+model field_definitions {
+  id                       String                     @id(map: "PK_field_definitions") @db.Uuid
+  organization_id          String                     @db.Uuid
+  name                     String                     @db.VarChar(100)
+  normalized_name          String                     @db.VarChar(100)
+  description              String?                    @db.VarChar(500)
+  field_type               FieldType
+  is_required              Boolean
+  display_order            Int
+  is_deleted               Boolean
+  deleted_at_utc           DateTime?                  @db.Timestamptz(6)
+  deleted_by_user_id       String?                    @db.Uuid
+  created_at_utc           DateTime                   @db.Timestamptz(6)
+  updated_at_utc           DateTime                   @db.Timestamptz(6)
+  created_by_user_id       String?                    @db.Uuid
+  updated_by_user_id       String?                    @db.Uuid
+  field_definition_options field_definition_options[]
+  organizations            organizations              @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_field_definitions_organizations_organization_id")
+  idea_field_values        idea_field_values[]
+  idea_type_fields         idea_type_fields[]
+
+  @@index([organization_id, display_order], map: "ix_field_definitions_organization_id_display_order")
+}
+
+model idea_assignees {
+  id      String @id(map: "PK_idea_assignees") @db.Uuid
+  idea_id String @db.Uuid
+  user_id String @db.Uuid
+  ideas   ideas  @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_assignees_ideas_idea_id")
+  users   users  @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "FK_idea_assignees_users_user_id")
+
+  @@unique([idea_id, user_id], map: "ux_idea_assignees_idea_id_user_id")
+  @@index([user_id], map: "IX_idea_assignees_user_id")
+}
+
+model idea_field_values {
+  id                  String            @id(map: "PK_idea_field_values") @db.Uuid
+  idea_id             String            @db.Uuid
+  field_definition_id String            @db.Uuid
+  value               String?           @db.VarChar(4000)
+  created_at_utc      DateTime          @db.Timestamptz(6)
+  updated_at_utc      DateTime          @db.Timestamptz(6)
+  created_by_user_id  String?           @db.Uuid
+  updated_by_user_id  String?           @db.Uuid
+  field_definitions   field_definitions @relation(fields: [field_definition_id], references: [id], onUpdate: NoAction, map: "FK_idea_field_values_field_definitions_field_definition_id")
+  ideas               ideas             @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_field_values_ideas_idea_id")
+
+  @@unique([idea_id, field_definition_id], map: "ux_idea_field_values_idea_id_field_definition_id")
+  @@index([field_definition_id], map: "ix_idea_field_values_field_definition_id")
+}
+
+model idea_mentions {
+  id                String @id(map: "PK_idea_mentions") @db.Uuid
+  idea_id           String @db.Uuid
+  mentioned_user_id String @db.Uuid
+  ideas             ideas  @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_mentions_ideas_idea_id")
+  users             users  @relation(fields: [mentioned_user_id], references: [id], onUpdate: NoAction, map: "FK_idea_mentions_users_mentioned_user_id")
+
+  @@unique([idea_id, mentioned_user_id], map: "ux_idea_mentions_idea_id_mentioned_user_id")
+  @@index([mentioned_user_id], map: "IX_idea_mentions_mentioned_user_id")
+}
+
+model idea_tags {
+  id      String @id(map: "PK_idea_tags") @db.Uuid
+  idea_id String @db.Uuid
+  tag_id  String @db.Uuid
+  ideas   ideas  @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_tags_ideas_idea_id")
+  tags    tags   @relation(fields: [tag_id], references: [id], onUpdate: NoAction, map: "FK_idea_tags_tags_tag_id")
+
+  @@unique([idea_id, tag_id], map: "ux_idea_tags_idea_id_tag_id")
+  @@index([tag_id], map: "IX_idea_tags_tag_id")
+}
+
+model idea_type_fields {
+  id                  String            @id(map: "PK_idea_type_fields") @db.Uuid
+  idea_type_id        String            @db.Uuid
+  field_definition_id String            @db.Uuid
+  display_order       Int
+  is_required         Boolean
+  field_definitions   field_definitions @relation(fields: [field_definition_id], references: [id], onUpdate: NoAction, map: "FK_idea_type_fields_field_definitions_field_definition_id")
+  idea_types          idea_types        @relation(fields: [idea_type_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_type_fields_idea_types_idea_type_id")
+
+  @@unique([idea_type_id, field_definition_id], map: "ux_idea_type_fields_idea_type_id_field_definition_id")
+  @@index([field_definition_id], map: "IX_idea_type_fields_field_definition_id")
+}
+
+model idea_types {
+  id                 String             @id(map: "PK_idea_types") @db.Uuid
+  organization_id    String             @db.Uuid
+  name               String             @db.VarChar(100)
+  sort_order         Int
+  is_deleted         Boolean
+  color_hex          String?            @db.VarChar(7)
+  icon               String?            @db.VarChar(64)
+  field_mode         IdeaTypeFieldMode  @default(AllActiveFields)
+  created_at_utc     DateTime           @db.Timestamptz(6)
+  updated_at_utc     DateTime           @db.Timestamptz(6)
+  created_by_user_id String?            @db.Uuid
+  updated_by_user_id String?            @db.Uuid
+  idea_type_fields   idea_type_fields[]
+  organizations      organizations      @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_idea_types_organizations_organization_id")
+  ideas              ideas[]
+
+  @@index([organization_id, sort_order], map: "ix_idea_types_organization_id_sort_order")
+}
+
+model idea_upvotes {
+  id             String   @id(map: "PK_idea_upvotes") @db.Uuid
+  idea_id        String   @db.Uuid
+  user_id        String   @db.Uuid
+  created_at_utc DateTime @db.Timestamptz(6)
+  ideas          ideas    @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_upvotes_ideas_idea_id")
+  users          users    @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "FK_idea_upvotes_users_user_id")
+
+  @@unique([idea_id, user_id], map: "ux_idea_upvotes_idea_id_user_id")
+  @@index([user_id], map: "IX_idea_upvotes_user_id")
+}
+
+model ideas {
+  id                 String              @id(map: "PK_ideas") @db.Uuid
+  organization_id    String              @db.Uuid
+  board_id           String              @db.Uuid
+  status_id          String              @db.Uuid
+  title              String              @db.VarChar(150)
+  description        String              @db.VarChar(4000)
+  priority           Priority
+  idea_type_id       String              @db.Uuid
+  business_impact_id String              @db.Uuid
+  due_date           DateTime?           @db.Date
+  author_user_id     String              @db.Uuid
+  is_deleted         Boolean
+  created_at_utc     DateTime            @db.Timestamptz(6)
+  updated_at_utc     DateTime            @db.Timestamptz(6)
+  created_by_user_id String?             @db.Uuid
+  updated_by_user_id String?             @db.Uuid
+  comments           comments[]
+  idea_assignees     idea_assignees[]
+  idea_field_values  idea_field_values[]
+  idea_mentions      idea_mentions[]
+  idea_tags          idea_tags[]
+  idea_upvotes       idea_upvotes[]
+  business_impacts   business_impacts    @relation(fields: [business_impact_id], references: [id], onUpdate: NoAction, map: "FK_ideas_business_impacts_business_impact_id")
+  idea_types         idea_types          @relation(fields: [idea_type_id], references: [id], onUpdate: NoAction, map: "FK_ideas_idea_types_idea_type_id")
+  organizations      organizations       @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_ideas_organizations_organization_id")
+
+  @@index([business_impact_id], map: "IX_ideas_business_impact_id")
+  @@index([idea_type_id], map: "IX_ideas_idea_type_id")
+  @@index([board_id, is_deleted], map: "ix_ideas_board_id_is_deleted")
+  @@index([organization_id, is_deleted], map: "ix_ideas_organization_id_is_deleted")
+}
+
+model impersonation_sessions {
+  id                                                 String                  @id(map: "PK_impersonation_sessions") @db.Uuid
+  real_user_id                                       String                  @db.Uuid
+  target_user_id                                     String                  @db.Uuid
+  started_at_utc                                     DateTime                @db.Timestamptz(6)
+  last_seen_at_utc                                   DateTime                @db.Timestamptz(6)
+  absolute_expires_at_utc                            DateTime                @db.Timestamptz(6)
+  ended_at_utc                                       DateTime?               @db.Timestamptz(6)
+  end_reason                                         ImpersonationEndReason?
+  users_impersonation_sessions_real_user_idTousers   users                   @relation("impersonation_sessions_real_user_idTousers", fields: [real_user_id], references: [id], onUpdate: NoAction, map: "FK_impersonation_sessions_users_real_user_id")
+  users_impersonation_sessions_target_user_idTousers users                   @relation("impersonation_sessions_target_user_idTousers", fields: [target_user_id], references: [id], onUpdate: NoAction, map: "FK_impersonation_sessions_users_target_user_id")
+
+  @@index([target_user_id], map: "IX_impersonation_sessions_target_user_id")
+  @@index([real_user_id, ended_at_utc], map: "ix_impersonation_sessions_real_user_id_ended_at_utc")
+}
+
+model notification_events {
+  id                String                @id(map: "PK_notification_events") @db.Uuid
+  event_type        NotificationEventType
+  organization_id   String                @db.Uuid
+  board_id          String                @db.Uuid
+  idea_id           String                @db.Uuid
+  idea_title        String                @db.VarChar(150)
+  actor_user_id     String                @db.Uuid
+  recipient_user_id String                @db.Uuid
+  link              String                @db.VarChar(200)
+  occurred_at_utc   DateTime              @db.Timestamptz(6)
+
+  @@index([idea_id], map: "ix_notification_events_idea_id")
+  @@index([occurred_at_utc], map: "ix_notification_events_occurred_at_utc")
+  @@index([recipient_user_id], map: "ix_notification_events_recipient_user_id")
+}
+
+model organizations {
+  id                         String              @id(map: "PK_organizations") @db.Uuid
+  title                      String              @db.VarChar(200)
+  description                String              @db.VarChar(1000)
+  invite_code                String              @unique(map: "ux_organizations_invite_code") @db.VarChar(50)
+  is_archived                Boolean
+  logo_url                   String?             @db.VarChar(500)
+  logo_thumbnail_url         String?
+  logo_height_px             Int?
+  address                    String?             @db.VarChar(200)
+  city                       String?             @db.VarChar(100)
+  state                      String?             @db.VarChar(50)
+  zip                        String?             @db.VarChar(20)
+  phone                      String?             @db.VarChar(25)
+  primary_contact_first_name String?             @db.VarChar(100)
+  primary_contact_last_name  String?             @db.VarChar(100)
+  created_at_utc             DateTime            @db.Timestamptz(6)
+  updated_at_utc             DateTime            @db.Timestamptz(6)
+  created_by_user_id         String?             @db.Uuid
+  updated_by_user_id         String?             @db.Uuid
+  ai_scope_statement         String?             @db.VarChar(500)
+  boards                     boards[]
+  business_impacts           business_impacts[]
+  field_definitions          field_definitions[]
+  idea_types                 idea_types[]
+  ideas                      ideas[]
+  statuses                   statuses[]
+  tags                       tags[]
+  users                      users[]
+}
+
+model statuses {
+  id                 String            @id(map: "PK_statuses") @db.Uuid
+  organization_id    String            @db.Uuid
+  name               String            @db.VarChar(100)
+  color              String            @db.VarChar(20)
+  sort_order         Int
+  is_deleted         Boolean
+  created_at_utc     DateTime          @db.Timestamptz(6)
+  updated_at_utc     DateTime          @db.Timestamptz(6)
+  created_by_user_id String?           @db.Uuid
+  updated_by_user_id String?           @db.Uuid
+  board_swimlanes    board_swimlanes[]
+  organizations      organizations     @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_statuses_organizations_organization_id")
+
+  @@index([organization_id, sort_order], map: "ix_statuses_organization_id_sort_order")
+}
+
+model tags {
+  id                 String        @id(map: "PK_tags") @db.Uuid
+  organization_id    String        @db.Uuid
+  name               String        @db.VarChar(100)
+  normalized_name    String        @db.VarChar(100)
+  created_at_utc     DateTime      @db.Timestamptz(6)
+  updated_at_utc     DateTime      @db.Timestamptz(6)
+  created_by_user_id String?       @db.Uuid
+  updated_by_user_id String?       @db.Uuid
+  idea_tags          idea_tags[]
+  organizations      organizations @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_tags_organizations_organization_id")
+
+  @@unique([organization_id, normalized_name], map: "ux_tags_organization_id_normalized_name")
+}
+
+model users {
+  id                                                                  String                   @id(map: "PK_users") @db.Uuid
+  organization_id                                                     String?                  @db.Uuid
+  first_name                                                          String                   @db.VarChar(100)
+  last_name                                                           String                   @db.VarChar(100)
+  email                                                               String                   @db.VarChar(320)
+  normalized_email                                                    String                   @unique(map: "ux_users_normalized_email") @db.VarChar(320)
+  password_hash                                                       String
+  role                                                                Role
+  status                                                              UserStatus
+  must_change_password                                                Boolean
+  failed_login_count                                                  Int
+  lockout_window_start_utc                                            DateTime?                @db.Timestamptz(6)
+  locked_until_utc                                                    DateTime?                @db.Timestamptz(6)
+  temporary_password_expires_at_utc                                   DateTime?                @db.Timestamptz(6)
+  portrait_png                                                        Bytes?
+  security_stamp                                                      String                   @db.VarChar(64)
+  created_at_utc                                                      DateTime                 @db.Timestamptz(6)
+  updated_at_utc                                                      DateTime                 @db.Timestamptz(6)
+  created_by_user_id                                                  String?                  @db.Uuid
+  updated_by_user_id                                                  String?                  @db.Uuid
+  comment_mentions                                                    comment_mentions[]
+  idea_assignees                                                      idea_assignees[]
+  idea_mentions                                                       idea_mentions[]
+  idea_upvotes                                                        idea_upvotes[]
+  impersonation_sessions_impersonation_sessions_real_user_idTousers   impersonation_sessions[] @relation("impersonation_sessions_real_user_idTousers")
+  impersonation_sessions_impersonation_sessions_target_user_idTousers impersonation_sessions[] @relation("impersonation_sessions_target_user_idTousers")
+  organizations                                                       organizations?           @relation(fields: [organization_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_users_organizations_organization_id")
+
+  @@index([organization_id], map: "ix_users_organization_id")
+}
+
+// ---------------------------------------------------------------------------
+// Enums promoted from the .NET domain (ticket 06, decided 2026-09-04).
+//
+// Seven of these were stored as varchar holding the C# member name verbatim, so they
+// port 1:1. Two - FieldType and IdeaTypeFieldMode - were stored as int, and their
+// meaning lived only in C#: nothing in the schema recorded it. The integer each member
+// had is written beside it below, because F3's transform needs exactly that mapping and
+// there is no other surviving record of it once the .NET solution is deleted.
+// ---------------------------------------------------------------------------
+
+enum AiCallOutcome {
+  Succeeded // 0
+  Refused // 1
+  Failed // 2
+}
+
+enum AiKeySource {
+  Platform // 0
+  Organization // 1
+}
+
+/// Stored as int. F3 maps 1..7 to these in declaration order - note it starts at 1, not 0.
+enum FieldType {
+  Text // 1
+  Number // 2
+  Date // 3
+  Boolean // 4
+  Dropdown // 5
+  MultiSelect // 6
+  Url // 7
+}
+
+/// Stored as int.
+enum IdeaTypeFieldMode {
+  AllActiveFields // 0
+  Curated // 1
+}
+
+enum ImpersonationEndReason {
+  ExitedByUser // 0
+  IdleTimeout // 1
+  AbsoluteTimeout // 2
+  TargetNoLongerValid // 3
+  RealUserNoLongerAuthorized // 4
+}
+
+enum NotificationEventType {
+  IdeaMention // 0
+  CommentMention // 1
+  CommentAdded // 2
+  IdeaStatusChanged // 3
+}
+
+enum Priority {
+  Low // 0
+  Medium // 1
+  High // 2
+  Critical // 3
+}
+
+enum Role {
+  SiteAdmin // 0
+  OrgAdmin // 1
+  User // 2
+  ReadOnly // 3
+}
+
+enum UserStatus {
+  Active // 0
+  Inactive // 1
+}
