@@ -14,6 +14,7 @@ import {
   removeUserPortrait,
   setUserPortrait,
   type User,
+  UserDomainError,
   updateUserName,
   validatePassword,
 } from '@collega/domain/users'
@@ -27,6 +28,7 @@ import {
   LockedOutError,
   NotFoundError,
   UnauthorizedError,
+  type UnitOfWork,
   ValidationError,
 } from '../common/index.js'
 import type { OrganizationRepository } from '../organizations/ports.js'
@@ -41,10 +43,30 @@ import type {
   TemporaryPasswordResult,
   UpdateProfileCommand,
 } from './models.js'
-import type { AccessTokenIssuer, ImageProcessor, PasswordHasher, UnitOfWork } from './ports.js'
+import type { AccessTokenIssuer, ImageProcessor, PasswordHasher } from './ports.js'
 
 // <=25px on either side, per the portrait-upload requirement.
 const PORTRAIT_MAX_DIMENSION = 25
+const VALIDATION_TITLE = 'One or more fields are invalid.'
+
+/**
+ * Wraps a domain transition so a `UserDomainError` (a plain-Error invariant violation - packages/
+ * domain imports nothing, so it cannot throw the kernel's `ValidationError` itself) surfaces as a
+ * proper field-level 400, mirroring how .NET's request-DTO validation attributes turned a blank
+ * First/Last Name into the same shape before the domain was ever reached (ideas/idea.service.ts's
+ * `runDomain` is the reference for this pattern; users/user-service.ts carries the same helper for
+ * the same reason - each file that calls into a User domain transition needs its own).
+ */
+function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T, ...args: Args): T {
+  try {
+    return fn(...args)
+  } catch (error) {
+    if (error instanceof UserDomainError) {
+      throw new ValidationError(VALIDATION_TITLE, { [error.field]: [error.message] })
+    }
+    throw error
+  }
+}
 
 /**
  * Auth slice use cases (SPEC/20-feature-auth.md). Authorization for `issueTemporaryPassword` and
@@ -58,7 +80,7 @@ export class AuthService {
     private readonly unitOfWork: UnitOfWork,
     private readonly passwordHasher: PasswordHasher,
     private readonly tokenIssuer: AccessTokenIssuer,
-    private readonly auditEventWriter: AuditEventWriter,
+    private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly imageProcessor: ImageProcessor,
     private readonly clock: Clock,
@@ -190,7 +212,14 @@ export class AuthService {
 
     // Names are validated for shape at the API boundary; the domain function trims and enforces
     // non-empty.
-    const updated = updateUserName(user, command.firstName, command.lastName, now, user.id)
+    const updated = runDomain(
+      updateUserName,
+      user,
+      command.firstName,
+      command.lastName,
+      now,
+      user.id,
+    )
     await this.users.update(updated)
     await this.unitOfWork.saveChanges()
 
@@ -215,7 +244,7 @@ export class AuthService {
     const user = await this.requireUser(userId)
 
     if (imageBytes.length === 0) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError(VALIDATION_TITLE, {
         portrait: ['Choose an image file to upload.'],
       })
     }
@@ -225,7 +254,7 @@ export class AuthService {
     // MIME type - comes back null and is rejected here, never persisted.
     const thumbnail = this.imageProcessor.tryCreatePngThumbnail(imageBytes, PORTRAIT_MAX_DIMENSION)
     if (!thumbnail) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError(VALIDATION_TITLE, {
         portrait: ["That file isn't a supported image. Upload a GIF, JPEG, or PNG."],
       })
     }
@@ -288,7 +317,7 @@ export class AuthService {
 
     const errors = validatePassword(command.newPassword)
     if (errors.length > 0) {
-      throw new ValidationError('Validation failed.', { newPassword: [...errors] })
+      throw new ValidationError(VALIDATION_TITLE, { newPassword: [...errors] })
     }
 
     const newHash = this.passwordHasher.hash(command.newPassword)
@@ -312,7 +341,7 @@ export class AuthService {
     const inviteCode = normalizeInviteCode(command.inviteCode)
 
     if (inviteCode.length === 0) {
-      throw new ValidationError('Validation failed.', { inviteCode: ['Invite code is required.'] })
+      throw new ValidationError(VALIDATION_TITLE, { inviteCode: ['Invite code is required.'] })
     }
 
     const organization = await this.organizations.getByInviteCode(inviteCode)
@@ -320,7 +349,7 @@ export class AuthService {
     // Archived organizations' invite codes are invalid (org-and-users requirement #9); surfaced
     // identically to "unknown code" so the API doesn't leak archive state to an anonymous caller.
     if (!organization || organization.isArchived) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError(VALIDATION_TITLE, {
         inviteCode: ['Invite code is invalid. Please provide a valid organization invite code.'],
       })
     }
@@ -333,14 +362,15 @@ export class AuthService {
 
     const passwordErrors = validatePassword(command.password)
     if (passwordErrors.length > 0) {
-      throw new ValidationError('Validation failed.', { password: [...passwordErrors] })
+      throw new ValidationError(VALIDATION_TITLE, { password: [...passwordErrors] })
     }
 
     const passwordHash = this.passwordHasher.hash(command.password)
 
     // Self-registered users always get role User / status Active (auth requirement #17,
     // org-and-users requirement #4) and are not forced to change their own chosen password.
-    const user = createOrganizationUser(
+    const user = runDomain(
+      createOrganizationUser,
       {
         id: randomUUID(),
         organizationId: organization.id,
@@ -448,7 +478,7 @@ export class AuthService {
   ): Promise<void> {
     // Rule 14: while acting as someone, the real administrator is the actor and the target moves
     // to onBehalfOfUserId - an audit row must never read as though the target did it.
-    await this.auditEventWriter.write({
+    await this.auditEvents.write({
       eventType,
       entityType: 'User',
       message,

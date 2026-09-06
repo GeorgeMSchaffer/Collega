@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { type Auditable, markCreated, markUpdated } from '../common/index.js'
 import { Role, UserStatus } from '../enums/index.js'
 import { normalizeEmail } from './email.js'
+import { UserDomainError } from './errors.js'
 
 // Organization-scoped account (SPEC/20-feature-organizations-and-users.md "User Fields",
 // SPEC/20-feature-auth.md). `organizationId` is null only for the global Site Admin (auth
@@ -57,9 +58,9 @@ export type User = Auditable & {
   readonly securityStamp: string
 }
 
-function requireNonBlank(value: string, fieldName: string): void {
+function requireNonBlank(value: string, field: string, message: string): void {
   if (value.trim().length === 0) {
-    throw new Error(`${fieldName} is required.`)
+    throw new UserDomainError(field, message)
   }
 }
 
@@ -84,10 +85,10 @@ function createInternal(
   nowUtc: Date,
   actorUserId: string | null,
 ): User {
-  requireNonBlank(input.firstName, 'First name')
-  requireNonBlank(input.lastName, 'Last name')
-  requireNonBlank(input.email, 'Email')
-  requireNonBlank(input.passwordHash, 'Password hash')
+  requireNonBlank(input.firstName, 'firstName', 'First Name is required.')
+  requireNonBlank(input.lastName, 'lastName', 'Last Name is required.')
+  requireNonBlank(input.email, 'email', 'Email is required.')
+  requireNonBlank(input.passwordHash, 'passwordHash', 'Password Hash is required.')
 
   const trimmedEmail = input.email.trim()
 
@@ -191,8 +192,8 @@ export function updateUserName(
   nowUtc: Date,
   actorUserId: string | null,
 ): User {
-  requireNonBlank(firstName, 'First name')
-  requireNonBlank(lastName, 'Last name')
+  requireNonBlank(firstName, 'firstName', 'First Name is required.')
+  requireNonBlank(lastName, 'lastName', 'Last Name is required.')
 
   return markUpdated(
     { ...user, firstName: firstName.trim(), lastName: lastName.trim() },
@@ -245,9 +246,9 @@ export function administerUser(
   nowUtc: Date,
   actorUserId: string | null,
 ): User {
-  requireNonBlank(input.firstName, 'First name')
-  requireNonBlank(input.lastName, 'Last name')
-  requireNonBlank(input.email, 'Email')
+  requireNonBlank(input.firstName, 'firstName', 'First Name is required.')
+  requireNonBlank(input.lastName, 'lastName', 'Last Name is required.')
+  requireNonBlank(input.email, 'email', 'Email is required.')
 
   if (user.organizationId !== null && input.role === Role.SiteAdmin) {
     throw new Error('Organization users cannot be assigned the Site Admin role.')
@@ -341,7 +342,7 @@ export function registerSuccessfulLogin(user: User, nowUtc: Date): User {
 /** Voluntary or forced (first-login) password change. Clears `mustChangePassword` per auth
  * requirement #31. */
 export function changeUserPassword(user: User, newPasswordHash: string, nowUtc: Date): User {
-  requireNonBlank(newPasswordHash, 'Password hash')
+  requireNonBlank(newPasswordHash, 'passwordHash', 'Password Hash is required.')
 
   return markUpdated(
     {
@@ -367,7 +368,7 @@ export function issueTemporaryPassword(
   nowUtc: Date,
   actorUserId: string,
 ): User {
-  requireNonBlank(temporaryPasswordHash, 'Password hash')
+  requireNonBlank(temporaryPasswordHash, 'passwordHash', 'Password Hash is required.')
 
   return markUpdated(
     {

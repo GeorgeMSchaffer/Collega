@@ -7,6 +7,7 @@ import {
   normalizeInviteCode,
   ORGANIZATION_LOGO_THUMBNAIL_MAX_LENGTH,
   type Organization,
+  OrganizationDomainError,
   regenerateInviteCode,
   setOrganizationLogo,
   updateOrganization,
@@ -21,6 +22,7 @@ import {
   normalizePageRequest,
   type PageRequest,
   UnauthorizedError,
+  type UnitOfWork,
   ValidationError,
 } from '../common/index.js'
 import type {
@@ -39,10 +41,28 @@ import type {
   InviteCodeGenerator,
   OrganizationBootstrapPort,
   OrganizationRepository,
-  UnitOfWork,
 } from './ports.js'
 
 const INVITE_CODE_GENERATION_ATTEMPTS = 10
+const VALIDATION_TITLE = 'One or more fields are invalid.'
+
+/**
+ * Wraps a domain transition so an `OrganizationDomainError` (a plain-Error invariant violation -
+ * packages/domain imports nothing, so it cannot throw the kernel's `ValidationError` itself)
+ * surfaces as a proper field-level 400, mirroring how .NET's request-DTO validation attributes
+ * turned a blank Title/Description into the same shape before the domain was ever reached
+ * (ideas/idea.service.ts's `runDomain` is the reference for this pattern).
+ */
+function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T, ...args: Args): T {
+  try {
+    return fn(...args)
+  } catch (error) {
+    if (error instanceof OrganizationDomainError) {
+      throw new ValidationError(VALIDATION_TITLE, { [error.field]: [error.message] })
+    }
+    throw error
+  }
+}
 
 // `exactOptionalPropertyTypes` refuses `{ page: number | undefined }` for an optional `page?:
 // number` - the key must be absent, not present-with-undefined - so a query's nullable fields
@@ -69,7 +89,7 @@ export class OrganizationService {
     private readonly bootstrap: OrganizationBootstrapPort,
     private readonly inviteCodeGenerator: InviteCodeGenerator,
     private readonly unitOfWork: UnitOfWork,
-    private readonly auditEventWriter: AuditEventWriter,
+    private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
   ) {}
@@ -102,7 +122,8 @@ export class OrganizationService {
     const actorUserId = this.currentUser.userId
     const inviteCode = await this.generateUniqueInviteCode()
 
-    const organization = createOrganization(
+    const organization = runDomain(
+      createOrganization,
       {
         id: randomUUID(),
         title: command.title,
@@ -156,7 +177,8 @@ export class OrganizationService {
     const organization = await this.loadForAdministration(organizationId)
     const now = this.clock.now()
 
-    const updated = updateOrganization(
+    const updated = runDomain(
+      updateOrganization,
       organization,
       {
         title: command.title,
@@ -214,13 +236,13 @@ export class OrganizationService {
       dataUri.trim().length === 0 ||
       !dataUri.toLowerCase().startsWith('data:image/')
     ) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError(VALIDATION_TITLE, {
         thumbnailDataUri: ['Logo must be an image.'],
       })
     }
 
     if (dataUri.length > ORGANIZATION_LOGO_THUMBNAIL_MAX_LENGTH) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError(VALIDATION_TITLE, {
         thumbnailDataUri: ['Logo image is too large.'],
       })
     }
@@ -353,7 +375,7 @@ export class OrganizationService {
   ): Promise<void> {
     // Rule 14: while acting as someone, the real administrator is the actor and the target moves
     // to onBehalfOfUserId - an audit row must never read as though the target did it.
-    await this.auditEventWriter.write({
+    await this.auditEvents.write({
       eventType,
       entityType: 'Organization',
       message,

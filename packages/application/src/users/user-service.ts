@@ -6,8 +6,10 @@ import {
   generateTemporaryPassword,
   normalizeEmail,
   type User,
+  UserDomainError,
   validatePassword,
 } from '@collega/domain/users'
+import type { PasswordHasher } from '../auth/ports.js'
 import {
   ApplicationError,
   type AuditEventWriter,
@@ -21,6 +23,7 @@ import {
   normalizePageRequest,
   type PageRequest,
   UnauthorizedError,
+  type UnitOfWork,
   ValidationError,
 } from '../common/index.js'
 import type {
@@ -36,7 +39,27 @@ import type {
   UserListQuery,
   UserListResult,
 } from './models.js'
-import type { PasswordHasher, UnitOfWork, UserRepository } from './ports.js'
+import type { UserRepository } from './ports.js'
+
+const VALIDATION_TITLE = 'One or more fields are invalid.'
+
+/**
+ * Wraps a domain transition so a `UserDomainError` (a plain-Error invariant violation - packages/
+ * domain imports nothing, so it cannot throw the kernel's `ValidationError` itself) surfaces as a
+ * proper field-level 400, mirroring how .NET's request-DTO validation attributes turned a blank
+ * First/Last Name into the same shape before the domain was ever reached (ideas/idea.service.ts's
+ * `runDomain` is the reference for this pattern).
+ */
+function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T, ...args: Args): T {
+  try {
+    return fn(...args)
+  } catch (error) {
+    if (error instanceof UserDomainError) {
+      throw new ValidationError(VALIDATION_TITLE, { [error.field]: [error.message] })
+    }
+    throw error
+  }
+}
 
 // `exactOptionalPropertyTypes` refuses `{ page: number | undefined }` for an optional `page?:
 // number` - the key must be absent, not present-with-undefined - so a query's nullable fields
@@ -62,7 +85,7 @@ export class UserService {
     private readonly users: UserRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly unitOfWork: UnitOfWork,
-    private readonly auditEventWriter: AuditEventWriter,
+    private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
   ) {}
@@ -125,7 +148,7 @@ export class UserService {
     const email = command.email ?? ''
     const normalizedEmail = normalizeEmail(email)
     if (normalizedEmail.length === 0) {
-      throw new ValidationError('Validation failed.', { email: ['Email is required.'] })
+      throw new ValidationError(VALIDATION_TITLE, { email: ['Email is required.'] })
     }
 
     if (await this.users.existsByNormalizedEmail(normalizedEmail)) {
@@ -134,14 +157,15 @@ export class UserService {
 
     const passwordErrors = validatePassword(command.initialPassword)
     if (passwordErrors.length > 0) {
-      throw new ValidationError('Validation failed.', { initialPassword: [...passwordErrors] })
+      throw new ValidationError(VALIDATION_TITLE, { initialPassword: [...passwordErrors] })
     }
 
     const passwordHash = this.passwordHasher.hash(command.initialPassword)
 
     // An admin-provided initial credential forces a change on first login (auth requirement
     // #31).
-    const user = createOrganizationUser(
+    const user = runDomain(
+      createOrganizationUser,
       {
         id: randomUUID(),
         organizationId,
@@ -256,14 +280,14 @@ export class UserService {
     const newRole = parseAssignableRole(command.role)
     const newStatus = parseStatus(command.status, null)
     if (newStatus === null) {
-      throw new ValidationError('Validation failed.', { status: [allowedStatusMessage()] })
+      throw new ValidationError(VALIDATION_TITLE, { status: [allowedStatusMessage()] })
     }
 
     // Email uniqueness is enforced only when the address actually changes (requirement #6).
     const newEmail = command.email ?? ''
     const newNormalizedEmail = normalizeEmail(newEmail)
     if (newNormalizedEmail.length === 0) {
-      throw new ValidationError('Validation failed.', { email: ['Email is required.'] })
+      throw new ValidationError(VALIDATION_TITLE, { email: ['Email is required.'] })
     }
 
     if (
@@ -278,7 +302,8 @@ export class UserService {
     const previousRole = user.role
     const previousStatus = user.status
 
-    const updated = administerUser(
+    const updated = runDomain(
+      administerUser,
       user,
       {
         firstName: command.firstName,
@@ -336,14 +361,14 @@ export class UserService {
     }
 
     if (losingAdmin) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError(VALIDATION_TITLE, {
         role: [
           'You cannot remove your own Org Admin role because you are the last Org Admin in this organization.',
         ],
       })
     }
 
-    throw new ValidationError('Validation failed.', {
+    throw new ValidationError(VALIDATION_TITLE, {
       status: [
         'You cannot deactivate yourself because you are the last Org Admin in this organization.',
       ],
@@ -438,7 +463,7 @@ export class UserService {
   ): Promise<void> {
     // Rule 14: while acting as someone, the real administrator is the actor and the target moves
     // to onBehalfOfUserId - an audit row must never read as though the target did it.
-    await this.auditEventWriter.write({
+    await this.auditEvents.write({
       eventType,
       entityType: 'User',
       message,
@@ -466,7 +491,7 @@ function parseAssignableRole(value: string | null | undefined): Role {
     return role
   }
 
-  throw new ValidationError('Validation failed.', {
+  throw new ValidationError(VALIDATION_TITLE, {
     role: [`Role must be one of: ${Role.OrgAdmin}, ${Role.User}, ${Role.ReadOnly}.`],
   })
 }
@@ -490,7 +515,7 @@ function parseStatus(
 
   const status = Object.values(UserStatus).find((s) => s.toLowerCase() === candidate.toLowerCase())
   if (status === undefined) {
-    throw new ValidationError('Validation failed.', { status: [allowedStatusMessage()] })
+    throw new ValidationError(VALIDATION_TITLE, { status: [allowedStatusMessage()] })
   }
   return status
 }

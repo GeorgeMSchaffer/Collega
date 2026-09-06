@@ -1,4 +1,5 @@
 import { type Auditable, markCreated, markUpdated } from '../common/index.js'
+import { OrganizationDomainError } from './errors.js'
 import { normalizeInviteCode } from './invite-code.js'
 
 // The top-level ownership boundary for all business data
@@ -84,9 +85,9 @@ function normalize(value: string | null | undefined): string | null {
   return value.trim()
 }
 
-function requireNonBlank(value: string, fieldName: string): void {
+function requireNonBlank(value: string, field: string, message: string): void {
   if (value.trim().length === 0) {
-    throw new Error(`${fieldName} is required.`)
+    throw new OrganizationDomainError(field, message)
   }
 }
 
@@ -121,9 +122,9 @@ export function createOrganization(
   nowUtc: Date,
   actorUserId: string | null,
 ): Organization {
-  requireNonBlank(input.title, 'Title')
-  requireNonBlank(input.description, 'Description')
-  requireNonBlank(input.inviteCode, 'Invite code')
+  requireNonBlank(input.title, 'title', 'Title is required.')
+  requireNonBlank(input.description, 'description', 'Description is required.')
+  requireNonBlank(input.inviteCode, 'inviteCode', 'Invite Code is required.')
 
   const profile = applyProfile(input.profile)
 
@@ -157,8 +158,8 @@ export function updateOrganization(
   nowUtc: Date,
   actorUserId: string | null,
 ): Organization {
-  requireNonBlank(input.title, 'Title')
-  requireNonBlank(input.description, 'Description')
+  requireNonBlank(input.title, 'title', 'Title is required.')
+  requireNonBlank(input.description, 'description', 'Description is required.')
 
   return markUpdated(
     {

@@ -68,9 +68,5 @@ export interface OrganizationBootstrapPort {
   ): Promise<OrganizationBootstrapResult>
 }
 
-// Clock and AuditEventWriter/AuditEventInput come from the shared kernel
-// (`@collega/application/common`) - not redeclared here. UnitOfWork stays local: the kernel
-// amendment didn't add one, and every Wave B partition needs its own until it does.
-export interface UnitOfWork {
-  saveChanges(): Promise<void>
-}
+// Clock, UnitOfWork, and AuditEventWriter/AuditEventInput come from the shared kernel
+// (packages/application/src/common) - not redeclared here.
