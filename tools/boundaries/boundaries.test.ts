@@ -48,6 +48,12 @@ const LAYERS = Object.keys(LAYER_DIR) as Layer[]
 
 // An interrupted run leaves probe dirs behind inside a layer, where they then show up as
 // lint errors and untracked files. Clear any before starting rather than only after.
+//
+// The probes must live inside the layer for biome.json's override globs to match, so they
+// are transiently visible to anything else reading that directory. turbo has no ordering
+// edge between this suite and @collega/domain:build, so every package tsconfig excludes
+// **/.boundary-*/** - otherwise a tsc file enumeration landing in that window would pick up
+// a probe and fail on an import it cannot resolve.
 for (const dir of Object.values(LAYER_DIR)) {
   const full = join(REPO_ROOT, dir)
   for (const entry of readdirSync(full, { withFileTypes: true })) {

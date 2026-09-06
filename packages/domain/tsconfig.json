@@ -8,6 +8,7 @@
     "test/**/*.ts"
   ],
   "exclude": [
-    "dist/**"
+    "dist/**",
+    "**/.boundary-*/**"
   ]
 }
