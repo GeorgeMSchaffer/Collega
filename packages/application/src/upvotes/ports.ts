@@ -23,22 +23,6 @@ export interface IdeaLookupPort {
   getOrganizationId(ideaId: string): Promise<string | null>
 }
 
-export interface Clock {
-  nowUtc(): Date
-}
-
-export type AuditEventInput = {
-  readonly eventType: string
-  readonly entityType: string
-  readonly message: string
-  readonly occurredAtUtc: Date
-  readonly organizationId: string | null
-  readonly actorUserId: string | null
-  readonly entityId: string | null
-  readonly metadataJson: string | null
-  readonly onBehalfOfUserId: string | null
-}
-
-export interface AuditEventWriter {
-  write(event: AuditEventInput): Promise<void>
-}
+// Clock and AuditEventWriter are NOT redeclared here - they live in the kernel
+// (@collega/application/common, S0.5) now that Ideas, Upvotes and two other partitions had
+// independently invented the same shapes. Import them from there.

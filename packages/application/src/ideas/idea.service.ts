@@ -1,12 +1,27 @@
 import { Priority, Role, UserStatus } from '@collega/domain/enums'
-import type { IdeaFieldValueInput } from '@collega/domain/ideas'
-import { Idea, IdeaDomainError, MAX_ASSIGNEES, MAX_TAGS } from '@collega/domain/ideas'
-import type { CurrentUserContext } from '../common/index.js'
+import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
+import {
+  changeIdeaStatus,
+  createIdea,
+  IdeaDomainError,
+  MAX_ASSIGNEES,
+  MAX_TAGS,
+  reassignIdeaType as reassignIdeaTypeOf,
+  replaceIdeaAssignees,
+  replaceIdeaFieldValues,
+  replaceIdeaMentions,
+  replaceIdeaTags,
+  softDeleteIdea,
+  updateIdeaContent,
+} from '@collega/domain/ideas'
+import type { AuditEventWriter, Clock, CurrentUserContext } from '../common/index.js'
 import {
   attributeAudit,
   ensureNotDirectSiteAdmin,
   ForbiddenError,
+  MAX_PAGE_SIZE,
   NotFoundError,
+  normalizePageRequest,
   UnauthorizedError,
   ValidationError,
 } from '../common/index.js'
@@ -33,16 +48,13 @@ import type {
 import {
   IDEA_CSV_CORE_COLUMNS,
   IdeaCsvColumns,
-  MAX_PAGE_SIZE,
-  normalizeIdeaPage,
   normalizeSortDirection,
+  toPageRequestInput,
 } from './models.js'
 import type {
-  AuditEventWriter,
   BoardContext,
   BoardsPort,
   BusinessImpactSummary,
-  Clock,
   CommentsPort,
   IdeaClassificationPort,
   IdeaFieldValuesPort,
@@ -106,11 +118,10 @@ export class IdeaService {
     }
     this.ensureOrganizationScope(board.organizationId)
 
-    const { page, pageSize } = normalizeIdeaPage(query.page, query.pageSize)
+    const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
     const ideasPage = await this.#deps.ideaRepository.listByBoard({
       boardId,
       page,
-      pageSize,
       search: trimOrNull(query.search),
       statusId: query.statusId,
       tag: trimOrNull(query.tag),
@@ -148,13 +159,12 @@ export class IdeaService {
     // it additionally matches ideas created on that (UTC) calendar day.
     const searchCreatedOnDate = search && isValidIsoDate(search) ? search : null
 
-    const { page, pageSize } = normalizeIdeaPage(query.page, query.pageSize)
+    const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
     const ideasPage = await this.#deps.ideaRepository.listByOrganization({
       organizationId,
       createdByUserId,
       assignedToUserId,
       page,
-      pageSize,
       search,
       sortBy: query.sortBy,
       sortDirection: normalizeSortDirection(query.sortDirection),
@@ -180,7 +190,7 @@ export class IdeaService {
     }
     this.ensureOrganizationScope(board.organizationId)
 
-    const now = this.#deps.clock.nowUtc()
+    const now = this.#deps.clock.now()
     const authorId = this.requireAuthenticatedUserId()
     const priority = parsePriority(command.priority)
     const dueDate = parseDueDate(command.dueDate)
@@ -218,7 +228,8 @@ export class IdeaService {
       submitted: command.fieldValues ?? [],
     })
 
-    const idea = createIdeaOrThrow({
+    let idea = createIdeaOrThrow({
+      id: crypto.randomUUID(),
       organizationId: board.organizationId,
       boardId,
       statusId,
@@ -239,7 +250,7 @@ export class IdeaService {
       board.organizationId,
       command.ideaTypeId,
     )
-    idea.replaceFieldValues(fieldValues, reconcileScope, now, authorId)
+    idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, authorId)
 
     await this.#deps.ideaRepository.add(idea)
 
@@ -282,13 +293,13 @@ export class IdeaService {
     ensureNotDirectSiteAdmin(this.#deps.currentUser)
     this.requireIdeaEditRole()
 
-    const idea = await this.#deps.ideaRepository.getById(ideaId, false)
+    let idea = await this.#deps.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
     this.ensureOrganizationScope(idea.organizationId)
 
-    const now = this.#deps.clock.nowUtc()
+    const now = this.#deps.clock.now()
     const actorId = this.requireAuthenticatedUserId()
     const priority = parsePriority(command.priority)
     const dueDate = parseDueDate(command.dueDate)
@@ -352,22 +363,24 @@ export class IdeaService {
       })
     }
 
-    runDomain(() =>
-      idea.updateContent(
-        command.title ?? '',
-        command.description ?? '',
+    idea = runDomain(
+      updateIdeaContent,
+      idea,
+      {
+        title: command.title ?? '',
+        description: command.description ?? '',
         priority,
-        command.businessImpactId,
+        businessImpactId: command.businessImpactId,
         dueDate,
-        now,
-        actorId,
-      ),
+      },
+      now,
+      actorId,
     )
-    runDomain(() => idea.replaceAssignees(assigneeIds, now, actorId))
-    runDomain(() => idea.replaceTags(tagIds, now, actorId))
-    idea.replaceMentions(mentionIds, now, actorId)
+    idea = runDomain(replaceIdeaAssignees, idea, assigneeIds, now, actorId)
+    idea = runDomain(replaceIdeaTags, idea, tagIds, now, actorId)
+    idea = replaceIdeaMentions(idea, mentionIds, now, actorId)
     if (reconcileFieldValues) {
-      idea.replaceFieldValues(fieldValues, reconcileScope, now, actorId)
+      idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, actorId)
     }
 
     await this.#deps.ideaRepository.update(idea)
@@ -395,7 +408,7 @@ export class IdeaService {
     this.requireAuthenticatedRole()
     ensureNotDirectSiteAdmin(this.#deps.currentUser)
 
-    const idea = await this.#deps.ideaRepository.getById(ideaId, false)
+    let idea = await this.#deps.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
@@ -416,11 +429,11 @@ export class IdeaService {
       return
     }
 
-    const now = this.#deps.clock.nowUtc()
+    const now = this.#deps.clock.now()
     const actorId = this.requireAuthenticatedUserId()
     const previousTypeId = idea.ideaTypeId
 
-    idea.reassignIdeaType(ideaTypeId, now, actorId)
+    idea = reassignIdeaTypeOf(idea, ideaTypeId, now, actorId)
     await this.#deps.ideaRepository.update(idea)
 
     await this.auditIdea(
@@ -438,7 +451,7 @@ export class IdeaService {
     ensureNotDirectSiteAdmin(this.#deps.currentUser)
     this.requireAuthenticatedRole()
 
-    const idea = await this.#deps.ideaRepository.getById(ideaId, false)
+    let idea = await this.#deps.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
@@ -461,11 +474,11 @@ export class IdeaService {
       return
     }
 
-    const now = this.#deps.clock.nowUtc()
+    const now = this.#deps.clock.now()
     const actorId = this.requireAuthenticatedUserId()
     const previousStatusId = idea.statusId
 
-    idea.changeStatus(command.statusId, now, actorId)
+    idea = changeIdeaStatus(idea, command.statusId, now, actorId)
     await this.#deps.ideaRepository.update(idea)
 
     await this.auditIdea(
@@ -486,7 +499,7 @@ export class IdeaService {
     ensureNotDirectSiteAdmin(this.#deps.currentUser)
     this.requireAuthenticatedRole()
 
-    const idea = await this.#deps.ideaRepository.getById(ideaId, false)
+    let idea = await this.#deps.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
@@ -498,10 +511,10 @@ export class IdeaService {
       throw new ForbiddenError('You are not allowed to delete ideas.')
     }
 
-    const now = this.#deps.clock.nowUtc()
+    const now = this.#deps.clock.now()
     const actorId = this.requireAuthenticatedUserId()
 
-    idea.softDelete(now, actorId)
+    idea = softDeleteIdea(idea, now, actorId)
     await this.#deps.ideaRepository.update(idea)
 
     await this.auditIdea('IdeaDeleted', idea, actorId, `Idea '${idea.title}' deleted.`, now, null)
@@ -523,12 +536,11 @@ export class IdeaService {
     // member including Read Only. The cap refuses rather than truncating: a silently short export
     // is worse than a clear failure for something people use as a reporting extract.
     const ideas: Idea[] = []
-    let page = 1
+    let pageNumber = 1
     for (;;) {
       const pageResult = await this.#deps.ideaRepository.listByBoard({
         boardId,
-        page,
-        pageSize: MAX_PAGE_SIZE,
+        page: { page: pageNumber, pageSize: MAX_PAGE_SIZE },
         search: null,
         statusId: null,
         tag: null,
@@ -550,7 +562,7 @@ export class IdeaService {
       if (pageResult.items.length === 0 || ideas.length >= pageResult.totalCount) {
         break
       }
-      page++
+      pageNumber++
     }
 
     const statusInfo = await this.#deps.boards.getStatusInfo(board.organizationId)
@@ -621,7 +633,7 @@ export class IdeaService {
     }
     this.ensureOrganizationScope(board.organizationId)
 
-    const now = this.#deps.clock.nowUtc()
+    const now = this.#deps.clock.now()
     const authorId = this.requireAuthenticatedUserId()
     const organizationId = board.organizationId
 
@@ -783,7 +795,8 @@ export class IdeaService {
 
       let idea: Idea
       try {
-        idea = Idea.create({
+        idea = createIdea({
+          id: crypto.randomUUID(),
           organizationId,
           boardId,
           statusId,
@@ -812,7 +825,7 @@ export class IdeaService {
         ideaType.id,
       )
       if (reconcileScope.length > 0) {
-        idea.replaceFieldValues(fieldValues, reconcileScope, now, authorId)
+        idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, authorId)
       }
 
       await this.#deps.ideaRepository.add(idea)
@@ -1307,17 +1320,15 @@ export class IdeaService {
     nowUtc: Date
     metadata: unknown
   }): Promise<void> {
-    const attribution = attributeAudit(this.#deps.currentUser, input.intendedActorUserId)
     await this.#deps.auditEvents.write({
       eventType: input.eventType,
       entityType: input.entityType,
       message: input.message,
       occurredAtUtc: input.nowUtc,
       organizationId: input.organizationId,
-      actorUserId: attribution.actorUserId,
+      attribution: attributeAudit(this.#deps.currentUser, input.intendedActorUserId),
       entityId: input.entityId,
       metadataJson: input.metadata === null ? null : JSON.stringify(input.metadata),
-      onBehalfOfUserId: attribution.onBehalfOfUserId,
     })
   }
 
@@ -1558,12 +1569,18 @@ function flattenValidationErrors(error: ValidationError): string {
   return Object.values(error.failures).flat().join('; ')
 }
 
-/** Wraps a domain mutation so an `IdeaDomainError` (a plain-Error invariant violation - packages/
+/**
+ * Wraps a domain transition so an `IdeaDomainError` (a plain-Error invariant violation - packages/
  * domain imports nothing, so it cannot throw the kernel's `ValidationError` itself) surfaces as a
- * proper field-level 400, mirroring how .NET let `Idea`'s `ArgumentException` reach the API. */
-function runDomain<T>(fn: () => T): T {
+ * proper field-level 400, mirroring how .NET let `Idea`'s `ArgumentException` reach the API.
+ *
+ * Takes `fn` and its arguments separately, rather than a `() => T` thunk, so a narrowed `let`
+ * (e.g. `idea` after a `null` guard) is read as a plain argument expression instead of inside a
+ * closure body - TypeScript does not carry narrowing for a mutable binding into a closure.
+ */
+function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T, ...args: Args): T {
   try {
-    return fn()
+    return fn(...args)
   } catch (error) {
     if (error instanceof IdeaDomainError) {
       throw new ValidationError('One or more fields are invalid.', {
@@ -1574,6 +1591,6 @@ function runDomain<T>(fn: () => T): T {
   }
 }
 
-function createIdeaOrThrow(props: Parameters<typeof Idea.create>[0]): Idea {
-  return runDomain(() => Idea.create(props))
+function createIdeaOrThrow(props: Parameters<typeof createIdea>[0]): Idea {
+  return runDomain(createIdea, props)
 }

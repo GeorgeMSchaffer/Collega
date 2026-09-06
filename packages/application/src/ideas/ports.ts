@@ -1,37 +1,38 @@
 import type { Priority, Role, UserStatus } from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
+import type { PageRequest, SortDirection } from '../common/index.js'
 import type { IdeaFieldValueFilter, IdeaFieldValueWrite, IdeaPage } from './models.js'
 
 // Persistence --------------------------------------------------------------------------------
 
 export type IdeaListFilter = {
   readonly boardId: string
-  readonly page: number
-  readonly pageSize: number
+  readonly page: PageRequest
   readonly search: string | null
   readonly statusId: string | null
   readonly tag: string | null
   readonly priority: Priority | null
   readonly dueBefore: string | null
   /**
-   * Total order is mandatory (a golden-capture finding: four list endpoints tied and broke only
-   * on a per-deployment-random generated id, which is not reproducible across a fresh seed). The
-   * repository MUST tie-break the requested `sortBy` on `createdAtUtc` then `title` (both
-   * ascending), never on id.
+   * TOTAL ORDER IS MANDATORY. A golden-capture finding: four list endpoints ordered by something
+   * that ties, broken only by a generated id - stable inside one deployment but not reproducible
+   * across a fresh seed, so under paging the tie-break silently decided what was on a page.
+   *
+   * The repository implementation (Wave C) MUST tie-break the requested `sortBy` on
+   * `createdAtUtc` then `title` (both ascending). NEVER tie-break on id.
    */
   readonly sortBy: string | null
-  readonly sortDirection: 'asc' | 'desc'
+  readonly sortDirection: SortDirection
 }
 
 export type OrganizationIdeaListFilter = {
   readonly organizationId: string
   readonly createdByUserId: string | null
   readonly assignedToUserId: string | null
-  readonly page: number
-  readonly pageSize: number
+  readonly page: PageRequest
   readonly search: string | null
   readonly sortBy: string | null
-  readonly sortDirection: 'asc' | 'desc'
+  readonly sortDirection: SortDirection
   readonly fieldFilters: readonly IdeaFieldValueFilter[]
   readonly searchTextFieldIds: readonly string[]
   readonly tag: string | null
@@ -39,7 +40,11 @@ export type OrganizationIdeaListFilter = {
   /** Set only when `search` parses as an ISO `yyyy-MM-dd` date: additionally matches ideas
    * created on that (UTC) calendar day. */
   readonly searchCreatedOnDate: string | null
-  /** See `IdeaListFilter.sortBy` - the same total-order requirement applies here. */
+  /**
+   * TOTAL ORDER IS MANDATORY here too - see `IdeaListFilter.sortBy` above for the finding and the
+   * required tie-break (`createdAtUtc` then `title`, never id). Repeated rather than cross-
+   * referenced only in prose so it is not missable from this type alone.
+   */
 }
 
 export type IdeaFieldValueSnapshot = {
@@ -70,27 +75,11 @@ export interface IdeaRepository {
   getFieldValuesByIdeaIds(ideaIds: readonly string[]): Promise<readonly IdeaFieldValueSnapshot[]>
 }
 
-// Cross-cutting (no shared kernel port exists for these - see the report's kernel-gap note) ----
-
-export interface Clock {
-  nowUtc(): Date
-}
-
-export type AuditEventInput = {
-  readonly eventType: string
-  readonly entityType: string
-  readonly message: string
-  readonly occurredAtUtc: Date
-  readonly organizationId: string | null
-  readonly actorUserId: string | null
-  readonly entityId: string | null
-  readonly metadataJson: string | null
-  readonly onBehalfOfUserId: string | null
-}
-
-export interface AuditEventWriter {
-  write(event: AuditEventInput): Promise<void>
-}
+// Notifications (B4) -----------------------------------------------------------------------
+//
+// Clock and AuditEventWriter are NOT redeclared here - they live in the kernel
+// (@collega/application/common, S0.5) now that Ideas, Upvotes and two other partitions had
+// independently invented the same shapes. Import them from there.
 
 export type NotificationEventType =
   | 'IdeaMention'

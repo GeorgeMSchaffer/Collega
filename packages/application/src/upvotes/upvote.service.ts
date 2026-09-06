@@ -1,6 +1,6 @@
 import { Role } from '@collega/domain/enums'
-import { IdeaUpvote } from '@collega/domain/upvotes'
-import type { CurrentUserContext } from '../common/index.js'
+import { createIdeaUpvote } from '@collega/domain/upvotes'
+import type { AuditEventWriter, Clock, CurrentUserContext } from '../common/index.js'
 import {
   attributeAudit,
   ensureNotDirectSiteAdmin,
@@ -8,7 +8,7 @@ import {
   UnauthorizedError,
 } from '../common/index.js'
 import type { UpvoteToggleResult } from './models.js'
-import type { AuditEventWriter, Clock, IdeaLookupPort, IdeaUpvoteRepository } from './ports.js'
+import type { IdeaLookupPort, IdeaUpvoteRepository } from './ports.js'
 
 export type UpvoteServiceDeps = {
   readonly upvoteRepository: IdeaUpvoteRepository
@@ -43,12 +43,14 @@ export class UpvoteService {
     }
     this.ensureOrganizationScope(organizationId)
 
-    const now = this.#deps.clock.nowUtc()
+    const now = this.#deps.clock.now()
     const existing = await this.#deps.upvoteRepository.getByIdeaAndUser(ideaId, userId)
 
     let hasUpvoted: boolean
     if (existing === null) {
-      await this.#deps.upvoteRepository.add(IdeaUpvote.create(ideaId, userId, now))
+      await this.#deps.upvoteRepository.add(
+        createIdeaUpvote({ id: crypto.randomUUID(), ideaId, userId, nowUtc: now }),
+      )
       hasUpvoted = true
     } else {
       await this.#deps.upvoteRepository.remove(existing)
@@ -57,17 +59,15 @@ export class UpvoteService {
 
     const count = await this.#deps.upvoteRepository.countByIdea(ideaId)
 
-    const attribution = attributeAudit(this.#deps.currentUser, userId)
     await this.#deps.auditEvents.write({
       eventType: hasUpvoted ? 'IdeaUpvoteAdded' : 'IdeaUpvoteRemoved',
       entityType: 'Idea',
       message: `Idea upvote ${hasUpvoted ? 'added' : 'removed'}.`,
       occurredAtUtc: now,
       organizationId,
-      actorUserId: attribution.actorUserId,
+      attribution: attributeAudit(this.#deps.currentUser, userId),
       entityId: ideaId,
       metadataJson: null,
-      onBehalfOfUserId: attribution.onBehalfOfUserId,
     })
 
     return { ideaId, hasUpvoted, upvoteCount: count }

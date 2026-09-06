@@ -1,4 +1,5 @@
 import type { IdeaFieldValueInput } from '@collega/domain/ideas'
+import type { Page, PageRequest, SortDirection } from '../common/index.js'
 
 // Commands / queries -------------------------------------------------------------------------
 
@@ -192,36 +193,28 @@ export type CreateIdeaResult = {
 }
 
 /** A page of ideas, echoing the sort actually applied (SPEC/30-Contracts.md "Shared Data Rules"
- * `items`/`page`/`pageSize`/`totalCount`/`sortBy`/`sortDirection`). Deliberately local rather than
- * the kernel's `Page<T>`: that type has no sort echo, and its `normalizePageRequest` default/max
- * (25/200) do not match this contract's pinned 20/100 (see `DEFAULT_PAGE_SIZE`/`MAX_PAGE_SIZE`
- * below and the report note on the kernel discrepancy). */
-export type IdeaPage<T> = {
-  readonly items: readonly T[]
-  readonly page: number
-  readonly pageSize: number
-  readonly totalCount: number
+ * `items`/`page`/`pageSize`/`totalCount`/`sortBy`/`sortDirection`). Built on the kernel's `Page<T>`
+ * (`items`/`page`/`pageSize`/`totalCount`) plus the sort echo the wire contract also needs. */
+export type IdeaPage<T> = Page<T> & {
   readonly sortBy: string | null
-  readonly sortDirection: 'asc' | 'desc'
+  readonly sortDirection: SortDirection
 }
 
-export const DEFAULT_PAGE_SIZE = 20
-export const MAX_PAGE_SIZE = 100
-
-export function normalizeIdeaPage(
+/** `query.page`/`pageSize` arrive as `number | null`; the kernel's `normalizePageRequest` takes
+ * `Partial<PageRequest>` and, under `exactOptionalPropertyTypes`, an omitted key and a key
+ * present with `undefined` are not interchangeable - so `null` must become "key absent", not
+ * "key present with value undefined". */
+export function toPageRequestInput(
   page: number | null,
   pageSize: number | null,
-): {
-  readonly page: number
-  readonly pageSize: number
-} {
-  const normalizedPage = page !== null && page > 0 ? Math.trunc(page) : 1
-  const requested = pageSize ?? DEFAULT_PAGE_SIZE
-  const normalizedPageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Math.trunc(requested)))
-  return { page: normalizedPage, pageSize: normalizedPageSize }
+): Partial<PageRequest> {
+  return {
+    ...(page !== null ? { page } : {}),
+    ...(pageSize !== null ? { pageSize } : {}),
+  }
 }
 
-export function normalizeSortDirection(value: string | null | undefined): 'asc' | 'desc' {
+export function normalizeSortDirection(value: string | null | undefined): SortDirection {
   return (value ?? '').trim().toLowerCase() === 'desc' ? 'desc' : 'asc'
 }
 
