@@ -33,6 +33,23 @@ export class ConflictError extends ApplicationError {
   readonly kind = 'conflict' as const
 }
 
+/**
+ * The account is locked after too many failed sign-in attempts. Maps to 429.
+ *
+ * Deliberately distinct from RateLimitedError even though both are 429: one is about an
+ * account's own failed attempts and the other about a caller's request volume, and the .NET
+ * side kept them apart. The golden corpus records whatever body each produced, so collapsing
+ * them into one type would show up as a replay diff.
+ */
+export class LockedOutError extends ApplicationError {
+  readonly kind = 'lockedOut' as const
+}
+
+/** The caller exceeded a rate limit. Maps to 429. See LockedOutError for why they differ. */
+export class RateLimitedError extends ApplicationError {
+  readonly kind = 'rateLimited' as const
+}
+
 /** Input failed validation. Maps to 400. */
 export class ValidationError extends ApplicationError {
   readonly kind = 'validation' as const
