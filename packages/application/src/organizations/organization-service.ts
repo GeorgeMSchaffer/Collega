@@ -209,7 +209,13 @@ export class OrganizationService {
     const now = this.clock.now()
 
     const newCode = await this.generateUniqueInviteCode()
-    const updated = regenerateInviteCode(organization, newCode, now, this.currentUser.userId)
+    const updated = runDomain(
+      regenerateInviteCode,
+      organization,
+      newCode,
+      now,
+      this.currentUser.userId,
+    )
     await this.organizations.update(updated)
     await this.unitOfWork.saveChanges()
 
@@ -248,7 +254,8 @@ export class OrganizationService {
     }
 
     const now = this.clock.now()
-    const updated = setOrganizationLogo(
+    const updated = runDomain(
+      setOrganizationLogo,
       organization,
       dataUri,
       command.heightPx,
