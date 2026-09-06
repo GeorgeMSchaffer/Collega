@@ -25,11 +25,16 @@
     "db:seed": "node prisma/seed/index.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.124.0",
     "@collega/application": "workspace:*",
     "@collega/domain": "workspace:*",
-    "@prisma/client": "^6.19.3"
+    "@prisma/client": "^6.19.3",
+    "csv-parse": "^7.0.2",
+    "jsonwebtoken": "^9.0.3",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "prisma": "^6.19.3",
     "typescript": "7.0.2",
     "vitest": "3.2.4"
