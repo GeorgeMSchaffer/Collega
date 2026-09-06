@@ -13,11 +13,13 @@ import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
+  type UnitOfWork,
   ValidationError,
 } from '@collega/application/common'
 import type { StatusRepository } from '@collega/application/statuses'
 import {
   type Board,
+  BoardInvariantError,
   createBoard,
   MIN_SWIMLANES,
   reorderBoardSwimlanes,
@@ -42,7 +44,8 @@ export class BoardService {
     private readonly boards: BoardRepository,
     private readonly statuses: StatusRepository,
     private readonly organizations: OrganizationExistenceLookup,
-    private readonly auditWriter: AuditEventWriter,
+    private readonly unitOfWork: UnitOfWork,
+    private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
   ) {}
@@ -69,7 +72,7 @@ export class BoardService {
     const orderedStatusIds = validateAndOrderSwimlanes(command.swimlanes, statusLookup)
 
     const now = this.clock.now()
-    const board = createBoard({
+    const board = runDomain(createBoard, {
       id: randomUUID(),
       organizationId,
       name: command.name,
@@ -79,6 +82,7 @@ export class BoardService {
       actorUserId: this.currentUser.userId,
     })
     await this.boards.add(board)
+    await this.unitOfWork.saveChanges()
 
     await this.audit(
       'BoardCreated',
@@ -120,7 +124,8 @@ export class BoardService {
     const orderedStatusIds = validateAndOrderSwimlanes(command.swimlanes, statusLookup)
 
     const now = this.clock.now()
-    const board = updateBoard(
+    const board = runDomain(
+      updateBoard,
       existing,
       {
         name: command.name,
@@ -131,6 +136,7 @@ export class BoardService {
       this.currentUser.userId,
     )
     await this.boards.save(board)
+    await this.unitOfWork.saveChanges()
 
     await this.audit(
       'BoardUpdated',
@@ -154,7 +160,7 @@ export class BoardService {
 
     const orderedStatusIds = orderSwimlaneInputs(command.swimlanes)
     if (new Set(orderedStatusIds).size !== orderedStatusIds.length) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError('One or more fields are invalid.', {
         swimlanes: ['A board cannot list the same status twice.'],
       })
     }
@@ -165,14 +171,21 @@ export class BoardService {
     const sameSet =
       orderedStatusIds.length === current.size && [...requested].every((id) => current.has(id))
     if (!sameSet) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError('One or more fields are invalid.', {
         swimlanes: ["A reorder must list exactly the board's current swimlane statuses."],
       })
     }
 
     const now = this.clock.now()
-    const board = reorderBoardSwimlanes(existing, orderedStatusIds, now, this.currentUser.userId)
+    const board = runDomain(
+      reorderBoardSwimlanes,
+      existing,
+      orderedStatusIds,
+      now,
+      this.currentUser.userId,
+    )
     await this.boards.save(board)
+    await this.unitOfWork.saveChanges()
 
     await this.audit(
       'BoardSwimlanesReordered',
@@ -246,7 +259,7 @@ export class BoardService {
     // Rule 14: while acting as someone, the real administrator is the actor and the target moves
     // to onBehalfOfUserId - an audit row must never read as though the target did it.
     const attribution = attributeAudit(this.currentUser, this.currentUser.userId)
-    await this.auditWriter.write({
+    await this.auditEvents.write({
       eventType,
       entityType: 'Board',
       message,
@@ -275,13 +288,13 @@ function validateAndOrderSwimlanes(
   const orderedStatusIds = orderSwimlaneInputs(swimlanes)
 
   if (orderedStatusIds.length < MIN_SWIMLANES) {
-    throw new ValidationError('Validation failed.', {
+    throw new ValidationError('One or more fields are invalid.', {
       swimlanes: [`A board must have at least ${MIN_SWIMLANES} swimlanes.`],
     })
   }
 
   if (new Set(orderedStatusIds).size !== orderedStatusIds.length) {
-    throw new ValidationError('Validation failed.', {
+    throw new ValidationError('One or more fields are invalid.', {
       swimlanes: ['A board cannot list the same status twice.'],
     })
   }
@@ -289,13 +302,36 @@ function validateAndOrderSwimlanes(
   for (const statusId of orderedStatusIds) {
     const status = statusLookup.get(statusId)
     if (status === undefined || status.isDeleted) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError('One or more fields are invalid.', {
         swimlanes: ['Every swimlane must reference an active status in this organization.'],
       })
     }
   }
 
   return orderedStatusIds
+}
+
+/**
+ * Wraps a domain transition so a `BoardInvariantError` (a plain-Error invariant violation -
+ * packages/domain imports nothing, so it cannot throw the kernel's `ValidationError` itself)
+ * surfaces as a proper field-level 400, mirroring how .NET let `Board`'s `ArgumentException`
+ * reach the API only through a `ValidationAppException` raised in the service, never directly
+ * (SPEC/decisions.md 2026-09-06 "Wave B conventions"; B3's `runDomain` is the reference).
+ *
+ * Takes `fn` and its arguments separately, rather than a `() => T` thunk, so a narrowed `let`
+ * or `const` binding is read as a plain argument expression instead of inside a closure body.
+ */
+function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T, ...args: Args): T {
+  try {
+    return fn(...args)
+  } catch (error) {
+    if (error instanceof BoardInvariantError) {
+      throw new ValidationError('One or more fields are invalid.', {
+        [error.field]: [error.message],
+      })
+    }
+    throw error
+  }
 }
 
 function toDetail(board: Board, statusLookup: ReadonlyMap<string, Status>): BoardDetail {

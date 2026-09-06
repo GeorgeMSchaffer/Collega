@@ -14,6 +14,7 @@ import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
+  type UnitOfWork,
   ValidationError,
 } from '@collega/application/common'
 import { Role } from '@collega/domain/enums'
@@ -21,6 +22,7 @@ import {
   createStatus,
   MIN_ACTIVE_STATUSES_PER_ORGANIZATION,
   type Status,
+  StatusInvariantError,
   setStatusSortOrder,
   softDeleteStatus,
   updateStatus,
@@ -43,7 +45,8 @@ export class StatusService {
     private readonly statuses: StatusRepository,
     private readonly boards: BoardRepository,
     private readonly organizations: OrganizationExistenceLookup,
-    private readonly auditWriter: AuditEventWriter,
+    private readonly unitOfWork: UnitOfWork,
+    private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
   ) {}
@@ -64,7 +67,7 @@ export class StatusService {
     const color = isBlank(command.color) ? DEFAULT_STATUS_COLOR : (command.color as string)
     const sortOrder = command.sortOrder ?? (await this.nextSortOrder(organizationId))
 
-    const status = createStatus({
+    const status = runDomain(createStatus, {
       id: randomUUID(),
       organizationId,
       name: command.name,
@@ -74,6 +77,7 @@ export class StatusService {
       actorUserId: this.currentUser.userId,
     })
     await this.statuses.add(status)
+    await this.unitOfWork.saveChanges()
 
     await this.audit(
       'StatusCreated',
@@ -109,13 +113,15 @@ export class StatusService {
     const color = isBlank(command.color) ? existing.color : (command.color as string)
     const sortOrder = command.sortOrder ?? existing.sortOrder
 
-    const status = updateStatus(
+    const status = runDomain(
+      updateStatus,
       existing,
       { name: command.name, color, sortOrder },
       now,
       this.currentUser.userId,
     )
     await this.statuses.save(status)
+    await this.unitOfWork.saveChanges()
 
     await this.audit(
       'StatusUpdated',
@@ -129,7 +135,14 @@ export class StatusService {
     return toItem(status)
   }
 
-  /** Replaces the complete active-status order atomically; the list must name every active status exactly once. */
+  /**
+   * Replaces the complete active-status order atomically; the list must name every active
+   * status exactly once. Atomic because every `save` below is staged and committed with a
+   * single `unitOfWork.saveChanges()` after the loop - matching the C#, which loops over the
+   * statuses mutating tracked entities and calls `SaveChangesAsync` once, after the loop. A
+   * per-iteration commit would leave a partially reordered catalog if a later status failed to
+   * save (SPEC/decisions.md 2026-09-06 "Wave B conventions").
+   */
   async reorder(organizationId: string, orderedIds: readonly string[]): Promise<void> {
     this.ensureAdminScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
@@ -148,7 +161,7 @@ export class StatusService {
         // Unreachable: ensureReorderCoversActive already proved orderedIds is a permutation of
         // byId's keys. Kept as a real error, not a silent skip, so a future change to that check
         // fails loudly instead of dropping a status's sort order.
-        throw new ValidationError('Validation failed.', {
+        throw new ValidationError('One or more fields are invalid.', {
           orderedIds: ['The reorder must list every active status exactly once.'],
         })
       }
@@ -160,6 +173,7 @@ export class StatusService {
       )
       await this.statuses.save(updated)
     }
+    await this.unitOfWork.saveChanges()
 
     await this.audit(
       'StatusesReordered',
@@ -188,7 +202,7 @@ export class StatusService {
     // being deleted is still active, so the current active count must exceed the floor.
     const activeCount = await this.statuses.countActiveByOrganization(existing.organizationId)
     if (activeCount <= MIN_ACTIVE_STATUSES_PER_ORGANIZATION) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError('One or more fields are invalid.', {
         status: [
           `An organization must keep at least ${MIN_ACTIVE_STATUSES_PER_ORGANIZATION} active statuses; this status cannot be deleted.`,
         ],
@@ -197,7 +211,7 @@ export class StatusService {
 
     // Rule #6: a status referenced as a swimlane on any board cannot be soft-deleted.
     if (await this.boards.isStatusReferenced(statusId)) {
-      throw new ValidationError('Validation failed.', {
+      throw new ValidationError('One or more fields are invalid.', {
         status: [
           'This status is used as a swimlane on a board and cannot be deleted until it is removed from that board.',
         ],
@@ -205,8 +219,9 @@ export class StatusService {
     }
 
     const now = this.clock.now()
-    const status = softDeleteStatus(existing, now, this.currentUser.userId)
+    const status = runDomain(softDeleteStatus, existing, now, this.currentUser.userId)
     await this.statuses.save(status)
+    await this.unitOfWork.saveChanges()
 
     await this.audit(
       'StatusDeleted',
@@ -283,7 +298,7 @@ export class StatusService {
     // Rule 14: while acting as someone, the real administrator is the actor and the target moves
     // to onBehalfOfUserId - an audit row must never read as though the target did it.
     const attribution = attributeAudit(this.currentUser, this.currentUser.userId)
-    await this.auditWriter.write({
+    await this.auditEvents.write({
       eventType,
       entityType: 'Status',
       message,
@@ -322,9 +337,29 @@ function ensureReorderCoversActive(
     distinctCount === orderedIds.length &&
     orderedIds.every((id) => active.has(id))
   if (!covers) {
-    throw new ValidationError('Validation failed.', {
+    throw new ValidationError('One or more fields are invalid.', {
       orderedIds: ['The reorder must list every active status exactly once.'],
     })
+  }
+}
+
+/**
+ * Wraps a domain transition so a `StatusInvariantError` (a plain-Error invariant violation -
+ * packages/domain imports nothing, so it cannot throw the kernel's `ValidationError` itself)
+ * surfaces as a proper field-level 400, mirroring how .NET let `Status`'s `ArgumentException`
+ * reach the API only through a `ValidationAppException` raised in the service, never directly
+ * (SPEC/decisions.md 2026-09-06 "Wave B conventions"; B3's `runDomain` is the reference).
+ */
+function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T, ...args: Args): T {
+  try {
+    return fn(...args)
+  } catch (error) {
+    if (error instanceof StatusInvariantError) {
+      throw new ValidationError('One or more fields are invalid.', {
+        [error.field]: [error.message],
+      })
+    }
+    throw error
   }
 }
 

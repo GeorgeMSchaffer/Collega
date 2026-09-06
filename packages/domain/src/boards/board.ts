@@ -12,8 +12,21 @@ import { type Auditable, markCreated, markUpdated } from '@collega/domain/common
 export const BOARD_NAME_MAX_LENGTH = 150
 export const MIN_SWIMLANES = 2
 
-/** Raised when a caller asks this module to put a Board into an invalid state. */
-export class BoardInvariantError extends Error {}
+/**
+ * Raised when a caller asks this module to put a Board into an invalid state. Carries the
+ * field the violation belongs to, mirroring `IdeaDomainError`, so the Application layer can
+ * translate it into a field-keyed `ValidationError` instead of letting a bare `Error` become a
+ * 500 (SPEC/decisions.md 2026-09-06 "Wave B conventions").
+ */
+export class BoardInvariantError extends Error {
+  readonly field: string
+
+  constructor(field: string, message: string) {
+    super(message)
+    this.name = 'BoardInvariantError'
+    this.field = field
+  }
+}
 
 export type BoardSwimlane = {
   readonly statusId: string
@@ -32,7 +45,7 @@ export type Board = Auditable & {
 function requireName(name: string): string {
   const trimmed = name.trim()
   if (trimmed.length === 0) {
-    throw new BoardInvariantError('Name is required.')
+    throw new BoardInvariantError('name', 'Name is required.')
   }
   return trimmed
 }
@@ -40,10 +53,13 @@ function requireName(name: string): string {
 /** Turns a caller-ordered list of status ids into dense, validated swimlanes. */
 function toSwimlanes(orderedStatusIds: readonly string[]): readonly BoardSwimlane[] {
   if (orderedStatusIds.length < MIN_SWIMLANES) {
-    throw new BoardInvariantError(`A board must have at least ${MIN_SWIMLANES} swimlanes.`)
+    throw new BoardInvariantError(
+      'swimlanes',
+      `A board must have at least ${MIN_SWIMLANES} swimlanes.`,
+    )
   }
   if (new Set(orderedStatusIds).size !== orderedStatusIds.length) {
-    throw new BoardInvariantError('A board cannot list the same status twice.')
+    throw new BoardInvariantError('swimlanes', 'A board cannot list the same status twice.')
   }
   return orderedStatusIds.map((statusId, displayOrder) => ({ statusId, displayOrder }))
 }
@@ -62,7 +78,7 @@ export function createBoard(params: {
   readonly actorUserId: string | null
 }): Board {
   if (params.organizationId.trim().length === 0) {
-    throw new BoardInvariantError('Organization id is required.')
+    throw new BoardInvariantError('organizationId', 'Organization id is required.')
   }
   const name = requireName(params.name)
   const swimlanes = toSwimlanes(params.orderedStatusIds)
@@ -123,6 +139,7 @@ export function reorderBoardSwimlanes(
     current.size === requested.size && [...current].every((statusId) => requested.has(statusId))
   if (!sameSet) {
     throw new BoardInvariantError(
+      'swimlanes',
       "A reorder must list exactly the board's current swimlane statuses.",
     )
   }

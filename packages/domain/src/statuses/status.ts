@@ -19,8 +19,21 @@ export const STATUS_COLOR_MAX_LENGTH = 20
  */
 export const MIN_ACTIVE_STATUSES_PER_ORGANIZATION = 2
 
-/** Raised when a caller asks this module to put a Status into an invalid state. */
-export class StatusInvariantError extends Error {}
+/**
+ * Raised when a caller asks this module to put a Status into an invalid state. Carries the
+ * field the violation belongs to, mirroring `IdeaDomainError`, so the Application layer can
+ * translate it into a field-keyed `ValidationError` instead of letting a bare `Error` become a
+ * 500 (SPEC/decisions.md 2026-09-06 "Wave B conventions").
+ */
+export class StatusInvariantError extends Error {
+  readonly field: string
+
+  constructor(field: string, message: string) {
+    super(message)
+    this.name = 'StatusInvariantError'
+    this.field = field
+  }
+}
 
 export type Status = Auditable & {
   readonly id: string
@@ -33,10 +46,11 @@ export type Status = Auditable & {
   readonly isDeleted: boolean
 }
 
-function requireNonBlank(value: string, field: string): string {
+/** `label` is both the field key (lowercased) and the message's spaced display name. */
+function requireNonBlank(value: string, label: string): string {
   const trimmed = value.trim()
   if (trimmed.length === 0) {
-    throw new StatusInvariantError(`${field} is required.`)
+    throw new StatusInvariantError(label.toLowerCase(), `${label} is required.`)
   }
   return trimmed
 }
@@ -51,7 +65,7 @@ export function createStatus(params: {
   readonly actorUserId: string | null
 }): Status {
   if (params.organizationId.trim().length === 0) {
-    throw new StatusInvariantError('Organization id is required.')
+    throw new StatusInvariantError('organizationId', 'Organization id is required.')
   }
   const name = requireNonBlank(params.name, 'Name')
   const color = requireNonBlank(params.color, 'Color')
@@ -75,7 +89,7 @@ export function updateStatus(
   actorUserId: string | null,
 ): Status {
   if (status.isDeleted) {
-    throw new StatusInvariantError('A deleted status cannot be updated.')
+    throw new StatusInvariantError('status', 'A deleted status cannot be updated.')
   }
   const name = requireNonBlank(params.name, 'Name')
   const color = requireNonBlank(params.color, 'Color')
