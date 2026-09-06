@@ -48,6 +48,18 @@ export class LockedOutError extends ApplicationError {
 /** The caller exceeded a rate limit. Maps to 429. See LockedOutError for why they differ. */
 export class RateLimitedError extends ApplicationError {
   readonly kind = 'rateLimited' as const
+
+  /**
+   * How long until the window has room again, surfaced by the API as the `Retry-After`
+   * header. A 429 that does not say when to come back leaves a well-behaved client guessing
+   * and a badly-behaved one hammering.
+   */
+  readonly retryAfterSeconds: number
+
+  constructor(message: string, retryAfterSeconds: number) {
+    super(message)
+    this.retryAfterSeconds = retryAfterSeconds
+  }
 }
 
 /** Input failed validation. Maps to 400. */

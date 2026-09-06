@@ -54,7 +54,11 @@ function loadEnvFile(): void {
  * variables is told all four at once rather than discovering them one redeploy at a time.
  */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  loadEnvFile()
+  // Only when reading the real environment. Passing an explicit `env` must have no side
+  // effect at all: loading the file unconditionally put the repository's live
+  // ANTHROPIC_API_KEY into process.env as a side effect of what reads as a pure function,
+  // which a test runner started from the repo root would trigger without anyone asking.
+  if (env === process.env) loadEnvFile()
 
   const problems: string[] = []
   const config = {

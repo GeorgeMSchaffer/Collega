@@ -9,6 +9,29 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-06 — Entity ids are generated in the application layer, not the domain
+
+**Decided:** `crypto.randomUUID()` in the application service, passed into the domain
+constructor. `packages/domain` never generates an id.
+
+**Why:** the .NET `EntityBase` defaulted `Id = Guid.NewGuid()` ambiently, so constructing an
+entity had a hidden random effect. Every Wave B partition independently settled on immutable
+entities with pure transition functions, and ambient randomness is the one thing that breaks
+that — an entity that generates its own id cannot be constructed twice and compared.
+
+**Why this is not the same call as `Clock`.** Time got a port because a service cannot
+supply "now" without one and remain testable. An id needs no port: the caller simply passes
+one. Adding an `IdGenerator` interface would be a single-implementation abstraction, which
+CLAUDE.md rules out.
+
+**Recorded because three partitions asked.** B1, B2 and B3 each hit the missing
+`packages/domain/src/common` and each resolved it slightly differently. This and the kernel
+promotion alongside it (`Clock`, `AuditEventWriter`, `Auditable`, `LockedOutError`,
+`RateLimitedError`) are what stop the fourth through seventh partitions doing it a fourth
+way.
+
+---
+
 ## 2026-09-06 — `.env` is the single home for configuration; a typed config module reads it
 
 **Decided:** every environment value the TypeScript stack needs lives in **`.env`** at the

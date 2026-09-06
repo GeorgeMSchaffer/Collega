@@ -16,6 +16,14 @@ export type AuditEventInput = {
   readonly entityId: string | null
   readonly message: string
   readonly metadataJson?: string | null
+
+  /**
+   * Required, because `audit_events.occurred_at_utc` is non-nullable with no database
+   * default and the .NET `AuditEvent.Create` took it explicitly at all thirteen call sites.
+   * It comes from `Clock`, not from `new Date()` inside the writer - a writer inventing its
+   * own timestamp is the ambient-time problem `Clock` exists to remove, one layer down.
+   */
+  readonly occurredAtUtc: Date
 }
 
 /**
