@@ -79,6 +79,11 @@ dist/
 # committing it means a stale client can disagree with the schema without anyone noticing.
 packages/infrastructure/src/generated/
 
+# Scratch dirs tools/boundaries writes inside each layer to probe the lint rules. They are
+# cleaned up on exit, but an interrupted run leaks them - and they must live inside the layer
+# for biome.json's override globs to match, so they cannot go anywhere tidier.
+.boundary-*/
+
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
 

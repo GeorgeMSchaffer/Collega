@@ -9,11 +9,11 @@
 //
 // Run: node --test "tools/boundaries/*.test.ts"
 
-import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 
 // Anchored to the repo root rather than cwd: turbo runs this task from tools/boundaries,
@@ -46,13 +46,28 @@ const ALLOWED: Record<Layer, readonly Layer[]> = {
 
 const LAYERS = Object.keys(LAYER_DIR) as Layer[]
 
+// An interrupted run leaves probe dirs behind inside a layer, where they then show up as
+// lint errors and untracked files. Clear any before starting rather than only after.
+for (const dir of Object.values(LAYER_DIR)) {
+  const full = join(REPO_ROOT, dir)
+  for (const entry of readdirSync(full, { withFileTypes: true })) {
+    if (entry.isDirectory() && entry.name.startsWith('.boundary-')) {
+      rmSync(join(full, entry.name), { recursive: true, force: true })
+    }
+  }
+}
+
 /** Lints a throwaway file in `dir` importing `specifier`; true when the boundary rule fired. */
 function isBlocked(dir: string, specifier: string): boolean {
   const tmp = mkdtempSync(join(REPO_ROOT, dir, '.boundary-'))
   const file = join(tmp, 'probe.ts')
   writeFileSync(file, `import { layer } from '${specifier}'\nexport const probe = layer\n`)
   try {
-    const out = execFileSync('npx', ['biome', 'check', file], {
+    // --vcs-enabled=false is load-bearing: biome.json sets useIgnoreFile, and .gitignore
+    // lists .boundary-*/ so leaked probe dirs never get committed. Without this flag biome
+    // skips the probe file, reports nothing, and every "may not import" case reads that
+    // silence as "not blocked" - the suite goes green while enforcing nothing.
+    const out = execFileSync('npx', ['biome', 'check', '--vcs-enabled=false', file], {
       cwd: REPO_ROOT,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -84,8 +99,8 @@ for (const from of LAYERS) {
         legal
           ? `${from} is allowed to import ${to}, but biome.json reports it. False positive.`
           : `${from} must not import ${to}, but biome.json allows ${specifier}. ` +
-            `Check that the override for ${LAYER_DIR[from]} uses "patterns" with a "/*" ` +
-            `glob rather than "paths".`,
+              `Check that the override for ${LAYER_DIR[from]} uses "patterns" with a "/*" ` +
+              `glob rather than "paths".`,
       )
     })
   }

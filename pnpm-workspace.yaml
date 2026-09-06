@@ -16,6 +16,7 @@
 #   e2e                     Playwright suite; kept, adapted to comp P in F2
 #   tools/golden            capture and replay harness - the conversion's only oracle
 #   tools/boundaries        architecture test over the layer-boundary lint
+#   tools/arch              architecture tests lint cannot express
 #   SPEC/mockups/_build/tw  Tailwind CLI that compiles CSS inlined into the comps
 #
 # apps/* and packages/* are globbed so a new workspace member is picked up without
@@ -24,6 +25,7 @@ packages:
   - 'e2e'
   - 'tools/golden'
   - 'tools/boundaries'
+  - 'tools/arch'
   - 'SPEC/mockups/_build/tw'
   - 'apps/*'
   - 'packages/*'

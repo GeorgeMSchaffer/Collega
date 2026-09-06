@@ -12,7 +12,10 @@
   "dependencies": {
     "@collega/application": "workspace:*",
     "@collega/domain": "workspace:*",
-    "@collega/infrastructure": "workspace:*"
+    "@collega/infrastructure": "workspace:*",
+    "@nestjs/common": "^11.2.3",
+    "@nestjs/core": "^11.2.3",
+    "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
     "typescript": "7.0.2",

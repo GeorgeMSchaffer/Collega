@@ -98,7 +98,8 @@ collega/
 ├── e2e/                        existing Playwright suite, kept
 └── tools/
     ├── golden/                 capture + replay harness (Wave A) — the oracle
-    └── boundaries/             asserts the layer lint above actually fires
+    ├── boundaries/             asserts the layer lint above actually fires
+    └── arch/                   the identity chokepoint, which lint cannot fully express
 ```
 
 Layer rules, enforced by lint rather than convention — `biome.json` carries one
@@ -204,8 +205,8 @@ the corpus never touches shows up as a hole rather than as silence.
 | Slice | Owns |
 |---|---|
 | **S0.1** Monorepo skeleton | root configs, `turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, the Biome layer-boundary overrides and the `tools/boundaries` test over them, CI task graph. **Done 2026-09-06.** The identity chokepoint that `07` §7 pairs with this — "only the auth folder reads a credential" as a lint failure, plus its exact-equality architecture test — moves to **S0.3**, which owns the auth guard skeleton it constrains |
-| **S0.2** Prisma introspect + reshape | `packages/infrastructure/prisma/**` — `db pull`, then the deliberate reshape; generated client; per-feature seed composition. Also owes the **three partial unique indexes** introspection drops, as raw SQL plus a test that fails if any is absent (`05`'s findings). **Freezes the schema.** |
-| **S0.3** Cross-cutting kernel | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` — error model, result types, pagination, auth guard skeleton, and the `AsyncLocalStorage` request context that View As will need. `07` §4 specifies it: four files plus the `CurrentUserContext` port, with `attributeAudit`, `ensureNotDirectSiteAdmin` and the branded `Attribution` type alongside |
+| **S0.2** Prisma introspect + reshape | `packages/infrastructure/prisma/**` — `db pull`, then the deliberate reshape; generated client; per-feature seed composition. Also owes the **three partial unique indexes** introspection drops, as raw SQL plus a test that fails if any is absent (`05`'s findings). **Freezes the schema. Done 2026-09-06** — 25 models, 9 enums promoted, baseline applied to a scratch database and diffed against the original |
+| **S0.3** Cross-cutting kernel | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` — error model, pagination, auth guard skeleton, and the `AsyncLocalStorage` request context that View As will need. `07` §4 specifies it: four files plus the `CurrentUserContext` port, with `attributeAudit`, `ensureNotDirectSiteAdmin` and the branded `Attribution` type alongside. **Done 2026-09-06**, and it also carries the identity chokepoint that moved off S0.1: the Biome override plus `tools/arch/identity-chokepoint.test.ts`. The nine domain enums land here too, in `packages/domain/src/enums/`, because every Wave B partition needs `Role` and the kernel is written against it |
 
 S0.3 exists so that seven feature agents do not each invent their own error shape. It is
 cheap insurance against the most expensive kind of rework.

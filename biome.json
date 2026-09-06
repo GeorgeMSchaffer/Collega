@@ -12,7 +12,7 @@
       "packages/**/*.ts",
       "packages/**/*.tsx",
       "e2e/**/*.ts",
-      "tools/golden/**/*.ts",
+      "tools/**/*.ts",
       "!**/node_modules",
       "!**/dist",
       "!**/.next",
@@ -20,7 +20,8 @@
       "!**/obj",
       "!**/playwright-report",
       "!**/test-results",
-      "!**/.playwright"
+      "!**/.playwright",
+      "!**/generated"
     ]
   },
   "formatter": {
@@ -66,6 +67,19 @@
                       "@collega/web/*"
                     ],
                     "message": "packages/domain imports nothing. Push the dependency up into application. SPEC/50-typescript-migration.md section 3."
+                  },
+                  {
+                    "group": [
+                      "jsonwebtoken",
+                      "jose",
+                      "@nestjs/jwt",
+                      "next/headers",
+                      "jsonwebtoken/*",
+                      "jose/*",
+                      "@nestjs/jwt/*",
+                      "next/headers/*"
+                    ],
+                    "message": "Only the authentication chokepoint may read a credential. Ask CurrentUserContext instead - code reading a credential directly silently opts itself out of View As (SPEC/20-feature-view-as.md rules 4/4a). The allowlist is in SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md section 7.4 and is asserted by tools/arch/identity-chokepoint.test.ts."
                   }
                 ]
               }
@@ -95,6 +109,19 @@
                       "@collega/web/*"
                     ],
                     "message": "packages/application imports @collega/domain only. Depend on an abstraction and let infrastructure implement it. SPEC/50-typescript-migration.md section 3."
+                  },
+                  {
+                    "group": [
+                      "jsonwebtoken",
+                      "jose",
+                      "@nestjs/jwt",
+                      "next/headers",
+                      "jsonwebtoken/*",
+                      "jose/*",
+                      "@nestjs/jwt/*",
+                      "next/headers/*"
+                    ],
+                    "message": "Only the authentication chokepoint may read a credential. Ask CurrentUserContext instead - code reading a credential directly silently opts itself out of View As (SPEC/20-feature-view-as.md rules 4/4a). The allowlist is in SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md section 7.4 and is asserted by tools/arch/identity-chokepoint.test.ts."
                   }
                 ]
               }
@@ -122,6 +149,19 @@
                       "@collega/web/*"
                     ],
                     "message": "packages/infrastructure implements application and domain abstractions. It renders nothing and must not depend on its host."
+                  },
+                  {
+                    "group": [
+                      "jsonwebtoken",
+                      "jose",
+                      "@nestjs/jwt",
+                      "next/headers",
+                      "jsonwebtoken/*",
+                      "jose/*",
+                      "@nestjs/jwt/*",
+                      "next/headers/*"
+                    ],
+                    "message": "Only the authentication chokepoint may read a credential. Ask CurrentUserContext instead - code reading a credential directly silently opts itself out of View As (SPEC/20-feature-view-as.md rules 4/4a). The allowlist is in SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md section 7.4 and is asserted by tools/arch/identity-chokepoint.test.ts."
                   }
                 ]
               }
@@ -153,6 +193,19 @@
                       "@collega/web/*"
                     ],
                     "message": "packages/design-system is presentation only - tokens and primitives from comp P."
+                  },
+                  {
+                    "group": [
+                      "jsonwebtoken",
+                      "jose",
+                      "@nestjs/jwt",
+                      "next/headers",
+                      "jsonwebtoken/*",
+                      "jose/*",
+                      "@nestjs/jwt/*",
+                      "next/headers/*"
+                    ],
+                    "message": "Only the authentication chokepoint may read a credential. Ask CurrentUserContext instead - code reading a credential directly silently opts itself out of View As (SPEC/20-feature-view-as.md rules 4/4a). The allowlist is in SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md section 7.4 and is asserted by tools/arch/identity-chokepoint.test.ts."
                   }
                 ]
               }
@@ -182,6 +235,19 @@
                       "@collega/api/*"
                     ],
                     "message": "apps/web reaches the server over HTTP only. Import @collega/design-system, or call the API. This is constraint 11, and the lint error is what stops it eroding - SPEC/50-typescript-migration.md section 4.3."
+                  },
+                  {
+                    "group": [
+                      "jsonwebtoken",
+                      "jose",
+                      "@nestjs/jwt",
+                      "next/headers",
+                      "jsonwebtoken/*",
+                      "jose/*",
+                      "@nestjs/jwt/*",
+                      "next/headers/*"
+                    ],
+                    "message": "Only the authentication chokepoint may read a credential. Ask CurrentUserContext instead - code reading a credential directly silently opts itself out of View As (SPEC/20-feature-view-as.md rules 4/4a). The allowlist is in SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md section 7.4 and is asserted by tools/arch/identity-chokepoint.test.ts."
                   }
                 ]
               }
@@ -207,6 +273,119 @@
                       "@collega/web/*"
                     ],
                     "message": "apps/api renders nothing and must not depend on the client."
+                  },
+                  {
+                    "group": [
+                      "jsonwebtoken",
+                      "jose",
+                      "@nestjs/jwt",
+                      "next/headers",
+                      "jsonwebtoken/*",
+                      "jose/*",
+                      "@nestjs/jwt/*",
+                      "next/headers/*"
+                    ],
+                    "message": "Only the authentication chokepoint may read a credential. Ask CurrentUserContext instead - code reading a credential directly silently opts itself out of View As (SPEC/20-feature-view-as.md rules 4/4a). The allowlist is in SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md section 7.4 and is asserted by tools/arch/identity-chokepoint.test.ts."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/api/src/auth/**", "apps/api/src/common/request-context/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@collega/design-system",
+                      "@collega/design-system/*",
+                      "@collega/web",
+                      "@collega/web/*"
+                    ],
+                    "message": "apps/api renders nothing and must not depend on the client."
+                  },
+                  {
+                    "group": ["next/headers", "next/headers/*"],
+                    "message": "Only the authentication chokepoint may read a credential. Ask CurrentUserContext instead - code reading a credential directly silently opts itself out of View As (SPEC/20-feature-view-as.md rules 4/4a). The allowlist is in SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md section 7.4 and is asserted by tools/arch/identity-chokepoint.test.ts."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/web/lib/server/current-user.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@collega/domain",
+                      "@collega/domain/*",
+                      "@collega/application",
+                      "@collega/application/*",
+                      "@collega/infrastructure",
+                      "@collega/infrastructure/*",
+                      "@collega/api",
+                      "@collega/api/*"
+                    ],
+                    "message": "apps/web reaches the server over HTTP only. Import @collega/design-system, or call the API. This is constraint 11, and the lint error is what stops it eroding - SPEC/50-typescript-migration.md section 4.3."
+                  },
+                  {
+                    "group": [
+                      "jsonwebtoken",
+                      "jsonwebtoken/*",
+                      "jose",
+                      "jose/*",
+                      "@nestjs/jwt",
+                      "@nestjs/jwt/*"
+                    ],
+                    "message": "Only the authentication chokepoint may read a credential. Ask CurrentUserContext instead - code reading a credential directly silently opts itself out of View As (SPEC/20-feature-view-as.md rules 4/4a). The allowlist is in SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md section 7.4 and is asserted by tools/arch/identity-chokepoint.test.ts."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/infrastructure/src/security/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@collega/design-system",
+                      "@collega/design-system/*",
+                      "@collega/api",
+                      "@collega/api/*",
+                      "@collega/web",
+                      "@collega/web/*"
+                    ],
+                    "message": "packages/infrastructure implements application and domain abstractions. It renders nothing and must not depend on its host."
+                  },
+                  {
+                    "group": ["@nestjs/jwt", "@nestjs/jwt/*", "next/headers", "next/headers/*"],
+                    "message": "Only the authentication chokepoint may read a credential. Ask CurrentUserContext instead - code reading a credential directly silently opts itself out of View As (SPEC/20-feature-view-as.md rules 4/4a). The allowlist is in SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md section 7.4 and is asserted by tools/arch/identity-chokepoint.test.ts."
                   }
                 ]
               }

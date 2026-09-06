@@ -1,0 +1,14 @@
+{
+  "name": "@collega/arch",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Architecture tests: assertions about the shape of the codebase that lint cannot make.",
+  "scripts": {
+    "test": "node --test \"*.test.ts\""
+  },
+  "devDependencies": {
+    "@types/node": "26.4.1",
+    "typescript": "7.0.2"
+  }
+}

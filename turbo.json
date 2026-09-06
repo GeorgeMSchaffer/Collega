@@ -23,9 +23,6 @@
       ],
       "outputs": []
     },
-    "lint": {
-      "outputs": []
-    },
     "collega-e2e#test": {
       "dependsOn": [
         "^build"
