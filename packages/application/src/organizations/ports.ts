@@ -68,28 +68,9 @@ export interface OrganizationBootstrapPort {
   ): Promise<OrganizationBootstrapResult>
 }
 
-export interface Clock {
-  readonly utcNow: Date
-}
-
+// Clock and AuditEventWriter/AuditEventInput come from the shared kernel
+// (`@collega/application/common`) - not redeclared here. UnitOfWork stays local: the kernel
+// amendment didn't add one, and every Wave B partition needs its own until it does.
 export interface UnitOfWork {
   saveChanges(): Promise<void>
-}
-
-/** Data passed to `AuditEventWriter.write` - a DTO at the application boundary, not the audit
- * domain entity itself (that lives outside this slice's globs). */
-export type AuditEventInput = {
-  readonly eventType: string
-  readonly entityType: string
-  readonly message: string
-  readonly occurredAtUtc: Date
-  readonly organizationId: string | null
-  readonly actorUserId: string | null
-  readonly entityId: string | null
-  readonly metadataJson: string | null
-  readonly onBehalfOfUserId: string | null
-}
-
-export interface AuditEventWriter {
-  write(event: AuditEventInput): Promise<void>
 }

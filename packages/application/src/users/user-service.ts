@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { Role, UserStatus } from '@collega/domain/enums'
 import {
   administerUser,
@@ -7,14 +8,18 @@ import {
   type User,
   validatePassword,
 } from '@collega/domain/users'
-import type { PageRequest } from '../common/index.js'
 import {
   ApplicationError,
+  type AuditEventWriter,
   attributeAudit,
+  type Clock,
   ConflictError,
   type CurrentUserContext,
   ForbiddenError,
+  MAX_PAGE_SIZE,
   NotFoundError,
+  normalizePageRequest,
+  type PageRequest,
   UnauthorizedError,
   ValidationError,
 } from '../common/index.js'
@@ -31,24 +36,16 @@ import type {
   UserListQuery,
   UserListResult,
 } from './models.js'
-import type {
-  AuditEventWriter,
-  Clock,
-  PasswordHasher,
-  UnitOfWork,
-  UserRepository,
-} from './ports.js'
+import type { PasswordHasher, UnitOfWork, UserRepository } from './ports.js'
 
-// Matches Collega.Application.Common.PageRequest exactly (default 20, max 100) - see the
-// matching note in organizations/organization-service.ts.
-const LIST_DEFAULT_PAGE_SIZE = 20
-const LIST_MAX_PAGE_SIZE = 100
-
-function normalizeListPage(page: number | null, pageSize: number | null): PageRequest {
-  const normalizedPage = page !== null && page > 0 ? Math.trunc(page) : 1
-  const requested = Math.trunc(pageSize ?? LIST_DEFAULT_PAGE_SIZE)
-  const normalizedPageSize = Math.min(LIST_MAX_PAGE_SIZE, Math.max(1, requested))
-  return { page: normalizedPage, pageSize: normalizedPageSize }
+// `exactOptionalPropertyTypes` refuses `{ page: number | undefined }` for an optional `page?:
+// number` - the key must be absent, not present-with-undefined - so a query's nullable fields
+// are translated into present-or-absent keys rather than passed straight through.
+function toPageRequestInput(page: number | null, pageSize: number | null): Partial<PageRequest> {
+  return {
+    ...(page !== null ? { page } : {}),
+    ...(pageSize !== null ? { pageSize } : {}),
+  }
 }
 
 /**
@@ -75,7 +72,7 @@ export class UserService {
 
     const page = await this.users.listByOrganization({
       organizationId,
-      page: normalizeListPage(query.page, query.pageSize),
+      page: normalizePageRequest(toPageRequestInput(query.page, query.pageSize)),
       search: query.search?.trim() ?? null,
       role: parseOptionalRole(query.role),
       status: parseOptionalStatus(query.status),
@@ -100,7 +97,7 @@ export class UserService {
     for (let page = 1; ; page++) {
       const result = await this.users.listByOrganization({
         organizationId,
-        page: { page, pageSize: LIST_MAX_PAGE_SIZE },
+        page: { page, pageSize: MAX_PAGE_SIZE },
         search: null,
         role: null,
         status: UserStatus.Active,
@@ -121,7 +118,7 @@ export class UserService {
   async create(organizationId: string, command: CreateUserCommand): Promise<CreateUserResult> {
     await this.authorizeOrganizationScope(organizationId)
 
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const role = parseAssignableRole(command.role)
     const status = parseStatus(command.status, UserStatus.Active) ?? UserStatus.Active
 
@@ -146,6 +143,7 @@ export class UserService {
     // #31).
     const user = createOrganizationUser(
       {
+        id: randomUUID(),
         organizationId,
         firstName: command.firstName,
         lastName: command.lastName,
@@ -253,7 +251,7 @@ export class UserService {
 
   async update(userId: string, command: UpdateUserCommand): Promise<UserDetail> {
     const user = await this.loadInScope(userId)
-    const now = this.clock.utcNow
+    const now = this.clock.now()
 
     const newRole = parseAssignableRole(command.role)
     const newStatus = parseStatus(command.status, null)
@@ -438,20 +436,17 @@ export class UserService {
     nowUtc: Date,
     metadata: Record<string, unknown> | null,
   ): Promise<void> {
-    const metadataJson = metadata === null ? null : JSON.stringify(metadata)
     // Rule 14: while acting as someone, the real administrator is the actor and the target moves
     // to onBehalfOfUserId - an audit row must never read as though the target did it.
-    const attribution = attributeAudit(this.currentUser, actorUserId)
     await this.auditEventWriter.write({
       eventType,
       entityType: 'User',
       message,
       occurredAtUtc: nowUtc,
       organizationId,
-      actorUserId: attribution.actorUserId,
       entityId,
-      metadataJson,
-      onBehalfOfUserId: attribution.onBehalfOfUserId,
+      metadataJson: metadata === null ? null : JSON.stringify(metadata),
+      attribution: attributeAudit(this.currentUser, actorUserId),
     })
   }
 }

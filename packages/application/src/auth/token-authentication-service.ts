@@ -1,8 +1,9 @@
 import { UserStatus } from '@collega/domain/enums'
 import type { User } from '@collega/domain/users'
+import type { Clock } from '../common/index.js'
 import type { UserRepository } from '../users/ports.js'
 import type { AuthenticatedPrincipal } from './models.js'
-import type { AccessTokenValidator, Clock, ImpersonationResolver } from './ports.js'
+import type { AccessTokenValidator, ImpersonationResolver } from './ports.js'
 
 /**
  * Validates a bearer token and resolves the live `AuthenticatedPrincipal` behind it. Used
@@ -23,7 +24,7 @@ export class TokenAuthenticationService {
       return null
     }
 
-    const validated = this.tokenValidator.tryValidate(token, this.clock.utcNow)
+    const validated = this.tokenValidator.tryValidate(token, this.clock.now())
     if (!validated) {
       return null
     }
@@ -47,7 +48,7 @@ export class TokenAuthenticationService {
     // The token always names the real user; impersonation is never carried in it
     // (SPEC/20-feature-view-as.md rule 1). Resolving the session here - the one place identity is
     // already established - is what lets every downstream authorization check work unchanged.
-    const impersonated = await this.impersonation.resolveActingPrincipal(user, this.clock.utcNow)
+    const impersonated = await this.impersonation.resolveActingPrincipal(user, this.clock.now())
     if (impersonated) {
       return impersonated
     }

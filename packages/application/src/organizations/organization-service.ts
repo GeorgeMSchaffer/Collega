@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { Role } from '@collega/domain/enums'
 import {
   archiveOrganization,
@@ -10,12 +11,15 @@ import {
   setOrganizationLogo,
   updateOrganization,
 } from '@collega/domain/organizations'
-import type { PageRequest } from '../common/index.js'
 import {
+  type AuditEventWriter,
   attributeAudit,
+  type Clock,
   type CurrentUserContext,
   ForbiddenError,
   NotFoundError,
+  normalizePageRequest,
+  type PageRequest,
   UnauthorizedError,
   ValidationError,
 } from '../common/index.js'
@@ -32,8 +36,6 @@ import type {
   UpdateOrganizationCommand,
 } from './models.js'
 import type {
-  AuditEventWriter,
-  Clock,
   InviteCodeGenerator,
   OrganizationBootstrapPort,
   OrganizationRepository,
@@ -42,17 +44,14 @@ import type {
 
 const INVITE_CODE_GENERATION_ATTEMPTS = 10
 
-// Matches Collega.Application.Common.PageRequest exactly (default 20, max 100) - the golden
-// corpus was recorded against those values, and they differ from the shared kernel's
-// DEFAULT_PAGE_SIZE/MAX_PAGE_SIZE (25/200). See the slice report for why this isn't reused.
-const LIST_DEFAULT_PAGE_SIZE = 20
-const LIST_MAX_PAGE_SIZE = 100
-
-function normalizeListPage(page: number | null, pageSize: number | null): PageRequest {
-  const normalizedPage = page !== null && page > 0 ? Math.trunc(page) : 1
-  const requested = Math.trunc(pageSize ?? LIST_DEFAULT_PAGE_SIZE)
-  const normalizedPageSize = Math.min(LIST_MAX_PAGE_SIZE, Math.max(1, requested))
-  return { page: normalizedPage, pageSize: normalizedPageSize }
+// `exactOptionalPropertyTypes` refuses `{ page: number | undefined }` for an optional `page?:
+// number` - the key must be absent, not present-with-undefined - so a query's nullable fields
+// are translated into present-or-absent keys rather than passed straight through.
+function toPageRequestInput(page: number | null, pageSize: number | null): Partial<PageRequest> {
+  return {
+    ...(page !== null ? { page } : {}),
+    ...(pageSize !== null ? { pageSize } : {}),
+  }
 }
 
 /**
@@ -79,7 +78,7 @@ export class OrganizationService {
     this.requireSiteAdmin()
 
     const page = await this.organizations.list({
-      page: normalizeListPage(query.page, query.pageSize),
+      page: normalizePageRequest(toPageRequestInput(query.page, query.pageSize)),
       search: query.search?.trim() ?? null,
       includeArchived: query.includeArchived,
       sortBy: query.sortBy,
@@ -99,12 +98,13 @@ export class OrganizationService {
   async create(command: CreateOrganizationCommand): Promise<CreateOrganizationResult> {
     this.requireSiteAdmin()
 
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const actorUserId = this.currentUser.userId
     const inviteCode = await this.generateUniqueInviteCode()
 
     const organization = createOrganization(
       {
+        id: randomUUID(),
         title: command.title,
         description: command.description,
         inviteCode,
@@ -154,7 +154,7 @@ export class OrganizationService {
     command: UpdateOrganizationCommand,
   ): Promise<OrganizationDetail> {
     const organization = await this.loadForAdministration(organizationId)
-    const now = this.clock.utcNow
+    const now = this.clock.now()
 
     const updated = updateOrganization(
       organization,
@@ -184,7 +184,7 @@ export class OrganizationService {
 
   async regenerateInviteCode(organizationId: string): Promise<RegenerateInviteCodeResult> {
     const organization = await this.loadForAdministration(organizationId)
-    const now = this.clock.utcNow
+    const now = this.clock.now()
 
     const newCode = await this.generateUniqueInviteCode()
     const updated = regenerateInviteCode(organization, newCode, now, this.currentUser.userId)
@@ -225,7 +225,7 @@ export class OrganizationService {
       })
     }
 
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const updated = setOrganizationLogo(
       organization,
       dataUri,
@@ -250,7 +250,7 @@ export class OrganizationService {
 
   async clearLogo(organizationId: string): Promise<OrganizationDetail> {
     const organization = await this.loadForAdministration(organizationId)
-    const now = this.clock.utcNow
+    const now = this.clock.now()
 
     const updated = clearOrganizationLogo(organization, now, this.currentUser.userId)
     await this.organizations.update(updated)
@@ -277,7 +277,7 @@ export class OrganizationService {
       throw new NotFoundError('Organization not found.')
     }
 
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const archived = archiveOrganization(organization, now, this.currentUser.userId)
     await this.organizations.update(archived)
     await this.unitOfWork.saveChanges()
@@ -351,20 +351,17 @@ export class OrganizationService {
     nowUtc: Date,
     metadata: Record<string, unknown> | null,
   ): Promise<void> {
-    const metadataJson = metadata === null ? null : JSON.stringify(metadata)
     // Rule 14: while acting as someone, the real administrator is the actor and the target moves
     // to onBehalfOfUserId - an audit row must never read as though the target did it.
-    const attribution = attributeAudit(this.currentUser, actorUserId)
     await this.auditEventWriter.write({
       eventType,
       entityType: 'Organization',
       message,
       occurredAtUtc: nowUtc,
       organizationId,
-      actorUserId: attribution.actorUserId,
       entityId: organizationId,
-      metadataJson,
-      onBehalfOfUserId: attribution.onBehalfOfUserId,
+      metadataJson: metadata === null ? null : JSON.stringify(metadata),
+      attribution: attributeAudit(this.currentUser, actorUserId),
     })
   }
 }

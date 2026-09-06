@@ -1,5 +1,4 @@
 export { AuthService } from './auth-service.js'
-export * from './errors.js'
 export * from './models.js'
 export * from './ports.js'
 export { TokenAuthenticationService } from './token-authentication-service.js'

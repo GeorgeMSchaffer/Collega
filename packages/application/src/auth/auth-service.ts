@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { Role, UserStatus } from '@collega/domain/enums'
 import { normalizeInviteCode } from '@collega/domain/organizations'
 import {
@@ -17,17 +18,19 @@ import {
   validatePassword,
 } from '@collega/domain/users'
 import {
+  type AuditEventWriter,
   attributeAudit,
+  type Clock,
   ConflictError,
   type CurrentUserContext,
   ForbiddenError,
+  LockedOutError,
   NotFoundError,
   UnauthorizedError,
   ValidationError,
 } from '../common/index.js'
 import type { OrganizationRepository } from '../organizations/ports.js'
 import type { UserRepository } from '../users/ports.js'
-import { LockedOutError } from './errors.js'
 import type {
   ChangePasswordCommand,
   CurrentUserSummary,
@@ -38,14 +41,7 @@ import type {
   TemporaryPasswordResult,
   UpdateProfileCommand,
 } from './models.js'
-import type {
-  AccessTokenIssuer,
-  AuditEventWriter,
-  Clock,
-  ImageProcessor,
-  PasswordHasher,
-  UnitOfWork,
-} from './ports.js'
+import type { AccessTokenIssuer, ImageProcessor, PasswordHasher, UnitOfWork } from './ports.js'
 
 // <=25px on either side, per the portrait-upload requirement.
 const PORTRAIT_MAX_DIMENSION = 25
@@ -69,7 +65,7 @@ export class AuthService {
   ) {}
 
   async login(command: LoginCommand): Promise<LoginResult> {
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const normalizedEmail = normalizeEmail(command.email ?? '')
     const user = await this.users.getByNormalizedEmail(normalizedEmail)
 
@@ -189,7 +185,7 @@ export class AuthService {
 
   /** Self-service update of the caller's own first/last name (auth requirement #20). */
   async updateProfile(userId: string, command: UpdateProfileCommand): Promise<CurrentUserSummary> {
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const user = await this.requireUser(userId)
 
     // Names are validated for shape at the API boundary; the domain function trims and enforces
@@ -215,7 +211,7 @@ export class AuthService {
    * disguised content), resizes to the portrait thumbnail, and stores it on the caller's
    * record. */
   async updatePortrait(userId: string, imageBytes: Uint8Array): Promise<CurrentUserSummary> {
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const user = await this.requireUser(userId)
 
     if (imageBytes.length === 0) {
@@ -253,7 +249,7 @@ export class AuthService {
 
   /** Clears the caller's stored portrait so the initials avatar is shown again. */
   async removePortrait(userId: string): Promise<CurrentUserSummary> {
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const user = await this.requireUser(userId)
 
     const updated = removeUserPortrait(user, now, user.id)
@@ -274,7 +270,7 @@ export class AuthService {
   }
 
   async changePassword(userId: string, command: ChangePasswordCommand): Promise<void> {
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const user = await this.requireUser(userId)
 
     if (!this.passwordHasher.verify(command.currentPassword ?? '', user.passwordHash)) {
@@ -312,7 +308,7 @@ export class AuthService {
   }
 
   async register(command: RegisterCommand): Promise<RegisterResult> {
-    const now = this.clock.utcNow
+    const now = this.clock.now()
     const inviteCode = normalizeInviteCode(command.inviteCode)
 
     if (inviteCode.length === 0) {
@@ -346,6 +342,7 @@ export class AuthService {
     // org-and-users requirement #4) and are not forced to change their own chosen password.
     const user = createOrganizationUser(
       {
+        id: randomUUID(),
         organizationId: organization.id,
         firstName: command.firstName,
         lastName: command.lastName,
@@ -381,7 +378,7 @@ export class AuthService {
   }
 
   async issueTemporaryPassword(targetUserId: string): Promise<TemporaryPasswordResult> {
-    const now = this.clock.utcNow
+    const now = this.clock.now()
 
     if (
       !this.currentUser.isAuthenticated ||
@@ -449,20 +446,17 @@ export class AuthService {
     nowUtc: Date,
     metadata: Record<string, unknown> | null,
   ): Promise<void> {
-    const metadataJson = metadata === null ? null : JSON.stringify(metadata)
     // Rule 14: while acting as someone, the real administrator is the actor and the target moves
     // to onBehalfOfUserId - an audit row must never read as though the target did it.
-    const attribution = attributeAudit(this.currentUser, actorUserId)
     await this.auditEventWriter.write({
       eventType,
       entityType: 'User',
       message,
       occurredAtUtc: nowUtc,
       organizationId,
-      actorUserId: attribution.actorUserId,
       entityId,
-      metadataJson,
-      onBehalfOfUserId: attribution.onBehalfOfUserId,
+      metadataJson: metadata === null ? null : JSON.stringify(metadata),
+      attribution: attributeAudit(this.currentUser, actorUserId),
     })
   }
 }
