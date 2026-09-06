@@ -105,3 +105,7 @@ SPEC/mockups/_build/__pycache__
 
 # Proxy CA certificates are environment-specific (see docker/proxy-ca/README.md)
 docker/proxy-ca/*.crt
+
+# npm lockfile. This is a pnpm workspace (pnpm-lock.yaml is the tracked lockfile);
+# a stray package-lock.json from an accidental `npm install` desyncs the two.
+package-lock.json
