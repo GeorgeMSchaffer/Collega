@@ -29,13 +29,12 @@ Re-capture only if the API surface changes, and against a freshly seeded databas
 | Slice | Owns | State |
 |---|---|---|
 | A1 capture harness | `tools/golden/` | **Done 2026-09-03** |
-| A2 golden corpus | `tools/golden/fixtures/` — 81 endpoints × 4 roles, error paths included | **Open — needs the running .NET API and a freshly seeded database** |
+| A2 golden corpus | `tools/golden/fixtures/` — 81 endpoints × 4 roles, error paths included | **Done 2026-09-03** — 447 cases committed, plus `manifest.json` |
 | A3 replay harness | `tools/golden/replay/` | **Done 2026-09-03** |
 
-A2 is now the whole of Wave A's remaining risk. The harness generates the case grid
-(`golden scaffold`), refuses to record a case still marked `todo`, and reports coverage
-against the endpoint list it reads from the controllers — so what is left is filling in
-request bodies against a running API, and running the capture. `tools/golden/README.md`.
+Wave A carries no remaining risk. Re-capture only if the API surface changes, and only
+while the .NET API still exists — `tools/golden/README.md` names the two deliberate
+coverage gaps and explains why the capture needs a freshly seeded database.
 
 ---
 
@@ -47,8 +46,8 @@ throughput.
 
 | Wave | What | Max concurrent | Starts when |
 |---|---|---:|---|
-| A | Golden capture | 2 | **Started 2026-08-31** — must finish before Sprint 8 closes |
-| 0 | Foundation: monorepo, Prisma schema, kernel | **1 (serial)** | Sprint 8 complete |
+| A | Golden capture | 2 | **Complete 2026-09-03** — ran ahead, against the live .NET API |
+| 0 | Foundation: monorepo, Prisma schema, kernel | **1 (serial)** | **Unblocked 2026-09-04** when `08` was decided |
 | B | Domain + Application, 7 feature partitions | 7 | S0.3 merged |
 | C | Infrastructure: repositories, integrations | 2 | S0.2 merged |
 | D | API, mirroring B's partition | 7 | per-partition, as each B*n* merges |
@@ -94,19 +93,35 @@ Beyond `SPEC/90-definition-of-done.md`:
 - **F2 green** — the adapted Playwright suite passes against the comp P UI.
 - Layer boundaries pass lint (`eslint-plugin-boundaries`), including the rule that
   `apps/web` never imports `packages/application`.
-- The standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas) exists in the new stack.
+- The standard demo seed (2 orgs, **10 users**, 4 boards, 44 ideas) exists in the new stack.
+  Ten is 2 orgs × 4 accounts (one Org Admin, two User, one Read Only) plus the configured
+  Site Admin and the Development-only convenience Site Admin.
 - F4's rollback window is **stated**, and F3 has answered in writing whether the data
   transform is reversible.
 
 ## Open before this sprint can start
 
-Answered 2026-09-03 and no longer gating: `01` (comp P on Tailwind + shadcn/ui, and
+**Nothing.** Eleven of the conversion map's twelve tickets are decided; the twelfth does
+not gate any wave.
+
+Answered 2026-09-03 (`SPEC/decisions.md`): `01` (comp P on Tailwind + shadcn/ui, and
 Question C — Wave G), `02` (Vercel + Prisma Postgres), `10` (discard the .NET suite).
-All three are in `SPEC/decisions.md`.
 
-Still open on the conversion map:
+Answered 2026-09-04, which is what unblocked Wave 0:
 
-- **`05` Prisma introspection fidelity** and **`07` View As ambient identity** — the two
-  AFK research tickets. Neither has started. `06` (schema reshape scope) waits on `05`,
-  `08` (auth / session model) waits on `07`, and **`08` gates Wave 0**.
-- **`11` spec reconciliation.**
+- **`05` Prisma introspection fidelity** — no EF global query filters exist, so org scoping
+  ports as ordinary Application-layer code. Introspection silently drops **three partial
+  unique indexes**; S0.2 owes them as raw SQL plus a test that fails if any is absent.
+  `typescript-conversion-map/findings/05-prisma-introspection.md`.
+- **`07` View As ambient identity** — `AsyncLocalStorage` behind a singleton `CurrentUserContext`
+  port, seeded in middleware (a guard cannot open the store) and filled by the auth guard,
+  with the chokepoint lint-enforced.
+  `typescript-conversion-map/findings/07-nest-ambient-identity.md`.
+- **`06` schema reshape scope** — forced reshapes only, plus promoting all nine enum
+  converters. S0.2 does **not** lay down Wave G's entities, so Wave G buys a schema
+  amendment slice.
+- **`08` auth / session model** — option C: Nest issues the httpOnly session cookie and Next
+  stays a pure client; the cross-origin setup is accepted as the cost. This was the last
+  thing gating Wave 0.
+
+Still open, and deliberately not gating: **`11` spec reconciliation**, which lands as F5.

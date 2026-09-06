@@ -1,7 +1,9 @@
 # TypeScript Stack Migration — Costed, Sequenced Plan
 
-Status: **plan, not authorization to build.** Written 2026-08-31.
-Supersedes nothing; constrains the conversion effort when it is authorized.
+Status: **authorized and executing.** Written 2026-08-31; became the active sprint's plan
+2026-09-04, when Sprint 8 was cancelled and conversion ticket `08` cleared the last gate on
+Wave 0. Execution wrapper: `SPEC/sprints/sprint-09-typescript-conversion.md`.
+Supersedes nothing; constrains the conversion effort.
 
 Converts Collega from .NET 8 / Blazor WASM / EF Core to Next.js + Nest.js + Prisma +
 Postgres on Vercel, per the stack recorded in `CLAUDE.md`.
@@ -136,7 +138,7 @@ the difference between seven agents working and seven agents producing merge con
 | Root `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json` | Any slice might add a dependency | Foundation owns all four. Feature slices declare dependencies **only in their own package's `package.json`**. A new root-level dependency is an escalation to the integrator. |
 | `apps/web/app/layout.tsx`, global token CSS | Every page depends on it | **Owned by E0 (design system), then frozen.** E0 must merge before any E1–E6 slice starts. |
 | Config / env schema | Every feature adds keys | Foundation defines a typed config module that composes **per-feature schema fragments**. Features add a fragment file; nobody edits the root schema. |
-| Database seed script | Every feature seeds demo data | Split into per-feature seed modules composed by one root seeder owned by Foundation. The standard demo seed (2 orgs, 8 users, 4 boards, 44 ideas) must exist in the new stack for the same reason it exists now. |
+| Database seed script | Every feature seeds demo data | Split into per-feature seed modules composed by one root seeder owned by Foundation. The standard demo seed (2 orgs, 10 users, 4 boards, 44 ideas) must exist in the new stack for the same reason it exists now. |
 | `SPEC/implementation-agent-tracker.md` | Every slice updates status on finish | Serialize on the **merge**, not the work. The tracker is edited at merge time by whoever merges, never inside a worktree. |
 
 ### 4.3 Why HTTP-only is load-bearing here
@@ -166,16 +168,17 @@ ceiling set by collisions, and the reviewer as the throttle set by throughput.
 
 Sized to one worktree agent session. `⇉` marks the maximum number that can run at once.
 
-### Wave A — Golden capture ⇉ 2 · **RUNS BEFORE OR DURING SPRINT 8**
+### Wave A — Golden capture ⇉ 2 · **COMPLETE 2026-09-03**
 
-The only part of this effort that cannot wait. It runs against the **live .NET API**, so
-it collides with nothing in the TypeScript tree and can start immediately, in parallel
-with Sprint 7.5 / Sprint 8 feature work.
+The only part of this effort that could not wait, and it is done. It ran against the
+**live .NET API**, so it collided with nothing in the TypeScript tree. Its deadline was
+never Sprint 8's close — it is cutover, which deletes the .NET solution and with it any
+ability to record again.
 
 | Slice | Owns | Notes |
 |---|---|---|
-| **A1** Capture harness | `tools/golden/` | **Built 2026-09-03.** Drives the live .NET API and records request/response pairs across all four roles — Site Admin, Org Admin, User, Read Only — because authorization is behaviour, not decoration. Zero-dependency TypeScript on Node's own type stripping; 36 self-tests. `tools/golden/README.md`. |
-| **A2** Golden corpus | `tools/golden/fixtures/` | **Not started — needs the running .NET API.** Execute the capture across **81 endpoints × 4 roles**, including error paths and validation failures. Commit the fixtures. This is the oracle; if it is thin, the whole strategy is thin. `golden scaffold` generates the full grid of cases; `golden coverage` reports the holes. |
+| **A1** Capture harness | `tools/golden/` | **Built 2026-09-03.** Drives the live .NET API and records request/response pairs across all four roles — Site Admin, Org Admin, User, Read Only — because authorization is behaviour, not decoration. Zero-dependency TypeScript on Node's own type stripping; 48 self-tests. `tools/golden/README.md`. |
+| **A2** Golden corpus | `tools/golden/fixtures/` | **Recorded 2026-09-03.** **447 cases over all 81 endpoints** at four roles and anonymous, error paths and validation failures included, replaying 447/447 clean against a fresh seed. This is the oracle. `golden scaffold` generates the full grid of cases; `golden coverage` reports the holes, and `tools/golden/README.md` names the two deliberate ones. |
 | **A3** Replay harness | `tools/golden/replay/` | **Built 2026-09-03.** Replays the corpus against a target base URL and diffs. Written now against .NET as a self-check (it must pass against the stack it recorded), pointed at Nest in Wave F. |
 
 The endpoint count above is not quoted, it is read: `golden inventory` parses
@@ -183,8 +186,10 @@ The endpoint count above is not quoted, it is read: `golden inventory` parses
 tests fail if that stops being true. Coverage is measured against the same list, so a route
 the corpus never touches shows up as a hole rather than as silence.
 
-> **If Sprint 8 closes and Wave A has not run, the golden-test strategy is gone** and the
-> conversion proceeds with no oracle. Escalate rather than quietly proceeding.
+> **Until Wave F, the .NET stack must stay runnable** even though no development happens on
+> it. A re-capture is only possible while the API still boots, and cutover deletes it. A
+> change that breaks the API's boot path is still a problem — escalate rather than
+> quietly proceeding.
 
 ### Wave 0 — Foundation ⇉ 1 (strictly serial; blocks everything after it)
 
@@ -252,11 +257,12 @@ D1–D7 map one-to-one onto B1–B7, covering the 15 controllers and 81 endpoint
 E2 owns the desk layout file, so E3–E6 must not edit it — they render into it. This is
 the one place inside Wave E where a collision is plausible; the glob makes it explicit.
 
-**E6 carries unresolved product scope.** Outcome ↔ Issue cardinality is still the
-blocking Open Question in `SPEC/20-feature-issues-and-delivery.md`. Comp P renders
-multi-parent affordances, but that is a layout choice, not a decision. If single-parent
-wins, E6's grouping control becomes a radio group and the outcomes chip list collapses to
-one value. **Answer this before E6 starts**, not during.
+**E6's product scope was resolved 2026-09-02: single-parent.** An Issue sits under at most
+one Outcome (`Idea.OutcomeId`, nullable FK, `ON DELETE SET NULL`); no join table
+(`SPEC/decisions.md`). So E6's grouping control **is** a radio group and the outcomes chip
+list collapses to one value — comp P's multi-parent affordances were a layout choice, and
+the delivery comp was regenerated on the decision. No Open Question remains in
+`SPEC/20-feature-issues-and-delivery.md`.
 
 ### Wave F — Validation and cutover ⇉ 3, converging to 1
 
@@ -418,16 +424,22 @@ assumed.
 
 ## 9. Before execution starts
 
+**All five are closed. Execution has started.**
+
 1. **Reconcile the branches.** Done 2026-09-03 — the map is at
-   `SPEC/typescript-conversion-map/`. The ticket `01` conflict it surfaced was
-   decided the same day: comp P on Tailwind + shadcn/ui (`decisions.md`). Question C
-   (net-new scope) is the one part still open, and nothing in E0–E5 waits on it.
-2. ~~**Schedule Wave A now.**~~ **Done 2026-09-03** — 447 cases over all 81 endpoints,
-   committed. Its deadline was never Sprint 8's close (that sprint is cancelled); it is
-   cutover, which deletes the .NET solution and with it any ability to record again.
-   **Until then the .NET stack must stay runnable**, even though no further development
-   happens on it: a re-capture is only possible while the API still boots.
-3. **Answer the Outcome ↔ Issue cardinality question** before Wave E6.
-4. **Take ticket `10`** — it was blocked on `04`, which is now answered.
+   `SPEC/typescript-conversion-map/`. The ticket `01` conflict it surfaced was decided the
+   same day: comp P on Tailwind + shadcn/ui (`decisions.md`). Question C was decided the
+   same day too, as Wave G.
+2. **Schedule Wave A.** Done 2026-09-03 — 447 cases over all 81 endpoints, committed. Its
+   deadline was never Sprint 8's close (that sprint is cancelled); it is cutover, which
+   deletes the .NET solution and with it any ability to record again. **Until then the .NET
+   stack must stay runnable**, even though no further development happens on it: a
+   re-capture is only possible while the API still boots.
+3. **Answer the Outcome ↔ Issue cardinality question** before Wave E6 — answered
+   2026-09-02, **single-parent** (`SPEC/decisions.md`). See Wave E6 above.
+4. **Take ticket `10`** — answered 2026-09-03: the .NET suite is discarded in favour of the
+   golden corpus plus per-slice Vitest.
 5. **Reconcile `SPEC/20-feature-client-ui.md`** against the comp P lock — done
    2026-09-03.
+
+The one ticket still open, `11` spec reconciliation, lands as F5 and gates nothing before it.

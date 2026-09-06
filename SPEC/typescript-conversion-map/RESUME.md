@@ -1,82 +1,93 @@
 # Resume here
 
-Written 2026-08-30, end of the charting session. Read this first, then `map.md`.
+Rewritten 2026-09-06. The charting session this file was originally written for
+(2026-08-30) is long over — **all twelve tickets but one are decided, and the conversion
+is executing.** Read this, then `SPEC/sprints/sprint-09-typescript-conversion.md`.
 
 ## Where you are
 
-The wayfinder map for the TypeScript conversion is **charted**. No ticket has been resolved yet. The destination is a **costed plan document**, not the conversion itself.
+**Sprint 9 — the TypeScript conversion — is the ACTIVE sprint.** The destination is no
+longer a costed plan; that plan exists (`SPEC/50-typescript-migration.md`) and is being
+executed against.
 
-Branch: `feature/068-typescript-conversion-map`, based on `origin/dev`.
+Branch: `dev`. The map was ported off `feature/068-typescript-conversion-map` on
+2026-09-03 and lives here; that branch is history.
 
-```
-git fetch origin && git checkout feature/068-typescript-conversion-map
-```
+| | |
+|---|---|
+| Tickets decided | **11 of 12** |
+| Still open | **`11` spec reconciliation** — lands as F5, gates nothing |
+| Wave A (the oracle) | **Complete** — 447 cases, all 81 endpoints, replaying clean |
+| Wave 0 (foundation) | **Unblocked 2026-09-04**, this is the frontier |
+| Waves B–G | Not started |
 
 ## Do this first
 
-Open the four comps side by side and answer `01`. It is the only ticket with artifacts already waiting, and Question A on it ("who is the primary user?") is the one answer that makes several other questions easier.
+**Wave 0, slice S0.1 — the monorepo skeleton.** It is strictly serial and blocks
+everything after it. `SPEC/50-typescript-migration.md` §5 states what it owns.
 
-```
-SPEC/mockups/comp-j-command-deck.html
-SPEC/mockups/comp-k-material-workspace.html
-SPEC/mockups/comp-l-canvas-board.html
-SPEC/mockups/comp-m-editorial-continuum.html
-```
+Wave 0's three slices run one at a time, in order:
 
-## Then this — and don't let it slide
-
-**Ticket `04` has a deadline the others don't.** If the validation strategy involves recording golden request/response pairs from the live .NET API, that capture has to happen **while the .NET API still exists** — before or during Sprint 8. Every other ticket on this map can wait for Sprint 8 to close. This one cannot, and it is the ticket that decides whether a ~61,000-line rewrite has any oracle at all.
-
-## Frontier — takeable right now
-
-| Ticket | Type | Note |
-|---|---|---|
-| `02` deployment target | grilling | Needs your read on what "ecosystem" meant |
-| `03` what ports | grilling | Recommendation is "everything, but View As gets its own slice" |
-| `04` validation strategy | grilling | **Highest leverage. Has a calendar consequence.** |
-| `05` Prisma introspection | research | **AFK — can run unattended in a worktree** |
-| `07` View As ambient identity | research | **AFK — can run unattended in a worktree** |
-| `09` Next↔Nest boundary | grilling | ADR candidate |
-| `11` spec reconciliation | grilling | |
-
-`01` is claimed. `06` waits on `05`; `08` waits on `07`; `10` waits on `04`; `12` assembles everything.
-
-The two research tickets are the obvious parallel work — they need no conversation, and both feed decisions that are otherwise blocked. Running them in worktrees while you think about `01` costs nothing.
-
-## Two things I could not resolve for you
-
-**1. Your local `dev` is diverged.** It carries 2 commits not on `origin/dev` (`3582713`, `f72ed69`) and is 17 behind. Both look like work the other machine already did independently — `163a46d` and `6399070` cover the same ground. I branched off `origin/dev` rather than merging, so nothing is lost, but the divergence is still there and reconciling it is your call.
-
-**2. The two tracker lineages disagree**, and both are wrong about client size. Local says 760 tests / Sprint 8 next / 29 pages. Origin says 811 tests / Sprint 7.5 next / 16 pages. The tree says 21 page files and 14 shared components. **The map's baseline is measured from the tree on `origin/dev`, not read from either tracker** — keep it that way.
-
-## Baseline (measured, not quoted)
-
-| Project | Size |
+| Slice | Owns |
 |---|---|
-| Domain | 3,135 lines · 23 entity classes |
-| Application | 8,568 lines · 30 services |
-| Infrastructure | 14,342 lines · 19 DbSets · 11 migrations |
-| API | 4,009 lines · 15 controllers · **81 endpoints** |
-| Client | 2,024 C# + 10,960 Razor + 1,397 scoped CSS |
-| Tests | 16,615 lines |
-| **Total** | **~61,000 lines to re-express** |
+| **S0.1** | root configs, `turbo.json`, `pnpm-workspace.yaml`, `tsconfig.base.json`, layer-boundary lint, CI task graph |
+| **S0.2** | `packages/infrastructure/prisma/**` — `db pull`, deliberate reshape, generated client, per-feature seed composition. **Freezes the schema.** |
+| **S0.3** | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` — error model, result types, pagination, auth guard skeleton, `AsyncLocalStorage` request context |
+
+## Two things S0.1 and S0.2 owe that are easy to miss
+
+**S0.2 owes three partial unique indexes as raw SQL.** `prisma db pull` drops them
+*silently* — it says nothing, and `migrate diff` reports an empty migration, because the
+engine does not model them. One of the three is what makes "at most one open View As
+session per user" a database guarantee rather than a race. S0.2 must add them as raw SQL
+in the first migration **plus a test that fails if any is absent**.
+Detail: `findings/05-prisma-introspection.md`.
+
+**Identity is `AsyncLocalStorage`, not Nest request scope.** The store is seeded in
+middleware — a guard cannot open one, because `canActivate` returns before the handler
+runs — filled by the auth guard, and read through a **singleton** provider with lazy
+getters implementing the `CurrentUserContext` port. An absent store must **throw**, not
+read as anonymous, or `ensureNotDirectSiteAdmin` passes for background work. On Vercel the
+new hazard is **module-scope identity caching**, which serves one user's identity to the
+next in a warm container. The chokepoint gets lint enforcement plus one exact-equality
+architecture test, because documentation did not prevent this bug class before.
+Detail: `findings/07-nest-ambient-identity.md`.
+
+## The deadline that is still live
+
+**Cutover deletes the .NET solution, and the golden corpus can never be recorded again
+after that.** Until Wave F, `dotnet run` and `dotnet test` must keep working even though
+no development happens on them. A change that breaks the API's boot path is a problem, not
+a curiosity. Re-capture only against a freshly seeded database — `tools/golden/README.md`
+explains why.
 
 ## Settled — do not re-litigate
 
-Plan not build · motive is hiring + ecosystem so the whole stack moves · starts after Sprint 8 · estimated in agent-slices · Vitest + Playwright, not Cypress · big-bang cutover · Prisma introspect then reshape · Turborepo + pnpm with lint-enforced layer boundaries · UI is a redesign with Comp C unlocked.
+Plan not build is **over**; this is the build. Motive is hiring + ecosystem so the whole
+stack moves · estimated in agent-slices · Vitest + Playwright, not Cypress · big-bang
+cutover · Prisma introspect then reshape · Turborepo + pnpm with lint-enforced layer
+boundaries · **UI is comp P on Tailwind v4 + shadcn/ui**, comp Q is the reference
+rendering · **Vercel + Prisma Postgres**, so Nest is serverless and keeps no in-process
+state · **the .NET test suite is discarded** · net-new scope is **Wave G**, after F1 ·
+**Outcome ↔ Issue is single-parent**.
 
-Full detail and rationale in `map.md` under "Settled during charting".
+Full detail and rationale in `map.md` and `SPEC/decisions.md`.
 
----
+## Comp status — settled, nothing outstanding
 
-## Comp status (settled 2026-08-30, nothing outstanding)
+**Comp P is locked and canonical** (2026-09-03), and the shipped Blazor client was ported
+to it so the conversion starts from a settled baseline: four files, 46 screens, every one
+at four roles and four states. **Comp Q** re-renders the same fragments on Tailwind v4 +
+shadcn/ui and is the reference for Wave E; `_build/build_q.py` carries the component map.
 
-**Comp J was rejected and has been deleted.** User feedback: *"I don't think a dark theme is appropriate for a business user type application."* Dark-first was integral to that direction rather than a setting on it, so the comp was retired rather than restyled. It is recoverable from git history at `0e2bd39`.
+Comps J–N are history. J was rejected outright — *"I don't think a dark theme is
+appropriate for a business user type application"* — and deleted; it is recoverable at
+`0e2bd39`. The six feature concepts N carried were triaged on ticket `01` Question C: Loop,
+decision records, commitment strip and Triage Mode are **in, as Wave G**; momentum,
+duplicate clustering and vote budget are **out**.
 
-**Comp N "Decision Desk"** replaced it — `SPEC/mockups/comp-n-decision-desk.html`, light only, browser-verified. Its argument is a product argument rather than a visual one: the hard problem is deciding, not displaying. It carries six new feature concepts (Triage Mode, duplicate clustering, vote budget, decision records, momentum over totals, commitment strip), all of which are **separable from its look** and are now Question C on ticket `01`.
+## The estimate
 
-Four comps stand: **K, L, M, N**. All indexed in `SPEC/mockups/README.md` with the buildability assessment of each of N's concepts.
-
-## One estimate exists already
-
-Ticket `12` carries a first-pass token estimate: **~1.5–2.5M to finish this map**, and **~15–30M to execute the conversion** if it is ever authorized. Low confidence on the multiplier, moderate on the slice count, deliberately not converted to currency. Tickets `04`, `09`, `10` and `01`-Question-C are what move it.
+`SPEC/50-typescript-migration.md` §6: **~66–82 slices, ~18–33M tokens for the port,
+centred near 22M**, plus Wave G's ~10 slices. Confidence is low on the multiplier and
+moderate on the slice count. This does not fit in one session and was never expected to.
