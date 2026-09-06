@@ -252,7 +252,10 @@ export class AuthService {
     // Security boundary: the bytes are decoded through a real image codec. Content that isn't a
     // genuine GIF/JPEG/PNG - including a disguised text/executable payload with an image name or
     // MIME type - comes back null and is rejected here, never persisted.
-    const thumbnail = this.imageProcessor.tryCreatePngThumbnail(imageBytes, PORTRAIT_MAX_DIMENSION)
+    const thumbnail = await this.imageProcessor.tryCreatePngThumbnail(
+      imageBytes,
+      PORTRAIT_MAX_DIMENSION,
+    )
     if (!thumbnail) {
       throw new ValidationError(VALIDATION_TITLE, {
         portrait: ["That file isn't a supported image. Upload a GIF, JPEG, or PNG."],

@@ -46,7 +46,12 @@ export interface ImageProcessor {
    * ratio preserved; never upscaled). Returns `null` when the input is empty, not a decodable
    * image, or not one of the supported formats.
    */
-  tryCreatePngThumbnail(input: Uint8Array, maxDimension: number): Uint8Array | null
+  /**
+   * Asynchronous, unlike the .NET `IImageProcessor` it ports. That is forced rather than
+   * chosen: ImageSharp offered a synchronous API and `sharp` does not, so a synchronous
+   * signature here cannot be implemented at all. The result is unchanged.
+   */
+  tryCreatePngThumbnail(input: Uint8Array, maxDimension: number): Promise<Uint8Array | null>
 }
 
 /**
