@@ -15,6 +15,7 @@
     }
   },
   "scripts": {
+    "postinstall": "prisma generate --schema prisma/schema.prisma",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
