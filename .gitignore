@@ -75,6 +75,10 @@ node_modules/
 dist/
 .next/
 
+# Prisma's generated client. Regenerated from schema.prisma by `pnpm db:generate`;
+# committing it means a stale client can disagree with the schema without anyone noticing.
+packages/infrastructure/src/generated/
+
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
 

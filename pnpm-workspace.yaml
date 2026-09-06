@@ -38,6 +38,11 @@ allowBuilds:
   # Vitest's bundler. Its postinstall fetches the platform-native binary; without it
   # every package's `test` script fails before running a single test.
   esbuild: true
+  # Prisma's postinstall downloads the query and schema engines and generates the client.
+  # Without it every database call fails at import time, not at query time.
+  '@prisma/client': true
+  '@prisma/engines': true
+  prisma: true
 
 # pnpm 12 holds back very recently published versions by default as a supply-chain
 # measure. Playwright 1.63.0 is pinned deliberately, so it is excluded from that hold.
