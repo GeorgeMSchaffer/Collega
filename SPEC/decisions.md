@@ -9,6 +9,32 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-06 — Unresolved comment mentions are rejected, not ignored; the contract was wrong
+
+**Decided:** an unresolved `mentionEmails` address is rejected with a 400 keyed on
+`mentionEmails`, for comments exactly as for ideas. `30-Contracts.md` line 1232 is corrected;
+no code changes.
+
+**Why the spec lost.** That line said "unresolved addresses are ignored" and described
+behaviour the implementation has never had. Ideas and comments call the **same**
+`IMentionResolver`, whose contract is explicit that a mention which does not resolve to a
+same-organization user throws a `ValidationAppException` keyed on the field. Sprint 9 is a
+re-expression, not a redesign, so the port follows the implementation and the document is
+corrected to match.
+
+**Two things that made this worth stopping for.** No golden fixture exercises an unresolved
+mention, so the F1 replay cannot adjudicate it — this is one of the gaps the corpus's own
+README names, and it is exactly where a spec error survives unnoticed. And `Mentions` #4 in
+`20-feature-ideas-and-engagement.md` — "the UI must show inline validation and block save" —
+is a **client** rule, not a server one; reading it as a server rule is what makes this look
+like a spec-versus-spec conflict when it is a spec-versus-implementation one.
+
+**Raised by the B4 partition**, which read the two documents as conflicting and resolved it
+by following the merged Ideas partition's precedent rather than blocking. The precedent was
+right; the reasoning needed checking.
+
+---
+
 ## 2026-09-06 — Wave B conventions: commits, validation errors, and house style
 
 Settled after reviewing the first three partitions together, which had each answered these

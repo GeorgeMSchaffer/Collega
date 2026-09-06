@@ -1229,7 +1229,7 @@ Purpose: Add a comment to an idea.
 
 Request body:
 - `body` required string, max 2000 characters, plain text with line breaks
-- `mentionEmails` optional string array — same organization-scoped, email-based mention resolution as ideas (`SPEC/20-feature-ideas-and-engagement.md` "Comments" #5); unresolved addresses are ignored
+- `mentionEmails` optional string array — same organization-scoped, email-based mention resolution as ideas (`SPEC/20-feature-ideas-and-engagement.md` "Comments" #5); **an unresolved address is rejected with 400**, keyed on `mentionEmails`, using the canonical mention-resolution message in "Validation Message Conventions" above. **Corrected 2026-09-06** — this line previously read "unresolved addresses are ignored", which described behaviour the implementation never had: ideas and comments share one `IMentionResolver`, and it has always thrown. See `SPEC/decisions.md`.
 
 UX rules:
 - clients should show a live character counter and inline overflow validation
