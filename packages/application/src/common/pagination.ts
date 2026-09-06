@@ -13,8 +13,14 @@ export type Page<T> = {
   readonly totalCount: number
 }
 
-export const DEFAULT_PAGE_SIZE = 25
-export const MAX_PAGE_SIZE = 200
+// These are NOT free choices. The golden corpus - 447 recorded cases that Wave F replays
+// against Nest - was captured from the .NET API, whose PageRequest used exactly these two
+// numbers. Changing either silently changes what a page contains for every list endpoint
+// that does not pass an explicit size, and the replay diff would read as a data bug rather
+// than as a wrong constant. Source: src/Collega.Application/Common (DefaultPageSize,
+// MaxPageSize), while the .NET solution still exists to check against.
+export const DEFAULT_PAGE_SIZE = 20
+export const MAX_PAGE_SIZE = 100
 
 export function normalizePageRequest(request: Partial<PageRequest> | undefined): PageRequest {
   const page = Math.max(1, Math.trunc(request?.page ?? 1))

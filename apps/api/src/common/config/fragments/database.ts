@@ -27,8 +27,9 @@ export const databaseFragment: EnvFragment<DatabaseConfig> = {
 
     // 127.0.0.1 rather than localhost by default: docker publishes the container on IPv4
     // only, and Node resolves localhost to ::1 first, so the URL fails to connect.
-    return {
-      url: `postgresql://${user}:${encodeURIComponent(password)}@${host}:${port}/${name}?schema=public`,
-    }
+    // Both credentials are encoded, not just the password: a username containing ':' or '@'
+    // produces a URL that parses to the wrong host in exactly the same way.
+    const credentials = `${encodeURIComponent(user)}:${encodeURIComponent(password)}`
+    return { url: `postgresql://${credentials}@${host}:${port}/${name}?schema=public` }
   },
 }
