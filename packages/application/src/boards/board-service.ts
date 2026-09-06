@@ -5,6 +5,16 @@
 
 import { randomUUID } from 'node:crypto'
 import {
+  type Board,
+  BoardInvariantError,
+  createBoard,
+  MIN_SWIMLANES,
+  reorderBoardSwimlanes,
+  updateBoard,
+} from '@collega/domain/boards'
+import { Role } from '@collega/domain/enums'
+import type { Status } from '@collega/domain/statuses'
+import {
   type AuditEventWriter,
   attributeAudit,
   type Clock,
@@ -15,18 +25,8 @@ import {
   UnauthorizedError,
   type UnitOfWork,
   ValidationError,
-} from '@collega/application/common'
-import type { StatusRepository } from '@collega/application/statuses'
-import {
-  type Board,
-  BoardInvariantError,
-  createBoard,
-  MIN_SWIMLANES,
-  reorderBoardSwimlanes,
-  updateBoard,
-} from '@collega/domain/boards'
-import { Role } from '@collega/domain/enums'
-import type { Status } from '@collega/domain/statuses'
+} from '../common/index.js'
+import type { StatusRepository } from '../statuses/index.js'
 import type {
   BoardDetail,
   BoardListItem,

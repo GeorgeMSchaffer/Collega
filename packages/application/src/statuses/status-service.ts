@@ -4,7 +4,17 @@
 // every board render needs the status catalog; create/update/delete/reorder are admin-only.
 
 import { randomUUID } from 'node:crypto'
-import type { BoardRepository } from '@collega/application/boards'
+import { Role } from '@collega/domain/enums'
+import {
+  createStatus,
+  MIN_ACTIVE_STATUSES_PER_ORGANIZATION,
+  type Status,
+  StatusInvariantError,
+  setStatusSortOrder,
+  softDeleteStatus,
+  updateStatus,
+} from '@collega/domain/statuses'
+import type { BoardRepository } from '../boards/index.js'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -16,17 +26,7 @@ import {
   UnauthorizedError,
   type UnitOfWork,
   ValidationError,
-} from '@collega/application/common'
-import { Role } from '@collega/domain/enums'
-import {
-  createStatus,
-  MIN_ACTIVE_STATUSES_PER_ORGANIZATION,
-  type Status,
-  StatusInvariantError,
-  setStatusSortOrder,
-  softDeleteStatus,
-  updateStatus,
-} from '@collega/domain/statuses'
+} from '../common/index.js'
 import type {
   CreateStatusCommand,
   CreateStatusResult,

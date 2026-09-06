@@ -39,8 +39,15 @@ B3's `IdeaDomainError` + `runDomain()` translation wrapper is the reference impl
 B1 had no domain error type at all; B2 defined `*InvariantError` classes and never caught
 them.
 
-**House style, so seven partitions read as one codebase.** Import the kernel by package
-specifier (`@collega/application/common`), not a relative path. Generate ids with
+**House style, so seven partitions read as one codebase.** Import ACROSS packages by
+specifier (`@collega/domain/enums`); import WITHIN a package by relative path
+(`../common/index.js`). A package must not reference itself by its own package name: the
+specifier resolves through the `exports` map to `dist/`, and turbo's `typecheck` depends on
+`^build` — upstream packages — not on the package's own build, so from a clean checkout the
+package's own `dist` does not exist yet and every self-import fails `TS2307`. This was
+recorded the other way round on first writing, and B1 refused it with a reproduction rather
+than shipping a check that only passes when a stale `dist` happens to be lying around.
+Generate ids with
 `randomUUID` imported from `node:crypto`, not the global. Take dependencies as a positional
 constructor, not a `deps` object. Name the audit port `auditEvents`. None of these is better
 than its alternative; being the same is what has value, and the first three partitions

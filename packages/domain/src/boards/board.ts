@@ -7,7 +7,7 @@
 // (`ux_board_swimlanes_board_id_status_id` in the frozen schema) - Infrastructure can diff and
 // upsert against that composite key without this layer tracking row identity across a reorder.
 
-import { type Auditable, markCreated, markUpdated } from '@collega/domain/common'
+import { type Auditable, markCreated, markUpdated } from '../common/index.js'
 
 export const BOARD_NAME_MAX_LENGTH = 150
 export const MIN_SWIMLANES = 2

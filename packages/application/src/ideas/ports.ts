@@ -109,7 +109,7 @@ export interface NotificationsPort {
 // list/detail projection needs read-only upvote data, and the toggle mutation belongs solely to
 // the upvotes feature. This is the narrow read-only slice of .NET's `IIdeaUpvoteRepository` that
 // `IdeaService` itself used - `GetAsync`/`AddAsync`/`Remove` (the toggle's own concerns) are not
-// part of it. Kept here rather than imported from '@collega/application/upvotes' so this feature
+// part of it. Kept here rather than imported from '../upvotes/index.js' so this feature
 // folder stays independently reachable per the subpath-export convention; Wave C can satisfy both
 // with the same concrete repository.
 

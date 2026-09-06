@@ -7,7 +7,7 @@
 // already takes an explicit `nowUtc` and `actorUserId` from the caller (no ambient time, no
 // ambient identity), so a class wrapping that state buys nothing a return value doesn't.
 
-import { type Auditable, markCreated, markUpdated } from '@collega/domain/common'
+import { type Auditable, markCreated, markUpdated } from '../common/index.js'
 
 export const STATUS_NAME_MAX_LENGTH = 100
 export const STATUS_COLOR_MAX_LENGTH = 20
