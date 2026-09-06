@@ -9,6 +9,41 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-06 — `.env` is the single home for configuration; a typed config module reads it
+
+**Decided:** every environment value the TypeScript stack needs lives in **`.env`** at the
+repository root in local development, and in Vercel project environment variables in
+deployment. There is no second home for any credential. The Anthropic key is
+**`ANTHROPIC_API_KEY`** — the environment variable name and the config key are the same
+string, with no prefix or nesting to get wrong.
+
+**Why, concretely.** The .NET stack reached that one key through three names at once:
+`Ai:ApiKey` in user-secrets, `CLAUDE_API_KEY` in `.env`, and `ANTHROPIC_API_KEY` in the
+code. Two of the three were read by nothing, so the feature was silently dark while the
+configuration looked complete in two places. Nothing failed; the assistant just never
+appeared. One name, one home, is what prevents that.
+
+**The module.** `apps/api/src/common/config/` composes **per-feature fragments** — a slice
+adds a file under `fragments/` and registers it, and nobody edits a shared body of
+validation. This is the artifact `50-typescript-migration.md` §4.2 required of Foundation
+and that Wave 0 did not deliver; it lands as **S0.4**. Node 24 reads `.env` natively, so
+there is no dotenv dependency. Existing environment variables win over the file, which is
+what lets CI and Vercel — which inject real variables and ship no `.env` — work with no
+special case.
+
+**The asymmetry is deliberate and is the part to preserve.** A missing `ANTHROPIC_API_KEY`
+is a **supported state**: the feature runs dark (`20-feature-ai-idea-assist.md` rule 31) and
+the application boots. Missing `SITE_ADMIN_*` **refuses to boot**, because a deployment with
+no Site Admin cannot create the first organization and would look healthy while being
+unusable. Getting these the wrong way round breaks a deployment that has no AI.
+
+**Still duplicated, and dying with the .NET solution:** the key also sits in .NET
+user-secrets, which is what the Blazor stack reads. That copy is deliberately left alone
+rather than removed, since removing it would take AI assist out of the app while it is still
+the only runnable one. It goes at cutover with the rest of the .NET solution.
+
+---
+
 ## 2026-09-06 — Layer boundaries are enforced by Biome, not eslint-plugin-boundaries
 
 **Decided:** the layer rules in `50-typescript-migration.md` section 3 are enforced by
