@@ -188,15 +188,15 @@ export function setOrganizationLogo(
   actorUserId: string | null,
 ): Organization {
   if (thumbnailDataUri.trim().length === 0) {
-    throw new Error('A logo image is required.')
+    throw new OrganizationDomainError('thumbnailDataUri', 'A logo image is required.')
   }
 
   if (!thumbnailDataUri.toLowerCase().startsWith('data:image/')) {
-    throw new Error('Logo must be an image.')
+    throw new OrganizationDomainError('thumbnailDataUri', 'Logo must be an image.')
   }
 
   if (thumbnailDataUri.length > ORGANIZATION_LOGO_THUMBNAIL_MAX_LENGTH) {
-    throw new Error('Logo image is too large.')
+    throw new OrganizationDomainError('thumbnailDataUri', 'Logo image is too large.')
   }
 
   return markUpdated(
@@ -234,7 +234,7 @@ export function regenerateInviteCode(
   actorUserId: string | null,
 ): Organization {
   if (newInviteCode.trim().length === 0) {
-    throw new Error('Invite code is required.')
+    throw new OrganizationDomainError('inviteCode', 'Invite code is required.')
   }
 
   return markUpdated(
@@ -258,7 +258,8 @@ export function setOrganizationAiScopeStatement(
   const normalized = normalize(scopeStatement)
 
   if (normalized !== null && normalized.length > ORGANIZATION_AI_SCOPE_STATEMENT_MAX_LENGTH) {
-    throw new Error(
+    throw new OrganizationDomainError(
+      'scopeStatement',
       `Scope statement cannot exceed ${ORGANIZATION_AI_SCOPE_STATEMENT_MAX_LENGTH} characters.`,
     )
   }

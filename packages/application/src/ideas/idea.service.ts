@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { Priority, Role, UserStatus } from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
 import {
@@ -14,7 +15,7 @@ import {
   softDeleteIdea,
   updateIdeaContent,
 } from '@collega/domain/ideas'
-import type { AuditEventWriter, Clock, CurrentUserContext } from '../common/index.js'
+import type { AuditEventWriter, Clock, CurrentUserContext, UnitOfWork } from '../common/index.js'
 import {
   attributeAudit,
   ensureNotDirectSiteAdmin,
@@ -81,21 +82,6 @@ const MAX_TAG_NAME_LENGTH = 100
  * any member including Read Only, so an unbounded export is a cheap way to pressure the host. */
 const MAX_EXPORT_ROWS = 10_000
 
-export type IdeaServiceDeps = {
-  readonly ideaRepository: IdeaRepository
-  readonly boards: BoardsPort
-  readonly users: UsersPort
-  readonly tags: TagsPort
-  readonly comments: CommentsPort
-  readonly classification: IdeaClassificationPort
-  readonly fieldValues: IdeaFieldValuesPort
-  readonly upvoteCounts: UpvoteCountsPort
-  readonly notifications: NotificationsPort
-  readonly auditEvents: AuditEventWriter
-  readonly clock: Clock
-  readonly currentUser: CurrentUserContext
-}
-
 /**
  * Idea use cases (SPEC/20-feature-ideas-and-engagement.md, SPEC/30-Contracts.md "Idea
  * Contracts"). Enforces organization scoping, idea-edit vs. description/assignee authorization,
@@ -103,23 +89,33 @@ export type IdeaServiceDeps = {
  * and audit emission (rule #36). Upvote toggling itself lives in the sibling `upvotes` feature.
  */
 export class IdeaService {
-  readonly #deps: IdeaServiceDeps
-
-  constructor(deps: IdeaServiceDeps) {
-    this.#deps = deps
-  }
+  constructor(
+    private readonly ideaRepository: IdeaRepository,
+    private readonly boards: BoardsPort,
+    private readonly users: UsersPort,
+    private readonly tags: TagsPort,
+    private readonly comments: CommentsPort,
+    private readonly classification: IdeaClassificationPort,
+    private readonly fieldValues: IdeaFieldValuesPort,
+    private readonly upvoteCounts: UpvoteCountsPort,
+    private readonly notifications: NotificationsPort,
+    private readonly unitOfWork: UnitOfWork,
+    private readonly auditEvents: AuditEventWriter,
+    private readonly currentUser: CurrentUserContext,
+    private readonly clock: Clock,
+  ) {}
 
   async listByBoard(boardId: string, query: IdeaListQuery): Promise<IdeaPage<IdeaListItem>> {
     this.requireAuthenticatedRole()
 
-    const board = await this.#deps.boards.getBoardContext(boardId)
+    const board = await this.boards.getBoardContext(boardId)
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
 
     const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
-    const ideasPage = await this.#deps.ideaRepository.listByBoard({
+    const ideasPage = await this.ideaRepository.listByBoard({
       boardId,
       page,
       search: trimOrNull(query.search),
@@ -149,7 +145,7 @@ export class IdeaService {
     const assignedToUserId = scope === 'assigned' ? currentUserId : null
 
     const { filters: fieldFilters, searchTextFieldIds } =
-      await this.#deps.fieldValues.translateListFilters({
+      await this.fieldValues.translateListFilters({
         organizationId,
         raw: query.fieldFilters,
       })
@@ -160,7 +156,7 @@ export class IdeaService {
     const searchCreatedOnDate = search && isValidIsoDate(search) ? search : null
 
     const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
-    const ideasPage = await this.#deps.ideaRepository.listByOrganization({
+    const ideasPage = await this.ideaRepository.listByOrganization({
       organizationId,
       createdByUserId,
       assignedToUserId,
@@ -181,16 +177,16 @@ export class IdeaService {
 
   async create(boardId: string, command: CreateIdeaCommand): Promise<CreateIdeaResult> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
-    ensureNotDirectSiteAdmin(this.#deps.currentUser)
+    ensureNotDirectSiteAdmin(this.currentUser)
     this.requireIdeaEditRole()
 
-    const board = await this.#deps.boards.getBoardContext(boardId)
+    const board = await this.boards.getBoardContext(boardId)
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
 
-    const now = this.#deps.clock.now()
+    const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
     const priority = parsePriority(command.priority)
     const dueDate = parseDueDate(command.dueDate)
@@ -222,14 +218,14 @@ export class IdeaService {
       'mentionEmails',
     )
 
-    const fieldValues = await this.#deps.fieldValues.resolveAndValidate({
+    const fieldValues = await this.fieldValues.resolveAndValidate({
       organizationId: board.organizationId,
       ideaTypeId: command.ideaTypeId,
       submitted: command.fieldValues ?? [],
     })
 
     let idea = createIdeaOrThrow({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       organizationId: board.organizationId,
       boardId,
       statusId,
@@ -246,13 +242,14 @@ export class IdeaService {
       nowUtc: now,
     })
 
-    const reconcileScope = await this.#deps.fieldValues.getReconcileScope(
+    const reconcileScope = await this.fieldValues.getReconcileScope(
       board.organizationId,
       command.ideaTypeId,
     )
     idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, authorId)
 
-    await this.#deps.ideaRepository.add(idea)
+    await this.ideaRepository.add(idea)
+    await this.unitOfWork.saveChanges()
 
     await this.auditIdea('IdeaCreated', idea, authorId, `Idea '${idea.title}' created.`, now, {
       title: idea.title,
@@ -279,7 +276,7 @@ export class IdeaService {
   async getById(ideaId: string): Promise<IdeaDetail> {
     this.requireAuthenticatedRole()
 
-    const idea = await this.#deps.ideaRepository.getById(ideaId, false)
+    const idea = await this.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
@@ -290,16 +287,16 @@ export class IdeaService {
 
   async update(ideaId: string, command: UpdateIdeaCommand): Promise<IdeaDetail> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
-    ensureNotDirectSiteAdmin(this.#deps.currentUser)
+    ensureNotDirectSiteAdmin(this.currentUser)
     this.requireIdeaEditRole()
 
-    let idea = await this.#deps.ideaRepository.getById(ideaId, false)
+    let idea = await this.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
     this.ensureOrganizationScope(idea.organizationId)
 
-    const now = this.#deps.clock.now()
+    const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
     const priority = parsePriority(command.priority)
     const dueDate = parseDueDate(command.dueDate)
@@ -351,12 +348,12 @@ export class IdeaService {
     let fieldValues: readonly IdeaFieldValueInput[] = []
     let reconcileScope: readonly string[] = []
     if (reconcileFieldValues) {
-      reconcileScope = await this.#deps.fieldValues.getReconcileScope(
+      reconcileScope = await this.fieldValues.getReconcileScope(
         idea.organizationId,
         idea.ideaTypeId,
       )
       previousFieldValues = new Map(idea.fieldValues.map((v) => [v.fieldDefinitionId, v.value]))
-      fieldValues = await this.#deps.fieldValues.resolveAndValidate({
+      fieldValues = await this.fieldValues.resolveAndValidate({
         organizationId: idea.organizationId,
         ideaTypeId: idea.ideaTypeId,
         submitted: command.fieldValues ?? [],
@@ -383,7 +380,8 @@ export class IdeaService {
       idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, actorId)
     }
 
-    await this.#deps.ideaRepository.update(idea)
+    await this.ideaRepository.update(idea)
+    await this.unitOfWork.saveChanges()
 
     await this.auditIdea('IdeaUpdated', idea, actorId, `Idea '${idea.title}' updated.`, now, null)
     if (reconcileFieldValues) {
@@ -406,9 +404,9 @@ export class IdeaService {
     ideaTypeId: string,
   ): Promise<void> {
     this.requireAuthenticatedRole()
-    ensureNotDirectSiteAdmin(this.#deps.currentUser)
+    ensureNotDirectSiteAdmin(this.currentUser)
 
-    let idea = await this.#deps.ideaRepository.getById(ideaId, false)
+    let idea = await this.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
@@ -429,12 +427,13 @@ export class IdeaService {
       return
     }
 
-    const now = this.#deps.clock.now()
+    const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
     const previousTypeId = idea.ideaTypeId
 
     idea = reassignIdeaTypeOf(idea, ideaTypeId, now, actorId)
-    await this.#deps.ideaRepository.update(idea)
+    await this.ideaRepository.update(idea)
+    await this.unitOfWork.saveChanges()
 
     await this.auditIdea(
       'IdeaTypeReassigned',
@@ -448,16 +447,16 @@ export class IdeaService {
 
   async changeStatus(ideaId: string, command: ChangeIdeaStatusCommand): Promise<void> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
-    ensureNotDirectSiteAdmin(this.#deps.currentUser)
+    ensureNotDirectSiteAdmin(this.currentUser)
     this.requireAuthenticatedRole()
 
-    let idea = await this.#deps.ideaRepository.getById(ideaId, false)
+    let idea = await this.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
     this.ensureOrganizationScope(idea.organizationId)
 
-    const board = await this.#deps.boards.getBoardContext(idea.boardId)
+    const board = await this.boards.getBoardContext(idea.boardId)
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
@@ -474,12 +473,13 @@ export class IdeaService {
       return
     }
 
-    const now = this.#deps.clock.now()
+    const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
     const previousStatusId = idea.statusId
 
     idea = changeIdeaStatus(idea, command.statusId, now, actorId)
-    await this.#deps.ideaRepository.update(idea)
+    await this.ideaRepository.update(idea)
+    await this.unitOfWork.saveChanges()
 
     await this.auditIdea(
       'IdeaStatusChanged',
@@ -496,10 +496,10 @@ export class IdeaService {
 
   async delete(ideaId: string): Promise<void> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
-    ensureNotDirectSiteAdmin(this.#deps.currentUser)
+    ensureNotDirectSiteAdmin(this.currentUser)
     this.requireAuthenticatedRole()
 
-    let idea = await this.#deps.ideaRepository.getById(ideaId, false)
+    let idea = await this.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
@@ -511,11 +511,12 @@ export class IdeaService {
       throw new ForbiddenError('You are not allowed to delete ideas.')
     }
 
-    const now = this.#deps.clock.now()
+    const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
 
     idea = softDeleteIdea(idea, now, actorId)
-    await this.#deps.ideaRepository.update(idea)
+    await this.ideaRepository.update(idea)
+    await this.unitOfWork.saveChanges()
 
     await this.auditIdea('IdeaDeleted', idea, actorId, `Idea '${idea.title}' deleted.`, now, null)
   }
@@ -525,7 +526,7 @@ export class IdeaService {
   async exportBoardIdeas(boardId: string): Promise<IdeaCsvExport> {
     this.requireAuthenticatedRole()
 
-    const board = await this.#deps.boards.getBoardContext(boardId)
+    const board = await this.boards.getBoardContext(boardId)
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
@@ -538,7 +539,7 @@ export class IdeaService {
     const ideas: Idea[] = []
     let pageNumber = 1
     for (;;) {
-      const pageResult = await this.#deps.ideaRepository.listByBoard({
+      const pageResult = await this.ideaRepository.listByBoard({
         boardId,
         page: { page: pageNumber, pageSize: MAX_PAGE_SIZE },
         search: null,
@@ -565,16 +566,14 @@ export class IdeaService {
       pageNumber++
     }
 
-    const statusInfo = await this.#deps.boards.getStatusInfo(board.organizationId)
+    const statusInfo = await this.boards.getStatusInfo(board.organizationId)
     const ideaTypeLookup = await this.loadIdeaTypeLookup(board.organizationId)
     const businessImpactLookup = await this.loadBusinessImpactLookup(board.organizationId)
     const tagLookup = await this.loadTagLookup(ideas.flatMap((i) => i.tagIds))
 
-    const exportColumns = await this.#deps.fieldValues.getExportColumns(board.organizationId)
+    const exportColumns = await this.fieldValues.getExportColumns(board.organizationId)
 
-    const snapshots = await this.#deps.ideaRepository.getFieldValuesByIdeaIds(
-      ideas.map((i) => i.id),
-    )
+    const snapshots = await this.ideaRepository.getFieldValuesByIdeaIds(ideas.map((i) => i.id))
     const valuesByIdea = new Map<string, Map<string, string | null>>()
     for (const snapshot of snapshots) {
       let byField = valuesByIdea.get(snapshot.ideaId)
@@ -606,7 +605,7 @@ export class IdeaService {
       const ideaValues = valuesByIdea.get(idea.id)
       for (const column of exportColumns) {
         const stored = ideaValues?.get(column.fieldDefinitionId) ?? null
-        cells.push(await this.#deps.fieldValues.formatForExport(column.fieldDefinitionId, stored))
+        cells.push(await this.fieldValues.formatForExport(column.fieldDefinitionId, stored))
       }
 
       rows.push(cells)
@@ -625,20 +624,20 @@ export class IdeaService {
     // Bulk create is still create: without this, a Site Admin refused POST .../ideas could make
     // the same ideas by the hundred through the sibling import endpoint.
     this.requireIdeaEditRole()
-    ensureNotDirectSiteAdmin(this.#deps.currentUser)
+    ensureNotDirectSiteAdmin(this.currentUser)
 
-    const board = await this.#deps.boards.getBoardContext(boardId)
+    const board = await this.boards.getBoardContext(boardId)
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
 
-    const now = this.#deps.clock.now()
+    const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
     const organizationId = board.organizationId
 
     const ideaTypeByName = new Map<string, IdeaTypeSummary>()
-    for (const ideaType of await this.#deps.classification.listIdeaTypesByOrganization(
+    for (const ideaType of await this.classification.listIdeaTypesByOrganization(
       organizationId,
       false,
     )) {
@@ -646,14 +645,14 @@ export class IdeaService {
     }
 
     const businessImpactIdByName = new Map<string, string>()
-    for (const impact of await this.#deps.classification.listBusinessImpactsByOrganization(
+    for (const impact of await this.classification.listBusinessImpactsByOrganization(
       organizationId,
       false,
     )) {
       businessImpactIdByName.set(impact.name.trim().toLowerCase(), impact.id)
     }
 
-    const statusInfo = await this.#deps.boards.getStatusInfo(organizationId)
+    const statusInfo = await this.boards.getStatusInfo(organizationId)
     // Only statuses that are swimlanes on this board are valid import targets.
     const boardStatusIdByName = new Map<string, string>()
     for (const [statusId, info] of statusInfo) {
@@ -662,7 +661,7 @@ export class IdeaService {
       }
     }
 
-    const exportColumns = await this.#deps.fieldValues.getExportColumns(organizationId)
+    const exportColumns = await this.fieldValues.getExportColumns(organizationId)
 
     const leftMost = leftMostStatusId(board)
     const results: IdeaImportRowResult[] = []
@@ -761,7 +760,7 @@ export class IdeaService {
           continue
         }
 
-        const translation = await this.#deps.fieldValues.translateImportCell({
+        const translation = await this.fieldValues.translateImportCell({
           organizationId,
           fieldName: column.header,
           rawCell,
@@ -780,7 +779,7 @@ export class IdeaService {
 
       let fieldValues: readonly IdeaFieldValueInput[]
       try {
-        fieldValues = await this.#deps.fieldValues.resolveAndValidate({
+        fieldValues = await this.fieldValues.resolveAndValidate({
           organizationId,
           ideaTypeId: ideaType.id,
           submitted: udfWrites,
@@ -796,7 +795,7 @@ export class IdeaService {
       let idea: Idea
       try {
         idea = createIdea({
-          id: crypto.randomUUID(),
+          id: randomUUID(),
           organizationId,
           boardId,
           statusId,
@@ -820,18 +819,19 @@ export class IdeaService {
         throw error
       }
 
-      const reconcileScope = await this.#deps.fieldValues.getReconcileScope(
-        organizationId,
-        ideaType.id,
-      )
+      const reconcileScope = await this.fieldValues.getReconcileScope(organizationId, ideaType.id)
       if (reconcileScope.length > 0) {
         idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, authorId)
       }
 
-      await this.#deps.ideaRepository.add(idea)
+      await this.ideaRepository.add(idea)
       created++
       results.push({ rowNumber: row.rowNumber, title, outcome: 'Created', error: null })
     }
+
+    // Every row's `add` above is staged only; one commit here after the loop is what makes the
+    // whole import atomic (SPEC/decisions.md 2026-09-06 "Wave B conventions").
+    await this.unitOfWork.saveChanges()
 
     await this.writeAudit({
       eventType: 'IdeasImported',
@@ -860,13 +860,13 @@ export class IdeaService {
     const ideaIds = ideas.map((i) => i.id)
     const tagLookup = await this.loadTagLookup(ideas.flatMap((i) => i.tagIds))
     const userLookup = await this.loadUserLookup(ideas.flatMap((i) => i.assigneeUserIds))
-    const statusInfo = await this.#deps.boards.getStatusInfo(organizationId)
+    const statusInfo = await this.boards.getStatusInfo(organizationId)
     const ideaTypeLookup = await this.loadIdeaTypeLookup(organizationId)
     const businessImpactLookup = await this.loadBusinessImpactLookup(organizationId)
-    const upvoteCounts = await this.#deps.upvoteCounts.countByIdeaIds(ideaIds)
-    const commentCounts = await this.#deps.comments.countByIdeaIds(ideaIds)
+    const upvoteCounts = await this.upvoteCounts.countByIdeaIds(ideaIds)
+    const commentCounts = await this.comments.countByIdeaIds(ideaIds)
     const currentUserId = this.requireAuthenticatedUserId()
-    const upvoted = await this.#deps.upvoteCounts.getUpvotedIdeaIds(currentUserId, ideaIds)
+    const upvoted = await this.upvoteCounts.getUpvotedIdeaIds(currentUserId, ideaIds)
 
     return ideas.map((idea) => ({
       ideaId: idea.id,
@@ -897,23 +897,22 @@ export class IdeaService {
     const tagLookup = await this.loadTagLookup(idea.tagIds)
     const mentionUserIds = [...idea.mentionedUserIds]
     const userLookup = await this.loadUserLookup([...idea.assigneeUserIds, ...mentionUserIds])
-    const statusInfo = await this.#deps.boards.getStatusInfo(idea.organizationId)
+    const statusInfo = await this.boards.getStatusInfo(idea.organizationId)
     const ideaTypeLookup = await this.loadIdeaTypeLookup(idea.organizationId)
     const businessImpactLookup = await this.loadBusinessImpactLookup(idea.organizationId)
-    const upvoteCount = await this.#deps.upvoteCounts.countByIdea(idea.id)
+    const upvoteCount = await this.upvoteCounts.countByIdea(idea.id)
     const currentUserId = this.requireAuthenticatedUserId()
-    const upvoted = await this.#deps.upvoteCounts.getUpvotedIdeaIds(currentUserId, [idea.id])
-    const commentCount = await this.#deps.comments.countByIdea(idea.id)
-    const comments = await this.#deps.comments.listByIdea(idea.id)
+    const upvoted = await this.upvoteCounts.getUpvotedIdeaIds(currentUserId, [idea.id])
+    const commentCount = await this.comments.countByIdea(idea.id)
+    const comments = await this.comments.listByIdea(idea.id)
 
     const ideaTypeForFields = ideaTypeLookup.get(idea.ideaTypeId) ?? null
 
-    const fieldValues: readonly IdeaFieldValueDto[] =
-      await this.#deps.fieldValues.describeForDetail({
-        organizationId: idea.organizationId,
-        ideaTypeId: idea.ideaTypeId,
-        stored: idea.fieldValues,
-      })
+    const fieldValues: readonly IdeaFieldValueDto[] = await this.fieldValues.describeForDetail({
+      organizationId: idea.organizationId,
+      ideaTypeId: idea.ideaTypeId,
+      stored: idea.fieldValues,
+    })
 
     const mentions: readonly MentionDto[] = mentionUserIds.flatMap((id) => {
       const user = userLookup.get(id)
@@ -972,7 +971,7 @@ export class IdeaService {
     if (ids.length === 0) {
       return new Map()
     }
-    const tags = await this.#deps.tags.listByIds(ids)
+    const tags = await this.tags.listByIds(ids)
     return new Map(tags.map((t) => [t.id, t]))
   }
 
@@ -983,7 +982,7 @@ export class IdeaService {
     if (ids.length === 0) {
       return new Map()
     }
-    const users = await this.#deps.users.listByIds(ids)
+    const users = await this.users.listByIds(ids)
     return new Map(users.map((u) => [u.id, u]))
   }
 
@@ -992,17 +991,14 @@ export class IdeaService {
   private async loadIdeaTypeLookup(
     organizationId: string,
   ): Promise<ReadonlyMap<string, IdeaTypeSummary>> {
-    const options = await this.#deps.classification.listIdeaTypesByOrganization(
-      organizationId,
-      true,
-    )
+    const options = await this.classification.listIdeaTypesByOrganization(organizationId, true)
     return new Map(options.map((o) => [o.id, o]))
   }
 
   private async loadBusinessImpactLookup(
     organizationId: string,
   ): Promise<ReadonlyMap<string, BusinessImpactSummary>> {
-    const options = await this.#deps.classification.listBusinessImpactsByOrganization(
+    const options = await this.classification.listBusinessImpactsByOrganization(
       organizationId,
       true,
     )
@@ -1095,7 +1091,7 @@ export class IdeaService {
       })
     }
 
-    const users = await this.#deps.users.listByIds(distinct)
+    const users = await this.users.listByIds(distinct)
     const byId = new Map(users.map((u) => [u.id, u]))
     const existingSet = new Set(existing)
     const errors: string[] = []
@@ -1159,7 +1155,7 @@ export class IdeaService {
       })
     }
 
-    const tags = await this.#deps.tags.getOrCreate({
+    const tags = await this.tags.getOrCreate({
       organizationId,
       requestedNames: distinctNormalized,
       nowUtc,
@@ -1195,7 +1191,7 @@ export class IdeaService {
       }
       seen.add(normalized)
 
-      const user = await this.#deps.users.findByNormalizedEmail(normalized)
+      const user = await this.users.findByNormalizedEmail(normalized)
       if (
         !user ||
         user.organizationId !== organizationId ||
@@ -1220,7 +1216,7 @@ export class IdeaService {
     organizationId: string,
     ideaTypeId: string,
   ): Promise<IdeaTypeSummary> {
-    const option = ideaTypeId ? await this.#deps.classification.getIdeaTypeById(ideaTypeId) : null
+    const option = ideaTypeId ? await this.classification.getIdeaTypeById(ideaTypeId) : null
     if (!option || option.organizationId !== organizationId || option.isDeleted) {
       throw new ValidationError('One or more fields are invalid.', {
         ideaTypeId: ['Idea Type must reference an active option in the organization.'],
@@ -1234,7 +1230,7 @@ export class IdeaService {
     businessImpactId: string,
   ): Promise<void> {
     const option = businessImpactId
-      ? await this.#deps.classification.getBusinessImpactById(businessImpactId)
+      ? await this.classification.getBusinessImpactById(businessImpactId)
       : null
     if (!option || option.organizationId !== organizationId || option.isDeleted) {
       throw new ValidationError('One or more fields are invalid.', {
@@ -1246,7 +1242,7 @@ export class IdeaService {
   // Authorization / scoping --------------------------------------------------------------------
 
   private requireAuthenticatedUserId(): string {
-    const currentUser = this.#deps.currentUser
+    const currentUser = this.currentUser
     if (!currentUser.isAuthenticated || currentUser.userId === null) {
       throw new UnauthorizedError('Caller identity could not be resolved.')
     }
@@ -1254,7 +1250,7 @@ export class IdeaService {
   }
 
   private requireAuthenticatedRole(): Role {
-    const currentUser = this.#deps.currentUser
+    const currentUser = this.currentUser
     if (!currentUser.isAuthenticated || currentUser.role === null) {
       throw new UnauthorizedError('Caller identity could not be resolved.')
     }
@@ -1272,7 +1268,7 @@ export class IdeaService {
     if (role === Role.SiteAdmin) {
       return
     }
-    if (this.#deps.currentUser.organizationId !== organizationId) {
+    if (this.currentUser.organizationId !== organizationId) {
       throw new NotFoundError('Idea not found.')
     }
   }
@@ -1299,13 +1295,13 @@ export class IdeaService {
     if (role === Role.SiteAdmin) {
       return true
     }
-    if (role === Role.OrgAdmin && this.#deps.currentUser.organizationId === idea.organizationId) {
+    if (role === Role.OrgAdmin && this.currentUser.organizationId === idea.organizationId) {
       return true
     }
     if (adminOnly) {
       return false
     }
-    return this.#deps.currentUser.userId === idea.authorUserId && !!actorUserId
+    return this.currentUser.userId === idea.authorUserId && !!actorUserId
   }
 
   // Audit ----------------------------------------------------------------------------------------
@@ -1320,13 +1316,13 @@ export class IdeaService {
     nowUtc: Date
     metadata: unknown
   }): Promise<void> {
-    await this.#deps.auditEvents.write({
+    await this.auditEvents.write({
       eventType: input.eventType,
       entityType: input.entityType,
       message: input.message,
       occurredAtUtc: input.nowUtc,
       organizationId: input.organizationId,
-      attribution: attributeAudit(this.#deps.currentUser, input.intendedActorUserId),
+      attribution: attributeAudit(this.currentUser, input.intendedActorUserId),
       entityId: input.entityId,
       metadataJson: input.metadata === null ? null : JSON.stringify(input.metadata),
     })
@@ -1366,7 +1362,7 @@ export class IdeaService {
       return
     }
 
-    const fieldNames = await this.#deps.fieldValues.getFieldNames(idea.organizationId, [...allIds])
+    const fieldNames = await this.fieldValues.getFieldNames(idea.organizationId, [...allIds])
 
     for (const fieldDefinitionId of allIds) {
       const previousValue = previousValues.get(fieldDefinitionId) ?? null
@@ -1402,7 +1398,7 @@ export class IdeaService {
         continue
       }
       seen.add(recipientId)
-      await this.#deps.notifications.notify({
+      await this.notifications.notify({
         eventType: 'IdeaMention',
         organizationId: idea.organizationId,
         boardId: idea.boardId,
@@ -1424,7 +1420,7 @@ export class IdeaService {
       if (!recipientId || recipientId === actorId) {
         continue
       }
-      await this.#deps.notifications.notify({
+      await this.notifications.notify({
         eventType,
         organizationId: idea.organizationId,
         boardId: idea.boardId,

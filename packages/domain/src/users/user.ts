@@ -163,7 +163,7 @@ export function createOrganizationUser(
   actorUserId: string | null = null,
 ): User {
   if (input.role === Role.SiteAdmin) {
-    throw new Error('Organization users cannot be assigned the Site Admin role.')
+    throw new UserDomainError('role', 'Organization users cannot be assigned the Site Admin role.')
   }
 
   return createInternal(
@@ -212,11 +212,14 @@ export function setUserPortrait(
   actorUserId: string | null,
 ): User {
   if (portraitPng.length === 0) {
-    throw new Error('Portrait content is required.')
+    throw new UserDomainError('portrait', 'Portrait content is required.')
   }
 
   if (portraitPng.length > USER_MAX_PORTRAIT_BYTES) {
-    throw new Error(`Portrait exceeds the maximum stored size of ${USER_MAX_PORTRAIT_BYTES} bytes.`)
+    throw new UserDomainError(
+      'portrait',
+      `Portrait exceeds the maximum stored size of ${USER_MAX_PORTRAIT_BYTES} bytes.`,
+    )
   }
 
   return markUpdated({ ...user, portraitPng }, nowUtc, actorUserId)
@@ -251,7 +254,7 @@ export function administerUser(
   requireNonBlank(input.email, 'email', 'Email is required.')
 
   if (user.organizationId !== null && input.role === Role.SiteAdmin) {
-    throw new Error('Organization users cannot be assigned the Site Admin role.')
+    throw new UserDomainError('role', 'Organization users cannot be assigned the Site Admin role.')
   }
 
   const trimmedEmail = input.email.trim()
