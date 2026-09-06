@@ -6,7 +6,9 @@
 import { randomUUID } from 'node:crypto'
 import type { BoardRepository } from '@collega/application/boards'
 import {
+  type AuditEventWriter,
   attributeAudit,
+  type Clock,
   type CurrentUserContext,
   ensureNotDirectSiteAdmin,
   ForbiddenError,
@@ -29,12 +31,7 @@ import type {
   StatusItem,
   UpdateStatusCommand,
 } from './models.js'
-import type {
-  AuditEventWriter,
-  Clock,
-  OrganizationExistenceLookup,
-  StatusRepository,
-} from './ports.js'
+import type { OrganizationExistenceLookup, StatusRepository } from './ports.js'
 
 const SORT_ORDER_STEP = 10
 
@@ -292,10 +289,9 @@ export class StatusService {
       message,
       occurredAtUtc,
       organizationId,
-      actorUserId: attribution.actorUserId,
+      attribution,
       entityId: statusId,
       metadataJson: metadata === null ? null : JSON.stringify(metadata),
-      onBehalfOfUserId: attribution.onBehalfOfUserId,
     })
   }
 }

@@ -31,28 +31,10 @@ export interface StatusRepository {
 /**
  * Narrow existence check so this feature does not need to depend on the Organizations
  * partition's full repository port just to answer "does this organization id exist".
+ *
+ * `Clock` and `AuditEventWriter` used to live here too; both moved to
+ * `@collega/application/common` once every Wave B partition turned out to need them.
  */
 export interface OrganizationExistenceLookup {
   existsById(organizationId: string): Promise<boolean>
-}
-
-/** Wall-clock time, injected so services stay testable without mocking `Date` globally. */
-export interface Clock {
-  now(): Date
-}
-
-export type AuditEventInput = {
-  readonly eventType: string
-  readonly entityType: string
-  readonly message: string
-  readonly occurredAtUtc: Date
-  readonly organizationId: string | null
-  readonly actorUserId: string | null
-  readonly entityId: string | null
-  readonly metadataJson: string | null
-  readonly onBehalfOfUserId: string | null
-}
-
-export interface AuditEventWriter {
-  write(event: AuditEventInput): Promise<void>
 }

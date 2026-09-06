@@ -7,6 +7,8 @@
 // already takes an explicit `nowUtc` and `actorUserId` from the caller (no ambient time, no
 // ambient identity), so a class wrapping that state buys nothing a return value doesn't.
 
+import { type Auditable, markCreated, markUpdated } from '@collega/domain/common'
+
 export const STATUS_NAME_MAX_LENGTH = 100
 export const STATUS_COLOR_MAX_LENGTH = 20
 
@@ -20,7 +22,7 @@ export const MIN_ACTIVE_STATUSES_PER_ORGANIZATION = 2
 /** Raised when a caller asks this module to put a Status into an invalid state. */
 export class StatusInvariantError extends Error {}
 
-export type Status = {
+export type Status = Auditable & {
   readonly id: string
   readonly organizationId: string
   readonly name: string
@@ -29,10 +31,6 @@ export type Status = {
   /** Organization-level catalog order, distinct from a board's swimlane order (rule #10). */
   readonly sortOrder: number
   readonly isDeleted: boolean
-  readonly createdAtUtc: Date
-  readonly updatedAtUtc: Date
-  readonly createdByUserId: string | null
-  readonly updatedByUserId: string | null
 }
 
 function requireNonBlank(value: string, field: string): string {
@@ -65,10 +63,7 @@ export function createStatus(params: {
     color,
     sortOrder: params.sortOrder,
     isDeleted: false,
-    createdAtUtc: params.nowUtc,
-    updatedAtUtc: params.nowUtc,
-    createdByUserId: params.actorUserId,
-    updatedByUserId: params.actorUserId,
+    ...markCreated(params.nowUtc, params.actorUserId),
   }
 }
 
@@ -85,14 +80,7 @@ export function updateStatus(
   const name = requireNonBlank(params.name, 'Name')
   const color = requireNonBlank(params.color, 'Color')
 
-  return {
-    ...status,
-    name,
-    color,
-    sortOrder: params.sortOrder,
-    updatedAtUtc: nowUtc,
-    updatedByUserId: actorUserId,
-  }
+  return markUpdated({ ...status, name, color, sortOrder: params.sortOrder }, nowUtc, actorUserId)
 }
 
 /**
@@ -105,7 +93,7 @@ export function setStatusSortOrder(
   nowUtc: Date,
   actorUserId: string | null,
 ): Status {
-  return { ...status, sortOrder, updatedAtUtc: nowUtc, updatedByUserId: actorUserId }
+  return markUpdated({ ...status, sortOrder }, nowUtc, actorUserId)
 }
 
 /**
@@ -117,5 +105,5 @@ export function softDeleteStatus(status: Status, nowUtc: Date, actorUserId: stri
   if (status.isDeleted) {
     return status
   }
-  return { ...status, isDeleted: true, updatedAtUtc: nowUtc, updatedByUserId: actorUserId }
+  return markUpdated({ ...status, isDeleted: true }, nowUtc, actorUserId)
 }

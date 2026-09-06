@@ -5,7 +5,9 @@
 
 import { randomUUID } from 'node:crypto'
 import {
+  type AuditEventWriter,
   attributeAudit,
+  type Clock,
   type CurrentUserContext,
   ensureNotDirectSiteAdmin,
   ForbiddenError,
@@ -33,12 +35,7 @@ import type {
   SwimlaneInput,
   UpdateBoardCommand,
 } from './models.js'
-import type {
-  AuditEventWriter,
-  BoardRepository,
-  Clock,
-  OrganizationExistenceLookup,
-} from './ports.js'
+import type { BoardRepository, OrganizationExistenceLookup } from './ports.js'
 
 export class BoardService {
   constructor(
@@ -255,10 +252,9 @@ export class BoardService {
       message,
       occurredAtUtc,
       organizationId,
-      actorUserId: attribution.actorUserId,
+      attribution,
       entityId: boardId,
       metadataJson: metadata === null ? null : JSON.stringify(metadata),
-      onBehalfOfUserId: attribution.onBehalfOfUserId,
     })
   }
 }

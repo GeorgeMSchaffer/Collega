@@ -7,6 +7,8 @@
 // (`ux_board_swimlanes_board_id_status_id` in the frozen schema) - Infrastructure can diff and
 // upsert against that composite key without this layer tracking row identity across a reorder.
 
+import { type Auditable, markCreated, markUpdated } from '@collega/domain/common'
+
 export const BOARD_NAME_MAX_LENGTH = 150
 export const MIN_SWIMLANES = 2
 
@@ -18,17 +20,13 @@ export type BoardSwimlane = {
   readonly displayOrder: number
 }
 
-export type Board = {
+export type Board = Auditable & {
   readonly id: string
   readonly organizationId: string
   readonly name: string
   /** Controls whether the User role can move ideas on this board. */
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly BoardSwimlane[]
-  readonly createdAtUtc: Date
-  readonly updatedAtUtc: Date
-  readonly createdByUserId: string | null
-  readonly updatedByUserId: string | null
 }
 
 function requireName(name: string): string {
@@ -75,10 +73,7 @@ export function createBoard(params: {
     name,
     allowUserStatusUpdate: params.allowUserStatusUpdate,
     swimlanes,
-    createdAtUtc: params.nowUtc,
-    updatedAtUtc: params.nowUtc,
-    createdByUserId: params.actorUserId,
-    updatedByUserId: params.actorUserId,
+    ...markCreated(params.nowUtc, params.actorUserId),
   }
 }
 
@@ -102,14 +97,11 @@ export function updateBoard(
   const name = requireName(params.name)
   const swimlanes = toSwimlanes(params.orderedStatusIds)
 
-  return {
-    ...board,
-    name,
-    allowUserStatusUpdate: params.allowUserStatusUpdate,
-    swimlanes,
-    updatedAtUtc: nowUtc,
-    updatedByUserId: actorUserId,
-  }
+  return markUpdated(
+    { ...board, name, allowUserStatusUpdate: params.allowUserStatusUpdate, swimlanes },
+    nowUtc,
+    actorUserId,
+  )
 }
 
 /**
@@ -135,5 +127,5 @@ export function reorderBoardSwimlanes(
     )
   }
 
-  return { ...board, swimlanes, updatedAtUtc: nowUtc, updatedByUserId: actorUserId }
+  return markUpdated({ ...board, swimlanes }, nowUtc, actorUserId)
 }
