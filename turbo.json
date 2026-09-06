@@ -4,7 +4,8 @@
   "tasks": {
     "build": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "db:generate"
       ],
       "outputs": [
         "dist/**",
@@ -13,7 +14,8 @@
     },
     "typecheck": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "db:generate"
       ],
       "outputs": []
     },
@@ -32,6 +34,14 @@
         "test-results/**"
       ],
       "cache": false
+    },
+    "db:generate": {
+      "outputs": [
+        "src/generated/**"
+      ],
+      "inputs": [
+        "prisma/schema.prisma"
+      ]
     }
   }
 }
