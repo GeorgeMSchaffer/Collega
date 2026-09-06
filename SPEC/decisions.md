@@ -65,6 +65,16 @@ B3's `IdeaDomainError` + `runDomain()` translation wrapper is the reference impl
 B1 had no domain error type at all; B2 defined `*InvariantError` classes and never caught
 them.
 
+**One documented exception to the Site Admin guard.** AI prompt-version management does NOT
+call `ensureNotDirectSiteAdmin`. It requires the caller to *be* an effective Site Admin, which
+is a structurally different requirement rather than an inversion: the system prompt is
+deployment configuration (`20-feature-ai-idea-assist.md` rule 34), not organization content, so
+it must be refused **during** a View As session — exactly when `ensureNotDirectSiteAdmin` stops
+firing, because the effective role has become the target's. This mirrors `AiPromptService.cs`'s
+`RequireSiteAdmin()` call for call. The scope statement on the same service is organization
+content and does use the shared guard. Recorded because it is the only place in seven
+partitions that does not call it, and it would otherwise read as an oversight.
+
 **House style, so seven partitions read as one codebase.** Import ACROSS packages by
 specifier (`@collega/domain/enums`); import WITHIN a package by relative path
 (`../common/index.js`). A package must not reference itself by its own package name: the
