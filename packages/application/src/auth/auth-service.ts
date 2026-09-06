@@ -259,7 +259,7 @@ export class AuthService {
       })
     }
 
-    const updated = setUserPortrait(user, thumbnail, now, user.id)
+    const updated = runDomain(setUserPortrait, user, thumbnail, now, user.id)
     await this.users.update(updated)
     await this.unitOfWork.saveChanges()
 
