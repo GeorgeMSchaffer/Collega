@@ -3,12 +3,16 @@
 // a subset of `Organization`) and `AiOrganizationRepository` (ai/ports.ts: `getById`/`update`,
 // exact same method names/shapes) - one adapter for the `organizations` table satisfies all three
 // feature ports that read or write it.
+//
+// `InviteCodeGenerator` does NOT live here - it originally did, as a small class alongside this
+// repository, but C2 independently built the same adapter under
+// `integrations/organizations/random-invite-code-generator.ts` (a defensible home too: it is
+// pure `node:crypto` randomness, no Prisma). Removed from here rather than left as a second,
+// competing implementation of the same port - C2's is the one Wave D should wire up.
 
-import { randomBytes } from 'node:crypto'
 import type { AiOrganizationRepository } from '@collega/application/ai'
 import type { ImpersonationOrganizationsPort } from '@collega/application/impersonation'
 import type {
-  InviteCodeGenerator,
   OrganizationListFilter,
   OrganizationPage,
   OrganizationRepository,
@@ -17,9 +21,6 @@ import type { Organization } from '@collega/domain/organizations'
 import type { organizations as OrganizationRow, Prisma } from '../generated/prisma/index.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 import type { PrismaUnitOfWork } from '../persistence/unit-of-work.js'
-
-const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0/O/1/I - avoids transcription errors
-const INVITE_CODE_LENGTH = 8
 
 function organizationFromRow(row: OrganizationRow): Organization {
   return {
@@ -152,19 +153,5 @@ export class PrismaOrganizationRepository
         data: toWriteData(organization),
       }),
     )
-  }
-}
-
-/** Generates invite codes from a transcription-safe alphabet (no `0`/`O`/`1`/`I`). Uniqueness
- * across organizations is `OrganizationService`'s concern (it retries against `inviteCodeExists`),
- * matching the port's contract. */
-export class RandomInviteCodeGenerator implements InviteCodeGenerator {
-  generate(): string {
-    const bytes = randomBytes(INVITE_CODE_LENGTH)
-    let code = ''
-    for (const byte of bytes) {
-      code += INVITE_CODE_ALPHABET[byte % INVITE_CODE_ALPHABET.length]
-    }
-    return code
   }
 }
