@@ -48,7 +48,7 @@ throughput.
 |---|---|---:|---|
 | A | Golden capture | 2 | **Complete 2026-09-03** — ran ahead, against the live .NET API |
 | 0 | Foundation: monorepo, Prisma schema, kernel | **1 (serial)** | **Complete 2026-09-06** — S0.1, S0.2, S0.3 all merged |
-| B | Domain + Application, 7 feature partitions | 7 | S0.3 merged |
+| B | Domain + Application, 7 feature partitions | 7 | S0.3 merged — **B1-B3 merged 2026-09-06; B4-B7 open** |
 | C | Infrastructure: repositories, integrations | 2 | S0.2 merged |
 | D | API, mirroring B's partition | 7 | per-partition, as each B*n* merges |
 | E | Web — **E0 design system first, alone** | 6 after E0 | E0 merged; D*n* merged for the routes it calls |
