@@ -37,6 +37,10 @@ export const buttonVariants = cva(
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof buttonVariants>
 
-export function Button({ className, variant, size, ...props }: ButtonProps) {
-  return <button className={cn(buttonVariants({ variant, size }), className)} {...props} />
+export function Button({ className, variant, size, type = 'button', ...props }: ButtonProps) {
+  // Defaults to `button`, not the HTML default of `submit`. A denied control carries `aria-disabled`,
+  // which does not prevent activation - so a Denied button dropped into a real form would submit it.
+  return (
+    <button type={type} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+  )
 }
