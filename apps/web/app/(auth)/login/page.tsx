@@ -1,6 +1,7 @@
 import { Alert, Button, Field, Input, Kbd } from '@collega/design-system'
 import Link from 'next/link'
 import { AuthPitch } from '@/components/auth-pitch'
+import { InertForm } from '@/components/common/inert-form'
 
 export const metadata = { title: 'Sign in · Collega' }
 
@@ -55,7 +56,7 @@ export default async function LoginPage({
             </Alert>
           ) : null}
 
-          <form>
+          <InertForm>
             <Field htmlFor="email" label="Email">
               <Input
                 id="email"
@@ -77,7 +78,7 @@ export default async function LoginPage({
             <Button type="submit" className="w-full">
               Sign in
             </Button>
-          </form>
+          </InertForm>
 
           <p className="mt-4 text-sm text-muted-foreground">
             Have an invite code? <Link href="/login">Create an account</Link>.
