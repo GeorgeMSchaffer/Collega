@@ -54,14 +54,47 @@ export const boards: Board[] = [
 
 export type Idea = {
   id: string
+  reference: string
   boardId: string
   statusId: string
   title: string
+  description: string
   priority: Priority
+  ideaType: string
+  businessImpact: string
   tag: string
   assigneeInitials: string | null
+  authorName: string
+  createdOn: string
   upvotes: number
 }
+
+export type Comment = {
+  id: string
+  ideaId: string
+  authorName: string
+  authorInitials: string
+  postedOn: string
+  body: string
+}
+
+const DESCRIPTIONS = [
+  'Map the current handoffs and automate the highest-friction transition.',
+  'Notify the responsible team before a preventable delay becomes customer-visible.',
+  'Use one concise checklist so requests arrive complete and ready for action.',
+  'Trial a lightweight review path for low-risk changes and measure cycle time.',
+  'Surface recurring exceptions with enough context for rapid ownership.',
+  'Generate the weekly operating summary from source data instead of spreadsheets.',
+  'Capture the approved response steps and escalation points in one maintained playbook.',
+  'Close the loop with requesters and record whether the change solved the problem.',
+  'Extend the successful pilot to the remaining teams with clear adoption measures.',
+  'Compare the new workflow with the baseline and publish the verified time savings.',
+  'Remove the superseded process step after confirming all dependencies have moved.',
+]
+
+const IDEA_TYPES = ['Process Revision', 'Continuous Improvement']
+const IMPACTS = ['Critical', 'High', 'Medium', 'Low']
+const AUTHORS = ['Noah Contributor', 'Maya Collaborator', 'Olivia Administer']
 
 const TITLES = [
   'Reduce manual handoffs',
@@ -95,12 +128,20 @@ function buildIdeas(boardId: string): Idea[] {
       if (!status || !title) continue
       out.push({
         id: `${boardId}-${index + 1}`,
+        // Human-facing reference, the way the comps label an idea in the inspector eyebrow.
+        reference: `IDEA-${100 + (boardId === 'ideas' ? 0 : 50) + index + 1}`,
         boardId,
         statusId: status.id,
         title,
+        description: DESCRIPTIONS[index] ?? '',
         priority: PRIORITIES[index % PRIORITIES.length] ?? 'Medium',
+        ideaType: IDEA_TYPES[index % IDEA_TYPES.length] ?? 'Process Revision',
+        businessImpact: IMPACTS[index % IMPACTS.length] ?? 'Medium',
         tag: TAGS[index % TAGS.length] ?? 'automation',
         assigneeInitials: ASSIGNEES[index % ASSIGNEES.length] ?? null,
+        authorName: AUTHORS[index % AUTHORS.length] ?? 'Noah Contributor',
+        // Fixed dates, not Date.now(): a screenshot taken tomorrow must look the same as today's.
+        createdOn: `2026-08-${String(10 + (index % 18)).padStart(2, '0')}`,
         upvotes: index % 3,
       })
       index++
@@ -122,6 +163,50 @@ export function statusById(id: string): Status | undefined {
 
 export function boardById(id: string): Board | undefined {
   return boards.find((board) => board.id === id)
+}
+
+export function ideaById(id: string): Idea | undefined {
+  return ideas.find((idea) => idea.id === id)
+}
+
+/** Three comments on the first two ideas of each board, matching the seed's shape. */
+const COMMENT_SEED: ReadonlyArray<
+  readonly [offset: number, author: string, initials: string, body: string]
+> = [
+  [0, 'Maya Collaborator', 'MC', "Thanks for raising this - I'll take a first look."],
+  [0, 'Olivia Administer', 'OA', "Agreed, let's prioritize it for the next review."],
+  [1, 'Noah Contributor', 'NC', 'Following along - this would help my team too.'],
+]
+
+export const comments: Comment[] = boards.flatMap((board) =>
+  COMMENT_SEED.flatMap(([offset, authorName, authorInitials, body], n) => {
+    const idea = ideasForBoard(board.id)[offset]
+    if (!idea) return []
+    return [
+      {
+        id: `${board.id}-c${n}`,
+        ideaId: idea.id,
+        authorName,
+        authorInitials,
+        postedOn: `2026-09-0${n + 1}`,
+        body,
+      },
+    ]
+  }),
+)
+
+export function commentsForIdea(ideaId: string): Comment[] {
+  return comments.filter((comment) => comment.ideaId === ideaId)
+}
+
+/**
+ * Whether the role may engage - vote and comment - which is a different question from whether it
+ * may edit. A Read Only account deliberately keeps engagement; a Site Admin has neither, being
+ * outside the organization entirely.
+ */
+export function engagementDenial(role: Role): string | null {
+  if (role === 'SiteAdmin') return 'Not a member of this organization'
+  return null
 }
 
 export const navCounts = {
