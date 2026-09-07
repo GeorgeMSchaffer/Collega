@@ -18,7 +18,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --filter=!collega-e2e",
     "test:e2e": "turbo run test --filter=collega-e2e",
-    "check": "pnpm run lint && pnpm run typecheck && pnpm run test"
+    "check": "pnpm run lint && turbo run typecheck test --filter=!collega-e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
