@@ -49,16 +49,27 @@ export const PRIORITY_COLORS: Record<Priority, string | undefined> = {
   Low: undefined,
 }
 
-export type Status = { id: string; name: string; color: string }
+export type Status = { id: string; name: string; color: string; colorName: string }
 
 /** Canonical order. The colour is the category dot from the comp Q palette. */
 export const statuses: Status[] = [
-  { id: 'new', name: 'New / Pending', color: 'var(--sky)' },
-  { id: 'review', name: 'In Review', color: 'var(--purple)' },
-  { id: 'progress', name: 'In Progress', color: 'var(--orange)' },
-  { id: 'client', name: 'Client Review', color: 'var(--pink)' },
-  { id: 'done', name: 'Complete', color: 'var(--green)' },
+  { id: 'new', name: 'New / Pending', color: 'var(--sky)', colorName: 'Sky' },
+  { id: 'review', name: 'In Review', color: 'var(--purple)', colorName: 'Purple' },
+  { id: 'progress', name: 'In Progress', color: 'var(--orange)', colorName: 'Orange' },
+  { id: 'client', name: 'Client Review', color: 'var(--pink)', colorName: 'Pink' },
+  { id: 'done', name: 'Complete', color: 'var(--green)', colorName: 'Green' },
 ]
+
+/** Blue Harbor runs its own workflow. Comp Q's cross-org list is distinct rows, not a cross-product. */
+export const statusesByOrganization: Record<string, Status[]> = {
+  'acme-robotics': statuses,
+  'blue-harbor': [
+    { id: 'intake', name: 'Intake', color: 'var(--pink)', colorName: 'Pink' },
+    { id: 'scheduled', name: 'Scheduled', color: 'var(--teal)', colorName: 'Teal' },
+    { id: 'dispatched', name: 'Dispatched', color: 'var(--orange)', colorName: 'Orange' },
+    { id: 'signed-off', name: 'Signed off', color: 'var(--green)', colorName: 'Green' },
+  ],
+}
 
 export type Board = { id: string; name: string; focus: string; ideaCount: number }
 
@@ -229,3 +240,166 @@ export const navCounts = {
   ideas: ideas.length,
   backlog: 7,
 } as const
+
+// ---------------------------------------------------------------------------
+// Administration fixtures (Wave E5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether the role may reach the administration routes at all.
+ *
+ * This is a **page-level** gate, not a control-level one, and it reads differently on purpose: a
+ * denied control stays visible with its reason beside it, but an entire route closed to a role
+ * shows the "Administrators only" panel instead. Comp Q states why — "nothing here is hidden from
+ * you selectively; the whole page is out of scope for your role" — which is a promise that the
+ * page is not quietly showing a member a reduced version of the same screen.
+ */
+export function isAdministrator(role: Role): boolean {
+  return role === 'SiteAdmin' || role === 'OrgAdmin'
+}
+
+export type Organization = {
+  id: string
+  name: string
+  description: string
+  memberCount: number
+  boardCount: number
+  ideaCount: number
+}
+
+export const organizations: Organization[] = [
+  {
+    id: 'acme-robotics',
+    name: 'Acme Robotics',
+    description: 'Industrial robotics and automation manufacturer.',
+    memberCount: 4,
+    boardCount: 2,
+    ideaCount: 11,
+  },
+  {
+    id: 'blue-harbor',
+    name: 'Blue Harbor Logistics',
+    description: 'Regional freight and warehousing operator.',
+    memberCount: 4,
+    boardCount: 2,
+    ideaCount: 11,
+  },
+]
+
+export type Member = {
+  id: string
+  displayName: string
+  initials: string
+  email: string
+  organizationId: string
+  organizationName: string
+  role: Role
+  roleLabel: string
+  status: 'Active' | 'Inactive'
+}
+
+const ROLE_SEED: ReadonlyArray<readonly [string, string, string, Role, string]> = [
+  ['Olivia Administer', 'OA', 'orgadmin', 'OrgAdmin', 'Org Admin'],
+  ['Noah Contributor', 'NC', 'user', 'User', 'User'],
+  ['Maya Collaborator', 'MC', 'user2', 'User', 'User'],
+  ['Rosa Observer', 'RO', 'readonly', 'ReadOnly', 'Read Only'],
+]
+
+/** The demo seed: four accounts per organization, one per role. See `demo.md`. */
+export const members: Member[] = organizations.flatMap((org) =>
+  ROLE_SEED.map(([displayName, initials, localPart, role, roleLabel], n) => ({
+    id: `${org.id}-u${n + 1}`,
+    displayName,
+    initials,
+    email: `${localPart}@${org.id}.demo.collega.test`,
+    organizationId: org.id,
+    organizationName: org.name,
+    role,
+    roleLabel,
+    status: 'Active' as const,
+  })),
+)
+
+export function membersForOrganization(organizationId: string): Member[] {
+  return members.filter((member) => member.organizationId === organizationId)
+}
+
+export type IdeaType = {
+  id: string
+  name: string
+  organizationId: string
+  description: string
+  fieldCount: number
+  ideaCount: number
+}
+
+export const ideaTypes: IdeaType[] = [
+  {
+    id: 'process-revision',
+    name: 'Process Revision',
+    organizationId: 'acme-robotics',
+    description: 'A change to how an existing process runs.',
+    fieldCount: 2,
+    ideaCount: 12,
+  },
+  {
+    id: 'continuous-improvement',
+    name: 'Continuous Improvement',
+    organizationId: 'acme-robotics',
+    description: 'An incremental gain against a current baseline.',
+    fieldCount: 1,
+    ideaCount: 10,
+  },
+  {
+    id: 'route-change',
+    name: 'Route Change',
+    organizationId: 'blue-harbor',
+    description: 'A change to a scheduled delivery route.',
+    fieldCount: 1,
+    ideaCount: 7,
+  },
+]
+
+export type FieldDefinition = {
+  id: string
+  name: string
+  organizationId: string
+  fieldType: 'Text' | 'Number' | 'Date' | 'Choice' | 'Checkbox'
+  required: boolean
+  ideaTypeNames: string[]
+}
+
+export const fieldDefinitions: FieldDefinition[] = [
+  {
+    id: 'f1',
+    name: 'Current cycle time',
+    organizationId: 'acme-robotics',
+    fieldType: 'Number',
+    required: true,
+    ideaTypeNames: ['Process Revision'],
+  },
+  {
+    id: 'f2',
+    name: 'Affected team',
+    organizationId: 'acme-robotics',
+    fieldType: 'Choice',
+    required: true,
+    ideaTypeNames: ['Process Revision', 'Continuous Improvement'],
+  },
+  {
+    id: 'f3',
+    name: 'Target date',
+    organizationId: 'acme-robotics',
+    fieldType: 'Date',
+    required: false,
+    ideaTypeNames: ['Process Revision'],
+  },
+  {
+    id: 'f4',
+    name: 'Depot',
+    organizationId: 'blue-harbor',
+    fieldType: 'Choice',
+    required: true,
+    ideaTypeNames: ['Route Change'],
+  },
+]
