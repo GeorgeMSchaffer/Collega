@@ -283,8 +283,14 @@ the delivery comp was regenerated on the decision. No Open Question remains in
 | **F3** Data migration | The transform, plus an answer to whether it is reversible |
 | **F4** Cutover runbook | Sequence, rollback posture, the go/no-go checklist |
 | **F5** Spec reconciliation | Ticket `11` — `SPEC/*.md` updated to describe the shipped stack, including reconciling `20-feature-client-ui.md` against comp P |
+| **F6** Delete the .NET solution | `src/Collega.*`, `tests/`, `Collega.sln`, `global.json`, the compose `api` service, and every .NET instruction file. One commit. **Gated on F1 green** |
 
-F1, F2 and F3 parallelise. F4 needs all three. F5 lands last.
+F1, F2 and F3 parallelise. F4 needs all three. F5 and F6 land last.
+
+**F6 is the only slice that may delete `src/` or `tests/`.** They were frozen on 2026-09-06
+(`SPEC/decisions.md`) — no features, no fixes, no tests — but kept on disk because re-recording a
+golden fixture needs the .NET API to boot, and Waves D and E are precisely where a missing or wrong
+fixture surfaces. Once F1 replays clean, that reason is spent and the code goes.
 
 ### Wave G — Net-new scope ⇉ 3 · **starts when F1 is green**
 
@@ -406,9 +412,12 @@ assumed.
 
 - **Gate:** F1 green — all 81 endpoints × 4 roles replay clean against Nest — plus F2's
   adapted Playwright suite green. No cutover before both.
-- **Rollback unit is the deployment, not the code.** The .NET stack stays deployable and
-  its database restorable for a stated window after cutover. Name that window in F4;
-  do not leave it implied.
+- **Rollback unit is the database, not the .NET deployment.** This bullet originally read
+  "the .NET stack stays deployable and its database restorable" — that is **dead as of
+  2026-09-04**, when Sprint 8 was cancelled and the .NET stack was never deployed. There is no
+  .NET deployment to fall back to, and after F6 there is no .NET code either. F4 must therefore
+  state the rollback posture in terms of the database alone: what is backed up, how it is
+  restored, and for how long.
 - **F3 must state whether the data transform is reversible.** If it is not, that is the
   real point of no return, and it should be scheduled and announced as one rather than
   discovered.
@@ -418,7 +427,10 @@ assumed.
 ## 8. Not converting
 
 - **The .NET solution itself.** It is replaced, not maintained in parallel — that is what
-  big-bang means.
+  big-bang means. **Frozen 2026-09-06** (`SPEC/decisions.md`): its code and every instruction file
+  under `src/` and `tests/` are no longer applicable guidance, and nothing may be built, fixed or
+  tested there. It stays on disk until **F6** solely as a golden-fixture recorder and as the only
+  runnable reference for existing behaviour.
 - **The 16,900-line C# test suite**, as C#. Its *coverage* is replaced by F1 + F2 +
   re-derived Vitest tests (ticket `10`).
 - **Sprint 7.5.** Implemented on .NET before this starts. **Sprint 8 was cancelled**

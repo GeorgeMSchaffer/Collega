@@ -1,99 +1,130 @@
 # AGENTS.md
 
+## The stack
+
+**Collega is a TypeScript monorepo.** pnpm workspaces + Turborepo, Node ≥ 24.20, pnpm ≥ 12.3.4.
+
+The .NET application in `src/Collega.*` and `tests/` is **frozen** — it is being replaced, not
+maintained. See [The frozen .NET stack](#the-frozen-net-stack) below before you touch anything
+there.
+
 ## Build and Test
 
 ```bash
-dotnet build Collega.sln
-dotnet test Collega.sln
-dotnet test tests/Collega.Application.Tests/Collega.Application.Tests.csproj   # single project
+pnpm install
+pnpm dev          # apps/web on http://localhost:3000
+pnpm check        # lint + typecheck + test — the gate
+pnpm build
+pnpm test:e2e     # Playwright; needs a running app
 ```
 
-EF Core tests use the **InMemory provider** — the PostgreSQL container is not required to run the suite. One exception: `PostgresProviderTests` starts a throwaway Testcontainers container and skips when Docker is unavailable; do not add a second container-backed test class.
-
-E2E tests (`tests/Collega.E2E.Tests`, Playwright for .NET) are skipped by default and require a running app + seeded database. There is also a separate TypeScript Playwright suite in `e2e/` (see `e2e/README.md`).
-
-There is no linter or typecheck step beyond `dotnet build`. No CI workflows are checked in.
-
-## SDK and Runtime
-
-.NET SDK **8.0.118** pinned in `global.json` (`rollForward: latestFeature`). EF packages are pinned to 8.0.x majors — `dotnet add package` will pick net9/net10-compatible versions that fail to restore against net8.0.
+`pnpm check` is what "green" means: Biome (lint + format + layer boundaries), `tsc` across every
+package, and Vitest. Run it before calling work done. A single package: `pnpm --filter @collega/api test`.
 
 ## Architecture
 
-Layers, dependencies flow inward:
+Dependencies flow inward. The boundaries are enforced by lint, not convention.
 
-| Project | Role |
+| Package | Role |
 |---|---|
-| `src/Collega.Domain` | Entities, enums, value objects, invariants (depends on nothing) |
-| `src/Collega.Application` | Use-case orchestration, authorization, validation (depends on Domain) |
-| `src/Collega.Infrastructure` | EF Core persistence, seeding, external integrations (implements Application/Domain abstractions) |
-| `src/Collega.API` | HTTP host, controllers, request boundary (depends on Application + Infrastructure) |
-| `src/Collega.Client` | Blazor WebAssembly UI — Fluent UI Blazor, runs on its own port (5098) |
+| `packages/domain` | Entities, enums, value objects, invariants — depends on nothing |
+| `packages/application` | Use cases, authorization, validation — depends on domain |
+| `packages/infrastructure` | Prisma persistence, seeding, external integrations — implements application/domain ports |
+| `apps/api` | Nest.js host, controllers, request boundary — the only thing that talks to the database |
+| `apps/web` | Next.js client — **HTTP only**, may import `@collega/design-system` and nothing else from the workspace |
+| `packages/design-system` | Comp P tokens and primitives, on Tailwind v4 + shadcn/ui |
 
-Business rules live in Domain and Application — **never** in controllers or Blazor components. Each project has its own `CLAUDE.md` with layout, conventions, and gotchas; read the relevant one before working in that area.
+Business rules live in domain and application — **never** in controllers or React components.
 
-`FluentUiComps/` is an unrelated spike, **not part of Collega**.
+`biome.json`'s `noRestrictedImports` overrides fail the build on a cross-layer import, and
+`tools/boundaries` is an architecture test over those rules. `tools/arch` holds the assertions lint
+cannot express, including the identity chokepoint (only the auth folder reads a credential).
+
+## Repository layout
+
+| Path | What |
+|---|---|
+| `apps/`, `packages/` | The application |
+| `SPEC/` | Canonical specs — the source of truth |
+| `SPEC/mockups/` | Comp P/Q HTML mockups; `comp-q-*.html` is the reference rendering |
+| `e2e/` | Playwright suite (TypeScript), adapted to comp P in F2 |
+| `tools/golden` | Capture/replay harness — **the conversion's only oracle** |
+| `tools/boundaries`, `tools/arch` | Architecture tests |
+| `src/`, `tests/`, `Collega.sln` | **Frozen .NET application.** Deleted in slice F6 |
 
 ## Source of Truth
 
-`SPEC/*.md` is canonical. Read the relevant spec before describing or changing behavior. `SPEC/README.MD` indexes the full set.
+`SPEC/*.md` is canonical. Read the relevant spec before describing or changing behavior.
+`SPEC/README.MD` indexes the full set.
 
-Critical spec files:
+- `SPEC/decisions.md` — dated log of decisions that constrain later work, newest first. Read the
+  top few before planning anything.
+- `SPEC/50-typescript-migration.md` — the conversion plan: waves, slices, and what is settled.
+- `SPEC/implementation-agent-tracker.md` — authoritative log of what is built, in progress, next.
+- `SPEC/30-Contracts.md` — canonical route/payload contracts. **Read, not edited**, by every API
+  slice; it is what the golden corpus pins.
+- `SPEC/40-test-strategy.md` — what must be covered. `SPEC/90-definition-of-done.md` — what done means.
+- `SPEC/Bug Triage.md` — clear its TODO items before new features unless the user approves an exception.
 
-- `SPEC/Bug Triage.md` — **clear its TODO items before starting new features** unless the user explicitly approves an exception. Move fixed items to `SPEC/archive/bug-triage-completed.md`.
-- `SPEC/implementation-agent-tracker.md` — the authoritative log of what's built, in progress, and next.
-- `SPEC/30-Contracts.md` — canonical API route/payload contracts; read before adding or changing an endpoint.
-- `SPEC/40-test-strategy.md` — what must be covered.
-- `SPEC/90-definition-of-done.md` — what "done" means.
-
-`SPEC/Specs Overview.md` is derived and non-canonical. Where it disagrees with a canonical spec, the canonical spec wins. `SPEC/archive/` contains superseded documents — don't read unless asked for history. `SPEC/SPECKIT/specs/` contains downstream copies; edit the canonical file first.
+`SPEC/Specs Overview.md` is derived and non-canonical; where it disagrees, the canonical spec wins.
+`SPEC/archive/` is superseded — don't read unless asked for history. `SPEC/SPECKIT/specs/` holds
+downstream copies; edit the canonical file first.
 
 ## Ground-Truth Verification
 
-Before any status, planning, or scope claim, re-read `SPEC/implementation-agent-tracker.md`'s Current Status section AND run `git log --oneline -10` fresh in the same turn. Never answer from recollection — this project moves fast via parallel worktree agents.
+Before any status, planning, or scope claim, re-read `SPEC/implementation-agent-tracker.md`'s
+Current Status section AND run `git log --oneline -10` fresh in the same turn. Never answer from
+recollection — this project moves fast via parallel worktree agents.
 
 ## Client Design Direction
 
-**Comp C "Fluent Editorial"** — locked in `SPEC/20-feature-client-ui.md` and `src/Collega.Client/CLAUDE.md`. Read those before UI work. Key traits: 64px icon rail, serif headings, warm neutral palette, indigo accent. Indigo always means *active/selected/primary action* — introduce new state colours as new tokens, never reuse the accent.
+**Comp P**, locked 2026-08-31 and made canonical 2026-09-03 (`SPEC/decisions.md`). Structure is
+locked; palette is open. Built on Tailwind v4 + shadcn/ui used as intended — comp Q
+(`SPEC/mockups/comp-q-*.html`) is the reference rendering, and `SPEC/mockups/_build/build_q.py`
+carries the component map. The theme lives in `apps/web/app/globals.css`, carried over from
+`_build/q.css`; change the palette in both or the comps stop being a reference.
 
-Admin list pages (Orgs, Users, Statuses, Idea Types, Custom Fields) use a **List + Drawer** pattern. Ideas uses a centered **create modal** because it's also opened from the board header. Don't "fix" the admin pages back to a modal — the divergence is deliberate.
+If a page or flow's layout isn't settled, produce a throwaway HTML comp in `SPEC/mockups/` for
+review before writing production React against an undecided design.
 
-If a page or flow's layout isn't settled, produce a throwaway HTML comp in `SPEC/mockups/` for review first rather than writing production Blazor against an undecided design.
+## Conventions
 
-## API Conventions
+- **Errors:** the shared error model from `packages/*/src/common` (S0.3). Don't hand-build error
+  responses in controllers.
+- **Identity:** one chokepoint. Only the auth folder reads a credential — asserted by
+  `tools/arch/identity-chokepoint.test.ts`, not just linted.
+- **Request context:** `AsyncLocalStorage`, because Nest runs serverless and there is no
+  long-lived in-process state to hang anything on.
+- **Tests:** hermetic — no network, no real clock, no randomness. Inject the clock and fixed seeds.
+  An agent does not write tests for its own code; a QA agent does.
+- **SQL:** UPPERCASE keywords, lowercase table/column names, no `SELECT *`, meaningful aliases.
+- Do not add dependencies without approval.
 
-- **Routing:** never write the version segment in a controller. `ApiVersionRoutePrefixConvention` prefixes every controller with `api/v1`, so `[Route("auth")]` serves `/api/v1/auth`.
-- **Errors:** throw an `AppException` subtype (e.g. `NotFoundAppException`, `ValidationAppException`); `AppExceptionHandler` maps to problem-details. Don't hand-build error responses in controllers.
-- **Validation:** use the repo's own attributes (`RequiredFieldAttribute`, `EmailFormatAttribute`, etc.) in `src/Collega.API/Validation/`, not raw `System.ComponentModel.DataAnnotations`.
-- **Seeding:** runs on every startup, idempotent. `--seed:auth` and `--seed:demo` flags override the environment default. `--seed:auth=reset` drops and recreates the configured Site Admin.
+## The frozen .NET stack
 
-## API Startup Gotchas
+`src/Collega.*`, `tests/`, `Collega.sln` and `global.json` are the .NET 8 / ASP.NET Core / Blazor
+WebAssembly / EF Core application being replaced (`SPEC/decisions.md` 2026-09-06).
 
-The API **fails fast** at startup if `SiteAdmin:Email` or `SiteAdmin:Password` is missing. Store secrets in user-secrets (Development only), not in `appsettings.Development.json` (which is committed). `dotnet run` does not read `.env`.
+**Their instructions are no longer applicable.** Do not fix bugs, add features, write tests, add
+migrations, or refactor there. A defect found in .NET is recorded against the TypeScript port. Every
+`CLAUDE.md` under `src/` and `tests/` carries a banner saying so.
 
-After the Postgres migration, check stale SQL Server user-secrets — a leftover `Server=localhost,1433` connection string will produce confusing Npgsql multi-host errors.
+They stay on disk until slice **F6** for exactly two reasons:
 
-## Testing Conventions
-
-- **Hermetic:** no network, no filesystem, no `DateTime.Now`, no randomness. Inject `IClock` and fixed seeds.
-- `[Using Include="Xunit"]` is set in every `.csproj` — no `using Xunit;` needed.
-- `CollegaApiFactory` boots the real host via `WebApplicationFactory<Program>` with InMemory DbContext. `SiteAdmin` credentials must be supplied as real process environment variables, not through `ConfigureWebHost` — the fail-fast check runs before the factory's configuration hooks.
-- The integration harness blanks `ANTHROPIC_API_KEY` and replaces `IIdeaDraftModel` with a throwing stub to prevent live Anthropic calls during tests.
-
-## Working Rules
-
-- If implementation changes behavior, update the canonical spec first, then align tests and implementation.
-- Make surgical changes; avoid unrelated refactors.
-- Do not add NuGet packages without approval.
-- Use DbContext + LINQ for data access; async/await for all database and I/O operations; EF Core migrations for schema changes.
-- SQL: UPPERCASE keywords, lowercase table/column names, no `SELECT *`, meaningful aliases.
+1. **Re-recording a golden fixture** needs the .NET API to boot. The corpus is the conversion's only
+   oracle, and Waves D/E are where a gap in it surfaces.
+2. It is the **only runnable full application** until Waves D and E land — the reference for how a
+   screen actually behaved. `README.md` and `demo.md` document how to start it for that purpose.
 
 ## Branching
 
 - Feature branches: `feature/<NNN>-<short-description>`
-- After build and tests pass: PR to `main`, merge feature into `dev`, push `dev`, report the merge commit hash.
-- Conflict resolution: server-side code — prefer `dev`; `SPEC/` and `src/Collega.Client/` — prefer the feature branch.
+- Flow: feature branch → `dev` → `main`. Report the merge commit hash.
+- Each implementer works in its own worktree; the Code Reviewer gates every branch before merge.
+- Once merged into `dev`, delete both the worktree and the branch.
 
 ## Explicitly Deferred
 
-Do not build without an explicit ask: OAuth/SSO, SAML, reporting, guaranteed outbound email delivery, remember-this-device.
+Do not build without an explicit ask: OAuth/SSO, SAML, reporting, guaranteed outbound email
+delivery, remember-this-device. Per-organization AI credentials are deliberately unimplemented
+(tracker rule 30); the conversion does not change that.

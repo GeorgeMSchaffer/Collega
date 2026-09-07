@@ -1,5 +1,11 @@
 # Feature: User-Defined Fields (UDFs) for Ideas
 
+> **Implementation sections below target the frozen .NET stack.** The EF Core configuration, the
+> `AddUserDefinedFields` migration and the Blazor component mapping describe how this was built in
+> `src/Collega.*`, which is frozen and deleted in slice F6 (`SPEC/decisions.md` 2026-09-06). The
+> **behaviour** they specify is canonical and ports as-is; the framework mechanics are history. The
+> schema now lives in `packages/infrastructure/prisma/`, and the field components in `apps/web`.
+
 ## Overview
 
 Organizations can extend the `Idea` entity with custom fields (User-Defined Fields / UDFs) to capture domain-specific data not covered by the core idea schema. Field definitions are owned at the organization level and are shared across all boards. Admins manage the schema; all org members can fill in UDF values on idea forms.

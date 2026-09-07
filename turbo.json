@@ -42,6 +42,14 @@
       "inputs": [
         "prisma/schema.prisma"
       ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": [
+        "^build",
+        "db:generate"
+      ]
     }
   }
 }

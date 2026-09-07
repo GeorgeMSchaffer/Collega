@@ -10,18 +10,26 @@ The product is conceptually similar to Trello/Jira:
 - Boards organize ideas by workflow status using swimlanes.
 
 ## Technology Stack
-- ASP.NET Core Web API
-- Blazor
-- Fluent UI
-- Entity Framework Core
-- PostgreSQL 16 (via Npgsql)
+- Next.js (App Router) + Tailwind CSS v4 + shadcn/ui
+- Nest.js, running serverless
+- Prisma
+- PostgreSQL 16
+- TypeScript on Node.js 24.x; pnpm workspaces + Turborepo
+
+The original stack — ASP.NET Core, Blazor, Fluent UI, EF Core — is **frozen** and no longer
+applicable (`SPEC/decisions.md` 2026-09-06). It is deleted in slice F6; see
+`SPEC/50-typescript-migration.md`.
 
 ## Solution Structure
-- `Collega.API` — HTTP API host
-- `Collega.Application` — business logic and use-case orchestration
-- `Collega.Domain` — entities, enums, value objects, shared contracts
-- `Collega.Infrastructure` — persistence and external integrations
-- `Collega.Client` — Blazor UI
+- `apps/api` — Nest.js HTTP host; the only thing that talks to the database
+- `apps/web` — Next.js client; reaches the server over HTTP only
+- `packages/application` — business logic and use-case orchestration
+- `packages/domain` — entities, enums, value objects, shared contracts
+- `packages/infrastructure` — Prisma persistence and external integrations
+- `packages/design-system` — comp P tokens and primitives
+
+The layering is unchanged from the frozen .NET solution — `Collega.Domain` → `packages/domain`, and
+so on. That is what the conversion preserves; the language and ORM are not.
 
 ## Architecture Rules
 - API depends on Application.

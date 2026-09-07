@@ -1,5 +1,15 @@
 # 50 — Azure Deployment Guide
 
+> ## ⛔ SUPERSEDED — describes the frozen .NET stack
+>
+> This document plans the deployment of `src/Collega.*`, which is **frozen and never deployed**:
+> Sprint 8 was cancelled on 2026-09-04, and the .NET code is deleted in slice F6
+> (`SPEC/decisions.md` 2026-09-06, `SPEC/50-typescript-migration.md`). The product ships to
+> **Vercel with Prisma Postgres** (ticket `02`, decided 2026-09-03).
+>
+> Kept for the cost model, the topology reasoning, and the database/secret-handling decisions,
+> which survive the change of host. **Nothing here is a build instruction.**
+
 How to provision and deploy Collega's three tiers to Azure at low cost. This is the
 cost-optimized PaaS target that pairs with `SPEC/50-kubernetes-deployment.md` (the heavier,
 self-hosted alternative). It reflects the **actual** wiring in the codebase as of this

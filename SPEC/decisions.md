@@ -9,6 +9,49 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-06 — The .NET stack is frozen; its code and instructions are no longer applicable
+
+**Decided:** `src/Collega.*`, `tests/`, `Collega.sln` and every .NET instruction file are
+**frozen**. They describe a stack that is being replaced, not the one being built. From today:
+
+- **Do not read the .NET code or its `CLAUDE.md` files for guidance on how to build anything.**
+  They are not the house style for the TypeScript stack; `packages/*` and `apps/*` are.
+- **Do not fix bugs, add features, write tests, or refactor there.** A defect found in .NET is
+  recorded against the TypeScript port, not repaired in C#.
+- **Do not add a .NET migration, package, or endpoint.** The schema is frozen at S0.2 and Prisma
+  owns it now.
+
+The code stays on disk until **F1 is green** — all 81 endpoints × 4 roles replaying clean against
+Nest — and its deletion is a named slice, **F6**. Then `src/`, `tests/`, `Collega.sln`,
+`global.json` and the compose `api` service go, in one commit.
+
+**Why frozen now rather than deleted now.** The one thing the .NET app is still good for is
+**re-recording a golden fixture**. Wave A banked 447 cases over all 81 endpoints on 2026-09-03, which is what bought
+the freedom to stop maintaining .NET at all — but Waves D and E are exactly where a missing or
+subtly wrong fixture surfaces, and the corpus is the *only* oracle this conversion has
+(constraint 10; the standing risk in §1). Deleting the recorder before the recording has been
+used against Nest would give that up for nothing. Git history is not a substitute: replaying from
+an old commit means resurrecting a schema Prisma has since reshaped.
+
+**Why the docs needed this at all.** The direction was never in doubt — §8 has said "the .NET
+solution is not converted, it is replaced" since charting, and Sprint 8's cancellation on
+2026-09-04 means it is never even deployed. But every instruction file still *read* as though
+.NET were the live stack: root `CLAUDE.md` said "only the first one exists" and "there is no
+`package.json`", `AGENTS.md` documented .NET conventions with no caveat, and each layer's
+`CLAUDE.md` gave detailed guidance with nothing marking it dead. An agent opening
+`src/Collega.Application/CLAUDE.md` had no way to know it was reading an epitaph. That is the
+drift this entry closes.
+
+**What this does not change.** The .NET app remains the only *runnable* application until Wave D
+and E land, so `demo.md` and the README still document how to start it — as the thing to look at
+and to re-record from, explicitly not as the thing to extend.
+
+**Supersedes** the `pnpm-workspace.yaml` note and §7's rollback posture, both of which assumed a
+deployed .NET stack to fall back to. Sprint 8's cancellation removed it; there is no deployment
+to roll back to, and F4 must state the rollback unit in terms of the database alone.
+
+---
+
 ## 2026-09-06 — Unresolved comment mentions are rejected, not ignored; the contract was wrong
 
 **Decided:** an unresolved `mentionEmails` address is rejected with a 400 keyed on

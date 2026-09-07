@@ -2,7 +2,18 @@
 
 Organization-scoped collaboration and idea-tracking tool. Organizations contain users, boards, statuses, and ideas; boards organize ideas by status using swimlanes.
 
-**Stack:** .NET 8 · ASP.NET Core Web API · Blazor WebAssembly (Fluent UI Blazor) · EF Core · PostgreSQL 16 (Npgsql) · xUnit
+**Stack:** TypeScript · Next.js · Nest.js · Prisma · PostgreSQL 16 · Tailwind v4 + shadcn/ui · Vitest + Playwright · pnpm + Turborepo
+
+> **The .NET code in `src/` and `tests/` is frozen.** It is being replaced, not maintained, and its
+> instructions no longer apply — do not build features, fix bugs, or write tests there
+> ([`SPEC/decisions.md`](SPEC/decisions.md) 2026-09-06). It is deleted in slice F6.
+>
+> **`apps/*` and `packages/*` are the application.** `pnpm install && pnpm dev` serves the client on
+> http://localhost:3000. It is mid-build: the design system and theme are in place (Wave E0), the
+> feature screens arrive in E1–E6 and the API in Wave D — so for a *complete working product with
+> real data*, the frozen .NET app is still the only thing that runs end to end, and the setup below
+> is how you start it. Use it to see how a screen behaved and to re-record a golden fixture, not to
+> extend.
 
 > **Database engine: PostgreSQL 16** (Npgsql), local container `collega-postgres` on port 5432. The SQL Server → PostgreSQL cutover completed in Sprint 5 (merged `7c5a78b`, 2026-08-12) and every document is reconciled to it; the migration's scope and post-mortem are kept for reference in [`SPEC/50-postgres-migration.md`](SPEC/50-postgres-migration.md) and [`SPEC/sprints/archive/sprint-05-postgres-migration.md`](SPEC/sprints/archive/sprint-05-postgres-migration.md).
 
@@ -14,9 +25,10 @@ Organization-scoped collaboration and idea-tracking tool. Organizations contain 
 
 | Requirement | Notes |
 |---|---|
-| .NET SDK **8.0.118** | Pinned in `global.json` (`rollForward: latestFeature`). |
-| Docker Desktop | Runs the local PostgreSQL 16 container. |
+| .NET SDK **8.0.118** | Pinned in `global.json` (`rollForward: latestFeature`). Required to run the application. |
+| Docker Desktop | Runs the local PostgreSQL 16 container. Also runs the API itself if you have no local .NET — see [No local .NET?](#no-local-net) |
 | `dotnet-ef` (optional) | Only needed to author migrations: `dotnet tool install -g dotnet-ef`. See the version caveat under [Migrations](#migrations). |
+| Node **≥ 24.20** + pnpm **≥ 12.3.4** (optional) | Only needed to work on the TypeScript conversion. `corepack enable && corepack prepare pnpm@12.3.4 --activate`. Not required to run or test the .NET app. |
 
 ---
 
@@ -39,7 +51,12 @@ POSTGRES_HOST_PORT=5432
 
 SITE_ADMIN_EMAIL=admin@collega.local
 SITE_ADMIN_PASSWORD=<your-password>
+
+# Optional. Empty is a supported state, not a misconfiguration.
+ANTHROPIC_API_KEY=
 ```
+
+> `ANTHROPIC_API_KEY` powers AI-assisted idea drafting. Leaving it empty runs the feature **dark**: the brainstorm falls back to its scripted prompts and the API answers "unavailable" rather than erroring (`SPEC/20-feature-ai-idea-assist.md` rule 31). One deployment-level key is shared by every organization. The key has no `:` segment, so the configuration key and the environment-variable name are the same string.
 
 > `POSTGRES_USER` is `collega`, not `postgres` — the container creates exactly one login role and names it `collega`, so local, in-cluster, and app connection strings all name the same role. It is still the container's superuser, just not called `postgres`. `psql -U postgres` will fail with `role "postgres" does not exist`.
 
@@ -55,9 +72,14 @@ dotnet user-secrets init
 dotnet user-secrets set "SiteAdmin:Email" "admin@collega.local"
 dotnet user-secrets set "SiteAdmin:Password" "<your-password>"
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=Collega;Username=collega;Password=<your-password>"
+
+# Optional — omit to run the AI assist feature dark.
+dotnet user-secrets set "ANTHROPIC_API_KEY" "<key>"
 ```
 
 The connection-string secret overrides the placeholder in `appsettings.Development.json`, which is committed and must never hold a real password.
+
+`dotnet run` does **not** read `.env` — that file only reaches the API under `docker compose`. User-secrets (or a shell variable) is how a local `dotnet run` picks these up.
 
 Environment variables work as an alternative (note the **double** underscore):
 
@@ -87,31 +109,50 @@ Data persists in the named volume `collega_postgres-data`.
 
 ```bash
 dotnet build Collega.sln
-dotnet run --project src/Collega.API/Collega.API.csproj
 ```
 
-On startup the API applies EF Core migrations, creates the `Collega` database, and runs idempotent seeding.
+The application is **two processes**: the API and the Blazor client. The client is a WebAssembly SPA that calls the API over HTTP, so for a working UI you need both running at once, in two terminals:
+
+```bash
+# terminal 1 — API
+dotnet run --project src/Collega.API/Collega.API.csproj
+
+# terminal 2 — client
+dotnet run --project src/Collega.Client/Collega.Client.csproj
+```
+
+Then open **http://localhost:5098** and sign in with any account from [`demo.md`](demo.md).
 
 | Surface | URL |
 |---|---|
+| **Client (start here)** | http://localhost:5098 |
 | API | http://localhost:5103 |
 | Swagger UI (**Development only**) | http://localhost:5103/swagger |
 | Health check | http://localhost:5103/api/v1/health |
 
-To override the port, bypass the launch profile — `ASPNETCORE_URLS` alone is ignored because `Properties/launchSettings.json` sets `applicationUrl`:
+On startup the API applies EF Core migrations, creates the `Collega` database, and runs idempotent seeding — so a fresh clone needs no manual `database update` and no manual user creation.
+
+The client is a full application — sign-in, home, boards (list and swim lanes), the global `/ideas` list, the idea detail drawer, and the role-scoped `/settings` hub. See [`src/Collega.Client/CLAUDE.md`](src/Collega.Client/CLAUDE.md) for the locked design direction.
+
+Use `dotnet watch` in place of `dotnet run` for hot reload on either process. Stop both before ending a session.
+
+**Overriding a port** — `ASPNETCORE_URLS` alone is ignored, because `Properties/launchSettings.json` sets `applicationUrl`. Bypass the profile:
 
 ```bash
 ASPNETCORE_URLS='http://localhost:5027' \
   dotnet run --project src/Collega.API/Collega.API.csproj --no-launch-profile
 ```
 
-Run the Blazor client separately:
+#### No local .NET?
+
+`docker compose` runs the API on the SDK image — migrations and seeding included — against a bind mount of the repository:
 
 ```bash
-dotnet run --project src/Collega.Client/Collega.Client.csproj   # http://localhost:5098
+docker compose --profile full up -d api    # http://localhost:5027
+docker compose logs -f api
 ```
 
-The client is a full application — sign-in, home, boards (list and swim lanes), the global `/ideas` list, the idea detail drawer, and the role-scoped `/settings` hub. See [`src/Collega.Client/CLAUDE.md`](src/Collega.Client/CLAUDE.md) for the locked design direction.
+This covers the API only; the `web` service is still a placeholder, so the Blazor client has no container yet. Behind a TLS-inspecting proxy, drop your CA into `docker/proxy-ca/` before building — see [`src/Collega.Infrastructure/CLAUDE.md`](src/Collega.Infrastructure/CLAUDE.md).
 
 ---
 
@@ -137,12 +178,14 @@ dotnet run --project ./src/Collega.API -- --seed:auth=reset
 
 See [`src/Collega.API/CLAUDE.md`](src/Collega.API/CLAUDE.md#seeding-flags) for the full flag semantics.
 
-**Demo data** — `Development` environment only. Two organizations, each with one Org Admin and two `User` accounts, all at password `Abc123!` with no forced change. Each organization gets two boards, and each board 11 ideas distributed `3/2/2/1/3` across the canonical statuses. **No Read Only account is seeded.**
+**Demo data** — `Development` environment only. Two organizations, each with one Org Admin, two `User` and one Read Only account, all at password `Abc123!` with no forced change — one per role, so every permission perspective can be exercised. Each organization gets two boards, and each board 11 ideas distributed `3/2/2/1/3` across the canonical statuses.
 
 | Organization | Email pattern |
 |---|---|
-| Acme Robotics | `{orgadmin,user,user2}@acme-robotics.demo.collega.test` |
-| Blue Harbor Logistics | `{orgadmin,user,user2}@blue-harbor.demo.collega.test` |
+| Acme Robotics | `{orgadmin,user,user2,readonly}@acme-robotics.demo.collega.test` |
+| Blue Harbor Logistics | `{orgadmin,user,user2,readonly}@blue-harbor.demo.collega.test` |
+
+The full roster — every address, display name and role — is [`demo.md`](demo.md).
 
 The demo seed also creates a convenience **Site Admin** — `siteadmin@demo.collega.test` / `Abc123!`, no forced password change — distinct from the configured account, so the platform-admin perspective is testable without your `SiteAdmin:Password` secret. Development-only and idempotent. The configured Site Admin stays outside every organization.
 
@@ -187,10 +230,40 @@ Browser tests are separate and **do** need a running app plus a seeded database:
 
 ---
 
+## TypeScript workspace (in progress)
+
+Sprint 9 converts the whole application to TypeScript ([`SPEC/50-typescript-migration.md`](SPEC/50-typescript-migration.md)). This is the application; the .NET code is frozen.
+
+**`apps/web` runs.** Wave E0 landed 2026-09-06: `pnpm dev` serves a real Next 16 app on
+http://localhost:3000 carrying comp Q's theme. It has no feature screens yet (E1–E6) and no API to
+call (`apps/api` is Wave D and still has no HTTP entry point), so for a complete working product
+with real data the frozen .NET app above is still the only option.
+
+```bash
+corepack enable && corepack prepare pnpm@12.3.4 --activate
+pnpm install
+
+pnpm dev         # apps/web on http://localhost:3000
+pnpm check       # lint + typecheck + test — the one command before pushing
+pnpm build       # turbo run build
+pnpm typecheck
+pnpm test        # every package except the Playwright suite
+pnpm test:e2e
+```
+
+Layer boundaries are enforced by `biome.json` overrides and asserted by `tools/boundaries`, so an illegal import fails lint rather than review.
+
+The .NET application is kept bootable until slice **F6** for one reason only: the golden corpus in
+`tools/golden` is the conversion's only oracle, and a fixture can only be re-recorded while the .NET
+API still runs. That is not a licence to develop there — see
+[`SPEC/decisions.md`](SPEC/decisions.md) 2026-09-06.
+
+---
+
 ## Solution layout
 
 ```
-src/
+src/                       FROZEN .NET application — replaced, not maintained; deleted in slice F6
   Collega.Domain           Entities, enums, value objects, invariants (depends on nothing)
   Collega.Application      Use-case orchestration, authorization, validation
   Collega.Infrastructure   EF Core persistence, seeding, external integrations
@@ -199,6 +272,17 @@ src/
 tests/
   Collega.Domain.Tests  Collega.Application.Tests  Collega.Infrastructure.Tests  Collega.API.Tests
   Collega.E2E.Tests        Playwright-for-.NET browser suite; needs a running app, skipped by default
+
+apps/                      The application (Sprint 9)
+  api                      Nest.js host
+  web                      Next.js client
+packages/
+  domain  application  infrastructure  design-system
+e2e/                       Playwright suite for the TypeScript stack
+tools/
+  golden                   Capture/replay harness — the conversion's only oracle
+  boundaries  arch         Architecture tests over the layer rules
+
 SPEC/                      Canonical specs — the source of truth
 SPEC/mockups/              UI comps (HTML/SVG)
 ```

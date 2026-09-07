@@ -29,24 +29,29 @@ This file carries only the rules that must be true *before* touching code. Refer
 
 ## Build and Test
 
+**This is a TypeScript monorepo.** pnpm workspaces + Turborepo; Node ≥ 24.20, pnpm ≥ 12.3.4.
+
 ```bash
-dotnet build Collega.sln
-dotnet test Collega.sln   # the whole suite: Domain, Application, Infrastructure, API
+pnpm install
+pnpm dev          # apps/web on http://localhost:3000
+pnpm check        # lint + typecheck + test — run this before calling anything done
+pnpm build
+pnpm test:e2e     # Playwright, separate because it needs a running app
 ```
 
-`tests/Collega.E2E.Tests` is **Playwright for .NET**, skipped by default, so the line above
-compiles it without needing a browser or a running server. See `tests/CLAUDE.md`.
+`pnpm check` is the gate. It runs Biome (which also enforces the layer boundaries), `tsc` across
+every package, and Vitest. There is no other build step.
 
-There is no `package.json` and no npm script — the TypeScript stack does not exist yet. When it
-does, the commands live here alongside these, not instead of them, until cutover.
+### The .NET commands are frozen, not current
 
-**No local `dotnet`?** `docker compose --profile full up -d api` runs the API on the SDK image,
-migrations and seed included (`src/Collega.Infrastructure/CLAUDE.md`). Behind a TLS-inspecting
-proxy, drop the CA into `docker/proxy-ca/` first; the container build needs `--network host` and
-the proxy variables or NuGet restore fails.
+`dotnet build Collega.sln` still works, and the golden-capture harness still needs it to. But
+`src/Collega.*` and `tests/` are **frozen** — see `SPEC/decisions.md` 2026-09-06 and the banner at
+the top of each of their `CLAUDE.md` files. Do not build features, fix bugs, or write tests there.
+They are deleted in slice **F6**, once F1 replays clean.
 
-Running the API or Client, required configuration and secrets, seeding flags, migrations, and the local PostgreSQL container are all documented where they belong: `src/Collega.API/CLAUDE.md`, `src/Collega.Infrastructure/CLAUDE.md`, `src/Collega.Client/CLAUDE.md`, `tests/CLAUDE.md`, and `README.md`.
-
+Until Waves D and E land, the .NET app is the only *runnable* full application, so `README.md` and
+`demo.md` still document how to start it — as the thing to look at and re-record from, not to
+extend.
 
 ## Repository State
 
@@ -77,54 +82,57 @@ If behavior is ambiguous, or **two canonical specs** conflict, ask before implem
 
 ## Architecture
 
-Layered with strict boundaries — business rules live in Domain and Application, never in controllers or UI components. Each project's own `CLAUDE.md` has its layout and conventions.
+Layered with strict boundaries — business rules live in Domain and Application, never in
+controllers or UI components. The layering is what the conversion preserves; the language and ORM
+are not.
 
-| Project | Role | Depends on |
+| Package | Role | Depends on |
 |---|---|---|
-| `src/Collega.API` | HTTP host, request boundary | Application, Infrastructure |
-| `src/Collega.Application` | Use-case orchestration, authorization, validation | Domain |
-| `src/Collega.Domain` | Entities, enums, value objects, invariants | nothing |
-| `src/Collega.Infrastructure` | Persistence via **EF Core** on PostgreSQL, plus external integrations | implements Application/Domain abstractions |
-| `src/Collega.Client` | Blazor WebAssembly UI (Fluent UI Blazor) | — |
+| `apps/web` | Next.js client. **HTTP only** — may import `@collega/design-system` and nothing else from the workspace | design-system |
+| `apps/api` | Nest.js host, request boundary. The only thing that talks to the database | application, infrastructure, domain |
+| `packages/application` | Use-case orchestration, authorization, validation | domain |
+| `packages/domain` | Entities, enums, value objects, invariants | nothing |
+| `packages/infrastructure` | Persistence via **Prisma** on PostgreSQL, plus external integrations | implements application/domain ports |
+| `packages/design-system` | Tokens and primitives from comp P, on Tailwind v4 + shadcn/ui | — |
 
-These are the real project names, and the layering — not the ORM or the language — is what the
-conversion preserves. `SPEC/50-typescript-migration.md` §4 maps each one onto its replacement.
+These boundaries are **enforced**, not conventional: `biome.json`'s `noRestrictedImports`
+overrides fail the lint run on a cross-layer import, and `tools/boundaries` asserts the lint rules
+themselves still work. `apps/web` reaching into `packages/application` is a lint error, and that is
+deliberate (`SPEC/50-typescript-migration.md` §4.3).
+
+The frozen .NET projects map one-to-one onto these — `Collega.Domain` → `packages/domain`, and so
+on. `SPEC/50-typescript-migration.md` §4 has the full mapping.
 
 ## Technology Stack
 
-**Two stacks are described below. Only the first one exists.** The whole application converts to
-TypeScript in Sprint 9 (`SPEC/50-typescript-migration.md`) — a big-bang rewrite of ~60,000 lines,
-not an incremental port — so until cutover, work against what is here and read the target as the
-destination it is. Writing code against the second table today is the drift this section exists to
-prevent.
-
-### What the code is today
-
 | | |
 |---|---|
-| Runtime | .NET 8 (`global.json` pins SDK 8.0.118) |
-| Backend | ASP.NET Core Web API |
-| Frontend | **Blazor WebAssembly**, Fluent UI Blazor — a client-side SPA, not Razor Pages |
-| ORM | **EF Core** (Npgsql), migrations in `src/Collega.Infrastructure/Persistence/Migrations` |
-| Database | PostgreSQL 16 — local in Docker with a persistent volume |
-| Tests | xUnit, plus Playwright for .NET in `tests/Collega.E2E.Tests` (skipped by default) |
-| Hosting | Azure, first deployed in Sprint 8 |
-
-### What it converts to, in Sprint 9
-
-| | |
-|---|---|
-| Runtime | Node.js 24.x, TypeScript |
-| Frontend | Next.js + Tailwind CSS v4 + shadcn/ui, used as intended (`SPEC/decisions.md` 2026-09-03; comp Q is the reference rendering) |
-| Backend | Nest.js, running serverless |
-| ORM | Prisma |
-| Database | PostgreSQL — Prisma Postgres in production |
-| Tests | The .NET suite is **discarded** (ticket `10`): the golden corpus in `tools/golden` plus fresh per-slice Vitest |
+| Runtime | Node.js 24.x, TypeScript 7 |
+| Frontend | **Next.js** (App Router) + Tailwind CSS v4 + shadcn/ui, used as intended. Comp P is the locked structure; comp Q (`SPEC/mockups/comp-q-*.html`) is the reference rendering |
+| Backend | **Nest.js**, running serverless |
+| ORM | **Prisma** — schema frozen at S0.2, `packages/infrastructure/prisma/` |
+| Database | PostgreSQL 16 — local in Docker; Prisma Postgres in production |
+| Tooling | pnpm workspaces + Turborepo, Biome for lint and format |
+| Tests | Vitest per package, plus the Playwright suite in `e2e/`, plus the golden corpus in `tools/golden` |
 | Hosting | Vercel |
 
-The cutover **deletes the .NET solution**. Nothing runs side by side, and `SPEC/decisions.md`
-2026-09-02 calls that the highest-risk change in the project. What survives it: `SPEC/`, the
-`tools/golden` corpus that is the conversion's only oracle, and the database itself.
+### The .NET stack (frozen)
+
+`src/Collega.*`, `tests/`, `Collega.sln` and `global.json` are the .NET 8 / ASP.NET Core / Blazor
+WebAssembly / EF Core application this replaces. **They are frozen and no longer applicable**
+(`SPEC/decisions.md` 2026-09-06): read them only to learn what the old behaviour was, never as a
+pattern. Every `CLAUDE.md` under `src/` and `tests/` carries a banner saying so.
+
+Two things keep them on disk until slice **F6**:
+
+- **The golden corpus is the conversion's only oracle.** Wave A recorded 447 cases across all 81
+  endpoints × 4 roles on 2026-09-03 (`tools/golden`), and re-recording a missing or wrong one needs
+  the .NET API to still boot. Waves D and E are exactly where such a gap surfaces.
+- **It is the only runnable full application** until D and E land — the thing to look at when you
+  need to know how a screen actually behaved.
+
+The .NET test suite is **discarded**, not ported (ticket `10`). Cutover deletes the solution;
+nothing runs side by side. What survives: `SPEC/`, `tools/golden`, and the database.
 
 ## Session, Branch, and Source Control
 

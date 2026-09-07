@@ -1,5 +1,15 @@
 # Technical Implementation Plan
 
+> ## ⛔ SUPERSEDED — describes the frozen .NET stack
+>
+> This plans the MVP as "a layered ASP.NET Core application with a Blazor client". That stack is
+> **frozen** and its instructions no longer apply (`SPEC/decisions.md` 2026-09-06); it is deleted in
+> slice F6. The application is TypeScript — see `SPEC/50-typescript-migration.md`.
+>
+> Still worth reading for **layer design and the entity/column model**, which the conversion
+> preserves: the layering is what ports, not the language or the ORM. Treat every framework, ORM and
+> tooling statement as history.
+
 ## Goal
 Deliver the Collega MVP as a layered ASP.NET Core application with a Blazor client, PostgreSQL persistence, organization-scoped authorization, audit coverage, and contract-aligned API behavior.
 

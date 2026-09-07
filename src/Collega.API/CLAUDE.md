@@ -1,5 +1,18 @@
 # Collega.API
 
+> # ⛔ FROZEN — this describes the .NET stack, which is being replaced
+>
+> **Everything below is no longer applicable guidance.** It documents `src/Collega.*`, the .NET
+> application the TypeScript conversion replaces (`SPEC/decisions.md` 2026-09-06). Read it only to
+> understand what the old code *did* — never as a pattern to follow, and never as the house style.
+>
+> **Do not** fix bugs, add features, write tests, add migrations or refactor anything in `src/` or
+> `tests/`. A defect found here is recorded against the TypeScript port instead.
+>
+> Build against `packages/{domain,application,infrastructure}` and `apps/{api,web}`. The .NET code
+> stays on disk only so a golden fixture can still be re-recorded, and is deleted in slice **F6**
+> once F1 replays clean.
+
 HTTP host and request boundary. Depends on Application and Infrastructure. **Controllers stay thin** — no business rules here; delegate to Application services.
 
 ## Run

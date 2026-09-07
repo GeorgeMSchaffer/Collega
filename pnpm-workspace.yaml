@@ -1,6 +1,6 @@
 # pnpm workspace members.
 #
-# The product is mid-conversion (Sprint 9). Two stacks are present at once:
+# The product is mid-conversion (Sprint 9). These are the application:
 #
 #   apps/api                Nest.js host            | the TypeScript stack the
 #   apps/web                Next.js client          | conversion is building.
@@ -9,9 +9,10 @@
 #   packages/infrastructure Prisma, integrations    | asserted by tools/boundaries.
 #   packages/design-system  comp P primitives       |
 #
-#   src/Collega.*           the .NET application being replaced, built via Collega.sln.
-#                           It must stay runnable until Wave F - the golden corpus can
-#                           only be re-recorded while the .NET API still boots.
+#   src/Collega.*           FROZEN. The .NET application being replaced - not a workspace
+#                           member, not maintained, and its instructions no longer apply
+#                           (SPEC/decisions.md 2026-09-06). Kept runnable only so a golden
+#                           fixture can still be re-recorded; deleted in slice F6.
 #
 #   e2e                     Playwright suite; kept, adapted to comp P in F2
 #   tools/golden            capture and replay harness - the conversion's only oracle
