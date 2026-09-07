@@ -1277,7 +1277,7 @@ Contract-wide rules for this section:
 Purpose: Advance the idea-drafting conversation by one turn and return the updated draft.
 
 Request body:
-- `transcript` required array, ordered oldest-first, **max 40 entries of which at most 20 may have `role` of `user`** — the cap is counted in *user turns*, not entries, per `20-feature-ai-idea-assist.md` rule 5; a full 20-turn conversation is ~40 entries. Both bounds are enforced server-side. Each entry:
+- `transcript` required array, ordered oldest-first, **max 20 entries** — user and assistant messages combined, per `20-feature-ai-idea-assist.md` rule 5. This line previously read "max 40 entries of which at most 20 may have `role` of `user`", which contradicted the two references to the 20-entry cap further down this same section, and the shipped implementation. Corrected 2026-09-07 to rule 5a's recorded resolution: **the cap counts entries, not user turns**. Each entry:
   - `role` required string, one of `user`, `assistant`
   - `text` required string, max 4000 characters, trimmed before validation
 - `draft` optional object carrying the current draft so the model can revise rather than restate. Same shape as `draft` in the response; unknown or inactive ids are discarded server-side rather than rejected
