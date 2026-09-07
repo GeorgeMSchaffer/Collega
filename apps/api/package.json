@@ -5,7 +5,10 @@
   "type": "module",
   "description": "Nest.js host - the only thing that talks to the database. Imports application and infrastructure.",
   "scripts": {
+    "generate:modules": "node scripts/generate-modules.mjs",
+    "prebuild": "npm run generate:modules",
     "build": "tsc -p tsconfig.build.json",
+    "pretypecheck": "npm run generate:modules",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests"
   },
@@ -15,9 +18,14 @@
     "@collega/infrastructure": "workspace:*",
     "@nestjs/common": "^11.2.3",
     "@nestjs/core": "^11.2.3",
+    "@nestjs/platform-express": "^11.2.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0",
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
     "typescript": "7.0.2",
     "vitest": "3.2.4"
   }
