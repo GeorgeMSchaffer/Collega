@@ -22,8 +22,8 @@ export const navGroups: NavGroup[] = [
     label: 'Workspace',
     items: [
       { href: '/home', label: 'Home', icon: 'home' },
-      { href: '/boards', label: 'Boards', icon: 'boards', count: navCounts.boards, slice: 'E3' },
-      { href: '/ideas', label: 'Ideas', icon: 'ideas', count: navCounts.ideas, slice: 'E3' },
+      { href: '/boards', label: 'Boards', icon: 'boards', count: navCounts.boards },
+      { href: '/ideas', label: 'Ideas', icon: 'ideas', count: navCounts.ideas },
     ],
   },
   {

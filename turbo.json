@@ -50,6 +50,13 @@
         "^build",
         "db:generate"
       ]
+    },
+    "@collega/boundaries#test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false,
+      "outputs": []
     }
   }
 }

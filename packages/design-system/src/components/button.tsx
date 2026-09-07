@@ -7,7 +7,11 @@ import { cn } from '../lib/cn.js'
  * here are the mockup's rendering rather than a fresh interpretation of it.
  */
 export const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+  // aria-disabled is styled alongside disabled because a denied control must stay focusable:
+  // a `disabled` button leaves the tab order and the accessibility tree, which makes the
+  // aria-describedby reason announcing *why* it is denied unreachable. Comp Q uses aria-disabled
+  // exclusively - 14 occurrences, and bare `disabled` zero times.
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
   {
     variants: {
       variant: {

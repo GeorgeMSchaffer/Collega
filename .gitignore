@@ -82,6 +82,10 @@ dist/
 # committing it means a stale client can disagree with the schema without anyone noticing.
 packages/infrastructure/src/generated/
 
+# Biome writes these beside the file it is checking and does not always clean up; the
+# boundaries suite runs it inside apps/* and packages/*, so they land in a layer.
+_tmp_*
+
 # Scratch dirs tools/boundaries writes inside each layer to probe the lint rules. They are
 # cleaned up on exit, but an interrupted run leaks them - and they must live inside the layer
 # for biome.json's override globs to match, so they cannot go anywhere tidier.
