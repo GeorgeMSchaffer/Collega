@@ -9,6 +9,45 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-07 — The live database cannot accept a Prisma write on seven columns
+
+**Found, and verified against the running `collega-postgres`:** the database has **zero**
+user-defined enum types. `schema.prisma` declares **nine**. Seven columns Prisma expects to be
+native Postgres enums are not:
+
+| column | live | schema |
+|---|---|---|
+| `users.role`, `users.status` | `character varying` | `Role`, `UserStatus` |
+| `notification_events.event_type` | `character varying` | `NotificationEventType` |
+| `ai_usage_records.outcome`, `.key_source` | `character varying` | enum |
+| `field_definitions.field_type` | **`integer`** | `FieldType` |
+| `idea_types.field_mode` | **`integer`** | `IdeaTypeFieldMode` |
+
+`__EFMigrationsHistory` is present, so this is the EF-migrated database — the one slice S0.2
+introspected and then reshaped. The reshape promoted nine enum columns to native types; the
+database was never migrated to match.
+
+**Why this blocks rather than annoys.** Prisma emits a `::"public"."<Enum>"` cast, so *every write
+through any of those columns fails*. That is users, notifications, custom fields, idea types and AI
+usage — most of the product. The last two rows are worse than a missing type: `integer` to enum is a
+**storage** change, so creating the enum types does not close it. And `CLAUDE.md` lists the database
+as one of three things that survive cutover, so "recreate it" is not available either. This is a data
+migration, and it does not exist.
+
+**Corroborating evidence already in the tree:** `packages/infrastructure/test/constraint-errors.test.ts`
+records that the dev database still has `field_type` as `integer`. That was written down as an honest
+disclosure and never resolved.
+
+**Why it was found by accident.** A fix agent needed a live database to prove a notification write
+committed, hit `type "public.NotificationEventType" does not exist`, and worked around it on a scratch
+database built by `prisma db push`. No test touches the real database except one that is
+`skipIf(!DATABASE_URL)` and skips in CI, so nothing in the suite would ever have said this.
+
+**Do this before F1.** Golden replay against Nest will otherwise present as a mass failure with a
+misleading cause — it will look like the port is broken rather than the database being unmigrated.
+
+---
+
 ## 2026-09-07 — Golden replay cannot authenticate against the Nest API, and F1 is the gate
 
 **Found:** `tools/golden` authenticates with a bearer token read from the login response body.
