@@ -64,6 +64,34 @@ export class PrismaAiUsageRepository implements AiUsageRepository {
     )
   }
 
+  // The settlement half of reserve-then-spend: `add` books the row before the provider call
+  // with an estimate, this rewrites it with the counts the provider reported. `id` and
+  // `occurred_at_utc` are written as given and never re-derived - moving either would double the
+  // turn in `countCallsSince`'s window and reorder it in `getRecentOutcomes`.
+  async update(record: AiUsageRecord): Promise<void> {
+    this.unitOfWork.enqueue(
+      this.prisma.ai_usage_records.update({
+        where: { id: record.id },
+        data: {
+          organization_id: record.organizationId,
+          actor_user_id: record.actorUserId,
+          on_behalf_of_user_id: record.onBehalfOfUserId,
+          board_id: record.boardId,
+          occurred_at_utc: record.occurredAtUtc,
+          model: record.model,
+          input_tokens: record.inputTokens,
+          output_tokens: record.outputTokens,
+          cache_read_input_tokens: record.cacheReadInputTokens,
+          cache_creation_input_tokens: record.cacheCreationInputTokens,
+          input_rate_per_million: record.inputRatePerMillion,
+          output_rate_per_million: record.outputRatePerMillion,
+          key_source: record.keySource,
+          outcome: record.outcome,
+        },
+      }),
+    )
+  }
+
   async getTotalTokensSince(fromUtc: Date): Promise<number> {
     const result = await this.prisma.ai_usage_records.aggregate({
       where: { occurred_at_utc: { gte: fromUtc } },
