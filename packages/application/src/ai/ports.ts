@@ -3,12 +3,14 @@ import type { AiCallOutcome } from '@collega/domain/enums'
 import type { Organization } from '@collega/domain/organizations'
 import type {
   AiCallCounts,
+  AiTokenUsage,
+  AiUsageReservation,
   AiUsageSummary,
   IdeaAssistContext,
   IdeaAssistTurn,
   IdeaDraft,
   IdeaDraftModelResponse,
-  RecordAiUsageInput,
+  ReserveAiUsageInput,
 } from './models.js'
 
 // Prompt version persistence -------------------------------------------------------------------
@@ -58,6 +60,18 @@ export interface AiPromptVersionRepository {
 export interface AiUsageRepository {
   /** Records one model call's consumption. */
   add(record: AiUsageRecord): Promise<void>
+
+  /**
+   * Replaces a row already written by `add` - the settlement half of reserve-then-spend, where a
+   * row goes down before the provider call carrying an estimate and is rewritten with the real
+   * token counts afterwards.
+   *
+   * REPLACES THE ROW, and specifically does not move it: the implementation must keep the row's
+   * id and `occurred_at_utc` as given, because a settlement that shifted either would double
+   * the turn in `countCallsSince`'s window and reorder it in `getRecentOutcomes`, which is what
+   * rule 10's three-strikes close reads.
+   */
+  update(record: AiUsageRecord): Promise<void>
 
   /** Total tokens consumed across EVERY organization at or after `fromUtc` - the number the
    * daily budget gate compares against. Deliberately not org-scoped: the ceiling is one shared
@@ -109,18 +123,43 @@ export interface AiUsageRepository {
 // literally extend rather than merely resemble.
 
 export interface AiUsageGate {
-  /** Whether another model call is allowed under today's ceiling. Check BEFORE calling the
-   * provider - a gate consulted afterwards has already spent the money it was meant to save. */
+  /**
+   * Whether another model call is allowed under today's ceiling.
+   *
+   * COUNTS COMMITTED ROWS, so it is only a gate if the caller's own turn is already one of them:
+   * check it AFTER `reserveUsage`, never before. Checked first, it tells every request in a
+   * concurrent burst the same "yes" - which is not a ceiling, it is a ceiling-shaped comment.
+   * (`IdeaAssistService.isAvailable` is the deliberate exception: it makes no provider call, so
+   * it has nothing to reserve and is documented as a snapshot, rule 32a.)
+   */
   isWithinDailyBudget(): Promise<boolean>
 
-  /** Enforces the per-user and per-organization request limits (rule 26). Also check BEFORE
-   * calling the provider, for the same reason.
+  /** Enforces the per-user and per-organization request limits (rule 26). Counted from the same
+   * committed rows, so it carries the same ordering obligation: reserve first, then enforce.
    * @throws {RateLimitedError} either limit is exhausted for the current window. */
   enforceRateLimit(organizationId: string): Promise<void>
 
-  /** Meters one model call, including refused and failed turns - they consumed tokens too, and a
-   * meter that counted only successes would not bound spend. */
-  recordUsage(input: RecordAiUsageInput): Promise<void>
+  /**
+   * Writes and commits this turn's usage row BEFORE anything is spent, carrying an estimate, so
+   * that the two counters above can see work that is still in flight. Returns the handle
+   * `settleUsage` needs to rewrite that row with the truth.
+   */
+  reserveUsage(input: ReserveAiUsageInput): Promise<AiUsageReservation>
+
+  /**
+   * Replaces a reservation with what the call actually consumed and how it actually ended -
+   * including refused and failed turns, which consumed tokens too (rule 28c).
+   *
+   * `usage` of `null` means the provider was reached but reported nothing (a timeout, a dropped
+   * connection): THE RESERVATION STANDS as written. Zeroing it there would meter a call that may
+   * well have been billed in full at nothing, which is how a failure loop walks past the daily
+   * ceiling. Pass `NO_AI_TOKEN_USAGE` instead for a turn that never reached the provider at all.
+   */
+  settleUsage(
+    reservation: AiUsageReservation,
+    outcome: AiCallOutcome,
+    usage: AiTokenUsage | null,
+  ): Promise<void>
 
   /** Recent outcomes for the current actor on one board, newest first - server-side truth about
    * how a conversation has gone, for callers that must not trust the client's transcript. */
@@ -134,12 +173,25 @@ export interface AiUsageGate {
 
 // Model provider -----------------------------------------------------------------------------
 
-/** A model call that could not produce a usable answer. Carries no provider detail worth
- * showing a user - the degradation path is the same whatever went wrong. */
+/**
+ * A model call that could not produce a usable answer. Carries no provider detail worth showing a
+ * user - the degradation path is the same whatever went wrong.
+ *
+ * It does carry `usage`, because "unusable" and "free" are different things. A safety refusal
+ * (`stop_reason` of `refusal`) and a malformed body both arrive as a SUCCESSFUL, BILLED HTTP
+ * 200 with the token counts right there in it. Discarding them meters a full-price turn at zero,
+ * which hands anyone who can reliably trip the provider's classifier an unmetered channel through
+ * the daily ceiling - the one control that is supposed to still hold when everything else has
+ * been talked past. Null means nothing was billed, or nothing was reported: a transport failure,
+ * or a request that never left the process.
+ */
 export class IdeaDraftModelError extends Error {
-  constructor(message: string, options?: { cause?: unknown }) {
-    super(message, options)
+  readonly usage: AiTokenUsage | null
+
+  constructor(message: string, options?: { cause?: unknown; usage?: AiTokenUsage | null }) {
+    super(message, { cause: options?.cause })
     this.name = 'IdeaDraftModelError'
+    this.usage = options?.usage ?? null
   }
 }
 

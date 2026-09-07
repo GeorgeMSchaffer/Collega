@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
+import type { AiUsageRecord } from '@collega/domain/ai'
 import { createAiUsageRecord } from '@collega/domain/ai'
-import type { AiCallOutcome } from '@collega/domain/enums'
-import { Role } from '@collega/domain/enums'
+import { AiCallOutcome, Role } from '@collega/domain/enums'
 import {
   attributeAudit,
   type Clock,
@@ -13,7 +13,13 @@ import {
   type UnitOfWork,
   ValidationError,
 } from '../common/index.js'
-import type { AiUsageLimits, AiUsageReport, RecordAiUsageInput } from './models.js'
+import type {
+  AiTokenUsage,
+  AiUsageLimits,
+  AiUsageReport,
+  AiUsageReservation,
+  ReserveAiUsageInput,
+} from './models.js'
 import { isRateLimited, isUsageEnforced } from './models.js'
 import type { AiUsageGate, AiUsageRepository } from './ports.js'
 
@@ -35,13 +41,13 @@ export class AiUsageService implements AiUsageGate {
   ) {}
 
   /**
-   * Whether another model call is allowed under today's ceiling (rule 28a). Callers must check
-   * this BEFORE invoking the provider - the point of the gate is to not spend.
+   * Whether another model call is allowed under today's ceiling (rule 28a).
    *
-   * Consumption is only known after a call returns, so this compares the day's committed total
-   * against the ceiling rather than predicting the next call's cost. Overshoot is therefore
-   * bounded by one in-flight turn, which is immaterial against a ceiling in the hundreds of
-   * thousands of tokens.
+   * Compares the day's COMMITTED total against the ceiling, which is only a gate for a caller
+   * that has already committed its own turn as a reservation (`reserveUsage`). Rule 28a's
+   * "overshoot is bounded by one in-flight turn" is a statement about serial execution; this runs
+   * serverless, where a hundred invocations can read this total in the same millisecond and every
+   * one of them is under it. The reservation is what makes that sentence true again.
    */
   async isWithinDailyBudget(): Promise<boolean> {
     if (!isUsageEnforced(this.limits)) {
@@ -53,9 +59,10 @@ export class AiUsageService implements AiUsageGate {
   }
 
   /**
-   * Enforces the per-user and per-organization request limits (rule 26). Called BEFORE the
-   * provider, like the budget gate - a rate limit that only notices after the call has been paid
-   * for is not a rate limit.
+   * Enforces the per-user and per-organization request limits (rule 26). Called once the turn's
+   * own reservation is committed and before the provider, like the budget gate - a rate limit
+   * that only notices after the call has been paid for is not a rate limit, and one that counts
+   * only turns which have already finished cannot see the burst it exists to stop.
    *
    * Counted from the usage records themselves rather than a separate counter: they already carry
    * organization, actor and timestamp, they are already written for every turn including refused
@@ -105,38 +112,111 @@ export class AiUsageService implements AiUsageGate {
   }
 
   /**
-   * Meters one model call. Called after every turn - including refused and failed ones, which
-   * consumed tokens too (rule 28c).
+   * Books this turn's usage row before a token has been spent, so both counters can see it while
+   * it is still in flight, and commits it immediately - a row still sitting in the unit of work
+   * is invisible to the concurrent invocation it exists to be visible to.
+   *
+   * The row is written as `Failed` at the estimate. That is not a placeholder state; it is what
+   * the row should say if this request never gets any further. A process that dies between here
+   * and the provider therefore leaves a complete, honest record of a turn that started and
+   * produced nothing - not a pending row needing a sweeper - and it stops counting on its own,
+   * leaving the rate-limit window after `rateLimitWindowSeconds` and the budget at the next UTC
+   * midnight. Nothing has to run for a tenant to get its allowance back.
    *
    * `input.organizationId` is the organization the work belongs to. Callers pass
    * `CurrentUserContext.organizationId`, which during a View As session is the IMPERSONATED
    * user's organization (view-as rule 15) - so a Site Admin drafting on behalf of an
    * organization spends that organization's budget, not nobody's.
    */
-  async recordUsage(input: RecordAiUsageInput): Promise<void> {
+  async reserveUsage(input: ReserveAiUsageInput): Promise<AiUsageReservation> {
+    const id = randomUUID()
+    const occurredAtUtc = this.clock.now()
+    const boardId = input.boardId ?? null
+
+    // The whole estimate rides on input tokens. The budget gate sums all four counts, and the
+    // split is meaningless until the provider's own numbers replace it.
+    await this.usageRepository.add(
+      this.buildRecord(id, input.organizationId, boardId, occurredAtUtc, AiCallOutcome.Failed, {
+        inputTokens: input.estimatedTokens,
+        outputTokens: 0,
+        cacheReadInputTokens: 0,
+        cacheCreationInputTokens: 0,
+      }),
+    )
+    await this.unitOfWork.saveChanges()
+
+    return {
+      id,
+      organizationId: input.organizationId,
+      boardId,
+      occurredAtUtc,
+      reservedTokens: input.estimatedTokens,
+    }
+  }
+
+  /**
+   * Replaces the reservation with what the call actually consumed and how it actually ended -
+   * refused and failed turns included, which consumed tokens too (rule 28c).
+   *
+   * Same id and same `occurredAtUtc`, so the settlement rewrites the turn rather than adding a
+   * second one: a new row would count twice against the rate limit and would land ahead of itself
+   * in `getRecentOutcomes`, which rule 10's three-strikes close reads.
+   *
+   * `usage` of `null` leaves the reservation exactly as booked. It means the provider was
+   * reached but reported nothing - a timeout, a dropped connection - and such a call may well
+   * have been billed in full. Rewriting it to zero would make a failure loop free, which is
+   * precisely the hole rule 28a's ceiling exists to close.
+   */
+  async settleUsage(
+    reservation: AiUsageReservation,
+    outcome: AiCallOutcome,
+    usage: AiTokenUsage | null,
+  ): Promise<void> {
+    if (usage === null) {
+      return
+    }
+
+    await this.usageRepository.update(
+      this.buildRecord(
+        reservation.id,
+        reservation.organizationId,
+        reservation.boardId,
+        reservation.occurredAtUtc,
+        outcome,
+        usage,
+      ),
+    )
+    await this.unitOfWork.saveChanges()
+  }
+
+  private buildRecord(
+    id: string,
+    organizationId: string,
+    boardId: string | null,
+    occurredAtUtc: Date,
+    outcome: AiCallOutcome,
+    usage: AiTokenUsage,
+  ): AiUsageRecord {
     // Same actor/on-behalf-of split the audit trail uses: the actor stays the real administrator
     // so a row can never read as though the impersonated user did it themselves.
     const attribution = attributeAudit(this.currentUser, this.currentUser.userId)
 
-    const record = createAiUsageRecord({
-      id: randomUUID(),
-      organizationId: input.organizationId,
+    return createAiUsageRecord({
+      id,
+      organizationId,
       model: this.limits.model,
-      occurredAtUtc: this.clock.now(),
-      inputTokens: input.inputTokens,
-      outputTokens: input.outputTokens,
-      cacheReadInputTokens: input.cacheReadInputTokens ?? 0,
-      cacheCreationInputTokens: input.cacheCreationInputTokens ?? 0,
+      occurredAtUtc,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      cacheReadInputTokens: usage.cacheReadInputTokens,
+      cacheCreationInputTokens: usage.cacheCreationInputTokens,
       inputRatePerMillion: this.limits.inputRatePerMillion,
       outputRatePerMillion: this.limits.outputRatePerMillion,
-      outcome: input.outcome,
+      outcome,
       actorUserId: attribution.actorUserId,
       onBehalfOfUserId: attribution.onBehalfOfUserId,
-      boardId: input.boardId ?? null,
+      boardId,
     })
-
-    await this.usageRepository.add(record)
-    await this.unitOfWork.saveChanges()
   }
 
   /**

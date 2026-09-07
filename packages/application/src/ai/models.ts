@@ -1,4 +1,4 @@
-import type { AiCallOutcome, Priority } from '@collega/domain/enums'
+import type { Priority } from '@collega/domain/enums'
 
 // Prompt management (Site-Admin settings surface) -------------------------------------------
 
@@ -199,6 +199,29 @@ export type IdeaDraftModelResponse = {
   readonly cacheCreationInputTokens: number
 }
 
+/**
+ * The four token counts the provider reports for one call - what the daily ceiling is measured in
+ * and what a usage record stores.
+ *
+ * A projection of the response rather than a second shape, because it is also carried by
+ * `IdeaDraftModelError` for the failures that arrive as a BILLED HTTP 200 (a safety refusal, a
+ * malformed body). Those cost what a successful turn costs; metering them at zero lets anyone who
+ * can reliably trip the provider's classifier walk past the ceiling that is the last line of
+ * defence.
+ */
+export type AiTokenUsage = Pick<
+  IdeaDraftModelResponse,
+  'inputTokens' | 'outputTokens' | 'cacheReadInputTokens' | 'cacheCreationInputTokens'
+>
+
+/** A turn that never reached the provider, so nothing was billed for it. */
+export const NO_AI_TOKEN_USAGE: AiTokenUsage = {
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadInputTokens: 0,
+  cacheCreationInputTokens: 0,
+}
+
 /** An organization's AI assist configuration (contract `GET .../ai-assist/settings`). */
 export type AiAssistSettings = {
   readonly aiAssistAvailable: boolean
@@ -302,16 +325,42 @@ export type AiCallCounts = {
 
 export const NO_AI_CALLS: AiCallCounts = { organizationCalls: 0, actorCalls: 0 }
 
-/** Input to `AiUsageGate.recordUsage` - meters one model call, including refused and failed
- * turns, which consumed tokens too (rule 28c). */
-export type RecordAiUsageInput = {
+/**
+ * What one turn asks the gate to hold before it spends anything (`AiUsageGate.reserveUsage`).
+ *
+ * The meter is also the counter: both cost controls read committed `ai_usage_records` rows - the
+ * daily ceiling sums their tokens, the rate limit counts them - so a turn that writes its row
+ * only after the provider answers is invisible to every turn racing it. On a serverless runtime
+ * that fans out by design, "check, then act" is not a gate at all: a burst of concurrent requests
+ * all read the same total and all pass it. The row goes down FIRST; the real counts replace the
+ * estimate once they are known.
+ */
+export type ReserveAiUsageInput = {
   readonly organizationId: string
-  readonly outcome: AiCallOutcome
-  readonly inputTokens: number
-  readonly outputTokens: number
-  readonly cacheReadInputTokens?: number
-  readonly cacheCreationInputTokens?: number
   readonly boardId?: string | null
+  /**
+   * Tokens held against the daily ceiling for as long as the turn is in flight. An estimate, and
+   * deliberately a generous one: it is replaced by the provider's own counts the moment the call
+   * returns, so it never distorts the day's total for longer than one call takes, and it only
+   * ever bounds how many turns may run AT ONCE. Under-reserving lets a burst past the ceiling the
+   * reservation exists to defend; over-reserving briefly refuses a burst that could have been
+   * afforded.
+   */
+  readonly estimatedTokens: number
+}
+
+/**
+ * A written, committed usage row awaiting its real token counts. Carries everything
+ * `settleUsage` needs to replace THAT EXACT ROW rather than write a second one - a settlement
+ * that moved the turn to a new row would double-count it in the rate-limit window and reorder
+ * it in `getRecentOutcomes`, which is what rule 10's three-strikes close reads.
+ */
+export type AiUsageReservation = {
+  readonly id: string
+  readonly organizationId: string
+  readonly boardId: string | null
+  readonly occurredAtUtc: Date
+  readonly reservedTokens: number
 }
 
 /**

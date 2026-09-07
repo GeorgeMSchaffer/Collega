@@ -27,7 +27,13 @@ import type {
   IdeaDraft,
   IdeaDraftModelResponse,
 } from './models.js'
-import { businessImpactIdsOf, EMPTY_IDEA_DRAFT, ideaTypeIdsOf, isUserTurn } from './models.js'
+import {
+  businessImpactIdsOf,
+  EMPTY_IDEA_DRAFT,
+  ideaTypeIdsOf,
+  isUserTurn,
+  NO_AI_TOKEN_USAGE,
+} from './models.js'
 import type {
   AiBoardLookupPort,
   AiOrganizationRepository,
@@ -43,8 +49,37 @@ import { IdeaDraftModelError } from './ports.js'
  */
 export const MAX_TRANSCRIPT_ENTRIES = 20
 
+/**
+ * The contract's third transcript constraint (`SPEC/30-Contracts.md` line 1283: `text` required
+ * string, max 4000 characters, trimmed before validation).
+ *
+ * Enforced HERE, beside the other two, and not only in a future request DTO - the DTO layer is
+ * the one that does not exist yet, and until it does this is the only thing between the caller
+ * and the provider. Twenty entries of unbounded text is on the order of 200,000 input tokens per
+ * call; the daily ceiling of rule 28a is 500,000 shared by every organization on one deployment
+ * key, so three such calls take idea assist dark for every tenant until the next UTC day.
+ */
+export const TRANSCRIPT_ENTRY_MAX_LENGTH = 4000
+
 /** Rule 10. Bounds the cost of someone probing the boundary. */
 export const OUT_OF_SCOPE_STRIKE_LIMIT = 3
+
+/**
+ * Characters per token. The real ratio is the provider's business and is unknowable before the
+ * call; four is the vendor's published rule of thumb for English prose and is more than accurate
+ * enough for a figure that lives only as long as one HTTP request.
+ */
+const CHARS_PER_TOKEN = 4
+
+/**
+ * What a turn is assumed to cost beyond its own transcript: the system prompt and the
+ * organization catalog going in, and the reply coming back, which the provider adapter caps at
+ * 8,000 tokens. Deliberately generous - the reservation is replaced by the provider's real counts
+ * the moment the call returns, so it only ever bounds how many turns run AT ONCE, and
+ * under-reserving is the failure that matters. With the transcript now bounded at 20 entries of
+ * 4,000 characters, the whole estimate tops out near 33,000 tokens.
+ */
+const RESERVED_OVERHEAD_TOKENS = 12_000
 
 /**
  * How far back a strike still counts. A conversation is capped at 20 entries and runs in
@@ -97,7 +132,7 @@ export class IdeaAssistService {
 
   async continueTurn(request: IdeaAssistTurnRequest): Promise<IdeaAssistTurnResult> {
     const organizationId = this.requireDraftingMember()
-    this.validateTranscript(request.transcript)
+    const transcript = this.validateTranscript(request.transcript)
 
     const board = await this.boards.getById(request.boardId)
 
@@ -107,74 +142,113 @@ export class IdeaAssistService {
       throw new NotFoundError('Board not found.')
     }
 
-    // Two states the client cannot distinguish, and must not: no key configured, and the
-    // deployment's daily token budget exhausted (rules 28a, 31).
-    if (!this.model.isConfigured || !(await this.usage.isWithinDailyBudget())) {
-      throw new AiAssistUnavailableError()
-    }
+    const userTurnCount = transcript.filter(isUserTurn).length
+    // The caller's own draft has been through nothing at this point, and `buildDraftNote` puts
+    // its title and description straight into the final user message - so left unclamped it walks
+    // around the per-entry cap it sits beside.
+    const currentDraft = clampDraftText(request.draft ?? EMPTY_IDEA_DRAFT)
 
-    // Rate limits are 429, deliberately NOT folded into the 503 above: unavailable means "stop
-    // asking, work without it", rate-limited means "you asked too fast, try again shortly". A
-    // client that cannot tell those apart either gives up too early or retries a dead endpoint.
-    await this.usage.enforceRateLimit(organizationId)
+    // BOOKED BEFORE THE GATES, not after them. Both gates count committed usage rows, so a turn
+    // that is not yet one of them is invisible to every turn racing it: on a serverless runtime
+    // two hundred simultaneous invocations each read the same total, each find room under a
+    // 10-per-60s limit, and each call the provider. Reserving first is what makes the counters
+    // count this turn.
+    const reservation = await this.usage.reserveUsage({
+      organizationId,
+      boardId: request.boardId,
+      estimatedTokens: estimateTurnTokens(transcript, currentDraft),
+    })
 
-    const userTurnCount = request.transcript.filter(isUserTurn).length
-    const currentDraft = request.draft ?? EMPTY_IDEA_DRAFT
+    let settled = false
 
-    const context = await this.contextBuilder.build(organizationId)
-
-    let response: IdeaDraftModelResponse
     try {
-      response = await this.model.continueTurn(context, request.transcript, currentDraft)
-    } catch (error) {
-      if (!(error instanceof IdeaDraftModelError)) {
-        throw error
+      // Two states the client cannot distinguish, and must not: no key configured, and the
+      // deployment's daily token budget exhausted (rules 28a, 31). Both sit inside the
+      // reservation so the two cannot be told apart by how long the 503 took, either.
+      if (!this.model.isConfigured || !(await this.usage.isWithinDailyBudget())) {
+        throw new AiAssistUnavailableError()
       }
-      // The turn consumed tokens even though it failed, so it is still metered (rule 28c) - a
-      // meter that counted only successes would not bound spend.
-      await this.recordUsage(organizationId, request.boardId, AiCallOutcome.Failed, null)
-      await this.audit(organizationId, request.boardId, userTurnCount, false, true)
-      throw new AiAssistUnavailableError()
-    }
 
-    const outcome = response.inScope ? AiCallOutcome.Succeeded : AiCallOutcome.Refused
-    await this.recordUsage(organizationId, request.boardId, outcome, response)
-    await this.audit(organizationId, request.boardId, userTurnCount, !response.inScope, false)
+      // Rate limits are 429, deliberately NOT folded into the 503 above: unavailable means "stop
+      // asking, work without it", rate-limited means "you asked too fast, try again shortly". A
+      // client that cannot tell those apart either gives up too early or retries a dead endpoint.
+      await this.usage.enforceRateLimit(organizationId)
 
-    if (!response.inScope) {
-      // The draft is returned unchanged and the client drops the offending turn rather than
-      // appending it: accumulated off-topic context is what drifts a constrained assistant into
-      // a general one (rule 8).
-      const closed = await this.isThirdConsecutiveRefusal(organizationId, request.boardId)
+      const context = await this.contextBuilder.build(organizationId)
+
+      let response: IdeaDraftModelResponse
+      try {
+        response = await this.model.continueTurn(context, transcript, currentDraft)
+      } catch (error) {
+        if (!(error instanceof IdeaDraftModelError)) {
+          // Not the port's documented failure, so this is a defect rather than a degradation -
+          // and the provider may well have been reached and billed before it surfaced. The
+          // reservation is left standing rather than zeroed: spend we cannot account for is
+          // metered at the estimate, never at nothing.
+          settled = true
+          throw error
+        }
+        // The turn consumed tokens even though it failed, so it is still metered (rule 28c) - a
+        // meter that counted only successes would not bound spend. `usage` carries the provider's
+        // real counts for the failures that arrive as a billed 200 - a safety refusal, a
+        // malformed body - and is null when nothing was reported, which leaves the reservation
+        // standing rather than pricing a call that may have been paid for in full at zero.
+        settled = true
+        await this.usage.settleUsage(reservation, AiCallOutcome.Failed, error.usage)
+        await this.audit(organizationId, request.boardId, userTurnCount, false, true)
+        throw new AiAssistUnavailableError()
+      }
+
+      const outcome = response.inScope ? AiCallOutcome.Succeeded : AiCallOutcome.Refused
+      settled = true
+      await this.usage.settleUsage(reservation, outcome, response)
+      await this.audit(organizationId, request.boardId, userTurnCount, !response.inScope, false)
+
+      if (!response.inScope) {
+        // The draft is returned unchanged and the client drops the offending turn rather than
+        // appending it: accumulated off-topic context is what drifts a constrained assistant into
+        // a general one (rule 8).
+        const closed = await this.isThirdConsecutiveRefusal(organizationId, request.boardId)
+
+        return {
+          inScope: false,
+          conversationClosed: closed,
+          // From the active prompt version, falling back to the built-in default (rule 34).
+          nextQuestion: closed
+            ? context.prompts.conversationClosedRedirect
+            : context.prompts.outOfScopeRedirect,
+          draft: currentDraft,
+          // The client drops the offending user turn and renders the redirect as a system note
+          // rather than an assistant bubble (rule 8/8a), so the transcript shrinks by one and a
+          // refused turn costs no conversation budget.
+          turnsRemaining: this.remainingUserTurns(transcript.length - 1),
+        }
+      }
+
+      // Every id the model returned is re-checked against what was actually retrieved. The schema
+      // already makes an out-of-org id structurally impossible; this is the belt to that braces,
+      // and it is what the contract promises (line 1274).
+      const draft = sanitizeDraft(response.draft, context, currentDraft)
+      // The client appends this reply, so the transcript it holds is one longer than the request.
+      const turnsRemaining = this.remainingUserTurns(transcript.length + 1)
 
       return {
-        inScope: false,
-        conversationClosed: closed,
-        // From the active prompt version, falling back to the built-in default (rule 34).
-        nextQuestion: closed
-          ? context.prompts.conversationClosedRedirect
-          : context.prompts.outOfScopeRedirect,
-        draft: currentDraft,
-        // The client drops the offending user turn and renders the redirect as a system note
-        // rather than an assistant bubble (rule 8/8a), so the transcript shrinks by one and a
-        // refused turn costs no conversation budget.
-        turnsRemaining: this.remainingUserTurns(request.transcript.length - 1),
+        inScope: true,
+        conversationClosed: turnsRemaining === 0,
+        nextQuestion: response.nextQuestion,
+        draft,
+        turnsRemaining,
       }
-    }
-
-    // Every id the model returned is re-checked against what was actually retrieved. The schema
-    // already makes an out-of-org id structurally impossible; this is the belt to that braces,
-    // and it is what the contract promises (line 1274).
-    const draft = sanitizeDraft(response.draft, context, currentDraft)
-    // The client appends this reply, so the transcript it will hold is one longer than the request.
-    const turnsRemaining = this.remainingUserTurns(request.transcript.length + 1)
-
-    return {
-      inScope: true,
-      conversationClosed: turnsRemaining === 0,
-      nextQuestion: response.nextQuestion,
-      draft,
-      turnsRemaining,
+    } finally {
+      // Reached only when the provider was never called - a gate refused the turn, or something
+      // threw before the call - so nothing was billed and the estimate must not be left standing.
+      // This is the unconditional half of the settlement: without it a defect on any of these
+      // paths would spend the whole platform ceiling in a few dozen requests and take the
+      // assistant dark for every tenant, which is the failure the reservation exists to prevent
+      // rather than cause.
+      if (!settled) {
+        await this.usage.settleUsage(reservation, AiCallOutcome.Failed, NO_AI_TOKEN_USAGE)
+      }
     }
   }
 
@@ -241,23 +315,6 @@ export class IdeaAssistService {
 
   // Internal helpers ------------------------------------------------------------------------
 
-  private async recordUsage(
-    organizationId: string,
-    boardId: string,
-    outcome: AiCallOutcome,
-    response: IdeaDraftModelResponse | null,
-  ): Promise<void> {
-    await this.usage.recordUsage({
-      organizationId,
-      outcome,
-      inputTokens: response?.inputTokens ?? 0,
-      outputTokens: response?.outputTokens ?? 0,
-      cacheReadInputTokens: response?.cacheReadInputTokens ?? 0,
-      cacheCreationInputTokens: response?.cacheCreationInputTokens ?? 0,
-      boardId,
-    })
-  }
-
   /**
    * Whether the refusal just recorded is the third consecutive one, closing the chat (rule 10).
    *
@@ -286,7 +343,16 @@ export class IdeaAssistService {
     )
   }
 
-  private validateTranscript(transcript: readonly IdeaAssistTurn[]): void {
+  /**
+   * All three of the contract's transcript constraints (`SPEC/30-Contracts.md` line 1283) -
+   * entry count, per-entry length, and last-entry-is-user.
+   *
+   * RETURNS THE TRIMMED TRANSCRIPT, and the trimmed form is what goes on to the provider.
+   * Validating a trimmed length while forwarding the raw string would enforce nothing: 4,000
+   * characters of text padded with 190,000 of whitespace passes a check on `text.trim().length`
+   * and is then billed on all 194,000.
+   */
+  private validateTranscript(transcript: readonly IdeaAssistTurn[]): readonly IdeaAssistTurn[] {
     if (!transcript || transcript.length === 0) {
       throw new ValidationError('One or more fields are invalid.', {
         transcript: ['At least one message is required.'],
@@ -299,11 +365,21 @@ export class IdeaAssistService {
       })
     }
 
-    if (!isUserTurn(transcript[transcript.length - 1] as IdeaAssistTurn)) {
+    const trimmed = transcript.map((turn) => ({ role: turn.role, text: turn.text.trim() }))
+
+    if (trimmed.some((turn) => turn.text.length > TRANSCRIPT_ENTRY_MAX_LENGTH)) {
+      throw new ValidationError('One or more fields are invalid.', {
+        transcript: [`A message cannot exceed ${TRANSCRIPT_ENTRY_MAX_LENGTH} characters.`],
+      })
+    }
+
+    if (!isUserTurn(trimmed[trimmed.length - 1] as IdeaAssistTurn)) {
       throw new ValidationError('One or more fields are invalid.', {
         transcript: ['The last message must be from the user.'],
       })
     }
+
+    return trimmed
   }
 
   /**
@@ -385,6 +461,38 @@ export class IdeaAssistService {
       occurredAtUtc: this.clock.now(),
       metadataJson: JSON.stringify({ boardId, turnCount, outOfScope, failed }),
     })
+  }
+}
+
+/**
+ * What to hold against the daily ceiling while this turn is in flight. Proportional to the part
+ * the caller controls, so an ordinary turn reserves little and the largest legal one reserves a
+ * lot, and bounded because that part is now bounded.
+ */
+function estimateTurnTokens(transcript: readonly IdeaAssistTurn[], draft: IdeaDraft): number {
+  const characters =
+    transcript.reduce((total, turn) => total + turn.text.length, 0) +
+    (draft.title?.length ?? 0) +
+    (draft.description?.length ?? 0)
+
+  return RESERVED_OVERHEAD_TOKENS + Math.ceil(characters / CHARS_PER_TOKEN)
+}
+
+/**
+ * Clamps the CALLER'S draft to the domain maxima before it reaches the prompt.
+ *
+ * `sanitizeDraft` already does this to what the model returns, but the draft that rides in on the
+ * request has been through nothing at all, and it is not decoration: `buildDraftNote` places its
+ * title and description into the final user message, alongside the transcript entry the contract
+ * caps at 4,000 characters. Clamped rather than rejected, matching how the contract treats the
+ * draft's other fields - "unknown or inactive ids are discarded server-side rather than
+ * rejected" - so a stale client is corrected, not refused.
+ */
+function clampDraftText(draft: IdeaDraft): IdeaDraft {
+  return {
+    ...draft,
+    title: truncate(draft.title, TITLE_MAX_LENGTH),
+    description: truncate(draft.description, DESCRIPTION_MAX_LENGTH),
   }
 }
 

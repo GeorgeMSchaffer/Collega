@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type {
+  AiTokenUsage,
   IdeaAssistContext,
   IdeaAssistTurn,
   IdeaDraft,
@@ -125,8 +126,15 @@ export class AnthropicIdeaDraftModel implements IdeaDraftModel {
 
     // A safety classifier can decline the request outright. That is a normal 200 with no usable
     // content, not a thrown error - treat it as an unusable turn rather than reading `content[0]`.
+    //
+    // A normal 200 is also a BILLED 200: the request was tokenized, the classifier ran, and the
+    // usage block is right there on the response. Metering it at zero would leave the daily
+    // ceiling - the control that still holds once everything upstream has been talked past -
+    // walkable by anyone who can reliably trip that classifier.
     if (response.stop_reason === 'refusal') {
-      throw new IdeaDraftModelError('The model declined the request.')
+      throw new IdeaDraftModelError('The model declined the request.', {
+        usage: usageOf(response),
+      })
     }
 
     return parseResponse(response)
@@ -161,21 +169,25 @@ function buildMessages(
 }
 
 function parseResponse(response: Anthropic.Message): IdeaDraftModelResponse {
+  // Every failure below this line is a 200 the provider has already billed, so each carries its
+  // usage on the way out - see the note on `IdeaDraftModelError`.
   const textBlock = response.content.find(
     (block): block is Anthropic.TextBlock => block.type === 'text' && block.text.trim().length > 0,
   )
   if (textBlock === undefined) {
-    throw new IdeaDraftModelError('The model returned no content.')
+    throw new IdeaDraftModelError('The model returned no content.', { usage: usageOf(response) })
   }
 
   let parsed: IdeaDraftSchemaResponse
   try {
     parsed = JSON.parse(textBlock.text) as IdeaDraftSchemaResponse
   } catch (error) {
-    throw new IdeaDraftModelError('The model returned malformed JSON.', { cause: error })
+    throw new IdeaDraftModelError('The model returned malformed JSON.', {
+      cause: error,
+      usage: usageOf(response),
+    })
   }
 
-  const usage = response.usage
   return {
     inScope: parsed.inScope,
     nextQuestion: parsed.nextQuestion ?? '',
@@ -186,6 +198,14 @@ function parseResponse(response: Anthropic.Message): IdeaDraftModelResponse {
       businessImpactId: parsed.businessImpactId ?? null,
       priority: parsePriority(parsed.priority),
     },
+    ...usageOf(response),
+  }
+}
+
+/** The four counts the provider billed for this call, whether or not it produced anything usable. */
+function usageOf(response: Anthropic.Message): AiTokenUsage {
+  const usage = response.usage
+  return {
     inputTokens: usage.input_tokens,
     outputTokens: usage.output_tokens,
     cacheReadInputTokens: usage.cache_read_input_tokens ?? 0,
