@@ -229,3 +229,164 @@ export const navCounts = {
   ideas: ideas.length,
   backlog: 7,
 } as const
+
+// ---------------------------------------------------------------------------
+// Administration fixtures (Wave E5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether the role may reach the administration routes at all.
+ *
+ * This is a **page-level** gate, not a control-level one, and it reads differently on purpose: a
+ * denied control stays visible with its reason beside it, but an entire route closed to a role
+ * shows the "Administrators only" panel instead. Comp Q states why — "nothing here is hidden from
+ * you selectively; the whole page is out of scope for your role" — which is a promise that the
+ * page is not quietly showing a member a reduced version of the same screen.
+ */
+export function isAdministrator(role: Role): boolean {
+  return role === 'SiteAdmin' || role === 'OrgAdmin'
+}
+
+export type Organization = {
+  id: string
+  name: string
+  description: string
+  memberCount: number
+  boardCount: number
+  ideaCount: number
+}
+
+export const organizations: Organization[] = [
+  {
+    id: 'acme-robotics',
+    name: 'Acme Robotics',
+    description: 'Industrial robotics and automation manufacturer.',
+    memberCount: 4,
+    boardCount: 2,
+    ideaCount: 11,
+  },
+  {
+    id: 'blue-harbor',
+    name: 'Blue Harbor Logistics',
+    description: 'Regional freight and warehousing operator.',
+    memberCount: 4,
+    boardCount: 2,
+    ideaCount: 11,
+  },
+]
+
+export type Member = {
+  id: string
+  displayName: string
+  initials: string
+  email: string
+  role: Role
+  roleLabel: string
+  status: 'Active' | 'Inactive'
+}
+
+/** The demo seed's four accounts per organization — one per role. See `demo.md`. */
+export const members: Member[] = [
+  {
+    id: 'u1',
+    displayName: 'Olivia Administer',
+    initials: 'OA',
+    email: 'orgadmin@acme-robotics.demo.collega.test',
+    role: 'OrgAdmin',
+    roleLabel: 'Org Admin',
+    status: 'Active',
+  },
+  {
+    id: 'u2',
+    displayName: 'Noah Contributor',
+    initials: 'NC',
+    email: 'user@acme-robotics.demo.collega.test',
+    role: 'User',
+    roleLabel: 'User',
+    status: 'Active',
+  },
+  {
+    id: 'u3',
+    displayName: 'Maya Collaborator',
+    initials: 'MC',
+    email: 'user2@acme-robotics.demo.collega.test',
+    role: 'User',
+    roleLabel: 'User',
+    status: 'Active',
+  },
+  {
+    id: 'u4',
+    displayName: 'Rosa Observer',
+    initials: 'RO',
+    email: 'readonly@acme-robotics.demo.collega.test',
+    role: 'ReadOnly',
+    roleLabel: 'Read Only',
+    status: 'Active',
+  },
+]
+
+export type IdeaType = {
+  id: string
+  name: string
+  description: string
+  fieldCount: number
+  ideaCount: number
+}
+
+export const ideaTypes: IdeaType[] = [
+  {
+    id: 'process-revision',
+    name: 'Process Revision',
+    description: 'A change to how an existing process runs.',
+    fieldCount: 2,
+    ideaCount: 12,
+  },
+  {
+    id: 'continuous-improvement',
+    name: 'Continuous Improvement',
+    description: 'An incremental gain against a current baseline.',
+    fieldCount: 1,
+    ideaCount: 10,
+  },
+]
+
+export type FieldDefinition = {
+  id: string
+  name: string
+  fieldType: 'Text' | 'Number' | 'Date' | 'Choice' | 'Checkbox'
+  required: boolean
+  ideaTypeNames: string[]
+}
+
+export const fieldDefinitions: FieldDefinition[] = [
+  {
+    id: 'f1',
+    name: 'Current cycle time',
+    fieldType: 'Number',
+    required: true,
+    ideaTypeNames: ['Process Revision'],
+  },
+  {
+    id: 'f2',
+    name: 'Affected team',
+    fieldType: 'Choice',
+    required: true,
+    ideaTypeNames: ['Process Revision', 'Continuous Improvement'],
+  },
+  {
+    id: 'f3',
+    name: 'Target date',
+    fieldType: 'Date',
+    required: false,
+    ideaTypeNames: ['Process Revision'],
+  },
+]
+
+export type BusinessImpactOption = { id: string; name: string; color: string }
+
+export const businessImpacts: BusinessImpactOption[] = [
+  { id: 'critical', name: 'Critical', color: 'var(--orange)' },
+  { id: 'high', name: 'High', color: 'var(--sky)' },
+  { id: 'medium', name: 'Medium', color: 'var(--teal)' },
+  { id: 'low', name: 'Low', color: 'var(--green)' },
+]
