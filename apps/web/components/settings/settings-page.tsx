@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Topbar } from '@/components/nav/topbar'
 import { currentUser, isAdministrator } from '@/lib/mock'
-import { AdminOnly } from './admin-only'
+import { AdminOnly, SiteAdminOnly } from './admin-only'
 
 /**
  * The frame every settings list shares: breadcrumb, heading, lead paragraph, and the role gate.
@@ -17,17 +17,22 @@ export function SettingsPage({
   gate,
   lead,
   actions,
+  siteAdminOnly = false,
   children,
 }: {
   title: string
   gate: string
   lead: ReactNode
   actions?: ReactNode
+  /** Deployment-level route: an Org Admin is refused too, with a different reason. */
+  siteAdminOnly?: boolean
   children: ReactNode
 }) {
   // The action lives in the topbar, which sits outside AdminOnly - so it needs the same check, or a
   // member reads "Add status" above a page telling them the route is closed to them.
-  const canAct = isAdministrator(currentUser.role)
+  const canAct = siteAdminOnly
+    ? currentUser.role === 'SiteAdmin'
+    : isAdministrator(currentUser.role)
 
   return (
     <>
@@ -41,13 +46,13 @@ export function SettingsPage({
         actions={canAct ? actions : undefined}
       />
       <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
-        <AdminOnly what={gate}>
+        <Gate siteAdminOnly={siteAdminOnly} what={gate}>
           <div>
             <h1>{title}</h1>
             <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">{lead}</p>
           </div>
           {children}
-        </AdminOnly>
+        </Gate>
       </main>
     </>
   )
@@ -71,4 +76,20 @@ export function Th({ children, className = '' }: { children?: ReactNode; classNa
       {children}
     </th>
   )
+}
+
+/** Picks the refusal the route actually owes: an Org Admin passes one gate and not the other. */
+function Gate({
+  siteAdminOnly,
+  what,
+  children,
+}: {
+  siteAdminOnly: boolean
+  what: string
+  children: ReactNode
+}) {
+  if (siteAdminOnly) {
+    return <SiteAdminOnly>{children}</SiteAdminOnly>
+  }
+  return <AdminOnly what={what}>{children}</AdminOnly>
 }

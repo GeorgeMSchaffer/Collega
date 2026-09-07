@@ -1,15 +1,20 @@
-import { Button, Denied, Dot, Marker } from '@collega/design-system'
+import { Button, Dot, Marker } from '@collega/design-system'
+import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { currentUser, organizations, statuses } from '@/lib/mock'
+import { currentUser, organizations, statuses, statusesByOrganization } from '@/lib/mock'
 
 export const metadata = { title: 'Statuses · Collega' }
 
 export default function StatusesPage() {
   const siteAdmin = currentUser.role === 'SiteAdmin'
 
-  // A Site Admin reads every organization's statuses; an Org Admin reads only their own.
+  // A status belongs to exactly one organization, so the cross-org list is a union of distinct
+  // rows. Repeating one organization's statuses per organization would assert the opposite of the
+  // rule this screen exists to teach.
   const rows = siteAdmin
-    ? organizations.flatMap((org) => statuses.map((status) => ({ status, org: org.name })))
+    ? organizations.flatMap((org) =>
+        (statusesByOrganization[org.id] ?? []).map((status) => ({ status, org: org.name })),
+      )
     : statuses.map((status) => ({ status, org: currentUser.organizationName ?? '' }))
 
   return (
@@ -21,18 +26,9 @@ export default function StatusesPage() {
           ? 'Workflow statuses across every organization. Open an organization to change its statuses.'
           : 'The columns your boards group ideas by. Order here is the order on every board.'
       }
-      actions={
-        siteAdmin ? (
-          <Denied reason="Act as a member" id="why-add-status">
-            <Button aria-disabled="true" aria-describedby="why-add-status">
-              Add status
-            </Button>
-          </Denied>
-        ) : (
-          <Button>Add status</Button>
-        )
-      }
+      actions={siteAdmin ? undefined : <Button>Add status</Button>}
     >
+      {siteAdmin ? <CrossOrgNote what="A status" /> : null}
       <AdminTable
         summary={
           siteAdmin
@@ -45,7 +41,9 @@ export default function StatusesPage() {
             <Th>Name</Th>
             {siteAdmin ? <Th className="w-56">Organization</Th> : null}
             <Th className="w-44">Colour</Th>
-            <Th className="w-24" />
+            <Th className="w-24">
+              <span className="sr-only">Actions</span>
+            </Th>
           </tr>
         </thead>
         <tbody>
@@ -56,11 +54,15 @@ export default function StatusesPage() {
               <td className="px-4 py-2.5">
                 <Marker>
                   <Dot color={status.color} />
-                  {status.color.replace('var(--', '').replace(')', '')}
+                  {status.colorName}
                 </Marker>
               </td>
               <td className="px-4 py-2.5 text-right">
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label={`${siteAdmin ? 'Manage' : 'Edit'} ${status.name}`}
+                >
                   {siteAdmin ? 'Manage' : 'Edit'}
                 </Button>
               </td>
