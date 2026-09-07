@@ -1,8 +1,16 @@
-import { Alert, Avatar, buttonVariants, Dot, Marker } from '@collega/design-system'
+import { Alert, Avatar, Button, buttonVariants, Denied, Dot, Marker } from '@collega/design-system'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Topbar } from '@/components/nav/topbar'
-import { deliveryStatusById, EFFORT_COLORS, issueByKey, outcomeById, sprintById } from '@/lib/mock'
+import {
+  currentUser,
+  deliveryAdminDenial,
+  deliveryStatusById,
+  EFFORT_COLORS,
+  issueByKey,
+  outcomeById,
+  sprintById,
+} from '@/lib/mock'
 
 export async function generateMetadata({ params }: { params: Promise<{ issueKey: string }> }) {
   const { issueKey } = await params
@@ -124,12 +132,28 @@ export default async function IssuePage({ params }: { params: Promise<{ issueKey
             </dl>
 
             <div className="mt-4">
-              <Link
-                href={`/delivery/issues/${issue.key}/outcome`}
-                className={buttonVariants({ variant: 'outline', size: 'sm' })}
-              >
-                Set outcome
-              </Link>
+              {deliveryAdminDenial(currentUser.role) ? (
+                <Denied
+                  reason={deliveryAdminDenial(currentUser.role) as string}
+                  id="why-set-outcome"
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-disabled="true"
+                    aria-describedby="why-set-outcome"
+                  >
+                    Set outcome
+                  </Button>
+                </Denied>
+              ) : (
+                <Link
+                  href={`/delivery/issues/${issue.key}/outcome`}
+                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                >
+                  Set outcome
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -21,7 +21,8 @@
       "!**/playwright-report",
       "!**/test-results",
       "!**/.playwright",
-      "!**/generated"
+      "!**/generated",
+      "!**/next-env.d.ts"
     ]
   },
   "formatter": {

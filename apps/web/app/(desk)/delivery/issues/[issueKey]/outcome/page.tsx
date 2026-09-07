@@ -1,9 +1,18 @@
-import { Alert, Button, buttonVariants, Dot } from '@collega/design-system'
+import { Alert, Button, buttonVariants, Denied, Dot } from '@collega/design-system'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { InertForm } from '@/components/common/inert-form'
 import { CloseOnEscape } from '@/components/inspector/close-on-escape'
 import { Topbar } from '@/components/nav/topbar'
-import { EFFORT_COLORS, issueByKey, issuesForOutcome, outcomeById, outcomes } from '@/lib/mock'
+import {
+  currentUser,
+  deliveryAdminDenial,
+  EFFORT_COLORS,
+  issueByKey,
+  issuesForOutcome,
+  outcomeById,
+  outcomes,
+} from '@/lib/mock'
 
 export async function generateMetadata({ params }: { params: Promise<{ issueKey: string }> }) {
   const { issueKey } = await params
@@ -33,6 +42,11 @@ export default async function SetOutcomePage({
 
   const current = outcomeById(issue.outcomeId)
   const backHref = `/delivery/issues/${issue.key}`
+
+  // Grouping an issue is administrator-only (SPEC/20-feature-issues-and-delivery.md): a Site Admin
+  // reaches it through View As, a member not at all. Without this the picker rendered fully
+  // operable for every role.
+  const denial = deliveryAdminDenial(currentUser.role)
 
   return (
     <>
@@ -101,7 +115,7 @@ export default async function SetOutcomePage({
             </div>
           </div>
 
-          <form className="flex flex-col gap-4 px-6 py-5">
+          <InertForm className="flex flex-col gap-4 px-6 py-5">
             <fieldset className="m-0 border-0 p-0">
               <legend className="sr-only">Outcome</legend>
               <div className="flex flex-col rounded-md border">
@@ -118,6 +132,7 @@ export default async function SetOutcomePage({
                         id={`outcome-${outcome.id}`}
                         value={outcome.id}
                         defaultChecked={outcome.id === current?.id}
+                        disabled={denial !== null}
                         className="mt-1"
                       />
                       <label
@@ -142,6 +157,7 @@ export default async function SetOutcomePage({
                     id="outcome-none"
                     value=""
                     defaultChecked={!current}
+                    disabled={denial !== null}
                     className="mt-1"
                   />
                   <label htmlFor="outcome-none" className="min-w-0 flex-1 cursor-pointer">
@@ -154,14 +170,27 @@ export default async function SetOutcomePage({
               </div>
             </fieldset>
 
-            <Button type="submit" className="self-start" aria-disabled="true">
-              Save outcome
-            </Button>
+            {denial ? (
+              <Denied reason={denial} id="why-move-issue">
+                <Button
+                  type="submit"
+                  className="self-start"
+                  aria-disabled="true"
+                  aria-describedby="why-move-issue"
+                >
+                  Move issue
+                </Button>
+              </Denied>
+            ) : (
+              <Button type="submit" className="self-start">
+                Move issue
+              </Button>
+            )}
             <p className="m-0 text-xs italic text-muted-foreground">
               Saving needs <code className="font-mono">PATCH /issues/{issue.key}</code>, which
               arrives with Wave D.
             </p>
-          </form>
+          </InertForm>
         </aside>
       </div>
     </>

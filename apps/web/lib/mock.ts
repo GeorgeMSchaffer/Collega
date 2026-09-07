@@ -238,8 +238,12 @@ export function engagementDenial(role: Role): string | null {
 export const navCounts = {
   boards: boards.length,
   ideas: ideas.length,
-  backlog: 7,
-} as const
+  // Derived, not a literal: this renders in the sidebar beside the backlog page's own count, so a
+  // hard-coded figure disagrees with the list it claims to count.
+  get backlog() {
+    return backlogIssues().length
+  },
+}
 
 // ---------------------------------------------------------------------------
 // Administration fixtures (Wave E5)

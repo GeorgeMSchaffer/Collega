@@ -1,5 +1,6 @@
 import { Alert, Button, Field, Input } from '@collega/design-system'
 import { AuthPitch } from '@/components/auth-pitch'
+import { InertForm } from '@/components/common/inert-form'
 
 export const metadata = { title: 'Change your password · Collega' }
 
@@ -43,7 +44,7 @@ export default async function ChangePasswordPage({
             </Alert>
           ) : null}
 
-          <form>
+          <InertForm>
             <Field
               htmlFor="currentPassword"
               label="Current password"
@@ -84,7 +85,7 @@ export default async function ChangePasswordPage({
             <Button type="submit" className="w-full">
               Update password
             </Button>
-          </form>
+          </InertForm>
 
           <p className="mt-4 text-sm text-muted-foreground">
             Saving signs you out. Sign in again with the new password and you will land on Home.

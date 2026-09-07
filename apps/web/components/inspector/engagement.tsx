@@ -1,4 +1,5 @@
 import { Button, Denied } from '@collega/design-system'
+import { InertForm } from '@/components/common/inert-form'
 import { currentUser, engagementDenial } from '@/lib/mock'
 
 /**
@@ -47,7 +48,7 @@ export function CommentBox() {
   }
 
   return (
-    <form className="flex flex-col gap-2">
+    <InertForm className="flex flex-col gap-2">
       <label htmlFor="comment" className="sr-only">
         Add a comment
       </label>
@@ -55,6 +56,6 @@ export function CommentBox() {
       <Button size="sm" className="self-start" type="submit">
         Comment
       </Button>
-    </form>
+    </InertForm>
   )
 }
