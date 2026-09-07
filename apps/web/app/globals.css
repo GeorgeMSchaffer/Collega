@@ -16,6 +16,8 @@
    ============================================================ */
 @import "tailwindcss" source(none);
 @source "../app";
+@source "../components";
+@source "../lib";
 @source "../../../packages/design-system/src";
 
 @theme inline {
