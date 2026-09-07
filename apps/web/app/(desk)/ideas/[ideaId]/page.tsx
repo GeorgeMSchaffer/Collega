@@ -11,6 +11,12 @@ import { ideaById, ideas } from '@/lib/mock'
  * render into it. So this page splits its own content area, which keeps the ownership boundary
  * intact and means the inspector exists only on the route that has something to show.
  */
+export async function generateMetadata({ params }: { params: Promise<{ ideaId: string }> }) {
+  const { ideaId } = await params
+  const idea = ideaById(ideaId)
+  return { title: idea ? `${idea.reference} ${idea.title} · Collega` : 'Collega' }
+}
+
 export default async function IdeaPage({ params }: { params: Promise<{ ideaId: string }> }) {
   const { ideaId } = await params
   const idea = ideaById(ideaId)

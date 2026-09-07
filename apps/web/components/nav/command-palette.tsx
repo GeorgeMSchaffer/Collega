@@ -29,7 +29,12 @@ export function CommandPalette() {
         event.preventDefault()
         setOpen((wasOpen) => !wasOpen)
       } else if (event.key === 'Escape') {
-        setOpen(false)
+        // Claim the key only when there is something to close, so a handler underneath - the idea
+        // inspector's - still sees the Escapes this one is not using.
+        setOpen((wasOpen) => {
+          if (wasOpen) event.preventDefault()
+          return false
+        })
       }
     }
     window.addEventListener('keydown', onKey)

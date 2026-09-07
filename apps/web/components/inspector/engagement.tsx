@@ -18,11 +18,11 @@ export function UpvoteButton({ count }: { count: number }) {
         <Button
           variant="outline"
           size="sm"
-          disabled
           aria-disabled="true"
           aria-describedby="why-upvote"
+          aria-label={`Upvote this idea, currently ${count} votes`}
         >
-          ▲ {count}
+          <span aria-hidden="true">▲</span> {count}
         </Button>
       </Denied>
     )
@@ -51,7 +51,7 @@ export function CommentBox() {
       <label htmlFor="comment" className="sr-only">
         Add a comment
       </label>
-      <textarea id="comment" rows={2} placeholder="Add a comment…" />
+      <textarea id="comment" rows={2} maxLength={2000} placeholder="Add a comment…" />
       <Button size="sm" className="self-start" type="submit">
         Comment
       </Button>

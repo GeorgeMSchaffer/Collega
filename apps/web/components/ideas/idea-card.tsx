@@ -1,7 +1,7 @@
 import { Avatar, Dot, Marker, Tag } from '@collega/design-system'
 import Link from 'next/link'
 import type { Idea } from '@/lib/mock'
-import { statusById } from '@/lib/mock'
+import { PRIORITY_COLORS } from '@/lib/mock'
 
 /**
  * A card in a lane (comp Q `.kcard`). Priority marker and assignee on the first row, tag and
@@ -13,8 +13,6 @@ import { statusById } from '@/lib/mock'
  * than neither.
  */
 export function IdeaCard({ idea }: { idea: Idea }) {
-  const status = statusById(idea.statusId)
-
   return (
     <Link
       href={`/ideas/${idea.id}`}
@@ -23,7 +21,7 @@ export function IdeaCard({ idea }: { idea: Idea }) {
       <span className="font-medium">{idea.title}</span>
       <div className="mt-2 flex items-center gap-2">
         <Marker>
-          <Dot color={status?.color} />
+          <Dot color={PRIORITY_COLORS[idea.priority]} />
           {idea.priority}
         </Marker>
         <span className="flex-1" />
@@ -35,7 +33,7 @@ export function IdeaCard({ idea }: { idea: Idea }) {
         <Tag>{idea.tag}</Tag>
         <span className="flex-1" />
         <span className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground">
-          ▲ {idea.upvotes}
+          <span aria-hidden="true">▲</span> {idea.upvotes}
         </span>
       </div>
     </Link>

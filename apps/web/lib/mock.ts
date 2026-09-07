@@ -34,6 +34,21 @@ export function writeDenial(role: Role): string | null {
   return null
 }
 
+/**
+ * Priority has its own colour scale, independent of status.
+ *
+ * Comp Q keys every dot to the label beside it, which is what lets the same palette token mean
+ * different things in different markers. Colouring a priority dot by status breaks that: inside one
+ * lane every card would show the same dot, and a `--purple` dot labelled "High" would sit next to a
+ * lane where `--purple` means "In Review". Low is deliberately uncoloured.
+ */
+export const PRIORITY_COLORS: Record<Priority, string | undefined> = {
+  Critical: 'var(--orange)',
+  High: 'var(--sky)',
+  Medium: 'var(--teal)',
+  Low: undefined,
+}
+
 export type Status = { id: string; name: string; color: string }
 
 /** Canonical order. The colour is the category dot from the comp Q palette. */

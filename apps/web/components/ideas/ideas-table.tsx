@@ -1,6 +1,6 @@
-import { Avatar, Dot, Marker, Tag } from '@collega/design-system'
+import { Avatar, Dot, Marker } from '@collega/design-system'
 import Link from 'next/link'
-import { boardById, type Idea, statusById } from '@/lib/mock'
+import { boardById, type Idea, PRIORITY_COLORS, statusById } from '@/lib/mock'
 
 /**
  * The organization-wide ideas table, shared by `/ideas` and `/ideas/[id]`.
@@ -14,12 +14,24 @@ export function IdeasTable({ rows, selectedId }: { rows: Idea[]; selectedId?: st
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b bg-muted/40 text-left">
-            <th className="px-4 py-2.5 font-medium">Title</th>
-            <th className="px-4 py-2.5 font-medium">Board</th>
-            <th className="px-4 py-2.5 font-medium">Status</th>
-            <th className="px-4 py-2.5 font-medium">Priority</th>
-            <th className="px-4 py-2.5 font-medium">Assignee</th>
-            <th className="px-4 py-2.5 text-right font-medium">Votes</th>
+            <th scope="col" className="px-4 py-2.5 font-medium">
+              Title
+            </th>
+            <th scope="col" className="px-4 py-2.5 font-medium">
+              Board
+            </th>
+            <th scope="col" className="px-4 py-2.5 font-medium">
+              Status
+            </th>
+            <th scope="col" className="px-4 py-2.5 font-medium">
+              Priority
+            </th>
+            <th scope="col" className="px-4 py-2.5 font-medium">
+              Assignee
+            </th>
+            <th scope="col" className="px-4 py-2.5 text-right font-medium">
+              Votes
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -50,7 +62,10 @@ export function IdeasTable({ rows, selectedId }: { rows: Idea[]; selectedId?: st
                   </span>
                 </td>
                 <td className="px-4 py-2.5">
-                  <Marker>{idea.priority}</Marker>
+                  <Marker>
+                    <Dot color={PRIORITY_COLORS[idea.priority]} />
+                    {idea.priority}
+                  </Marker>
                 </td>
                 <td className="px-4 py-2.5">
                   {idea.assigneeInitials ? (
@@ -68,5 +83,3 @@ export function IdeasTable({ rows, selectedId }: { rows: Idea[]; selectedId?: st
     </div>
   )
 }
-
-export { Tag }

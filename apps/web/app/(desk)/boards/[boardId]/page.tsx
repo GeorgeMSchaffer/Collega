@@ -6,6 +6,11 @@ import { NewIdeaButton } from '@/components/ideas/new-idea-button'
 import { Topbar } from '@/components/nav/topbar'
 import { boardById, currentUser, ideasForBoard, statuses, writeDenial } from '@/lib/mock'
 
+export async function generateMetadata({ params }: { params: Promise<{ boardId: string }> }) {
+  const { boardId } = await params
+  return { title: `${boardById(boardId)?.name ?? 'Board'} · Collega` }
+}
+
 export default async function BoardPage({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params
   const board = boardById(boardId)

@@ -15,7 +15,7 @@ export function NewIdeaButton({ id }: { id: string }) {
 
   return (
     <Denied reason={denial} id={id}>
-      <Button aria-disabled="true" disabled aria-describedby={id}>
+      <Button aria-disabled="true" aria-describedby={id}>
         New idea
       </Button>
     </Denied>

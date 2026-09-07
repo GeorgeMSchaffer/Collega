@@ -50,7 +50,7 @@ export function IdeaInspector({ idea, closeHref }: { idea: Idea; closeHref: stri
             className="ml-auto text-sm text-muted-foreground no-underline hover:text-foreground"
             aria-label="Close inspector"
           >
-            ✕
+            <span aria-hidden="true">✕</span>
           </Link>
         </div>
         <h2 className="text-lg font-semibold leading-tight">{idea.title}</h2>
