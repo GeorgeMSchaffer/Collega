@@ -9,6 +9,42 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-07 — Golden replay cannot authenticate against the Nest API, and F1 is the gate
+
+**Found:** `tools/golden` authenticates with a bearer token read from the login response body.
+`apps/api` issues and reads an httpOnly session cookie. Neither is wrong; they disagree, and F1
+— "all 81 endpoints × 4 roles replay clean against Nest", the gate before cutover — fails on every
+authenticated case as a result. That is 447 of 447.
+
+**Why they disagree.** Decision `08` (2026-09-04) chose the cookie and explicitly rejected a bearer
+token in client-reachable JavaScript as "the exact defect that cost a sprint to find". Wave D
+implemented that correctly — `apps/api/src/auth/session-cookie.ts` sets `httpOnly`, `secure`,
+`sameSite`, and `auth.guard.ts` reads the cookie. But the corpus was recorded in Wave A against the
+**.NET** API, which is bearer-only, and decision `08` was never propagated into
+`SPEC/30-Contracts.md` — the string "cookie" appears there **zero times**.
+
+**The evidence, so nobody re-derives it:**
+- `tools/golden/src/runner.ts:115-118` throws `login as ${role} returned no accessToken`.
+- `runner.ts:133` sends `authorization: Bearer …` on every subsequent request; there is no cookie jar.
+- `tools/golden/fixtures/auth.login.*.json` pin `accessToken` in the 200 body.
+
+**Not yet decided, and not this note's to decide:** the corpus cannot simply be re-recorded, because
+the only thing that can record it is the bearer-only .NET app. The likely shape is that the harness
+gains a cookie jar and the **login fixture alone** becomes an explicitly marked non-replayable
+deviation — everything downstream of it replays normally once the jar carries the `Set-Cookie`.
+That keeps the deviation to one fixture rather than a class of them.
+
+**Why this is logged rather than fixed.** It sits across `tools/golden`, `apps/api` and
+`SPEC/30-Contracts.md` — the seam belongs to whoever owns Wave D, and that owner was not reachable
+when this was found. Recorded so it is caught **before** the cutover gate rather than at it, which
+is the worst possible moment to discover the oracle cannot run.
+
+Raised by the identity security review, 2026-09-07. That review's own headline — that Wave D was
+heading into the rejected bearer design — was **wrong**, and is corrected here: it read an older
+file state. Wave D built the cookie correctly. Only the corpus is stale.
+
+---
+
 ## 2026-09-06 — The .NET stack is frozen; its code and instructions are no longer applicable
 
 **Decided:** `src/Collega.*`, `tests/`, `Collega.sln` and every .NET instruction file are
