@@ -29,7 +29,10 @@ const LAYER_DIR = {
   infrastructure: 'packages/infrastructure/src',
   'design-system': 'packages/design-system/src',
   api: 'apps/api/src',
-  web: 'apps/web/src',
+  // Next's App Router, not `src` - apps/web has no src/ since Wave E0 laid down the real client.
+  // Any directory works as long as biome.json's `apps/web/**` override matches it; what matters is
+  // that it exists, because this suite probes by writing a file into it.
+  web: 'apps/web/app',
 } as const
 
 type Layer = keyof typeof LAYER_DIR
