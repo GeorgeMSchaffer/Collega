@@ -1,22 +1,28 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { type AiConfig, aiFragment } from './fragments/ai.js'
+import { type AuthConfig, authFragment } from './fragments/auth.js'
 import { type DatabaseConfig, databaseFragment } from './fragments/database.js'
+import { type ServerConfig, serverFragment } from './fragments/server.js'
 import { type SiteAdminConfig, siteAdminFragment } from './fragments/site-admin.js'
 
 export type { EnvFragment } from './fragment.js'
-export type { AiConfig, DatabaseConfig, SiteAdminConfig }
+export type { AiConfig, AuthConfig, DatabaseConfig, ServerConfig, SiteAdminConfig }
 
 export type Config = {
   readonly ai: AiConfig
+  readonly auth: AuthConfig
   readonly database: DatabaseConfig
+  readonly server: ServerConfig
   readonly siteAdmin: SiteAdminConfig
 }
 
 /** Every fragment. A feature slice adds its own here and writes nothing else in this file. */
 const FRAGMENTS = {
   ai: aiFragment,
+  auth: authFragment,
   database: databaseFragment,
+  server: serverFragment,
   siteAdmin: siteAdminFragment,
 } as const
 
@@ -63,7 +69,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const problems: string[] = []
   const config = {
     ai: FRAGMENTS.ai.read(env, problems),
+    auth: FRAGMENTS.auth.read(env, problems),
     database: FRAGMENTS.database.read(env, problems),
+    server: FRAGMENTS.server.read(env, problems),
     siteAdmin: FRAGMENTS.siteAdmin.read(env, problems),
   }
 
