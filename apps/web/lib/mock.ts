@@ -278,7 +278,7 @@ export const organizations: Organization[] = [
     description: 'Industrial robotics and automation manufacturer.',
     memberCount: 4,
     boardCount: 2,
-    ideaCount: 11,
+    ideaCount: 22,
   },
   {
     id: 'blue-harbor',
@@ -286,7 +286,7 @@ export const organizations: Organization[] = [
     description: 'Regional freight and warehousing operator.',
     memberCount: 4,
     boardCount: 2,
-    ideaCount: 11,
+    ideaCount: 22,
   },
 ]
 
@@ -420,8 +420,15 @@ export const fieldDefinitions: FieldDefinition[] = [
  * and gives a member a flat statement of scope.
  */
 export function deliveryAdminDenial(role: Role): string | null {
-  if (role === 'SiteAdmin')
-    return `Act as an ${currentUser.organizationName} administrator to change this`
+  if (role === 'SiteAdmin') {
+    // A Site Admin belongs to no organization, so `organizationName` is null *by design* — the
+    // sidebar and the settings hub both handle that. Naming one here without a fallback printed
+    // "Act as an null administrator to change this" on three delivery routes.
+    const org = currentUser.organizationName
+    return org
+      ? `Act as an ${org} administrator to change this`
+      : 'Act as an organization administrator to change this'
+  }
   if (role === 'User' || role === 'ReadOnly') return 'Administrators only'
   return null
 }

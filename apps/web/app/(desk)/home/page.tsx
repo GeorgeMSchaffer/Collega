@@ -45,8 +45,8 @@ export default function HomePage() {
         <div>
           <h2 className="mb-1">Good to see you, {currentUser.displayName.split(' ')[0]}.</h2>
           <p className="m-0 max-w-2xl text-muted-foreground">
-            {currentUser.organizationName} has {navCounts.ideas} ideas across {navCounts.boards}{' '}
-            boards. The counts and your identity are hard-coded in{' '}
+            {currentUser.organizationName ?? 'This deployment'} has {navCounts.ideas} ideas across{' '}
+            {navCounts.boards} boards. The counts and your identity are hard-coded in{' '}
             <code className="font-mono text-xs">lib/mock.ts</code> until Wave D gives this client an
             API to call.
           </p>
