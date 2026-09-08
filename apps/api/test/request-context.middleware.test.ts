@@ -1,10 +1,14 @@
+import type { PrismaClient } from '@collega/infrastructure/persistence'
 import { describe, expect, it } from 'vitest'
 import { requestContextStorage } from '../src/common/request-context/request-context.js'
 import { RequestContextMiddleware } from '../src/common/request-context/request-context.middleware.js'
 
+// The middleware only hands this to a PrismaUnitOfWork constructor, which stores it untouched.
+const stubPrisma = {} as PrismaClient
+
 describe('RequestContextMiddleware', () => {
   it('opens an empty (identity: null), mutable store and calls next()', () => {
-    const middleware = new RequestContextMiddleware()
+    const middleware = new RequestContextMiddleware(stubPrisma)
     let observed: unknown
 
     middleware.use({}, {}, () => {
@@ -17,7 +21,7 @@ describe('RequestContextMiddleware', () => {
   })
 
   it('the store it opens is mutable - the guard can write identity into the same object later', () => {
-    const middleware = new RequestContextMiddleware()
+    const middleware = new RequestContextMiddleware(stubPrisma)
 
     middleware.use({}, {}, () => {
       const store = requestContextStorage.getStore()
@@ -36,7 +40,7 @@ describe('RequestContextMiddleware', () => {
   })
 
   it('does not leak its store past the request - a later, unrelated read outside use() sees no store', () => {
-    const middleware = new RequestContextMiddleware()
+    const middleware = new RequestContextMiddleware(stubPrisma)
     middleware.use({}, {}, () => {})
     expect(requestContextStorage.getStore()).toBeUndefined()
   })
