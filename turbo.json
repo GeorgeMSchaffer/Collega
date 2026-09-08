@@ -62,6 +62,15 @@
       ],
       "cache": false,
       "outputs": []
+    },
+    "@collega/infrastructure#test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "env": [
+        "DATABASE_URL"
+      ],
+      "outputs": []
     }
   }
 }
