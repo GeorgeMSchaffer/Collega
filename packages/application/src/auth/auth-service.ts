@@ -206,9 +206,9 @@ export class AuthService {
   }
 
   /** Self-service update of the caller's own first/last name (auth requirement #20). */
-  async updateProfile(userId: string, command: UpdateProfileCommand): Promise<CurrentUserSummary> {
+  async updateProfile(command: UpdateProfileCommand): Promise<CurrentUserSummary> {
     const now = this.clock.now()
-    const user = await this.requireUser(userId)
+    const user = await this.requireCurrentUser()
 
     // Names are validated for shape at the API boundary; the domain function trims and enforces
     // non-empty.
@@ -239,9 +239,9 @@ export class AuthService {
   /** Validates raw uploaded image bytes through the image pipeline (reject non-images /
    * disguised content), resizes to the portrait thumbnail, and stores it on the caller's
    * record. */
-  async updatePortrait(userId: string, imageBytes: Uint8Array): Promise<CurrentUserSummary> {
+  async updatePortrait(imageBytes: Uint8Array): Promise<CurrentUserSummary> {
     const now = this.clock.now()
-    const user = await this.requireUser(userId)
+    const user = await this.requireCurrentUser()
 
     if (imageBytes.length === 0) {
       throw new ValidationError(VALIDATION_TITLE, {
@@ -280,9 +280,9 @@ export class AuthService {
   }
 
   /** Clears the caller's stored portrait so the initials avatar is shown again. */
-  async removePortrait(userId: string): Promise<CurrentUserSummary> {
+  async removePortrait(): Promise<CurrentUserSummary> {
     const now = this.clock.now()
-    const user = await this.requireUser(userId)
+    const user = await this.requireCurrentUser()
 
     const updated = removeUserPortrait(user, now, user.id)
     await this.users.update(updated)
@@ -301,9 +301,9 @@ export class AuthService {
     return toSummary(updated)
   }
 
-  async changePassword(userId: string, command: ChangePasswordCommand): Promise<void> {
+  async changePassword(command: ChangePasswordCommand): Promise<void> {
     const now = this.clock.now()
-    const user = await this.requireUser(userId)
+    const user = await this.requireCurrentUser()
 
     if (!this.passwordHasher.verify(command.currentPassword ?? '', user.passwordHash)) {
       await this.audit(
@@ -462,8 +462,23 @@ export class AuthService {
     return { temporaryPassword, mustChangePassword: true }
   }
 
-  private async requireUser(userId: string): Promise<User> {
-    const user = await this.users.getById(userId)
+  /**
+   * Resolves the caller's own identity from the injected `CurrentUserContext`, then loads that
+   * record. The self-service mutations above take no user id parameter on purpose: the previous
+   * `requireUser(userId)` only checked that the requested row existed, so a caller-supplied id
+   * would have let any authenticated request rename, re-portrait, or change the password of any
+   * other user. `issueTemporaryPassword` is the reference for resolving identity this way.
+   *
+   * While a View As session is live `currentUser.userId` is the impersonated user, which is the
+   * correct target for a self-service edit - authorship records the target, not the real
+   * administrator (SPEC/20-feature-view-as.md rules 4 and 15).
+   */
+  private async requireCurrentUser(): Promise<User> {
+    if (!this.currentUser.isAuthenticated || this.currentUser.userId === null) {
+      throw new UnauthorizedError('Caller identity could not be resolved.')
+    }
+
+    const user = await this.users.getById(this.currentUser.userId)
     if (!user) {
       throw new UnauthorizedError('Caller identity could not be resolved.')
     }

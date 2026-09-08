@@ -91,10 +91,51 @@ function requireNonBlank(value: string, field: string, message: string): void {
   }
 }
 
+/**
+ * Restores the `[MaxLengthField]` request attributes the .NET contracts carried
+ * (`CreateOrganizationRequest` / `UpdateOrganizationRequest`) - the constants above were ported
+ * but the checks were not, so an over-long value reached a `VarChar(N)` column and Postgres's
+ * `22001` surfaced as a 500 instead of the field-keyed 400 the contract requires. Same shape as
+ * `packages/domain/src/comments/comment.ts`; length is judged on the TRIMMED value because "all
+ * organization text fields are trimmed before validation and persistence"
+ * (SPEC/20-feature-organizations-and-users.md "Organization Fields").
+ *
+ * `label` is the spaced Title Case display name, `field` the camelCase wire key
+ * (SPEC/30-Contracts.md "Validation Message Conventions").
+ */
+function requireMaxLength(
+  value: string | null | undefined,
+  field: string,
+  label: string,
+  maxLength: number,
+): void {
+  if ((value ?? '').trim().length > maxLength) {
+    throw new OrganizationDomainError(field, `${label} must be ${maxLength} characters or fewer.`)
+  }
+}
+
 function applyProfile(profile: OrganizationProfile | null | undefined): OrganizationProfile {
   if (!profile) {
     return EMPTY_PROFILE
   }
+  requireMaxLength(profile.address, 'address', 'Address', ORGANIZATION_ADDRESS_MAX_LENGTH)
+  requireMaxLength(profile.city, 'city', 'City', ORGANIZATION_CITY_MAX_LENGTH)
+  requireMaxLength(profile.state, 'state', 'State', ORGANIZATION_STATE_MAX_LENGTH)
+  requireMaxLength(profile.zip, 'zip', 'Zip', ORGANIZATION_ZIP_MAX_LENGTH)
+  requireMaxLength(profile.phone, 'phone', 'Phone', ORGANIZATION_PHONE_MAX_LENGTH)
+  requireMaxLength(
+    profile.primaryContactFirstName,
+    'primaryContactFirstName',
+    'Primary Contact First Name',
+    ORGANIZATION_CONTACT_NAME_MAX_LENGTH,
+  )
+  requireMaxLength(
+    profile.primaryContactLastName,
+    'primaryContactLastName',
+    'Primary Contact Last Name',
+    ORGANIZATION_CONTACT_NAME_MAX_LENGTH,
+  )
+
   return {
     address: normalize(profile.address),
     city: normalize(profile.city),
@@ -123,8 +164,16 @@ export function createOrganization(
   actorUserId: string | null,
 ): Organization {
   requireNonBlank(input.title, 'title', 'Title is required.')
+  requireMaxLength(input.title, 'title', 'Title', ORGANIZATION_TITLE_MAX_LENGTH)
   requireNonBlank(input.description, 'description', 'Description is required.')
+  requireMaxLength(
+    input.description,
+    'description',
+    'Description',
+    ORGANIZATION_DESCRIPTION_MAX_LENGTH,
+  )
   requireNonBlank(input.inviteCode, 'inviteCode', 'Invite Code is required.')
+  requireMaxLength(input.logoUrl, 'logoUrl', 'Logo Address', ORGANIZATION_LOGO_URL_MAX_LENGTH)
 
   const profile = applyProfile(input.profile)
 
@@ -159,7 +208,15 @@ export function updateOrganization(
   actorUserId: string | null,
 ): Organization {
   requireNonBlank(input.title, 'title', 'Title is required.')
+  requireMaxLength(input.title, 'title', 'Title', ORGANIZATION_TITLE_MAX_LENGTH)
   requireNonBlank(input.description, 'description', 'Description is required.')
+  requireMaxLength(
+    input.description,
+    'description',
+    'Description',
+    ORGANIZATION_DESCRIPTION_MAX_LENGTH,
+  )
+  requireMaxLength(input.logoUrl, 'logoUrl', 'Logo Address', ORGANIZATION_LOGO_URL_MAX_LENGTH)
 
   return markUpdated(
     {

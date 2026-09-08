@@ -42,10 +42,23 @@ export type Board = Auditable & {
   readonly swimlanes: readonly BoardSwimlane[]
 }
 
+/**
+ * The max-length half restores the `[MaxLengthField]` request attribute the .NET contracts
+ * carried (`CreateBoardRequest` / `UpdateBoardRequest`) - `BOARD_NAME_MAX_LENGTH` was ported but
+ * the check was not, so an over-long name reached a `VarChar(150)` column and Postgres's `22001`
+ * surfaced as a 500 instead of the field-keyed 400 the contract requires. Same shape as
+ * `packages/domain/src/comments/comment.ts`.
+ */
 function requireName(name: string): string {
   const trimmed = name.trim()
   if (trimmed.length === 0) {
     throw new BoardInvariantError('name', 'Name is required.')
+  }
+  if (trimmed.length > BOARD_NAME_MAX_LENGTH) {
+    throw new BoardInvariantError(
+      'name',
+      `Name must be ${BOARD_NAME_MAX_LENGTH} characters or fewer.`,
+    )
   }
   return trimmed
 }
