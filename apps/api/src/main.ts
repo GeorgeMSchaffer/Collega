@@ -1,6 +1,6 @@
 import 'reflect-metadata'
-import cookieParser from 'cookie-parser'
 import { NestFactory } from '@nestjs/core'
+import cookieParser from 'cookie-parser'
 import { AppModule } from './app.module.js'
 import { CONFIG } from './common/config/config.module.js'
 import type { Config } from './common/config/index.js'

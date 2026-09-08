@@ -3,6 +3,4 @@
 // Source: apps/api/scripts/generate-modules.mjs, scanning apps/api/src/*/*.module.ts.
 
 /** Every Wave D feature module discovered under apps/api/src/, in directory-name order. */
-export const FEATURE_MODULES = [
-
-] as const
+export const FEATURE_MODULES = [] as const

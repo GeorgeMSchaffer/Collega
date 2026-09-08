@@ -1,3 +1,5 @@
+import type { CurrentUserContext } from '@collega/application/common'
+import type { Role } from '@collega/domain/enums'
 import {
   type CanActivate,
   type ExecutionContext,
@@ -6,8 +8,6 @@ import {
   Injectable,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import type { CurrentUserContext } from '@collega/application/common'
-import type { Role } from '@collega/domain/enums'
 import { PORT_TOKENS } from '../common/tokens.js'
 import { ROLES_KEY } from './roles.decorator.js'
 

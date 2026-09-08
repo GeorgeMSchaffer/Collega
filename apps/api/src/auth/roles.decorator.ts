@@ -1,5 +1,5 @@
-import { SetMetadata } from '@nestjs/common'
 import type { Role } from '@collega/domain/enums'
+import { SetMetadata } from '@nestjs/common'
 
 export const ROLES_KEY = 'collega:roles'
 

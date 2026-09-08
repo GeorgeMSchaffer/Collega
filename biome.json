@@ -41,6 +41,9 @@
       "quoteStyle": "single",
       "semicolons": "asNeeded",
       "trailingCommas": "all"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
     }
   },
   "overrides": [
@@ -289,7 +292,8 @@
                   }
                 ]
               }
-            }
+            },
+            "useImportType": "off"
           }
         }
       }

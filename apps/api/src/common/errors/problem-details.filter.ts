@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { ApplicationError, RateLimitedError, ValidationError } from '@collega/application/common'
 import {
   type ArgumentsHost,
   Catch,
@@ -6,7 +7,6 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common'
-import { ApplicationError, RateLimitedError, ValidationError } from '@collega/application/common'
 import type { Request, Response } from 'express'
 
 /**

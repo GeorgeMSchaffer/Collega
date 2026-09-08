@@ -1,3 +1,5 @@
+import type { AuthenticatedPrincipal, TokenAuthenticationService } from '@collega/application/auth'
+import { ForbiddenError } from '@collega/application/common'
 import {
   type CanActivate,
   type ExecutionContext,
@@ -6,12 +8,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import type { AuthenticatedPrincipal, TokenAuthenticationService } from '@collega/application/auth'
-import { ForbiddenError } from '@collega/application/common'
 import type { Request } from 'express'
-import { PORT_TOKENS } from '../common/tokens.js'
 import type { ResolvedIdentity } from '../common/request-context/request-context.js'
 import { requestContextStorage } from '../common/request-context/request-context.js'
+import { PORT_TOKENS } from '../common/tokens.js'
 import { ALLOW_WHILE_PASSWORD_CHANGE_REQUIRED_KEY } from './allow-while-password-change-required.decorator.js'
 import { SESSION_COOKIE_NAME } from './session-cookie.js'
 

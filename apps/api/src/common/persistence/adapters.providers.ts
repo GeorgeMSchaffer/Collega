@@ -1,5 +1,4 @@
 import { randomBytes } from 'node:crypto'
-import type { Provider } from '@nestjs/common'
 import type { ImpersonationResolver } from '@collega/application/auth'
 import { TokenAuthenticationService } from '@collega/application/auth'
 import { systemClock } from '@collega/application/common'
@@ -33,6 +32,7 @@ import {
   PrismaUserRepository,
 } from '@collega/infrastructure/repositories'
 import { JwtAccessTokenService, Pbkdf2PasswordHasher } from '@collega/infrastructure/security'
+import type { Provider } from '@nestjs/common'
 import { CONFIG } from '../config/config.module.js'
 import type { Config } from '../config/index.js'
 import { PORT_TOKENS } from '../tokens.js'
@@ -63,7 +63,8 @@ const CONCRETE_ADAPTERS: Provider[] = [
   },
   {
     provide: PrismaBoardRepository,
-    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) => new PrismaBoardRepository(prisma, uow),
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaBoardRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
@@ -259,7 +260,10 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.AiUsersPort, useExisting: PrismaUserRepository },
 
   { provide: PORT_TOKENS.BoardRepository, useExisting: PrismaBoardRepository },
-  { provide: PORT_TOKENS.OrganizationExistenceLookup, useExisting: OrganizationExistenceLookupRepository },
+  {
+    provide: PORT_TOKENS.OrganizationExistenceLookup,
+    useExisting: OrganizationExistenceLookupRepository,
+  },
 
   { provide: PORT_TOKENS.BusinessImpactRepository, useExisting: PrismaBusinessImpactRepository },
 
@@ -279,15 +283,24 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.IdeaClassificationPort, useExisting: IdeaClassificationRepository },
   { provide: PORT_TOKENS.IdeaFieldValuesPort, useExisting: PrismaIdeaFieldValuesRepository },
 
-  { provide: PORT_TOKENS.NotificationEventRepository, useExisting: PrismaNotificationEventRepository },
+  {
+    provide: PORT_TOKENS.NotificationEventRepository,
+    useExisting: PrismaNotificationEventRepository,
+  },
 
   { provide: PORT_TOKENS.OrganizationRepository, useExisting: PrismaOrganizationRepository },
   { provide: PORT_TOKENS.InviteCodeGenerator, useExisting: RandomInviteCodeGenerator },
   { provide: PORT_TOKENS.OrganizationBootstrapPort, useExisting: OrganizationBootstrapRepository },
 
-  { provide: PORT_TOKENS.ImpersonationSessionRepository, useExisting: PrismaImpersonationSessionRepository },
+  {
+    provide: PORT_TOKENS.ImpersonationSessionRepository,
+    useExisting: PrismaImpersonationSessionRepository,
+  },
   { provide: PORT_TOKENS.ImpersonationUsersPort, useExisting: PrismaUserRepository },
-  { provide: PORT_TOKENS.ImpersonationOrganizationsPort, useExisting: PrismaOrganizationRepository },
+  {
+    provide: PORT_TOKENS.ImpersonationOrganizationsPort,
+    useExisting: PrismaOrganizationRepository,
+  },
 
   { provide: PORT_TOKENS.StatusRepository, useExisting: PrismaStatusRepository },
 

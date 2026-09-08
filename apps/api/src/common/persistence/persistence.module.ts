@@ -1,6 +1,6 @@
-import { Inject, Injectable, Module, type OnModuleDestroy } from '@nestjs/common'
 import { systemClock } from '@collega/application/common'
 import { createPrismaClient, type PrismaClient } from '@collega/infrastructure/persistence'
+import { Inject, Injectable, Module, type OnModuleDestroy } from '@nestjs/common'
 import { ConfigModule } from '../config/config.module.js'
 import { AlsCurrentUserContext } from '../request-context/als-current-user-context.js'
 import { PORT_TOKENS } from '../tokens.js'

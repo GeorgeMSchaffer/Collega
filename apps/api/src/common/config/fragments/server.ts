@@ -1,4 +1,4 @@
-import { type EnvFragment } from '../fragment.js'
+import type { EnvFragment } from '../fragment.js'
 
 export type ServerConfig = {
   readonly port: number
