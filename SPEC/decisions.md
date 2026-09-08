@@ -9,6 +9,33 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-08 — An empty state's action is disabled with a reason, never omitted
+
+**The conflict.** Comp Q applies two different rules to the same situation. Its delivery screens
+(`s-sprint`, `s-roadmap`, `s-issue` tasks) render an empty state's action three ways under
+`data-roles`: live for an Org Admin, `aria-disabled` for a Site Admin with *"Act as an Acme Robotics
+administrator to …"*, `aria-disabled` for a member with *"Administrators only"*. But `s-home`,
+`s-boards`, `s-board` and `s-outcome` simply **omit** the control for roles that cannot use it, and
+let the sentence carry the explanation instead.
+
+**Decided: disabled with a reason, everywhere.** `apps/web/components/common/gated-action.tsx` is
+the single implementation, and every empty state goes through it.
+
+**Why, given it diverges from four comp Q screens.** `20-feature-client-ui.md` already settled this
+on 2026-09-02 — *"Denied is shown, not hidden"* — for controls generally, and an empty state's
+action is a control. Shipping both conventions would teach a reader two rules for one situation and
+make the product's shape depend on which screen they happened to reach. The omitting variant also
+loses something the disabled one keeps: a member who never sees the control cannot learn that the
+capability exists or who to ask for it.
+
+**What this does not change.** Page-level gating stays as it is: a whole route closed to a role
+still shows the refusal panel rather than a reduced screen, and the settings hub still leaves an
+administrative section **absent rather than refused**. The rule here is about a control inside a
+screen the reader may legitimately be on, which is the case comp Q's own delivery screens already
+answer this way.
+
+---
+
 ## 2026-09-07 — The live database cannot accept a Prisma write on seven columns
 
 **Found, and verified against the running `collega-postgres`:** the database has **zero**
