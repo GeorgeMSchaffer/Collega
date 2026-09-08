@@ -1,4 +1,10 @@
-import type { LabelHTMLAttributes, ReactNode } from 'react'
+import {
+  Children,
+  cloneElement,
+  type LabelHTMLAttributes,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import { cn } from '../lib/cn.js'
 
 /**
@@ -24,6 +30,14 @@ export function Label({ className, ...props }: LabelProps) {
  * `htmlFor` is required rather than optional — a real `<label for>` bound to a real control is one
  * of the three accessibility properties comp P carried over deliberately, and making it optional is
  * how that quietly gets dropped. The caller wires `id` on the control to match.
+ *
+ * **`Field` binds `aria-describedby` itself, and must keep doing so.** It previously computed the
+ * hint/error id, rendered it on the `<span>`, and never put `aria-describedby` on the control —
+ * so the whole sign-in and password-change flow shipped with three ids nothing pointed at and zero
+ * `aria-describedby` in the document. A screen-reader user heard "New password, secure edit text"
+ * and never the password rules. Leaving the binding to the caller is what made that possible, and
+ * it is the same defect `Denied` shipped with for the same reason: an id computed in one place and
+ * a reference owed in another. Only this component knows the id, so only it can be responsible.
  */
 export function Field({
   htmlFor,
@@ -42,10 +56,18 @@ export function Field({
 }) {
   const describedBy = error ? `${htmlFor}-msg` : hint ? `${htmlFor}-hint` : undefined
 
+  // `Children.only` throws for a fragment or multiple children rather than silently binding
+  // nothing — a Field wraps exactly one control, and a caller who passes two should hear about it.
+  const control = describedBy
+    ? cloneElement(Children.only(children) as ReactElement<{ 'aria-describedby'?: string }>, {
+        'aria-describedby': describedBy,
+      })
+    : children
+
   return (
     <div className={cn('mb-4', className)} data-invalid={error ? '' : undefined}>
       <Label htmlFor={htmlFor}>{label}</Label>
-      {children}
+      {control}
       {error ? (
         <span id={describedBy} className="mt-1 block text-[0.8rem] font-medium text-destructive">
           {error}
