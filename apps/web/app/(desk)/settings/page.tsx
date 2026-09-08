@@ -9,43 +9,121 @@ import {
 } from '@collega/design-system'
 import Link from 'next/link'
 import { Topbar } from '@/components/nav/topbar'
-import { currentUser, isAdministrator } from '@/lib/mock'
+import { currentUser, isAdministrator, type Role } from '@/lib/mock'
 
 export const metadata = { title: 'Settings · Collega' }
 
-type Section = { href: string; title: string; blurb: string; siteAdminOnly?: boolean }
+type Section = { href: string; title: string; blurb: string; badge?: string }
 
-const SECTIONS: Section[] = [
-  {
-    href: '/settings/organizations',
-    title: 'Organizations',
-    blurb: 'Every organization on the deployment, and its size.',
-    siteAdminOnly: true,
-  },
-  {
-    href: '/settings/users',
-    title: 'Users',
-    blurb: 'Who is in this organization, and what each of them may do.',
-  },
-  {
-    href: '/settings/statuses',
-    title: 'Statuses',
-    blurb: 'The columns your boards group ideas by. Order here is the order on every board.',
-  },
-  {
-    href: '/settings/idea-types',
-    title: 'Idea types',
-    blurb: 'The kinds of idea people may raise, and which fields each one asks for.',
-  },
-  {
-    href: '/settings/fields',
-    title: 'Custom fields',
-    blurb: 'Extra questions attached to an idea type.',
-  },
-]
+/** Every role reaches its own profile, which is why the hub itself is ungated. */
+const PROFILE: Section = {
+  href: '/settings/profile',
+  title: 'My profile',
+  blurb: 'Your name, your portrait, and your password.',
+}
 
-/** Settings surfaces comp Q has that this slice does not build. Named so the gap is visible. */
-const NOT_BUILT = ['My profile', 'Boards', 'AI assist', 'API usage', 'CSV import']
+/**
+ * The hub is a role map, not a menu (`SPEC/20-feature-client-ui.md`), so the list is built per role
+ * rather than filtered from one array with a flag.
+ *
+ * Two routes read differently for a Site Admin than a flag could express. **Boards** points at the
+ * workspace list instead of `/settings/boards`, because board administration is scoped to one
+ * organization and a Site Admin belongs to none — sending them to a settings route with nothing to
+ * list would be a dead end the hub can simply not create. **AI Assist** is absent for the same
+ * reason and replaced by AI Prompt, which is the deployment-level surface a Site Admin does own.
+ */
+function sectionsFor(role: Role): Section[] {
+  if (!isAdministrator(role)) return [PROFILE]
+
+  if (role === 'SiteAdmin') {
+    return [
+      PROFILE,
+      {
+        href: '/settings/organizations',
+        title: 'Organizations',
+        blurb: 'Every organization on the deployment, and its size.',
+        badge: 'Site Admin',
+      },
+      {
+        href: '/settings/users',
+        title: 'Users',
+        blurb: 'Every account on the deployment. Open an organization to change its membership.',
+      },
+      {
+        href: '/boards',
+        title: 'Boards',
+        blurb:
+          'Boards belong to an organization, so there is no cross-organization view — this is the workspace list.',
+      },
+      {
+        href: '/settings/statuses',
+        title: 'Statuses',
+        blurb: 'The columns boards group ideas by, per organization.',
+      },
+      {
+        href: '/settings/idea-types',
+        title: 'Idea types',
+        blurb: 'The kinds of idea people may raise, and which fields each one asks for.',
+      },
+      {
+        href: '/settings/fields',
+        title: 'Custom fields',
+        blurb: 'Extra questions attached to an idea type.',
+      },
+      {
+        href: '/settings/ai-prompt',
+        title: 'AI prompt',
+        blurb:
+          'The instructions every organization’s assistant runs under, and its version history.',
+        badge: 'Site Admin',
+      },
+      {
+        href: '/settings/api-usage',
+        title: 'API usage',
+        blurb: 'Assistant token consumption and estimated cost, per organization.',
+      },
+    ]
+  }
+
+  return [
+    PROFILE,
+    {
+      href: '/settings/users',
+      title: 'Users',
+      blurb: 'Who is in this organization, and what each of them may do.',
+    },
+    {
+      href: '/settings/boards',
+      title: 'Boards',
+      blurb: 'The boards you track ideas on, and which statuses become each one’s swimlanes.',
+    },
+    {
+      href: '/settings/statuses',
+      title: 'Statuses',
+      blurb: 'The columns your boards group ideas by. Order here is the order on every board.',
+    },
+    {
+      href: '/settings/idea-types',
+      title: 'Idea types',
+      blurb: 'The kinds of idea people may raise, and which fields each one asks for.',
+    },
+    {
+      href: '/settings/fields',
+      title: 'Custom fields',
+      blurb: 'Extra questions attached to an idea type.',
+    },
+    {
+      href: '/settings/ai-assist',
+      title: 'AI assist',
+      blurb: 'What the assistant should treat as on-topic for this organization.',
+    },
+    {
+      href: '/settings/api-usage',
+      title: 'API usage',
+      blurb: 'Your assistant token consumption and estimated cost for today.',
+    },
+  ]
+}
 
 /**
  * The settings hub.
@@ -58,7 +136,7 @@ const NOT_BUILT = ['My profile', 'Boards', 'AI assist', 'API usage', 'CSV import
  */
 export default function SettingsPage() {
   const admin = isAdministrator(currentUser.role)
-  const sections = admin ? SECTIONS : []
+  const sections = sectionsFor(currentUser.role)
 
   return (
     <>
@@ -75,30 +153,23 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        {admin ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {sections.map((section) => {
-              const closed = section.siteAdminOnly && currentUser.role !== 'SiteAdmin'
-              return (
-                <Card key={section.href}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      {closed ? section.title : <Link href={section.href}>{section.title}</Link>}
-                      {section.siteAdminOnly ? <Badge variant="outline">Site Admin</Badge> : null}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>
-                      {closed
-                        ? 'Deployment configuration, not this organization’s — closed to your role.'
-                        : section.blurb}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {sections.map((section) => (
+            <Card key={section.href}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Link href={section.href}>{section.title}</Link>
+                  {section.badge ? <Badge variant="outline">{section.badge}</Badge> : null}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>{section.blurb}</CardDescription>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {admin ? null : (
           <Alert variant="note" className="max-w-prose">
             <span>
               <b>Settings is almost entirely administrative.</b> You see only your own profile here.
@@ -107,21 +178,6 @@ export default function SettingsPage() {
             </span>
           </Alert>
         )}
-
-        <div>
-          <h2 className="mb-2 text-sm font-medium text-muted-foreground">Not built yet</h2>
-          <div className="flex flex-wrap gap-2">
-            {NOT_BUILT.map((item) => (
-              <Badge key={item} variant="secondary">
-                {item}
-              </Badge>
-            ))}
-          </div>
-          <p className="m-0 mt-2 text-xs text-muted-foreground">
-            These settings surfaces exist in comp Q and are not in this slice. They need Wave
-            D&rsquo;s API before they can do anything.
-          </p>
-        </div>
       </main>
     </>
   )
