@@ -1,0 +1,120 @@
+/* ============================================================
+   design-sync Tailwind entry — build input, not app code.
+
+   Claude Design renders a design from `styles.css` and its @import
+   closure alone. Collega styles its components with Tailwind utility
+   classes, and Tailwind only emits the utilities it finds in the
+   sources it scans — so a stylesheet compiled from the design system
+   alone would style the components correctly and leave every layout
+   the design agent writes itself completely unstyled.
+
+   This entry therefore compiles three things into one static
+   stylesheet:
+
+     1. the theme  — @collega/design-system/src/globals.css (tokens,
+        the @theme block, the base layer),
+     2. real usage — the design system's own sources, the authored
+        preview cards, and apps/web, so the vocabulary the product
+        actually ships is present,
+     3. a safelist — the generic layout/spacing/type/colour utilities
+        below, so the agent can compose new screens rather than only
+        re-render existing ones.
+
+   Compiled by .design-sync/build-css.sh into
+   packages/design-system/dist/collega.css, which cfg.cssEntry points
+   at. Regenerate it whenever the theme or the safelist changes.
+   ============================================================ */
+@import "../packages/design-system/src/globals.css";
+
+@source "../packages/design-system/src";
+@source "../.design-sync/previews";
+@source "../apps/web/app";
+@source "../apps/web/components";
+
+/* Geist and Geist Mono are not imported here: they ship as real font
+   files via cfg.extraFonts (.design-sync/fonts/geist.css), so a design
+   never depends on a font CDN being reachable at render time. */
+
+/* ---- safelist: the composition vocabulary ---------------------- */
+
+/* Display, position, overflow */
+@source inline("{block,inline-block,inline,flex,inline-flex,grid,inline-grid,hidden,contents}");
+@source inline("{static,relative,absolute,fixed,sticky}");
+@source inline("{inset-0,top-0,right-0,bottom-0,left-0,z-{0,10,20,30,40,50}}");
+@source inline("overflow-{auto,hidden,visible,scroll}");
+@source inline("overflow-{x,y}-{auto,hidden,visible,scroll}");
+
+/* Flex and grid */
+@source inline("flex-{row,row-reverse,col,col-reverse,wrap,nowrap,1,auto,initial,none}");
+@source inline("{grow,shrink}");
+@source inline("{grow,shrink}-0");
+@source inline("items-{start,end,center,baseline,stretch}");
+@source inline("justify-{start,end,center,between,around,evenly}");
+@source inline("self-{start,end,center,stretch,auto}");
+@source inline("content-{start,end,center,between,around}");
+@source inline("grid-cols-{1,2,3,4,5,6,7,8,9,10,11,12}");
+@source inline("grid-rows-{1,2,3,4,5,6}");
+@source inline("col-span-{1,2,3,4,5,6,7,8,9,10,11,12,full}");
+@source inline("row-span-{1,2,3,4,5,6,full}");
+@source inline("order-{first,last,none,1,2,3,4,5}");
+
+/* Spacing */
+@source inline("{p,px,py,pt,pr,pb,pl}-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,12,14,16,20,24}");
+@source inline("{m,mx,my,mt,mr,mb,ml}-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,9,10,12,14,16,20,24,auto}");
+@source inline("{gap,gap-x,gap-y}-{0,0.5,1,1.5,2,2.5,3,3.5,4,5,6,7,8,10,12,16}");
+@source inline("{space-x,space-y}-{0,0.5,1,1.5,2,2.5,3,4,5,6,8}");
+
+/* Sizing */
+@source inline("{w,h,size}-{0,1,2,3,4,5,6,7,8,9,10,11,12,14,16,20,24,32,40,48,56,64,px,auto,full,screen,min,max,fit}");
+@source inline("{w,h}-{1/2,1/3,2/3,1/4,3/4}");
+@source inline("{min-w,min-h,max-w,max-h}-{0,full,screen,min,max,fit,none}");
+@source inline("max-w-{xs,sm,md,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,prose}");
+
+/* Typography */
+@source inline("text-{xs,sm,base,lg,xl,2xl,3xl,4xl,5xl}");
+@source inline("font-{thin,light,normal,medium,semibold,bold,extrabold}");
+@source inline("font-{sans,mono}");
+@source inline("text-{left,center,right,justify}");
+@source inline("leading-{none,tight,snug,normal,relaxed,loose,3,4,5,6,7,8,9,10}");
+@source inline("tracking-{tighter,tight,normal,wide,wider,widest}");
+@source inline("{truncate,text-ellipsis,text-clip,text-wrap,text-nowrap,text-balance,text-pretty,break-words,break-all}");
+@source inline("{uppercase,lowercase,capitalize,normal-case,italic,not-italic}");
+@source inline("{underline,line-through,no-underline,tabular-nums,sr-only,not-sr-only}");
+@source inline("align-{baseline,top,middle,bottom}");
+@source inline("whitespace-{normal,nowrap,pre,pre-line,pre-wrap}");
+@source inline("line-clamp-{1,2,3,4,5,6,none}");
+
+/* Colour — the semantic theme scale, plus the opacity steps the app uses */
+@source inline("{bg,text,border,fill,stroke,ring,divide,outline}-{background,foreground,card,card-foreground,popover,popover-foreground,primary,primary-foreground,secondary,secondary-foreground,muted,muted-foreground,accent,accent-foreground,destructive,destructive-foreground,warning,success,teal,border,input,ring,sidebar,sidebar-foreground,sidebar-primary,sidebar-accent,sidebar-accent-foreground,sidebar-border}");
+@source inline("{bg,text,border}-{primary,secondary,muted,accent,destructive,warning,success,teal,card,background,foreground,border}/{5,10,15,20,25,30,40,50,60,70,75,80,90,95}");
+@source inline("{bg,text,border}-{transparent,current,inherit,white,black}");
+@source inline("hover:{bg,text,border}-{primary,secondary,muted,accent,destructive,card,background}");
+@source inline("hover:{bg,text}-{primary,secondary,muted,accent,destructive}/{80,90}");
+
+/* Borders, radius, effects */
+@source inline("{border,border-x,border-y,border-t,border-r,border-b,border-l}");
+@source inline("{border,border-x,border-y,border-t,border-r,border-b,border-l}-{0,2,4,8}");
+@source inline("border-{solid,dashed,dotted,none}");
+@source inline("rounded{,-t,-r,-b,-l,-tl,-tr,-br,-bl}-{none,xs,sm,md,lg,xl,2xl,3xl,full}");
+@source inline("rounded{,-t,-r,-b,-l}");
+@source inline("shadow-{2xs,xs,sm,md,lg,xl,2xl,none,inner}");
+@source inline("opacity-{0,5,10,20,25,30,40,50,60,70,75,80,90,95,100}");
+@source inline("{divide-x,divide-y}");
+
+/* Interaction */
+@source inline("cursor-{pointer,default,not-allowed,wait,text,move,grab}");
+@source inline("pointer-events-{none,auto}");
+@source inline("select-{none,text,all,auto}");
+@source inline("transition{,-all,-colors,-opacity,-shadow,-transform}");
+@source inline("duration-{75,100,150,200,300,500,700,1000}");
+@source inline("ease-{linear,in,out,in-out}");
+@source inline("{resize,resize-none,resize-x,resize-y}");
+@source inline("appearance-none");
+
+/* Responsive prefixes on the layout primitives most used for screens */
+@source inline("{sm,md,lg,xl}:{block,flex,grid,hidden,inline-flex}");
+@source inline("{sm,md,lg,xl}:flex-{row,col}");
+@source inline("{sm,md,lg,xl}:grid-cols-{1,2,3,4,5,6,8,12}");
+@source inline("{sm,md,lg,xl}:{p,px,py,m,mx,my,gap}-{0,1,2,3,4,5,6,8,10,12}");
+@source inline("{sm,md,lg,xl}:text-{xs,sm,base,lg,xl,2xl,3xl}");
+@source inline("{sm,md,lg,xl}:{w,h}-{full,auto,screen}");
