@@ -11,9 +11,13 @@ const INVALID = 'border-destructive focus-visible:ring-destructive'
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }
 
-export function Input({ className, invalid, ...props }: InputProps) {
+export function Input({ className, invalid, type = 'text', ...props }: InputProps) {
+  // Defaults to `text`, which HTML would do anyway - but the base layer in `globals.css` keys off
+  // `input[type=text]`, so an Input with no `type` matched nothing and rendered with no border, no
+  // padding and no background. It read as plain text, and only on the one screen that omitted it.
   return (
     <input
+      type={type}
       className={cn(FIELD, invalid && INVALID, className)}
       aria-invalid={invalid || undefined}
       {...props}
