@@ -22,7 +22,8 @@
     "db:pull": "prisma db pull --schema prisma/schema.prisma",
     "db:generate": "prisma generate --schema prisma/schema.prisma",
     "db:migrate": "prisma migrate deploy --schema prisma/schema.prisma",
-    "db:seed": "node prisma/seed/index.ts"
+    "db:seed": "node prisma/seed/index.ts",
+    "db:check-enums": "node prisma/check-enums.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
