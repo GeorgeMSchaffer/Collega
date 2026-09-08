@@ -29,7 +29,9 @@ const LAYER_DIR = {
   infrastructure: 'packages/infrastructure/src',
   'design-system': 'packages/design-system/src',
   api: 'apps/api/src',
-  web: 'apps/web/src',
+  // apps/web is a Next app - app/, components/, lib/ - with no src/. lib/ is plain modules,
+  // so a probe dir there is not mistaken for a route.
+  web: 'apps/web/lib',
 } as const
 
 type Layer = keyof typeof LAYER_DIR

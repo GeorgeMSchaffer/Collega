@@ -55,16 +55,17 @@ function render(modules) {
   const imports = modules
     .map((m) => `import { ${m.className} } from '${m.specifier}'`)
     .join('\n')
-  const list = modules.map((m) => `  ${m.className},`).join('\n')
+  // Biome collapses an empty multi-line array literal, so emit the collapsed form directly -
+  // otherwise `pnpm check` fails on a file nobody is allowed to hand-edit.
+  const list =
+    modules.length > 0 ? `[\n${modules.map((m) => `  ${m.className},`).join('\n')}\n]` : '[]'
 
   return `// GENERATED FILE - do not hand-edit. Run \`pnpm generate:modules\` (apps/api) to refresh;
 // \`pnpm build\` and \`pnpm typecheck\` do this automatically via the package.json pre* hooks.
 // Source: apps/api/scripts/generate-modules.mjs, scanning apps/api/src/*/*.module.ts.
 ${modules.length > 0 ? imports + '\n' : ''}
 /** Every Wave D feature module discovered under apps/api/src/, in directory-name order. */
-export const FEATURE_MODULES = [
-${list}
-] as const
+export const FEATURE_MODULES = ${list} as const
 `
 }
 
