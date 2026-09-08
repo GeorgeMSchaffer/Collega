@@ -9,8 +9,13 @@
 // Non-development environments must never run this. SPEC/40-test-strategy.md gates it.
 
 import { PrismaClient } from '../../src/generated/prisma/client.js'
-import { order } from './compose.js'
-import type { SeedModule } from './types.js'
+import { order } from './compose.ts'
+import { boardsAndStatusesSeed } from './modules/boards-and-statuses.ts'
+import { commentsSeed } from './modules/comments.ts'
+import { ideasAndUpvotesSeed } from './modules/ideas-and-upvotes.ts'
+import { organizationsSeed } from './modules/organizations.ts'
+import { usersSeed } from './modules/users.ts'
+import type { SeedModule } from './types.ts'
 
 /**
  * Every module in the seed. Wave B-E slices add their own here, alongside the module file.
@@ -18,7 +23,11 @@ import type { SeedModule } from './types.js'
  * body of logic so two slices adding modules conflict trivially instead of badly.
  */
 const MODULES: readonly SeedModule[] = [
-  // Wave B1: organizations, users. Wave B2: boards, statuses. Wave B3: ideas, upvotes.
+  organizationsSeed, // B1
+  usersSeed, // B1
+  boardsAndStatusesSeed, // B2
+  ideasAndUpvotesSeed, // B3
+  commentsSeed, // B4
 ]
 
 async function main(): Promise<void> {

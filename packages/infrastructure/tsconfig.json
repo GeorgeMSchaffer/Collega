@@ -6,11 +6,12 @@
   "include": [
     "src/**/*.ts",
     "test/**/*.ts",
-    "prisma/**/*.ts"
+    "prisma/*.ts"
   ],
   "exclude": [
     "dist/**",
     "src/generated/**",
-    "**/.boundary-*/**"
+    "**/.boundary-*/**",
+    "prisma/seed/**"
   ]
 }
