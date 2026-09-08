@@ -12,6 +12,19 @@ export type RoleCredentials = { email: string; password: string }
 /** Fixed, so two captures of the same upload produce identical bytes. */
 const MULTIPART_BOUNDARY = '----GoldenCaptureBoundary'
 
+/**
+ * How the target stack carries a session.
+ *
+ * The corpus was recorded against .NET, which returns a bearer token in the login body. Nest
+ * issues an httpOnly cookie instead (`SPEC/decisions.md` 2026-09-04, ticket `08`) - so replaying
+ * the same corpus against Nest needs the same steps driven a different way. Neither side is
+ * wrong, and the recorded responses are unaffected: authentication is transport.
+ */
+export type AuthMode = 'bearer' | 'cookie'
+
+/** The cookie Nest sets. Fixed rather than configurable, exactly as the API fixes it. */
+export const SESSION_COOKIE_NAME = 'collega_session'
+
 export type RunnerConfig = {
   baseUrl: string
   /** Route prefix the stack serves under. .NET mounts every controller under /api/v1. */
@@ -19,6 +32,8 @@ export type RunnerConfig = {
   credentials: Record<Role, RoleCredentials>
   /** Fail a step rather than continue once the sequence has diverged. */
   stopOnError: boolean
+  /** Defaults to bearer, so a capture against .NET behaves exactly as it always has. */
+  auth?: AuthMode
 }
 
 export type Exchange = {
@@ -62,7 +77,17 @@ export type RunResult = {
 export type Fetcher = (
   url: string,
   init: { method: string; headers: Record<string, string>; body?: string },
-) => Promise<{ status: number; headers: Record<string, string>; text: string }>
+) => Promise<{
+  status: number
+  headers: Record<string, string>
+  text: string
+  /**
+   * Separate from `headers` because iterating headers collapses repeated `set-cookie` into one
+   * comma-joined string, and a cookie value may itself contain a comma - so the collapsed form
+   * cannot be split back apart reliably.
+   */
+  setCookie?: string[]
+}>
 
 export const nodeFetcher: Fetcher = async (url, init) => {
   const response = await fetch(url, init)
@@ -70,7 +95,17 @@ export const nodeFetcher: Fetcher = async (url, init) => {
   response.headers.forEach((value, name) => {
     headers[name.toLowerCase()] = value
   })
-  return { status: response.status, headers, text: await response.text() }
+  const setCookie =
+    typeof response.headers.getSetCookie === 'function' ? response.headers.getSetCookie() : []
+  return { status: response.status, headers, text: await response.text(), setCookie }
+}
+
+/** The `name=value` pairs from a set-cookie list, in the form a `cookie` request header takes. */
+export function cookieHeaderFrom(setCookie: readonly string[]): string {
+  return setCookie
+    .map((cookie) => cookie.split(';', 1)[0]?.trim() ?? '')
+    .filter((pair) => pair !== '' && pair.includes('='))
+    .join('; ')
 }
 
 function parseBody(text: string, contentType: string | undefined): unknown {
@@ -86,53 +121,75 @@ function parseBody(text: string, contentType: string | undefined): unknown {
   return text
 }
 
+/** The request header that carries an authenticated session, ready to spread into a headers map. */
+export type SessionHeader = { readonly name: 'authorization' | 'cookie'; readonly value: string }
+
 export class Runner {
   #config: RunnerConfig
   #fetch: Fetcher
-  #tokens = new Map<string, string>()
+  #sessions = new Map<string, SessionHeader>()
 
   constructor(config: RunnerConfig, fetcher: Fetcher = nodeFetcher) {
     this.#config = config
     this.#fetch = fetcher
   }
 
-  /** Log a role in once per run and hold its token. Login itself is also a captured step. */
-  async tokenFor(role: Role, override?: RoleCredentials): Promise<string> {
+  /**
+   * Log a role in once per run and hold whatever carries its session. Login itself is also a
+   * captured step, so this deliberately does not record anything.
+   */
+  async sessionFor(role: Role, override?: RoleCredentials): Promise<SessionHeader> {
     const key = override ? `override:${override.email}` : role
-    const held = this.#tokens.get(key)
+    const held = this.#sessions.get(key)
     if (held !== undefined) return held
 
     const credentials = override ?? this.#config.credentials[role]
     if (!credentials) throw new Error(`no credentials configured for role ${role}`)
-    const { status, headers, text } = await this.#fetch(this.#url('/auth/login'), {
+    const response = await this.#fetch(this.#url('/auth/login'), {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(credentials),
     })
-    if (status !== 200) {
-      throw new Error(`login as ${role} (${credentials.email}) returned ${status}: ${text}`)
+    if (response.status !== 200) {
+      throw new Error(
+        `login as ${role} (${credentials.email}) returned ${response.status}: ${response.text}`,
+      )
     }
-    const body = parseBody(text, headers['content-type']) as { accessToken?: string } | null
-    const token = body?.accessToken
-    if (typeof token !== 'string' || token === '') {
-      throw new Error(`login as ${role} returned no accessToken`)
-    }
-    this.#tokens.set(key, token)
-    return token
+
+    const session =
+      (this.#config.auth ?? 'bearer') === 'cookie'
+        ? cookieSession(role, response.setCookie ?? [])
+        : bearerSession(role, parseBody(response.text, response.headers['content-type']))
+    this.#sessions.set(key, session)
+    return session
   }
 
-  /** Forget held tokens — used between scenarios that end a View As session. */
+  /** Bearer only. Kept for callers that genuinely want the token rather than a header. */
+  async tokenFor(role: Role, override?: RoleCredentials): Promise<string> {
+    const session = await this.sessionFor(role, override)
+    if (session.name !== 'authorization') {
+      throw new Error(`tokenFor is bearer-only; this runner is configured for ${this.#config.auth}`)
+    }
+    return session.value.replace(/^Bearer /, '')
+  }
+
+  /** Forget held sessions — used between scenarios that end a View As session. */
   resetSessions() {
-    this.#tokens.clear()
+    this.#sessions.clear()
   }
 
   /** A read outside the corpus, for the seed fingerprint. Never recorded. */
   async get(routePath: string, role: Role): Promise<unknown> {
     const { status, headers, text } = await this.#fetch(this.#url(routePath), {
       method: 'GET',
-      headers: { accept: 'application/json', authorization: `Bearer ${await this.tokenFor(role)}` },
+      headers: { accept: 'application/json', ...(await this.#sessionHeader(role)) },
     })
     return status === 200 ? parseBody(text, headers['content-type']) : null
+  }
+
+  async #sessionHeader(role: Role, override?: RoleCredentials): Promise<Record<string, string>> {
+    const session = await this.sessionFor(role, override)
+    return { [session.name]: session.value }
   }
 
   #url(routePath: string, query?: Record<string, string>): string {
@@ -213,7 +270,7 @@ export class Runner {
       const override = step.credentials
         ? (interpolate(step.credentials, vars) as RoleCredentials)
         : undefined
-      headers.authorization = `Bearer ${await this.tokenFor(step.as, override)}`
+      Object.assign(headers, await this.#sessionHeader(step.as, override))
     }
 
     let body: string | undefined
@@ -270,4 +327,27 @@ export class Runner {
       response: { status: response.status, headers: response.headers, body: parsed },
     }
   }
+}
+
+function bearerSession(role: Role, body: unknown): SessionHeader {
+  const token = (body as { accessToken?: string } | null)?.accessToken
+  if (typeof token !== 'string' || token === '') {
+    throw new Error(`login as ${role} returned no accessToken`)
+  }
+  return { name: 'authorization', value: `Bearer ${token}` }
+}
+
+function cookieSession(role: Role, setCookie: readonly string[]): SessionHeader {
+  const header = cookieHeaderFrom(setCookie)
+  if (header === '') {
+    throw new Error(`login as ${role} set no cookie; the stack may still be issuing a bearer token`)
+  }
+  if (!header.includes(`${SESSION_COOKIE_NAME}=`)) {
+    // Named explicitly: a stack that sets some other cookie and no session one fails every
+    // subsequent step with a 401, which is a much harder failure to read than this.
+    throw new Error(
+      `login as ${role} set cookies (${header}) but none named ${SESSION_COOKIE_NAME}`,
+    )
+  }
+  return { name: 'cookie', value: header }
 }

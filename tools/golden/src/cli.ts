@@ -65,11 +65,19 @@ async function run(
 ): Promise<RunSummary> {
   const { byId } = await endpointMap()
   const scenarios = await loadScenarios(PATHS.scenarios)
+  // `--auth cookie` drives the same corpus against a stack that carries its session in an httpOnly
+  // cookie rather than a bearer token (`SPEC/decisions.md` `08`). Bearer stays the default so a
+  // capture against .NET is unchanged; Wave F's replay against Nest passes the flag.
+  const auth = args.flags.get('auth') ?? 'bearer'
+  if (auth !== 'bearer' && auth !== 'cookie') {
+    throw new Error(`--auth must be bearer or cookie, not "${auth}"`)
+  }
   const runner = new Runner({
     baseUrl: args.flags.get('base-url') ?? DEFAULT_BASE_URL,
     basePath: args.flags.get('base-path') ?? DEFAULT_BASE_PATH,
     credentials: readCredentials(),
     stopOnError: args.flags.get('keep-going') !== 'true',
+    auth,
   })
 
   // Taken before any scenario runs, so it describes the seed rather than what
@@ -190,7 +198,9 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
 
   async replay(args) {
     const baseUrl = args.flags.get('base-url') ?? DEFAULT_BASE_URL
-    console.log(`replaying the corpus against ${baseUrl}`)
+    console.log(
+      `replaying the corpus against ${baseUrl} (${args.flags.get('auth') ?? 'bearer'} auth)`,
+    )
     const fixtures = await readCorpus(PATHS.fixtures)
     const manifest = await readManifest(PATHS.fixtures)
     const exchanges: Exchange[] = []
@@ -234,7 +244,8 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
         '  inventory [--json]            list the endpoints read from the .NET controllers',
         '  scaffold  [--force]           write a scenario stub per controller, every endpoint x role',
         '  capture   [--base-url URL]    record the corpus from the live .NET API  (slice A2)',
-        '  replay    [--base-url URL]    re-run the corpus and diff against it     (slice A3)',
+        '  replay    [--base-url URL] [--auth bearer|cookie]',
+        '                                re-run the corpus and diff against it     (slice A3)',
         '  coverage  [--from fixtures]   what the corpus does and does not pin',
         '',
         'Credentials come from the environment: GOLDEN_PASSWORD, or GOLDEN_<ROLE>_PASSWORD',

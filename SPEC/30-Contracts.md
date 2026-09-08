@@ -102,8 +102,20 @@ Request body:
 - `email` required string
 - `password` required string
 
-Success response `200` authenticated:
-- `accessToken` string
+**Session transport (decision `08`, 2026-09-04).** The Nest host issues the session as an
+**httpOnly cookie** named `collega_session`, not as a bearer token in the body: `Secure`,
+`SameSite=Lax`, `Path=/`. The client never reads it and never sets an `Authorization` header, which
+is what keeps `apps/web` a pure client. Cleared on logout and on View As start and exit.
+
+This document said nothing about cookies until 2026-09-08, which is how the frozen .NET API
+(bearer) and the Nest host (cookie) came to disagree with nothing forcing the question. The body is
+otherwise unchanged. The `accessToken` field the .NET API returned is **gone**: issuing it
+alongside the cookie would hand the token back to JavaScript and defeat the point of `httpOnly`.
+One golden fixture records that field and will diff against Nest until it is re-recorded — the
+single known cost of this decision, and cheaper than the alternative.
+
+Success response `200` authenticated — the body carries **no token**; the cookie above is the
+session:
 - `expiresInSeconds` integer; `28800` under the canonical 480-minute configuration
 - `requiresPasswordChange` boolean
 - `user`
