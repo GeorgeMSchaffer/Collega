@@ -1,4 +1,4 @@
-import { Button, Kbd } from '@collega/design-system'
+import { buttonVariants, Kbd } from '@collega/design-system'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Lane } from '@/components/ideas/lane'
@@ -30,8 +30,8 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
         }
         actions={
           <>
-            <Link href="/ideas">
-              <Button variant="outline">List view</Button>
+            <Link href="/ideas" className={buttonVariants({ variant: 'outline' })}>
+              List view
             </Link>
             <NewIdeaButton id="why-new-board" />
           </>
