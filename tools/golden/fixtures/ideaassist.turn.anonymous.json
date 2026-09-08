@@ -1,0 +1,54 @@
+{
+  "scenario": "ideaassist",
+  "step": "turn.anonymous",
+  "endpoint": "POST /boards/{boardId}/idea-assist/turns",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "503 is the contract when no model key is configured (rule 31), and it is the only answer this endpoint can have in a corpus: a live turn would be a billed, non-deterministic response, which tests/CLAUDE.md forbids outright. The authorization half is still pinned — who may ask at all.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/182df148-cf57-4bba-ade8-99286b6c1181/idea-assist/turns",
+    "body": {
+      "transcript": [
+        {
+          "role": "user",
+          "text": "We keep losing time on manual handoffs."
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/182df148-cf57-4bba-ade8-99286b6c1181/idea-assist/turns",
+      "traceId": "00-5de5ff40b0abce28bbd1c248b92c7e5b-ba07535462355158-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/boards/<guid@board.body[0].boardId>/idea-assist/turns",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

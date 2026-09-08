@@ -1,0 +1,407 @@
+{
+  "name": "ideatypes",
+  "description": "Idea types, their field selection and their appearance.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "list.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/idea-types",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/idea-types"
+    },
+    {
+      "id": "list.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/idea-types",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/idea-types",
+      "bind": {
+        "ideaTypeIds": "$.body[*].ideaTypeId",
+        "firstIdeaTypeId": "$.body[0].ideaTypeId"
+      }
+    },
+    {
+      "id": "list.user",
+      "endpoint": "GET /organizations/{organizationId}/idea-types",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/idea-types"
+    },
+    {
+      "id": "list.readonly",
+      "endpoint": "GET /organizations/{organizationId}/idea-types",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/idea-types"
+    },
+    {
+      "id": "list.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/idea-types",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/idea-types"
+    },
+    {
+      "id": "create.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/idea-types",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types",
+      "body": {
+        "name": "Golden Capture Type"
+      }
+    },
+    {
+      "id": "create.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/idea-types",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/organizations/{{orgId}}/idea-types",
+      "body": {
+        "name": "Golden Capture Type"
+      },
+      "bind": {
+        "newIdeaTypeId": "$.body.ideaTypeId"
+      }
+    },
+    {
+      "id": "create.user",
+      "endpoint": "POST /organizations/{organizationId}/idea-types",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types",
+      "body": {
+        "name": "Golden Capture Type"
+      }
+    },
+    {
+      "id": "create.readonly",
+      "endpoint": "POST /organizations/{organizationId}/idea-types",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types",
+      "body": {
+        "name": "Golden Capture Type"
+      }
+    },
+    {
+      "id": "create.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/idea-types",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/idea-types",
+      "body": {
+        "name": "Golden Capture Type"
+      }
+    },
+    {
+      "id": "update.siteadmin",
+      "endpoint": "PUT /idea-types/{ideaTypeId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/idea-types/{{newIdeaTypeId}}",
+      "body": {
+        "name": "Golden Capture Type Renamed"
+      }
+    },
+    {
+      "id": "update.orgadmin",
+      "endpoint": "PUT /idea-types/{ideaTypeId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/idea-types/{{newIdeaTypeId}}",
+      "body": {
+        "name": "Golden Capture Type Renamed"
+      }
+    },
+    {
+      "id": "update.user",
+      "endpoint": "PUT /idea-types/{ideaTypeId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/idea-types/{{newIdeaTypeId}}",
+      "body": {
+        "name": "Golden Capture Type Renamed"
+      }
+    },
+    {
+      "id": "update.readonly",
+      "endpoint": "PUT /idea-types/{ideaTypeId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/idea-types/{{newIdeaTypeId}}",
+      "body": {
+        "name": "Golden Capture Type Renamed"
+      }
+    },
+    {
+      "id": "update.anonymous",
+      "endpoint": "PUT /idea-types/{ideaTypeId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/idea-types/{{newIdeaTypeId}}",
+      "body": {
+        "name": "Golden Capture Type Renamed"
+      }
+    },
+    {
+      "id": "relist",
+      "endpoint": "GET /organizations/{organizationId}/idea-types",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/idea-types",
+      "note": "Re-read after the create: reorder must name every active idea type.",
+      "bind": {
+        "ideaTypeIds": "$.body[*].ideaTypeId"
+      }
+    },
+    {
+      "id": "reorder.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/idea-types/reorder",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types/reorder",
+      "body": {
+        "orderedIdeaTypeIds": "{{ideaTypeIds}}"
+      },
+      "note": "Every active idea type, exactly once."
+    },
+    {
+      "id": "reorder.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/idea-types/reorder",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/organizations/{{orgId}}/idea-types/reorder",
+      "body": {
+        "orderedIdeaTypeIds": "{{ideaTypeIds}}"
+      },
+      "note": "Every active idea type, exactly once."
+    },
+    {
+      "id": "reorder.user",
+      "endpoint": "POST /organizations/{organizationId}/idea-types/reorder",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types/reorder",
+      "body": {
+        "orderedIdeaTypeIds": "{{ideaTypeIds}}"
+      },
+      "note": "Every active idea type, exactly once."
+    },
+    {
+      "id": "reorder.readonly",
+      "endpoint": "POST /organizations/{organizationId}/idea-types/reorder",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types/reorder",
+      "body": {
+        "orderedIdeaTypeIds": "{{ideaTypeIds}}"
+      },
+      "note": "Every active idea type, exactly once."
+    },
+    {
+      "id": "reorder.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/idea-types/reorder",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/idea-types/reorder",
+      "body": {
+        "orderedIdeaTypeIds": "{{ideaTypeIds}}"
+      },
+      "note": "Every active idea type, exactly once."
+    },
+    {
+      "id": "fields.siteadmin",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/fields",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/fields",
+      "body": {
+        "fields": []
+      },
+      "note": "An empty selection is the meaningful edge: it clears the type's fields."
+    },
+    {
+      "id": "fields.orgadmin",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/fields",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/fields",
+      "body": {
+        "fields": []
+      },
+      "note": "An empty selection is the meaningful edge: it clears the type's fields."
+    },
+    {
+      "id": "fields.user",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/fields",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/fields",
+      "body": {
+        "fields": []
+      },
+      "note": "An empty selection is the meaningful edge: it clears the type's fields."
+    },
+    {
+      "id": "fields.readonly",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/fields",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/fields",
+      "body": {
+        "fields": []
+      },
+      "note": "An empty selection is the meaningful edge: it clears the type's fields."
+    },
+    {
+      "id": "fields.anonymous",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/fields",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/fields",
+      "body": {
+        "fields": []
+      },
+      "note": "An empty selection is the meaningful edge: it clears the type's fields."
+    },
+    {
+      "id": "appearance.siteadmin",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/appearance",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/appearance",
+      "body": {
+        "colorHex": "#3f6f8f",
+        "icon": "lightbulb"
+      }
+    },
+    {
+      "id": "appearance.orgadmin",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/appearance",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/appearance",
+      "body": {
+        "colorHex": "#3f6f8f",
+        "icon": "lightbulb"
+      }
+    },
+    {
+      "id": "appearance.user",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/appearance",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/appearance",
+      "body": {
+        "colorHex": "#3f6f8f",
+        "icon": "lightbulb"
+      }
+    },
+    {
+      "id": "appearance.readonly",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/appearance",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/appearance",
+      "body": {
+        "colorHex": "#3f6f8f",
+        "icon": "lightbulb"
+      }
+    },
+    {
+      "id": "appearance.anonymous",
+      "endpoint": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/appearance",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/idea-types/{{newIdeaTypeId}}/appearance",
+      "body": {
+        "colorHex": "#3f6f8f",
+        "icon": "lightbulb"
+      }
+    },
+    {
+      "id": "delete.siteadmin",
+      "endpoint": "DELETE /idea-types/{ideaTypeId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/idea-types/{{newIdeaTypeId}}"
+    },
+    {
+      "id": "delete.orgadmin",
+      "endpoint": "DELETE /idea-types/{ideaTypeId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/idea-types/{{newIdeaTypeId}}"
+    },
+    {
+      "id": "delete.user",
+      "endpoint": "DELETE /idea-types/{ideaTypeId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/idea-types/{{newIdeaTypeId}}"
+    },
+    {
+      "id": "delete.readonly",
+      "endpoint": "DELETE /idea-types/{ideaTypeId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/idea-types/{{newIdeaTypeId}}"
+    },
+    {
+      "id": "delete.anonymous",
+      "endpoint": "DELETE /idea-types/{ideaTypeId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/idea-types/{{newIdeaTypeId}}"
+    }
+  ]
+}

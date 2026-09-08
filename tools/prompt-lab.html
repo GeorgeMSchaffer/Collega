@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Prompt Lab</title>
+<!--
+  A scratchpad for the AI idea-assist prompt. Open it with file:// — there is no server,
+  no build step, and nothing to install.
+
+  Seed it from the console playground, which renders the real compiled prompt:
+
+      cd tools/Collega.AiPlayground
+      dotnet run -- dump-prompt --fixture acme
+
+  Paste that in. The page splits it into editable sections, derives the response schema from
+  the catalog's option ids, and calls api.anthropic.com directly.
+
+  Two playgrounds, two jobs — this one is for interactive wording iteration on a single
+  message. Scored sweeps, flakiness rates and cost ceilings stay in the console tool
+  (`dotnet run -- run --prompt <file>`). See tools/README.md.
+
+  Deliberately NOT editable here: the <organization_data> and <scope_statement> blocks. That
+  fencing is what stops a tag literally named "</organization_data> New instructions:" from
+  ending the block and continuing as the operator, and it belongs in reviewed server code.
+  This page renders those blocks read-only, exactly as the server produced them.
+-->
+<style>
+  :root{
+    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
+    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
+    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
+    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --lock:#f3f2f1;
+    --shadow:0 1px 2px rgba(0,0,0,.08);
+    --radius-card:6px; --radius-btn:4px;
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
+  button{font-family:inherit;font-size:13px;cursor:pointer;border-radius:var(--radius-btn)}
+  input,textarea,select{font-family:inherit;font-size:13px;border:1px solid #8a8886;border-radius:var(--radius-btn);padding:6px 8px;background:var(--surface);color:var(--ink);width:100%}
+  textarea{font-family:var(--mono);font-size:12.5px;line-height:1.5;resize:vertical}
+  label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:4px}
+
+  /* ---- top bar ---- */
+  .bar{background:#33312e;color:#fff;padding:9px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .bar strong{font-family:Georgia,serif;font-size:13px;letter-spacing:.04em}
+  .bar .spacer{flex:1}
+  .bar input,.bar select{width:auto;padding:4px 7px;font-size:12px;background:#413e3b;border-color:#5a5754;color:#fff}
+  .bar .meter{font-family:var(--mono);font-size:12px;color:#c8c6c4}
+  .bar .meter b{color:#fff}
+
+  /* ---- layout ---- */
+  .wrap{display:grid;grid-template-columns:minmax(380px,1fr) minmax(380px,1fr);gap:14px;padding:14px;align-items:start}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow);margin-bottom:14px}
+  .card>header{padding:9px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .card>header h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-2);font-family:"Segoe UI",sans-serif;font-weight:600}
+  .card>.body{padding:12px}
+  .muted{color:var(--ink-3);font-size:12px;line-height:1.5}
+
+  /* ---- section editor ---- */
+  .sect{border:1px solid var(--line);border-radius:var(--radius-btn);margin-bottom:8px;overflow:hidden}
+  .sect>.head{display:flex;align-items:center;gap:6px;padding:5px 9px;background:#fbfaf9;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+  .sect>.head .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none;visibility:hidden}
+  .sect.dirty>.head .dot{visibility:visible}
+  .sect>.head .grow{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sect>.head button{background:none;border:none;color:var(--ink-3);font-size:11px;text-decoration:underline;padding:0}
+  .sect textarea{border:none;border-radius:0;display:block;width:100%}
+  .sect textarea:focus{outline:2px solid var(--accent-soft);outline-offset:-2px}
+  .lockbox{background:var(--lock);border-top:1px dashed var(--line);border-bottom:1px dashed var(--line)}
+  .lockbox summary{cursor:pointer;padding:6px 9px;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);list-style:none;display:flex;gap:6px;align-items:center}
+  .lockbox summary::-webkit-details-marker{display:none}
+  .lockbox pre{margin:0;padding:0 9px 9px;font-family:var(--mono);font-size:11.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--ink-2);max-height:340px;overflow:auto}
+
+  /* ---- buttons ---- */
+  .btn{padding:7px 14px;border:1px solid #8a8886;background:var(--surface);color:var(--ink)}
+  .btn:hover{background:#f3f2f1}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.primary:hover{background:var(--accent-deep)}
+  .btn.spend{background:var(--surface);border-color:var(--warn);color:var(--warn);font-weight:600}
+  .btn.spend:hover{background:#fdf6ec}
+  .btn:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  /* ---- response ---- */
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:11px;font-size:12px;font-weight:600}
+  .badge.in{background:#e6f2e6;color:var(--ok)}
+  .badge.out{background:#fdecea;color:var(--err)}
+  .q{font-size:15px;line-height:1.55;margin:10px 0;padding:10px 12px;background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:0 4px 4px 0}
+  table.draft{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  table.draft th{text-align:left;font-weight:600;color:var(--ink-3);padding:5px 8px;width:130px;vertical-align:top;font-size:12px}
+  table.draft td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top;white-space:pre-wrap;word-break:break-word}
+  table.draft tr:last-child td{border-bottom:none}
+  table.draft td.none{color:var(--ink-3);font-style:italic}
+  .stats{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:10px;padding-top:8px;border-top:1px solid var(--line);line-height:1.7}
+  .tabs{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+  .tabs button{background:none;border:1px solid var(--line);padding:3px 9px;font-size:11.5px;color:var(--ink-2)}
+  .tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  pre.out{margin-top:8px;background:#fbfaf9;border:1px solid var(--line);border-radius:4px;padding:10px;font-family:var(--mono);font-size:11.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:460px;overflow:auto}
+  .note{padding:8px 10px;border-radius:4px;font-size:12px;line-height:1.5;margin-bottom:10px}
+  .note.warn{background:#fdf6ec;border:1px solid #e8d9bf;color:#6b4700}
+  .note.err{background:#fdecea;border:1px solid #f3c8c3;color:#8a0b17}
+  .note.ok{background:#e6f2e6;border:1px solid #c3ddc3;color:#0b5c0b}
+  .kv{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .kv>div{flex:1;min-width:110px}
+  details.more>summary{cursor:pointer;font-size:12px;color:var(--ink-3);padding:5px 0;list-style:none;display:flex;gap:6px;align-items:center}
+  details.more>summary::-webkit-details-marker{display:none}
+  details.more>summary::before{content:"▸";font-size:10px}
+  details.more[open]>summary::before{content:"▾"}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>COLLEGA · PROMPT LAB</strong>
+  <input id="key" type="password" placeholder="sk-ant-… (session only)" autocomplete="off" style="width:210px">
+  <select id="model">
+    <option value="claude-sonnet-5">claude-sonnet-5</option>
+    <option value="claude-opus-5">claude-opus-5</option>
+    <option value="claude-haiku-4-5">claude-haiku-4-5</option>
+  </select>
+  <select id="effort">
+    <option value="low">effort low</option>
+    <option value="medium">effort medium</option>
+    <option value="high">effort high</option>
+  </select>
+  <span class="spacer"></span>
+  <span class="meter" id="meter">no calls yet</span>
+</div>
+
+<div class="wrap">
+
+  <!-- ================= LEFT ================= -->
+  <div>
+    <section class="card" id="loadCard">
+      <header><h2>Load a prompt</h2></header>
+      <div class="body">
+        <p class="muted" style="margin-bottom:8px">
+          Render the real compiled prompt and paste it below — the page never carries its own copy,
+          so nothing here can drift from <code>AiPromptDefaults</code>.
+        </p>
+        <pre class="out" style="margin:0 0 8px">cd tools/Collega.AiPlayground
+dotnet run -- dump-prompt --fixture acme</pre>
+        <textarea id="paste" rows="7" placeholder="Paste the rendered prompt (or a template containing {{ORGANIZATION_CATALOG}} and {{SCOPE_STATEMENT}})…"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="btn primary" id="loadBtn">Load</button>
+          <input type="file" id="file" accept=".md,.txt,text/*" style="width:auto;border:none;padding:0;font-size:12px">
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="editCard" hidden>
+      <header>
+        <h2>Instructions</h2>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn" id="rawToggle" style="padding:3px 9px;font-size:11.5px">Raw</button>
+        <button class="btn" id="resetAll" style="padding:3px 9px;font-size:11.5px">Reset all</button>
+      </header>
+      <div class="body">
+        <div id="sections"></div>
+        <textarea id="rawEdit" rows="26" hidden></textarea>
+        <div class="kv" style="margin-top:12px">
+          <div>
+            <label for="oos">Out-of-scope redirect</label>
+            <textarea id="oos" rows="2"></textarea>
+          </div>
+          <div>
+            <label for="closed">Conversation-closed redirect</label>
+            <textarea id="closed" rows="2"></textarea>
+          </div>
+        </div>
+        <p class="muted" style="margin-top:8px">
+          These two are substituted by the server for a refused turn — the model never writes them.
+          Shown here so you can see what the user would actually get.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= RIGHT ================= -->
+  <div>
+    <section class="card" id="msgCard" hidden>
+      <header><h2>Message</h2></header>
+      <div class="body">
+        <textarea id="message" rows="4" placeholder="We should add a second shift in packing"></textarea>
+
+        <details class="more" style="margin-top:8px">
+          <summary>Prior transcript &amp; current draft</summary>
+          <div style="padding-top:8px">
+            <label for="transcript">Prior turns — one per line, <code>user:</code> or <code>assistant:</code></label>
+            <textarea id="transcript" rows="4" placeholder="user: we have a bottleneck in packing&#10;assistant: What time of day is worst?"></textarea>
+            <div class="kv" style="margin-top:10px">
+              <div><label for="dTitle">Draft title</label><input id="dTitle"></div>
+              <div><label for="dPriority">Priority</label>
+                <select id="dPriority"><option value="">—</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
+              </div>
+            </div>
+            <div style="margin-top:8px"><label for="dDesc">Draft description</label><textarea id="dDesc" rows="2"></textarea></div>
+            <div class="kv" style="margin-top:8px">
+              <div><label for="dType">Idea type</label><select id="dType"></select></div>
+              <div><label for="dImpact">Business impact</label><select id="dImpact"></select></div>
+            </div>
+          </div>
+        </details>
+
+        <div class="row" style="margin-top:12px">
+          <button class="btn primary" id="renderBtn">Render · free</button>
+          <button class="btn spend" id="sendBtn">Send · billed</button>
+          <span class="muted" id="sendHint"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="outCard" hidden>
+      <header><h2>Response</h2></header>
+      <div class="body" id="out"></div>
+    </section>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ *
+ * Constants mirrored from the product. Kept together so a drift is a
+ * one-line fix rather than a hunt.
+ *   AnthropicIdeaDraftModel.MaxTokens          = 8000
+ *   Idea.TitleMaxLength / DescriptionMaxLength = 150 / 4000
+ *   Domain.Enums.Priority                      = Low|Medium|High|Critical
+ * ------------------------------------------------------------------ */
+const MAX_TOKENS = 8000;
+const TITLE_MAX = 150;
+const DESC_MAX = 4000;
+const PRIORITIES = ["Low", "Medium", "High", "Critical"];
+
+// $ per million tokens. Cache writes bill at 1.25x input, reads at 0.1x.
+const RATES = {
+  "claude-sonnet-5":  { in: 3,  out: 15 },
+  "claude-opus-5":    { in: 5,  out: 25 },
+  "claude-haiku-4-5": { in: 1,  out: 5  },
+};
+
+// Blocks the server owns. Rendered read-only: this is where Fence() lives.
+const LOCKED = [
+  /<organization_data>[\s\S]*?<\/organization_data>/,
+  /<scope_statement>[\s\S]*?<\/scope_statement>/,
+  /\{\{ORGANIZATION_CATALOG\}\}/,
+  /\{\{SCOPE_STATEMENT\}\}/,
+];
+
+const $ = (id) => document.getElementById(id);
+const state = {
+  sections: [],   // [{ parts: [{type:'edit'|'lock', text, original}] }]
+  raw: false,
+  catalog: { ideaTypes: [], businessImpacts: [] },
+  spent: 0,
+  calls: 0,
+  lastPromptSent: null,
+};
+
+/* ---------------- splitting ---------------- *
+ * Sections are delimited by lines starting "## ". Each section keeps its own
+ * heading and everything up to the next one, so concatenating every part of
+ * every section reproduces the input byte for byte. That round-trip is the
+ * correctness property the whole editor rests on — verify it with Render.
+ */
+function splitSections(text) {
+  const bounds = [];
+  const re = /^## /gm;
+  let m;
+  while ((m = re.exec(text)) !== null) bounds.push(m.index);
+
+  const chunks = [];
+  if (bounds.length === 0 || bounds[0] > 0) chunks.push(text.slice(0, bounds.length ? bounds[0] : text.length));
+  for (let i = 0; i < bounds.length; i++) {
+    chunks.push(text.slice(bounds[i], i + 1 < bounds.length ? bounds[i + 1] : text.length));
+  }
+  return chunks.filter((c) => c.length).map((c) => ({ parts: splitLocked(c) }));
+}
+
+// Carve a chunk into alternating editable prose and server-owned locked runs.
+function splitLocked(chunk) {
+  const hits = [];
+  for (const re of LOCKED) {
+    const g = new RegExp(re.source, "g");
+    let m;
+    while ((m = g.exec(chunk)) !== null) hits.push({ start: m.index, end: m.index + m[0].length });
+  }
+  hits.sort((a, b) => a.start - b.start);
+
+  const parts = [];
+  let cursor = 0;
+  for (const h of hits) {
+    if (h.start < cursor) continue; // overlapping match; first one wins
+    if (h.start > cursor) parts.push(mk("edit", chunk.slice(cursor, h.start)));
+    parts.push(mk("lock", chunk.slice(h.start, h.end)));
+    cursor = h.end;
+  }
+  if (cursor < chunk.length) parts.push(mk("edit", chunk.slice(cursor)));
+  return parts.length ? parts : [mk("edit", chunk)];
+}
+
+const mk = (type, text) => ({ type, text, original: text });
+
+function joinSections() {
+  return state.sections.map((s) => s.parts.map((p) => p.text).join("")).join("");
+}
+
+/* ---------------- catalog parsing ---------------- *
+ * Option lines are "- {guid} — {name}" with an em-dash (U+2014) and an optional
+ * " (captures: …)" suffix. Parsing them is what lets the page build the same
+ * closed-enum schema the server builds, rather than an approximation of it.
+ */
+function parseCatalog(text) {
+  const out = { ideaTypes: [], businessImpacts: [] };
+  if (!text) return out;
+
+  let bucket = null;
+  for (const line of text.split("\n")) {
+    if (/^Idea types \(/.test(line)) { bucket = out.ideaTypes; continue; }
+    if (/^Business impacts \(/.test(line)) { bucket = out.businessImpacts; continue; }
+    if (/^(Board statuses|Existing tags|Members|Organization:|<\/?organization_data>)/.test(line)) { bucket = null; continue; }
+    if (!bucket) continue;
+
+    const m = line.match(/^- ([0-9a-fA-F-]{36}) — (.*)$/);
+    if (m) bucket.push({ id: m[1], name: m[2].replace(/ \(captures: .*\)$/, "") });
+  }
+  return out;
+}
+
+function lockedText() {
+  return state.sections
+    .flatMap((s) => s.parts)
+    .filter((p) => p.type === "lock")
+    .map((p) => p.text)
+    .join("\n");
+}
+
+/* ---------------- schema ---------------- *
+ * Mirrors IdeaDraftSchema.Build. An empty option list degrades to a bare null
+ * type, because an empty `enum` array is invalid JSON Schema.
+ */
+function nullableEnum(values, description) {
+  const node = values.length
+    ? { anyOf: [{ type: "string", enum: values }, { type: "null" }] }
+    : { type: "null" };
+  return description ? Object.assign({ description }, node) : node;
+}
+
+function buildSchema() {
+  const c = state.catalog;
+  return {
+    type: "object",
+    properties: {
+      inScope: { type: "boolean", description: "True when the user's latest message could plausibly become an idea of one of this organization's active idea types, within any scope statement given. False otherwise." },
+      nextQuestion: { type: "string", description: "One short follow-up question that moves the draft forward. This is the only free text you may write." },
+      title: { anyOf: [{ type: "string", maxLength: TITLE_MAX }, { type: "null" }] },
+      description: { anyOf: [{ type: "string", maxLength: DESC_MAX }, { type: "null" }] },
+      ideaTypeId: nullableEnum(c.ideaTypes.map((t) => t.id), "The idea type, chosen from this organization's active types."),
+      businessImpactId: nullableEnum(c.businessImpacts.map((b) => b.id), "The business impact, chosen from this organization's active options."),
+      priority: { anyOf: [{ type: "string", enum: PRIORITIES }, { type: "null" }] },
+    },
+    required: ["inScope", "nextQuestion"],
+    additionalProperties: false,
+  };
+}
+
+/* ---------------- draft note ---------------- *
+ * Mirrors IdeaAssistPromptBuilder.BuildDraftNote: prepended to the final user
+ * turn rather than the system block, so the cached prefix stays stable.
+ */
+function currentDraft() {
+  return {
+    title: $("dTitle").value.trim(),
+    description: $("dDesc").value.trim(),
+    ideaTypeId: $("dType").value,
+    businessImpactId: $("dImpact").value,
+    priority: $("dPriority").value,
+  };
+}
+
+function buildDraftNote(d) {
+  const nameOf = (list, id) => (list.find((o) => o.id === id) || {}).name || "";
+  const lines = [];
+  const add = (label, value) => { if (value) lines.push(`- ${label}: ${value}\n`); };
+  add("title", d.title);
+  add("description", d.description);
+  add("ideaType", nameOf(state.catalog.ideaTypes, d.ideaTypeId));
+  add("businessImpact", nameOf(state.catalog.businessImpacts, d.businessImpactId));
+  add("priority", d.priority);
+  if (!lines.length) return "Nothing has been drafted yet.";
+  return "Draft so far — revise rather than restate:\n" + lines.join("");
+}
+
+function buildMessages() {
+  const msgs = [];
+  for (const line of $("transcript").value.split("\n")) {
+    const m = line.match(/^\s*(user|assistant)\s*:\s*(.*)$/i);
+    if (m && m[2].trim()) msgs.push({ role: m[1].toLowerCase(), content: m[2].trim() });
+  }
+  const text = $("message").value.trim();
+  if (text) msgs.push({ role: "user", content: text });
+  if (!msgs.length) return msgs;
+
+  const last = msgs[msgs.length - 1];
+  msgs[msgs.length - 1] = { role: last.role, content: `${buildDraftNote(currentDraft())}\n\n${last.content}` };
+  return msgs;
+}
+
+/* ---------------- rendering the editor ---------------- */
+function renderEditor() {
+  const host = $("sections");
+  host.textContent = "";
+
+  state.sections.forEach((section, si) => {
+    const wrap = document.createElement("div");
+    wrap.className = "sect";
+
+    const head = document.createElement("div");
+    head.className = "head";
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    const label = document.createElement("span");
+    label.className = "grow";
+    const first = section.parts[0].text.trim().split("\n")[0] || "(preamble)";
+    label.textContent = first.startsWith("## ") ? first : (first.slice(0, 60) || "(preamble)");
+    const reset = document.createElement("button");
+    reset.textContent = "reset";
+    reset.addEventListener("click", () => {
+      section.parts.forEach((p) => { p.text = p.original; });
+      renderEditor();
+      persist();
+    });
+    head.append(dot, label, reset);
+    wrap.append(head);
+
+    section.parts.forEach((part, pi) => {
+      if (part.type === "lock") {
+        const det = document.createElement("details");
+        det.className = "lockbox";
+        const sum = document.createElement("summary");
+        const oneLine = part.text.split("\n")[0];
+        sum.textContent = `🔒 server-rendered · ${oneLine.slice(0, 52)}${oneLine.length > 52 ? "…" : ""}`;
+        const pre = document.createElement("pre");
+        pre.textContent = part.text;   // textContent, never innerHTML
+        det.append(sum, pre);
+        wrap.append(det);
+        return;
+      }
+      const ta = document.createElement("textarea");
+      ta.value = part.text;
+      ta.rows = Math.min(18, Math.max(2, part.text.split("\n").length + 1));
+      ta.setAttribute("aria-label", `${label.textContent} — editable text ${pi + 1}`);
+      ta.addEventListener("input", () => {
+        part.text = ta.value;
+        wrap.classList.toggle("dirty", section.parts.some((p) => p.text !== p.original));
+        persist();
+      });
+      wrap.append(ta);
+    });
+
+    wrap.classList.toggle("dirty", section.parts.some((p) => p.text !== p.original));
+    host.append(wrap);
+    void si;
+  });
+}
+
+function refreshCatalogUI() {
+  state.catalog = parseCatalog(lockedText());
+  const fill = (sel, list) => {
+    const el = $(sel);
+    el.textContent = "";
+    const none = document.createElement("option");
+    none.value = ""; none.textContent = "—";
+    el.append(none);
+    for (const o of list) {
+      const opt = document.createElement("option");
+      opt.value = o.id; opt.textContent = o.name;
+      el.append(opt);
+    }
+  };
+  fill("dType", state.catalog.ideaTypes);
+  fill("dImpact", state.catalog.businessImpacts);
+}
+
+/* ---------------- persistence ---------------- */
+const STORE = "collega.promptlab.v1";
+function persist() {
+  try {
+    localStorage.setItem(STORE, JSON.stringify({
+      sections: state.sections,
+      oos: $("oos").value,
+      closed: $("closed").value,
+      message: $("message").value,
+      transcript: $("transcript").value,
+    }));
+  } catch (_) { /* quota or private mode — not worth interrupting for */ }
+}
+
+function restore() {
+  const key = sessionStorage.getItem("collega.promptlab.key");
+  if (key) $("key").value = key;
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE) || "null");
+    if (!saved || !Array.isArray(saved.sections) || !saved.sections.length) return false;
+    state.sections = saved.sections;
+    $("oos").value = saved.oos || "";
+    $("closed").value = saved.closed || "";
+    $("message").value = saved.message || "";
+    $("transcript").value = saved.transcript || "";
+    return true;
+  } catch (_) { return false; }
+}
+
+function showEditor() {
+  $("editCard").hidden = false;
+  $("msgCard").hidden = false;
+  renderEditor();
+  refreshCatalogUI();
+}
+
+/* ---------------- output ---------------- */
+function note(kind, text) {
+  const d = document.createElement("div");
+  d.className = `note ${kind}`;
+  d.textContent = text;
+  return d;
+}
+
+function showTabs(host, tabs) {
+  const bar = document.createElement("div");
+  bar.className = "tabs";
+  const pre = document.createElement("pre");
+  pre.className = "out";
+  const buttons = [];
+  tabs.forEach((t, i) => {
+    const b = document.createElement("button");
+    b.textContent = t.label;
+    b.addEventListener("click", () => {
+      buttons.forEach((x) => x.classList.remove("on"));
+      b.classList.add("on");
+      pre.textContent = t.body();
+    });
+    buttons.push(b);
+    bar.append(b);
+    if (i === 0) { b.classList.add("on"); pre.textContent = t.body(); }
+  });
+  host.append(bar, pre);
+}
+
+function composed() {
+  return { prompt: joinSections(), messages: buildMessages(), schema: buildSchema() };
+}
+
+function doRender() {
+  const c = composed();
+  const host = $("out");
+  host.textContent = "";
+  $("outCard").hidden = false;
+
+  const counts = `${state.catalog.ideaTypes.length} idea type(s), ${state.catalog.businessImpacts.length} business impact(s)`;
+  if (!state.catalog.ideaTypes.length && !state.catalog.businessImpacts.length) {
+    host.append(note("warn", `No options parsed from the catalog — the schema will not constrain ideaTypeId or businessImpactId. Expected lines of the form "- {guid} — {name}".`));
+  } else {
+    host.append(note("ok", `Composed. Schema derived from ${counts}. Nothing was sent.`));
+  }
+
+  showTabs(host, [
+    { label: "rendered prompt", body: () => c.prompt },
+    { label: "messages", body: () => JSON.stringify(c.messages, null, 2) },
+    { label: "schema", body: () => JSON.stringify(c.schema, null, 2) },
+  ]);
+  $("outCard").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function money(n) { return `$${n.toFixed(4)}`; }
+
+function costOf(usage, model) {
+  const r = RATES[model] || RATES["claude-sonnet-5"];
+  const inTok = usage.input_tokens || 0;
+  const write = usage.cache_creation_input_tokens || 0;
+  const read = usage.cache_read_input_tokens || 0;
+  const outTok = usage.output_tokens || 0;
+  return ((inTok + write * 1.25 + read * 0.1) * r.in + outTok * r.out) / 1e6;
+}
+
+async function doSend() {
+  const key = $("key").value.trim();
+  if (!key) { alert("Paste an API key first — it stays in sessionStorage and is never written to disk."); $("key").focus(); return; }
+  if (!$("message").value.trim()) { alert("Type a message to send."); $("message").focus(); return; }
+
+  const c = composed();
+  const model = $("model").value;
+
+  if (state.calls === 0) {
+    const changed = c.prompt !== state.loadedPrompt;
+    const warn = changed
+      ? "\n\nThe prompt differs from what you loaded, so this creates a NEW cache prefix — roughly 4x the input cost of a warm production turn. Re-sending it unchanged will hit the cache."
+      : "";
+    if (!confirm(`This makes a real, billed call to ${model}.${warn}\n\nContinue?`)) return;
+  }
+
+  sessionStorage.setItem("collega.promptlab.key", key);
+  $("sendBtn").disabled = true;
+  $("renderBtn").disabled = true;
+  $("sendHint").textContent = "calling…";
+
+  const started = performance.now();
+  let res, body;
+  try {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        // Required for any browser-origin call; without it the API rejects the request.
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: MAX_TOKENS,
+        // One cache_control breakpoint on the system block — the same stable prefix
+        // the product caches. Editing the prompt is what makes this a cache miss.
+        system: [{ type: "text", text: c.prompt, cache_control: { type: "ephemeral" } }],
+        thinking: { type: "adaptive" },
+        output_config: { effort: $("effort").value, format: { type: "json_schema", schema: c.schema } },
+        messages: c.messages,
+      }),
+    });
+    body = await res.json();
+  } catch (err) {
+    renderError(`Network error: ${err && err.message ? err.message : String(err)}`, null);
+    return;
+  } finally {
+    $("sendBtn").disabled = false;
+    $("renderBtn").disabled = false;
+    $("sendHint").textContent = "";
+  }
+
+  const elapsed = Math.round(performance.now() - started);
+  if (!res.ok) { renderError(`HTTP ${res.status}`, body); return; }
+  renderResponse(body, elapsed, model, c);
+}
+
+function renderError(headline, body) {
+  const host = $("out");
+  host.textContent = "";
+  $("outCard").hidden = false;
+  host.append(note("err", headline));
+  if (body) {
+    const pre = document.createElement("pre");
+    pre.className = "out";
+    pre.textContent = JSON.stringify(body, null, 2);
+    host.append(pre);
+  }
+}
+
+function renderResponse(body, elapsed, model, c) {
+  const host = $("out");
+  host.textContent = "";
+  $("outCard").hidden = false;
+
+  if (body.stop_reason === "refusal") {
+    host.append(note("err", "The provider's safety classifiers declined this request (stop_reason: refusal). This is not the model's inScope flag."));
+  }
+
+  // Adaptive thinking interleaves, so content is typically
+  // [thinking, text, thinking, text("")]. Take the first NON-EMPTY text block —
+  // both content[0] and "last text block" get this wrong.
+  const textBlock = (body.content || []).find((b) => b.type === "text" && b.text && b.text.trim());
+  let draft = null;
+  if (textBlock) {
+    try { draft = JSON.parse(textBlock.text); }
+    catch (_) { host.append(note("warn", "The model's text block was not valid JSON — shown raw below.")); }
+  }
+
+  if (draft) {
+    const badge = document.createElement("span");
+    badge.className = `badge ${draft.inScope ? "in" : "out"}`;
+    badge.textContent = draft.inScope ? "● in scope" : "● out of scope";
+    host.append(badge);
+
+    const q = document.createElement("div");
+    q.className = "q";
+    q.textContent = draft.nextQuestion || "(no nextQuestion)";
+    host.append(q);
+
+    if (!draft.inScope) {
+      host.append(note("warn", `Production would discard that question and show the fixed redirect instead: "${$("oos").value || "(none set)"}"`));
+    }
+
+    const nameOf = (list, id) => (list.find((o) => o.id === id) || {}).name || null;
+    const rows = [
+      ["title", draft.title],
+      ["description", draft.description],
+      ["ideaType", nameOf(state.catalog.ideaTypes, draft.ideaTypeId)],
+      ["businessImpact", nameOf(state.catalog.businessImpacts, draft.businessImpactId)],
+      ["priority", draft.priority],
+    ];
+    const table = document.createElement("table");
+    table.className = "draft";
+    for (const [k, v] of rows) {
+      const tr = document.createElement("tr");
+      const th = document.createElement("th");
+      th.textContent = k;
+      const td = document.createElement("td");
+      if (v) { td.textContent = v; } else { td.textContent = "—"; td.className = "none"; }
+      tr.append(th, td);
+      table.append(tr);
+    }
+    host.append(table);
+  }
+
+  const u = body.usage || {};
+  const cost = costOf(u, model);
+  state.spent += cost;
+  state.calls += 1;
+  state.lastPromptSent = c.prompt;
+  $("meter").textContent = `${state.calls} call(s) · `;
+  const b = document.createElement("b");
+  b.textContent = money(state.spent);
+  $("meter").append(b);
+
+  const read = u.cache_read_input_tokens || 0;
+  const write = u.cache_creation_input_tokens || 0;
+  const stats = document.createElement("div");
+  stats.className = "stats";
+  stats.textContent =
+    `${u.input_tokens || 0} in · ${u.output_tokens || 0} out · ` +
+    `cache ${read} read / ${write} write · ${elapsed} ms · ${money(cost)} · ${body.model || model}\n` +
+    (read > 0 ? "cache HIT — the prefix was reused." : "cache MISS — new prefix, billed at 1.25x input. Re-send unchanged to hit it.");
+  host.append(stats);
+
+  showTabs(host, [
+    { label: "raw response", body: () => JSON.stringify(body, null, 2) },
+    { label: "rendered prompt", body: () => c.prompt },
+    { label: "messages", body: () => JSON.stringify(c.messages, null, 2) },
+    { label: "schema", body: () => JSON.stringify(c.schema, null, 2) },
+  ]);
+}
+
+/* ---------------- wiring ---------------- */
+function load(text) {
+  if (!text.trim()) { alert("Nothing to load."); return; }
+  state.sections = splitSections(text);
+  state.loadedPrompt = text;
+  if (!$("oos").value) $("oos").value = "I can only help with drafting ideas for your organization. What would you like to capture?";
+  if (!$("closed").value) $("closed").value = "Let's pick this up on the idea form instead — I've kept whatever we captured so far.";
+  showEditor();
+  persist();
+
+  // Round-trip check: joining must reproduce the input exactly, or the editor is lossy.
+  if (joinSections() !== text) {
+    $("outCard").hidden = false;
+    $("out").textContent = "";
+    $("out").append(note("err", "Split/rejoin is not lossless for this input — please report it. Editing would silently corrupt the prompt."));
+  }
+}
+
+$("loadBtn").addEventListener("click", () => load($("paste").value));
+$("file").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { $("paste").value = String(r.result); load($("paste").value); };
+  r.readAsText(f);
+});
+$("renderBtn").addEventListener("click", doRender);
+$("sendBtn").addEventListener("click", doSend);
+$("resetAll").addEventListener("click", () => {
+  if (!confirm("Discard every edit and return to the loaded prompt?")) return;
+  state.sections.forEach((s) => s.parts.forEach((p) => { p.text = p.original; }));
+  renderEditor();
+  persist();
+});
+$("rawToggle").addEventListener("click", () => {
+  state.raw = !state.raw;
+  $("rawToggle").textContent = state.raw ? "Layered" : "Raw";
+  $("sections").hidden = state.raw;
+  $("rawEdit").hidden = !state.raw;
+  if (state.raw) {
+    $("rawEdit").value = joinSections();
+  } else {
+    // Re-split so locked blocks are re-detected and the schema stays in sync.
+    state.sections = splitSections($("rawEdit").value);
+    renderEditor();
+    refreshCatalogUI();
+    persist();
+  }
+});
+["oos", "closed", "message", "transcript"].forEach((id) => $(id).addEventListener("input", persist));
+$("key").addEventListener("change", () => sessionStorage.setItem("collega.promptlab.key", $("key").value.trim()));
+
+if (restore()) { showEditor(); $("loadCard").querySelector(".body").prepend(note("ok", "Restored your previous session. Load again to start from a fresh prompt.")); }
+</script>
+</body>
+</html>

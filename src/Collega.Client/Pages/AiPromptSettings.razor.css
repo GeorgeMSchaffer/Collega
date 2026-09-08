@@ -1,0 +1,45 @@
+/* AI prompt settings — content styles only. Page chrome (cards, buttons, fields, tables) comes from
+   wwwroot/css/app.css, matching AiAssistSettings.razor. */
+
+.sect {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.field { margin-bottom: 14px; }
+
+.field textarea {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  /* The prompt is read as a whole; wrapping long lines beats a horizontal scrollbar in a text area. */
+  white-space: pre-wrap;
+}
+
+.charlim { color: var(--ink-3); font-weight: 400; font-size: 11px; }
+
+.actions { display: flex; gap: 8px; align-items: center; margin: 14px 0 6px; flex-wrap: wrap; }
+
+/* The one piece of guidance that is not obvious from the text being edited, so it does not read as
+   ordinary help copy. */
+.sub.warn {
+  border-left: 3px solid var(--err);
+  padding-left: 10px;
+  margin: 12px 0;
+}
+
+.notice {
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  padding: 8px 10px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.grid td { padding: 6px 10px 6px 0; font-size: 13px; vertical-align: top; }
+.grid td.ok { color: var(--ok, #16A34A); font-weight: 600; white-space: nowrap; }
+
+/* An allowed probe is the finding worth noticing, so it is the one thing shouting. */
+.grid td.bad { color: var(--err); font-weight: 700; white-space: nowrap; }

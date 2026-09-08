@@ -1,0 +1,47 @@
+{
+  "name": "health",
+  "description": "The unauthenticated liveness probe.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "health.siteadmin",
+      "endpoint": "GET /health",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Anonymous by design \u2014 a probe that needs a token cannot report that auth is down."
+    },
+    {
+      "id": "health.orgadmin",
+      "endpoint": "GET /health",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Anonymous by design \u2014 a probe that needs a token cannot report that auth is down."
+    },
+    {
+      "id": "health.user",
+      "endpoint": "GET /health",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "note": "Anonymous by design \u2014 a probe that needs a token cannot report that auth is down."
+    },
+    {
+      "id": "health.readonly",
+      "endpoint": "GET /health",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "note": "Anonymous by design \u2014 a probe that needs a token cannot report that auth is down."
+    },
+    {
+      "id": "health.anonymous",
+      "endpoint": "GET /health",
+      "as": "anonymous",
+      "kind": "success",
+      "expect": 200,
+      "note": "Anonymous by design \u2014 a probe that needs a token cannot report that auth is down."
+    }
+  ]
+}

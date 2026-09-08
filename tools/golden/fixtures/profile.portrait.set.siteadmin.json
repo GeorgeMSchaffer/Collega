@@ -1,0 +1,55 @@
+{
+  "scenario": "profile",
+  "step": "portrait.set.siteadmin",
+  "endpoint": "PUT /auth/me/portrait",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Everyone owns their own portrait.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/auth/me/portrait",
+    "body": {
+      "imageBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:47 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "e8e2c76e-f265-4733-a32d-8d08d845169a",
+      "organizationId": null,
+      "role": "SiteAdmin",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "email": "siteadmin@demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAADUlEQVR4nGNh+M9QDwADlQGD5CrorAAAAABJRU5ErkJggg==",
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "siteadmin@demo.collega.test",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "organizationId": null,
+      "portraitDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAADUlEQVR4nGNh+M9QDwADlQGD5CrorAAAAABJRU5ErkJggg==",
+      "role": "SiteAdmin",
+      "status": "Active",
+      "userId": "<guid@me.update.siteadmin.body.userId>",
+      "viewingAs": null
+    }
+  }
+}

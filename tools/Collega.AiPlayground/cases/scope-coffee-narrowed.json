@@ -1,0 +1,7 @@
+{
+  "id": "scope-coffee-narrowed",
+  "fixture": "acme-scoped",
+  "note": "The scope statement is the only part of the gate an organization controls, and this is the case that proves it does anything. Paired with scope-coffee-unnarrowed: the same sentence, the same model, opposite expectations. If both pass, the statement is working; if both give the same answer, it is being ignored.",
+  "turns": ["We should get better coffee in the break room."],
+  "expect": { "inScope": false }
+}

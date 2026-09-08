@@ -1,0 +1,61 @@
+{
+  "scenario": "boards",
+  "step": "reorder.user",
+  "endpoint": "POST /boards/{boardId}/swimlanes/reorder",
+  "as": "User",
+  "kind": "denied",
+  "note": "Drag-and-drop persists immediately.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/53ad2530-e1b2-4346-9061-cba0a754822f/swimlanes/reorder",
+    "body": {
+      "swimlanes": [
+        {
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+          "order": 0
+        },
+        {
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "order": 1
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Fri, 04 Sep 2026 03:55:42 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to manage boards in this organization.",
+      "instance": "/api/v1/boards/53ad2530-e1b2-4346-9061-cba0a754822f/swimlanes/reorder",
+      "traceId": "0HNOA71FOOKTK:0000003B"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to manage boards in this organization.",
+      "instance": "/api/v1/boards/<guid@create.orgadmin.body.boardId>/swimlanes/reorder",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

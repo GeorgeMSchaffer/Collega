@@ -1,0 +1,53 @@
+{
+  "scenario": "organizations",
+  "step": "create.readonly",
+  "endpoint": "POST /organizations",
+  "as": "ReadOnly",
+  "kind": "denied",
+  "note": "Refusals first, so exactly one organization is created. Named to sort last.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations",
+    "body": {
+      "title": "Zz Golden Capture Org",
+      "description": "Created by the golden capture."
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Only a Site Admin can perform this action.",
+      "instance": "/api/v1/organizations",
+      "traceId": "0HNOA71FOOKTJ:000000B3"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Only a Site Admin can perform this action.",
+      "instance": "/api/v1/organizations",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

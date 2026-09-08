@@ -417,7 +417,7 @@
     private RenderFragment RenderTypeForm => @<text>
         <div class="field">
             <label for="type-name">Name</label>
-            <FluentTextField id="type-name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
+            <FluentTextField id="type-name" AriaLabel="Name" @bind-Value="_form.Name" Disabled="_busy" Style="width:100%" />
         </div>
 
         <div class="field">

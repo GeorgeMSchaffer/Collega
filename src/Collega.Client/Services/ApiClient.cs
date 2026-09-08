@@ -242,6 +242,62 @@ public sealed partial class ApiClient
     public Task<ApiResult<AiUsageReportDto>> GetOrganizationAiUsageAsync(string organizationId, CancellationToken ct = default) =>
         GetAsync<AiUsageReportDto>($"{BasePath}/organizations/{organizationId}/ai-assist/usage", ct);
 
+    // ---- AI idea assist (SPEC/30-Contracts.md → "AI Idea Assist Contracts") ----
+
+    /// <summary>
+    /// Advances the drafting conversation by one turn. A failure here — including the 503 that means
+    /// "assistant unavailable" — is never fatal: the caller degrades to the scripted nudge and keeps
+    /// the user's text (rules 31–32).
+    /// </summary>
+    public Task<ApiResult<IdeaAssistTurnResponseDto>> ContinueIdeaAssistAsync(
+        string boardId,
+        IdeaAssistTurnRequestDto request,
+        CancellationToken ct = default) =>
+        SendJsonAsync<IdeaAssistTurnResponseDto>(
+            HttpMethod.Post, $"{BasePath}/boards/{boardId}/idea-assist/turns", request, ct);
+
+    /// <summary>
+    /// Whether to open the drafting chat or go straight to the create form (rule 32a). Open to any
+    /// authenticated user, unlike the admin-only settings read below.
+    /// </summary>
+    public Task<ApiResult<AiAssistAvailabilityDto>> GetAiAssistAvailabilityAsync(CancellationToken ct = default) =>
+        GetAsync<AiAssistAvailabilityDto>($"{BasePath}/ai-assist/availability", ct);
+
+    // ---- Site-Admin prompt management (rules 34-38). Deployment-wide, not org-scoped. ----
+
+    public Task<ApiResult<AiPromptDto>> GetAiPromptAsync(CancellationToken ct = default) =>
+        GetAsync<AiPromptDto>($"{BasePath}/ai-assist/prompt", ct);
+
+    public Task<ApiResult<AiPromptDto>> PublishAiPromptAsync(
+        PublishAiPromptRequestDto request,
+        CancellationToken ct = default) =>
+        SendJsonAsync<AiPromptDto>(HttpMethod.Put, $"{BasePath}/ai-assist/prompt", request, ct);
+
+    public Task<ApiResult<AiPromptDto>> RestoreAiPromptAsync(int version, CancellationToken ct = default) =>
+        SendJsonAsync<AiPromptDto>(
+            HttpMethod.Post, $"{BasePath}/ai-assist/prompt/versions/{version}/restore", new { }, ct);
+
+    public Task<ApiResult<AiPromptDto>> ResetAiPromptAsync(CancellationToken ct = default) =>
+        SendJsonAsync<AiPromptDto>(HttpMethod.Post, $"{BasePath}/ai-assist/prompt/reset", new { }, ct);
+
+    /// <summary>Advisory only — never publishes, and a failing probe never blocks a publish.</summary>
+    public Task<ApiResult<AiPromptProbeDto>> ProbeAiPromptAsync(
+        ProbeAiPromptRequestDto request,
+        CancellationToken ct = default) =>
+        SendJsonAsync<AiPromptProbeDto>(HttpMethod.Post, $"{BasePath}/ai-assist/prompt/probe", request, ct);
+
+    /// <summary>Reads an organization's AI assist configuration. Never returns a key.</summary>
+    public Task<ApiResult<AiAssistSettingsDto>> GetAiAssistSettingsAsync(string organizationId, CancellationToken ct = default) =>
+        GetAsync<AiAssistSettingsDto>($"{BasePath}/organizations/{organizationId}/ai-assist/settings", ct);
+
+    /// <summary>Sets or clears the organization's scope statement.</summary>
+    public Task<ApiResult<AiAssistSettingsDto>> UpdateAiAssistSettingsAsync(
+        string organizationId,
+        UpdateAiAssistSettingsRequestDto request,
+        CancellationToken ct = default) =>
+        SendJsonAsync<AiAssistSettingsDto>(
+            HttpMethod.Put, $"{BasePath}/organizations/{organizationId}/ai-assist/settings", request, ct);
+
     public Task<ApiResult<CreateStatusResultDto>> CreateStatusAsync(string organizationId, SaveStatusRequestDto body, CancellationToken ct = default) =>
         SendJsonAsync<CreateStatusResultDto>(HttpMethod.Post, $"{BasePath}/organizations/{organizationId}/statuses", body, ct);
 

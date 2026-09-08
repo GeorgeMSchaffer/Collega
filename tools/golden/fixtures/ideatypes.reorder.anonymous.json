@@ -1,0 +1,53 @@
+{
+  "scenario": "ideatypes",
+  "step": "reorder.anonymous",
+  "endpoint": "POST /organizations/{organizationId}/idea-types/reorder",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Every active idea type, exactly once.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/idea-types/reorder",
+    "body": {
+      "orderedIdeaTypeIds": [
+        "83ee3626-d19d-4537-a394-9e0d3233045d",
+        "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+        "46bd64e9-005f-4bf0-acc5-1f71ac5dbf0e"
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/idea-types/reorder",
+      "traceId": "00-eefce91c2aaa9539e69dc8a23d3ed211-64162e05bb4a2964-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/idea-types/reorder",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

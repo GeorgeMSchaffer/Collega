@@ -1,0 +1,51 @@
+{
+  "scenario": "organizations",
+  "step": "users.create.bootstrap.siteadmin",
+  "endpoint": "POST /organizations/{organizationId}/users",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "A direct Site Admin creating a user, which rule 26 keeps out of View As: without it a new deployment would have nobody to act as.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/users",
+    "body": {
+      "firstName": "Golden",
+      "lastName": "Bootstrap",
+      "email": "golden.bootstrap@acme-robotics.demo.collega.test",
+      "role": "User",
+      "initialPassword": "<redacted>"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "efcf203f-d610-4156-bdca-a2caa3dd4f57",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+      "email": "golden.bootstrap@acme-robotics.demo.collega.test",
+      "role": "User",
+      "status": "Active"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "golden.bootstrap@acme-robotics.demo.collega.test",
+      "organizationId": "<guid@org.body.organizationId>",
+      "role": "User",
+      "status": "Active",
+      "userId": "<guid@users.create.bootstrap.siteadmin.body.userId>"
+    }
+  }
+}

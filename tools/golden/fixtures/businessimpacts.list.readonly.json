@@ -1,0 +1,97 @@
+{
+  "scenario": "businessimpacts",
+  "step": "list.readonly",
+  "endpoint": "GET /organizations/{organizationId}/business-impacts",
+  "as": "ReadOnly",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/business-impacts",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:42 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "Critical",
+        "color": "#DC2626",
+        "sortOrder": 10,
+        "isDeleted": false
+      },
+      {
+        "businessImpactId": "82e95b94-5708-4385-89c0-cc5fa51b3264",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "High",
+        "color": "#D97706",
+        "sortOrder": 20,
+        "isDeleted": false
+      },
+      {
+        "businessImpactId": "ab4dc497-aa72-4cbb-9146-cdeff9d956b6",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "Medium",
+        "color": "#2563EB",
+        "sortOrder": 30,
+        "isDeleted": false
+      },
+      {
+        "businessImpactId": "f7d3a912-2de2-436f-86a9-bda801d77bc3",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "Low",
+        "color": "#16A34A",
+        "sortOrder": 40,
+        "isDeleted": false
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "businessImpactId": "<guid@list.siteadmin.body[0].businessImpactId>",
+        "color": "#DC2626",
+        "isDeleted": false,
+        "name": "Critical",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 10
+      },
+      {
+        "businessImpactId": "<guid@list.siteadmin.body[1].businessImpactId>",
+        "color": "#D97706",
+        "isDeleted": false,
+        "name": "High",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 20
+      },
+      {
+        "businessImpactId": "<guid@list.siteadmin.body[2].businessImpactId>",
+        "color": "#2563EB",
+        "isDeleted": false,
+        "name": "Medium",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 30
+      },
+      {
+        "businessImpactId": "<guid@list.siteadmin.body[3].businessImpactId>",
+        "color": "#16A34A",
+        "isDeleted": false,
+        "name": "Low",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 40
+      }
+    ]
+  }
+}

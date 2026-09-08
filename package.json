@@ -1,0 +1,29 @@
+{
+  "name": "collega",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Collega monorepo. Mid-conversion (Sprint 9): apps/* and packages/* are the TypeScript stack being built, src/Collega.* is the .NET application it replaces - see SPEC/50-typescript-migration.md.",
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=24.20.0",
+    "pnpm": ">=12.3.4"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "dev": "turbo run dev",
+    "format": "biome format --write .",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test --filter=!collega-e2e",
+    "test:e2e": "turbo run test --filter=collega-e2e",
+    "check": "pnpm run lint && turbo run typecheck test --filter=!collega-e2e"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "@types/node": "26.4.1",
+    "turbo": "2.10.12",
+    "typescript": "7.0.2"
+  }
+}

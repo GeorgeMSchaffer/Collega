@@ -1,0 +1,7 @@
+{
+  "id": "refuse-offtopic-recipe",
+  "fixture": "acme",
+  "note": "Structural refusal: could not plausibly become an idea of either type. Only inScope is scored - a refused turn returns the draft unchanged, so classification assertions would be meaningless.",
+  "turns": ["What's a good recipe for carbonara?"],
+  "expect": { "inScope": false }
+}

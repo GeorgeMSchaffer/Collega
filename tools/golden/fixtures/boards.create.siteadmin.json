@@ -1,0 +1,63 @@
+{
+  "scenario": "boards",
+  "step": "create.siteadmin",
+  "endpoint": "POST /organizations/{organizationId}/boards",
+  "as": "SiteAdmin",
+  "kind": "denied",
+  "note": "Named to sort last: board lists come back by name, and a scenario that binds body[0] must get a seeded board rather than this one.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/boards",
+    "body": {
+      "name": "Zz Golden Capture Board",
+      "allowUserStatusUpdate": true,
+      "swimlanes": [
+        {
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "order": 0
+        },
+        {
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+          "order": 1
+        }
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Fri, 04 Sep 2026 03:55:41 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/boards",
+      "traceId": "0HNOA71FOOKTK:00000032"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/boards",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "scenario": "fielddefinitions",
+  "step": "reorder.siteadmin",
+  "endpoint": "PUT /organizations/{organizationId}/field-definitions/reorder",
+  "as": "SiteAdmin",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/field-definitions/reorder",
+    "body": {
+      "orderedIds": [
+        "669cc969-5fba-4dee-a3d6-a072799faa63"
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Fri, 04 Sep 2026 03:55:43 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/field-definitions/reorder",
+      "traceId": "0HNOA71FOOKTJ:00000068"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "Site Admins cannot change organization content directly. Use View As to act as a user in that organization.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/field-definitions/reorder",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

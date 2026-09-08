@@ -1,33 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Comp C Review 2: Admin — Organizations &amp; Users</title>
 <style>
   :root{
-    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
-    --ink:#242424; --ink-2:#484644; --ink-3:#797672;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#5D6C7E;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
     --shadow:0 1px 2px rgba(0,0,0,.08);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
-  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
   .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
-  .rail .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
-  .rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
   .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
   .rail a.on{background:var(--accent-soft);color:var(--accent)}
-  .rail a:hover{background:#f3f2f1}
+  .rail a:hover{background:#F1F3F6}
   .rail .push{flex:1}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
   .avatar.s{width:24px;height:24px;font-size:9.5px}
@@ -42,33 +46,33 @@
   .ptabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent}
   .ptabs a.on{color:var(--accent);border-bottom-color:var(--accent)}
   .body{padding:26px 40px;max-width:1200px}
-  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f3f2f1}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:var(--accent-deep)}
   .btn.subtle{border-color:transparent;color:var(--accent)}
   .btn.danger{border-color:transparent;color:var(--err)}
-  input[type=text],input[type=email],select,textarea{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input[type=text],input[type=email],select,textarea{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
   label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
   .field{margin-bottom:15px}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:var(--shadow)}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line)}
-  td{padding:12px 16px;border-bottom:1px solid #f0efed;vertical-align:middle}
+  td{padding:12px 16px;border-bottom:1px solid #F1F3F6;vertical-align:middle}
   tr:last-child td{border-bottom:none}
-  tr:hover td{background:#faf9f8}
-  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
-  .pill.ok{background:#e7f2e7;color:var(--ok)}.pill.warn{background:#f7ecdc;color:var(--warn)}
-  .pill.err{background:#fbe5e7;color:var(--err)}.pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  tr:hover td{background:#F7F9FB}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:600}
+  .pill.ok{background:#F0F7F1;color:var(--ok)}.pill.warn{background:#F9F6EE;color:var(--warn)}
+  .pill.err{background:#F8EFEF;color:var(--err)}.pill.neutral{background:#F1F3F6;color:var(--ink-2)}
   .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
   .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
-  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:640px;line-height:1.5}
-  .code{font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:13px;letter-spacing:.02em;display:inline-flex;gap:10px;align-items:center}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 2px 2px 0;margin-top:18px;max-width:640px;line-height:1.5}
+  .code{font-family:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;background:#F1F3F6;border:1px solid var(--line);border-radius:2px;padding:6px 10px;font-size:13px;letter-spacing:.02em;display:inline-flex;gap:10px;align-items:center}
   .panelform{max-width:480px}
   .panelform .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .drop{border:2px dashed var(--line);border-radius:8px;padding:28px;text-align:center;color:var(--ink-3);font-size:13px}
-  .csverr{background:#fbe5e7;border:1px solid #f3c3c8;border-radius:6px;padding:12px 14px;font-size:12.5px;color:var(--err);margin-top:12px}
+  .drop{border:2px dashed var(--line);border-radius:2px;padding:28px;text-align:center;color:var(--ink-3);font-size:13px}
+  .csverr{background:#F8EFEF;border:1px solid #EACCCC;border-radius:2px;padding:12px 14px;font-size:12.5px;color:var(--err);margin-top:12px}
   .csverr li{margin-left:18px}
   .hint{font-size:12px;color:var(--ink-3);margin-top:5px}
 </style>
@@ -173,7 +177,7 @@
               <tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar s">MP</span><div><strong>Mia Park</strong><div style="font-size:12px;color:var(--ink-3)">mia.park@acme.com</div></div></div></td><td><span class="pill neutral">User</span></td><td><span class="pill warn">Locked · 12 min</span></td><td>Today 08:47</td><td><button class="btn subtle">Edit</button><button class="btn">Unlock</button></td></tr>
               <tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar s">TD</span><div><strong>Tom Diaz</strong><div style="font-size:12px;color:var(--ink-3)">tom.diaz@acme.com</div></div></div></td><td><span class="pill neutral">Read Only</span></td><td><span class="pill ok">Active</span></td><td>Yesterday</td><td><button class="btn subtle">Edit</button><button class="btn subtle">Reset pw</button></td></tr>
               <tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar s">AL</span><div><strong>Ana Liu</strong><div style="font-size:12px;color:var(--ink-3)">ana.liu@acme.com</div></div></div></td><td><span class="pill neutral">User</span></td><td><span class="pill err">Inactive</span></td><td>—</td><td><button class="btn subtle">Reactivate</button></td></tr>
-              <tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar s" style="background:#c8c6c4">—</span><div><strong>Sam Rios</strong> <span style="font-size:11px;color:var(--ink-3)">(last Org Admin)</span><div style="font-size:12px;color:var(--ink-3)">sam.rios@acme.com</div></div></div></td><td><span class="pill info">Org Admin</span></td><td><span class="pill ok">Active</span></td><td>3 days ago</td><td><button class="btn subtle" disabled title="Cannot remove the last Org Admin's own access">Edit role</button></td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:10px"><span class="avatar s" style="background:#C5CBD3">—</span><div><strong>Sam Rios</strong> <span style="font-size:11px;color:var(--ink-3)">(last Org Admin)</span><div style="font-size:12px;color:var(--ink-3)">sam.rios@acme.com</div></div></div></td><td><span class="pill info">Org Admin</span></td><td><span class="pill ok">Active</span></td><td>3 days ago</td><td><button class="btn subtle" disabled title="Cannot remove the last Org Admin's own access">Edit role</button></td></tr>
             </tbody>
           </table>
         </div>

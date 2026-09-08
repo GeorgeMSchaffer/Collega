@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // Nest's DI (`@Injectable`, `@Inject`, `@Controller`, `@Module`, ...) needs the classic
+    // decorator model plus reflect-metadata - the only package in the workspace that does,
+    // which is why this is set here and not in tsconfig.base.json.
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": [
+    "dist/**",
+    "**/.boundary-*/**"
+  ]
+}

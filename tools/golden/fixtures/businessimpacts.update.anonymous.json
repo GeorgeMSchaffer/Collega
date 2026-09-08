@@ -1,0 +1,49 @@
+{
+  "scenario": "businessimpacts",
+  "step": "update.anonymous",
+  "endpoint": "PUT /business-impacts/{businessImpactId}",
+  "as": "anonymous",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/business-impacts/afbf188c-bc8e-45d6-982f-b375aa5e4811",
+    "body": {
+      "name": "Golden Capture Impact Renamed",
+      "color": "#8f6f3f"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:42 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/business-impacts/afbf188c-bc8e-45d6-982f-b375aa5e4811",
+      "traceId": "00-d4829d92274094e1208bab287123aa2a-15692c8a21b2b2dc-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/business-impacts/<guid@create.orgadmin.body.businessImpactId>",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

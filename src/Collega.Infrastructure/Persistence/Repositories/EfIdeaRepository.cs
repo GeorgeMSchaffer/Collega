@@ -73,7 +73,7 @@ public sealed class EfIdeaRepository : IIdeaRepository
         var totalCount = await query.CountAsync(cancellationToken);
 
         var descending = SortDirection.IsDescending(filter.SortDirection);
-        query = (filter.SortBy?.Trim().ToLowerInvariant()) switch
+        var ordered = (filter.SortBy?.Trim().ToLowerInvariant()) switch
         {
             "updatedat" => descending ? query.OrderByDescending(i => i.UpdatedAtUtc) : query.OrderBy(i => i.UpdatedAtUtc),
             "priority" => descending ? query.OrderByDescending(i => i.Priority) : query.OrderBy(i => i.Priority),
@@ -84,7 +84,13 @@ public sealed class EfIdeaRepository : IIdeaRepository
             _ => descending ? query.OrderByDescending(i => i.CreatedAtUtc) : query.OrderBy(i => i.CreatedAtUtc)
         };
 
-        var items = await query
+        // Id breaks the tie, so the board's order is total. Every sort above can tie —
+        // two ideas share a priority, a due date, an upvote count, or a creation instant
+        // — and without this the tied cards swap places between reads and, under the
+        // paging below, can land on different pages. The organization list already
+        // does this; the board did not.
+        var items = await ordered
+            .ThenBy(i => i.Id)
             .Skip(filter.Page.Skip)
             .Take(filter.Page.PageSize)
             .ToListAsync(cancellationToken);

@@ -1,0 +1,56 @@
+{
+  "scenario": "ideas",
+  "step": "create.user",
+  "endpoint": "POST /boards/{boardId}/ideas",
+  "as": "User",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/boards/182df148-cf57-4bba-ade8-99286b6c1181/ideas",
+    "body": {
+      "title": "Golden capture idea",
+      "description": "Recorded by the golden capture.",
+      "priority": "Medium",
+      "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+      "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "ideaId": "5ea9641a-72ad-445a-921c-8de278e777b9",
+      "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+      "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+      "title": "Golden capture idea",
+      "priority": "Medium",
+      "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+      "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+      "dueDate": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "boardId": "<guid@board.body[0].boardId>",
+      "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+      "dueDate": null,
+      "ideaId": "<guid@create.user.body.ideaId>",
+      "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+      "priority": "Medium",
+      "statusId": "<guid@statuses.body[0].statusId>",
+      "title": "Golden capture idea"
+    }
+  }
+}

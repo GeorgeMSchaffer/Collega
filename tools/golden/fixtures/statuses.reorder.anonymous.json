@@ -1,0 +1,56 @@
+{
+  "scenario": "statuses",
+  "step": "reorder.anonymous",
+  "endpoint": "POST /organizations/{organizationId}/statuses/reorder",
+  "as": "anonymous",
+  "kind": "denied",
+  "note": "Must name every active status exactly once, so it is bound from the list above.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/statuses/reorder",
+    "body": {
+      "orderedStatusIds": [
+        "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+        "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+        "8d4b935c-2709-418e-b151-6a5eb3449880",
+        "8aa88452-07f5-48c7-b087-64687efdb427",
+        "fa4869d2-bf67-4c11-b243-a1a20a3fc293",
+        "f92de280-3042-40c5-91ec-74877534de45"
+      ]
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:47 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+      "title": "Unauthorized",
+      "status": 401,
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/statuses/reorder",
+      "traceId": "00-314110bffea3ae155f3502555f12f919-91e60982c5754c18-00"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/problem+json; charset=utf-8"
+    },
+    "body": {
+      "detail": "No further details are available for this 401 response.",
+      "instance": "/api/v1/organizations/<guid@org.body.organizationId>/statuses/reorder",
+      "status": 401,
+      "title": "Unauthorized",
+      "traceId": "<traceid>",
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2"
+    }
+  }
+}

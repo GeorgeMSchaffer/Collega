@@ -57,6 +57,26 @@
             img.src = dataUri;
         });
     </script>
+
+    <script>
+        // A native <button> does not scroll the page when Space activates it; an element with
+        // role="button" does, because Space keeps its default scroll behaviour there. Board cards
+        // and list rows are role="button" and handle Space to open the idea drawer, so without
+        // this the page scrolls behind the drawer it just opened.
+        //
+        // It lives here rather than on the component because Blazor's @onkeydown:preventDefault
+        // is static — it cannot be applied to Space alone, and applying it to every key would
+        // break Tab out of the card. The rule is the same for any role="button" anyway.
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== ' ' || event.defaultPrevented) {
+                return;
+            }
+
+            if (event.target instanceof Element && event.target.getAttribute('role') === 'button') {
+                event.preventDefault();
+            }
+        });
+    </script>
 </body>
 
 </html>

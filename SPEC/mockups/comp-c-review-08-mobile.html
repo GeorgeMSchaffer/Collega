@@ -1,50 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Review 08: Mobile / Narrow Viewport</title>
 <style>
   :root{
-    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
-    --ink:#242424; --ink-2:#484644; --ink-3:#5f5b56;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
-    --im-high-deep:#9c1258; --im-high-soft:#fbe3ee;
-    --im-med-deep:#a8447a; --im-med-soft:#f7e9f1;
-    --im-low-deep:#7d6270; --im-low-soft:#f2ecf0;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#3E4E60;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
+    --im-high-deep:#B64B4B; --im-high-soft:#F8EFEF;
+    --im-med-deep:#C97A7A; --im-med-soft:#F1F3F6;
+    --im-low-deep:#B64B4B; --im-low-soft:#F1F3F6;
     --shadow:0 1px 2px rgba(0,0,0,.08);
-    --radius-card:6px; --radius-btn:4px;
+    --radius-card:2px; --radius-btn:2px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
-  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
-  .comp-bar .hint{font-size:11.5px;color:#c8c6c4}
+  .comp-bar .hint{font-size:11.5px;color:#C5CBD3}
   .screen{display:none}.screen.on{display:block}
   .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;position:relative}
-  .rail .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
-  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
   .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
   .rail a.on{background:var(--accent-soft);color:var(--accent)}
-  .rail a:hover{background:#f3f2f1}
+  .rail a:hover{background:#F1F3F6}
   .rail .push{flex:1}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
   .avatar.s{width:24px;height:24px;font-size:9.5px}
-  .avatar.more{background:#e4e2df;color:var(--ink-2);font-weight:700}
+  .avatar.more{background:#DDE1E6;color:var(--ink-2);font-weight:700}
   .avatarwrap{position:relative}
   .avatarbtn{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;line-height:0}
-  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
+  .avatarmenu{display:none;position:absolute;bottom:0;left:calc(100% + 10px);background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,.14);min-width:190px;z-index:30;overflow:hidden}
   .avatarmenu.show{display:block}
   .avatarmenu .who{padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink-3);line-height:1.5}
   .avatarmenu .who strong{color:var(--ink);font-size:13px;display:block}
   .avatarmenu .item{display:block;padding:9px 14px;font-size:13px;color:var(--ink);text-decoration:none;cursor:pointer}
-  .avatarmenu .item:hover{background:#f3f2f1}
+  .avatarmenu .item:hover{background:#F1F3F6}
   .pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 0}
   .pagehead .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:10px}
   .pagehead .crumbs a{color:var(--ink-3);text-decoration:none}
@@ -54,29 +58,29 @@
   .pagehead .row .grow{flex:1}
   .body{padding:26px 40px;max-width:1200px}
   .btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f3f2f1}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.primary:hover{background:var(--accent-deep)}
   .btn.subtle{border-color:transparent;color:var(--accent)}
   .btn.danger{border-color:transparent;color:var(--err)}
-  input[type=text],input[type=email],input[type=password],select,textarea{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input[type=text],input[type=email],input[type=password],select,textarea{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
   label{font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:5px}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow)}
-  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:600}
   .pill.info{background:var(--accent-soft);color:var(--accent-deep)}
-  .pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  .pill.neutral{background:#F1F3F6;color:var(--ink-2)}
   .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
-  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:680px;line-height:1.5}
-  .code{font-family:ui-monospace,Consolas,monospace;background:#f3f2f1;border:1px solid var(--line);border-radius:4px;padding:2px 6px;font-size:11.5px}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 2px 2px 0;margin-top:18px;max-width:680px;line-height:1.5}
+  .code{font-family:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;background:#F1F3F6;border:1px solid var(--line);border-radius:2px;padding:2px 6px;font-size:11.5px}
   /* focus-visible: every interactive control gets a visible keyboard focus ring */
   .btn:focus-visible,.rail a:focus-visible,.rowcard:focus-visible,.kcard:focus-visible,
   .up:focus-visible,.cmt:focus-visible,.chip:focus-visible,.avatarbtn:focus-visible,
-  .avatarmenu .item:focus-visible,.movepop .opt:focus-visible,.tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  .avatarmenu .item:focus-visible,.movepop .opt:focus-visible,.tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
   /* filter chips */
   .chipbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-  .chip{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
-  .chip:hover{background:#f3f2f1}
+  .chip{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:6px 14px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip:hover{background:#F1F3F6}
   .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .chip.on:hover{background:var(--accent-deep)}
   /* home dashboard */
@@ -84,23 +88,23 @@
   .tile{border-radius:var(--radius-card);overflow:hidden;cursor:pointer;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line)}
   .tile .band{height:5px}
   .tile .bd{padding:14px 16px}
-  .tile h3{font-family:Georgia,serif;font-size:15px;margin-bottom:4px}
+  .tile h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;margin-bottom:4px}
   .tile p{font-size:12px;color:var(--ink-3)}
   .tile.newt{display:flex;align-items:center;justify-content:center;min-height:96px;border:1.5px dashed var(--line);box-shadow:none;color:var(--ink-3);font-weight:600;background:transparent}
-  .feedrow{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #f0efed;font-size:13px}
+  .feedrow{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #F1F3F6;font-size:13px}
   .feedrow:last-child{border-bottom:none}
   .feedrow .when{margin-left:auto;color:var(--ink-3);font-size:12px}
   .feedrow a{color:var(--accent-deep);font-weight:600;text-decoration:none}
   .statgrid{display:flex;gap:28px;margin:4px 0 26px}
-  .stat .n{font-family:Georgia,serif;font-size:26px;color:var(--accent-deep)}
+  .stat .n{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:26px;color:var(--accent-deep)}
   .stat .l{font-size:12px;color:var(--ink-3)}
   /* swimlanes — Flat treatment (locked) */
   .klanes{display:grid;grid-auto-flow:column;grid-auto-columns:280px;gap:16px;overflow-x:auto;padding-bottom:12px;align-items:start}
-  .klane{background:#f3f2f1;border-radius:var(--radius-card);padding:12px}
-  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;font-family:"Segoe UI",sans-serif;color:var(--ink-2);padding:2px 6px 12px}
+  .klane{background:#F1F3F6;border-radius:var(--radius-card);padding:12px}
+  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;display:flex;align-items:center;gap:7px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink-2);padding:2px 6px 12px}
   .klane h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--lc-deep,var(--ink-3));flex-shrink:0}
   .klane h3 .grow{flex:1}
-  .klane .cnt{border-radius:10px;padding:0 8px;font-size:11px;background:#e4e2df}
+  .klane .cnt{border-radius:2px;padding:0 8px;font-size:11px;background:#DDE1E6}
   .kcard{background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;cursor:grab;border-left:3px solid var(--lc-deep,transparent)}
   .kcard:hover{outline:1px solid var(--accent)}
   .kcard .top{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
@@ -109,8 +113,8 @@
   .kcard .meta2{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
   .kcard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
   .kcard .meta .spacer{flex:1}
-  .kcard .tag{background:#f3f2f1;border-radius:3px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
-  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:3px;white-space:nowrap;flex-shrink:0}
+  .kcard .tag{background:#F1F3F6;border-radius:2px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .impact{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:2px;white-space:nowrap;flex-shrink:0}
   .impact.high{background:var(--im-high-soft);color:var(--im-high-deep)}
   .impact.med{background:var(--im-med-soft);color:var(--im-med-deep)}
   .impact.low{background:var(--im-low-soft);color:var(--im-low-deep)}
@@ -118,30 +122,30 @@
   .avatarstack{display:inline-flex;align-items:center;flex-shrink:0}
   .avatarstack .avatar{margin-left:-6px;border:2px solid var(--surface)}
   .avatarstack .avatar:first-child{margin-left:0}
-  .cmt{border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:600;color:var(--ink-2);flex-shrink:0}
-  .cmt:hover{background:#f3f2f1}
-  .up{border:1px solid var(--line);border-radius:4px;padding:6px 13px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:56px;text-align:center;flex-shrink:0}
+  .cmt{border:1px solid var(--line);border-radius:2px;padding:6px 10px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:600;color:var(--ink-2);flex-shrink:0}
+  .cmt:hover{background:#F1F3F6}
+  .up{border:1px solid var(--line);border-radius:2px;padding:6px 13px;font-size:12px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:56px;text-align:center;flex-shrink:0}
   .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
   .viewswitch{display:flex;gap:4px;margin-top:18px;flex-wrap:wrap}
   .viewswitch a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent;cursor:pointer}
   .viewswitch a.on{color:var(--accent);border-bottom-color:var(--accent)}
-  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap}
-  .prio-chip.high{background:#fbe5e7;color:var(--err)}
-  .prio-chip.med{background:#f7ecdc;color:var(--warn)}
-  .prio-chip.low{background:#e7f2e7;color:var(--ok)}
+  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px;flex-shrink:0;white-space:nowrap}
+  .prio-chip.high{background:#F8EFEF;color:var(--err)}
+  .prio-chip.med{background:#F9F6EE;color:var(--warn)}
+  .prio-chip.low{background:#F0F7F1;color:var(--ok)}
   .emptylane{color:var(--ink-3);font-size:12px;text-align:center;padding:22px 8px;font-style:italic}
   /* idea detail */
   .ideahd{border-bottom:1px solid var(--line);background:var(--surface);padding:26px 40px}
-  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;font-family:"Segoe UI",sans-serif}
+  .ideahd .kicker{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-deep);font-weight:700;margin-bottom:6px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .ideahd h1{font-size:30px;max-width:760px}
   .ideahd .byline{font-size:13px;color:var(--ink-3);margin:8px 0 4px}
   .actionbar{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
   .movewrap,.delwrap{position:relative}
-  .movepop{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);min-width:170px;z-index:10}
+  .movepop{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:var(--shadow);min-width:170px;z-index:10}
   .movepop.show{display:block}
   .movepop .opt{padding:9px 12px;font-size:13px;cursor:pointer}
   .movepop .opt:hover,.movepop .opt.hi{background:var(--accent-soft)}
-  .delconfirm{display:none;align-items:center;gap:8px;position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--err);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:10px 12px;font-size:12.5px;white-space:nowrap;z-index:10}
+  .delconfirm{display:none;align-items:center;gap:8px;position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--err);border-radius:2px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:10px 12px;font-size:12.5px;white-space:nowrap;z-index:10}
   .delconfirm.show{display:flex}
   .ideabody{display:grid;grid-template-columns:minmax(0,720px) 300px;gap:44px;padding:30px 40px}
   .prose{font-size:15px;line-height:1.7;color:var(--ink-2)}
@@ -150,7 +154,7 @@
   .fact .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:700;margin-bottom:5px}
   .fact .v{font-size:14px;font-weight:600}
   .fact select,.fact input{width:100%}
-  .comment{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #f0efed}
+  .comment{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #F1F3F6}
   .comment .byline{display:flex;align-items:center;gap:9px;margin-bottom:6px}
   .comment .who{font-size:13px;font-weight:700}
   .comment .when{font-size:12px;color:var(--ink-3)}
@@ -167,7 +171,7 @@
   .searchinput{width:260px}
   .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:40;padding:6px 4px;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
   .tabbar-inner{display:flex;justify-content:space-around;align-items:center;max-width:520px;margin:0 auto}
-  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink-3);text-decoration:none;font-size:9.5px;font-weight:600;padding:5px 4px;border-radius:8px;flex:1;text-align:center}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink-3);text-decoration:none;font-size:9.5px;font-weight:600;padding:5px 4px;border-radius:2px;flex:1;text-align:center}
   .tabbar a .ic{font-size:19px;line-height:1}
   .tabbar a.on{color:var(--accent);background:var(--accent-soft)}
   .tabbar a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -239,8 +243,8 @@
         <h2 style="font-size:16px;margin-bottom:10px">Your boards</h2>
         <div class="tiles">
           <div class="tile" tabindex="0"><div class="band" style="background:var(--accent)"></div><div class="bd"><h3>Product Ideas</h3><p>48 open · 9 assigned to you · active 12m ago</p></div></div>
-          <div class="tile" tabindex="0"><div class="band" style="background:#9a5b00"></div><div class="bd"><h3>Platform Backlog</h3><p>31 open · 5 assigned to you · active 2h ago</p></div></div>
-          <div class="tile" tabindex="0"><div class="band" style="background:#7a3fb8"></div><div class="bd"><h3>Customer Feedback</h3><p>17 open · none assigned · active yesterday</p></div></div>
+          <div class="tile" tabindex="0"><div class="band" style="background:#8A6D2E"></div><div class="bd"><h3>Platform Backlog</h3><p>31 open · 5 assigned to you · active 2h ago</p></div></div>
+          <div class="tile" tabindex="0"><div class="band" style="background:#5B7FA3"></div><div class="bd"><h3>Customer Feedback</h3><p>17 open · none assigned · active yesterday</p></div></div>
           <div class="tile newt" tabindex="0">+ Request a new board</div>
         </div>
         <h2 style="font-size:16px;margin-bottom:10px">Catching you up</h2>
@@ -293,7 +297,7 @@
         </div>
         <div class="cmdbar"><input class="searchinput" type="text" placeholder="Search title, tag, assignee…"></div>
         <div class="klanes">
-          <div class="klane" style="--lc-deep:#57534e">
+          <div class="klane" style="--lc-deep:#3E4E60">
             <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
             <div class="kcard" tabindex="0">
               <div class="top"><span class="grip">⠿</span><span class="t">Dark mode support</span><span class="prio-chip high">High</span></div>
@@ -307,7 +311,7 @@
             </div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
           </div>
-          <div class="klane" style="--lc-deep:#9a5b00">
+          <div class="klane" style="--lc-deep:#8A6D2E">
             <h3><span class="dot"></span><span class="grow">In Review</span><span class="cnt">1</span></h3>
             <div class="kcard" tabindex="0">
               <div class="top"><span class="grip">⠿</span><span class="t">Mobile responsive board</span><span class="prio-chip high">High</span></div>
@@ -316,7 +320,7 @@
             </div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
           </div>
-          <div class="klane" style="--lc-deep:#2f6fb0">
+          <div class="klane" style="--lc-deep:#527292">
             <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">3</span></h3>
             <div class="kcard" tabindex="0">
               <div class="top"><span class="grip">⠿</span><span class="t">SSO via SAML</span><span class="prio-chip high">High</span></div>
@@ -330,7 +334,7 @@
             </div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
           </div>
-          <div class="klane" style="--lc-deep:#7a3fb8">
+          <div class="klane" style="--lc-deep:#5B7FA3">
             <h3><span class="dot"></span><span class="grow">Client Review</span><span class="cnt">1</span></h3>
             <div class="kcard" tabindex="0">
               <div class="top"><span class="grip">⠿</span><span class="t">Org-scoped user search</span><span class="prio-chip med">Medium</span></div>
@@ -339,12 +343,12 @@
             </div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
           </div>
-          <div class="klane" style="--lc-deep:#b10e1c">
+          <div class="klane" style="--lc-deep:#B64B4B">
             <h3><span class="dot"></span><span class="grow">Blocked</span><span class="cnt">0</span></h3>
             <div class="emptylane">No ideas</div>
             <button class="btn subtle" style="width:100%">+ Add idea</button>
           </div>
-          <div class="klane" style="--lc-deep:#0e700e">
+          <div class="klane" style="--lc-deep:#457C4F">
             <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">1</span></h3>
             <div class="kcard" style="opacity:.75" tabindex="0">
               <div class="top"><span class="grip">⠿</span><span class="t">Audit log for admin actions</span><span class="prio-chip low">Low</span></div>
@@ -423,7 +427,7 @@
           <input type="text" style="width:100%;margin:6px 0 20px;font-size:18px;padding:10px 12px" value="Dark mode support">
           <label style="font-size:12px;font-weight:600;color:var(--ink-3)">Description</label>
           <textarea style="width:100%;min-height:100px;margin-top:6px" class="prose">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu.</textarea>
-          <h2 style="font-size:19px;margin:30px 0 16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:'Segoe UI',sans-serif;font-weight:600">4 comments</span></h2>
+          <h2 style="font-size:19px;margin:30px 0 16px">Discussion <span style="font-size:13px;color:var(--ink-3);font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600">4 comments</span></h2>
           <div class="comment"><div class="byline"><span class="avatar s">MP</span><span class="who">Mia Park</span><span class="when">2 hours ago</span></div><p><span class="mention">@Jordan Reyes</span> can we scope this to the board view first? Full app theming is a bigger lift.</p></div>
           <div class="comment"><div class="byline"><span class="avatar s">TD</span><span class="who">Tom Diaz</span><span class="when">1 hour ago</span></div><p>+1 — the Fluent design tokens should make this straightforward.</p></div>
           <div style="display:flex;gap:12px">

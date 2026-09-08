@@ -1,5 +1,15 @@
 # 50 — Azure Deployment Guide
 
+> ## ⛔ SUPERSEDED — describes the frozen .NET stack
+>
+> This document plans the deployment of `src/Collega.*`, which is **frozen and never deployed**:
+> Sprint 8 was cancelled on 2026-09-04, and the .NET code is deleted in slice F6
+> (`SPEC/decisions.md` 2026-09-06, `SPEC/50-typescript-migration.md`). The product ships to
+> **Vercel with Prisma Postgres** (ticket `02`, decided 2026-09-03).
+>
+> Kept for the cost model, the topology reasoning, and the database/secret-handling decisions,
+> which survive the change of host. **Nothing here is a build instruction.**
+
 How to provision and deploy Collega's three tiers to Azure at low cost. This is the
 cost-optimized PaaS target that pairs with `SPEC/50-kubernetes-deployment.md` (the heavier,
 self-hosted alternative). It reflects the **actual** wiring in the codebase as of this
@@ -92,6 +102,10 @@ On App Service, provide these as **Application settings** using the double-under
 | App setting | Maps to | Default |
 |---|---|---|
 | `Auth__AccessTokenLifetimeMinutes` | `Auth:AccessTokenLifetimeMinutes` | `480` (8h) |
+| `Ai__ApiKey` | `Ai:ApiKey` | *(unset)* — **a secret.** The single deployment-level Anthropic key every organization shares (`SPEC/20-feature-ai-idea-assist.md` rule 29). Leaving it unset is a **supported** state, not a misconfiguration: AI idea assist runs dark, the brainstorm falls back to its scripted prompts, and the API answers "not configured" rather than erroring (rule 31). Unlike `SiteAdmin__*` it must never fail startup. |
+| `Ai__DailyTokenLimit` | `Ai:DailyTokenLimit` | `500000` tokens per UTC day, one global pool across all organizations. Non-positive disables the budget gate — local use only, never in Azure. |
+| `Ai__Model` / `Ai__Effort` | `Ai:Model` / `Ai:Effort` | `claude-sonnet-5` / `low` |
+| `Ai__Pricing__InputPerMillion` / `Ai__Pricing__OutputPerMillion` | `Ai:Pricing:*` | `3.00` / `15.00` — display only, for the usage page's cost estimate |
 
 > **Migrations are automatic.** On startup the API runs `Database.MigrateAsync()` against the
 > relational provider, so the schema is created/upgraded on first boot — no separate migration

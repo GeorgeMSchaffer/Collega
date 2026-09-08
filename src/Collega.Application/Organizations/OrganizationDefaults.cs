@@ -39,16 +39,30 @@ public static class OrganizationDefaults
     };
 
     /// <summary>
-    /// Canonical default Business Impacts provisioned for every new organization. The first by sort
-    /// order is the default. Colors follow a low→critical green/blue/amber/red progression.
+    /// Canonical default Business Impacts provisioned for every new organization, **most severe first**
+    /// (user decision 2026-08-17).
     /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="IdeaTypes"/> and <see cref="Statuses"/>, the first option here is <b>not</b> the
+    /// default for a new idea — <see cref="DefaultBusinessImpactName"/> is. Reversing this list without
+    /// that decoupling would have pre-marked every new idea <c>Critical</c>, inflating reported severity
+    /// through a default nobody chose. Colors stay bound to meaning, not to position: red is Critical
+    /// wherever it sits.
+    /// </remarks>
     public static readonly IReadOnlyList<DefaultBusinessImpact> BusinessImpacts = new[]
     {
-        new DefaultBusinessImpact("Low", "#16A34A", 10),
-        new DefaultBusinessImpact("Medium", "#2563EB", 20),
-        new DefaultBusinessImpact("High", "#D97706", 30),
-        new DefaultBusinessImpact("Critical", "#DC2626", 40)
+        new DefaultBusinessImpact("Critical", "#DC2626", 10),
+        new DefaultBusinessImpact("High", "#D97706", 20),
+        new DefaultBusinessImpact("Medium", "#2563EB", 30),
+        new DefaultBusinessImpact("Low", "#16A34A", 40)
     };
+
+    /// <summary>
+    /// The Business Impact pre-selected on a new idea, matched by name. Mirrors <c>Priority</c>, which
+    /// already hard-defaults to Medium rather than to first-in-list. Callers fall back to the first
+    /// active option when an organization has renamed or removed this one.
+    /// </summary>
+    public const string DefaultBusinessImpactName = "Medium";
 }
 
 public sealed record DefaultStatus(string Name, string Color, int SortOrder);

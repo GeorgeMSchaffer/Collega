@@ -1,0 +1,28 @@
+{
+  "scenario": "organizations",
+  "step": "archive.siteadmin",
+  "endpoint": "POST /organizations/{organizationId}/archive",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Archives the organization this scenario created. Last, because it is terminal.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/a313baf6-1d17-470d-99d2-6d565199a856/archive",
+    "body": null
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

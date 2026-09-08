@@ -1,0 +1,56 @@
+{
+  "scenario": "fielddefinitions",
+  "step": "relist",
+  "endpoint": "GET /organizations/{organizationId}/field-definitions",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Re-read after the create, so the reorder is over a non-empty set.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/field-definitions",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:43 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "fieldDefinitionId": "669cc969-5fba-4dee-a3d6-a072799faa63",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "Golden Capture Field Renamed",
+        "description": null,
+        "fieldType": "Text",
+        "isRequired": true,
+        "displayOrder": 10,
+        "isDeleted": false,
+        "options": []
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "description": null,
+        "displayOrder": 10,
+        "fieldDefinitionId": "<guid@create.orgadmin.body.fieldDefinitionId>",
+        "fieldType": "Text",
+        "isDeleted": false,
+        "isRequired": true,
+        "name": "Golden Capture Field Renamed",
+        "options": [],
+        "organizationId": "<guid@org.body.organizationId>"
+      }
+    ]
+  }
+}

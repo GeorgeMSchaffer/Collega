@@ -1,0 +1,113 @@
+{
+  "name": "tags",
+  "description": "Tag suggestions for the idea form.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "suggest.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/tags"
+    },
+    {
+      "id": "suggest.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/tags"
+    },
+    {
+      "id": "suggest.user",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/tags"
+    },
+    {
+      "id": "suggest.readonly",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/tags"
+    },
+    {
+      "id": "suggest.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/tags"
+    },
+    {
+      "id": "suggest.search.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/tags",
+      "query": {
+        "search": "safe"
+      }
+    },
+    {
+      "id": "suggest.search.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/tags",
+      "query": {
+        "search": "safe"
+      }
+    },
+    {
+      "id": "suggest.search.user",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/tags",
+      "query": {
+        "search": "safe"
+      }
+    },
+    {
+      "id": "suggest.search.readonly",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/tags",
+      "query": {
+        "search": "safe"
+      }
+    },
+    {
+      "id": "suggest.search.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/tags",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/tags",
+      "query": {
+        "search": "safe"
+      }
+    }
+  ]
+}

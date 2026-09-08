@@ -5,7 +5,13 @@
     the SPA's browser history, so it works regardless of how the page was reached. Available to every
     role (no authorization gate) and sits alongside the page's "Add New" action per bug-triage item #3.
 *@
-<button class="btn subtle" type="button" @onclick="GoBackAsync" title="Back to the previous page"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowLeft())" aria-hidden="true" /> Back</button>
+@*
+    Styled as a link, not a button (user decision 2026-08-17): `.btn subtle` still inherited
+    `background: var(--surface)` from `.btn`, so it painted a card-coloured box wherever it sat.
+    It stays a <button> element — it runs history.back(), it is not a navigation to an href, and
+    giving it a fake href would break middle-click and "open in new tab" expectations.
+*@
+<button class="backlink" type="button" @onclick="GoBackAsync" title="Back to the previous page"><FluentIcon Value="@(new Icons.Regular.Size20.ArrowLeft())" aria-hidden="true" /> Back</button>
 
 @code {
     private async Task GoBackAsync() => await JS.InvokeVoidAsync("history.back");

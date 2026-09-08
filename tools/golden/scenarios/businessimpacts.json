@@ -1,0 +1,291 @@
+{
+  "name": "businessimpacts",
+  "description": "The business impact catalog.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "list.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/business-impacts",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/business-impacts"
+    },
+    {
+      "id": "list.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/business-impacts",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/business-impacts",
+      "bind": {
+        "impactIds": "$.body[*].businessImpactId"
+      }
+    },
+    {
+      "id": "list.user",
+      "endpoint": "GET /organizations/{organizationId}/business-impacts",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/business-impacts"
+    },
+    {
+      "id": "list.readonly",
+      "endpoint": "GET /organizations/{organizationId}/business-impacts",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/business-impacts"
+    },
+    {
+      "id": "list.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/business-impacts",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/business-impacts"
+    },
+    {
+      "id": "create.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/business-impacts",
+      "body": {
+        "name": "Golden Capture Impact",
+        "color": "#6f8f3f"
+      }
+    },
+    {
+      "id": "create.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/organizations/{{orgId}}/business-impacts",
+      "body": {
+        "name": "Golden Capture Impact",
+        "color": "#6f8f3f"
+      },
+      "bind": {
+        "newImpactId": "$.body.businessImpactId"
+      }
+    },
+    {
+      "id": "create.user",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/business-impacts",
+      "body": {
+        "name": "Golden Capture Impact",
+        "color": "#6f8f3f"
+      }
+    },
+    {
+      "id": "create.readonly",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/business-impacts",
+      "body": {
+        "name": "Golden Capture Impact",
+        "color": "#6f8f3f"
+      }
+    },
+    {
+      "id": "create.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/business-impacts",
+      "body": {
+        "name": "Golden Capture Impact",
+        "color": "#6f8f3f"
+      }
+    },
+    {
+      "id": "update.siteadmin",
+      "endpoint": "PUT /business-impacts/{businessImpactId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/business-impacts/{{newImpactId}}",
+      "body": {
+        "name": "Golden Capture Impact Renamed",
+        "color": "#8f6f3f"
+      }
+    },
+    {
+      "id": "update.orgadmin",
+      "endpoint": "PUT /business-impacts/{businessImpactId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/business-impacts/{{newImpactId}}",
+      "body": {
+        "name": "Golden Capture Impact Renamed",
+        "color": "#8f6f3f"
+      }
+    },
+    {
+      "id": "update.user",
+      "endpoint": "PUT /business-impacts/{businessImpactId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/business-impacts/{{newImpactId}}",
+      "body": {
+        "name": "Golden Capture Impact Renamed",
+        "color": "#8f6f3f"
+      }
+    },
+    {
+      "id": "update.readonly",
+      "endpoint": "PUT /business-impacts/{businessImpactId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/business-impacts/{{newImpactId}}",
+      "body": {
+        "name": "Golden Capture Impact Renamed",
+        "color": "#8f6f3f"
+      }
+    },
+    {
+      "id": "update.anonymous",
+      "endpoint": "PUT /business-impacts/{businessImpactId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/business-impacts/{{newImpactId}}",
+      "body": {
+        "name": "Golden Capture Impact Renamed",
+        "color": "#8f6f3f"
+      }
+    },
+    {
+      "id": "relist",
+      "endpoint": "GET /organizations/{organizationId}/business-impacts",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/business-impacts",
+      "note": "Re-read after the create: reorder must name every active impact.",
+      "bind": {
+        "impactIds": "$.body[*].businessImpactId"
+      }
+    },
+    {
+      "id": "reorder.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts/reorder",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/business-impacts/reorder",
+      "body": {
+        "orderedBusinessImpactIds": "{{impactIds}}"
+      }
+    },
+    {
+      "id": "reorder.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts/reorder",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/organizations/{{orgId}}/business-impacts/reorder",
+      "body": {
+        "orderedBusinessImpactIds": "{{impactIds}}"
+      }
+    },
+    {
+      "id": "reorder.user",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts/reorder",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/business-impacts/reorder",
+      "body": {
+        "orderedBusinessImpactIds": "{{impactIds}}"
+      }
+    },
+    {
+      "id": "reorder.readonly",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts/reorder",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/business-impacts/reorder",
+      "body": {
+        "orderedBusinessImpactIds": "{{impactIds}}"
+      }
+    },
+    {
+      "id": "reorder.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/business-impacts/reorder",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/business-impacts/reorder",
+      "body": {
+        "orderedBusinessImpactIds": "{{impactIds}}"
+      }
+    },
+    {
+      "id": "delete.siteadmin",
+      "endpoint": "DELETE /business-impacts/{businessImpactId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/business-impacts/{{newImpactId}}"
+    },
+    {
+      "id": "delete.orgadmin",
+      "endpoint": "DELETE /business-impacts/{businessImpactId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/business-impacts/{{newImpactId}}"
+    },
+    {
+      "id": "delete.user",
+      "endpoint": "DELETE /business-impacts/{businessImpactId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/business-impacts/{{newImpactId}}"
+    },
+    {
+      "id": "delete.readonly",
+      "endpoint": "DELETE /business-impacts/{businessImpactId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/business-impacts/{{newImpactId}}"
+    },
+    {
+      "id": "delete.anonymous",
+      "endpoint": "DELETE /business-impacts/{businessImpactId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/business-impacts/{{newImpactId}}"
+    }
+  ]
+}

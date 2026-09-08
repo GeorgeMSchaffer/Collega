@@ -1,0 +1,56 @@
+{
+  "scenario": "profile",
+  "step": "me.update.orgadmin",
+  "endpoint": "PUT /auth/me",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Everyone owns their own name, Read Only included.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/auth/me",
+    "body": {
+      "firstName": "Golden",
+      "lastName": "Capture"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+      "role": "OrgAdmin",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "email": "orgadmin@acme-robotics.demo.collega.test",
+      "status": "Active",
+      "portraitDataUrl": null,
+      "viewingAs": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "orgadmin@acme-robotics.demo.collega.test",
+      "firstName": "Golden",
+      "lastName": "Capture",
+      "organizationId": "<guid@org.body.organizationId>",
+      "portraitDataUrl": null,
+      "role": "OrgAdmin",
+      "status": "Active",
+      "userId": "<guid@org.body.userId>",
+      "viewingAs": null
+    }
+  }
+}

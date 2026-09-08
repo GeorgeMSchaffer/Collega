@@ -1,0 +1,14 @@
+{
+  "id": "approval-threshold",
+  "fixture": "acme",
+  "note": "Separates a rule change from an improvement. If this drifts to Continuous Improvement, the type descriptions in the prompt are not carrying enough signal.",
+  "turns": [
+    "Every outbound shipment needs a manager signature before it leaves the dock, even repeat customers under $500. That rule was written when we had two clients. It adds an hour of waiting most afternoons."
+  ],
+  "expect": {
+    "inScope": true,
+    "ideaType": "Process Revision",
+    "titleSet": true,
+    "descriptionSet": true
+  }
+}

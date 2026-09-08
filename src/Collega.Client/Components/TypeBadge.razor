@@ -5,22 +5,20 @@
 
     Colors come in as inline styles (a soft tint of the type color for the fill, the color itself for the
     text) so no shared app.css class is needed and the palette follows whatever the admin picked. A null
-    color falls back to a neutral badge; a null icon simply omits the glyph. Set IconOnly for tight spots
-    (swimlane/list cards) where the name would cause chip overload — the full name rides the tooltip.
+    color falls back to a neutral badge; a null icon simply omits the glyph.
+
+    The name is always rendered: colour may never be the only carrier of meaning (SPEC/decisions.md,
+    2026-08-31), and the earlier icon-only form left the type as a coloured dot with the name only on a
+    tooltip — invisible to screen readers and unreachable on touch. Set Compact for tight spots
+    (swimlane/list cards), which keeps the badge small and lets a long name ellipsize; the full name
+    stays on the tooltip.
 *@
-<span class="typebadge @(IconOnly ? "icononly" : null)" style="@Style()" title="@Tooltip()">
+<span class="typebadge @(Compact ? "compact" : null)" style="@Style()" title="@Tooltip()">
     @if (!string.IsNullOrWhiteSpace(Icon))
     {
-        <span class="ic">@Icon</span>
+        <span class="ic" aria-hidden="true">@Icon</span>
     }
-    else if (IconOnly)
-    {
-        <span class="dot"></span>
-    }
-    @if (!IconOnly)
-    {
-        @Name
-    }
+    <span class="nm">@Name</span>
 </span>
 
 @code {
@@ -28,8 +26,8 @@
     [Parameter] public string? ColorHex { get; set; }
     [Parameter] public string? Icon { get; set; }
 
-    /// <summary>Compact form (icon or dot only, name on the tooltip) for cards where space is tight.</summary>
-    [Parameter] public bool IconOnly { get; set; }
+    /// <summary>Tighter form for cards where space is short — the name stays, but may ellipsize.</summary>
+    [Parameter] public bool Compact { get; set; }
 
     private string Style()
     {
@@ -41,7 +39,8 @@
         return "background:#f1f0ee;color:var(--ink-2)";
     }
 
-    private string? Tooltip() => IconOnly ? Name : null;
+    // Only the compact form can truncate, so only it needs the name repeated on hover.
+    private string? Tooltip() => Compact ? Name : null;
 
     private static bool IsHex(string? value) =>
         !string.IsNullOrWhiteSpace(value) && value.Length == 7 && value[0] == '#';

@@ -89,6 +89,158 @@ public class AiUsageServiceTests
         Assert.True(await service.IsWithinDailyBudgetAsync());
     }
 
+    // ---- Rate limiting (rule 26) ----
+
+    [Fact]
+    public async Task EnforceRateLimit_Allows_WhenTheUserIsUnderTheirLimit()
+    {
+        var actor = Guid.NewGuid();
+        var service = CreateService(
+            FakeCurrentUserContext.User(AcmeId, actor),
+            new AiUsageLimits { PerUserCallsPerWindow = 3, PerOrganizationCallsPerWindow = 100 });
+
+        GivenCalls(AcmeId, actor, count: 2, at: _clock.UtcNow);
+
+        await service.EnforceRateLimitAsync(AcmeId);
+    }
+
+    [Fact]
+    public async Task EnforceRateLimit_Refuses_WhenTheUserHitsTheirLimit()
+    {
+        var actor = Guid.NewGuid();
+        var service = CreateService(
+            FakeCurrentUserContext.User(AcmeId, actor),
+            new AiUsageLimits { PerUserCallsPerWindow = 3, PerOrganizationCallsPerWindow = 100 });
+
+        GivenCalls(AcmeId, actor, count: 3, at: _clock.UtcNow);
+
+        var error = await Assert.ThrowsAsync<RateLimitedAppException>(() => service.EnforceRateLimitAsync(AcmeId));
+        Assert.True(error.RetryAfterSeconds > 0);
+    }
+
+    /// <summary>
+    /// The organization ceiling holds even when no single user is over theirs — that is the point of
+    /// having both: a burst spread across accounts is still a burst.
+    /// </summary>
+    [Fact]
+    public async Task EnforceRateLimit_Refuses_WhenTheOrganizationHitsItsLimit()
+    {
+        var actor = Guid.NewGuid();
+        var service = CreateService(
+            FakeCurrentUserContext.User(AcmeId, actor),
+            new AiUsageLimits { PerUserCallsPerWindow = 100, PerOrganizationCallsPerWindow = 4 });
+
+        // Four different colleagues, one call each.
+        for (var i = 0; i < 4; i++)
+        {
+            GivenCalls(AcmeId, Guid.NewGuid(), count: 1, at: _clock.UtcNow);
+        }
+
+        await Assert.ThrowsAsync<RateLimitedAppException>(() => service.EnforceRateLimitAsync(AcmeId));
+    }
+
+    [Fact]
+    public async Task EnforceRateLimit_IgnoresAnotherOrganizationsTraffic()
+    {
+        var actor = Guid.NewGuid();
+        var service = CreateService(
+            FakeCurrentUserContext.User(AcmeId, actor),
+            new AiUsageLimits { PerUserCallsPerWindow = 100, PerOrganizationCallsPerWindow = 2 });
+
+        GivenCalls(HarborId, Guid.NewGuid(), count: 10, at: _clock.UtcNow);
+
+        await service.EnforceRateLimitAsync(AcmeId);
+    }
+
+    [Fact]
+    public async Task EnforceRateLimit_ForgetsCallsOlderThanTheWindow()
+    {
+        var actor = Guid.NewGuid();
+        var service = CreateService(
+            FakeCurrentUserContext.User(AcmeId, actor),
+            new AiUsageLimits { RateLimitWindowSeconds = 60, PerUserCallsPerWindow = 2 });
+
+        GivenCalls(AcmeId, actor, count: 5, at: _clock.UtcNow.AddSeconds(-61));
+
+        await service.EnforceRateLimitAsync(AcmeId);
+    }
+
+    /// <summary>
+    /// The case that makes this a real limit rather than a speed bump. During a View As session the
+    /// allowance follows the <b>real administrator</b>, so hopping between impersonated users does
+    /// not hand them a fresh quota each time.
+    /// </summary>
+    [Fact]
+    public async Task EnforceRateLimit_CountsAgainstTheRealAdministrator_DuringViewAs()
+    {
+        var realAdmin = Guid.NewGuid();
+        var firstTarget = Guid.NewGuid();
+        var secondTarget = Guid.NewGuid();
+
+        // Earlier calls made while acting as one member.
+        GivenCalls(AcmeId, realAdmin, count: 3, at: _clock.UtcNow, onBehalfOf: firstTarget);
+
+        // Now acting as a different member — same administrator, so the allowance is already spent.
+        var context = FakeCurrentUserContext.User(AcmeId, secondTarget);
+        context.ImpersonatingRealUserId = realAdmin;
+
+        var service = CreateService(context, new AiUsageLimits { PerUserCallsPerWindow = 3 });
+
+        await Assert.ThrowsAsync<RateLimitedAppException>(() => service.EnforceRateLimitAsync(AcmeId));
+    }
+
+    /// <summary>
+    /// Refused turns count. Rule 10's three-strikes close bounds one conversation; this bounds the
+    /// attempt to open many, so probing the boundary has to cost allowance.
+    /// </summary>
+    [Fact]
+    public async Task EnforceRateLimit_CountsRefusedAndFailedTurns()
+    {
+        var actor = Guid.NewGuid();
+        var service = CreateService(
+            FakeCurrentUserContext.User(AcmeId, actor),
+            new AiUsageLimits { PerUserCallsPerWindow = 2 });
+
+        GivenCalls(AcmeId, actor, count: 1, at: _clock.UtcNow, outcome: AiCallOutcome.Refused);
+        GivenCalls(AcmeId, actor, count: 1, at: _clock.UtcNow, outcome: AiCallOutcome.Failed);
+
+        await Assert.ThrowsAsync<RateLimitedAppException>(() => service.EnforceRateLimitAsync(AcmeId));
+    }
+
+    [Theory]
+    [InlineData(0, 10, 10)]   // window disabled
+    [InlineData(60, 0, 0)]    // both limits disabled
+    public async Task EnforceRateLimit_IsDisabled_ByNonPositiveConfiguration(int window, int perUser, int perOrg)
+    {
+        var actor = Guid.NewGuid();
+        var service = CreateService(
+            FakeCurrentUserContext.User(AcmeId, actor),
+            new AiUsageLimits
+            {
+                RateLimitWindowSeconds = window,
+                PerUserCallsPerWindow = perUser,
+                PerOrganizationCallsPerWindow = perOrg,
+            });
+
+        GivenCalls(AcmeId, actor, count: 500, at: _clock.UtcNow);
+
+        await service.EnforceRateLimitAsync(AcmeId);
+    }
+
+    /// <summary>One limit disabled must not disable the other.</summary>
+    [Fact]
+    public async Task EnforceRateLimit_StillEnforcesTheOrgLimit_WhenThePerUserLimitIsOff()
+    {
+        var actor = Guid.NewGuid();
+        var service = CreateService(
+            FakeCurrentUserContext.User(AcmeId, actor),
+            new AiUsageLimits { PerUserCallsPerWindow = 0, PerOrganizationCallsPerWindow = 2 });
+
+        GivenCalls(AcmeId, actor, count: 2, at: _clock.UtcNow);
+
+        await Assert.ThrowsAsync<RateLimitedAppException>(() => service.EnforceRateLimitAsync(AcmeId));
+    }
+
     // ---- Attribution (rule 28c) ----
 
     [Fact]
@@ -337,6 +489,31 @@ public class AiUsageServiceTests
         "ReadOnly" => FakeCurrentUserContext.ReadOnly(organizationId),
         _ => throw new ArgumentOutOfRangeException(nameof(role), role, "Unhandled role."),
     };
+
+    /// <summary>Seeds <paramref name="count"/> calls by one actor, as the rate-limit window sees them.</summary>
+    private void GivenCalls(
+        Guid organizationId,
+        Guid actorUserId,
+        int count,
+        DateTime at,
+        Guid? onBehalfOf = null,
+        AiCallOutcome outcome = AiCallOutcome.Succeeded)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            _usage.Records.Add(AiUsageRecord.Create(
+                organizationId,
+                "claude-sonnet-5",
+                at,
+                inputTokens: 10,
+                outputTokens: 5,
+                inputRatePerMillion: 3.00m,
+                outputRatePerMillion: 15.00m,
+                outcome,
+                actorUserId,
+                onBehalfOf));
+        }
+    }
 
     private void GivenUsage(Guid organizationId, DateTime occurredAtUtc, int inputTokens = 0, int outputTokens = 0) =>
         _usage.Records.Add(AiUsageRecord.Create(

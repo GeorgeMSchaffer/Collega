@@ -1,0 +1,51 @@
+{
+  "scenario": "fielddefinitions",
+  "step": "get.orgadmin",
+  "endpoint": "GET /organizations/{organizationId}/field-definitions/{id}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/field-definitions/669cc969-5fba-4dee-a3d6-a072799faa63",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:43 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "fieldDefinitionId": "669cc969-5fba-4dee-a3d6-a072799faa63",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+      "name": "Golden Capture Field",
+      "description": null,
+      "fieldType": "Text",
+      "isRequired": false,
+      "displayOrder": 10,
+      "isDeleted": false,
+      "options": []
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "description": null,
+      "displayOrder": 10,
+      "fieldDefinitionId": "<guid@create.orgadmin.body.fieldDefinitionId>",
+      "fieldType": "Text",
+      "isDeleted": false,
+      "isRequired": false,
+      "name": "Golden Capture Field",
+      "options": [],
+      "organizationId": "<guid@org.body.organizationId>"
+    }
+  }
+}

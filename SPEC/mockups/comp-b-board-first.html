@@ -1,62 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Comp B: Board First (Trello-inspired)</title>
 <style>
   :root{
-    --brand-1:#38a1a5; --brand-2:#1f7a8c; --brand-deep:#0b3948;
-    --ink:#1d2b36; --ink-2:#4a5b68; --ink-3:#6b7b88;
-    --bg:#eef3f6; --surface:#ffffff; --line:#d7e0e6;
-    --ok:#2e8b57; --warn:#d97a00; --err:#c23934;
+    --brand-1:#4A7972; --brand-2:#4A7972; --brand-deep:#4A7972;
+    --ink:#243447; --ink-2:#527292; --ink-3:#5B7FA3;
+    --bg:#F1F3F6; --surface:#FFFFFF; --line:#D1DBE5;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#C97A7A;
     --shadow:0 1px 1px rgba(11,57,72,.18);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
   /* comp chrome */
   .comp-bar{background:var(--brand-deep);color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
   .comp-bar strong{font-size:13px;letter-spacing:.04em}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#bcd6dd;border:1px solid #35606e;border-radius:14px;padding:4px 12px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#D2E4E1;border:1px solid #4A7972;border-radius:2px;padding:4px 12px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--brand-1);border-color:var(--brand-1);color:#fff}
   .screen{display:none}.screen.on{display:block}
   /* top-nav shell (no sidebar — Trello style) */
   .appbar{height:52px;background:linear-gradient(90deg,var(--brand-2),var(--brand-1));display:flex;align-items:center;gap:14px;padding:0 18px;color:#fff}
   .appbar .logo{font-weight:700;display:flex;align-items:center;gap:8px;font-size:15px}
-  .appbar .mark{width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.22);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
-  .appbar a{color:#eaf6f7;text-decoration:none;font-size:13.5px;padding:6px 12px;border-radius:6px}
+  .appbar .mark{width:26px;height:26px;border-radius:2px;background:rgba(255,255,255,.22);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  .appbar a{color:#F1F6F5;text-decoration:none;font-size:13.5px;padding:6px 12px;border-radius:2px}
   .appbar a.on,.appbar a:hover{background:rgba(255,255,255,.18)}
   .appbar .spacer{flex:1}
-  .appbar input{border:none;border-radius:6px;padding:7px 12px;width:260px;background:rgba(255,255,255,.22);color:#fff;font-size:13px}
-  .appbar input::placeholder{color:#dceff1}
-  .avatar{width:30px;height:30px;border-radius:50%;background:#f4b942;color:#4a3200;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid rgba(255,255,255,.6)}
+  .appbar input{border:none;border-radius:2px;padding:7px 12px;width:260px;background:rgba(255,255,255,.22);color:#fff;font-size:13px}
+  .appbar input::placeholder{color:#F1F6F5}
+  .avatar{width:30px;height:30px;border-radius:50%;background:#C9A65C;color:#8A6D2E;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid rgba(255,255,255,.6)}
   .avatar.s{width:24px;height:24px;font-size:9.5px;border:none}
   .bell{position:relative;font-size:17px;background:none;border:none;color:#fff;cursor:pointer}
-  .bell .dot{position:absolute;top:-2px;right:-4px;width:9px;height:9px;border-radius:50%;background:#ffd166;border:2px solid var(--brand-2)}
+  .bell .dot{position:absolute;top:-2px;right:-4px;width:9px;height:9px;border-radius:50%;background:#C9A65C;border:2px solid var(--brand-2)}
   main{max-width:1160px;margin:0 auto;padding:26px 22px}
   main.wide{max-width:none}
   h1{font-size:21px;font-weight:700;margin-bottom:4px}
   .sub{color:var(--ink-3);font-size:13px;margin-bottom:20px}
   .crumbs{font-size:12px;color:var(--ink-3);margin-bottom:8px}
   .crumbs a{color:var(--brand-2);text-decoration:none}
-  .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f2f7f9}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--brand-2);border-color:var(--brand-2);color:#fff}
   .btn.primary:hover{background:var(--brand-deep)}
   .btn.ghost{border-color:transparent;background:transparent;color:var(--brand-2)}
   .btn.danger{border-color:transparent;background:transparent;color:var(--err)}
-  input[type=text],input[type=email],input[type=password],select,textarea{border:1.5px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  input[type=text],input[type=email],input[type=password],select,textarea{border:1.5px solid var(--line);border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--brand-1);outline-offset:-1px}
   label{font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:5px}
-  .card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);border:1px solid var(--line)}
-  .pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700}
-  .pill.ok{background:#e0f3e8;color:#1e6b41}.pill.warn{background:#fdefdd;color:#8a5200}
-  .pill.err{background:#fbe4e3;color:#96302c}.pill.neutral{background:#e9eef2;color:var(--ink-2)}
-  .pill.info{background:#dff0f2;color:var(--brand-2)}
+  .card{background:var(--surface);border-radius:2px;box-shadow:var(--shadow);border:1px solid var(--line)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:700}
+  .pill.ok{background:#F0F7F1;color:#457C4F}.pill.warn{background:#F9F6EE;color:#8A6D2E}
+  .pill.err{background:#F8EFEF;color:#B64B4B}.pill.neutral{background:#F1F3F6;color:var(--ink-2)}
+  .pill.info{background:#F1F6F5;color:var(--brand-2)}
   /* board tiles on home */
   .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-bottom:26px}
-  .tile{border-radius:12px;padding:0;overflow:hidden;cursor:pointer;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line)}
+  .tile{border-radius:2px;padding:0;overflow:hidden;cursor:pointer;background:var(--surface);box-shadow:var(--shadow);border:1px solid var(--line)}
   .tile:hover{transform:translateY(-2px);transition:transform .12s}
   .tile .band{height:56px}
   .tile .bd{padding:12px 14px}
@@ -66,72 +70,72 @@
   /* lists/tables */
   table{width:100%;border-collapse:collapse;font-size:13px}
   th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line)}
-  td{padding:12px 16px;border-bottom:1px solid #edf2f5;vertical-align:middle}
+  td{padding:12px 16px;border-bottom:1px solid #F1F3F6;vertical-align:middle}
   tr:last-child td{border-bottom:none}
-  tr:hover td{background:#f6fafb}
+  tr:hover td{background:#F7F9FB}
   .cmdbar{display:flex;gap:10px;align-items:center;margin:16px 0;flex-wrap:wrap}
   /* board lanes */
-  .boardbg{background:linear-gradient(160deg,#2a8f95,#0b5c6b);min-height:calc(100vh - 98px);padding:18px 20px}
+  .boardbg{background:linear-gradient(160deg,#4A7972,#4A7972);min-height:calc(100vh - 98px);padding:18px 20px}
   .boardhead{display:flex;align-items:center;gap:12px;margin-bottom:14px;color:#fff;flex-wrap:wrap}
   .boardhead h1{color:#fff;margin:0}
-  .boardhead .chip{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;font-weight:600}
+  .boardhead .chip{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:2px;padding:6px 12px;font-size:12.5px;cursor:pointer;font-weight:600}
   .lanes{display:flex;gap:14px;overflow-x:auto;align-items:flex-start;padding-bottom:10px}
-  .lane{background:#f0f4f6;border-radius:12px;min-width:276px;width:276px;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+  .lane{background:#F1F3F6;border-radius:2px;min-width:276px;width:276px;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
   .lane h3{font-size:13px;font-weight:700;padding:4px 8px 10px;display:flex;justify-content:space-between;color:var(--ink)}
   .lane .cnt{color:var(--ink-3);font-weight:600}
-  .icard{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);padding:10px 12px;margin-bottom:8px;cursor:pointer}
+  .icard{background:var(--surface);border-radius:2px;box-shadow:var(--shadow);padding:10px 12px;margin-bottom:8px;cursor:pointer}
   .icard:hover{outline:2px solid var(--brand-1)}
   .icard .tags{display:flex;gap:5px;margin-bottom:6px}
-  .swatch{height:7px;width:36px;border-radius:4px;display:inline-block}
+  .swatch{height:7px;width:36px;border-radius:2px;display:inline-block}
   .icard .t{font-size:13.5px;font-weight:600;margin-bottom:8px}
   .icard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3)}
   .icard .meta .spacer{flex:1}
-  .up{border:1px solid var(--line);border-radius:12px;padding:2px 9px;font-size:11px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2)}
-  .up.mine{background:#dff0f2;border-color:var(--brand-1);color:var(--brand-2)}
-  .addcard{width:100%;border:none;background:transparent;text-align:left;padding:8px;border-radius:8px;color:var(--ink-3);cursor:pointer;font-size:13px;font-weight:600}
-  .addcard:hover{background:#e3eaee}
+  .up{border:1px solid var(--line);border-radius:2px;padding:2px 9px;font-size:11px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2)}
+  .up.mine{background:#F1F6F5;border-color:var(--brand-1);color:var(--brand-2)}
+  .addcard{width:100%;border:none;background:transparent;text-align:left;padding:8px;border-radius:2px;color:var(--ink-3);cursor:pointer;font-size:13px;font-weight:600}
+  .addcard:hover{background:#DDE1E6}
   /* auth */
   .authwrap{min-height:calc(100vh - 46px);display:grid;grid-template-columns:1fr 1fr}
   .authart{background:linear-gradient(160deg,var(--brand-1),var(--brand-deep));color:#fff;display:flex;flex-direction:column;justify-content:center;padding:60px}
   .authart h2{font-size:26px;line-height:1.25;margin-bottom:14px;font-weight:800}
-  .authart p{font-size:14px;color:#cfe8ea;max-width:380px;line-height:1.55}
+  .authart p{font-size:14px;color:#D2E4E1;max-width:380px;line-height:1.55}
   .authform{display:flex;align-items:center;justify-content:center;background:var(--surface)}
   .authform .inner{width:360px}
   .authform .field{margin-bottom:15px}
   .authform input{width:100%}
-  .msg{border-radius:8px;padding:10px 13px;font-size:12.5px;margin-bottom:15px}
-  .msg.err{background:#fbe4e3;color:#96302c}.msg.info{background:#dff0f2;color:var(--brand-2)}
+  .msg{border-radius:2px;padding:10px 13px;font-size:12.5px;margin-bottom:15px}
+  .msg.err{background:#F8EFEF;color:#B64B4B}.msg.info{background:#F1F6F5;color:var(--brand-2)}
   .checklist{list-style:none;font-size:12px;margin:8px 0 15px}
   .checklist li{padding:2px 0;color:var(--ink-3)}
   .checklist li.ok{color:var(--ok)}
   .checklist li::before{content:"○ "}.checklist li.ok::before{content:"✓ "}
   /* idea overlay */
   .overlay{position:fixed;inset:0;background:rgba(11,57,72,.6);display:flex;align-items:flex-start;justify-content:center;padding:44px 16px;z-index:40}
-  .panel{width:840px;max-width:100%;background:#f4f7f9;border-radius:14px;max-height:86vh;overflow:auto;box-shadow:0 14px 44px rgba(11,57,72,.45)}
-  .panel .cover{height:10px;border-radius:14px 14px 0 0;background:linear-gradient(90deg,var(--brand-1),var(--brand-2))}
+  .panel{width:840px;max-width:100%;background:#F7F9FB;border-radius:2px;max-height:86vh;overflow:auto;box-shadow:0 14px 44px rgba(11,57,72,.45)}
+  .panel .cover{height:10px;border-radius:2px 2px 0 0;background:linear-gradient(90deg,var(--brand-1),var(--brand-2))}
   .panel .hd{display:flex;align-items:flex-start;gap:12px;padding:18px 24px 8px}
   .panel .hd h2{font-size:19px;font-weight:800;flex:1}
   .panel .bd{display:grid;grid-template-columns:1fr 230px;gap:20px;padding:12px 24px 24px}
   .blk{margin-bottom:20px}
   .blk h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:8px}
-  .sidebtn{display:block;width:100%;text-align:left;background:#e6edf1;border:none;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:7px;cursor:pointer}
-  .sidebtn:hover{background:#dbe5ea}
+  .sidebtn{display:block;width:100%;text-align:left;background:#F1F3F6;border:none;border-radius:2px;padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:7px;cursor:pointer}
+  .sidebtn:hover{background:#D1DBE5}
   .comment{display:flex;gap:10px;margin-bottom:13px}
-  .comment .bubble{background:var(--surface);border-radius:10px;padding:9px 13px;box-shadow:var(--shadow);flex:1}
+  .comment .bubble{background:var(--surface);border-radius:2px;padding:9px 13px;box-shadow:var(--shadow);flex:1}
   .comment .who{font-size:12px;font-weight:700}
   .comment .when{font-size:11px;color:var(--ink-3);font-weight:400;margin-left:6px}
   .comment p{font-size:13px;margin-top:3px}
-  .mention{color:var(--brand-2);font-weight:700;background:#dff0f2;border-radius:4px;padding:0 3px}
+  .mention{color:var(--brand-2);font-weight:700;background:#F1F6F5;border-radius:2px;padding:0 3px}
   .charcount{font-size:11px;color:var(--ink-3);text-align:right;margin-top:4px}
-  .tagchip{background:#e6edf1;border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:600;color:var(--ink-2)}
+  .tagchip{background:#F1F3F6;border-radius:2px;padding:3px 9px;font-size:11.5px;font-weight:600;color:var(--ink-2)}
   /* admin hub tiles */
   .hub{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
   .hub .card{padding:22px;cursor:pointer}
-  .hub .em{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
+  .hub .em{width:42px;height:42px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
   .hub h3{font-size:15px;margin-bottom:5px}
   .hub p{font-size:12.5px;color:var(--ink-3);line-height:1.5}
   .empty{padding:56px;text-align:center;color:var(--ink-3)}
-  .note{font-size:11.5px;color:var(--ink-2);background:#fdf6df;border-radius:8px;padding:8px 12px;margin-top:16px;display:inline-block}
+  .note{font-size:11.5px;color:var(--ink-2);background:#F9F6EE;border-radius:2px;padding:8px 12px;margin-top:16px;display:inline-block}
 </style>
 </head>
 <body>
@@ -165,7 +169,7 @@
         <p class="sub">Sign in with your email. Your organization is detected automatically.</p>
         <div class="field"><label for="b-em">Email</label><input id="b-em" type="email" placeholder="you@company.com"></div>
         <div class="field"><label for="b-pw">Password</label><input id="b-pw" type="password"></div>
-        <button class="btn primary" style="width:100%;padding:10px;border-radius:8px">Sign in</button>
+        <button class="btn primary" style="width:100%;padding:10px;border-radius:2px">Sign in</button>
         <div class="msg err" style="margin-top:15px">Too many failed attempts locks your account for 15 minutes. Need help? Ask your org admin for a temporary password.</div>
       </div>
     </div>
@@ -211,18 +215,18 @@
     <h1>Your boards</h1>
     <p class="sub">Acme Corp · 3 boards you can access</p>
     <div class="tiles">
-      <div class="tile"><div class="band" style="background:linear-gradient(120deg,#38a1a5,#1f7a8c)"></div><div class="bd"><h3>Product Ideas</h3><p>48 open · 9 assigned to you · active 12m ago</p></div></div>
-      <div class="tile"><div class="band" style="background:linear-gradient(120deg,#f4b942,#d97a00)"></div><div class="bd"><h3>Platform Backlog</h3><p>31 open · 5 assigned to you · active 2h ago</p></div></div>
-      <div class="tile"><div class="band" style="background:linear-gradient(120deg,#7d6b91,#4a3f63)"></div><div class="bd"><h3>Customer Feedback</h3><p>17 open · none assigned · active yesterday</p></div></div>
+      <div class="tile"><div class="band" style="background:linear-gradient(120deg,#4A7972,#4A7972)"></div><div class="bd"><h3>Product Ideas</h3><p>48 open · 9 assigned to you · active 12m ago</p></div></div>
+      <div class="tile"><div class="band" style="background:linear-gradient(120deg,#C9A65C,#8A6D2E)"></div><div class="bd"><h3>Platform Backlog</h3><p>31 open · 5 assigned to you · active 2h ago</p></div></div>
+      <div class="tile"><div class="band" style="background:linear-gradient(120deg,#5B7FA3,#527292)"></div><div class="bd"><h3>Customer Feedback</h3><p>17 open · none assigned · active yesterday</p></div></div>
       <div class="tile newt">+ Request a new board</div>
     </div>
     <h2 style="font-size:16px;margin-bottom:10px">Catching you up</h2>
     <div class="card" style="padding:6px 0">
       <table>
         <tbody>
-          <tr><td style="width:36px"><span class="avatar s" style="background:#7d6b91;color:#fff">MP</span></td><td><strong>Mia Park</strong> mentioned you in <a href="#" style="color:var(--brand-2);font-weight:600">Dark mode support</a></td><td style="text-align:right;color:var(--ink-3)">20m</td></tr>
-          <tr><td><span class="avatar s" style="background:#1f7a8c;color:#fff">TD</span></td><td><strong>Tom Diaz</strong> upvoted your idea <a href="#" style="color:var(--brand-2);font-weight:600">Bulk import CSV</a></td><td style="text-align:right;color:var(--ink-3)">1h</td></tr>
-          <tr><td><span class="avatar s" style="background:#c23934;color:#fff">AL</span></td><td><strong>Ana Liu</strong> moved <a href="#" style="color:var(--brand-2);font-weight:600">SSO via SAML</a> to <span class="pill info">In Progress</span></td><td style="text-align:right;color:var(--ink-3)">3h</td></tr>
+          <tr><td style="width:36px"><span class="avatar s" style="background:#5B7FA3;color:#fff">MP</span></td><td><strong>Mia Park</strong> mentioned you in <a href="#" style="color:var(--brand-2);font-weight:600">Dark mode support</a></td><td style="text-align:right;color:var(--ink-3)">20m</td></tr>
+          <tr><td><span class="avatar s" style="background:#4A7972;color:#fff">TD</span></td><td><strong>Tom Diaz</strong> upvoted your idea <a href="#" style="color:var(--brand-2);font-weight:600">Bulk import CSV</a></td><td style="text-align:right;color:var(--ink-3)">1h</td></tr>
+          <tr><td><span class="avatar s" style="background:#C97A7A;color:#fff">AL</span></td><td><strong>Ana Liu</strong> moved <a href="#" style="color:var(--brand-2);font-weight:600">SSO via SAML</a> to <span class="pill info">In Progress</span></td><td style="text-align:right;color:var(--ink-3)">3h</td></tr>
         </tbody>
       </table>
     </div>
@@ -240,9 +244,9 @@
     <h1>Admin</h1>
     <p class="sub">Everything a Site Admin needs, one card per job. All actions are audit-logged.</p>
     <div class="hub">
-      <div class="card"><div class="em" style="background:#dff0f2">🏢</div><h3>Organizations</h3><p>Create organizations, activate or deactivate them, and jump into their people and workflow settings.</p><button class="btn ghost" style="margin-top:12px;padding-left:0">Open organizations →</button></div>
-      <div class="card"><div class="em" style="background:#fdefdd">👥</div><h3>Users</h3><p>Invite people by email (globally unique), set org roles, unlock accounts, and issue one-time temporary passwords.</p><button class="btn ghost" style="margin-top:12px;padding-left:0">Open users →</button></div>
-      <div class="card"><div class="em" style="background:#e0f3e8">🏷️</div><h3>Statuses</h3><p>Shape each organization's workflow. Statuses become board swimlanes; retiring one is a safe soft delete.</p><button class="btn ghost" style="margin-top:12px;padding-left:0">Open statuses →</button></div>
+      <div class="card"><div class="em" style="background:#F1F6F5">🏢</div><h3>Organizations</h3><p>Create organizations, activate or deactivate them, and jump into their people and workflow settings.</p><button class="btn ghost" style="margin-top:12px;padding-left:0">Open organizations →</button></div>
+      <div class="card"><div class="em" style="background:#F9F6EE">👥</div><h3>Users</h3><p>Invite people by email (globally unique), set org roles, unlock accounts, and issue one-time temporary passwords.</p><button class="btn ghost" style="margin-top:12px;padding-left:0">Open users →</button></div>
+      <div class="card"><div class="em" style="background:#F0F7F1">🏷️</div><h3>Statuses</h3><p>Shape each organization's workflow. Statuses become board swimlanes; retiring one is a safe soft delete.</p><button class="btn ghost" style="margin-top:12px;padding-left:0">Open statuses →</button></div>
     </div>
   </main>
 </section>
@@ -265,7 +269,7 @@
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">
       <div class="card" style="padding:18px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span class="avatar" style="border-radius:9px;background:#1f7a8c;color:#fff">AC</span>
+          <span class="avatar" style="border-radius:2px;background:#4A7972;color:#fff">AC</span>
           <div style="flex:1"><strong>Acme Corp</strong><div style="font-size:11.5px;color:var(--ink-3)">Created Jan 12, 2026</div></div>
           <span class="pill ok">Active</span>
         </div>
@@ -274,7 +278,7 @@
       </div>
       <div class="card" style="padding:18px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span class="avatar" style="border-radius:9px;background:#7d6b91;color:#fff">IN</span>
+          <span class="avatar" style="border-radius:2px;background:#5B7FA3;color:#fff">IN</span>
           <div style="flex:1"><strong>Initech</strong><div style="font-size:11.5px;color:var(--ink-3)">Created Feb 3, 2026</div></div>
           <span class="pill ok">Active</span>
         </div>
@@ -283,7 +287,7 @@
       </div>
       <div class="card" style="padding:18px;opacity:.72">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span class="avatar" style="border-radius:9px;background:#95a5ae;color:#fff">GL</span>
+          <span class="avatar" style="border-radius:2px;background:#5B7FA3;color:#fff">GL</span>
           <div style="flex:1"><strong>Globex Ltd</strong><div style="font-size:11.5px;color:var(--ink-3)">Created Mar 20, 2026</div></div>
           <span class="pill err">Inactive</span>
         </div>
@@ -316,22 +320,22 @@
         <thead><tr><th>Person</th><th>Role</th><th>Status</th><th>Last sign-in</th><th style="width:220px"></th></tr></thead>
         <tbody>
           <tr>
-            <td><span class="avatar s" style="background:#1f7a8c;color:#fff;margin-right:8px">JR</span><strong>Jordan Reyes</strong><div style="font-size:11.5px;color:var(--ink-3);margin-left:32px">jordan.reyes@acme.com</div></td>
+            <td><span class="avatar s" style="background:#4A7972;color:#fff;margin-right:8px">JR</span><strong>Jordan Reyes</strong><div style="font-size:11.5px;color:var(--ink-3);margin-left:32px">jordan.reyes@acme.com</div></td>
             <td><span class="pill info">Org Admin</span></td><td><span class="pill ok">Active</span></td><td>Today 11:02</td>
             <td><button class="btn ghost">Edit</button><button class="btn ghost">Temp password</button></td>
           </tr>
           <tr>
-            <td><span class="avatar s" style="background:#7d6b91;color:#fff;margin-right:8px">MP</span><strong>Mia Park</strong><div style="font-size:11.5px;color:var(--ink-3);margin-left:32px">mia.park@acme.com</div></td>
+            <td><span class="avatar s" style="background:#5B7FA3;color:#fff;margin-right:8px">MP</span><strong>Mia Park</strong><div style="font-size:11.5px;color:var(--ink-3);margin-left:32px">mia.park@acme.com</div></td>
             <td><span class="pill neutral">Member</span></td><td><span class="pill warn">Locked · 12 min left</span></td><td>Today 08:47</td>
             <td><button class="btn ghost">Edit</button><button class="btn">Unlock now</button></td>
           </tr>
           <tr>
-            <td><span class="avatar s" style="background:#c23934;color:#fff;margin-right:8px">TD</span><strong>Tom Diaz</strong><div style="font-size:11.5px;color:var(--ink-3);margin-left:32px">tom.diaz@acme.com</div></td>
+            <td><span class="avatar s" style="background:#C97A7A;color:#fff;margin-right:8px">TD</span><strong>Tom Diaz</strong><div style="font-size:11.5px;color:var(--ink-3);margin-left:32px">tom.diaz@acme.com</div></td>
             <td><span class="pill neutral">Member</span></td><td><span class="pill ok">Active</span></td><td>Yesterday</td>
             <td><button class="btn ghost">Edit</button><button class="btn ghost">Temp password</button></td>
           </tr>
           <tr>
-            <td><span class="avatar s" style="background:#95a5ae;color:#fff;margin-right:8px">AL</span><strong>Ana Liu</strong><div style="font-size:11.5px;color:var(--ink-3);margin-left:32px">ana.liu@acme.com</div></td>
+            <td><span class="avatar s" style="background:#5B7FA3;color:#fff;margin-right:8px">AL</span><strong>Ana Liu</strong><div style="font-size:11.5px;color:var(--ink-3);margin-left:32px">ana.liu@acme.com</div></td>
             <td><span class="pill neutral">Member</span></td><td><span class="pill neutral">Invited</span></td><td>—</td>
             <td><button class="btn ghost">Resend invite</button></td>
           </tr>
@@ -356,27 +360,27 @@
     <div style="display:grid;grid-template-columns:1fr 300px;gap:22px;align-items:start">
       <div style="display:grid;gap:10px">
         <div class="card" style="padding:13px 16px;display:flex;align-items:center;gap:12px">
-          <span style="cursor:grab;color:var(--ink-3)">⠿</span><span class="swatch" style="background:#95a5ae"></span>
+          <span style="cursor:grab;color:var(--ink-3)">⠿</span><span class="swatch" style="background:#5B7FA3"></span>
           <strong style="flex:1">New</strong><span style="font-size:12px;color:var(--ink-3)">22 ideas · 3 boards</span>
           <button class="btn ghost">Rename</button><button class="btn danger">Retire</button>
         </div>
         <div class="card" style="padding:13px 16px;display:flex;align-items:center;gap:12px">
-          <span style="cursor:grab;color:var(--ink-3)">⠿</span><span class="swatch" style="background:#1f7a8c"></span>
+          <span style="cursor:grab;color:var(--ink-3)">⠿</span><span class="swatch" style="background:#4A7972"></span>
           <strong style="flex:1">In Progress</strong><span style="font-size:12px;color:var(--ink-3)">15 ideas · 3 boards</span>
           <button class="btn ghost">Rename</button><button class="btn danger">Retire</button>
         </div>
         <div class="card" style="padding:13px 16px;display:flex;align-items:center;gap:12px">
-          <span style="cursor:grab;color:var(--ink-3)">⠿</span><span class="swatch" style="background:#d97a00"></span>
+          <span style="cursor:grab;color:var(--ink-3)">⠿</span><span class="swatch" style="background:#8A6D2E"></span>
           <strong style="flex:1">Blocked</strong><span style="font-size:12px;color:var(--ink-3)">4 ideas · 1 board</span>
           <button class="btn ghost">Rename</button><button class="btn danger">Retire</button>
         </div>
         <div class="card" style="padding:13px 16px;display:flex;align-items:center;gap:12px">
-          <span style="cursor:grab;color:var(--ink-3)">⠿</span><span class="swatch" style="background:#2e8b57"></span>
+          <span style="cursor:grab;color:var(--ink-3)">⠿</span><span class="swatch" style="background:#457C4F"></span>
           <strong style="flex:1">Done</strong><span style="font-size:12px;color:var(--ink-3)">61 ideas · 3 boards</span>
           <button class="btn ghost">Rename</button><button class="btn danger">Retire</button>
         </div>
         <div class="card" style="padding:13px 16px;display:flex;align-items:center;gap:12px;opacity:.6;border-style:dashed">
-          <span></span><span class="swatch" style="background:#cfd8dd"></span>
+          <span></span><span class="swatch" style="background:#D1DBE5"></span>
           <strong style="flex:1">Won't Do <span class="pill err" style="margin-left:6px">Retired</span></strong><span style="font-size:12px;color:var(--ink-3)">9 ideas keep it for history</span>
           <button class="btn ghost">Restore</button>
         </div>
@@ -416,28 +420,28 @@
     <div class="lanes">
       <div class="lane">
         <h3>New <span class="cnt">4</span></h3>
-        <div class="icard"><div class="tags"><span class="swatch" style="background:#c23934"></span><span class="swatch" style="background:#7d6b91"></span></div><div class="t">Dark mode support</div><div class="meta"><span class="pill err" style="padding:1px 7px">High</span><span class="spacer"></span><span class="avatar s" style="background:#7d6b91;color:#fff">MP</span><button class="up mine">▲ 24</button></div></div>
-        <div class="icard"><div class="tags"><span class="swatch" style="background:#d97a00"></span></div><div class="t">Bulk import from CSV</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#c23934;color:#fff">TD</span><button class="up">▲ 17</button></div></div>
+        <div class="icard"><div class="tags"><span class="swatch" style="background:#C97A7A"></span><span class="swatch" style="background:#5B7FA3"></span></div><div class="t">Dark mode support</div><div class="meta"><span class="pill err" style="padding:1px 7px">High</span><span class="spacer"></span><span class="avatar s" style="background:#5B7FA3;color:#fff">MP</span><button class="up mine">▲ 24</button></div></div>
+        <div class="icard"><div class="tags"><span class="swatch" style="background:#8A6D2E"></span></div><div class="t">Bulk import from CSV</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#C97A7A;color:#fff">TD</span><button class="up">▲ 17</button></div></div>
         <div class="icard"><div class="t">Keyboard shortcuts cheat sheet</div><div class="meta"><span class="pill ok" style="padding:1px 7px">Low</span><span class="spacer"></span><button class="up">▲ 6</button></div></div>
-        <div class="icard"><div class="tags"><span class="swatch" style="background:#1f7a8c"></span></div><div class="t">Export board to PDF</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#1f7a8c;color:#fff">JR</span><button class="up">▲ 5</button></div></div>
+        <div class="icard"><div class="tags"><span class="swatch" style="background:#4A7972"></span></div><div class="t">Export board to PDF</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#4A7972;color:#fff">JR</span><button class="up">▲ 5</button></div></div>
         <button class="addcard">+ Add an idea</button>
       </div>
       <div class="lane">
         <h3>In Progress <span class="cnt">3</span></h3>
-        <div class="icard"><div class="tags"><span class="swatch" style="background:#c23934"></span></div><div class="t">SSO via SAML</div><div class="meta"><span class="pill err" style="padding:1px 7px">High</span><span style="font-size:11px">📅 Aug 15</span><span class="spacer"></span><span class="avatar s" style="background:#95a5ae;color:#fff">AL</span><button class="up">▲ 31</button></div></div>
-        <div class="icard"><div class="t">Notification digest email</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#1f7a8c;color:#fff">JR</span><button class="up mine">▲ 12</button></div></div>
-        <div class="icard"><div class="t">Mention autocomplete</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#7d6b91;color:#fff">MP</span><button class="up">▲ 9</button></div></div>
+        <div class="icard"><div class="tags"><span class="swatch" style="background:#C97A7A"></span></div><div class="t">SSO via SAML</div><div class="meta"><span class="pill err" style="padding:1px 7px">High</span><span style="font-size:11px">📅 Aug 15</span><span class="spacer"></span><span class="avatar s" style="background:#5B7FA3;color:#fff">AL</span><button class="up">▲ 31</button></div></div>
+        <div class="icard"><div class="t">Notification digest email</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#4A7972;color:#fff">JR</span><button class="up mine">▲ 12</button></div></div>
+        <div class="icard"><div class="t">Mention autocomplete</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#5B7FA3;color:#fff">MP</span><button class="up">▲ 9</button></div></div>
         <button class="addcard">+ Add an idea</button>
       </div>
       <div class="lane">
         <h3>Blocked <span class="cnt">1</span></h3>
-        <div class="icard"><div class="tags"><span class="swatch" style="background:#c23934"></span><span class="swatch" style="background:#7d6b91"></span></div><div class="t">Mobile responsive board</div><div class="meta"><span class="pill err" style="padding:1px 7px">High</span><span class="spacer"></span><span class="avatar s" style="background:#c23934;color:#fff">TD</span><button class="up">▲ 20</button></div></div>
+        <div class="icard"><div class="tags"><span class="swatch" style="background:#C97A7A"></span><span class="swatch" style="background:#5B7FA3"></span></div><div class="t">Mobile responsive board</div><div class="meta"><span class="pill err" style="padding:1px 7px">High</span><span class="spacer"></span><span class="avatar s" style="background:#C97A7A;color:#fff">TD</span><button class="up">▲ 20</button></div></div>
         <button class="addcard">+ Add an idea</button>
       </div>
       <div class="lane">
         <h3>Done <span class="cnt">2</span></h3>
-        <div class="icard" style="opacity:.8"><div class="t">Org-scoped user search</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#95a5ae;color:#fff">AL</span><button class="up">▲ 14</button></div></div>
-        <div class="icard" style="opacity:.8"><div class="t">Audit log for admin actions</div><div class="meta"><span class="pill ok" style="padding:1px 7px">Low</span><span class="spacer"></span><span class="avatar s" style="background:#1f7a8c;color:#fff">JR</span><button class="up">▲ 8</button></div></div>
+        <div class="icard" style="opacity:.8"><div class="t">Org-scoped user search</div><div class="meta"><span class="pill warn" style="padding:1px 7px">Med</span><span class="spacer"></span><span class="avatar s" style="background:#5B7FA3;color:#fff">AL</span><button class="up">▲ 14</button></div></div>
+        <div class="icard" style="opacity:.8"><div class="t">Audit log for admin actions</div><div class="meta"><span class="pill ok" style="padding:1px 7px">Low</span><span class="spacer"></span><span class="avatar s" style="background:#4A7972;color:#fff">JR</span><button class="up">▲ 8</button></div></div>
         <button class="addcard">+ Add an idea</button>
       </div>
     </div>
@@ -471,16 +475,16 @@
           </div>
           <div class="blk">
             <h4>Comments · 4</h4>
-            <div class="comment"><span class="avatar s" style="background:#7d6b91;color:#fff">MP</span>
+            <div class="comment"><span class="avatar s" style="background:#5B7FA3;color:#fff">MP</span>
               <div class="bubble"><div class="who">Mia Park <span class="when">2h ago</span></div>
               <p><span class="mention">@Jordan Reyes</span> can we scope this to the board view first? Full app theming is a bigger lift.</p></div>
             </div>
-            <div class="comment"><span class="avatar s" style="background:#c23934;color:#fff">TD</span>
+            <div class="comment"><span class="avatar s" style="background:#C97A7A;color:#fff">TD</span>
               <div class="bubble"><div class="who">Tom Diaz <span class="when">1h ago</span></div>
               <p>+1 — Fluent design tokens should make this straightforward.</p></div>
             </div>
             <div style="display:flex;gap:10px;margin-top:10px">
-              <span class="avatar s" style="background:#1f7a8c;color:#fff">JR</span>
+              <span class="avatar s" style="background:#4A7972;color:#fff">JR</span>
               <div style="flex:1">
                 <textarea style="width:100%;min-height:56px" placeholder="Write a comment… @ mentions people in your org"></textarea>
                 <div class="charcount">0 / 500</div>

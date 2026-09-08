@@ -75,3 +75,24 @@ public sealed class LockedOutAppException : AppException
     {
     }
 }
+
+/// <summary>
+/// Maps to 429: the caller exceeded a rate limit. Distinct from <see cref="LockedOutAppException"/>
+/// even though both are 429 — a lockout is an auth outcome tied to an account, a rate limit is a
+/// throughput policy that clears on its own.
+/// </summary>
+/// <param name="RetryAfterSeconds">
+/// How long until the window has room again, surfaced as the <c>Retry-After</c> header. A 429 that
+/// doesn't say when to come back leaves a well-behaved client guessing and a badly-behaved one
+/// hammering.
+/// </param>
+public sealed class RateLimitedAppException : AppException
+{
+    public RateLimitedAppException(string message, int retryAfterSeconds)
+        : base(message)
+    {
+        RetryAfterSeconds = retryAfterSeconds;
+    }
+
+    public int RetryAfterSeconds { get; }
+}

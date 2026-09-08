@@ -42,7 +42,7 @@
             </div>
         }
         <div class="cmdbar">
-            <input type="text" placeholder="Search title & text fields…" value="@_search" @onchange="OnSearchChanged" style="width:280px" />
+            <input type="text" aria-label="Search ideas by title and text fields" placeholder="Search title & text fields…" value="@_search" @onchange="OnSearchChanged" style="width:280px" />
             @if (!string.IsNullOrWhiteSpace(_search))
             {
                 <button class="btn subtle" @onclick="ClearSearch">Clear</button>
@@ -233,7 +233,7 @@
                 <span class="info">Showing @RangeStart–@RangeEnd of @_total</span>
                 <span class="sizesel">
                     Rows per page
-                    <select value="@_pageSize" @onchange="OnPageSizeChanged">
+                    <select aria-label="Rows per page" value="@_pageSize" @onchange="OnPageSizeChanged">
                         <option value="25">25</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
@@ -250,8 +250,9 @@
 </div>
 
 <IdeaDrawer IdeaId="@_openIdeaId" OnClose="CloseDrawer" OnChanged="OnDrawerChanged" />
-<IdeaBrainstormModal Open="_showBrainstorm" OnCancel="CloseBrainstorm" OnComplete="OnBrainstormComplete" />
-<IdeaCreateModal Open="_showCreate" BoardId="@_createBoardId" InitialDescription="@_seedDescription" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
+<IdeaBrainstormModal Open="_showBrainstorm" BoardId="@_assistBoardId" OrganizationId="@_organizationId"
+                     OnCancel="CloseBrainstorm" OnComplete="OnBrainstormComplete" />
+<IdeaCreateModal Open="_showCreate" BoardId="@_createBoardId" InitialDraft="@_seedDraft" OnCancel="CloseCreate" OnCreated="OnIdeaCreated" />
 
 @code {
     [Parameter] public string? IdeaId { get; set; }
@@ -293,9 +294,13 @@
     // Drawer + create modal state.
     private string? _openIdeaId;
     private bool _showBrainstorm;
+
+    // Page-load snapshot of AI assist availability (rule 32a). Optimistic default: see LoadAiAvailabilityAsync.
+    private bool _aiAvailable = true;
     private bool _showCreate;
     private string? _createBoardId;
-    private string? _seedDescription;
+    private string? _assistBoardId;
+    private IdeaDraftDto? _seedDraft;
 
     private IReadOnlyList<FieldDefinitionDto> _fieldDefs = Array.Empty<FieldDefinitionDto>();
     private readonly Dictionary<string, FieldFilterState> _fieldFilters = new();
@@ -338,6 +343,8 @@
             _isSiteAdmin = user.IsInRole("SiteAdmin");
             _isReadOnly = user.IsInRole("ReadOnly");
         }
+
+        await LoadAiAvailabilityAsync();
 
         if (_isSiteAdmin)
         {
@@ -661,19 +668,44 @@
         StateHasChanged();
     }
 
-    // "Add New" opens the brainstorm chat first; its transcript seeds the create form's description.
+    // "Add New" opens the brainstorm chat first; its draft pre-fills the create form. When the
+    // assistant is known to be down we skip straight to the form instead of opening a scripted chat
+    // the user has to escape from (rule 32a); a mid-session outage is caught by the modal's
+    // first-turn bailout (rule 32b), since _aiAvailable is only a page-load snapshot.
     private void OpenCreate()
     {
-        _createBoardId = null; // global list: the modal shows a board picker
-        _seedDescription = null;
+        _createBoardId = null; // global list: the create surface shows a board picker
+        _seedDraft = null;
+
+        if (!_aiAvailable)
+        {
+            _showCreate = true;
+            return;
+        }
+
+        // The assist endpoint is board-scoped for authorization and attribution, but retrieval is
+        // organization-scoped — so from the global list any board the caller can see yields the same
+        // catalog. No board at all means the chat stays scripted, which is a supported state.
+        _assistBoardId = _boardNames.Keys.FirstOrDefault();
         _showBrainstorm = true;
+    }
+
+    /// <summary>
+    /// One cached read per page load (rule 32a) so "Add New" costs no extra round trip. A failed probe
+    /// is treated as available: the chat's own 503 path still degrades correctly, whereas assuming
+    /// unavailable would silently withhold a working feature over one flaky request.
+    /// </summary>
+    private async Task LoadAiAvailabilityAsync()
+    {
+        var result = await Api.GetAiAssistAvailabilityAsync();
+        _aiAvailable = !result.Succeeded || (result.Value?.Available ?? true);
     }
 
     private void CloseBrainstorm() => _showBrainstorm = false;
 
-    private void OnBrainstormComplete(string transcript)
+    private void OnBrainstormComplete(IdeaDraftDto draft)
     {
-        _seedDescription = string.IsNullOrWhiteSpace(transcript) ? null : transcript;
+        _seedDraft = draft;
         _showBrainstorm = false;
         _showCreate = true;
     }

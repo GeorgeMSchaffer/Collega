@@ -1,0 +1,62 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": [
+        "^build",
+        "db:generate"
+      ],
+      "outputs": [
+        "dist/**",
+        "out/**"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^build",
+        "db:generate"
+      ],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": []
+    },
+    "collega-e2e#test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "playwright-report/**",
+        "test-results/**"
+      ],
+      "cache": false
+    },
+    "db:generate": {
+      "outputs": [
+        "src/generated/**"
+      ],
+      "inputs": [
+        "prisma/schema.prisma"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": [
+        "^build",
+        "db:generate"
+      ]
+    },
+    "@collega/boundaries#test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": false,
+      "outputs": []
+    }
+  }
+}

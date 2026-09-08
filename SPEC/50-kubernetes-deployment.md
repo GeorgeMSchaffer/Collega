@@ -1,5 +1,15 @@
 # Collega Kubernetes deployment plan
 
+> ## ⛔ SUPERSEDED — describes the frozen .NET stack
+>
+> This document plans the deployment of `src/Collega.*`, which is **frozen and never deployed**:
+> Sprint 8 was cancelled on 2026-09-04, and the .NET code is deleted in slice F6
+> (`SPEC/decisions.md` 2026-09-06, `SPEC/50-typescript-migration.md`). The product ships to
+> **Vercel with Prisma Postgres** (ticket `02`, decided 2026-09-03).
+>
+> Kept for the cost model, the topology reasoning, and the database/secret-handling decisions,
+> which survive the change of host. **Nothing here is a build instruction.**
+
 > ## ⚠️ THIS DESCRIBES INFRASTRUCTURE THAT DOES NOT EXIST YET
 >
 > **Nothing in this document is built.** It is a forward-looking plan, not a description of

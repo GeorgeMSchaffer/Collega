@@ -1,4 +1,6 @@
 using Collega.Application.Abstractions;
+using Collega.Application.Ai;
+using Collega.Domain.Ai;
 using Collega.Domain.Auditing;
 using Collega.Domain.Enums;
 using Collega.Domain.Notifications;
@@ -159,6 +161,47 @@ internal readonly record struct NotificationWrite(
     Guid ActorUserId,
     Guid RecipientUserId);
 
+/// <summary>
+/// Scriptable <see cref="IIdeaDraftModel"/>. No test may reach a real provider, so the model's answer
+/// is whatever the test says it is — which is also the only way to exercise the branches that matter:
+/// a returned id that is not in the retrieved set, a refusal, a provider failure.
+/// </summary>
+internal sealed class FakeIdeaDraftModel : IIdeaDraftModel
+{
+    public bool IsConfigured { get; set; } = true;
+
+    /// <summary>Set to make the next call throw, exercising the degradation path.</summary>
+    public bool ThrowOnCall { get; set; }
+
+    public IdeaDraftModelResponse Next { get; set; } =
+        new(InScope: true, "What problem does this solve?", IdeaDraft.Empty, InputTokens: 900, OutputTokens: 120);
+
+    public int CallCount { get; private set; }
+
+    /// <summary>The context the service assembled — asserted on for org scoping and scope-statement flow.</summary>
+    public IdeaAssistContext? LastContext { get; private set; }
+
+    public IReadOnlyList<IdeaAssistTurn>? LastTranscript { get; private set; }
+
+    public Task<IdeaDraftModelResponse> ContinueAsync(
+        IdeaAssistContext context,
+        IReadOnlyList<IdeaAssistTurn> transcript,
+        IdeaDraft currentDraft,
+        CancellationToken cancellationToken = default)
+    {
+        CallCount++;
+        LastContext = context;
+        LastTranscript = transcript;
+
+        if (ThrowOnCall)
+        {
+            throw new IdeaDraftModelException("Simulated provider failure.");
+        }
+
+        return Task.FromResult(Next);
+    }
+}
+
 /// <summary>Deterministic invite-code generator returning a predictable, unique sequence.</summary>
 internal sealed class FakeInviteCodeGenerator : IInviteCodeGenerator
 {
@@ -178,5 +221,44 @@ internal sealed class FakeAccessTokenIssuer : IAccessTokenIssuer
         LastUserId = userId;
         LastSecurityStamp = securityStamp;
         return new AccessTokenResult($"token-{userId:N}", 3600);
+    }
+}
+
+/// <summary>
+/// Published prompt versions. Empty by default, which is the deployment's normal state and means the
+/// built-in default is in force — so existing tests keep exercising the compiled prompt unchanged.
+/// </summary>
+internal sealed class FakeAiPromptVersionRepository : IAiPromptVersionRepository
+{
+    private readonly List<AiPromptVersion> _versions = new();
+
+    public IReadOnlyList<AiPromptVersion> Versions => _versions;
+
+    public Task<AiPromptVersion?> GetActiveAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult(_versions.FirstOrDefault(v => v.IsActive));
+
+    public Task<IReadOnlyList<AiPromptVersion>> ListAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<AiPromptVersion>>(_versions.OrderByDescending(v => v.Version).ToList());
+
+    public Task<AiPromptVersion?> GetByVersionAsync(int version, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_versions.FirstOrDefault(v => v.Version == version));
+
+    public Task<int> GetMaxVersionAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult(_versions.Count == 0 ? 0 : _versions.Max(v => v.Version));
+
+    public Task AddAsync(AiPromptVersion version, CancellationToken cancellationToken = default)
+    {
+        _versions.Add(version);
+        return Task.CompletedTask;
+    }
+
+    public Task DeactivateAllAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (var version in _versions.Where(v => v.IsActive))
+        {
+            version.Deactivate();
+        }
+
+        return Task.CompletedTask;
     }
 }

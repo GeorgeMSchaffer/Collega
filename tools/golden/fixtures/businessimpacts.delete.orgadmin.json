@@ -1,0 +1,27 @@
+{
+  "scenario": "businessimpacts",
+  "step": "delete.orgadmin",
+  "endpoint": "DELETE /business-impacts/{businessImpactId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/business-impacts/afbf188c-bc8e-45d6-982f-b375aa5e4811",
+    "body": null
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Fri, 04 Sep 2026 03:55:42 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

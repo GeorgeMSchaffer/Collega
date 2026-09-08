@@ -1,0 +1,54 @@
+{
+  "scenario": "ideatypes",
+  "step": "update.orgadmin",
+  "endpoint": "PUT /idea-types/{ideaTypeId}",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/idea-types/46bd64e9-005f-4bf0-acc5-1f71ac5dbf0e",
+    "body": {
+      "name": "Golden Capture Type Renamed"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "ideaTypeId": "46bd64e9-005f-4bf0-acc5-1f71ac5dbf0e",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+      "name": "Golden Capture Type Renamed",
+      "sortOrder": 30,
+      "isDeleted": false,
+      "colorHex": null,
+      "icon": null,
+      "fieldMode": "AllActiveFields",
+      "fields": []
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "colorHex": null,
+      "fieldMode": "AllActiveFields",
+      "fields": [],
+      "icon": null,
+      "ideaTypeId": "<guid@create.orgadmin.body.ideaTypeId>",
+      "isDeleted": false,
+      "name": "Golden Capture Type Renamed",
+      "organizationId": "<guid@org.body.organizationId>",
+      "sortOrder": 30
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "scenario": "comments",
+  "step": "delete.user",
+  "endpoint": "DELETE /comments/{commentId}",
+  "as": "User",
+  "kind": "success",
+  "note": "The refusals run first, so the author's delete is last and succeeds once.",
+  "unstable": [],
+  "request": {
+    "method": "DELETE",
+    "path": "/comments/7b257c52-55ba-4445-9a0d-6b763bd1bf33",
+    "body": null
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Fri, 04 Sep 2026 03:55:43 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

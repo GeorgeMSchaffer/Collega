@@ -1,0 +1,37 @@
+{
+  "scenario": "aiassist",
+  "step": "settings.get.orgadmin",
+  "endpoint": "GET /organizations/{organizationId}/ai-assist/settings",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ai-assist/settings",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:40 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "aiAssistAvailable": false,
+      "scopeStatement": null
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "aiAssistAvailable": false,
+      "scopeStatement": null
+    }
+  }
+}

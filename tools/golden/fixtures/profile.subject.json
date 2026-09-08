@@ -1,0 +1,51 @@
+{
+  "scenario": "profile",
+  "step": "subject",
+  "endpoint": "POST /organizations/{organizationId}/users",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Password changes run against an account the corpus creates. Changing a demo role's password invalidates its token and locks every later scenario out of it.",
+  "unstable": [],
+  "request": {
+    "method": "POST",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/users",
+    "body": {
+      "firstName": "Golden",
+      "lastName": "Rotator",
+      "email": "golden.rotator@acme-robotics.demo.collega.test",
+      "role": "User",
+      "initialPassword": "<redacted>"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:47 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "userId": "14d7ece9-6d25-4c3a-abb6-7cc478219d0c",
+      "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+      "email": "golden.rotator@acme-robotics.demo.collega.test",
+      "role": "User",
+      "status": "Active"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 201,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "email": "golden.rotator@acme-robotics.demo.collega.test",
+      "organizationId": "<guid@org.body.organizationId>",
+      "role": "User",
+      "status": "Active",
+      "userId": "<guid@subject.body.userId>"
+    }
+  }
+}

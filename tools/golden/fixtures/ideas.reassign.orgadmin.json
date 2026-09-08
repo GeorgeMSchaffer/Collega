@@ -1,0 +1,31 @@
+{
+  "scenario": "ideas",
+  "step": "reassign.orgadmin",
+  "endpoint": "PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "Reassignment is administrative, and a Site Admin reaches it through View As.",
+  "unstable": [],
+  "request": {
+    "method": "PUT",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ideas/5ea9641a-72ad-445a-921c-8de278e777b9/idea-type",
+    "body": {
+      "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "date": "Fri, 04 Sep 2026 03:55:45 GMT",
+      "server": "Kestrel"
+    },
+    "body": null
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 204,
+    "headers": {},
+    "body": null
+  }
+}

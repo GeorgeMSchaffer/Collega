@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Collega.API.Tests.Infrastructure;
+using Collega.Application.Organizations;
 
 namespace Collega.API.Tests;
 
@@ -32,9 +33,18 @@ public sealed class IdeaFieldOptionsTests : IClassFixture<CollegaApiFactory>
         var ideaTypes = await client.GetFromJsonAsync<List<IdeaTypeItem>>($"/api/v1/organizations/{orgId}/idea-types", Json);
         Assert.Equal(new[] { "Continuous Improvement", "Process Revision" }, ideaTypes!.Select(t => t.Name));
 
+        // Most severe first since 2026-08-17 (user decision). Note the consequence this ordering
+        // creates: unlike Idea Type, the first Business Impact is deliberately NOT the default for a
+        // new idea — that is OrganizationDefaults.DefaultBusinessImpactName ("Medium"), because
+        // first-active would otherwise pre-mark every idea Critical. See 10-requirements.md.
         var impacts = await client.GetFromJsonAsync<List<BusinessImpactItem>>($"/api/v1/organizations/{orgId}/business-impacts", Json);
-        Assert.Equal(new[] { "Low", "Medium", "High", "Critical" }, impacts!.Select(i => i.Name));
+        Assert.Equal(new[] { "Critical", "High", "Medium", "Low" }, impacts!.Select(i => i.Name));
         Assert.All(impacts, i => Assert.Matches("^#[0-9A-Fa-f]{6}$", i.Color));
+
+        // Colour is bound to meaning, not position: red stays Critical wherever it sits in the list.
+        Assert.Equal("#DC2626", impacts.Single(i => i.Name == "Critical").Color);
+        Assert.Equal("#16A34A", impacts.Single(i => i.Name == "Low").Color);
+        Assert.NotEqual(OrganizationDefaults.DefaultBusinessImpactName, impacts[0].Name);
     }
 
     [Fact]

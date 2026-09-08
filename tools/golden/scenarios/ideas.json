@@ -1,0 +1,748 @@
+{
+  "name": "ideas",
+  "description": "The idea lifecycle: list, create, read, edit, move, upvote, export, import.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "board",
+      "endpoint": "GET /organizations/{organizationId}/boards",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/boards",
+      "bind": {
+        "boardId": "$.body[0].boardId"
+      }
+    },
+    {
+      "id": "types",
+      "endpoint": "GET /organizations/{organizationId}/idea-types",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/idea-types",
+      "bind": {
+        "ideaTypeId": "$.body[0].ideaTypeId"
+      }
+    },
+    {
+      "id": "impacts",
+      "endpoint": "GET /organizations/{organizationId}/business-impacts",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/business-impacts",
+      "bind": {
+        "impactId": "$.body[0].businessImpactId"
+      }
+    },
+    {
+      "id": "statuses",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses",
+      "bind": {
+        "statusA": "$.body[0].statusId",
+        "statusB": "$.body[1].statusId"
+      }
+    },
+    {
+      "id": "types2",
+      "endpoint": "GET /organizations/{organizationId}/idea-types",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/idea-types",
+      "note": "A second type, for the reassignment case.",
+      "bind": {
+        "otherIdeaTypeId": "$.body[1].ideaTypeId"
+      }
+    },
+    {
+      "id": "list.board.siteadmin",
+      "endpoint": "GET /boards/{boardId}/ideas",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
+    },
+    {
+      "id": "list.board.orgadmin",
+      "endpoint": "GET /boards/{boardId}/ideas",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create.",
+      "bind": {
+        "seededIdeaId": "$.body.items[0].ideaId"
+      }
+    },
+    {
+      "id": "list.board.user",
+      "endpoint": "GET /boards/{boardId}/ideas",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
+    },
+    {
+      "id": "list.board.readonly",
+      "endpoint": "GET /boards/{boardId}/ideas",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
+    },
+    {
+      "id": "list.board.anonymous",
+      "endpoint": "GET /boards/{boardId}/ideas",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/boards/{{boardId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
+    },
+    {
+      "id": "list.org.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/ideas",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
+    },
+    {
+      "id": "list.org.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/ideas",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
+    },
+    {
+      "id": "list.org.user",
+      "endpoint": "GET /organizations/{organizationId}/ideas",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
+    },
+    {
+      "id": "list.org.readonly",
+      "endpoint": "GET /organizations/{organizationId}/ideas",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
+    },
+    {
+      "id": "list.org.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/ideas",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/ideas",
+      "unstable": [
+        "body.items[].dueDate"
+      ],
+      "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned \u2014 see ideas.create."
+    },
+    {
+      "id": "create.siteadmin",
+      "endpoint": "POST /boards/{boardId}/ideas",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{boardId}}/ideas",
+      "body": {
+        "title": "Golden capture idea",
+        "description": "Recorded by the golden capture.",
+        "priority": "Medium",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "create.orgadmin",
+      "endpoint": "POST /boards/{boardId}/ideas",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/boards/{{boardId}}/ideas",
+      "body": {
+        "title": "Golden capture idea",
+        "description": "Recorded by the golden capture.",
+        "priority": "Medium",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "create.user",
+      "endpoint": "POST /boards/{boardId}/ideas",
+      "as": "User",
+      "kind": "success",
+      "expect": 201,
+      "path": "/boards/{{boardId}}/ideas",
+      "body": {
+        "title": "Golden capture idea",
+        "description": "Recorded by the golden capture.",
+        "priority": "Medium",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      },
+      "bind": {
+        "userIdeaId": "$.body.ideaId"
+      }
+    },
+    {
+      "id": "create.readonly",
+      "endpoint": "POST /boards/{boardId}/ideas",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{boardId}}/ideas",
+      "body": {
+        "title": "Golden capture idea",
+        "description": "Recorded by the golden capture.",
+        "priority": "Medium",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "create.anonymous",
+      "endpoint": "POST /boards/{boardId}/ideas",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/boards/{{boardId}}/ideas",
+      "body": {
+        "title": "Golden capture idea",
+        "description": "Recorded by the golden capture.",
+        "priority": "Medium",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "create.invalid.user",
+      "endpoint": "POST /boards/{boardId}/ideas",
+      "as": "User",
+      "kind": "invalid",
+      "expect": 400,
+      "path": "/boards/{{boardId}}/ideas",
+      "body": {
+        "description": "No title.",
+        "priority": "Medium",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "get.siteadmin",
+      "endpoint": "GET /ideas/{ideaId}",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{userIdeaId}}"
+    },
+    {
+      "id": "get.orgadmin",
+      "endpoint": "GET /ideas/{ideaId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{userIdeaId}}"
+    },
+    {
+      "id": "get.user",
+      "endpoint": "GET /ideas/{ideaId}",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{userIdeaId}}"
+    },
+    {
+      "id": "get.readonly",
+      "endpoint": "GET /ideas/{ideaId}",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{userIdeaId}}"
+    },
+    {
+      "id": "get.anonymous",
+      "endpoint": "GET /ideas/{ideaId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/ideas/{{userIdeaId}}"
+    },
+    {
+      "id": "update.siteadmin",
+      "endpoint": "PUT /ideas/{ideaId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ideas/{{userIdeaId}}",
+      "body": {
+        "title": "Golden capture idea, edited",
+        "description": "Recorded by the golden capture.",
+        "priority": "High",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "update.orgadmin",
+      "endpoint": "PUT /ideas/{ideaId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{userIdeaId}}",
+      "body": {
+        "title": "Golden capture idea, edited",
+        "description": "Recorded by the golden capture.",
+        "priority": "High",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "update.user",
+      "endpoint": "PUT /ideas/{ideaId}",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{userIdeaId}}",
+      "body": {
+        "title": "Golden capture idea, edited",
+        "description": "Recorded by the golden capture.",
+        "priority": "High",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "update.readonly",
+      "endpoint": "PUT /ideas/{ideaId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ideas/{{userIdeaId}}",
+      "body": {
+        "title": "Golden capture idea, edited",
+        "description": "Recorded by the golden capture.",
+        "priority": "High",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "update.anonymous",
+      "endpoint": "PUT /ideas/{ideaId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/ideas/{{userIdeaId}}",
+      "body": {
+        "title": "Golden capture idea, edited",
+        "description": "Recorded by the golden capture.",
+        "priority": "High",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      }
+    },
+    {
+      "id": "status.siteadmin",
+      "endpoint": "POST /ideas/{ideaId}/status",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ideas/{{userIdeaId}}/status",
+      "body": {
+        "statusId": "{{statusB}}"
+      },
+      "note": "This board allows members to move cards; that is a board setting."
+    },
+    {
+      "id": "status.orgadmin",
+      "endpoint": "POST /ideas/{ideaId}/status",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/ideas/{{userIdeaId}}/status",
+      "body": {
+        "statusId": "{{statusB}}"
+      },
+      "note": "This board allows members to move cards; that is a board setting."
+    },
+    {
+      "id": "status.user",
+      "endpoint": "POST /ideas/{ideaId}/status",
+      "as": "User",
+      "kind": "success",
+      "expect": 204,
+      "path": "/ideas/{{userIdeaId}}/status",
+      "body": {
+        "statusId": "{{statusB}}"
+      },
+      "note": "This board allows members to move cards; that is a board setting."
+    },
+    {
+      "id": "status.readonly",
+      "endpoint": "POST /ideas/{ideaId}/status",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ideas/{{userIdeaId}}/status",
+      "body": {
+        "statusId": "{{statusB}}"
+      },
+      "note": "This board allows members to move cards; that is a board setting."
+    },
+    {
+      "id": "status.anonymous",
+      "endpoint": "POST /ideas/{ideaId}/status",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/ideas/{{userIdeaId}}/status",
+      "body": {
+        "statusId": "{{statusB}}"
+      },
+      "note": "This board allows members to move cards; that is a board setting."
+    },
+    {
+      "id": "upvote.siteadmin",
+      "endpoint": "POST /ideas/{ideaId}/upvote/toggle",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ideas/{{userIdeaId}}/upvote/toggle"
+    },
+    {
+      "id": "upvote.orgadmin",
+      "endpoint": "POST /ideas/{ideaId}/upvote/toggle",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{userIdeaId}}/upvote/toggle"
+    },
+    {
+      "id": "upvote.user",
+      "endpoint": "POST /ideas/{ideaId}/upvote/toggle",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{userIdeaId}}/upvote/toggle"
+    },
+    {
+      "id": "upvote.readonly",
+      "endpoint": "POST /ideas/{ideaId}/upvote/toggle",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/ideas/{{userIdeaId}}/upvote/toggle"
+    },
+    {
+      "id": "upvote.anonymous",
+      "endpoint": "POST /ideas/{ideaId}/upvote/toggle",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/ideas/{{userIdeaId}}/upvote/toggle"
+    },
+    {
+      "id": "reassign.siteadmin",
+      "endpoint": "PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ideas/{{userIdeaId}}/idea-type",
+      "body": {
+        "ideaTypeId": "{{otherIdeaTypeId}}"
+      },
+      "note": "Reassignment is administrative, and a Site Admin reaches it through View As."
+    },
+    {
+      "id": "reassign.orgadmin",
+      "endpoint": "PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/organizations/{{orgId}}/ideas/{{userIdeaId}}/idea-type",
+      "body": {
+        "ideaTypeId": "{{otherIdeaTypeId}}"
+      },
+      "note": "Reassignment is administrative, and a Site Admin reaches it through View As."
+    },
+    {
+      "id": "reassign.user",
+      "endpoint": "PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ideas/{{userIdeaId}}/idea-type",
+      "body": {
+        "ideaTypeId": "{{otherIdeaTypeId}}"
+      },
+      "note": "Reassignment is administrative, and a Site Admin reaches it through View As."
+    },
+    {
+      "id": "reassign.readonly",
+      "endpoint": "PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/ideas/{{userIdeaId}}/idea-type",
+      "body": {
+        "ideaTypeId": "{{otherIdeaTypeId}}"
+      },
+      "note": "Reassignment is administrative, and a Site Admin reaches it through View As."
+    },
+    {
+      "id": "reassign.anonymous",
+      "endpoint": "PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/ideas/{{userIdeaId}}/idea-type",
+      "body": {
+        "ideaTypeId": "{{otherIdeaTypeId}}"
+      },
+      "note": "Reassignment is administrative, and a Site Admin reaches it through View As."
+    },
+    {
+      "id": "export.siteadmin",
+      "endpoint": "GET /boards/{boardId}/ideas/export",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas/export",
+      "note": "CSV, not JSON \u2014 the corpus pins the text body as recorded."
+    },
+    {
+      "id": "export.orgadmin",
+      "endpoint": "GET /boards/{boardId}/ideas/export",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas/export",
+      "note": "CSV, not JSON \u2014 the corpus pins the text body as recorded."
+    },
+    {
+      "id": "export.user",
+      "endpoint": "GET /boards/{boardId}/ideas/export",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas/export",
+      "note": "CSV, not JSON \u2014 the corpus pins the text body as recorded."
+    },
+    {
+      "id": "export.readonly",
+      "endpoint": "GET /boards/{boardId}/ideas/export",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas/export",
+      "note": "CSV, not JSON \u2014 the corpus pins the text body as recorded."
+    },
+    {
+      "id": "export.anonymous",
+      "endpoint": "GET /boards/{boardId}/ideas/export",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/boards/{{boardId}}/ideas/export",
+      "note": "CSV, not JSON \u2014 the corpus pins the text body as recorded."
+    },
+    {
+      "id": "import.siteadmin",
+      "endpoint": "POST /boards/{boardId}/ideas/import",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{boardId}}/ideas/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "ideas.csv",
+        "contentType": "text/csv",
+        "content": "Title,Description,Priority,Idea Type,Business Impact\nImported by capture,A row the corpus creates,Low,Continuous Improvement,Cost Saving\n"
+      },
+      "note": "A member may bulk-create what they may create one at a time; Read Only may not, and a direct Site Admin is refused \u2014 the CSV path was the bypass that moved that guard server-side (rule 26)."
+    },
+    {
+      "id": "import.orgadmin",
+      "endpoint": "POST /boards/{boardId}/ideas/import",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "ideas.csv",
+        "contentType": "text/csv",
+        "content": "Title,Description,Priority,Idea Type,Business Impact\nImported by capture,A row the corpus creates,Low,Continuous Improvement,Cost Saving\n"
+      },
+      "note": "A member may bulk-create what they may create one at a time; Read Only may not, and a direct Site Admin is refused \u2014 the CSV path was the bypass that moved that guard server-side (rule 26)."
+    },
+    {
+      "id": "import.user",
+      "endpoint": "POST /boards/{boardId}/ideas/import",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{boardId}}/ideas/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "ideas.csv",
+        "contentType": "text/csv",
+        "content": "Title,Description,Priority,Idea Type,Business Impact\nImported by capture,A row the corpus creates,Low,Continuous Improvement,Cost Saving\n"
+      },
+      "note": "A member may bulk-create what they may create one at a time; Read Only may not, and a direct Site Admin is refused \u2014 the CSV path was the bypass that moved that guard server-side (rule 26)."
+    },
+    {
+      "id": "import.readonly",
+      "endpoint": "POST /boards/{boardId}/ideas/import",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{boardId}}/ideas/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "ideas.csv",
+        "contentType": "text/csv",
+        "content": "Title,Description,Priority,Idea Type,Business Impact\nImported by capture,A row the corpus creates,Low,Continuous Improvement,Cost Saving\n"
+      },
+      "note": "A member may bulk-create what they may create one at a time; Read Only may not, and a direct Site Admin is refused \u2014 the CSV path was the bypass that moved that guard server-side (rule 26)."
+    },
+    {
+      "id": "import.anonymous",
+      "endpoint": "POST /boards/{boardId}/ideas/import",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/boards/{{boardId}}/ideas/import",
+      "file": {
+        "field": "csvFile",
+        "filename": "ideas.csv",
+        "contentType": "text/csv",
+        "content": "Title,Description,Priority,Idea Type,Business Impact\nImported by capture,A row the corpus creates,Low,Continuous Improvement,Cost Saving\n"
+      },
+      "note": "A member may bulk-create what they may create one at a time; Read Only may not, and a direct Site Admin is refused \u2014 the CSV path was the bypass that moved that guard server-side (rule 26)."
+    },
+    {
+      "id": "delete.siteadmin",
+      "endpoint": "DELETE /ideas/{ideaId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ideas/{{userIdeaId}}",
+      "note": "Refusals first, so the successful delete happens once and last."
+    },
+    {
+      "id": "delete.readonly",
+      "endpoint": "DELETE /ideas/{ideaId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ideas/{{userIdeaId}}",
+      "note": "Refusals first, so the successful delete happens once and last."
+    },
+    {
+      "id": "delete.anonymous",
+      "endpoint": "DELETE /ideas/{ideaId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/ideas/{{userIdeaId}}",
+      "note": "Refusals first, so the successful delete happens once and last."
+    },
+    {
+      "id": "delete.orgadmin",
+      "endpoint": "DELETE /ideas/{ideaId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/ideas/{{userIdeaId}}",
+      "note": "Refusals first, so the successful delete happens once and last."
+    },
+    {
+      "id": "own-idea",
+      "endpoint": "POST /boards/{boardId}/ideas",
+      "as": "User",
+      "kind": "success",
+      "expect": 201,
+      "path": "/boards/{{boardId}}/ideas",
+      "body": {
+        "title": "Golden capture idea, the author's own",
+        "description": "Created so its author can delete it.",
+        "priority": "Low",
+        "ideaTypeId": "{{ideaTypeId}}",
+        "businessImpactId": "{{impactId}}"
+      },
+      "bind": {
+        "ownIdeaId": "$.body.ideaId"
+      }
+    },
+    {
+      "id": "delete.own.user",
+      "endpoint": "DELETE /ideas/{ideaId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/ideas/{{ownIdeaId}}",
+      "note": "Even its own author cannot delete an idea \u2014 deletion is administrative (SPEC/20-feature-ideas-and-engagement.md, the Idea deletion row of the Board Enhancement Decisions table), which is not what the create and edit permissions would lead you to expect."
+    }
+  ]
+}

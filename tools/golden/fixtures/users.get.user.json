@@ -1,0 +1,48 @@
+{
+  "scenario": "users",
+  "step": "get.user",
+  "endpoint": "GET /users/{userId}",
+  "as": "User",
+  "kind": "denied",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/users/abf6440e-49b7-4d56-916a-e331d971c8fa",
+    "body": null
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "cache-control": "no-cache,no-store",
+      "content-type": "application/problem+json",
+      "date": "Fri, 04 Sep 2026 03:55:48 GMT",
+      "expires": "-1",
+      "pragma": "no-cache",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "type": "https://collega.dev/problems/forbidden",
+      "title": "Forbidden",
+      "status": 403,
+      "detail": "You are not allowed to manage this user.",
+      "instance": "/api/v1/users/abf6440e-49b7-4d56-916a-e331d971c8fa",
+      "traceId": "0HNOA71FOOKTK:000000F9"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 403,
+    "headers": {
+      "content-type": "application/problem+json"
+    },
+    "body": {
+      "detail": "You are not allowed to manage this user.",
+      "instance": "/api/v1/users/<guid@create.body.userId>",
+      "status": 403,
+      "title": "Forbidden",
+      "traceId": "<traceid>",
+      "type": "https://collega.dev/problems/forbidden"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "calibration-checklist",
+  "fixture": "acme",
+  "note": "Baseline happy path. One rich turn should be enough to classify and draft.",
+  "turns": [
+    "The calibration step on the assembly line takes about 40 minutes a unit because each tech works from a paper checklist by hand. A guided digital checklist that logged results automatically would cut it to maybe 15 minutes and stop us losing the records."
+  ],
+  "expect": {
+    "inScope": true,
+    "ideaType": "Continuous Improvement",
+    "titleSet": true,
+    "descriptionSet": true
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "multiturn-packing-pivot",
+  "fixture": "acme",
+  "note": "The user changes their mind. The final draft must describe jamming printers, not a second shift - rule 4 says revise rather than restate. A prompt that only ever appends will pass the field checks here while producing a draft that contradicts itself, so read the description on failure.",
+  "turns": [
+    "We should add a second shift in packing.",
+    "Actually the problem isn't headcount. The label printers jam constantly and one person spends half their day clearing them."
+  ],
+  "expect": {
+    "inScope": true,
+    "ideaType": "Continuous Improvement",
+    "titleSet": true,
+    "descriptionSet": true
+  }
+}

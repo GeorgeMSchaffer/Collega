@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Collega — Comp J: Desk + Slideout (Hybrid A)</title>
+<style>
+  /* ============================================================
+     Collega design system — business-professional palette.
+     Seeds (client-chosen): #5B7FA3 #5F9E93 #6FAF7A #C9A65C #C97A7A #F7F9FB #243447
+     Each seed keeps its hue as a FILL; text uses a derived -ink at >=4.5:1 on white.
+     ============================================================ */
+  :root{
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#5D6C7E; --ink-4:#818E9C;
+    --bg:#F7F9FB; --surface:#FFFFFF; --surface-2:#F1F3F6;
+    --line:#DDE1E6; --line-2:#C5CBD3;
+    --accent:#527292; --accent-deep:#3E566F; --accent-fill:#5B7FA3;
+    --accent-soft:#F0F4F7; --accent-line:#D1DBE5;
+    --teal:#5F9E93;  --teal-ink:#4A7972;  --teal-soft:#F1F6F5;  --teal-line:#D2E4E1;
+    --green:#6FAF7A; --green-ink:#457C4F; --green-soft:#F0F7F1; --green-line:#D1E6D5;
+    --amber:#C9A65C; --amber-ink:#8A6D2E; --amber-soft:#F9F6EE; --amber-line:#EDE2C9;
+    --red:#C97A7A;   --red-ink:#B64B4B;   --red-soft:#F8EFEF;   --red-line:#EACCCC;
+    --r:2px;
+    --sans:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em}
+  button{font-family:inherit;font-size:inherit;cursor:pointer}
+  a{color:var(--accent)}
+
+  /* comp switcher (review chrome, not product UI) */
+  .switch{background:var(--ink);color:#fff;padding:8px 14px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;height:42px}
+  .switch b{font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  .switch .cap{font-size:11.5px;color:#93A6BC;margin-right:6px}
+  .switch button{background:transparent;border:1px solid #46586E;color:#D6DEE8;padding:4px 10px;border-radius:var(--r);font-size:12px}
+  .switch button[aria-current="true"]{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff;font-weight:600}
+
+  .shell{display:grid;grid-template-columns:212px 1fr;min-height:calc(100vh - 42px)}
+  .side{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px}
+  .brand{display:flex;align-items:center;gap:9px;padding:4px 6px 14px}
+  .mark{width:26px;height:26px;background:var(--accent-fill);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;border-radius:var(--r)}
+  .org{font-size:11.5px;color:var(--ink-3);padding:0 6px 12px}
+  .seek{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--bg);padding:6px 8px;border-radius:var(--r);font-size:12.5px;color:var(--ink-4);margin-bottom:14px}
+  .seek kbd{margin-left:auto;font-family:var(--mono);font-size:10.5px;border:1px solid var(--line-2);padding:1px 4px;border-radius:var(--r);color:var(--ink-3)}
+  .navlbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-4);font-weight:700;padding:10px 6px 5px}
+  .nav{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--r);color:var(--ink-2);font-size:13px;border:0;background:transparent;width:100%;text-align:left}
+  .nav .ct{margin-left:auto;font-size:11px;color:var(--ink-4)}
+  .nav:hover{background:var(--surface-2)}
+  .nav[aria-current="page"]{background:var(--accent-soft);color:var(--accent-deep);font-weight:600;box-shadow:inset 2px 0 0 var(--accent-fill)}
+  .push{margin-top:auto}
+  .me{display:flex;align-items:center;gap:9px;padding:10px 6px 2px;border-top:1px solid var(--line)}
+  .av{width:26px;height:26px;border-radius:50%;background:var(--accent-deep);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:700;flex:none}
+  .av.sm{width:21px;height:21px;font-size:8.5px}
+
+  .main{min-width:0;display:flex;flex-direction:column}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--line);padding:0 22px;display:flex;align-items:center;gap:12px;height:46px;flex:none}
+  .crumb{font-size:12.5px;color:var(--ink-3)}
+  .crumb b{color:var(--ink);font-weight:600}
+  .spacer{flex:1}
+  .btn{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);padding:6px 12px;border-radius:var(--r);font-size:12.5px;font-weight:500}
+  .btn:hover{background:var(--surface-2)}
+  .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.pri:hover{background:var(--accent-deep);border-color:var(--accent-deep)}
+  .btn.sm{padding:4px 9px;font-size:12px}
+  .seg{display:flex;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden}
+  .seg button{border:0;background:var(--surface);color:var(--ink-3);padding:5px 11px;font-size:12.5px}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:600}
+
+  .body{padding:20px 22px 34px}
+  .pagehead{display:flex;align-items:flex-end;gap:14px;margin-bottom:16px}
+  .pagehead h1{font-size:21px}
+  .pagehead p{margin:5px 0 0;font-size:12.5px;color:var(--ink-3)}
+
+  .lanes{display:grid;grid-template-columns:repeat(5,minmax(190px,1fr));gap:10px;align-items:start}
+  .lane{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;min-width:0}
+  .lane>h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);padding:9px 11px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;border-top:2px solid var(--lc,var(--line-2))}
+  .lane>h3 .ct{margin-left:auto;background:var(--surface-2);color:var(--ink-3);font-size:10.5px;padding:1px 6px;border-radius:var(--r);font-weight:600}
+  .stack{padding:9px;display:flex;flex-direction:column;gap:8px}
+  .card{background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--lc,var(--line-2));border-radius:var(--r);padding:10px;text-align:left;width:100%;display:block}
+  .card:hover{border-color:var(--line-2);background:var(--surface-2)}
+  .card h4{font-size:13px;line-height:1.35;margin-bottom:8px}
+  .cardmeta{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-3);margin-top:8px}
+  .cardmeta .r{margin-left:auto;display:flex;gap:4px;align-items:center}
+  .chip{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:var(--r);border:1px solid}
+  .chip.low{color:var(--ink-3);border-color:var(--line-2);background:var(--surface-2)}
+  .chip.med{color:var(--accent-deep);border-color:var(--accent-line);background:var(--accent-soft)}
+  .chip.high{color:var(--amber-ink);border-color:var(--amber-line);background:var(--amber-soft)}
+  .chip.crit{color:var(--red-ink);border-color:var(--red-line);background:var(--red-soft)}
+  .addbtn{margin:0 9px 9px;border:1px dashed var(--line-2);background:transparent;color:var(--ink-3);padding:7px;border-radius:var(--r);font-size:12px;width:calc(100% - 18px)}
+  .addbtn:hover{background:var(--surface-2);color:var(--accent-deep)}
+
+  /* ---- the slideout: the pattern carried over from comp-i ---- */
+  .scrim{position:fixed;inset:0;background:rgba(36,52,71,.34);z-index:40}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:620px;max-width:100%;background:var(--surface);border-left:1px solid var(--line);z-index:41;display:flex;flex-direction:column;box-shadow:-4px 0 18px rgba(36,52,71,.12)}
+  .dhead{padding:15px 22px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start;flex:none}
+  .dhead .grow{flex:1}
+  .eyebrow{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:700}
+  .dhead h2{font-size:18px;margin-top:4px;line-height:1.3}
+  .dhead .meta{font-size:12px;color:var(--ink-3);margin-top:5px}
+  .iconbtn{width:29px;height:29px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink-2);font-size:15px;flex:none}
+  .iconbtn:hover{background:var(--surface-2)}
+  .dbody{padding:18px 22px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:17px}
+  .dfoot{padding:13px 22px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end;align-items:center;flex:none;background:var(--surface)}
+  .dfoot .hint{margin-right:auto;font-size:11.5px;color:var(--ink-3)}
+  .secline{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700;padding-bottom:7px;border-bottom:1px solid var(--line);margin-bottom:12px}
+
+  .field{display:block;margin-bottom:14px}
+  .field>span{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+  .field .help{font-weight:400;color:var(--ink-3);font-size:11.5px;margin-top:4px;display:block}
+  input[type=text],input[type=email],input[type=date],select,textarea{
+    width:100%;font-family:inherit;font-size:13px;color:var(--ink);background:var(--surface);
+    border:1px solid var(--line-2);border-radius:var(--r);padding:7px 9px}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  textarea{min-height:86px;resize:vertical;line-height:1.55}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .radioset{display:flex;gap:8px}
+  .radioset label{flex:1;border:1px solid var(--line-2);border-radius:var(--r);padding:8px 10px;font-size:12.5px;display:flex;gap:7px;align-items:center}
+  .radioset label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent-deep);font-weight:600}
+
+  .note{background:var(--accent-soft);border-left:2px solid var(--accent-fill);padding:11px 13px;font-size:12px;color:var(--ink-2);border-radius:0 var(--r) var(--r) 0}
+  .note b{color:var(--accent-deep)}
+  .screen{display:none}
+  .screen[data-on="1"]{display:block}
+  .dim{opacity:.55}
+  @media (max-width:980px){
+    .shell{grid-template-columns:1fr}
+    .side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+    .lanes{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:minmax(210px,1fr);overflow-x:auto}
+    .drawer{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<nav class="switch" aria-label="Comp screens">
+  <b>Comp J</b>
+  <span class="cap">Hybrid A — Desk (comp-d shell) + Slideout (comp-i drawer)</span>
+  <button data-go="s-board" aria-current="true">Board</button>
+  <button data-go="s-new">New idea</button>
+  <button data-go="s-detail">Idea detail</button>
+  <button data-go="s-status">Add status</button>
+  <button data-go="s-invite">Invite user</button>
+</nav>
+
+<!-- ============ shared shell, rendered once per screen ============ -->
+<template id="tpl-shell"></template>
+
+<section class="screen" id="s-board" data-on="1">
+  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="seek"><span>Search or jump…</span><kbd>Ctrl K</kbd></div>
+      <div class="navlbl">Workspace</div>
+      <button class="nav">Home</button>
+      <button class="nav" aria-current="page">Boards<span class="ct">2</span></button>
+      <button class="nav">Ideas<span class="ct">22</span></button>
+      <div class="navlbl">Configure</div>
+      <button class="nav">Settings</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12.5px;font-weight:600">Olivia Administer</div><div style="font-size:11px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <span class="crumb">Boards / <b>Ideas</b></span>
+        <span class="spacer"></span>
+        <div class="seg"><button>List</button><button aria-pressed="true">Lanes</button></div>
+        <button class="btn">Export CSV</button>
+        <button class="btn pri" data-go="s-new">New idea</button>
+      </div>
+      <div class="body">
+        <div class="pagehead">
+          <div><h1>Ideas</h1><p>Every create and edit opens in a slideout — the board never leaves the screen.</p></div>
+        </div>
+        <div class="lanes">
+          <div class="lane" style="--lc:var(--line-2)">
+            <h3>New / Pending <span class="ct">3</span></h3>
+            <div class="stack">
+              <button class="card" style="--lc:var(--amber)" data-go="s-detail"><h4>Standardize the intake checklist</h4><span class="chip high">High</span><div class="cardmeta">Continuous Improvement<span class="r"><span class="av sm">MG</span>2 votes</span></div></button>
+              <button class="card" style="--lc:var(--accent-fill)"><h4>Add proactive alerts</h4><span class="chip med">Medium</span><div class="cardmeta">Process Revision<span class="r"><span class="av sm">NC</span>1 vote</span></div></button>
+              <button class="card"><h4>Reduce manual handoffs</h4><span class="chip low">Low</span><div class="cardmeta">Continuous Improvement<span class="r">2 votes</span></div></button>
+            </div>
+            <button class="addbtn" data-go="s-new">+ Add idea</button>
+          </div>
+          <div class="lane" style="--lc:var(--amber)">
+            <h3>In Review <span class="ct">2</span></h3>
+            <div class="stack">
+              <button class="card"><h4>Improve exception visibility</h4><span class="chip low">Low</span><div class="cardmeta">Continuous Improvement<span class="r">1 vote</span></div></button>
+              <button class="card" style="--lc:var(--red)"><h4>Pilot a faster review path</h4><span class="chip crit">Critical</span><div class="cardmeta">Process Revision<span class="r">0 votes</span></div></button>
+            </div>
+            <button class="addbtn" data-go="s-new">+ Add idea</button>
+          </div>
+          <div class="lane" style="--lc:var(--accent-fill)">
+            <h3>In Progress <span class="ct">2</span></h3>
+            <div class="stack">
+              <button class="card" style="--lc:var(--accent-fill)"><h4>Automate weekly reporting</h4><span class="chip med">Medium</span><div class="cardmeta">Process Revision<span class="r"><span class="av sm">MG</span>2 votes</span></div></button>
+              <button class="card" style="--lc:var(--amber)"><h4>Create a shared playbook</h4><span class="chip high">High</span><div class="cardmeta">Continuous Improvement<span class="r">0 votes</span></div></button>
+            </div>
+            <button class="addbtn" data-go="s-new">+ Add idea</button>
+          </div>
+          <div class="lane" style="--lc:var(--teal)">
+            <h3>Client Review <span class="ct">1</span></h3>
+            <div class="stack">
+              <button class="card" style="--lc:var(--red)"><h4>Validate the customer feedback loop</h4><span class="chip crit">Critical</span><div class="cardmeta">Process Revision<span class="r">1 vote</span></div></button>
+            </div>
+            <button class="addbtn" data-go="s-new">+ Add idea</button>
+          </div>
+          <div class="lane" style="--lc:var(--green)">
+            <h3>Complete <span class="ct">3</span></h3>
+            <div class="stack">
+              <button class="card" style="--lc:var(--green)"><h4>Roll out the proven workflow</h4><span class="chip low">Low</span><div class="cardmeta">Continuous Improvement<span class="r">2 votes</span></div></button>
+              <button class="card" style="--lc:var(--green)"><h4>Retire the legacy step</h4><span class="chip high">High</span><div class="cardmeta">Continuous Improvement<span class="r">1 vote</span></div></button>
+              <button class="card" style="--lc:var(--green)"><h4>Measure time saved</h4><span class="chip med">Medium</span><div class="cardmeta">Process Revision<span class="r">0 votes</span></div></button>
+            </div>
+            <button class="addbtn" data-go="s-new">+ Add idea</button>
+          </div>
+        </div>
+        <div class="note" style="margin-top:18px"><b>Hybrid A.</b> Shell, rail and lane board come from <b>comp-d Focus Desk</b>; every form is <b>comp-i's right slideout</b> rather than a route change or a centred modal. Corners are 2px throughout; only avatars stay circular.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NEW IDEA — slideout over the board ============ -->
+<section class="screen" id="s-new">
+  <div class="shell dim" aria-hidden="true">
+    <aside class="side"><div class="brand"><span class="mark">CG</span><b>Collega</b></div><div class="org">Acme Robotics</div></aside>
+    <div class="main"><div class="topbar"><span class="crumb">Boards / <b>Ideas</b></span></div>
+      <div class="body"><div style="height:340px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink-4);font-size:12.5px">Board stays mounted behind the slideout</div></div></div>
+  </div>
+  <div class="scrim" data-go="s-board"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="j-new-title">
+    <div class="dhead">
+      <div class="grow"><div class="eyebrow">New idea</div><h2 id="j-new-title">Add an idea to Ideas</h2>
+        <div class="meta">Acme Robotics · lands in <b>New / Pending</b></div></div>
+      <button class="iconbtn" data-go="s-board" aria-label="Close">✕</button>
+    </div>
+    <div class="dbody">
+      <div>
+        <label class="field"><span>Title</span>
+          <input type="text" placeholder="Short, specific, and outcome-shaped">
+          <span class="help">What should be different once this is done?</span></label>
+        <label class="field"><span>Description</span>
+          <textarea placeholder="Context, the problem it solves, anything a reviewer would ask."></textarea></label>
+        <div class="row2">
+          <label class="field"><span>Idea type</span>
+            <select><option>Continuous Improvement</option><option>Process Revision</option><option>New Capability</option></select></label>
+          <label class="field"><span>Status</span>
+            <select><option>New / Pending</option><option>In Review</option></select></label>
+        </div>
+        <div class="field"><span>Priority</span>
+          <div class="radioset">
+            <label><input type="radio" name="pri">Low</label>
+            <label><input type="radio" name="pri" checked>Medium</label>
+            <label><input type="radio" name="pri">High</label>
+            <label><input type="radio" name="pri">Critical</label>
+          </div></div>
+      </div>
+      <div class="note">Idea type is written as <i>text</i>, never encoded in colour alone — the same accessibility fix carried from comp-d.</div>
+    </div>
+    <div class="dfoot"><span class="hint">Esc closes · ⌘↵ saves</span>
+      <button class="btn" data-go="s-board">Cancel</button>
+      <button class="btn pri" data-go="s-board">Create idea</button></div>
+  </aside>
+</section>
+
+<!-- ============ IDEA DETAIL — slideout, read + edit in place ============ -->
+<section class="screen" id="s-detail">
+  <div class="shell dim" aria-hidden="true">
+    <aside class="side"><div class="brand"><span class="mark">CG</span><b>Collega</b></div><div class="org">Acme Robotics</div></aside>
+    <div class="main"><div class="topbar"><span class="crumb">Boards / <b>Ideas</b></span></div>
+      <div class="body"><div style="height:340px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink-4);font-size:12.5px">Board stays mounted behind the slideout</div></div></div>
+  </div>
+  <div class="scrim" data-go="s-board"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="j-det-title">
+    <div class="dhead">
+      <div class="grow"><div class="eyebrow">Idea · New / Pending</div>
+        <h2 id="j-det-title">Standardize the intake checklist</h2>
+        <div class="meta">Continuous Improvement · raised by Marcus Green · 2 votes</div></div>
+      <button class="iconbtn" aria-label="Edit">✎</button>
+      <button class="iconbtn" data-go="s-board" aria-label="Close">✕</button>
+    </div>
+    <div class="dbody">
+      <div>
+        <div class="secline">Detail</div>
+        <p style="margin:0;font-size:13px;color:var(--ink-2)">Intake is handled differently by each coordinator, so rework lands late and unevenly. A single checklist, owned by the team and revised quarterly, would make handover predictable.</p>
+      </div>
+      <div>
+        <div class="secline">Attributes</div>
+        <div class="row2">
+          <label class="field"><span>Priority</span><select><option>High</option><option>Medium</option></select></label>
+          <label class="field"><span>Status</span><select><option>New / Pending</option><option>In Review</option></select></label>
+        </div>
+      </div>
+      <div>
+        <div class="secline">Activity</div>
+        <div style="display:flex;gap:9px;margin-bottom:11px"><span class="av sm">NC</span>
+          <div style="font-size:12.5px"><b>Nina Chen</b> <span style="color:var(--ink-3)">· 2 days ago</span><div style="color:var(--ink-2);margin-top:2px">Agreed — I'd start with the three steps that cause the most rework.</div></div></div>
+        <div style="display:flex;gap:9px"><span class="av sm">MG</span>
+          <div style="font-size:12.5px"><b>Marcus Green</b> <span style="color:var(--ink-3)">· 4 days ago</span><div style="color:var(--ink-2);margin-top:2px">Raised after the Q3 retro.</div></div></div>
+      </div>
+    </div>
+    <div class="dfoot"><span class="hint">Nothing navigates — the board is still behind you</span>
+      <button class="btn" data-go="s-board">Close</button>
+      <button class="btn pri">Save changes</button></div>
+  </aside>
+</section>
+
+<!-- ============ ADD STATUS — same slideout, admin context ============ -->
+<section class="screen" id="s-status">
+  <div class="shell dim" aria-hidden="true">
+    <aside class="side"><div class="brand"><span class="mark">CG</span><b>Collega</b></div><div class="org">Acme Robotics</div></aside>
+    <div class="main"><div class="topbar"><span class="crumb">Settings / <b>Statuses</b></span></div>
+      <div class="body"><div style="height:340px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink-4);font-size:12.5px">Status list stays mounted behind the slideout</div></div></div>
+  </div>
+  <div class="scrim" data-go="s-board"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="j-st-title">
+    <div class="dhead"><div class="grow"><div class="eyebrow">Statuses</div><h2 id="j-st-title">Add a status</h2>
+      <div class="meta">Becomes a swimlane on every board in Acme Robotics</div></div>
+      <button class="iconbtn" data-go="s-board" aria-label="Close">✕</button></div>
+    <div class="dbody">
+      <label class="field"><span>Name</span><input type="text" placeholder="e.g. Client Review"></label>
+      <div class="row2">
+        <label class="field"><span>Order</span><input type="text" value="4"></label>
+        <label class="field"><span>Lane marker</span><select><option>Blue — in flight</option><option>Amber — needs attention</option><option>Teal — with the client</option><option>Green — done</option></select></label>
+      </div>
+      <div class="note">The marker is a lane accent only. Status is always <b>spelled out</b>, so it never depends on colour vision.</div>
+    </div>
+    <div class="dfoot"><button class="btn" data-go="s-board">Cancel</button><button class="btn pri" data-go="s-board">Add status</button></div>
+  </aside>
+</section>
+
+<!-- ============ INVITE USER — same slideout again ============ -->
+<section class="screen" id="s-invite">
+  <div class="shell dim" aria-hidden="true">
+    <aside class="side"><div class="brand"><span class="mark">CG</span><b>Collega</b></div><div class="org">Acme Robotics</div></aside>
+    <div class="main"><div class="topbar"><span class="crumb">Settings / <b>Users</b></span></div>
+      <div class="body"><div style="height:340px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink-4);font-size:12.5px">User list stays mounted behind the slideout</div></div></div>
+  </div>
+  <div class="scrim" data-go="s-board"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="j-inv-title">
+    <div class="dhead"><div class="grow"><div class="eyebrow">Users</div><h2 id="j-inv-title">Invite a user</h2>
+      <div class="meta">One account per person, scoped to Acme Robotics</div></div>
+      <button class="iconbtn" data-go="s-board" aria-label="Close">✕</button></div>
+    <div class="dbody">
+      <div class="row2">
+        <label class="field"><span>First name</span><input type="text"></label>
+        <label class="field"><span>Last name</span><input type="text"></label>
+      </div>
+      <label class="field"><span>Email</span><input type="email" placeholder="name@acmerobotics.com">
+        <span class="help">Email is unique across the whole system, not just this organization.</span></label>
+      <div class="field"><span>Role</span>
+        <div class="radioset">
+          <label><input type="radio" name="role">Org Admin</label>
+          <label><input type="radio" name="role" checked>User</label>
+          <label><input type="radio" name="role">Read Only</label>
+        </div></div>
+    </div>
+    <div class="dfoot"><button class="btn" data-go="s-board">Cancel</button><button class="btn pri" data-go="s-board">Send invite</button></div>
+  </aside>
+</section>
+
+<script>
+  const screens = [...document.querySelectorAll('.screen')];
+  const tabs = [...document.querySelectorAll('.switch button')];
+  function go(id){
+    screens.forEach(s => s.dataset.on = (s.id === id) ? '1' : '0');
+    tabs.forEach(t => t.setAttribute('aria-current', String(t.dataset.go === id)));
+    window.scrollTo(0,0);
+  }
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-go]');
+    if (t) { e.preventDefault(); go(t.dataset.go); }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.querySelector('.screen[data-on="1"] .drawer')) go('s-board');
+  });
+</script>
+</body>
+</html>

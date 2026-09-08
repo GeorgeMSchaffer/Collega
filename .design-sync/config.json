@@ -1,0 +1,8 @@
+{
+  "projectId": "81cdd465-640b-4c96-bdc8-197bb73cbb59",
+  "projectName": "Collega Design System",
+  "shape": "style-layer-only",
+  "readmeHeader": ".design-sync/conventions.md",
+  "localDir": "./ds-bundle",
+  "notes": "Collega is Blazor WASM, not a JS/React design system: the converter (package-build.mjs) cannot run here. See .design-sync/NOTES.md. Style layer only - no components, no _ds_sync.json anchor."
+}

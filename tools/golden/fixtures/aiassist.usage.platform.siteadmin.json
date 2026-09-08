@@ -1,0 +1,49 @@
+{
+  "scenario": "aiassist",
+  "step": "usage.platform.siteadmin",
+  "endpoint": "GET /ai-assist/usage",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/ai-assist/usage",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:40 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "fromUtc": "2026-09-01T00:00:00Z",
+      "toUtc": "2026-09-04T03:55:41.2327559Z",
+      "organizations": [],
+      "dailyTokenLimit": 500000,
+      "tokensUsedToday": 0,
+      "totalCalls": 0,
+      "totalTokens": 0,
+      "totalEstimatedCost": 0
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "dailyTokenLimit": 500000,
+      "fromUtc": "<timestamp>",
+      "organizations": [],
+      "toUtc": "<timestamp>",
+      "tokensUsedToday": 0,
+      "totalCalls": 0,
+      "totalEstimatedCost": 0,
+      "totalTokens": 0
+    }
+  }
+}

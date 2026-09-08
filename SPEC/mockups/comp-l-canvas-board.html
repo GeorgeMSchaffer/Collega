@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<!--
+  COMP L — "Canvas Board"
+  Library: Bootstrap 5.3 (cdnjs) + Bootstrap Icons, heavily re-themed via CSS custom
+  properties. Real Bootstrap components are used throughout (offcanvas, modal, dropdown,
+  navbar, nav-pills, table, forms) — none of the default Bootstrap blue survives.
+
+  Design decisions:
+  1. Warm-neutral canvas, one accent. Page ground is a bone/sand paper tone, not gray;
+     the single accent is a clay terracotta used sparingly (primary actions, the active
+     status dot ring, links) so it reads as a considered choice, not decoration. All
+     Bootstrap color variables (--bs-primary, --bs-body-bg, --bs-border-color, focus
+     rings) are redefined at the root so every stock component inherits the palette
+     instead of being fought component-by-component.
+  2. Cards are physical objects, not table rows. Generous padding, a two-layer soft
+     shadow that lifts further on hover/drag, and a tiny per-card rotation (±0.3–0.6°)
+     that straightens on interaction — the board should look like idea cards left on a
+     desk, not a spreadsheet wearing rounded corners.
+  3. Status color is a meaningful accent, never the sole carrier of information and
+     never used as body text color (several of the seed hexes fail 4.5:1 as text on a
+     light ground). Every status/impact indicator pairs a small ringed color dot with a
+     always-dark-ink text label, so contrast is guaranteed regardless of hue.
+  4. Drag-and-drop is real (HTML5 DnD) but never the *only* way to move a card: every
+     card's "..." menu has a "Move to" list that performs the identical mutation via
+     keyboard/click. The board track itself is click-drag-panned (grab/grabbing cursor)
+     to sell "a surface you scan across," independent of card dragging.
+  5. One shared drawer (offcanvas) serves both "view idea" and "create idea" so the AI
+     draft strip has one obvious home: it appears when creating, offers Accept (fills
+     title + description) or Dismiss, and never reappears once resolved for that idea.
+
+  What I'd push back on for this product: a spatial/canvas metaphor is a strong pitch
+  for a *sparse* backlog, but Collega's own scale target (idea #12: "faster board load
+  for 500+ ideas") is in tension with "cards you pan across" — at real volume this
+  needs virtualization and probably a density toggle, or the warmth here becomes a tax
+  on triage-heavy days. I'd keep the physicality for boards under ~50 cards and let the
+  list surface (already dense) carry the heavy-volume workflows.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collega — Canvas Board (Comp L)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================= THEME TOKENS ============================= */
+:root{
+  --bone:#F5EEE0;
+  --bone-2:#FBF7EE;
+  --sand:#EBDEC0;
+  --sand-2:#E1D0A9;
+  --line:#D8C6A0;
+  --line-soft:#E5D7B6;
+  --ink:#2A2118;
+  --ink-soft:#6C5D49;
+  --ink-faint:#8C7C64;
+  --clay:#B5562B;
+  --clay-dark:#8F4220;
+  --clay-tint:#F3DCC8;
+  --clay-tint-2:#EACBAE;
+  --paper-shadow-1:0 1px 2px rgba(42,33,24,.07), 0 6px 16px -6px rgba(42,33,24,.18);
+  --paper-shadow-2:0 3px 8px rgba(42,33,24,.10), 0 18px 34px -10px rgba(42,33,24,.30);
+  --radius-card:16px;
+  --radius-md:12px;
+  --radius-sm:8px;
+  --font-display:'Fraunces', Georgia, serif;
+  --font-body:'Inter', -apple-system, sans-serif;
+
+  color-scheme: light;
+  --bs-body-bg: var(--bone);
+  --bs-body-color: var(--ink);
+  --bs-body-font-family: var(--font-body);
+  --bs-border-color: var(--line);
+  --bs-primary: var(--clay);
+  --bs-primary-rgb: 181,86,43;
+  --bs-border-radius: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-md);
+  --bs-border-radius-xl: var(--radius-card);
+  --bs-link-color: var(--clay-dark);
+  --bs-link-hover-color: var(--clay);
+  --bs-secondary-color: var(--ink-soft);
+  --bs-emphasis-color: var(--ink);
+}
+
+*{ scrollbar-color: var(--sand-2) transparent; }
+html,body{ background:var(--bone); color:var(--ink); }
+body{ font-family:var(--font-body); }
+h1,h2,h3,h4,h5,.font-display{ font-family:var(--font-display); letter-spacing:-0.01em; }
+
+/* ============================= FOCUS STATES (a11y) ============================= */
+:focus{ outline:none; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible, .idea-card:focus-visible,
+.form-check-input:focus-visible{
+  outline:3px solid var(--clay-dark) !important;
+  outline-offset:2px;
+  border-radius:6px;
+  box-shadow:none !important;
+}
+.btn-close:focus-visible{ outline:3px solid var(--clay-dark) !important; outline-offset:2px; }
+.form-control:focus, .form-select:focus{
+  border-color:var(--clay);
+  box-shadow:0 0 0 .22rem rgba(181,86,43,.28);
+}
+.form-check-input:checked{ background-color:var(--clay); border-color:var(--clay); }
+.form-check-input:focus{ box-shadow:0 0 0 .22rem rgba(181,86,43,.28); }
+
+/* ============================= NAVBAR / SHELL ============================= */
+.app-navbar{
+  background:var(--bone-2);
+  border-bottom:1px solid var(--line);
+}
+.brand-mark{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:1.35rem;
+  color:var(--ink);
+  display:flex; align-items:center; gap:.5rem;
+}
+.brand-mark .bi{ color:var(--clay); }
+.org-name{ color:var(--ink-faint); font-size:.8rem; font-weight:500; }
+.board-switcher-btn{
+  background:var(--sand); border:1px solid var(--line); color:var(--ink);
+  font-weight:600; border-radius:999px; padding:.4rem .9rem .4rem 1rem;
+}
+.board-switcher-btn:hover, .board-switcher-btn:focus{ background:var(--sand-2); color:var(--ink); }
+.user-chip{
+  width:36px; height:36px; border-radius:50%; background:var(--clay);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:.8rem; border:2px solid var(--bone-2);
+  box-shadow:0 0 0 1px var(--line);
+}
+.avatar-sm{
+  width:26px; height:26px; border-radius:50%; background:var(--sand-2);
+  color:var(--ink); display:inline-flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:.65rem; border:1px solid var(--line); flex-shrink:0;
+}
+
+.viewas-banner{
+  background:linear-gradient(180deg, var(--clay-tint), var(--clay-tint-2));
+  border-bottom:1px solid var(--clay-dark);
+  color:var(--ink);
+  font-weight:600;
+  font-size:.9rem;
+}
+.viewas-banner .bi{ color:var(--clay-dark); }
+
+/* surface switcher */
+.surface-nav{ background:var(--bone); border-bottom:1px solid var(--line-soft); overflow-x:auto; }
+.nav-pills.surface-pills{ flex-wrap:nowrap; }
+.surface-pills .nav-link{
+  color:var(--ink-soft); font-weight:600; border-radius:999px 999px 0 0;
+  border-bottom:3px solid transparent; padding:.75rem 1.1rem .6rem;
+  white-space:nowrap;
+}
+.surface-pills .nav-link.active{
+  background:transparent; color:var(--clay-dark); border-bottom-color:var(--clay);
+}
+.surface-pills .nav-link:hover{ color:var(--clay-dark); }
+
+/* ============================= DROPDOWNS / MODAL / OFFCANVAS ============================= */
+.dropdown-menu{
+  background:var(--bone-2); border:1px solid var(--line); border-radius:var(--radius-md);
+  box-shadow:var(--paper-shadow-2); padding:.4rem;
+}
+.dropdown-item{ border-radius:var(--radius-sm); font-size:.9rem; padding:.5rem .7rem; color:var(--ink); }
+.dropdown-item:hover, .dropdown-item:focus{ background:var(--sand); color:var(--ink); }
+.dropdown-item.active, .dropdown-item:active{ background:var(--clay); color:#fff; }
+.dropdown-header{ color:var(--ink-faint); font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+
+.modal-content{ background:var(--bone-2); border:1px solid var(--line); border-radius:var(--radius-card); box-shadow:var(--paper-shadow-2); }
+.modal-header, .modal-footer{ border-color:var(--line-soft); }
+
+.offcanvas{ background:var(--bone-2); border-color:var(--line); box-shadow:var(--paper-shadow-2); }
+.offcanvas-header{ border-bottom:1px solid var(--line-soft); }
+
+/* ============================= BUTTONS ============================= */
+.btn{ font-weight:600; }
+.btn-primary{ background:var(--clay); border-color:var(--clay); }
+.btn-primary:hover, .btn-primary:focus{ background:var(--clay-dark); border-color:var(--clay-dark); }
+.btn-outline-secondary{ color:var(--ink-soft); border-color:var(--line); }
+.btn-outline-secondary:hover{ background:var(--sand); color:var(--ink); border-color:var(--line); }
+.btn-icon{ width:2.1rem; height:2.1rem; display:inline-flex; align-items:center; justify-content:center; padding:0; border-radius:999px; }
+.btn-link{ text-decoration:none; }
+
+/* ============================= FORM CONTROLS ============================= */
+.form-control, .form-select{
+  background:var(--bone-2); border-color:var(--line); color:var(--ink); border-radius:var(--radius-sm);
+}
+.form-control::placeholder{ color:var(--ink-faint); }
+.form-label{ font-weight:600; font-size:.82rem; color:var(--ink-soft); }
+
+/* ============================= BOARD ============================= */
+.board-wrap{ background:
+    radial-gradient(circle at 1px 1px, rgba(140,124,100,.18) 1px, transparent 0) 0 0/22px 22px,
+    var(--bone);
+  min-height:calc(100vh - 190px);
+}
+.board-track{
+  display:flex; gap:1.25rem; padding:1.5rem; overflow-x:auto; align-items:flex-start;
+  cursor:grab;
+}
+.board-track.panning{ cursor:grabbing; user-select:none; }
+.status-col{
+  flex:0 0 300px; width:300px; background:rgba(251,247,238,.6);
+  border:1px solid var(--line-soft); border-radius:var(--radius-card);
+  display:flex; flex-direction:column; max-height:calc(100vh - 230px);
+}
+.status-col-head{
+  display:flex; align-items:center; gap:.5rem; padding:.9rem 1rem .7rem;
+  border-bottom:1px dashed var(--line);
+}
+.status-dot{
+  width:12px; height:12px; border-radius:50%; flex-shrink:0;
+  box-shadow:0 0 0 2px rgba(42,33,24,.18), 0 0 0 1px rgba(255,255,255,.5) inset;
+}
+.status-col-title{ font-weight:700; font-size:.92rem; flex:1; }
+.status-col-count{
+  background:var(--sand); color:var(--ink-soft); font-size:.72rem; font-weight:700;
+  border-radius:999px; padding:.1rem .5rem;
+}
+.status-col-body{
+  flex:1; overflow-y:auto; padding:.9rem; display:flex; flex-direction:column; gap:.9rem;
+  min-height:120px;
+}
+.status-col-body.drag-over{ background:var(--clay-tint); border-radius:0 0 var(--radius-card) var(--radius-card); outline:2px dashed var(--clay); outline-offset:-6px; }
+.status-col-empty{ color:var(--ink-faint); font-size:.82rem; text-align:center; padding:1.5rem .5rem; }
+.col-add-btn{ margin:.4rem .9rem .9rem; }
+
+.idea-card{
+  background:var(--bone-2); border:1px solid var(--line-soft); border-radius:var(--radius-card);
+  padding:1rem 1rem .85rem; box-shadow:var(--paper-shadow-1);
+  transition:transform .15s ease, box-shadow .15s ease;
+  cursor:pointer;
+}
+.idea-card:nth-of-type(3n){ transform:rotate(-.45deg); }
+.idea-card:nth-of-type(3n+1){ transform:rotate(.3deg); }
+.idea-card:nth-of-type(3n+2){ transform:rotate(-.15deg); }
+.idea-card:hover, .idea-card:focus-visible{
+  transform:rotate(0deg) translateY(-2px);
+  box-shadow:var(--paper-shadow-2);
+}
+.idea-card.dragging{ opacity:.4; }
+.idea-card-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:.4rem; margin-bottom:.5rem; }
+.idea-title{ font-family:var(--font-display); font-weight:600; font-size:1rem; line-height:1.3; margin:.15rem 0 .55rem; color:var(--ink); }
+.type-badge{
+  display:inline-flex; align-items:center; gap:.3rem; font-size:.68rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:.03em; background:var(--sand); color:var(--ink-soft);
+  border-radius:999px; padding:.22rem .55rem;
+}
+.impact-chip{ display:inline-flex; align-items:center; gap:.35rem; font-size:.74rem; font-weight:600; color:var(--ink); }
+.impact-dot{ width:8px; height:8px; border-radius:50%; box-shadow:0 0 0 1px rgba(42,33,24,.2); }
+.impact-critical .impact-dot{ background:#9A2F1F; }
+.impact-high .impact-dot{ background:#C1652F; }
+.impact-medium .impact-dot{ background:#A3811F; }
+.impact-low .impact-dot{ background:#4B7A55; }
+
+.tag-chip{
+  font-size:.68rem; font-weight:600; background:transparent; border:1px solid var(--line);
+  color:var(--ink-soft); border-radius:999px; padding:.12rem .5rem;
+}
+.idea-card-footer{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; margin-top:.75rem; padding-top:.6rem; border-top:1px solid var(--line-soft); }
+.idea-tags{ display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.4rem; }
+.stat-btn{
+  background:none; border:1px solid transparent; color:var(--ink-soft); font-weight:700;
+  font-size:.78rem; display:inline-flex; align-items:center; gap:.3rem; border-radius:999px;
+  padding:.2rem .5rem;
+}
+.stat-btn:hover{ background:var(--sand); }
+.stat-btn.upvoted{ color:var(--clay-dark); background:var(--clay-tint); border-color:var(--clay-tint-2); }
+.card-kebab{ background:none; border:none; color:var(--ink-faint); padding:.1rem .3rem; border-radius:6px; }
+.card-kebab:hover{ background:var(--sand); color:var(--ink); }
+
+/* status color dot swatch reused in table/badges */
+.dot-swatch{ width:10px; height:10px; border-radius:50%; display:inline-block; box-shadow:0 0 0 1px rgba(42,33,24,.22); flex-shrink:0; }
+
+/* ============================= LIST SURFACE ============================= */
+.filter-toolbar{ background:var(--bone-2); border:1px solid var(--line-soft); border-radius:var(--radius-md); padding:1rem; }
+.idea-table{ background:var(--bone-2); border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--line-soft); }
+.idea-table thead th{
+  background:var(--sand); color:var(--ink-soft); font-size:.72rem; text-transform:uppercase;
+  letter-spacing:.05em; font-weight:700; border-bottom:1px solid var(--line); white-space:nowrap;
+}
+.idea-table thead th button{
+  background:none; border:none; color:inherit; font:inherit; text-transform:inherit;
+  letter-spacing:inherit; display:inline-flex; align-items:center; gap:.3rem; padding:.9rem .75rem;
+  width:100%;
+}
+.idea-table thead th button:hover{ color:var(--clay-dark); }
+.idea-table tbody tr{ border-color:var(--line-soft); }
+.idea-table tbody tr:hover{ background:var(--sand); cursor:pointer; }
+.idea-table td, .idea-table th{ vertical-align:middle; }
+.row-title-btn{ background:none; border:none; padding:0; color:var(--ink); font-weight:600; text-align:left; }
+.row-title-btn:hover{ color:var(--clay-dark); text-decoration:underline; }
+.sort-caret{ font-size:.65rem; opacity:.35; }
+.sort-caret.active{ opacity:1; color:var(--clay); }
+
+/* ============================= STATUSES ADMIN ============================= */
+.status-row{
+  background:var(--bone-2); border:1px solid var(--line-soft); border-radius:var(--radius-md);
+  padding:.75rem 1rem; display:flex; align-items:center; gap:.75rem; margin-bottom:.6rem;
+  box-shadow:var(--paper-shadow-1);
+}
+.status-row.dragging{ opacity:.4; }
+.drag-handle{ cursor:grab; color:var(--ink-faint); }
+.swatch-lg{ width:22px; height:22px; border-radius:7px; border:1px solid rgba(42,33,24,.25); flex-shrink:0; }
+
+/* ============================= LOGIN ============================= */
+.login-wrap{
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(140,124,100,.18) 1px, transparent 0) 0 0/22px 22px,
+    var(--bone);
+  padding:1.5rem;
+}
+.login-card{
+  background:var(--bone-2); border:1px solid var(--line-soft); border-radius:var(--radius-card);
+  box-shadow:var(--paper-shadow-2); padding:2.25rem; width:100%; max-width:400px;
+}
+
+/* ============================= COMMENTS / AI STRIP / DRAWER ============================= */
+.ai-strip{
+  background:linear-gradient(135deg, var(--clay-tint), var(--bone-2));
+  border:1px solid var(--clay-tint-2); border-radius:var(--radius-md);
+  padding:.9rem 1rem; margin-bottom:1.1rem;
+}
+.ai-strip .bi-stars{ color:var(--clay); }
+.comment-item{ padding:.65rem 0; border-bottom:1px solid var(--line-soft); }
+.comment-item:last-child{ border-bottom:none; }
+.activity-item{ display:flex; gap:.6rem; padding:.5rem 0; font-size:.85rem; color:var(--ink-soft); }
+.activity-item .bi{ color:var(--clay); margin-top:.15rem; }
+.custom-field-box{ background:var(--sand); border-radius:var(--radius-sm); padding:.75rem; }
+.nav-tabs.warm{ border-color:var(--line-soft); }
+.nav-tabs.warm .nav-link{ color:var(--ink-soft); border:none; border-bottom:3px solid transparent; font-weight:600; }
+.nav-tabs.warm .nav-link.active{ background:none; color:var(--clay-dark); border-color:var(--clay); }
+
+.section-heading{ font-family:var(--font-display); font-weight:600; }
+
+@media (max-width: 767.98px){
+  .status-col{ flex:0 0 82vw; width:82vw; }
+  .login-card{ padding:1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================= LOGIN SURFACE ============================= -->
+<div id="loginSurface" class="login-wrap d-none">
+  <div class="login-card">
+    <div class="brand-mark justify-content-center mb-1"><i class="bi bi-grid-3x3-gap-fill"></i> Collega</div>
+    <p class="text-center org-name mb-4">Northwind Labs workspace</p>
+    <form id="loginForm" novalidate>
+      <div class="mb-3">
+        <label for="loginEmail" class="form-label">Email</label>
+        <input type="email" class="form-control" id="loginEmail" value="ada.okafor@northwindlabs.com" required>
+      </div>
+      <div class="mb-2">
+        <label for="loginPassword" class="form-label">Password</label>
+        <input type="password" class="form-control" id="loginPassword" value="••••••••••" required>
+      </div>
+      <p class="small text-muted mb-3" style="color:var(--ink-faint) !important;">
+        <i class="bi bi-shield-lock"></i> 5 failed attempts will temporarily lock this account.
+      </p>
+      <div id="lockoutAlert" class="alert d-none mb-3" role="alert"
+           style="background:var(--clay-tint); border:1px solid var(--clay-tint-2); color:var(--ink);">
+        <i class="bi bi-lock-fill"></i> <strong>Account temporarily locked.</strong>
+        Too many failed attempts — try again in <strong>4:32</strong>, or reset your password below.
+      </div>
+      <button type="submit" class="btn btn-primary w-100 mb-2">Sign in</button>
+      <div class="d-flex justify-content-between">
+        <a href="#" class="small">Forgot password?</a>
+        <button type="button" id="simulateLockoutBtn" class="btn btn-link btn-sm p-0 small">Preview lockout state</button>
+      </div>
+    </form>
+    <hr style="border-color:var(--line-soft);">
+    <button type="button" class="btn btn-outline-secondary w-100" id="backToAppBtn">
+      <i class="bi bi-arrow-left"></i> Back to workspace (demo)
+    </button>
+  </div>
+</div>
+
+<!-- ============================= APP SHELL ============================= -->
+<div id="appShell">
+
+  <!-- View As banner -->
+  <div id="viewAsBanner" class="viewas-banner d-none py-2 px-3 d-flex align-items-center justify-content-center gap-2">
+    <i class="bi bi-eye-fill"></i>
+    <span>Site Admin view — you're viewing Northwind Labs as <strong>Ben Torres (User)</strong>.</span>
+    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="exitViewAsBtn" style="border-color:var(--clay-dark);">Exit View As</button>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-md app-navbar py-2">
+    <div class="container-fluid px-3 gap-3">
+      <span class="brand-mark"><i class="bi bi-grid-3x3-gap-fill"></i> Collega</span>
+      <span class="org-name d-none d-lg-inline">Northwind Labs</span>
+
+      <div class="dropdown ms-md-2">
+        <button class="btn board-switcher-btn dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-kanban"></i> <span id="currentBoardLabel">Product Ideas</span>
+        </button>
+        <ul class="dropdown-menu">
+          <li><h6 class="dropdown-header">Switch board</h6></li>
+          <li><button class="dropdown-item board-choice" data-board="Product Ideas">Product Ideas</button></li>
+          <li><button class="dropdown-item board-choice" data-board="Platform Health">Platform Health</button></li>
+          <li><button class="dropdown-item board-choice" data-board="Customer Requests">Customer Requests</button></li>
+          <li><button class="dropdown-item board-choice" data-board="Q4 Planning">Q4 Planning</button></li>
+        </ul>
+      </div>
+
+      <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navShellCollapse" aria-controls="navShellCollapse" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse flex-grow-0 ms-auto" id="navShellCollapse">
+        <div class="d-flex align-items-center gap-3 mt-3 mt-md-0">
+          <button class="btn btn-primary btn-sm" id="newIdeaBtn"><i class="bi bi-plus-lg"></i> New idea</button>
+          <div class="dropdown">
+            <button class="btn btn-sm p-0 border-0 bg-transparent" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
+              <span class="user-chip" id="userChipInitials">AO</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><h6 class="dropdown-header" id="userMenuName">Ada Okafor · Org Admin</h6></li>
+              <li><hr class="dropdown-divider" style="border-color:var(--line-soft);"></li>
+              <li><button class="dropdown-item" id="toggleViewAsItem"><i class="bi bi-eye"></i> Demo: View As Ben Torres</button></li>
+              <li><button class="dropdown-item" id="goLoginBtn"><i class="bi bi-box-arrow-right"></i> Log out</button></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Surface switcher -->
+  <div class="surface-nav px-3">
+    <ul class="nav nav-pills surface-pills" role="tablist" aria-label="Surfaces">
+      <li class="nav-item"><button class="nav-link active" data-surface="board" type="button"><i class="bi bi-kanban-fill me-1"></i>Board</button></li>
+      <li class="nav-item"><button class="nav-link" data-surface="list" type="button"><i class="bi bi-list-ul me-1"></i>Ideas List</button></li>
+      <li class="nav-item"><button class="nav-link" data-surface="admin" type="button"><i class="bi bi-sliders me-1"></i>Statuses Admin</button></li>
+      <li class="nav-item"><button class="nav-link" data-surface="login" type="button"><i class="bi bi-box-arrow-in-right me-1"></i>Login</button></li>
+    </ul>
+  </div>
+
+  <!-- ============================= BOARD SURFACE ============================= -->
+  <main id="surfaceBoard" class="board-wrap">
+    <div id="boardTrack" class="board-track"></div>
+  </main>
+
+  <!-- ============================= LIST SURFACE ============================= -->
+  <main id="surfaceList" class="d-none container-fluid px-3 py-4">
+    <h1 class="h4 section-heading mb-3">Ideas — <span id="listBoardLabel">Product Ideas</span></h1>
+    <div class="filter-toolbar mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+          <label class="form-label mb-1" for="filterSearch">Search</label>
+          <input type="search" id="filterSearch" class="form-control" placeholder="Search idea titles…">
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label mb-1" for="filterStatus">Status</label>
+          <select id="filterStatus" class="form-select"><option value="">All</option></select>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label mb-1" for="filterType">Type</label>
+          <select id="filterType" class="form-select">
+            <option value="">All</option>
+            <option>Feature</option><option>Bug</option><option>Improvement</option><option>Research</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <label class="form-label mb-1" for="filterTag">Tag</label>
+          <select id="filterTag" class="form-select"><option value="">All</option></select>
+        </div>
+        <div class="col-6 col-md-2">
+          <button class="btn btn-outline-secondary w-100" id="clearFiltersBtn"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="table-responsive idea-table">
+      <table class="table mb-0 align-middle">
+        <thead>
+          <tr>
+            <th data-sort="title" style="min-width:260px;"><button>Title <i class="bi bi-caret-down-fill sort-caret"></i></button></th>
+            <th data-sort="type"><button>Type <i class="bi bi-caret-down-fill sort-caret"></i></button></th>
+            <th data-sort="impact"><button>Impact <i class="bi bi-caret-down-fill sort-caret"></i></button></th>
+            <th data-sort="status"><button>Status <i class="bi bi-caret-down-fill sort-caret"></i></button></th>
+            <th data-sort="upvotes"><button>Upvotes <i class="bi bi-caret-down-fill sort-caret"></i></button></th>
+            <th data-sort="commentsCount"><button>Comments <i class="bi bi-caret-down-fill sort-caret"></i></button></th>
+            <th>Tags</th>
+            <th>Owner</th>
+            <th class="text-end pe-3">Open</th>
+          </tr>
+        </thead>
+        <tbody id="listTableBody"></tbody>
+      </table>
+    </div>
+    <p class="small mt-2" id="listEmptyState" style="color:var(--ink-faint);"></p>
+  </main>
+
+  <!-- ============================= STATUSES ADMIN SURFACE ============================= -->
+  <main id="surfaceAdmin" class="d-none container-fluid px-3 py-4" style="max-width:720px;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="h4 section-heading mb-0">Statuses</h1>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addStatusModal"><i class="bi bi-plus-lg"></i> Add status</button>
+    </div>
+    <p class="small mb-3" style="color:var(--ink-faint);">Drag rows to reorder, or use the arrow buttons. These statuses apply org-wide across every board.</p>
+    <div id="statusList"></div>
+  </main>
+
+</div><!-- /appShell -->
+
+<!-- ============================= IDEA DETAIL OFFCANVAS ============================= -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="ideaDrawer" aria-labelledby="ideaDrawerLabel" style="width:min(560px, 100vw);">
+  <div class="offcanvas-header">
+    <div>
+      <div class="small mb-1" id="ideaDrawerKicker" style="color:var(--ink-faint);">Idea</div>
+      <h2 class="offcanvas-title h5 section-heading" id="ideaDrawerLabel">Idea title</h2>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+
+    <div id="aiStrip" class="ai-strip d-none">
+      <div class="d-flex align-items-start gap-2">
+        <i class="bi bi-stars fs-5"></i>
+        <div class="flex-grow-1">
+          <strong>AI-suggested draft</strong>
+          <p class="small mb-2" style="color:var(--ink-soft);">Based on similar ideas, we drafted a title and description for you to review.</p>
+          <p class="small mb-1"><strong id="aiSuggestedTitle">Dark mode for the board canvas</strong></p>
+          <p class="small mb-2" style="color:var(--ink-soft);" id="aiSuggestedDesc">Several customers with low-light workflows have asked for a dark theme on the board view specifically, separate from the OS-level preference.</p>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-primary" id="aiAcceptBtn"><i class="bi bi-check-lg"></i> Accept suggestion</button>
+            <button class="btn btn-sm btn-outline-secondary" id="aiDismissBtn">Dismiss</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="drawerTitleInput">Title</label>
+      <input type="text" class="form-control" id="drawerTitleInput">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="drawerDescInput">Description</label>
+      <textarea class="form-control" id="drawerDescInput" rows="3"></textarea>
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-4">
+        <label class="form-label" for="drawerStatusSelect">Status</label>
+        <select class="form-select form-select-sm" id="drawerStatusSelect"></select>
+      </div>
+      <div class="col-4">
+        <label class="form-label" for="drawerTypeSelect">Type</label>
+        <select class="form-select form-select-sm" id="drawerTypeSelect">
+          <option>Feature</option><option>Bug</option><option>Improvement</option><option>Research</option>
+        </select>
+      </div>
+      <div class="col-4">
+        <label class="form-label" for="drawerImpactSelect">Impact</label>
+        <select class="form-select form-select-sm" id="drawerImpactSelect">
+          <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label mb-1">Custom fields</label>
+      <div class="custom-field-box">
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label small mb-1" for="cfRelease">Target release</label>
+            <input type="text" class="form-control form-control-sm" id="cfRelease" value="Q4 2026">
+          </div>
+          <div class="col-6">
+            <label class="form-label small mb-1" for="cfEstimate">Eng. estimate</label>
+            <select class="form-select form-select-sm" id="cfEstimate">
+              <option>S</option><option selected>M</option><option>L</option><option>XL</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label mb-1">Tags</label>
+      <div id="drawerTags" class="d-flex flex-wrap gap-2 align-items-center"></div>
+    </div>
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <button class="btn btn-outline-secondary d-flex align-items-center gap-2" id="drawerUpvoteBtn" aria-pressed="false">
+        <i class="bi bi-arrow-up-circle"></i> <span id="drawerUpvoteCount">0</span> upvotes
+      </button>
+      <span class="small" style="color:var(--ink-faint);">Owned by <strong id="drawerOwnerName" style="color:var(--ink-soft);">—</strong></span>
+    </div>
+
+    <ul class="nav nav-tabs warm mb-3" role="tablist">
+      <li class="nav-item"><button class="nav-link active" data-tab="comments" type="button">Comments</button></li>
+      <li class="nav-item"><button class="nav-link" data-tab="activity" type="button">Activity</button></li>
+    </ul>
+
+    <div id="tabComments">
+      <form id="addCommentForm" class="d-flex gap-2 mb-3">
+        <input type="text" class="form-control form-control-sm" id="newCommentInput" placeholder="Add a comment as Ada Okafor…" aria-label="Add a comment">
+        <button class="btn btn-sm btn-primary" type="submit">Post</button>
+      </form>
+      <div id="commentsList"></div>
+      <button class="btn btn-sm btn-link px-0" id="showMoreCommentsBtn">Show more comments</button>
+    </div>
+
+    <div id="tabActivity" class="d-none">
+      <div id="activityList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================= ADD STATUS MODAL ============================= -->
+<div class="modal fade" id="addStatusModal" tabindex="-1" aria-labelledby="addStatusModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="addStatusModalLabel">Add status</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label" for="newStatusName">Name</label>
+          <input type="text" class="form-control" id="newStatusName" placeholder="e.g. Blocked">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="newStatusColor">Color</label>
+          <input type="color" class="form-control form-control-color" id="newStatusColor" value="#B5562B" title="Choose status color">
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="newStatusDefault">
+          <label class="form-check-label" for="newStatusDefault">Make this the default status for new ideas</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmAddStatusBtn" data-bs-dismiss="modal">Add status</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= DELETE STATUS CONFIRM MODAL ============================= -->
+<div class="modal fade" id="deleteStatusModal" tabindex="-1" aria-labelledby="deleteStatusModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="deleteStatusModalLabel">Remove status?</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">Remove <strong id="deleteStatusName">this status</strong>? Ideas currently in it will need to be moved.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmDeleteStatusBtn" data-bs-dismiss="modal" style="background:#9A2F1F; border-color:#9A2F1F;">Remove</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div aria-live="polite" class="visually-hidden" id="liveRegion"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ============================= DATA MODEL ============================= */
+  const USERS = {
+    ada:   {name:'Ada Okafor',  role:'Org Admin', initials:'AO'},
+    ben:   {name:'Ben Torres',  role:'User',      initials:'BT'},
+    priya: {name:'Priya Raman', role:'User',      initials:'PR'},
+    marcus:{name:'Marcus Webb', role:'User',      initials:'MW'},
+    lena:  {name:'Lena Fischer',role:'User',      initials:'LF'},
+  };
+
+  let statuses = [
+    {id:'new',        name:'New',         color:'#6B7280', isDefault:true,  order:1},
+    {id:'triage',      name:'Triage',      color:'#F59E0B', isDefault:false, order:2},
+    {id:'planned',     name:'Planned',     color:'#3B82F6', isDefault:false, order:3},
+    {id:'inprogress',  name:'In Progress', color:'#8B5CF6', isDefault:false, order:4},
+    {id:'shipped',     name:'Shipped',     color:'#10B981', isDefault:false, order:5},
+    {id:'declined',    name:'Declined',    color:'#EF4444', isDefault:false, order:6},
+  ];
+
+  const IMPACT_RANK = {Critical:4, High:3, Medium:2, Low:1};
+  const TAGS = ['mobile','api','billing','accessibility','performance'];
+  const BOARDS = ['Product Ideas','Platform Health','Customer Requests','Q4 Planning'];
+
+  let ideas = [
+    {id:1,  title:'Single sign-on for enterprise customers',        type:'Feature',     impact:'Critical', status:'planned',    upvotes:34, commentsCount:8,  tags:['api','billing'],           owner:'ada',    board:'Product Ideas',
+      desc:'Enterprise prospects are asking for SAML/SSO before they will sign. Scope: SSO login for org members, admin-configurable per organization, no change to Site Admin auth.'},
+    {id:2,  title:'Board view drops swimlane order on refresh',     type:'Bug',         impact:'High',     status:'inprogress',  upvotes:12, commentsCount:5,  tags:['performance'],             owner:'ben',    board:'Product Ideas',
+      desc:'Reordering statuses on a board resets to default order after a hard refresh. Looks like the order isn\'t persisted with the board preference.'},
+    {id:3,  title:'Bulk edit ideas from the list view',             type:'Feature',     impact:'Medium',   status:'new',         upvotes:21, commentsCount:3,  tags:[],                          owner:'priya',  board:'Product Ideas',
+      desc:'Select multiple rows in the list view and change status/type/tags in one action, instead of opening each idea individually.'},
+    {id:4,  title:'Keyboard navigation for the idea drawer',        type:'Improvement', impact:'High',     status:'triage',      upvotes:18, commentsCount:6,  tags:['accessibility'],           owner:'lena',   board:'Product Ideas',
+      desc:'Tab order in the idea drawer skips the comment form and the focus trap doesn\'t return focus to the triggering card on close.'},
+    {id:5,  title:'Export board to CSV',                            type:'Feature',     impact:'Low',      status:'shipped',     upvotes:9,  commentsCount:2,  tags:['api'],                     owner:'marcus', board:'Product Ideas',
+      desc:'One-click export of the current board (respecting active filters) to a CSV for offline sharing with stakeholders.'},
+    {id:6,  title:'Mobile board scrolling is janky on iOS',         type:'Bug',         impact:'High',     status:'triage',      upvotes:27, commentsCount:11, tags:['mobile','performance'],    owner:'ben',    board:'Product Ideas',
+      desc:'Horizontal board scroll fights with vertical card scroll on iOS Safari, causing visible jank and occasional stuck scroll positions.'},
+    {id:7,  title:'Custom fields on idea types',                    type:'Feature',     impact:'Critical', status:'shipped',     upvotes:41, commentsCount:14, tags:[],                          owner:'ada',    board:'Product Ideas',
+      desc:'Org admins can define custom fields per idea type (e.g. "Target release" for Features, "Repro steps" for Bugs).'},
+    {id:8,  title:'Slack notifications for status changes',         type:'Feature',     impact:'Medium',   status:'new',         upvotes:16, commentsCount:4,  tags:['api'],                     owner:'priya',  board:'Product Ideas',
+      desc:'Post a message to a configured Slack channel whenever a watched idea changes status.'},
+    {id:9,  title:'Screen reader announces status column twice',    type:'Bug',         impact:'Medium',   status:'planned',     upvotes:7,  commentsCount:1,  tags:['accessibility'],           owner:'lena',   board:'Product Ideas',
+      desc:'VoiceOver reads the status column header, then immediately re-announces it when the first card receives focus.'},
+    {id:10, title:'Per-org AI credit limits',                       type:'Research',    impact:'High',     status:'new',         upvotes:5,  commentsCount:0,  tags:['billing'],                 owner:'ada',    board:'Product Ideas',
+      desc:'Investigate a configurable monthly cap on AI-assisted drafting per organization, with usage visible to Org Admins.'},
+    {id:11, title:'Archive stale ideas automatically',              type:'Improvement', impact:'Low',      status:'declined',    upvotes:3,  commentsCount:2,  tags:[],                          owner:'marcus', board:'Product Ideas',
+      desc:'Auto-archive ideas with no activity for 12+ months. Declined after feedback that silent archiving hides context during audits.'},
+    {id:12, title:'Faster board load for 500+ ideas',               type:'Improvement', impact:'Critical', status:'inprogress',  upvotes:31, commentsCount:9,  tags:['performance'],             owner:'ben',    board:'Product Ideas',
+      desc:'Boards with 500+ ideas take 4-6s to become interactive. Needs virtualization of off-screen cards and lazy comment counts.'},
+  ];
+
+  const SEED_COMMENTS = {
+    1: [{author:'Ben Torres', text:'Do we need per-org IdP config, or is one shared IdP enough for launch?', time:'3d ago'},
+        {author:'Ada Okafor', text:'Per-org — enterprise security review will ask for it either way.', time:'2d ago'}],
+    6: [{author:'Priya Raman', text:'Repro\'d on iOS 17.4, Safari and in-app webviews both affected.', time:'6d ago'},
+        {author:'Marcus Webb', text:'Might be the same root cause as #2 — both touch swimlane scroll containers.', time:'5d ago'}],
+    7: [{author:'Lena Fischer', text:'Shipped! Docs are up in the admin guide.', time:'2w ago'},
+        {author:'Priya Raman', text:'This unblocked our billing custom field request too.', time:'2w ago'}],
+    12:[{author:'Ada Okafor', text:'What\'s the target TTI once virtualization lands?', time:'4d ago'},
+        {author:'Ben Torres', text:'Aiming under 1.5s for 500 cards, testing now.', time:'3d ago'}],
+  };
+  const FILLER_COMMENTS = [
+    {author:'Marcus Webb', text:'Following this — would help our team a lot.'},
+    {author:'Priya Raman', text:'+1, ran into this last sprint.'},
+    {author:'Lena Fischer', text:'Any update on timeline?'},
+    {author:'Ben Torres', text:'Linked a related thread in Slack.'},
+    {author:'Ada Okafor', text:'Adding this to the Q4 review list.'},
+    {author:'Priya Raman', text:'Same here, seeing this weekly.'},
+  ];
+  function getComments(idea){
+    const seed = (SEED_COMMENTS[idea.id] || []).slice();
+    let i = 0;
+    while (seed.length < idea.commentsCount){
+      const f = FILLER_COMMENTS[i % FILLER_COMMENTS.length];
+      seed.push({author:f.author, text:f.text, time:`${i+3}d ago`});
+      i++;
+    }
+    return seed.slice(0, idea.commentsCount);
+  }
+  function getActivity(idea){
+    const st = statuses.find(s=>s.id===idea.status);
+    return [
+      {icon:'bi-plus-circle', text:`${USERS[idea.owner].name} created this idea.`, time:'3w ago'},
+      {icon:'bi-arrow-repeat', text:`Status set to ${st ? st.name : idea.status}.`, time:'2w ago'},
+      {icon:'bi-hand-thumbs-up', text:`Reached ${idea.upvotes} upvotes.`, time:'5d ago'},
+      {icon:'bi-tag', text: idea.tags.length ? `Tagged ${idea.tags.join(', ')}.` : 'No tags applied.', time:'4d ago'},
+    ];
+  }
+
+  /* ============================= STATE ============================= */
+  let currentBoard = 'Product Ideas';
+  let currentSurface = 'board';
+  let activeIdeaId = null;
+  let isCreateMode = false;
+  let aiResolved = {}; // ideaId(or 'create') -> true once accepted/dismissed
+  let commentsExpanded = false;
+  let listSort = {key:'upvotes', dir:'desc'};
+  let viewingAs = false;
+  let dragIdeaId = null;
+  let dragStatusId = null;
+
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  function announce(msg){ $('#liveRegion').textContent = msg; }
+  function statusById(id){ return statuses.find(s=>s.id===id); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  /* ============================= BOARD RENDER ============================= */
+  function renderBoard(){
+    $('#currentBoardLabel').textContent = currentBoard;
+    const track = $('#boardTrack');
+    track.innerHTML = '';
+    const sorted = statuses.slice().sort((a,b)=>a.order-b.order);
+    const boardIdeas = ideas.filter(i => i.board === currentBoard);
+
+    sorted.forEach(st => {
+      const colIdeas = boardIdeas.filter(i => i.status === st.id);
+      const col = document.createElement('div');
+      col.className = 'status-col';
+      col.innerHTML = `
+        <div class="status-col-head">
+          <span class="status-dot" style="background:${st.color}"></span>
+          <span class="status-col-title">${escapeHtml(st.name)}</span>
+          <span class="status-col-count">${colIdeas.length}</span>
+        </div>
+        <div class="status-col-body" data-status="${st.id}" role="list" aria-label="${escapeHtml(st.name)} ideas"></div>
+        <button class="btn btn-sm btn-outline-secondary col-add-btn" data-add-status="${st.id}">
+          <i class="bi bi-plus-lg"></i> Add idea
+        </button>`;
+      track.appendChild(col);
+      const body = col.querySelector('.status-col-body');
+
+      if (colIdeas.length === 0){
+        body.innerHTML = `<div class="status-col-empty">No ideas yet on ${escapeHtml(currentBoard === 'Product Ideas' ? st.name : currentBoard)}.</div>`;
+      } else {
+        colIdeas.forEach(idea => body.appendChild(renderCard(idea)));
+      }
+
+      body.addEventListener('dragover', e => { e.preventDefault(); body.classList.add('drag-over'); });
+      body.addEventListener('dragleave', () => body.classList.remove('drag-over'));
+      body.addEventListener('drop', e => {
+        e.preventDefault();
+        body.classList.remove('drag-over');
+        const id = Number(e.dataTransfer.getData('text/plain'));
+        moveIdeaToStatus(id, st.id);
+      });
+    });
+
+    track.querySelectorAll('[data-add-status]').forEach(btn=>{
+      btn.addEventListener('click', ()=> openDrawerCreate(btn.getAttribute('data-add-status')));
+    });
+
+    setupBoardPan(track);
+  }
+
+  function renderCard(idea){
+    const card = document.createElement('div');
+    card.className = 'idea-card';
+    card.draggable = true;
+    card.tabIndex = 0;
+    card.dataset.id = idea.id;
+    card.setAttribute('role','listitem');
+    card.setAttribute('aria-label', `${idea.title}, ${idea.type}, ${idea.impact} impact, ${idea.upvotes} upvotes`);
+
+    const otherStatuses = statuses.filter(s=>s.id!==idea.status).sort((a,b)=>a.order-b.order);
+    const moveItems = otherStatuses.map(s=>`<li><button class="dropdown-item move-status-item" data-idea="${idea.id}" data-target="${s.id}"><span class="status-dot d-inline-block" style="width:8px;height:8px;background:${s.color};margin-right:.4rem;"></span>${escapeHtml(s.name)}</button></li>`).join('');
+
+    card.innerHTML = `
+      <div class="idea-card-top">
+        <span class="type-badge">${typeIcon(idea.type)} ${escapeHtml(idea.type)}</span>
+        <div class="dropdown">
+          <button class="card-kebab" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Card actions for ${escapeHtml(idea.title)}" onclick="event.stopPropagation()">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><button class="dropdown-item open-idea-item" data-idea="${idea.id}"><i class="bi bi-arrows-angle-expand"></i> Open</button></li>
+            <li><h6 class="dropdown-header">Move to</h6></li>
+            ${moveItems}
+          </ul>
+        </div>
+      </div>
+      <h3 class="idea-title">${escapeHtml(idea.title)}</h3>
+      <span class="impact-chip impact-${idea.impact.toLowerCase()}"><span class="impact-dot"></span>${escapeHtml(idea.impact)} impact</span>
+      <div class="idea-tags">${idea.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>
+      <div class="idea-card-footer">
+        <div class="d-flex align-items-center gap-2">
+          <button class="stat-btn upvote-inline" data-idea="${idea.id}" aria-pressed="false" aria-label="Upvote ${escapeHtml(idea.title)}">
+            <i class="bi bi-arrow-up-circle"></i> ${idea.upvotes}
+          </button>
+          <span class="stat-btn" style="pointer-events:none;"><i class="bi bi-chat-dots"></i> ${idea.commentsCount}</span>
+        </div>
+        <span class="avatar-sm" title="${escapeHtml(USERS[idea.owner].name)}">${USERS[idea.owner].initials}</span>
+      </div>`;
+
+    card.addEventListener('click', (e)=>{
+      if (e.target.closest('.dropdown')) return;
+      openDrawerView(idea.id);
+    });
+    card.addEventListener('keydown', (e)=>{
+      if ((e.key==='Enter' || e.key===' ') && !e.target.closest('.dropdown')){
+        e.preventDefault();
+        openDrawerView(idea.id);
+      }
+    });
+    card.addEventListener('dragstart', (e)=>{
+      dragIdeaId = idea.id;
+      e.dataTransfer.setData('text/plain', String(idea.id));
+      e.dataTransfer.effectAllowed = 'move';
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', ()=> card.classList.remove('dragging'));
+
+    card.querySelector('.upvote-inline').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      toggleUpvote(idea.id);
+    });
+    card.querySelectorAll('.move-status-item').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        moveIdeaToStatus(Number(btn.dataset.idea), btn.dataset.target);
+      });
+    });
+    card.querySelector('.open-idea-item').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openDrawerView(idea.id);
+    });
+
+    return card;
+  }
+
+  function typeIcon(type){
+    const map = {Feature:'bi-stars', Bug:'bi-bug', Improvement:'bi-arrow-up-right-circle', Research:'bi-search'};
+    return `<i class="bi ${map[type]||'bi-tag'}"></i>`;
+  }
+
+  function moveIdeaToStatus(ideaId, statusId){
+    const idea = ideas.find(i=>i.id===ideaId);
+    if (!idea || idea.status === statusId) return;
+    idea.status = statusId;
+    renderBoard();
+    if (currentSurface==='list') renderList();
+    if (activeIdeaId === ideaId) populateDrawer(idea);
+    const st = statusById(statusId);
+    announce(`${idea.title} moved to ${st ? st.name : statusId}`);
+  }
+
+  function toggleUpvote(ideaId){
+    const idea = ideas.find(i=>i.id===ideaId);
+    if (!idea) return;
+    if (idea._upvoted){ idea.upvotes -= 1; idea._upvoted = false; }
+    else { idea.upvotes += 1; idea._upvoted = true; }
+    renderBoard();
+    if (currentSurface==='list') renderList();
+    if (activeIdeaId === ideaId){
+      $('#drawerUpvoteCount').textContent = idea.upvotes;
+      $('#drawerUpvoteBtn').classList.toggle('upvoted', !!idea._upvoted);
+      $('#drawerUpvoteBtn').setAttribute('aria-pressed', String(!!idea._upvoted));
+    }
+  }
+
+  function setupBoardPan(track){
+    let isDown = false, startX, scrollLeft;
+    track.addEventListener('mousedown', e=>{
+      if (e.target.closest('.idea-card') || e.target.closest('button')) return;
+      isDown = true; track.classList.add('panning');
+      startX = e.pageX - track.offsetLeft;
+      scrollLeft = track.scrollLeft;
+    });
+    window.addEventListener('mouseup', ()=>{ isDown=false; track.classList.remove('panning'); });
+    track.addEventListener('mouseleave', ()=>{ isDown=false; track.classList.remove('panning'); });
+    track.addEventListener('mousemove', e=>{
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - track.offsetLeft;
+      track.scrollLeft = scrollLeft - (x - startX);
+    });
+  }
+
+  /* ============================= LIST RENDER ============================= */
+  function populateFilterOptions(){
+    const statusSel = $('#filterStatus');
+    statusSel.innerHTML = '<option value="">All</option>' + statuses.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+    const tagSel = $('#filterTag');
+    tagSel.innerHTML = '<option value="">All</option>' + TAGS.map(t=>`<option value="${t}">${escapeHtml(t)}</option>`).join('');
+  }
+
+  function renderList(){
+    $('#listBoardLabel').textContent = currentBoard;
+    const search = $('#filterSearch').value.trim().toLowerCase();
+    const fStatus = $('#filterStatus').value;
+    const fType = $('#filterType').value;
+    const fTag = $('#filterTag').value;
+
+    let rows = ideas.filter(i => i.board === currentBoard);
+    if (search) rows = rows.filter(i => i.title.toLowerCase().includes(search));
+    if (fStatus) rows = rows.filter(i => i.status === fStatus);
+    if (fType) rows = rows.filter(i => i.type === fType);
+    if (fTag) rows = rows.filter(i => i.tags.includes(fTag));
+
+    rows = rows.slice().sort((a,b)=>{
+      let av, bv;
+      if (listSort.key === 'impact'){ av = IMPACT_RANK[a.impact]; bv = IMPACT_RANK[b.impact]; }
+      else if (listSort.key === 'status'){ av = statusById(a.status)?.order||0; bv = statusById(b.status)?.order||0; }
+      else { av = a[listSort.key]; bv = b[listSort.key]; }
+      if (typeof av === 'string'){ av = av.toLowerCase(); bv = bv.toLowerCase(); }
+      if (av < bv) return listSort.dir === 'asc' ? -1 : 1;
+      if (av > bv) return listSort.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    $$('.idea-table thead th[data-sort] .sort-caret').forEach(c=>{
+      c.classList.remove('active');
+      c.className = 'bi sort-caret ' + (c.closest('th').dataset.sort===listSort.key ? (listSort.dir==='asc'?'bi-caret-up-fill active':'bi-caret-down-fill active') : 'bi-caret-down-fill');
+    });
+
+    const tbody = $('#listTableBody');
+    tbody.innerHTML = '';
+    rows.forEach(idea=>{
+      const st = statusById(idea.status);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><button class="row-title-btn">${escapeHtml(idea.title)}</button></td>
+        <td><span class="type-badge">${typeIcon(idea.type)} ${escapeHtml(idea.type)}</span></td>
+        <td><span class="impact-chip impact-${idea.impact.toLowerCase()}"><span class="impact-dot"></span>${escapeHtml(idea.impact)}</span></td>
+        <td><span class="dot-swatch" style="background:${st?st.color:'#999'}"></span> ${escapeHtml(st?st.name:idea.status)}</td>
+        <td>${idea.upvotes}</td>
+        <td>${idea.commentsCount}</td>
+        <td>${idea.tags.length ? idea.tags.map(t=>`<span class="tag-chip me-1">${escapeHtml(t)}</span>`).join('') : '<span style="color:var(--ink-faint)">—</span>'}</td>
+        <td><span class="avatar-sm">${USERS[idea.owner].initials}</span></td>
+        <td class="text-end pe-2"><button class="btn btn-sm btn-outline-secondary open-row-btn" aria-label="Open ${escapeHtml(idea.title)}"><i class="bi bi-box-arrow-up-right"></i></button></td>`;
+      tr.addEventListener('click', (e)=>{
+        if (e.target.closest('button')) { openDrawerView(idea.id); return; }
+      });
+      tr.querySelector('.row-title-btn').addEventListener('click', ()=> openDrawerView(idea.id));
+      tr.querySelector('.open-row-btn').addEventListener('click', ()=> openDrawerView(idea.id));
+      tbody.appendChild(tr);
+    });
+
+    $('#listEmptyState').textContent = rows.length ? '' : `No ideas match these filters on ${currentBoard}.`;
+  }
+
+  $('#filterSearch').addEventListener('input', renderList);
+  $('#filterStatus').addEventListener('change', renderList);
+  $('#filterType').addEventListener('change', renderList);
+  $('#filterTag').addEventListener('change', renderList);
+  $('#clearFiltersBtn').addEventListener('click', ()=>{
+    $('#filterSearch').value=''; $('#filterStatus').value=''; $('#filterType').value=''; $('#filterTag').value='';
+    renderList();
+  });
+  $$('.idea-table thead th[data-sort]').forEach(th=>{
+    th.querySelector('button').addEventListener('click', ()=>{
+      const key = th.dataset.sort;
+      if (listSort.key === key) listSort.dir = listSort.dir === 'asc' ? 'desc' : 'asc';
+      else { listSort.key = key; listSort.dir = 'asc'; }
+      renderList();
+    });
+  });
+
+  /* ============================= STATUSES ADMIN RENDER ============================= */
+  let deleteTargetId = null;
+  function renderStatusAdmin(){
+    const list = $('#statusList');
+    list.innerHTML = '';
+    const sorted = statuses.slice().sort((a,b)=>a.order-b.order);
+    sorted.forEach((st, idx)=>{
+      const row = document.createElement('div');
+      row.className = 'status-row';
+      row.draggable = true;
+      row.dataset.id = st.id;
+      row.innerHTML = `
+        <span class="drag-handle" aria-hidden="true"><i class="bi bi-grip-vertical"></i></span>
+        <span class="swatch-lg" style="background:${st.color}"></span>
+        <span class="flex-grow-1 fw-semibold">${escapeHtml(st.name)}</span>
+        <div class="form-check form-check-inline mb-0">
+          <input class="form-check-input default-radio" type="radio" name="defaultStatus" id="default-${st.id}" ${st.isDefault?'checked':''}>
+          <label class="form-check-label small" for="default-${st.id}">Default</label>
+        </div>
+        <button class="btn btn-sm btn-icon btn-outline-secondary move-up-btn" aria-label="Move ${escapeHtml(st.name)} up" ${idx===0?'disabled':''}><i class="bi bi-chevron-up"></i></button>
+        <button class="btn btn-sm btn-icon btn-outline-secondary move-down-btn" aria-label="Move ${escapeHtml(st.name)} down" ${idx===sorted.length-1?'disabled':''}><i class="bi bi-chevron-down"></i></button>
+        <button class="btn btn-sm btn-icon btn-outline-secondary delete-status-btn" aria-label="Remove ${escapeHtml(st.name)}"><i class="bi bi-trash3"></i></button>`;
+      list.appendChild(row);
+
+      row.querySelector('.default-radio').addEventListener('change', ()=>{
+        statuses.forEach(s=>s.isDefault=false);
+        st.isDefault = true;
+        announce(`${st.name} set as default status`);
+      });
+      row.querySelector('.move-up-btn').addEventListener('click', ()=> reorderStatus(st.id, -1));
+      row.querySelector('.move-down-btn').addEventListener('click', ()=> reorderStatus(st.id, 1));
+      row.querySelector('.delete-status-btn').addEventListener('click', ()=>{
+        deleteTargetId = st.id;
+        $('#deleteStatusName').textContent = st.name;
+        new bootstrap.Modal($('#deleteStatusModal')).show();
+      });
+
+      row.addEventListener('dragstart', ()=>{ row.classList.add('dragging'); dragStatusId = st.id; });
+      row.addEventListener('dragend', ()=> row.classList.remove('dragging'));
+      row.addEventListener('dragover', e=>{ e.preventDefault(); });
+      row.addEventListener('drop', e=>{
+        e.preventDefault();
+        if (dragStatusId && dragStatusId !== st.id){
+          swapStatusOrder(dragStatusId, st.id);
+        }
+      });
+    });
+  }
+
+  function reorderStatus(id, dir){
+    const sorted = statuses.slice().sort((a,b)=>a.order-b.order);
+    const idx = sorted.findIndex(s=>s.id===id);
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx], b = sorted[swapIdx];
+    const tmp = a.order; a.order = b.order; b.order = tmp;
+    renderStatusAdmin();
+    announce(`${a.name} moved ${dir<0?'up':'down'}`);
+  }
+  function swapStatusOrder(idA, idB){
+    const a = statusById(idA), b = statusById(idB);
+    if (!a || !b) return;
+    const tmp = a.order; a.order = b.order; b.order = tmp;
+    renderStatusAdmin();
+  }
+
+  $('#confirmAddStatusBtn').addEventListener('click', ()=>{
+    const name = $('#newStatusName').value.trim() || 'Untitled status';
+    const color = $('#newStatusColor').value;
+    const isDefault = $('#newStatusDefault').checked;
+    const id = 'status-' + Date.now();
+    if (isDefault) statuses.forEach(s=>s.isDefault=false);
+    statuses.push({id, name, color, isDefault, order: statuses.length+1});
+    $('#newStatusName').value=''; $('#newStatusDefault').checked=false;
+    renderStatusAdmin(); populateFilterOptions(); renderBoard();
+    announce(`${name} status added`);
+  });
+  $('#confirmDeleteStatusBtn').addEventListener('click', ()=>{
+    if (!deleteTargetId) return;
+    statuses = statuses.filter(s=>s.id !== deleteTargetId);
+    renderStatusAdmin(); populateFilterOptions(); renderBoard();
+  });
+
+  /* ============================= DRAWER (VIEW / CREATE) ============================= */
+  const drawerEl = $('#ideaDrawer');
+  const drawerBs = new bootstrap.Offcanvas(drawerEl);
+
+  function populateDrawerStatusSelect(selectedId){
+    $('#drawerStatusSelect').innerHTML = statuses.slice().sort((a,b)=>a.order-b.order)
+      .map(s=>`<option value="${s.id}" ${s.id===selectedId?'selected':''}>${escapeHtml(s.name)}</option>`).join('');
+  }
+
+  function openDrawerView(ideaId){
+    const idea = ideas.find(i=>i.id===ideaId);
+    if (!idea) return;
+    isCreateMode = false;
+    activeIdeaId = ideaId;
+    commentsExpanded = false;
+    $('#ideaDrawerKicker').textContent = 'Idea #' + idea.id;
+    populateDrawer(idea);
+    const shouldShowAi = !aiResolved[ideaId] && false; // AI strip reserved for create flow
+    $('#aiStrip').classList.toggle('d-none', !shouldShowAi);
+    drawerBs.show();
+  }
+
+  function openDrawerCreate(presetStatusId){
+    isCreateMode = true;
+    activeIdeaId = null;
+    commentsExpanded = false;
+    $('#ideaDrawerKicker').textContent = 'New idea · ' + currentBoard;
+    $('#ideaDrawerLabel').textContent = 'Untitled idea';
+    $('#drawerTitleInput').value = '';
+    $('#drawerDescInput').value = '';
+    populateDrawerStatusSelect(presetStatusId || (statuses.find(s=>s.isDefault)||statuses[0]).id);
+    $('#drawerTypeSelect').value = 'Feature';
+    $('#drawerImpactSelect').value = 'Medium';
+    $('#drawerTags').innerHTML = '<span class="small" style="color:var(--ink-faint)">No tags yet.</span>';
+    $('#drawerUpvoteCount').textContent = '0';
+    $('#drawerUpvoteBtn').classList.remove('upvoted');
+    $('#drawerOwnerName').textContent = 'Ada Okafor (you)';
+    $('#commentsList').innerHTML = '<p class="small" style="color:var(--ink-faint)">Comments become available once the idea is created.</p>';
+    $('#showMoreCommentsBtn').classList.add('d-none');
+    $('#activityList').innerHTML = '<p class="small" style="color:var(--ink-faint)">No activity yet.</p>';
+
+    if (!aiResolved['create']){
+      $('#aiStrip').classList.remove('d-none');
+    } else {
+      $('#aiStrip').classList.add('d-none');
+    }
+    drawerBs.show();
+  }
+
+  function populateDrawer(idea){
+    $('#ideaDrawerLabel').textContent = idea.title;
+    $('#drawerTitleInput').value = idea.title;
+    $('#drawerDescInput').value = idea.desc;
+    populateDrawerStatusSelect(idea.status);
+    $('#drawerTypeSelect').value = idea.type;
+    $('#drawerImpactSelect').value = idea.impact;
+    $('#drawerTags').innerHTML = (idea.tags.length ? idea.tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('') : '<span class="small" style="color:var(--ink-faint)">No tags.</span>')
+      + ` <div class="dropdown d-inline-block"><button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">+ Add tag</button>
+          <ul class="dropdown-menu">${TAGS.filter(t=>!idea.tags.includes(t)).map(t=>`<li><button class="dropdown-item add-tag-item" data-tag="${t}">${escapeHtml(t)}</button></li>`).join('') || '<li><span class="dropdown-item disabled">All tags applied</span></li>'}</ul>
+        </div>`;
+    $('#drawerTags').querySelectorAll('.add-tag-item').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        idea.tags.push(btn.dataset.tag);
+        populateDrawer(idea); renderBoard(); if (currentSurface==='list') renderList();
+      });
+    });
+    $('#drawerUpvoteCount').textContent = idea.upvotes;
+    $('#drawerUpvoteBtn').classList.toggle('upvoted', !!idea._upvoted);
+    $('#drawerUpvoteBtn').setAttribute('aria-pressed', String(!!idea._upvoted));
+    $('#drawerOwnerName').textContent = USERS[idea.owner].name;
+
+    const comments = getComments(idea);
+    renderCommentsList(comments);
+    $('#showMoreCommentsBtn').classList.toggle('d-none', comments.length <= 3);
+
+    $('#activityList').innerHTML = getActivity(idea).map(a=>`
+      <div class="activity-item"><i class="bi ${a.icon}"></i><div><div>${escapeHtml(a.text)}</div><div class="small" style="color:var(--ink-faint)">${escapeHtml(a.time)}</div></div></div>
+    `).join('');
+  }
+
+  function renderCommentsList(comments){
+    const shown = commentsExpanded ? comments : comments.slice(0,3);
+    $('#commentsList').innerHTML = shown.length ? shown.map(c=>`
+      <div class="comment-item">
+        <div class="d-flex justify-content-between">
+          <strong class="small">${escapeHtml(c.author)}</strong>
+          <span class="small" style="color:var(--ink-faint)">${escapeHtml(c.time)}</span>
+        </div>
+        <div class="small">${escapeHtml(c.text)}</div>
+      </div>`).join('') : '<p class="small" style="color:var(--ink-faint)">No comments yet — be the first.</p>';
+  }
+
+  $('#showMoreCommentsBtn').addEventListener('click', ()=>{
+    commentsExpanded = true;
+    const idea = ideas.find(i=>i.id===activeIdeaId);
+    if (idea) { renderCommentsList(getComments(idea)); $('#showMoreCommentsBtn').classList.add('d-none'); }
+  });
+
+  $('#drawerUpvoteBtn').addEventListener('click', ()=>{
+    if (activeIdeaId) toggleUpvote(activeIdeaId);
+  });
+
+  $('#drawerStatusSelect').addEventListener('change', (e)=>{
+    if (activeIdeaId) moveIdeaToStatus(activeIdeaId, e.target.value);
+  });
+  $('#drawerTitleInput').addEventListener('input', (e)=>{
+    $('#ideaDrawerLabel').textContent = e.target.value || 'Untitled idea';
+    if (activeIdeaId){
+      const idea = ideas.find(i=>i.id===activeIdeaId);
+      if (idea) idea.title = e.target.value;
+    }
+  });
+  $('#drawerDescInput').addEventListener('input', (e)=>{
+    if (activeIdeaId){
+      const idea = ideas.find(i=>i.id===activeIdeaId);
+      if (idea) idea.desc = e.target.value;
+    }
+  });
+
+  $('#addCommentForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const input = $('#newCommentInput');
+    const text = input.value.trim();
+    if (!text || !activeIdeaId) return;
+    const idea = ideas.find(i=>i.id===activeIdeaId);
+    if (!idea) return;
+    if (!SEED_COMMENTS[idea.id]) SEED_COMMENTS[idea.id] = getComments(idea);
+    SEED_COMMENTS[idea.id].unshift({author:'Ada Okafor (you)', text, time:'just now'});
+    idea.commentsCount += 1;
+    commentsExpanded = true;
+    input.value = '';
+    populateDrawer(idea);
+    renderBoard(); if (currentSurface==='list') renderList();
+    announce('Comment posted');
+  });
+
+  $$('#ideaDrawer [data-tab]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      $$('#ideaDrawer [data-tab]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      $('#tabComments').classList.toggle('d-none', tab!=='comments');
+      $('#tabActivity').classList.toggle('d-none', tab!=='activity');
+    });
+  });
+
+  $('#aiAcceptBtn').addEventListener('click', ()=>{
+    $('#drawerTitleInput').value = $('#aiSuggestedTitle').textContent;
+    $('#drawerDescInput').value = $('#aiSuggestedDesc').textContent;
+    $('#ideaDrawerLabel').textContent = $('#aiSuggestedTitle').textContent;
+    aiResolved[isCreateMode ? 'create' : activeIdeaId] = true;
+    $('#aiStrip').classList.add('d-none');
+    announce('AI suggestion accepted');
+  });
+  $('#aiDismissBtn').addEventListener('click', ()=>{
+    aiResolved[isCreateMode ? 'create' : activeIdeaId] = true;
+    $('#aiStrip').classList.add('d-none');
+    announce('AI suggestion dismissed');
+  });
+
+  $('#newIdeaBtn').addEventListener('click', ()=> openDrawerCreate(null));
+
+  /* ============================= SURFACE SWITCHING ============================= */
+  function setSurface(name){
+    currentSurface = name;
+    $$('.surface-pills .nav-link').forEach(l=> l.classList.toggle('active', l.dataset.surface===name));
+
+    if (name === 'login'){
+      showLogin();
+      return;
+    }
+    hideLogin();
+    $('#surfaceBoard').classList.toggle('d-none', name!=='board');
+    $('#surfaceList').classList.toggle('d-none', name!=='list');
+    $('#surfaceAdmin').classList.toggle('d-none', name!=='admin');
+
+    if (name==='board') renderBoard();
+    if (name==='list') renderList();
+    if (name==='admin') renderStatusAdmin();
+  }
+  $$('.surface-pills [data-surface]').forEach(btn=>{
+    btn.addEventListener('click', ()=> setSurface(btn.dataset.surface));
+  });
+
+  function showLogin(){
+    $('#appShell').classList.add('d-none');
+    $('#loginSurface').classList.remove('d-none');
+  }
+  function hideLogin(){
+    $('#loginSurface').classList.add('d-none');
+    $('#appShell').classList.remove('d-none');
+  }
+  $('#goLoginBtn').addEventListener('click', ()=> setSurface('login'));
+  $('#backToAppBtn').addEventListener('click', ()=> setSurface('board'));
+
+  $('#loginForm').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    setSurface('board');
+  });
+  $('#simulateLockoutBtn').addEventListener('click', ()=>{
+    $('#lockoutAlert').classList.toggle('d-none');
+  });
+
+  /* ============================= BOARD SWITCHER ============================= */
+  $$('.board-choice').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      currentBoard = btn.dataset.board;
+      $('#currentBoardLabel').textContent = currentBoard;
+      if (currentSurface==='board') renderBoard();
+      if (currentSurface==='list') renderList();
+    });
+  });
+
+  /* ============================= VIEW AS ============================= */
+  $('#toggleViewAsItem').addEventListener('click', ()=>{
+    viewingAs = !viewingAs;
+    $('#viewAsBanner').classList.toggle('d-none', !viewingAs);
+    $('#toggleViewAsItem').innerHTML = viewingAs
+      ? '<i class="bi bi-eye-slash"></i> Demo: Exit View As'
+      : '<i class="bi bi-eye"></i> Demo: View As Ben Torres';
+    $('#userChipInitials').textContent = viewingAs ? 'BT' : 'AO';
+    $('#userMenuName').textContent = viewingAs ? 'Ben Torres · User (viewed by Ada)' : 'Ada Okafor · Org Admin';
+  });
+  $('#exitViewAsBtn').addEventListener('click', ()=>{
+    viewingAs = false;
+    $('#viewAsBanner').classList.add('d-none');
+    $('#toggleViewAsItem').innerHTML = '<i class="bi bi-eye"></i> Demo: View As Ben Torres';
+    $('#userChipInitials').textContent = 'AO';
+    $('#userMenuName').textContent = 'Ada Okafor · Org Admin';
+  });
+
+  /* ============================= INIT ============================= */
+  populateFilterOptions();
+  renderBoard();
+  renderList();
+  renderStatusAdmin();
+})();
+</script>
+</body>
+</html>

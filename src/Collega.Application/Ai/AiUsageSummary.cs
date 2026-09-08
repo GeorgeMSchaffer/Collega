@@ -22,6 +22,15 @@ public sealed record AiUsageSummary(
 }
 
 /// <summary>
+/// Calls seen in the rate-limit window: the organization's total, and the requesting actor's share
+/// of it (rule 26). <paramref name="ActorCalls"/> is always ≤ <paramref name="OrganizationCalls"/>.
+/// </summary>
+public sealed record AiCallCounts(int OrganizationCalls, int ActorCalls)
+{
+    public static readonly AiCallCounts None = new(0, 0);
+}
+
+/// <summary>
 /// The platform-wide usage report. <paramref name="DailyTokenLimit"/> and
 /// <paramref name="TokensUsedToday"/> are null on the single-organization report — the ceiling is
 /// platform-wide and is not an organization's business.

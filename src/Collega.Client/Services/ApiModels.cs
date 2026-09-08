@@ -96,6 +96,83 @@ public sealed record AiUsageReportDto(
     long TotalTokens,
     decimal TotalEstimatedCost);
 
+// ---- AI idea assist (SPEC/30-Contracts.md → "AI Idea Assist Contracts") ----
+
+/// <summary>One transcript entry sent back on each turn — the client owns the conversation, not the server.</summary>
+public sealed record IdeaAssistTurnDto(string Role, string Text);
+
+/// <summary>
+/// The fields the assistant may propose. All optional: an early turn returns only a question, and
+/// "not decided yet" must stay distinguishable from "decided nothing" on the draft strip.
+/// </summary>
+public sealed record IdeaDraftDto(
+    string? Title = null,
+    string? Description = null,
+    string? IdeaTypeId = null,
+    string? BusinessImpactId = null,
+    string? Priority = null);
+
+/// <summary>Body for <c>POST /boards/{boardId}/idea-assist/turns</c>.</summary>
+public sealed record IdeaAssistTurnRequestDto(List<IdeaAssistTurnDto> Transcript, IdeaDraftDto? Draft);
+
+/// <summary>
+/// Response for a drafting turn. <c>NextQuestion</c> is the only free text the model produces; on a
+/// refused turn it carries the server's fixed redirect instead.
+/// </summary>
+public sealed record IdeaAssistTurnResponseDto(
+    bool InScope,
+    bool ConversationClosed,
+    string NextQuestion,
+    IdeaDraftDto Draft,
+    int TurnsRemaining);
+
+/// <summary>
+/// An organization's AI assist configuration. <c>AiAssistAvailable</c> says only <i>whether</i> a
+/// deployment key is configured — a key is never sent to the client.
+/// </summary>
+public sealed record AiAssistSettingsDto(bool AiAssistAvailable, string? ScopeStatement);
+
+/// <summary>Response for <c>GET /ai-assist/availability</c> (rule 32a).</summary>
+public sealed record AiAssistAvailabilityDto(bool Available);
+
+/// <summary>The Site-Admin-managed prompt and its history (rules 34–36).</summary>
+public sealed record AiPromptDto(
+    string Body,
+    string OutOfScopeRedirect,
+    string ConversationClosedRedirect,
+    int? Version,
+    bool IsBuiltInDefault,
+    List<AiPromptVersionDto> Versions);
+
+public sealed record AiPromptVersionDto(
+    int Version,
+    DateTime CreatedAtUtc,
+    Guid? CreatedByUserId,
+    string? CreatedByDisplayName,
+    bool IsActive);
+
+public sealed record PublishAiPromptRequestDto(
+    string Body,
+    string OutOfScopeRedirect,
+    string ConversationClosedRedirect);
+
+public sealed record ProbeAiPromptRequestDto(string Body);
+
+/// <summary>Advisory safety-probe outcomes (rule 37).</summary>
+public sealed record AiPromptProbeDto(
+    List<AiPromptProbeItemDto> Probes,
+    int RefusedCount,
+    int TotalCount);
+
+public sealed record AiPromptProbeItemDto(
+    string Id,
+    string Prompt,
+    bool Refused,
+    bool ExpectedRefused);
+
+/// <summary>Body for <c>PUT /organizations/{id}/ai-assist/settings</c>. Null or empty clears the statement.</summary>
+public sealed record UpdateAiAssistSettingsRequestDto(string? ScopeStatement);
+
 /// <summary>RFC 7807 problem-details envelope the API returns for every non-2xx response.</summary>
 public sealed record ProblemDetailsDto(string? Title, int? Status, string? Detail);
 

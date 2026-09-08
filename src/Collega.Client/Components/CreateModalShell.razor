@@ -1,3 +1,6 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
 @*
     CreateModalShell — reusable centered modal chrome (overlay + card + header + body + footer).
 
@@ -9,6 +12,12 @@
 
     On any dismiss the shell raises OnClose; the host decides whether to actually close (e.g. to block
     dismissal mid-create).
+
+    Like DrawerShell, it is a modal surface: opening it moves focus into the card, disables the
+    background (js/drawerFocus.js) and closing returns focus to the control that opened it. Without
+    that the Escape handler never sees a keystroke unless the user has clicked into the card first,
+    and the background stays tabbable while aria-modal="true" says otherwise — measured at 64
+    reachable controls behind the brainstorm chat before this was added.
 
     Public API
       IsOpen        bool             When false the shell renders nothing.
@@ -33,8 +42,11 @@
 @if (IsOpen)
 {
     <div class="modal-wrap open" @onclick="OnClose" @onkeydown="OnKeyDown">
-        <section class="modal" role="dialog" aria-modal="true"
+        @* tabindex="-1" so the card can take focus on open; the keydown handler sits on the wrap
+           above and catches Escape as it bubbles from anywhere inside. *@
+        <section @ref="_card" class="modal" role="dialog" aria-modal="true"
                  aria-labelledby="@(Title is not null ? _titleId : null)"
+                 tabindex="-1"
                  @onclick:stopPropagation="true">
             <header class="surface-head">
                 <div class="grow">
@@ -80,8 +92,63 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? FooterContent { get; set; }
 
-    // Stable per-instance id so the card's aria-labelledby resolves without colliding across instances.
+    // Stable per-instance id so the card's aria-labelledby resolves without colliding across
+    // instances. It doubles as the key drawerFocus.js files this modal's background state under,
+    // which has to outlive the card: on close Blazor has already removed it.
     private readonly string _titleId = $"modal-title-{Guid.NewGuid():N}";
+
+    private ElementReference _card;
+    private IJSObjectReference? _module;
+    private bool _activated;
+    private bool _disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // See DrawerShell: imported before anything opens so the module's focusin listener is
+        // already running when the invoking control is focused.
+        if (firstRender)
+        {
+            _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/drawerFocus.js");
+
+            if (_disposed)
+            {
+                await _module.DisposeAsync();
+                _module = null;
+                return;
+            }
+        }
+
+        if (IsOpen == _activated)
+        {
+            return;
+        }
+
+        _activated = IsOpen;
+        _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/drawerFocus.js");
+
+        // See DrawerShell: the import is the one slow await, and the card can be gone by the time
+        // it resolves, in which case DisposeAsync has already run with nothing to unwind.
+        if (_disposed)
+        {
+            await _module.DisposeAsync();
+            return;
+        }
+
+        if (_activated != IsOpen)
+        {
+            return;
+        }
+
+        if (IsOpen)
+        {
+            await _module.InvokeVoidAsync("activate", _titleId, _card);
+            await _card.FocusAsync();
+        }
+        else
+        {
+            await _module.InvokeVoidAsync("deactivate", _titleId);
+        }
+    }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
     {
@@ -89,5 +156,24 @@
         {
             await OnClose.InvokeAsync();
         }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+
+        if (_module is null)
+        {
+            return;
+        }
+
+        // Torn down while still open — the host page navigated away — and inert left on the shell
+        // would take the whole app with it.
+        if (_activated)
+        {
+            await _module.InvokeVoidAsync("deactivate", _titleId);
+        }
+
+        await _module.DisposeAsync();
     }
 }

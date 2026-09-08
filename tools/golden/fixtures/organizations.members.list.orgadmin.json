@@ -1,0 +1,82 @@
+{
+  "scenario": "organizations",
+  "step": "members.list.orgadmin",
+  "endpoint": "GET /organizations/{organizationId}/members",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "What the assignee picker reads, so every member may.",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/members",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:46 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+        "firstName": "Olivia",
+        "lastName": "Administer",
+        "email": "orgadmin@acme-robotics.demo.collega.test"
+      },
+      {
+        "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "email": "user@acme-robotics.demo.collega.test"
+      },
+      {
+        "userId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+        "firstName": "Maya",
+        "lastName": "Collaborator",
+        "email": "user2@acme-robotics.demo.collega.test"
+      },
+      {
+        "userId": "8c461a04-30e1-4df1-8d01-c2367922bd33",
+        "firstName": "Rosa",
+        "lastName": "Observer",
+        "email": "readonly@acme-robotics.demo.collega.test"
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "email": "orgadmin@acme-robotics.demo.collega.test",
+        "firstName": "Olivia",
+        "lastName": "Administer",
+        "userId": "<guid@org.body.userId>"
+      },
+      {
+        "email": "user@acme-robotics.demo.collega.test",
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "userId": "<guid@users.list.siteadmin.body.items[1].userId>"
+      },
+      {
+        "email": "user2@acme-robotics.demo.collega.test",
+        "firstName": "Maya",
+        "lastName": "Collaborator",
+        "userId": "<guid@users.list.siteadmin.body.items[2].userId>"
+      },
+      {
+        "email": "readonly@acme-robotics.demo.collega.test",
+        "firstName": "Rosa",
+        "lastName": "Observer",
+        "userId": "<guid@users.list.siteadmin.body.items[3].userId>"
+      }
+    ]
+  }
+}

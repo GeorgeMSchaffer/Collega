@@ -7,6 +7,11 @@
     signed-in screen. Home / Boards / Ideas / Settings, plus a bottom avatar
     whose click-open popover owns Profile and Sign Out (there is no top header
     bar). Locked design: SPEC/mockups/comp-c-review-06-lockin-v5-final.html.
+
+    The popover is the only Sign Out, which is what the comp shows. A fifth rail
+    item labelled "Log out" also existed until Sprint 7.5; it duplicated the
+    popover item, drifted from the "Sign Out" wording, and signed the user out
+    through a plain GET link. The /logout route stays for anyone holding the URL.
 *@
 
 <aside class="rail">
@@ -25,11 +30,6 @@
     }
 
     <span class="push"></span>
-
-    <a href="/logout" title="Log out">
-        <span class="ico" aria-hidden="true"><FluentIcon Value="@(new Icons.Regular.Size20.SignOut())" /></span>
-        <span>Log out</span>
-    </a>
 
     <span class="avatarwrap">
         <FluentButton Id="collega-avatar"

@@ -1,5 +1,18 @@
 # Collega.E2E.Tests — Playwright browser test suite
 
+> # ⛔ FROZEN — this describes the .NET stack, which is being replaced
+>
+> **Everything below is no longer applicable guidance.** It documents `src/Collega.*`, the .NET
+> application the TypeScript conversion replaces (`SPEC/decisions.md` 2026-09-06). Read it only to
+> understand what the old code *did* — never as a pattern to follow, and never as the house style.
+>
+> **Do not** fix bugs, add features, write tests, add migrations or refactor anything in `src/` or
+> `tests/`. A defect found here is recorded against the TypeScript port instead.
+>
+> Build against `packages/{domain,application,infrastructure}` and `apps/{api,web}`. The .NET code
+> stays on disk only so a golden fixture can still be re-recorded, and is deleted in slice **F6**
+> once F1 replays clean.
+
 End-to-end browser tests that drive the **running** Blazor Client (and, transitively, the API + database) with [Playwright for .NET](https://playwright.dev/dotnet/). Unlike the other `tests/` projects, these are **not hermetic** — they need a live app and a seeded database.
 
 This file is the **living use-case catalog** for the suite. When we add or change a browser-level behavior to cover, update the tables below in the same change. Treat `SPEC/40-test-strategy.md` as the upstream source of truth for *what* to verify; this file tracks *how* it maps to tests and *whether* each case is implemented.
@@ -97,7 +110,7 @@ Status legend: ✅ implemented & passing · 🟡 scaffolded (written, `Skip`ped,
 ### Ideas & idea-detail drawer — (no .NET file; covered in the TS `e2e/` suite)
 Locked design: right slide-in **drawer** + centered **create modal**, URL-addressable via `?idea={id}` and `/ideas/{id}` (SPEC/20-feature-client-ui.md → Idea Detail Surface). **These cases live in the TypeScript Playwright suite** (`e2e/tests/05-idea-drawer-engagement.spec.ts`, `06-ideas-list-surface.spec.ts`), not this .NET project — see `e2e/README.md`. Status below reflects that suite.
 
-> **Note on this section's history.** The `e2e/` suite was deleted in `3c367f3` and these rows were re-marked ⬜ uncovered as a result. It was **restored in `9301073`** (2026-08-12) after the removal was identified as a mistake, so the original statuses are reinstated. Before trusting a ✅ here, re-run the suite: its setup targets SQL Server and has not yet been reconciled to PostgreSQL (see `e2e/README.md`).
+> **Note on this section's history.** The `e2e/` suite was deleted in `3c367f3` and these rows were re-marked ⬜ uncovered as a result. It was **restored in `9301073`** (2026-08-12) after the removal was identified as a mistake, so the original statuses are reinstated. Before trusting a ✅ here, re-run the suite. Its setup **was** reconciled to PostgreSQL on 2026-08-12 — `e2e/README.md` now documents the `collega-postgres` container, a `psql` drop with `WITH (FORCE)`, and an Npgsql connection string; this note previously claimed otherwise and was itself the stale part.
 
 | Case | Status | Notes |
 |---|---|---|

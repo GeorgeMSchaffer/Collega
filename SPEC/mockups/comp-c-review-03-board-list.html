@@ -1,30 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega — Comp C Review 3: Board — List &amp; Swim Lane Views</title>
 <style>
   :root{
-    --accent:#5b5fc7; --accent-deep:#444791; --accent-soft:#eef0fb;
-    --ink:#242424; --ink-2:#484644; --ink-3:#797672;
-    --bg:#faf9f8; --surface:#ffffff; --line:#e4e2df;
-    --ok:#0e700e; --warn:#9a5b00; --err:#b10e1c;
+    --accent:#5B7FA3; --accent-deep:#527292; --accent-soft:#F1F3F6;
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#5D6C7E;
+    --bg:#F7F9FB; --surface:#FFFFFF; --line:#DDE1E6;
+    --ok:#457C4F; --warn:#8A6D2E; --err:#B64B4B;
     --shadow:0 1px 2px rgba(0,0,0,.08);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Segoe UI",-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
-  h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:-.01em}
-  .comp-bar{background:#33312e;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
-  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:Georgia,serif}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+  h1,h2{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+  .comp-bar{background:#243447;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+  .comp-bar strong{font-size:13px;letter-spacing:.04em;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .comp-bar nav{display:flex;gap:6px;flex-wrap:wrap}
-  .comp-bar button{background:transparent;color:#c8c6c4;border:1px solid #5a5754;border-radius:3px;padding:4px 11px;font-size:12px;cursor:pointer}
+  .comp-bar button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:4px 11px;font-size:12px;cursor:pointer}
   .comp-bar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .screen{display:none}.screen.on{display:block}
   .shell{display:grid;grid-template-columns:64px 1fr;min-height:calc(100vh - 46px)}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px}
-  .rail .mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:Georgia,serif}
-  .rail a{width:44px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
+  .rail .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;margin-bottom:14px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;font-size:16px;gap:1px}
   .rail a span{font-size:8.5px;font-weight:600;letter-spacing:.02em}
   .rail a.on{background:var(--accent-soft);color:var(--accent)}
   .rail .push{flex:1}
@@ -40,29 +44,29 @@
   .ptabs a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent}
   .ptabs a.on{color:var(--accent);border-bottom-color:var(--accent)}
   .body{padding:26px 40px;max-width:1200px}
-  .btn{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
-  .btn:hover{background:#f3f2f1}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:2px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:600}
+  .btn:hover{background:#F1F3F6}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .btn.subtle{border-color:transparent;color:var(--accent)}
   .btn.danger{border-color:transparent;color:var(--err)}
-  input[type=text],select{border:1px solid #8a8886;border-radius:4px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
-  .pill{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600}
-  .pill.neutral{background:#f3f2f1;color:var(--ink-2)}
+  input[type=text],select{border:1px solid #818E9C;border-radius:2px;padding:8px 11px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--ink)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:2px;box-shadow:var(--shadow)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:2px;font-size:11px;font-weight:600}
+  .pill.neutral{background:#F1F3F6;color:var(--ink-2)}
   .cmdbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
-  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 4px 4px 0;margin-top:18px;max-width:640px;line-height:1.5}
+  .note{font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 14px;border-radius:0 2px 2px 0;margin-top:18px;max-width:640px;line-height:1.5}
   .lanesec{margin-bottom:26px}
   .lanesec>h2{font-size:17px;display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
-  .lanesec>h2 .cnt{font-size:12px;color:var(--ink-3);font-family:"Segoe UI",sans-serif;font-weight:600}
-  .rowcard{display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid #f0efed;cursor:pointer}
+  .lanesec>h2 .cnt{font-size:12px;color:var(--ink-3);font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600}
+  .rowcard{display:flex;align-items:center;gap:16px;padding:13px 18px;border-bottom:1px solid #F1F3F6;cursor:pointer}
   .rowcard:hover{background:var(--accent-soft)}
   .rowcard:last-child{border-bottom:none}
   .rowcard .t{font-weight:600;font-size:14px;flex:1;color:var(--ink)}
   .rowcard .t:hover{color:var(--accent-deep)}
-  .rowcard .tag{font-size:11px;color:var(--ink-3);background:#f3f2f1;border-radius:3px;padding:1px 7px}
+  .rowcard .tag{font-size:11px;color:var(--ink-3);background:#F1F3F6;border-radius:2px;padding:1px 7px}
   .prio{width:8px;height:8px;border-radius:50%;flex-shrink:0}
   .prio.high{background:var(--err)}.prio.med{background:var(--warn)}.prio.low{background:var(--ok)}
-  .up{border:1px solid var(--line);border-radius:4px;padding:2px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:52px;text-align:center}
+  .up{border:1px solid var(--line);border-radius:2px;padding:2px 10px;font-size:11.5px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink-2);min-width:52px;text-align:center}
   .up.mine{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep)}
   .viewswitch{display:flex;gap:4px;margin-top:18px}
   .viewswitch a{padding:9px 14px;font-size:13px;font-weight:600;color:var(--ink-3);text-decoration:none;border-bottom:2.5px solid transparent;cursor:pointer}
@@ -70,12 +74,12 @@
   .kview{display:none}
   .kview.on{display:block}
   .klanes{display:grid;grid-auto-flow:column;grid-auto-columns:280px;gap:16px;overflow-x:auto;padding-bottom:12px;align-items:start}
-  .klane{background:#f3f2f1;border-radius:8px;padding:12px}
-  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);font-weight:700;display:flex;align-items:center;gap:7px;padding:2px 6px 12px;font-family:"Segoe UI",sans-serif}
+  .klane{background:#F1F3F6;border-radius:2px;padding:12px}
+  .klane h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);font-weight:700;display:flex;align-items:center;gap:7px;padding:2px 6px 12px;font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
   .klane h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--lc-deep,var(--ink-3));flex-shrink:0}
   .klane h3 .grow{flex:1}
-  .klane .cnt{background:#e4e2df;border-radius:10px;padding:0 8px;font-size:11px}
-  .kcard{background:var(--surface);border-radius:8px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;cursor:grab;border-left:3px solid var(--lc-deep,transparent)}
+  .klane .cnt{background:#DDE1E6;border-radius:2px;padding:0 8px;font-size:11px}
+  .kcard{background:var(--surface);border-radius:2px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;cursor:grab;border-left:3px solid var(--lc-deep,transparent)}
   .kcard:hover{background:var(--accent-soft);outline:1px solid var(--accent)}
   .kcard:active{cursor:grabbing;box-shadow:0 4px 10px rgba(0,0,0,.18)}
   .klane.dragover{outline:2px dashed var(--accent);outline-offset:-4px;background:var(--accent-soft)}
@@ -86,13 +90,13 @@
   .kcard .due{font-size:11px;color:var(--ink-3);margin-bottom:8px;display:flex;align-items:center;gap:4px}
   .kcard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
   .kcard .meta .spacer{flex:1}
-  .kcard .tag{background:#f3f2f1;border-radius:3px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
-  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:10px;flex-shrink:0;white-space:nowrap;background:var(--lc-soft,#f3f2f1);color:var(--lc-deep,var(--ink-2))}
-  .swatch.sm{width:14px;height:14px;border-radius:4px;display:inline-block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
-  .swrow{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 16px;margin-bottom:8px}
+  .kcard .tag{background:#F1F3F6;border-radius:2px;padding:1px 7px;font-size:10.5px;color:var(--ink-2)}
+  .prio-chip{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:2px;flex-shrink:0;white-space:nowrap;background:var(--lc-soft,#F1F3F6);color:var(--lc-deep,var(--ink-2))}
+  .swatch.sm{width:14px;height:14px;border-radius:2px;display:inline-block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+  .swrow{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:2px;padding:12px 16px;margin-bottom:8px}
   .swrow .grip{cursor:grab;color:var(--ink-3)}
   .swrow .spacer{flex:1}
-  .warnbanner{border-left:3px solid var(--warn);background:#f7ecdc;color:#6b4200;border-radius:0 4px 4px 0;padding:11px 15px;font-size:12.5px;margin-bottom:16px;max-width:680px;line-height:1.5}
+  .warnbanner{border-left:3px solid var(--warn);background:#F9F6EE;color:#8A6D2E;border-radius:0 2px 2px 0;padding:11px 15px;font-size:12.5px;margin-bottom:16px;max-width:680px;line-height:1.5}
   .empty{padding:64px 24px;text-align:center}
   .empty .art{font-size:40px;margin-bottom:10px}
   .empty h2{font-size:19px;margin-bottom:8px}
@@ -133,7 +137,7 @@
             <div class="card">
               <div class="rowcard"><span class="prio high"></span><span class="t">Dark mode support</span><span class="tag">ui</span><span class="tag">theme</span><span class="avatar s">MP</span><button class="up mine">▲ 24</button></div>
               <div class="rowcard"><span class="prio med"></span><span class="t">Bulk import from CSV</span><span class="tag">data</span><span class="avatar s">TD</span><button class="up">▲ 17</button></div>
-              <div class="rowcard"><span class="prio low"></span><span class="t">Keyboard shortcuts cheat sheet</span><span class="tag">docs</span><span class="avatar s" style="background:#c8c6c4">—</span><button class="up">▲ 6</button></div>
+              <div class="rowcard"><span class="prio low"></span><span class="t">Keyboard shortcuts cheat sheet</span><span class="tag">docs</span><span class="avatar s" style="background:#C5CBD3">—</span><button class="up">▲ 6</button></div>
               <div class="rowcard"><span class="prio med"></span><span class="t">Export board to PDF</span><span class="tag">reporting</span><span class="avatar s">JR</span><button class="up">▲ 5</button></div>
             </div>
           </div>
@@ -164,7 +168,7 @@
 
         <div class="kview on" id="view-swim-user">
           <div class="klanes">
-            <div class="klane" data-lane="New / Pending" style="--lc-deep:#57534e;--lc-soft:#f1f0ee">
+            <div class="klane" data-lane="New / Pending" style="--lc-deep:#3E4E60;--lc-soft:#F1F3F6">
               <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
               <div class="kcard" draggable="true">
                 <div class="top"><span class="t">Dark mode support</span><span class="prio-chip">High</span></div>
@@ -180,7 +184,7 @@
               <div class="kcard" draggable="true">
                 <div class="top"><span class="t">Keyboard shortcuts cheat sheet</span><span class="prio-chip">Low</span></div>
                 <p class="desc">A printable reference card listing every keyboard shortcut in the app.</p>
-                <div class="meta"><span class="tag">docs</span><span class="spacer"></span><span class="avatar s" style="background:#c8c6c4">—</span><button class="up">▲ 6</button></div>
+                <div class="meta"><span class="tag">docs</span><span class="spacer"></span><span class="avatar s" style="background:#C5CBD3">—</span><button class="up">▲ 6</button></div>
               </div>
               <div class="kcard" draggable="true">
                 <div class="top"><span class="t">Export board to PDF</span><span class="prio-chip">Medium</span></div>
@@ -189,7 +193,7 @@
               </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
-            <div class="klane" data-lane="In Review" style="--lc-deep:#9a5b00;--lc-soft:#f7ecdc">
+            <div class="klane" data-lane="In Review" style="--lc-deep:#8A6D2E;--lc-soft:#F9F6EE">
               <h3><span class="dot"></span><span class="grow">In Review</span><span class="cnt">1</span></h3>
               <div class="kcard" draggable="true">
                 <div class="top"><span class="t">Mobile responsive board</span><span class="prio-chip">High</span></div>
@@ -198,7 +202,7 @@
               </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
-            <div class="klane" data-lane="In Progress" style="--lc-deep:#2f6fb0;--lc-soft:#e6f0fa">
+            <div class="klane" data-lane="In Progress" style="--lc-deep:#527292;--lc-soft:#F0F4F7">
               <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">3</span></h3>
               <div class="kcard" draggable="true">
                 <div class="top"><span class="t">SSO via SAML</span><span class="prio-chip">High</span></div>
@@ -218,7 +222,7 @@
               </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
-            <div class="klane" data-lane="Client Review" style="--lc-deep:#7a3fb8;--lc-soft:#f1e8fb">
+            <div class="klane" data-lane="Client Review" style="--lc-deep:#5B7FA3;--lc-soft:#F0F4F7">
               <h3><span class="dot"></span><span class="grow">Client Review</span><span class="cnt">1</span></h3>
               <div class="kcard" draggable="true">
                 <div class="top"><span class="t">Org-scoped user search</span><span class="prio-chip">Medium</span></div>
@@ -227,7 +231,7 @@
               </div>
               <button class="btn subtle" style="width:100%">+ Add idea</button>
             </div>
-            <div class="klane" data-lane="Complete" style="--lc-deep:#0e700e;--lc-soft:#e7f2e7">
+            <div class="klane" data-lane="Complete" style="--lc-deep:#457C4F;--lc-soft:#F0F7F1">
               <h3><span class="dot"></span><span class="grow">Complete</span><span class="cnt">1</span></h3>
               <div class="kcard" draggable="true" style="opacity:.75">
                 <div class="top"><span class="t">Audit log for admin actions</span><span class="prio-chip">Low</span></div>
@@ -277,7 +281,7 @@
 
         <div class="kview on" id="view-swim-ro">
           <div class="klanes">
-            <div class="klane" style="--lc-deep:#57534e;--lc-soft:#f1f0ee">
+            <div class="klane" style="--lc-deep:#3E4E60;--lc-soft:#F1F3F6">
               <h3><span class="dot"></span><span class="grow">New / Pending</span><span class="cnt">4</span></h3>
               <div class="kcard" style="cursor:default">
                 <div class="top"><span class="t">Dark mode support</span><span class="prio-chip">High</span></div>
@@ -291,7 +295,7 @@
                 <div class="meta"><span class="tag">data</span><span class="spacer"></span><span class="avatar s">TD</span><span class="up" style="cursor:default;color:var(--ink-3)">▲ 17</span></div>
               </div>
             </div>
-            <div class="klane" style="--lc-deep:#2f6fb0;--lc-soft:#e6f0fa">
+            <div class="klane" style="--lc-deep:#527292;--lc-soft:#F0F4F7">
               <h3><span class="dot"></span><span class="grow">In Progress</span><span class="cnt">3</span></h3>
               <div class="kcard" style="cursor:default">
                 <div class="top"><span class="t">SSO via SAML</span><span class="prio-chip">High</span></div>
@@ -317,8 +321,8 @@
       <div class="body">
         <div class="warnbanner">This board is already at the 2-swimlane minimum — Remove is disabled on both until a third swimlane is added.</div>
         <div class="card" style="padding:18px;max-width:560px">
-          <div class="swrow" style="opacity:.6"><span class="grip">⠿</span><span class="swatch sm" style="background:#57534e"></span><span>New / Pending</span><span class="spacer"></span><span class="pill neutral">22 ideas</span><button class="btn subtle" disabled title="A board must have at least 2 swimlanes">Remove</button></div>
-          <div class="swrow" style="opacity:.6"><span class="grip">⠿</span><span class="swatch sm" style="background:#0e700e"></span><span>Complete</span><span class="spacer"></span><span class="pill neutral">61 ideas</span><button class="btn subtle" disabled title="A board must have at least 2 swimlanes">Remove</button></div>
+          <div class="swrow" style="opacity:.6"><span class="grip">⠿</span><span class="swatch sm" style="background:#3E4E60"></span><span>New / Pending</span><span class="spacer"></span><span class="pill neutral">22 ideas</span><button class="btn subtle" disabled title="A board must have at least 2 swimlanes">Remove</button></div>
+          <div class="swrow" style="opacity:.6"><span class="grip">⠿</span><span class="swatch sm" style="background:#457C4F"></span><span>Complete</span><span class="spacer"></span><span class="pill neutral">61 ideas</span><button class="btn subtle" disabled title="A board must have at least 2 swimlanes">Remove</button></div>
           <div class="cmdbar" style="margin-bottom:0">
             <select style="flex:1">
               <option>+ Add existing status as swimlane…</option>

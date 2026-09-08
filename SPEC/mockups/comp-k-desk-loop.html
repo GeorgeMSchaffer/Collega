@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Collega — Comp K: Desk + Loop Rail (Hybrid B)</title>
+<style>
+  :root{
+    --ink:#243447; --ink-2:#3E4E60; --ink-3:#5D6C7E; --ink-4:#818E9C;
+    --bg:#F7F9FB; --surface:#FFFFFF; --surface-2:#F1F3F6;
+    --line:#DDE1E6; --line-2:#C5CBD3;
+    --accent:#527292; --accent-deep:#3E566F; --accent-fill:#5B7FA3;
+    --accent-soft:#F0F4F7; --accent-line:#D1DBE5;
+    --teal:#5F9E93;  --teal-ink:#4A7972;  --teal-soft:#F1F6F5;  --teal-line:#D2E4E1;
+    --green:#6FAF7A; --green-ink:#457C4F; --green-soft:#F0F7F1; --green-line:#D1E6D5;
+    --amber:#C9A65C; --amber-ink:#8A6D2E; --amber-soft:#F9F6EE; --amber-line:#EDE2C9;
+    --red:#C97A7A;   --red-ink:#B64B4B;   --red-soft:#F8EFEF;   --red-line:#EACCCC;
+    --r:2px;
+    --sans:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:"Geist Mono",ui-monospace,"SF Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em}
+  button{font-family:inherit;font-size:inherit;cursor:pointer}
+  a{color:var(--accent)}
+
+  .switch{background:var(--ink);color:#fff;padding:8px 14px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-height:42px}
+  .switch b{font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+  .switch .cap{font-size:11.5px;color:#93A6BC;margin-right:6px}
+  .switch button{background:transparent;border:1px solid #46586E;color:#D6DEE8;padding:4px 10px;border-radius:var(--r);font-size:12px}
+  .switch button[aria-current="true"]{background:var(--accent-fill);border-color:var(--accent-fill);color:#fff;font-weight:600}
+
+  .shell{display:grid;grid-template-columns:212px 1fr;min-height:calc(100vh - 42px)}
+  .side{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px}
+  .brand{display:flex;align-items:center;gap:9px;padding:4px 6px 14px}
+  .mark{width:26px;height:26px;background:var(--accent-fill);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;border-radius:var(--r)}
+  .org{font-size:11.5px;color:var(--ink-3);padding:0 6px 12px}
+  .navlbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-4);font-weight:700;padding:10px 6px 5px}
+  .nav{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--r);color:var(--ink-2);font-size:13px;border:0;background:transparent;width:100%;text-align:left}
+  .nav .ct{margin-left:auto;font-size:11px;color:var(--ink-4)}
+  .nav .dot{margin-left:auto;background:var(--red-ink);color:#fff;font-size:10px;font-weight:700;padding:0 6px;border-radius:var(--r)}
+  .nav:hover{background:var(--surface-2)}
+  .nav[aria-current="page"]{background:var(--accent-soft);color:var(--accent-deep);font-weight:600;box-shadow:inset 2px 0 0 var(--accent-fill)}
+  .push{margin-top:auto}
+  .me{display:flex;align-items:center;gap:9px;padding:10px 6px 2px;border-top:1px solid var(--line)}
+  .av{width:26px;height:26px;border-radius:50%;background:var(--accent-deep);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:700;flex:none}
+  .av.sm{width:22px;height:22px;font-size:9px}
+
+  .main{min-width:0;display:flex;flex-direction:column}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--line);padding:0 22px;display:flex;align-items:center;gap:12px;height:46px;flex:none}
+  .crumb{font-size:12.5px;color:var(--ink-3)}
+  .crumb b{color:var(--ink);font-weight:600}
+  .spacer{flex:1}
+  .btn{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);padding:6px 12px;border-radius:var(--r);font-size:12.5px;font-weight:500}
+  .btn:hover{background:var(--surface-2)}
+  .btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.pri:hover{background:var(--accent-deep);border-color:var(--accent-deep)}
+  .btn.sm{padding:3px 9px;font-size:11.5px}
+  .body{padding:20px 22px 34px}
+  .pagehead h1{font-size:21px}
+  .pagehead p{margin:5px 0 0;font-size:12.5px;color:var(--ink-3)}
+
+  /* the loop rail: comp-h's activity surface, docked beside the work */
+  .withrail{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+  .panel>h3{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);padding:10px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .panel>h3 .grow{flex:1}
+  .panel .in{padding:13px}
+  .railtabs{display:flex;border-bottom:1px solid var(--line)}
+  .railtabs button{flex:1;border:0;background:transparent;padding:9px 6px;font-size:12px;color:var(--ink-3);border-bottom:2px solid transparent}
+  .railtabs button[aria-selected="true"]{color:var(--accent-deep);font-weight:600;border-bottom-color:var(--accent-fill);background:var(--accent-soft)}
+  .feed{max-height:520px;overflow:auto}
+  .ev{display:flex;gap:9px;padding:11px 13px;border-bottom:1px solid var(--line);font-size:12.5px}
+  .ev:last-child{border-bottom:0}
+  .ev .grow{flex:1;min-width:0}
+  .ev .when{font-size:11px;color:var(--ink-4);margin-top:3px}
+  .ev.sys{color:var(--ink-3);font-size:12px;background:var(--surface-2)}
+  .ev.mention{background:var(--amber-soft);border-left:2px solid var(--amber)}
+  .men{background:var(--accent-soft);color:var(--accent-deep);font-weight:600;padding:0 3px;border-radius:var(--r)}
+  .composer{border-top:1px solid var(--line);padding:11px 13px;background:var(--surface)}
+  textarea,input[type=text],select{width:100%;font-family:inherit;font-size:13px;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);padding:7px 9px}
+  textarea:focus,input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+  textarea{min-height:62px;resize:vertical}
+  .chip{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:var(--r);border:1px solid}
+  .chip.low{color:var(--ink-3);border-color:var(--line-2);background:var(--surface-2)}
+  .chip.med{color:var(--accent-deep);border-color:var(--accent-line);background:var(--accent-soft)}
+  .chip.high{color:var(--amber-ink);border-color:var(--amber-line);background:var(--amber-soft)}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:9px 11px;font-size:12.5px;margin:0}
+  .kv dt{color:var(--ink-3);font-size:11.5px;font-weight:600}
+  .kv dd{margin:0;color:var(--ink-2)}
+
+  .inboxrow{display:flex;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface);text-align:left;width:100%;border-left:2px solid transparent;border-top:0;border-right:0;align-items:flex-start}
+  .inboxrow:hover{background:var(--surface-2)}
+  .inboxrow.unread{border-left-color:var(--accent-fill);background:var(--accent-soft)}
+  .inboxrow .grow{flex:1;min-width:0}
+  .inboxrow .ttl{font-size:13px;font-weight:600}
+  .inboxrow .prev{font-size:12px;color:var(--ink-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .inboxrow .when{font-size:11px;color:var(--ink-4);flex:none}
+  .note{background:var(--accent-soft);border-left:2px solid var(--accent-fill);padding:11px 13px;font-size:12px;color:var(--ink-2);border-radius:0 var(--r) var(--r) 0}
+  .note b{color:var(--accent-deep)}
+  .prefrow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .prefrow:last-child{border-bottom:0}
+  .prefrow .grow{flex:1}
+  .prefrow .sub{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+  .screen{display:none}
+  .screen[data-on="1"]{display:block}
+  @media (max-width:980px){
+    .shell{grid-template-columns:1fr}
+    .side{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+    .withrail{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav class="switch" aria-label="Comp screens">
+  <b>Comp K</b>
+  <span class="cap">Hybrid B — Desk (comp-d shell) + Loop rail (comp-h activity)</span>
+  <button data-go="s-detail" aria-current="true">Idea + rail</button>
+  <button data-go="s-inbox">Inbox</button>
+  <button data-go="s-thread">Thread</button>
+  <button data-go="s-prefs">Preferences</button>
+</nav>
+
+<!-- ============ IDEA DETAIL WITH PERSISTENT LOOP RAIL ============ -->
+<section class="screen" id="s-detail" data-on="1">
+  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="navlbl">Workspace</div>
+      <button class="nav">Home</button>
+      <button class="nav" aria-current="page">Boards<span class="ct">2</span></button>
+      <button class="nav">Ideas<span class="ct">22</span></button>
+      <button class="nav" data-go="s-inbox">Inbox<span class="dot">3</span></button>
+      <div class="navlbl">Configure</div>
+      <button class="nav">Settings</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12.5px;font-weight:600">Olivia Administer</div><div style="font-size:11px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb">Boards / Ideas / <b>Standardize the intake checklist</b></span>
+        <span class="spacer"></span><button class="btn">Edit</button><button class="btn pri">Move status</button></div>
+      <div class="body">
+        <div class="pagehead"><h1>Standardize the intake checklist</h1>
+          <p>Continuous Improvement · New / Pending · raised by Marcus Green · 2 votes</p></div>
+
+        <div class="withrail" style="margin-top:16px">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="panel"><h3>Detail</h3><div class="in" style="font-size:13px;color:var(--ink-2)">
+              Intake is handled differently by each coordinator, so rework lands late and unevenly. A single checklist, owned by the team and revised quarterly, would make handover predictable and make the failure points visible.</div></div>
+            <div class="panel"><h3>Attributes</h3><div class="in">
+              <dl class="kv">
+                <dt>Idea type</dt><dd>Continuous Improvement</dd>
+                <dt>Priority</dt><dd><span class="chip high">High</span></dd>
+                <dt>Status</dt><dd>New / Pending</dd>
+                <dt>Raised</dt><dd>14 Jul 2026</dd>
+              </dl></div></div>
+            <div class="note"><b>Hybrid B.</b> The rail is docked, not summoned. Discussion, mentions and history sit permanently beside the idea, so the debate never has to be reopened from somewhere else to be read.</div>
+          </div>
+
+          <!-- the loop rail -->
+          <div class="panel" style="position:sticky;top:16px">
+            <div class="railtabs" role="tablist">
+              <button role="tab" aria-selected="true">Discussion</button>
+              <button role="tab" aria-selected="false">Mentions</button>
+              <button role="tab" aria-selected="false">History</button>
+            </div>
+            <div class="feed">
+              <div class="ev mention"><span class="av sm">NC</span><div class="grow">
+                <b>Nina Chen</b> mentioned <span class="men">@you</span><div style="color:var(--ink-2);margin-top:3px">Can you confirm the three steps that cause the most rework before we scope this?</div>
+                <div class="when">2 days ago</div></div></div>
+              <div class="ev"><span class="av sm">MG</span><div class="grow">
+                <b>Marcus Green</b><div style="color:var(--ink-2);margin-top:3px">Raised after the Q3 retro — every coordinator described a different intake.</div>
+                <div class="when">4 days ago</div></div></div>
+              <div class="ev sys"><span style="width:22px;text-align:center">↕</span><div class="grow">
+                Priority changed <b>Medium → High</b> by Olivia Administer<div class="when">4 days ago</div></div></div>
+              <div class="ev"><span class="av sm">OA</span><div class="grow">
+                <b>Olivia Administer</b><div style="color:var(--ink-2);margin-top:3px">Agreed. Let's get it in front of the client review group first.</div>
+                <div class="when">5 days ago</div></div></div>
+              <div class="ev sys"><span style="width:22px;text-align:center">+</span><div class="grow">
+                Idea created by Marcus Green<div class="when">14 Jul 2026</div></div></div>
+            </div>
+            <div class="composer">
+              <textarea placeholder="Reply, or use @ to pull someone in…"></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+                <span style="font-size:11px;color:var(--ink-3);flex:1">@ mentions notify in-app</span>
+                <button class="btn sm">Attach</button><button class="btn pri sm">Comment</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ INBOX ============ -->
+<section class="screen" id="s-inbox">
+  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="navlbl">Workspace</div>
+      <button class="nav">Home</button>
+      <button class="nav" data-go="s-detail">Boards<span class="ct">2</span></button>
+      <button class="nav">Ideas<span class="ct">22</span></button>
+      <button class="nav" aria-current="page">Inbox<span class="dot">3</span></button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12.5px;font-weight:600">Olivia Administer</div><div style="font-size:11px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb"><b>Inbox</b></span><span class="spacer"></span>
+        <button class="btn" data-go="s-prefs">Preferences</button><button class="btn">Mark all read</button></div>
+      <div class="body">
+        <div class="pagehead"><h1>Inbox</h1><p>Everything addressed to you, in one queue. Unread carries a rule-marker, never colour alone.</p></div>
+        <div class="panel" style="margin-top:16px;overflow:hidden">
+          <button class="inboxrow unread" data-go="s-thread"><span class="av sm">NC</span><div class="grow">
+            <div class="ttl">Nina Chen mentioned you</div>
+            <div class="prev">Can you confirm the three steps that cause the most rework before we scope this?</div>
+            <div style="font-size:11px;color:var(--ink-4);margin-top:3px">Standardize the intake checklist</div></div>
+            <span class="when">2d</span></button>
+          <button class="inboxrow unread"><span class="av sm">MG</span><div class="grow">
+            <div class="ttl">Marcus Green replied in a thread you follow</div>
+            <div class="prev">Extract query is in — the empty-week case is the last thing.</div>
+            <div style="font-size:11px;color:var(--ink-4);margin-top:3px">Automate weekly reporting</div></div>
+            <span class="when">3d</span></button>
+          <button class="inboxrow unread"><span class="av sm" style="background:var(--teal-ink)">SY</span><div class="grow">
+            <div class="ttl">An idea you raised moved to In Review</div>
+            <div class="prev">Pilot a faster review path — moved by Olivia Administer</div></div>
+            <span class="when">4d</span></button>
+          <button class="inboxrow"><span class="av sm">OA</span><div class="grow">
+            <div class="ttl">Olivia Administer upvoted your idea</div>
+            <div class="prev">Reduce manual handoffs</div></div>
+            <span class="when">1w</span></button>
+          <button class="inboxrow"><span class="av sm" style="background:var(--teal-ink)">SY</span><div class="grow">
+            <div class="ttl">You were added to Acme Robotics</div>
+            <div class="prev">Role: Org Admin</div></div>
+            <span class="when">3w</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THREAD ============ -->
+<section class="screen" id="s-thread">
+  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-detail">Boards<span class="ct">2</span></button>
+      <button class="nav" aria-current="page" data-go="s-inbox">Inbox<span class="dot">3</span></button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12.5px;font-weight:600">Olivia Administer</div><div style="font-size:11px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb">Inbox / <b>Nina Chen mentioned you</b></span><span class="spacer"></span>
+        <button class="btn" data-go="s-inbox">Back to inbox</button>
+        <button class="btn" data-go="s-detail">Open the idea</button></div>
+      <div class="body">
+        <div class="pagehead"><h1>Standardize the intake checklist</h1>
+          <p>Thread · 4 replies · you were mentioned 2 days ago</p></div>
+        <div class="withrail" style="margin-top:16px">
+          <div class="panel">
+            <h3><span class="grow">Discussion</span><button class="btn sm">Following</button></h3>
+            <div class="feed" style="max-height:none">
+              <div class="ev"><span class="av sm">MG</span><div class="grow"><b>Marcus Green</b>
+                <div style="color:var(--ink-2);margin-top:3px">Raised after the Q3 retro — every coordinator described a different intake.</div>
+                <div class="when">4 days ago</div></div></div>
+              <div class="ev"><span class="av sm">OA</span><div class="grow"><b>Olivia Administer</b>
+                <div style="color:var(--ink-2);margin-top:3px">Agreed. Let's get it in front of the client review group first.</div>
+                <div class="when">3 days ago</div></div></div>
+              <div class="ev mention"><span class="av sm">NC</span><div class="grow"><b>Nina Chen</b>
+                <div style="color:var(--ink-2);margin-top:3px"><span class="men">@Olivia</span> can you confirm the three steps that cause the most rework before we scope this?</div>
+                <div class="when">2 days ago · mentioned you</div></div></div>
+            </div>
+            <div class="composer">
+              <textarea placeholder="Reply to Nina…"></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+                <span style="font-size:11px;color:var(--ink-3);flex:1">⌘↵ to send</span>
+                <button class="btn pri sm">Reply</button></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="panel"><h3>The idea</h3><div class="in">
+              <dl class="kv"><dt>Status</dt><dd>New / Pending</dd><dt>Priority</dt><dd><span class="chip high">High</span></dd>
+                <dt>Raised by</dt><dd>Marcus Green</dd><dt>Votes</dt><dd>2</dd></dl>
+              <button class="btn sm" style="margin-top:11px;width:100%" data-go="s-detail">Open the idea</button></div></div>
+            <div class="panel"><h3>Participants</h3><div class="in" style="display:flex;gap:7px;flex-wrap:wrap">
+              <span class="av sm">MG</span><span class="av sm">NC</span><span class="av sm">OA</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PREFERENCES ============ -->
+<section class="screen" id="s-prefs">
+  <div class="shell">
+    <aside class="side">
+      <div class="brand"><span class="mark">CG</span><b>Collega</b></div>
+      <div class="org">Acme Robotics</div>
+      <div class="navlbl">Workspace</div>
+      <button class="nav" data-go="s-detail">Boards<span class="ct">2</span></button>
+      <button class="nav" data-go="s-inbox">Inbox<span class="dot">3</span></button>
+      <div class="navlbl">Configure</div>
+      <button class="nav" aria-current="page">Preferences</button>
+      <div class="push"></div>
+      <div class="me"><span class="av">OA</span><div><div style="font-size:12.5px;font-weight:600">Olivia Administer</div><div style="font-size:11px;color:var(--ink-3)">Org Admin</div></div></div>
+    </aside>
+    <div class="main">
+      <div class="topbar"><span class="crumb">Preferences / <b>Notifications</b></span><span class="spacer"></span>
+        <button class="btn" data-go="s-inbox">Cancel</button><button class="btn pri">Save</button></div>
+      <div class="body">
+        <div class="pagehead"><h1>Notifications</h1><p>What reaches your inbox, and what stays quiet.</p></div>
+        <div class="panel" style="margin-top:16px;max-width:680px"><div class="in">
+          <div class="prefrow"><div class="grow"><b>Mentions</b><div class="sub">Someone writes @you in a comment</div></div>
+            <label style="display:flex;gap:7px;align-items:center;font-size:12.5px"><input type="checkbox" checked>In app</label></div>
+          <div class="prefrow"><div class="grow"><b>Replies in threads you follow</b><div class="sub">You commented, or you raised the idea</div></div>
+            <label style="display:flex;gap:7px;align-items:center;font-size:12.5px"><input type="checkbox" checked>In app</label></div>
+          <div class="prefrow"><div class="grow"><b>Status changes on your ideas</b><div class="sub">An idea you raised moves swimlane</div></div>
+            <label style="display:flex;gap:7px;align-items:center;font-size:12.5px"><input type="checkbox" checked>In app</label></div>
+          <div class="prefrow"><div class="grow"><b>Upvotes</b><div class="sub">Can get noisy on popular ideas</div></div>
+            <label style="display:flex;gap:7px;align-items:center;font-size:12.5px"><input type="checkbox">In app</label></div>
+          <div class="prefrow"><div class="grow"><b>Administrative changes</b><div class="sub">Role or organization changes affecting your account</div></div>
+            <span style="font-size:11.5px;color:var(--ink-3)">Always on</span></div>
+        </div></div>
+        <div class="note" style="margin-top:16px;max-width:680px"><b>In-app only.</b> Guaranteed outbound email delivery is explicitly deferred, so every preference here is an in-app switch — no email column that would imply a delivery promise the product does not make.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const screens = [...document.querySelectorAll('.screen')];
+  const tabs = [...document.querySelectorAll('.switch button')];
+  function go(id){
+    screens.forEach(s => s.dataset.on = (s.id === id) ? '1' : '0');
+    tabs.forEach(t => t.setAttribute('aria-current', String(t.dataset.go === id)));
+    window.scrollTo(0,0);
+  }
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-go]');
+    if (t) { e.preventDefault(); go(t.dataset.go); }
+  });
+  // rail tabs are illustrative only
+  document.querySelectorAll('.railtabs').forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    [...g.children].forEach(x => x.setAttribute('aria-selected', String(x === b)));
+  }));
+</script>
+</body>
+</html>

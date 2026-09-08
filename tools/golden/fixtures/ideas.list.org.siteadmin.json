@@ -1,0 +1,1344 @@
+{
+  "scenario": "ideas",
+  "step": "list.org.siteadmin",
+  "endpoint": "GET /organizations/{organizationId}/ideas",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "note": "Seeded due dates are relative to the day the database was seeded, so a capture and a replay on different days would differ with nothing having changed. A due date a case sets itself is still pinned — see ideas.create.",
+  "unstable": [
+    "body.items[].dueDate"
+  ],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/ideas",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:44 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "items": [
+        {
+          "ideaId": "4a4bdb5c-2385-40b0-bd58-2e87d211db01",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Reduce manual handoffs",
+          "priority": "Low",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+          "businessImpactName": "Critical",
+          "businessImpactColor": "#DC2626",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "statusName": "New / Pending",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 4,
+          "authorUserId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+          "createdAtUtc": "2026-09-04T03:33:30.134348Z"
+        },
+        {
+          "ideaId": "55afb622-a8c5-4b79-9240-8a3733489691",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Add proactive alerts",
+          "priority": "Medium",
+          "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "82e95b94-5708-4385-89c0-cc5fa51b3264",
+          "businessImpactName": "High",
+          "businessImpactColor": "#D97706",
+          "dueDate": "2026-09-12",
+          "assignees": [
+            {
+              "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "safety"
+          ],
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "statusName": "New / Pending",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 1,
+          "authorUserId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+          "createdAtUtc": "2026-09-04T03:34:30.134348Z"
+        },
+        {
+          "ideaId": "65240cda-3b5d-4e1e-8745-0a9145860df7",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Standardize the intake checklist",
+          "priority": "High",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "ab4dc497-aa72-4cbb-9146-cdeff9d956b6",
+          "businessImpactName": "Medium",
+          "businessImpactColor": "#2563EB",
+          "dueDate": "2026-09-13",
+          "assignees": [
+            {
+              "userId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+              "firstName": "Maya",
+              "lastName": "Collaborator",
+              "displayName": "Maya Collaborator",
+              "isActive": true,
+              "portraitDataUrl": null
+            },
+            {
+              "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+              "firstName": "Olivia",
+              "lastName": "Administer",
+              "displayName": "Olivia Administer",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "cycle-time",
+            "quality"
+          ],
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "statusName": "New / Pending",
+          "upvoteCount": 2,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+          "createdAtUtc": "2026-09-04T03:35:30.134348Z"
+        },
+        {
+          "ideaId": "ce750517-1d49-4b38-8718-1fc6e39533de",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Pilot a faster review path",
+          "priority": "Critical",
+          "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "f7d3a912-2de2-436f-86a9-bda801d77bc3",
+          "businessImpactName": "Low",
+          "businessImpactColor": "#16A34A",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+          "statusName": "In Review",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+          "createdAtUtc": "2026-09-04T03:36:30.134348Z"
+        },
+        {
+          "ideaId": "28a5d84a-0537-4b22-9209-909e2b143110",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Improve exception visibility",
+          "priority": "Low",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+          "businessImpactName": "Critical",
+          "businessImpactColor": "#DC2626",
+          "dueDate": "2026-09-15",
+          "assignees": [
+            {
+              "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "automation"
+          ],
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+          "statusName": "In Review",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+          "createdAtUtc": "2026-09-04T03:37:30.134348Z"
+        },
+        {
+          "ideaId": "1633de54-3d74-49e2-8d4f-5476ebf7ab62",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Automate weekly reporting",
+          "priority": "Medium",
+          "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "82e95b94-5708-4385-89c0-cc5fa51b3264",
+          "businessImpactName": "High",
+          "businessImpactColor": "#D97706",
+          "dueDate": "2026-09-16",
+          "assignees": [
+            {
+              "userId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+              "firstName": "Maya",
+              "lastName": "Collaborator",
+              "displayName": "Maya Collaborator",
+              "isActive": true,
+              "portraitDataUrl": null
+            },
+            {
+              "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+              "firstName": "Olivia",
+              "lastName": "Administer",
+              "displayName": "Olivia Administer",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "quality",
+            "safety"
+          ],
+          "statusId": "8d4b935c-2709-418e-b151-6a5eb3449880",
+          "statusName": "In Progress",
+          "upvoteCount": 2,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+          "createdAtUtc": "2026-09-04T03:38:30.134348Z"
+        },
+        {
+          "ideaId": "34eb883c-2f20-4620-80b9-c8e0b6eb24fd",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Create a shared playbook",
+          "priority": "High",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "ab4dc497-aa72-4cbb-9146-cdeff9d956b6",
+          "businessImpactName": "Medium",
+          "businessImpactColor": "#2563EB",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "8d4b935c-2709-418e-b151-6a5eb3449880",
+          "statusName": "In Progress",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+          "createdAtUtc": "2026-09-04T03:39:30.134348Z"
+        },
+        {
+          "ideaId": "c57dd4d8-4d9a-4fce-9529-959c5dcaa00a",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Validate the customer feedback loop",
+          "priority": "Critical",
+          "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "f7d3a912-2de2-436f-86a9-bda801d77bc3",
+          "businessImpactName": "Low",
+          "businessImpactColor": "#16A34A",
+          "dueDate": "2026-09-18",
+          "assignees": [
+            {
+              "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "cycle-time"
+          ],
+          "statusId": "8aa88452-07f5-48c7-b087-64687efdb427",
+          "statusName": "Client Review",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+          "createdAtUtc": "2026-09-04T03:40:30.134348Z"
+        },
+        {
+          "ideaId": "f9e712ca-79ca-4a5f-a07c-1c802493138b",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Roll out the proven workflow",
+          "priority": "Low",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+          "businessImpactName": "Critical",
+          "businessImpactColor": "#DC2626",
+          "dueDate": "2026-09-19",
+          "assignees": [
+            {
+              "userId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+              "firstName": "Maya",
+              "lastName": "Collaborator",
+              "displayName": "Maya Collaborator",
+              "isActive": true,
+              "portraitDataUrl": null
+            },
+            {
+              "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+              "firstName": "Olivia",
+              "lastName": "Administer",
+              "displayName": "Olivia Administer",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "automation",
+            "safety"
+          ],
+          "statusId": "fa4869d2-bf67-4c11-b243-a1a20a3fc293",
+          "statusName": "Complete",
+          "upvoteCount": 2,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+          "createdAtUtc": "2026-09-04T03:41:30.134348Z"
+        },
+        {
+          "ideaId": "fd93150a-2c1f-4344-a1ea-8f9b1e5abd8e",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Measure time saved",
+          "priority": "Medium",
+          "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "82e95b94-5708-4385-89c0-cc5fa51b3264",
+          "businessImpactName": "High",
+          "businessImpactColor": "#D97706",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "fa4869d2-bf67-4c11-b243-a1a20a3fc293",
+          "statusName": "Complete",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+          "createdAtUtc": "2026-09-04T03:42:30.134348Z"
+        },
+        {
+          "ideaId": "2f3010f6-c4e9-456e-b225-a1ad15559b12",
+          "boardId": "182df148-cf57-4bba-ade8-99286b6c1181",
+          "title": "Assembly cell reliability: Retire the legacy step",
+          "priority": "High",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "ab4dc497-aa72-4cbb-9146-cdeff9d956b6",
+          "businessImpactName": "Medium",
+          "businessImpactColor": "#2563EB",
+          "dueDate": "2026-09-21",
+          "assignees": [
+            {
+              "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "quality"
+          ],
+          "statusId": "fa4869d2-bf67-4c11-b243-a1a20a3fc293",
+          "statusName": "Complete",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+          "createdAtUtc": "2026-09-04T03:43:30.134348Z"
+        },
+        {
+          "ideaId": "cf2df063-bc38-45d1-ac86-e3f7abfe046e",
+          "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+          "title": "Field service enablement: Reduce manual handoffs",
+          "priority": "Low",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+          "businessImpactName": "Critical",
+          "businessImpactColor": "#DC2626",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "statusName": "New / Pending",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 2,
+          "authorUserId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+          "createdAtUtc": "2026-09-04T03:44:30.134348Z"
+        },
+        {
+          "ideaId": "361b0195-4102-405d-989f-059452200c25",
+          "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+          "title": "Field service enablement: Add proactive alerts",
+          "priority": "Medium",
+          "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "82e95b94-5708-4385-89c0-cc5fa51b3264",
+          "businessImpactName": "High",
+          "businessImpactColor": "#D97706",
+          "dueDate": "2026-09-12",
+          "assignees": [
+            {
+              "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "diagnostics"
+          ],
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "statusName": "New / Pending",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 1,
+          "authorUserId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+          "createdAtUtc": "2026-09-04T03:45:30.134348Z"
+        },
+        {
+          "ideaId": "01ec691d-1b34-4e84-b6f4-92c334244f58",
+          "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+          "title": "Field service enablement: Standardize the intake checklist",
+          "priority": "High",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "ab4dc497-aa72-4cbb-9146-cdeff9d956b6",
+          "businessImpactName": "Medium",
+          "businessImpactColor": "#2563EB",
+          "dueDate": "2026-09-13",
+          "assignees": [
+            {
+              "userId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+              "firstName": "Maya",
+              "lastName": "Collaborator",
+              "displayName": "Maya Collaborator",
+              "isActive": true,
+              "portraitDataUrl": null
+            },
+            {
+              "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+              "firstName": "Olivia",
+              "lastName": "Administer",
+              "displayName": "Olivia Administer",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "customer-impact",
+            "parts"
+          ],
+          "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+          "statusName": "New / Pending",
+          "upvoteCount": 2,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+          "createdAtUtc": "2026-09-04T03:46:30.134348Z"
+        },
+        {
+          "ideaId": "9aac51a8-4c53-4b89-8a34-ec801666531b",
+          "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+          "title": "Field service enablement: Pilot a faster review path",
+          "priority": "Critical",
+          "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "f7d3a912-2de2-436f-86a9-bda801d77bc3",
+          "businessImpactName": "Low",
+          "businessImpactColor": "#16A34A",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+          "statusName": "In Review",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+          "createdAtUtc": "2026-09-04T03:47:30.134348Z"
+        },
+        {
+          "ideaId": "3ec26983-2a35-45c3-a085-6311518b1ab6",
+          "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+          "title": "Field service enablement: Improve exception visibility",
+          "priority": "Low",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+          "businessImpactName": "Critical",
+          "businessImpactColor": "#DC2626",
+          "dueDate": "2026-09-15",
+          "assignees": [
+            {
+              "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "service"
+          ],
+          "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+          "statusName": "In Review",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+          "createdAtUtc": "2026-09-04T03:48:30.134348Z"
+        },
+        {
+          "ideaId": "4c4c5305-7287-4cef-b7f1-b2e4ca7c8b0b",
+          "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+          "title": "Field service enablement: Automate weekly reporting",
+          "priority": "Medium",
+          "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "82e95b94-5708-4385-89c0-cc5fa51b3264",
+          "businessImpactName": "High",
+          "businessImpactColor": "#D97706",
+          "dueDate": "2026-09-16",
+          "assignees": [
+            {
+              "userId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+              "firstName": "Maya",
+              "lastName": "Collaborator",
+              "displayName": "Maya Collaborator",
+              "isActive": true,
+              "portraitDataUrl": null
+            },
+            {
+              "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+              "firstName": "Olivia",
+              "lastName": "Administer",
+              "displayName": "Olivia Administer",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "customer-impact",
+            "diagnostics"
+          ],
+          "statusId": "8d4b935c-2709-418e-b151-6a5eb3449880",
+          "statusName": "In Progress",
+          "upvoteCount": 2,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+          "createdAtUtc": "2026-09-04T03:49:30.134348Z"
+        },
+        {
+          "ideaId": "8d981bf1-3dd1-4f5f-81d6-57e588f9dc5c",
+          "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+          "title": "Field service enablement: Create a shared playbook",
+          "priority": "High",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "ab4dc497-aa72-4cbb-9146-cdeff9d956b6",
+          "businessImpactName": "Medium",
+          "businessImpactColor": "#2563EB",
+          "dueDate": null,
+          "assignees": [],
+          "tagNames": [],
+          "statusId": "8d4b935c-2709-418e-b151-6a5eb3449880",
+          "statusName": "In Progress",
+          "upvoteCount": 0,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+          "createdAtUtc": "2026-09-04T03:50:30.134348Z"
+        },
+        {
+          "ideaId": "50c90cf3-cb76-45d0-ae47-3add94f9a355",
+          "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+          "title": "Field service enablement: Validate the customer feedback loop",
+          "priority": "Critical",
+          "ideaTypeId": "bafaae0d-488c-43ff-abed-6bc5049aa80f",
+          "ideaTypeName": "Process Revision",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "f7d3a912-2de2-436f-86a9-bda801d77bc3",
+          "businessImpactName": "Low",
+          "businessImpactColor": "#16A34A",
+          "dueDate": "2026-09-18",
+          "assignees": [
+            {
+              "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+              "firstName": "Golden",
+              "lastName": "Capture",
+              "displayName": "Golden Capture",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "parts"
+          ],
+          "statusId": "8aa88452-07f5-48c7-b087-64687efdb427",
+          "statusName": "Client Review",
+          "upvoteCount": 1,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+          "createdAtUtc": "2026-09-04T03:51:30.134348Z"
+        },
+        {
+          "ideaId": "e3557b56-2f45-4af3-bf2b-2742aaa0b449",
+          "boardId": "20111273-9308-42ff-80d4-1f527b4bd159",
+          "title": "Field service enablement: Roll out the proven workflow",
+          "priority": "Low",
+          "ideaTypeId": "83ee3626-d19d-4537-a394-9e0d3233045d",
+          "ideaTypeName": "Continuous Improvement",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "businessImpactId": "eff275bf-f5f4-4fab-b4fe-681be490fb60",
+          "businessImpactName": "Critical",
+          "businessImpactColor": "#DC2626",
+          "dueDate": "2026-09-19",
+          "assignees": [
+            {
+              "userId": "f03bd3d3-7b72-404c-a1cf-3ca820f77afd",
+              "firstName": "Maya",
+              "lastName": "Collaborator",
+              "displayName": "Maya Collaborator",
+              "isActive": true,
+              "portraitDataUrl": null
+            },
+            {
+              "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+              "firstName": "Olivia",
+              "lastName": "Administer",
+              "displayName": "Olivia Administer",
+              "isActive": true,
+              "portraitDataUrl": null
+            }
+          ],
+          "tagNames": [
+            "diagnostics",
+            "service"
+          ],
+          "statusId": "fa4869d2-bf67-4c11-b243-a1a20a3fc293",
+          "statusName": "Complete",
+          "upvoteCount": 2,
+          "hasUpvoted": false,
+          "commentCount": 0,
+          "authorUserId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+          "createdAtUtc": "2026-09-04T03:52:30.134348Z"
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "totalCount": 22,
+      "sortBy": null,
+      "sortDirection": "asc"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "items": [
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#DC2626",
+          "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+          "businessImpactName": "Critical",
+          "commentCount": 4,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[0].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "Low",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusName": "New / Pending",
+          "tagNames": [],
+          "title": "Assembly cell reliability: Reduce manual handoffs",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#D97706",
+          "businessImpactId": "<guid@impacts.body[1].businessImpactId>",
+          "businessImpactName": "High",
+          "commentCount": 1,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[1].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Medium",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusName": "New / Pending",
+          "tagNames": [
+            "safety"
+          ],
+          "title": "Assembly cell reliability: Add proactive alerts",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Maya Collaborator",
+              "firstName": "Maya",
+              "isActive": true,
+              "lastName": "Collaborator",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].authorUserId>"
+            },
+            {
+              "displayName": "Olivia Administer",
+              "firstName": "Olivia",
+              "isActive": true,
+              "lastName": "Administer",
+              "portraitDataUrl": null,
+              "userId": "<guid@org.body.userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#2563EB",
+          "businessImpactId": "<guid@impacts.body[2].businessImpactId>",
+          "businessImpactName": "Medium",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[2].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "High",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusName": "New / Pending",
+          "tagNames": [
+            "cycle-time",
+            "quality"
+          ],
+          "title": "Assembly cell reliability: Standardize the intake checklist",
+          "upvoteCount": 2
+        },
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#16A34A",
+          "businessImpactId": "<guid@impacts.body[3].businessImpactId>",
+          "businessImpactName": "Low",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[3].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Critical",
+          "statusId": "<guid@statuses.body[1].statusId>",
+          "statusName": "In Review",
+          "tagNames": [],
+          "title": "Assembly cell reliability: Pilot a faster review path",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#DC2626",
+          "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+          "businessImpactName": "Critical",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[4].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "Low",
+          "statusId": "<guid@statuses.body[1].statusId>",
+          "statusName": "In Review",
+          "tagNames": [
+            "automation"
+          ],
+          "title": "Assembly cell reliability: Improve exception visibility",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Maya Collaborator",
+              "firstName": "Maya",
+              "isActive": true,
+              "lastName": "Collaborator",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].authorUserId>"
+            },
+            {
+              "displayName": "Olivia Administer",
+              "firstName": "Olivia",
+              "isActive": true,
+              "lastName": "Administer",
+              "portraitDataUrl": null,
+              "userId": "<guid@org.body.userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#D97706",
+          "businessImpactId": "<guid@impacts.body[1].businessImpactId>",
+          "businessImpactName": "High",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[5].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Medium",
+          "statusId": "<guid@statuses.body[2].statusId>",
+          "statusName": "In Progress",
+          "tagNames": [
+            "quality",
+            "safety"
+          ],
+          "title": "Assembly cell reliability: Automate weekly reporting",
+          "upvoteCount": 2
+        },
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#2563EB",
+          "businessImpactId": "<guid@impacts.body[2].businessImpactId>",
+          "businessImpactName": "Medium",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[6].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "High",
+          "statusId": "<guid@statuses.body[2].statusId>",
+          "statusName": "In Progress",
+          "tagNames": [],
+          "title": "Assembly cell reliability: Create a shared playbook",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#16A34A",
+          "businessImpactId": "<guid@impacts.body[3].businessImpactId>",
+          "businessImpactName": "Low",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[7].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Critical",
+          "statusId": "<guid@statuses.body[3].statusId>",
+          "statusName": "Client Review",
+          "tagNames": [
+            "cycle-time"
+          ],
+          "title": "Assembly cell reliability: Validate the customer feedback loop",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Maya Collaborator",
+              "firstName": "Maya",
+              "isActive": true,
+              "lastName": "Collaborator",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].authorUserId>"
+            },
+            {
+              "displayName": "Olivia Administer",
+              "firstName": "Olivia",
+              "isActive": true,
+              "lastName": "Administer",
+              "portraitDataUrl": null,
+              "userId": "<guid@org.body.userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#DC2626",
+          "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+          "businessImpactName": "Critical",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[8].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "Low",
+          "statusId": "<guid@statuses.body[4].statusId>",
+          "statusName": "Complete",
+          "tagNames": [
+            "automation",
+            "safety"
+          ],
+          "title": "Assembly cell reliability: Roll out the proven workflow",
+          "upvoteCount": 2
+        },
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#D97706",
+          "businessImpactId": "<guid@impacts.body[1].businessImpactId>",
+          "businessImpactName": "High",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[9].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Medium",
+          "statusId": "<guid@statuses.body[4].statusId>",
+          "statusName": "Complete",
+          "tagNames": [],
+          "title": "Assembly cell reliability: Measure time saved",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[0].boardId>",
+          "businessImpactColor": "#2563EB",
+          "businessImpactId": "<guid@impacts.body[2].businessImpactId>",
+          "businessImpactName": "Medium",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.board.siteadmin.body.items[10].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "High",
+          "statusId": "<guid@statuses.body[4].statusId>",
+          "statusName": "Complete",
+          "tagNames": [
+            "quality"
+          ],
+          "title": "Assembly cell reliability: Retire the legacy step",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[1].boardId>",
+          "businessImpactColor": "#DC2626",
+          "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+          "businessImpactName": "Critical",
+          "commentCount": 2,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.org.siteadmin.body.items[11].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "Low",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusName": "New / Pending",
+          "tagNames": [],
+          "title": "Field service enablement: Reduce manual handoffs",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[1].boardId>",
+          "businessImpactColor": "#D97706",
+          "businessImpactId": "<guid@impacts.body[1].businessImpactId>",
+          "businessImpactName": "High",
+          "commentCount": 1,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.org.siteadmin.body.items[12].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Medium",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusName": "New / Pending",
+          "tagNames": [
+            "diagnostics"
+          ],
+          "title": "Field service enablement: Add proactive alerts",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Maya Collaborator",
+              "firstName": "Maya",
+              "isActive": true,
+              "lastName": "Collaborator",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].authorUserId>"
+            },
+            {
+              "displayName": "Olivia Administer",
+              "firstName": "Olivia",
+              "isActive": true,
+              "lastName": "Administer",
+              "portraitDataUrl": null,
+              "userId": "<guid@org.body.userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>",
+          "boardId": "<guid@board.body[1].boardId>",
+          "businessImpactColor": "#2563EB",
+          "businessImpactId": "<guid@impacts.body[2].businessImpactId>",
+          "businessImpactName": "Medium",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.org.siteadmin.body.items[13].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "High",
+          "statusId": "<guid@statuses.body[0].statusId>",
+          "statusName": "New / Pending",
+          "tagNames": [
+            "customer-impact",
+            "parts"
+          ],
+          "title": "Field service enablement: Standardize the intake checklist",
+          "upvoteCount": 2
+        },
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[1].boardId>",
+          "businessImpactColor": "#16A34A",
+          "businessImpactId": "<guid@impacts.body[3].businessImpactId>",
+          "businessImpactName": "Low",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.org.siteadmin.body.items[14].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Critical",
+          "statusId": "<guid@statuses.body[1].statusId>",
+          "statusName": "In Review",
+          "tagNames": [],
+          "title": "Field service enablement: Pilot a faster review path",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[1].boardId>",
+          "businessImpactColor": "#DC2626",
+          "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+          "businessImpactName": "Critical",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.org.siteadmin.body.items[15].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "Low",
+          "statusId": "<guid@statuses.body[1].statusId>",
+          "statusName": "In Review",
+          "tagNames": [
+            "service"
+          ],
+          "title": "Field service enablement: Improve exception visibility",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Maya Collaborator",
+              "firstName": "Maya",
+              "isActive": true,
+              "lastName": "Collaborator",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].authorUserId>"
+            },
+            {
+              "displayName": "Olivia Administer",
+              "firstName": "Olivia",
+              "isActive": true,
+              "lastName": "Administer",
+              "portraitDataUrl": null,
+              "userId": "<guid@org.body.userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>",
+          "boardId": "<guid@board.body[1].boardId>",
+          "businessImpactColor": "#D97706",
+          "businessImpactId": "<guid@impacts.body[1].businessImpactId>",
+          "businessImpactName": "High",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.org.siteadmin.body.items[16].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Medium",
+          "statusId": "<guid@statuses.body[2].statusId>",
+          "statusName": "In Progress",
+          "tagNames": [
+            "customer-impact",
+            "diagnostics"
+          ],
+          "title": "Field service enablement: Automate weekly reporting",
+          "upvoteCount": 2
+        },
+        {
+          "assignees": [],
+          "authorUserId": "<guid@org.body.userId>",
+          "boardId": "<guid@board.body[1].boardId>",
+          "businessImpactColor": "#2563EB",
+          "businessImpactId": "<guid@impacts.body[2].businessImpactId>",
+          "businessImpactName": "Medium",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.org.siteadmin.body.items[17].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "High",
+          "statusId": "<guid@statuses.body[2].statusId>",
+          "statusName": "In Progress",
+          "tagNames": [],
+          "title": "Field service enablement: Create a shared playbook",
+          "upvoteCount": 0
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Golden Capture",
+              "firstName": "Golden",
+              "isActive": true,
+              "lastName": "Capture",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].authorUserId>",
+          "boardId": "<guid@board.body[1].boardId>",
+          "businessImpactColor": "#16A34A",
+          "businessImpactId": "<guid@impacts.body[3].businessImpactId>",
+          "businessImpactName": "Low",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.org.siteadmin.body.items[18].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[1].ideaTypeId>",
+          "ideaTypeName": "Process Revision",
+          "priority": "Critical",
+          "statusId": "<guid@statuses.body[3].statusId>",
+          "statusName": "Client Review",
+          "tagNames": [
+            "parts"
+          ],
+          "title": "Field service enablement: Validate the customer feedback loop",
+          "upvoteCount": 1
+        },
+        {
+          "assignees": [
+            {
+              "displayName": "Maya Collaborator",
+              "firstName": "Maya",
+              "isActive": true,
+              "lastName": "Collaborator",
+              "portraitDataUrl": null,
+              "userId": "<guid@list.board.siteadmin.body.items[1].authorUserId>"
+            },
+            {
+              "displayName": "Olivia Administer",
+              "firstName": "Olivia",
+              "isActive": true,
+              "lastName": "Administer",
+              "portraitDataUrl": null,
+              "userId": "<guid@org.body.userId>"
+            }
+          ],
+          "authorUserId": "<guid@list.board.siteadmin.body.items[1].assignees[0].userId>",
+          "boardId": "<guid@board.body[1].boardId>",
+          "businessImpactColor": "#DC2626",
+          "businessImpactId": "<guid@impacts.body[0].businessImpactId>",
+          "businessImpactName": "Critical",
+          "commentCount": 0,
+          "createdAtUtc": "<timestamp>",
+          "hasUpvoted": false,
+          "ideaId": "<guid@list.org.siteadmin.body.items[19].ideaId>",
+          "ideaTypeColorHex": null,
+          "ideaTypeIcon": null,
+          "ideaTypeId": "<guid@types.body[0].ideaTypeId>",
+          "ideaTypeName": "Continuous Improvement",
+          "priority": "Low",
+          "statusId": "<guid@statuses.body[4].statusId>",
+          "statusName": "Complete",
+          "tagNames": [
+            "diagnostics",
+            "service"
+          ],
+          "title": "Field service enablement: Roll out the proven workflow",
+          "upvoteCount": 2
+        }
+      ],
+      "page": 1,
+      "pageSize": 20,
+      "sortBy": null,
+      "sortDirection": "asc",
+      "totalCount": 22
+    }
+  }
+}

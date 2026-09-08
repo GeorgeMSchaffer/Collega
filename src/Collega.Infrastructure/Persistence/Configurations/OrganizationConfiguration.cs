@@ -38,7 +38,8 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
             .HasColumnName("logo_url")
             .HasMaxLength(Organization.LogoUrlMaxLength);
 
-        // Holds a resized-image data URI (client-side thumbnail), so it needs nvarchar(max).
+        // Holds a resized-image data URI (client-side thumbnail), so it is left unbounded — an
+        // unbounded string maps to Postgres text.
         builder.Property(o => o.LogoThumbnailUrl)
             .HasColumnName("logo_thumbnail_url");
 
@@ -72,6 +73,10 @@ public sealed class OrganizationConfiguration : IEntityTypeConfiguration<Organiz
         builder.Property(o => o.PrimaryContactLastName)
             .HasColumnName("primary_contact_last_name")
             .HasMaxLength(Organization.ContactNameMaxLength);
+
+        builder.Property(o => o.AiScopeStatement)
+            .HasColumnName("ai_scope_statement")
+            .HasMaxLength(Organization.AiScopeStatementMaxLength);
 
         builder.Property(o => o.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
         builder.Property(o => o.UpdatedAtUtc).HasColumnName("updated_at_utc").IsRequired();

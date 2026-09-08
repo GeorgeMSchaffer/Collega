@@ -42,6 +42,8 @@
 - user CSV import enforces Site Admin and Org Admin organization scope and rejects Site Admin as an imported role
 - invalid, duplicate, empty, oversized, and over-row-limit CSV imports return row-specific validation where applicable and create no users
 - user CSV import responses, logs, and audit events do not expose plaintext initial passwords or uploaded file contents
+- operational logs never contain plaintext passwords, reset or bearer tokens, AI prompt or transcript content, API keys, uploaded CSV contents, or request query strings
+- no test writes a log file: the integration harness disables the Development file sink and substitutes an in-memory sink
 - board creation rejects fewer than 2 swimlanes
 - new organization provisioning creates the canonical Idea Type and Business Impact options in the specified order
 - migration backfills existing ideas to `Continuous Improvement` and `Medium`
@@ -57,6 +59,17 @@
 - Post-MVP password-reset request and confirmation contracts stay aligned with `30-Contracts.md`
 - Idea field option routes, idea delete behavior, and expanded board-card projections stay aligned with `30-Contracts.md`
 - User CSV template and import content types, request limits, response shape, and problem-details errors stay aligned with `30-Contracts.md`
+
+### What the golden corpus cannot pin — owed as unit tests
+The TypeScript conversion's golden corpus (`tools/golden/`) redacts credentials in both
+directions, so every redacted value reads alike and a *change* in one is invisible to a
+replay diff. These assertions therefore have to live in unit tests against the service,
+not in the corpus:
+- **Regenerating an organization's invite code returns a different code.** Against
+  `OrganizationService.RegenerateInviteCodeAsync` — assert the second result differs from
+  the first. Owed by whichever wave ports organization administration (C or D).
+- The same applies to any future endpoint whose contract is "this value changed": issuing
+  a temporary password twice, or a token rotation.
 
 ## Smoke Tests
 - Critical-path smoke test: sign in successfully, create a new board, and create a new idea

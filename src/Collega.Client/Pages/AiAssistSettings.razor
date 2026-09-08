@@ -1,0 +1,209 @@
+@page "/settings/ai-assist"
+@attribute [Authorize(Roles = "OrgAdmin,SiteAdmin")]
+@inject ApiClient Api
+
+<PageTitle>AI assist · Collega</PageTitle>
+
+@*
+    The organization's AI assist scope statement (D-SCOPEUI, locked 2026-08-16).
+
+    Its own Settings page, NOT the Organization detail drawer. The decisive reason: Settings.razor is
+    [Authorize(Roles = "SiteAdmin")], so that drawer is unreachable for the very Org Admin who owns this
+    setting under rule 6. Don't "consolidate" it back there.
+
+    The statement can only NARROW the boundary the organization's active Idea Types already draw — it
+    can never widen it. The page says so, shows the Idea Types as the floor, and previews the exact
+    redirect a refused turn will show, so the effect of a change is visible before it is saved.
+*@
+<div class="pagehead">
+    <div class="crumbs"><a href="/settings">Settings</a> / AI assist</div>
+    <h1>AI assist</h1>
+    <p class="sub" style="margin-bottom:18px">
+        Tune what the idea assistant will and won't discuss for your organization.
+    </p>
+</div>
+
+<div class="body">
+    @if (_loading)
+    {
+        <div class="loading"><FluentProgressRing /> <span>Loading…</span></div>
+    }
+    else
+    {
+        <div class="cmdbar"><BackButton /></div>
+
+        @if (_error is not null)
+        {
+            <div class="autherror" role="alert">@_error</div>
+        }
+
+        @if (_settings is not null && !_settings.AiAssistAvailable)
+        {
+            <div class="note" style="border-left-color:var(--warn);background:#f7ecdc">
+                The assistant isn't switched on for this deployment, so the brainstorm chat is running on
+                its scripted prompts. You can still set a scope statement — it takes effect when the
+                assistant is enabled.
+            </div>
+        }
+
+        <div class="card" style="padding:18px 20px;margin-top:14px;max-width:680px">
+            <div class="field">
+                <div class="lblrow">
+                    <label for="scope">Scope statement</label>
+                    <span class="charlim">@(_scopeStatement?.Length ?? 0) / 500</span>
+                </div>
+                <textarea id="scope" rows="5" maxlength="500"
+                          placeholder="e.g. Only ideas about our warehouse operations and the systems that support them."
+                          @bind="_scopeStatement" @bind:event="oninput" disabled="@_saving"></textarea>
+                <div class="help">
+                    Leave this empty and your active idea types are the only boundary. Anything you write
+                    here <strong>narrows</strong> that boundary further — it can never widen it, so the
+                    assistant will still refuse anything that couldn't become one of the types below.
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Always in scope — your active idea types</label>
+                @if (_ideaTypes.Count == 0)
+                {
+                    <p class="help">No active idea types yet. Add some under Settings → Manage Idea Types.</p>
+                }
+                else
+                {
+                    <div class="chipbar">
+                        @foreach (var type in _ideaTypes)
+                        {
+                            <span class="pill neutral">@type.Name</span>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="field">
+                <label>What a refused turn shows</label>
+                <div class="sysnote">
+                    <div>
+                        <b>That one's outside what I can help with here.</b>
+                        <span class="redirect">@RefusalPreview</span>
+                    </div>
+                </div>
+                <div class="help">
+                    Fixed wording, supplied by Collega — the assistant never writes its own refusal. The
+                    offending message is dropped rather than kept, and three in a row end the chat.
+                </div>
+            </div>
+
+            <div style="display:flex;gap:9px;align-items:center;margin-top:6px">
+                <button class="btn primary" @onclick="SaveAsync" disabled="@(_saving || !_dirty)">
+                    @(_saving ? "Saving…" : "Save")
+                </button>
+                @if (!string.IsNullOrWhiteSpace(_scopeStatement))
+                {
+                    <button class="btn subtle" @onclick="ClearAsync" disabled="@_saving">Clear statement</button>
+                }
+                @if (_saved)
+                {
+                    <span class="help" role="status">Saved. Takes effect on the next turn.</span>
+                }
+            </div>
+        </div>
+
+        <div class="note">
+            Changing this doesn't re-scope conversations already in progress — it applies from the next
+            turn onward.
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private AiAssistSettingsDto? _settings;
+    private List<IdeaTypeOptionDto> _ideaTypes = new();
+    private string? _organizationId;
+    private string? _scopeStatement;
+    private string? _savedStatement;
+    private bool _loading = true;
+    private bool _saving;
+    private bool _saved;
+    private string? _error;
+
+    private bool _dirty => (_scopeStatement ?? "") != (_savedStatement ?? "");
+
+    /// <summary>
+    /// The literal redirect a refused turn renders, so an Org Admin sees the consequence of tightening
+    /// the boundary rather than having to imagine it.
+    /// </summary>
+    private const string RefusalPreview =
+        "I can only help with drafting ideas for your organization. What would you like to capture?";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthStateTask is not null)
+        {
+            _organizationId = (await AuthStateTask).User.FindFirst("organizationId")?.Value;
+        }
+
+        if (_organizationId is not { Length: > 0 })
+        {
+            // A Site Admin acting as themselves has no organization. This setting belongs to one, so
+            // they reach it through View As — the same path every other org-scoped setting takes.
+            _error = "Act as a member of an organization to configure its assistant.";
+            _loading = false;
+            return;
+        }
+
+        var settings = await Api.GetAiAssistSettingsAsync(_organizationId);
+        if (settings.Succeeded)
+        {
+            _settings = settings.Value!;
+            _scopeStatement = _savedStatement = _settings.ScopeStatement;
+        }
+        else
+        {
+            _error = settings.Error ?? "Could not load the assistant's settings.";
+        }
+
+        var types = await Api.GetIdeaTypesAsync(_organizationId);
+        if (types.Succeeded)
+        {
+            _ideaTypes = types.Value!.Where(t => !t.IsDeleted).OrderBy(t => t.SortOrder).ToList();
+        }
+
+        _loading = false;
+    }
+
+    private Task SaveAsync() => PersistAsync(_scopeStatement);
+
+    private Task ClearAsync() => PersistAsync(null);
+
+    private async Task PersistAsync(string? statement)
+    {
+        if (_organizationId is not { Length: > 0 })
+        {
+            return;
+        }
+
+        _saving = true;
+        _saved = false;
+        _error = null;
+
+        var result = await Api.UpdateAiAssistSettingsAsync(
+            _organizationId,
+            new UpdateAiAssistSettingsRequestDto(string.IsNullOrWhiteSpace(statement) ? null : statement.Trim()));
+
+        _saving = false;
+
+        if (result.Succeeded)
+        {
+            _settings = result.Value!;
+            _scopeStatement = _savedStatement = _settings.ScopeStatement;
+            _saved = true;
+        }
+        else
+        {
+            _error = result.Error ?? "Could not save the scope statement.";
+        }
+    }
+}

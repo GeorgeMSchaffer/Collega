@@ -1,0 +1,364 @@
+/* ============================================================
+   Comp Q — comp P's screens on Tailwind CSS v4 + shadcn/ui.
+
+   This is the shape of a shadcn project's globals.css: Tailwind, a
+   theme block that maps semantic colour names onto CSS variables, the
+   variables themselves, and a base layer. Component classes below
+   (.btn, .panel, .marker, …) exist only so the shared fragments can
+   be rendered without a React runtime; build_q.py expands each into
+   the utility string the matching shadcn component emits, so the
+   generated HTML is what the framework would render.
+   ============================================================ */
+@import "tailwindcss" source(none);
+@source "../../comp-q-focus-roadmap.html";
+@source "../../comp-q-auth.html";
+@source "../../comp-q-admin.html";
+@source "../../comp-q-delivery.html";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-teal: var(--teal-brand);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* The theme. shadcn's own dial: --radius is the one knob for corner
+   rounding (0.3rem is its "small" preset — the closest supported value
+   to the "minimize rounded corners" feedback), and every semantic
+   colour is a variable. The values are the business-professional
+   palette chosen 2026-08-31; the palette is still open, and changing it
+   means changing this block only. */
+:root {
+  --radius: 0.3rem;
+  --background: #F7F9FB;
+  --foreground: #243447;
+  --card: #FFFFFF;
+  --card-foreground: #243447;
+  --popover: #FFFFFF;
+  --popover-foreground: #243447;
+  --primary: #527292;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1F3F6;
+  --secondary-foreground: #3E4E60;
+  --muted: #F1F3F6;
+  --muted-foreground: #5D6C7E;
+  --accent: #F0F4F7;
+  --accent-foreground: #3E566F;
+  --destructive: #B64B4B;
+  --destructive-foreground: #FFFFFF;
+  --warning: #C9A65C;
+  --success: #6FAF7A;
+  --teal-brand: #5F9E93;
+  --border: #DDE1E6;
+  --input: #C5CBD3;
+  --ring: #5B7FA3;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #3E4E60;
+  --sidebar-primary: #527292;
+  --sidebar-accent: #F0F4F7;
+  --sidebar-accent-foreground: #3E566F;
+  --sidebar-border: #DDE1E6;
+
+  /* Category dots. The fragments name them by comp P's sticker names;
+     here each is a value from the same palette, so the mapping is the
+     only thing that changes when the palette does. */
+  --sky: #5B7FA3;
+  --teal: #5F9E93;
+  --green: #6FAF7A;
+  --orange: #C9A65C;
+  --orange-deep: #8A6D2E;
+  --pink: #C97A7A;
+  --purple: #9A8AC4;
+  --purple-deep: #5B4F86;
+  --brown: #8A6D2E;
+  --sug: #116b5e;
+  --sug-soft: #e8f3f1;
+
+  /* Aliases the fragments reach for in inline styles. */
+  --ink: var(--foreground);
+  --ink-secondary: #3E4E60;
+  --ink-muted: var(--muted-foreground);
+  --ink-faint: #818E9C;
+  --hairline: var(--border);
+  --canvas: #FFFFFF;
+  --canvas-soft: var(--muted);
+  --surface: var(--card);
+  --primary-active: #3E566F;
+  --on-primary: #FFFFFF;
+  --s-xxs: 4px; --s-xs: 8px; --s-sm: 12px; --s-md: 16px; --s-lg: 24px; --s-xl: 28px; --s-xxl: 32px;
+  --r-xs: calc(var(--radius) - 2px); --r-sm: var(--radius); --r-md: var(--radius);
+  --r-lg: calc(var(--radius) + 2px); --r-xl: calc(var(--radius) + 6px); --r-full: 9999px;
+  --e1: 0 1px 2px rgba(36,52,71,.06);
+  --e2: 0 8px 24px rgba(36,52,71,.14);
+  --font: var(--font-sans);
+}
+
+@layer base {
+  * { border-color: var(--border); }
+  html, body { margin: 0; }
+  body { @apply bg-background text-foreground font-sans text-sm antialiased; }
+  h1 { @apply text-2xl font-semibold tracking-tight; }
+  h2 { @apply text-xl font-semibold tracking-tight; }
+  h3 { @apply text-lg font-semibold tracking-tight; }
+  p { @apply m-0 mb-4; }
+  a { @apply text-primary no-underline hover:underline; }
+  /* shadcn Input / Textarea / Select (native) */
+  input[type=text], input[type=password], input[type=search], input[type=file], textarea, select {
+    @apply flex h-9 w-full rounded-md border border-input bg-card px-3 py-1 text-sm shadow-xs
+           placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1
+           focus-visible:ring-ring;
+  }
+  textarea { @apply h-auto min-h-16 py-2 resize-y; }
+  input[type=file] { @apply py-1.5 file:mr-3 file:rounded-sm file:border-0 file:bg-secondary file:px-2 file:py-0.5 file:text-xs file:font-medium; }
+  input[type=checkbox], input[type=radio] { @apply size-4 accent-primary; }
+  /* shadcn Label */
+  label { @apply mb-1.5 block text-sm font-medium leading-none; }
+  table { @apply w-full caption-bottom text-sm border-collapse; }
+  thead th { @apply h-10 border-b bg-muted/40 px-3 text-left align-middle text-xs font-medium text-muted-foreground; }
+  tbody td { @apply border-b px-3 py-2.5 align-middle; }
+  tbody tr:last-child td { @apply border-0; }
+  tbody tr:hover td { @apply bg-muted/50; }
+  tfoot td { @apply border-t-2 bg-muted/40 px-3 py-2 font-medium; }
+  button { font-family: inherit; }
+  code { @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]; }
+}
+
+/* ---- layout that has no shadcn component: the desk grid ---- */
+@layer components {
+  .shell { @apply grid min-h-[calc(100vh-70px)] grid-cols-[256px_minmax(0,1fr)]; }
+  .shell.insp { @apply grid-cols-[256px_minmax(0,1fr)_400px]; }
+  .main { @apply flex min-w-0 flex-col; }
+  .screen { display: none; }
+  .screen[data-on="1"] { display: block; }
+
+  /* sidebar internals shadcn's Sidebar renders as sub-components */
+  .brand .mark { @apply flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-[11px] font-bold text-primary-foreground; }
+  .nav .ic { @apply size-4 shrink-0; }
+  .nav .ct { @apply ml-auto text-xs tabular-nums text-muted-foreground; }
+  .me .av { @apply size-8 text-xs; }
+  .me .cap { @apply text-xs text-muted-foreground; }
+  .palette .kbd { @apply ml-auto; }
+
+  /* page header */
+  .pgh .sub, .card .sub, .authform .sub { @apply mt-1 text-sm text-muted-foreground; }
+  .authform .sub { @apply mb-5 text-base; }
+
+  /* Card internals */
+  .panel > h2, .panel > h3 { @apply flex items-center gap-2 border-b px-5 py-3 text-base font-semibold tracking-tight; }
+  .panel > h2:has(+ .lede) { @apply border-b-0 pb-1; }
+  .panel > .lede { @apply border-b px-5 pb-3 text-xs text-muted-foreground; }
+  .panel > .in, .panel .in { @apply p-5; }
+  .panel table { @apply text-sm; }
+  .panel .t { @apply font-medium; }
+  .panel td .iconbtn { @apply mr-0.5 inline-flex size-7 text-xs; }
+  .panel td.act { @apply align-middle; }
+  .panel.figures th.num, .panel.figures td.num { @apply text-right; }
+  .card > .title, .card .title { @apply text-base font-semibold leading-none tracking-tight; }
+  .kpi .k { @apply text-xs font-medium uppercase tracking-wide text-muted-foreground; }
+  .kpi .v { @apply mt-1 text-3xl font-semibold tracking-tight; }
+  .kpi .d { @apply mt-0.5 text-xs text-muted-foreground; }
+  .kpi .why { @apply mt-2.5 border-t pt-2.5 text-xs text-muted-foreground; }
+  .tip .btn { @apply ml-auto shrink-0 self-center; }
+  .tip b { @apply text-foreground; }
+
+  /* tables */
+  tbody tr.sel td { @apply bg-muted; }
+  tbody tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
+  thead th button { @apply inline-flex items-center gap-1 bg-transparent p-0 text-inherit; font: inherit; }
+  tbody td:first-child { white-space: nowrap; }
+  .wrap1 td:first-child { white-space: normal; }
+  .bd .tag { @apply whitespace-nowrap; }
+  .pgfoot label { @apply mb-0 inline text-sm font-normal; }
+  .pgfoot select { @apply h-8 w-auto text-xs; }
+
+  /* segmented control (shadcn Tabs list) */
+  .seg button { @apply inline-flex h-7 items-center justify-center whitespace-nowrap rounded-sm px-3 text-sm font-medium text-muted-foreground transition-all aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-xs; border: 0; background: transparent; }
+
+  /* feed, comments, discussion */
+  .feed li { @apply flex items-center gap-2 px-5 py-3 text-sm; }
+  .feed .when { @apply ml-auto whitespace-nowrap text-xs text-muted-foreground; }
+  .cmt { @apply flex gap-2.5 border-t py-2.5; }
+  .cmt .who { @apply mb-0.5 text-xs font-semibold; }
+  .cmt .when { @apply ml-1.5 font-normal text-muted-foreground; }
+  .cmt p { @apply m-0 text-sm text-foreground/90; }
+
+  /* description lists */
+  .kv dt { @apply self-center text-xs font-medium uppercase tracking-wide text-muted-foreground; }
+  .kv dd { @apply m-0 leading-snug; }
+
+  /* board */
+  .lanehd .t { @apply text-sm font-semibold; }
+  .lanehd .ct { @apply ml-auto text-xs tabular-nums text-muted-foreground; }
+  .kcard .t { @apply mb-2 block text-sm font-medium leading-snug; }
+  .kcard .ft { @apply flex flex-wrap items-center gap-1.5; }
+  .kcard .ft + .ft { @apply mt-1; }
+  .kcard .key { @apply mb-1.5; }
+  .lane > .btn { @apply mt-1 w-full justify-center text-muted-foreground; }
+  .lane > .deniedwrap { @apply mt-1 w-full; }
+
+  /* delivery cards */
+  .tprog { @apply mt-2 flex items-center gap-2 text-xs text-muted-foreground; }
+  .tbar { @apply h-1 flex-1 overflow-hidden rounded-full border bg-muted; }
+  .tbar i { @apply block h-full bg-muted-foreground; }
+  .sprintbar .goal { @apply mt-1 text-sm text-foreground/90; }
+  .sprintbar .dates { @apply whitespace-nowrap text-right text-sm; }
+  .task .who { @apply mt-0.5 text-xs text-muted-foreground; }
+  .task.done > .grow > span { @apply text-muted-foreground line-through; }
+  .roadgrid { @apply grid grid-cols-[238px_repeat(4,minmax(0,1fr))] gap-px bg-border; }
+  .roadgrid > div { @apply min-h-[52px] bg-card px-4 py-3; }
+  .roadgrid .hd { @apply min-h-0 bg-muted/60 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground; }
+  .roadgrid .out { @apply text-sm font-semibold; }
+  .roadgrid .out a { @apply text-foreground; }
+  .roadgrid .out small { @apply mt-0.5 block text-xs font-normal text-muted-foreground; }
+  .roadgrid .dim { @apply bg-muted/50 text-muted-foreground; }
+  .sum b { @apply font-semibold text-foreground; }
+
+  /* inspector internals */
+  .insp-head h2 { @apply text-lg font-semibold leading-tight; }
+  .insp-head .meta { @apply text-xs text-muted-foreground; }
+  .gate .insp-head, .chatm .insp-head { @apply px-0 pt-0; }
+  .chatm .insp-head { @apply px-6 pt-5; }
+  .gate .empty { @apply text-left; }
+  .gate .count { @apply font-semibold tabular-nums text-foreground; }
+
+  /* empty state internals */
+  .empty h3 { @apply mb-1 text-lg font-semibold; }
+  .empty p { @apply mx-auto mb-4 max-w-md text-sm text-muted-foreground; }
+  .empty .btn { @apply mx-0.5; }
+
+  /* forms */
+  .field.bad input, .field.bad select, .field.bad textarea { @apply border-destructive; }
+  .field .msg { @apply mt-1 block; }
+  .field .hint { @apply mt-1.5; }
+  .radioset label { @apply mb-0 flex flex-1 cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-normal has-[input:checked]:border-primary has-[input:checked]:bg-accent has-[input:checked]:font-medium; }
+  .radioset input { @apply m-0 w-auto; }
+  legend.lbl { @apply mb-1.5 text-sm font-medium; }
+  .chk { @apply inline-flex cursor-pointer items-center gap-2 font-normal; }
+  .chk input { @apply m-0 w-auto; }
+  .pickrow label { @apply m-0 cursor-pointer font-normal; }
+  .pickrow .grow { @apply flex-1; }
+  .pickrow .ty { @apply text-xs text-muted-foreground; }
+  .pickrow .reqtog { @apply inline-flex w-20 items-center justify-end gap-1 text-xs text-muted-foreground; }
+  .pickrow label .ty { @apply mt-0.5; }
+  .chip button { @apply bg-transparent p-0 px-0.5 text-sm text-muted-foreground hover:text-foreground; border: 0; }
+  .tstate.ro { @apply w-auto; }
+
+  /* command palette */
+  .cp .q input { @apply h-11 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0; }
+  .cp .it .kbd { @apply ml-auto; }
+  .cp .it.on { @apply bg-accent text-accent-foreground; }
+
+  /* chat */
+  .bub .who { @apply mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground; }
+  .thinking { @apply inline-flex gap-1 py-1; }
+  .thinking i { @apply size-1.5 rounded-full bg-muted-foreground; }
+  .strip .lead { @apply inline-flex items-center gap-1.5 font-semibold text-teal; }
+  .strip .lead::before { content: ""; @apply size-2 rounded-full bg-teal; }
+  .strip b { @apply text-foreground; }
+  .composer textarea { @apply flex-1; }
+
+  /* auth */
+  .authpitch .mark { @apply mb-6 flex size-9 items-center justify-center rounded-md bg-white/15 text-sm font-bold text-primary-foreground; }
+  .authpitch h2 { @apply mb-4 max-w-[17ch] text-2xl font-semibold text-primary-foreground; }
+  .authpitch p { @apply mb-6 max-w-[48ch] text-base text-primary-foreground/80; }
+  .authpitch ul { @apply m-0 flex list-none flex-col gap-3 p-0; }
+  .authpitch li { @apply flex items-start gap-2.5 text-sm text-primary-foreground/90; }
+  .authpitch li svg { @apply mt-0.5 shrink-0 text-primary-foreground/70; }
+  .authpitch .kbd { @apply border-white/30 bg-white/15 text-primary-foreground; }
+  .authform .in { @apply mx-auto w-full max-w-sm; }
+  .authform h1 { @apply text-2xl; }
+  .authform .alert, .authform .authnote { @apply mb-4; }
+  .authform input.mono { @apply font-mono tracking-wider; }
+  .banner .btn { @apply ml-auto shrink-0; }
+  .banner b { @apply font-semibold; }
+  .cand .em { @apply block text-xs font-normal text-muted-foreground; }
+  .vaorg + .cand { border-top: 0; }
+
+  /* view-as scope bar and notes */
+  .note b { @apply text-foreground; }
+  .note a { @apply underline; }
+
+  /* admin: swimlane picker and misc generators */
+  .swimpick { @apply grid grid-cols-[1.3fr_1fr] items-start gap-6; }
+  .swimhd { @apply mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground; }
+  .swimrow { @apply mb-1.5 flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 text-sm; }
+  .swimrow .grow { @apply min-w-0 flex-1; }
+  .swimrow .iconbtn { @apply size-7 text-xs; }
+  .swimrow [aria-disabled="true"] { @apply opacity-40; }
+  .hnd { @apply cursor-grab leading-none text-muted-foreground; }
+  .meter { @apply h-2.5 overflow-hidden rounded-full border bg-muted; }
+  .meter i { @apply block h-full bg-primary; }
+  .meter.warn i { @apply bg-warning; }
+  .meter.over i { @apply bg-destructive; }
+  .acts { @apply flex flex-wrap items-center gap-0.5; }
+  .invite { @apply inline-block whitespace-nowrap rounded border bg-muted px-2 py-0.5 font-mono text-xs tracking-wider; }
+  .tbadge { @apply inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground; }
+  .explore .how span, .explore .k { font-size: 11px; }
+}
+
+/* ---- shared mechanisms: role gating, state variants, denied ----
+   Attribute selectors, not classes, so they survive class expansion
+   unchanged. !important is load-bearing: gated elements carry inline
+   display styles and Tailwind display utilities. */
+[data-role="SiteAdmin"] [data-roles]:not([data-roles~="SiteAdmin"]),
+[data-role="OrgAdmin"]  [data-roles]:not([data-roles~="OrgAdmin"]),
+[data-role="User"]      [data-roles]:not([data-roles~="User"]),
+[data-role="ReadOnly"]  [data-roles]:not([data-roles~="ReadOnly"]) { display: none !important; }
+.screen[data-state="normal"]  [data-when]:not([data-when~="normal"]),
+.screen[data-state="empty"]   [data-when]:not([data-when~="empty"]),
+.screen[data-state="loading"] [data-when]:not([data-when~="loading"]),
+.screen[data-state="error"]   [data-when]:not([data-when~="error"]) { display: none !important; }
+[aria-disabled="true"] { opacity: .5; cursor: not-allowed; pointer-events: none; }
+[hidden] { display: none !important; }
+
+/* ---- comp chrome (reviewer-facing, outside the app frame) ---- */
+.switch { background: #1f2933; color: #fff; padding: 8px 14px; display: flex; gap: 7px; align-items: center; flex-wrap: wrap; min-height: 42px; }
+.switch b { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+.switch .lbl { font-size: 11.5px; color: #93A6BC; margin-right: 6px; }
+.switch button, .switch .xfile { background: transparent; border: 1px solid #46586E; color: #D6DEE8; padding: 3px 10px; border-radius: 9999px; font-size: 12px; font-family: inherit; cursor: pointer; text-decoration: none; line-height: 1.4; }
+.switch button[aria-current="true"] { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+.switch .xfile:hover { background: #2f3e4d; color: #fff; }
+.ctl { background: #1f2933; color: #93A6BC; padding: 0 14px 8px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; font-size: 11.5px; }
+.ctl .grp { display: flex; gap: 5px; align-items: center; }
+.ctl .cap2 { text-transform: uppercase; letter-spacing: .07em; font-size: 10.5px; color: #7d8a99; }
+.ctl button { background: transparent; border: 1px solid #46586E; color: #D6DEE8; padding: 1px 9px; border-radius: 9999px; font-size: 11.5px; cursor: pointer; }
+.ctl button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+.explore { background: #F9F6EE; border-bottom: 1px solid #EDE2C9; color: #8A6D2E; font-size: 11.5px; padding: 8px 16px; display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+.explore b { text-transform: uppercase; letter-spacing: .07em; font-size: 10.5px; }
+.explore .how { display: flex; flex-wrap: wrap; gap: 2px 16px; margin-top: 3px; }
+.explore .how span { white-space: nowrap; }
+.explore .how b { text-transform: none; letter-spacing: 0; font-size: 11.5px; }
+.explore .k { border: 1px solid #e0c9a6; border-radius: 3px; padding: 0 4px; font-size: 10.5px; }
+.wip { display: none; background: #F9F6EE; border-bottom: 1px solid #EDE2C9; color: #8A6D2E; padding: 8px 16px; font-size: 12px; line-height: 1.43; }
+.screen[data-wip] .wip { display: block; }
+.wip b { text-transform: uppercase; letter-spacing: .07em; font-size: 10.5px; margin-right: 6px; }

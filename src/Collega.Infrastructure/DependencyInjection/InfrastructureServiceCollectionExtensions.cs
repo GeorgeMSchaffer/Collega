@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Collega.Application.Abstractions;
 using Collega.Application.Ai;
+using Collega.Infrastructure.Ai;
 using Collega.Infrastructure.Auditing;
 using Collega.Infrastructure.Imaging;
 using Collega.Infrastructure.Notifications;
@@ -41,7 +42,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IIdeaUpvoteRepository, EfIdeaUpvoteRepository>();
         services.AddScoped<IFieldDefinitionRepository, EfFieldDefinitionRepository>();
         services.AddScoped<IAiUsageRepository, EfAiUsageRepository>();
+        services.AddScoped<IAiPromptVersionRepository, EfAiPromptVersionRepository>();
         services.AddScoped<IAiUsageService, AiUsageService>();
+        services.AddScoped<IdeaAssistContextBuilder>();
+        services.AddScoped<IIdeaAssistService, IdeaAssistService>();
+        services.AddScoped<IAiPromptService, AiPromptService>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IStartupSeeder, StartupSeeder>();
 
@@ -84,12 +89,55 @@ public static class InfrastructureServiceCollectionExtensions
                 OutputRatePerMillion = decimal.TryParse(config["Ai:Pricing:OutputPerMillion"], out var outputRate)
                     ? outputRate
                     : defaults.OutputRatePerMillion,
+
+                // Rule 26: limits are configuration, never hard-coded. Non-positive disables, same
+                // convention as DailyTokenLimit.
+                RateLimitWindowSeconds = int.TryParse(config["Ai:RateLimit:WindowSeconds"], out var window)
+                    ? window
+                    : defaults.RateLimitWindowSeconds,
+                PerUserCallsPerWindow = int.TryParse(config["Ai:RateLimit:PerUserCalls"], out var perUser)
+                    ? perUser
+                    : defaults.PerUserCallsPerWindow,
+                PerOrganizationCallsPerWindow = int.TryParse(config["Ai:RateLimit:PerOrganizationCalls"], out var perOrg)
+                    ? perOrg
+                    : defaults.PerOrganizationCallsPerWindow,
             };
         });
+
+        // The deployment AI credential. Absent is a supported state — the feature runs dark (rule 31),
+        // so this must never fail startup the way the SiteAdmin keys do.
+        services.AddSingleton(sp => new AiCredentials
+        {
+            ApiKey = sp.GetRequiredService<IConfiguration>()["ANTHROPIC_API_KEY"],
+        });
+
+        // Singleton: the model client is stateless and holds an HTTP client, so one per process.
+        services.AddSingleton<IIdeaDraftModel, AnthropicIdeaDraftModel>();
 
         services.AddSingleton<JwtAccessTokenService>();
         services.AddSingleton<IAccessTokenIssuer>(sp => sp.GetRequiredService<JwtAccessTokenService>());
         services.AddSingleton<IAccessTokenValidator>(sp => sp.GetRequiredService<JwtAccessTokenService>());
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the Development-only factory that builds draft models carrying a caller-supplied
+    /// system prompt (see <see cref="AnthropicIdeaDraftModelFactory"/>).
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="AddInfrastructure"/> because it needs the host environment, which is
+    /// not configuration. Registered unconditionally and made inert by the flag rather than skipped
+    /// outside Development: a missing registration turns a routing regression into a resolution
+    /// failure at activation, where refusing inside the factory keeps the failure specific and the
+    /// capability equally dead.
+    /// </remarks>
+    public static IServiceCollection AddIdeaDraftModelFactory(this IServiceCollection services, bool isDevelopment)
+    {
+        services.AddSingleton<IIdeaDraftModelFactory>(sp => new AnthropicIdeaDraftModelFactory(
+            sp.GetRequiredService<AiUsageLimits>(),
+            sp.GetRequiredService<AiCredentials>(),
+            isDevelopment));
 
         return services;
     }

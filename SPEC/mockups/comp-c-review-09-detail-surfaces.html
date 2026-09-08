@@ -1,32 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega - Review 09: Detail Surfaces</title>
 <style>
   :root{
-    --accent:#5b5fc7;--accent-deep:#444791;--accent-soft:#eef0fb;
-    --ink:#242424;--ink-2:#484644;--ink-3:#66615d;
-    --bg:#faf9f8;--surface:#fff;--line:#e4e2df;
-    --ok:#0e700e;--warn:#9a5b00;--err:#b10e1c;
+    --accent:#5B7FA3;--accent-deep:#527292;--accent-soft:#F1F3F6;
+    --ink:#243447;--ink-2:#3E4E60;--ink-3:#5D6C7E;
+    --bg:#F7F9FB;--surface:#fff;--line:#DDE1E6;
+    --ok:#457C4F;--warn:#8A6D2E;--err:#B64B4B;
     --shadow:0 1px 2px rgba(0,0,0,.08);--shadow-float:0 18px 48px rgba(0,0,0,.22);
-    --radius-card:6px;--radius-btn:4px;
+    --radius-card:2px;--radius-btn:2px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   [hidden]{display:none!important}
-  body{font-family:"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);font-size:14px;overflow-x:hidden}
+  body{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;overflow-x:hidden}
   button,input,select,textarea{font:inherit}
-  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:600;letter-spacing:0}
-  .comp-bar{height:46px;background:#33312e;color:#fff;padding:8px 18px;display:flex;gap:18px;align-items:center;position:sticky;top:0;z-index:80}
+  h1,h2,h3{font-family:"Geist",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:0}
+  .comp-bar{height:46px;background:#243447;color:#fff;padding:8px 18px;display:flex;gap:18px;align-items:center;position:sticky;top:0;z-index:80}
   .comp-bar strong{font:600 13px Georgia,serif;letter-spacing:.04em;white-space:nowrap}
   .mode-tabs{display:flex;gap:6px;overflow:auto}
-  .mode-tabs button{background:transparent;color:#d1cfcc;border:1px solid #5a5754;border-radius:3px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .mode-tabs button{background:transparent;color:#C5CBD3;border:1px solid #3E4E60;border-radius:2px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap}
   .mode-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .shell{display:grid;grid-template-columns:64px minmax(0,1fr);min-height:calc(100vh - 46px)}
   .rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:6px;z-index:10}
-  .mark{width:34px;height:34px;border-radius:6px;background:var(--accent);color:#fff;display:grid;place-items:center;font:700 13px Georgia,serif;margin-bottom:14px}
-  .rail a{width:44px;height:44px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;gap:2px}
+  .mark{width:34px;height:34px;border-radius:2px;background:var(--accent);color:#fff;display:grid;place-items:center;font:700 13px Georgia,serif;margin-bottom:14px}
+  .rail a{width:44px;height:44px;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-3);text-decoration:none;gap:2px}
   .rail a svg{width:19px;height:19px;fill:currentColor}.rail a span{font-size:8.5px;font-weight:600}.rail a.on{background:var(--accent-soft);color:var(--accent)}
   .push{flex:1}.avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-deep);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
   .page{min-width:0}.pagehead{background:var(--surface);border-bottom:1px solid var(--line);padding:22px 40px 20px}
@@ -34,19 +38,19 @@
   .body{padding:24px 40px;max-width:1280px}
   .toolbar{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:14px}.toolbar .search{flex:1;min-width:240px;max-width:420px}.toolbar .new{margin-left:auto}
   label{display:block;color:var(--ink-3);font-size:11.5px;font-weight:700;margin-bottom:5px}
-  input,select,textarea{border:1px solid #8a8886;border-radius:4px;background:#fff;color:var(--ink);padding:8px 10px;min-height:36px;width:100%}
+  input,select,textarea{border:1px solid #818E9C;border-radius:2px;background:#fff;color:var(--ink);padding:8px 10px;min-height:36px;width:100%}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
-  textarea{resize:vertical;line-height:1.5}.btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:8px 13px;min-height:36px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}.btn:hover{background:#f3f2f1}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:var(--accent-deep)}.btn.link{border-color:transparent;background:transparent;color:var(--accent);padding-inline:8px}
+  textarea{resize:vertical;line-height:1.5}.btn{border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-btn);padding:8px 13px;min-height:36px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}.btn:hover{background:#F1F3F6}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.primary:hover{background:var(--accent-deep)}.btn.link{border-color:transparent;background:transparent;color:var(--accent);padding-inline:8px}
   .filters{display:flex;gap:10px}.filters select{width:160px}.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);box-shadow:var(--shadow);overflow:auto}
-  table{width:100%;border-collapse:collapse;min-width:820px}th{text-align:left;font-size:12px;color:var(--ink-3);padding:11px 15px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px 15px;border-bottom:1px solid #f0efed;vertical-align:middle}tbody tr:last-child td{border-bottom:0}tbody tr:hover td,tbody tr.selected td{background:#f7f7fc}tbody tr.selected td:first-child{box-shadow:inset 3px 0 var(--accent)}
-  .title{font-weight:650}.meta{font-size:11.5px;color:var(--ink-3);margin-top:2px}.status{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--ink-2);white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%}.pager{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:13px;color:var(--ink-3);font-size:12.5px}.pager .nav{display:flex;gap:6px}.pager button{padding:5px 10px;border:1px solid var(--line);background:#fff;border-radius:4px;color:var(--ink-2)}
+  table{width:100%;border-collapse:collapse;min-width:820px}th{text-align:left;font-size:12px;color:var(--ink-3);padding:11px 15px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px 15px;border-bottom:1px solid #F1F3F6;vertical-align:middle}tbody tr:last-child td{border-bottom:0}tbody tr:hover td,tbody tr.selected td{background:#F7F9FB}tbody tr.selected td:first-child{box-shadow:inset 3px 0 var(--accent)}
+  .title{font-weight:650}.meta{font-size:11.5px;color:var(--ink-3);margin-top:2px}.status{display:inline-flex;align-items:center;gap:7px;font-weight:600;color:var(--ink-2);white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%}.pager{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:13px;color:var(--ink-3);font-size:12.5px}.pager .nav{display:flex;gap:6px}.pager button{padding:5px 10px;border:1px solid var(--line);background:#fff;border-radius:2px;color:var(--ink-2)}
   .surface-backdrop{position:fixed;inset:46px 0 0 64px;background:rgba(36,36,36,.28);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:40}.surface-backdrop.open{opacity:1;visibility:visible}
   .drawer{position:fixed;top:46px;right:0;bottom:0;width:min(620px,calc(100vw - 64px));background:var(--surface);border-left:1px solid var(--line);box-shadow:-12px 0 32px rgba(0,0,0,.16);z-index:50;transform:translateX(105%);visibility:hidden;transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s linear .24s;display:flex;flex-direction:column}.drawer.open{transform:translateX(0);visibility:visible;transition-delay:0s}
-  .surface-head{padding:20px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:16px}.surface-head .grow{flex:1;min-width:0}.eyebrow{text-transform:uppercase;letter-spacing:.07em;color:var(--accent-deep);font-size:11px;font-weight:700;margin-bottom:5px}.surface-head h2{font-size:22px;line-height:1.25}.surface-head .meta{margin-top:6px}.iconbtn{width:34px;height:34px;border:1px solid var(--line);border-radius:4px;background:#fff;cursor:pointer;color:var(--ink-2);display:grid;place-items:center;font-size:19px;line-height:1}.iconbtn:hover{background:#f3f2f1}
+  .surface-head{padding:20px 24px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:16px}.surface-head .grow{flex:1;min-width:0}.eyebrow{text-transform:uppercase;letter-spacing:.07em;color:var(--accent-deep);font-size:11px;font-weight:700;margin-bottom:5px}.surface-head h2{font-size:22px;line-height:1.25}.surface-head .meta{margin-top:6px}.iconbtn{width:34px;height:34px;border:1px solid var(--line);border-radius:2px;background:#fff;cursor:pointer;color:var(--ink-2);display:grid;place-items:center;font-size:19px;line-height:1}.iconbtn:hover{background:#F1F3F6}
   .surface-body{padding:22px 24px;overflow:auto;flex:1}.surface-foot{padding:13px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px;background:#fff}
-  .detail-copy{color:var(--ink-2);font-size:14px;line-height:1.65;margin:18px 0 24px}.facts{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.fact .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:700;margin-bottom:4px}.fact .v{font-weight:600}.section-title{font-size:17px;margin:24px 0 12px}.comment{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid #f0efed}.comment .avatar{width:26px;height:26px;font-size:9px;flex:none}.comment p{line-height:1.5;color:var(--ink-2)}
+  .detail-copy{color:var(--ink-2);font-size:14px;line-height:1.65;margin:18px 0 24px}.facts{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.fact .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:700;margin-bottom:4px}.fact .v{font-weight:600}.section-title{font-size:17px;margin:24px 0 12px}.comment{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid #F1F3F6}.comment .avatar{width:26px;height:26px;font-size:9px;flex:none}.comment p{line-height:1.5;color:var(--ink-2)}
   .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.span2{grid-column:1/-1}.help{font-size:11px;color:var(--ink-3);margin-top:4px}.required{color:var(--err)}
-  .modal-wrap{position:fixed;inset:46px 0 0 64px;z-index:60;display:grid;place-items:center;padding:24px;background:rgba(36,36,36,.38);opacity:0;visibility:hidden;transition:opacity .18s ease}.modal-wrap.open{opacity:1;visibility:visible}.modal{width:min(760px,100%);max-height:calc(100vh - 94px);background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow-float);display:flex;flex-direction:column;transform:translateY(18px) scale(.985);transition:transform .2s ease}.modal-wrap.open .modal{transform:translateY(0) scale(1)}
+  .modal-wrap{position:fixed;inset:46px 0 0 64px;z-index:60;display:grid;place-items:center;padding:24px;background:rgba(36,36,36,.38);opacity:0;visibility:hidden;transition:opacity .18s ease}.modal-wrap.open{opacity:1;visibility:visible}.modal{width:min(760px,100%);max-height:calc(100vh - 94px);background:#fff;border:1px solid var(--line);border-radius:2px;box-shadow:var(--shadow-float);display:flex;flex-direction:column;transform:translateY(18px) scale(.985);transition:transform .2s ease}.modal-wrap.open .modal{transform:translateY(0) scale(1)}
   .decision-note{margin-top:18px;border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 13px;color:var(--ink-2);font-size:12px;line-height:1.5;max-width:880px}
   .btn:focus-visible,.iconbtn:focus-visible,.mode-tabs button:focus-visible,.rail a:focus-visible,tbody tr:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media(max-width:760px){
@@ -84,10 +88,10 @@
         <table>
           <thead><tr><th>Title</th><th>Idea Type</th><th>Created By</th><th>Assigned To</th><th>Status</th><th>Created Date</th><th></th></tr></thead>
           <tbody>
-            <tr tabindex="0" data-row="dark"><td><div class="title">Dark mode support</div><div class="meta">Product Ideas · IDEA-128</div></td><td>Continuous Improvement</td><td>Tom Diaz</td><td>Mia Park</td><td><span class="status"><span class="dot" style="background:#2563eb"></span>In Progress</span></td><td>Jul 2, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
-            <tr tabindex="0"><td><div class="title">Bulk import from CSV</div><div class="meta">Product Ideas · IDEA-142</div></td><td>Process Revision</td><td>Tom Diaz</td><td>Jordan Reyes</td><td><span class="status"><span class="dot" style="background:#64748b"></span>New / Pending</span></td><td>Aug 6, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
-            <tr tabindex="0"><td><div class="title">Mobile responsive board</div><div class="meta">Platform Backlog · IDEA-139</div></td><td>Continuous Improvement</td><td>Jordan Reyes</td><td>Tom Diaz</td><td><span class="status"><span class="dot" style="background:#d97706"></span>In Review</span></td><td>Aug 2, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
-            <tr tabindex="0"><td><div class="title">Notification digest email</div><div class="meta">Platform Backlog · IDEA-140</div></td><td>Process Revision</td><td>Jordan Reyes</td><td>Jordan Reyes</td><td><span class="status"><span class="dot" style="background:#2563eb"></span>In Progress</span></td><td>Aug 3, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
+            <tr tabindex="0" data-row="dark"><td><div class="title">Dark mode support</div><div class="meta">Product Ideas · IDEA-128</div></td><td>Continuous Improvement</td><td>Tom Diaz</td><td>Mia Park</td><td><span class="status"><span class="dot" style="background:#5B7FA3"></span>In Progress</span></td><td>Jul 2, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
+            <tr tabindex="0"><td><div class="title">Bulk import from CSV</div><div class="meta">Product Ideas · IDEA-142</div></td><td>Process Revision</td><td>Tom Diaz</td><td>Jordan Reyes</td><td><span class="status"><span class="dot" style="background:#5B7FA3"></span>New / Pending</span></td><td>Aug 6, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
+            <tr tabindex="0"><td><div class="title">Mobile responsive board</div><div class="meta">Platform Backlog · IDEA-139</div></td><td>Continuous Improvement</td><td>Jordan Reyes</td><td>Tom Diaz</td><td><span class="status"><span class="dot" style="background:#8A6D2E"></span>In Review</span></td><td>Aug 2, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
+            <tr tabindex="0"><td><div class="title">Notification digest email</div><div class="meta">Platform Backlog · IDEA-140</div></td><td>Process Revision</td><td>Jordan Reyes</td><td>Jordan Reyes</td><td><span class="status"><span class="dot" style="background:#5B7FA3"></span>In Progress</span></td><td>Aug 3, 2026</td><td><button class="btn link" data-open="detail">Details</button></td></tr>
           </tbody>
         </table>
       </div>
@@ -101,7 +105,7 @@
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" aria-hidden="true">
   <header class="surface-head"><div class="grow"><div class="eyebrow" id="drawer-eyebrow">IDEA-128 · In Progress</div><h2 id="drawer-title">Dark mode support</h2><div class="meta" id="drawer-meta">Product Ideas · Proposed by Tom Diaz on July 2</div></div><button class="iconbtn" data-close aria-label="Close">×</button></header>
   <div class="surface-body" id="drawer-view">
-    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><span class="status"><span class="dot" style="background:#2563eb"></span>In Progress</span><button class="btn" id="edit-drawer">Edit idea</button></div>
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><span class="status"><span class="dot" style="background:#5B7FA3"></span>In Progress</span><button class="btn" id="edit-drawer">Edit idea</button></div>
     <p class="detail-copy">Users working late hours have asked for a dark theme. It should respect the operating-system preference by default and allow a manual override from the profile menu.</p>
     <div class="facts"><div class="fact"><div class="k">Idea type</div><div class="v">Continuous Improvement</div></div><div class="fact"><div class="k">Business impact</div><div class="v">High</div></div><div class="fact"><div class="k">Assigned to</div><div class="v">Mia Park</div></div><div class="fact"><div class="k">Due date</div><div class="v">Aug 15, 2026</div></div></div>
     <h3 class="section-title">Discussion <span class="meta">2 comments</span></h3>

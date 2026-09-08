@@ -1,0 +1,466 @@
+{
+  "name": "boards",
+  "description": "Board configuration and its swimlanes.",
+  "bind": {},
+  "steps": [
+    {
+      "id": "org",
+      "endpoint": "GET /auth/me",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "note": "Binds this organization for the steps below; ids are per-seed.",
+      "bind": {
+        "orgId": "$.body.organizationId"
+      }
+    },
+    {
+      "id": "statuses",
+      "endpoint": "GET /organizations/{organizationId}/statuses",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/statuses",
+      "note": "Two statuses, because a board needs at least two swimlanes.",
+      "bind": {
+        "statusA": "$.body[0].statusId",
+        "statusB": "$.body[1].statusId"
+      }
+    },
+    {
+      "id": "list.siteadmin",
+      "endpoint": "GET /organizations/{organizationId}/boards",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/boards"
+    },
+    {
+      "id": "list.orgadmin",
+      "endpoint": "GET /organizations/{organizationId}/boards",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/boards",
+      "bind": {
+        "seededBoardId": "$.body[0].boardId"
+      }
+    },
+    {
+      "id": "list.user",
+      "endpoint": "GET /organizations/{organizationId}/boards",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/boards"
+    },
+    {
+      "id": "list.readonly",
+      "endpoint": "GET /organizations/{organizationId}/boards",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/organizations/{{orgId}}/boards"
+    },
+    {
+      "id": "list.anonymous",
+      "endpoint": "GET /organizations/{organizationId}/boards",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/boards"
+    },
+    {
+      "id": "create.siteadmin",
+      "endpoint": "POST /organizations/{organizationId}/boards",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/boards",
+      "body": {
+        "name": "Zz Golden Capture Board",
+        "allowUserStatusUpdate": true,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Named to sort last: board lists come back by name, and a scenario that binds body[0] must get a seeded board rather than this one."
+    },
+    {
+      "id": "create.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/boards",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 201,
+      "path": "/organizations/{{orgId}}/boards",
+      "body": {
+        "name": "Zz Golden Capture Board",
+        "allowUserStatusUpdate": true,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Named to sort last: board lists come back by name, and a scenario that binds body[0] must get a seeded board rather than this one.",
+      "bind": {
+        "newBoardId": "$.body.boardId"
+      }
+    },
+    {
+      "id": "create.user",
+      "endpoint": "POST /organizations/{organizationId}/boards",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/boards",
+      "body": {
+        "name": "Zz Golden Capture Board",
+        "allowUserStatusUpdate": true,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Named to sort last: board lists come back by name, and a scenario that binds body[0] must get a seeded board rather than this one."
+    },
+    {
+      "id": "create.readonly",
+      "endpoint": "POST /organizations/{organizationId}/boards",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/organizations/{{orgId}}/boards",
+      "body": {
+        "name": "Zz Golden Capture Board",
+        "allowUserStatusUpdate": true,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Named to sort last: board lists come back by name, and a scenario that binds body[0] must get a seeded board rather than this one."
+    },
+    {
+      "id": "create.anonymous",
+      "endpoint": "POST /organizations/{organizationId}/boards",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/organizations/{{orgId}}/boards",
+      "body": {
+        "name": "Zz Golden Capture Board",
+        "allowUserStatusUpdate": true,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Named to sort last: board lists come back by name, and a scenario that binds body[0] must get a seeded board rather than this one."
+    },
+    {
+      "id": "create.one-swimlane.orgadmin",
+      "endpoint": "POST /organizations/{organizationId}/boards",
+      "as": "OrgAdmin",
+      "kind": "invalid",
+      "expect": 400,
+      "path": "/organizations/{{orgId}}/boards",
+      "body": {
+        "name": "One Lane",
+        "allowUserStatusUpdate": true,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          }
+        ]
+      },
+      "note": "The two-swimlane minimum is a rule, not a suggestion."
+    },
+    {
+      "id": "get.siteadmin",
+      "endpoint": "GET /boards/{boardId}",
+      "as": "SiteAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{newBoardId}}"
+    },
+    {
+      "id": "get.orgadmin",
+      "endpoint": "GET /boards/{boardId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{newBoardId}}"
+    },
+    {
+      "id": "get.user",
+      "endpoint": "GET /boards/{boardId}",
+      "as": "User",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{newBoardId}}"
+    },
+    {
+      "id": "get.readonly",
+      "endpoint": "GET /boards/{boardId}",
+      "as": "ReadOnly",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{newBoardId}}"
+    },
+    {
+      "id": "get.anonymous",
+      "endpoint": "GET /boards/{boardId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/boards/{{newBoardId}}"
+    },
+    {
+      "id": "update.siteadmin",
+      "endpoint": "PUT /boards/{boardId}",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{newBoardId}}",
+      "body": {
+        "name": "Zz Golden Capture Board Renamed",
+        "allowUserStatusUpdate": false,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "update.orgadmin",
+      "endpoint": "PUT /boards/{boardId}",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 200,
+      "path": "/boards/{{newBoardId}}",
+      "body": {
+        "name": "Zz Golden Capture Board Renamed",
+        "allowUserStatusUpdate": false,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "update.user",
+      "endpoint": "PUT /boards/{boardId}",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{newBoardId}}",
+      "body": {
+        "name": "Zz Golden Capture Board Renamed",
+        "allowUserStatusUpdate": false,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "update.readonly",
+      "endpoint": "PUT /boards/{boardId}",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{newBoardId}}",
+      "body": {
+        "name": "Zz Golden Capture Board Renamed",
+        "allowUserStatusUpdate": false,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "update.anonymous",
+      "endpoint": "PUT /boards/{boardId}",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/boards/{{newBoardId}}",
+      "body": {
+        "name": "Zz Golden Capture Board Renamed",
+        "allowUserStatusUpdate": false,
+        "swimlanes": [
+          {
+            "statusId": "{{statusA}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusB}}",
+            "order": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "reorder.siteadmin",
+      "endpoint": "POST /boards/{boardId}/swimlanes/reorder",
+      "as": "SiteAdmin",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{newBoardId}}/swimlanes/reorder",
+      "body": {
+        "swimlanes": [
+          {
+            "statusId": "{{statusB}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusA}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Drag-and-drop persists immediately."
+    },
+    {
+      "id": "reorder.orgadmin",
+      "endpoint": "POST /boards/{boardId}/swimlanes/reorder",
+      "as": "OrgAdmin",
+      "kind": "success",
+      "expect": 204,
+      "path": "/boards/{{newBoardId}}/swimlanes/reorder",
+      "body": {
+        "swimlanes": [
+          {
+            "statusId": "{{statusB}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusA}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Drag-and-drop persists immediately."
+    },
+    {
+      "id": "reorder.user",
+      "endpoint": "POST /boards/{boardId}/swimlanes/reorder",
+      "as": "User",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{newBoardId}}/swimlanes/reorder",
+      "body": {
+        "swimlanes": [
+          {
+            "statusId": "{{statusB}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusA}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Drag-and-drop persists immediately."
+    },
+    {
+      "id": "reorder.readonly",
+      "endpoint": "POST /boards/{boardId}/swimlanes/reorder",
+      "as": "ReadOnly",
+      "kind": "denied",
+      "expect": 403,
+      "path": "/boards/{{newBoardId}}/swimlanes/reorder",
+      "body": {
+        "swimlanes": [
+          {
+            "statusId": "{{statusB}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusA}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Drag-and-drop persists immediately."
+    },
+    {
+      "id": "reorder.anonymous",
+      "endpoint": "POST /boards/{boardId}/swimlanes/reorder",
+      "as": "anonymous",
+      "kind": "denied",
+      "expect": 401,
+      "path": "/boards/{{newBoardId}}/swimlanes/reorder",
+      "body": {
+        "swimlanes": [
+          {
+            "statusId": "{{statusB}}",
+            "order": 0
+          },
+          {
+            "statusId": "{{statusA}}",
+            "order": 1
+          }
+        ]
+      },
+      "note": "Drag-and-drop persists immediately."
+    }
+  ]
+}

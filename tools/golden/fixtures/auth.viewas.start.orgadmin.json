@@ -1,0 +1,86 @@
+{
+  "scenario": "auth",
+  "step": "viewas.start.orgadmin",
+  "endpoint": "POST /auth/view-as",
+  "as": "OrgAdmin",
+  "kind": "success",
+  "note": "An Org Admin acting as one of their own members, ended by the step after it.",
+  "unstable": [
+    "body.startedAtUtc",
+    "body.expiresAtUtc"
+  ],
+  "request": {
+    "method": "POST",
+    "path": "/auth/view-as",
+    "body": {
+      "targetUserId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266"
+    },
+    "contentType": "application/json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:41 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": {
+      "impersonating": {
+        "userId": "b9fe740e-52ec-44e8-bd73-d2aca3a49266",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "role": "User",
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "email": "user@acme-robotics.demo.collega.test",
+        "status": "Active",
+        "portraitDataUrl": null,
+        "viewingAs": null
+      },
+      "realUser": {
+        "userId": "fe9f702e-dc9c-4eaa-b7c9-1c4e258a5717",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "role": "OrgAdmin",
+        "firstName": "Olivia",
+        "lastName": "Administer",
+        "email": "orgadmin@acme-robotics.demo.collega.test",
+        "status": "Active",
+        "portraitDataUrl": null,
+        "viewingAs": null
+      },
+      "startedAtUtc": "2026-09-04T03:55:42.2402545Z",
+      "expiresAtUtc": "2026-09-04T05:55:42.2402545Z"
+    }
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": {
+      "impersonating": {
+        "email": "user@acme-robotics.demo.collega.test",
+        "firstName": "Golden",
+        "lastName": "Capture",
+        "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+        "portraitDataUrl": null,
+        "role": "User",
+        "status": "Active",
+        "userId": "<guid@me.user.body.userId>",
+        "viewingAs": null
+      },
+      "realUser": {
+        "email": "orgadmin@acme-robotics.demo.collega.test",
+        "firstName": "Olivia",
+        "lastName": "Administer",
+        "organizationId": "<guid@login.orgadmin.body.user.organizationId>",
+        "portraitDataUrl": null,
+        "role": "OrgAdmin",
+        "status": "Active",
+        "userId": "<guid@login.orgadmin.body.user.userId>",
+        "viewingAs": null
+      }
+    }
+  }
+}

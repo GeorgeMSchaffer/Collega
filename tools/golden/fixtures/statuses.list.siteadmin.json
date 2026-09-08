@@ -1,0 +1,113 @@
+{
+  "scenario": "statuses",
+  "step": "list.siteadmin",
+  "endpoint": "GET /organizations/{organizationId}/statuses",
+  "as": "SiteAdmin",
+  "kind": "success",
+  "unstable": [],
+  "request": {
+    "method": "GET",
+    "path": "/organizations/7edd9249-cc88-46e3-a3e1-354daf717e4f/statuses",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "date": "Fri, 04 Sep 2026 03:55:47 GMT",
+      "server": "Kestrel",
+      "transfer-encoding": "chunked"
+    },
+    "body": [
+      {
+        "statusId": "c0947285-f182-4bb0-9cb8-5e0f549e9992",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "New / Pending",
+        "color": "#64748B",
+        "sortOrder": 10,
+        "isDeleted": false
+      },
+      {
+        "statusId": "f7e6c2fd-a5db-453d-a5bc-4495300fefd5",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "In Review",
+        "color": "#D97706",
+        "sortOrder": 20,
+        "isDeleted": false
+      },
+      {
+        "statusId": "8d4b935c-2709-418e-b151-6a5eb3449880",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "In Progress",
+        "color": "#2563EB",
+        "sortOrder": 30,
+        "isDeleted": false
+      },
+      {
+        "statusId": "8aa88452-07f5-48c7-b087-64687efdb427",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "Client Review",
+        "color": "#7C3AED",
+        "sortOrder": 40,
+        "isDeleted": false
+      },
+      {
+        "statusId": "fa4869d2-bf67-4c11-b243-a1a20a3fc293",
+        "organizationId": "7edd9249-cc88-46e3-a3e1-354daf717e4f",
+        "name": "Complete",
+        "color": "#16A34A",
+        "sortOrder": 50,
+        "isDeleted": false
+      }
+    ]
+  },
+  "corpusVersion": 1,
+  "normalized": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "body": [
+      {
+        "color": "#64748B",
+        "isDeleted": false,
+        "name": "New / Pending",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 10,
+        "statusId": "<guid@list.siteadmin.body[0].statusId>"
+      },
+      {
+        "color": "#D97706",
+        "isDeleted": false,
+        "name": "In Review",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 20,
+        "statusId": "<guid@list.siteadmin.body[1].statusId>"
+      },
+      {
+        "color": "#2563EB",
+        "isDeleted": false,
+        "name": "In Progress",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 30,
+        "statusId": "<guid@list.siteadmin.body[2].statusId>"
+      },
+      {
+        "color": "#7C3AED",
+        "isDeleted": false,
+        "name": "Client Review",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 40,
+        "statusId": "<guid@list.siteadmin.body[3].statusId>"
+      },
+      {
+        "color": "#16A34A",
+        "isDeleted": false,
+        "name": "Complete",
+        "organizationId": "<guid@org.body.organizationId>",
+        "sortOrder": 50,
+        "statusId": "<guid@list.siteadmin.body[4].statusId>"
+      }
+    ]
+  }
+}
