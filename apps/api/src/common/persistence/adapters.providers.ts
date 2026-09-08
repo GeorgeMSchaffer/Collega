@@ -132,10 +132,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
+    // No unit of work: this writer commits its own insert, because every caller stages
+    // notifications after the saveChanges() that accompanies the mutation - so a buffered insert
+    // would never be flushed. audit-event.repository.ts commits itself for the same reason.
     provide: PrismaNotificationEventRepository,
-    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
-      new PrismaNotificationEventRepository(prisma, uow),
-    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+    useFactory: (prisma: PrismaClient) => new PrismaNotificationEventRepository(prisma),
+    inject: [PORT_TOKENS.PrismaClient],
   },
   {
     provide: OrganizationExistenceLookupRepository,
