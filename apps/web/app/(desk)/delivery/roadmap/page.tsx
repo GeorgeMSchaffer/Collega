@@ -1,8 +1,9 @@
-import { Dot } from '@collega/design-system'
+import { Dot, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { Topbar } from '@/components/nav/topbar'
 import { getDeliveryStatuses, getIssues, getIssuesForOutcome, getOutcomes } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Roadmap · Collega' }
 
@@ -46,55 +47,70 @@ export default async function RoadmapPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          {grouped.map(({ outcome, items }) => (
-            <div key={outcome.id} className="rounded-lg border bg-card">
-              <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3">
-                <Dot color={outcome.color} />
-                <span className="font-semibold">{outcome.name}</span>
-                <span className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
-                  {outcome.quarter}
-                </span>
-                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-                  {items.length} {items.length === 1 ? 'issue' : 'issues'}
-                </span>
-              </div>
-              <ul className="m-0 flex list-none flex-col p-0">
-                {items.map((issue) => (
-                  <li
-                    key={issue.id}
-                    className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-5 py-2.5 text-sm last:border-0"
-                  >
-                    <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
-                    <Link href={`/delivery/issues/${issue.key}`}>{issue.title}</Link>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {statuses.find((row) => row.id === issue.deliveryStatusId)?.name}
+        {outcomes.length === 0 ? (
+          <EmptyState
+            heading="No outcomes yet"
+            action={<AdminAction id="why-outcome-empty" label="Add the first outcome" />}
+          >
+            An outcome is a named, dated theme &mdash; &ldquo;cut reporting effort&rdquo; &mdash;
+            that issues are grouped under. {currentUser.organizationName ?? 'This deployment'} has{' '}
+            {issues.length} delivery {issues.length === 1 ? 'issue' : 'issues'} and nothing to group
+            them by.
+          </EmptyState>
+        ) : (
+          <>
+            <div className="flex flex-col gap-3">
+              {grouped.map(({ outcome, items }) => (
+                <div key={outcome.id} className="rounded-lg border bg-card">
+                  <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3">
+                    <Dot color={outcome.color} />
+                    <span className="font-semibold">{outcome.name}</span>
+                    <span className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
+                      {outcome.quarter}
                     </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                    <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                      {items.length} {items.length === 1 ? 'issue' : 'issues'}
+                    </span>
+                  </div>
+                  <ul className="m-0 flex list-none flex-col p-0">
+                    {items.map((issue) => (
+                      <li
+                        key={issue.id}
+                        className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-5 py-2.5 text-sm last:border-0"
+                      >
+                        <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
+                        <Link href={`/delivery/issues/${issue.key}`}>{issue.title}</Link>
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {statuses.find((row) => row.id === issue.deliveryStatusId)?.name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
 
-          {ungrouped.length > 0 ? (
-            <div className="rounded-lg border border-dashed bg-card px-5 py-4">
-              <div className="flex items-center gap-3">
-                <span className="font-medium text-muted-foreground">Not yet grouped</span>
-                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-                  {ungrouped.length} issues
-                </span>
-              </div>
-              <p className="m-0 mt-1 text-xs text-muted-foreground">
-                An outcome is optional, so these are counted here rather than left out &mdash; the
-                total below would not otherwise close.
-              </p>
+              {ungrouped.length > 0 ? (
+                <div className="rounded-lg border border-dashed bg-card px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium text-muted-foreground">Not yet grouped</span>
+                    <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                      {ungrouped.length} issues
+                    </span>
+                  </div>
+                  <p className="m-0 mt-1 text-xs text-muted-foreground">
+                    An outcome is optional, so these are counted here rather than left out &mdash;
+                    the total below would not otherwise close.
+                  </p>
+                </div>
+              ) : null}
             </div>
-          ) : null}
-        </div>
 
-        <p className="m-0 text-xs text-muted-foreground">
-          {accountedFor} of {issues.length} issues accounted for across {outcomes.length} outcomes.
-        </p>
+            <p className="m-0 text-xs text-muted-foreground">
+              {accountedFor} of {issues.length} issues accounted for across {outcomes.length}{' '}
+              outcomes.
+            </p>
+          </>
+        )}
       </main>
     </>
   )

@@ -1,5 +1,6 @@
-import { Badge, buttonVariants } from '@collega/design-system'
+import { Badge, buttonVariants, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
+import { GatedAction } from '@/components/common/gated-action'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getBoardAdmin, getBoards } from '@/lib/data'
 import { currentUser } from '@/lib/session'
@@ -42,6 +43,16 @@ export default async function SettingsBoardsPage() {
             Go to the boards list
           </Link>
         </div>
+      ) : boardAdmin.length === 0 ? (
+        <EmptyState
+          heading="No boards yet"
+          action={
+            <GatedAction id="why-create-first-board" label="Create the first board" denial={null} />
+          }
+        >
+          A board is where ideas get worked. Without one there is nowhere for an idea to go, so this
+          is the first thing to set up.
+        </EmptyState>
       ) : (
         <AdminTable summary="A board’s swimlanes are a subset of the organization’s statuses, in an order chosen per board.">
           <thead>

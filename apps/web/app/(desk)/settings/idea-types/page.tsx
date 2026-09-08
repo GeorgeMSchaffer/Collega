@@ -1,10 +1,46 @@
-import { Button } from '@collega/design-system'
+import { Button, buttonVariants, EmptyState } from '@collega/design-system'
+import Link from 'next/link'
+import { GatedAction } from '@/components/common/gated-action'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getIdeaTypes, getOrganizations } from '@/lib/data'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Idea types · Collega' }
+
+/**
+ * The cross-organization empty state offers navigation, not creation: an idea type belongs to one
+ * organization, so there is nothing here for a create control to create.
+ */
+function NoIdeaTypes({ siteAdmin }: { siteAdmin: boolean }) {
+  if (siteAdmin) {
+    return (
+      <EmptyState
+        heading="No idea types anywhere yet"
+        action={
+          <Link href="/settings/organizations" className={buttonVariants({ variant: 'outline' })}>
+            Go to Organizations
+          </Link>
+        }
+      >
+        No organization has configured idea types. Open an organization to set its idea types up
+        &mdash; they cannot be created from this cross-organization view.
+      </EmptyState>
+    )
+  }
+
+  return (
+    <EmptyState
+      heading="No idea types yet"
+      action={
+        <GatedAction id="why-add-first-idea-type" label="Add the first idea type" denial={null} />
+      }
+    >
+      Every idea is exactly one type, chosen at creation, so ideas cannot be created until at least
+      one type exists.
+    </EmptyState>
+  )
+}
 
 export default async function IdeaTypesPage() {
   const [ideaTypes, organizations] = await Promise.all([getIdeaTypes(), getOrganizations()])
@@ -27,50 +63,54 @@ export default async function IdeaTypesPage() {
       actions={siteAdmin ? undefined : <Button>Add idea type</Button>}
     >
       {siteAdmin ? <CrossOrgNote what="An idea type" /> : null}
-      <AdminTable
-        summary={
-          siteAdmin
-            ? `${rows.length} idea types across ${organizations.length} organizations.`
-            : `${rows.length} idea types.`
-        }
-      >
-        <thead>
-          <tr className="border-b bg-muted/40">
-            <Th>Name</Th>
-            {siteAdmin ? <Th className="w-56">Organization</Th> : null}
-            <Th>Description</Th>
-            <Th className="w-28">Fields</Th>
-            <Th className="w-28">Ideas</Th>
-            <Th className="w-24">
-              <span className="sr-only">Actions</span>
-            </Th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((type) => (
-            <tr key={type.id} className="border-b last:border-0">
-              <td className="px-4 py-2.5 font-medium">{type.name}</td>
-              {siteAdmin ? (
-                <td className="px-4 py-2.5 text-muted-foreground">
-                  {organizations.find((org) => org.id === type.organizationId)?.name}
-                </td>
-              ) : null}
-              <td className="px-4 py-2.5 text-muted-foreground">{type.description}</td>
-              <td className="px-4 py-2.5 tabular-nums">{type.fieldCount}</td>
-              <td className="px-4 py-2.5 tabular-nums">{type.ideaCount}</td>
-              <td className="px-4 py-2.5 text-right">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  aria-label={`${siteAdmin ? 'Manage' : 'Edit'} ${type.name}`}
-                >
-                  {siteAdmin ? 'Manage' : 'Edit'}
-                </Button>
-              </td>
+      {rows.length === 0 ? (
+        <NoIdeaTypes siteAdmin={siteAdmin} />
+      ) : (
+        <AdminTable
+          summary={
+            siteAdmin
+              ? `${rows.length} idea types across ${organizations.length} organizations.`
+              : `${rows.length} idea types.`
+          }
+        >
+          <thead>
+            <tr className="border-b bg-muted/40">
+              <Th>Name</Th>
+              {siteAdmin ? <Th className="w-56">Organization</Th> : null}
+              <Th>Description</Th>
+              <Th className="w-28">Fields</Th>
+              <Th className="w-28">Ideas</Th>
+              <Th className="w-24">
+                <span className="sr-only">Actions</span>
+              </Th>
             </tr>
-          ))}
-        </tbody>
-      </AdminTable>
+          </thead>
+          <tbody>
+            {rows.map((type) => (
+              <tr key={type.id} className="border-b last:border-0">
+                <td className="px-4 py-2.5 font-medium">{type.name}</td>
+                {siteAdmin ? (
+                  <td className="px-4 py-2.5 text-muted-foreground">
+                    {organizations.find((org) => org.id === type.organizationId)?.name}
+                  </td>
+                ) : null}
+                <td className="px-4 py-2.5 text-muted-foreground">{type.description}</td>
+                <td className="px-4 py-2.5 tabular-nums">{type.fieldCount}</td>
+                <td className="px-4 py-2.5 tabular-nums">{type.ideaCount}</td>
+                <td className="px-4 py-2.5 text-right">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-label={`${siteAdmin ? 'Manage' : 'Edit'} ${type.name}`}
+                  >
+                    {siteAdmin ? 'Manage' : 'Edit'}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </AdminTable>
+      )}
     </SettingsPage>
   )
 }

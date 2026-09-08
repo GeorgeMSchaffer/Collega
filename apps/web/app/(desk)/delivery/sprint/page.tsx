@@ -1,15 +1,24 @@
-import { Dot } from '@collega/design-system'
+import { buttonVariants, Dot, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { IssueCard } from '@/components/delivery/issue-card'
 import { Topbar } from '@/components/nav/topbar'
-import { getActiveSprint, getDeliveryStatuses, getIssuesInSprint } from '@/lib/data'
+import {
+  getActiveSprint,
+  getBacklogIssues,
+  getDeliveryStatuses,
+  getIssuesInSprint,
+} from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Sprint board · Collega' }
 
 export default async function SprintBoardPage() {
   const [sprint, deliveryStatuses] = await Promise.all([getActiveSprint(), getDeliveryStatuses()])
   const committed = sprint ? await getIssuesInSprint(sprint.id) : []
+  // The empty state names how many issues are waiting. Derived from the same query the backlog
+  // page runs rather than quoted from comp Q, so the two screens cannot disagree.
+  const waiting = sprint ? [] : await getBacklogIssues()
 
   return (
     <>
@@ -85,14 +94,21 @@ export default async function SprintBoardPage() {
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed bg-card px-6 py-8">
-            <h3 className="m-0 text-base font-semibold">No sprint is running</h3>
-            <p className="m-0 max-w-prose text-sm text-muted-foreground">
-              An administrator plans a sprint from the backlog, then starts it here.
-            </p>
-            <AdminAction id="why-plan-empty" label="Plan a sprint" />
-            <Link href="/delivery/backlog">See the backlog</Link>
-          </div>
+          <EmptyState
+            heading="No sprint is running"
+            action={
+              <div className="flex flex-col items-start gap-2">
+                <AdminAction id="why-plan-empty" label="Plan a sprint" />
+                <Link href="/delivery/backlog" className={buttonVariants({ variant: 'outline' })}>
+                  See the backlog
+                </Link>
+              </div>
+            }
+          >
+            {currentUser.organizationName ?? 'This deployment'} has {waiting.length}{' '}
+            {waiting.length === 1 ? 'issue' : 'issues'} in the delivery backlog and no active
+            sprint. An administrator plans a sprint from the backlog, then starts it here.
+          </EmptyState>
         )}
       </main>
     </>

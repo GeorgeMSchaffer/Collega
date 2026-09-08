@@ -5,10 +5,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EmptyState,
 } from '@collega/design-system'
 import Link from 'next/link'
+import { GatedAction } from '@/components/common/gated-action'
 import { Topbar } from '@/components/nav/topbar'
-import { getNavCounts } from '@/lib/data'
+import { getBoards, getNavCounts } from '@/lib/data'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Home · Collega' }
@@ -38,8 +40,45 @@ const TONE = {
   todo: 'outline',
 } as const
 
+/**
+ * A Site Admin sits outside every organization, so an empty deployment is a different problem from
+ * an empty organization: nothing exists to hold a board yet, and creating the organization is the
+ * one write the role does take — the bootstrap exception to "act as a member".
+ */
+function NoBoards() {
+  if (currentUser.role === 'SiteAdmin') {
+    return (
+      <EmptyState
+        heading="No organizations yet"
+        action={
+          <GatedAction id="why-create-organization" label="Create an organization" denial={null} />
+        }
+      >
+        Nothing to show until an organization exists. Creating one provisions its default statuses
+        and a first board.
+      </EmptyState>
+    )
+  }
+
+  return (
+    <EmptyState
+      heading="No boards yet"
+      action={
+        <GatedAction
+          id="why-create-board"
+          label="Create a board"
+          denial={currentUser.role === 'OrgAdmin' ? null : 'Administrators only'}
+        />
+      }
+    >
+      Your organization doesn&rsquo;t have any boards to show. An Org Admin can create boards from
+      Settings.
+    </EmptyState>
+  )
+}
+
 export default async function HomePage() {
-  const navCounts = await getNavCounts()
+  const [navCounts, boards] = await Promise.all([getNavCounts(), getBoards()])
 
   return (
     <>
@@ -54,6 +93,8 @@ export default async function HomePage() {
             API to call.
           </p>
         </div>
+
+        {boards.length === 0 ? <NoBoards /> : null}
 
         <Card>
           <CardHeader>

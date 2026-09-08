@@ -7,6 +7,7 @@ import {
   CardTitle,
   Code,
   CodeChip,
+  EmptyState,
   FileButton,
 } from '@collega/design-system'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
@@ -25,56 +26,68 @@ export default async function ImportUsersPage() {
     >
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_356px]">
         <div className="flex min-w-0 flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="m-0 text-base font-semibold tracking-tight">
-              Last import &mdash; {lastImport.completedAt}
-            </h2>
-            <Badge variant="secondary">{lastImport.created} created</Badge>
-            <Badge variant="secondary">{lastImport.rejected} rejected</Badge>
-          </div>
+          {/* The whole results column goes, not just the table: the "Last import" heading and the
+              password warning both assert an import happened. No action either — the file picker
+              beside this is the action, and a second button would only point at it. */}
+          {lastImport.rows.length === 0 ? (
+            <EmptyState heading="Nothing imported yet">
+              Choose a CSV to see each row&rsquo;s outcome here, with the temporary password for
+              every account it creates.
+            </EmptyState>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="m-0 text-base font-semibold tracking-tight">
+                  Last import &mdash; {lastImport.completedAt}
+                </h2>
+                <Badge variant="secondary">{lastImport.created} created</Badge>
+                <Badge variant="secondary">{lastImport.rejected} rejected</Badge>
+              </div>
 
-          <AdminTable
-            summary={`${lastImport.rows.length} rows — ${lastImport.created} created, ${lastImport.rejected} rejected.`}
-          >
-            <thead>
-              <tr className="border-b bg-muted/40">
-                <Th className="w-16">Row</Th>
-                <Th>Email</Th>
-                <Th className="w-28">Outcome</Th>
-                <Th>Temporary password / reason</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {lastImport.rows.map((row) => (
-                <tr key={row.row} className="border-b last:border-0">
-                  <td className="px-4 py-2.5 text-muted-foreground">{row.row}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
-                    {row.email}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <Badge variant={row.created ? 'success' : 'warning'}>
-                      {row.created ? 'Created' : 'Rejected'}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2.5">
-                    {row.created ? (
-                      <CodeChip>{row.detail}</CodeChip>
-                    ) : (
-                      <span className="text-muted-foreground">{row.detail}</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </AdminTable>
+              <AdminTable
+                summary={`${lastImport.rows.length} rows — ${lastImport.created} created, ${lastImport.rejected} rejected.`}
+              >
+                <thead>
+                  <tr className="border-b bg-muted/40">
+                    <Th className="w-16">Row</Th>
+                    <Th>Email</Th>
+                    <Th className="w-28">Outcome</Th>
+                    <Th>Temporary password / reason</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lastImport.rows.map((row) => (
+                    <tr key={row.row} className="border-b last:border-0">
+                      <td className="px-4 py-2.5 text-muted-foreground">{row.row}</td>
+                      <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
+                        {row.email}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <Badge variant={row.created ? 'success' : 'warning'}>
+                          {row.created ? 'Created' : 'Rejected'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-2.5">
+                        {row.created ? (
+                          <CodeChip>{row.detail}</CodeChip>
+                        ) : (
+                          <span className="text-muted-foreground">{row.detail}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </AdminTable>
 
-          <Alert role="status">
-            <span>
-              <b>Copy the temporary passwords now.</b> They are generated once and never shown again
-              &mdash; a person whose password is lost here needs a fresh reset from their row on the
-              users screen.
-            </span>
-          </Alert>
+              <Alert role="status">
+                <span>
+                  <b>Copy the temporary passwords now.</b> They are generated once and never shown
+                  again &mdash; a person whose password is lost here needs a fresh reset from their
+                  row on the users screen.
+                </span>
+              </Alert>
+            </>
+          )}
         </div>
 
         <Card className="self-start">

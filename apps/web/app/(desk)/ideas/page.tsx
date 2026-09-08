@@ -1,5 +1,6 @@
-import { Button } from '@collega/design-system'
+import { Button, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
+import { GatedAction } from '@/components/common/gated-action'
 import { IdeasTable } from '@/components/ideas/ideas-table'
 import { NewIdeaButton } from '@/components/ideas/new-idea-button'
 import { Topbar } from '@/components/nav/topbar'
@@ -31,7 +32,19 @@ export default async function IdeasPage() {
             {ideas.length} ideas across every board in this organization. Open one to inspect it.
           </p>
         </div>
-        <IdeasTable rows={ideas} boards={boards} statuses={statuses} />
+        {/* Unreachable against the fixture — there is no filter control yet — but this list is a
+            filtered view by definition, so the empty answer is "nothing matched", never "nothing
+            exists". Wired now so it is already right when filtering lands. */}
+        {ideas.length === 0 ? (
+          <EmptyState
+            heading="No ideas match this filter"
+            action={<GatedAction id="why-clear-filters" label="Clear filters" denial={null} />}
+          >
+            Try a different filter, or clear the search.
+          </EmptyState>
+        ) : (
+          <IdeasTable rows={ideas} boards={boards} statuses={statuses} />
+        )}
       </main>
     </>
   )

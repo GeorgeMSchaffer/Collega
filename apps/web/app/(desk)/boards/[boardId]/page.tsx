@@ -1,6 +1,7 @@
-import { buttonVariants, Kbd } from '@collega/design-system'
+import { buttonVariants, EmptyState, Kbd } from '@collega/design-system'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { GatedAction } from '@/components/common/gated-action'
 import { Lane } from '@/components/ideas/lane'
 import { NewIdeaButton } from '@/components/ideas/new-idea-button'
 import { Topbar } from '@/components/nav/topbar'
@@ -22,7 +23,8 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
   ])
   if (!board) notFound()
 
-  const canMove = writeDenial(currentUser.role) === null
+  const denial = writeDenial(currentUser.role)
+  const canMove = denial === null
 
   return (
     <>
@@ -68,6 +70,24 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
             />
           ))}
         </div>
+
+        {/* Beneath the lanes, not instead of them: the five empty columns are what teach the
+            workflow, so an empty board still shows the shape it will fill. */}
+        {boardIdeas.length === 0 ? (
+          <EmptyState
+            heading="No ideas on this board yet"
+            action={<GatedAction id="why-new-board-empty" label="New idea" denial={denial} />}
+          >
+            {canMove ? (
+              <>
+                Use &ldquo;New idea&rdquo; to add the first one. It lands in New / Pending, the
+                left-most lane.
+              </>
+            ) : (
+              <>Nothing has been raised here yet.</>
+            )}
+          </EmptyState>
+        ) : null}
       </main>
     </>
   )
