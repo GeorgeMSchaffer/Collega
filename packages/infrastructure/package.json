@@ -16,7 +16,7 @@
   },
   "scripts": {
     "postinstall": "prisma generate --schema prisma/schema.prisma",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node -e \"require('node:fs').cpSync('src/generated','dist/generated',{recursive:true})\"",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "db:pull": "prisma db pull --schema prisma/schema.prisma",
