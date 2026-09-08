@@ -64,6 +64,18 @@ export function navGroupsWith(counts: NavCounts): NavGroup[] {
   }))
 }
 
+/**
+ * The nav before its counts arrive.
+ *
+ * Every label, icon and href is static, so the sidebar is fully usable while the counts are still
+ * in flight — which is why the layout's Suspense fallback renders this rather than a skeleton. A
+ * count appearing a moment later is a smaller lie than a nav that is not there yet.
+ */
+export const navGroupsWithoutCounts: NavGroup[] = NAV_SHAPE.map((group) => ({
+  label: group.label,
+  items: group.items.map((item) => toNavItem(item)),
+}))
+
 /** The command palette jumps by label, so it takes the shape without any counts. */
 export const allNavItems: NavItem[] = NAV_SHAPE.flatMap((group) =>
   group.items.map((item) => toNavItem(item)),
