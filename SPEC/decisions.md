@@ -9,6 +9,55 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-08 — Wave G is cut from the conversion and revisited after cutover
+
+**Decided by the user**, asked directly, with the alternatives on the table (keep it as planned;
+cut it now; defer the call to the F1 gate).
+
+**What is cut.** Wave G — Loop, decision records, the commitment strip, and Triage Mode — roughly
+ten slices, and the only part of Sprint 9 that is not a re-expression of something that already
+exists. It was admitted on 2026-09-03 (ticket `01`, Question C) and gated on F1 going green.
+
+**Why now rather than at the gate.** The plan named Wave G as the part that could be cut without
+the conversion failing, and the conversion is where the risk is: Wave D owes all 81 endpoints and
+has built one. Deciding now removes it from every estimate and every sequencing conversation
+between here and cutover, instead of leaving ten slices of ambiguity attached to the gate. Deferring
+the call was offered and not taken.
+
+**What this does not mean.** Not cancelled — *revisited after cutover*, with a working product in
+hand and the real cost of D and F known rather than estimated. Nothing about its scope is
+retracted; `SPEC/50-typescript-migration.md` §5 keeps the wave's definition so it can be picked up
+as written.
+
+**What it changes downstream.** F1 stays the gate, but it now releases only F6 (deleting the .NET
+solution) rather than F6 and Wave G. The schema amendment slice that ticket `06` says Wave G buys —
+S0.2 deliberately did not lay down Wave G's entities — is deferred with it, and is still owed
+whenever the wave is picked back up.
+
+**Supersedes** the 2026-09-03 answer to `01` Question C to the extent that it scheduled Wave G
+inside this effort. The scope decision itself stands.
+
+## 2026-09-08 — Application-layer test coverage is paid down alongside Wave D, not after it
+
+**Decided by the user**, asked directly, with "after Wave D lands" and "rely on the golden corpus
+instead" offered.
+
+**The measurement.** Counted from the tree on 2026-09-08: `packages/application` is the largest
+package at **14,876 lines**, it carries authorization, and it has **35 tests**. `apps/web` has
+**94** over 8,544 lines. The ratio is inverted against risk — a defect in the web layer shows a
+wrong screen, a defect here shows one organization another organization's data.
+
+**Why not wait for the gate.** The golden corpus does cover authorization at four roles across all
+81 endpoints, so F1 would eventually catch a role regression. But only end to end, only once Wave D
+is finished, and it cannot localise a failure to a use case. Wave D slices are about to build
+controllers over these use cases; catching a defect while the use case is being read is cheaper
+than catching it at the gate.
+
+**Shape.** A QA slice in its own worktree, per `CLAUDE.md`'s rule that the agent who wrote code does
+not test it, run in parallel with Wave D rather than after. The Wave E precedent is the model:
+102 tests, and **every rule verified by breaking it** — 21 mutations, 21 caught. A suite that has
+not been shown to fail has not been shown to do anything.
+
 ## 2026-09-08 — An empty state's action is disabled with a reason, never omitted
 
 **The conflict.** Comp Q applies two different rules to the same situation. Its delivery screens

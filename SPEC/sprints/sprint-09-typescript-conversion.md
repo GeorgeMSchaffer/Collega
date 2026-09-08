@@ -116,7 +116,7 @@ Beyond `SPEC/90-definition-of-done.md`:
 not gate any wave.
 
 Answered 2026-09-03 (`SPEC/decisions.md`): `01` (comp P on Tailwind + shadcn/ui, and
-Question C — Wave G), `02` (Vercel + Prisma Postgres), `10` (discard the .NET suite).
+Question C — Wave G, **cut 2026-09-08** and revisited after cutover, `SPEC/decisions.md`), `02` (Vercel + Prisma Postgres), `10` (discard the .NET suite).
 
 Answered 2026-09-04, which is what unblocked Wave 0:
 
