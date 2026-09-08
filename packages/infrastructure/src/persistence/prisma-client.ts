@@ -16,6 +16,15 @@ import { PrismaClient } from '../generated/prisma/index.js'
 export type { PrismaClient } from '../generated/prisma/index.js'
 export { Prisma } from '../generated/prisma/index.js'
 
-export function createPrismaClient(): PrismaClient {
-  return new PrismaClient()
+/**
+ * `url` is passed explicitly rather than left to Prisma's own `env("DATABASE_URL")` lookup.
+ *
+ * The host composes its connection string from either DATABASE_URL or the POSTGRES_* parts that
+ * configure the local container, and validates the result. Letting Prisma read the environment
+ * itself quietly discards that: a developer with only the parts set gets a config the host calls
+ * valid and a client that cannot connect, because the composed URL was never handed to anything.
+ * Omit it only where Prisma's own resolution is what you want - the CLI, which reads the schema.
+ */
+export function createPrismaClient(url?: string): PrismaClient {
+  return url ? new PrismaClient({ datasources: { db: { url } } }) : new PrismaClient()
 }

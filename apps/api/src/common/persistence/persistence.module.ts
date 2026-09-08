@@ -1,7 +1,8 @@
 import { systemClock } from '@collega/application/common'
 import { createPrismaClient, type PrismaClient } from '@collega/infrastructure/persistence'
 import { Inject, Injectable, Module, type OnModuleDestroy } from '@nestjs/common'
-import { ConfigModule } from '../config/config.module.js'
+import { CONFIG, ConfigModule } from '../config/config.module.js'
+import type { Config } from '../config/index.js'
 import { AlsCurrentUserContext } from '../request-context/als-current-user-context.js'
 import { PORT_TOKENS } from '../tokens.js'
 import { ADAPTER_PROVIDERS } from './adapters.providers.js'
@@ -34,7 +35,11 @@ class PrismaLifecycle implements OnModuleDestroy {
 @Module({
   imports: [ConfigModule],
   providers: [
-    { provide: PORT_TOKENS.PrismaClient, useFactory: () => createPrismaClient() },
+    {
+      provide: PORT_TOKENS.PrismaClient,
+      useFactory: (config: Config) => createPrismaClient(config.database.url),
+      inject: [CONFIG],
+    },
     AlsUnitOfWork,
     AlsCurrentUserContext,
     { provide: PORT_TOKENS.UnitOfWork, useExisting: AlsUnitOfWork },
