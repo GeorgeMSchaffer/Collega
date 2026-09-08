@@ -1,68 +1,17 @@
-'use client'
+import { getNavCounts } from '@/lib/data'
+import { navGroupsWith } from './nav-items'
+import { SidebarNav } from './sidebar-nav'
 
-import { Avatar } from '@collega/design-system'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { currentUser } from '@/lib/mock'
-import { CommandPalette } from './command-palette'
-import { NavIcon } from './icons'
-import { navGroups } from './nav-items'
+/**
+ * The desk sidebar.
+ *
+ * Split in two so the counts can be fetched: they are per-request data, but the rendering needs
+ * `usePathname` and so has to be a client component, which cannot await. This half is the Server
+ * Component that reads them and hands them down. `app/(desk)/layout.tsx` still renders `<Sidebar />`
+ * with no props.
+ */
+export async function Sidebar() {
+  const counts = await getNavCounts()
 
-const NAV_CLASS =
-  'flex w-full items-center gap-2 rounded-md p-2 text-left text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground aria-[current=page]:bg-sidebar-accent aria-[current=page]:font-medium aria-[current=page]:text-sidebar-accent-foreground'
-
-export function Sidebar() {
-  const pathname = usePathname()
-
-  return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground">
-      <div className="flex items-center gap-2 px-2 py-3 text-base font-semibold text-foreground">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-[11px] font-bold text-primary-foreground">
-          CG
-        </span>
-        <b>Collega</b>
-      </div>
-
-      {/* A Site Admin is outside every organization, so it shows the scope rather than an org name. */}
-      <div className="px-2 pb-3 text-xs font-medium text-muted-foreground">
-        {currentUser.organizationName ?? 'All organizations'}
-      </div>
-
-      <CommandPalette />
-
-      {navGroups.map((group) => (
-        <div key={group.label}>
-          <div className="flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70">
-            {group.label}
-          </div>
-          {group.items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={NAV_CLASS}
-              aria-current={pathname === item.href ? 'page' : undefined}
-            >
-              <NavIcon icon={item.icon} />
-              {item.label}
-              {item.count !== undefined ? (
-                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-                  {item.count}
-                </span>
-              ) : null}
-            </Link>
-          ))}
-        </div>
-      ))}
-
-      <div className="flex-1" />
-
-      <div className="flex items-center gap-2 border-t px-2 py-2.5 text-sm">
-        <Avatar initials={currentUser.initials} />
-        <div>
-          <div className="text-sm font-semibold leading-snug">{currentUser.displayName}</div>
-          <div className="text-xs text-muted-foreground/70">{currentUser.roleLabel}</div>
-        </div>
-      </div>
-    </aside>
-  )
+  return <SidebarNav groups={navGroupsWith(counts)} />
 }

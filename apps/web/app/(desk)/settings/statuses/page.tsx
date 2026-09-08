@@ -1,11 +1,17 @@
 import { Button, Dot, Marker } from '@collega/design-system'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { currentUser, organizations, statuses, statusesByOrganization } from '@/lib/mock'
+import { getOrganizations, getStatuses, getStatusesByOrganization } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Statuses · Collega' }
 
-export default function StatusesPage() {
+export default async function StatusesPage() {
+  const [organizations, statuses, statusesByOrganization] = await Promise.all([
+    getOrganizations(),
+    getStatuses(),
+    getStatusesByOrganization(),
+  ])
   const siteAdmin = currentUser.role === 'SiteAdmin'
 
   // A status belongs to exactly one organization, so the cross-org list is a union of distinct

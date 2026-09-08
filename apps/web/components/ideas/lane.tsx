@@ -1,5 +1,5 @@
 import { Dot } from '@collega/design-system'
-import type { Idea, Status } from '@/lib/mock'
+import type { Idea, Status } from '@/lib/data'
 import { IdeaCard } from './idea-card'
 
 export function Lane({ status, ideas }: { status: Status; ideas: Idea[] }) {

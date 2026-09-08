@@ -1,7 +1,7 @@
 import { buttonVariants } from '@collega/design-system'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { currentUser, isAdministrator } from '@/lib/mock'
+import { currentUser, isAdministrator } from '@/lib/session'
 
 /**
  * The refusal panel a settings route shows a role that may not reach it.

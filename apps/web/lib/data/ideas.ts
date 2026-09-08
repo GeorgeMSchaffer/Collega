@@ -6,10 +6,10 @@
  * idea to drop most of them is the shape that quietly stops scaling.
  */
 
-import * as fixture from '../mock.js'
-import { failIfRequested, resolve } from './latency.js'
+import * as fixture from '../mock'
+import { failIfRequested, resolve } from './latency'
 
-export type { Comment, Idea, Priority } from '../mock.js'
+export type { Comment, Idea, Priority } from '../mock'
 
 export async function getIdeas(): Promise<fixture.Idea[]> {
   failIfRequested('getIdeas')

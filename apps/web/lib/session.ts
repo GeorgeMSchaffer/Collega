@@ -10,11 +10,11 @@
  * That is the line this module draws: `lib/data/` is where the network will be, and this is not.
  */
 
-export type { CurrentUser, Role } from './mock.js'
+export type { CurrentUser, Role } from './mock'
 export {
   currentUser,
   deliveryAdminDenial,
   engagementDenial,
   isAdministrator,
   writeDenial,
-} from './mock.js'
+} from './mock'

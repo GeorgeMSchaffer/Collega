@@ -2,7 +2,7 @@
 
 import { Button, Dot } from '@collega/design-system'
 import { useState } from 'react'
-import { SWIMLANE_FLOOR, statusById, statuses } from '@/lib/mock'
+import { type Status, SWIMLANE_FLOOR } from '@/lib/data'
 
 /**
  * Which statuses become a board's columns, and in what order.
@@ -11,15 +11,18 @@ import { SWIMLANE_FLOOR, statusById, statuses } from '@/lib/mock'
  * reorder would leave the one thing that distinguishes two boards unexpressible. Nothing here is
  * saved; the state is local until Wave D gives the form an endpoint.
  *
+ * The organization's statuses arrive as a prop because this component cannot await: the route that
+ * renders it reads them and hands them down.
+ *
  * Every refused control is `aria-disabled` and stays focusable, never `disabled`: a `disabled`
  * button leaves the tab order and takes the `aria-describedby` reason with it, so the reader who
  * most needs to know why it is refused is the one who cannot reach it.
  */
-export function SwimlanePicker({ selected }: { selected: string[] }) {
+export function SwimlanePicker({ selected, statuses }: { selected: string[]; statuses: Status[] }) {
   const [ids, setIds] = useState(selected)
 
   const lanes = ids.flatMap((id) => {
-    const status = statusById(id)
+    const status = statuses.find((candidate) => candidate.id === id)
     return status ? [status] : []
   })
   const available = statuses.filter((status) => !ids.includes(status.id))

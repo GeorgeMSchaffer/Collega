@@ -1,11 +1,16 @@
 import { Badge, Button, Tag } from '@collega/design-system'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { currentUser, fieldDefinitions, organizations } from '@/lib/mock'
+import { getFieldDefinitions, getOrganizations } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Custom fields · Collega' }
 
-export default function FieldsPage() {
+export default async function FieldsPage() {
+  const [fieldDefinitions, organizations] = await Promise.all([
+    getFieldDefinitions(),
+    getOrganizations(),
+  ])
   const siteAdmin = currentUser.role === 'SiteAdmin'
   const rows = siteAdmin
     ? fieldDefinitions

@@ -2,7 +2,7 @@ import { Dot } from '@collega/design-system'
 import Link from 'next/link'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { Topbar } from '@/components/nav/topbar'
-import { deliveryStatusById, issues, issuesForOutcome, outcomes } from '@/lib/mock'
+import { getDeliveryStatuses, getIssues, getIssuesForOutcome, getOutcomes } from '@/lib/data'
 
 export const metadata = { title: 'Roadmap · Collega' }
 
@@ -14,8 +14,15 @@ export const metadata = { title: 'Roadmap · Collega' }
  * and the rows would not add up — which is why the ungrouped row exists: an outcome is optional, so
  * without it the totals would silently fail to close.
  */
-export default function RoadmapPage() {
-  const grouped = outcomes.map((outcome) => ({ outcome, items: issuesForOutcome(outcome.id) }))
+export default async function RoadmapPage() {
+  const [outcomes, issues, statuses] = await Promise.all([
+    getOutcomes(),
+    getIssues(),
+    getDeliveryStatuses(),
+  ])
+  const grouped = await Promise.all(
+    outcomes.map(async (outcome) => ({ outcome, items: await getIssuesForOutcome(outcome.id) })),
+  )
   const ungrouped = issues.filter((issue) => issue.outcomeId === null)
   const accountedFor = grouped.reduce((n, g) => n + g.items.length, 0) + ungrouped.length
 
@@ -61,7 +68,7 @@ export default function RoadmapPage() {
                     <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
                     <Link href={`/delivery/issues/${issue.key}`}>{issue.title}</Link>
                     <span className="ml-auto text-xs text-muted-foreground">
-                      {deliveryStatusById(issue.deliveryStatusId)?.name}
+                      {statuses.find((row) => row.id === issue.deliveryStatusId)?.name}
                     </span>
                   </li>
                 ))}

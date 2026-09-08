@@ -4,19 +4,24 @@ import { notFound } from 'next/navigation'
 import { Lane } from '@/components/ideas/lane'
 import { NewIdeaButton } from '@/components/ideas/new-idea-button'
 import { Topbar } from '@/components/nav/topbar'
-import { boardById, currentUser, ideasForBoard, statuses, writeDenial } from '@/lib/mock'
+import { getBoard, getIdeasForBoard, getStatuses } from '@/lib/data'
+import { currentUser, writeDenial } from '@/lib/session'
 
 export async function generateMetadata({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params
-  return { title: `${boardById(boardId)?.name ?? 'Board'} · Collega` }
+  const board = await getBoard(boardId)
+  return { title: `${board?.name ?? 'Board'} · Collega` }
 }
 
 export default async function BoardPage({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params
-  const board = boardById(boardId)
+  const [board, statuses, boardIdeas] = await Promise.all([
+    getBoard(boardId),
+    getStatuses(),
+    getIdeasForBoard(boardId),
+  ])
   if (!board) notFound()
 
-  const boardIdeas = ideasForBoard(board.id)
   const canMove = writeDenial(currentUser.role) === null
 
   return (

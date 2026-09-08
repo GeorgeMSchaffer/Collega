@@ -7,11 +7,11 @@
  * throwing — `notFound()` is the caller's decision, and the API answers 404 the same way.
  */
 
-import * as fixture from '../mock.js'
-import { failIfRequested, resolve } from './latency.js'
+import * as fixture from '../mock'
+import { failIfRequested, resolve } from './latency'
 
-export type { Board, BoardAdmin, Status } from '../mock.js'
-export { SWIMLANE_FLOOR } from '../mock.js'
+export type { Board, BoardAdmin, Status } from '../mock'
+export { SWIMLANE_FLOOR } from '../mock'
 
 export async function getBoards(): Promise<fixture.Board[]> {
   failIfRequested('getBoards')

@@ -1,6 +1,6 @@
 import { Button } from '@collega/design-system'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { organizations } from '@/lib/mock'
+import { getOrganizations } from '@/lib/data'
 
 export const metadata = { title: 'Organizations · Collega' }
 
@@ -9,7 +9,9 @@ export const metadata = { title: 'Organizations · Collega' }
  * still refused here, which is why the route declares `siteAdminOnly` rather than relying on
  * `AdminOnly` — the member wording ("an administrator's job") would be false to an Org Admin's face.
  */
-export default function OrganizationsPage() {
+export default async function OrganizationsPage() {
+  const organizations = await getOrganizations()
+
   return (
     <SettingsPage
       title="Organizations"

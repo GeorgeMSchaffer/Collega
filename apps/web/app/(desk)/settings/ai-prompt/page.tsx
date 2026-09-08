@@ -13,7 +13,7 @@ import {
 } from '@collega/design-system'
 import { InertForm } from '@/components/common/inert-form'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { aiProbes, aiPrompt, promptVersions, SYSTEM_PROMPT_MAX } from '@/lib/mock'
+import { getAiPrompt, SYSTEM_PROMPT_MAX } from '@/lib/data'
 
 export const metadata = { title: 'AI Prompt · Collega' }
 
@@ -24,7 +24,9 @@ export const metadata = { title: 'AI Prompt · Collega' }
  * organization content, which is why editing it does not go through View As the way a scope
  * statement does.
  */
-export default function AiPromptPage() {
+export default async function AiPromptPage() {
+  const { prompt, probes, versions } = await getAiPrompt()
+
   return (
     <SettingsPage
       title="AI Prompt"
@@ -59,7 +61,7 @@ export default function AiPromptPage() {
                   name="systemPrompt"
                   rows={14}
                   maxLength={SYSTEM_PROMPT_MAX}
-                  defaultValue={aiPrompt.text}
+                  defaultValue={prompt.text}
                   className="font-mono text-xs"
                   aria-describedby="systemPrompt-count"
                 />
@@ -67,16 +69,16 @@ export default function AiPromptPage() {
                   id="systemPrompt-count"
                   className="mt-1 block text-[0.8rem] text-muted-foreground"
                 >
-                  {aiPrompt.text.length} / {SYSTEM_PROMPT_MAX.toLocaleString('en-US')}
+                  {prompt.text.length} / {SYSTEM_PROMPT_MAX.toLocaleString('en-US')}
                 </span>
               </Field>
 
               <div className="mt-4 grid gap-x-4 sm:grid-cols-2">
                 <Field htmlFor="opening" label="Opening message">
-                  <Input id="opening" name="opening" type="text" defaultValue={aiPrompt.opening} />
+                  <Input id="opening" name="opening" type="text" defaultValue={prompt.opening} />
                 </Field>
                 <Field htmlFor="refusal" label="Refusal message">
-                  <Input id="refusal" name="refusal" type="text" defaultValue={aiPrompt.refusal} />
+                  <Input id="refusal" name="refusal" type="text" defaultValue={prompt.refusal} />
                 </Field>
               </div>
 
@@ -101,7 +103,7 @@ export default function AiPromptPage() {
               instructions that have stopped refusing at all, not every way one can go wrong.
             </p>
           </div>
-          <AdminTable summary={`${aiProbes.length} probes ran against the draft above.`}>
+          <AdminTable summary={`${probes.length} probes ran against the draft above.`}>
             <thead>
               <tr className="border-b bg-muted/40">
                 <Th>Request</Th>
@@ -110,7 +112,7 @@ export default function AiPromptPage() {
               </tr>
             </thead>
             <tbody>
-              {aiProbes.map((probe) => (
+              {probes.map((probe) => (
                 <tr key={probe.request} className="border-b last:border-0">
                   <td className="px-4 py-2.5">{probe.request}</td>
                   <td className="px-4 py-2.5 text-muted-foreground">{probe.outcome}</td>
@@ -135,7 +137,7 @@ export default function AiPromptPage() {
               not publish on its own.
             </p>
           </div>
-          <AdminTable summary={`${promptVersions.length} published versions.`}>
+          <AdminTable summary={`${versions.length} published versions.`}>
             <thead>
               <tr className="border-b bg-muted/40">
                 <Th className="w-32">Version</Th>
@@ -147,7 +149,7 @@ export default function AiPromptPage() {
               </tr>
             </thead>
             <tbody>
-              {promptVersions.map((version) => (
+              {versions.map((version) => (
                 <tr key={version.version} className="border-b last:border-0">
                   <td className="px-4 py-2.5">
                     <span className="flex items-center gap-2">

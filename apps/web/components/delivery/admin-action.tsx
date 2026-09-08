@@ -1,5 +1,5 @@
 import { Button, Denied } from '@collega/design-system'
-import { currentUser, deliveryAdminDenial } from '@/lib/mock'
+import { currentUser, deliveryAdminDenial } from '@/lib/session'
 
 /**
  * A delivery action only an organization administrator may take.

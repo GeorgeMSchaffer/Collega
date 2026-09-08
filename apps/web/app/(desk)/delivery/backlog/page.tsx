@@ -2,12 +2,18 @@ import { Avatar, Dot, Marker } from '@collega/design-system'
 import Link from 'next/link'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { Topbar } from '@/components/nav/topbar'
-import { backlogIssues, deliveryStatusById, EFFORT_COLORS, outcomeById, sprints } from '@/lib/mock'
+import { getBacklogIssues, getDeliveryStatuses, getOutcomes, getSprints } from '@/lib/data'
+import { EFFORT_COLORS } from '@/lib/display'
 
 export const metadata = { title: 'Backlog · Collega' }
 
-export default function BacklogPage() {
-  const rows = backlogIssues()
+export default async function BacklogPage() {
+  const [rows, sprints, outcomes, statuses] = await Promise.all([
+    getBacklogIssues(),
+    getSprints(),
+    getOutcomes(),
+    getDeliveryStatuses(),
+  ])
   const next = sprints.find((sprint) => !sprint.active)
 
   return (
@@ -57,8 +63,8 @@ export default function BacklogPage() {
               </thead>
               <tbody>
                 {rows.map((issue) => {
-                  const outcome = outcomeById(issue.outcomeId)
-                  const status = deliveryStatusById(issue.deliveryStatusId)
+                  const outcome = outcomes.find((row) => row.id === issue.outcomeId)
+                  const status = statuses.find((row) => row.id === issue.deliveryStatusId)
                   return (
                     <tr key={issue.id} className="border-b last:border-0">
                       <td className="px-4 py-2.5">

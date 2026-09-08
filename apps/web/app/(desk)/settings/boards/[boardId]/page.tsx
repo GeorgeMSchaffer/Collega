@@ -1,14 +1,18 @@
 import { notFound } from 'next/navigation'
 import { BoardForm, BoardRefusal } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { boardAdminById, boardById, currentUser } from '@/lib/mock'
+import { getBoard, getBoardAdminEntry, getStatuses } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Edit board · Collega' }
 
 export default async function EditBoardPage({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params
-  const board = boardById(boardId)
-  const entry = boardAdminById(boardId)
+  const [board, entry, statuses] = await Promise.all([
+    getBoard(boardId),
+    getBoardAdminEntry(boardId),
+    getStatuses(),
+  ])
   if (!board || !entry) notFound()
 
   if (currentUser.role === 'SiteAdmin') {
@@ -25,6 +29,7 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
         defaultName={board.name}
         userStatusMoves={entry.userStatusMoves}
         swimlaneIds={entry.swimlaneIds}
+        statuses={statuses}
         submitLabel="Save changes"
         explainerHeading="Edit board"
       />

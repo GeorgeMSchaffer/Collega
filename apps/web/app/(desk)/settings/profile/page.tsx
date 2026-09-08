@@ -13,7 +13,8 @@ import {
 import Link from 'next/link'
 import { InertForm } from '@/components/common/inert-form'
 import { Topbar } from '@/components/nav/topbar'
-import { currentUser, profile } from '@/lib/mock'
+import { getProfile } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Profile · Collega' }
 
@@ -24,7 +25,9 @@ export const metadata = { title: 'Profile · Collega' }
  * administrator. This is the one settings surface comp Q gives all four roles — it is the reason the
  * hub stays ungated — so gating it would strand a member with no route to their own account.
  */
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const profile = await getProfile()
+
   return (
     <>
       <Topbar

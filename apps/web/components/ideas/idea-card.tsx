@@ -1,7 +1,7 @@
 import { Avatar, Dot, Marker, Tag } from '@collega/design-system'
 import Link from 'next/link'
-import type { Idea } from '@/lib/mock'
-import { PRIORITY_COLORS } from '@/lib/mock'
+import type { Idea } from '@/lib/data'
+import { PRIORITY_COLORS } from '@/lib/display'
 
 /**
  * A card in a lane (comp Q `.kcard`). Priority marker and assignee on the first row, tag and

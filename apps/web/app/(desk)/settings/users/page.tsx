@@ -2,13 +2,17 @@ import { Avatar, Badge, Button, buttonVariants } from '@collega/design-system'
 import Link from 'next/link'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { currentUser, members, membersForOrganization, organizations } from '@/lib/mock'
+import { getMembers, getMembersForOrganization, getOrganizations } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Users · Collega' }
 
-export default function UsersPage() {
+export default async function UsersPage() {
   const siteAdmin = currentUser.role === 'SiteAdmin'
-  const rows = siteAdmin ? members : membersForOrganization('acme-robotics')
+  const [rows, organizations] = await Promise.all([
+    siteAdmin ? getMembers() : getMembersForOrganization('acme-robotics'),
+    getOrganizations(),
+  ])
 
   return (
     <SettingsPage

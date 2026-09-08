@@ -1,6 +1,7 @@
 import { Avatar, Dot, Marker } from '@collega/design-system'
 import Link from 'next/link'
-import { boardById, type Idea, PRIORITY_COLORS, statusById } from '@/lib/mock'
+import type { Board, Idea, Status } from '@/lib/data'
+import { PRIORITY_COLORS } from '@/lib/display'
 
 /**
  * The organization-wide ideas table, shared by `/ideas` and `/ideas/[id]`.
@@ -8,7 +9,25 @@ import { boardById, type Idea, PRIORITY_COLORS, statusById } from '@/lib/mock'
  * `selectedId` marks the row the inspector is showing. Comp P marks it with a left rule plus a soft
  * ground — two channels, so it survives greyscale and does not rely on colour alone.
  */
-export function IdeasTable({ rows, selectedId }: { rows: Idea[]; selectedId?: string }) {
+export function IdeasTable({
+  rows,
+  boards,
+  statuses,
+  selectedId,
+}: {
+  rows: Idea[]
+  boards: Board[]
+  statuses: Status[]
+  selectedId?: string
+}) {
+  // Presentational, and takes its lookups rather than reading them. The caller already fetches
+  // both lists once, so indexing here costs nothing and a row-level reader would have been one
+  // request per idea. Staying synchronous is the other half of the reason: an async component
+  // cannot be rendered by Testing Library, and the eight tests holding the selection contract
+  // in place all render this directly.
+  const boardsById = new Map(boards.map((board) => [board.id, board]))
+  const statusesById = new Map(statuses.map((status) => [status.id, status]))
+
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">
       <table className="w-full border-collapse text-sm">
@@ -36,7 +55,7 @@ export function IdeasTable({ rows, selectedId }: { rows: Idea[]; selectedId?: st
         </thead>
         <tbody>
           {rows.map((idea) => {
-            const status = statusById(idea.statusId)
+            const status = statusesById.get(idea.statusId)
             const selected = idea.id === selectedId
             return (
               <tr
@@ -49,11 +68,11 @@ export function IdeasTable({ rows, selectedId }: { rows: Idea[]; selectedId?: st
                 >
                   <Link href={`/ideas/${idea.id}`}>{idea.title}</Link>
                   <div className="text-xs text-muted-foreground">
-                    {boardById(idea.boardId)?.name} · {idea.ideaType}
+                    {boardsById.get(idea.boardId)?.name} · {idea.ideaType}
                   </div>
                 </td>
                 <td className="px-4 py-2.5 text-muted-foreground">
-                  {boardById(idea.boardId)?.name}
+                  {boardsById.get(idea.boardId)?.name}
                 </td>
                 <td className="px-4 py-2.5">
                   <span className="inline-flex items-center gap-1.5 whitespace-nowrap">

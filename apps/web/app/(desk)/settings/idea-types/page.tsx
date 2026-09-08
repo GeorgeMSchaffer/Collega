@@ -1,11 +1,13 @@
 import { Button } from '@collega/design-system'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { currentUser, ideaTypes, organizations } from '@/lib/mock'
+import { getIdeaTypes, getOrganizations } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Idea types · Collega' }
 
-export default function IdeaTypesPage() {
+export default async function IdeaTypesPage() {
+  const [ideaTypes, organizations] = await Promise.all([getIdeaTypes(), getOrganizations()])
   const siteAdmin = currentUser.role === 'SiteAdmin'
   const rows = siteAdmin
     ? ideaTypes

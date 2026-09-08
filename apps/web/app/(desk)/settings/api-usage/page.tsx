@@ -2,13 +2,12 @@ import { Badge, Card, CardContent, Meter } from '@collega/design-system'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import {
   compactTokens,
-  currentUser,
   DAILY_TOKEN_BUDGET,
+  getUsage,
+  getUsageForOrganization,
   totalTokens,
-  usageForOrganization,
-  usageRows,
-  usageTotals,
-} from '@/lib/mock'
+} from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'API usage · Collega' }
 
@@ -38,8 +37,9 @@ function budgetVariant(pct: number): 'ok' | 'warn' | 'over' {
   return 'ok'
 }
 
-function DeploymentUsage() {
-  const pct = usageTotals.pctOfBudget
+async function DeploymentUsage() {
+  const usage = await getUsage()
+  const pct = usage.pctOfBudget
 
   return (
     <>
@@ -50,7 +50,7 @@ function DeploymentUsage() {
           </div>
           <div className="flex flex-wrap items-baseline gap-2">
             <span className="text-2xl font-semibold tabular-nums">
-              {compactTokens(usageTotals.tokens)}
+              {compactTokens(usage.tokens)}
             </span>
             <span className="text-sm text-muted-foreground">
               of {compactTokens(DAILY_TOKEN_BUDGET)} tokens
@@ -78,7 +78,7 @@ function DeploymentUsage() {
           </tr>
         </thead>
         <tbody>
-          {usageRows.map((row) => (
+          {usage.rows.map((row) => (
             <tr key={row.organizationId} className="border-b last:border-0">
               <td className="px-4 py-2.5 font-medium">{row.organizationName}</td>
               <td className="px-4 py-2.5 text-right tabular-nums">{row.conversations}</td>
@@ -103,15 +103,15 @@ function DeploymentUsage() {
         <tfoot>
           <tr className="border-t bg-muted/40">
             <td className="px-4 py-2.5 font-medium">All organizations</td>
-            <td className="px-4 py-2.5 text-right tabular-nums">{usageTotals.conversations}</td>
+            <td className="px-4 py-2.5 text-right tabular-nums">{usage.conversations}</td>
             <td colSpan={3} className="px-4 py-2.5 text-right text-xs text-muted-foreground">
               summed into Total tokens
             </td>
             <td className="px-4 py-2.5 text-right font-medium tabular-nums">
-              {compactTokens(usageTotals.tokens)}
+              {compactTokens(usage.tokens)}
             </td>
             <td className="px-4 py-2.5 text-right font-medium tabular-nums">
-              ${usageTotals.estimatedCost.toFixed(2)}
+              ${usage.estimatedCost.toFixed(2)}
             </td>
           </tr>
         </tfoot>
@@ -120,8 +120,8 @@ function DeploymentUsage() {
   )
 }
 
-function OrganizationUsage() {
-  const row = usageForOrganization('acme-robotics')
+async function OrganizationUsage() {
+  const row = await getUsageForOrganization('acme-robotics')
 
   // No budget card: the cap is deployment-wide (28a), so showing an Org Admin a bar they share with
   // organizations they cannot see would read as their own allowance.

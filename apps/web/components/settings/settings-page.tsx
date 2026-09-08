@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Topbar } from '@/components/nav/topbar'
-import { currentUser, isAdministrator } from '@/lib/mock'
+import { currentUser, isAdministrator } from '@/lib/session'
 import { AdminOnly, SiteAdminOnly } from './admin-only'
 
 /**

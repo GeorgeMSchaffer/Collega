@@ -9,7 +9,7 @@ import {
 } from '@collega/design-system'
 import Link from 'next/link'
 import { Topbar } from '@/components/nav/topbar'
-import { currentUser, isAdministrator, type Role } from '@/lib/mock'
+import { currentUser, isAdministrator, type Role } from '@/lib/session'
 
 export const metadata = { title: 'Settings · Collega' }
 

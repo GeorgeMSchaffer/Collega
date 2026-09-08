@@ -10,11 +10,13 @@ import {
   FileButton,
 } from '@collega/design-system'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { importCounts, lastImport } from '@/lib/mock'
+import { getLastImport } from '@/lib/data'
 
 export const metadata = { title: 'Import users · Collega' }
 
-export default function ImportUsersPage() {
+export default async function ImportUsersPage() {
+  const lastImport = await getLastImport()
+
   return (
     <SettingsPage
       title="Import users"
@@ -27,12 +29,12 @@ export default function ImportUsersPage() {
             <h2 className="m-0 text-base font-semibold tracking-tight">
               Last import &mdash; {lastImport.completedAt}
             </h2>
-            <Badge variant="secondary">{importCounts.created} created</Badge>
-            <Badge variant="secondary">{importCounts.rejected} rejected</Badge>
+            <Badge variant="secondary">{lastImport.created} created</Badge>
+            <Badge variant="secondary">{lastImport.rejected} rejected</Badge>
           </div>
 
           <AdminTable
-            summary={`${lastImport.rows.length} rows — ${importCounts.created} created, ${importCounts.rejected} rejected.`}
+            summary={`${lastImport.rows.length} rows — ${lastImport.created} created, ${lastImport.rejected} rejected.`}
           >
             <thead>
               <tr className="border-b bg-muted/40">

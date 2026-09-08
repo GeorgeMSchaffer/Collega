@@ -8,7 +8,8 @@ import {
 } from '@collega/design-system'
 import Link from 'next/link'
 import { Topbar } from '@/components/nav/topbar'
-import { currentUser, navCounts } from '@/lib/mock'
+import { getNavCounts } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Home · Collega' }
 
@@ -37,7 +38,9 @@ const TONE = {
   todo: 'outline',
 } as const
 
-export default function HomePage() {
+export default async function HomePage() {
+  const navCounts = await getNavCounts()
+
   return (
     <>
       <Topbar title="Home" />

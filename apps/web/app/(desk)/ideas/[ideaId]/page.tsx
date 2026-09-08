@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { IdeasTable } from '@/components/ideas/ideas-table'
 import { IdeaInspector } from '@/components/inspector/idea-inspector'
 import { Topbar } from '@/components/nav/topbar'
-import { ideaById, ideas } from '@/lib/mock'
+import { getBoards, getIdea, getIdeas, getStatuses } from '@/lib/data'
 
 /**
  * An idea open in the inspector.
@@ -13,13 +13,18 @@ import { ideaById, ideas } from '@/lib/mock'
  */
 export async function generateMetadata({ params }: { params: Promise<{ ideaId: string }> }) {
   const { ideaId } = await params
-  const idea = ideaById(ideaId)
+  const idea = await getIdea(ideaId)
   return { title: idea ? `${idea.reference} ${idea.title} · Collega` : 'Collega' }
 }
 
 export default async function IdeaPage({ params }: { params: Promise<{ ideaId: string }> }) {
   const { ideaId } = await params
-  const idea = ideaById(ideaId)
+  const [idea, ideas, boards, statuses] = await Promise.all([
+    getIdea(ideaId),
+    getIdeas(),
+    getBoards(),
+    getStatuses(),
+  ])
   if (!idea) notFound()
 
   return (
@@ -33,7 +38,7 @@ export default async function IdeaPage({ params }: { params: Promise<{ ideaId: s
       />
       <div className="grid min-w-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px]">
         <main className="min-w-0 p-6">
-          <IdeasTable rows={ideas} selectedId={idea.id} />
+          <IdeasTable rows={ideas} boards={boards} statuses={statuses} selectedId={idea.id} />
         </main>
         <IdeaInspector idea={idea} closeHref="/ideas" />
       </div>

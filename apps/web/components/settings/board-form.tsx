@@ -13,6 +13,7 @@ import { InertForm } from '@/components/common/inert-form'
 import { Topbar } from '@/components/nav/topbar'
 import { RefusalPanel } from '@/components/settings/admin-only'
 import { SwimlanePicker } from '@/components/settings/swimlane-picker'
+import type { Status } from '@/lib/data'
 
 /**
  * Create and edit are the same form with different seed values, so they are the same component.
@@ -23,12 +24,15 @@ export function BoardForm({
   defaultName = '',
   userStatusMoves,
   swimlaneIds,
+  statuses,
   submitLabel,
   explainerHeading,
 }: {
   defaultName?: string
   userStatusMoves: boolean
   swimlaneIds: string[]
+  /** Drilled to `SwimlanePicker`, which is a client component and cannot read them itself. */
+  statuses: Status[]
   submitLabel: string
   explainerHeading: string
 }) {
@@ -71,7 +75,7 @@ export function BoardForm({
                 left-to-right order of the board&rsquo;s columns.
               </p>
             </div>
-            <SwimlanePicker selected={swimlaneIds} />
+            <SwimlanePicker selected={swimlaneIds} statuses={statuses} />
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Button type="submit">{submitLabel}</Button>

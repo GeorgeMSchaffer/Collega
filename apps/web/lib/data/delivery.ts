@@ -6,10 +6,10 @@
  * separation exists to prevent.
  */
 
-import * as fixture from '../mock.js'
-import { failIfRequested, resolve } from './latency.js'
+import * as fixture from '../mock'
+import { failIfRequested, resolve } from './latency'
 
-export type { DeliveryStatus, Effort, Issue, Outcome, Sprint } from '../mock.js'
+export type { DeliveryStatus, Effort, Issue, Outcome, Sprint } from '../mock'
 
 export async function getDeliveryStatuses(): Promise<fixture.DeliveryStatus[]> {
   failIfRequested('getDeliveryStatuses')

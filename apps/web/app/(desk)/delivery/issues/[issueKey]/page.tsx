@@ -2,19 +2,13 @@ import { Alert, Avatar, Button, buttonVariants, Denied, Dot, Marker } from '@col
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Topbar } from '@/components/nav/topbar'
-import {
-  currentUser,
-  deliveryAdminDenial,
-  deliveryStatusById,
-  EFFORT_COLORS,
-  issueByKey,
-  outcomeById,
-  sprintById,
-} from '@/lib/mock'
+import { getDeliveryStatus, getIssueByKey, getOutcome, getSprint } from '@/lib/data'
+import { EFFORT_COLORS } from '@/lib/display'
+import { currentUser, deliveryAdminDenial } from '@/lib/session'
 
 export async function generateMetadata({ params }: { params: Promise<{ issueKey: string }> }) {
   const { issueKey } = await params
-  const issue = issueByKey(issueKey)
+  const issue = await getIssueByKey(issueKey)
   return { title: issue ? `${issue.key} ${issue.title} · Collega` : 'Collega' }
 }
 
@@ -36,12 +30,14 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  */
 export default async function IssuePage({ params }: { params: Promise<{ issueKey: string }> }) {
   const { issueKey } = await params
-  const issue = issueByKey(issueKey)
+  const issue = await getIssueByKey(issueKey)
   if (!issue) notFound()
 
-  const status = deliveryStatusById(issue.deliveryStatusId)
-  const sprint = sprintById(issue.sprintId)
-  const outcome = outcomeById(issue.outcomeId)
+  const [status, sprint, outcome] = await Promise.all([
+    getDeliveryStatus(issue.deliveryStatusId),
+    getSprint(issue.sprintId),
+    getOutcome(issue.outcomeId),
+  ])
 
   return (
     <>

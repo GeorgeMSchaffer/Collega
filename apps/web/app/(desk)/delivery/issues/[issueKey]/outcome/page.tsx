@@ -4,19 +4,13 @@ import { notFound } from 'next/navigation'
 import { InertForm } from '@/components/common/inert-form'
 import { CloseOnEscape } from '@/components/inspector/close-on-escape'
 import { Topbar } from '@/components/nav/topbar'
-import {
-  currentUser,
-  deliveryAdminDenial,
-  EFFORT_COLORS,
-  issueByKey,
-  issuesForOutcome,
-  outcomeById,
-  outcomes,
-} from '@/lib/mock'
+import { getIssueByKey, getIssuesForOutcome, getOutcome, getOutcomes } from '@/lib/data'
+import { EFFORT_COLORS } from '@/lib/display'
+import { currentUser, deliveryAdminDenial } from '@/lib/session'
 
 export async function generateMetadata({ params }: { params: Promise<{ issueKey: string }> }) {
   const { issueKey } = await params
-  const issue = issueByKey(issueKey)
+  const issue = await getIssueByKey(issueKey)
   return { title: issue ? `Set outcome · ${issue.key} · Collega` : 'Collega' }
 }
 
@@ -37,10 +31,20 @@ export default async function SetOutcomePage({
   params: Promise<{ issueKey: string }>
 }) {
   const { issueKey } = await params
-  const issue = issueByKey(issueKey)
+  const issue = await getIssueByKey(issueKey)
   if (!issue) notFound()
 
-  const current = outcomeById(issue.outcomeId)
+  const [current, outcomes] = await Promise.all([getOutcome(issue.outcomeId), getOutcomes()])
+  // The per-outcome counts beside each radio; read together so they are one round trip apiece
+  // rather than one after another.
+  const counts = new Map(
+    await Promise.all(
+      outcomes.map(
+        async (outcome) =>
+          [outcome.id, (await getIssuesForOutcome(outcome.id)).length] as [string, number],
+      ),
+    ),
+  )
   const backHref = `/delivery/issues/${issue.key}`
 
   // Grouping an issue is administrator-only (SPEC/20-feature-issues-and-delivery.md): a Site Admin
@@ -120,7 +124,7 @@ export default async function SetOutcomePage({
               <legend className="sr-only">Outcome</legend>
               <div className="flex flex-col rounded-md border">
                 {outcomes.map((outcome) => {
-                  const count = issuesForOutcome(outcome.id).length
+                  const count = counts.get(outcome.id) ?? 0
                   return (
                     <div
                       key={outcome.id}

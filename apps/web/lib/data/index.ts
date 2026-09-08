@@ -12,7 +12,7 @@
  * **Identity does not live here** — see `lib/session.ts` for why it stays synchronous.
  */
 
-export * from './admin.js'
-export * from './boards.js'
-export * from './delivery.js'
-export * from './ideas.js'
+export * from './admin'
+export * from './boards'
+export * from './delivery'
+export * from './ideas'

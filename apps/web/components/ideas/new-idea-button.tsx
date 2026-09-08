@@ -1,5 +1,5 @@
 import { Button, Denied } from '@collega/design-system'
-import { currentUser, writeDenial } from '@/lib/mock'
+import { currentUser, writeDenial } from '@/lib/session'
 
 /**
  * "New idea", gated by role. A Site Admin sits outside every organization and a Read Only account

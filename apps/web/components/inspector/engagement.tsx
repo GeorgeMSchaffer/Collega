@@ -1,6 +1,6 @@
 import { Button, Denied } from '@collega/design-system'
 import { InertForm } from '@/components/common/inert-form'
-import { currentUser, engagementDenial } from '@/lib/mock'
+import { currentUser, engagementDenial } from '@/lib/session'
 
 /**
  * Upvote and comment controls.

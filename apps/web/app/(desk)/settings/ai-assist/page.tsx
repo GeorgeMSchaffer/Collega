@@ -13,7 +13,8 @@ import {
 import Link from 'next/link'
 import { InertForm } from '@/components/common/inert-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { aiAssist, currentUser, ideaTypes, SCOPE_STATEMENT_MAX } from '@/lib/mock'
+import { getAiAssist, getIdeaTypes, SCOPE_STATEMENT_MAX } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'AI Assist · Collega' }
 
@@ -59,7 +60,8 @@ function ActAsAMember() {
   )
 }
 
-function ScopeStatement({ org }: { org: string }) {
+async function ScopeStatement({ org }: { org: string }) {
+  const [aiAssist, ideaTypes] = await Promise.all([getAiAssist(), getIdeaTypes()])
   const inScope = ideaTypes.filter((type) => type.organizationId === 'acme-robotics')
 
   return (

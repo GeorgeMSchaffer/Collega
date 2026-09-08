@@ -1,16 +1,19 @@
 import { BoardForm, BoardRefusal } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { currentUser } from '@/lib/mock'
+import { getStatuses } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'New board · Collega' }
 
-export default function NewBoardPage() {
+export default async function NewBoardPage() {
   // A Site Admin passes `isAdministrator`, so the default gate would hand them a form whose save
   // is refused on every path. Branch first; a User or Read Only still falls through to the
   // administrators-only refusal `SettingsPage` owns.
   if (currentUser.role === 'SiteAdmin') {
     return <BoardRefusal title="New board" reading="board creation" />
   }
+
+  const statuses = await getStatuses()
 
   return (
     <SettingsPage
@@ -21,6 +24,7 @@ export default function NewBoardPage() {
       <BoardForm
         userStatusMoves={true}
         swimlaneIds={['new', 'review']}
+        statuses={statuses}
         submitLabel="Create board"
         explainerHeading="New board"
       />

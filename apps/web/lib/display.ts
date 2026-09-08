@@ -6,4 +6,4 @@
  * has a colour because comp Q says so, not because the API said so.
  */
 
-export { EFFORT_COLORS, PRIORITY_COLORS } from './mock.js'
+export { EFFORT_COLORS, PRIORITY_COLORS } from './mock'

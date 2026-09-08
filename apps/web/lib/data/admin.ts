@@ -7,8 +7,8 @@
  * disagreeing — they render side by side on the same screen.
  */
 
-import * as fixture from '../mock.js'
-import { failIfRequested, resolve } from './latency.js'
+import * as fixture from '../mock'
+import { failIfRequested, resolve } from './latency'
 
 export type {
   FieldDefinition,
@@ -20,14 +20,14 @@ export type {
   Profile,
   PromptVersion,
   UsageRow,
-} from '../mock.js'
+} from '../mock'
 export {
   compactTokens,
   DAILY_TOKEN_BUDGET,
   SCOPE_STATEMENT_MAX,
   SYSTEM_PROMPT_MAX,
   totalTokens,
-} from '../mock.js'
+} from '../mock'
 
 export async function getOrganizations(): Promise<fixture.Organization[]> {
   failIfRequested('getOrganizations')

@@ -1,9 +1,10 @@
 import { Avatar, Dot, Marker } from '@collega/design-system'
 import Link from 'next/link'
-import { EFFORT_COLORS, type Issue, outcomeById } from '@/lib/mock'
+import { getOutcome, type Issue } from '@/lib/data'
+import { EFFORT_COLORS } from '@/lib/display'
 
-export function IssueCard({ issue }: { issue: Issue }) {
-  const outcome = outcomeById(issue.outcomeId)
+export async function IssueCard({ issue }: { issue: Issue }) {
+  const outcome = await getOutcome(issue.outcomeId)
 
   return (
     <div className="mb-1.5 rounded-xl border bg-card p-3 shadow-sm hover:shadow-md">

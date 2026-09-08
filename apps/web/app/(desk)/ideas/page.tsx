@@ -3,11 +3,13 @@ import Link from 'next/link'
 import { IdeasTable } from '@/components/ideas/ideas-table'
 import { NewIdeaButton } from '@/components/ideas/new-idea-button'
 import { Topbar } from '@/components/nav/topbar'
-import { ideas } from '@/lib/mock'
+import { getBoards, getIdeas, getStatuses } from '@/lib/data'
 
 export const metadata = { title: 'Ideas · Collega' }
 
-export default function IdeasPage() {
+export default async function IdeasPage() {
+  const [ideas, boards, statuses] = await Promise.all([getIdeas(), getBoards(), getStatuses()])
+
   return (
     <>
       <Topbar
@@ -29,7 +31,7 @@ export default function IdeasPage() {
             {ideas.length} ideas across every board in this organization. Open one to inspect it.
           </p>
         </div>
-        <IdeasTable rows={ideas} />
+        <IdeasTable rows={ideas} boards={boards} statuses={statuses} />
       </main>
     </>
   )

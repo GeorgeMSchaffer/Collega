@@ -3,13 +3,13 @@ import Link from 'next/link'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { IssueCard } from '@/components/delivery/issue-card'
 import { Topbar } from '@/components/nav/topbar'
-import { activeSprint, deliveryStatuses, issuesInSprint } from '@/lib/mock'
+import { getActiveSprint, getDeliveryStatuses, getIssuesInSprint } from '@/lib/data'
 
 export const metadata = { title: 'Sprint board · Collega' }
 
-export default function SprintBoardPage() {
-  const sprint = activeSprint
-  const committed = sprint ? issuesInSprint(sprint.id) : []
+export default async function SprintBoardPage() {
+  const [sprint, deliveryStatuses] = await Promise.all([getActiveSprint(), getDeliveryStatuses()])
+  const committed = sprint ? await getIssuesInSprint(sprint.id) : []
 
   return (
     <>

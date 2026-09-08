@@ -1,11 +1,14 @@
 import { Badge, buttonVariants } from '@collega/design-system'
 import Link from 'next/link'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { boardAdmin, boardById, currentUser } from '@/lib/mock'
+import { getBoardAdmin, getBoards } from '@/lib/data'
+import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Boards · Collega' }
 
-export default function SettingsBoardsPage() {
+export default async function SettingsBoardsPage() {
+  const [boardAdmin, boards] = await Promise.all([getBoardAdmin(), getBoards()])
+
   // A Site Admin passes the administrator gate, so the branch has to be taken here rather than
   // left to `SettingsPage` - otherwise the one role with no organization gets the org-scoped screen.
   const siteAdmin = currentUser.role === 'SiteAdmin'
@@ -53,7 +56,7 @@ export default function SettingsBoardsPage() {
           </thead>
           <tbody>
             {boardAdmin.map((entry) => {
-              const name = boardById(entry.id)?.name ?? entry.id
+              const name = boards.find((board) => board.id === entry.id)?.name ?? entry.id
               return (
                 <tr key={entry.id} className="border-b last:border-0">
                   <td className="px-4 py-2.5">
