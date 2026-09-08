@@ -1,0 +1,53 @@
+name: CI
+
+# The repo's first automated check on a pull request. deploy-api.yml and deploy-client.yml are
+# push:main Azure workflows kept as a record of the cancelled Sprint 8 (SPEC/decisions.md
+# 2026-09-04) — they are not gates and nothing here depends on them.
+#
+# No dotnet step: src/Collega.* and tests/ are frozen (SPEC/decisions.md 2026-09-06) and nothing
+# in this workspace builds them. Slice F6 deletes them.
+
+on:
+  pull_request:
+  push:
+    branches: [dev, main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reads the pinned version from package.json "packageManager".
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Major only: package.json's engines field is a range (>=24.20.0), which
+          # node-version-file cannot pin to a build.
+          node-version: '24'
+          cache: pnpm
+
+      # packages/infrastructure's postinstall runs `prisma generate`, which reads the schema and
+      # does not need a reachable database.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # DATABASE_URL is deliberately NOT set here, and setting it would break this job rather
+      # than help it: packages/infrastructure has a suite guarded by skipIf(!DATABASE_URL) that
+      # expects a live Postgres. With the variable present it stops skipping and tries to
+      # connect. Anything needing a real database belongs in a separate job with a service
+      # container, not in this one.
+      #
+      # `check` is the whole gate — Biome, tsc across every package, and Vitest. It also runs
+      # tools/boundaries, which asserts the layer rules still FIRE by writing probe files and
+      # confirming Biome reports them. That matters more than a clean run: the first version of
+      # the config blocked `@collega/application` and silently allowed `@collega/application/ideas`,
+      # so it looked right and enforced nothing. A green lint alone would not have caught it.
+      - name: Lint, typecheck and test
+        run: pnpm check
