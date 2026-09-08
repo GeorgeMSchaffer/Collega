@@ -1,0 +1,1726 @@
+<!--
+  COMP K — "Material Workspace"
+  Direction: Material Design 3, implemented straight — no hedging toward any other
+  system. Library: hand-rolled MD3 tokens as plain CSS custom properties
+  (--md-sys-color-*, --md-sys-elevation-*), Material Symbols Outlined + Roboto from
+  Google Fonts. Vanilla JS, no build step, no framework.
+
+  Design decisions committed to, and why:
+
+  1. Real MD3 color ROLES, not a reskinned palette. Every surface picks from the
+     actual baseline tonal system (primary / on-primary / primary-container /
+     surface-container-{low,high,highest} / outline / outline-variant) and a full,
+     independently-toggleable light + dark scheme is defined on :root and
+     [data-theme="dark"]. Status/type/impact color-coding is layered ON TOP as an
+     accent (a tinted dot + border via color-mix()) rather than replacing the
+     on-surface text color, so every chip keeps guaranteed body-text contrast
+     instead of gambling contrast on 6 arbitrary hex swatches.
+
+  2. Navigation rail with a true rail-FAB, per the MD3 spec (not a floating corner
+     button bolted onto a sidebar). "New idea" lives at the top of the rail as the
+     single, unambiguous primary action app-wide; there is deliberately no second
+     FAB competing for attention in the content area.
+
+  3. Elevation is real, not decorative: five MD3 elevation levels (dual ambient +
+     key shadows) are defined once and applied by role — resting cards sit at
+     level 1, the app bar and rail at level 0/2, drawers/dialogs at level 3,
+     menus/snackbar at level 2 — and every interactive surface gets a genuine
+     state-layer (hover 8%, pressed/focus 12% overlay) plus a JS ripple on
+     pointerdown, so the "familiar enterprise app" argument is backed by behavior,
+     not just shape.
+
+  4. Status color-coding, chip semantics, and the reorderable statuses list all
+     honor color-plus-text (never color-only): every colored chip carries its own
+     visible label, and the drag-reorder in Statuses Admin has a full keyboard
+     equivalent (Move up / Move down icon buttons) since native HTML5 drag-and-
+     drop has no keyboard story of its own.
+
+  5. The AI draft strip is scoped to where MD3 already has a container for it —
+     an elevated tonal card inside the New Idea dialog and again inside the Idea
+     Detail drawer — using the "auto_awesome" glyph and a primary-container tint
+     so it reads as an assist affordance, not a fourth idea type.
+
+  Where this direction may not serve the product: MD3's rail + FAB + extensive
+  chip vocabulary is calibrated for consumer/mobile-first density, and against
+  Jira/Trello-trained enterprise users it can read as "Google Workspace" rather
+  than "our tool" — the tonal-container love (chips, cards, dialogs all drawing
+  from the same handful of surface-container steps) also flattens visual
+  hierarchy in dense views like the ideas table if not disciplined with outlines.
+  Ripples and state-layers are genuine delight on first use but are pure overhead
+  for a keyboard-and-mouse power user doing bulk triage all day.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Collega — Comp K: Material Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..600,0..1,-25..0&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================= MD3 TOKENS ============================= */
+:root{
+  color-scheme: light;
+  /* -- light scheme, MD3 baseline purple seed (#6750A4) -- */
+  --md-sys-color-primary: #6750A4;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #EADDFF;
+  --md-sys-color-on-primary-container: #21005D;
+  --md-sys-color-secondary: #625B71;
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-secondary-container: #E8DEF8;
+  --md-sys-color-on-secondary-container: #1D192B;
+  --md-sys-color-tertiary: #7D5260;
+  --md-sys-color-on-tertiary: #FFFFFF;
+  --md-sys-color-tertiary-container: #FFD8E4;
+  --md-sys-color-on-tertiary-container: #31111D;
+  --md-sys-color-error: #B3261E;
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-error-container: #F9DEDC;
+  --md-sys-color-on-error-container: #410E0B;
+  --md-sys-color-background: #FFFBFE;
+  --md-sys-color-on-background: #1C1B1F;
+  --md-sys-color-surface: #FFFBFE;
+  --md-sys-color-on-surface: #1C1B1F;
+  --md-sys-color-surface-variant: #E7E0EC;
+  --md-sys-color-on-surface-variant: #49454F;
+  --md-sys-color-outline: #79747E;
+  --md-sys-color-outline-variant: #CAC4D0;
+  --md-sys-color-surface-container-lowest: #FFFFFF;
+  --md-sys-color-surface-container-low: #F7F2FA;
+  --md-sys-color-surface-container: #F3EDF7;
+  --md-sys-color-surface-container-high: #ECE6F0;
+  --md-sys-color-surface-container-highest: #E6E0E9;
+  --md-sys-color-inverse-surface: #313033;
+  --md-sys-color-inverse-on-surface: #F4EFF4;
+  --md-sys-color-inverse-primary: #D0BCFF;
+  --md-sys-color-shadow: #000000;
+
+  --md-sys-elevation-0: none;
+  --md-sys-elevation-1: 0 1px 2px 0 rgba(0,0,0,.30), 0 1px 3px 1px rgba(0,0,0,.15);
+  --md-sys-elevation-2: 0 1px 2px 0 rgba(0,0,0,.30), 0 2px 6px 2px rgba(0,0,0,.15);
+  --md-sys-elevation-3: 0 1px 3px 0 rgba(0,0,0,.30), 0 4px 8px 3px rgba(0,0,0,.15);
+  --md-sys-elevation-4: 0 2px 3px 0 rgba(0,0,0,.30), 0 6px 10px 4px rgba(0,0,0,.15);
+  --md-sys-elevation-5: 0 4px 4px 0 rgba(0,0,0,.30), 0 8px 12px 6px rgba(0,0,0,.15);
+
+  --md-sys-shape-xs: 4px;
+  --md-sys-shape-sm: 8px;
+  --md-sys-shape-md: 12px;
+  --md-sys-shape-lg: 16px;
+  --md-sys-shape-xl: 28px;
+  --md-sys-shape-full: 999px;
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --md-sys-color-primary: #D0BCFF;
+  --md-sys-color-on-primary: #381E72;
+  --md-sys-color-primary-container: #4F378B;
+  --md-sys-color-on-primary-container: #EADDFF;
+  --md-sys-color-secondary: #CCC2DC;
+  --md-sys-color-on-secondary: #332D41;
+  --md-sys-color-secondary-container: #4A4458;
+  --md-sys-color-on-secondary-container: #E8DEF8;
+  --md-sys-color-tertiary: #EFB8C8;
+  --md-sys-color-on-tertiary: #492532;
+  --md-sys-color-tertiary-container: #633B48;
+  --md-sys-color-on-tertiary-container: #FFD8E4;
+  --md-sys-color-error: #F2B8B5;
+  --md-sys-color-on-error: #601410;
+  --md-sys-color-error-container: #8C1D18;
+  --md-sys-color-on-error-container: #F9DEDC;
+  --md-sys-color-background: #1C1B1F;
+  --md-sys-color-on-background: #E6E1E5;
+  --md-sys-color-surface: #1C1B1F;
+  --md-sys-color-on-surface: #E6E1E5;
+  --md-sys-color-surface-variant: #49454F;
+  --md-sys-color-on-surface-variant: #CAC4D0;
+  --md-sys-color-outline: #938F99;
+  --md-sys-color-outline-variant: #49454F;
+  --md-sys-color-surface-container-lowest: #0F0D13;
+  --md-sys-color-surface-container-low: #1D1B20;
+  --md-sys-color-surface-container: #211F26;
+  --md-sys-color-surface-container-high: #2B2930;
+  --md-sys-color-surface-container-highest: #36343B;
+  --md-sys-color-inverse-surface: #E6E1E5;
+  --md-sys-color-inverse-on-surface: #313033;
+  --md-sys-color-inverse-primary: #6750A4;
+  --md-sys-color-shadow: #000000;
+}
+
+/* ============================= RESET / BASE ============================= */
+*,*::before,*::after{ box-sizing: border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: 'Roboto', system-ui, sans-serif;
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color .2s ease, color .2s ease;
+}
+img{ max-width:100%; }
+button{ font-family: inherit; }
+.material-symbols-outlined{
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 22px; line-height:1; user-select:none; flex-shrink:0;
+}
+.material-symbols-outlined.filled{ font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
+
+/* type scale */
+.display-small{ font-size:2.25rem; line-height:2.75rem; font-weight:400; }
+.headline-small{ font-size:1.5rem; line-height:2rem; font-weight:400; }
+.title-large{ font-size:1.375rem; line-height:1.75rem; font-weight:500; }
+.title-medium{ font-size:1rem; line-height:1.5rem; font-weight:500; }
+.title-small{ font-size:.875rem; line-height:1.25rem; font-weight:500; }
+.body-large{ font-size:1rem; line-height:1.5rem; font-weight:400; }
+.body-medium{ font-size:.875rem; line-height:1.25rem; font-weight:400; }
+.body-small{ font-size:.75rem; line-height:1rem; font-weight:400; }
+.label-large{ font-size:.875rem; line-height:1.25rem; font-weight:500; letter-spacing:.01em; }
+.label-medium{ font-size:.75rem; line-height:1rem; font-weight:500; letter-spacing:.03em; }
+.label-small{ font-size:.6875rem; line-height:1rem; font-weight:500; letter-spacing:.03em; }
+
+/* focus visibility — kept loud on purpose, this app is mid accessibility paydown */
+:focus{ outline:none; }
+:focus-visible{
+  outline: 3px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+  z-index: 5;
+  position: relative;
+}
+
+.skip-link{
+  position:absolute; left:8px; top:-48px; z-index:1000;
+  background: var(--md-sys-color-inverse-surface); color: var(--md-sys-color-inverse-on-surface);
+  padding:12px 16px; border-radius: var(--md-sys-shape-sm); transition: top .15s ease;
+  text-decoration:none; font-weight:600;
+}
+.skip-link:focus{ top:8px; }
+
+.visually-hidden{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+/* ============================= STATE LAYER + RIPPLE ============================= */
+.state-layer{ position:relative; isolation:isolate; overflow:hidden; }
+.state-layer::before{
+  content:""; position:absolute; inset:0; background: currentColor; opacity:0;
+  transition: opacity .12s ease; pointer-events:none; border-radius: inherit;
+}
+.state-layer:hover::before{ opacity:.08; }
+.state-layer:active::before{ opacity:.12; }
+.state-layer:focus-visible::before{ opacity:.12; }
+.ripple-ink{
+  position:absolute; border-radius:50%; transform: scale(0); pointer-events:none;
+  background: currentColor; opacity:.18; animation: ripple-grow .55s ease-out forwards;
+}
+@keyframes ripple-grow{ to{ transform: scale(2.6); opacity:0; } }
+@media (prefers-reduced-motion: reduce){
+  .ripple-ink{ animation: none; display:none; }
+  *{ transition-duration: .001ms !important; animation-duration: .001ms !important; }
+}
+
+/* ============================= APP SHELL ============================= */
+#app{ display:flex; min-height:100vh; }
+
+/* ---- Navigation rail ---- */
+.rail{
+  width:88px; flex-shrink:0; background: var(--md-sys-color-surface-container-low);
+  border-right:1px solid var(--md-sys-color-outline-variant);
+  display:flex; flex-direction:column; align-items:center; padding:16px 8px; gap:16px;
+}
+.rail-fab{
+  width:56px; height:56px; border-radius: var(--md-sys-shape-lg); border:none; cursor:pointer;
+  background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+  display:flex; align-items:center; justify-content:center; box-shadow: var(--md-sys-elevation-3);
+}
+.rail-fab .material-symbols-outlined{ font-size:26px; }
+.rail-fab:hover{ box-shadow: var(--md-sys-elevation-4); }
+.rail-nav{ display:flex; flex-direction:column; gap:4px; width:100%; align-items:center; margin-top:8px; }
+.rail-item{
+  width:64px; border:none; background:none; cursor:pointer; padding:6px 0 8px;
+  display:flex; flex-direction:column; align-items:center; gap:4px; border-radius: var(--md-sys-shape-lg);
+  color: var(--md-sys-color-on-surface-variant);
+}
+.rail-item .rail-item__indicator{
+  width:56px; height:32px; border-radius: var(--md-sys-shape-full); display:flex; align-items:center; justify-content:center;
+}
+.rail-item[aria-current="page"] .rail-item__indicator{ background: var(--md-sys-color-secondary-container); }
+.rail-item[aria-current="page"]{ color: var(--md-sys-color-on-surface); }
+.rail-item[aria-current="page"] .material-symbols-outlined{ font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24; }
+.rail-spacer{ flex:1; }
+.rail-theme-toggle{
+  width:48px; height:48px; border-radius:50%; border:1px solid var(--md-sys-color-outline-variant); background:var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant); cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+
+/* ---- App column ---- */
+.app-column{ flex:1; min-width:0; display:flex; flex-direction:column; }
+
+.topbar{
+  height:64px; flex-shrink:0; display:flex; align-items:center; gap:12px; padding:0 20px;
+  background: var(--md-sys-color-surface); border-bottom:1px solid var(--md-sys-color-outline-variant);
+  position:relative; z-index:20;
+}
+.board-switcher{
+  display:flex; align-items:center; gap:8px; border:none; background:none; cursor:pointer;
+  padding:8px 12px; border-radius: var(--md-sys-shape-sm); color: var(--md-sys-color-on-surface);
+}
+.topbar-title{ color: var(--md-sys-color-on-surface); margin:0; }
+.topbar-sub{ color: var(--md-sys-color-on-surface-variant); }
+.topbar-spacer{ flex:1; }
+.icon-btn{
+  width:40px; height:40px; border-radius:50%; border:none; background:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; color: var(--md-sys-color-on-surface-variant);
+}
+.avatar{
+  width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:.75rem; color: var(--md-sys-color-on-primary-container); background: var(--md-sys-color-primary-container);
+  border:none; cursor:pointer; flex-shrink:0;
+}
+
+/* view-as banner */
+.viewas-banner{
+  display:flex; align-items:center; gap:10px; padding:10px 20px;
+  background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container);
+  border-bottom:1px solid var(--md-sys-color-outline-variant);
+}
+.viewas-banner[hidden]{ display:none; }
+.viewas-banner .btn{ margin-left:auto; }
+
+main{ flex:1; overflow:auto; padding:24px; position:relative; }
+.view[hidden]{ display:none; }
+
+/* ============================= BUTTONS ============================= */
+.btn{
+  border-radius: var(--md-sys-shape-full); border:none; cursor:pointer; padding:10px 20px;
+  font-family:inherit; font-size:.875rem; font-weight:500; letter-spacing:.01em;
+  display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+}
+.btn .material-symbols-outlined{ font-size:18px; }
+.btn--filled{ background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+.btn--filled:hover{ box-shadow: var(--md-sys-elevation-1); }
+.btn--tonal{ background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.btn--outlined{ background:none; color: var(--md-sys-color-primary); border:1px solid var(--md-sys-color-outline); }
+.btn--text{ background:none; color: var(--md-sys-color-primary); padding:10px 12px; }
+.btn--danger{ background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.btn:disabled{ opacity:.38; cursor:not-allowed; }
+
+/* ============================= CHIPS ============================= */
+.chip{
+  display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 12px;
+  border-radius: var(--md-sys-shape-sm); border:1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface-variant);
+  font-size:.8125rem; font-weight:500; cursor:pointer;
+}
+.chip .material-symbols-outlined{ font-size:16px; }
+.chip[aria-pressed="true"]{
+  background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+  border-color: transparent;
+}
+.chip--static{ cursor:default; }
+.dot-chip{
+  display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius: var(--md-sys-shape-sm);
+  font-size:.75rem; font-weight:500; color: var(--md-sys-color-on-surface);
+  background: color-mix(in srgb, var(--c) 14%, var(--md-sys-color-surface-container-high));
+  border:1px solid color-mix(in srgb, var(--c) 45%, var(--md-sys-color-outline-variant));
+}
+.dot-chip__dot{ width:8px; height:8px; border-radius:50%; background: var(--c); flex-shrink:0; }
+.tag-chip{
+  display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius: var(--md-sys-shape-sm);
+  font-size:.75rem; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant);
+  border:1px solid var(--md-sys-color-outline-variant);
+}
+.tag-chip button{ border:none; background:none; cursor:pointer; color:inherit; display:flex; padding:0; }
+.tag-chip button .material-symbols-outlined{ font-size:14px; }
+
+/* ============================= SEGMENTED BUTTONS ============================= */
+.segmented{ display:inline-flex; border:1px solid var(--md-sys-color-outline); border-radius: var(--md-sys-shape-full); overflow:hidden; }
+.segmented button{
+  border:none; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface);
+  padding:8px 16px; font-size:.8125rem; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;
+  border-right:1px solid var(--md-sys-color-outline); position:relative;
+}
+.segmented button:last-child{ border-right:none; }
+.segmented button .material-symbols-outlined{ font-size:16px; }
+.segmented button[aria-checked="true"]{ background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+
+/* ============================= SWITCH ============================= */
+.switch{ position:relative; width:52px; height:32px; flex-shrink:0; }
+.switch input{ position:absolute; opacity:0; inset:0; margin:0; cursor:pointer; }
+.switch-track{
+  position:absolute; inset:0; border-radius: var(--md-sys-shape-full); background: var(--md-sys-color-surface-container-highest);
+  border:2px solid var(--md-sys-color-outline); transition: background .15s ease;
+}
+.switch-thumb{
+  position:absolute; top:6px; left:6px; width:16px; height:16px; border-radius:50%;
+  background: var(--md-sys-color-outline); transition: transform .15s ease, background .15s ease, width .15s, height .15s, top .15s, left .15s;
+}
+.switch input:checked + .switch-track{ background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); }
+.switch input:checked + .switch-track + .switch-thumb{ transform: translateX(20px); background: var(--md-sys-color-on-primary); width:22px; height:22px; top:3px; left:3px; }
+.switch input:focus-visible ~ .switch-thumb{ outline:3px solid var(--md-sys-color-primary); outline-offset:2px; }
+
+/* ============================= CARDS ============================= */
+.md-card{
+  background: var(--md-sys-color-surface-container-low); border-radius: var(--md-sys-shape-md);
+  box-shadow: var(--md-sys-elevation-1);
+}
+
+/* ============================= BOARD ============================= */
+.board-scroll{ display:flex; gap:16px; overflow-x:auto; padding-bottom:8px; align-items:flex-start; }
+.board-column{
+  flex:0 0 300px; background: var(--md-sys-color-surface-container); border-radius: var(--md-sys-shape-lg);
+  display:flex; flex-direction:column; max-height: calc(100vh - 210px);
+}
+.board-column__head{ display:flex; align-items:center; gap:8px; padding:14px 14px 10px; }
+.board-column__dot{ width:10px; height:10px; border-radius:50%; background:var(--c); flex-shrink:0; }
+.board-column__count{
+  margin-left:auto; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant);
+  font-size:.6875rem; font-weight:700; padding:2px 8px; border-radius: var(--md-sys-shape-full);
+}
+.board-column__body{ padding:0 10px 12px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; flex:1; }
+.board-column__empty{ margin:8px 4px; padding:20px 12px; text-align:center; color: var(--md-sys-color-on-surface-variant); border:1px dashed var(--md-sys-color-outline-variant); border-radius: var(--md-sys-shape-md); font-size:.8125rem; }
+
+.idea-card{
+  text-align:left; width:100%; border:none; cursor:pointer; padding:14px; border-radius: var(--md-sys-shape-md);
+  background: var(--md-sys-color-surface-container-lowest); box-shadow: var(--md-sys-elevation-1);
+  display:flex; flex-direction:column; gap:10px; color: var(--md-sys-color-on-surface);
+}
+.idea-card:hover{ box-shadow: var(--md-sys-elevation-3); }
+.idea-card__top{ display:flex; align-items:flex-start; gap:8px; }
+.idea-card__title{ font-size:.875rem; font-weight:500; line-height:1.3rem; flex:1; }
+.idea-card__meta{ display:flex; gap:6px; flex-wrap:wrap; }
+.idea-card__tags{ display:flex; gap:6px; flex-wrap:wrap; }
+.idea-card__bottom{ display:flex; align-items:center; gap:14px; }
+.idea-card__stat{ display:flex; align-items:center; gap:4px; color: var(--md-sys-color-on-surface-variant); font-size:.75rem; font-weight:500; }
+.idea-card__stat .material-symbols-outlined{ font-size:16px; }
+.idea-card__stat.upvoted{ color: var(--md-sys-color-primary); }
+.idea-card__owner{ margin-left:auto; }
+.owner-avatar{
+  width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:.6875rem; font-weight:700; color: var(--md-sys-color-on-tertiary-container); background: var(--md-sys-color-tertiary-container);
+}
+
+/* ============================= TOOLBAR / FILTERS ============================= */
+.toolbar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:18px; }
+.search-field{
+  display:flex; align-items:center; gap:8px; background: var(--md-sys-color-surface-container-high);
+  border-radius: var(--md-sys-shape-full); padding:0 14px; height:44px; flex:0 1 320px; color: var(--md-sys-color-on-surface-variant);
+}
+.search-field input{
+  border:none; background:none; outline:none; font-size:.875rem; color: var(--md-sys-color-on-surface); width:100%; font-family:inherit;
+}
+.select-field{
+  height:40px; border-radius: var(--md-sys-shape-xs); border:1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); padding:0 32px 0 12px; font-size:.8125rem; font-family:inherit;
+  appearance:none; cursor:pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'><path fill='%2349454F' d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat:no-repeat; background-position:right 8px center;
+}
+.filter-group{ display:flex; gap:6px; flex-wrap:wrap; }
+.toolbar-divider{ width:1px; align-self:stretch; background: var(--md-sys-color-outline-variant); margin:0 4px; }
+
+/* ============================= TABLE ============================= */
+.table-wrap{ background: var(--md-sys-color-surface-container-low); border-radius: var(--md-sys-shape-lg); overflow:hidden; box-shadow: var(--md-sys-elevation-1); }
+table{ width:100%; border-collapse:collapse; }
+thead th{
+  text-align:left; padding:14px 16px; font-size:.6875rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+  color: var(--md-sys-color-on-surface-variant); border-bottom:1px solid var(--md-sys-color-outline-variant); white-space:nowrap;
+}
+th.sortable{ cursor:pointer; user-select:none; }
+th.sortable button{ background:none; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:4px; font:inherit; color:inherit; padding:2px; }
+th.sortable .material-symbols-outlined{ font-size:16px; opacity:0; }
+th.sortable[aria-sort="ascending"] .material-symbols-outlined,
+th.sortable[aria-sort="descending"] .material-symbols-outlined{ opacity:1; }
+tbody tr{ border-bottom:1px solid var(--md-sys-color-outline-variant); cursor:pointer; }
+tbody tr:last-child{ border-bottom:none; }
+tbody tr:hover{ background: var(--md-sys-color-surface-container-high); }
+tbody td{ padding:14px 16px; font-size:.8125rem; color: var(--md-sys-color-on-surface); vertical-align:middle; }
+.table-wrap.compact tbody td{ padding:8px 16px; }
+.table-wrap.compact thead th{ padding:8px 16px; }
+.cell-title{ font-weight:500; max-width:280px; }
+.cell-tags{ display:flex; gap:4px; flex-wrap:wrap; max-width:180px; }
+.cell-num{ font-variant-numeric: tabular-nums; }
+.empty-row td{ text-align:center; padding:48px; color: var(--md-sys-color-on-surface-variant); }
+
+/* ============================= STATUSES ADMIN ============================= */
+.status-row{
+  display:flex; align-items:center; gap:12px; padding:12px 16px; background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-md); box-shadow: var(--md-sys-elevation-1); margin-bottom:10px;
+}
+.status-row.dragging{ opacity:.4; }
+.status-row.drag-over{ outline:2px dashed var(--md-sys-color-primary); outline-offset:2px; }
+.drag-handle{ cursor:grab; color: var(--md-sys-color-on-surface-variant); display:flex; }
+.reorder-btns{ display:flex; flex-direction:column; }
+.reorder-btns button{ width:24px; height:20px; border:none; background:none; cursor:pointer; color: var(--md-sys-color-on-surface-variant); display:flex; align-items:center; justify-content:center; }
+.reorder-btns .material-symbols-outlined{ font-size:16px; }
+.swatch-label{ width:32px; height:32px; border-radius:50%; cursor:pointer; border:2px solid var(--md-sys-color-outline-variant); display:inline-block; position:relative; }
+.swatch-label input[type="color"]{ position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; padding:0; border:none; }
+.status-name-input{
+  border:1px solid transparent; background:none; font: inherit; font-weight:500; font-size:.9375rem; color: var(--md-sys-color-on-surface);
+  padding:6px 8px; border-radius: var(--md-sys-shape-xs); width:180px;
+}
+.status-name-input:hover{ border-color: var(--md-sys-color-outline-variant); }
+.status-count{ color: var(--md-sys-color-on-surface-variant); font-size:.75rem; white-space:nowrap; }
+.default-badge{ display:flex; align-items:center; gap:4px; font-size:.75rem; font-weight:600; color: var(--md-sys-color-primary); }
+.default-badge .material-symbols-outlined{ font-size:16px; }
+.status-row-spacer{ flex:1; }
+
+/* ============================= DRAWER (Idea detail) ============================= */
+.scrim{ position:fixed; inset:0; background: rgba(0,0,0,.4); z-index:90; opacity:0; pointer-events:none; transition: opacity .18s ease; }
+.scrim.open{ opacity:1; pointer-events:auto; }
+.drawer{
+  position:fixed; top:0; right:0; bottom:0; width:480px; max-width:92vw; background: var(--md-sys-color-surface-container-lowest);
+  box-shadow: var(--md-sys-elevation-5); z-index:91; transform: translateX(100%); transition: transform .22s ease;
+  display:flex; flex-direction:column;
+}
+.drawer.open{ transform: translateX(0); }
+.drawer__head{ display:flex; align-items:flex-start; gap:8px; padding:16px 12px 16px 20px; border-bottom:1px solid var(--md-sys-color-outline-variant); }
+.drawer__body{ padding:20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:22px; }
+.field-label{ display:block; font-size:.75rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color: var(--md-sys-color-on-surface-variant); margin-bottom:8px; }
+.drawer-title-input{
+  font-size:1.25rem; font-weight:500; width:100%; border:1px solid transparent; background:none; color:var(--md-sys-color-on-surface);
+  font-family:inherit; padding:4px 6px; border-radius: var(--md-sys-shape-xs);
+}
+.drawer-title-input.editing{ border-color: var(--md-sys-color-outline); background: var(--md-sys-color-surface); }
+textarea.md-textarea, input.md-input{
+  width:100%; border:1px solid var(--md-sys-color-outline); border-radius: var(--md-sys-shape-xs); padding:10px 12px;
+  font-family:inherit; font-size:.875rem; color: var(--md-sys-color-on-surface); background: var(--md-sys-color-surface); resize:vertical;
+}
+textarea.md-textarea:focus, input.md-input:focus{ border-color: var(--md-sys-color-primary); border-width:2px; padding:9px 11px; }
+.meta-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.ai-strip{
+  display:flex; gap:10px; padding:12px; border-radius: var(--md-sys-shape-md); background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container); align-items:flex-start;
+}
+.ai-strip .material-symbols-outlined{ color: var(--md-sys-color-primary); }
+.ai-strip__actions{ display:flex; gap:8px; margin-top:8px; }
+.upvote-btn{
+  display:inline-flex; align-items:center; gap:6px; border-radius: var(--md-sys-shape-full); border:1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); padding:8px 16px; cursor:pointer; font-weight:700; font-size:.875rem;
+}
+.upvote-btn[aria-pressed="true"]{ background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border-color:transparent; }
+.comment{ display:flex; gap:10px; margin-bottom:16px; }
+.comment__avatar{ width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.6875rem; font-weight:700; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.comment__body{ background: var(--md-sys-color-surface-container); border-radius: var(--md-sys-shape-md); padding:10px 12px; flex:1; }
+.comment__meta{ display:flex; gap:8px; align-items:baseline; margin-bottom:2px; }
+.comment__author{ font-weight:600; font-size:.8125rem; }
+.comment__time{ color: var(--md-sys-color-on-surface-variant); font-size:.75rem; }
+.comment-list{ max-height:280px; overflow-y:auto; padding-right:4px; margin-bottom:12px; }
+.activity-item{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; font-size:.8125rem; color: var(--md-sys-color-on-surface-variant); }
+.activity-item .material-symbols-outlined{ font-size:18px; margin-top:1px; }
+.drawer-section-title{ display:flex; align-items:center; gap:8px; margin:0 0 4px; }
+
+/* ============================= DIALOGS ============================= */
+.dialog{
+  position:fixed; top:50%; left:50%; transform: translate(-50%,-48%); width:480px; max-width:92vw; max-height:88vh;
+  background: var(--md-sys-color-surface-container-high); border-radius: var(--md-sys-shape-xl); box-shadow: var(--md-sys-elevation-5);
+  z-index:101; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition: opacity .16s ease, transform .16s ease;
+}
+.dialog.open{ opacity:1; pointer-events:auto; transform: translate(-50%,-50%); }
+.dialog__head{ padding:24px 24px 12px; }
+.dialog__body{ padding:0 24px 12px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
+.dialog__actions{ padding:16px 24px 20px; display:flex; justify-content:flex-end; gap:8px; }
+.dialog-scrim{ position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:100; opacity:0; pointer-events:none; transition:opacity .16s ease; }
+.dialog-scrim.open{ opacity:1; pointer-events:auto; }
+
+/* ============================= SNACKBAR ============================= */
+#snackbar-region{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:200; display:flex; flex-direction:column; gap:8px; align-items:center; }
+.snackbar{
+  display:flex; align-items:center; gap:16px; background: var(--md-sys-color-inverse-surface); color: var(--md-sys-color-inverse-on-surface);
+  padding:14px 16px 14px 20px; border-radius: var(--md-sys-shape-xs); box-shadow: var(--md-sys-elevation-3); font-size:.875rem;
+  animation: snackbar-in .18s ease;
+}
+@keyframes snackbar-in{ from{ opacity:0; transform: translateY(12px);} to{ opacity:1; transform:translateY(0);} }
+.snackbar button{ background:none; border:none; color: var(--md-sys-color-inverse-primary); font-weight:700; cursor:pointer; padding:4px 8px; font-size:.8125rem; }
+
+/* ============================= LOGIN ============================= */
+.login-wrap{ min-height: calc(100vh - 300px); display:flex; align-items:center; justify-content:center; }
+.login-card{ width:400px; max-width:92vw; padding:32px; display:flex; flex-direction:column; gap:18px; }
+.login-logo{ display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+.login-logo .material-symbols-outlined{ font-size:32px; color: var(--md-sys-color-primary); }
+.field-wrap{ display:flex; flex-direction:column; gap:6px; }
+.password-field{ position:relative; }
+.password-field .icon-btn{ position:absolute; right:2px; top:2px; }
+.field-error{ color: var(--md-sys-color-error); font-size:.75rem; display:flex; align-items:center; gap:4px; }
+.lockout-banner{
+  display:flex; gap:10px; padding:12px; border-radius: var(--md-sys-shape-md); background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container); font-size:.8125rem; align-items:flex-start;
+}
+.hint-text{ color: var(--md-sys-color-on-surface-variant); font-size:.75rem; display:flex; gap:6px; align-items:flex-start; }
+.hint-text .material-symbols-outlined{ font-size:16px; }
+
+/* ============================= FAB (contextual, board/list) ============================= */
+.fab-extended{
+  position:fixed; right:32px; bottom:32px; z-index:15; display:none; align-items:center; gap:10px;
+  border:none; border-radius: var(--md-sys-shape-lg); background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container); padding:16px 24px 16px 20px; box-shadow: var(--md-sys-elevation-3);
+  font-size:.875rem; font-weight:600; cursor:pointer;
+}
+.fab-extended.show{ display:inline-flex; }
+.fab-extended:hover{ box-shadow: var(--md-sys-elevation-4); }
+
+/* ============================= UTIL ============================= */
+.section-head{ display:flex; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+.section-head-actions{ margin-left:auto; }
+.stack{ display:flex; flex-direction:column; gap:6px; }
+.row{ display:flex; align-items:center; gap:8px; }
+.custom-field-preview{ background: var(--md-sys-color-surface-container); border-radius: var(--md-sys-shape-md); padding:12px 14px; font-size:.8125rem; }
+.custom-field-preview .field-label{ margin-bottom:4px; }
+
+@media (max-width: 900px){
+  .rail{ width:72px; }
+  .meta-grid{ grid-template-columns:1fr; }
+  .drawer{ width:100%; max-width:100%; }
+}
+@media (max-width: 768px){
+  .rail-item .label-small{ display:none; }
+  .rail{ width:64px; }
+  main{ padding:16px; }
+  .board-column{ flex-basis:82vw; }
+  .fab-extended span.fab-label{ display:none; }
+  .fab-extended{ border-radius:50%; padding:16px; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<div id="app">
+  <!-- ===================== NAV RAIL ===================== -->
+  <nav class="rail" aria-label="Primary">
+    <button class="rail-fab ripple" id="railFab" aria-haspopup="dialog">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      <span class="visually-hidden">New idea</span>
+    </button>
+    <div class="rail-nav" role="tablist" aria-label="Surfaces">
+      <button class="rail-item ripple" data-view="board" aria-current="page">
+        <span class="rail-item__indicator"><span class="material-symbols-outlined filled" aria-hidden="true">view_kanban</span></span>
+        <span class="label-small">Board</span>
+      </button>
+      <button class="rail-item ripple" data-view="list">
+        <span class="rail-item__indicator"><span class="material-symbols-outlined" aria-hidden="true">list_alt</span></span>
+        <span class="label-small">Ideas</span>
+      </button>
+      <button class="rail-item ripple" data-view="statuses">
+        <span class="rail-item__indicator"><span class="material-symbols-outlined" aria-hidden="true">sell</span></span>
+        <span class="label-small">Statuses</span>
+      </button>
+      <button class="rail-item ripple" data-view="login">
+        <span class="rail-item__indicator"><span class="material-symbols-outlined" aria-hidden="true">login</span></span>
+        <span class="label-small">Login</span>
+      </button>
+    </div>
+    <div class="rail-spacer"></div>
+    <button class="rail-theme-toggle ripple" id="themeToggle" aria-label="Switch to dark theme" aria-pressed="false">
+      <span class="material-symbols-outlined" id="themeIcon" aria-hidden="true">dark_mode</span>
+    </button>
+  </nav>
+
+  <!-- ===================== APP COLUMN ===================== -->
+  <div class="app-column">
+    <header class="topbar">
+      <button class="board-switcher state-layer ripple" id="boardSwitcherBtn" aria-haspopup="menu" aria-expanded="false">
+        <span class="material-symbols-outlined" aria-hidden="true">view_kanban</span>
+        <span class="title-medium" id="boardSwitcherLabel">Product Ideas</span>
+        <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
+      </button>
+      <span class="body-small topbar-sub" id="orgLabel">Northwind Labs</span>
+      <div id="boardMenu" class="md-card" role="menu" aria-label="Switch board" hidden
+           style="position:absolute; top:56px; left:20px; z-index:30; min-width:220px; padding:8px; box-shadow: var(--md-sys-elevation-2);">
+      </div>
+      <div class="topbar-spacer"></div>
+      <button class="icon-btn state-layer ripple" id="userMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu, signed in as Ada Okafor">
+        <span class="avatar" aria-hidden="true">AO</span>
+      </button>
+      <div id="userMenu" class="md-card" role="menu" aria-label="Account menu" hidden
+           style="position:absolute; top:56px; right:20px; z-index:30; min-width:280px; padding:8px; box-shadow: var(--md-sys-elevation-2);">
+      </div>
+    </header>
+
+    <div class="viewas-banner" id="viewAsBanner" hidden role="status">
+      <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+      <span class="body-medium">Site Admin view — you are viewing Northwind Labs as <strong>Ben Torres (User)</strong>.</span>
+      <button class="btn btn--outlined" id="exitViewAsBtn" style="border-color: var(--md-sys-color-on-tertiary-container); color: var(--md-sys-color-on-tertiary-container);">Exit View As</button>
+    </div>
+
+    <main id="main">
+
+      <!-- ===================== BOARD VIEW ===================== -->
+      <section class="view" id="view-board" aria-labelledby="boardHeading">
+        <div class="section-head">
+          <h1 class="title-large" id="boardHeading" style="margin:0;">Board</h1>
+          <span class="body-small" style="color:var(--md-sys-color-on-surface-variant);">Swimlanes by status</span>
+        </div>
+        <div class="board-scroll" id="boardScroll" role="list" aria-label="Idea board columns"></div>
+      </section>
+
+      <!-- ===================== IDEAS LIST VIEW ===================== -->
+      <section class="view" id="view-list" hidden aria-labelledby="listHeading">
+        <div class="section-head">
+          <h1 class="title-large" id="listHeading" style="margin:0;">Ideas</h1>
+        </div>
+        <div class="toolbar">
+          <div class="search-field">
+            <span class="material-symbols-outlined" aria-hidden="true">search</span>
+            <label for="searchInput" class="visually-hidden">Search ideas by title</label>
+            <input type="search" id="searchInput" placeholder="Search ideas…" />
+          </div>
+          <select class="select-field" id="typeFilter" aria-label="Filter by idea type">
+            <option value="all">All types</option>
+            <option value="Feature">Feature</option>
+            <option value="Bug">Bug</option>
+            <option value="Improvement">Improvement</option>
+            <option value="Research">Research</option>
+          </select>
+          <div class="toolbar-divider"></div>
+          <div class="filter-group" id="statusFilterGroup" aria-label="Filter by status"></div>
+          <div class="toolbar-divider"></div>
+          <div class="filter-group" id="tagFilterGroup" aria-label="Filter by tag"></div>
+          <button class="btn btn--text" id="clearFiltersBtn">Clear filters</button>
+          <div class="section-head-actions">
+            <div class="segmented" role="radiogroup" aria-label="Row density" id="densityGroup">
+              <button role="radio" aria-checked="true" data-density="comfortable"><span class="material-symbols-outlined" aria-hidden="true">density_medium</span>Comfortable</button>
+              <button role="radio" aria-checked="false" data-density="compact"><span class="material-symbols-outlined" aria-hidden="true">density_small</span>Compact</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap" id="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable" data-sort="title" aria-sort="none"><button>Title <span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button></th>
+                <th>Type</th>
+                <th class="sortable" data-sort="impact" aria-sort="none"><button>Impact <span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button></th>
+                <th>Status</th>
+                <th class="sortable" data-sort="upvotes" aria-sort="descending"><button>Upvotes <span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></button></th>
+                <th class="sortable" data-sort="comments" aria-sort="none"><button>Comments <span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button></th>
+                <th>Tags</th>
+                <th>Owner</th>
+              </tr>
+            </thead>
+            <tbody id="ideasTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== STATUSES ADMIN VIEW ===================== -->
+      <section class="view" id="view-statuses" hidden aria-labelledby="statusesHeading">
+        <div class="section-head">
+          <h1 class="title-large" id="statusesHeading" style="margin:0;">Statuses</h1>
+          <span class="body-small" style="color:var(--md-sys-color-on-surface-variant);">Drag, or use the arrows, to reorder. Order shown here sets the board's swimlane order.</span>
+          <div class="section-head-actions">
+            <button class="btn btn--tonal ripple" id="addStatusBtn"><span class="material-symbols-outlined" aria-hidden="true">add</span>Add status</button>
+          </div>
+        </div>
+        <div id="statusesList" role="list" aria-label="Statuses, in board order" style="max-width:640px;"></div>
+      </section>
+
+      <!-- ===================== LOGIN VIEW ===================== -->
+      <section class="view" id="view-login" hidden aria-labelledby="loginHeading">
+        <div class="login-wrap">
+          <form class="md-card login-card" id="loginForm" novalidate>
+            <div class="login-logo">
+              <span class="material-symbols-outlined" aria-hidden="true">hub</span>
+              <span class="title-large">Collega</span>
+            </div>
+            <h2 class="headline-small" id="loginHeading" style="margin:0;">Sign in</h2>
+            <p class="body-medium" style="margin:0; color:var(--md-sys-color-on-surface-variant);">Northwind Labs workspace</p>
+
+            <div id="lockoutBanner" class="lockout-banner" hidden role="alert">
+              <span class="material-symbols-outlined" aria-hidden="true">lock_clock</span>
+              <span>Too many failed attempts. This account is temporarily locked for 15 minutes. <button type="button" id="resetDemoBtn" class="btn btn--text" style="padding:2px 4px; height:auto; color:inherit; text-decoration:underline;">Reset demo</button></span>
+            </div>
+
+            <div class="field-wrap">
+              <label class="label-large" for="loginEmail">Email</label>
+              <input class="md-input" type="email" id="loginEmail" autocomplete="username" value="ada@northwindlabs.com" />
+            </div>
+            <div class="field-wrap">
+              <label class="label-large" for="loginPassword">Password</label>
+              <div class="password-field">
+                <input class="md-input" type="password" id="loginPassword" autocomplete="current-password" style="padding-right:44px;" />
+                <button type="button" class="icon-btn" id="togglePasswordBtn" aria-pressed="false" aria-label="Show password">
+                  <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                </button>
+              </div>
+              <div id="loginError" class="field-error" hidden><span class="material-symbols-outlined" aria-hidden="true" style="font-size:14px;">error</span><span></span></div>
+            </div>
+            <button type="submit" class="btn btn--filled ripple" id="loginSubmitBtn" style="justify-content:center;">Sign in</button>
+            <button type="button" class="btn btn--text" style="align-self:center;">Forgot password?</button>
+            <p class="hint-text"><span class="material-symbols-outlined" aria-hidden="true">info</span>Try the seeded password <strong>&nbsp;password&nbsp;</strong>, or enter anything else three times to see the lockout state.</p>
+          </form>
+        </div>
+      </section>
+
+    </main>
+    <button class="fab-extended ripple" id="fabExtended">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      <span class="fab-label">New idea</span>
+    </button>
+  </div>
+</div>
+
+<!-- ===================== IDEA DETAIL DRAWER ===================== -->
+<div class="scrim" id="drawerScrim"></div>
+<aside class="drawer" id="ideaDrawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitleHeading" hidden>
+  <div class="drawer__head">
+    <div style="flex:1; min-width:0;">
+      <div class="row" style="margin-bottom:6px;">
+        <span class="label-small" id="drawerIdLabel" style="color:var(--md-sys-color-on-surface-variant);"></span>
+        <span class="chip chip--static" id="drawerAiBadge" hidden style="height:24px; padding:0 8px; background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); border:none;">
+          <span class="material-symbols-outlined" aria-hidden="true" style="font-size:14px;">auto_awesome</span>AI-assisted
+        </span>
+      </div>
+      <h2 class="visually-hidden" id="drawerTitleHeading">Idea detail</h2>
+      <input class="drawer-title-input" id="drawerTitleInput" readonly />
+    </div>
+    <button class="icon-btn state-layer ripple" id="drawerEditTitleBtn" aria-label="Edit title" aria-pressed="false"><span class="material-symbols-outlined" aria-hidden="true">edit</span></button>
+    <button class="icon-btn state-layer ripple" id="drawerCloseBtn" aria-label="Close idea detail"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+  </div>
+  <div class="drawer__body" id="drawerBody">
+    <!-- populated by JS -->
+  </div>
+</aside>
+
+<!-- ===================== NEW IDEA DIALOG ===================== -->
+<div class="dialog-scrim" id="newIdeaScrim"></div>
+<div class="dialog" id="newIdeaDialog" role="dialog" aria-modal="true" aria-labelledby="newIdeaTitle" hidden>
+  <div class="dialog__head"><h2 class="headline-small" id="newIdeaTitle" style="margin:0;">New idea</h2></div>
+  <div class="dialog__body">
+    <div class="ai-strip">
+      <span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
+      <div style="flex:1;">
+        <p class="label-large" style="margin:0 0 4px;">AI draft suggestion</p>
+        <p class="body-small" style="margin:0 0 2px;"><strong>Title:</strong> "Allow saved filter views on the ideas list"</p>
+        <p class="body-small" style="margin:0;"><strong>Description:</strong> Let users save a combination of status, type, tag and text filters as a named view they can return to, reducing repeated manual filtering on large boards.</p>
+        <div class="ai-strip__actions">
+          <button class="btn btn--filled ripple" id="aiAcceptBtn" style="padding:6px 14px;"><span class="material-symbols-outlined" aria-hidden="true" style="font-size:16px;">check</span>Accept</button>
+          <button class="btn btn--text" id="aiDismissBtn" style="padding:6px 10px;">Dismiss</button>
+        </div>
+      </div>
+    </div>
+    <div class="field-wrap">
+      <label class="label-large" for="newIdeaTitleInput">Title</label>
+      <input class="md-input" id="newIdeaTitleInput" placeholder="A short, specific title" />
+    </div>
+    <div class="field-wrap">
+      <label class="label-large" for="newIdeaDescInput">Description</label>
+      <textarea class="md-textarea" id="newIdeaDescInput" rows="3" placeholder="What problem does this solve?"></textarea>
+    </div>
+    <div class="meta-grid">
+      <div class="field-wrap">
+        <label class="label-large" for="newIdeaTypeInput">Type</label>
+        <select class="select-field" id="newIdeaTypeInput" style="width:100%; height:44px;">
+          <option>Feature</option><option>Bug</option><option>Improvement</option><option>Research</option>
+        </select>
+      </div>
+      <div class="field-wrap">
+        <label class="label-large" for="newIdeaImpactInput">Business impact</label>
+        <select class="select-field" id="newIdeaImpactInput" style="width:100%; height:44px;">
+          <option>Critical</option><option>High</option><option>Medium</option><option selected>Low</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="dialog__actions">
+    <button class="btn btn--text" id="newIdeaCancelBtn">Cancel</button>
+    <button class="btn btn--filled ripple" id="newIdeaCreateBtn">Create idea</button>
+  </div>
+</div>
+
+<!-- ===================== ADD STATUS DIALOG ===================== -->
+<div class="dialog-scrim" id="newStatusScrim"></div>
+<div class="dialog" id="newStatusDialog" role="dialog" aria-modal="true" aria-labelledby="newStatusTitle" hidden style="width:400px;">
+  <div class="dialog__head"><h2 class="headline-small" id="newStatusTitle" style="margin:0;">Add status</h2></div>
+  <div class="dialog__body">
+    <div class="field-wrap">
+      <label class="label-large" for="newStatusNameInput">Name</label>
+      <input class="md-input" id="newStatusNameInput" placeholder="e.g. Blocked" />
+    </div>
+    <div class="field-wrap">
+      <label class="label-large" for="newStatusColorInput">Color</label>
+      <input type="color" id="newStatusColorInput" value="#3B82F6" style="width:56px; height:36px; padding:2px; border:1px solid var(--md-sys-color-outline); border-radius:8px; cursor:pointer;" />
+    </div>
+  </div>
+  <div class="dialog__actions">
+    <button class="btn btn--text" id="newStatusCancelBtn">Cancel</button>
+    <button class="btn btn--filled ripple" id="newStatusCreateBtn">Add status</button>
+  </div>
+</div>
+
+<div id="snackbar-region" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================= SEED DATA ============================= */
+const ORG = "Northwind Labs";
+const BOARDS = ["Product Ideas","Platform Health","Customer Requests","Q4 Planning"];
+let currentBoard = "Product Ideas";
+
+let STATUSES = [
+  { id:"new",        name:"New",         color:"#6B7280", isDefault:true  },
+  { id:"triage",      name:"Triage",      color:"#F59E0B", isDefault:false },
+  { id:"planned",     name:"Planned",     color:"#3B82F6", isDefault:false },
+  { id:"inprogress",  name:"In Progress", color:"#8B5CF6", isDefault:false },
+  { id:"shipped",     name:"Shipped",     color:"#10B981", isDefault:false },
+  { id:"declined",    name:"Declined",    color:"#EF4444", isDefault:false },
+];
+
+const TYPE_COLORS = { Feature:"#3B82F6", Bug:"#EF4444", Improvement:"#10B981", Research:"#8B5CF6" };
+const IMPACT_COLORS = { Critical:"#EF4444", High:"#F59E0B", Medium:"#3B82F6", Low:"#6B7280" };
+const IMPACT_ORDER = ["Critical","High","Medium","Low"];
+
+const USERS = {
+  "Ada Okafor":  { initials:"AO", role:"Org Admin" },
+  "Ben Torres":  { initials:"BT", role:"User" },
+  "Priya Raman": { initials:"PR", role:"User" },
+  "Marcus Webb": { initials:"MW", role:"User" },
+  "Lena Fischer":{ initials:"LF", role:"User" },
+};
+const CURRENT_USER = "Ada Okafor";
+
+const CUSTOM_FIELD_BY_TYPE = {
+  Feature:     { label:"Target release", value:"Q4 2026" },
+  Bug:         { label:"Steps to reproduce", value:"See description — reproduced on latest build." },
+  Improvement: { label:"Current pain point", value:"Manual workaround costs ~10 min per occurrence." },
+  Research:    { label:"Hypothesis", value:"Usage-based caps reduce runaway AI spend without hurting adoption." },
+};
+
+const COMMENT_BANK = [
+  "This would save my team a lot of manual work every sprint.",
+  "+1 — we hit this constantly with our enterprise customers.",
+  "Can we scope this down for a faster first pass?",
+  "Linked a similar request from the support queue below.",
+  "What's the rollout plan once this ships?",
+  "Tested a workaround in the meantime, works but is fragile.",
+  "Flagging this blocks our Q4 rollout if it slips.",
+  "Nice writeup — moved this to Planned.",
+  "Any accessibility implications we should track separately?",
+  "Confirmed reproducible on staging as of this morning.",
+  "Adding this to the design review agenda.",
+  "This overlaps with the mobile performance work — worth pairing on.",
+  "Customer success has three more tickets citing this exact issue.",
+  "Can we get a rough estimate before committing this to the sprint?",
+];
+
+function makeComments(idea){
+  const list = [];
+  const names = Object.keys(USERS).filter(n => n !== idea.owner);
+  for(let i=0;i<idea.commentCount;i++){
+    const author = i === 0 ? idea.owner : names[(idea.id*3+i) % names.length];
+    list.push({
+      author,
+      time: i===0 ? `${(idea.id%4)+1} weeks ago` : `${((idea.id+i)%6)+1} days ago`,
+      text: COMMENT_BANK[(idea.id*5+i*3) % COMMENT_BANK.length]
+    });
+  }
+  return list;
+}
+
+const DESCRIPTIONS = {
+  1: "Enterprise buyers are asking for SAML/SSO during procurement. Without it we're losing deals that require centralized identity management.",
+  2: "Reordering swimlanes on the board resets to the default order after any page refresh, even though the reorder call succeeds.",
+  3: "Selecting multiple rows in the ideas list and applying a status, type, or tag change in one action would speed up quarterly triage.",
+  4: "The idea drawer currently traps focus incorrectly and several controls are unreachable by keyboard alone.",
+  5: "Org admins want a CSV export of the current board for offline reporting and stakeholder decks.",
+  6: "Users report stutter and dropped frames scrolling long swimlanes on iOS Safari, especially with images in idea cards.",
+  7: "Different idea types need different structured fields (target release, repro steps, hypothesis) instead of one generic free-text field.",
+  8: "Teams want a Slack message posted to a configured channel whenever an idea's status changes, to keep stakeholders in the loop without polling the board.",
+  9: "NVDA announces the status column header twice per swimlane when navigating the board with a screen reader.",
+  10: "As AI-assisted drafting rolls out, orgs need a way to cap token/credit spend per billing period to avoid surprise costs.",
+  11: "Ideas untouched for 12+ months should move to an Archived state automatically, with a manual override.",
+  12: "Boards past ~500 ideas take several seconds to become interactive; investigate virtualization for swimlane columns.",
+};
+
+const IDEAS_SEED = [
+  { id:1,  title:"Single sign-on for enterprise customers",              type:"Feature",     impact:"Critical", status:"Planned",     upvotes:34, commentCount:8,  tags:["api","billing"],             owner:"Ada Okafor" },
+  { id:2,  title:"Board view drops swimlane order on refresh",           type:"Bug",         impact:"High",     status:"In Progress", upvotes:12, commentCount:5,  tags:["performance"],               owner:"Ben Torres" },
+  { id:3,  title:"Bulk edit ideas from the list view",                   type:"Feature",     impact:"Medium",   status:"New",         upvotes:21, commentCount:3,  tags:[],                             owner:"Priya Raman" },
+  { id:4,  title:"Keyboard navigation for the idea drawer",              type:"Improvement", impact:"High",     status:"Triage",      upvotes:18, commentCount:6,  tags:["accessibility"],             owner:"Lena Fischer" },
+  { id:5,  title:"Export board to CSV",                                  type:"Feature",     impact:"Low",      status:"Shipped",     upvotes:9,  commentCount:2,  tags:["api"],                        owner:"Marcus Webb" },
+  { id:6,  title:"Mobile board scrolling is janky on iOS",               type:"Bug",         impact:"High",     status:"Triage",      upvotes:27, commentCount:11, tags:["mobile","performance"],      owner:"Ben Torres" },
+  { id:7,  title:"Custom fields on idea types",                         type:"Feature",     impact:"Critical", status:"Shipped",     upvotes:41, commentCount:14, tags:[],                             owner:"Ada Okafor", aiOrigin:false },
+  { id:8,  title:"Slack notifications for status changes",               type:"Feature",     impact:"Medium",   status:"New",         upvotes:16, commentCount:4,  tags:["api"],                        owner:"Priya Raman", aiOrigin:true },
+  { id:9,  title:"Screen reader announces status column twice",          type:"Bug",         impact:"Medium",   status:"Planned",     upvotes:7,  commentCount:1,  tags:["accessibility"],             owner:"Lena Fischer" },
+  { id:10, title:"Per-org AI credit limits",                             type:"Research",    impact:"High",     status:"New",         upvotes:5,  commentCount:0,  tags:["billing"],                   owner:"Ada Okafor" },
+  { id:11, title:"Archive stale ideas automatically",                    type:"Improvement", impact:"Low",      status:"Declined",    upvotes:3,  commentCount:2,  tags:[],                             owner:"Marcus Webb" },
+  { id:12, title:"Faster board load for 500+ ideas",                     type:"Improvement", impact:"Critical", status:"In Progress", upvotes:31, commentCount:9,  tags:["performance"],               owner:"Ben Torres" },
+].map(i => Object.assign({ board:"Product Ideas", description: DESCRIPTIONS[i.id] || "" }, i));
+
+IDEAS_SEED.forEach(i => { i.comments = makeComments(i); i.upvotedByMe = false; });
+
+/* ============================= STATE ============================= */
+let ideas = IDEAS_SEED;
+let filters = { search:"", types:"all", statuses: new Set(STATUSES.map(s=>s.name)), tags: new Set() };
+let sort = { key:"upvotes", dir:"desc" };
+let density = "comfortable";
+let currentView = "board";
+let openIdeaId = null;
+let loginFailCount = 0;
+let lockedOut = false;
+let editingTitle = false;
+
+/* ============================= HELPERS ============================= */
+function el(tag, attrs, ...children){
+  const node = document.createElement(tag);
+  if(attrs) for(const k in attrs){
+    if(attrs[k] === null || attrs[k] === undefined) continue;
+    if(k === "class") node.className = attrs[k];
+    else if(k === "text") node.textContent = attrs[k];
+    else if(k === "html") node.innerHTML = attrs[k];
+    else if(k.startsWith("on") && typeof attrs[k] === "function") node.addEventListener(k.slice(2), attrs[k]);
+    else node.setAttribute(k, attrs[k]);
+  }
+  children.flat().forEach(c => { if(c!=null) node.append(c.nodeType ? c : document.createTextNode(c)); });
+  return node;
+}
+function initials(name){ return USERS[name] ? USERS[name].initials : name.slice(0,2).toUpperCase(); }
+function statusByName(name){ return STATUSES.find(s => s.name === name); }
+function ideaById(id){ return ideas.find(i => i.id === id); }
+function boardIdeas(){ return ideas.filter(i => i.board === currentBoard); }
+
+function dotChip(label, color, extra){
+  return el("span", {class:"dot-chip "+(extra||""), style:`--c:${color}`},
+    el("span",{class:"dot-chip__dot"}), label);
+}
+function tagChip(tag, removable, onRemove){
+  const chip = el("span",{class:"tag-chip"}, tag);
+  if(removable){
+    chip.append(el("button",{type:"button","aria-label":`Remove tag ${tag}`, onclick:onRemove},
+      el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"close")));
+  }
+  return chip;
+}
+
+/* ============================= RIPPLE ============================= */
+document.addEventListener("pointerdown", e => {
+  const target = e.target.closest(".ripple, .state-layer");
+  if(!target) return;
+  const rect = target.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const span = document.createElement("span");
+  span.className = "ripple-ink";
+  span.style.width = span.style.height = size + "px";
+  span.style.left = (e.clientX - rect.left - size/2) + "px";
+  span.style.top = (e.clientY - rect.top - size/2) + "px";
+  const prevPosition = getComputedStyle(target).position;
+  if(prevPosition === "static") target.style.position = "relative";
+  target.style.overflow = target.style.overflow || "hidden";
+  target.appendChild(span);
+  span.addEventListener("animationend", () => span.remove());
+});
+
+/* ============================= SNACKBAR ============================= */
+function showSnackbar(msg, actionLabel, actionFn){
+  const region = document.getElementById("snackbar-region");
+  const bar = el("div",{class:"snackbar", role:"status"}, el("span",null,msg));
+  if(actionLabel){
+    bar.append(el("button",{type:"button", onclick:()=>{ actionFn && actionFn(); bar.remove(); }}, actionLabel));
+  }
+  region.appendChild(bar);
+  setTimeout(()=>{ bar.style.transition="opacity .2s ease"; bar.style.opacity="0"; setTimeout(()=>bar.remove(),200); }, 3400);
+}
+
+/* ============================= THEME ============================= */
+const root = document.documentElement;
+function setTheme(dark){
+  root.setAttribute("data-theme", dark ? "dark" : "light");
+  document.getElementById("themeIcon").textContent = dark ? "light_mode" : "dark_mode";
+  document.getElementById("themeToggle").setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+  document.getElementById("themeToggle").setAttribute("aria-pressed", String(dark));
+}
+setTheme(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+document.getElementById("themeToggle").addEventListener("click", () => {
+  setTheme(root.getAttribute("data-theme") !== "dark");
+});
+
+/* ============================= VIEW SWITCHING ============================= */
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll(".view").forEach(v => v.hidden = true);
+  document.getElementById("view-"+view).hidden = false;
+  document.querySelectorAll(".rail-item").forEach(btn => {
+    const active = btn.dataset.view === view;
+    if(active) btn.setAttribute("aria-current","page"); else btn.removeAttribute("aria-current");
+  });
+  document.getElementById("boardSwitcherBtn").parentElement.style.display = ""; // topbar always shown
+  document.getElementById("boardSwitcherBtn").style.visibility = (view === "board" || view === "list") ? "visible" : "hidden";
+  document.getElementById("fabExtended").classList.toggle("show", view === "board" || view === "list");
+  closeDrawer();
+  closeMenus();
+  document.getElementById("main").scrollTop = 0;
+  document.getElementById("main").focus?.();
+}
+document.querySelectorAll(".rail-item").forEach(btn => btn.addEventListener("click", () => switchView(btn.dataset.view)));
+
+/* ============================= BOARD SWITCHER MENU ============================= */
+const boardMenu = document.getElementById("boardMenu");
+function renderBoardMenu(){
+  boardMenu.innerHTML = "";
+  BOARDS.forEach(b => {
+    const count = ideas.filter(i => i.board === b).length;
+    const item = el("button",{type:"button", role:"menuitem", class:"state-layer ripple",
+      style:"display:flex; width:100%; align-items:center; gap:8px; padding:10px 12px; border:none; background:none; cursor:pointer; border-radius:8px; font:inherit; color:var(--md-sys-color-on-surface); text-align:left;"},
+      el("span",{class:"material-symbols-outlined","aria-hidden":"true", style:b===currentBoard? "color:var(--md-sys-color-primary);":"opacity:0;"},"check"),
+      el("span",{style:"flex:1;"}, b),
+      el("span",{class:"body-small", style:"color:var(--md-sys-color-on-surface-variant);"}, count+" ideas")
+    );
+    item.addEventListener("click", () => {
+      currentBoard = b;
+      document.getElementById("boardSwitcherLabel").textContent = b;
+      boardMenu.hidden = true;
+      document.getElementById("boardSwitcherBtn").setAttribute("aria-expanded","false");
+      renderAll();
+      showSnackbar(`Switched to ${b}`);
+    });
+    boardMenu.appendChild(item);
+  });
+}
+document.getElementById("boardSwitcherBtn").addEventListener("click", () => {
+  const willOpen = boardMenu.hidden;
+  closeMenus();
+  if(willOpen){ renderBoardMenu(); boardMenu.hidden = false; document.getElementById("boardSwitcherBtn").setAttribute("aria-expanded","true"); }
+});
+
+/* ============================= USER MENU ============================= */
+const userMenu = document.getElementById("userMenu");
+let viewAsActive = false;
+function renderUserMenu(){
+  userMenu.innerHTML = "";
+  userMenu.appendChild(el("div",{style:"padding:10px 12px; border-bottom:1px solid var(--md-sys-color-outline-variant); margin-bottom:6px;"},
+    el("div",{class:"title-small"},"Ada Okafor"),
+    el("div",{class:"body-small", style:"color:var(--md-sys-color-on-surface-variant);"},"Org Admin · Northwind Labs")
+  ));
+  const viewAsRow = el("div",{style:"display:flex; align-items:center; gap:10px; padding:10px 12px;"},
+    el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"visibility"),
+    el("span",{class:"body-medium", style:"flex:1;"},"Simulate View As (demo)"),
+  );
+  const sw = el("label",{class:"switch"},
+    el("input",{type:"checkbox", id:"viewAsSwitch", ...(viewAsActive?{checked:"checked"}:{}) }),
+    el("span",{class:"switch-track"}), el("span",{class:"switch-thumb"})
+  );
+  viewAsRow.appendChild(sw);
+  userMenu.appendChild(viewAsRow);
+  sw.querySelector("input").addEventListener("change", e => setViewAs(e.target.checked));
+  ["Profile settings","Sign out"].forEach(label => {
+    const btn = el("button",{type:"button", role:"menuitem", class:"state-layer ripple",
+      style:"display:flex; width:100%; align-items:center; gap:8px; padding:10px 12px; border:none; background:none; cursor:pointer; border-radius:8px; font:inherit; color:var(--md-sys-color-on-surface); text-align:left;"},
+      el("span",{class:"material-symbols-outlined","aria-hidden":"true"}, label==="Sign out" ? "logout" : "person"),
+      label);
+    btn.addEventListener("click", () => {
+      closeMenus();
+      if(label==="Sign out"){ switchView("login"); showSnackbar("Signed out"); }
+      else showSnackbar("Profile settings — not part of this comp");
+    });
+    userMenu.appendChild(btn);
+  });
+}
+document.getElementById("userMenuBtn").addEventListener("click", () => {
+  const willOpen = userMenu.hidden;
+  closeMenus();
+  if(willOpen){ renderUserMenu(); userMenu.hidden = false; document.getElementById("userMenuBtn").setAttribute("aria-expanded","true"); }
+});
+function closeMenus(){
+  boardMenu.hidden = true; userMenu.hidden = true;
+  document.getElementById("boardSwitcherBtn").setAttribute("aria-expanded","false");
+  document.getElementById("userMenuBtn").setAttribute("aria-expanded","false");
+}
+document.addEventListener("click", e => {
+  if(!e.target.closest("#boardMenu, #boardSwitcherBtn, #userMenu, #userMenuBtn")) closeMenus();
+});
+function setViewAs(active){
+  viewAsActive = active;
+  document.getElementById("viewAsBanner").hidden = !active;
+  showSnackbar(active ? "Now viewing as Ben Torres" : "Exited View As");
+}
+document.getElementById("exitViewAsBtn").addEventListener("click", () => { setViewAs(false); closeMenus(); });
+
+/* ============================= BOARD RENDER ============================= */
+function renderBoard(){
+  const wrap = document.getElementById("boardScroll");
+  wrap.innerHTML = "";
+  const list = boardIdeas();
+  STATUSES.forEach(status => {
+    const inCol = list.filter(i => i.status === status.name);
+    const col = el("div",{class:"board-column", role:"listitem"});
+    col.appendChild(el("div",{class:"board-column__head"},
+      el("span",{class:"board-column__dot", style:`--c:${status.color}`}),
+      el("span",{class:"title-small"}, status.name),
+      el("span",{class:"board-column__count"}, String(inCol.length))
+    ));
+    const body = el("div",{class:"board-column__body"});
+    if(inCol.length === 0){
+      body.appendChild(el("div",{class:"board-column__empty"}, `No ideas in ${status.name} on this board yet.`));
+    } else {
+      inCol.forEach(idea => body.appendChild(ideaCard(idea)));
+    }
+    col.appendChild(body);
+    wrap.appendChild(col);
+  });
+}
+function ideaCard(idea){
+  const card = el("button",{type:"button", class:"idea-card ripple", "aria-haspopup":"dialog"},
+    el("div",{class:"idea-card__top"},
+      el("span",{class:"idea-card__title"}, idea.title)
+    ),
+    el("div",{class:"idea-card__meta"},
+      dotChip(idea.type, TYPE_COLORS[idea.type]),
+      dotChip(idea.impact, IMPACT_COLORS[idea.impact])
+    )
+  );
+  if(idea.tags.length){
+    card.appendChild(el("div",{class:"idea-card__tags"}, idea.tags.map(t => tagChip(t,false))));
+  }
+  card.appendChild(el("div",{class:"idea-card__bottom"},
+    el("span",{class:"idea-card__stat"+(idea.upvotedByMe?" upvoted":"")},
+      el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"arrow_upward"), String(idea.upvotes)),
+    el("span",{class:"idea-card__stat"},
+      el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"chat_bubble_outline"), String(idea.comments.length)),
+    el("span",{class:"idea-card__owner"},
+      el("span",{class:"owner-avatar", title:idea.owner, "aria-hidden":"true"}, initials(idea.owner)))
+  ));
+  card.addEventListener("click", () => openDrawer(idea.id));
+  return card;
+}
+
+/* ============================= IDEAS LIST RENDER ============================= */
+function renderStatusFilterChips(){
+  const grp = document.getElementById("statusFilterGroup");
+  grp.innerHTML = "";
+  STATUSES.forEach(s => {
+    const pressed = filters.statuses.has(s.name);
+    const chip = el("button",{type:"button", class:"chip", "aria-pressed":String(pressed)},
+      el("span",{class:"dot-chip__dot", style:`--c:${s.color}; width:8px; height:8px;`}), s.name);
+    chip.addEventListener("click", () => {
+      if(filters.statuses.has(s.name)) filters.statuses.delete(s.name); else filters.statuses.add(s.name);
+      renderList();
+    });
+    grp.appendChild(chip);
+  });
+}
+function renderTagFilterChips(){
+  const grp = document.getElementById("tagFilterGroup");
+  grp.innerHTML = "";
+  const allTags = ["mobile","api","billing","accessibility","performance"];
+  allTags.forEach(tag => {
+    const pressed = filters.tags.has(tag);
+    const chip = el("button",{type:"button", class:"chip", "aria-pressed":String(pressed)},
+      el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"sell"), tag);
+    chip.addEventListener("click", () => {
+      if(filters.tags.has(tag)) filters.tags.delete(tag); else filters.tags.add(tag);
+      renderList();
+    });
+    grp.appendChild(chip);
+  });
+}
+function filteredSortedIdeas(){
+  let list = boardIdeas().filter(i => {
+    if(filters.search && !i.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    if(filters.types !== "all" && i.type !== filters.types) return false;
+    if(!filters.statuses.has(i.status)) return false;
+    if(filters.tags.size && ![...filters.tags].every(t => i.tags.includes(t))) return false;
+    return true;
+  });
+  const dir = sort.dir === "asc" ? 1 : -1;
+  list = list.slice().sort((a,b) => {
+    let av, bv;
+    if(sort.key === "title"){ av=a.title.toLowerCase(); bv=b.title.toLowerCase(); }
+    else if(sort.key === "impact"){ av=IMPACT_ORDER.indexOf(a.impact); bv=IMPACT_ORDER.indexOf(b.impact); }
+    else if(sort.key === "upvotes"){ av=a.upvotes; bv=b.upvotes; }
+    else if(sort.key === "comments"){ av=a.comments.length; bv=b.comments.length; }
+    if(av<bv) return -1*dir; if(av>bv) return 1*dir; return 0;
+  });
+  return list;
+}
+function renderList(){
+  renderStatusFilterChips();
+  renderTagFilterChips();
+  document.querySelectorAll("th.sortable").forEach(th => {
+    th.setAttribute("aria-sort", th.dataset.sort === sort.key ? (sort.dir==="asc"?"ascending":"descending") : "none");
+    const icon = th.querySelector(".material-symbols-outlined");
+    if(th.dataset.sort === sort.key) icon.textContent = sort.dir === "asc" ? "arrow_upward" : "arrow_downward";
+  });
+  const tbody = document.getElementById("ideasTableBody");
+  tbody.innerHTML = "";
+  const rows = filteredSortedIdeas();
+  if(rows.length === 0){
+    tbody.appendChild(el("tr",{class:"empty-row"}, el("td",{colspan:"8"},"No ideas match the current filters.")));
+    return;
+  }
+  rows.forEach(idea => {
+    const status = statusByName(idea.status);
+    const tr = el("tr",{tabindex:"0", role:"button", "aria-label":`Open idea: ${idea.title}`},
+      el("td",{class:"cell-title"}, idea.title),
+      el("td",null, dotChip(idea.type, TYPE_COLORS[idea.type])),
+      el("td",null, dotChip(idea.impact, IMPACT_COLORS[idea.impact])),
+      el("td",null, dotChip(idea.status, status.color)),
+      el("td",{class:"cell-num"}, String(idea.upvotes)),
+      el("td",{class:"cell-num"}, String(idea.comments.length)),
+      el("td",{class:"cell-tags"}, idea.tags.length ? idea.tags.map(t=>tagChip(t,false)) : el("span",{class:"body-small", style:"color:var(--md-sys-color-on-surface-variant);"},"—")),
+      el("td",null, el("span",{class:"row"}, el("span",{class:"owner-avatar", style:"width:22px;height:22px;font-size:.625rem;"}, initials(idea.owner)), idea.owner))
+    );
+    tr.addEventListener("click", () => openDrawer(idea.id));
+    tr.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openDrawer(idea.id); } });
+    tbody.appendChild(tr);
+  });
+}
+document.getElementById("searchInput").addEventListener("input", e => { filters.search = e.target.value; renderList(); });
+document.getElementById("typeFilter").addEventListener("change", e => { filters.types = e.target.value; renderList(); });
+document.getElementById("clearFiltersBtn").addEventListener("click", () => {
+  filters = { search:"", types:"all", statuses:new Set(STATUSES.map(s=>s.name)), tags:new Set() };
+  document.getElementById("searchInput").value = "";
+  document.getElementById("typeFilter").value = "all";
+  renderList();
+  showSnackbar("Filters cleared");
+});
+document.querySelectorAll("th.sortable").forEach(th => {
+  th.addEventListener("click", () => {
+    const key = th.dataset.sort;
+    if(sort.key === key) sort.dir = sort.dir === "asc" ? "desc" : "asc";
+    else { sort.key = key; sort.dir = "asc"; }
+    renderList();
+  });
+});
+document.querySelectorAll("#densityGroup button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("#densityGroup button").forEach(b => b.setAttribute("aria-checked","false"));
+    btn.setAttribute("aria-checked","true");
+    density = btn.dataset.density;
+    document.getElementById("tableWrap").classList.toggle("compact", density==="compact");
+  });
+});
+document.getElementById("densityGroup").addEventListener("keydown", e => {
+  if(!["ArrowLeft","ArrowRight"].includes(e.key)) return;
+  const buttons = [...document.querySelectorAll("#densityGroup button")];
+  const idx = buttons.indexOf(document.activeElement);
+  if(idx === -1) return;
+  e.preventDefault();
+  const next = buttons[(idx + (e.key==="ArrowRight"?1:-1) + buttons.length) % buttons.length];
+  next.focus(); next.click();
+});
+
+/* ============================= STATUSES ADMIN RENDER ============================= */
+let dragSrcIndex = null;
+function renderStatusesAdmin(){
+  const wrap = document.getElementById("statusesList");
+  wrap.innerHTML = "";
+  STATUSES.forEach((status, idx) => {
+    const count = ideas.filter(i => i.status === status.name).length;
+    const row = el("div",{class:"status-row", role:"listitem", draggable:"true", "data-idx":idx});
+    row.appendChild(el("span",{class:"drag-handle", "aria-hidden":"true"}, el("span",{class:"material-symbols-outlined"},"drag_indicator")));
+    const reorder = el("span",{class:"reorder-btns"});
+    const upBtn = el("button",{type:"button","aria-label":`Move ${status.name} up`, disabled: idx===0 ? "disabled" : null}, el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"keyboard_arrow_up"));
+    const downBtn = el("button",{type:"button","aria-label":`Move ${status.name} down`, disabled: idx===STATUSES.length-1 ? "disabled" : null}, el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"keyboard_arrow_down"));
+    upBtn.addEventListener("click", () => moveStatus(idx, idx-1));
+    downBtn.addEventListener("click", () => moveStatus(idx, idx+1));
+    reorder.append(upBtn, downBtn);
+    row.appendChild(reorder);
+    const swatch = el("label",{class:"swatch-label", style:`background:${status.color}`, title:`${status.name} color`},
+      el("input",{type:"color", value:status.color, "aria-label":`Color for ${status.name}`}));
+    swatch.querySelector("input").addEventListener("input", e => {
+      status.color = e.target.value;
+      swatch.style.background = status.color;
+      renderAll();
+    });
+    row.appendChild(swatch);
+    const nameInput = el("input",{class:"status-name-input", value:status.name, "aria-label":`Name for status`});
+    nameInput.addEventListener("change", e => { status.name = e.target.value || status.name; renderAll(); });
+    row.appendChild(nameInput);
+    row.appendChild(el("span",{class:"status-count"}, `${count} idea${count===1?"":"s"}`));
+    row.appendChild(el("span",{class:"status-row-spacer"}));
+    if(status.isDefault){
+      row.appendChild(el("span",{class:"default-badge"}, el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"check_circle"),"Default"));
+    } else {
+      const setDefaultBtn = el("button",{type:"button", class:"btn btn--text", style:"padding:6px 10px;"}, "Set as default");
+      setDefaultBtn.addEventListener("click", () => {
+        STATUSES.forEach(s => s.isDefault = false);
+        status.isDefault = true;
+        renderStatusesAdmin();
+        showSnackbar(`${status.name} is now the default status for new ideas`);
+      });
+      row.appendChild(setDefaultBtn);
+    }
+    const delBtn = el("button",{type:"button", class:"icon-btn", "aria-label":`Delete ${status.name}`, disabled: count>0 ? "disabled" : null, title: count>0 ? "Cannot delete: ideas use this status" : "Delete status"},
+      el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"delete"));
+    delBtn.addEventListener("click", () => {
+      if(count>0) return;
+      STATUSES = STATUSES.filter(s => s.id !== status.id);
+      renderAll();
+      showSnackbar(`Deleted status "${status.name}"`);
+    });
+    row.appendChild(delBtn);
+
+    row.addEventListener("dragstart", () => { dragSrcIndex = idx; row.classList.add("dragging"); });
+    row.addEventListener("dragend", () => { row.classList.remove("dragging"); document.querySelectorAll(".status-row").forEach(r=>r.classList.remove("drag-over")); });
+    row.addEventListener("dragover", e => { e.preventDefault(); row.classList.add("drag-over"); });
+    row.addEventListener("dragleave", () => row.classList.remove("drag-over"));
+    row.addEventListener("drop", e => {
+      e.preventDefault();
+      if(dragSrcIndex === null || dragSrcIndex === idx) return;
+      moveStatus(dragSrcIndex, idx);
+    });
+    wrap.appendChild(row);
+  });
+}
+function moveStatus(from, to){
+  if(to < 0 || to >= STATUSES.length) return;
+  const [moved] = STATUSES.splice(from,1);
+  STATUSES.splice(to,0,moved);
+  renderAll();
+  showSnackbar(`Reordered statuses — ${moved.name} moved to position ${to+1}`);
+}
+document.getElementById("addStatusBtn").addEventListener("click", () => openDialog("newStatusDialog","newStatusScrim", () => document.getElementById("newStatusNameInput").focus()));
+
+/* ============================= IDEA DETAIL DRAWER ============================= */
+const drawer = document.getElementById("ideaDrawer");
+const drawerScrim = document.getElementById("drawerScrim");
+let drawerLastFocus = null;
+
+function openDrawer(id){
+  openIdeaId = id;
+  const idea = ideaById(id);
+  editingTitle = false;
+  renderDrawer(idea);
+  drawer.hidden = false; drawerScrim.classList.add("open");
+  requestAnimationFrame(()=> drawer.classList.add("open"));
+  drawerLastFocus = document.activeElement;
+  document.getElementById("drawerCloseBtn").focus();
+  document.addEventListener("keydown", drawerKeydown);
+}
+function closeDrawer(){
+  if(!openIdeaId) { drawer.hidden = true; return; }
+  drawer.classList.remove("open"); drawerScrim.classList.remove("open");
+  setTimeout(()=>{ drawer.hidden = true; }, 220);
+  document.removeEventListener("keydown", drawerKeydown);
+  openIdeaId = null;
+  drawerLastFocus && drawerLastFocus.focus();
+}
+function drawerKeydown(e){
+  if(e.key === "Escape"){ closeDrawer(); return; }
+  if(e.key === "Tab"){
+    const focusables = drawer.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    if(!focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length-1];
+    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  }
+}
+document.getElementById("drawerCloseBtn").addEventListener("click", closeDrawer);
+drawerScrim.addEventListener("click", closeDrawer);
+document.getElementById("drawerEditTitleBtn").addEventListener("click", () => {
+  const input = document.getElementById("drawerTitleInput");
+  editingTitle = !editingTitle;
+  input.readOnly = !editingTitle;
+  input.classList.toggle("editing", editingTitle);
+  document.getElementById("drawerEditTitleBtn").setAttribute("aria-pressed", String(editingTitle));
+  if(editingTitle) input.focus(); else {
+    const idea = ideaById(openIdeaId);
+    if(idea && input.value.trim()){ idea.title = input.value.trim(); renderAll(); showSnackbar("Title updated"); }
+  }
+});
+
+function renderDrawer(idea){
+  document.getElementById("drawerIdLabel").textContent = `Idea #${idea.id} · ${idea.board}`;
+  document.getElementById("drawerTitleInput").value = idea.title;
+  document.getElementById("drawerAiBadge").hidden = !idea.aiOrigin;
+  const body = document.getElementById("drawerBody");
+  body.innerHTML = "";
+
+  if(idea.aiOrigin){
+    body.appendChild(el("div",{class:"ai-strip"},
+      el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"auto_awesome"),
+      el("div",null,
+        el("p",{class:"body-small", style:"margin:0;"}, el("strong",null,"AI-drafted."), " This idea's title and description were suggested by AI and reviewed by ", idea.owner, ".")
+      )
+    ));
+  }
+
+  // description
+  const descWrap = el("div",null,
+    el("label",{class:"field-label", for:"drawerDesc"},"Description"),
+    el("textarea",{class:"md-textarea", id:"drawerDesc", rows:"3"}, idea.description)
+  );
+  body.appendChild(descWrap);
+  const saveDescBtn = el("button",{type:"button", class:"btn btn--text ripple", style:"align-self:flex-start; margin-top:4px; padding:6px 10px;"}, "Save description");
+  saveDescBtn.addEventListener("click", () => {
+    idea.description = document.getElementById("drawerDesc").value;
+    showSnackbar("Description saved");
+  });
+  descWrap.appendChild(saveDescBtn);
+
+  // meta grid: status + type
+  const statusSelect = el("select",{class:"select-field", style:"width:100%; height:44px;", "aria-label":"Status"});
+  STATUSES.forEach(s => statusSelect.appendChild(el("option",{value:s.name, ...(s.name===idea.status?{selected:"selected"}:{})}, s.name)));
+  statusSelect.addEventListener("change", e => { idea.status = e.target.value; renderAll(); showSnackbar(`Status changed to ${idea.status}`); });
+
+  body.appendChild(el("div",{class:"meta-grid"},
+    el("div",null, el("span",{class:"field-label"},"Status"), statusSelect),
+    el("div",null, el("span",{class:"field-label"},"Type"), dotChip(idea.type, TYPE_COLORS[idea.type], "chip--static"))
+  ));
+
+  // business impact segmented
+  const impactGroup = el("div",{class:"segmented", role:"radiogroup","aria-label":"Business impact"});
+  IMPACT_ORDER.forEach(level => {
+    const btn = el("button",{type:"button", role:"radio", "aria-checked": String(level===idea.impact)}, level);
+    btn.addEventListener("click", () => {
+      idea.impact = level;
+      impactGroup.querySelectorAll("button").forEach(b=>b.setAttribute("aria-checked","false"));
+      btn.setAttribute("aria-checked","true");
+      renderAll();
+      showSnackbar(`Business impact set to ${level}`);
+    });
+    impactGroup.appendChild(btn);
+  });
+  impactGroup.addEventListener("keydown", e => {
+    if(!["ArrowLeft","ArrowRight"].includes(e.key)) return;
+    const buttons=[...impactGroup.querySelectorAll("button")];
+    const idx=buttons.indexOf(document.activeElement); if(idx===-1) return;
+    e.preventDefault();
+    const next=buttons[(idx+(e.key==="ArrowRight"?1:-1)+buttons.length)%buttons.length];
+    next.focus(); next.click();
+  });
+  body.appendChild(el("div",null, el("span",{class:"field-label"},"Business impact"), impactGroup));
+
+  // custom field
+  const cf = CUSTOM_FIELD_BY_TYPE[idea.type];
+  body.appendChild(el("div",{class:"custom-field-preview"}, el("span",{class:"field-label", style:"margin-bottom:2px;"}, cf.label), el("div",{class:"body-medium"}, cf.value)));
+
+  // tags
+  const tagsWrap = el("div",{class:"row", style:"flex-wrap:wrap; gap:6px;"});
+  function refreshTags(){
+    tagsWrap.innerHTML = "";
+    idea.tags.forEach(t => tagsWrap.appendChild(tagChip(t, true, () => { idea.tags = idea.tags.filter(x=>x!==t); refreshTags(); renderAll(); })));
+    const addInput = el("input",{class:"md-input", placeholder:"Add tag + Enter", style:"width:140px; height:32px; padding:4px 10px; font-size:.75rem;"});
+    addInput.addEventListener("keydown", e => {
+      if(e.key === "Enter" && addInput.value.trim()){
+        e.preventDefault();
+        idea.tags.push(addInput.value.trim().toLowerCase());
+        addInput.value = "";
+        refreshTags(); renderAll();
+      }
+    });
+    tagsWrap.appendChild(addInput);
+  }
+  refreshTags();
+  body.appendChild(el("div",null, el("span",{class:"field-label"},"Tags"), tagsWrap));
+
+  // upvote
+  const upvoteBtn = el("button",{type:"button", class:"upvote-btn ripple", "aria-pressed":String(idea.upvotedByMe)},
+    el("span",{class:"material-symbols-outlined","aria-hidden":"true"},"arrow_upward"),
+    el("span",null, `${idea.upvotes} upvote${idea.upvotes===1?"":"s"}`));
+  upvoteBtn.addEventListener("click", () => {
+    idea.upvotedByMe = !idea.upvotedByMe;
+    idea.upvotes += idea.upvotedByMe ? 1 : -1;
+    upvoteBtn.setAttribute("aria-pressed", String(idea.upvotedByMe));
+    upvoteBtn.querySelector("span:last-child").textContent = `${idea.upvotes} upvote${idea.upvotes===1?"":"s"}`;
+    renderAll();
+    showSnackbar(idea.upvotedByMe ? "Upvoted" : "Upvote removed");
+  });
+  body.appendChild(upvoteBtn);
+
+  // comments
+  const commentsSection = el("div",null,
+    el("h3",{class:"drawer-section-title title-small"}, el("span",{class:"material-symbols-outlined","aria-hidden":"true", style:"font-size:18px;"},"chat_bubble_outline"), `Comments (${idea.comments.length})`)
+  );
+  const list = el("div",{class:"comment-list"});
+  function refreshComments(){
+    list.innerHTML = "";
+    if(idea.comments.length === 0){
+      list.appendChild(el("p",{class:"body-small", style:"color:var(--md-sys-color-on-surface-variant);"},"No comments yet."));
+    }
+    idea.comments.forEach(c => {
+      list.appendChild(el("div",{class:"comment"},
+        el("span",{class:"comment__avatar","aria-hidden":"true"}, initials(c.author)),
+        el("div",{class:"comment__body"},
+          el("div",{class:"comment__meta"}, el("span",{class:"comment__author"}, c.author), el("span",{class:"comment__time"}, c.time)),
+          el("div",{class:"body-medium"}, c.text)
+        )
+      ));
+    });
+  }
+  refreshComments();
+  commentsSection.appendChild(list);
+  const commentInput = el("textarea",{class:"md-textarea", rows:"2", placeholder:"Add a comment…", "aria-label":"Add a comment"});
+  const postBtn = el("button",{type:"button", class:"btn btn--tonal ripple", style:"margin-top:8px;"}, "Post comment");
+  postBtn.addEventListener("click", () => {
+    if(!commentInput.value.trim()) return;
+    idea.comments.push({ author: CURRENT_USER, time:"just now", text: commentInput.value.trim() });
+    commentInput.value = "";
+    renderAll();
+    showSnackbar("Comment added");
+  });
+  commentsSection.appendChild(commentInput);
+  commentsSection.appendChild(postBtn);
+  body.appendChild(commentsSection);
+
+  // activity log
+  const activitySection = el("div",null,
+    el("h3",{class:"drawer-section-title title-small"}, el("span",{class:"material-symbols-outlined","aria-hidden":"true", style:"font-size:18px;"},"history"), "Activity")
+  );
+  const activityList = el("div",null);
+  function refreshActivity(){
+    activityList.innerHTML = "";
+    const entries = [
+      { icon:"add_circle", text:`${idea.owner} created this idea` },
+    ];
+    if(idea.status !== "New"){
+      entries.push({ icon:"sync_alt", text:`Status changed from New to ${idea.status}` });
+    }
+    if(idea.upvotes > 0){
+      entries.push({ icon:"arrow_upward", text:`${idea.upvotes} people upvoted this idea` });
+    }
+    if(idea.comments.length){
+      entries.push({ icon:"chat_bubble_outline", text:`${idea.comments.length} comment${idea.comments.length===1?"":"s"} so far, most recently from ${idea.comments[idea.comments.length-1].author}` });
+    }
+    entries.forEach(en => activityList.appendChild(el("div",{class:"activity-item"}, el("span",{class:"material-symbols-outlined","aria-hidden":"true"},en.icon), el("span",null,en.text))));
+  }
+  refreshActivity();
+  activitySection.appendChild(activityList);
+  body.appendChild(activitySection);
+}
+
+/* ============================= NEW IDEA DIALOG ============================= */
+function openDialog(dialogId, scrimId, onOpen){
+  const dialog = document.getElementById(dialogId);
+  const scrim = document.getElementById(scrimId);
+  dialog.hidden = false; scrim.classList.add("open");
+  requestAnimationFrame(()=> dialog.classList.add("open"));
+  dialog._lastFocus = document.activeElement;
+  onOpen && onOpen();
+  const kd = e => {
+    if(e.key === "Escape"){ closeDialog(dialogId, scrimId); }
+    if(e.key === "Tab"){
+      const f = dialog.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+      if(!f.length) return;
+      const first=f[0], last=f[f.length-1];
+      if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+    }
+  };
+  dialog._kd = kd;
+  document.addEventListener("keydown", kd);
+}
+function closeDialog(dialogId, scrimId){
+  const dialog = document.getElementById(dialogId);
+  const scrim = document.getElementById(scrimId);
+  dialog.classList.remove("open"); scrim.classList.remove("open");
+  setTimeout(()=> dialog.hidden = true, 160);
+  document.removeEventListener("keydown", dialog._kd);
+  dialog._lastFocus && dialog._lastFocus.focus();
+}
+document.getElementById("railFab").addEventListener("click", openNewIdea);
+document.getElementById("fabExtended").addEventListener("click", openNewIdea);
+function openNewIdea(){
+  document.getElementById("newIdeaTitleInput").value = "";
+  document.getElementById("newIdeaDescInput").value = "";
+  document.getElementById("newIdeaTypeInput").value = "Feature";
+  document.getElementById("newIdeaImpactInput").value = "Low";
+  const aiStrip = document.querySelector("#newIdeaDialog .ai-strip");
+  if(aiStrip) aiStrip.style.display = "";
+  openDialog("newIdeaDialog","newIdeaScrim", () => document.getElementById("newIdeaTitleInput").focus());
+}
+document.getElementById("newIdeaCancelBtn").addEventListener("click", () => closeDialog("newIdeaDialog","newIdeaScrim"));
+document.getElementById("newIdeaScrim").addEventListener("click", () => closeDialog("newIdeaDialog","newIdeaScrim"));
+document.getElementById("aiAcceptBtn").addEventListener("click", () => {
+  document.getElementById("newIdeaTitleInput").value = "Allow saved filter views on the ideas list";
+  document.getElementById("newIdeaDescInput").value = "Let users save a combination of status, type, tag and text filters as a named view they can return to, reducing repeated manual filtering on large boards.";
+  showSnackbar("AI suggestion applied");
+});
+document.getElementById("aiDismissBtn").addEventListener("click", (e) => {
+  e.target.closest(".ai-strip").style.display = "none";
+});
+document.getElementById("newIdeaCreateBtn").addEventListener("click", () => {
+  const title = document.getElementById("newIdeaTitleInput").value.trim();
+  if(!title){ document.getElementById("newIdeaTitleInput").focus(); showSnackbar("Give the idea a title first"); return; }
+  const def = STATUSES.find(s=>s.isDefault) || STATUSES[0];
+  const idea = {
+    id: Math.max(...ideas.map(i=>i.id))+1,
+    title, description: document.getElementById("newIdeaDescInput").value.trim() || "No description provided.",
+    type: document.getElementById("newIdeaTypeInput").value,
+    impact: document.getElementById("newIdeaImpactInput").value,
+    status: def.name, upvotes:0, tags:[], owner: CURRENT_USER, board: currentBoard, aiOrigin:false, upvotedByMe:false, comments:[]
+  };
+  ideas.push(idea);
+  closeDialog("newIdeaDialog","newIdeaScrim");
+  renderAll();
+  showSnackbar("Idea created", "View", () => openDrawer(idea.id));
+});
+
+/* ============================= NEW STATUS DIALOG ============================= */
+document.getElementById("newStatusCancelBtn").addEventListener("click", () => closeDialog("newStatusDialog","newStatusScrim"));
+document.getElementById("newStatusScrim").addEventListener("click", () => closeDialog("newStatusDialog","newStatusScrim"));
+document.getElementById("newStatusCreateBtn").addEventListener("click", () => {
+  const name = document.getElementById("newStatusNameInput").value.trim();
+  if(!name){ document.getElementById("newStatusNameInput").focus(); return; }
+  STATUSES.push({ id:"s"+Date.now(), name, color: document.getElementById("newStatusColorInput").value, isDefault:false });
+  document.getElementById("newStatusNameInput").value = "";
+  closeDialog("newStatusDialog","newStatusScrim");
+  renderAll();
+  showSnackbar(`Added status "${name}"`);
+});
+
+/* ============================= LOGIN ============================= */
+const loginForm = document.getElementById("loginForm");
+const loginError = document.getElementById("loginError");
+const lockoutBanner = document.getElementById("lockoutBanner");
+document.getElementById("togglePasswordBtn").addEventListener("click", () => {
+  const input = document.getElementById("loginPassword");
+  const btn = document.getElementById("togglePasswordBtn");
+  const show = input.type === "password";
+  input.type = show ? "text" : "password";
+  btn.setAttribute("aria-pressed", String(show));
+  btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+  btn.querySelector(".material-symbols-outlined").textContent = show ? "visibility_off" : "visibility";
+});
+loginForm.addEventListener("submit", e => {
+  e.preventDefault();
+  if(lockedOut) return;
+  const pw = document.getElementById("loginPassword").value;
+  if(pw === "password"){
+    loginError.hidden = true;
+    loginFailCount = 0;
+    showSnackbar("Signed in — redirecting to board");
+    switchView("board");
+    return;
+  }
+  loginFailCount++;
+  if(loginFailCount >= 3){
+    lockedOut = true;
+    lockoutBanner.hidden = false;
+    loginError.hidden = true;
+    document.getElementById("loginSubmitBtn").disabled = true;
+    document.getElementById("loginEmail").disabled = true;
+    document.getElementById("loginPassword").disabled = true;
+  } else {
+    loginError.hidden = false;
+    loginError.querySelector("span:last-child").textContent = `Incorrect password. ${3-loginFailCount} attempt${3-loginFailCount===1?"":"s"} left before this account is locked.`;
+  }
+});
+document.getElementById("resetDemoBtn").addEventListener("click", () => {
+  lockedOut = false; loginFailCount = 0;
+  lockoutBanner.hidden = true;
+  document.getElementById("loginSubmitBtn").disabled = false;
+  document.getElementById("loginEmail").disabled = false;
+  document.getElementById("loginPassword").disabled = false;
+  document.getElementById("loginPassword").value = "";
+  loginError.hidden = true;
+  showSnackbar("Demo lockout reset");
+});
+
+/* ============================= GLOBAL RENDER ============================= */
+function renderAll(){
+  renderBoard();
+  renderList();
+  renderStatusesAdmin();
+  document.getElementById("boardSwitcherLabel").textContent = currentBoard;
+  if(openIdeaId){ const idea = ideaById(openIdeaId); if(idea) renderDrawer(idea); }
+}
+renderAll();
+switchView("board");
+
+})();
+</script>
+</body>
+</html>
