@@ -45,6 +45,12 @@ var siteAdminPassword = builder.Configuration["SiteAdmin:Password"]!;
 builder.Services.AddControllers(options =>
 {
     options.Conventions.Add(new ApiVersionRoutePrefixConvention());
+
+    // Developer-tooling controllers marked [DevelopmentOnly] are dropped from the application model
+    // outside Development, so their routes are never registered and a request 404s from routing —
+    // before any filter, DI activation or authentication runs. See DevelopmentOnlyControllerConvention.
+    options.Conventions.Add(new DevelopmentOnlyControllerConvention(builder.Environment.IsDevelopment()));
+
     options.ModelMetadataDetailsProviders.Add(new SpacedDisplayNameMetadataProvider());
 
     // Server-side enforcement of the mandatory first-login password change. Closed by default:
@@ -57,6 +63,7 @@ builder.Services.AddExceptionHandler<AppExceptionHandler>();
 builder.Services.AddCollegaProblemDetails();
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddIdeaDraftModelFactory(builder.Environment.IsDevelopment());
 builder.Services.AddSingleton<IClock, Collega.Application.Abstractions.SystemClock>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
