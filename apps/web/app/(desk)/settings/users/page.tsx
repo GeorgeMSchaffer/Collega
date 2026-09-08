@@ -1,4 +1,5 @@
-import { Avatar, Badge, Button } from '@collega/design-system'
+import { Avatar, Badge, Button, buttonVariants } from '@collega/design-system'
+import Link from 'next/link'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { currentUser, members, membersForOrganization, organizations } from '@/lib/mock'
@@ -18,7 +19,16 @@ export default function UsersPage() {
           ? 'Every account on the deployment. Open an organization to change its membership.'
           : `Who is in ${currentUser.organizationName}, and what each of them may do.`
       }
-      actions={siteAdmin ? undefined : <Button>Invite user</Button>}
+      actions={
+        <span className="flex items-center gap-2">
+          <Link href="/settings/users/import" className={buttonVariants({ variant: 'outline' })}>
+            Import users
+          </Link>
+          {/* Bootstrap exception: user import stays direct for a Site Admin, but inviting one
+              member into an organization they do not belong to has no referent. */}
+          {siteAdmin ? null : <Button>Invite user</Button>}
+        </span>
+      }
     >
       {siteAdmin ? <CrossOrgNote what="An account" /> : null}
       <AdminTable
