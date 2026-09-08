@@ -2,7 +2,7 @@
   "name": "collega-e2e",
   "private": true,
   "version": "0.0.0",
-  "description": "Playwright browser E2E tests for Collega (drives the Blazor client at :5098 against the API at :5103).",
+  "description": "Playwright browser E2E tests for Collega (drives apps/web at :3000, which Playwright starts itself).",
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",

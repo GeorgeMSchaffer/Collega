@@ -14,7 +14,7 @@
 #                           (SPEC/decisions.md 2026-09-06). Kept runnable only so a golden
 #                           fixture can still be re-recorded; deleted in slice F6.
 #
-#   e2e                     Playwright suite; kept, adapted to comp P in F2
+#   e2e                     Playwright suite; harness repointed at apps/web, flows are F2's
 #   tools/golden            capture and replay harness - the conversion's only oracle
 #   tools/boundaries        architecture test over the layer-boundary lint
 #   tools/arch              architecture tests lint cannot express

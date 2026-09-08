@@ -1,90 +1,99 @@
 # Collega browser E2E (Playwright)
 
-End-to-end tests that drive the **real Blazor client** in a headless Chromium browser against the
-live API and a **throwaway** SQL database. These are true browser tests (clicking the UI), distinct
-from the in-process `Collega.API.Tests` HTTP integration suite.
+Browser tests that drive `apps/web` in a headless Chromium. Playwright starts the app itself, so:
 
-## Flows covered
+```bash
+pnpm test:e2e
+```
 
-| Spec | Flows |
+is the whole thing — nothing needs to be running first.
+
+## What is here, and what is not
+
+The harness, and a two-assertion check that the harness works. **There are no product flows yet.**
+
+This suite used to drive the Blazor client at `:5098` against the .NET API at `:5103`. That stack is
+frozen (`SPEC/decisions.md` 2026-09-06) and its seven specs went with it — they were written against
+FluentUI's shadow roots and a `CollegaE2E` database seeded on API boot, and neither exists in the
+TypeScript stack. Rewriting them for the Next client is slice **F2**, and QA writes them, per
+`CLAUDE.md`. Nothing in `SPEC/` holds their flow list, so it is kept at the bottom of this file —
+F2 starts from a list of what was covered rather than from the deleted specs.
+
+What replaced them, `tests/harness.spec.ts`, asserts only that a route renders server-side and that
+client-side navigation works. If it ever needs a fixture or a login, it has stopped being a harness
+check and belongs in a spec of its own.
+
+## What the tests can and cannot see
+
+`apps/web` reads `apps/web/lib/mock.ts`. Nothing here reaches `apps/api` or a database, so a flow
+that creates, edits or deletes anything cannot pass yet however it is written — the fixtures do not
+persist. Read-only flows against the demo fixture are writable today; stateful ones wait for Wave D.
+
+When Wave D lands, `apps/api` becomes a second `webServer` entry in `playwright.config.ts` and the
+fixtures give way to a seeded throwaway database. The seed modules do not exist yet either
+(`packages/infrastructure/prisma/seed/` has the harness and an empty `MODULES`), which is the real
+gate on stateful specs.
+
+## Claude Code on the web
+
+`.claude/hooks/session-start.sh` prepares a cloud session: Node 24, `pnpm install`, a native
+PostgreSQL 16 cluster, `prisma migrate deploy`, and `PLAYWRIGHT_CHROMIUM_PATH`.
+
+That last one matters here. The container ships a Chromium but blocks `cdn.playwright.dev`, so
+`playwright install` cannot run, and the build it ships is not the build this Playwright pins.
+`playwright.config.ts` reads `PLAYWRIGHT_CHROMIUM_PATH` and launches the browser that is present;
+unset — the normal case on a development machine — Playwright uses its own download, as usual.
+
+`turbo.json` passes that variable and `PLAYWRIGHT_BROWSERS_PATH` through explicitly. Turbo 2 runs
+strict env mode by default, so an undeclared variable never reaches the test process; the ffmpeg
+Playwright wants for failure video is found through the second one.
+
+## Running it
+
+```bash
+pnpm test:e2e                        # from the repository root
+pnpm --filter collega-e2e test       # the same thing
+cd e2e && pnpm exec playwright test --headed   # watch it drive the browser
+```
+
+Failures keep a trace, a screenshot and a video under `e2e/test-results/`:
+
+```bash
+cd e2e && pnpm exec playwright show-trace test-results/<test>/trace.zip
+```
+
+**One gotcha, and it will cost you twenty minutes if you hit it blind.** `reuseExistingServer` is on
+outside CI, so a dev server you left running is the one the tests drive. A Next dev server whose
+parent was killed can keep the port without answering on it, and Playwright's start-up check passes
+against a server that then never responds — presenting as `page.goto` timeouts, not as a server
+error. If runs hang, check the port before you touch the config:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' http://localhost:3000/login   # 000 with something on :3000 means wedged
+pgrep -f next-server | xargs -r kill -9
+```
+
+## Flows the retired suite covered
+
+Kept for F2. These ran green against the Blazor stack; they are a starting list, not a
+specification — where one disagrees with `SPEC/`, the spec wins.
+
+| # | Flow |
 |---|---|
-| `01-site-admin-password.spec.ts` | 1. Site Admin first-login forced password change |
-| `02-org-admin-users.spec.ts` | 2. Org Admin creates two users · 3. deactivates them* |
-| `03-org-admin-statuses.spec.ts` | 4. Org Admin adds a status · 5. deletes it |
-| `04-board-and-card.spec.ts` | 6. Org Admin creates a board · 7. User adds a card · 8. User moves the card through all statuses |
-| `05-idea-drawer-engagement.spec.ts` | 9. drawer opens from the Ideas list + is URL-addressable (`?idea=`, bare `/ideas/{id}`; `/edit` retired) · 10. upvote · 11. comment (with @mention token) · 12. edit adds a tag + assignee · 13. status move from the drawer |
-| `06-ideas-list-surface.spec.ts` | 14. scope chips + server-side search + clear · 15. sortable column headers · 16. page-size options |
-| `07-idea-admin-delete.spec.ts` | 17. Org Admin deletes an idea from the drawer danger zone · 18. a deep-link to the deleted idea no longer loads |
+| 1 | Site Admin first-login forced password change |
+| 2–3 | Org Admin creates two users, then deactivates them (there is no hard delete — "delete" is deactivate) |
+| 4–5 | Org Admin adds a status, then deletes it |
+| 6–8 | Org Admin creates a board · User adds a card · User moves it through every status |
+| 9 | Idea drawer opens from the Ideas list and is URL-addressable |
+| 10–13 | Upvote · comment with an @mention · edit adding a tag and an assignee · status move from the drawer |
+| 14–16 | Scope chips, server-side search and clear · sortable column headers · page-size options |
+| 17–18 | Org Admin deletes an idea from the drawer danger zone · the deep link stops loading |
 
-\* There is no hard-delete user endpoint; "delete" is implemented as **deactivate** (status → Inactive),
-which is the app's actual behavior.
+Three things the old suite learned the hard way, all still true of the product:
 
-**Flows 9–16 (specs `05`/`06`)** are validated green against the live stack. `05` is stateful (creates its
-own throwaway board + idea, then drives the drawer on it) and runs serially; `06` is read-only against the
-demo seed. Two behaviors these specs encode:
-
-- Flow 9 avoids the `/ideas` **Add New** button on purpose — that path currently opens the brainstorm
-  modal first (WIP), so the fixture idea is created from the board header, where **New idea** opens the
-  create modal directly.
-- **Assignee picker for Users:** the drawer/create-modal assignee picker is populated from
-  `GET /organizations/{id}/members` — a minimal, non-admin member list any in-org caller may read.
-  A plain **User** can therefore populate the picker and, as the creating author, change the assignee
-  collection (SPEC/20-feature-ideas-and-engagement.md Permissions), so flow 12's assignee step runs as
-  the authoring **User**. (The admin user listing `GET /organizations/{id}/users` stays Org-Admin+.)
-
-## Prerequisites
-
-1. **PostgreSQL** running (the repo's `collega-postgres` container, host port **5432** — `docker compose up -d postgres`).
-2. **API on `http://localhost:5103`** against a **fresh** throwaway `CollegaE2E` database, in the
-   `Development` environment (so the demo orgs/users are seeded and the Site Admin still requires a
-   first-login password change). Never point these tests at your real `Collega` database.
-3. **Client on `http://localhost:5098`** (its `wwwroot/appsettings.json` already targets `:5103`).
-
-> **Reconciled to PostgreSQL 2026-08-12 (Sprint 5).** This suite was restored in `9301073` still
-> carrying its original SQL Server setup — `collega-sqlserver` on port 1434, a `sqlcmd` drop, and a
-> `Server=…;TrustServerCertificate=True` connection string, none of which work against the current
-> stack. The commands below are the Postgres equivalents. Substitute your own `POSTGRES_PASSWORD`
-> from `.env`; the value shown is the `.env.example` placeholder, not a real credential.
-
-### Start the stack
-
-```bash
-# 1) Fresh throwaway DB (drops any previous CollegaE2E; FORCE terminates open connections,
-#    the Postgres equivalent of SINGLE_USER WITH ROLLBACK IMMEDIATE — requires PG 13+)
-docker exec collega-postgres psql -U collega -d postgres \
-  -c 'DROP DATABASE IF EXISTS "CollegaE2E" WITH (FORCE);'
-
-# 2) API (creates, migrates and demo-seeds CollegaE2E on boot)
-ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://localhost:5103 \
-  ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=CollegaE2E;Username=collega;Password=Ch4ngeMe!Now" \
-  SiteAdmin__Email=admin@collega.local SiteAdmin__Password='Ch4ngeMe!Now' \
-  dotnet run --project src/Collega.API/Collega.API.csproj --no-launch-profile
-
-# 3) Client
-dotnet run --project src/Collega.Client/Collega.Client.csproj --launch-profile http
-```
-
-## Run the tests
-
-```bash
-cd e2e
-npm install
-npx playwright install chromium
-npm test               # headless
-npm run test:headed    # watch it drive the browser
-```
-
-## Notes / caveats
-
-- **Seeded accounts** used: Site Admin `admin@collega.local` / `rsbr220Sql!` (forced first-login
-  change); demo Org Admin `orgadmin@acme-robotics.demo.collega.test` / `Abc123!`; demo User
-  `user@acme-robotics.demo.collega.test` / `Abc123!`.
-- **Flow 1 is one-shot per database.** It consumes the Site Admin's forced password change and changes
-  the password, so re-running the full suite needs a fresh `CollegaE2E` (drop + let the API re-seed).
-- **Status moves (flow 8)** are driven through the Idea drawer's status control rather than HTML5
-  drag-and-drop on the Kanban — native drag under Blazor WASM is unreliable to automate. It exercises
-  the same server status-change call. The board is created with "Allow Users to move ideas" enabled so
-  a plain User is permitted to move.
-- **FluentUI fields** (`<fluent-text-field>`, `<fluent-select>`) keep their real control in a shadow
-  root; the helpers in `tests/helpers.ts` target the inner control / open the combobox accordingly.
-- Tests run **serially** (`workers: 1`) because the flows are stateful and ordered.
+- **Flow 1 is one-shot per database.** It consumes the Site Admin's forced password change, so
+  re-running the suite needs a fresh database rather than a re-run.
+- **Status moves were driven through the drawer, not by dragging the Kanban.** Native HTML5 drag was
+  unreliable to automate; the drawer control exercises the same server call.
+- **A plain User can set an assignee** on an idea they authored — the picker reads
+  `GET /organizations/{id}/members`, which any in-org caller may read, not the Org-Admin+ user list.
