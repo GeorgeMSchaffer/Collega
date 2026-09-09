@@ -49,18 +49,25 @@ type RegisterBody = {
   password?: string
 }
 
+/** Base64 alphabet plus at most two padding characters, and nothing else. */
+const BASE64_PAYLOAD = /^[A-Za-z0-9+/]*={0,2}$/
+
 /**
  * Decodes a portrait upload, accepting either a bare Base64 string or a full
  * `data:image/png;base64,...` URL. Returns `null` for anything that does not decode to at least
  * one byte, which the caller renders as a field-level failure.
  *
  * `Buffer.from(s, 'base64')` never throws - it discards characters outside the alphabet and
- * returns whatever is left, so a truthy result proves nothing on its own. Re-encoding and
- * comparing against the input, ignoring padding, is what actually rejects a corrupt string. The
- * .NET handler got this from `Convert.FromBase64String` throwing; here it has to be checked.
+ * returns whatever is left, so a truthy result proves nothing on its own. The rules reproduced
+ * here are `Convert.FromBase64String`'s, which the .NET handler let throw:
+ *
+ * - **whitespace anywhere is ignored**, so a line-wrapped payload or a trailing newline decodes
+ *   rather than failing;
+ * - the whitespace-stripped length must be a **multiple of four**, so padding is mandatory and
+ *   over-padding is rejected - which is why the re-encode below compares padding and all.
  */
-function decodeBase64Image(value: string | undefined): Buffer | null {
-  if (value === undefined || value.trim() === '') {
+function decodeBase64Image(value: unknown): Buffer | null {
+  if (typeof value !== 'string' || value.trim() === '') {
     return null
   }
 
@@ -68,13 +75,17 @@ function decodeBase64Image(value: string | undefined): Buffer | null {
   const payload =
     value.toLowerCase().startsWith('data:') && commaIndex >= 0 ? value.slice(commaIndex + 1) : value
 
-  const bytes = Buffer.from(payload, 'base64')
+  const stripped = payload.replace(/\s/g, '')
+  if (stripped.length % 4 !== 0 || !BASE64_PAYLOAD.test(stripped)) {
+    return null
+  }
+
+  const bytes = Buffer.from(stripped, 'base64')
   if (bytes.length === 0) {
     return null
   }
 
-  const canonical = payload.replace(/=+$/, '')
-  return bytes.toString('base64').replace(/=+$/, '') === canonical ? bytes : null
+  return bytes.toString('base64') === stripped ? bytes : null
 }
 
 /**
