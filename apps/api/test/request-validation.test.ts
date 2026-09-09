@@ -78,6 +78,27 @@ describe('validateFields - accumulation', () => {
     expect(failures.email).toEqual(['Email is required.', 'Email must be a valid email address.'])
   })
 
+  it('reports the required failure ALONE for an explicit null, where an omitted key reports two', () => {
+    // The one place omitted and null legitimately differ. System.Text.Json leaves the
+    // `= string.Empty` initialiser alone for a key that is not in the JSON, so `{}` reached
+    // [EmailFormat] as "" and failed it; an explicit null overwrote the initialiser, and
+    // EmailAddressAttribute.IsValid(null) returns true, so `{"email": null}` failed [RequiredField]
+    // only. Collapsing the two - in either direction - changes what a client renders.
+    const explicitNull = failuresOf(() =>
+      validateFields({ email: { value: null, required: true, email: true } }),
+    )
+    expect(explicitNull.email).toEqual(['Email is required.'])
+
+    const omitted = failuresOf(() =>
+      validateFields({ email: { value: undefined, required: true, email: true } }),
+    )
+    expect(omitted.email).toHaveLength(2)
+  })
+
+  it('does not fail the email rule at all for a null that is not also required', () => {
+    expect(() => validateFields({ email: { value: null, email: true } })).not.toThrow()
+  })
+
   it('accumulates required, max length, and email failures on a single field at once', () => {
     const failures = failuresOf(() =>
       validateFields({ email: { value: '     ', required: true, maxLength: 3, email: true } }),
