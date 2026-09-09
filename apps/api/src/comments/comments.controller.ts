@@ -19,7 +19,11 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
-import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
+import {
+  type FieldRules,
+  RequestValidationError,
+  validateFields,
+} from '../common/errors/request-validation.error.js'
 import { optional } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
@@ -60,9 +64,31 @@ function sortDirection(value: unknown): SortDirection | null {
   return text.trim().toLowerCase() === 'desc' ? 'desc' : 'asc'
 }
 
-/** `List<string>?`; a non-string element becomes `''`, which mention resolution skips as blank. */
-function stringList(value: unknown): readonly string[] | null {
-  return Array.isArray(value) ? value.map((item) => (typeof item === 'string' ? item : '')) : null
+/**
+ * `List<string>?`; absent and null stay absent, and a non-string ELEMENT becomes `''`, which
+ * mention resolution skips as blank.
+ *
+ * A present value that is not an array is REFUSED rather than read as absent, which is the one
+ * place this file departs from the "default it and record the divergence" rule the query
+ * coercions follow. Those only change the STATUS of a request that was going to be rejected
+ * anyway; reading `{"body":"m","mentionEmails":"someone@example.test"}` as absent would ACCEPT the
+ * request and silently discard content the caller asked for - a **201 with the @-mention gone**,
+ * nobody notified and nothing recorded. System.Text.Json could not bind a bare string to
+ * `List<string>` either, so the model-binding envelope is the right one.
+ *
+ * **The exact .NET message text is unverified** - no fixture in the corpus sends a mistyped
+ * `mentionEmails`, so the wording below is this API's own, following the same house convention as
+ * the templates it sits beside. Record one against the frozen .NET app and replace it, exactly as
+ * `absent-body.pipe.ts` says for the body-less request.
+ */
+function mentionEmailList(value: unknown): readonly string[] | null {
+  if (value === undefined || value === null) {
+    return null
+  }
+  if (!Array.isArray(value)) {
+    throw new RequestValidationError({ mentionEmails: ['Mention Emails is invalid.'] })
+  }
+  return value.map((item) => (typeof item === 'string' ? item : ''))
 }
 
 /**
@@ -132,7 +158,7 @@ export class CommentsController {
 
     return this.comments.create(ideaId, {
       body: body.body ?? '',
-      mentionEmails: stringList(body.mentionEmails),
+      mentionEmails: mentionEmailList(body.mentionEmails),
     })
   }
 
@@ -145,7 +171,7 @@ export class CommentsController {
 
     return this.comments.update(commentId, {
       body: body.body ?? '',
-      mentionEmails: stringList(body.mentionEmails),
+      mentionEmails: mentionEmailList(body.mentionEmails),
     })
   }
 
