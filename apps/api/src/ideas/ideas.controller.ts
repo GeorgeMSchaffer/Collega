@@ -171,6 +171,13 @@ function ideaBodyRules(body: CreateIdeaBody): Record<string, FieldRules> {
  * parse `page`, `search` and the rest as GUIDs. Keys whose inner text is not a GUID are skipped,
  * exactly as `Guid.TryParse` skipped them; a repeated key joins its values with a comma, which is
  * what `StringValues.ToString()` produced.
+ *
+ * **Express 5's default `simple` query parser is load-bearing here.** It leaves the literal key
+ * `fieldFilters[<uuid>]` alone, which is the only reason the loop below can see it. Under
+ * `extended` (the Express 4 default, and one `app.set('query parser', ...)` away) `qs` would fold
+ * those keys into a NESTED OBJECT under `fieldFilters`, no key would carry the prefix, every field
+ * filter would silently stop applying, and the endpoint would answer **200 with the wrong rows** -
+ * no error anywhere. Do not change the query parser without rewriting this function.
  */
 function parseFieldFilters(query: Record<string, unknown>): ReadonlyMap<string, string> | null {
   const prefix = 'fieldfilters['
