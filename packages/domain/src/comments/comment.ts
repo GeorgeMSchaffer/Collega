@@ -49,19 +49,24 @@ function assertRequiredId(field: string, value: string, message: string): string
  * (`Collega.API.Contracts.Comments.CreateCommentRequest.Body`, `[RequiredField]` /
  * `[MaxLengthField(2000)]`) rather than the domain's own defensive `ArgumentException` wording -
  * that is where the golden corpus's recorded 400 actually originates (SPEC/decisions.md
- * 2026-09-06 "Wave B conventions"). Required-ness is judged on the trimmed value (matching
- * `RequiredAttribute`'s own trim), length on the raw value (matching `MaxLengthAttribute`, which
- * does not trim first) - the two checks are independent so they never both fire.
+ * 2026-09-06 "Wave B conventions").
+ *
+ * The CHECKS are `Comment.SetBody`'s, though, not the attributes': both are measured on the
+ * trimmed value, because that is what `SetBody` did - it trimmed first and tested
+ * `trimmed.Length`. `MaxLengthAttribute` measured the raw string instead, which is the looser
+ * pair of the two and is transcribed where it belongs, in `commentBodyRules`
+ * (`apps/api/src/comments/comments.controller.ts`). That check runs first on every route that
+ * reaches here, so the two never disagree in practice.
  */
 function normalizeBody(body: string): string {
-  const raw = body ?? ''
-  if (raw.trim().length === 0) {
+  const trimmed = (body ?? '').trim()
+  if (trimmed.length === 0) {
     throw new CommentDomainError('body', 'Body is required.')
   }
-  if (raw.length > BODY_MAX_LENGTH) {
+  if (trimmed.length > BODY_MAX_LENGTH) {
     throw new CommentDomainError('body', `Body must be ${BODY_MAX_LENGTH} characters or fewer.`)
   }
-  return raw.trim()
+  return trimmed
 }
 
 function normalizeMentions(mentionedUserIds: readonly string[]): readonly string[] {

@@ -103,8 +103,9 @@ function mentionEmailList(value: unknown): readonly string[] | null {
  * carrying `; charset=utf-8` - the shape `RequestValidationError` renders and the kernel
  * `ValidationError` does not. Reaching the domain check instead would answer the other shape.
  *
- * The domain's copy still has to stay: that one is the invariant, and it judges the TRIMMED body
- * where `MaxLengthAttribute` judged the raw one.
+ * The domain's copy still has to stay - that one is the invariant - but it is UNREACHABLE through
+ * these two routes: this check runs first and is the stricter of the pair, since
+ * `MaxLengthAttribute` measured the raw body where `Comment.SetBody` measured the trimmed one.
  */
 function commentBodyRules(body: CreateCommentBody): Record<string, FieldRules> {
   return { body: { value: body.body, required: true, maxLength: BODY_MAX_LENGTH } }
