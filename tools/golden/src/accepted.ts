@@ -113,10 +113,17 @@ export type Classification = {
   readonly used: readonly AcceptedCase[]
 }
 
-/** Does `value` satisfy the entry's shape? A shape-less entry accepts anything, including absence. */
+/**
+ * Does `value` satisfy the entry's shape? A shape-less entry accepts anything, including absence.
+ *
+ * `match` rather than `test` because this is called twice per mismatch, once per side, and `test`
+ * carries `lastIndex` between calls on a `g`-flagged regex — a shape written with one would pass on
+ * the expected side and fail on the actual. No current shape has the flag; the gate is too load
+ * bearing to leave that waiting for whoever adds one.
+ */
 function satisfies(entry: AcceptedDiff, value: unknown): boolean {
   if (entry.shape === undefined) return true
-  return typeof value === 'string' && entry.shape.test(value)
+  return typeof value === 'string' && value.match(entry.shape) !== null
 }
 
 /**
