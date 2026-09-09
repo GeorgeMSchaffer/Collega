@@ -104,14 +104,48 @@ function fieldDefinitionBodyRules(body: CreateFieldDefinitionBody): Record<strin
   return rules
 }
 
+/**
+ * `Options` -> the service's command list. `OptionId` is a `Guid?`, and its three states are three
+ * different requests: ABSENT or `null` means "this option is new" and the service mints an id;
+ * a canonical GUID means "update that option".
+ *
+ * A PRESENT BUT MALFORMED id is the third, and it is **refused**. It used to be read as the first,
+ * so `{"optionId":"not-a-guid"}` answered **201 with a freshly minted id** - the caller asked to
+ * update one specific option and silently got a different one created instead, with nothing in the
+ * response to say so. Passing the raw text through is not the alternative: it reaches a `uuid`
+ * column with no guard between here and Prisma, raises `P2023` and answers 500.
+ *
+ * **The message wording is ours, not transcribed.** .NET answered 400 here too - System.Text.Json
+ * could not bind `"not-a-guid"` to a `Guid?` - but no fixture in the corpus records one, so there
+ * is no recorded text to match. This follows the canonical "invalid format" template in
+ * `SPEC/30-Contracts.md` "Validation Message Conventions" (`<FieldName> must be a valid
+ * <FormatName>.`), with "GUID" as the format name that section's "Shared Data Rules" already uses
+ * for identifiers.
+ *
+ * The KEY is settled from source rather than invented: `ToCamelCasePath`
+ * (`src/Collega.API/ErrorHandling/ProblemDetailsServiceCollectionExtensions.cs:66-90`) camelCases
+ * each segment and re-attaches the `[n]` suffix, so a nested failure keys as
+ * `options[0].optionId` - the same shape as the `options[0].label` rule above.
+ *
+ * Every malformed id is collected rather than only the first, matching what ModelState did across
+ * a collection.
+ */
 function optionCommands(body: CreateFieldDefinitionBody): readonly FieldOptionCommand[] {
-  return optionBodies(body).map((option) => ({
-    // `Guid?`: absent, null and anything that is not a canonical GUID all bind to null, and the
-    // service mints a fresh id for each - which is what "this option is new" means on the wire.
-    // The shape check is not optional: `id` reaches a `uuid` column with no guard between here and
-    // Prisma, so passing raw text on raised `P2023` and answered **500** (`{"optionId":
-    // "not-a-guid"}`, reproduced live). `null` rather than `EMPTY_GUID` because the all-zero GUID
-    // is a real, collidable id, where null is exactly "this option is new".
+  const options = optionBodies(body)
+  const failures: Record<string, readonly string[]> = {}
+  for (const [index, option] of options.entries()) {
+    const optionId = option?.optionId
+    if (optionId !== undefined && optionId !== null && !isGuid(optionId)) {
+      failures[`options[${index}].optionId`] = ['Option Id must be a valid GUID.']
+    }
+  }
+  if (Object.keys(failures).length > 0) {
+    throw new RequestValidationError(failures)
+  }
+
+  return options.map((option) => ({
+    // `null` rather than `EMPTY_GUID` because the all-zero GUID is a real, collidable id, where
+    // null is exactly "this option is new".
     optionId: isGuid(option?.optionId) ? option.optionId.trim() : null,
     label: typeof option?.label === 'string' ? option.label : '',
     displayOrder: optionalInt32(option?.displayOrder) ?? 0,
