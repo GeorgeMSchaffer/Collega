@@ -130,7 +130,10 @@ export class PrismaCommentRepository implements CommentRepository {
       page: filter.page.page,
       pageSize: filter.page.pageSize,
       totalCount,
-      sortBy: null,
+      // The literal `EfCommentRepository.ListByIdeaAsync` returned, not `null`: this list has no
+      // sort switch - it is always chronological - but it still ECHOES the column it ordered by,
+      // and every recorded comment-list fixture pins `"createdAtUtc"`.
+      sortBy: 'createdAtUtc',
       sortDirection: direction,
     }
   }
