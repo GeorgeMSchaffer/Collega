@@ -62,9 +62,11 @@ const BASE64_PAYLOAD = /^[A-Za-z0-9+/]*={0,2}$/
  * here are `Convert.FromBase64String`'s, which the .NET handler let throw:
  *
  * - **whitespace anywhere is ignored**, so a line-wrapped payload or a trailing newline decodes
- *   rather than failing;
+ *   rather than failing. Its decoder skips characters `<= ' '` and nothing else, which is why the
+ *   strip below keeps only characters ABOVE `' '` rather than using `\s`, which is wider: JS `\s`
+ *   also covers NBSP, U+2028 and U+FEFF, all of which `Convert.FromBase64String` threw on;
  * - the whitespace-stripped length must be a **multiple of four**, so padding is mandatory and
- *   over-padding is rejected - which is why the re-encode below compares padding and all.
+ *   over-padding is rejected.
  */
 function decodeBase64Image(value: unknown): Buffer | null {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -75,7 +77,12 @@ function decodeBase64Image(value: unknown): Buffer | null {
   const payload =
     value.toLowerCase().startsWith('data:') && commaIndex >= 0 ? value.slice(commaIndex + 1) : value
 
-  const stripped = payload.replace(/\s/g, '')
+  let stripped = ''
+  for (const char of payload) {
+    if (char > ' ') {
+      stripped += char
+    }
+  }
   if (stripped.length % 4 !== 0 || !BASE64_PAYLOAD.test(stripped)) {
     return null
   }
