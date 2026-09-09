@@ -82,11 +82,19 @@ export type FieldRules = {
  * `SPEC/30-Contracts.md` "Validation Message Conventions"; the corpus records the required variant
  * only, so the other two are matched against the .NET source rather than a fixture.
  *
- * An absent field is judged as `''`, not skipped, because that is what it was on the .NET side:
- * every string property on those DTOs is initialised to `string.Empty`, so an omitted key reached
- * validation as an empty string. A JSON value that is not a string at all (`{"email": 123}`) is
- * treated the same way - body types are compile-time only and there is no `ValidationPipe`, so
- * without this the first `.trim()` would be a `TypeError` and a 500 on an anonymous endpoint.
+ * An OMITTED field is judged as `''`, not skipped, because that is what it was on the .NET side:
+ * every string property on those DTOs is initialised to `string.Empty`, and System.Text.Json
+ * leaves the initialiser alone for a key that is not in the JSON. So `{}` reached validation as an
+ * empty string and failed `[EmailFormat]` as well as `[RequiredField]`.
+ *
+ * An EXPLICIT `null` is not the same thing and is the one case that has to branch. System.Text.Json
+ * writes the `null` over the initialiser, and `EmailAddressAttribute.IsValid(null)` returns TRUE -
+ * so `{"email": null}` failed `[RequiredField]` only, one message where `{}` gave two.
+ *
+ * A JSON value that is neither (`{"email": 123}`) had no faithful answer to reproduce: System.Text
+ * .Json threw a `JsonException` during binding, which is a different envelope entirely. It is read
+ * as omitted, since body types are compile-time only and there is no `ValidationPipe` - without
+ * that the first `.trim()` would be a `TypeError` and a 500 on an anonymous endpoint.
  */
 export function validateFields(fields: Readonly<Record<string, FieldRules>>): void {
   const failures: Record<string, readonly string[]> = {}
@@ -102,7 +110,9 @@ export function validateFields(fields: Readonly<Record<string, FieldRules>>): vo
     if (rules.maxLength !== undefined && value.length > rules.maxLength) {
       messages.push(`${displayName(name)} must be ${rules.maxLength} characters or fewer.`)
     }
-    if (rules.email === true && !isEmailAddress(value)) {
+    // `!== null` and not `typeof === 'string'`: `EmailAddressAttribute.IsValid` short-circuits on
+    // null alone, so an omitted field still has to fail this rule (see above).
+    if (rules.email === true && rules.value !== null && !isEmailAddress(value)) {
       messages.push(`${displayName(name)} must be a valid email address.`)
     }
 
