@@ -156,7 +156,9 @@ export class PrismaUserRepository
       page: filter.page.page,
       pageSize: filter.page.pageSize,
       totalCount,
-      sortBy,
+      // The REQUESTED sort field, not the resolved one - see the organization repository's note;
+      // `EfUserRepository` echoed `filter.SortBy` the same way.
+      sortBy: filter.sortBy,
       sortDirection: direction,
     }
   }

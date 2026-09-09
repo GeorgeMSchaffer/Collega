@@ -137,7 +137,10 @@ export class PrismaOrganizationRepository
       page: filter.page.page,
       pageSize: filter.page.pageSize,
       totalCount,
-      sortBy,
+      // The REQUESTED sort field, not the resolved one: `EfOrganizationRepository` passed
+      // `filter.SortBy` straight into `PagedResult`, so a caller who sent nothing got `null` back
+      // rather than the default the query actually used.
+      sortBy: filter.sortBy,
       sortDirection: direction,
     }
   }
