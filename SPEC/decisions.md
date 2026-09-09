@@ -53,7 +53,7 @@ the `accessToken` removal under decision `08`.
 81 endpoints × 4 roles, clean". Under this decision "clean" can no longer mean zero diffs, or the
 gate fails forever on differences we chose. It should mean **every diff is either fixed or on a
 recorded accepted list** — otherwise, once diffs start being waved through case by case, the gate
-quietly stops meaning anything. That list does not exist yet.
+quietly stops meaning anything. That list is `tools/golden/src/accepted.ts`, written the same day; `SPEC/50-typescript-migration.md` F1 now says so. An entry there asserts what the difference is *allowed to look like* rather than muting the path, so the field stays pinned to a shape, and an entry that stops excusing anything is reported as stale.
 
 **Why this needed writing down.** Six agents built Wave D against the older assumption, and it is
 baked into their briefs — "the .NET source is the specification", "the corpus is the oracle". Those

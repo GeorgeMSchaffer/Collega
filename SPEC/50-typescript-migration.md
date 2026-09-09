@@ -278,7 +278,7 @@ the delivery comp was regenerated on the decision. No Open Question remains in
 
 | Slice | Owns |
 |---|---|
-| **F1** Golden replay | Point A3 at Nest, diff all 81 endpoints × 4 roles, fix until clean. **This is the gate.** |
+| **F1** Golden replay | Point A3 at Nest, diff all 81 endpoints × 4 roles, and resolve every diff: fix it, record it in `tools/golden/src/accepted.ts`, or deliberately do better. **Green means no unexplained diff**, not zero diffs — `SPEC/decisions.md` 2026-09-09. **This is the gate.** |
 | **F2** E2E adaptation | `e2e/**` — the suite is kept in principle, but comp P is a redesign, so its selectors will not survive unchanged |
 | **F3** Data migration | The transform, plus an answer to whether it is reversible |
 | **F4** Cutover runbook | Sequence, rollback posture, the go/no-go checklist |
@@ -410,8 +410,9 @@ test, because documentation did not prevent this bug class before.
 Big-bang was chosen deliberately, so the rollback posture has to be explicit rather than
 assumed.
 
-- **Gate:** F1 green — all 81 endpoints × 4 roles replay clean against Nest — plus F2's
-  adapted Playwright suite green. No cutover before both.
+- **Gate:** F1 green — all 81 endpoints × 4 roles replay against Nest with every diff either
+  fixed or recorded in `tools/golden/src/accepted.ts` — plus F2's adapted Playwright suite
+  green. No cutover before both.
 - **Rollback unit is the database, not the .NET deployment.** This bullet originally read
   "the .NET stack stays deployable and its database restorable" — that is **dead as of
   2026-09-04**, when Sprint 8 was cancelled and the .NET stack was never deployed. There is no
