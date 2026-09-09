@@ -10,11 +10,10 @@ Repairs the EF-migrated database described in `SPEC/decisions.md` 2026-09-07: ze
 types where `schema.prisma` declares nine, so **every Prisma write through those nine columns
 fails**. Five columns are `character varying`, four are `integer`.
 
-**There are two ways out of this, and they are not equally priced.**
+**The chosen path is a rebuild** (decided 2026-09-09, `SPEC/decisions.md`). The migration below
+is the exception, kept for a database someone would rather not lose.
 
-### Option A — rebuild (preferred, since 2026-09-08)
-
-The demo seed now exists, so the database is no longer the only copy of its own contents:
+### The decision — rebuild
 
 ```bash
 dropdb Collega && createdb Collega
@@ -22,11 +21,18 @@ pnpm --filter @collega/infrastructure db:migrate   # baseline; creates all nine 
 pnpm --filter @collega/infrastructure db:seed      # 2 orgs, 10 users, 4 boards, 44 ideas
 ```
 
-Takes under a minute and ends in a database that is correct by construction rather than repaired.
-**It loses anything hand-created** — data entered while testing, an organization someone set up by
-hand. If that matters, take Option B.
+**Verified 2026-09-09: 3.7 seconds end to end**, `db:check-enums` reporting `0 of 9 columns need
+migrating` and the live-database suite passing 28/28 against the result. Correct by construction
+rather than repaired. This only became possible when the demo seed landed on 2026-09-08 — before
+that, the database was the only copy of its own contents.
 
-### Option B — migrate in place
+It **loses anything hand-created**: data entered while testing, an organization someone set up by
+hand. There was none worth keeping when this was decided.
+
+### The exception — migrate in place
+
+Still the right move for a pre-existing developer database holding local work, since the drift is in
+every one of them:
 
 ```bash
 pg_dump -Fc "$DATABASE_URL" > collega-before-enum-migration.dump   # do this first

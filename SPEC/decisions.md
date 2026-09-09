@@ -9,6 +9,41 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-09 — The drifted database is rebuilt, not migrated
+
+**Decided by the user**, asked directly: *"there is no production data so feel free to recreate the
+DB… it won't have impact."*
+
+**What happens.** The EF-migrated database is dropped and rebuilt from the baseline migration plus
+the demo seed, rather than repaired in place. Verified end to end on 2026-09-09:
+
+```
+dropdb Collega && createdb Collega
+pnpm --filter @collega/infrastructure db:migrate
+pnpm --filter @collega/infrastructure db:seed
+```
+
+**3.7 seconds**, producing 2 organizations, 10 users, 4 boards and 44 ideas; `db:check-enums`
+reports `0 of 9 columns need migrating`, and the live-database suite passes 28/28 against the
+result. Correct by construction rather than repaired.
+
+**Why this is now available at all.** It was not, two days ago. The 2026-09-07 entry below rejected
+recreation because the database was the only copy of its own contents — the seed modules were an
+empty array, so nothing could rebuild the demo data. The seed landed on 2026-09-08 and removed that
+constraint. **This is the second decision the seed reversed**, after `DATABASE_URL` being withheld
+from cloud sessions; both were correct when taken and wrong within a day, which is worth noticing
+about how fast the ground moved here.
+
+**The in-place migration stays on disk**, at
+`packages/infrastructure/prisma/manual/2026-09-08-ef-enum-drift.sql`. It is no longer the plan, but
+the drift exists in every pre-existing developer database, and someone with local data they would
+rather not lose still needs it. It is verified, idempotent, and documented as the exception.
+
+**A premise worth re-examining, not decided here.** `CLAUDE.md` names the database as one of three
+things that survive cutover, alongside `SPEC/` and `tools/golden`. That was load-bearing when the
+database was irreplaceable. It is now reproducible in under four seconds from committed code, so its
+survival may no longer need to constrain the cutover plan. Flagged for the owner; not changed.
+
 ## 2026-09-08 — Wave G is cut from the conversion and revisited after cutover
 
 **Decided by the user**, asked directly, with the alternatives on the table (keep it as planned;
@@ -102,6 +137,8 @@ native Postgres enums are not:
 `__EFMigrationsHistory` is present, so this is the EF-migrated database — the one slice S0.2
 introspected and then reshaped. The reshape promoted nine enum columns to native types; the
 database was never migrated to match.
+
+> **Partly superseded 2026-09-09.** The paragraph below argues recreation is unavailable because the database is irreplaceable. That stopped being true when the demo seed landed on 2026-09-08; the chosen resolution is now a rebuild. The description of the defect itself still stands.
 
 **Why this blocks rather than annoys.** Prisma emits a `::"public"."<Enum>"` cast, so *every write
 through any of those columns fails*. That is users, notifications, custom fields, idea types and AI
