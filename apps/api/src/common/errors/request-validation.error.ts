@@ -71,9 +71,11 @@ export type FieldRules = {
   /**
    * The name the MESSAGE uses, when it is not derivable from the key. Needed only for a NESTED
    * property, where the two genuinely part company: ASP.NET keyed the failure by the whole path
-   * (`options[0].label`) but built the message from `ModelMetadata.DisplayName`, which
-   * `SpacedDisplayNameMetadataProvider` filled from the property's own name alone - so the entry
-   * reads `"Label is required."`, not `"Options[0].label is required."`.
+   * (`Options[0].Label`, camelCased to `options[0].label` by `ToCamelCasePath` in
+   * `src/Collega.API/ErrorHandling/ProblemDetailsServiceCollectionExtensions.cs:66-90`) but built
+   * the message from `ModelMetadata.DisplayName`, which `SpacedDisplayNameMetadataProvider` filled
+   * from the property's own name alone - so the entry reads `"Label is required."`, not
+   * `"Options[0].label is required."`.
    */
   readonly displayName?: string
 }

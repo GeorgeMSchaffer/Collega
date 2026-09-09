@@ -54,7 +54,17 @@ type UpdateFieldDefinitionBody = CreateFieldDefinitionBody
 
 type ReorderFieldDefinitionsBody = { orderedIds?: unknown }
 
-/** `Options` on both request records, read as omitted when it is not a JSON array. */
+/**
+ * `Options` on both request records, read as omitted when it is not a JSON array.
+ *
+ * **A KNOWN DIVERGENCE, and the only one in this slice that makes a request SUCCEED where .NET
+ * failed.** `Options` carries no `[RequiredField]` and the property is initialised to `new()`, so
+ * System.Text.Json wrote an explicit `null` straight over the initialiser and
+ * `FieldDefinitionsController.cs:62` and `:96` then called `request.Options.Select(...)` with no
+ * `?? new()` guard - unlike `SetFields` at `:87`, which has one. So `{"options": null}`, and a
+ * null ELEMENT, were a **500** there and are a 201 here. Kept: a `Text` field legitimately has no
+ * options, and answering 500 to a request that asks for none is not worth reproducing.
+ */
 function optionBodies(body: CreateFieldDefinitionBody): readonly FieldOptionBody[] {
   return Array.isArray(body.options) ? body.options : []
 }
@@ -64,13 +74,15 @@ function optionBodies(body: CreateFieldDefinitionBody): readonly FieldOptionBody
  * identical field for field, including the nested `FieldOptionRequest` list. `IsRequired` (`bool`)
  * and `DisplayOrder` (`int?`) carry none, and `OptionId` is a `Guid?`.
  *
- * **The option keys are the one part of this not pinned by a fixture.** ASP.NET's
- * `ValidationVisitor` builds a nested key by index and then property - `options[0].label`, in
- * camelCase because `AddControllers` registers the System.Text.Json validation metadata provider
- * (which is also why the flat keys in the recorded 400s are camelCase). The MESSAGE text is
- * certain: `SpacedDisplayNameMetadataProvider` fed the attribute the property's own spaced name,
- * `Label`, not the path. Nothing in the corpus sends a bad option, so if a recording ever
- * contradicts the key shape, this is the line to change - not the messages.
+ * **The nested option key is settled from source, not guessed.** ASP.NET's `ValidationVisitor`
+ * keys a nested collection failure by index and then property - `Options[0].Label` - and
+ * `ProblemDetailsServiceCollectionExtensions.CreateValidationProblemResult` rewrites every
+ * ModelState key through `ToCamelCasePath` (`:66-90`), which splits on `.`, camelCases each
+ * segment's property part and re-attaches the `[n]` suffix. Its own worked example is
+ * `"Assignees[0].UserId" -> "assignees[0].userId"`, so `options[0].label` is what the wire
+ * carried. The MESSAGE is separate and equally pinned: `SpacedDisplayNameMetadataProvider` fills
+ * `DisplayName` from the property's own name alone, hence `"Label is required."` rather than the
+ * path.
  */
 function fieldDefinitionBodyRules(body: CreateFieldDefinitionBody): Record<string, FieldRules> {
   const rules: Record<string, FieldRules> = {
