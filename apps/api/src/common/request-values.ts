@@ -37,3 +37,68 @@ export function optional(value: unknown): string | null {
 export function queryBool(value: unknown): boolean {
   return String(value).toLowerCase() === 'true'
 }
+
+/** `int` is 32-bit and signed on the .NET side; `Int` is the same column here. */
+const INT32_MIN = -2147483648
+const INT32_MAX = 2147483647
+
+/**
+ * An `int?` BODY property with no attributes - `sortOrder`, `displayOrder`. Only a JSON number
+ * **that an `int` could hold** is a value; anything else is read as omitted so the Application
+ * layer applies its own default.
+ *
+ * (The query-string counterpart is `optionalInt` in `ideas.controller.ts`/
+ * `organizations.controller.ts`: a query value arrives as text, so it parses rather than
+ * type-checks. Same divergence, different input shape.)
+ *
+ * The range and integer checks are not pedantry - both cases were live faults on the status
+ * routes, which carry the identical property:
+ * - `{"sortOrder": 99999999999}` overflowed Prisma's `Int` and answered **500**. .NET bound
+ *   `int?`, failed the conversion, and answered 400.
+ * - `{"sortOrder": 1.5}` was accepted, the response ECHOED `1.5`, and the row stored `1` - so the
+ *   create response contradicted the very next read. That is a state inconsistency, not only an
+ *   infidelity.
+ *
+ * **A KNOWN DIVERGENCE, deliberate**, and the same one D1 recorded for `?page=abc`: every value
+ * this reads as omitted - `"abc"`, `1.5`, `99999999999` alike - was a System.Text.Json or
+ * value-conversion binding failure on the .NET side, which is a different envelope again, not the
+ * model-binding one and not the Application one. No fixture in the corpus records it, so
+ * reproducing the 400 means guessing the wording. Record one against the frozen .NET app first.
+ */
+export function optionalInt32(value: unknown): number | null {
+  return typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= INT32_MIN &&
+    value <= INT32_MAX
+    ? value
+    : null
+}
+
+/** Canonical 8-4-4-4-12 hex form - the only shape a `uuid` column accepts. */
+const UUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+
+/**
+ * `default(Guid)`, which is what a non-nullable `Guid` property bound to when the JSON omitted it.
+ * See `guidOrEmpty` for why a value that is not a GUID lands here too.
+ */
+export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
+
+/**
+ * A non-nullable `Guid` body property. Absent, null, or anything that is not a canonical GUID
+ * binds to `default(Guid)` - which is what .NET did for an omitted key.
+ *
+ * `[RequiredField]` on such a property is a NO-OP and never turns any of those into a 400:
+ * `RequiredAttribute` rejects null alone, and a boxed `Guid.Empty` is not null. A present-but-
+ * malformed value was a System.Text.Json binding failure there (a different envelope again);
+ * passing the raw text on instead is not an option, because it reaches a `uuid` column, Prisma
+ * raises `P2023`, and the caller gets a **500**. Every consumer treats the empty GUID as "no such
+ * row" and answers 400, which is the closer answer.
+ */
+export function guidOrEmpty(value: unknown): string {
+  return isGuid(value) ? value.trim() : EMPTY_GUID
+}
+
+/** Whether a value is a canonical GUID - for the callers that must SKIP one rather than blank it. */
+export function isGuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID.test(value.trim())
+}

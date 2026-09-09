@@ -32,7 +32,7 @@ import type { Response } from 'express'
 import { AuthGuard } from '../auth/auth.guard.js'
 import { writeCsv } from '../common/csv/write-csv.js'
 import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
-import { optional } from '../common/request-values.js'
+import { guidOrEmpty, isGuid, optional } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** Hard ceiling on a CSV import body, from .NET's `IdeasController.MaxImportBytes`. */
@@ -40,15 +40,6 @@ const MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 /** Hard ceiling on parsed import rows, applied after the header row is dropped. */
 const MAX_IMPORT_ROWS = 5_000
-
-/** Canonical 8-4-4-4-12 hex form - the only shape a `uuid` column accepts. */
-const UUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
-
-/**
- * `default(Guid)`, which is what a non-nullable `Guid` property bound to when the JSON omitted it.
- * See `guidOrEmpty` for why a value that is not a GUID lands here too.
- */
-const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
 
 type IdeaFieldValueBody = { fieldDefinitionId?: unknown; value?: unknown }
 
@@ -103,21 +94,7 @@ function optionalInt(value: unknown): number | null {
  */
 function optionalGuid(value: unknown): string | null {
   const text = optional(value)
-  if (text === null) {
-    return null
-  }
-  return UUID.test(text.trim()) ? text.trim() : EMPTY_GUID
-}
-
-/**
- * A non-nullable `Guid` body property. Absent, null, or anything that is not a canonical GUID
- * binds to `default(Guid)` - which is what .NET did for an omitted key, and what `optionalGuid`
- * explains for the rest. Every consumer of these ids treats the empty GUID as "no such option"
- * and answers 400 (`IdeaService.getActiveIdeaType`, `ensureActiveBusinessImpact`,
- * `hasSwimlaneForStatus`, `resolveAssignees`), so no path reaches Prisma with a malformed uuid.
- */
-function guidOrEmpty(value: unknown): string {
-  return typeof value === 'string' && UUID.test(value.trim()) ? value.trim() : EMPTY_GUID
+  return text === null ? null : guidOrEmpty(text)
 }
 
 /** `List<Guid>?` - absent stays absent, so the Application layer can tell "not provided" apart. */
@@ -187,7 +164,7 @@ function parseFieldFilters(query: Record<string, unknown>): ReadonlyMap<string, 
       continue
     }
     const inner = key.slice(prefix.length, -1)
-    if (!UUID.test(inner)) {
+    if (!isGuid(inner)) {
       continue
     }
     const text = Array.isArray(value) ? value.join(',') : String(value)
