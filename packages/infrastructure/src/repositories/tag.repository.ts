@@ -173,7 +173,12 @@ export class PrismaTagRepository implements TagRepository, IdeasTagsPort, AiTags
         organization_id: organizationId,
         normalized_name: { startsWith: normalizedPrefix },
       },
-      orderBy: { name: 'asc' },
+      // `normalized_name`, not `name` - `EfTagRepository.SearchByPrefixAsync` ordered by the
+      // normalized column and projected the display one. The two differ whenever casing does:
+      // `normalized_name` is lowercased, so it sorts case-insensitively where `name` would let
+      // the collation decide, and `"UX"` sorts after `"triage"` under a C collation but before
+      // it here. The prefix filter already runs on the normalized column; the ordering follows it.
+      orderBy: { normalized_name: 'asc' },
       take: limit,
       select: { name: true },
     })

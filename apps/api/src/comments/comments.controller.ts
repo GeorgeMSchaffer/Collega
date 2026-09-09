@@ -1,0 +1,140 @@
+import {
+  type CommentListItem,
+  type CommentListResult,
+  CommentService,
+  type CreateCommentResult,
+} from '@collega/application/comments'
+import type { SortDirection } from '@collega/application/common'
+import { BODY_MAX_LENGTH } from '@collega/domain/comments'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common'
+import { AuthGuard } from '../auth/auth.guard.js'
+import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
+import { optional, optionalInt, stringList } from '../common/request-values.js'
+import { UuidParamPipe } from '../common/uuid-param.pipe.js'
+
+/** `POST /ideas/{ideaId}/comments` - `CreateCommentRequest`. */
+type CreateCommentBody = { body?: string; mentionEmails?: unknown }
+
+/** `PUT /comments/{commentId}` - `UpdateCommentRequest`: the same two properties. */
+type UpdateCommentBody = CreateCommentBody
+
+/**
+ * `CommentListQuery.sortDirection` is typed `'asc' | 'desc'`, not a raw string, so the coercion
+ * .NET did inside `SortDirection.Normalize` has to happen here instead of in the repository.
+ *
+ * Trimmed and case-insensitive, matching `SortDirection.IsDescending`'s
+ * `StringComparison.OrdinalIgnoreCase` - `?sortDirection=DESC` was descending there and must stay
+ * descending here. Everything that is not "desc" is ascending, which is why an unrecognised value
+ * is `'asc'` rather than an error: `Normalize` never rejected one.
+ */
+function sortDirection(value: unknown): SortDirection | null {
+  const text = optional(value)
+  if (text === null) {
+    return null
+  }
+  return text.trim().toLowerCase() === 'desc' ? 'desc' : 'asc'
+}
+
+/**
+ * The `[RequiredField]` / `[MaxLengthField(2000)]` pair that `CreateCommentRequest` and
+ * `UpdateCommentRequest` both carry on `Body`, and the only attributes either declares -
+ * `MentionEmails` is a bare `List<string>?`.
+ *
+ * **Not redundant with the domain's identical pair** (`packages/domain/src/comments/comment.ts`'s
+ * `normalizeBody`), for the reason `ideas.controller.ts` gives about titles: only this one
+ * produces the model-binding envelope, and the corpus is explicit about which envelope belongs
+ * here. `comments.create.empty.user` records a 400 with **no `traceId`** and a `content-type`
+ * carrying `; charset=utf-8` - the shape `RequestValidationError` renders and the kernel
+ * `ValidationError` does not. Reaching the domain check instead would answer the other shape.
+ *
+ * The domain's copy still has to stay - that one is the invariant - but it is UNREACHABLE through
+ * these two routes: this check runs first and is the stricter of the pair, since
+ * `MaxLengthAttribute` measured the raw body where `Comment.SetBody` measured the trimmed one.
+ */
+function commentBodyRules(body: CreateCommentBody): Record<string, FieldRules> {
+  return { body: { value: body.body, required: true, maxLength: BODY_MAX_LENGTH } }
+}
+
+/**
+ * Idea comments (`SPEC/30-Contracts.md` "Comment Contracts").
+ *
+ * **No controller prefix, deliberately.** The five routes span two roots - `ideas/{ideaId}/
+ * comments` for the list and create, `comments/{commentId}` for the edit and delete - because the
+ * .NET controller declared each path in full rather than sharing one, and the corpus pins all
+ * five. Any `@Controller(prefix)` would move at least two of them.
+ *
+ * Authorization lives entirely in `CommentService`: that every member including Read Only may
+ * comment, that editing is the author's alone while an in-scope admin may delete, and that a
+ * direct Site Admin is refused where a View As session is not. Nothing here branches on a role or
+ * an organization, and the caller's identity is never read - it reaches the service through
+ * `CurrentUserContext`.
+ *
+ * Mentions are resolved by the service too, and an address it cannot resolve to an active user of
+ * the idea's organization is a **400 keyed on `mentionEmails`** (`SPEC/30-Contracts.md` line 1250,
+ * correcting an earlier line that said such addresses were ignored - they never were). That one is
+ * thrown from Application code, so it renders with a `traceId` and no charset: the opposite
+ * envelope to the body rules above, and the reason the two failures are raised in different
+ * layers rather than merged into one check here.
+ */
+@Controller()
+@UseGuards(AuthGuard)
+export class CommentsController {
+  constructor(private readonly comments: CommentService) {}
+
+  @Get('ideas/:ideaId/comments')
+  async listByIdea(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<CommentListResult> {
+    return this.comments.listByIdea(ideaId, {
+      page: optionalInt(query.page),
+      pageSize: optionalInt(query.pageSize),
+      sortDirection: sortDirection(query.sortDirection),
+    })
+  }
+
+  @Post('ideas/:ideaId/comments')
+  @HttpCode(201)
+  async create(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Body() body: CreateCommentBody,
+  ): Promise<CreateCommentResult> {
+    validateFields(commentBodyRules(body))
+
+    return this.comments.create(ideaId, {
+      body: body.body ?? '',
+      mentionEmails: stringList('mentionEmails', body.mentionEmails),
+    })
+  }
+
+  @Put('comments/:commentId')
+  async update(
+    @Param('commentId', UuidParamPipe) commentId: string,
+    @Body() body: UpdateCommentBody,
+  ): Promise<CommentListItem> {
+    validateFields(commentBodyRules(body))
+
+    return this.comments.update(commentId, {
+      body: body.body ?? '',
+      mentionEmails: stringList('mentionEmails', body.mentionEmails),
+    })
+  }
+
+  /** Hard delete - comments carry no soft-delete flag, unlike ideas. */
+  @Delete('comments/:commentId')
+  @HttpCode(204)
+  async delete(@Param('commentId', UuidParamPipe) commentId: string): Promise<void> {
+    await this.comments.delete(commentId)
+  }
+}

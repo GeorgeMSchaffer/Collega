@@ -191,8 +191,15 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
   { firstName: 'Rosa', lastName: 'Observer', localPart: 'readonly', role: 'ReadOnly' },
 ]
 
-/** Org Admin plus the two Users. Read Only is excluded: it authors nothing. */
-export const CONTRIBUTOR_LOCAL_PARTS: readonly string[] = ['orgadmin', 'user', 'user2']
+/**
+ * Org Admin plus the two Users, in the rotation order every author, assignee, upvote and comment
+ * index below is taken modulo. Read Only is excluded: it authors nothing.
+ *
+ * ORDER IS LOAD-BEARING, and `user2` before `user` is not a typo. `StartupSeeder` read the
+ * contributors as `OrderBy(Role == OrgAdmin ? 0 : 1).ThenBy(Email)`, and `user2@...` sorts before
+ * `user@...` because `2` precedes `@`. The golden corpus agrees: idea 1's author is `user2@`.
+ */
+export const CONTRIBUTOR_LOCAL_PARTS: readonly string[] = ['orgadmin', 'user2', 'user']
 
 export function demoEmail(localPart: string, slug: string): string {
   return `${localPart}@${slug}.demo.collega.test`

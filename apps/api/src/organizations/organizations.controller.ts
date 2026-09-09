@@ -47,6 +47,7 @@ import {
   requirePresent,
   validateFields,
 } from '../common/errors/request-validation.error.js'
+import { optional, optionalInt, queryBool } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** The seven optional address/contact fields shared by create and update. */
@@ -78,18 +79,6 @@ type CreateUserBody = {
   role?: string
   initialPassword?: string
   status?: string
-}
-
-/**
- * A blank or absent optional value is `null`, never `''` - the domain distinguishes them, and so
- * does every Application list filter.
- *
- * Anything that is not a string counts as absent. Body types are compile-time only and a repeated
- * query key arrives as an array, so `{"city": 12}` and `?search=a&search=b` would otherwise reach
- * `.trim()` and answer 500.
- */
-function optional(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value : null
 }
 
 /**
@@ -139,30 +128,6 @@ function toProfile(body: OrganizationProfileBody): OrganizationProfile {
 }
 
 /**
- * Query strings arrive as strings or, for a repeated key, as an array. Anything that is not a
- * finite number becomes `null` so the Application layer applies its own default.
- *
- * **A KNOWN DIVERGENCE, deliberate.** ASP.NET did NOT bind an unparseable `int?` to null: the
- * value-conversion failure landed in ModelState and `[ApiController]` answered 400 through the
- * `InvalidModelStateResponseFactory` that `ProblemDetailsServiceCollectionExtensions` installs
- * (it replaces the factory, it does not suppress the filter). So `?page=abc` was a 400 there and
- * is a defaulted 200 here.
- *
- * Not corrected because the message text cannot be reproduced faithfully: it is ASP.NET's own
- * binding resource string, not one of the templates in `SPEC/30-Contracts.md`, and no fixture in
- * the corpus records one - so implementing the 400 means guessing the wording of the `errors`
- * entry, which is exactly the trap this comment used to be. Record a fixture against the frozen
- * .NET app first, then this becomes a two-line change.
- */
-function optionalInt(value: unknown): number | null {
-  if (typeof value !== 'string' || value.trim() === '') {
-    return null
-  }
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
-
-/**
  * Organizations, plus the user endpoints that are scoped by an organization in the route rather
  * than by a user - list, members, create and CSV import. The .NET controller drew the line the
  * same way and the corpus recorded these paths, so moving them onto the users controller would
@@ -182,10 +147,7 @@ export class OrganizationsController {
 
   /**
    * `isArchived` is a .NET `bool` rather than `bool?`, so an ABSENT value binds to `false` and the
-   * list excludes archived organizations. Only the literal `true` flips it.
-   *
-   * An UNPARSEABLE value (`?isArchived=yes`) was a 400 there, not a `false`, for the same reason
-   * `?page=abc` was - see `optionalInt` above for why that is not reproduced here.
+   * list excludes archived organizations - see `queryBool` for the divergences that carries.
    */
   @Get()
   async list(@Query() query: Record<string, unknown>): Promise<OrganizationListResult> {
@@ -193,7 +155,7 @@ export class OrganizationsController {
       page: optionalInt(query.page),
       pageSize: optionalInt(query.pageSize),
       search: optional(query.search),
-      includeArchived: String(query.isArchived).toLowerCase() === 'true',
+      includeArchived: queryBool(query.isArchived),
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
     })

@@ -65,7 +65,8 @@
     },
     "@collega/infrastructure#test": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "db:generate"
       ],
       "env": [
         "DATABASE_URL"

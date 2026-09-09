@@ -44,7 +44,7 @@ export class RequestValidationError extends Error {
  * This mirrors `SpacedDisplayNameMetadataProvider` on the .NET side, which fed ASP.NET's
  * `DisplayName` and therefore every message any request DTO produced.
  */
-function displayName(field: string): string {
+export function displayName(field: string): string {
   const spaced = field.replace(/(?<=[a-z0-9])(?=[A-Z])/g, ' ')
   return `${spaced.charAt(0).toUpperCase()}${spaced.slice(1)}`
 }
@@ -68,6 +68,16 @@ export type FieldRules = {
   readonly required?: boolean
   readonly maxLength?: number
   readonly email?: boolean
+  /**
+   * The name the MESSAGE uses, when it is not derivable from the key. Needed only for a NESTED
+   * property, where the two genuinely part company: ASP.NET keyed the failure by the whole path
+   * (`Options[0].Label`, camelCased to `options[0].label` by `ToCamelCasePath` in
+   * `src/Collega.API/ErrorHandling/ProblemDetailsServiceCollectionExtensions.cs:66-90`) but built
+   * the message from `ModelMetadata.DisplayName`, which `SpacedDisplayNameMetadataProvider` filled
+   * from the property's own name alone - so the entry reads `"Label is required."`, not
+   * `"Options[0].label is required."`.
+   */
+  readonly displayName?: string
 }
 
 /**
@@ -100,20 +110,21 @@ export function validateFields(fields: Readonly<Record<string, FieldRules>>): vo
   const failures: Record<string, readonly string[]> = {}
   for (const [name, rules] of Object.entries(fields)) {
     const value = typeof rules.value === 'string' ? rules.value : ''
+    const shown = rules.displayName ?? displayName(name)
     const messages: string[] = []
 
     if (rules.required === true && value.trim() === '') {
-      messages.push(`${displayName(name)} is required.`)
+      messages.push(`${shown} is required.`)
     }
     // Untrimmed, as `MaxLengthAttribute` measured it - the domain trims first, which is a
     // different (and looser) rule, so the two checks are not interchangeable.
     if (rules.maxLength !== undefined && value.length > rules.maxLength) {
-      messages.push(`${displayName(name)} must be ${rules.maxLength} characters or fewer.`)
+      messages.push(`${shown} must be ${rules.maxLength} characters or fewer.`)
     }
     // `!== null` and not `typeof === 'string'`: `EmailAddressAttribute.IsValid` short-circuits on
     // null alone, so an omitted field still has to fail this rule (see above).
     if (rules.email === true && rules.value !== null && !isEmailAddress(value)) {
-      messages.push(`${displayName(name)} must be a valid email address.`)
+      messages.push(`${shown} must be a valid email address.`)
     }
 
     if (messages.length > 0) {
