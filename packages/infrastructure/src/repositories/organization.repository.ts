@@ -99,8 +99,13 @@ export class PrismaOrganizationRepository
   }
 
   async list(filter: OrganizationListFilter): Promise<OrganizationPage> {
-    const sortBy = filter.sortBy === 'companyName' ? 'companyName' : 'createdAt'
-    const direction = filter.sortDirection === 'desc' ? 'desc' : 'asc'
+    // `createdAt` is the OPT-IN and company name the default, matching the switch in
+    // `EfOrganizationRepository`. Both the field and the direction are matched on the trimmed,
+    // lowercased value, as `SortBy?.Trim().ToLowerInvariant()` and `SortDirection.IsDescending`
+    // did - so `?sortBy=CreatedAt&sortDirection=DESC` sorts the way it reads.
+    const sortBy =
+      (filter.sortBy ?? '').trim().toLowerCase() === 'createdat' ? 'createdAt' : 'companyName'
+    const direction = (filter.sortDirection ?? '').trim().toLowerCase() === 'desc' ? 'desc' : 'asc'
 
     // Explicit scope, not a global filter (SPEC/decisions.md: the .NET has no EF global query
     // filters). Archived organizations are excluded unless the caller asks for them.

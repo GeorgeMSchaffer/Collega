@@ -114,9 +114,12 @@ export class PrismaUserRepository
   }
 
   async listByOrganization(filter: UserListFilter): Promise<UserPage> {
+    // Matched on the trimmed, lowercased value, as `SortBy?.Trim().ToLowerInvariant()` and
+    // `SortDirection.IsDescending` did in `EfUserRepository`.
+    const sortKey = (filter.sortBy ?? '').trim().toLowerCase()
     const sortBy =
-      filter.sortBy === 'email' || filter.sortBy === 'createdAt' ? filter.sortBy : 'lastName'
-    const direction = filter.sortDirection === 'desc' ? 'desc' : 'asc'
+      sortKey === 'email' ? 'email' : sortKey === 'createdat' ? 'createdAt' : 'lastName'
+    const direction = (filter.sortDirection ?? '').trim().toLowerCase() === 'desc' ? 'desc' : 'asc'
 
     const where: Prisma.usersWhereInput = {
       organization_id: filter.organizationId,
