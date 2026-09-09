@@ -133,6 +133,11 @@ function ideaBodyRules(body: CreateIdeaBody): Record<string, FieldRules> {
  * exactly as `Guid.TryParse` skipped them; a repeated key joins its values with a comma, which is
  * what `StringValues.ToString()` produced.
  *
+ * The key is the TRIMMED inner text, because `Guid.TryParse` accepted surrounding whitespace and
+ * then keyed the dictionary by the parsed `Guid` - so `fieldFilters[ <uuid> ]` applied the filter
+ * there, and storing the padded text here would hand the Application layer an id that resolves
+ * against nothing and silently drop it.
+ *
  * **Express 5's default `simple` query parser is load-bearing here.** It leaves the literal key
  * `fieldFilters[<uuid>]` alone, which is the only reason the loop below can see it. Under
  * `extended` (the Express 4 default, and one `app.set('query parser', ...)` away) `qs` would fold
@@ -153,7 +158,7 @@ function parseFieldFilters(query: Record<string, unknown>): ReadonlyMap<string, 
     }
     const text = Array.isArray(value) ? value.join(',') : String(value)
     filters ??= new Map<string, string>()
-    filters.set(inner, text)
+    filters.set(inner.trim(), text)
   }
   return filters
 }
