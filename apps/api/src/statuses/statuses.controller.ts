@@ -50,19 +50,35 @@ function statusBodyRules(body: CreateStatusBody): Record<string, FieldRules> {
   }
 }
 
+/** `int` is 32-bit and signed on the .NET side; `Int` is the same column here. */
+const INT32_MIN = -2147483648
+const INT32_MAX = 2147483647
+
 /**
- * `int?` on both request records, with no attributes. Only a JSON number is a value; anything
- * else is read as omitted so the service applies its own default (append to the end of the
- * catalog on create, keep the current order on update).
+ * `int?` on both request records, with no attributes. Only a JSON number **that an `int` could
+ * hold** is a value; anything else is read as omitted so the service applies its own default
+ * (append to the end of the catalog on create, keep the current order on update).
  *
- * **A KNOWN DIVERGENCE, deliberate**, and the same one D1 recorded for `?page=abc`:
- * `{"sortOrder": "abc"}` was a System.Text.Json binding failure on the .NET side, which is a
- * different envelope again - not the model-binding one and not the Application one. No fixture
- * records it, so reproducing it means guessing the wording. Record one against the frozen .NET
- * app first.
+ * The range and integer checks are not pedantry - both cases were live faults:
+ * - `{"sortOrder": 99999999999}` overflowed Prisma's `Int` and answered **500**. .NET bound `int?`,
+ *   failed the conversion, and answered 400.
+ * - `{"sortOrder": 1.5}` was accepted, the response ECHOED `1.5`, and the row stored `1` - so the
+ *   create response contradicted the very next read. That is a state inconsistency, not only an
+ *   infidelity.
+ *
+ * **A KNOWN DIVERGENCE, deliberate**, and the same one D1 recorded for `?page=abc`: every value
+ * this reads as omitted - `"abc"`, `1.5`, `99999999999` alike - was a System.Text.Json or
+ * value-conversion binding failure on the .NET side, which is a different envelope again, not the
+ * model-binding one and not the Application one. No fixture records it, so reproducing the 400
+ * means guessing the wording. Record one against the frozen .NET app first.
  */
 function optionalInt(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
+  return typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= INT32_MIN &&
+    value <= INT32_MAX
+    ? value
+    : null
 }
 
 /**
