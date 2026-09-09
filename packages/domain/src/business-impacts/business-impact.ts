@@ -7,6 +7,11 @@
 
 import { type Auditable, markCreated, markUpdated } from '../common/index.js'
 
+export const BUSINESS_IMPACT_NAME_MAX_LENGTH = 100
+
+/** Twenty, not seven: the column is wider than the `#RRGGBB` the UI writes into it. */
+export const BUSINESS_IMPACT_COLOR_MAX_LENGTH = 20
+
 /** Every organization must keep at least this many active options. */
 export const MINIMUM_ACTIVE_BUSINESS_IMPACTS_PER_ORGANIZATION = 1
 
