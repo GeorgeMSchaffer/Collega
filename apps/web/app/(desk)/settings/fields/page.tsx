@@ -4,6 +4,7 @@ import { GatedAction } from '@/components/common/gated-action'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getFieldDefinitions, getOrganizations } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Custom fields · Collega' }
@@ -41,11 +42,16 @@ function NoFields({ siteAdmin }: { siteAdmin: boolean }) {
 }
 
 export default async function FieldsPage() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
   const [fieldDefinitions, organizations] = await Promise.all([
     getFieldDefinitions(),
     getOrganizations(),
   ])
-  const siteAdmin = currentUser.role === 'SiteAdmin'
+  const siteAdmin = currentUser().role === 'SiteAdmin'
   const rows = siteAdmin
     ? fieldDefinitions
     : fieldDefinitions.filter((field) => field.organizationId === 'acme-robotics')

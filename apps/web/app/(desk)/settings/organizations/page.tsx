@@ -2,6 +2,7 @@ import { Button, EmptyState } from '@collega/design-system'
 import { GatedAction } from '@/components/common/gated-action'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getOrganizations } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Organizations · Collega' }
 
@@ -11,6 +12,11 @@ export const metadata = { title: 'Organizations · Collega' }
  * `AdminOnly` — the member wording ("an administrator's job") would be false to an Org Admin's face.
  */
 export default async function OrganizationsPage() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
   const organizations = await getOrganizations()
 
   return (

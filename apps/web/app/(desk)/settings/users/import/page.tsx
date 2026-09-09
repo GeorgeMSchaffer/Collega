@@ -12,10 +12,16 @@ import {
 } from '@collega/design-system'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getLastImport } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Import users · Collega' }
 
 export default async function ImportUsersPage() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
   const lastImport = await getLastImport()
 
   return (

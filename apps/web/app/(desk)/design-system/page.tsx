@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@collega/design-system'
 import { Topbar } from '@/components/nav/topbar'
+import { requireCurrentUser } from '@/lib/server/current-user'
 
 /**
  * Wave E0's verification surface: it renders the theme and every primitive the design system
@@ -37,7 +38,12 @@ const CATEGORY_DOTS = [
   'purple-deep',
 ] as const
 
-export default function Page() {
+export default async function Page() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
   return (
     <>
       <Topbar title="Design system" actions={<Badge variant="warning">Wave E0</Badge>} />

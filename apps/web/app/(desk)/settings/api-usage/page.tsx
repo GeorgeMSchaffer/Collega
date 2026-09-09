@@ -7,6 +7,7 @@ import {
   getUsageForOrganization,
   totalTokens,
 } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'API usage · Collega' }
@@ -15,8 +16,13 @@ export const metadata = { title: 'API usage · Collega' }
  * The usage meter of rule 28d: a Site Admin reads every organization's consumption, an Org Admin
  * their own and no other. Counts only, never prompt or transcript content (28e).
  */
-export default function ApiUsagePage() {
-  const siteAdmin = currentUser.role === 'SiteAdmin'
+export default async function ApiUsagePage() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
+  const siteAdmin = currentUser().role === 'SiteAdmin'
 
   return (
     <SettingsPage
@@ -128,14 +134,14 @@ async function OrganizationUsage() {
   if (!row) {
     return (
       <p className="m-0 max-w-prose text-sm text-muted-foreground">
-        No assist usage recorded for {currentUser.organizationName} today.
+        No assist usage recorded for {currentUser().organizationName} today.
       </p>
     )
   }
 
   return (
     <AdminTable
-      summary={`${currentUser.organizationName}, today. Estimated cost is computed from published token prices and is not a bill.`}
+      summary={`${currentUser().organizationName}, today. Estimated cost is computed from published token prices and is not a bill.`}
     >
       <thead>
         <tr className="border-b bg-muted/40">
