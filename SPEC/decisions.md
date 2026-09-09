@@ -39,10 +39,12 @@ about how fast the ground moved here.
 the drift exists in every pre-existing developer database, and someone with local data they would
 rather not lose still needs it. It is verified, idempotent, and documented as the exception.
 
-**A premise worth re-examining, not decided here.** `CLAUDE.md` names the database as one of three
-things that survive cutover, alongside `SPEC/` and `tools/golden`. That was load-bearing when the
-database was irreplaceable. It is now reproducible in under four seconds from committed code, so its
-survival may no longer need to constrain the cutover plan. Flagged for the owner; not changed.
+**Consequence, decided the same day.** `CLAUDE.md` named the database as one of three things that
+survive cutover, alongside `SPEC/` and `tools/golden`. That was load-bearing while it was
+irreplaceable; it is now reproducible in under four seconds from committed code. **The database is
+removed from that list.** F3 (data migration) and F4 (cutover runbook) should be planned on the new
+basis — if the target is seeded fresh, F3 may not be a slice at all, which is the largest scope
+reduction available in Wave F.
 
 ## 2026-09-08 — Wave G is cut from the conversion and revisited after cutover
 
