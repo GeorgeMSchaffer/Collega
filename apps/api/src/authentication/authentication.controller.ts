@@ -196,10 +196,14 @@ export class AuthenticationController {
   @Put('me/portrait')
   @UseGuards(AuthGuard)
   async updatePortrait(@Body() body: UpdatePortraitBody): Promise<CurrentUserSummary> {
+    // `UpdatePortraitRequest` carries `[RequiredField]`, and model validation ran BEFORE the
+    // action - so `TryDecodeBase64` never saw a missing or blank value, and this message was
+    // reachable only for a string that was present and corrupt. Ordering the two checks the other
+    // way round answers "could not be read." where .NET answered "is required."
+    requirePresent({ imageBase64: body.imageBase64 })
+
     const imageBytes = decodeBase64Image(body.imageBase64)
     if (imageBytes === null) {
-      // Not a `requirePresent` failure: a present-but-unreadable string is a different fault from
-      // a missing one, and the .NET handler keyed both on `imageBase64` with this wording.
       throw new RequestValidationError({
         imageBase64: ['The uploaded image could not be read.'],
       })
