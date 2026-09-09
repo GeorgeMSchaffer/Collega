@@ -62,7 +62,7 @@ export const commentsSeed: SeedModule = {
 
           await prisma.comments.upsert({
             where: { id },
-            update: { body: entry.body },
+            update: {},
             create: {
               id,
               idea_id: ideaId,

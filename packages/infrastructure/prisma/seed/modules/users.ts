@@ -109,14 +109,10 @@ type UserInput = {
 async function upsertUser(prisma: PrismaClient, input: UserInput): Promise<void> {
   await prisma.users.upsert({
     where: { id: input.id },
-    // A re-run must not reset a password someone changed while testing, nor clear a lockout they
-    // were deliberately reproducing - so an existing account only has its name and timestamp
-    // refreshed.
-    update: {
-      first_name: input.firstName,
-      last_name: input.lastName,
-      updated_at_utc: input.now,
-    },
+    // Empty on purpose: an existing row is left exactly as it is. A re-run must not reset a
+    // password someone changed while testing, nor clear a lockout they were deliberately
+    // reproducing - and see the module header for why it must not touch timestamps either.
+    update: {},
     create: {
       id: input.id,
       organization_id: input.organizationId,

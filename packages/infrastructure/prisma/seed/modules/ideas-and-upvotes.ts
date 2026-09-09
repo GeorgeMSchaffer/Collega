@@ -50,7 +50,7 @@ export const ideasAndUpvotesSeed: SeedModule = {
         const id = seedId('tag', scenario.slug, name)
         await prisma.tags.upsert({
           where: { id },
-          update: { name, updated_at_utc: now },
+          update: {},
           create: {
             id,
             organization_id: organizationId,
@@ -93,7 +93,7 @@ export const ideasAndUpvotesSeed: SeedModule = {
 
           await prisma.ideas.upsert({
             where: { id: ideaId },
-            update: { updated_at_utc: now },
+            update: {},
             create: {
               id: ideaId,
               organization_id: organizationId,

@@ -25,12 +25,7 @@ export const boardsAndStatusesSeed: SeedModule = {
         const id = seedId('status', scenario.slug, status.name)
         await prisma.statuses.upsert({
           where: { id },
-          update: {
-            name: status.name,
-            color: status.color,
-            sort_order: status.sortOrder,
-            updated_at_utc: now,
-          },
+          update: {},
           create: {
             id,
             organization_id: organizationId,
@@ -48,7 +43,7 @@ export const boardsAndStatusesSeed: SeedModule = {
         const boardId = seedId('board', scenario.slug, board.name)
         await prisma.boards.upsert({
           where: { id: boardId },
-          update: { name: board.name, updated_at_utc: now },
+          update: {},
           create: {
             id: boardId,
             organization_id: organizationId,
@@ -64,7 +59,7 @@ export const boardsAndStatusesSeed: SeedModule = {
           const swimlaneId = seedId('swimlane', scenario.slug, board.name, status.name)
           await prisma.board_swimlanes.upsert({
             where: { id: swimlaneId },
-            update: { display_order: index },
+            update: {},
             create: {
               id: swimlaneId,
               board_id: boardId,

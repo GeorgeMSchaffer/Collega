@@ -30,9 +30,20 @@ that creates, edits or deletes anything cannot pass yet however it is written �
 persist. Read-only flows against the demo fixture are writable today; stateful ones wait for Wave D.
 
 When Wave D lands, `apps/api` becomes a second `webServer` entry in `playwright.config.ts` and the
-fixtures give way to a seeded throwaway database. The seed modules do not exist yet either
-(`packages/infrastructure/prisma/seed/` has the harness and an empty `MODULES`), which is the real
-gate on stateful specs.
+fixtures give way to a seeded throwaway database. **The database half of that is ready**: five seed
+modules under `packages/infrastructure/prisma/seed/modules/` build the demo dataset — 2
+organizations, 10 users, 4 boards, 44 ideas, with accounts that sign in — and a throwaway database
+is three commands and under four seconds:
+
+```bash
+dropdb CollegaE2E && createdb CollegaE2E
+DATABASE_URL=…/CollegaE2E pnpm --filter @collega/infrastructure db:migrate
+DATABASE_URL=…/CollegaE2E pnpm --filter @collega/infrastructure db:seed
+```
+
+So the remaining gate on stateful specs is **Wave D alone** — there is no API for the browser to
+drive. Re-running the seed against an existing database is inert by design, so a spec that needs a
+clean slate must drop and recreate rather than re-seed.
 
 ## Claude Code on the web
 

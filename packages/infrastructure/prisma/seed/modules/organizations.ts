@@ -26,7 +26,7 @@ export const organizationsSeed: SeedModule = {
 
       await prisma.organizations.upsert({
         where: { id: organizationId },
-        update: { title: scenario.title, description: scenario.description, updated_at_utc: now },
+        update: {},
         create: {
           id: organizationId,
           title: scenario.title,
@@ -45,7 +45,7 @@ export const organizationsSeed: SeedModule = {
         const id = seedId('idea-type', scenario.slug, ideaType.name)
         await prisma.idea_types.upsert({
           where: { id },
-          update: { name: ideaType.name, sort_order: ideaType.sortOrder, updated_at_utc: now },
+          update: {},
           create: {
             id,
             organization_id: organizationId,
@@ -62,12 +62,7 @@ export const organizationsSeed: SeedModule = {
         const id = seedId('business-impact', scenario.slug, impact.name)
         await prisma.business_impacts.upsert({
           where: { id },
-          update: {
-            name: impact.name,
-            color: impact.color,
-            sort_order: impact.sortOrder,
-            updated_at_utc: now,
-          },
+          update: {},
           create: {
             id,
             organization_id: organizationId,

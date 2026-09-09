@@ -8,6 +8,15 @@ import { createHash } from 'node:crypto'
  * and it cannot be rebuilt from itself. The shape is fixed by the definition of done: 2
  * organizations, 10 users, 4 boards, 44 ideas.
  *
+ * **Every upsert in these modules has an empty `update`.** A row that already exists is left
+ * exactly as it is - the seed creates what is missing and mutates nothing. An earlier version
+ * refreshed names and `updated_at_utc`, which meant a re-run silently changed every timestamp in
+ * the database and two consecutive runs produced different response bodies: the opposite of the
+ * reproducibility the derived ids below exist to buy, and something a golden fixture comparing a
+ * timestamp would catch as a false diff. Changing the scenario data therefore needs a rebuild
+ * (`dropdb`, `db:migrate`, `db:seed` - under four seconds), which is the sanctioned path anyway
+ * per `SPEC/decisions.md` 2026-09-09.
+ *
  * One deliberate change from the .NET seeder: **every id here is derived, not random.** That
  * seeder created GUIDs and made each step idempotent by re-querying on a natural key, which works
  * but leaves two seeded databases disagreeing about every id - so a golden fixture recorded
