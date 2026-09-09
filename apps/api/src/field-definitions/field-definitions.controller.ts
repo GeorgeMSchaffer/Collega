@@ -26,7 +26,13 @@ import {
   RequestValidationError,
   validateFields,
 } from '../common/errors/request-validation.error.js'
-import { guidOrEmpty, optional, optionalInt32, queryBool } from '../common/request-values.js'
+import {
+  guidOrEmpty,
+  isGuid,
+  optional,
+  optionalInt32,
+  queryBool,
+} from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 type FieldOptionBody = {
@@ -88,9 +94,13 @@ function fieldDefinitionBodyRules(body: CreateFieldDefinitionBody): Record<strin
 
 function optionCommands(body: CreateFieldDefinitionBody): readonly FieldOptionCommand[] {
   return optionBodies(body).map((option) => ({
-    // `Guid?`: absent, null and anything that is not a GUID all bind to null, and the service
-    // mints a fresh id for each - which is what "this option is new" means on the wire.
-    optionId: typeof option?.optionId === 'string' ? optional(option.optionId) : null,
+    // `Guid?`: absent, null and anything that is not a canonical GUID all bind to null, and the
+    // service mints a fresh id for each - which is what "this option is new" means on the wire.
+    // The shape check is not optional: `id` reaches a `uuid` column with no guard between here and
+    // Prisma, so passing raw text on raised `P2023` and answered **500** (`{"optionId":
+    // "not-a-guid"}`, reproduced live). `null` rather than `EMPTY_GUID` because the all-zero GUID
+    // is a real, collidable id, where null is exactly "this option is new".
+    optionId: isGuid(option?.optionId) ? option.optionId.trim() : null,
     label: typeof option?.label === 'string' ? option.label : '',
     displayOrder: optionalInt32(option?.displayOrder) ?? 0,
   }))
