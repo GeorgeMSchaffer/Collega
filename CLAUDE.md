@@ -125,9 +125,13 @@ pattern. Every `CLAUDE.md` under `src/` and `tests/` carries a banner saying so.
 
 Two things keep them on disk until slice **F6**:
 
-- **The golden corpus is the conversion's only oracle.** Wave A recorded 447 cases across all 81
-  endpoints × 4 roles on 2026-09-03 (`tools/golden`), and re-recording a missing or wrong one needs
-  the .NET API to still boot. Waves D and E are exactly where such a gap surfaces.
+- **The golden corpus is the conversion's only broad safety net.** Wave A recorded 447 cases across
+  all 81 endpoints × 4 roles on 2026-09-03 (`tools/golden`), and re-recording a missing or wrong one
+  needs the .NET API to still boot. Waves D and E are exactly where such a gap surfaces.
+  **It is a regression detector, not the specification** (`SPEC/decisions.md` 2026-09-09): shipping
+  for feedback outranks fidelity to the frozen app, so a diff is a question — fix it, accept and
+  record it, or deliberately do better — rather than automatically a defect. Read that entry before
+  treating a corpus difference as work.
 - **It is the only runnable full application** until D and E land — the thing to look at when you
   need to know how a screen actually behaved.
 

@@ -9,6 +9,64 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-09 — Shipping for feedback outranks fidelity to the .NET app
+
+**Decided by the user**, unprompted, when asked to choose between four ways of making a CSV export
+fixture match a September capture date:
+
+> *"You are too focused on the .NET application. The app was in development but not live so we are
+> free as we want to change things… The most important thing right now is to get the MVP in the
+> hands of end users to gather feedback. Strict adherence to what .NET was doing is not needed. I
+> care about meeting the requirements but not on how we get there."*
+
+**What this changes.** The conversion ports the frozen app's **functionality and requirements**, not
+its implementation. Where the old behaviour is a good answer, match it — it is a free, well-tested
+default. Where a better answer exists, take it and say so in a comment. Do not contort code to
+reproduce a .NET quirk with no user value, and do not defer a fix because no fixture records the
+wording.
+
+Two things had already been blocked on the older assumption and are now unblocked. The malformed
+field-option id answered `201` with a silently different id because matching .NET's `400` would have
+needed invented message text; it now answers `400`, using the canonical template in
+`SPEC/30-Contracts.md` rather than a transcription. And `SEED_NOW` — a proposal to make the seed's
+clock injectable purely so the export fixtures could byte-match — is **dropped**. Those four diffs
+are accepted instead.
+
+**What this does NOT change: the golden corpus stays.** Its job changes, and the distinction is the
+whole point of this entry. It is a **regression detector**, not the specification. Treating it as
+the specification is what produced work like "the export CSV must byte-match a September 4th
+capture", which buys nothing.
+
+The corpus is also still the only broad safety net on the API: the .NET suite was discarded
+(ticket `10`), and `apps/api` has 87 unit tests against 66 endpoints. So keep replaying it, and
+change what a diff *means*. A diff is now a **question with three valid answers**:
+
+1. **Fix it** — the old behaviour was right and we broke it.
+2. **Accept and record it** — the difference is deliberate or harmless.
+3. **Do better** — the old behaviour was wrong; improve on it and note why.
+
+Nine accepted diffs stand today: four portrait bytes (sharp and ImageSharp encode the same PNG
+differently — unfixable by matching), four CSV export dates (seeded relative to the run day), and
+the `accessToken` removal under decision `08`.
+
+**The consequence for F1, which needs deciding before that gate runs.** F1 is defined as "replay all
+81 endpoints × 4 roles, clean". Under this decision "clean" can no longer mean zero diffs, or the
+gate fails forever on differences we chose. It should mean **every diff is either fixed or on a
+recorded accepted list** — otherwise, once diffs start being waved through case by case, the gate
+quietly stops meaning anything. That list does not exist yet.
+
+**Why this needed writing down.** Six agents built Wave D against the older assumption, and it is
+baked into their briefs — "the .NET source is the specification", "the corpus is the oracle". Those
+sentences are now half-true, and an agent that reads them without this entry will keep optimising
+for the wrong thing.
+
+**What it does not license.** Not a licence to diverge casually. A difference nobody decided is
+still a defect — the nine defects Wave D's reviews found were real precisely because nobody had
+chosen them. The change is that a difference someone *has* decided is now a legitimate outcome, and
+should be recorded rather than fixed.
+
+---
+
 ## 2026-09-09 — The drifted database is rebuilt, not migrated
 
 **Decided by the user**, asked directly: *"there is no production data so feel free to recreate the
