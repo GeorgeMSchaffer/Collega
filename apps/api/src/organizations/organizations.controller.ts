@@ -47,6 +47,7 @@ import {
   requirePresent,
   validateFields,
 } from '../common/errors/request-validation.error.js'
+import { optional, queryBool } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** The seven optional address/contact fields shared by create and update. */
@@ -78,18 +79,6 @@ type CreateUserBody = {
   role?: string
   initialPassword?: string
   status?: string
-}
-
-/**
- * A blank or absent optional value is `null`, never `''` - the domain distinguishes them, and so
- * does every Application list filter.
- *
- * Anything that is not a string counts as absent. Body types are compile-time only and a repeated
- * query key arrives as an array, so `{"city": 12}` and `?search=a&search=b` would otherwise reach
- * `.trim()` and answer 500.
- */
-function optional(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value : null
 }
 
 /**
@@ -182,10 +171,7 @@ export class OrganizationsController {
 
   /**
    * `isArchived` is a .NET `bool` rather than `bool?`, so an ABSENT value binds to `false` and the
-   * list excludes archived organizations. Only the literal `true` flips it.
-   *
-   * An UNPARSEABLE value (`?isArchived=yes`) was a 400 there, not a `false`, for the same reason
-   * `?page=abc` was - see `optionalInt` above for why that is not reproduced here.
+   * list excludes archived organizations - see `queryBool` for the divergences that carries.
    */
   @Get()
   async list(@Query() query: Record<string, unknown>): Promise<OrganizationListResult> {
@@ -193,7 +179,7 @@ export class OrganizationsController {
       page: optionalInt(query.page),
       pageSize: optionalInt(query.pageSize),
       search: optional(query.search),
-      includeArchived: String(query.isArchived).toLowerCase() === 'true',
+      includeArchived: queryBool(query.isArchived),
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
     })

@@ -32,6 +32,7 @@ import type { Response } from 'express'
 import { AuthGuard } from '../auth/auth.guard.js'
 import { writeCsv } from '../common/csv/write-csv.js'
 import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
+import { optional } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** Hard ceiling on a CSV import body, from .NET's `IdeasController.MaxImportBytes`. */
@@ -72,16 +73,6 @@ type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'>
 type ChangeIdeaStatusBody = { statusId?: unknown }
 
 type ReassignIdeaTypeBody = { ideaTypeId?: unknown }
-
-/**
- * A blank or absent optional value is `null`, never `''`. Anything that is not a string counts as
- * absent - body types are compile-time only and a repeated query key arrives as an array, so
- * `{"dueDate": 12}` and `?search=a&search=b` would otherwise reach `.trim()` and answer 500.
- * Identical to the organizations controller's helper of the same name.
- */
-function optional(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value : null
-}
 
 /**
  * Query strings arrive as strings or, for a repeated key, as an array; anything unparseable

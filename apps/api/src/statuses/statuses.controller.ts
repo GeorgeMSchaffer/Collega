@@ -22,6 +22,7 @@ import {
   RequestValidationError,
   validateFields,
 } from '../common/errors/request-validation.error.js'
+import { optional, queryBool } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 type CreateStatusBody = {
@@ -47,14 +48,6 @@ function statusBodyRules(body: CreateStatusBody): Record<string, FieldRules> {
     name: { value: body.name, required: true, maxLength: STATUS_NAME_MAX_LENGTH },
     color: { value: body.color, maxLength: STATUS_COLOR_MAX_LENGTH },
   }
-}
-
-/**
- * A blank or absent optional string is `null`, never `''` - `StatusService` branches on exactly
- * that to decide whether to keep the current color or fall back to the neutral default.
- */
-function optional(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value : null
 }
 
 /**
@@ -116,7 +109,7 @@ export class StatusesController {
 
   /**
    * `includeDeleted` is a .NET `bool` rather than `bool?`, so an ABSENT value binds to `false`
-   * and the list excludes soft-deleted statuses. Only the literal `true` flips it.
+   * and the list excludes soft-deleted statuses - see `queryBool` for what else that means.
    *
    * Who may ask is not decided here: the corpus records every role getting the same answer, and
    * that is `StatusService`'s call, not this controller's.
@@ -126,7 +119,7 @@ export class StatusesController {
     @Param('organizationId', UuidParamPipe) organizationId: string,
     @Query() query: Record<string, unknown>,
   ): Promise<readonly StatusItem[]> {
-    return this.statuses.list(organizationId, String(query.includeDeleted).toLowerCase() === 'true')
+    return this.statuses.list(organizationId, queryBool(query.includeDeleted))
   }
 
   @Post('organizations/:organizationId/statuses')
