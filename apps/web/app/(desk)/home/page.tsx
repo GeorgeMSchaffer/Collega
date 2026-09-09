@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { Topbar } from '@/components/nav/topbar'
 import { getBoards, getNavCounts } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Home · Collega' }
@@ -46,7 +47,7 @@ const TONE = {
  * one write the role does take — the bootstrap exception to "act as a member".
  */
 function NoBoards() {
-  if (currentUser.role === 'SiteAdmin') {
+  if (currentUser().role === 'SiteAdmin') {
     return (
       <EmptyState
         heading="No organizations yet"
@@ -67,7 +68,7 @@ function NoBoards() {
         <GatedAction
           id="why-create-board"
           label="Create a board"
-          denial={currentUser.role === 'OrgAdmin' ? null : 'Administrators only'}
+          denial={currentUser().role === 'OrgAdmin' ? null : 'Administrators only'}
         />
       }
     >
@@ -78,6 +79,11 @@ function NoBoards() {
 }
 
 export default async function HomePage() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
   const [navCounts, boards] = await Promise.all([getNavCounts(), getBoards()])
 
   return (
@@ -85,12 +91,12 @@ export default async function HomePage() {
       <Topbar title="Home" />
       <main className="flex flex-col gap-6 p-6">
         <div>
-          <h2 className="mb-1">Good to see you, {currentUser.displayName.split(' ')[0]}.</h2>
+          <h2 className="mb-1">Good to see you, {currentUser().displayName.split(' ')[0]}.</h2>
           <p className="m-0 max-w-2xl text-muted-foreground">
-            {currentUser.organizationName ?? 'This deployment'} has {navCounts.ideas} ideas across{' '}
-            {navCounts.boards} boards. The counts and your identity are hard-coded in{' '}
-            <code className="font-mono text-xs">lib/mock.ts</code> until Wave D gives this client an
-            API to call.
+            {currentUser().organizationName ?? 'This deployment'} has {navCounts.ideas} ideas across{' '}
+            {navCounts.boards} boards. Your identity, those counts and the boards below come from
+            the API; the delivery and settings surfaces are still reading{' '}
+            <code className="font-mono text-xs">lib/mock.ts</code>.
           </p>
         </div>
 
