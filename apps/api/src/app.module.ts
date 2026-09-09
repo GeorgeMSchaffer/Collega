@@ -1,7 +1,8 @@
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common'
-import { APP_FILTER } from '@nestjs/core'
+import { APP_FILTER, APP_PIPE } from '@nestjs/core'
 import { FEATURE_MODULES } from './app.modules.generated.js'
 import { AuthModule } from './auth/auth.module.js'
+import { AbsentBodyPipe } from './common/absent-body.pipe.js'
 import { ConfigModule } from './common/config/config.module.js'
 import { ProblemDetailsFilter } from './common/errors/problem-details.filter.js'
 import { HealthModule } from './common/health/health.module.js'
@@ -15,7 +16,12 @@ import { RequestContextMiddleware } from './common/request-context/request-conte
  */
 @Module({
   imports: [ConfigModule, PersistenceModule, AuthModule, HealthModule, ...FEATURE_MODULES],
-  providers: [{ provide: APP_FILTER, useClass: ProblemDetailsFilter }],
+  providers: [
+    { provide: APP_FILTER, useClass: ProblemDetailsFilter },
+    // Global, not per controller, so a route added later cannot 500 on a body-less request by
+    // forgetting to guard - and so the testing module gets it too, which `main.ts` would not give.
+    { provide: APP_PIPE, useClass: AbsentBodyPipe },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
