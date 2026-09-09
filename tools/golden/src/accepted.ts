@@ -29,6 +29,8 @@
 // landed or the corpus moved, and the case should come off the entry — otherwise this file silently
 // accumulates permission to ignore things nobody has looked at in a year.
 
+import type { Mismatch } from './diff.ts'
+
 /** A recorded difference and the evidence for keeping it. */
 export type AcceptedDiff = {
   /** The cases this covers, each `scenario.step` as the fixtures name it. */
@@ -47,6 +49,11 @@ export type AcceptedDiff = {
   readonly shape?: RegExp
   /** Both sides must be equal once every match of this is replaced. Use when only part of the value may differ. */
   readonly mask?: RegExp
+  /**
+   * The kind of mismatch this excuses. The way to say "the field must be gone" - `shape` cannot,
+   * because a shape-less entry accepts any value and a shape rejects absence outright.
+   */
+  readonly kind?: Mismatch['kind']
 }
 
 export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
@@ -96,7 +103,10 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'Decision `08` moved the session into an httpOnly cookie. Returning the token in the body as ' +
       'well would hand it back to JavaScript and defeat the point, so the field is gone and ' +
       '`SPEC/30-Contracts.md` says so. Predicted in `SPEC/decisions.md` as the one fixture the ' +
-      'decision would strand. No shape: the accepted difference is the absence itself.',
+      'decision would strand. The accepted difference is the absence itself, which is what `kind` ' +
+      'says: a login that answered `null` there, or anything else, is a contract this decision ' +
+      'did not make and still fails.',
+    kind: 'missing',
   },
 ]
 
@@ -149,7 +159,7 @@ function equalUnderMask(entry: AcceptedDiff, expected: unknown, actual: unknown)
  */
 export function classify(
   caseKey: string,
-  mismatches: readonly { path: string; expected: unknown; actual: unknown }[],
+  mismatches: readonly Mismatch[],
   list: readonly AcceptedDiff[],
 ): Classification {
   if (mismatches.length === 0) return { accepted: false, used: [] }
@@ -160,6 +170,7 @@ export function classify(
       (candidate) =>
         candidate.cases.includes(caseKey) &&
         candidate.path === mismatch.path &&
+        (candidate.kind === undefined || candidate.kind === mismatch.kind) &&
         satisfies(candidate, mismatch.expected) &&
         satisfies(candidate, mismatch.actual) &&
         equalUnderMask(candidate, mismatch.expected, mismatch.actual),
