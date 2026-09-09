@@ -5,7 +5,7 @@
 // In Wave F the same command is pointed at Nest and its failure list is the
 // remaining work (SPEC/50-typescript-migration.md, F1).
 
-import { type AcceptedDiff, classify, staleEntries } from '../src/accepted.ts'
+import { ACCEPTED_DIFFS, type AcceptedCase, classify, staleEntries } from '../src/accepted.ts'
 import { type Fixture, groupByScenario, normalizeExchange } from '../src/corpus.ts'
 import { diff, formatMismatches, type Mismatch } from '../src/diff.ts'
 import { Normalizer } from '../src/normalize.ts'
@@ -30,8 +30,8 @@ export type ReplayReport = {
   matched: number
   accepted: number
   results: CaseResult[]
-  /** Accepted entries that excused nothing - the fix landed, or the corpus moved. */
-  stale: readonly AcceptedDiff[]
+  /** Accepted (entry, case) pairs that excused nothing - the fix landed, or the corpus moved. */
+  stale: readonly AcceptedCase[]
 }
 
 type Normalized = ReturnType<typeof normalizeExchange>
@@ -115,10 +115,12 @@ export function buildReport(fixtures: Fixture[], exchanges: Exchange[]): ReplayR
 
   // Classification runs after comparison, never instead of it. The mismatch was found; the entry
   // only decides whether it counts against the gate.
-  const used: AcceptedDiff[] = []
+  // Both halves are handed the same list explicitly: `staleEntries` compares entry identity, so
+  // classifying against one list and reporting staleness against another would call everything stale.
+  const used: AcceptedCase[] = []
   const classified = results.map((result) => {
     if (result.status === 'match' || result.status === 'absent') return result
-    const verdict = classify(`${result.scenario}.${result.step}`, result.mismatches)
+    const verdict = classify(`${result.scenario}.${result.step}`, result.mismatches, ACCEPTED_DIFFS)
     if (!verdict.accepted) return result
     used.push(...verdict.used)
     return { ...result, status: 'accepted' as const }
@@ -129,7 +131,7 @@ export function buildReport(fixtures: Fixture[], exchanges: Exchange[]): ReplayR
     matched: classified.filter((r) => r.status === 'match').length,
     accepted: classified.filter((r) => r.status === 'accepted').length,
     results: classified,
-    stale: staleEntries(used),
+    stale: staleEntries(used, ACCEPTED_DIFFS),
   }
 }
 
@@ -146,9 +148,12 @@ export function formatReport(report: ReplayReport): string {
   // that no longer happens, and it will outlive whoever remembers why it was added.
   if (report.stale.length > 0) {
     lines.push('')
-    lines.push(`${report.stale.length} accepted difference(s) did not occur — remove them:`)
-    for (const entry of report.stale) {
-      lines.push(`  ${entry.case}  ${entry.path}  (accepted ${entry.decided})`)
+    lines.push(
+      `${report.stale.length} accepted difference(s) did not occur against this target — ` +
+        'remove them if this is the stack they were written for:',
+    )
+    for (const { entry, case: caseKey } of report.stale) {
+      lines.push(`  ${caseKey}  ${entry.path}  (accepted ${entry.decided})`)
     }
   }
 

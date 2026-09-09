@@ -15,14 +15,24 @@
 // comparison still runs; a mismatch is only excused if it also matches the shape the entry
 // describes. A portrait that turns into `null` is a different mismatch and still fails.
 //
-// A stale entry is reported too. If an accepted difference stops occurring, the fix landed or the
-// corpus moved, and the entry should go — otherwise this file silently accumulates permission to
-// ignore things nobody has looked at in a year.
+// `shape` on its own cannot always keep that promise. It is a *per-side* regex, so where only a
+// fraction of a value may move — seven due dates in a 3161-character CSV — anchoring it to the part
+// that is stable leaves everything else unchecked on both sides, and the entry has quietly become
+// the muting it was supposed to avoid. `mask` is the comparative half: both sides must be equal once
+// the part that may differ is replaced. Any `reason` claiming "everything else is identical" needs
+// one, because that sentence is a statement about the two sides together and no `shape` can make it.
+//
+// Cases are listed rather than wildcarded, so a case that starts diverging later has to be looked at
+// instead of arriving pre-authorized, and so staleness can be reported per case.
+//
+// A stale (entry, case) pair is reported too. If an accepted difference stops occurring, the fix
+// landed or the corpus moved, and the case should come off the entry — otherwise this file silently
+// accumulates permission to ignore things nobody has looked at in a year.
 
 /** A recorded difference and the evidence for keeping it. */
 export type AcceptedDiff = {
-  /** `scenario.step`, as the fixtures name it. `*` accepts the path across every case. */
-  readonly case: string
+  /** The cases this covers, each `scenario.step` as the fixtures name it. */
+  readonly cases: readonly string[]
   /** The mismatch path exactly as `diff` reports it, e.g. `body.portraitDataUrl`. */
   readonly path: string
   /** ISO date the difference was accepted, so an old entry is visibly old. */
@@ -35,11 +45,18 @@ export type AcceptedDiff = {
    * at all, which should be rare enough to argue about.
    */
   readonly shape?: RegExp
+  /** Both sides must be equal once every match of this is replaced. Use when only part of the value may differ. */
+  readonly mask?: RegExp
 }
 
 export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
   {
-    case: '*',
+    cases: [
+      'profile.portrait.set.orgadmin',
+      'profile.portrait.set.readonly',
+      'profile.portrait.set.siteadmin',
+      'profile.portrait.set.user',
+    ],
     path: 'body.portraitDataUrl',
     decided: '2026-09-09',
     reason:
@@ -50,19 +67,29 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
     shape: /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/,
   },
   {
-    case: '*',
+    cases: [
+      'ideas.export.orgadmin',
+      'ideas.export.readonly',
+      'ideas.export.siteadmin',
+      'ideas.export.user',
+    ],
     path: 'body',
     decided: '2026-09-09',
     reason:
       'The idea CSV export embeds due dates the seed sets relative to the day it runs, and the ' +
-      'capture was 2026-09-04. Everything else about the export is byte-identical - header row, ' +
-      'CRLF endings, quoting, the UTF-8 BOM, content type and disposition. This cannot be handled ' +
-      'by `unstable` because the body is one string and `omitPaths` walks object keys. The shape ' +
-      'holds the export to its recorded header row, so a truncated or reordered export still fails.',
-    shape: /^﻿?Title,Description,Priority,Idea Type,Business Impact,Status,Due Date,Tags\r\n/,
+      'capture was 2026-09-04. The mask holds the whole body to equality once those dates are ' +
+      'replaced, so the header row, the thirteen data rows, their order, the quoting and the CRLF ' +
+      'endings are all still compared byte for byte and only the dates may move; `content-type` is ' +
+      'pinned by the header diff. Two things are deliberately not claimed here: the recorded body ' +
+      'carries no BOM (the capture decoded it away - `content-length` is 3164 against 3161 ' +
+      'characters), and `content-disposition` is outside HEADER_ALLOW_LIST, so the download ' +
+      'filename is not compared at all. This cannot be handled by `unstable` because the body is ' +
+      'one string and `omitPaths` walks object keys.',
+    shape: /^Title,Description,Priority,Idea Type,Business Impact,Status,Due Date,Tags\r\n/,
+    mask: /\d{4}-\d{2}-\d{2}/g,
   },
   {
-    case: 'auth.login.orgadmin',
+    cases: ['auth.login.orgadmin'],
     path: 'body.accessToken',
     decided: '2026-09-09',
     reason:
@@ -73,17 +100,35 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
   },
 ]
 
+/** One entry as it applies to one of its cases - the unit staleness is reported at. */
+export type AcceptedCase = {
+  readonly entry: AcceptedDiff
+  readonly case: string
+}
+
 export type Classification = {
   /** Every mismatch was accepted, so the case does not fail the gate. */
   readonly accepted: boolean
   /** The entries that excused a mismatch, for staleness reporting. */
-  readonly used: readonly AcceptedDiff[]
+  readonly used: readonly AcceptedCase[]
 }
 
 /** Does `value` satisfy the entry's shape? A shape-less entry accepts anything, including absence. */
 function satisfies(entry: AcceptedDiff, value: unknown): boolean {
   if (entry.shape === undefined) return true
   return typeof value === 'string' && entry.shape.test(value)
+}
+
+/**
+ * Do the two sides agree once the entry's mask is replaced out of both?
+ *
+ * The placeholder is a literal rather than the empty string on purpose: masking to nothing would
+ * make a value with the varying part *deleted* equal to one that still has it.
+ */
+function equalUnderMask(entry: AcceptedDiff, expected: unknown, actual: unknown): boolean {
+  if (entry.mask === undefined) return true
+  if (typeof expected !== 'string' || typeof actual !== 'string') return false
+  return expected.replace(entry.mask, '<masked>') === actual.replace(entry.mask, '<masked>')
 }
 
 /**
@@ -98,30 +143,45 @@ function satisfies(entry: AcceptedDiff, value: unknown): boolean {
 export function classify(
   caseKey: string,
   mismatches: readonly { path: string; expected: unknown; actual: unknown }[],
-  list: readonly AcceptedDiff[] = ACCEPTED_DIFFS,
+  list: readonly AcceptedDiff[],
 ): Classification {
   if (mismatches.length === 0) return { accepted: false, used: [] }
 
-  const used: AcceptedDiff[] = []
+  const used: AcceptedCase[] = []
   for (const mismatch of mismatches) {
     const entry = list.find(
       (candidate) =>
-        (candidate.case === '*' || candidate.case === caseKey) &&
+        candidate.cases.includes(caseKey) &&
         candidate.path === mismatch.path &&
         satisfies(candidate, mismatch.expected) &&
-        satisfies(candidate, mismatch.actual),
+        satisfies(candidate, mismatch.actual) &&
+        equalUnderMask(candidate, mismatch.expected, mismatch.actual),
     )
     if (entry === undefined) return { accepted: false, used: [] }
-    used.push(entry)
+    used.push({ entry, case: caseKey })
   }
   return { accepted: true, used }
 }
 
-/** Entries that excused nothing in this run - the fix landed, or the corpus moved. */
+/**
+ * The (entry, case) pairs that excused nothing in this run - the fix landed, or the corpus moved.
+ *
+ * Per case rather than per entry, so an entry whose four cases are down to one says so instead of
+ * looking as alive as the day it was written.
+ */
 export function staleEntries(
-  used: readonly AcceptedDiff[],
-  list: readonly AcceptedDiff[] = ACCEPTED_DIFFS,
-): readonly AcceptedDiff[] {
-  const seen = new Set(used)
-  return list.filter((entry) => !seen.has(entry))
+  used: readonly AcceptedCase[],
+  list: readonly AcceptedDiff[],
+): readonly AcceptedCase[] {
+  const excused = new Map<AcceptedDiff, Set<string>>()
+  for (const pair of used) {
+    const cases = excused.get(pair.entry)
+    if (cases) cases.add(pair.case)
+    else excused.set(pair.entry, new Set([pair.case]))
+  }
+  return list.flatMap((entry) =>
+    entry.cases
+      .filter((caseKey) => !excused.get(entry)?.has(caseKey))
+      .map((caseKey) => ({ entry, case: caseKey })),
+  )
 }
