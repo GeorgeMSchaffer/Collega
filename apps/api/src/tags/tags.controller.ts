@@ -1,20 +1,8 @@
 import { TagService } from '@collega/application/tags'
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
-import { optional } from '../common/request-values.js'
+import { optional, optionalInt } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
-
-/**
- * `int?` from the query string. `?limit=abc` defaults rather than answering the ASP.NET
- * model-binding 400 no fixture records - the divergence `ideas.controller.ts` documents at length.
- */
-function optionalInt(value: unknown): number | null {
-  if (typeof value !== 'string' || value.trim() === '') {
-    return null
-  }
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
 
 /**
  * Organization-scoped tag autocomplete (`SPEC/30-Contracts.md` "Tag Contracts").

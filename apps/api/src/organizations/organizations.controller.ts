@@ -47,7 +47,7 @@ import {
   requirePresent,
   validateFields,
 } from '../common/errors/request-validation.error.js'
-import { optional, queryBool } from '../common/request-values.js'
+import { optional, optionalInt, queryBool } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** The seven optional address/contact fields shared by create and update. */
@@ -125,30 +125,6 @@ function toProfile(body: OrganizationProfileBody): OrganizationProfile {
     primaryContactFirstName: optional(body.primaryContactFirstName),
     primaryContactLastName: optional(body.primaryContactLastName),
   }
-}
-
-/**
- * Query strings arrive as strings or, for a repeated key, as an array. Anything that is not a
- * finite number becomes `null` so the Application layer applies its own default.
- *
- * **A KNOWN DIVERGENCE, deliberate.** ASP.NET did NOT bind an unparseable `int?` to null: the
- * value-conversion failure landed in ModelState and `[ApiController]` answered 400 through the
- * `InvalidModelStateResponseFactory` that `ProblemDetailsServiceCollectionExtensions` installs
- * (it replaces the factory, it does not suppress the filter). So `?page=abc` was a 400 there and
- * is a defaulted 200 here.
- *
- * Not corrected because the message text cannot be reproduced faithfully: it is ASP.NET's own
- * binding resource string, not one of the templates in `SPEC/30-Contracts.md`, and no fixture in
- * the corpus records one - so implementing the 400 means guessing the wording of the `errors`
- * entry, which is exactly the trap this comment used to be. Record a fixture against the frozen
- * .NET app first, then this becomes a two-line change.
- */
-function optionalInt(value: unknown): number | null {
-  if (typeof value !== 'string' || value.trim() === '') {
-    return null
-  }
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
 }
 
 /**

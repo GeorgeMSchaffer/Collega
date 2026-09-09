@@ -24,7 +24,7 @@ import {
   RequestValidationError,
   validateFields,
 } from '../common/errors/request-validation.error.js'
-import { optional } from '../common/request-values.js'
+import { optional, optionalInt } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** `POST /ideas/{ideaId}/comments` - `CreateCommentRequest`. */
@@ -32,20 +32,6 @@ type CreateCommentBody = { body?: string; mentionEmails?: unknown }
 
 /** `PUT /comments/{commentId}` - `UpdateCommentRequest`: the same two properties. */
 type UpdateCommentBody = CreateCommentBody
-
-/**
- * Query strings arrive as strings or, for a repeated key, as an array; anything unparseable
- * becomes `null` so the Application layer applies its own default. Same known divergence
- * `ideas.controller.ts` records: ASP.NET turned `?page=abc` into a model-binding 400 whose
- * message is one of its own resource strings, which no fixture pins.
- */
-function optionalInt(value: unknown): number | null {
-  if (typeof value !== 'string' || value.trim() === '') {
-    return null
-  }
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
 
 /**
  * `CommentListQuery.sortDirection` is typed `'asc' | 'desc'`, not a raw string, so the coercion

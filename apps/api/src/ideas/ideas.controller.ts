@@ -32,7 +32,7 @@ import type { Response } from 'express'
 import { AuthGuard } from '../auth/auth.guard.js'
 import { writeCsv } from '../common/csv/write-csv.js'
 import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
-import { guidOrEmpty, isGuid, optional } from '../common/request-values.js'
+import { guidOrEmpty, isGuid, optional, optionalInt } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** Hard ceiling on a CSV import body, from .NET's `IdeasController.MaxImportBytes`. */
@@ -64,22 +64,6 @@ type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'>
 type ChangeIdeaStatusBody = { statusId?: unknown }
 
 type ReassignIdeaTypeBody = { ideaTypeId?: unknown }
-
-/**
- * Query strings arrive as strings or, for a repeated key, as an array; anything unparseable
- * becomes `null` so the Application layer applies its own default.
- *
- * A KNOWN DIVERGENCE, and the same one `organizations.controller.ts` documents at length: ASP.NET
- * turned `?page=abc` into a model-binding 400 whose message is one of its own resource strings, so
- * reproducing it means guessing wording no fixture records. Defaulted here instead.
- */
-function optionalInt(value: unknown): number | null {
-  if (typeof value !== 'string' || value.trim() === '') {
-    return null
-  }
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
 
 /**
  * A `Guid?` query parameter (`statusId`, `user`): the value when it is a canonical GUID, `null`

@@ -29,13 +29,38 @@ export function optional(value: unknown): string | null {
  * as an array, `String(['true','true'])` is `'true,true'`, and this reads `false` where .NET bound
  * the first value and answered `true`.
  *
- * Not corrected for the reason `optionalInt` records at length in `organizations.controller.ts`:
+ * Not corrected for the reason `optionalInt` below records at length:
  * the 400's message is ASP.NET's own binding resource string, not one of the templates in
  * `SPEC/30-Contracts.md`, and no fixture in the corpus records one - so implementing it means
  * guessing the wording. Record a fixture against the frozen .NET app first.
  */
 export function queryBool(value: unknown): boolean {
   return String(value).toLowerCase() === 'true'
+}
+
+/**
+ * An `int?` QUERY parameter - `?page`, `?pageSize`, `?limit`. A query value arrives as text (or,
+ * for a repeated key, as an array), so this parses rather than type-checks; anything unparseable
+ * is `null` and the Application layer applies its own default.
+ *
+ * **A KNOWN DIVERGENCE, deliberate.** ASP.NET did NOT bind an unparseable `int?` to null: the
+ * value-conversion failure landed in ModelState and `[ApiController]` answered 400 through the
+ * `InvalidModelStateResponseFactory` that `ProblemDetailsServiceCollectionExtensions` installs
+ * (it replaces the factory, it does not suppress the filter). So `?page=abc` was a 400 there and
+ * is a defaulted 200 here.
+ *
+ * Not corrected because the message text cannot be reproduced faithfully: it is ASP.NET's own
+ * binding resource string, not one of the templates in `SPEC/30-Contracts.md`, and no fixture in
+ * the corpus records one - so implementing the 400 means guessing the wording of the `errors`
+ * entry, which is exactly the trap this comment used to be. Record a fixture against the frozen
+ * .NET app first, then this becomes a two-line change.
+ */
+export function optionalInt(value: unknown): number | null {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return null
+  }
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 /** `int` is 32-bit and signed on the .NET side; `Int` is the same column here. */
@@ -47,9 +72,8 @@ const INT32_MAX = 2147483647
  * **that an `int` could hold** is a value; anything else is read as omitted so the Application
  * layer applies its own default.
  *
- * (The query-string counterpart is `optionalInt` in `ideas.controller.ts`/
- * `organizations.controller.ts`: a query value arrives as text, so it parses rather than
- * type-checks. Same divergence, different input shape.)
+ * (The query-string counterpart is `optionalInt` above: a query value arrives as text, so it
+ * parses rather than type-checks. Same divergence, different input shape.)
  *
  * The range and integer checks are not pedantry - both cases were live faults on the status
  * routes, which carry the identical property:
