@@ -44,7 +44,7 @@ export class RequestValidationError extends Error {
  * This mirrors `SpacedDisplayNameMetadataProvider` on the .NET side, which fed ASP.NET's
  * `DisplayName` and therefore every message any request DTO produced.
  */
-function displayName(field: string): string {
+export function displayName(field: string): string {
   const spaced = field.replace(/(?<=[a-z0-9])(?=[A-Z])/g, ' ')
   return `${spaced.charAt(0).toUpperCase()}${spaced.slice(1)}`
 }

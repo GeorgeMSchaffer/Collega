@@ -3,8 +3,12 @@
  * place so three copies cannot drift apart and a fourth cannot be written slightly differently.
  *
  * `validateFields` (`errors/request-validation.error.ts`) is the other half of this boundary: it
- * decides whether a request is REFUSED; these decide what an accepted value MEANS.
+ * decides whether a request is REFUSED; these mostly decide what an accepted value MEANS.
+ *
+ * `stringList` is the exception and refuses outright, because for that one shape there is no
+ * meaning to assign that is not a lie - see its own comment.
  */
+import { displayName, RequestValidationError } from './errors/request-validation.error.js'
 
 /**
  * A blank or absent optional value is `null`, never `''` - the domain distinguishes them, and so
@@ -96,6 +100,39 @@ export function optionalInt32(value: unknown): number | null {
     value <= INT32_MAX
     ? value
     : null
+}
+
+/**
+ * A `List<string>?` BODY property - `tagNames`, `mentionEmails`. Absent and null stay absent so the
+ * Application layer can tell "not provided" from "provided empty"; a non-string ELEMENT becomes
+ * `''`, which every consumer discards as blank.
+ *
+ * A present value that is NOT an array is REFUSED, which is the one place this file rejects rather
+ * than defaults. The query coercions above only change the STATUS of a request that was going to be
+ * rejected anyway; reading `{"title":"x","mentionEmails":"someone@example.test"}` as absent would
+ * ACCEPT the request and silently discard content the caller asked for - a **201 with the @-mention
+ * gone**, nobody notified and nothing recorded, and no way for the caller to tell. That is data
+ * loss, not an infidelity. System.Text.Json could not bind a bare string to `List<string>` either,
+ * so the model-binding envelope is the right one.
+ *
+ * **The exact .NET message text is unverified** - no fixture in the corpus sends a mistyped
+ * `tagNames` or `mentionEmails`, so the wording is this API's own, following the same house
+ * convention as the templates in `SPEC/30-Contracts.md` "Validation Message Conventions". Record
+ * one against the frozen .NET app and replace it, exactly as `absent-body.pipe.ts` says for the
+ * body-less request.
+ *
+ * `field` keys the `errors` entry AND names the message, so `mentionEmails` reads
+ * `"Mention Emails is invalid."` - the camelCase key, spaced Title Case text split the conventions
+ * pin.
+ */
+export function stringList(field: string, value: unknown): readonly string[] | null {
+  if (value === undefined || value === null) {
+    return null
+  }
+  if (!Array.isArray(value)) {
+    throw new RequestValidationError({ [field]: [`${displayName(field)} is invalid.`] })
+  }
+  return value.map((item) => (typeof item === 'string' ? item : ''))
 }
 
 /** Canonical 8-4-4-4-12 hex form - the only shape a `uuid` column accepts. */

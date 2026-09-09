@@ -32,7 +32,7 @@ import type { Response } from 'express'
 import { AuthGuard } from '../auth/auth.guard.js'
 import { writeCsv } from '../common/csv/write-csv.js'
 import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
-import { guidOrEmpty, isGuid, optional, optionalInt } from '../common/request-values.js'
+import { guidOrEmpty, isGuid, optional, optionalInt, stringList } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** Hard ceiling on a CSV import body, from .NET's `IdeasController.MaxImportBytes`. */
@@ -84,11 +84,6 @@ function optionalGuid(value: unknown): string | null {
 /** `List<Guid>?` - absent stays absent, so the Application layer can tell "not provided" apart. */
 function guidList(value: unknown): readonly string[] | null {
   return Array.isArray(value) ? value.map(guidOrEmpty) : null
-}
-
-/** `List<string>?`; a non-string element becomes `''`, which every consumer discards as blank. */
-function stringList(value: unknown): readonly string[] | null {
-  return Array.isArray(value) ? value.map((item) => (typeof item === 'string' ? item : '')) : null
 }
 
 /** `List<IdeaFieldValueRequest>?` -> `IdeaFieldValueWrite[]`, mirroring .NET's `ToFieldValues`. */
@@ -241,8 +236,8 @@ export class IdeasController {
       // `Guid?` here, not `Guid`: omitting it means "the board's left-most swimlane", which is not
       // the same request as naming a status that does not exist.
       statusId: optionalGuid(body.statusId),
-      tagNames: stringList(body.tagNames),
-      mentionEmails: stringList(body.mentionEmails),
+      tagNames: stringList('tagNames', body.tagNames),
+      mentionEmails: stringList('mentionEmails', body.mentionEmails),
       fieldValues: fieldValues(body.fieldValues),
     })
   }
@@ -267,8 +262,8 @@ export class IdeasController {
       businessImpactId: guidOrEmpty(body.businessImpactId),
       dueDate: optional(body.dueDate),
       assigneeUserIds: guidList(body.assigneeUserIds),
-      tagNames: stringList(body.tagNames),
-      mentionEmails: stringList(body.mentionEmails),
+      tagNames: stringList('tagNames', body.tagNames),
+      mentionEmails: stringList('mentionEmails', body.mentionEmails),
       fieldValues: fieldValues(body.fieldValues),
     })
   }
