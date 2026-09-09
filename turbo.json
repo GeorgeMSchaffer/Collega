@@ -33,7 +33,12 @@
         "playwright-report/**",
         "test-results/**"
       ],
-      "cache": false
+      "cache": false,
+      "passThroughEnv": [
+        "CI",
+        "PLAYWRIGHT_BROWSERS_PATH",
+        "PLAYWRIGHT_CHROMIUM_PATH"
+      ]
     },
     "db:generate": {
       "outputs": [
@@ -56,6 +61,15 @@
         "^build"
       ],
       "cache": false,
+      "outputs": []
+    },
+    "@collega/infrastructure#test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "env": [
+        "DATABASE_URL"
+      ],
       "outputs": []
     }
   }

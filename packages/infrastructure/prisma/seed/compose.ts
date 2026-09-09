@@ -1,4 +1,4 @@
-import type { SeedModule } from './types.js'
+import type { SeedModule } from './types.ts'
 
 /**
  * Orders modules so every module runs after everything it depends on.

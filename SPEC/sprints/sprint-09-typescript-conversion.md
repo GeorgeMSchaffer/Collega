@@ -47,12 +47,12 @@ throughput.
 | Wave | What | Max concurrent | Starts when |
 |---|---|---:|---|
 | A | Golden capture | 2 | **Complete 2026-09-03** — ran ahead, against the live .NET API |
-| 0 | Foundation: monorepo, Prisma schema, kernel | **1 (serial)** | **Complete 2026-09-06** — S0.1, S0.2, S0.3 all merged |
-| B | Domain + Application, 7 feature partitions | 7 | S0.3 merged — **B1-B3 merged 2026-09-06; B4-B7 open** |
-| C | Infrastructure: repositories, integrations | 2 | S0.2 merged |
-| D | API, mirroring B's partition | 7 | per-partition, as each B*n* merges |
-| E | Web — **E0 design system first, alone** | 6 after E0 | E0 merged; D*n* merged for the routes it calls |
-| F | Validation, data migration, cutover | 3 → 1 | D complete, E complete |
+| 0 | Foundation: monorepo, Prisma schema, kernel | **1 (serial)** | **Complete 2026-09-06** — five slices, not three: S0.1, S0.2, S0.3, plus S0.4 (typed config) and S0.5 (kernel), which the first pass missed |
+| B | Domain + Application, 7 feature partitions | 7 | **Complete — all seven merged 2026-09-06** (`41ea143`, `c29fcc1`, `13ac239`, `238e12a`, `12d9391`, `bcecddc`, `76349df`). This row said "B4-B7 open" until 2026-09-08 |
+| C | Infrastructure: repositories, integrations | 2 | **Complete — C1 `5df98cf`, C2 `f0c6797`, both 2026-09-06** |
+| D | API, mirroring B's partition | 7 | **D0 only (`2c31f85`). D1-D7 owe all 81 endpoints — `apps/api` has one controller (health) and `FEATURE_MODULES` is empty. Every B*n* it waits on has merged, so all seven can start now.** |
+| E | Web — **E0 design system first, alone** | 6 after E0 | **Complete through E7 (`2575b4f`, 2026-09-08)** — built against `lib/mock.ts`, since no D*n* exists to call |
+| F | Validation, data migration, cutover | 3 → 1 | D complete, E complete. **F2's harness was repointed at `apps/web` 2026-09-08**; F1 and F3-F6 untouched |
 
 D*n* does not wait for all of Wave B — it waits for **B*n***. The partitions are
 independent, so partition 3 can be in D while partition 5 is still in B.
@@ -116,7 +116,7 @@ Beyond `SPEC/90-definition-of-done.md`:
 not gate any wave.
 
 Answered 2026-09-03 (`SPEC/decisions.md`): `01` (comp P on Tailwind + shadcn/ui, and
-Question C — Wave G), `02` (Vercel + Prisma Postgres), `10` (discard the .NET suite).
+Question C — Wave G, **cut 2026-09-08** and revisited after cutover, `SPEC/decisions.md`), `02` (Vercel + Prisma Postgres), `10` (discard the .NET suite).
 
 Answered 2026-09-04, which is what unblocked Wave 0:
 

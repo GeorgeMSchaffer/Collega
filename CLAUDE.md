@@ -132,7 +132,13 @@ Two things keep them on disk until slice **F6**:
   need to know how a screen actually behaved.
 
 The .NET test suite is **discarded**, not ported (ticket `10`). Cutover deletes the solution;
-nothing runs side by side. What survives: `SPEC/`, `tools/golden`, and the database.
+nothing runs side by side. What survives: `SPEC/` and `tools/golden`.
+
+**The database is no longer on that list** (2026-09-09, `SPEC/decisions.md`). It was, while it held
+the only copy of the demo data and could not be recreated. The seed modules now rebuild it from
+committed code in under four seconds — `dropdb`, `db:migrate`, `db:seed` — so nothing about cutover
+needs to preserve it. F3 and F4 should be planned on that basis: if the target is seeded fresh there
+is no data to migrate.
 
 ## Session, Branch, and Source Control
 
