@@ -143,6 +143,12 @@ Success response `200`:
 - `lastName`
 - `email`
 - `status`
+- `portraitDataUrl` string or `null`
+- `viewingAs` object or `null` — populated while a View As session is live
+
+The last two were missing from this document until 2026-09-09 and are **not** optional: every
+recorded fixture carries them, and the client depends on `viewingAs` to render the effective role
+during impersonation. Verified against `tools/golden/fixtures/auth.me.*`.
 
 Error responses:
 - `401` caller is not authenticated

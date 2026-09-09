@@ -14,7 +14,8 @@
 // D1-D7 turn on by adding a file - sweeping them into the generated barrel too would just be a
 // second, redundant way to import the same two things.
 
-import { readdirSync, statSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
+import { existsSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -55,8 +56,10 @@ function render(modules) {
   const imports = modules
     .map((m) => `import { ${m.className} } from '${m.specifier}'`)
     .join('\n')
-  // Biome collapses an empty multi-line array literal, so emit the collapsed form directly -
-  // otherwise `pnpm check` fails on a file nobody is allowed to hand-edit.
+  // Always the expanded form; `formatWithBiome` below collapses it when it fits. Emitting a
+  // guess here is what broke the first time this file had exactly one entry: the empty case was
+  // special-cased, the one-element case was not, and Biome collapses both - failing `pnpm check`
+  // on a file nobody is allowed to hand-edit, with no obvious culprit.
   const list =
     modules.length > 0 ? `[\n${modules.map((m) => `  ${m.className},`).join('\n')}\n]` : '[]'
 
@@ -69,6 +72,25 @@ export const FEATURE_MODULES = ${list} as const
 `
 }
 
+/**
+ * Hands the result to Biome rather than trying to predict it. Whether an array literal fits on one
+ * line depends on `lineWidth` and on how long the module names happen to be - a rule this script
+ * would have to keep in sync with `biome.json` forever, and would get wrong silently.
+ *
+ * Best-effort: a missing binary is not worth failing a build over, and `pnpm check` still catches
+ * the formatting if it ever matters.
+ */
+function formatWithBiome(file) {
+  const binary = resolve(SCRIPT_DIR, '../../../node_modules/.bin/biome')
+  if (!existsSync(binary)) return
+  try {
+    execFileSync(binary, ['format', '--write', file], { stdio: 'ignore' })
+  } catch {
+    // Formatting is a convenience here; the generated file is still valid TypeScript without it.
+  }
+}
+
 const modules = findFeatureModules()
 writeFileSync(OUTPUT_FILE, render(modules))
+formatWithBiome(OUTPUT_FILE)
 console.log(`generate-modules: wrote ${modules.length} feature module(s) to ${OUTPUT_FILE}`)

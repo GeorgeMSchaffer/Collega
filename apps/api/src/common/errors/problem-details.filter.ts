@@ -8,6 +8,7 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import type { Request, Response } from 'express'
+import { RequestValidationError } from './request-validation.error.js'
 
 /**
  * The one place every non-2xx response is built. Mirrors `src/Collega.API/ErrorHandling/
@@ -31,11 +32,15 @@ import type { Request, Response } from 'express'
  * A Nest `HttpException` thrown deliberately by a guard never passed through anything like that,
  * so it keeps the plainer, framework-default shape instead.
  *
- * `errors` (field-keyed validation failures) is set only for the kernel's `ValidationError`. A
- * future request-DTO validation pipe (D1-D7's to build) that wants the identical `400` shape
- * should throw `ValidationError` itself rather than a Nest `BadRequestException` - throwing the
- * kernel type is what routes it through the first row of this table's SECOND column, not a new
- * branch added here.
+ * **There is a THIRD shape, and this file used to deny it.** The advice here was that a request-DTO
+ * validation failure should throw the kernel `ValidationError` to get the identical `400`. Replaying
+ * the corpus against a live host proved otherwise: six of the eight recorded `400`s carry no
+ * `traceId` and DO carry `; charset=utf-8`, because ASP.NET rejected them during model binding,
+ * before the action was entered - while the two thrown by Application code carry a `traceId` and no
+ * charset. Same `type`, same `title`, different envelope. `RequestValidationError` is that first
+ * case; see its own file for the fixture-by-fixture split.
+ *
+ * `errors` (field-keyed validation failures) is set for both validation shapes and nothing else.
  */
 @Catch()
 export class ProblemDetailsFilter implements ExceptionFilter {
@@ -49,6 +54,13 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     // that has nothing to do with identity. The golden corpus only checks a traceId is PRESENT,
     // never that it matches anything else in the response.
     const traceId = randomUUID()
+
+    // Before ApplicationError: this is deliberately NOT one, so ordering here is only about
+    // reading order, not correctness.
+    if (exception instanceof RequestValidationError) {
+      this.sendModelValidation(response, exception, instance)
+      return
+    }
 
     if (exception instanceof ApplicationError) {
       this.sendKernel(response, exception, instance, traceId)
@@ -69,6 +81,33 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       instance,
       traceId,
     )
+  }
+
+  /**
+   * A request rejected on its own shape, before any Application code ran. No `traceId`, and no
+   * cache-clearing headers - nothing was thrown through ASP.NET's exception middleware, so nothing
+   * cleared them. The body is sent as a STRING on purpose: Express then appends `; charset=utf-8`
+   * to the content type, which is exactly what the recorded fixtures carry, and is the mirror image
+   * of the Buffer trick `sendKernel` needs to avoid it.
+   */
+  private sendModelValidation(
+    response: Response,
+    exception: RequestValidationError,
+    instance: string,
+  ): void {
+    const body: ProblemBody = {
+      type: 'https://collega.dev/problems/validation-error',
+      title: 'One or more fields are invalid.',
+      status: HttpStatus.BAD_REQUEST,
+      detail: 'The request failed validation. See the errors property for field-level details.',
+      instance,
+      errors: exception.failures,
+    }
+
+    response
+      .status(HttpStatus.BAD_REQUEST)
+      .setHeader('Content-Type', 'application/problem+json')
+      .send(JSON.stringify(body))
   }
 
   private sendKernel(
@@ -100,11 +139,17 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       .status(status)
       // No charset: matches AppExceptionHandler's explicit WriteAsJsonAsync(..., contentType:
       // "application/problem+json") call, which passes the content type verbatim.
+      //
+      // Sent as a Buffer, not a string, and that is load-bearing rather than stylistic. Express's
+      // `res.send` rewrites an already-set Content-Type to append `; charset=utf-8` whenever the
+      // body is a string - so setting the header above was silently undone, and every kernel error
+      // in the corpus came back with a charset the .NET handler never sent. A Buffer body skips
+      // that rewrite. Caught by the golden replay on its first run against a live Nest host.
       .setHeader('Content-Type', 'application/problem+json')
       .setHeader('Cache-Control', 'no-cache,no-store')
       .setHeader('Pragma', 'no-cache')
       .setHeader('Expires', '-1')
-      .send(JSON.stringify(body))
+      .send(Buffer.from(JSON.stringify(body), 'utf8'))
   }
 
   private sendFramework(
@@ -142,7 +187,8 @@ type ProblemBody = {
   status: number
   detail: string
   instance: string
-  traceId: string
+  /** Absent on a model-binding rejection - see `sendModelValidation`. */
+  traceId?: string
   errors?: Readonly<Record<string, readonly string[]>>
 }
 
