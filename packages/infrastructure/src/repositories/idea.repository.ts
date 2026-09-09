@@ -256,14 +256,16 @@ export class PrismaIdeaRepository implements IdeaRepository {
     sortBy: string | null,
     direction: SortDirection,
   ): Prisma.ideasOrderByWithRelationInput[] {
-    switch (sortBy) {
-      case 'updatedAt':
+    // Matched on the trimmed, lowercased value, as `SortBy?.Trim().ToLowerInvariant()` did in
+    // `EfIdeaRepository` - so `PRIORITY` and ` dueDate ` sort the way they read.
+    switch ((sortBy ?? '').trim().toLowerCase()) {
+      case 'updatedat':
         return [{ updated_at_utc: direction }]
       case 'priority':
         return [{ priority: direction }]
-      case 'dueDate':
+      case 'duedate':
         return [{ due_date: direction }]
-      case 'upvoteCount':
+      case 'upvotecount':
         return [{ idea_upvotes: { _count: direction } }]
       default:
         return [{ created_at_utc: direction }]
@@ -272,13 +274,19 @@ export class PrismaIdeaRepository implements IdeaRepository {
 
   async listByOrganization(filter: OrganizationIdeaListFilter): Promise<IdeaPage<Idea>> {
     const direction: SortDirection = filter.sortDirection === 'desc' ? 'desc' : 'asc'
+    // Matched on the trimmed, lowercased value, as `SortBy?.Trim().ToLowerInvariant()` did in
+    // `EfIdeaRepository`; anything else falls back to createdAt.
+    const sortKey = (filter.sortBy ?? '').trim().toLowerCase()
     const sortBy =
-      filter.sortBy === 'title' ||
-      filter.sortBy === 'createdBy' ||
-      filter.sortBy === 'assignedTo' ||
-      filter.sortBy === 'status'
-        ? filter.sortBy
-        : 'createdAt'
+      sortKey === 'title'
+        ? 'title'
+        : sortKey === 'createdby'
+          ? 'createdBy'
+          : sortKey === 'assignedto'
+            ? 'assignedTo'
+            : sortKey === 'status'
+              ? 'status'
+              : 'createdAt'
 
     const conditions: Prisma.Sql[] = [
       Prisma.sql`i.organization_id = ${filter.organizationId}::uuid`,
