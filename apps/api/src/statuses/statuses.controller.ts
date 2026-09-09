@@ -22,7 +22,7 @@ import {
   RequestValidationError,
   validateFields,
 } from '../common/errors/request-validation.error.js'
-import { optional, queryBool } from '../common/request-values.js'
+import { optional, optionalInt32, queryBool } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 type CreateStatusBody = {
@@ -48,37 +48,6 @@ function statusBodyRules(body: CreateStatusBody): Record<string, FieldRules> {
     name: { value: body.name, required: true, maxLength: STATUS_NAME_MAX_LENGTH },
     color: { value: body.color, maxLength: STATUS_COLOR_MAX_LENGTH },
   }
-}
-
-/** `int` is 32-bit and signed on the .NET side; `Int` is the same column here. */
-const INT32_MIN = -2147483648
-const INT32_MAX = 2147483647
-
-/**
- * `int?` on both request records, with no attributes. Only a JSON number **that an `int` could
- * hold** is a value; anything else is read as omitted so the service applies its own default
- * (append to the end of the catalog on create, keep the current order on update).
- *
- * The range and integer checks are not pedantry - both cases were live faults:
- * - `{"sortOrder": 99999999999}` overflowed Prisma's `Int` and answered **500**. .NET bound `int?`,
- *   failed the conversion, and answered 400.
- * - `{"sortOrder": 1.5}` was accepted, the response ECHOED `1.5`, and the row stored `1` - so the
- *   create response contradicted the very next read. That is a state inconsistency, not only an
- *   infidelity.
- *
- * **A KNOWN DIVERGENCE, deliberate**, and the same one D1 recorded for `?page=abc`: every value
- * this reads as omitted - `"abc"`, `1.5`, `99999999999` alike - was a System.Text.Json or
- * value-conversion binding failure on the .NET side, which is a different envelope again, not the
- * model-binding one and not the Application one. No fixture records it, so reproducing the 400
- * means guessing the wording. Record one against the frozen .NET app first.
- */
-function optionalInt(value: unknown): number | null {
-  return typeof value === 'number' &&
-    Number.isInteger(value) &&
-    value >= INT32_MIN &&
-    value <= INT32_MAX
-    ? value
-    : null
 }
 
 /**
@@ -149,7 +118,7 @@ export class StatusesController {
     return this.statuses.create(organizationId, {
       name: body.name ?? '',
       color: optional(body.color),
-      sortOrder: optionalInt(body.sortOrder),
+      sortOrder: optionalInt32(body.sortOrder),
     })
   }
 
@@ -163,7 +132,7 @@ export class StatusesController {
     return this.statuses.update(statusId, {
       name: body.name ?? '',
       color: optional(body.color),
-      sortOrder: optionalInt(body.sortOrder),
+      sortOrder: optionalInt32(body.sortOrder),
     })
   }
 

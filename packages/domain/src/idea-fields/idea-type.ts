@@ -12,6 +12,11 @@
 import { type Auditable, markCreated, markUpdated } from '../common/index.js'
 import { IdeaTypeFieldMode } from '../enums/index.js'
 
+export const IDEA_TYPE_NAME_MAX_LENGTH = 100
+
+/** `#RRGGBB` is exactly seven characters, so this is a fixed width rather than a ceiling. */
+export const IDEA_TYPE_COLOR_HEX_LENGTH = 7
+
 export const IDEA_TYPE_ICON_MAX_LENGTH = 64
 
 /** Every organization must keep at least this many active options. */
