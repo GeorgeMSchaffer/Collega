@@ -240,6 +240,12 @@ export class AuthenticationController {
   @UseGuards(AuthGuard)
   @AllowWhilePasswordChangeRequired()
   async changePassword(@Body() body: ChangePasswordBody): Promise<void> {
+    // Both fields carry `[RequiredField]` on `ChangePasswordRequest`, so a missing one never
+    // reached the service. Without this an absent `currentPassword` is answered 401 "Current
+    // password is incorrect." and, worse, writes an `AuthPasswordChangeFailed` audit event for a
+    // request that was never a password attempt.
+    requirePresent({ currentPassword: body.currentPassword, newPassword: body.newPassword })
+
     await this.auth.changePassword({
       currentPassword: body.currentPassword ?? '',
       newPassword: body.newPassword ?? '',
