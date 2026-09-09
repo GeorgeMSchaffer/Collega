@@ -81,9 +81,12 @@ type CreateUserBody = {
 }
 
 /**
- * An absent optional string is `null` on the command, never `''` - the domain distinguishes them.
- * A JSON value that is not a string counts as absent: body types are compile-time only, so
- * `{"city": 12}` would otherwise reach `.trim()` and answer 500.
+ * A blank or absent optional value is `null`, never `''` - the domain distinguishes them, and so
+ * does every Application list filter.
+ *
+ * Anything that is not a string counts as absent. Body types are compile-time only and a repeated
+ * query key arrives as an array, so `{"city": 12}` and `?search=a&search=b` would otherwise reach
+ * `.trim()` and answer 500.
  */
 function optional(value: unknown): string | null {
   return typeof value === 'string' && value.trim() !== '' ? value : null
@@ -159,10 +162,6 @@ function optionalInt(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function optionalString(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value : null
-}
-
 /**
  * Organizations, plus the user endpoints that are scoped by an organization in the route rather
  * than by a user - list, members, create and CSV import. The .NET controller drew the line the
@@ -193,10 +192,10 @@ export class OrganizationsController {
     return this.organizations.list({
       page: optionalInt(query.page),
       pageSize: optionalInt(query.pageSize),
-      search: optionalString(query.search),
+      search: optional(query.search),
       includeArchived: String(query.isArchived).toLowerCase() === 'true',
-      sortBy: optionalString(query.sortBy),
-      sortDirection: optionalString(query.sortDirection),
+      sortBy: optional(query.sortBy),
+      sortDirection: optional(query.sortDirection),
     })
   }
 
@@ -280,11 +279,11 @@ export class OrganizationsController {
     return this.users.listByOrganization(organizationId, {
       page: optionalInt(query.page),
       pageSize: optionalInt(query.pageSize),
-      search: optionalString(query.search),
-      role: optionalString(query.role),
-      status: optionalString(query.status),
-      sortBy: optionalString(query.sortBy),
-      sortDirection: optionalString(query.sortDirection),
+      search: optional(query.search),
+      role: optional(query.role),
+      status: optional(query.status),
+      sortBy: optional(query.sortBy),
+      sortDirection: optional(query.sortDirection),
     })
   }
 
