@@ -8,6 +8,11 @@
 // `PUT /auth/me/portrait`, which is its only caller and the surface whose behaviour the contract
 // actually describes. An accepted payload reaches `AuthService.updatePortrait` as bytes; a
 // rejected one is a RequestValidationError keyed on `imageBase64` and the service is never called.
+//
+// A rejection is one of two faults, and which one matters: `[RequiredField]` on
+// `UpdatePortraitRequest.ImageBase64` ran during model binding, so a blank or absent upload was
+// "is required." and only a present-but-corrupt one was "could not be read." They are pinned in
+// separate tables below, plus one test whose only job is that the two never converge.
 
 import { readFileSync } from 'node:fs'
 import type { AuthService, CurrentUserSummary } from '@collega/application/auth'
@@ -55,21 +60,57 @@ function controllerRecordingBytes() {
   return { controller, received }
 }
 
-/** Decodes `imageBase64` through the endpoint, returning the bytes, or null if it was rejected. */
-async function decodeThroughEndpoint(imageBase64: unknown): Promise<Uint8Array | null> {
+/**
+ * The two distinct faults, which the endpoint must keep apart. `UpdatePortraitRequest` carries
+ * `[RequiredField]` on `ImageBase64` and ASP.NET ran model validation before the action, so
+ * `TryDecodeBase64` never saw a blank value and could only ever produce the second of these.
+ */
+const REQUIRED = 'Image Base64 is required.'
+const UNREADABLE = 'The uploaded image could not be read.'
+
+/** What the endpoint did with a payload: the bytes it forwarded, or the messages it rejected with. */
+type Outcome =
+  | { readonly accepted: true; readonly bytes: Uint8Array }
+  | { readonly accepted: false; readonly messages: readonly string[] }
+
+/**
+ * Puts `imageBase64` through the endpoint. Deliberately returns the rejection messages rather than
+ * asserting them: which message comes back is the thing under test in half these cases, so a
+ * shared expectation here would hide exactly the distinction the tests exist to pin.
+ */
+async function throughEndpoint(imageBase64: unknown): Promise<Outcome> {
   const { controller, received } = controllerRecordingBytes()
   try {
     await controller.updatePortrait({ imageBase64 } as { imageBase64?: string })
   } catch (error) {
+    // The envelope is the same for both faults - same error type, same key, and in neither case
+    // does the upload reach the service. Only the message differs.
     expect(error).toBeInstanceOf(RequestValidationError)
-    expect((error as RequestValidationError).failures).toEqual({
-      imageBase64: ['The uploaded image could not be read.'],
-    })
+    const { failures } = error as RequestValidationError
+    expect(Object.keys(failures)).toEqual(['imageBase64'])
     expect(received).toHaveLength(0)
-    return null
+    return { accepted: false, messages: failures.imageBase64 as readonly string[] }
   }
   expect(received).toHaveLength(1)
-  return received[0] as Uint8Array
+  return { accepted: true, bytes: received[0] as Uint8Array }
+}
+
+/** The bytes the endpoint forwarded, failing the test if it rejected the payload instead. */
+async function acceptedBytes(imageBase64: unknown): Promise<Uint8Array> {
+  const outcome = await throughEndpoint(imageBase64)
+  if (!outcome.accepted) {
+    throw new Error(`expected acceptance, but it was rejected with: ${outcome.messages.join(' ')}`)
+  }
+  return outcome.bytes
+}
+
+/** The messages the endpoint rejected with, failing the test if it accepted the payload instead. */
+async function rejectionMessages(imageBase64: unknown): Promise<readonly string[]> {
+  const outcome = await throughEndpoint(imageBase64)
+  if (outcome.accepted) {
+    throw new Error('expected rejection, but the payload was accepted')
+  }
+  return outcome.messages
 }
 
 /** Breaks a payload into `width`-character lines, as a Base64 encoder with wrapping would. */
@@ -79,69 +120,114 @@ function wrap(payload: string, width: number): string {
 
 describe('PUT /auth/me/portrait - accepted payloads', () => {
   it('accepts the recorded fixture payload bare, and decodes it to the PNG magic number', async () => {
-    const bytes = await decodeThroughEndpoint(FIXTURE_PAYLOAD)
-    expect(bytes).not.toBeNull()
-    expect(Array.from((bytes as Uint8Array).subarray(0, 4))).toEqual([0x89, 0x50, 0x4e, 0x47])
+    const bytes = await acceptedBytes(FIXTURE_PAYLOAD)
+    expect(Array.from(bytes.subarray(0, 4))).toEqual([0x89, 0x50, 0x4e, 0x47])
   })
 
   it('accepts the same payload as a full data URL, decoding to identical bytes', async () => {
     // Any client built on FileReader.readAsDataURL sends this form without thinking about it.
-    const bare = await decodeThroughEndpoint(FIXTURE_PAYLOAD)
-    const asUrl = await decodeThroughEndpoint(`data:image/png;base64,${FIXTURE_PAYLOAD}`)
-    expect(asUrl).not.toBeNull()
-    expect(Buffer.from(asUrl as Uint8Array).equals(Buffer.from(bare as Uint8Array))).toBe(true)
+    const bare = await acceptedBytes(FIXTURE_PAYLOAD)
+    const asUrl = await acceptedBytes(`data:image/png;base64,${FIXTURE_PAYLOAD}`)
+    expect(Buffer.from(asUrl).equals(Buffer.from(bare))).toBe(true)
   })
 
   it('ignores line wrapping - a payload broken at 40 characters decodes to the same bytes', async () => {
-    const bare = await decodeThroughEndpoint(FIXTURE_PAYLOAD)
-    const wrapped = await decodeThroughEndpoint(wrap(FIXTURE_PAYLOAD, 40))
-    expect(wrapped).not.toBeNull()
-    expect(Buffer.from(wrapped as Uint8Array).equals(Buffer.from(bare as Uint8Array))).toBe(true)
+    const bare = await acceptedBytes(FIXTURE_PAYLOAD)
+    const wrapped = await acceptedBytes(wrap(FIXTURE_PAYLOAD, 40))
+    expect(Buffer.from(wrapped).equals(Buffer.from(bare))).toBe(true)
   })
 
   it('ignores a single trailing newline', async () => {
-    expect(await decodeThroughEndpoint(`${FIXTURE_PAYLOAD}\n`)).not.toBeNull()
+    await acceptedBytes(`${FIXTURE_PAYLOAD}\n`)
   })
 
-  it('ignores whitespace of every kind, including inside the data URL form', async () => {
-    expect(await decodeThroughEndpoint(` ${FIXTURE_PAYLOAD}\t\r\n `)).not.toBeNull()
-    expect(
-      await decodeThroughEndpoint(`data:image/png;base64,${wrap(FIXTURE_PAYLOAD, 24)}\n`),
-    ).not.toBeNull()
+  it('ignores every character Convert.FromBase64String skipped, and nothing else', async () => {
+    // Its decoder skips characters <= ' ', which is space, tab, CR, LF, FF and VT - not the wider
+    // set JS \s covers. The rejection half of this rule is in the rejected-payload table below.
+    const bare = await acceptedBytes(FIXTURE_PAYLOAD)
+    const padded = await acceptedBytes(` ${FIXTURE_PAYLOAD}\t\r\n\f\v `)
+    expect(Buffer.from(padded).equals(Buffer.from(bare))).toBe(true)
+    await acceptedBytes(`data:image/png;base64,${wrap(FIXTURE_PAYLOAD, 24)}\n`)
+  })
+
+  it('accepts a payload whose final unused bits are non-zero, as Convert.FromBase64String did', async () => {
+    // "aGVsbG9=" and "aGVsbG8=" differ only in bits the decoder shifts out, and .NET validated
+    // neither - it returned the same five bytes for both. A re-encode-and-compare check on top of
+    // the length and alphabet rules would reject the first, which is stricter than the API being
+    // ported; this fails if one is ever reintroduced.
+    const canonical = await acceptedBytes('aGVsbG8=')
+    const nonCanonical = await acceptedBytes('aGVsbG9=')
+    expect(Buffer.from(nonCanonical).equals(Buffer.from(canonical))).toBe(true)
+    expect(Buffer.from(canonical).toString('utf8')).toBe('hello')
+
+    // The same thing at the two-padding-character boundary, where the leftover is four bits.
+    expect(Array.from(await acceptedBytes('AB=='))).toEqual([0x00])
   })
 })
 
-describe('PUT /auth/me/portrait - rejected payloads', () => {
-  // Convert.FromBase64String throws on any of these; the .NET handler let it, and answered 400
-  // keyed on imageBase64. Buffer.from(s, 'base64') would silently succeed on all but the last two,
-  // which is why the length and alphabet checks exist at all.
-  const rejected: ReadonlyArray<readonly [string, string]> = [
+describe('PUT /auth/me/portrait - present but unreadable', () => {
+  // Convert.FromBase64String throws on every one of these, and the .NET handler let it through as
+  // a 400 keyed on imageBase64. Buffer.from(s, 'base64') would silently succeed on most of them,
+  // discarding what it cannot read - which is why the length and alphabet checks exist at all.
+  const unreadable: ReadonlyArray<readonly [string, string]> = [
     ['unpadded, length % 4 === 3', 'aGVsbG8'],
     ['length % 4 === 2', 'iVBORw'],
-    ['excess padding', 'aGVsbG8====='],
     ['length % 4 === 1', 'aGVsb'],
-    ['base64url alphabet', 'a-VsbG8='],
+    ['excess padding', 'aGVsbG8====='],
     ['interior padding', 'aGVs=bG8='],
-    ['empty string', ''],
-    ['whitespace only', '   '],
+    ['interior padding that is still a multiple of four', 'aGV=bG8='],
+    ['base64url alphabet', 'a-VsbG8='],
+    // Written as escapes: these are exactly the characters that look like whitespace to JS \s
+    // and are not whitespace to .NET, so a literal here would be invisible in review.
+    ['a non-breaking space, which Convert.FromBase64String did not skip', 'aGVs\u00a0bG8='],
+    ['a line separator, likewise', 'aGVs\u2028bG8='],
+    ['a byte order mark, likewise', 'aGVsbG8=\ufeff'],
     ['a data URL with no payload after the comma', 'data:image/png;base64,'],
   ]
 
-  for (const [label, payload] of rejected) {
-    it(`rejects ${label} (${JSON.stringify(payload)})`, async () => {
-      expect(await decodeThroughEndpoint(payload)).toBeNull()
+  for (const [label, payload] of unreadable) {
+    it(`rejects ${label} as unreadable`, async () => {
+      expect(await rejectionMessages(payload)).toEqual([UNREADABLE])
+    })
+  }
+})
+
+describe('PUT /auth/me/portrait - blank or absent', () => {
+  // [RequiredField] on UpdatePortraitRequest.ImageBase64 ran during model binding, ahead of the
+  // action, so .NET answered "is required." here and never reached the decoder at all.
+  const blank: ReadonlyArray<readonly [string, unknown]> = [
+    ['an omitted field', undefined],
+    ['an empty string', ''],
+    ['a JSON null', null],
+    ['a number', 123],
+    ['an object', {}],
+    ['an array', []],
+    ['a boolean', true],
+  ]
+
+  for (const [label, value] of blank) {
+    it(`answers "is required." for ${label}`, async () => {
+      // The last four have no ValidationPipe to stop them: {"imageBase64": 123} reaches the
+      // handler as a number, and a TypeError here would be a 500 on an authenticated endpoint
+      // rather than the 400 the contract records.
+      expect(await rejectionMessages(value)).toEqual([REQUIRED])
     })
   }
 
-  it('rejects an absent field', async () => {
-    expect(await decodeThroughEndpoint(undefined)).toBeNull()
+  it('keeps the two faults distinct - an absent upload is not a corrupt one', async () => {
+    // The fault a caller sees has to say which mistake they made. Reordering the presence check
+    // after the decode, or collapsing the two messages into one, makes this fail rather than
+    // silently telling someone who sent nothing that their image could not be read.
+    const absent = await rejectionMessages(undefined)
+    const corrupt = await rejectionMessages('aGVsbG8')
+    expect(absent).toEqual([REQUIRED])
+    expect(corrupt).toEqual([UNREADABLE])
+    expect(absent).not.toEqual(corrupt)
   })
 
-  it('rejects a non-string body value without throwing anything but the validation error', async () => {
-    // No ValidationPipe runs, so {"imageBase64": 123} arrives as a number. A TypeError here would
-    // be a 500 on an authenticated endpoint rather than the 400 the contract records.
-    for (const value of [123, null, {}, [], true]) {
-      expect(await decodeThroughEndpoint(value)).toBeNull()
-    }
+  it('answers "is required." for whitespace that would also fail the decode', async () => {
+    // A whitespace-only string fails BOTH rules, so it is the case that pins the ORDER: the
+    // presence check has to run first, exactly as model binding did.
+    expect(await rejectionMessages(' \t\r\n ')).toEqual([REQUIRED])
   })
 })
