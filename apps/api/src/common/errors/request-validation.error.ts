@@ -32,20 +32,104 @@ export class RequestValidationError extends Error {
 }
 
 /**
- * Throws for any absent or blank field, collecting every failure rather than stopping at the
- * first - a caller fixing one field per round trip is a caller making three round trips.
+ * The human-readable name a validation message uses for a field.
  *
- * The message is `"<Field> is required."` with the field name capitalised, which is what ASP.NET's
- * `[Required]` produced and what the fixtures record.
+ * `SPEC/30-Contracts.md` "Validation Message Conventions" (resolved 2026-08-07) splits the two
+ * spellings deliberately: the `errors` object's **keys** stay camelCase to match the wire JSON,
+ * while the name substituted into the message **text** is spaced Title Case. So `firstName` keys
+ * an entry reading `"First Name is required."`, and the corpus records exactly that - along with
+ * `"Target User Id is required."`, which is why the split happens on a lowercase-or-digit followed
+ * by an uppercase and not on every capital: `userId` must become `User Id`, never `User I d`.
+ *
+ * This mirrors `SpacedDisplayNameMetadataProvider` on the .NET side, which fed ASP.NET's
+ * `DisplayName` and therefore every message any request DTO produced.
  */
-export function requirePresent(fields: Readonly<Record<string, string | undefined>>): void {
+function displayName(field: string): string {
+  const spaced = field.replace(/(?<=[a-z0-9])(?=[A-Z])/g, ' ')
+  return `${spaced.charAt(0).toUpperCase()}${spaced.slice(1)}`
+}
+
+/**
+ * `EmailAddressAttribute.IsValid` in full: exactly one `@`, neither first nor last character.
+ * Deliberately not a stricter pattern - a rule the .NET API accepted and this one rejects is as
+ * much a divergence as the other way round.
+ */
+function isEmailAddress(value: string): boolean {
+  const at = value.indexOf('@')
+  return at > 0 && at !== value.length - 1 && at === value.lastIndexOf('@')
+}
+
+/**
+ * One field's constraints - the transcription of the `[RequiredField]` / `[MaxLengthField]` /
+ * `[EmailFormat]` attributes the matching request DTO under `src/Collega.API/Contracts/` carries.
+ */
+export type FieldRules = {
+  readonly value: unknown
+  readonly required?: boolean
+  readonly maxLength?: number
+  readonly email?: boolean
+}
+
+/**
+ * Validates a request body against the attribute set its .NET contract declared, collecting every
+ * failure rather than stopping at the first - which is what ASP.NET's ModelState did, and it
+ * matters within a field as well as across them: a `RegisterRequest` with no `email` at all failed
+ * `[RequiredField]` and `[EmailFormat]` both, and reported two messages under the one key.
+ *
+ * Only the required/max-length/email templates are implemented, because those are the only
+ * attributes the D1 contracts use. Wording comes from `src/Collega.API/Validation/
+ * ValidationMessages.cs`, which is the canonical source for all six templates in
+ * `SPEC/30-Contracts.md` "Validation Message Conventions"; the corpus records the required variant
+ * only, so the other two are matched against the .NET source rather than a fixture.
+ *
+ * An OMITTED field is judged as `''`, not skipped, because that is what it was on the .NET side:
+ * every string property on those DTOs is initialised to `string.Empty`, and System.Text.Json
+ * leaves the initialiser alone for a key that is not in the JSON. So `{}` reached validation as an
+ * empty string and failed `[EmailFormat]` as well as `[RequiredField]`.
+ *
+ * An EXPLICIT `null` is not the same thing and is the one case that has to branch. System.Text.Json
+ * writes the `null` over the initialiser, and `EmailAddressAttribute.IsValid(null)` returns TRUE -
+ * so `{"email": null}` failed `[RequiredField]` only, one message where `{}` gave two.
+ *
+ * A JSON value that is neither (`{"email": 123}`) had no faithful answer to reproduce: System.Text
+ * .Json threw a `JsonException` during binding, which is a different envelope entirely. It is read
+ * as omitted, since body types are compile-time only and there is no `ValidationPipe` - without
+ * that the first `.trim()` would be a `TypeError` and a 500 on an anonymous endpoint.
+ */
+export function validateFields(fields: Readonly<Record<string, FieldRules>>): void {
   const failures: Record<string, readonly string[]> = {}
-  for (const [name, value] of Object.entries(fields)) {
-    if (value === undefined || value === null || value.trim() === '') {
-      failures[name] = [`${name.charAt(0).toUpperCase()}${name.slice(1)} is required.`]
+  for (const [name, rules] of Object.entries(fields)) {
+    const value = typeof rules.value === 'string' ? rules.value : ''
+    const messages: string[] = []
+
+    if (rules.required === true && value.trim() === '') {
+      messages.push(`${displayName(name)} is required.`)
+    }
+    // Untrimmed, as `MaxLengthAttribute` measured it - the domain trims first, which is a
+    // different (and looser) rule, so the two checks are not interchangeable.
+    if (rules.maxLength !== undefined && value.length > rules.maxLength) {
+      messages.push(`${displayName(name)} must be ${rules.maxLength} characters or fewer.`)
+    }
+    // `!== null` and not `typeof === 'string'`: `EmailAddressAttribute.IsValid` short-circuits on
+    // null alone, so an omitted field still has to fail this rule (see above).
+    if (rules.email === true && rules.value !== null && !isEmailAddress(value)) {
+      messages.push(`${displayName(name)} must be a valid email address.`)
+    }
+
+    if (messages.length > 0) {
+      failures[name] = messages
     }
   }
   if (Object.keys(failures).length > 0) {
     throw new RequestValidationError(failures)
   }
+}
+
+/** `validateFields` for the common case of a body whose fields carry `[RequiredField]` and nothing else. */
+export function requirePresent(fields: Readonly<Record<string, unknown>>): void {
+  validateFields(
+    Object.fromEntries(
+      Object.entries(fields).map(([name, value]) => [name, { value, required: true }]),
+    ),
+  )
 }

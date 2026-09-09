@@ -1,12 +1,18 @@
-import { AuthService, type CurrentUserSummary } from '@collega/application/auth'
+import {
+  AuthService,
+  type CurrentUserSummary,
+  type RegisterResult,
+} from '@collega/application/auth'
 import type { CurrentUserContext } from '@collega/application/common'
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Inject,
   Post,
+  Put,
   Res,
   UnauthorizedException,
   UseGuards,
@@ -15,7 +21,11 @@ import type { Response } from 'express'
 import { AllowWhilePasswordChangeRequired } from '../auth/allow-while-password-change-required.decorator.js'
 import { AuthGuard } from '../auth/auth.guard.js'
 import { setSessionCookie } from '../auth/session-cookie.js'
-import { requirePresent } from '../common/errors/request-validation.error.js'
+import {
+  RequestValidationError,
+  requirePresent,
+  validateFields,
+} from '../common/errors/request-validation.error.js'
 import { PORT_TOKENS } from '../common/tokens.js'
 
 /** `POST /auth/login` request body (`SPEC/30-Contracts.md`). */
@@ -23,6 +33,69 @@ type LoginBody = { email?: string; password?: string }
 
 /** `POST /auth/change-password` request body. */
 type ChangePasswordBody = { currentPassword?: string; newPassword?: string }
+
+/** `PUT /auth/me` request body. */
+type UpdateProfileBody = { firstName?: string; lastName?: string }
+
+/** `PUT /auth/me/portrait` request body - Base64 of the raw image file, or a full data URL. */
+type UpdatePortraitBody = { imageBase64?: string }
+
+/** `POST /auth/register` request body. */
+type RegisterBody = {
+  inviteCode?: string
+  firstName?: string
+  lastName?: string
+  email?: string
+  password?: string
+}
+
+/** Base64 alphabet plus at most two padding characters, and nothing else. */
+const BASE64_PAYLOAD = /^[A-Za-z0-9+/]*={0,2}$/
+
+/**
+ * Decodes a portrait upload, accepting either a bare Base64 string or a full
+ * `data:image/png;base64,...` URL. Returns `null` for anything that does not decode to at least
+ * one byte, which the caller renders as a field-level failure.
+ *
+ * `Buffer.from(s, 'base64')` never throws - it discards characters outside the alphabet and
+ * returns whatever is left, so a truthy result proves nothing on its own. The rules reproduced
+ * here are `Convert.FromBase64String`'s, which the .NET handler let throw:
+ *
+ * - **whitespace anywhere is ignored**, so a line-wrapped payload or a trailing newline decodes
+ *   rather than failing. Its decoder skips characters `<= ' '` and nothing else, which is why the
+ *   strip below keeps only characters ABOVE `' '` rather than using `\s`, which is wider: JS `\s`
+ *   also covers NBSP, U+2028 and U+FEFF, all of which `Convert.FromBase64String` threw on;
+ * - the whitespace-stripped length must be a **multiple of four**, so padding is mandatory and
+ *   over-padding is rejected.
+ *
+ * Those two plus `BASE64_PAYLOAD` are exhaustive: anchoring `=` to the end also rules out interior
+ * and excess padding, and the alphabet rules out base64url. There is deliberately NO re-encode
+ * comparison on top - it would be STRICTER than .NET, rejecting a payload whose final unused bits
+ * are non-zero (`AB==`), which `Convert.FromBase64String` accepted and decoded to the same bytes
+ * Node does.
+ */
+function decodeBase64Image(value: unknown): Buffer | null {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return null
+  }
+
+  const commaIndex = value.indexOf(',')
+  const payload =
+    value.toLowerCase().startsWith('data:') && commaIndex >= 0 ? value.slice(commaIndex + 1) : value
+
+  let stripped = ''
+  for (const char of payload) {
+    if (char > ' ') {
+      stripped += char
+    }
+  }
+  if (stripped.length % 4 !== 0 || !BASE64_PAYLOAD.test(stripped)) {
+    return null
+  }
+
+  const bytes = Buffer.from(stripped, 'base64')
+  return bytes.length > 0 ? bytes : null
+}
 
 /**
  * The login response, minus the token.
@@ -105,6 +178,84 @@ export class AuthenticationController {
   }
 
   /**
+   * Not allowlisted mid-rotation, deliberately: only `GET /auth/me` and `change-password` carry
+   * that opt-in on the .NET controller, so editing a profile while a forced change is pending is
+   * a 403 here as it was there.
+   */
+  @Put('me')
+  @UseGuards(AuthGuard)
+  async updateMe(@Body() body: UpdateProfileBody): Promise<CurrentUserSummary> {
+    validateFields({
+      firstName: { value: body.firstName, required: true, maxLength: 100 },
+      lastName: { value: body.lastName, required: true, maxLength: 100 },
+    })
+
+    return this.auth.updateProfile({
+      firstName: body.firstName ?? '',
+      lastName: body.lastName ?? '',
+    })
+  }
+
+  /**
+   * The body carries the raw image file as Base64, and a full data URL is accepted as well -
+   * clients built on `FileReader.readAsDataURL` send one without thinking about it, and the .NET
+   * handler took both. What comes back is not what went in: the Application layer re-encodes
+   * through the image processor, so the response's `portraitDataUrl` is the normalised PNG.
+   */
+  @Put('me/portrait')
+  @UseGuards(AuthGuard)
+  async updatePortrait(@Body() body: UpdatePortraitBody): Promise<CurrentUserSummary> {
+    // `UpdatePortraitRequest` carries `[RequiredField]`, and model validation ran BEFORE the
+    // action - so `TryDecodeBase64` never saw a missing or blank value, and this message was
+    // reachable only for a string that was present and corrupt. Ordering the two checks the other
+    // way round answers "could not be read." where .NET answered "is required."
+    requirePresent({ imageBase64: body.imageBase64 })
+
+    const imageBytes = decodeBase64Image(body.imageBase64)
+    if (imageBytes === null) {
+      throw new RequestValidationError({
+        imageBase64: ['The uploaded image could not be read.'],
+      })
+    }
+
+    return this.auth.updatePortrait(imageBytes)
+  }
+
+  /** Reverts to the initials avatar. Returns the whole summary, not 204, so the client can rerender. */
+  @Delete('me/portrait')
+  @UseGuards(AuthGuard)
+  async removePortrait(): Promise<CurrentUserSummary> {
+    return this.auth.removePortrait()
+  }
+
+  /**
+   * Anonymous by design - the invite code is the credential. `AuthService.register` owns every
+   * rejection past field presence: an unknown or expired code is a `400` keyed on `inviteCode`
+   * and an email already in use is a `409`, both thrown from Application code and therefore
+   * carrying a `traceId` rather than the model-binding shape this handler's own check produces.
+   * The corpus records both, which is how the two envelopes stay distinguishable.
+   */
+  @Post('register')
+  @HttpCode(201)
+  async register(@Body() body: RegisterBody): Promise<RegisterResult> {
+    validateFields({
+      inviteCode: { value: body.inviteCode, required: true },
+      firstName: { value: body.firstName, required: true, maxLength: 100 },
+      lastName: { value: body.lastName, required: true, maxLength: 100 },
+      email: { value: body.email, required: true, email: true },
+      password: { value: body.password, required: true },
+    })
+
+    return this.auth.register({
+      inviteCode: body.inviteCode ?? '',
+      firstName: body.firstName ?? '',
+      lastName: body.lastName ?? '',
+      email: body.email ?? '',
+      password: body.password ?? '',
+    })
+  }
+
+  /**
    * Allowed while a password change is pending - it is the only way out of that state, which is
    * why it carries the same opt-in as `GET /auth/me` (auth requirement #31).
    */
@@ -113,6 +264,12 @@ export class AuthenticationController {
   @UseGuards(AuthGuard)
   @AllowWhilePasswordChangeRequired()
   async changePassword(@Body() body: ChangePasswordBody): Promise<void> {
+    // Both fields carry `[RequiredField]` on `ChangePasswordRequest`, so a missing one never
+    // reached the service. Without this an absent `currentPassword` is answered 401 "Current
+    // password is incorrect." and, worse, writes an `AuthPasswordChangeFailed` audit event for a
+    // request that was never a password attempt.
+    requirePresent({ currentPassword: body.currentPassword, newPassword: body.newPassword })
+
     await this.auth.changePassword({
       currentPassword: body.currentPassword ?? '',
       newPassword: body.newPassword ?? '',

@@ -73,5 +73,9 @@ import { AuthenticationController } from './authentication.controller.js'
       ],
     },
   ],
+  // The users controller's temporary-password endpoint is an `AuthService` call under a `/users`
+  // route, so that module imports this one rather than building a second copy of the same
+  // nine-port service.
+  exports: [AuthService],
 })
 export class AuthenticationModule {}
