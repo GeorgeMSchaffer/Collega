@@ -67,6 +67,12 @@ const BASE64_PAYLOAD = /^[A-Za-z0-9+/]*={0,2}$/
  *   also covers NBSP, U+2028 and U+FEFF, all of which `Convert.FromBase64String` threw on;
  * - the whitespace-stripped length must be a **multiple of four**, so padding is mandatory and
  *   over-padding is rejected.
+ *
+ * Those two plus `BASE64_PAYLOAD` are exhaustive: anchoring `=` to the end also rules out interior
+ * and excess padding, and the alphabet rules out base64url. There is deliberately NO re-encode
+ * comparison on top - it would be STRICTER than .NET, rejecting a payload whose final unused bits
+ * are non-zero (`AB==`), which `Convert.FromBase64String` accepted and decoded to the same bytes
+ * Node does.
  */
 function decodeBase64Image(value: unknown): Buffer | null {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -88,11 +94,7 @@ function decodeBase64Image(value: unknown): Buffer | null {
   }
 
   const bytes = Buffer.from(stripped, 'base64')
-  if (bytes.length === 0) {
-    return null
-  }
-
-  return bytes.toString('base64') === stripped ? bytes : null
+  return bytes.length > 0 ? bytes : null
 }
 
 /**
