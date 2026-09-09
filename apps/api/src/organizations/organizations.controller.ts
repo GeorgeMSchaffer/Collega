@@ -47,6 +47,7 @@ import {
   requirePresent,
   validateFields,
 } from '../common/errors/request-validation.error.js'
+import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** The seven optional address/contact fields shared by create and update. */
 type OrganizationProfileBody = {
@@ -213,13 +214,15 @@ export class OrganizationsController {
   }
 
   @Get(':organizationId')
-  async getById(@Param('organizationId') organizationId: string): Promise<OrganizationDetail> {
+  async getById(
+    @Param('organizationId', UuidParamPipe) organizationId: string,
+  ): Promise<OrganizationDetail> {
     return this.organizations.getById(organizationId)
   }
 
   @Put(':organizationId')
   async update(
-    @Param('organizationId') organizationId: string,
+    @Param('organizationId', UuidParamPipe) organizationId: string,
     @Body() body: UpdateOrganizationBody,
   ): Promise<OrganizationDetail> {
     validateFields(organizationBodyRules(body))
@@ -235,7 +238,7 @@ export class OrganizationsController {
   @Post(':organizationId/invite-code/regenerate')
   @HttpCode(200)
   async regenerateInviteCode(
-    @Param('organizationId') organizationId: string,
+    @Param('organizationId', UuidParamPipe) organizationId: string,
   ): Promise<RegenerateInviteCodeResult> {
     return this.organizations.regenerateInviteCode(organizationId)
   }
@@ -243,13 +246,13 @@ export class OrganizationsController {
   /** Archive is a soft delete and answers 204, unlike the logo endpoints which return the detail. */
   @Post(':organizationId/archive')
   @HttpCode(204)
-  async archive(@Param('organizationId') organizationId: string): Promise<void> {
+  async archive(@Param('organizationId', UuidParamPipe) organizationId: string): Promise<void> {
     await this.organizations.archive(organizationId)
   }
 
   @Put(':organizationId/logo')
   async setLogo(
-    @Param('organizationId') organizationId: string,
+    @Param('organizationId', UuidParamPipe) organizationId: string,
     @Body() body: SetLogoBody,
   ): Promise<OrganizationDetail> {
     requirePresent({ thumbnailDataUri: body.thumbnailDataUri })
@@ -263,13 +266,15 @@ export class OrganizationsController {
   }
 
   @Delete(':organizationId/logo')
-  async clearLogo(@Param('organizationId') organizationId: string): Promise<OrganizationDetail> {
+  async clearLogo(
+    @Param('organizationId', UuidParamPipe) organizationId: string,
+  ): Promise<OrganizationDetail> {
     return this.organizations.clearLogo(organizationId)
   }
 
   @Get(':organizationId/users')
   async listUsers(
-    @Param('organizationId') organizationId: string,
+    @Param('organizationId', UuidParamPipe) organizationId: string,
     @Query() query: Record<string, unknown>,
   ): Promise<UserListResult> {
     return this.users.listByOrganization(organizationId, {
@@ -286,7 +291,7 @@ export class OrganizationsController {
   /** Id, name and email only - this is the assignee picker's source, not an admin listing. */
   @Get(':organizationId/members')
   async listMembers(
-    @Param('organizationId') organizationId: string,
+    @Param('organizationId', UuidParamPipe) organizationId: string,
   ): Promise<readonly OrganizationMember[]> {
     return this.users.listAssignableMembers(organizationId)
   }
@@ -294,7 +299,7 @@ export class OrganizationsController {
   @Post(':organizationId/users')
   @HttpCode(201)
   async createUser(
-    @Param('organizationId') organizationId: string,
+    @Param('organizationId', UuidParamPipe) organizationId: string,
     @Body() body: CreateUserBody,
   ): Promise<CreateUserResult> {
     validateFields({
@@ -329,7 +334,7 @@ export class OrganizationsController {
   @HttpCode(200)
   @UseInterceptors(FileInterceptor('csvFile'))
   async importUsers(
-    @Param('organizationId') organizationId: string,
+    @Param('organizationId', UuidParamPipe) organizationId: string,
     @UploadedFile() csvFile: { buffer?: Buffer } | undefined,
   ): Promise<UserImportResult> {
     const buffer = csvFile?.buffer

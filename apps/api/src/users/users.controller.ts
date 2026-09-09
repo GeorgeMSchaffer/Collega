@@ -3,6 +3,7 @@ import { type UserDetail, UserService } from '@collega/application/users'
 import { Body, Controller, Get, HttpCode, Param, Post, Put, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
 import { validateFields } from '../common/errors/request-validation.error.js'
+import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** `PUT /users/{userId}` request body (`SPEC/30-Contracts.md` "User Contracts"). */
 type UpdateUserBody = {
@@ -35,12 +36,15 @@ export class UsersController {
   ) {}
 
   @Get(':userId')
-  async getById(@Param('userId') userId: string): Promise<UserDetail> {
+  async getById(@Param('userId', UuidParamPipe) userId: string): Promise<UserDetail> {
     return this.users.getById(userId)
   }
 
   @Put(':userId')
-  async update(@Param('userId') userId: string, @Body() body: UpdateUserBody): Promise<UserDetail> {
+  async update(
+    @Param('userId', UuidParamPipe) userId: string,
+    @Body() body: UpdateUserBody,
+  ): Promise<UserDetail> {
     validateFields({
       firstName: { value: body.firstName, required: true, maxLength: 100 },
       lastName: { value: body.lastName, required: true, maxLength: 100 },
@@ -66,7 +70,9 @@ export class UsersController {
    */
   @Post(':userId/temporary-password')
   @HttpCode(200)
-  async issueTemporaryPassword(@Param('userId') userId: string): Promise<TemporaryPasswordResult> {
+  async issueTemporaryPassword(
+    @Param('userId', UuidParamPipe) userId: string,
+  ): Promise<TemporaryPasswordResult> {
     return this.auth.issueTemporaryPassword(userId)
   }
 }

@@ -225,17 +225,25 @@ const KERNEL_TITLE: Readonly<Record<string, string>> = {
   aiAssistUnavailable: 'Service Unavailable',
 }
 
-/** RFC 9110 URIs for a framework-level rejection - only the two statuses the corpus actually
- * records this way (401/403). Any other framework `HttpException` falls back to a generic
- * `collega.dev/problems/error` type in `sendFramework` above. */
+/** RFC 9110 URIs for a framework-level rejection. 401 and 403 are the two the corpus records this
+ * way; 404 is here for a request that matched no route - a non-GUID id segment, which `UuidParamPipe`
+ * turns into the same 404 ASP.NET's routing produced, and which would otherwise render with the
+ * generic type and a `NotFound` title. Any other framework `HttpException` falls back to a generic
+ * `collega.dev/problems/error` type in `sendFramework` above.
+ *
+ * An Application-thrown 404 does NOT come through here - it is an `ApplicationError` and takes
+ * `sendKernel`, which is why the corpus's recorded 404s keep their `collega.dev/problems/not-found`
+ * type and their own detail text. */
 const RFC_TYPE: Readonly<Record<number, string>> = {
   [HttpStatus.UNAUTHORIZED]: 'https://tools.ietf.org/html/rfc9110#section-15.5.2',
   [HttpStatus.FORBIDDEN]: 'https://tools.ietf.org/html/rfc9110#section-15.5.4',
+  [HttpStatus.NOT_FOUND]: 'https://tools.ietf.org/html/rfc9110#section-15.5.5',
 }
 
 const RFC_TITLE: Readonly<Record<number, string>> = {
   [HttpStatus.UNAUTHORIZED]: 'Unauthorized',
   [HttpStatus.FORBIDDEN]: 'Forbidden',
+  [HttpStatus.NOT_FOUND]: 'Not Found',
 }
 
 function messageFrom(exception: HttpException): string {
