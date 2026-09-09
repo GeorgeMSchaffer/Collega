@@ -1,0 +1,124 @@
+/**
+ * The shapes the screens render.
+ *
+ * These are **view types, not wire types**, and the distinction is the whole reason this module
+ * exists. `apps/web` may not import `@collega/application` — `biome.json`'s `noRestrictedImports`
+ * fails the lint run on it — so the API's own DTOs cannot be shared. Rather than mirror them and
+ * inherit every rename, the screens keep the vocabulary they were written in and each reader in
+ * `lib/data/` adapts the wire shape into it (`lib/api/wire.ts` is where the wire shape is
+ * declared, and `lib/api/adapt.ts` is where the mapping lives).
+ *
+ * That is a deliberate seam, not laziness: an idea's status arrives as `statusId` + `statusName`
+ * on the list item and the board separately resolves colour from its swimlanes, while a card only
+ * ever needed `statusId`. Adapting once, at the boundary, keeps that reconciliation in one file
+ * instead of in every component.
+ *
+ * `lib/mock.ts` is typed against this module too, so a fixture-backed reader and a real one return
+ * the same thing and a screen cannot tell which it got.
+ */
+
+export type Role = 'SiteAdmin' | 'OrgAdmin' | 'User' | 'ReadOnly'
+export type Priority = 'Low' | 'Medium' | 'High' | 'Critical'
+
+/**
+ * The real administrator behind a live View As session.
+ *
+ * Present on the type before the feature exists (D7) on purpose. `GET /auth/me` returns the
+ * ACTING user with this populated, and the client is required to take its principal from there
+ * rather than from what login handed back — so a session ended server-side cannot leave a stale
+ * banner on screen. A principal type that could not express it would have to be widened later by
+ * whoever builds D7, in the one place five other slices had already built on.
+ */
+export type ViewingAs = {
+  realUserId: string
+  realUserName: string
+  expiresAtUtc: string
+}
+
+export type CurrentUser = {
+  userId: string
+  displayName: string
+  initials: string
+  role: Role
+  roleLabel: string
+  /** Null for a Site Admin, who belongs to no organization. */
+  organizationId: string | null
+  organizationName: string | null
+  viewingAs: ViewingAs | null
+}
+
+/**
+ * `colorName` is the human name shown in the status settings table, and it has no API field —
+ * a status carries a hex colour and nothing else. Optional rather than invented: the settings
+ * screen renders the swatch alone when the name is absent, which is honest, and inventing
+ * "Slate" from `#64748B` would be a lookup table nobody maintains.
+ */
+export type Status = {
+  id: string
+  name: string
+  color: string
+  colorName?: string
+}
+
+/** `focus` is demo-seed copy with no column behind it, so a real board simply has none. */
+export type Board = {
+  id: string
+  name: string
+  ideaCount: number
+  laneCount: number
+  focus?: string
+}
+
+/**
+ * A board opened, rather than listed.
+ *
+ * The lanes belong to the board and not to the organization: a board picks a subset of the status
+ * catalog and puts it in its own order. Not an extension of `Board` — an opened board shows its
+ * cards, so it has no use for the idea count a card in the list needs, and fetching one anyway
+ * would be a request per page view for a number nothing renders.
+ */
+export type BoardWithLanes = {
+  id: string
+  name: string
+  lanes: Status[]
+  /** Whether a plain User may move a card between lanes, or only an administrator. */
+  allowUserStatusUpdate: boolean
+}
+
+/**
+ * What a lane card and a table row need — the list shape, and no more.
+ *
+ * Split from `IdeaDetail` because the API splits them: `GET /boards/{id}/ideas` carries no
+ * description and no author name, only an `authorUserId`. The fixture happened to carry both on
+ * every idea, which quietly promised the list screens a field the list endpoint cannot supply.
+ */
+export type Idea = {
+  id: string
+  boardId: string
+  statusId: string
+  title: string
+  priority: Priority
+  ideaType: string
+  businessImpact: string
+  /** The first tag, which is all a card shows. Null when an idea carries none. */
+  tag: string | null
+  assigneeInitials: string | null
+  upvotes: number
+}
+
+/** The inspector's shape: everything a card shows, plus the prose and provenance behind it. */
+export type IdeaDetail = Idea & {
+  reference: string
+  description: string
+  authorName: string
+  createdOn: string
+}
+
+export type Comment = {
+  id: string
+  ideaId: string
+  authorName: string
+  authorInitials: string
+  postedOn: string
+  body: string
+}

@@ -1,38 +1,22 @@
 /**
- * Hard-coded stand-ins for what Wave D's API will return.
+ * Hard-coded stand-ins for the parts of the API `lib/data/` has not been pointed at yet.
  *
  * Every value here mirrors the demo seed in `demo.md` — two boards per organization, five statuses
  * in canonical order, eleven ideas per board distributed 3/2/2/1/3 — so a screen built against this
- * and the same screen built against the real API should differ only in where the data came from.
- * Nothing else in `apps/web` may invent its own fixtures; when the API lands, this file is the only
- * thing deleted.
+ * and the same screen built against the real API differ only in where the data came from. Nothing
+ * else in `apps/web` may invent its own fixtures.
+ *
+ * **Shrinking, not static.** The board readers are real now; the ideas list, the delivery surfaces
+ * and every settings screen still answer from here. Each converted reader deletes its section, and
+ * when the last one goes so does this file. The types are no longer declared here either — they
+ * live in `lib/types.ts`, so a fixture and a real response are the same shape by construction
+ * rather than by inspection.
  */
 
-export type Role = 'SiteAdmin' | 'OrgAdmin' | 'User' | 'ReadOnly'
-export type Priority = 'Low' | 'Medium' | 'High' | 'Critical'
+import type { Board, Comment, IdeaDetail, Priority, Role, Status } from './types'
 
-export type CurrentUser = {
-  displayName: string
-  initials: string
-  role: Role
-  roleLabel: string
-  organizationName: string | null
-}
-
-export const currentUser: CurrentUser = {
-  displayName: 'Olivia Administer',
-  initials: 'OA',
-  role: 'OrgAdmin',
-  roleLabel: 'Org Admin',
-  organizationName: 'Acme Robotics',
-}
-
-/** Whether the current role may create or move ideas, and the reason shown when it may not. */
-export function writeDenial(role: Role): string | null {
-  if (role === 'SiteAdmin') return 'Act as a member'
-  if (role === 'ReadOnly') return 'Read-only account'
-  return null
-}
+export { engagementDenial, isAdministrator, writeDenial } from './roles'
+export type { Board, Comment, CurrentUser, Idea, IdeaDetail, Priority, Role, Status } from './types'
 
 /**
  * Priority has its own colour scale, independent of status.
@@ -48,8 +32,6 @@ export const PRIORITY_COLORS: Record<Priority, string | undefined> = {
   Medium: 'var(--teal)',
   Low: undefined,
 }
-
-export type Status = { id: string; name: string; color: string; colorName: string }
 
 /** Canonical order. The colour is the category dot from the comp Q palette. */
 export const statuses: Status[] = [
@@ -71,38 +53,16 @@ export const statusesByOrganization: Record<string, Status[]> = {
   ],
 }
 
-export type Board = { id: string; name: string; focus: string; ideaCount: number }
-
 export const boards: Board[] = [
-  { id: 'ideas', name: 'Ideas', focus: 'Assembly cell reliability', ideaCount: 11 },
-  { id: 'opportunities', name: 'Opportunities', focus: 'Field service enablement', ideaCount: 11 },
+  { id: 'ideas', name: 'Ideas', focus: 'Assembly cell reliability', ideaCount: 11, laneCount: 5 },
+  {
+    id: 'opportunities',
+    name: 'Opportunities',
+    focus: 'Field service enablement',
+    ideaCount: 11,
+    laneCount: 5,
+  },
 ]
-
-export type Idea = {
-  id: string
-  reference: string
-  boardId: string
-  statusId: string
-  title: string
-  description: string
-  priority: Priority
-  ideaType: string
-  businessImpact: string
-  tag: string
-  assigneeInitials: string | null
-  authorName: string
-  createdOn: string
-  upvotes: number
-}
-
-export type Comment = {
-  id: string
-  ideaId: string
-  authorName: string
-  authorInitials: string
-  postedOn: string
-  body: string
-}
 
 const DESCRIPTIONS = [
   'Map the current handoffs and automate the highest-friction transition.',
@@ -143,8 +103,8 @@ const ASSIGNEES = [null, 'NC', 'MC', 'OA']
 /** The seed's 3/2/2/1/3 spread across the five statuses, in canonical order. */
 const PER_STATUS = [3, 2, 2, 1, 3]
 
-function buildIdeas(boardId: string): Idea[] {
-  const out: Idea[] = []
+function buildIdeas(boardId: string): IdeaDetail[] {
+  const out: IdeaDetail[] = []
   let index = 0
 
   PER_STATUS.forEach((count, statusIndex) => {
@@ -177,9 +137,9 @@ function buildIdeas(boardId: string): Idea[] {
   return out
 }
 
-export const ideas: Idea[] = boards.flatMap((board) => buildIdeas(board.id))
+export const ideas: IdeaDetail[] = boards.flatMap((board) => buildIdeas(board.id))
 
-export function ideasForBoard(boardId: string): Idea[] {
+export function ideasForBoard(boardId: string): IdeaDetail[] {
   return ideas.filter((idea) => idea.boardId === boardId)
 }
 
@@ -191,7 +151,7 @@ export function boardById(id: string): Board | undefined {
   return boards.find((board) => board.id === id)
 }
 
-export function ideaById(id: string): Idea | undefined {
+export function ideaById(id: string): IdeaDetail | undefined {
   return ideas.find((idea) => idea.id === id)
 }
 
@@ -225,16 +185,6 @@ export function commentsForIdea(ideaId: string): Comment[] {
   return comments.filter((comment) => comment.ideaId === ideaId)
 }
 
-/**
- * Whether the role may engage - vote and comment - which is a different question from whether it
- * may edit. A Read Only account deliberately keeps engagement; a Site Admin has neither, being
- * outside the organization entirely.
- */
-export function engagementDenial(role: Role): string | null {
-  if (role === 'SiteAdmin') return 'Not a member of this organization'
-  return null
-}
-
 export const navCounts = {
   boards: boards.length,
   ideas: ideas.length,
@@ -248,19 +198,6 @@ export const navCounts = {
 // ---------------------------------------------------------------------------
 // Administration fixtures (Wave E5)
 // ---------------------------------------------------------------------------
-
-/**
- * Whether the role may reach the administration routes at all.
- *
- * This is a **page-level** gate, not a control-level one, and it reads differently on purpose: a
- * denied control stays visible with its reason beside it, but an entire route closed to a role
- * shows the "Administrators only" panel instead. Comp Q states why — "nothing here is hidden from
- * you selectively; the whole page is out of scope for your role" — which is a promise that the
- * page is not quietly showing a member a reduced version of the same screen.
- */
-export function isAdministrator(role: Role): boolean {
-  return role === 'SiteAdmin' || role === 'OrgAdmin'
-}
 
 export type Organization = {
   id: string
@@ -411,27 +348,6 @@ export const fieldDefinitions: FieldDefinition[] = [
 // ---------------------------------------------------------------------------
 // Delivery fixtures (Wave E6)
 // ---------------------------------------------------------------------------
-
-/**
- * Why an administrator-only delivery action is refused.
- *
- * Different wording from `writeDenial`, deliberately: administering a sprint is not the same
- * refusal as "you cannot author an idea". Comp Q offers a Site Admin a route back through View As,
- * and gives a member a flat statement of scope.
- */
-export function deliveryAdminDenial(role: Role): string | null {
-  if (role === 'SiteAdmin') {
-    // A Site Admin belongs to no organization, so `organizationName` is null *by design* — the
-    // sidebar and the settings hub both handle that. Naming one here without a fallback printed
-    // "Act as an null administrator to change this" on three delivery routes.
-    const org = currentUser.organizationName
-    return org
-      ? `Act as an ${org} administrator to change this`
-      : 'Act as an organization administrator to change this'
-  }
-  if (role === 'User' || role === 'ReadOnly') return 'Administrators only'
-  return null
-}
 
 /**
  * The fixed delivery status set — `Pending`, `Scoping`, `Development`, `Review`, `Complete`
@@ -680,7 +596,7 @@ export function issuesForOutcome(outcomeId: string): Issue[] {
 /**
  * The signed-in account's own record, for `/settings/profile`.
  *
- * `currentUser` carries what the shell renders — a display name and initials. The profile form
+ * The resolved principal carries what the shell renders — a display name and initials. The profile form
  * edits the parts it is composed from, so those live here: a first and last name the form owns, and
  * the email and role it shows read-only. Comp Q labels the `User` role "Member" on this one screen;
  * every other surface in this app calls it "User", and two names for one role is worse than
