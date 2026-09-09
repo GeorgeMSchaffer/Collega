@@ -2,7 +2,7 @@ import { AuthService, type TemporaryPasswordResult } from '@collega/application/
 import { type UserDetail, UserService } from '@collega/application/users'
 import { Body, Controller, Get, HttpCode, Param, Post, Put, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
-import { requirePresent } from '../common/errors/request-validation.error.js'
+import { validateFields } from '../common/errors/request-validation.error.js'
 
 /** `PUT /users/{userId}` request body (`SPEC/30-Contracts.md` "User Contracts"). */
 type UpdateUserBody = {
@@ -41,12 +41,12 @@ export class UsersController {
 
   @Put(':userId')
   async update(@Param('userId') userId: string, @Body() body: UpdateUserBody): Promise<UserDetail> {
-    requirePresent({
-      firstName: body.firstName,
-      lastName: body.lastName,
-      email: body.email,
-      role: body.role,
-      status: body.status,
+    validateFields({
+      firstName: { value: body.firstName, required: true, maxLength: 100 },
+      lastName: { value: body.lastName, required: true, maxLength: 100 },
+      email: { value: body.email, required: true, email: true },
+      role: { value: body.role, required: true },
+      status: { value: body.status, required: true },
     })
 
     return this.users.update(userId, {

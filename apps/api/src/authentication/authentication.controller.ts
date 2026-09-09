@@ -24,6 +24,7 @@ import { setSessionCookie } from '../auth/session-cookie.js'
 import {
   RequestValidationError,
   requirePresent,
+  validateFields,
 } from '../common/errors/request-validation.error.js'
 import { PORT_TOKENS } from '../common/tokens.js'
 
@@ -164,7 +165,10 @@ export class AuthenticationController {
   @Put('me')
   @UseGuards(AuthGuard)
   async updateMe(@Body() body: UpdateProfileBody): Promise<CurrentUserSummary> {
-    requirePresent({ firstName: body.firstName, lastName: body.lastName })
+    validateFields({
+      firstName: { value: body.firstName, required: true, maxLength: 100 },
+      lastName: { value: body.lastName, required: true, maxLength: 100 },
+    })
 
     return this.auth.updateProfile({
       firstName: body.firstName ?? '',
@@ -210,12 +214,12 @@ export class AuthenticationController {
   @Post('register')
   @HttpCode(201)
   async register(@Body() body: RegisterBody): Promise<RegisterResult> {
-    requirePresent({
-      inviteCode: body.inviteCode,
-      firstName: body.firstName,
-      lastName: body.lastName,
-      email: body.email,
-      password: body.password,
+    validateFields({
+      inviteCode: { value: body.inviteCode, required: true },
+      firstName: { value: body.firstName, required: true, maxLength: 100 },
+      lastName: { value: body.lastName, required: true, maxLength: 100 },
+      email: { value: body.email, required: true, email: true },
+      password: { value: body.password, required: true },
     })
 
     return this.auth.register({

@@ -13,7 +13,18 @@ import type {
   UserListResult,
 } from '@collega/application/users'
 import { UserService } from '@collega/application/users'
-import type { OrganizationProfile } from '@collega/domain/organizations'
+import {
+  ORGANIZATION_ADDRESS_MAX_LENGTH,
+  ORGANIZATION_CITY_MAX_LENGTH,
+  ORGANIZATION_CONTACT_NAME_MAX_LENGTH,
+  ORGANIZATION_DESCRIPTION_MAX_LENGTH,
+  ORGANIZATION_LOGO_URL_MAX_LENGTH,
+  ORGANIZATION_PHONE_MAX_LENGTH,
+  ORGANIZATION_STATE_MAX_LENGTH,
+  ORGANIZATION_TITLE_MAX_LENGTH,
+  ORGANIZATION_ZIP_MAX_LENGTH,
+  type OrganizationProfile,
+} from '@collega/domain/organizations'
 import { parseUserImportCsv } from '@collega/infrastructure/integrations/csv'
 import {
   Body,
@@ -31,7 +42,11 @@ import {
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { AuthGuard } from '../auth/auth.guard.js'
-import { requirePresent } from '../common/errors/request-validation.error.js'
+import {
+  type FieldRules,
+  requirePresent,
+  validateFields,
+} from '../common/errors/request-validation.error.js'
 
 /** The seven optional address/contact fields shared by create and update. */
 type OrganizationProfileBody = {
@@ -64,9 +79,47 @@ type CreateUserBody = {
   status?: string
 }
 
-/** An absent optional string is `null` on the command, never `''` - the domain distinguishes them. */
-function optional(value: string | undefined): string | null {
-  return value === undefined || value.trim() === '' ? null : value
+/**
+ * An absent optional string is `null` on the command, never `''` - the domain distinguishes them.
+ * A JSON value that is not a string counts as absent: body types are compile-time only, so
+ * `{"city": 12}` would otherwise reach `.trim()` and answer 500.
+ */
+function optional(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() !== '' ? value : null
+}
+
+/**
+ * The `[RequiredField]` / `[MaxLengthField]` set that `CreateOrganizationRequest` and
+ * `UpdateOrganizationRequest` share - identical field for field on the .NET side.
+ *
+ * The domain enforces the same lengths (`packages/domain/src/organizations/organization.ts`) and
+ * must keep doing so: that check is the invariant, this one is the contract. They are not
+ * redundant. Only this one produces the model-binding envelope a DTO attribute produced, and the
+ * domain's judges the trimmed value where `MaxLengthAttribute` judged the raw one.
+ */
+function organizationBodyRules(body: CreateOrganizationBody): Record<string, FieldRules> {
+  return {
+    title: { value: body.title, required: true, maxLength: ORGANIZATION_TITLE_MAX_LENGTH },
+    description: {
+      value: body.description,
+      required: true,
+      maxLength: ORGANIZATION_DESCRIPTION_MAX_LENGTH,
+    },
+    logoUrl: { value: body.logoUrl, maxLength: ORGANIZATION_LOGO_URL_MAX_LENGTH },
+    address: { value: body.address, maxLength: ORGANIZATION_ADDRESS_MAX_LENGTH },
+    city: { value: body.city, maxLength: ORGANIZATION_CITY_MAX_LENGTH },
+    state: { value: body.state, maxLength: ORGANIZATION_STATE_MAX_LENGTH },
+    zip: { value: body.zip, maxLength: ORGANIZATION_ZIP_MAX_LENGTH },
+    phone: { value: body.phone, maxLength: ORGANIZATION_PHONE_MAX_LENGTH },
+    primaryContactFirstName: {
+      value: body.primaryContactFirstName,
+      maxLength: ORGANIZATION_CONTACT_NAME_MAX_LENGTH,
+    },
+    primaryContactLastName: {
+      value: body.primaryContactLastName,
+      maxLength: ORGANIZATION_CONTACT_NAME_MAX_LENGTH,
+    },
+  }
 }
 
 function toProfile(body: OrganizationProfileBody): OrganizationProfile {
@@ -135,7 +188,7 @@ export class OrganizationsController {
   @Post()
   @HttpCode(201)
   async create(@Body() body: CreateOrganizationBody): Promise<CreateOrganizationResult> {
-    requirePresent({ title: body.title, description: body.description })
+    validateFields(organizationBodyRules(body))
 
     return this.organizations.create({
       title: body.title ?? '',
@@ -155,7 +208,7 @@ export class OrganizationsController {
     @Param('organizationId') organizationId: string,
     @Body() body: UpdateOrganizationBody,
   ): Promise<OrganizationDetail> {
-    requirePresent({ title: body.title, description: body.description })
+    validateFields(organizationBodyRules(body))
 
     return this.organizations.update(organizationId, {
       title: body.title ?? '',
@@ -230,12 +283,12 @@ export class OrganizationsController {
     @Param('organizationId') organizationId: string,
     @Body() body: CreateUserBody,
   ): Promise<CreateUserResult> {
-    requirePresent({
-      firstName: body.firstName,
-      lastName: body.lastName,
-      email: body.email,
-      role: body.role,
-      initialPassword: body.initialPassword,
+    validateFields({
+      firstName: { value: body.firstName, required: true, maxLength: 100 },
+      lastName: { value: body.lastName, required: true, maxLength: 100 },
+      email: { value: body.email, required: true, email: true },
+      role: { value: body.role, required: true },
+      initialPassword: { value: body.initialPassword, required: true },
     })
 
     return this.users.create(organizationId, {
