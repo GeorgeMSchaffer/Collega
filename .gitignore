@@ -130,3 +130,10 @@ docker/proxy-ca/*.crt
 # npm lockfile. This is a pnpm workspace (pnpm-lock.yaml is the tracked lockfile);
 # a stray package-lock.json from an accidental `npm install` desyncs the two.
 package-lock.json
+
+# design-sync (claude.ai/design) build output and staged scripts
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules

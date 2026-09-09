@@ -1,87 +1,99 @@
 # Collega — how to build with this design system
 
-**This is a CSS design system, not a React component library.** Nothing is importable
-from `window`. Collega's real UI is Blazor WebAssembly, which cannot render here, so what
-is bound is the **style layer**: tokens, the font, and the locked component CSS. Build
-with **plain semantic HTML plus the classes below**. Do not invent a parallel class
-vocabulary; do not reach for Tailwind or CSS-in-JS.
+Collega is a **React component library on Tailwind CSS v4 + shadcn/ui**. Build screens from the
+components below plus Tailwind utility classes. Do not write bespoke CSS, and do not invent a
+parallel class vocabulary — the utilities and the semantic colour names below are the whole
+styling surface.
 
 ## Setup
 
-No provider or wrapper component. Link `styles.css` and everything resolves — it
-`@import`s the tokens, the `@font-face` and the component layer in the required order.
+**There is no provider or wrapper component.** No theme context, no root element to nest under —
+every component is plain and renders correctly on its own. Link `styles.css` and everything
+resolves: it imports the theme tokens, the self-hosted fonts, and the compiled component CSS.
 
-Wrap a full app screen in `.shell` (grid: 64px icon rail + content). Screens outside the
-app frame — sign-in, first-login — use `.authwrap > .authcard` instead.
-
-Geist is **bundled and self-hosted** (`fonts/geist-latin-variable.woff2`, 29 KB variable
-font, weight axis 400–700). Never add a Google Fonts or CDN link.
+Type is **Geist** (`font-sans`) and **Geist Mono** (`font-mono`), shipped as real font files. Never
+add a Google Fonts or CDN link.
 
 ## The styling idiom
 
-Plain classes plus CSS custom properties. There is no utility-class system: `.p-4` and
-`.text-lg` do not exist. For your own layout glue use `var(--*)` tokens directly.
+Tailwind utility classes over **semantic colour names**, never raw palette values. Write
+`bg-primary`, not `bg-[#527292]`; `text-muted-foreground`, not `text-gray-500`. Tailwind's own
+numbered palette (`blue-500`, `slate-200`) is not part of this system.
 
-| Purpose | Classes |
+The semantic scale — each is available as `bg-*`, `text-*` and `border-*`:
+
+| Purpose | Names |
 |---|---|
-| Frame | `.shell`, `.rail` (+ `.rail a.on` for the active destination), `.body` |
-| Page header | `.pagehead` (`.crumbs`, `h1`, `.sub`, `.row`, `.grow`), `.ptabs` (+ `a.on`) |
-| Actions | `.btn`, `.btn.primary`, `.btn.subtle`, `.btn.danger`, `.cmdbar`, `.actionbar` |
-| Surfaces | `.card`, `.tiles` > `.tile`, `.rowcard`, `.kcard` |
-| Board | `.lanesec` > `h2` (+ `.dot`, `.cnt`), `.kview` > `.klanes` > `.klane`, `.emptylane` |
-| Chips/state | `.chip` (+ `.on`), `.chipbar`, `.pill` (+ `.ok` / `.err` / `.info`), `.tag`, `.taglist` |
-| Meaning | `.impact` (+ `.high` / `.med` / `.low`), `.prio-chip` (+ `.high` / `.med` / `.low`) |
-| Forms | `.field`, `.charcount`, `.note`, `.warnbanner` |
-| Idea detail | `.ideahd`, `.ideabody`, `.facts` > `.fact`, `.prose`, `.comment`, `.cmt`, `.mention` |
-| People | `.avatar` (+ `.s` / `.more`), `.avatarstack`, `.avatarwrap`, `.avatarbtn` |
-| Monospace | `.code` — invite codes and identifiers only |
+| Page and text | `background`, `foreground` |
+| Surfaces | `card` / `card-foreground`, `popover` / `popover-foreground` |
+| Emphasis | `primary` / `primary-foreground`, `secondary` / `secondary-foreground` |
+| Recessive | `muted` / `muted-foreground`, `accent` / `accent-foreground` |
+| Meaning | `destructive` / `destructive-foreground`, `warning`, `success`, `teal` |
+| Lines and focus | `border`, `input`, `ring` |
+| Navigation | `sidebar`, `sidebar-foreground`, `sidebar-primary`, `sidebar-accent`, `sidebar-border` |
+
+Opacity modifiers are idiomatic here: `bg-muted/40`, `border-destructive/50`.
+
+Category colours (status dots, idea categories) are CSS variables rather than utilities, passed as
+values: `var(--sky)`, `var(--teal)`, `var(--green)`, `var(--orange)`, `var(--purple)`,
+`var(--pink)`, `var(--brown)`, and `var(--sug)` for AI suggestions.
+
+**Corner radius is deliberately small** — `--radius` is `0.3rem`. Use `rounded-md` (the default),
+`rounded-sm`, `rounded-lg`; only avatars and meters are `rounded-full`. Do not round further.
 
 Three rules that are load-bearing:
 
-- **The accent means one thing.** `--accent` / `--accent-deep` mean *active, selected, or
-  primary action*. Never reuse it for a new meaning; give the new meaning its own token.
-  (Precedent: AI suggestions got their own teal rather than borrowing the accent.)
-- **Never encode meaning in colour alone.** Status, idea type, priority and impact are
-  always spelled out as text next to any colour marker.
-- **Status lanes are parameterised, not hard-coded.** A lane's colour comes from
-  `--lc-deep`, set inline on the lane or row: `<section class="lanesec"
-  style="--lc-deep:#3E4E60">`. Every rule that reads it has a fallback, so omitting it
-  degrades cleanly. Do not add per-status classes.
+- **An action a role may not take is shown, disabled, with the reason beside it — never hidden.**
+  Use `Denied` wrapping a control that carries `aria-disabled="true"` and `aria-describedby`
+  pointing at the reason. Never plain `disabled`: it leaves the tab order, which makes the reason
+  unreachable.
+- **Never encode meaning in colour alone.** Status, priority and impact are always spelled out in
+  words next to any colour marker.
+- **`Field` owns the label binding.** `htmlFor` is required, and `Field` sets `aria-describedby`
+  on the control itself. Pass exactly one child control whose `id` matches.
 
-Corner radius is `2px` everywhere (`--radius-card`, `--radius-btn`). Only `.avatar` is
-round. This is a locked decision — do not round corners further.
+One gotcha: the base layer styles `input[type=text|password|search|file]`, `textarea` and
+`select`. An `Input` with any other type (`email`, `url`, `number`) renders with no border or
+padding — use the default `text` type for an email field.
+
+## The components
+
+**Actions** `Button` (variants `default` `secondary` `outline` `ghost` `destructive` `link`; sizes
+`sm` `default` `lg` `icon`), `FileButton`, `Denied`.
+**Forms** `Field`, `Label`, `Input`, `Textarea`, `Select` — each control takes `invalid`.
+**Surfaces** `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `Separator`.
+**Status** `Badge` (`default` `secondary` `outline` `success` `warning` `destructive`), `Marker`,
+`Tag`, `Dot`, `Alert` (`default` `destructive` `note`), `Meter` (`ok` `warn` `over`).
+**States** `EmptyState`, `ErrorState`, `Skeleton`, `SkeletonRows`, `SkeletonRegion`.
+**Primitives** `Avatar`, `Kbd`, `Code`, `CodeChip`.
+`cn` is the class-merging helper if you need it.
 
 ## Where the truth lives
 
-Read these before styling; they are bound alongside this file and beat any summary:
+Read these before styling — they beat any summary:
 
-- `styles.css` — entry point and import order
-- `tokens/color.css` — ink ramp, surfaces, accent, semantic and impact tokens. Only
-  `--ink` clears WCAG AA as body text; every chromatic value is a fill, paired with a
-  `-deep` value for text.
-- `tokens/type.css`, `tokens/layout.css` — font and geometry
-- `components.css` — the locked component CSS, verbatim
+- `styles.css` — the entry point and its import order
+- `tokens/` — every token value, including the category colours
+- each component's `.d.ts` for its real props, and its `.prompt.md` for usage
 
 ## A build snippet
 
-```html
-<div class="shell">
-  <nav class="rail"><a class="on" href="#"><span>Boards</span></a></nav>
-  <main class="body">
-    <header class="pagehead">
-      <div class="crumbs"><a href="#">Boards</a> / Q3 Intake</div>
-      <div class="row"><h1>Q3 Intake</h1><span class="grow"></span>
-        <button class="btn primary">New idea</button></div>
-    </header>
-
-    <section class="lanesec" style="--lc-deep:#3E4E60">
-      <h2><span class="dot"></span> In review <span class="cnt">4</span></h2>
-      <article class="rowcard">
-        <span class="grow">Automate weekly reporting</span>
-        <span class="impact high">High impact</span>
-        <span class="prio-chip med">Medium</span>
-      </article>
-    </section>
-  </main>
-</div>
+```jsx
+<Card className="max-w-lg">
+  <CardHeader>
+    <CardTitle>Assist budget</CardTitle>
+    <CardDescription>Tokens spent against today’s deployment cap.</CardDescription>
+  </CardHeader>
+  <CardContent>
+    <div className="mb-2 flex items-center gap-2">
+      <span className="text-sm font-medium">Northwind</span>
+      <Badge variant="warning">Near cap</Badge>
+      <span className="ml-auto text-sm font-semibold tabular-nums">88%</span>
+    </div>
+    <Meter pct={88} variant="warn" />
+    <p className="m-0 mt-3 text-xs text-muted-foreground">
+      The window rolls over at midnight UTC.
+    </p>
+  </CardContent>
+</Card>
 ```
