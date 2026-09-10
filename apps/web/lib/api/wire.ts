@@ -54,6 +54,7 @@ export type WireBoardListItem = {
   name: string
   allowUserStatusUpdate: boolean
   swimlaneCount: number
+  ideaCount: number
 }
 
 /** `GET /boards/{id}` — the lanes, in the order the board defines. */
@@ -113,8 +114,8 @@ export type WireIdeaListItem = {
  * A page of anything, plus the sort the API actually applied.
  *
  * Every list endpoint answers this envelope (`SPEC/30-Contracts.md` "Shared Data Rules"), so
- * `totalCount` is available without pulling a page — which is how the boards list gets its idea
- * count in one cheap request instead of fetching every idea to call `.length` on them.
+ * `totalCount` is available without pulling a page — which is how a screen asks how many of
+ * something there are without transferring any of it.
  */
 export type WirePage<T> = {
   items: readonly T[]

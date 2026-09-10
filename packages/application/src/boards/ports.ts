@@ -19,6 +19,19 @@ export interface BoardRepository {
    * reference exists (SPEC/20-feature-boards-and-statuses.md "Status Rules" #6).
    */
   isStatusReferenced(statusId: string): Promise<boolean>
+
+  /**
+   * Live ideas per board, keyed by board id, for the whole list in one query. Soft-deleted ideas
+   * are excluded, matching what `IdeaRepository.listByBoard` counts.
+   *
+   * On this port rather than a narrow lookup of its own (the `OrganizationExistenceLookup`
+   * pattern) because it needs no wiring: the same adapter already serves `BoardRepository`, and a
+   * second port would buy a DI token, a provider and a constructor argument for one method.
+   * Boards with no ideas may be absent from the map rather than present at zero - a caller
+   * defaulting to 0 covers both, and forcing the adapter to pad the result would mean a second
+   * pass over ids it was handed.
+   */
+  countIdeasByBoard(boardIds: readonly string[]): Promise<ReadonlyMap<string, number>>
 }
 
 /**

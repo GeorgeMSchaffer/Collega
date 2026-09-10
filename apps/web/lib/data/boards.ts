@@ -27,11 +27,10 @@ export type { Board, BoardWithLanes, Status } from '../types'
 /**
  * The organization's boards, each with the number of ideas on it.
  *
- * The count comes from a `pageSize=1` request per board and its `totalCount`, not from fetching the
- * ideas and calling `.length` on them — every list endpoint answers the paging envelope, so the
- * total is available without transferring a single row. The fixture version pulled every idea on
- * every board to count them, which is the shape that quietly stops scaling once a board has a
- * thousand.
+ * One request, whatever the organization holds. The count arrives on the list item beside
+ * `swimlaneCount`, where the API produces both from rows it is already reading. Asking each
+ * board's own idea endpoint for its `totalCount` would also avoid transferring rows, but it costs
+ * a round trip per board from a single render, and `/organizations/{id}/boards` does not page.
  */
 export async function getBoards(): Promise<Board[]> {
   failIfRequested('getBoards')
@@ -44,22 +43,12 @@ export async function getBoards(): Promise<Board[]> {
     `/organizations/${scope}/boards`,
   )
 
-  return Promise.all(
-    boards.map(async (board) => ({
-      id: board.boardId,
-      name: board.name,
-      laneCount: board.swimlaneCount,
-      ideaCount: await countIdeasOn(board.boardId),
-    })),
-  )
-}
-
-async function countIdeasOn(boardId: string): Promise<number> {
-  const page = await apiGet<WirePage<WireIdeaListItem>>(
-    'getBoards',
-    `/boards/${boardId}/ideas?pageSize=1`,
-  )
-  return page.totalCount
+  return boards.map((board) => ({
+    id: board.boardId,
+    name: board.name,
+    laneCount: board.swimlaneCount,
+    ideaCount: board.ideaCount,
+  }))
 }
 
 /**

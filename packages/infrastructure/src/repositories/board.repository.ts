@@ -62,6 +62,20 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     return rows.map(boardFromRow)
   }
 
+  /** `is_deleted: false` matches `PrismaIdeaRepository.listByBoard`'s filter, so this count and
+   * that endpoint's `totalCount` answer the same question. */
+  async countIdeasByBoard(boardIds: readonly string[]): Promise<ReadonlyMap<string, number>> {
+    if (boardIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.ideas.groupBy({
+      by: ['board_id'],
+      where: { board_id: { in: [...boardIds] }, is_deleted: false },
+      _count: { _all: true },
+    })
+    return new Map(rows.map((row) => [row.board_id, row._count._all]))
+  }
+
   async isStatusReferenced(statusId: string): Promise<boolean> {
     const found = await this.prisma.board_swimlanes.findFirst({
       where: { status_id: statusId },
