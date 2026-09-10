@@ -14,8 +14,15 @@
  *
  * Unset and it costs a microtask. It is read per call rather than captured at module load so it
  * can be changed without restarting a dev server that keeps this module warm.
+ *
+ * **Both knobs are inert in production**, and that is a security property rather than tidiness.
+ * Setting a project environment variable is available to more people than deploying is, and these
+ * two would otherwise let any one of them hold every server render open for thirty seconds, or 500
+ * every authenticated page, without touching the code or leaving a deploy behind.
  */
 export async function resolve<T>(value: T): Promise<T> {
+  if (process.env.NODE_ENV === 'production') return value
+
   const delay = Number(process.env.MOCK_LATENCY_MS ?? 0)
   if (delay > 0) {
     await new Promise((done) => setTimeout(done, delay))
@@ -36,6 +43,8 @@ export async function resolve<T>(value: T): Promise<T> {
  * names work against the real endpoints.
  */
 export function failIfRequested(reader: string): void {
+  if (process.env.NODE_ENV === 'production') return
+
   const failing = (process.env.MOCK_FAIL ?? '')
     .split(',')
     .map((name) => name.trim())
