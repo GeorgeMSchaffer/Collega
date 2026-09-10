@@ -104,6 +104,20 @@ export type Idea = {
   tag: string | null
   assigneeInitials: string | null
   upvotes: number
+  /** Whether the reader is one of them, which is what fills the chip rather than outlining it. */
+  hasUpvoted: boolean
+}
+
+/**
+ * The two catalogs authoring an idea has to choose from.
+ *
+ * One type rather than two loose lists because the create form needs both or neither: the API
+ * requires an active Idea Type *and* an active Business Impact on every idea, so a form holding one
+ * of them cannot be submitted.
+ */
+export type IdeaOptions = {
+  ideaTypes: { id: string; name: string }[]
+  businessImpacts: { id: string; name: string }[]
 }
 
 /** The inspector's shape: everything a card shows, plus the prose and provenance behind it. */

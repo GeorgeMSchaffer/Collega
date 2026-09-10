@@ -129,6 +129,7 @@ function buildIdeas(boardId: string): IdeaDetail[] {
         // Fixed dates, not Date.now(): a screenshot taken tomorrow must look the same as today's.
         createdOn: `2026-08-${String(10 + (index % 18)).padStart(2, '0')}`,
         upvotes: index % 3,
+        hasUpvoted: index % 5 === 0,
       })
       index++
     }

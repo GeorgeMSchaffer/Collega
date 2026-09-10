@@ -84,6 +84,18 @@ export type WireStatus = {
   isDeleted: boolean
 }
 
+/** `GET /organizations/{id}/idea-types`. The archived ones are already excluded by default. */
+export type WireIdeaType = {
+  ideaTypeId: string
+  name: string
+}
+
+/** `GET /organizations/{id}/business-impacts`, same default. */
+export type WireBusinessImpact = {
+  businessImpactId: string
+  name: string
+}
+
 export type WireIdeaAssignee = {
   userId: string
   firstName: string
@@ -105,6 +117,7 @@ export type WireIdeaListItem = {
   statusId: string
   statusName: string
   upvoteCount: number
+  hasUpvoted: boolean
   commentCount: number
   authorUserId: string
   createdAtUtc: string

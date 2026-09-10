@@ -106,5 +106,6 @@ export function toIdea(wire: WireIdeaListItem): Idea {
     tag: wire.tagNames[0] ?? null,
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
     upvotes: wire.upvoteCount,
+    hasUpvoted: wire.hasUpvoted,
   }
 }

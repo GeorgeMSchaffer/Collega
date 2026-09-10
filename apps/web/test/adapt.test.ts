@@ -40,6 +40,7 @@ const WIRE_IDEA: WireIdeaListItem = {
   statusId: '3f7b0a3c-1d9e-4a2b-8c55-2f0f9c1d7e41',
   statusName: 'New / Pending',
   upvoteCount: 0,
+  hasUpvoted: false,
   commentCount: 4,
   authorUserId: '7edd9249-cc88-46e3-a3e1-354daf717e4f',
   createdAtUtc: '2026-09-04T03:55:41.000Z',
@@ -113,6 +114,7 @@ describe('toIdea', () => {
       tag: null,
       assigneeInitials: null,
       upvotes: 0,
+      hasUpvoted: false,
     })
   })
 
