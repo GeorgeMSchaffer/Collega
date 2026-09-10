@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
-import { NewIdeaButton } from '@/components/ideas/new-idea-button'
 import { Topbar } from '@/components/nav/topbar'
 import { getBoards } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -31,7 +30,10 @@ export default async function BoardsPage() {
 
   return (
     <>
-      <Topbar title="Boards" actions={<NewIdeaButton id="why-new-boards" />} />
+      {/* No "New idea" here, by design. Comp P's `s-boards` topbar carries one action — "Manage
+          boards", for an Org Admin — because this screen chooses a board rather than acting on one,
+          and an idea is always raised against a board. The list of boards *is* the chooser. */}
+      <Topbar title="Boards" />
       <main className="flex max-w-[1320px] flex-col gap-6 p-6">
         <p className="m-0 max-w-2xl text-muted-foreground">
           Every board organizes the same organization&rsquo;s ideas by status. Open one to see its

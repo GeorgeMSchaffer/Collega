@@ -10,9 +10,22 @@
  */
 
 import { roleLabel } from '../roles'
-import type { CurrentUser, Idea, Priority, Role, Status, ViewingAs } from '../types'
+import type {
+  Comment,
+  CurrentUser,
+  Idea,
+  IdeaDetail,
+  Person,
+  Priority,
+  Role,
+  Status,
+  ViewingAs,
+} from '../types'
 import type {
   WireCurrentUser,
+  WireIdeaAssignee,
+  WireIdeaComment,
+  WireIdeaDetail,
   WireIdeaListItem,
   WireStatus,
   WireSwimlane,
@@ -93,6 +106,66 @@ export function toStatus(wire: WireStatus): Status {
  * narrowed the same way, to `null` when there are none — the fixture always had exactly one tag
  * and the real data frequently has none, which is why `Idea.tag` is nullable now.
  */
+/**
+ * The date as comp P writes it in the inspector byline: `Aug 15, 2026`.
+ *
+ * Fixed to UTC and to `en-US`, because the alternative is a date that renders one way on the server
+ * and another in the reader's browser — a hydration mismatch — and a "created on" that silently
+ * shifts a day for anyone west of Greenwich.
+ */
+const DATE = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+function toPerson(wire: WireIdeaAssignee | null): Person | null {
+  if (!wire) return null
+  return {
+    name: wire.displayName,
+    initials: initialsOf(wire.firstName, wire.lastName),
+  }
+}
+
+function toComment(wire: WireIdeaComment): Comment {
+  return {
+    id: wire.commentId,
+    author: toPerson(wire.author),
+    postedOn: DATE.format(new Date(wire.createdAtUtc)),
+    body: wire.body,
+  }
+}
+
+/**
+ * `GET /ideas/{id}` into what the inspector renders.
+ *
+ * Built on `toIdea`'s shape rather than beside it, so a card and the panel it opens cannot disagree
+ * about the same idea's priority, tag or assignee. The detail's extra fields are the prose, the
+ * provenance and the thread — and no reference, which has no source; `lib/types.ts` says why.
+ */
+export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
+  const assignee = wire.assignees[0]
+  return {
+    id: wire.ideaId,
+    boardId: wire.boardId,
+    statusId: wire.statusId,
+    statusName: wire.statusName,
+    title: wire.title,
+    priority: toPriority(wire.priority),
+    ideaType: wire.ideaTypeName,
+    businessImpact: wire.businessImpactName,
+    tag: wire.tagNames[0] ?? null,
+    assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
+    upvotes: wire.upvoteCount,
+    hasUpvoted: wire.hasUpvoted,
+    description: wire.description,
+    author: toPerson(wire.author),
+    createdOn: DATE.format(new Date(wire.createdAtUtc)),
+    comments: wire.comments.map(toComment),
+  }
+}
+
 export function toIdea(wire: WireIdeaListItem): Idea {
   const assignee = wire.assignees[0]
   return {
