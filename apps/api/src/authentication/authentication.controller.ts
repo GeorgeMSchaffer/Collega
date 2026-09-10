@@ -17,9 +17,11 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import type { Response } from 'express'
 import { AllowWhilePasswordChangeRequired } from '../auth/allow-while-password-change-required.decorator.js'
 import { AuthGuard } from '../auth/auth.guard.js'
+import { AUTH_BURST_THROTTLER, AuthRateLimitGuard } from '../auth/rate-limit.guard.js'
 import { setSessionCookie } from '../auth/session-cookie.js'
 import {
   RequestValidationError,
@@ -127,9 +129,15 @@ export class AuthenticationController {
    *
    * `passthrough: true` keeps Nest's serialization while still allowing the cookie to be set -
    * without it, returning a value from a handler that injects `@Res()` silently sends nothing.
+   *
+   * Rate limited per IP, twenty a minute rather than the shared ten: this is the one endpoint a
+   * single shared egress hits repeatedly with different people behind it. See
+   * `AUTH_THROTTLERS` for the rest of the reasoning, including what this does NOT fix.
    */
   @Post('login')
   @HttpCode(200)
+  @UseGuards(AuthRateLimitGuard)
+  @Throttle({ [AUTH_BURST_THROTTLER]: { limit: 20 } })
   async login(
     @Body() body: LoginBody,
     @Res({ passthrough: true }) res: Response,
@@ -237,6 +245,7 @@ export class AuthenticationController {
    */
   @Post('register')
   @HttpCode(201)
+  @UseGuards(AuthRateLimitGuard)
   async register(@Body() body: RegisterBody): Promise<RegisterResult> {
     validateFields({
       inviteCode: { value: body.inviteCode, required: true },
@@ -261,7 +270,9 @@ export class AuthenticationController {
    */
   @Post('change-password')
   @HttpCode(204)
-  @UseGuards(AuthGuard)
+  // Rate limit first: an anonymous caller hammering this is turned away before the session
+  // lookup, not after it.
+  @UseGuards(AuthRateLimitGuard, AuthGuard)
   @AllowWhilePasswordChangeRequired()
   async changePassword(@Body() body: ChangePasswordBody): Promise<void> {
     // Both fields carry `[RequiredField]` on `ChangePasswordRequest`, so a missing one never

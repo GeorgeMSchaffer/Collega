@@ -1,12 +1,13 @@
 import 'reflect-metadata'
 import { NestFactory } from '@nestjs/core'
+import type { NestExpressApplication } from '@nestjs/platform-express'
 import cookieParser from 'cookie-parser'
 import { AppModule } from './app.module.js'
 import { CONFIG } from './common/config/config.module.js'
 import type { Config } from './common/config/index.js'
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
   // The ONLY place the session cookie's raw value is parsed off the wire before the auth guard
   // reads it - still inside the allowlisted auth surface, never a feature controller's concern.
@@ -19,6 +20,13 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix('api/v1')
 
   const config = app.get<Config>(CONFIG)
+
+  // Without this the per-IP auth rate limiter reads `req.ip` as the address of Vercel's proxy,
+  // which is the SAME for every caller - one bucket for the whole deployment, so the limit is
+  // either meaningless or locks everyone out at once. See `trustedProxyHops` for why the value
+  // is 0 anywhere else. `server.js` boots this same file, so there is no second entrypoint that
+  // could miss it.
+  app.set('trust proxy', config.server.trustedProxyHops)
 
   // Lets Nest run each provider's `onModuleDestroy` (PrismaLifecycle's $disconnect) on
   // SIGTERM/SIGINT, so a redeploy or local Ctrl+C closes the connection pool instead of leaking

@@ -95,6 +95,14 @@ Rules:
 
 Before this gate, the rule was enforced only client-side: the issued token was valid everywhere, so a caller holding an admin-issued temporary password could skip the rotation entirely by calling the API directly and continue on a credential the issuing admin still knew.
 
+### Rate limiting on the authentication surface
+
+`POST /api/v1/auth/login`, `POST /api/v1/auth/register` and `POST /api/v1/auth/change-password` are limited **per caller IP and per route** — each keeps its own counter, so spending the register allowance does not close login. The limits are 10 requests per minute (20 on login) and 100 per hour. Exceeding either answers `429` with the standard problem-details envelope, `type` `https://collega.dev/problems/too-many-requests`, and a `Retry-After` header in seconds. This is the same `429` shape the AI assist endpoints already use for their own limits, and is deliberately distinct from the `429` a locked-out account produces, which is about one account's failed attempts rather than a caller's volume.
+
+Two properties clients must not read more into than is there. The caller IP is taken from `x-forwarded-for` **only when the process is running on Vercel**, which overwrites that header with the real client address; anywhere else the socket address is used, so a self-hosted run cannot be steered by a caller-supplied header. And the counters live in the serving process, which on serverless is neither shared between concurrent instances nor preserved across cold starts — the limit bounds volume, it is not a guarantee of an exact ceiling. A shared store is what would make it one.
+
+This does **not** replace the account lockout below, and does not prevent it: five failed attempts still lock an account, and five is below any limit that lets real people sign in.
+
 ### `POST /api/v1/auth/login`
 Purpose: Authenticate a user with globally unique email credentials.
 
@@ -131,6 +139,7 @@ Error responses:
 - `401` invalid credentials
 - `403` inactive account
 - `429` locked out after 5 failed attempts within 15 minutes
+- `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `GET /api/v1/auth/me`
 Purpose: Return the currently authenticated user summary.
@@ -192,6 +201,7 @@ Error responses:
 - `400` invalid password policy
 - `401` invalid current password
 - `403` caller is authenticated but not allowed to change the password in the current state
+- `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `POST /api/v1/users/{userId}/temporary-password`
 Purpose: MVP/P1 admin-issued temporary password reset.
@@ -537,6 +547,7 @@ Error responses:
 - `400` request body is malformed or violates field constraints
 - `400` invite code is missing or invalid; response prompts the user to provide a correct invite code
 - `409` email is already in use
+- `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `GET /api/v1/organizations/{organizationId}/users`
 Purpose: List users within an organization with pagination.
