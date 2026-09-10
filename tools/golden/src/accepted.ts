@@ -275,6 +275,26 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
     kind: 'extra',
   },
   {
+    cases: ['profile.register.duplicate.anonymous'],
+    path: 'status',
+    decided: '2026-09-10',
+    reason:
+      'A deliberate improvement, not drift. Registering an email that is already taken answered a ' +
+      'distinguishable 409 "Email is already in use." before the password was even validated, and ' +
+      "`users.normalized_email` is globally unique - so anyone holding any organization's invite " +
+      'code could ask whether an address has an account in ANY tenant, Site Admins included, ' +
+      'without signing in. It is now the same field-keyed 400 every other registration refusal ' +
+      'produces, worded so it does not say the account exists; SPEC/30-Contracts.md and ' +
+      'SPEC/decisions.md 2026-09-10 both say so, and the real reason goes to the audit log as ' +
+      '`UserSelfRegistrationRejected`. What this entry costs is worth naming rather than hiding: a ' +
+      'status mismatch short-circuits the comparison in `replay.ts`, so accepting it means the ' +
+      'BODY of this one case is no longer compared at all. That is the harness, not a choice made ' +
+      'here, and it is the reason the contract change is written down in two specs instead of ' +
+      'being pinned by this file. No `shape` - the value is a number, and `shape` is a per-side ' +
+      'regex over strings.',
+    kind: 'value',
+  },
+  {
     cases: ['comments.update.user'],
     path: 'body.author',
     decided: '2026-09-10',

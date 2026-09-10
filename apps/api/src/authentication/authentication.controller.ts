@@ -238,10 +238,14 @@ export class AuthenticationController {
 
   /**
    * Anonymous by design - the invite code is the credential. `AuthService.register` owns every
-   * rejection past field presence: an unknown or expired code is a `400` keyed on `inviteCode`
-   * and an email already in use is a `409`, both thrown from Application code and therefore
-   * carrying a `traceId` rather than the model-binding shape this handler's own check produces.
-   * The corpus records both, which is how the two envelopes stay distinguishable.
+   * rejection past field presence, and every one of them is now a `400` keyed on a field:
+   * an unknown, expired or archived code on `inviteCode`, an unusable email on `email`. All are
+   * thrown from Application code and therefore carry a `traceId` rather than the model-binding
+   * shape this handler's own check produces, which is how the two envelopes stay distinguishable.
+   *
+   * The `409` this used to answer for an email already in use is gone on purpose - it let an
+   * anonymous caller enumerate accounts across every tenant. See `AuthService.register` and
+   * `SPEC/decisions.md` 2026-09-10.
    */
   @Post('register')
   @HttpCode(201)

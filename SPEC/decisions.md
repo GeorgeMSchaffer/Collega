@@ -9,6 +9,53 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-10 — `POST /auth/register` refuses a taken email generically, and no longer answers `409`
+
+**An email address already in use is now the same field-keyed `400` every other registration
+refusal produces**, keyed on `email` and worded so it does not say the account exists. The `409
+"Email is already in use."` the frozen .NET API returned is gone. `SPEC/30-Contracts.md` is
+updated.
+
+**The reason is cross-tenant account enumeration by an anonymous caller.** `register()` checks
+`existsByNormalizedEmail`, and `users.normalized_email` is globally `@unique`
+(`packages/infrastructure/prisma/schema.prisma`) — the check therefore spans every organization,
+not the one whose invite code was supplied. Anyone holding any organization's invite code, which
+is a standing non-expiring credential printed on an admin screen, could ask "does this address
+have an account here" about **every tenant**, Site Admins included, without signing in. A security
+audit confirmed it against the running API. Scoping the check per organization is not available:
+the uniqueness constraint is global and the schema is frozen at S0.2.
+
+**The precedent this follows is three lines above it in the same function.** An archived
+organization's invite code is already "surfaced identically to 'unknown code' so the API doesn't
+leak archive state to an anonymous caller." Same shape of problem, same answer, and both now carry
+a comment saying the sameness is deliberate — the failure mode for this kind of fix is a later
+reader deciding the vague message is unhelpful and making it specific again.
+
+**The real reason is not lost, it is moved off the wire.** The rejection writes a
+`UserSelfRegistrationRejected` audit event carrying the organization, the normalized email and
+`reason: 'EmailInUse'`, through the audit path that already existed; an operator can still answer
+"why did this person's registration fail". Nothing new was built for it.
+
+**Separately, `validatePassword` moved above the email check.** It stands on its own and would
+have been worth doing under either outcome: a probe now costs a request carrying a policy-valid
+password rather than any request at all.
+
+**What this does not claim.** The endpoint still refuses, so a caller learns that *some* detail is
+unacceptable — the residual oracle is weaker but not zero, and closing it entirely means
+registration that answers `201` and sends a verification email instead, which is a feature nobody
+has asked for. The rate limit added the same day bounds how fast the residue can be sampled.
+
+**Cost:** one accepted golden diff, `profile.register.duplicate.anonymous`
+(`tools/golden/src/accepted.ts`). It is the third answer under the 2026-09-09 entry — a deliberate
+improvement, recorded rather than fixed. Note that the replay compares only the status for that
+case now, because a status mismatch short-circuits the body comparison; the entry says so.
+
+**Downstream:** `apps/web/lib/server/auth-actions.ts` already handles a `400` with an `errors` bag
+and keys it onto the same field, so the register screen renders the new refusal without a change.
+Its `409` branch and the two comments describing it are now dead and should be removed.
+
+---
+
 ## 2026-09-10 — The organization's title rides on `/auth/me`, not on a second call to an admin endpoint
 
 **`GET /auth/me` now carries `organizationTitle`.** The sidebar names the organization on every

@@ -535,6 +535,8 @@ Behavior rules:
 - the invite code determines the organization the user is associated with
 - the created user receives role `User` and status `Active`
 - registration against an archived organization is rejected as an invalid invite code
+- an email address that is already registered — in **any** organization, since `normalized_email` is globally unique — is refused with the same field-keyed `400` every other refusal produces, carrying a message that does not say the account exists. The response must not fork on whether it does: an anonymous caller holding one organization's invite code could otherwise enumerate accounts across every tenant, Site Admins included (`SPEC/decisions.md` 2026-09-10). The real reason is written to the audit log as `UserSelfRegistrationRejected` and is never sent to the caller
+- the password is validated **before** the email is looked up, so a probe costs a request carrying a policy-valid password rather than any request at all
 
 Success response `201`:
 - `userId`
@@ -546,7 +548,7 @@ Success response `201`:
 Error responses:
 - `400` request body is malformed or violates field constraints
 - `400` invite code is missing or invalid; response prompts the user to provide a correct invite code
-- `409` email is already in use
+- `400` the account could not be created for the supplied details, keyed on `email`. This is what an address already in use answers; it is deliberately not distinguishable, and **superseded the `409` the frozen .NET API returned** (2026-09-10)
 - `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `GET /api/v1/organizations/{organizationId}/users`
