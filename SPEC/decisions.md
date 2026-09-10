@@ -15,6 +15,15 @@ stay, and the older one is marked.
 carries the detail. This entry records only the choices that constrain later work, and the two that
 were made rather than merely written down.
 
+**The two Azure deploy workflows are deleted**, not merely dead. `.github/workflows/deploy-api.yml`
+and `deploy-client.yml` were recorded as dead on 2026-09-04 when Sprint 8 was cancelled, but they
+stayed on disk as a record of it and kept their `push: main` trigger — so they would have run
+`dotnet test` and `dotnet publish` against the frozen stack on the next merge to `main`, and failed.
+A record that still fires is not a record. `ci.yml` is now the only workflow. **Their two secrets
+outlive them**: `AZURE_WEBAPP_PUBLISH_PROFILE` and `AZURE_STATIC_WEB_APPS_API_TOKEN` are stored on
+the repository, deleting a workflow does not remove them, and a publish profile is a credential -
+revoke both in repository settings.
+
 **Two projects from one repository**, root directories `apps/web` and `apps/api`. Forced, not
 preferred: one project would mean `apps/web` importing `packages/application` and
 `packages/infrastructure`, which `biome.json` fails and `tools/boundaries` asserts. Ticket `08`
