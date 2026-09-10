@@ -9,6 +9,32 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-10 — The auth rate limiter sends `Retry-After` and nothing else
+
+**`ThrottlerModule` runs with `setHeaders: false`.** Left at its default it decorated every
+login, register and change-password response with `X-RateLimit-Limit-authBurst`,
+`-Remaining-authBurst`, `-Reset-authBurst` and the matching `authHourly` trio, and added
+`Retry-After-authBurst` beside the real `Retry-After` on a `429`. `SPEC/30-Contracts.md` promised
+one header; the API sent seven, none of them written down.
+
+**The suffix is the reason, not the count.** `authBurst` and `authHourly` are constants in
+`apps/api/src/auth/rate-limit.guard.ts` chosen to read well in that file. Emitting them makes an
+internal name something callers can read, and renaming a bucket — or splitting one, which the
+serverless storage note in `app.module.ts` says is likely — silently becomes a breaking change to a
+surface nobody agreed to. `Retry-After` also had two writers, the library's suffixed copy and
+`ProblemDetailsFilter`'s from `RateLimitedError.retryAfterSeconds`, which is one too many for a
+value clients act on.
+
+**What this gives up.** `X-RateLimit-*` is genuinely useful: it lets a client pace itself rather
+than discovering the limit by hitting it. That case is worth revisiting — as unsuffixed headers,
+specified in the contract first. Turning the library's own back on is not the way to get there.
+
+**Not affected: the `429` itself.** Status, problem-details envelope and `Retry-After` are
+unchanged, so nothing a client can legitimately depend on moved — including `Retry-After`'s
+presence, which is the only thing separating the limiter's `429` from an account lockout's.
+
+---
+
 ## 2026-09-10 — `POST /auth/register` refuses a taken email generically, and no longer answers `409`
 
 **An email address already in use is now the same field-keyed `400` every other registration
