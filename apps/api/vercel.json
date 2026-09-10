@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nestjs",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=@collega/api && pnpm --filter @collega/infrastructure db:migrate && pnpm --filter @collega/infrastructure db:bootstrap-admin",
+  "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1",
+  "regions": ["iad1"],
+  "functions": {
+    "server.js": {
+      "maxDuration": 60
+    }
+  }
+}
