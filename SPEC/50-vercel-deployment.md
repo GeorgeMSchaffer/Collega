@@ -144,9 +144,18 @@ In the **API project's build command**, after the build and before the deploymen
   live at all.
 - It runs after the compile, so a build that was going to fail anyway never touches the database.
 
-`prisma migrate deploy` is idempotent and takes an advisory lock, so a retried build or two
-concurrent preview builds serialize rather than collide. Migrations are additive — see the
-rollback posture in §10 before writing one that is not.
+`prisma migrate deploy` is idempotent and takes an advisory lock, **and that covers the migration
+step only**. Two qualifications, both of which have been read too generously before:
+
+- The lock is released when `migrate deploy` exits, before the next `&&` in the build command runs.
+  It says nothing about `db:bootstrap-admin`, which is the step two concurrent builds actually
+  collide in — see §8 for how that step defends itself.
+- "Serialize" overstates what the lock does even for the migration. A waiter that does not get the
+  lock inside Prisma's timeout fails with `P1002` rather than queueing behind the holder, so under
+  real contention the second build errors out and needs a redeploy. Idempotent means the redeploy is
+  safe, not that it is unnecessary.
+
+Migrations are additive — see the rollback posture in §10 before writing one that is not.
 
 `packages/infrastructure/prisma/migrations/` holds a single baseline migration
 (`00000000000000_baseline`). Against a **fresh** database it applies cleanly and that is the
@@ -280,12 +289,18 @@ pnpm --filter @collega/infrastructure db:bootstrap-admin
 
 It creates exactly one account, from the environment, with `must_change_password` set, and it is
 in the API project's build command after `db:migrate`. It can also be run by hand by anyone holding
-`DATABASE_URL` — which is how to recover if the administrator is ever locked out.
+`DATABASE_URL`, which is useful for bootstrapping a database that was created outside a deploy.
 
-Three properties that make it safe to leave in a build command that runs on every deploy:
+Four properties that make it safe to leave in a build command that runs on every deploy:
 
 - **Idempotent.** An account already owning that email is reported and left exactly as it is, so a
   password the administrator has since changed is never reset to the environment's value.
+- **Concurrency-safe.** The existence check and the insert are not one transaction, and two preview
+  builds starting a second apart against the shared staging database will both see "absent". The
+  insert catches the resulting unique violation (`P2002`) and treats it as the already-exists
+  branch, because losing that race is the same outcome as never having raced. Before this was
+  handled, the loser exited non-zero — and because `db:bootstrap-admin` is the last link in an `&&`
+  chain, a non-zero exit **fails the whole Vercel build**.
 - **It invents nothing.** With either variable unset it logs and exits 0 rather than making up a
   credential. **No credential is ever committed** — the values live only in Vercel's environment
   variables and your local `.env`, both untracked.
@@ -293,6 +308,30 @@ Three properties that make it safe to leave in a build command that runs on ever
   demo seed and this bootstrap holds one row rather than colliding on the unique email index.
 
 After the first login and password change, `SITE_ADMIN_PASSWORD` can be deleted from the project.
+
+### When the address is owned by an account that cannot administer anything
+
+Leaving an existing row alone is right — re-granting `SiteAdmin` to whoever owns the configured
+address would make this script a privilege-escalation path for anyone able to set an environment
+variable — but leaving it alone *quietly* was wrong. A `SITE_ADMIN_EMAIL` owned by a `ReadOnly` or
+`Inactive` account used to print "already exists … left untouched" and exit 0: the deploy went
+green and shipped an application nobody could administer.
+
+The row is still never modified. But when the account found is not both `role = SiteAdmin` and
+`status = Active`, the script prints what it found and **exits 1, failing the build**. Recovery is
+to fix that account directly against the database, or to point `SITE_ADMIN_EMAIL` at an address
+nothing owns yet — not to re-run this script, which by design will not touch it.
+
+**This script is not a lockout recovery.** A locked-out, deactivated, demoted or
+password-forgotten administrator is precisely the case the idempotency guard refuses to act on;
+running it by hand will print a message and change nothing. Recovering a lost administrator means a
+direct write with `DATABASE_URL` in hand — clear `locked_until_utc` and `failed_login_count`, or
+set `status`/`role` back, or set `password_hash` to a fresh PBKDF2 hash in the format
+`packages/infrastructure/src/security/pbkdf2-password-hasher.ts` produces together with
+`must_change_password = true` and a new `security_stamp` (changing the stamp is what invalidates
+any session the previous state left outstanding). Know that before the incident; the alternative
+during one is to point `SITE_ADMIN_EMAIL` at a fresh address and redeploy, which does work and
+leaves the broken account behind to clean up later.
 
 ---
 
