@@ -6,20 +6,24 @@
  * of them is the shape that quietly stops scaling. That reasoning was written against the fixture
  * and is now simply true.
  *
- * **The list readers are real** — the lane cards, the organization-wide table, and the catalogs the
- * create form picks from. `getIdea` and `getCommentsForIdea` still answer from the fixture, and
- * deliberately so: `GET /ideas/{id}` carries no author and no created date, so the inspector's
- * byline has no source on the wire. That is a contract gap, not something to paper over with a
- * blank line on the screen — see the slice report. `getIdeas` stays with them, because the table
- * `/ideas/[ideaId]` renders beside the inspector has to select a fixture row.
+ * **Every reader in this module is real.** The lane cards, the organization-wide table, the
+ * catalogs the create form picks from, and now the idea detail behind the inspector. `GET
+ * /ideas/{id}` gained an `author` and a `createdAtUtc`, plus an `author` on each embedded comment,
+ * which were the fields the byline and the thread had no source for and the reason this one stayed
+ * on the fixture as long as it did.
  */
 
-import { toIdea } from '../api/adapt'
-import { apiGet, apiPath } from '../api/client'
-import type { WireBusinessImpact, WireIdeaListItem, WireIdeaType, WirePage } from '../api/wire'
-import * as fixture from '../mock'
+import { toIdea, toIdeaDetail } from '../api/adapt'
+import { apiGet, apiPath, isApiStatus } from '../api/client'
+import type {
+  WireBusinessImpact,
+  WireIdeaDetail,
+  WireIdeaListItem,
+  WireIdeaType,
+  WirePage,
+} from '../api/wire'
 import type { Idea, IdeaDetail, IdeaOptions, IdeaPage } from '../types'
-import { failIfRequested, resolve } from './latency'
+import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
 
 export type { Comment, Idea, IdeaDetail, IdeaOptions, IdeaPage, Priority } from '../types'
@@ -115,18 +119,29 @@ export async function getOrganizationIdeas(page: number): Promise<IdeaPage> {
   }
 }
 
-/** The rows behind the ideas table on `/ideas/[ideaId]`, which is still a fixture screen. */
-export async function getIdeas(): Promise<IdeaDetail[]> {
-  failIfRequested('getIdeas')
-  return resolve(fixture.ideas)
-}
-
+/**
+ * One idea, with its prose, its provenance and its whole comment thread.
+ *
+ * **The thread comes from here, not from `GET /ideas/{id}/comments`.** Both are real and both now
+ * carry author names, so the choice is about which one tells the truth about *this* screen. The
+ * detail embeds every comment, chronologically and unpaged (`CommentsPort.listByIdea`), while the
+ * comments endpoint is paged and would show the first twenty of a longer thread under a heading
+ * counting all of them. Reading the embedded copy is also one round trip rather than two, and its
+ * `commentCount` is computed in the same request as the comments themselves — so the count beside
+ * "Discussion" cannot disagree with the number of comments under it, which two requests racing each
+ * other could arrange.
+ *
+ * `null` for a missing idea rather than a throw, and that covers the cross-organization case too:
+ * `IdeaService.getById` answers 404 for an idea in another organization rather than 403, declining
+ * to confirm it exists, and so does this — the caller reaches `notFound()` either way.
+ */
 export async function getIdea(id: string): Promise<IdeaDetail | null> {
   failIfRequested('getIdea')
-  return resolve(fixture.ideaById(id) ?? null)
-}
 
-export async function getCommentsForIdea(ideaId: string): Promise<fixture.Comment[]> {
-  failIfRequested('getCommentsForIdea')
-  return resolve(fixture.commentsForIdea(ideaId))
+  try {
+    return toIdeaDetail(await apiGet<WireIdeaDetail>('getIdea', apiPath`/ideas/${id}`))
+  } catch (error) {
+    if (isApiStatus(error, 404)) return null
+    throw error
+  }
 }

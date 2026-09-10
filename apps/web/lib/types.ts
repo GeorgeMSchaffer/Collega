@@ -142,19 +142,46 @@ export type IdeaOptions = {
   businessImpacts: { id: string; name: string }[]
 }
 
-/** The inspector's shape: everything a card shows, plus the prose and provenance behind it. */
-export type IdeaDetail = Idea & {
-  reference: string
-  description: string
-  authorName: string
-  createdOn: string
+/**
+ * A person attached to an idea — its author, an assignee, or a commenter.
+ *
+ * One type because the API sends one shape for all three, so the avatar and the name are read the
+ * same way wherever they appear.
+ */
+export type Person = {
+  name: string
+  initials: string
 }
 
 export type Comment = {
   id: string
-  ideaId: string
-  authorName: string
-  authorInitials: string
+  /**
+   * Null when the API cannot resolve the row behind `authorUserId` — possible because that column
+   * carries no foreign key and the schema is frozen at S0.2. Deactivation is not this case: an
+   * inactive commenter still arrives named. Rendered as an unattributed comment rather than as an
+   * invented name.
+   */
+  author: Person | null
   postedOn: string
   body: string
+}
+
+/**
+ * The inspector's shape: everything a card shows, plus the prose and provenance behind it.
+ *
+ * **There is no `reference`.** Comp Q's `IDEA-101` eyebrow has no column behind it — a real one is a
+ * per-organization sequence allocated under a row lock, which needs a schema amendment, and the
+ * schema is frozen at S0.2. Deriving one from the id or the row order would be a plausible-looking
+ * identifier that changes when the data does, which is worse for trust than having none: a tester
+ * cannot tell a fabricated reference from a real one, and the whole point of this screen is that
+ * what it shows is what the server holds. So the field does not exist, rather than existing empty.
+ *
+ * `comments` is the thread as `GET /ideas/{id}` embeds it — the full list, chronological, not a
+ * page. See `getIdea` for why the inspector reads it from here.
+ */
+export type IdeaDetail = Idea & {
+  description: string
+  author: Person | null
+  createdOn: string
+  comments: Comment[]
 }
