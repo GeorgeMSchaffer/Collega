@@ -60,6 +60,23 @@ function isEmailAddress(value: string): boolean {
 }
 
 /**
+ * `#RRGGBB`, and nothing else - notably not a CSS function.
+ *
+ * A colour column that was only length-checked accepted `url(//x.tt/p)` in twenty characters, and
+ * the design system renders these straight into a `style` attribute, so one Org Admin could turn
+ * every viewer of their organization's ideas table into an outbound request to a host of their
+ * choosing - a tracking pixel disclosing viewer IP and User-Agent on page load. React goes through
+ * the CSSOM so nothing executes, and the author is already trusted, which is what kept it minor.
+ *
+ * Six digits rather than also accepting the three-digit CSS shorthand, which would have been just
+ * as safe. This is the shape the product already has everywhere else and the one a widening would
+ * have to be reconciled with in three places: `SPEC/30-Contracts.md` pins every Business Impact
+ * colour to `#RRGGBB` in six lines, `setIdeaTypeAppearance` in the domain tests the same six-digit
+ * pattern, and every seeded and golden-corpus value is six digits. One rule, already written down.
+ */
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/
+
+/**
  * One field's constraints - the transcription of the `[RequiredField]` / `[MaxLengthField]` /
  * `[EmailFormat]` attributes the matching request DTO under `src/Collega.API/Contracts/` carries.
  */
@@ -68,6 +85,13 @@ export type FieldRules = {
   readonly required?: boolean
   readonly maxLength?: number
   readonly email?: boolean
+  /**
+   * `#RRGGBB` only. The one rule here that is NOT a transcription of a .NET attribute -
+   * the .NET contracts length-checked these columns and never format-checked them, which is the
+   * defect it closes. An absent or blank value passes: the status catalog's colour is optional
+   * and defaults downstream, so emptiness is `required`'s question, not this one's.
+   */
+  readonly hexColor?: boolean
   /**
    * The name the MESSAGE uses, when it is not derivable from the key. Needed only for a NESTED
    * property, where the two genuinely part company: ASP.NET keyed the failure by the whole path
@@ -125,6 +149,9 @@ export function validateFields(fields: Readonly<Record<string, FieldRules>>): vo
     // null alone, so an omitted field still has to fail this rule (see above).
     if (rules.email === true && rules.value !== null && !isEmailAddress(value)) {
       messages.push(`${shown} must be a valid email address.`)
+    }
+    if (rules.hexColor === true && value.trim() !== '' && !HEX_COLOR.test(value.trim())) {
+      messages.push(`${shown} must be a hex color such as #2563EB.`)
     }
 
     if (messages.length > 0) {

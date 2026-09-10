@@ -42,13 +42,23 @@ type ReorderBusinessImpactsBody = { orderedBusinessImpactIds?: unknown }
  * identical field for field. `SortOrder` is a bare `int?` and carries none.
  *
  * `Color` is `[RequiredField]` here where the status catalog's is optional: an impact chip has no
- * neutral fallback, so the .NET contract made the color mandatory. The `#RRGGBB` shape itself is
- * the domain's rule, not this one's.
+ * neutral fallback, so the .NET contract made the color mandatory.
+ *
+ * The `#RRGGBB` shape was described as the domain's rule and was not actually anyone's -
+ * `normalizeColor` only rejects a blank string - so twenty characters of anything, a working CSS
+ * `url()` included, reached the `style` attribute the design system renders. `hexColor` is that
+ * rule, checked here alongside the length it was always paired with. See `HEX_COLOR` in
+ * `request-validation.error.ts`.
  */
 function businessImpactBodyRules(body: CreateBusinessImpactBody): Record<string, FieldRules> {
   return {
     name: { value: body.name, required: true, maxLength: BUSINESS_IMPACT_NAME_MAX_LENGTH },
-    color: { value: body.color, required: true, maxLength: BUSINESS_IMPACT_COLOR_MAX_LENGTH },
+    color: {
+      value: body.color,
+      required: true,
+      maxLength: BUSINESS_IMPACT_COLOR_MAX_LENGTH,
+      hexColor: true,
+    },
   }
 }
 

@@ -690,7 +690,7 @@ Purpose: Create a new organization status.
 
 Request body:
 - `name` required string
-- `color` optional CSS/hex color string (max 20 chars); defaults to `#64748B` when omitted — drives the swimlane color dot and idea-card status chip
+- `color` optional string in `#RRGGBB` format (max 20 chars, but the format is what is enforced); defaults to `#64748B` when omitted — drives the swimlane color dot and idea-card status chip. **Format-checked since 2026-09-10**: it was previously length-checked only, and twenty characters is enough for a working CSS `url()`, which the client renders into a `style` attribute
 - `sortOrder` optional integer (organization-level catalog order); appended after the current maximum when omitted
 
 Success response `201`:
@@ -704,7 +704,7 @@ Purpose: Rename or update a status.
 
 Request body:
 - `name` required string
-- `color` optional CSS/hex color string (max 20 chars)
+- `color` optional string in `#RRGGBB` format (max 20 chars, but the format is what is enforced)
 - `sortOrder` optional integer
 
 ### `POST /api/v1/organizations/{organizationId}/statuses/reorder`

@@ -42,11 +42,15 @@ type ReorderStatusesBody = { orderedStatusIds?: readonly string[] | null }
  * `color` is `[MaxLengthField]` with no `[RequiredField]`, and it is `string?` on the .NET side,
  * so an absent or null value passed: `MaxLengthAttribute.IsValid(null)` returns true, and
  * `validateFields` reaches the same answer by judging a non-string as `''`.
+ *
+ * `hexColor` is the one rule here with no .NET counterpart, and the length limit is why it is
+ * needed: twenty characters is enough for a working CSS `url()`, which the design system renders
+ * into a `style` attribute. See `HEX_COLOR` in `request-validation.error.ts`.
  */
 function statusBodyRules(body: CreateStatusBody): Record<string, FieldRules> {
   return {
     name: { value: body.name, required: true, maxLength: STATUS_NAME_MAX_LENGTH },
-    color: { value: body.color, maxLength: STATUS_COLOR_MAX_LENGTH },
+    color: { value: body.color, maxLength: STATUS_COLOR_MAX_LENGTH, hexColor: true },
   }
 }
 
