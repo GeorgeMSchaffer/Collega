@@ -2,7 +2,31 @@ import { Dot } from '@collega/design-system'
 import type { Idea, Status } from '@/lib/data'
 import { IdeaCard } from './idea-card'
 
-export function Lane({ status, ideas }: { status: Status; ideas: Idea[] }) {
+/**
+ * One swimlane, and the cards in it.
+ *
+ * The lane knows what is either side of it and the card does not, which is why the neighbouring
+ * status ids arrive here rather than being worked out per card: "one lane left" is a fact about the
+ * board's order, and computing it thirty times from the same array would be thirty chances to
+ * disagree with the columns actually on screen.
+ */
+export function Lane({
+  status,
+  ideas,
+  boardId,
+  previousStatusId,
+  nextStatusId,
+  canMove,
+  canUpvote,
+}: {
+  status: Status
+  ideas: Idea[]
+  boardId: string
+  previousStatusId: string | null
+  nextStatusId: string | null
+  canMove: boolean
+  canUpvote: boolean
+}) {
   return (
     <div className="w-72 shrink-0 rounded-lg border bg-muted/50 p-2">
       <div className="flex items-center gap-2 px-2 pt-1 pb-2">
@@ -15,7 +39,17 @@ export function Lane({ status, ideas }: { status: Status; ideas: Idea[] }) {
           No ideas
         </div>
       ) : (
-        ideas.map((idea) => <IdeaCard key={idea.id} idea={idea} />)
+        ideas.map((idea) => (
+          <IdeaCard
+            key={idea.id}
+            idea={idea}
+            boardId={boardId}
+            previousStatusId={previousStatusId}
+            nextStatusId={nextStatusId}
+            canMove={canMove}
+            canUpvote={canUpvote}
+          />
+        ))
       )}
     </div>
   )

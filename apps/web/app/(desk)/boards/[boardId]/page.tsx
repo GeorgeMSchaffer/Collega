@@ -1,13 +1,13 @@
-import { buttonVariants, EmptyState, Kbd } from '@collega/design-system'
+import { buttonVariants, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { GatedAction } from '@/components/common/gated-action'
 import { Lane } from '@/components/ideas/lane'
-import { NewIdeaButton } from '@/components/ideas/new-idea-button'
+import { NewIdeaForm } from '@/components/ideas/new-idea-form'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoard, getIdeasForBoard } from '@/lib/data'
+import { getBoard, getIdeaOptions, getIdeasForBoard } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
-import { currentUser, writeDenial } from '@/lib/session'
+import { currentUser, engagementDenial, writeDenial } from '@/lib/session'
 
 export async function generateMetadata({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params
@@ -28,19 +28,29 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
   const board = await getBoard(boardId)
   if (!board) notFound()
 
-  const boardIdeas = await getIdeasForBoard(boardId)
-
   // Two independent gates, and both have to open. The role decides whether this account writes at
   // all; `allowUserStatusUpdate` is the board's own setting for whether a plain User may move a
   // card between lanes, which is a board configuration rather than a role (comp Q's "User status
   // moves" column in board settings). An Org Admin moves cards on a board that has it switched off.
   const roleDenial = writeDenial(currentUser().role)
-  const denial =
+  const moveDenial =
     roleDenial ??
     (board.allowUserStatusUpdate || currentUser().role === 'OrgAdmin'
       ? null
       : 'This board only lets administrators move cards')
-  const canMove = denial === null
+  const canMove = moveDenial === null
+
+  // Upvoting is engagement, not authorship, and the two part company for exactly one role: a Read
+  // Only account may vote and may not write (`UpvoteService.toggle` — "All authenticated users,
+  // including Read Only, can upvote"). Gating the chip on `roleDenial` would take that away.
+  const canUpvote = engagementDenial(currentUser().role) === null
+
+  // The catalogs only the create form reads, and only when there is a form to fill — two requests
+  // that would otherwise be paid on every board view by everyone who cannot author.
+  const [boardIdeas, options] = await Promise.all([
+    getIdeasForBoard(boardId),
+    roleDenial ? { ideaTypes: [], businessImpacts: [] } : getIdeaOptions(),
+  ])
 
   return (
     <>
@@ -56,7 +66,7 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
             <Link href="/ideas" className={buttonVariants({ variant: 'outline' })}>
               List view
             </Link>
-            <NewIdeaButton id="why-new-board" />
+            <NewIdeaForm boardId={board.id} options={options} denial={roleDenial} />
           </>
         }
       />
@@ -66,13 +76,11 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
           <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">
             {canMove ? (
               <>
-                Move a card with drag, or focus it and press <Kbd>←</Kbd> <Kbd>→</Kbd>. Both paths
-                do the same thing — and both need{' '}
-                <code className="font-mono text-xs">POST /ideas/&#123;id&#125;/status</code>, which
-                is a later slice: the board reads real data but does not write yet.
+                Move a card between lanes with the arrows on it. A move saves immediately and the
+                board re-reads itself, so what you see after it is what the server holds.
               </>
             ) : (
-              <>{denial}. Cards open read-only, and nothing here can be moved.</>
+              <>{moveDenial}. Cards open read-only, and nothing here can be moved.</>
             )}
           </p>
         </div>
@@ -81,11 +89,16 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
           {/* The board's own lanes, in the board's own order — not the organization's status
               catalog. A board picks a subset, so rendering the catalog would show columns this
               board does not have. */}
-          {board.lanes.map((status) => (
+          {board.lanes.map((status, index) => (
             <Lane
               key={status.id}
               status={status}
+              boardId={board.id}
               ideas={boardIdeas.filter((i) => i.statusId === status.id)}
+              previousStatusId={board.lanes[index - 1]?.id ?? null}
+              nextStatusId={board.lanes[index + 1]?.id ?? null}
+              canMove={canMove}
+              canUpvote={canUpvote}
             />
           ))}
         </div>
@@ -93,23 +106,31 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
         {/* Beneath the lanes, not instead of them: the five empty columns are what teach the
             workflow, so an empty board still shows the shape it will fill.
 
-            The button below is gated on `roleDenial`, not `denial`: it authors an idea, and the API
-            refuses authoring for ReadOnly alone (`IdeaService.requireIdeaEditRole`).
-            `allowUserStatusUpdate` gates moves and nothing else, so folding it in here refused a
-            User with a reason that was not true — and contradicted the identically labelled button
-            in the topbar, which gates on the role alone. */}
+            The action below appears only for a role that may NOT author, which is the opposite of
+            the usual shape and is what "shown, not hidden" actually asks for here: the refusal is
+            the thing worth showing, and a second live "New idea" would mean a second dialog in the
+            document with the same heading and the same ids as the working one in the top bar. The
+            copy points at that one instead.
+
+            It is gated on `roleDenial`, not `moveDenial`: authoring is refused for ReadOnly alone
+            (`IdeaService.requireIdeaEditRole`), while `allowUserStatusUpdate` gates moves and
+            nothing else, so folding it in here refused a User with a reason that was not true. */}
         {boardIdeas.length === 0 ? (
           <EmptyState
             heading="No ideas on this board yet"
-            action={<GatedAction id="why-new-board-empty" label="New idea" denial={roleDenial} />}
+            action={
+              roleDenial ? (
+                <GatedAction id="why-new-board-empty" label="New idea" denial={roleDenial} />
+              ) : undefined
+            }
           >
-            {canMove ? (
-              <>
-                Use &ldquo;New idea&rdquo; to add the first one. It lands in New / Pending, the
-                left-most lane.
-              </>
-            ) : (
+            {roleDenial ? (
               <>Nothing has been raised here yet.</>
+            ) : (
+              <>
+                Use &ldquo;New idea&rdquo; in the top bar to add the first one. It lands in{' '}
+                {board.lanes[0]?.name ?? 'the left-most lane'}.
+              </>
             )}
           </EmptyState>
         ) : null}
