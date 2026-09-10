@@ -14,7 +14,7 @@
  */
 
 import { toIdea } from '../api/adapt'
-import { apiGet } from '../api/client'
+import { apiGet, apiPath } from '../api/client'
 import type { WireBusinessImpact, WireIdeaListItem, WireIdeaType, WirePage } from '../api/wire'
 import * as fixture from '../mock'
 import type { Idea, IdeaDetail, IdeaOptions } from '../types'
@@ -36,7 +36,7 @@ export async function getIdeasForBoard(boardId: string): Promise<Idea[]> {
 
   const page = await apiGet<WirePage<WireIdeaListItem>>(
     'getIdeasForBoard',
-    `/boards/${boardId}/ideas?pageSize=100`,
+    apiPath`/boards/${boardId}/ideas?pageSize=100`,
   )
   return page.items.map(toIdea)
 }
@@ -58,10 +58,10 @@ export async function getIdeaOptions(): Promise<IdeaOptions> {
   if (scope === null) return { ideaTypes: [], businessImpacts: [] }
 
   const [ideaTypes, businessImpacts] = await Promise.all([
-    apiGet<readonly WireIdeaType[]>('getIdeaOptions', `/organizations/${scope}/idea-types`),
+    apiGet<readonly WireIdeaType[]>('getIdeaOptions', apiPath`/organizations/${scope}/idea-types`),
     apiGet<readonly WireBusinessImpact[]>(
       'getIdeaOptions',
-      `/organizations/${scope}/business-impacts`,
+      apiPath`/organizations/${scope}/business-impacts`,
     ),
   ])
 

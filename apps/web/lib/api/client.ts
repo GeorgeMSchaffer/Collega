@@ -16,6 +16,9 @@
  * A mutation adds a fourth: the API is the only thing that decides whether the caller may write.
  * `apiPost` therefore sends the request and lets the refusal come back, rather than consulting the
  * principal first — a check here could only ever disagree with the one that matters.
+ *
+ * A fifth is `apiPath`, below: which request gets sent is decided here too, not by whatever a form
+ * field happened to contain.
  */
 
 import 'server-only'
@@ -23,6 +26,30 @@ import 'server-only'
 import { failIfRequested, resolve } from '../data/latency'
 import { sessionHeader } from '../server/current-user'
 import { apiBaseUrl } from './config'
+
+declare const API_PATH: unique symbol
+
+/** A path whose interpolated values are escaped — see `apiPath`. */
+export type ApiPath = string & { readonly [API_PATH]: true }
+
+/**
+ * The path of an API call, as a template whose interpolations are escaped: apiPath`/boards/${id}`.
+ *
+ * Every id in these paths reaches the server from outside — a route segment, a hidden form field —
+ * and `fetch` runs whatever it is handed through the WHATWG URL parser. So an id spelling `/`, `..`
+ * or `#` does not sit in the segment it was written into; it re-routes the request. `<uuid>/upvote/
+ * toggle#` interpolated into `/ideas/{id}/status` posts an upvote instead, and `../..` climbs out of
+ * `/api/v1` entirely — which would turn three Server Functions into a general-purpose authenticated
+ * proxy to every route the API has, against the boundary `config.ts` states as a decision.
+ *
+ * `encodeURIComponent` leaves a UUID untouched and renders everything else into one inert segment,
+ * which the API answers 404 for and `refusal()` puts beside the control. The branded return type is
+ * the point of the tag: it is the only thing `apiGet` and `apiPost` accept, so a path assembled any
+ * other way does not compile and the next caller does not have to remember this.
+ */
+export function apiPath(literals: TemplateStringsArray, ...values: string[]): ApiPath {
+  return String.raw({ raw: literals }, ...values.map(encodeURIComponent)) as ApiPath
+}
 
 /**
  * A request the API refused or could not answer.
@@ -90,7 +117,7 @@ async function describeFailure(response: Response): Promise<string> {
  * — see `lib/data/latency.ts`. It also names the call in the thrown message, which is what turns
  * "something 500ed" into "getBoard 500ed" in an error boundary.
  */
-export async function apiGet<T>(reader: string, path: string): Promise<T> {
+export async function apiGet<T>(reader: string, path: ApiPath): Promise<T> {
   failIfRequested(reader)
 
   const response = await fetch(`${apiBaseUrl()}${path}`, {
@@ -122,7 +149,7 @@ export async function apiGet<T>(reader: string, path: string): Promise<T> {
  * The default body is `{}` rather than nothing, so the upvote toggle — the one route here that
  * takes no payload — is the same request shape as the other two instead of a branch.
  */
-export async function apiPost(path: string, body: unknown = {}): Promise<void> {
+export async function apiPost(path: ApiPath, body: unknown = {}): Promise<void> {
   const response = await fetch(`${apiBaseUrl()}${path}`, {
     method: 'POST',
     headers: {

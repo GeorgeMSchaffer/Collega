@@ -13,7 +13,7 @@
  */
 
 import { swimlaneToStatus } from '../api/adapt'
-import { apiGet, isApiStatus } from '../api/client'
+import { apiGet, apiPath, isApiStatus } from '../api/client'
 import type { WireBoardDetail, WireBoardListItem, WireIdeaListItem, WirePage } from '../api/wire'
 import * as fixture from '../mock'
 import type { Board, BoardWithLanes } from '../types'
@@ -40,7 +40,7 @@ export async function getBoards(): Promise<Board[]> {
 
   const boards = await apiGet<readonly WireBoardListItem[]>(
     'getBoards',
-    `/organizations/${scope}/boards`,
+    apiPath`/organizations/${scope}/boards`,
   )
 
   return boards.map((board) => ({
@@ -63,7 +63,7 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
   failIfRequested('getBoard')
 
   try {
-    const board = await apiGet<WireBoardDetail>('getBoard', `/boards/${id}`)
+    const board = await apiGet<WireBoardDetail>('getBoard', apiPath`/boards/${id}`)
     return {
       id: board.boardId,
       name: board.name,
@@ -147,8 +147,11 @@ export async function getNavCounts(): Promise<{ boards: number; ideas: number; b
   }
 
   const [boards, ideas] = await Promise.all([
-    apiGet<readonly WireBoardListItem[]>('getNavCounts', `/organizations/${scope}/boards`),
-    apiGet<WirePage<WireIdeaListItem>>('getNavCounts', `/organizations/${scope}/ideas?pageSize=1`),
+    apiGet<readonly WireBoardListItem[]>('getNavCounts', apiPath`/organizations/${scope}/boards`),
+    apiGet<WirePage<WireIdeaListItem>>(
+      'getNavCounts',
+      apiPath`/organizations/${scope}/ideas?pageSize=1`,
+    ),
   ])
 
   return { boards: boards.length, ideas: ideas.totalCount, backlog: fixture.navCounts.backlog }

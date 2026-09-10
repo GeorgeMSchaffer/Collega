@@ -31,7 +31,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { ApiError, apiPost } from '../api/client'
+import { ApiError, apiPath, apiPost } from '../api/client'
 
 /** What a card's controls render back: the API's refusal, or nothing. */
 export type ActionState = { error: string | null }
@@ -64,6 +64,19 @@ function refusal(error: unknown): string {
   throw error
 }
 
+/**
+ * Re-read the board this write landed on.
+ *
+ * `boardId` is a hidden field like any other, and it is the one value here that never reaches the
+ * API — a move and an upvote identify the idea, not the board — so nothing else would ever question
+ * its shape. Escaped for the reason `apiPath` gives: a cache path is a path, and `..` in one names a
+ * route this write has nothing to do with. An escaped id that names no route simply revalidates
+ * nothing, which is the correct outcome for a write the API refused to believe in.
+ */
+function revalidateBoard(boardId: string): void {
+  revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
+}
+
 export async function createIdea(
   _previous: CreateIdeaState,
   form: FormData,
@@ -73,7 +86,7 @@ export async function createIdea(
   const description = String(form.get('description') ?? '')
 
   try {
-    await apiPost(`/boards/${boardId}/ideas`, {
+    await apiPost(apiPath`/boards/${boardId}/ideas`, {
       title,
       description,
       priority: String(form.get('priority') ?? ''),
@@ -86,34 +99,36 @@ export async function createIdea(
     return { error: refusal(error), title, description }
   }
 
-  revalidatePath(`/boards/${boardId}`)
+  revalidateBoard(boardId)
   return { error: null, title: '', description: '' }
 }
 
 export async function moveIdea(_previous: ActionState, form: FormData): Promise<ActionState> {
   const boardId = String(form.get('boardId') ?? '')
+  const ideaId = String(form.get('ideaId') ?? '')
 
   try {
-    await apiPost(`/ideas/${String(form.get('ideaId') ?? '')}/status`, {
+    await apiPost(apiPath`/ideas/${ideaId}/status`, {
       statusId: String(form.get('statusId') ?? ''),
     })
   } catch (error) {
     return { error: refusal(error) }
   }
 
-  revalidatePath(`/boards/${boardId}`)
+  revalidateBoard(boardId)
   return { error: null }
 }
 
 export async function toggleUpvote(_previous: ActionState, form: FormData): Promise<ActionState> {
   const boardId = String(form.get('boardId') ?? '')
+  const ideaId = String(form.get('ideaId') ?? '')
 
   try {
-    await apiPost(`/ideas/${String(form.get('ideaId') ?? '')}/upvote/toggle`)
+    await apiPost(apiPath`/ideas/${ideaId}/upvote/toggle`)
   } catch (error) {
     return { error: refusal(error) }
   }
 
-  revalidatePath(`/boards/${boardId}`)
+  revalidateBoard(boardId)
   return { error: null }
 }
