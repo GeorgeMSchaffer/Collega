@@ -110,7 +110,7 @@
       "mcp__claude-in-chrome__read_console_messages",
       "Bash(pnpm check)",
       "Bash(pnpm build)",
-      "Bash(git fetch *)",
+      "Bash(git fetch origin *)",
       "mcp__github__pull_request_read",
       "mcp__github__list_pull_requests",
       "mcp__github__actions_list",
