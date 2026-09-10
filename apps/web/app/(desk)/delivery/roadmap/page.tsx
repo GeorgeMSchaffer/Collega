@@ -17,9 +17,7 @@ export const metadata = { title: 'Roadmap · Collega' }
  * without it the totals would silently fail to close.
  */
 export default async function RoadmapPage() {
-  // Identity first, and in this segment: Next renders a layout and its page independently,
-  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
-  // request all the same — the resolver is request-cached.
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
   const [outcomes, issues, statuses] = await Promise.all([

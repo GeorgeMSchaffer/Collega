@@ -30,9 +30,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  * answers "how much support did this have when we committed", and a live count could not.
  */
 export default async function IssuePage({ params }: { params: Promise<{ issueKey: string }> }) {
-  // Identity first, and in this segment: Next renders a layout and its page independently,
-  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
-  // request all the same — the resolver is request-cached.
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
   const { issueKey } = await params

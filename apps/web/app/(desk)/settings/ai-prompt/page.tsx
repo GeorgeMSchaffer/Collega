@@ -26,9 +26,7 @@ export const metadata = { title: 'AI Prompt · Collega' }
  * statement does.
  */
 export default async function AiPromptPage() {
-  // Identity first, and in this segment: Next renders a layout and its page independently,
-  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
-  // request all the same — the resolver is request-cached.
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
   const { prompt, probes, versions } = await getAiPrompt()

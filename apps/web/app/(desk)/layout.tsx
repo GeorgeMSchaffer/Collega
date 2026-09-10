@@ -12,10 +12,11 @@ import { SessionProvider } from '@/lib/session-client'
  * the client half through `SessionProvider`, which is how `sidebar-nav.tsx` reads a role without
  * awaiting anything.
  *
- * It is deliberately **not** the only place identity is resolved. Next renders a layout and the
- * page inside it independently, so what this establishes is not reliably in place when the page
- * renders — each page calls `requireCurrentUser()` too, and the request-cached resolver keeps that
- * one round trip rather than two. `lib/server/current-user.ts` has the full reasoning.
+ * It is deliberately **not** the only place identity is resolved. A layout and its page render
+ * concurrently, so the page can read identity while this line is still awaiting and what it
+ * establishes is not there yet — each page calls `requireCurrentUser()` too, and the request-cached
+ * resolver keeps that one round trip rather than two. `lib/server/current-user.ts` has the full
+ * reasoning, and the measurement behind it.
  *
  * **E3–E6 must not edit this file** — they render into it. Comp P's third column, the docked
  * inspector (`.shell.insp`), belongs to E4 and is deliberately absent until then.

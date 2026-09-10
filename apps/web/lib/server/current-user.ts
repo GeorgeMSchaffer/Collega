@@ -84,10 +84,25 @@ export async function clearSession(): Promise<void> {
  * Resolves the acting user and publishes it for the synchronous readers below.
  *
  * **Every authenticated page and layout calls this as its first statement**, and that is not
- * ceremony — it is what makes `currentUser()` synchronous and race-free. Next renders a layout and
- * the page inside it independently, so a principal resolved only in the layout is not reliably
- * there when the page renders: identity has to be established in each segment that reads it. The
- * `cache` below means that costs one `/auth/me` per request all the same.
+ * ceremony — it is what makes `currentUser()` synchronous and race-free. This is the one place that
+ * reason is written down; the pages carry a pointer here rather than a copy of it.
+ *
+ * A layout and the page inside it render **concurrently, not in sequence**. The page element is
+ * created before the layout's body runs, so React begins rendering the page while the layout is
+ * still suspended on this very await. Logging both sides of it shows the order plainly:
+ *
+ *   [layout] about to resolve
+ *   [page]   rendering, reading identity now   <- throws, if this is the layout's job alone
+ *   [layout] published
+ *
+ * So a principal established only in the layout is not there yet when the page reads it, on a
+ * first load as much as on a client-side navigation. Each segment that reads identity has to
+ * establish it.
+ *
+ * That is not two round trips: `loadPrincipal` is `cache`d, so the layout and the page share one
+ * resolution and `/auth/me` is requested exactly once per request — measured, not assumed. What
+ * `cache` memoizes is the *answer*; it does not make one segment's `setCurrentUser` happen before
+ * another segment's read, which is the part these calls are for.
  *
  * The same shape every framework-level auth library in this ecosystem settles on — `const user =
  * await requireCurrentUser()` at the top of a page — and it fails loudly rather than silently if a

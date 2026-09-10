@@ -27,9 +27,7 @@ export const metadata = { title: 'Profile · Collega' }
  * hub stays ungated — so gating it would strand a member with no route to their own account.
  */
 export default async function ProfilePage() {
-  // Identity first, and in this segment: Next renders a layout and its page independently,
-  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
-  // request all the same — the resolver is request-cached.
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
   const profile = await getProfile()
