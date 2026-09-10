@@ -569,6 +569,16 @@ database; step 10 is verification.
    | `SITE_ADMIN_PASSWORD` | a strong one-time password | as above |
 
    Leave `ANTHROPIC_API_KEY` unset unless you want AI assist configured. Never set `POSTGRES_*`.
+
+   > **Add `DATABASE_URL` one environment at a time, and do not accept the default.** Vercel's
+   > "Add New" form pre-selects Production, Preview *and* Development, and a `DATABASE_URL` saved
+   > with all three ticked points every preview build at the production database. The build command
+   > is byte-identical in every environment — it runs `prisma migrate deploy` and then
+   > `db:bootstrap-admin` unconditionally — so nothing downstream can tell staging from production,
+   > and nothing in the code can be made to. **This scoping is the only thing separating the two
+   > databases.** Save the production string with Production ticked and the other two clear, then
+   > save the staging string with Preview ticked and the other two clear. Verify by reopening each
+   > entry: the environment badges are shown on the row.
 8. **Deploy the API** (push, or Redeploy). The build runs the migration and creates the Site Admin;
    the log ends with either `created Site Admin …` or `… already exists`. Note the deployment's
    hostname.
@@ -580,6 +590,11 @@ database; step 10 is verification.
 
    No trailing slash, and keep the `/api/v1`.
 10. **Verify, in this order:**
+    - **Open the first preview build's log and confirm which database `db:migrate` touched.** This
+      is required, not optional. It is the only evidence that step 7's per-environment scoping took
+      — a `DATABASE_URL` saved with all three environments ticked produces a preview build that
+      migrates and bootstraps *production*, and it does so with a green check and no other symptom.
+      Check it once per project; after that the scoping is proven.
     - `curl -i https://<api host>/api/v1/auth/me` → **401** with a JSON problem document. Anything
       else — HTML, 404, a redirect — means §11's first two rows, not a code bug.
     - Open the web app, sign in as `SITE_ADMIN_EMAIL`. It must **force a password change**; that is
