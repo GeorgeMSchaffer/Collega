@@ -50,6 +50,19 @@ import {
 import { optional, optionalInt, queryBool } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
+/**
+ * Hard ceilings on a CSV import body and its parsed rows, both the same figures
+ * `ideas.controller.ts` applies to the sibling idea import.
+ *
+ * Same numbers because this is the same upload with a different header row, not a different
+ * policy - the idea import got them from .NET's `IdeasController.MaxImportBytes` and this one was
+ * simply never given any. Nest's `FileInterceptor` buffers into the function heap by default and
+ * `buffer.toString('utf8')` doubles it, so an unbounded body was a way to exhaust a serverless
+ * function's memory with one request.
+ */
+const MAX_IMPORT_BYTES = 5 * 1024 * 1024
+const MAX_IMPORT_ROWS = 5_000
+
 /** The seven optional address/contact fields shared by create and update. */
 type OrganizationProfileBody = {
   address?: string
@@ -293,7 +306,7 @@ export class OrganizationsController {
    */
   @Post(':organizationId/users/import')
   @HttpCode(200)
-  @UseInterceptors(FileInterceptor('csvFile'))
+  @UseInterceptors(FileInterceptor('csvFile', { limits: { fileSize: MAX_IMPORT_BYTES } }))
   async importUsers(
     @Param('organizationId', UuidParamPipe) organizationId: string,
     @UploadedFile() csvFile: { buffer?: Buffer } | undefined,
@@ -309,6 +322,28 @@ export class OrganizationsController {
       })
     }
 
-    return this.users.import(organizationId, parseUserImportCsv(buffer.toString('utf8')))
+    // The multer limit above refuses an oversized body at the pipeline; this second, explicit
+    // check turns the same condition into the standard problem-details 400 once the length is
+    // known. Both halves and both messages are `ideas.controller.ts`'s, deliberately.
+    if (buffer.length > MAX_IMPORT_BYTES) {
+      throw new ValidationError('One or more fields are invalid.', {
+        csvFile: [
+          `The file is larger than the ${MAX_IMPORT_BYTES / (1024 * 1024)} MB import limit.`,
+        ],
+      })
+    }
+
+    // Bounded HERE rather than during import: the upload is buffered into a string and then
+    // re-materialised as parsed records before any per-row work happens.
+    const rows = parseUserImportCsv(buffer.toString('utf8'))
+    if (rows.length > MAX_IMPORT_ROWS) {
+      throw new ValidationError('One or more fields are invalid.', {
+        csvFile: [
+          `The file has ${rows.length} rows, which is more than the ${MAX_IMPORT_ROWS} this import supports. Split it into smaller files.`,
+        ],
+      })
+    }
+
+    return this.users.import(organizationId, rows)
   }
 }

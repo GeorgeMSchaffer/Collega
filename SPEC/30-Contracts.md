@@ -631,6 +631,7 @@ CSV columns:
 Behavior rules:
 - each created user receives a system-generated temporary password and must change it on first login
 - rows with invalid data or duplicate emails are rejected individually without failing the whole import
+- **Bounded (added 2026-09-10):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**, the same two bounds and the same messages as the idea import below. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. This endpoint had no bound at all until now, which was an oversight rather than a policy difference: the body buffers into the serving process's heap, so one request could exhaust it
 
 Success response `200`:
 - `createdCount`
