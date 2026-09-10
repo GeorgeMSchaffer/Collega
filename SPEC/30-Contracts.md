@@ -95,6 +95,14 @@ Rules:
 
 Before this gate, the rule was enforced only client-side: the issued token was valid everywhere, so a caller holding an admin-issued temporary password could skip the rotation entirely by calling the API directly and continue on a credential the issuing admin still knew.
 
+### Rate limiting on the authentication surface
+
+`POST /api/v1/auth/login`, `POST /api/v1/auth/register` and `POST /api/v1/auth/change-password` are limited **per caller IP and per route** — each keeps its own counter, so spending the register allowance does not close login. The limits are 10 requests per minute (20 on login) and 100 per hour. Exceeding either answers `429` with the standard problem-details envelope, `type` `https://collega.dev/problems/too-many-requests`, and a `Retry-After` header in seconds. This is the same `429` shape the AI assist endpoints already use for their own limits, and is deliberately distinct from the `429` a locked-out account produces, which is about one account's failed attempts rather than a caller's volume.
+
+Two properties clients must not read more into than is there. The caller IP is taken from `x-forwarded-for` **only when the process is running on Vercel**, which overwrites that header with the real client address; anywhere else the socket address is used, so a self-hosted run cannot be steered by a caller-supplied header. And the counters live in the serving process, which on serverless is neither shared between concurrent instances nor preserved across cold starts — the limit bounds volume, it is not a guarantee of an exact ceiling. A shared store is what would make it one.
+
+This does **not** replace the account lockout below, and does not prevent it: five failed attempts still lock an account, and five is below any limit that lets real people sign in.
+
 ### `POST /api/v1/auth/login`
 Purpose: Authenticate a user with globally unique email credentials.
 
@@ -131,6 +139,7 @@ Error responses:
 - `401` invalid credentials
 - `403` inactive account
 - `429` locked out after 5 failed attempts within 15 minutes
+- `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `GET /api/v1/auth/me`
 Purpose: Return the currently authenticated user summary.
@@ -192,6 +201,7 @@ Error responses:
 - `400` invalid password policy
 - `401` invalid current password
 - `403` caller is authenticated but not allowed to change the password in the current state
+- `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `POST /api/v1/users/{userId}/temporary-password`
 Purpose: MVP/P1 admin-issued temporary password reset.
@@ -525,6 +535,8 @@ Behavior rules:
 - the invite code determines the organization the user is associated with
 - the created user receives role `User` and status `Active`
 - registration against an archived organization is rejected as an invalid invite code
+- an email address that is already registered — in **any** organization, since `normalized_email` is globally unique — is refused with the same field-keyed `400` every other refusal produces, carrying a message that does not say the account exists. The response must not fork on whether it does: an anonymous caller holding one organization's invite code could otherwise enumerate accounts across every tenant, Site Admins included (`SPEC/decisions.md` 2026-09-10). The real reason is written to the audit log as `UserSelfRegistrationRejected` and is never sent to the caller
+- the password is validated **before** the email is looked up, so a probe costs a request carrying a policy-valid password rather than any request at all
 
 Success response `201`:
 - `userId`
@@ -536,7 +548,8 @@ Success response `201`:
 Error responses:
 - `400` request body is malformed or violates field constraints
 - `400` invite code is missing or invalid; response prompts the user to provide a correct invite code
-- `409` email is already in use
+- `400` the account could not be created for the supplied details, keyed on `email`. This is what an address already in use answers; it is deliberately not distinguishable, and **superseded the `409` the frozen .NET API returned** (2026-09-10)
+- `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `GET /api/v1/organizations/{organizationId}/users`
 Purpose: List users within an organization with pagination.
@@ -618,6 +631,7 @@ CSV columns:
 Behavior rules:
 - each created user receives a system-generated temporary password and must change it on first login
 - rows with invalid data or duplicate emails are rejected individually without failing the whole import
+- **Bounded (added 2026-09-10):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**, the same two bounds and the same messages as the idea import below. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. This endpoint had no bound at all until now, which was an oversight rather than a policy difference: the body buffers into the serving process's heap, so one request could exhaust it
 
 Success response `200`:
 - `createdCount`
@@ -676,7 +690,7 @@ Purpose: Create a new organization status.
 
 Request body:
 - `name` required string
-- `color` optional CSS/hex color string (max 20 chars); defaults to `#64748B` when omitted — drives the swimlane color dot and idea-card status chip
+- `color` optional string in `#RRGGBB` format (max 20 chars, but the format is what is enforced); defaults to `#64748B` when omitted — drives the swimlane color dot and idea-card status chip. **Format-checked since 2026-09-10**: it was previously length-checked only, and twenty characters is enough for a working CSS `url()`, which the client renders into a `style` attribute
 - `sortOrder` optional integer (organization-level catalog order); appended after the current maximum when omitted
 
 Success response `201`:
@@ -690,7 +704,7 @@ Purpose: Rename or update a status.
 
 Request body:
 - `name` required string
-- `color` optional CSS/hex color string (max 20 chars)
+- `color` optional string in `#RRGGBB` format (max 20 chars, but the format is what is enforced)
 - `sortOrder` optional integer
 
 ### `POST /api/v1/organizations/{organizationId}/statuses/reorder`

@@ -22,7 +22,6 @@ import {
   type AuditEventWriter,
   attributeAudit,
   type Clock,
-  ConflictError,
   type CurrentUserContext,
   ForbiddenError,
   LockedOutError,
@@ -357,15 +356,36 @@ export class AuthService {
       })
     }
 
-    const email = command.email ?? ''
-    const normalizedEmail = normalizeEmail(email)
-    if (await this.users.existsByNormalizedEmail(normalizedEmail)) {
-      throw new ConflictError('Email is already in use.')
-    }
-
+    // Before the email check, not after, and that order is the security property: a probe now
+    // costs a request carrying a policy-valid password rather than any request at all.
     const passwordErrors = validatePassword(command.password)
     if (passwordErrors.length > 0) {
       throw new ValidationError(VALIDATION_TITLE, { password: [...passwordErrors] })
+    }
+
+    const email = command.email ?? ''
+    const normalizedEmail = normalizeEmail(email)
+    if (await this.users.existsByNormalizedEmail(normalizedEmail)) {
+      // Surfaced as a generic refusal, for the same reason the archived organization above is
+      // surfaced as "unknown code", and the sameness is deliberate - DO NOT make this specific
+      // again. `users.normalized_email` is globally unique, so this check spans every tenant:
+      // a distinguishable "Email is already in use." let anyone holding one organization's
+      // invite code enumerate accounts across all of them, Site Admins included, while
+      // unauthenticated (SPEC/decisions.md 2026-09-10).
+      //
+      // The real reason is not lost, only moved off the wire - an operator reads it here.
+      await this.audit(
+        'UserSelfRegistrationRejected',
+        organization.id,
+        null,
+        null,
+        'Self-registration rejected: the email address is already in use.',
+        now,
+        { reason: 'EmailInUse', email: normalizedEmail },
+      )
+      throw new ValidationError(VALIDATION_TITLE, {
+        email: ['We could not create an account with those details.'],
+      })
     }
 
     const passwordHash = this.passwordHasher.hash(command.password)
