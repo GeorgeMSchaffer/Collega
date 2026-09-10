@@ -205,7 +205,7 @@ every name for local development; nothing in this table belongs in a committed f
 | Variable | Environments | Required | What breaks without it |
 |---|---|---|---|
 | `DATABASE_URL` | Production, Preview | **yes** | The build fails at `db:migrate`; if it somehow got past, every request 500s. Production and Preview hold **different** values — production and staging. |
-| `ACCESS_TOKEN_SIGNING_KEY` | Production, Preview | **yes** | The API **refuses to boot** (see below). Generate with `openssl rand -base64 48`; a different value per environment. |
+| `ACCESS_TOKEN_SIGNING_KEY` | Production, Preview | **yes** | The API **refuses to boot** (see below), and refuses again if it is shorter than 32 characters. Generate with `openssl rand -base64 48`, which gives 64; a different value per environment. |
 | `SITE_ADMIN_EMAIL` | Production, Preview | **yes** | The API refuses to boot, and nothing creates the first administrator (§8). |
 | `SITE_ADMIN_PASSWORD` | Production, Preview | **yes** | Same. Removable after the first login and password change — the bootstrap then finds the account and leaves it alone. |
 | `ACCESS_TOKEN_LIFETIME_MINUTES` | optional | no | Defaults to 480 (8h). |
@@ -220,6 +220,15 @@ sign with different keys, so a session issued by one is rejected by the other an
 out at moments nobody could trace back to a missing variable. Refusing to boot is the cheaper
 failure. Vercel sets `NODE_ENV=production` for preview deployments too, so previews need a key as
 well — a different one.
+
+**A short key is rejected on the same terms.** HS256 signs and verifies with the same secret, so
+`ACCESS_TOKEN_SIGNING_KEY=changeme` is eight guessable bytes standing between an attacker and a
+token this API will accept. What that buys is bounded — `TokenAuthenticationService` re-checks the
+token's `sstamp` claim against the live user row, so forging a session for someone else needs a
+security stamp the attacker does not have — but a forged token still carries an `exp` of the
+attacker's choosing, which is the 8h lifetime made optional. The fragment refuses anything under 32
+characters in production; §12 step 3 already asks for 48 bytes of base64, so this only enforces the
+handoff.
 
 ### `collega-web`
 

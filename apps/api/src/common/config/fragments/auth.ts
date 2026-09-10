@@ -14,6 +14,13 @@ export type AuthConfig = {
 const DEFAULT_LIFETIME_MINUTES = 480 // Mirrors .NET's AccessTokenOptions.Lifetime default (8h).
 
 /**
+ * Shortest signing key production accepts. `openssl rand -base64 48` - what
+ * `SPEC/50-vercel-deployment.md` §12 tells the operator to run - produces 64 characters, so this
+ * only enforces what the handoff already asks for while still rejecting `changeme`.
+ */
+const MINIMUM_KEY_LENGTH = 32
+
+/**
  * ACCESS_TOKEN_SIGNING_KEY / ACCESS_TOKEN_LIFETIME_MINUTES.
  *
  * The signing key is optional locally and required in production, because on Vercel **every cold
@@ -22,6 +29,11 @@ const DEFAULT_LIFETIME_MINUTES = 480 // Mirrors .NET's AccessTokenOptions.Lifeti
  * rejected by the other and users are signed out at unpredictable moments as functions recycle -
  * a symptom nobody would trace back to a missing environment variable. Refusing to boot is the
  * cheaper failure, and it is the same choice `SiteAdminConfig` already makes for its two keys.
+ *
+ * Present is not the same as adequate, so production also requires a length. `TokenAuthentication`
+ * re-checks the `sstamp` claim against the live row, which bounds what a forged token buys - but a
+ * key an attacker can guess still mints a session with an `exp` of its own choosing, ignoring the
+ * configured lifetime entirely.
  */
 export const authFragment: EnvFragment<AuthConfig> = {
   name: 'auth',
@@ -33,12 +45,20 @@ export const authFragment: EnvFragment<AuthConfig> = {
     }
 
     const tokenSigningKey = optional(env, 'ACCESS_TOKEN_SIGNING_KEY')
-    if (tokenSigningKey === undefined && env.NODE_ENV === 'production') {
-      problems.push(
-        'ACCESS_TOKEN_SIGNING_KEY is missing or empty. It is required when NODE_ENV=production: ' +
-          'without it each process signs sessions with a key of its own, and on serverless that ' +
-          'signs every user out whenever a cold start serves them.',
-      )
+    if (env.NODE_ENV === 'production') {
+      if (tokenSigningKey === undefined) {
+        problems.push(
+          'ACCESS_TOKEN_SIGNING_KEY is missing or empty. It is required when NODE_ENV=production: ' +
+            'without it each process signs sessions with a key of its own, and on serverless that ' +
+            'signs every user out whenever a cold start serves them.',
+        )
+      } else if (tokenSigningKey.length < MINIMUM_KEY_LENGTH) {
+        problems.push(
+          `ACCESS_TOKEN_SIGNING_KEY is shorter than ${MINIMUM_KEY_LENGTH} characters. HS256 is a ` +
+            'symmetric signature, so a guessable key is a forgeable session: generate one with ' +
+            '`openssl rand -base64 48`.',
+        )
+      }
     }
 
     return {
