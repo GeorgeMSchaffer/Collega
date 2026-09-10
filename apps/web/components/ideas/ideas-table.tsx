@@ -17,16 +17,24 @@ export function IdeasTable({
 }: {
   rows: Idea[]
   boards: Board[]
-  statuses: Status[]
+  /**
+   * The organization's status colours, for callers that have a catalog.
+   *
+   * A row reads its own status **name** off the idea, so the join a fixture needed is gone. The
+   * swatch beside it is the part with no source: neither ideas endpoint carries a status colour,
+   * and asking a separate catalog for one would join real ids against whichever screen's statuses
+   * happened to be handed over. Absent, the swatch falls back to a neutral dot, which is honest.
+   */
+  statuses?: Status[]
   selectedId?: string
 }) {
   // Presentational, and takes its lookups rather than reading them. The caller already fetches
-  // both lists once, so indexing here costs nothing and a row-level reader would have been one
+  // the boards once, so indexing here costs nothing and a row-level reader would have been one
   // request per idea. Staying synchronous is the other half of the reason: an async component
   // cannot be rendered by Testing Library, and the eight tests holding the selection contract
   // in place all render this directly.
   const boardsById = new Map(boards.map((board) => [board.id, board]))
-  const statusesById = new Map(statuses.map((status) => [status.id, status]))
+  const colorByStatusId = new Map((statuses ?? []).map((status) => [status.id, status.color]))
 
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">
@@ -55,7 +63,6 @@ export function IdeasTable({
         </thead>
         <tbody>
           {rows.map((idea) => {
-            const status = statusesById.get(idea.statusId)
             const selected = idea.id === selectedId
             return (
               <tr
@@ -76,8 +83,8 @@ export function IdeasTable({
                 </td>
                 <td className="px-4 py-2.5">
                   <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                    <Dot color={status?.color} />
-                    {status?.name}
+                    <Dot color={colorByStatusId.get(idea.statusId)} />
+                    {idea.statusName}
                   </span>
                 </td>
                 <td className="px-4 py-2.5">

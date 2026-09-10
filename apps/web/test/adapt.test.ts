@@ -107,6 +107,7 @@ describe('toIdea', () => {
       id: WIRE_IDEA.ideaId,
       boardId: WIRE_IDEA.boardId,
       statusId: WIRE_IDEA.statusId,
+      statusName: WIRE_IDEA.statusName,
       title: WIRE_IDEA.title,
       priority: 'Low',
       ideaType: 'Continuous Improvement',

@@ -99,6 +99,7 @@ export function toIdea(wire: WireIdeaListItem): Idea {
     id: wire.ideaId,
     boardId: wire.boardId,
     statusId: wire.statusId,
+    statusName: wire.statusName,
     title: wire.title,
     priority: toPriority(wire.priority),
     ideaType: wire.ideaTypeName,

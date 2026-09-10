@@ -6,10 +6,11 @@
  * API answers 404 the same way — so the call sites did not change when the bodies did. That was the
  * point of writing them against a promise from the start.
  *
- * The status readers are still fixture-backed, because the screens that use them (`/ideas`,
- * `settings/statuses`, `settings/boards/*`) are still fixture-backed and a half-real screen is
+ * The status readers are still fixture-backed, because the screens that use them
+ * (`settings/statuses`, `settings/boards/*`) are still fixture-backed and a half-real screen is
  * worse than an honest fixture: real statuses carry UUIDs, and a fixture idea's `statusId` would
- * match none of them.
+ * match none of them. `/ideas` is off that list now, and not by converting them — a real idea
+ * arrives carrying its own status name, so the list has nothing left to look up.
  */
 
 import { swimlaneToStatus } from '../api/adapt'
@@ -83,8 +84,8 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
 /**
  * The boards the still-fixture screens see.
  *
- * `/ideas`, the idea inspector and `settings/boards` all join a board id against a fixture — a
- * fixture idea's `boardId`, a `BoardAdmin` row — so handing them real boards would join UUIDs
+ * The idea inspector and `settings/boards` both join a board id against a fixture — a fixture
+ * idea's `boardId`, a `BoardAdmin` row — so handing them real boards would join UUIDs
  * against `'ideas'` and render a row with no board name. Named for what it is, so it is obvious
  * which screens are still waiting and so that converting one of them deletes a call site rather
  * than changing a meaning.

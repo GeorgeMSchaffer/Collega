@@ -6,11 +6,12 @@
  * a reader replaces a body, never a signature. Before it existed, 37 files imported the fixture
  * module directly, so wiring the API meant editing all 37.
  *
- * Converted so far: the board readers, `getIdeasForBoard` and `getIdeaOptions` — between them,
- * everything `/boards/[boardId]` reads and writes. Everything else — the ideas list and
- * detail, delivery, and every settings surface — still answers from `lib/mock.ts`, and the readers
- * that a half-converted screen would otherwise join against real data are named
- * `getFixtureBoards` / `getFixtureBoard` so it is visible which ones those are.
+ * Converted so far: the board readers, `getIdeasForBoard`, `getIdeaOptions` and
+ * `getOrganizationIdeas` — between them, everything `/boards`, `/boards/[boardId]` and `/ideas`
+ * read and write. Everything else — the idea inspector, delivery, and every settings surface —
+ * still answers from `lib/mock.ts`, and the readers that a half-converted screen would otherwise
+ * join against real data are named `getFixtureBoards` / `getFixtureBoard` so it is visible which
+ * ones those are.
  *
  * **Identity does not live here** — see `lib/session.ts` for why it stays synchronous, and
  * `lib/server/current-user.ts` for the one place it is fetched.
