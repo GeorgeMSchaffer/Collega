@@ -251,6 +251,41 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'no such field.',
     kind: 'extra',
   },
+  {
+    cases: [
+      'comments.list.orgadmin',
+      'comments.list.readonly',
+      'comments.list.siteadmin',
+      'comments.list.user',
+    ],
+    path: 'body.items[].author',
+    decided: '2026-09-10',
+    reason:
+      'A deliberate improvement, not drift, and the same one `body.author` on the idea detail ' +
+      'above is. A comment carried only an `authorUserId`, so the thread had no name and no ' +
+      'avatar to render without a request per distinct commenter, and the inspector stayed on ' +
+      'fixture data showing invented commenters. Each item now carries the full persona under ' +
+      '`author`, in the shape `assignees` and the idea `author` already use, and ' +
+      'SPEC/30-Contracts.md names it. The accepted difference is the appearance of that object ' +
+      'and only that, which is what `kind` says: every other field of every item is still ' +
+      'compared, and so is the array length, so a comment that lost `body` or a page that gained ' +
+      'an entry still fails. `[]` rather than two indexed entries because the path is the same on ' +
+      'both items. Its contents are not pinned - `shape` is a per-side regex over strings and ' +
+      'this value is an object, and the recording has no such field to compare against either way.',
+    kind: 'extra',
+  },
+  {
+    cases: ['comments.update.user'],
+    path: 'body.author',
+    decided: '2026-09-10',
+    reason:
+      'The same field as the entry above, on the single comment `PUT /comments/{commentId}` ' +
+      'answers - the edit returns the list item shape, so it gains the author with it, and the ' +
+      'composer can put the edited comment back in the thread without refetching. Listed ' +
+      'separately because an entry names one path and this one is not under `items`. The other ' +
+      'three `comments.update.*` cases are 403s and are unaffected.',
+    kind: 'extra',
+  },
 ]
 
 /** One entry as it applies to one of its cases - the unit staleness is reported at. */

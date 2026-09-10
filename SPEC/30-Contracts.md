@@ -1070,6 +1070,8 @@ Success response `200`:
 - `priority`
 - `ideaTypeId`
 - `ideaTypeName`
+- `ideaTypeColorHex` string or `null` — the Idea Type's chip colour
+- `ideaTypeIcon` string or `null` — the Idea Type's icon name
 - `businessImpactId`
 - `businessImpactName`
 - `businessImpactColor`
@@ -1080,6 +1082,7 @@ Success response `200`:
 - `tagNames`
 - `mentions`
 - `comments` array using the comment item shape from `GET /api/v1/ideas/{ideaId}/comments`, every comment on the idea in chronological order and unpaged
+- `fieldValues` array of resolved User-Defined Field values (`fieldDefinitionId`, `fieldName`, `fieldType`, `value`), per `SPEC/20-feature-user-defined-fields.md`
 - `upvoteCount`
 - `hasUpvoted` boolean for the current caller
 - `commentCount` integer
@@ -1092,6 +1095,11 @@ Success response `200`:
 opened. It is nullable only because `ideas.author_user_id` carries no foreign key; no code path
 deletes a user, so a `null` there is data damage rather than an ordinary case to design a label
 for.
+
+`ideaTypeColorHex`, `ideaTypeIcon` and `fieldValues` were **missing from this document, not from
+the endpoint** — all three have been returned since long before the 2026-09-10 additions above, and
+the recorded corpus carries them. Written down 2026-09-10 because a contract that omits fields the
+endpoint really answers misleads every reader of it; nothing about the response changed.
 
 There is deliberately **no** `reference` field. The comps show `IDEA-101`, but no reference column
 exists and the Prisma schema is frozen at S0.2 — a real reference needs a per-organization
