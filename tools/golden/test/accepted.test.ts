@@ -49,11 +49,25 @@ const RECORDED_PORTRAIT = PORTRAIT.normalized.body as Record<string, unknown>
 const REENCODED_PORTRAIT = `data:image/png;base64,${'iVBORw0KGgoAAAANSUhEU'.repeat(3)}=`
 const LOGIN = fixture('auth.login.orgadmin')
 const RECORDED_LOGIN = LOGIN.normalized.body as Record<string, unknown>
+/** A bare-array body: the two boards the org admin's list step recorded. */
+const RECORDED_BOARDS = fixture('boards.list.orgadmin').normalized.body as BoardItem[]
+/** The same endpoint as a setup step, where three boards exist — the reason the entry says `[]`. */
+const RECORDED_THREE_BOARDS = fixture('ideas.board').normalized.body as BoardItem[]
+
+type BoardItem = Record<string, unknown>
+
+/** The projection the client now reads instead of one paged ideas request per board. */
+const withIdeaCount = (boards: readonly BoardItem[]): BoardItem[] =>
+  boards.map((board, i) => ({ ...board, ideaCount: 7 + i }))
+
+const IDEA_COUNT: AcceptedDiff =
+  ACCEPTED_DIFFS.find((entry) => entry.path === 'body[].ideaCount') ??
+  assert.fail('the board list entry is gone, so the tests below assert nothing')
 
 /** The seed sets due dates relative to the day it runs, which is the whole reason that entry exists. */
 const shift = (csv: string) => csv.replace(/2026-09-(\d\d)/g, (_, day) => `2027-01-${day}`)
 
-/** Every accepted (entry, case) pair on the list: three entries over nine cases. */
+/** Every accepted (entry, case) pair on the list: four entries over sixteen cases. */
 const ALL_PAIRS = ACCEPTED_DIFFS.reduce((n, entry) => n + entry.cases.length, 0)
 
 test('the expected side is checked too, so an entry cannot excuse a value never recorded', () => {
@@ -202,6 +216,130 @@ test('a login that answers null on the token path is not the absence that was ac
       `a login answering ${JSON.stringify(value)} on body.accessToken was waved through`,
     )
   }
+})
+
+test('the board list accepts an ideaCount on every element, at whatever length the case ran', () => {
+  const mismatches = diff(RECORDED_BOARDS, withIdeaCount(RECORDED_BOARDS))
+  assert.deepEqual(
+    mismatches.map((m) => [m.path, m.kind]),
+    [
+      ['body[0].ideaCount', 'extra'],
+      ['body[1].ideaCount', 'extra'],
+    ],
+  )
+  const verdict = classify('boards.list.orgadmin', mismatches, ACCEPTED_DIFFS)
+  assert.equal(verdict.accepted, true)
+  assert.deepEqual(verdict.used, [
+    { entry: IDEA_COUNT, case: 'boards.list.orgadmin' },
+    { entry: IDEA_COUNT, case: 'boards.list.orgadmin' },
+  ])
+
+  // The three-element case is what `[]` is for: an entry written per index would cover the four
+  // role cases and quietly fail the three setup steps, which list a board they just created.
+  assert.equal(RECORDED_THREE_BOARDS.length, 3)
+  const setup = diff(RECORDED_THREE_BOARDS, withIdeaCount(RECORDED_THREE_BOARDS))
+  assert.equal(classify('ideas.board', setup, ACCEPTED_DIFFS).accepted, true)
+})
+
+test('a swimlaneCount that moved is not excused by the ideaCount arriving beside it', () => {
+  const drifted = withIdeaCount(RECORDED_BOARDS)
+  drifted[1] = { ...drifted[1], swimlaneCount: 4 }
+  const verdict = classify('boards.list.orgadmin', diff(RECORDED_BOARDS, drifted), ACCEPTED_DIFFS)
+  assert.equal(verdict.accepted, false, 'a board that lost a swimlane rode in on the new count')
+  assert.deepEqual(verdict.used, [])
+})
+
+test('a list that gained or lost a board still fails, so `[]` is not a mute on the array', () => {
+  // The length mismatch is the one that stops an entry over array elements from becoming an entry
+  // over the array: an organization whose second board vanished is a regression, not a projection.
+  const gained = withIdeaCount([...RECORDED_BOARDS, { ...RECORDED_BOARDS[0], name: 'Extra' }])
+  const lost = withIdeaCount(RECORDED_BOARDS.slice(0, 1))
+  for (const [what, actual] of [
+    ['gained a board', gained],
+    ['lost a board', lost],
+  ] as const) {
+    const mismatches = diff(RECORDED_BOARDS, actual)
+    assert.ok(
+      mismatches.some((m) => m.kind === 'length'),
+      `a list that ${what} produced no length mismatch, so this proves nothing`,
+    )
+    assert.equal(
+      classify('boards.list.orgadmin', mismatches, ACCEPTED_DIFFS).accepted,
+      false,
+      `a list that ${what} was accepted`,
+    )
+  }
+})
+
+test('an ideaCount that vanished is not the appearance that was accepted', () => {
+  // The reverse direction. Once the corpus is re-recorded the count is on both sides, and an
+  // endpoint that then stopped projecting it reports `missing` on the same path — which the entry
+  // must not excuse, or the field can be added and removed again without the gate noticing.
+  const recorded = withIdeaCount(RECORDED_BOARDS)
+  const mismatches = diff(recorded, RECORDED_BOARDS)
+  assert.deepEqual(
+    mismatches.map((m) => [m.path, m.kind]),
+    [
+      ['body[0].ideaCount', 'missing'],
+      ['body[1].ideaCount', 'missing'],
+    ],
+  )
+  assert.equal(classify('boards.list.orgadmin', mismatches, ACCEPTED_DIFFS).accepted, false)
+})
+
+test('`[]` stands for an array index, not for any segment', () => {
+  // `body[].ideaCount` must not reach `body.total.ideaCount`. Nothing on this endpoint answers an
+  // envelope today, but every other list does (`WirePage`), so a board list that grew paging would
+  // arrive with its count pre-authorized on a path nobody wrote down.
+  const mismatches = diff({ total: { name: 'Ideas' } }, { total: { name: 'Ideas', ideaCount: 7 } })
+  assert.deepEqual(
+    mismatches.map((m) => [m.path, m.kind]),
+    [['body.total.ideaCount', 'extra']],
+  )
+  assert.equal(classify('boards.list.orgadmin', mismatches, ACCEPTED_DIFFS).accepted, false)
+})
+
+test('a literal index in an entry path still means that index and nothing else', () => {
+  // A path with no `[]` is compared as the string it always was. An entry someone wrote against
+  // one recorded element must not turn into a wildcard now that brackets carry meaning.
+  const list: AcceptedDiff[] = [{ ...IDEA_COUNT, path: 'body[0].ideaCount' }]
+  const onFirst = diff(RECORDED_BOARDS, [
+    { ...RECORDED_BOARDS[0], ideaCount: 7 },
+    RECORDED_BOARDS[1],
+  ])
+  const onSecond = diff(RECORDED_BOARDS, [
+    RECORDED_BOARDS[0],
+    { ...RECORDED_BOARDS[1], ideaCount: 7 },
+  ])
+  assert.equal(classify('boards.list.orgadmin', onFirst, list).accepted, true)
+  assert.equal(
+    classify('boards.list.orgadmin', onSecond, list).accepted,
+    false,
+    'an entry against body[0] excused a difference on body[1]',
+  )
+})
+
+test('the entry excuses ideaCount and not whatever else appears in the same position', () => {
+  const others = ['commentCount', 'ideaCountTotal', 'inviteCode']
+  for (const field of others) {
+    const mismatches = diff(
+      RECORDED_BOARDS,
+      RECORDED_BOARDS.map((board) => ({ ...board, [field]: 7 })),
+    )
+    assert.equal(
+      classify('boards.list.orgadmin', mismatches, ACCEPTED_DIFFS).accepted,
+      false,
+      `a board list that grew ${field} was accepted`,
+    )
+  }
+})
+
+test('the board list entry does not reach a case nobody has listed', () => {
+  // Three scenarios list boards as a setup step and are named on the entry. A fourth added later
+  // produces exactly this diff, and has to be looked at rather than arriving pre-authorized —
+  // which is why `cases` is a list and not `boards.*`.
+  const mismatches = diff(RECORDED_BOARDS, withIdeaCount(RECORDED_BOARDS))
+  assert.equal(classify('tags.board', mismatches, ACCEPTED_DIFFS).accepted, false)
 })
 
 test('a kind-less entry still excuses whatever kind the diff reports', () => {
