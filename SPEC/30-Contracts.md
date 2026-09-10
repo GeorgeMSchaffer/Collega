@@ -1074,6 +1074,21 @@ Success response `200`:
 - `upvoteCount`
 - `hasUpvoted` boolean for the current caller
 - `commentCount` integer
+- `author` object using the same assignee item shape, or `null` — who raised the idea
+- `createdAtUtc` timestamp
+
+`author` and `createdAtUtc` were added 2026-09-10: the detail header renders "by {author} on
+{date}" and had no source for either. `author` is the full persona rather than the bare
+`authorUserId` the list item carries, so the name renders without a second request per idea
+opened. It is nullable only because `ideas.author_user_id` carries no foreign key; no code path
+deletes a user, so a `null` there is data damage rather than an ordinary case to design a label
+for.
+
+There is deliberately **no** `reference` field. The comps show `IDEA-101`, but no reference column
+exists and the Prisma schema is frozen at S0.2 — a real reference needs a per-organization
+sequence and therefore a schema amendment slice.
+
+`PUT /api/v1/ideas/{ideaId}` answers this same detail shape, and carries both fields with it.
 
 ### `PUT /api/v1/ideas/{ideaId}`
 Purpose: Update idea content.

@@ -896,7 +896,11 @@ export class IdeaService {
   private async projectDetail(idea: Idea): Promise<IdeaDetail> {
     const tagLookup = await this.loadTagLookup(idea.tagIds)
     const mentionUserIds = [...idea.mentionedUserIds]
-    const userLookup = await this.loadUserLookup([...idea.assigneeUserIds, ...mentionUserIds])
+    const userLookup = await this.loadUserLookup([
+      ...idea.assigneeUserIds,
+      ...mentionUserIds,
+      idea.authorUserId,
+    ])
     const statusInfo = await this.boards.getStatusInfo(idea.organizationId)
     const ideaTypeLookup = await this.loadIdeaTypeLookup(idea.organizationId)
     const businessImpactLookup = await this.loadBusinessImpactLookup(idea.organizationId)
@@ -963,6 +967,8 @@ export class IdeaService {
       hasUpvoted: upvoted.has(idea.id),
       commentCount,
       fieldValues,
+      author: this.projectAuthor(idea, userLookup),
+      createdAtUtc: idea.createdAtUtc,
     }
   }
 
@@ -1051,14 +1057,15 @@ export class IdeaService {
         (a, b) =>
           compareIgnoreCase(a.firstName, b.firstName) || compareIgnoreCase(a.lastName, b.lastName),
       )
-      .map((user) => ({
-        userId: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        displayName: displayName(user),
-        isActive: user.status === UserStatus.Active,
-        portraitDataUrl: portraitDataUrl(user),
-      }))
+      .map(toPersonDto)
+  }
+
+  private projectAuthor(
+    idea: Idea,
+    userLookup: ReadonlyMap<string, UserSummary>,
+  ): IdeaAssigneeDto | null {
+    const author = userLookup.get(idea.authorUserId)
+    return author ? toPersonDto(author) : null
   }
 
   private projectTagNames(
@@ -1434,6 +1441,18 @@ export class IdeaService {
 }
 
 // Module-level helpers ---------------------------------------------------------------------------
+
+/** One user as the idea payloads carry a person - assignees and the detail's author alike. */
+function toPersonDto(user: UserSummary): IdeaAssigneeDto {
+  return {
+    userId: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    displayName: displayName(user),
+    isActive: user.status === UserStatus.Active,
+    portraitDataUrl: portraitDataUrl(user),
+  }
+}
 
 function displayName(user: UserSummary): string {
   return `${user.firstName} ${user.lastName}`.trim()
