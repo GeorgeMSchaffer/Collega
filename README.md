@@ -25,13 +25,19 @@ http://localhost:3001/api/v1, a migrated and seeded PostgreSQL behind them. Ctrl
 
 [`tools/local/start.ts`](tools/local/start.ts) is what it runs, and it is idempotent — copy `.env`
 from the example if it is missing, start the `postgres` compose service **only** if nothing is
-already listening on the port, build, `prisma migrate deploy`, seed, then run both halves. Run it as
-often as you like. It reloads the web app on save; **re-run it after changing `apps/api`**, which it
-runs as built output rather than under a watcher.
+already listening at the host and port `DATABASE_URL` names, build, `prisma migrate deploy`, seed,
+then run both halves. Run it as often as you like. It reloads the web app on save; **re-run it after
+changing `apps/api`**, which it runs as built output rather than under a watcher.
 
 You need Node **≥ 24.20**, pnpm **≥ 12.3.4** (`corepack enable && corepack prepare pnpm@12.3.4
 --activate`), and — unless you already run a PostgreSQL 16 — **Docker**, which is what the database
-container needs. Point `DATABASE_URL` at a cluster you already run and Docker is not involved at all.
+container needs. Point `DATABASE_URL` at a cluster you already run **on this machine** and Docker is
+not involved at all.
+
+It refuses to run against anything else. The script migrates and seeds whatever `DATABASE_URL`
+names, so a host that is not loopback stops it before the first write with the address it read;
+`COLLEGA_ALLOW_REMOTE_DATABASE=1` is the way to say you meant it. Nothing here is a substitute for
+that being your own database — the seed upserts demo organizations and users.
 
 `.env` is gitignored and copied from [`.env.example`](.env.example), whose defaults are placeholders
 for a throwaway local container. Two are worth knowing about: `POSTGRES_USER` is **`collega`**, not

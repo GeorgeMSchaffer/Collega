@@ -67,7 +67,7 @@ function run(command: string, args: string[], env: NodeJS.ProcessEnv = {}): void
   }
 }
 
-/** Whether something is listening, which is the only question this script has about a database. */
+/** Whether something is listening there, which is the only question this script has about a database. */
 function listening(port: number, host = '127.0.0.1'): Promise<boolean> {
   return new Promise((done) => {
     const socket = createConnection({ port, host })
@@ -82,9 +82,9 @@ function listening(port: number, host = '127.0.0.1'): Promise<boolean> {
   })
 }
 
-async function waitForPort(port: number, seconds: number): Promise<boolean> {
+async function waitForPort(port: number, seconds: number, host = '127.0.0.1'): Promise<boolean> {
   for (let attempt = 0; attempt < seconds; attempt++) {
-    if (await listening(port)) return true
+    if (await listening(port, host)) return true
     await new Promise((tick) => setTimeout(tick, 1000))
   }
   return false
@@ -126,16 +126,63 @@ const databaseUrl =
   })()
 
 env = readEnvFile()
-const postgresPort = Number(new URL(databaseUrl).port || '5432')
+
+/**
+ * Which machine the database is on, and on which port — **both**, from the same string.
+ *
+ * Taking only the port and probing `127.0.0.1` for it is how this script came to check one database
+ * and write to another: an exported `DATABASE_URL` naming a remote host with nothing on local 5432
+ * found nothing, started a container, waited for the container, and then deployed migrations and
+ * seeded demo organizations into the remote host that string actually names.
+ */
+function databaseTarget(url: string): { host: string; port: number } {
+  try {
+    const parsed = new URL(url)
+    return { host: parsed.hostname, port: Number(parsed.port || '5432') }
+  } catch {
+    return fail(
+      `DATABASE_URL is not a URL:\n\n  ${url}\n\n` +
+        'Prisma needs the postgresql://user:password@host:port/database form. Fix it in .env, or\n' +
+        'unset it in your shell to have this script compose one from the POSTGRES_* values.',
+    )
+  }
+}
+
+const { host: postgresHost, port: postgresPort } = databaseTarget(databaseUrl)
+const postgresIsLocal =
+  postgresHost === 'localhost' || postgresHost === '::1' || postgresHost.startsWith('127.')
 
 // --- 2. PostgreSQL ------------------------------------------------------------------------------
+// Everything below this point either starts a container on this machine or writes to whatever
+// `DATABASE_URL` names — `prisma migrate deploy` applies schema changes, and the seed upserts demo
+// organizations and users whose only guard is `NODE_ENV === 'production'`, which a developer shell
+// does not set. Neither belongs on a shared cluster by accident, so a non-loopback host stops the
+// run here rather than being caught twice further down.
+if (!postgresIsLocal && process.env.COLLEGA_ALLOW_REMOTE_DATABASE !== '1') {
+  fail(
+    `DATABASE_URL points at ${postgresHost}:${postgresPort}, which is not this machine.\n\n` +
+      'This script deploys migrations and seeds demo organizations and users into whatever it is\n' +
+      'given, so it will not touch a host it cannot see is yours. Point DATABASE_URL at a local\n' +
+      'PostgreSQL 16, or set COLLEGA_ALLOW_REMOTE_DATABASE=1 if migrating and seeding that host is\n' +
+      'genuinely what you meant.',
+  )
+}
+
 // Docker only when nothing is listening. Somebody running their own PostgreSQL, or one of the
 // cloud containers where `.claude/hooks/session-start.sh` installed a native cluster, must not have
 // a second one started underneath them.
-if (await listening(postgresPort)) {
-  say(`PostgreSQL — already listening on ${postgresPort}`)
+if (await listening(postgresPort, postgresHost)) {
+  say(`PostgreSQL — already listening on ${postgresHost}:${postgresPort}`)
+} else if (!postgresIsLocal) {
+  // Reachable only with the opt-in above. `docker compose up postgres` would start a database on
+  // this machine, which is not the one the connection string names and would not be reached by it.
+  fail(
+    `Nothing is listening at ${postgresHost}:${postgresPort}, and it is not this machine to start.`,
+  )
 } else {
-  say(`PostgreSQL — nothing on ${postgresPort}, starting the docker compose service`)
+  say(
+    `PostgreSQL — nothing on ${postgresHost}:${postgresPort}, starting the docker compose service`,
+  )
   const docker = spawnSync('docker', ['compose', 'up', '-d', 'postgres'], {
     cwd: ROOT,
     stdio: 'inherit',
@@ -144,10 +191,10 @@ if (await listening(postgresPort)) {
     fail(
       `No PostgreSQL on port ${postgresPort}, and \`docker compose up -d postgres\` could not start one.\n` +
         'Either start Docker Desktop and run this again, or point DATABASE_URL at a PostgreSQL 16\n' +
-        'you already run and set it in .env.',
+        'you already run on this machine and set it in .env.',
     )
   }
-  if (!(await waitForPort(postgresPort, 60))) {
+  if (!(await waitForPort(postgresPort, 60, postgresHost))) {
     fail(`The postgres container started but nothing is listening on ${postgresPort}.`)
   }
 }
