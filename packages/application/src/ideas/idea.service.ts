@@ -896,10 +896,14 @@ export class IdeaService {
   private async projectDetail(idea: Idea): Promise<IdeaDetail> {
     const tagLookup = await this.loadTagLookup(idea.tagIds)
     const mentionUserIds = [...idea.mentionedUserIds]
+    // Ahead of the user lookup, so the commenters go into it - one read for every person on the
+    // payload rather than one per comment thread.
+    const comments = await this.comments.listByIdea(idea.id)
     const userLookup = await this.loadUserLookup([
       ...idea.assigneeUserIds,
       ...mentionUserIds,
       idea.authorUserId,
+      ...comments.map((c) => c.authorUserId),
     ])
     const statusInfo = await this.boards.getStatusInfo(idea.organizationId)
     const ideaTypeLookup = await this.loadIdeaTypeLookup(idea.organizationId)
@@ -908,7 +912,6 @@ export class IdeaService {
     const currentUserId = this.requireAuthenticatedUserId()
     const upvoted = await this.upvoteCounts.getUpvotedIdeaIds(currentUserId, [idea.id])
     const commentCount = await this.comments.countByIdea(idea.id)
-    const comments = await this.comments.listByIdea(idea.id)
 
     const ideaTypeForFields = ideaTypeLookup.get(idea.ideaTypeId) ?? null
 
@@ -934,14 +937,18 @@ export class IdeaService {
         : []
     })
 
-    const commentDtos: readonly IdeaCommentDto[] = comments.map((c) => ({
-      commentId: c.commentId,
-      ideaId: c.ideaId,
-      authorUserId: c.authorUserId,
-      body: c.body,
-      createdAtUtc: c.createdAtUtc,
-      updatedAtUtc: c.updatedAtUtc,
-    }))
+    const commentDtos: readonly IdeaCommentDto[] = comments.map((c) => {
+      const author = userLookup.get(c.authorUserId)
+      return {
+        commentId: c.commentId,
+        ideaId: c.ideaId,
+        authorUserId: c.authorUserId,
+        author: author ? toPersonDto(author) : null,
+        body: c.body,
+        createdAtUtc: c.createdAtUtc,
+        updatedAtUtc: c.updatedAtUtc,
+      }
+    })
 
     return {
       ideaId: idea.id,

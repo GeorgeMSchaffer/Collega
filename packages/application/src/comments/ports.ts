@@ -66,18 +66,24 @@ export interface IdeaLookupPort {
 
 // Users (cross-partition, B1) -------------------------------------------------------------------
 //
-// Mention resolution's narrow needs only - kept local rather than depending on Users'
+// Mention resolution and comment-author personas only - kept local rather than depending on Users'
 // `UserRepository`, matching how Ideas kept its own copy of the identical .NET `MentionResolver`
 // logic local rather than importing it from here.
 
 export type UserSummary = {
   readonly id: string
+  readonly firstName: string
+  readonly lastName: string
   readonly organizationId: string | null
   readonly role: Role
   readonly status: UserStatus
+  readonly portraitPng: Uint8Array | null
 }
 
 export interface UsersPort {
+  /** The people a comment page names, for the `author` persona on each item. */
+  listByIds(userIds: readonly string[]): Promise<readonly UserSummary[]>
+
   /** Global lookup by normalized (trimmed, lowercased) email, for mention resolution. The caller
    * still checks organization/role/status - mirrors .NET's `MentionResolver`. */
   findByNormalizedEmail(normalizedEmail: string): Promise<UserSummary | null>

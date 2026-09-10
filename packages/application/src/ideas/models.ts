@@ -96,9 +96,9 @@ export type OrganizationIdeaListQuery = {
 
 /**
  * Persona shape for a user attached to an idea (SPEC/30-Contracts.md). Named for the assignees it
- * was introduced for, and also what the detail's `author` carries - the two render the same avatar
- * and the same name, so a second shape saying the same thing would only give a client two ways to
- * read a person off one payload.
+ * was introduced for, and also what the detail's `author` and every comment's `author` carry - all
+ * three render the same avatar and the same name, so a second shape saying the same thing would
+ * only give a client more ways to read a person off one payload.
  */
 export type IdeaAssigneeDto = {
   readonly userId: string
@@ -122,6 +122,16 @@ export type IdeaCommentDto = {
   readonly commentId: string
   readonly ideaId: string
   readonly authorUserId: string
+  /**
+   * Who wrote it, in the persona shape assignees and the idea's own author use. The thread renders
+   * a name and an avatar per comment, and `authorUserId` alone would cost one request per distinct
+   * commenter to turn into either.
+   *
+   * Nullable for the same reason the idea's `author` is: `comments.author_user_id` is `NOT NULL`
+   * but carries no foreign key, and the schema is frozen at S0.2. A deactivated commenter is not
+   * this case - they are still a row, and come back named with `isActive` false.
+   */
+  readonly author: IdeaAssigneeDto | null
   readonly body: string
   readonly createdAtUtc: Date
   readonly updatedAtUtc: Date
