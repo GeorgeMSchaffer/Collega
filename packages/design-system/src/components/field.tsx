@@ -49,9 +49,12 @@ export function Field({
 }: {
   htmlFor: string
   label: string
-  hint?: string
-  error?: string
-  className?: string
+  // `| undefined` explicitly, because `exactOptionalPropertyTypes` is on and these are the two
+  // props a caller computes rather than writes: `error={errors.email}` is the whole point of them,
+  // and without this every such caller has to spread a conditional object instead.
+  hint?: string | undefined
+  error?: string | undefined
+  className?: string | undefined
   children: ReactNode
 }) {
   const describedBy = error ? `${htmlFor}-msg` : hint ? `${htmlFor}-hint` : undefined

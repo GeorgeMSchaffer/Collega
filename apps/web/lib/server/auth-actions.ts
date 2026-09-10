@@ -14,6 +14,7 @@
 
 import { redirect } from 'next/navigation'
 import { apiBaseUrl, SESSION_COOKIE_NAME } from '../api/config'
+import { fieldErrors, type ProblemDetails } from '../api/problem'
 import type { WireLoginResponse } from '../api/wire'
 import { clearSession, issueSession } from './current-user'
 
@@ -89,6 +90,82 @@ export async function signIn(_previous: LoginState, form: FormData): Promise<Log
 
   // `redirect` signals by throwing, so it must be the last thing and must not sit inside a `try`.
   redirect(body.requiresPasswordChange ? '/change-password' : '/boards')
+}
+
+/**
+ * What the register form renders back.
+ *
+ * `errors` is keyed by the API's own field names, which are the `name` attributes the form posts —
+ * so the screen looks a message up by the field it is already rendering rather than mapping between
+ * two vocabularies. `values` echoes everything the person typed except the password, for the reason
+ * `LoginState.email` gives: React resets the form once the action resolves, and a rejected invite
+ * code would otherwise cost them their name, their address and their password as well.
+ */
+export type RegisterState = {
+  error: string | null
+  errors: Readonly<Record<string, string>>
+  values: Readonly<Record<'inviteCode' | 'firstName' | 'lastName' | 'email', string>>
+}
+
+/**
+ * Creates an account from an invite code, then sends the reader to sign in.
+ *
+ * **It does not sign them in, and that is comp P's decision rather than an omission here.**
+ * `POST /auth/register` returns the account and sets no cookie, so signing them in means a second
+ * call to `/auth/login` with the password still in hand. Comp P's `s-register` states the outcome
+ * instead — *"On success the page returns to Sign in carrying Your account was created"* — and
+ * `s-login` reserves one of its three notice strings for it. Doing the extra hop would leave a
+ * designed screen state unbuilt, and would put this function in the business of interpreting a
+ * *sign-in* refusal (a lockout, a rejected credential) for someone whose account demonstrably just
+ * succeeded — a branch with no honest message.
+ *
+ * Every rejection is attributable to a field, so there is no generic-failure path: a 400 names the
+ * fields in its `errors` bag, and the 409 is only ever the email.
+ */
+export async function register(_previous: RegisterState, form: FormData): Promise<RegisterState> {
+  const values = {
+    inviteCode: String(form.get('inviteCode') ?? ''),
+    firstName: String(form.get('firstName') ?? ''),
+    lastName: String(form.get('lastName') ?? ''),
+    email: String(form.get('email') ?? ''),
+  }
+
+  const response = await fetch(`${apiBaseUrl()}/auth/register`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ ...values, password: String(form.get('password') ?? '') }),
+    cache: 'no-store',
+  })
+
+  if (response.status === 400 || response.status === 409) {
+    const problem = (await response.json()) as ProblemDetails
+    // A 409 carries no `errors` bag — it is `ConflictError('Email is already in use.')`, whose text
+    // lands in `detail`. Keying it onto `email` here is what lets the screen treat both refusals
+    // identically instead of growing a second rendering path for the one status that skips the bag.
+    const errors =
+      response.status === 409
+        ? {
+            email: typeof problem.detail === 'string' ? problem.detail : 'Email is already in use.',
+          }
+        : fieldErrors(problem.errors)
+
+    return {
+      // Named rather than generic, because the invite code is the one field a person cannot simply
+      // re-read off the screen and correct — it came from somebody else.
+      error: errors.inviteCode
+        ? 'Check your invite code and try again.'
+        : 'Check the highlighted fields and try again.',
+      errors,
+      values,
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(`POST /auth/register answered ${response.status}`)
+  }
+
+  // `redirect` signals by throwing, so it must be the last thing and must not sit inside a `try`.
+  redirect('/login?registered=1')
 }
 
 /**
