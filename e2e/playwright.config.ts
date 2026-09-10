@@ -18,8 +18,15 @@ const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_PATH
  * and its seven specs were retired with it (see e2e/README.md). What remains here is the harness:
  * F2 owns the flows that go back on top of it.
  *
- * `apps/web` still reads `lib/mock.ts`, so nothing here reaches a database or an API yet. When
- * Wave D lands, `apps/api` becomes a second `webServer` entry and the fixtures give way to a seed.
+ * **This config starts `apps/web` and nothing else, and that is now a limit rather than a
+ * simplification.** `/boards`, `/boards/[boardId]`, `/ideas` and `/ideas/[ideaId]` no longer read
+ * `lib/mock.ts` - they `fetch` `apps/api` (see `apps/web/lib/data/index.ts`). With no API running,
+ * those screens fail at render, so a spec written over any of them fails here however it is
+ * written. Delivery and the settings surfaces are still fixture-backed and still work.
+ *
+ * Adding `apps/api` as a second `webServer` entry, against a dropped-and-seeded throwaway database,
+ * is the prerequisite for covering them. It is not done, and it is the gate on every product spec -
+ * see README.md, "What the tests can and cannot see".
  */
 export default defineConfig({
   testDir: './tests',
