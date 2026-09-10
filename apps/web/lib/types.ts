@@ -96,6 +96,12 @@ export type Idea = {
   id: string
   boardId: string
   statusId: string
+  /**
+   * The lane the idea sits in, spelled out. A list item carries it, so a row that names its status
+   * does not have to join an id against the organization's catalog — which is what a board does,
+   * from its own swimlanes, and what the ideas table used to do from a fixture.
+   */
+  statusName: string
   title: string
   priority: Priority
   ideaType: string
@@ -106,6 +112,22 @@ export type Idea = {
   upvotes: number
   /** Whether the reader is one of them, which is what fills the chip rather than outlining it. */
   hasUpvoted: boolean
+}
+
+/**
+ * One page of the organization's ideas, and how much there is behind it.
+ *
+ * The list screen renders a page rather than a list because it is the one surface with no natural
+ * ceiling — every board's ideas at once — so the count it reports and the rows it shows are two
+ * different numbers and the type says so. `page` and `pageSize` are the API's answer, not the
+ * request: a page beyond the end still echoes what was asked for, and the footer is drawn from
+ * what came back.
+ */
+export type IdeaPage = {
+  ideas: Idea[]
+  page: number
+  pageSize: number
+  totalCount: number
 }
 
 /**

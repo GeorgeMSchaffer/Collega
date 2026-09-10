@@ -118,6 +118,7 @@ function buildIdeas(boardId: string): IdeaDetail[] {
         reference: `IDEA-${100 + (boardId === 'ideas' ? 0 : 50) + index + 1}`,
         boardId,
         statusId: status.id,
+        statusName: status.name,
         title,
         description: DESCRIPTIONS[index] ?? '',
         priority: PRIORITIES[index % PRIORITIES.length] ?? 'Medium',
