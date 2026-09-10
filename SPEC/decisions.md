@@ -45,10 +45,20 @@ unacceptable — the residual oracle is weaker but not zero, and closing it enti
 registration that answers `201` and sends a verification email instead, which is a feature nobody
 has asked for. The rate limit added the same day bounds how fast the residue can be sampled.
 
-**Cost:** one accepted golden diff, `profile.register.duplicate.anonymous`
-(`tools/golden/src/accepted.ts`). It is the third answer under the 2026-09-09 entry — a deliberate
-improvement, recorded rather than fixed. Note that the replay compares only the status for that
-case now, because a status mismatch short-circuits the body comparison; the entry says so.
+**Cost: the golden case `profile.register.duplicate.anonymous` is retired, not accepted.** This is
+the one place the 2026-09-09 entry's "accept and record it" answer is unavailable, and that is
+deliberate rather than an oversight in the harness. `tools/golden/test/accepted.test.ts` asserts
+that **no accepted-diff entry may name `status` or a header** — "would let an entry excuse
+transport or an authorization outcome" — because a status that quietly moved is exactly how an
+authorization regression would hide. A 409 becoming a 400 is a status change and nothing else, so
+the corpus cannot express it, and an entry that tried was refused by that test. The scenario step
+and its fixture are therefore removed together, leaving `register.anonymous` (201) and
+`register.bad-code.anonymous` (400) still pinning the endpoint including one refusal.
+
+**What that gives up, and how to get it back.** No recorded case now pins what a taken email
+answers, so the two specs above are the only statement of it. The case should be re-recorded
+against the Nest stack once F1 has replayed clean — at that point the corpus stops being a .NET
+recording anyway, and this endpoint gets a pinned refusal again.
 
 **Downstream:** `apps/web/lib/server/auth-actions.ts` already handles a `400` with an `errors` bag
 and keys it onto the same field, so the register screen renders the new refusal without a change.
