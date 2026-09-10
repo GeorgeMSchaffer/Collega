@@ -42,6 +42,18 @@ export type ViewingAsSummary = {
 export type CurrentUserSummary = {
   readonly userId: string
   readonly organizationId: string | null
+  /**
+   * The organization's display title, so the sidebar can name it from the one call every
+   * authenticated request already makes.
+   *
+   * `null` means "belongs to no organization" - a Site Admin, whose surfaces read "All
+   * organizations" - and nothing else. It is not the fallback for a title that could not be
+   * resolved: `users.organization_id` carries a restricted foreign key and `organizations.title`
+   * is `NOT NULL`, so a user with an `organizationId` always has a string here, empty if the
+   * organization was named that way. The two cases stay distinguishable, which is the whole
+   * reason the client can branch on it.
+   */
+  readonly organizationTitle: string | null
   readonly role: Role
   readonly firstName: string
   readonly lastName: string

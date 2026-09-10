@@ -35,6 +35,7 @@ const FIXTURE_PAYLOAD: string = (
 const SUMMARY: CurrentUserSummary = {
   userId: 'u1',
   organizationId: 'org-1',
+  organizationTitle: 'Acme Robotics',
   role: Role.User,
   firstName: 'Ada',
   lastName: 'Lovelace',
