@@ -18,8 +18,15 @@
  * Outside a render there is no such scope, and `cache` stops memoizing rather than announcing
  * itself: two calls return two different objects. `inRequestScope()` detects exactly that and falls
  * back to a process-wide holder, which is what makes `actAs()` work in the unit tests, where
- * components are rendered directly with no request around them. The fallback is never reached
- * inside a request, so it cannot leak one caller's identity into another's page.
+ * components are rendered directly with no request around them.
+ *
+ * **That fallback is off unless a test turns it on**, because a render is not the only thing that
+ * runs outside a request scope: a Server Function does too. Nothing reaches it today — `signIn` and
+ * `signOut` neither publish a principal nor read one — but a mutation whose first line is `await
+ * requireCurrentUser()` and whose third reads `organizationScope()` would, and two people
+ * interleaving across that `await` would share one module-level object. One would act with the
+ * other's organization id and no screen would show it. Throwing instead makes a Server Function
+ * that needs the principal pass it explicitly, which is the only shape that is correct there.
  *
  * ## What changed from the fixture, and why it is one function call now
  *
@@ -46,6 +53,15 @@ const requestScope = cache((): Holder => ({ user: null }))
 
 /** Stands in for a request scope where there is none: unit tests, and nothing else. */
 const processScope: Holder = { user: null }
+let processScopeAllowed = false
+
+/**
+ * Opens the process-wide holder, for unit tests that render a gated component with no request
+ * around it. `apps/web/test/setup.ts` is the only caller; nothing in `app/` may call this.
+ */
+export function allowProcessScope(): void {
+  processScopeAllowed = true
+}
 
 /**
  * Two calls to a `cache`d function return the same object inside a render and different ones
@@ -66,7 +82,13 @@ function inRequestScope(): boolean {
 }
 
 function holder(): Holder {
-  return inRequestScope() ? requestScope() : processScope
+  if (inRequestScope()) return requestScope()
+  if (!processScopeAllowed) {
+    throw new Error(
+      'currentUser() outside a render scope. A Server Function must pass the principal explicitly.',
+    )
+  }
+  return processScope
 }
 
 /**
