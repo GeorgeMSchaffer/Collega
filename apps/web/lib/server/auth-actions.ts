@@ -48,7 +48,10 @@ function sessionTokenFrom(response: Response): string | null {
     const [pair] = header.split(';')
     const separator = pair?.indexOf('=') ?? -1
     if (pair && separator > 0 && pair.slice(0, separator).trim() === SESSION_COOKIE_NAME) {
-      return pair.slice(separator + 1)
+      // `|| null`, not the value: a `collega_session=; Max-Age=0` header is the API *clearing* the
+      // cookie, and `''` is not `null`, so the caller's guard would pass and this would re-issue an
+      // empty session — landing the reader in the redirect loop `proxy.ts` now has to break.
+      return pair.slice(separator + 1) || null
     }
   }
   return null
