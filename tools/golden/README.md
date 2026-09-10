@@ -165,6 +165,20 @@ is accepted only when *every* one of its mismatches is: a recorded difference
 plus a real regression in the same response is a failing case, not a passing one
 with a footnote.
 
+`path` may carry `[]` for an array index, the same way an `unstable` declaration
+does, so an entry about a field on every element of a list body does not have to
+guess how many elements a scenario produced:
+
+```ts
+{ cases: ['boards.list.orgadmin', 'ideas.board', ...],
+  path: 'body[].ideaCount', decided: '2026-09-10',
+  reason: 'the boards list now carries the count the client used to fan out for...',
+  kind: 'extra' }
+```
+
+`[]` matches an index and nothing else, and a path without one is still compared
+as the exact string it always was.
+
 `shape` is per-side, so on a value where only a fraction may move it cannot say
 "identical except this". Anchor it to the stable part of a 3161-character CSV and
 everything after the anchor is unchecked on **both** sides — the entry has become

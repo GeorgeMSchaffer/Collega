@@ -35,7 +35,12 @@ import type { Mismatch } from './diff.ts'
 export type AcceptedDiff = {
   /** The cases this covers, each `scenario.step` as the fixtures name it. */
   readonly cases: readonly string[]
-  /** The mismatch path exactly as `diff` reports it, e.g. `body.portraitDataUrl`. */
+  /**
+   * The mismatch path as `diff` reports it, e.g. `body.portraitDataUrl`. `[]` stands for any one
+   * array index, exactly as it does in a case's `unstable` declarations: `body[].ideaCount` covers
+   * a field on every element of a bare-array body without the entry having to guess how many
+   * elements the scenario produced.
+   */
   readonly path: string
   /** ISO date the difference was accepted, so an old entry is visibly old. */
   readonly decided: string
@@ -108,6 +113,34 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'did not make and still fails.',
     kind: 'missing',
   },
+  {
+    cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].ideaCount',
+    decided: '2026-09-10',
+    reason:
+      'A deliberate improvement, not drift. To render the count on each board card the client used ' +
+      'to issue GET /boards/{boardId}/ideas?pageSize=1 per board and read `totalCount` off the ' +
+      'paging envelope; the board list does not page, so an organization with 200 boards fired 200 ' +
+      'requests and 200 count queries from one render. The figure is now projected on the list item ' +
+      'beside `swimlaneCount` and `SPEC/30-Contracts.md` names it. The accepted difference is the ' +
+      "field's appearance and only that, which is what `kind` says: every other field of every " +
+      'element is still compared, and so is the array length, so a board that lost `swimlaneCount` ' +
+      'or a list that gained an entry still fails. Three of these cases run the board list as a ' +
+      'setup step after creating a board, so they carry three elements where the four role cases ' +
+      'carry two - hence `[]` rather than an entry per index. The count itself is not pinned here: ' +
+      '`shape` is a per-side regex over strings and this value is a number, so any `ideaCount` on ' +
+      'any element is accepted. Nothing is lost by that - the recording has no such field, so there ' +
+      'was never a recorded number to compare against.',
+    kind: 'extra',
+  },
 ]
 
 /** One entry as it applies to one of its cases - the unit staleness is reported at. */
@@ -121,6 +154,25 @@ export type Classification = {
   readonly accepted: boolean
   /** The entries that excused a mismatch, for staleness reporting. */
   readonly used: readonly AcceptedCase[]
+}
+
+/**
+ * Does the entry's path name this mismatch's?
+ *
+ * A path with no `[]` is compared as the string it always was, so an entry written against one
+ * literal index still means that index and nothing else. `[]` matches an array index only — `\d+`
+ * inside the brackets `diff` prints — rather than an arbitrary segment, so `body[].ideaCount`
+ * cannot quietly start excusing `body.total.ideaCount`. That is deliberately all it is: `unstable`
+ * needs the same reach through an array and expresses it the same way (`omitPaths`), and a general
+ * path-expression language on this list would be a second thing to learn about the same file.
+ */
+function pathMatches(pattern: string, path: string): boolean {
+  if (!pattern.includes('[]')) return pattern === path
+  const source = pattern
+    .split('[]')
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('\\[\\d+\\]')
+  return new RegExp(`^${source}$`).test(path)
 }
 
 /**
@@ -169,7 +221,7 @@ export function classify(
     const entry = list.find(
       (candidate) =>
         candidate.cases.includes(caseKey) &&
-        candidate.path === mismatch.path &&
+        pathMatches(candidate.path, mismatch.path) &&
         (candidate.kind === undefined || candidate.kind === mismatch.kind) &&
         satisfies(candidate, mismatch.expected) &&
         satisfies(candidate, mismatch.actual) &&
