@@ -304,7 +304,7 @@ every name for local development; nothing in this table belongs in a committed f
 | `DATABASE_URL` | Production, Preview | **yes** | The build fails at `db:migrate`; if it somehow got past, every request 500s. Production and Preview hold **different** values — production and staging. |
 | `ACCESS_TOKEN_SIGNING_KEY` | Production, Preview | **yes** | The API **refuses to boot** (see below), and refuses again if it is shorter than 32 characters. Generate with `openssl rand -base64 48`, which gives 64; a different value per environment. |
 | `SITE_ADMIN_EMAIL` | Production, Preview | **yes** | The API refuses to boot, and nothing creates the first administrator (§8). |
-| `SITE_ADMIN_PASSWORD` | Production, Preview | **yes** | Same. Removable after the first login and password change — the bootstrap then finds the account and leaves it alone. |
+| `SITE_ADMIN_PASSWORD` | Production, Preview | **yes** | Same, and **not removable** — `siteAdminFragment` reads it through `required()`, so deleting it after the first login takes the API down on the next cold start. Nothing reads the value: the bootstrap script reads `process.env` directly, so the fragment's only effect is to refuse boot. See the note under §8. |
 | `ACCESS_TOKEN_LIFETIME_MINUTES` | optional | no | Defaults to 480 (8h). |
 | `ANTHROPIC_API_KEY` | optional | no | AI idea assist runs dark — the scripted fallback answers and the API reports "not configured" rather than erroring (`SPEC/20-feature-ai-idea-assist.md` rule 31). D6 is unbuilt, so today it changes nothing. |
 | `POSTGRES_*` | — | **no** | Do not set them. They are the local container's parts; `DATABASE_URL` wins anyway, and having both invites the two drifting. |
@@ -377,6 +377,21 @@ unwritten). Leave protection on for `collega-web` if you want previews private.
 ## 8. The first administrator
 
 **This is the part that decides whether a fresh deployment is usable at all.**
+
+> **Open choice, and it needs one.** `SITE_ADMIN_EMAIL` and `SITE_ADMIN_PASSWORD` are read through
+> `required()` in `apps/api/src/common/config/fragments/site-admin.ts`, so the API will not start
+> without them — yet **nothing consumes `config.siteAdmin`**. The bootstrap script reads
+> `process.env` directly, so the fragment's entire effect is to refuse boot. That leaves an
+> administrator's password sitting in the environment forever, long after the account has changed
+> it, and an earlier version of §12 compounded it by telling the operator to delete the variable,
+> which would have taken the deployment down on the next cold start.
+>
+> Two ways out, and they are not equivalent. **Stop requiring them** — delete the dead fragment, and
+> the credential becomes genuinely removable once the account exists; the cost is losing a guard
+> that today guarantees a first deploy cannot finish without the means to create an administrator.
+> **Or keep the requirement** and accept that the variable is permanent, which is what §12 now says.
+> The first is probably right, but it changes boot-time behaviour and should land as its own change
+> rather than riding along with deployment configuration.
 
 The demo seed throws when `NODE_ENV=production` (`packages/infrastructure/prisma/seed/index.ts`),
 so a production database created by `migrate deploy` has **zero users** and a login screen nobody
@@ -639,8 +654,10 @@ database; step 10 is verification.
     - Open the web app, sign in as `SITE_ADMIN_EMAIL`. It must **force a password change**; that is
       requirement 9 working, not a bug.
     - Change the password, then create an organization. That exercises a write through Prisma.
-    - Optionally delete `SITE_ADMIN_PASSWORD` from the API project. Nothing resets the account
-      afterwards.
+    - **Leave `SITE_ADMIN_PASSWORD` in place.** An earlier draft of this checklist said it could be
+      deleted once the password had been changed. It cannot: the API refuses to boot without it, so
+      deleting it works until the next cold start and then takes the deployment down. That the
+      credential outlives its usefulness is a real wart — §8 records the choice it needs.
 
 If something fails, §11 names the six candidates and where each shows itself. **Do not fix a
 cross-origin symptom by adding CORS** (§4), and do not set `DATABASE_URL` in the GitHub Actions
