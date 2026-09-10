@@ -513,6 +513,36 @@ account. In rough order of how likely each is to be the thing that bites:
 | Node 24 selection on the build image | `Invalid Node.js Version` during install | Set the project's Node.js Version to 24.x |
 | Deployment Protection on the API (§7) | Web previews receiving HTML from every API call | Turn Vercel Authentication off for `collega-api` |
 | That preview builds see Preview-scoped variables at build time | `db:migrate` failing or migrating the wrong database | The first preview build's log — **check which database it touched** (§12 step 10, required) |
+| **Observed, not hypothetical:** stale settings on a project repointed rather than created | Build fails asking you to remove the `public` output directory so the Next.js build output can be used | Clear the Output Directory override *and* set Root Directory — see below |
+
+### Stale project settings on a repointed project
+
+This one has already happened, on the pre-existing `collega` project. It was created pointing at
+the **repository root**, auto-detected as the "Other" preset, and given `public` as its Output
+Directory. Every line of configuration in this document postdates it, and none of it helps.
+
+**`vercel.json` cannot fix this, and reaching for it is the natural first instinct.**
+`outputDirectory` can only *set* an override — there is no value meaning "go back to
+auto-detecting" — so a stale project-level override beats the file's silence. Clear it at the
+project:
+
+```bash
+vercel project update <name> --auto-detect output-directory
+```
+
+or switch the override off under **Settings → Build & Development Settings**.
+
+**Clearing it is not enough on its own.** The output directory is the symptom; the project is
+building the wrong directory altogether. Three settings move together, in this order:
+
+1. **Root Directory → `apps/web`.** Until this is right, Vercel never even reads
+   `apps/web/vercel.json`, so nothing this repository says is in play.
+2. **Output Directory → override off.** As above, and only the project can do it.
+3. **Framework → follows.** Once Root Directory is right, the preset self-corrects, because
+   `apps/web/vercel.json` declares `nextjs` itself. Nothing to set by hand.
+
+A project created fresh at the correct Root Directory carries none of this. That is the argument
+for deleting and recreating rather than repointing, if repointing turns into more than these three.
 
 ### The one failure that is silent, and how to recognise it
 
@@ -553,10 +583,19 @@ database; step 10 is verification.
 4. **Create the web project.** New Project → this repository → **Root Directory `apps/web`** →
    Framework **Next.js**. Do not override the build or install commands; `apps/web/vercel.json`
    already sets them.
+
+   *Or repoint the existing one.* `georgemschaffers-projects/collega` has no Root Directory set,
+   which is why every push fails. It can become the web project, but **it carries settings a fresh
+   project would not have** — it was auto-detected as "Other" at the repository root, so its Output
+   Directory is pinned to `public` and its build fails asking you to remove it. Fix all three:
+   Root Directory → `apps/web`; Output Directory → override **off**
+   (`vercel project update collega --auto-detect output-directory`, or Settings → Build &
+   Development Settings — `vercel.json` cannot express this); Framework then corrects itself from
+   the file. §11 has the full symptom. Deleting it and creating fresh is the shorter path if you
+   have no attachment to the project's history.
 5. **Create the API project.** New Project → the same repository → **Root Directory `apps/api`** →
-   Framework **Nest.js**. Same: the commands come from `apps/api/vercel.json`.
-   *(The existing `georgemschaffers-projects/collega` project has no root directory set, which is
-   why every push fails. Repoint it at `apps/web` and it becomes the web project, or delete it.)*
+   Framework **Nest.js**. Same: the commands come from `apps/api/vercel.json`. Create this one
+   fresh — there is no existing project to repoint, and nothing to inherit.
 6. **Turn Vercel Authentication off for the API project** (Settings → Deployment Protection).
    `apps/web` calls it server-side and cannot satisfy an SSO redirect.
 7. **Set the API project's variables:**
