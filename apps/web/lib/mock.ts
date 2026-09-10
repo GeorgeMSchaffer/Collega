@@ -19,28 +19,22 @@ export { engagementDenial, isAdministrator, writeDenial } from './roles'
 export type { Board, CurrentUser, Idea, Priority, Role, Status } from './types'
 
 /**
- * The ideas and comments below are the fixture's own shape, not the screens'.
+ * The ideas below are the fixture's own shape, not the screens'.
  *
- * They stopped being `IdeaDetail` and `Comment` when the inspector went to the API: a real idea has
- * no `reference` and carries its thread inline, and a real comment's author can be absent. Keeping
- * the fixture on the view types would either drag a field with no column back into what the screens
- * render, or force this file to invent the parts it cannot know. Nothing in `lib/data/` reads
- * either of these any more — only the tests that assert the fixture's own distribution do.
+ * They stopped being `IdeaDetail` when the inspector went to the API: a real idea has no
+ * `reference` and carries its thread inline. Keeping the fixture on the view types would either
+ * drag a field with no column back into what the screens render, or force this file to invent the
+ * parts it cannot know. Nothing in `lib/data/` reads this any more — only the tests that assert
+ * the fixture's own distribution do.
+ *
+ * The comment fixtures that sat beside it are gone: the thread comes off `GET /ideas/{id}` now,
+ * and nothing — not a screen, not a test — had read them since.
  */
 type FixtureIdea = Idea & {
   reference: string
   description: string
   authorName: string
   createdOn: string
-}
-
-type FixtureComment = {
-  id: string
-  ideaId: string
-  authorName: string
-  authorInitials: string
-  postedOn: string
-  body: string
 }
 
 /**
@@ -180,36 +174,6 @@ export function boardById(id: string): Board | undefined {
 
 export function ideaById(id: string): FixtureIdea | undefined {
   return ideas.find((idea) => idea.id === id)
-}
-
-/** Three comments on the first two ideas of each board, matching the seed's shape. */
-const COMMENT_SEED: ReadonlyArray<
-  readonly [offset: number, author: string, initials: string, body: string]
-> = [
-  [0, 'Maya Collaborator', 'MC', "Thanks for raising this - I'll take a first look."],
-  [0, 'Olivia Administer', 'OA', "Agreed, let's prioritize it for the next review."],
-  [1, 'Noah Contributor', 'NC', 'Following along - this would help my team too.'],
-]
-
-export const comments: FixtureComment[] = boards.flatMap((board) =>
-  COMMENT_SEED.flatMap(([offset, authorName, authorInitials, body], n) => {
-    const idea = ideasForBoard(board.id)[offset]
-    if (!idea) return []
-    return [
-      {
-        id: `${board.id}-c${n}`,
-        ideaId: idea.id,
-        authorName,
-        authorInitials,
-        postedOn: `2026-09-0${n + 1}`,
-        body,
-      },
-    ]
-  }),
-)
-
-export function commentsForIdea(ideaId: string): FixtureComment[] {
-  return comments.filter((comment) => comment.ideaId === ideaId)
 }
 
 export const navCounts = {

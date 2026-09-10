@@ -104,10 +104,6 @@ export async function getStatuses(): Promise<fixture.Status[]> {
   return resolve(fixture.statuses)
 }
 
-export async function getStatus(id: string): Promise<fixture.Status | null> {
-  return resolve(fixture.statusById(id) ?? null)
-}
-
 export async function getStatusesForOrganization(
   organizationId: string,
 ): Promise<fixture.Status[]> {

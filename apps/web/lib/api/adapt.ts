@@ -98,14 +98,6 @@ export function toStatus(wire: WireStatus): Status {
 }
 
 /**
- * A list item into a card.
- *
- * `assignees` is a list on the wire and one avatar on the card: comp Q's `.kcard` shows a single
- * assignee, so the first is taken rather than the card silently growing a row. `tagNames` is
- * narrowed the same way, to `null` when there are none — the fixture always had exactly one tag
- * and the real data frequently has none, which is why `Idea.tag` is nullable now.
- */
-/**
  * The date as comp P writes it in the inspector byline: `Aug 15, 2026`.
  *
  * Fixed to UTC and to `en-US`, because the alternative is a date that renders one way on the server
@@ -165,6 +157,14 @@ export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
   }
 }
 
+/**
+ * A list item into a card.
+ *
+ * `assignees` is a list on the wire and one avatar on the card: comp Q's `.kcard` shows a single
+ * assignee, so the first is taken rather than the card silently growing a row. `tagNames` is
+ * narrowed the same way, to `null` when there are none — the fixture always had exactly one tag
+ * and the real data frequently has none, which is why `Idea.tag` is nullable now.
+ */
 export function toIdea(wire: WireIdeaListItem): Idea {
   const assignee = wire.assignees[0]
   return {
