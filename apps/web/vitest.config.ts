@@ -16,6 +16,12 @@ export default defineConfig({
         find: /^@\//,
         replacement: `${fileURLToPath(new URL('.', import.meta.url))}/`,
       },
+      // `server-only` is not installed — Next resolves it internally — so a test that reaches a
+      // module carrying the marker fails to resolve rather than to assert. See the stub.
+      {
+        find: /^server-only$/,
+        replacement: fileURLToPath(new URL('./test/support/server-only.ts', import.meta.url)),
+      },
     ],
   },
   test: {

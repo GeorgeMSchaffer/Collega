@@ -1,10 +1,9 @@
 /**
  * Ideas, the comments on them, and the board lanes they sit in.
  *
- * `getIdeasForBoard` is a reader rather than a filter the caller applies to `getIdeas`, because it
- * is a different request — the API scopes by board server-side, and pulling every idea to drop most
- * of them is the shape that quietly stops scaling. That reasoning was written against the fixture
- * and is now simply true.
+ * A board's ideas and the organization's ideas are separate readers rather than one list the caller
+ * filters, because they are separate requests: the API scopes by board server-side, and pulling
+ * every idea to drop most of them is the shape that quietly stops scaling.
  *
  * **Every reader in this module is real.** The lane cards, the organization-wide table, the
  * catalogs the create form picks from, and now the idea detail behind the inspector. `GET
