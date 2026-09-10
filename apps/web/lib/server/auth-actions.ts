@@ -189,8 +189,9 @@ export type RegisterState = {
  * *sign-in* refusal (a lockout, a rejected credential) for someone whose account demonstrably just
  * succeeded — a branch with no honest message.
  *
- * Every rejection is attributable to a field, so there is no generic-failure path: a 400 names the
- * fields in its `errors` bag.
+ * Every rejection the submitted details earn is attributable to a field: a 400 names them in its
+ * `errors` bag. The one refusal that is not is the rate limiter's 429, which is about the address
+ * the request came from and so carries a banner message with no field beside it.
  */
 export async function register(_previous: RegisterState, form: FormData): Promise<RegisterState> {
   const values = {
@@ -220,6 +221,17 @@ export async function register(_previous: RegisterState, form: FormData): Promis
       errors,
       values,
     }
+  }
+
+  // Not a field's fault and not an outage, so neither of the branches around it will do. Register
+  // is limited to ten a minute per address, which one onboarding session or one classroom reaches
+  // — and throwing here crashes the page, losing an invite code, a name and an address that were
+  // typed correctly. `errors` stays empty because no field is at fault; `values` comes back for
+  // the same reason it does above.
+  //
+  // No `isRateLimited` check: register has no lockout, so every 429 it answers is the limiter.
+  if (response.status === 429) {
+    return { error: tooManyAttempts(response.headers.get('retry-after')), errors: {}, values }
   }
 
   if (!response.ok) {
