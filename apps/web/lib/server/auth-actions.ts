@@ -37,6 +37,21 @@ export type LoginState = { error: string | null; email: string }
 const SIGN_IN_FAILED = 'Incorrect email or password.'
 
 /**
+ * Every status `POST /auth/login` uses to decline: 400 a field is missing, 401 the credential is
+ * wrong, 403 the account is inactive, 429 it is locked out after five failed attempts.
+ *
+ * **All four render as `SIGN_IN_FAILED`, deliberately.** The last two describe *this* account, so
+ * naming them tells an anonymous caller that the address is registered — five wrong guesses would
+ * separate a real account from a made-up one, which is the enumeration the shared message exists to
+ * prevent, and an inactive-account notice leaks a deactivation to whoever asks. Nobody is left
+ * uninformed by the choice: `LoginForm` already prints the fifteen-minute lockout rule beside every
+ * failure, so the person who has just locked themselves out reads how long to wait regardless.
+ *
+ * Anything not on this list is an outage or a misrouted request and must reach the error boundary.
+ */
+const SIGN_IN_REFUSALS: readonly number[] = [400, 401, 403, 429]
+
+/**
  * Lifts the session out of the API's `Set-Cookie` and onto ours.
  *
  * The token is deliberately absent from the login *body* (decision `08`), so the cookie header is
@@ -69,10 +84,9 @@ export async function signIn(_previous: LoginState, form: FormData): Promise<Log
     cache: 'no-store',
   })
 
-  // 400 (a field missing) and 401 (wrong credential) are both "that did not sign you in" to a
-  // person typing into a form, and the API distinguishes them for an API client's benefit, not a
-  // reader's. Anything else is an outage and should reach the error boundary as one.
-  if (response.status === 400 || response.status === 401) {
+  // Every designed refusal is "that did not sign you in" to a person typing into a form; the API
+  // separates them for an API client's benefit, not a reader's. See `SIGN_IN_REFUSALS`.
+  if (SIGN_IN_REFUSALS.includes(response.status)) {
     return { error: SIGN_IN_FAILED, email }
   }
   if (!response.ok) {
