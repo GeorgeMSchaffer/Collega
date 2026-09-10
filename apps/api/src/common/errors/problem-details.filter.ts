@@ -72,9 +72,22 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       return
     }
 
+    // The name, message and stack, never the exception object. A Prisma error carries far more
+    // than that on its own properties - `PrismaClientInitializationError` holds the datasource URL,
+    // and a query error holds the failing query - and Vercel's runtime logs are readable by
+    // everyone with access to the project, which is a wider audience than the credential's. The
+    // traceId goes with it so a log line can be matched to the 500 the caller was handed; the
+    // response itself still says only "Internal Server Error".
+    //
     // eslint-disable-next-line no-console -- the one place an unexpected error is allowed to be
     // logged rather than silently swallowed; nothing about this response reveals it to the caller.
-    console.error('Unhandled exception', exception)
+    console.error('Unhandled exception', {
+      traceId,
+      error:
+        exception instanceof Error
+          ? { name: exception.name, message: exception.message, stack: exception.stack }
+          : String(exception),
+    })
     this.sendFramework(
       response,
       new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR),
