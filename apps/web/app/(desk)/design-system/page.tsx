@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@collega/design-system'
 import { Topbar } from '@/components/nav/topbar'
+import { requireCurrentUser } from '@/lib/server/current-user'
 
 /**
  * Wave E0's verification surface: it renders the theme and every primitive the design system
@@ -37,7 +38,10 @@ const CATEGORY_DOTS = [
   'purple-deep',
 ] as const
 
-export default function Page() {
+export default async function Page() {
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
+  await requireCurrentUser()
+
   return (
     <>
       <Topbar title="Design system" actions={<Badge variant="warning">Wave E0</Badge>} />

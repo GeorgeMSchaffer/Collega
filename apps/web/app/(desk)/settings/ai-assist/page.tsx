@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { InertForm } from '@/components/common/inert-form'
 import { SettingsPage } from '@/components/settings/settings-page'
 import { getAiAssist, getIdeaTypes, SCOPE_STATEMENT_MAX } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'AI Assist · Collega' }
@@ -26,9 +27,12 @@ export const metadata = { title: 'AI Assist · Collega' }
  * branches on the role itself rather than declaring `siteAdminOnly`, which would refuse the very
  * admin who owns the setting.
  */
-export default function AiAssistPage() {
-  const siteAdmin = currentUser.role === 'SiteAdmin'
-  const org = currentUser.organizationName ?? 'this organization'
+export default async function AiAssistPage() {
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
+  await requireCurrentUser()
+
+  const siteAdmin = currentUser().role === 'SiteAdmin'
+  const org = currentUser().organizationName ?? 'this organization'
 
   return (
     <SettingsPage

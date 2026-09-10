@@ -55,12 +55,18 @@ export class BoardService {
     await this.ensureOrganizationExists(organizationId)
 
     const boards = await this.boards.listByOrganization(organizationId)
+    // One query for every board's idea count. The client used to ask each board's idea endpoint
+    // for a single row and read `totalCount` off the envelope, which is one round trip per board
+    // from one render - fine at four boards, two hundred concurrent requests at two hundred.
+    const ideaCounts = await this.boards.countIdeasByBoard(boards.map((board) => board.id))
+
     return [...boards].sort(compareBoardsForListing).map((board) => ({
       boardId: board.id,
       organizationId: board.organizationId,
       name: board.name,
       allowUserStatusUpdate: board.allowUserStatusUpdate,
       swimlaneCount: board.swimlanes.length,
+      ideaCount: ideaCounts.get(board.id) ?? 0,
     }))
   }
 

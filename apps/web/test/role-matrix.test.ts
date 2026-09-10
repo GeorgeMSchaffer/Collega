@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import {
-  currentUser,
-  deliveryAdminDenial,
-  engagementDenial,
-  isAdministrator,
-  members,
-  type Role,
-  writeDenial,
-} from '@/lib/mock'
+import { members } from '@/lib/mock'
+import { engagementDenial, isAdministrator, type Role, writeDenial } from '@/lib/roles'
+import { currentUser, deliveryAdminDenial } from '@/lib/session'
 import { actAs } from './support/acting-role'
 
 /**
@@ -162,12 +156,13 @@ describe('the premise the role fixtures rest on', () => {
   })
 
   it('signs in as an Org Admin of a named organization by default', () => {
-    expect(currentUser.role).toBe('OrgAdmin')
-    expect(currentUser.organizationName).toBe('Acme Robotics')
+    expect(currentUser().role).toBe('OrgAdmin')
+    expect(currentUser().organizationName).toBe('Acme Robotics')
   })
 
   it('gives a Site Admin no organization name to display', () => {
     actAs('SiteAdmin')
-    expect(currentUser.organizationName).toBeNull()
+    expect(currentUser().organizationName).toBeNull()
+    expect(currentUser().organizationId).toBeNull()
   })
 })

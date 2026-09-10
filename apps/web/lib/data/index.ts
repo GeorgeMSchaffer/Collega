@@ -1,15 +1,18 @@
 /**
  * The seam between `apps/web` and its data.
  *
- * Every reader here is async and every one is backed by `lib/mock.ts` today. When Wave D lands,
- * these bodies become `fetch` calls against the Nest host and `mock.ts` is deleted — the call
- * sites do not change, because they were written against a promise from the start.
+ * Every reader here is async, and each one is either a `fetch` against `apps/api` or still a
+ * fixture. The call sites cannot tell which, and that is the point of the indirection: converting
+ * a reader replaces a body, never a signature. Before it existed, 37 files imported the fixture
+ * module directly, so wiring the API meant editing all 37.
  *
- * That is the whole point of the indirection. Before it existed, 37 files imported the fixture
- * module directly, so wiring the API meant editing all 37 across seven parallel Wave D slices,
- * each touching files the others also touched. Now it is one module per feature area.
+ * Converted so far: the board readers and `getIdeasForBoard`. Everything else — the ideas list and
+ * detail, delivery, and every settings surface — still answers from `lib/mock.ts`, and the readers
+ * that a half-converted screen would otherwise join against real data are named
+ * `getFixtureBoards` / `getFixtureBoard` so it is visible which ones those are.
  *
- * **Identity does not live here** — see `lib/session.ts` for why it stays synchronous.
+ * **Identity does not live here** — see `lib/session.ts` for why it stays synchronous, and
+ * `lib/server/current-user.ts` for the one place it is fetched.
  */
 
 export * from './admin'

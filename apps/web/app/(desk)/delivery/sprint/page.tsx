@@ -9,11 +9,15 @@ import {
   getDeliveryStatuses,
   getIssuesInSprint,
 } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Sprint board · Collega' }
 
 export default async function SprintBoardPage() {
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
+  await requireCurrentUser()
+
   const [sprint, deliveryStatuses] = await Promise.all([getActiveSprint(), getDeliveryStatuses()])
   const committed = sprint ? await getIssuesInSprint(sprint.id) : []
   // The empty state names how many issues are waiting. Derived from the same query the backlog
@@ -105,7 +109,7 @@ export default async function SprintBoardPage() {
               </div>
             }
           >
-            {currentUser.organizationName ?? 'This deployment'} has {waiting.length}{' '}
+            {currentUser().organizationName ?? 'This deployment'} has {waiting.length}{' '}
             {waiting.length === 1 ? 'issue' : 'issues'} in the delivery backlog and no active
             sprint. An administrator plans a sprint from the backlog, then starts it here.
           </EmptyState>

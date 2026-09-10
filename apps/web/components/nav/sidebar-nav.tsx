@@ -3,7 +3,8 @@
 import { Avatar } from '@collega/design-system'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { currentUser } from '@/lib/session'
+import { signOut } from '@/lib/server/auth-actions'
+import { useCurrentUser } from '@/lib/session-client'
 import { CommandPalette } from './command-palette'
 import { NavIcon } from './icons'
 import type { NavGroup } from './nav-items'
@@ -17,6 +18,9 @@ const NAV_CLASS =
  */
 export function SidebarNav({ groups }: { groups: NavGroup[] }) {
   const pathname = usePathname()
+  // The principal the desk layout already resolved, handed across the boundary by
+  // `SessionProvider` — not a second fetch, and not a promise this component could not await.
+  const user = useCurrentUser()
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground">
@@ -29,7 +33,7 @@ export function SidebarNav({ groups }: { groups: NavGroup[] }) {
 
       {/* A Site Admin is outside every organization, so it shows the scope rather than an org name. */}
       <div className="px-2 pb-3 text-xs font-medium text-muted-foreground">
-        {currentUser.organizationName ?? 'All organizations'}
+        {user.organizationName ?? 'All organizations'}
       </div>
 
       <CommandPalette />
@@ -60,12 +64,23 @@ export function SidebarNav({ groups }: { groups: NavGroup[] }) {
 
       <div className="flex-1" />
 
-      <div className="flex items-center gap-2 border-t px-2 py-2.5 text-sm">
-        <Avatar initials={currentUser.initials} />
-        <div>
-          <div className="text-sm font-semibold leading-snug">{currentUser.displayName}</div>
-          <div className="text-xs text-muted-foreground/70">{currentUser.roleLabel}</div>
+      {/* Sign out sits on its own row rather than beside the name: at 256px the two together
+          truncated the display name, and a person's name is the one label here that must not be. */}
+      <div className="flex flex-col gap-1 border-t px-2 py-2.5 text-sm">
+        <div className="flex items-center gap-2">
+          <Avatar initials={user.initials} />
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold leading-snug">{user.displayName}</div>
+            <div className="text-xs text-muted-foreground/70">{user.roleLabel}</div>
+          </div>
         </div>
+        {/* A real `<form>` around a Server Function, so signing out is a POST and cannot be
+            triggered by a prefetch or a link the browser decides to warm up. */}
+        <form action={signOut}>
+          <button type="submit" className={`${NAV_CLASS} cursor-pointer border-0 bg-transparent`}>
+            Sign out
+          </button>
+        </form>
       </div>
     </aside>
   )

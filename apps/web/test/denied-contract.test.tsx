@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { NewIdeaButton } from '@/components/ideas/new-idea-button'
 import { CommentBox, UpvoteButton } from '@/components/inspector/engagement'
-import { deliveryAdminDenial, engagementDenial, type Role, writeDenial } from '@/lib/mock'
+import { engagementDenial, type Role, writeDenial } from '@/lib/roles'
+import { deliveryAdminDenial } from '@/lib/session'
 import { actAs } from './support/acting-role'
 
 /**

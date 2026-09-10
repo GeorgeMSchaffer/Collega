@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Topbar } from '@/components/nav/topbar'
 import { getDeliveryStatus, getIssueByKey, getOutcome, getSprint } from '@/lib/data'
 import { EFFORT_COLORS } from '@/lib/display'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, deliveryAdminDenial } from '@/lib/session'
 
 export async function generateMetadata({ params }: { params: Promise<{ issueKey: string }> }) {
@@ -29,6 +30,9 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  * answers "how much support did this have when we committed", and a live count could not.
  */
 export default async function IssuePage({ params }: { params: Promise<{ issueKey: string }> }) {
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
+  await requireCurrentUser()
+
   const { issueKey } = await params
   const issue = await getIssueByKey(issueKey)
   if (!issue) notFound()
@@ -128,9 +132,9 @@ export default async function IssuePage({ params }: { params: Promise<{ issueKey
             </dl>
 
             <div className="mt-4">
-              {deliveryAdminDenial(currentUser.role) ? (
+              {deliveryAdminDenial(currentUser().role) ? (
                 <Denied
-                  reason={deliveryAdminDenial(currentUser.role) as string}
+                  reason={deliveryAdminDenial(currentUser().role) as string}
                   id="why-set-outcome"
                 >
                   <Button

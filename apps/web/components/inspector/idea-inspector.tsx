@@ -1,6 +1,6 @@
 import { Alert, Avatar, Dot, Marker, Separator, Tag } from '@collega/design-system'
 import Link from 'next/link'
-import { getBoard, getCommentsForIdea, getStatus, type Idea } from '@/lib/data'
+import { getCommentsForIdea, getFixtureBoard, getStatus, type IdeaDetail } from '@/lib/data'
 import { currentUser, writeDenial } from '@/lib/session'
 import { CloseOnEscape } from './close-on-escape'
 import { CommentBox, UpvoteButton } from './engagement'
@@ -21,13 +21,13 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  * scrollable, two ideas can be compared by moving down it, and nothing needs `inert`. Do not
  * "improve" this into a dialog; the accessibility argument for the whole surface rests on it.
  */
-export async function IdeaInspector({ idea, closeHref }: { idea: Idea; closeHref: string }) {
+export async function IdeaInspector({ idea, closeHref }: { idea: IdeaDetail; closeHref: string }) {
   const [status, board, thread] = await Promise.all([
     getStatus(idea.statusId),
-    getBoard(idea.boardId),
+    getFixtureBoard(idea.boardId),
     getCommentsForIdea(idea.id),
   ])
-  const editDenial = writeDenial(currentUser.role)
+  const editDenial = writeDenial(currentUser().role)
 
   return (
     <aside

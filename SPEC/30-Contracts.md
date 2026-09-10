@@ -837,6 +837,7 @@ Success response `200` item shape:
 - `name`
 - `allowUserStatusUpdate` boolean
 - `swimlaneCount`
+- `ideaCount` — live ideas on the board, excluding soft-deleted ones, so it matches the `totalCount` of `GET /api/v1/boards/{boardId}/ideas`. Added 2026-09-10: the boards list renders the figure on every card, and without it a client has to issue one idea request per board. This endpoint does not page, so that fan-out is unbounded.
 
 ### `POST /api/v1/organizations/{organizationId}/boards`
 Purpose: Create a board with at least two swimlanes.

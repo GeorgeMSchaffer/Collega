@@ -4,12 +4,20 @@ import { GatedAction } from '@/components/common/gated-action'
 import { IdeasTable } from '@/components/ideas/ideas-table'
 import { NewIdeaButton } from '@/components/ideas/new-idea-button'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoards, getIdeas, getStatuses } from '@/lib/data'
+import { getFixtureBoards, getIdeas, getStatuses } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Ideas · Collega' }
 
 export default async function IdeasPage() {
-  const [ideas, boards, statuses] = await Promise.all([getIdeas(), getBoards(), getStatuses()])
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
+  await requireCurrentUser()
+
+  const [ideas, boards, statuses] = await Promise.all([
+    getIdeas(),
+    getFixtureBoards(),
+    getStatuses(),
+  ])
 
   return (
     <>

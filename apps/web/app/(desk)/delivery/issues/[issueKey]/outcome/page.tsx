@@ -6,6 +6,7 @@ import { CloseOnEscape } from '@/components/inspector/close-on-escape'
 import { Topbar } from '@/components/nav/topbar'
 import { getIssueByKey, getIssuesForOutcome, getOutcome, getOutcomes } from '@/lib/data'
 import { EFFORT_COLORS } from '@/lib/display'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, deliveryAdminDenial } from '@/lib/session'
 
 export async function generateMetadata({ params }: { params: Promise<{ issueKey: string }> }) {
@@ -30,6 +31,9 @@ export default async function SetOutcomePage({
 }: {
   params: Promise<{ issueKey: string }>
 }) {
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
+  await requireCurrentUser()
+
   const { issueKey } = await params
   const issue = await getIssueByKey(issueKey)
   if (!issue) notFound()
@@ -50,7 +54,7 @@ export default async function SetOutcomePage({
   // Grouping an issue is administrator-only (SPEC/20-feature-issues-and-delivery.md): a Site Admin
   // reaches it through View As, a member not at all. Without this the picker rendered fully
   // operable for every role.
-  const denial = deliveryAdminDenial(currentUser.role)
+  const denial = deliveryAdminDenial(currentUser().role)
 
   return (
     <>

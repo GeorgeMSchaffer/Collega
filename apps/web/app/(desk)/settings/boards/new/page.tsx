@@ -1,15 +1,19 @@
 import { BoardForm, BoardRefusal } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
 import { getStatuses } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'New board · Collega' }
 
 export default async function NewBoardPage() {
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
+  await requireCurrentUser()
+
   // A Site Admin passes `isAdministrator`, so the default gate would hand them a form whose save
   // is refused on every path. Branch first; a User or Read Only still falls through to the
   // administrators-only refusal `SettingsPage` owns.
-  if (currentUser.role === 'SiteAdmin') {
+  if (currentUser().role === 'SiteAdmin') {
     return <BoardRefusal title="New board" reading="board creation" />
   }
 

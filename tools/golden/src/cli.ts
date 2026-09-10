@@ -209,7 +209,12 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
 
     const report = buildReport(fixtures, exchanges)
     console.log(`\n${formatReplay(report)}`)
-    return report.matched === report.total && summary.failures.length === 0 ? 0 : 1
+    // F1's gate. "Clean" cannot mean zero diffs once some differences are chosen deliberately
+    // (`SPEC/decisions.md` 2026-09-09), so it means every case either matched or is on the
+    // accepted list. A stale entry does not fail the run - it is bookkeeping, not a regression -
+    // but it is printed every time until someone removes it.
+    const unexplained = report.total - report.matched - report.accepted
+    return unexplained === 0 && summary.failures.length === 0 ? 0 : 1
   },
 
   async coverage(args) {

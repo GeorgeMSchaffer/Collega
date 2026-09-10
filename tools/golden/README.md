@@ -136,6 +136,84 @@ is declared per step in `unstable`, and dropped from both sides before the diff:
 is a small hole in the oracle, so keep the list short and say why in the step's
 `note`.
 
+## Differences someone decided to keep
+
+`unstable` says *this value cannot be compared*. It is the wrong tool for a
+value that **can** be compared and is simply going to be different from now on —
+declaring `body.portraitDataUrl` unstable would stop pinning that a portrait
+comes back at all, and an endpoint that quietly returned `null` would pass.
+
+`src/accepted.ts` is the other tool. The corpus is a regression detector, not the
+specification (`SPEC/decisions.md` 2026-09-09), so a diff has three answers: fix
+it, accept and record it, or deliberately do better. An entry is the second, and
+it **asserts what the difference is allowed to look like** rather than muting the
+path:
+
+```ts
+{ cases: ['profile.portrait.set.orgadmin', 'profile.portrait.set.user', ...],
+  path: 'body.portraitDataUrl', decided: '2026-09-09',
+  reason: 'sharp and ImageSharp encode the same pixels differently...',
+  shape: /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/ }
+```
+
+The comparison still runs. The mismatch is still found. The entry only decides
+whether it counts, and only if **both** sides satisfy `shape` — so a portrait
+that became `null`, `""`, or vanished is a different mismatch and still fails.
+`cases` lists `scenario.step` keys, never a wildcard: a case that starts
+diverging later has to be looked at rather than arriving pre-authorized. A case
+is accepted only when *every* one of its mismatches is: a recorded difference
+plus a real regression in the same response is a failing case, not a passing one
+with a footnote.
+
+`path` may carry `[]` for an array index, the same way an `unstable` declaration
+does, so an entry about a field on every element of a list body does not have to
+guess how many elements a scenario produced:
+
+```ts
+{ cases: ['boards.list.orgadmin', 'ideas.board', ...],
+  path: 'body[].ideaCount', decided: '2026-09-10',
+  reason: 'the boards list now carries the count the client used to fan out for...',
+  kind: 'extra' }
+```
+
+`[]` matches an index and nothing else, and a path without one is still compared
+as the exact string it always was.
+
+`shape` is per-side, so on a value where only a fraction may move it cannot say
+"identical except this". Anchor it to the stable part of a 3161-character CSV and
+everything after the anchor is unchecked on **both** sides — the entry has become
+the muting it was supposed to avoid. `mask` is the comparative half: both sides
+must be equal once every match of it is replaced.
+
+```ts
+{ cases: ['ideas.export.orgadmin', ...], path: 'body', decided: '2026-09-09',
+  reason: 'the export embeds due dates the seed sets relative to the run day...',
+  shape: /^Title,Description,Priority,.../, mask: /\d{4}-\d{2}-\d{2}/g }
+```
+
+So the export's header, its thirteen data rows, their order, quoting and CRLF
+endings are all still compared byte for byte, and only the dates may move. Any
+`reason` that claims "everything else is identical" needs a `mask`, because that
+sentence is a statement about the two sides together and no `shape` can make it.
+
+A `reason` is the evidence someone reads when deciding whether to reopen an
+entry, so it must claim only what the harness actually checks —
+`content-disposition`, for one, is outside the header allow list and is not
+compared at all.
+
+This is what makes F1's gate mean something. "Fix until clean" cannot mean zero
+diffs once some differences are chosen, so `replay` exits non-zero unless every
+case either matched or is listed here — otherwise the gate quietly stops meaning
+anything the first time a diff is waved through.
+
+An (entry, case) pair that excuses nothing is printed as **stale** on every run,
+per case rather than per entry, so an entry whose four cases are down to one says
+so instead of looking as alive as the day it was written. It does not fail the
+run; it means the fix landed or the corpus moved, and the case should come off
+the entry. Staleness is relative to the stack just replayed — entries written for
+Nest correctly excuse nothing on a .NET self-replay. Nothing here should outlive
+the reason it was added.
+
 **Reading a failure list, one caveat.** Because labels are minted per scenario,
 a step that fails outright takes its ids with it: a *later* step that would have
 echoed one of them has nothing to match against, so it is labelled by its own

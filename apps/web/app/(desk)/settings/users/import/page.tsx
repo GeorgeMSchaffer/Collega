@@ -12,10 +12,14 @@ import {
 } from '@collega/design-system'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getLastImport } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Import users · Collega' }
 
 export default async function ImportUsersPage() {
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
+  await requireCurrentUser()
+
   const lastImport = await getLastImport()
 
   return (

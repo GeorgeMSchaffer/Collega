@@ -4,10 +4,14 @@ import { AdminAction } from '@/components/delivery/admin-action'
 import { Topbar } from '@/components/nav/topbar'
 import { getBacklogIssues, getDeliveryStatuses, getOutcomes, getSprints } from '@/lib/data'
 import { EFFORT_COLORS } from '@/lib/display'
+import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Backlog · Collega' }
 
 export default async function BacklogPage() {
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
+  await requireCurrentUser()
+
   const [rows, sprints, outcomes, statuses] = await Promise.all([
     getBacklogIssues(),
     getSprints(),

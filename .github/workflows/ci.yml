@@ -44,7 +44,12 @@ jobs:
       # connect. Anything needing a real database belongs in a separate job with a service
       # container, not in this one.
       #
-      # `check` is the whole gate — Biome, tsc across every package, and Vitest. It also runs
+      # `check` is the whole gate — Biome, tsc across every package, Vitest, and `next build`.
+      # The build is in there because tsc is not a substitute for it: the client/server graph is
+      # Turbopack's to resolve, and a `'use client'` file reaching a server module through a barrel
+      # typechecks perfectly and fails to build. That shipped once.
+      #
+      # It also runs
       # tools/boundaries, which asserts the layer rules still FIRE by writing probe files and
       # confirming Biome reports them. That matters more than a clean run: the first version of
       # the config blocked `@collega/application` and silently allowed `@collega/application/ideas`,

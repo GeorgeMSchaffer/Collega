@@ -7,7 +7,7 @@ import { currentUser, writeDenial } from '@/lib/session'
  * (see `Denied`).
  */
 export function NewIdeaButton({ id }: { id: string }) {
-  const denial = writeDenial(currentUser.role)
+  const denial = writeDenial(currentUser().role)
 
   if (!denial) {
     return <Button>New idea</Button>

@@ -23,6 +23,8 @@
       "Bash(dotnet ef *)",
       "Bash(dotnet restore *)",
       "Bash(dotnet publish *)",
+      "Bash(dropdb -h 127.0.0.1 *)",
+      "Bash(createdb -h 127.0.0.1 *)",
       "Bash(docker compose *)",
       "Bash(docker ps *)",
       "Bash(docker logs *)",

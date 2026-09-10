@@ -2,7 +2,10 @@
 
 import { Button, Dot } from '@collega/design-system'
 import { useState } from 'react'
-import { type Status, SWIMLANE_FLOOR } from '@/lib/data'
+// Not through `@/lib/data`: that barrel re-exports the API-backed readers, so pulling these two
+// constants through it drags `next/headers` into the client graph and fails the build.
+import { SWIMLANE_FLOOR } from '@/lib/mock'
+import type { Status } from '@/lib/types'
 
 /**
  * Which statuses become a board's columns, and in what order.

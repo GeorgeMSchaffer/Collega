@@ -5,6 +5,7 @@
 // In Wave F the same command is pointed at Nest and its failure list is the
 // remaining work (SPEC/50-typescript-migration.md, F1).
 
+import { ACCEPTED_DIFFS, type AcceptedCase, classify, staleEntries } from '../src/accepted.ts'
 import { type Fixture, groupByScenario, normalizeExchange } from '../src/corpus.ts'
 import { diff, formatMismatches, type Mismatch } from '../src/diff.ts'
 import { Normalizer } from '../src/normalize.ts'
@@ -15,14 +16,22 @@ export type CaseResult = {
   step: string
   endpoint: string
   role: string
-  status: 'match' | 'status' | 'body' | 'headers' | 'absent'
+  /**
+   * `accepted` is a difference someone decided to keep (`src/accepted.ts`). It is reported
+   * separately from `match` rather than folded into it, because "367 matched" and "363 matched and
+   * 4 accepted" are different claims and the second is the honest one.
+   */
+  status: 'match' | 'accepted' | 'status' | 'body' | 'headers' | 'absent'
   mismatches: Mismatch[]
 }
 
 export type ReplayReport = {
   total: number
   matched: number
+  accepted: number
   results: CaseResult[]
+  /** Accepted (entry, case) pairs that excused nothing - the fix landed, or the corpus moved. */
+  stale: readonly AcceptedCase[]
 }
 
 type Normalized = ReturnType<typeof normalizeExchange>
@@ -104,16 +113,50 @@ export function buildReport(fixtures: Fixture[], exchanges: Exchange[]): ReplayR
     results.push(compare(fixture, actual))
   }
 
+  // Classification runs after comparison, never instead of it. The mismatch was found; the entry
+  // only decides whether it counts against the gate.
+  // Both halves are handed the same list explicitly: `staleEntries` compares entry identity, so
+  // classifying against one list and reporting staleness against another would call everything stale.
+  const used: AcceptedCase[] = []
+  const classified = results.map((result) => {
+    if (result.status === 'match' || result.status === 'absent') return result
+    const verdict = classify(`${result.scenario}.${result.step}`, result.mismatches, ACCEPTED_DIFFS)
+    if (!verdict.accepted) return result
+    used.push(...verdict.used)
+    return { ...result, status: 'accepted' as const }
+  })
+
   return {
-    total: results.length,
-    matched: results.filter((r) => r.status === 'match').length,
-    results,
+    total: classified.length,
+    matched: classified.filter((r) => r.status === 'match').length,
+    accepted: classified.filter((r) => r.status === 'accepted').length,
+    results: classified,
+    stale: staleEntries(used, ACCEPTED_DIFFS),
   }
 }
 
 export function formatReport(report: ReplayReport): string {
-  const failures = report.results.filter((r) => r.status !== 'match')
-  const lines = [`replay: ${report.matched}/${report.total} cases match`]
+  const failures = report.results.filter((r) => r.status !== 'match' && r.status !== 'accepted')
+  const lines = [
+    report.accepted === 0
+      ? `replay: ${report.matched}/${report.total} cases match`
+      : `replay: ${report.matched}/${report.total} cases match, ` +
+        `${report.accepted} accepted (src/accepted.ts), ${failures.length} unexplained`,
+  ]
+
+  // A stale entry is reported whether or not the run passed: it is permission to ignore something
+  // that no longer happens, and it will outlive whoever remembers why it was added.
+  if (report.stale.length > 0) {
+    lines.push('')
+    lines.push(
+      `${report.stale.length} accepted difference(s) did not occur against this target — ` +
+        'remove them if this is the stack they were written for:',
+    )
+    for (const { entry, case: caseKey } of report.stale) {
+      lines.push(`  ${caseKey}  ${entry.path}  (accepted ${entry.decided})`)
+    }
+  }
+
   if (failures.length === 0) return lines.join('\n')
 
   lines.push('')

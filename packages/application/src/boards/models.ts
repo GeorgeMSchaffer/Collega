@@ -29,6 +29,9 @@ export type BoardListItem = {
   readonly name: string
   readonly allowUserStatusUpdate: boolean
   readonly swimlaneCount: number
+  /** Live ideas on the board, excluding soft-deleted ones - the same population the board's own
+   * idea list counts, so a card reading "11 ideas" opens onto eleven. */
+  readonly ideaCount: number
 }
 
 /** A resolved swimlane on a board detail, carrying the referenced status's display fields. */

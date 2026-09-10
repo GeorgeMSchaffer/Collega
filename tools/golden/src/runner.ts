@@ -159,7 +159,11 @@ export class Runner {
     const session =
       (this.#config.auth ?? 'bearer') === 'cookie'
         ? cookieSession(role, response.setCookie ?? [])
-        : bearerSession(role, parseBody(response.text, response.headers['content-type']))
+        : bearerSession(
+            role,
+            parseBody(response.text, response.headers['content-type']),
+            response.setCookie ?? [],
+          )
     this.#sessions.set(key, session)
     return session
   }
@@ -329,9 +333,18 @@ export class Runner {
   }
 }
 
-function bearerSession(role: Role, body: unknown): SessionHeader {
+function bearerSession(role: Role, body: unknown, setCookie: readonly string[]): SessionHeader {
   const token = (body as { accessToken?: string } | null)?.accessToken
   if (typeof token !== 'string' || token === '') {
+    // The mirror of cookieSession's check, and the first thing a replay against Nest hits: the
+    // login succeeded and the session is in the cookie, so the flag is the answer rather than
+    // anything about the credentials the bare message sends the reader looking at.
+    if (setCookie.some((cookie) => cookie.startsWith(`${SESSION_COOKIE_NAME}=`))) {
+      throw new Error(
+        `login as ${role} returned no accessToken but set ${SESSION_COOKIE_NAME}; ` +
+          'this stack carries its session in a cookie - replay with --auth cookie',
+      )
+    }
     throw new Error(`login as ${role} returned no accessToken`)
   }
   return { name: 'authorization', value: `Bearer ${token}` }

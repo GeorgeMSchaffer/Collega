@@ -11,7 +11,7 @@ import { currentUser, engagementDenial } from '@/lib/session'
  * from Read Only, which is the opposite of what the product intends.
  */
 export function UpvoteButton({ count }: { count: number }) {
-  const denial = engagementDenial(currentUser.role)
+  const denial = engagementDenial(currentUser().role)
 
   if (denial) {
     return (
@@ -37,7 +37,7 @@ export function UpvoteButton({ count }: { count: number }) {
 }
 
 export function CommentBox() {
-  const denial = engagementDenial(currentUser.role)
+  const denial = engagementDenial(currentUser().role)
 
   if (denial) {
     return (
