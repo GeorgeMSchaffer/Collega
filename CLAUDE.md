@@ -40,7 +40,9 @@ pnpm test:e2e     # Playwright, separate because it needs a running app
 ```
 
 `pnpm check` is the gate. It runs Biome (which also enforces the layer boundaries), `tsc` across
-every package, and Vitest. There is no other build step.
+every package, Vitest, and `next build`. The build is part of the gate because `tsc` cannot stand in
+for it — a `'use client'` file that reaches a server-only module through a barrel typechecks and
+then fails to build — and Turbo caches it, so a second run costs nothing.
 
 ### The .NET commands are frozen, not current
 
