@@ -1,5 +1,15 @@
 # 50 — API CI/CD to Azure App Service
 
+> ## ⛔ SUPERSEDED — describes the frozen .NET stack
+>
+> This document sets up `.github/workflows/deploy-api.yml`, which builds and deploys
+> `src/Collega.API` — **frozen and never deployed**: Sprint 8 was cancelled on 2026-09-04, and the
+> .NET code is deleted in slice F6 (`SPEC/decisions.md`). The shipping stack deploys to **Vercel
+> with Prisma Postgres**: see `SPEC/50-vercel-deployment.md`, which is canonical for deployment.
+>
+> Kept as the record of what that pipeline was. **Nothing here is a build instruction**, and the
+> workflow it describes is not a gate on anything.
+
 Setup for `.github/workflows/deploy-api.yml`, which builds and deploys `Collega.API` to the App
 Service from `SPEC/50-azure-deployment.md`. On every push to `main` (or a manual run from the
 **Actions** tab) it publishes the API and deploys it. Migrations run automatically when the new

@@ -9,6 +9,70 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-10 — How the two Vercel projects are configured, and how production gets its first administrator
+
+**Decided while writing `SPEC/50-vercel-deployment.md`**, which is now canonical for deployment and
+carries the detail. This entry records only the choices that constrain later work, and the two that
+were made rather than merely written down.
+
+**Two projects from one repository**, root directories `apps/web` and `apps/api`. Forced, not
+preferred: one project would mean `apps/web` importing `packages/application` and
+`packages/infrastructure`, which `biome.json` fails and `tools/boundaries` asserts. Ticket `08`
+already priced the cross-origin cost. Both carry a committed `vercel.json` — framework, install,
+build, ignore, regions — so the only setting that lives in a dashboard is Root Directory, which
+Vercel needs before it can read the file.
+
+**The API deploys its compiled output, not its source.** `apps/api/server.js` is a one-line
+`import './dist/main.js'`, and it exists because Nest resolves constructor dependencies from
+`design:paramtypes`, which only `tsc` with `emitDecoratorMetadata` emits — esbuild does not
+implement it at all. A build that compiled `src/main.ts` itself would deploy an application that
+looks healthy and fails to resolve every provider on the first request. Vercel prefers a root-level
+entrypoint over `src/main.ts`, which is what makes the file work; `src/main.ts` already ends in a
+`listen()`, so nothing else was needed.
+
+**`prisma migrate deploy` runs in the API project's build command**, after the compile and before
+the deployment serves traffic. It is the only place that reliably holds the right `DATABASE_URL`,
+it runs exactly once per deployment, a failed migration fails the build so a half-migrated
+deployment never goes live, and putting it after the compile means a build that was going to fail
+anyway never touches the database. **The consequence for later work:** every migration must be
+backward-compatible with the deployment before it, because Vercel's Instant Rollback moves code and
+nothing moves the schema back. Expand now, contract in a later release.
+
+**`ACCESS_TOKEN_SIGNING_KEY` is now required when `NODE_ENV=production`** — a code change, in
+`authFragment`. Absent, the key was generated per process, which is fine for one local process and
+actively harmful on serverless: **every cold start is a new process**, so two warm instances sign
+with different keys, sessions issued by one are rejected by the other, and users are signed out at
+moments nobody would trace back to a missing environment variable. Refusing to boot is the cheaper
+failure, and it matches what `SiteAdminConfig` already does.
+
+**Production gets its first administrator from a deploy step, not from boot.** This was the gap
+worth finding: the demo seed throws when `NODE_ENV=production`, so a freshly migrated production
+database has **zero users and an unusable login screen**, while `apps/api` reads
+`SITE_ADMIN_EMAIL`/`SITE_ADMIN_PASSWORD`, refuses to boot without them, and then does nothing with
+them. `SPEC/20-feature-auth.md` requirement 8 says "created on first run", and on serverless first
+run happens on every cold start — so the answer is neither boot nor the demo seed but
+`packages/infrastructure/prisma/seed/bootstrap-site-admin.ts`
+(`pnpm --filter @collega/infrastructure db:bootstrap-admin`), in the API build command after the
+migration and runnable by hand by anyone holding `DATABASE_URL`. It creates one account with
+`must_change_password` set (requirement 9), leaves an existing one untouched including its
+password, logs and exits 0 when the variables are unset rather than inventing a credential, and
+derives its id the same way the demo seed does so a development database that has seen both holds
+one row.
+
+**Previews point at a shared staging API and a shared staging database**, addressed through the API
+project's `dev` branch alias. Two pull requests changing the API at once therefore share a backend,
+and a web preview exercises `dev`'s API rather than its own branch's. Accepted for a product with
+no users; the answer when it stops being acceptable is a Vercel custom environment, not a database
+per pull request.
+
+**What could not be decided from here.** The session that wrote this had no Vercel access —
+`list_teams` returned empty and project reads answered 403 — so nothing was created, deployed or
+observed. `SPEC/50-vercel-deployment.md` §11 lists six things that are unverified and where each
+would first show itself; §12 is the ordered handoff. Read §11 before treating the first failed
+deployment as a defect in this configuration.
+
+---
+
 ## 2026-09-09 — Shipping for feedback outranks fidelity to the .NET app
 
 **Decided by the user**, unprompted, when asked to choose between four ways of making a CSV export
