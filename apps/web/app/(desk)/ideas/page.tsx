@@ -6,16 +6,11 @@ import { IdeasTable } from '@/components/ideas/ideas-table'
 import { NewIdeaForm } from '@/components/ideas/new-idea-form'
 import { Topbar } from '@/components/nav/topbar'
 import { getBoards, getIdeaOptions, getOrganizationIdeas } from '@/lib/data'
+import { requestedPage } from '@/lib/paging'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, writeDenial } from '@/lib/session'
 
 export const metadata = { title: 'Ideas · Collega' }
-
-/** Anything that is not a page number past the first is the first page, including nothing at all. */
-function requestedPage(raw: string | undefined): number {
-  const parsed = Number(raw)
-  return Number.isInteger(parsed) && parsed > 1 ? parsed : 1
-}
 
 export default async function IdeasPage({
   searchParams,
@@ -103,7 +98,7 @@ export default async function IdeasPage({
           </EmptyState>
         ) : (
           <>
-            <IdeasTable rows={ideas.ideas} boards={boards} />
+            <IdeasTable rows={ideas.ideas} boards={boards} page={page} />
             {pageCount > 1 ? (
               <nav aria-label="Ideas pages" className="flex items-center justify-between gap-4">
                 <p className="m-0 text-sm text-muted-foreground tabular-nums">

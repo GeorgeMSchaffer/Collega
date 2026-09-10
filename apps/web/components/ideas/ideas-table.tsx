@@ -2,12 +2,16 @@ import { Avatar, Dot, Marker } from '@collega/design-system'
 import Link from 'next/link'
 import type { Board, Idea } from '@/lib/data'
 import { PRIORITY_COLORS } from '@/lib/display'
+import { pageQuery } from '@/lib/paging'
 
 /**
  * The organization-wide ideas table, shared by `/ideas` and `/ideas/[id]`.
  *
  * `selectedId` marks the row the inspector is showing. Comp P marks it with a left rule plus a soft
  * ground — two channels, so it survives greyscale and does not rely on colour alone.
+ *
+ * `page` is carried into every row link so opening an idea from page three lands on a companion
+ * table showing page three, with the row still in it.
  *
  * The status swatch is deliberately uncoloured. A row reads its status **name** off the idea, but
  * neither ideas endpoint carries a colour, and this screen spans every board in the organization —
@@ -17,10 +21,12 @@ import { PRIORITY_COLORS } from '@/lib/display'
 export function IdeasTable({
   rows,
   boards,
+  page = 1,
   selectedId,
 }: {
   rows: Idea[]
   boards: Board[]
+  page?: number
   selectedId?: string
 }) {
   // Presentational, and takes its lookups rather than reading them. The caller already fetches
@@ -67,7 +73,7 @@ export function IdeasTable({
                 <td
                   className={`px-4 py-2.5 ${selected ? 'border-l-[3px] border-l-primary pl-[13px]' : ''}`}
                 >
-                  <Link href={`/ideas/${idea.id}`}>{idea.title}</Link>
+                  <Link href={`/ideas/${idea.id}${pageQuery(page)}`}>{idea.title}</Link>
                   <div className="text-xs text-muted-foreground">
                     {boardsById.get(idea.boardId)?.name} · {idea.ideaType}
                   </div>
