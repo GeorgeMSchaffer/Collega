@@ -144,8 +144,15 @@ all. A deployment that compiled `src/main.ts` itself would look healthy and fail
 provider on the first request. This is the thing not to assume either way: `dist/main.js` is the
 artifact that works, and reaching it is deliberate.
 
-Vercel looks for an entrypoint named `app` / `index` / `server` / `main` at the project root
-**before** it looks under `src/`, so a root file wins over `src/main.ts`:
+**Established:** Vercel's Node runtime captures `listen()`, and the `functions` glob in
+`apps/api/vercel.json` must match a real serverless function or the build fails naming the pattern.
+**Expected, not documented:** that Vercel resolves an entrypoint named `app` / `index` / `server` /
+`main` at the project root ahead of anything under `src/`. That ordering is how the presets are
+observed to behave and it is why this file is named `server.js` and sits where it does, but no
+Vercel document states it. Vercel publishes an entrypoint escape hatch for its **Python** presets
+(`[tool.vercel] entrypoint = …`) and nothing equivalent for Node, so there is no setting to force
+the matter either. Treat the file's placement as a well-founded expectation to be confirmed by the
+first build log (§11), not as a guarantee.
 
 ```js
 // apps/api/server.js
@@ -153,13 +160,32 @@ import './dist/main.js'
 ```
 
 `apps/api/vercel.json` names `server.js` in its `functions` block (`maxDuration: 60`), which
-doubles as an assertion: if Vercel resolved a different entrypoint, the pattern matches nothing and
+doubles as the assertion: if Vercel resolved a different entrypoint, the pattern matches nothing and
 the build says so rather than deploying the wrong file.
 
-**If a deployment reports that `server.js` matched no function**, the entrypoint was resolved
-differently. Read the build log for the file it chose, and prefer changing the file's *name* to
-whatever Vercel is looking for over changing what it does — the requirement is only that the thing
-Vercel runs is `dist/`-backed.
+### If the build says `server.js` matched no function
+
+```
+The pattern "server.js" defined in 'functions' doesn't match any Serverless Functions
+```
+
+This is the expected first failure, and the likeliest cause is the most benign one: the `nestjs`
+preset resolved `dist/main.js` directly, which exists because that is where Nest apps compile.
+Nothing is wrong with the deployment except the glob.
+
+**Point the glob at the entrypoint the log names. Do not rename `server.js` to match the glob,
+and do not delete the `functions` block.** Renaming chases a moving target and can only be
+confirmed by another failed build; deleting the block makes the error go away and takes
+`maxDuration: 60` silently with it, leaving the API on the default timeout with nothing in the diff
+to say so. Read the build log for the file Vercel chose, put that path in `functions`, keep
+`maxDuration`, and — if the chosen entrypoint is already `dist/`-backed — `server.js` becomes dead
+weight to delete in a follow-up rather than something to fix under pressure.
+
+**Do not set `framework` to `null`.** It was considered and rejected: with no preset, Vercel still
+needs some rule to turn `apps/api` into a function at all, and the "Other" preset has historically
+meant static output — a deployment that produced no function would be a worse and more confusing
+first result than a glob error that names its own fix. Keep `nestjs` for the first deploy and
+change it only with a build log to justify it.
 
 ---
 
@@ -486,7 +512,29 @@ account. In rough order of how likely each is to be the thing that bites:
 | That the `prisma+postgres://` URL works with the pinned client | Boot failure naming the datasource protocol | Swap to the direct `postgresql://` string (§5) |
 | Node 24 selection on the build image | `Invalid Node.js Version` during install | Set the project's Node.js Version to 24.x |
 | Deployment Protection on the API (§7) | Web previews receiving HTML from every API call | Turn Vercel Authentication off for `collega-api` |
-| That preview builds see Preview-scoped variables at build time | `db:migrate` failing or migrating the wrong database | The first preview build's log — **check which database it touched** |
+| That preview builds see Preview-scoped variables at build time | `db:migrate` failing or migrating the wrong database | The first preview build's log — **check which database it touched** (§12 step 10, required) |
+
+### The one failure that is silent, and how to recognise it
+
+Every row above announces itself. This one does not, and it is the reason §3 insists on
+`dist/`-backed output.
+
+If Vercel's preset compiles `apps/api/src/main.ts` with its own toolchain instead of running the
+`tsc` output, `emitDecoratorMetadata` is lost — esbuild does not implement it — and the build
+succeeds. The first request then 500s with:
+
+```
+Nest can't resolve dependencies of the IdeasController (?)
+```
+
+**The `?` in that dependency list is the missing metadata.** Nest is not saying the provider is
+unregistered; it is saying it has no type to look up. Do not go hunting for a missing module
+import — the module graph is fine, the artifact is wrong.
+
+Its build-log tell, visible before any request: a build that **succeeds without ever mentioning
+`server.js`**, plus a compile or bundle step appearing *after* the custom `buildCommand` has
+already finished. Both mean the preset built its own thing. Fix it in §3's terms — point the
+`functions` glob at whatever the log names, having confirmed it is `dist/`-backed.
 
 ---
 

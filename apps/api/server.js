@@ -10,12 +10,16 @@
  * itself would deploy an app whose every provider fails to resolve, at runtime, on the first
  * request.
  *
- * Vercel looks for an entrypoint named app / index / server / main at the project root before it
- * looks under `src/`, so this file wins over `src/main.ts` by being here. Keep it a plain `.js`
+ * The name and location are an expectation, not a documented guarantee: Vercel is understood to
+ * resolve an entrypoint named app / index / server / main at the project root ahead of anything
+ * under `src/`, which is why this file is where it is, but no Vercel document states that ordering
+ * and there is no Node equivalent of the entrypoint setting its Python presets expose. The
+ * `functions` glob in `vercel.json` is the assertion that it held. Keep this a plain `.js`
  * side-effect import: there is nothing to typecheck, and nothing to compile.
  *
- * `SPEC/50-vercel-deployment.md` has the rest, including what to change if a deployment reports it
- * found a different entrypoint.
+ * `SPEC/50-vercel-deployment.md` §3 has the rest, including what to change if a deployment reports
+ * it found a different entrypoint - point the glob at what the build log names; do not rename this
+ * file, and do not delete the glob.
  */
 
 import './dist/main.js'
