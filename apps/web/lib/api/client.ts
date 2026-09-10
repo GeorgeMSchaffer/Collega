@@ -26,6 +26,7 @@ import 'server-only'
 import { failIfRequested, resolve } from '../data/latency'
 import { sessionHeader } from '../server/current-user'
 import { apiBaseUrl } from './config'
+import { fieldMessages, type ProblemDetails } from './problem'
 
 declare const API_PATH: unique symbol
 
@@ -76,26 +77,6 @@ export class ApiError extends Error {
     this.path = path
     this.detail = detail
   }
-}
-
-/** The API's RFC 7807 problem envelope, as much of it as a message needs. */
-type ProblemDetails = { title?: unknown; detail?: unknown; errors?: unknown }
-
-/**
- * The field-level messages a validation 400 carries.
- *
- * Worth reaching for because that envelope's `detail` is "The request failed validation. See the
- * errors property for field-level details." — true, and useless to the person who left the title
- * empty. The first message per field, joined, is what they actually need to read.
- */
-function fieldMessages(errors: unknown): string | null {
-  if (typeof errors !== 'object' || errors === null) return null
-
-  const messages = Object.values(errors)
-    .map((list) => (Array.isArray(list) ? list.find((entry) => typeof entry === 'string') : null))
-    .filter((message) => typeof message === 'string')
-
-  return messages.length > 0 ? messages.join(' ') : null
 }
 
 async function describeFailure(response: Response): Promise<string> {

@@ -525,6 +525,32 @@ code nobody can use — an archived organization's invite code is rejected at re
 (org-and-users requirement #9), so it says so and exits 1 rather than printing joining instructions
 that would not work.
 
+### Where the code is spent
+
+`/register` on the web app, which is the whole of the front door: a public route carrying comp Q's
+`s-register` — invite code, first and last name, email, password — posting to `POST /auth/register`.
+Everything the API refuses is rendered beside the field that earned it, because the API keys its
+`errors` bag by field name and those are the same names the form posts: an unknown or archived code
+under Invite code, a duplicate address under Email (the one refusal that arrives as a `409` with no
+bag, keyed onto `email` by `lib/server/auth-actions.ts`), a broken password rule under Password.
+
+Two properties of that route are worth stating because both are decisions rather than accidents.
+
+**Registering does not sign you in.** `POST /auth/register` returns the account and sets no cookie,
+so the page redirects to `/login?registered=1` and the sign-in form carries *Your account was
+created. Sign in to get started.* This is comp P's `s-register` (*"On success the page returns to
+Sign in"*) and one of the three notice strings `s-login` reserves. The alternative — replaying the
+password against `/auth/login` to save one form — would put the web tier in the position of
+explaining a *sign-in* refusal to somebody whose account had just succeeded.
+
+**The code is not accepted from the query string.** `/register?code=…` would be the tidier handout,
+but the code is a standing, non-expiring credential that self-registers anyone into the organization
+(`tools/golden/README.md`), and a URL is the one place a secret is copied without anyone choosing to
+copy it: browser and shell history, platform request logs, `Referer`, and every screenshot of an
+address bar. It would also outlive the tester, staying valid and forwardable long after they were
+in. So the code is pasted once into a field, and step 12 below sends the link and the code as two
+separate things.
+
 ---
 
 ## 9. What "deployed" looks like
@@ -744,11 +770,28 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
     organization's invite code. **Both appear once and are stored nowhere** — copy them out of the
     terminal now. Give the temporary password to that person out of band; they sign in with it and
     are forced to change it.
-12. **Hand out the invite code.** This is the onboarding mechanism, and the only one: a person opens
-    `/register` on the web app, enters the code with their name, email and a password of their own,
-    and joins the organization with the `User` role — which can create ideas on the default `Ideas`
-    board and move them between statuses. Treat the code as a shared secret, since anyone holding it
-    can create an account; an Org Admin can regenerate it, which invalidates the old one.
+12. **Hand out the invite code.** This is the onboarding mechanism, and the only one. Send each
+    person the address and the code as two things — the code is deliberately not accepted as a
+    query parameter, and §8a says why:
+
+    ```
+    Sign up here:  https://<web host>/register
+    Invite code:   <the code step 11 printed>
+
+    Enter the code with your name, your email, and a password you choose —
+    at least 6 characters with an uppercase letter, a lowercase letter, a
+    number and a symbol. You'll be asked to sign in once with it, and you're in.
+    ```
+
+    They join the organization with the `User` role, which can create ideas on the default `Ideas`
+    board and move them between statuses. **The sign-in step is expected, not a fault**: registering
+    returns them to `/login` with *Your account was created*, because `POST /auth/register` issues no
+    session. Nothing else needs doing for them — `/register` is public in `apps/web/proxy.ts`, so
+    the link works with no cookie, and it bounces anyone who is already signed in to `/boards`.
+
+    Treat the code as a shared secret, since anyone holding it can create an account. It does not
+    expire; an Org Admin regenerating it is what invalidates the old one, and anyone who registered
+    with the old code keeps their account.
 
 If something fails, §11 names the six candidates and where each shows itself. **Do not fix a
 cross-origin symptom by adding CORS** (§4), and do not set `DATABASE_URL` in the GitHub Actions

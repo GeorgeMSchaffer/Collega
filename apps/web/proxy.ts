@@ -22,7 +22,7 @@ import { NextResponse } from 'next/server'
 import { SESSION_COOKIE_NAME } from '@/lib/api/config'
 
 /** Everything the reader sees without signing in. */
-const PUBLIC_PATHS = ['/login', '/change-password']
+const PUBLIC_PATHS = ['/login', '/register', '/change-password']
 
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl
@@ -33,16 +33,23 @@ export function proxy(request: NextRequest): NextResponse {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // `/change-password` stays reachable while signed in — it is the only way out of a forced
-  // rotation, and the API allowlists it for exactly that reason.
-  if (signedIn && pathname === '/login') {
+  // `/change-password` is the exception and stays reachable while signed in — it is the only way
+  // out of a forced rotation, and the API allowlists it for exactly that reason. `/register` is not
+  // like it: an account holder has nothing to do on it, and `POST /auth/register` is anonymous, so
+  // submitting it while signed in would silently create a *second* account rather than adding the
+  // current one to another organization.
+  if (signedIn && (pathname === '/login' || pathname === '/register')) {
     // `?expired=1` is `requireCurrentUser` saying the API refused this cookie. Cookie-and-JWT
     // share a lifetime, so ordinary expiry drops both together and never lands here — but a
     // rotated signing key, a deactivated account, a reseeded database or a fast browser clock all
     // leave a live cookie the API rejects, and without this the reader can only reach the form by
     // clearing site data by hand. Dropping the cookie as well as letting the request through is
     // what keeps the next navigation from paying another wasted `/auth/me`.
-    if (request.nextUrl.searchParams.has('expired')) {
+    //
+    // Only `/login` has it, because only `/login` is redirected to — nothing sends a reader to
+    // `/register` to recover from anything, and a stale cookie reaching here is bounced to
+    // `/boards`, which resolves the principal properly and lands them back on `/login?expired=1`.
+    if (pathname === '/login' && request.nextUrl.searchParams.has('expired')) {
       const response = NextResponse.next()
       response.cookies.delete(SESSION_COOKIE_NAME)
       return response
