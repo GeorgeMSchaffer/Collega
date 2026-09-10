@@ -93,11 +93,17 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
         </div>
 
         {/* Beneath the lanes, not instead of them: the five empty columns are what teach the
-            workflow, so an empty board still shows the shape it will fill. */}
+            workflow, so an empty board still shows the shape it will fill.
+
+            The button below is gated on `roleDenial`, not `denial`: it authors an idea, and the API
+            refuses authoring for ReadOnly alone (`IdeaService.requireIdeaEditRole`).
+            `allowUserStatusUpdate` gates moves and nothing else, so folding it in here refused a
+            User with a reason that was not true — and contradicted the identically labelled button
+            in the topbar, which gates on the role alone. */}
         {boardIdeas.length === 0 ? (
           <EmptyState
             heading="No ideas on this board yet"
-            action={<GatedAction id="why-new-board-empty" label="New idea" denial={denial} />}
+            action={<GatedAction id="why-new-board-empty" label="New idea" denial={roleDenial} />}
           >
             {canMove ? (
               <>
