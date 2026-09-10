@@ -39,6 +39,15 @@ export function NewIdeaForm({
   const dialog = useRef<HTMLDialogElement>(null)
   const [state, submit, pending] = useActionState(createIdea, IDLE)
 
+  // Both catalogs are per-organization and both are required on `POST /boards/{id}/ideas`, so an
+  // organization whose administrators archived every idea type renders a select with no options,
+  // posts an empty id and gets "Idea Type not found" back — a configuration state wearing the
+  // clothes of a bug. Saying so, and refusing to submit, is the difference.
+  const missing = [
+    options.ideaTypes.length === 0 ? 'idea types' : null,
+    options.businessImpacts.length === 0 ? 'business impacts' : null,
+  ].filter((catalog) => catalog !== null)
+
   // `state !== IDLE` is exactly "an action has resolved" — `useActionState` hands back the initial
   // object itself until one does, and every result is a fresh one. Comparing fields instead would
   // close the dialog on mount, because a clean result and the initial state hold the same values.
@@ -78,6 +87,15 @@ export function NewIdeaForm({
           </Alert>
         ) : null}
 
+        {missing.length > 0 ? (
+          <Alert variant="destructive" className="mb-4">
+            <span>
+              This organization has no {missing.join(' and no ')} to choose from. An idea requires
+              both, so an Org Admin has to add them in Settings before one can be raised here.
+            </span>
+          </Alert>
+        ) : null}
+
         <form action={submit}>
           <input type="hidden" name="boardId" value={boardId} />
 
@@ -111,7 +129,7 @@ export function NewIdeaForm({
           </Field>
 
           <Field htmlFor="idea-type" label="Idea type">
-            <Select id="idea-type" name="ideaTypeId">
+            <Select id="idea-type" name="ideaTypeId" required>
               {options.ideaTypes.map((type) => (
                 <option key={type.id} value={type.id}>
                   {type.name}
@@ -121,7 +139,7 @@ export function NewIdeaForm({
           </Field>
 
           <Field htmlFor="idea-impact" label="Business impact">
-            <Select id="idea-impact" name="businessImpactId">
+            <Select id="idea-impact" name="businessImpactId" required>
               {options.businessImpacts.map((impact) => (
                 <option key={impact.id} value={impact.id}>
                   {impact.name}
@@ -134,7 +152,7 @@ export function NewIdeaForm({
             <Button variant="outline" onClick={() => dialog.current?.close()}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || missing.length > 0}>
               {pending ? 'Creating…' : 'Create idea'}
             </Button>
           </div>
