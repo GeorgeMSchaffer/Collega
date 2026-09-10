@@ -75,10 +75,58 @@ is required for a Next app under Turborepo and is already in place.
 `@collega/design-system`, and `DATABASE_URL` is not among its inputs. Keep it that way: a web
 deploy that can be blocked by the database is a web deploy that fails during an incident.
 
-`ignoreCommand: npx turbo-ignore --fallback=HEAD^1` skips a project's build when nothing in its
-dependency graph changed — a `SPEC/`-only commit stops burning two builds and two red checks. On
-error `turbo-ignore` exits non-zero, which means *build anyway*; the failure mode is a wasted
-build, not a missed one.
+The build command's shape is not improvised: `cd ../.. && turbo run build --filter=<package>` is
+what Vercel's own Turborepo page documents for a project whose Root Directory is a workspace
+member.
+
+### The ignore step, and why it is not `npx turbo-ignore`
+
+```
+turbo query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @collega/api --exit-code || exit 1
+```
+
+It skips a project's build when nothing in its dependency graph changed — a `SPEC/`-only commit
+stops burning two builds and two red checks.
+
+**Vercel's Turborepo page documents two forms for this field, and we use the second one
+deliberately.** The first, `npx turbo-ignore --fallback=HEAD^1`, is the one most repositories
+copy — and `npx` with no version resolves and downloads whatever was published most recently, on
+every build, outside `pnpm-lock.yaml`. That happens in a container holding `DATABASE_URL`,
+`ACCESS_TOKEN_SIGNING_KEY` and `SITE_ADMIN_PASSWORD`, with write access to the artifact about to
+deploy. Two lines below it, `--frozen-lockfile` exists precisely so a package that disagrees with
+the lockfile fails the deploy instead of resolving silently; running an unpinned package above it
+exempts one dependency from the guarantee the line below is there to give. So we use the second
+documented form, `turbo query affected`, which invokes a `turbo` already present on the build image
+and fetches nothing. **A future reader should not "fix" this back to the `npx` snippet** — the
+deviation is the point.
+
+Exit codes, verified against `turbo` 2.10.12 (the version the root `devDependencies` pins):
+
+| Case | `turbo query affected` exits | Vercel does |
+|---|---|---|
+| The package's graph changed | 1 | builds |
+| Nothing changed | 0 | **skips** |
+| Any error — bad ref, missing base, `turbo` not on `PATH` | 2, or 127 | builds |
+
+`ignoreCommand`'s semantics are inverted and unforgiving: **0 means skip, anything else means
+build.** The trailing `|| exit 1` normalizes every error exit to a plain 1, because Vercel's own
+wording ("code 0 ignores the build, while code 1 continues it") does not say what it does with a 2,
+and the cost of guessing wrong is a first deployment that silently skips itself.
+
+Two known ways it errs toward building, both harmless:
+
+- **The first deployment of a project.** `VERCEL_GIT_PREVIOUS_SHA` is only exposed once an Ignored
+  Build Step is configured *and* a previous deployment exists, so on the first one `--base=` is
+  empty, `turbo` reports a query error, and the build runs. That is the right answer.
+- **The shallow clone.** Vercel clones with `--depth=10`; a previous SHA older than that is not in
+  the history, `turbo` cannot resolve it, and the build runs. `turbo-ignore` handles this more
+  gracefully with `--fallback=HEAD^1`, which `turbo query affected` has no equivalent for. The
+  cost is builds that were not strictly necessary — never a build that was needed and skipped.
+
+If the first build log shows `turbo: command not found`, the skip is simply not working: builds
+still run and deploy correctly, they just always run. The fallback then is the *pinned* form,
+`npx --yes turbo-ignore@2.10.12 --fallback=HEAD^1` — pinned to the root `turbo` version, since
+`turbo-ignore` ships from the same repository at the same version — and never the unpinned one.
 
 ---
 

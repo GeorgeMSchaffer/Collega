@@ -3,6 +3,6 @@
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=@collega/web",
-  "ignoreCommand": "npx turbo-ignore --fallback=HEAD^1",
+  "ignoreCommand": "turbo query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @collega/web --exit-code || exit 1",
   "regions": ["iad1"]
 }
