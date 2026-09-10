@@ -2,11 +2,18 @@
  * The single place `apps/web` touches the session credential, and the single place it resolves who
  * is signed in.
  *
- * `biome.json` enforces that literally: `next/headers` is on the restricted-import list for the
- * whole workspace and **this file is the only path allowlisted for it** (override 7), which is why
- * `apps/api/src/auth/session-cookie.ts` names this module as the other half of its own chokepoint.
- * Reading or writing the cookie anywhere else is a lint error, and deliberately so — code that
- * reads a credential directly silently opts itself out of View As.
+ * Two different guards keep it that way, and neither one covers the other's case:
+ *
+ * - `biome.json` puts `next/headers` on the restricted-import list for the whole workspace and
+ *   allowlists **this path alone** (override 7), which is why `apps/api/src/auth/session-cookie.ts`
+ *   names this module as the other half of its own chokepoint. That catches a file that writes
+ *   `import { cookies } from 'next/headers'` itself — code reading a credential directly silently
+ *   opts itself out of View As.
+ * - `import 'server-only'` below catches the case the lint rule cannot see: a `'use client'`
+ *   component that reaches this module *transitively*, through a barrel that re-exports something
+ *   that eventually imports it. No file in that chain names `next/headers`, so Biome has nothing to
+ *   match on, and the failure otherwise surfaces as a Turbopack build error naming a component
+ *   several hops away. `lib/api/client.ts` carries the same import for the same reason.
  *
  * So everything that needs the session goes through the three primitives below rather than reaching
  * for `cookies()`: `lib/api/client.ts` forwards it, and `lib/server/auth-actions.ts` issues and
@@ -20,6 +27,8 @@
  * is D7 and unbuilt; taking the principal from here now is what makes it buildable without
  * revisiting every screen.
  */
+
+import 'server-only'
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'

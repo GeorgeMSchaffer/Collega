@@ -14,6 +14,8 @@
  *    actually fails. Returning `null` on a 500 would render an "empty board" and hide an outage.
  */
 
+import 'server-only'
+
 import { failIfRequested, resolve } from '../data/latency'
 import { sessionHeader } from '../server/current-user'
 import { apiBaseUrl } from './config'
