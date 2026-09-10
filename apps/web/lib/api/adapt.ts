@@ -69,12 +69,11 @@ function toViewingAs(wire: WireViewingAs | null): ViewingAs | null {
 /**
  * `GET /auth/me` into the principal every gated component reads.
  *
- * `organizationName` is not on the payload — `/auth/me` carries an `organizationId` and no title —
- * so the caller resolves it separately and passes it in. Making it a parameter rather than a second
- * fetch inside this function keeps the module pure and lets the caller decide whether the extra
- * request is worth it: a Site Admin has no organization to look up at all.
+ * The organization's title rides on the payload (`SPEC/decisions.md` 2026-09-10), so this is a pure
+ * rename and needs no second request. `null` means "belongs to no organization" — a Site Admin —
+ * and nothing else, which is what lets the sidebar branch on it rather than guess.
  */
-export function toCurrentUser(wire: WireCurrentUser, organizationName: string | null): CurrentUser {
+export function toCurrentUser(wire: WireCurrentUser): CurrentUser {
   const role = toRole(wire.role)
   return {
     userId: wire.userId,
@@ -83,7 +82,7 @@ export function toCurrentUser(wire: WireCurrentUser, organizationName: string | 
     role,
     roleLabel: roleLabel(role),
     organizationId: wire.organizationId,
-    organizationName,
+    organizationName: wire.organizationTitle,
     viewingAs: toViewingAs(wire.viewingAs),
   }
 }

@@ -18,6 +18,8 @@
 export type WireCurrentUser = {
   userId: string
   organizationId: string | null
+  /** `null` means "belongs to no organization" — a Site Admin — and nothing else. */
+  organizationTitle: string | null
   role: string
   firstName: string
   lastName: string
@@ -39,12 +41,6 @@ export type WireLoginResponse = {
   expiresInSeconds: number
   requiresPasswordChange: boolean
   user: WireCurrentUser
-}
-
-/** `GET /organizations/{id}`. */
-export type WireOrganization = {
-  organizationId: string
-  title: string
 }
 
 /** `GET /organizations/{id}/boards`. */

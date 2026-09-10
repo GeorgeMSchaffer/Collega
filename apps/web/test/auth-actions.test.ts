@@ -41,6 +41,7 @@ const LOGIN_BODY: WireLoginResponse = {
   user: {
     userId: '7edd9249-cc88-46e3-a3e1-354daf717e4f',
     organizationId: '182df148-cf57-4bba-ade8-99286b6c1181',
+    organizationTitle: 'Acme Robotics',
     role: 'OrgAdmin',
     firstName: 'Olivia',
     lastName: 'Administer',

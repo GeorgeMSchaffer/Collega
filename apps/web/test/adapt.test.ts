@@ -19,6 +19,7 @@ import type { WireCurrentUser, WireIdeaListItem } from '@/lib/api/wire'
 const WIRE_USER: WireCurrentUser = {
   userId: '7edd9249-cc88-46e3-a3e1-354daf717e4f',
   organizationId: '182df148-cf57-4bba-ade8-99286b6c1181',
+  organizationTitle: 'Acme Robotics',
   role: 'OrgAdmin',
   firstName: 'Olivia',
   lastName: 'Administer',
@@ -56,7 +57,7 @@ const assignee = (firstName: string, lastName: string) => ({
 
 describe('toCurrentUser', () => {
   it('maps the principal every gated component reads', () => {
-    expect(toCurrentUser(WIRE_USER, 'Acme Robotics')).toEqual({
+    expect(toCurrentUser(WIRE_USER)).toEqual({
       userId: WIRE_USER.userId,
       displayName: 'Olivia Administer',
       initials: 'OA',
@@ -73,7 +74,7 @@ describe('toCurrentUser', () => {
     // API side, or a casing change. A cast would let any of these through to `isAdministrator`,
     // where an unknown role is silently a member.
     for (const role of ['Owner', 'orgadmin', 'ORGADMIN', 'Admin', '']) {
-      expect(() => toCurrentUser({ ...WIRE_USER, role }, null)).toThrow(
+      expect(() => toCurrentUser({ ...WIRE_USER, role })).toThrow(
         `The API returned an unknown role: ${role}`,
       )
     }
@@ -81,18 +82,15 @@ describe('toCurrentUser', () => {
 
   it('carries a View As session without the field the view has no use for', () => {
     // `startedAtUtc` is on the wire and not on `ViewingAs`: the banner counts down to the expiry.
-    const viewing = toCurrentUser(
-      {
-        ...WIRE_USER,
-        viewingAs: {
-          realUserId: 'demo-site-admin',
-          realUserName: 'Sam Deployment',
-          startedAtUtc: '2026-09-04T03:00:00.000Z',
-          expiresAtUtc: '2026-09-04T04:00:00.000Z',
-        },
+    const viewing = toCurrentUser({
+      ...WIRE_USER,
+      viewingAs: {
+        realUserId: 'demo-site-admin',
+        realUserName: 'Sam Deployment',
+        startedAtUtc: '2026-09-04T03:00:00.000Z',
+        expiresAtUtc: '2026-09-04T04:00:00.000Z',
       },
-      'Acme Robotics',
-    )
+    })
     expect(viewing.viewingAs).toEqual({
       realUserId: 'demo-site-admin',
       realUserName: 'Sam Deployment',
