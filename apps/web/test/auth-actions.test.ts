@@ -71,7 +71,7 @@ function signInAgainst(cookies: readonly string[], body: Partial<WireLoginRespon
     'fetch',
     vi.fn(async () => response),
   )
-  return signIn({ error: null, email: '' }, credentials())
+  return signIn({ error: null, rateLimited: false, email: '' }, credentials())
 }
 
 afterEach(() => vi.unstubAllGlobals())

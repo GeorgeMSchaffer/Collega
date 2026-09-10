@@ -39,6 +39,7 @@ export function LoginForm({
 }) {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(signIn, {
     error: null,
+    rateLimited: false,
     email: '',
   })
 
@@ -47,8 +48,14 @@ export function LoginForm({
       {state.error ? (
         <Alert variant="destructive" className="mb-4">
           <span>
-            <b>{state.error}</b> Five failed attempts within 15 minutes lock the account for 15
-            minutes.
+            <b>{state.error}</b>
+            {/* The lockout rule belongs beside a refusal of the credential, and nowhere else. A
+                request the rate limiter turned away never reached the account, so pairing it with
+                "five failed attempts" tells the reader they got their password wrong — which is
+                the mistake this sentence is here to prevent, not cause. */}
+            {state.rateLimited
+              ? null
+              : ' Five failed attempts within 15 minutes lock the account for 15 minutes.'}
           </span>
         </Alert>
       ) : null}
