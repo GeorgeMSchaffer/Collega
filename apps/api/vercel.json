@@ -6,7 +6,7 @@
   "ignoreCommand": "turbo query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @collega/api --exit-code || exit 1",
   "regions": ["iad1"],
   "functions": {
-    "api/[...path].js": {
+    "server.js": {
       "maxDuration": 60
     }
   }
