@@ -117,7 +117,9 @@
       "mcp__github__get_job_logs",
       "mcp__Vercel__search_vercel_documentation",
       "mcp__Vercel__get_deployment_build_logs",
-      "mcp__Context7__query-docs"
+      "mcp__Context7__query-docs",
+      "Bash(pnpm exec biome check *)",
+      "Bash(npx biome check *)"
     ],
     "additionalDirectories": [
       "/tmp"
