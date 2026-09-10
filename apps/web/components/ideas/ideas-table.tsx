@@ -1,6 +1,6 @@
 import { Avatar, Dot, Marker } from '@collega/design-system'
 import Link from 'next/link'
-import type { Board, Idea, Status } from '@/lib/data'
+import type { Board, Idea } from '@/lib/data'
 import { PRIORITY_COLORS } from '@/lib/display'
 
 /**
@@ -8,24 +8,19 @@ import { PRIORITY_COLORS } from '@/lib/display'
  *
  * `selectedId` marks the row the inspector is showing. Comp P marks it with a left rule plus a soft
  * ground — two channels, so it survives greyscale and does not rely on colour alone.
+ *
+ * The status swatch is deliberately uncoloured. A row reads its status **name** off the idea, but
+ * neither ideas endpoint carries a colour, and this screen spans every board in the organization —
+ * so there is no catalog already in hand to join against. A neutral dot beside a real name is
+ * honest; a coloured one would need a request this screen does not make.
  */
 export function IdeasTable({
   rows,
   boards,
-  statuses,
   selectedId,
 }: {
   rows: Idea[]
   boards: Board[]
-  /**
-   * The organization's status colours, for callers that have a catalog.
-   *
-   * A row reads its own status **name** off the idea, so the join a fixture needed is gone. The
-   * swatch beside it is the part with no source: neither ideas endpoint carries a status colour,
-   * and asking a separate catalog for one would join real ids against whichever screen's statuses
-   * happened to be handed over. Absent, the swatch falls back to a neutral dot, which is honest.
-   */
-  statuses?: Status[]
   selectedId?: string
 }) {
   // Presentational, and takes its lookups rather than reading them. The caller already fetches
@@ -34,7 +29,6 @@ export function IdeasTable({
   // cannot be rendered by Testing Library, and the eight tests holding the selection contract
   // in place all render this directly.
   const boardsById = new Map(boards.map((board) => [board.id, board]))
-  const colorByStatusId = new Map((statuses ?? []).map((status) => [status.id, status.color]))
 
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">
@@ -83,7 +77,7 @@ export function IdeasTable({
                 </td>
                 <td className="px-4 py-2.5">
                   <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                    <Dot color={colorByStatusId.get(idea.statusId)} />
+                    <Dot />
                     {idea.statusName}
                   </span>
                 </td>
