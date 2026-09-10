@@ -33,7 +33,7 @@ export function RefusalPanel({ heading, children }: { heading: string; children:
 }
 
 export function AdminOnly({ what, children }: { what: string; children: ReactNode }) {
-  if (isAdministrator(currentUser.role)) {
+  if (isAdministrator(currentUser().role)) {
     return <>{children}</>
   }
 
@@ -51,7 +51,7 @@ export function AdminOnly({ what, children }: { what: string; children: ReactNod
  * these, so the reason has to differ — "administrators only" would be false to their face.
  */
 export function SiteAdminOnly({ children }: { children: ReactNode }) {
-  if (currentUser.role === 'SiteAdmin') {
+  if (currentUser().role === 'SiteAdmin') {
     return <>{children}</>
   }
 

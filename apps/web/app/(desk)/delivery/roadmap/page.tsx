@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { Topbar } from '@/components/nav/topbar'
 import { getDeliveryStatuses, getIssues, getIssuesForOutcome, getOutcomes } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Roadmap · Collega' }
@@ -16,6 +17,11 @@ export const metadata = { title: 'Roadmap · Collega' }
  * without it the totals would silently fail to close.
  */
 export default async function RoadmapPage() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
   const [outcomes, issues, statuses] = await Promise.all([
     getOutcomes(),
     getIssues(),
@@ -53,7 +59,7 @@ export default async function RoadmapPage() {
             action={<AdminAction id="why-outcome-empty" label="Add the first outcome" />}
           >
             An outcome is a named, dated theme &mdash; &ldquo;cut reporting effort&rdquo; &mdash;
-            that issues are grouped under. {currentUser.organizationName ?? 'This deployment'} has{' '}
+            that issues are grouped under. {currentUser().organizationName ?? 'This deployment'} has{' '}
             {issues.length} delivery {issues.length === 1 ? 'issue' : 'issues'} and nothing to group
             them by.
           </EmptyState>

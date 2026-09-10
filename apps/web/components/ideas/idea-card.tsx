@@ -30,7 +30,9 @@ export function IdeaCard({ idea }: { idea: Idea }) {
         ) : null}
       </div>
       <div className="mt-2 flex items-center gap-2">
-        <Tag>{idea.tag}</Tag>
+        {/* Real ideas frequently carry no tag at all, where every fixture idea had exactly one.
+            An empty chip is worse than none: it reads as a tag whose name failed to load. */}
+        {idea.tag ? <Tag>{idea.tag}</Tag> : null}
         <span className="flex-1" />
         <span className="inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground">
           <span aria-hidden="true">▲</span> {idea.upvotes}

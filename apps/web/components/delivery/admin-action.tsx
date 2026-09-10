@@ -8,5 +8,5 @@ import { currentUser, deliveryAdminDenial } from '@/lib/session'
  * View As, a member is told the scope.
  */
 export function AdminAction({ id, label }: { id: string; label: string }) {
-  return <GatedAction id={id} label={label} denial={deliveryAdminDenial(currentUser.role)} />
+  return <GatedAction id={id} label={label} denial={deliveryAdminDenial(currentUser().role)} />
 }

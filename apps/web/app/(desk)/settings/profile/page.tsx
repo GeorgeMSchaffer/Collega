@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { InertForm } from '@/components/common/inert-form'
 import { Topbar } from '@/components/nav/topbar'
 import { getProfile } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Profile · Collega' }
@@ -26,6 +27,11 @@ export const metadata = { title: 'Profile · Collega' }
  * hub stays ungated — so gating it would strand a member with no route to their own account.
  */
 export default async function ProfilePage() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
   const profile = await getProfile()
 
   return (
@@ -56,7 +62,7 @@ export default async function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap items-center gap-4">
-              <Avatar initials={currentUser.initials} className="size-14 text-base" />
+              <Avatar initials={currentUser().initials} className="size-14 text-base" />
               <FileButton
                 id="portrait"
                 name="portrait"
@@ -111,7 +117,7 @@ export default async function ProfilePage() {
                     name="role"
                     type="text"
                     readOnly
-                    defaultValue={currentUser.roleLabel}
+                    defaultValue={currentUser().roleLabel}
                   />
                 </Field>
                 <Button type="submit">Save profile</Button>

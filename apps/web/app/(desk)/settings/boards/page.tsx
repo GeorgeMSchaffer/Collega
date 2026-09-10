@@ -2,17 +2,23 @@ import { Badge, buttonVariants, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { getBoardAdmin, getBoards } from '@/lib/data'
+import { getBoardAdmin, getFixtureBoards } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Boards · Collega' }
 
 export default async function SettingsBoardsPage() {
-  const [boardAdmin, boards] = await Promise.all([getBoardAdmin(), getBoards()])
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
+  const [boardAdmin, boards] = await Promise.all([getBoardAdmin(), getFixtureBoards()])
 
   // A Site Admin passes the administrator gate, so the branch has to be taken here rather than
   // left to `SettingsPage` - otherwise the one role with no organization gets the org-scoped screen.
-  const siteAdmin = currentUser.role === 'SiteAdmin'
+  const siteAdmin = currentUser().role === 'SiteAdmin'
 
   return (
     <SettingsPage

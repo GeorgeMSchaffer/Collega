@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { NewIdeaButton } from '@/components/ideas/new-idea-button'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoards, getIdeasForBoard, getStatuses } from '@/lib/data'
+import { getBoards } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Boards · Collega' }
@@ -14,19 +15,21 @@ export const metadata = { title: 'Boards · Collega' }
  * organization — while a member is refused for a different one, and the two must not be conflated.
  */
 function createBoardDenial() {
-  if (currentUser.role === 'OrgAdmin') return null
-  if (currentUser.role === 'SiteAdmin') return 'Act as a member'
+  if (currentUser().role === 'OrgAdmin') return null
+  if (currentUser().role === 'SiteAdmin') return 'Act as a member'
   return 'Administrators only'
 }
 
 export default async function BoardsPage() {
-  const [boards, statuses] = await Promise.all([getBoards(), getStatuses()])
-  const cards = await Promise.all(
-    boards.map(async (board) => ({
-      board,
-      ideaCount: (await getIdeasForBoard(board.id)).length,
-    })),
-  )
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
+  // One reader, and it already carries both counts. The page used to fetch every idea on every
+  // board to call `.length` on them, which was free against a fixture and would have been a full
+  // table scan per card against a database.
+  const boards = await getBoards()
 
   return (
     <>
@@ -52,7 +55,7 @@ export default async function BoardsPage() {
           </EmptyState>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {cards.map(({ board, ideaCount }) => (
+            {boards.map((board) => (
               <Card key={board.id}>
                 <CardHeader>
                   <CardTitle>
@@ -60,10 +63,15 @@ export default async function BoardsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
-                  <p className="m-0 text-sm text-muted-foreground">{board.focus}</p>
+                  {/* A board has no "focus" column — that line was demo-seed copy. Rendered only
+                      where one exists, rather than leaving an empty paragraph behind. */}
+                  {board.focus ? (
+                    <p className="m-0 text-sm text-muted-foreground">{board.focus}</p>
+                  ) : null}
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span className="tabular-nums">{ideaCount} ideas</span>
-                    <span className="tabular-nums">{statuses.length} lanes</span>
+                    <span className="tabular-nums">{board.ideaCount} ideas</span>
+                    {/* Per board, not the size of the status catalog: a board chooses its lanes. */}
+                    <span className="tabular-nums">{board.laneCount} lanes</span>
                   </div>
                 </CardContent>
               </Card>

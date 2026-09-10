@@ -9,6 +9,7 @@ import {
 } from '@collega/design-system'
 import Link from 'next/link'
 import { Topbar } from '@/components/nav/topbar'
+import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, isAdministrator, type Role } from '@/lib/session'
 
 export const metadata = { title: 'Settings · Collega' }
@@ -134,9 +135,14 @@ function sectionsFor(role: Role): Section[] {
  * sub-routes are the opposite — they refuse explicitly, because a member arriving at one has asked
  * for something specific. Gating the hub would strand a member with no route to their own profile.
  */
-export default function SettingsPage() {
-  const admin = isAdministrator(currentUser.role)
-  const sections = sectionsFor(currentUser.role)
+export default async function SettingsPage() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
+  const admin = isAdministrator(currentUser().role)
+  const sections = sectionsFor(currentUser().role)
 
   return (
     <>
@@ -145,10 +151,10 @@ export default function SettingsPage() {
         <div>
           <h1>Settings</h1>
           <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">
-            {currentUser.role === 'SiteAdmin'
+            {currentUser().role === 'SiteAdmin'
               ? 'Deployment-wide configuration. Open an organization to change what belongs to it.'
               : admin
-                ? `Configuration for ${currentUser.organizationName}.`
+                ? `Configuration for ${currentUser().organizationName}.`
                 : 'Your own account. Everything else here belongs to an organization administrator.'}
           </p>
         </div>

@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import { IdeasTable } from '@/components/ideas/ideas-table'
 import { IdeaInspector } from '@/components/inspector/idea-inspector'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoards, getIdea, getIdeas, getStatuses } from '@/lib/data'
+import { getFixtureBoards, getIdea, getIdeas, getStatuses } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 
 /**
  * An idea open in the inspector.
@@ -18,11 +19,16 @@ export async function generateMetadata({ params }: { params: Promise<{ ideaId: s
 }
 
 export default async function IdeaPage({ params }: { params: Promise<{ ideaId: string }> }) {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
   const { ideaId } = await params
   const [idea, ideas, boards, statuses] = await Promise.all([
     getIdea(ideaId),
     getIdeas(),
-    getBoards(),
+    getFixtureBoards(),
     getStatuses(),
   ])
   if (!idea) notFound()

@@ -1,25 +1,111 @@
 /**
  * Boards, their swimlanes, and the statuses those lanes draw from.
  *
- * Every reader returns a promise even where the fixture behind it is a constant, because the shape
- * is the contract: after Wave D these are `fetch` calls and the call sites must already be written
- * for one. A reader that returns a single record resolves to `null` when it is missing rather than
- * throwing — `notFound()` is the caller's decision, and the API answers 404 the same way.
+ * The board readers now call the API. Every one still returns a promise and still resolves to
+ * `null` for a missing record rather than throwing — `notFound()` is the caller's decision, and the
+ * API answers 404 the same way — so the call sites did not change when the bodies did. That was the
+ * point of writing them against a promise from the start.
+ *
+ * The status readers are still fixture-backed, because the screens that use them (`/ideas`,
+ * `settings/statuses`, `settings/boards/*`) are still fixture-backed and a half-real screen is
+ * worse than an honest fixture: real statuses carry UUIDs, and a fixture idea's `statusId` would
+ * match none of them.
  */
 
+import { swimlaneToStatus } from '../api/adapt'
+import { apiGet, isApiStatus } from '../api/client'
+import type { WireBoardDetail, WireBoardListItem, WireIdeaListItem, WirePage } from '../api/wire'
 import * as fixture from '../mock'
+import type { Board, BoardWithLanes } from '../types'
 import { failIfRequested, resolve } from './latency'
+import { organizationScope } from './scope'
 
-export type { Board, BoardAdmin, Status } from '../mock'
+export type { BoardAdmin } from '../mock'
 export { SWIMLANE_FLOOR } from '../mock'
+export type { Board, BoardWithLanes, Status } from '../types'
 
-export async function getBoards(): Promise<fixture.Board[]> {
+/**
+ * The organization's boards, each with the number of ideas on it.
+ *
+ * The count comes from a `pageSize=1` request per board and its `totalCount`, not from fetching the
+ * ideas and calling `.length` on them — every list endpoint answers the paging envelope, so the
+ * total is available without transferring a single row. The fixture version pulled every idea on
+ * every board to count them, which is the shape that quietly stops scaling once a board has a
+ * thousand.
+ */
+export async function getBoards(): Promise<Board[]> {
   failIfRequested('getBoards')
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  const boards = await apiGet<readonly WireBoardListItem[]>(
+    'getBoards',
+    `/organizations/${scope}/boards`,
+  )
+
+  return Promise.all(
+    boards.map(async (board) => ({
+      id: board.boardId,
+      name: board.name,
+      laneCount: board.swimlaneCount,
+      ideaCount: await countIdeasOn(board.boardId),
+    })),
+  )
+}
+
+async function countIdeasOn(boardId: string): Promise<number> {
+  const page = await apiGet<WirePage<WireIdeaListItem>>(
+    'getBoards',
+    `/boards/${boardId}/ideas?pageSize=1`,
+  )
+  return page.totalCount
+}
+
+/**
+ * One board and the lanes it actually defines.
+ *
+ * The lanes come from the board, not from the organization's status catalog. Those are different
+ * questions and the fixture conflated them: a board picks a subset of the statuses in its own
+ * order, so rendering the catalog would show a lane the board does not have — which is exactly what
+ * `settings/boards/[boardId]`'s swimlane picker exists to configure.
+ */
+export async function getBoard(id: string): Promise<BoardWithLanes | null> {
+  failIfRequested('getBoard')
+
+  try {
+    const board = await apiGet<WireBoardDetail>('getBoard', `/boards/${id}`)
+    return {
+      id: board.boardId,
+      name: board.name,
+      allowUserStatusUpdate: board.allowUserStatusUpdate,
+      // Deleted statuses still hold ideas that have to go somewhere, so their lane stays on the
+      // board — hiding it would silently drop cards off a screen that claims to show all of them.
+      lanes: [...board.swimlanes].sort((a, b) => a.order - b.order).map(swimlaneToStatus),
+    }
+  } catch (error) {
+    // A board in another organization answers 404, not 403 — the API declines to confirm it exists,
+    // and so does this. `null` rather than a throw, so the caller reaches `notFound()`.
+    if (isApiStatus(error, 404)) return null
+    throw error
+  }
+}
+
+/**
+ * The boards the still-fixture screens see.
+ *
+ * `/ideas`, the idea inspector and `settings/boards` all join a board id against a fixture — a
+ * fixture idea's `boardId`, a `BoardAdmin` row — so handing them real boards would join UUIDs
+ * against `'ideas'` and render a row with no board name. Named for what it is, so it is obvious
+ * which screens are still waiting and so that converting one of them deletes a call site rather
+ * than changing a meaning.
+ */
+export async function getFixtureBoards(): Promise<Board[]> {
+  failIfRequested('getFixtureBoards')
   return resolve(fixture.boards)
 }
 
-export async function getBoard(id: string): Promise<fixture.Board | null> {
-  failIfRequested('getBoard')
+export async function getFixtureBoard(id: string): Promise<Board | null> {
   return resolve(fixture.boardById(id) ?? null)
 }
 
@@ -59,11 +145,22 @@ export async function getBoardAdminEntry(id: string): Promise<fixture.BoardAdmin
  *
  * A single reader rather than one per figure: the sidebar renders them together, and three
  * separate awaits would be three round trips once this is a real API.
+ *
+ * Boards and ideas are real; `backlog` counts the delivery fixture, which has no endpoint behind it
+ * yet. A count that is a fixture sitting beside two that are not is the honest state of a partly
+ * converted app, and the alternative — leaving all three on the fixture — would have the sidebar
+ * disagree with the boards page it links to.
  */
 export async function getNavCounts(): Promise<{ boards: number; ideas: number; backlog: number }> {
-  return resolve({
-    boards: fixture.navCounts.boards,
-    ideas: fixture.navCounts.ideas,
-    backlog: fixture.navCounts.backlog,
-  })
+  const scope = organizationScope()
+  if (scope === null) {
+    return resolve({ boards: 0, ideas: 0, backlog: fixture.navCounts.backlog })
+  }
+
+  const [boards, ideas] = await Promise.all([
+    apiGet<readonly WireBoardListItem[]>('getNavCounts', `/organizations/${scope}/boards`),
+    apiGet<WirePage<WireIdeaListItem>>('getNavCounts', `/organizations/${scope}/ideas?pageSize=1`),
+  ])
+
+  return { boards: boards.length, ideas: ideas.totalCount, backlog: fixture.navCounts.backlog }
 }

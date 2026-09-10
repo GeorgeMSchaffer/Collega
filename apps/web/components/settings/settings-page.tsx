@@ -31,8 +31,8 @@ export function SettingsPage({
   // The action lives in the topbar, which sits outside AdminOnly - so it needs the same check, or a
   // member reads "Add status" above a page telling them the route is closed to them.
   const canAct = siteAdminOnly
-    ? currentUser.role === 'SiteAdmin'
-    : isAdministrator(currentUser.role)
+    ? currentUser().role === 'SiteAdmin'
+    : isAdministrator(currentUser().role)
 
   return (
     <>

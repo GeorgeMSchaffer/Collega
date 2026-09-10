@@ -14,6 +14,7 @@ import {
 import { InertForm } from '@/components/common/inert-form'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getAiPrompt, SYSTEM_PROMPT_MAX } from '@/lib/data'
+import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'AI Prompt · Collega' }
 
@@ -25,6 +26,11 @@ export const metadata = { title: 'AI Prompt · Collega' }
  * statement does.
  */
 export default async function AiPromptPage() {
+  // Identity first, and in this segment: Next renders a layout and its page independently,
+  // so the desk layout resolving it is not enough for what renders here. One `/auth/me` per
+  // request all the same — the resolver is request-cached.
+  await requireCurrentUser()
+
   const { prompt, probes, versions } = await getAiPrompt()
 
   return (
