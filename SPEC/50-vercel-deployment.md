@@ -331,7 +331,7 @@ handoff.
 
 | Variable | Environments | Required | What breaks without it |
 |---|---|---|---|
-| `COLLEGA_API_URL` | Production, Preview | **yes in deployment** | Falls back to `http://127.0.0.1:3001/api/v1` and every server-side call fails. Include the `/api/v1` prefix and no trailing slash. Production points at the production API; Preview at the staging API (§7). |
+| `COLLEGA_API_URL` | Production, Preview | **yes in deployment** | Falls back to `http://127.0.0.1:3001/api/v1` and every server-side call fails. Include the `/api/v1` prefix and no trailing slash. Production points at `api.collega-ai.com`, a custom domain bound to the API project; Preview at the staging API (§7). A custom domain covers production only, so Preview keeps the branch alias. |
 
 Not `NEXT_PUBLIC_` — see §4.
 
@@ -351,6 +351,13 @@ from a run without a database is never reused for a run with one. Leave all thre
   database.
 - **Preview** — every other branch, including `dev`. All previews of `collega-web` point at **one
   shared staging API**, backed by **one shared staging database**.
+
+**Production is a custom domain, `api.collega-ai.com`,** bound to the API project — decided
+2026-09-10. Vercel's generated hostname is derived from the project name, so it changes if the
+project is renamed or recreated, and the web app would keep pointing at a host that no longer
+answers. A domain we own removes that coupling. Nothing about the cookie changes: the browser never
+sees the API, because `apps/web` re-issues the session on its own origin (§4), so the API living on
+a different registrable domain costs nothing.
 
 A preview API deployment gets a unique hostname per commit, which a web preview cannot know. The
 stable address is the API project's **branch alias for `dev`**:
@@ -640,7 +647,7 @@ database; step 10 is verification.
 
    | Variable | Production | Preview |
    |---|---|---|
-   | `COLLEGA_API_URL` | `https://<api production host>/api/v1` | `https://collega-api-git-dev-<team>.vercel.app/api/v1` |
+   | `COLLEGA_API_URL` | `https://api.collega-ai.com/api/v1` | `https://collega-api-git-dev-<team>.vercel.app/api/v1` |
 
    No trailing slash, and keep the `/api/v1`.
 10. **Verify, in this order:**
