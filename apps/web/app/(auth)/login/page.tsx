@@ -10,8 +10,20 @@ export const metadata = { title: 'Sign in · Collega' }
  *
  * The page stays a Server Component and the form is the only client boundary — see
  * `components/auth/login-form.tsx`, which holds the accessibility contract this screen must keep.
+ *
+ * Reading `searchParams` is what makes this route server-rendered rather than prerendered, and it
+ * is the cheaper of the two ways to notice `?expired=1`: `useSearchParams` in the form would need a
+ * Suspense boundary around it on a static route, and that turns the sign-in form itself into a
+ * client-rendered fallback. There is nothing to fetch here, so rendering per request costs a
+ * template.
  */
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ expired?: string }>
+}) {
+  const expired = 'expired' in (await searchParams)
+
   return (
     <>
       <AuthPitch
@@ -38,7 +50,7 @@ export default function LoginPage() {
             One email, one account. We&rsquo;ll take you straight to your organization.
           </p>
 
-          <LoginForm />
+          <LoginForm expired={expired} />
 
           <p className="mt-4 text-sm text-muted-foreground">
             Have an invite code? <Link href="/login">Create an account</Link>.

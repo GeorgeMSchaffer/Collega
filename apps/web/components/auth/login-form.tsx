@@ -18,8 +18,13 @@ import { type LoginState, signIn } from '@/lib/server/auth-actions'
  * The failure message lives beside the form rather than in a query string. The screen used to read
  * `?error=`, which a bookmark or a shared link could reproduce out of nowhere, and which meant a
  * failed sign-in was a navigation.
+ *
+ * `expired` is the one exception, and it is not a failure: `proxy.ts` sends the reader here after
+ * dropping a session the API refused, and without a word for it the form looks like it appeared for
+ * no reason. It gives way to a real sign-in failure rather than stacking with one — by then the
+ * reader is being told about the attempt they just made, not the session they lost.
  */
-export function LoginForm() {
+export function LoginForm({ expired = false }: { expired?: boolean }) {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(signIn, {
     error: null,
     email: '',
@@ -33,6 +38,12 @@ export function LoginForm() {
             <b>{state.error}</b> Five failed attempts within 15 minutes lock the account for 15
             minutes.
           </span>
+        </Alert>
+      ) : null}
+
+      {expired && !state.error ? (
+        <Alert variant="note" className="mb-4">
+          <span>Your session has ended. Sign in again to pick up where you left off.</span>
         </Alert>
       ) : null}
 

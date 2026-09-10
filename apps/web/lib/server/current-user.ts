@@ -96,10 +96,15 @@ export async function clearSession(): Promise<void> {
  * No session means the cookie has expired or been revoked, which is an ordinary end to a session
  * and so a redirect rather than an error boundary. `proxy.ts` already turned away the requests with
  * no cookie at all; this catches the ones it cannot judge.
+ *
+ * `?expired=1` rather than a bare `/login`, and this cannot be fixed here instead: a cookie the API
+ * rejects is still a cookie, so `proxy.ts` would bounce the reader back to `/boards` and around
+ * again, and clearing it here is not available because cookies are immutable during a render. The
+ * flag is what tells `proxy.ts` to let the request through and drop the cookie on the way.
  */
 export async function requireCurrentUser(): Promise<CurrentUser> {
   const user = await loadPrincipal()
-  if (!user) redirect('/login')
+  if (!user) redirect('/login?expired=1')
   setCurrentUser(user)
   return user
 }
