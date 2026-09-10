@@ -66,7 +66,14 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
             <Link href="/ideas" className={buttonVariants({ variant: 'outline' })}>
               List view
             </Link>
-            <NewIdeaForm boardId={board.id} options={options} denial={roleDenial} />
+            {/* The board is context here, so the form asks for everything except that. A role that
+                may not author gets the same control, disabled with its reason, and none of the
+                form's client bundle. */}
+            {roleDenial ? (
+              <GatedAction id="why-new-board" label="New idea" denial={roleDenial} />
+            ) : (
+              <NewIdeaForm boardId={board.id} options={options} />
+            )}
           </>
         }
       />

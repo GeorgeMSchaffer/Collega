@@ -100,6 +100,10 @@ export async function createIdea(
   }
 
   revalidateBoard(boardId)
+  // And the organization-wide list, which is the other screen the create form is reachable from and
+  // where a new idea is the first row. Without it, creating one from `/ideas` re-renders the page
+  // the router already has and the idea appears not to have been created.
+  revalidatePath('/ideas')
   return { error: null, title: '', description: '' }
 }
 

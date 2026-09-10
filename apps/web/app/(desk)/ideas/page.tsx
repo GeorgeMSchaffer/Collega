@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { GatedAction } from '@/components/common/gated-action'
 import { IdeasTable } from '@/components/ideas/ideas-table'
-import { NewIdeaButton } from '@/components/ideas/new-idea-button'
+import { NewIdeaForm } from '@/components/ideas/new-idea-form'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoards, getOrganizationIdeas } from '@/lib/data'
+import { getBoards, getIdeaOptions, getOrganizationIdeas } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, writeDenial } from '@/lib/session'
 
@@ -26,11 +26,18 @@ export default async function IdeasPage({
   await requireCurrentUser()
 
   const { page: rawPage } = await searchParams
+
+  // Whether this account may author at all. Read before the fetch because it decides whether two of
+  // the three requests below are worth making — the catalogs exist only to fill the create form.
+  const roleDenial = writeDenial(currentUser().role)
+
   // The board names, which no idea carries: a list item has a `boardId` and nothing else. One
-  // request for the organization's boards, not one per row.
-  const [ideas, boards] = await Promise.all([
+  // request for the organization's boards, not one per row — and the same list the create form
+  // picks a board from, since this screen spans every board and so has none in context.
+  const [ideas, boards, options] = await Promise.all([
     getOrganizationIdeas(requestedPage(rawPage)),
     getBoards(),
+    roleDenial ? { ideaTypes: [], businessImpacts: [] } : getIdeaOptions(),
   ])
 
   // A page past the end of the list is not a page of it. Reachable only by typing one, and 404 is
@@ -51,7 +58,11 @@ export default async function IdeasPage({
               <Button variant="outline">Lane view</Button>
             </Link>
             <Button variant="outline">Export CSV</Button>
-            <NewIdeaButton id="why-new-ideas" />
+            {roleDenial ? (
+              <GatedAction id="why-new-ideas" label="New idea" denial={roleDenial} />
+            ) : (
+              <NewIdeaForm boardId={null} boards={boards} options={options} />
+            )}
           </>
         }
       />
@@ -71,16 +82,24 @@ export default async function IdeasPage({
         {totalCount === 0 ? (
           <EmptyState
             heading="No ideas yet"
+            // Only where the role may NOT author, for the reason the board's empty state gives: a
+            // second live "New idea" would be a second copy of the same dialog, with the same
+            // heading and the same field ids as the working one in the top bar. Where the role may
+            // author, the copy points at that one instead.
             action={
-              <GatedAction
-                id="why-new-idea-empty"
-                label="New idea"
-                denial={writeDenial(currentUser().role)}
-              />
+              roleDenial ? (
+                <GatedAction id="why-new-idea-empty" label="New idea" denial={roleDenial} />
+              ) : undefined
             }
           >
-            An idea is raised on a board, against one of its idea types. Open a board to add the
-            first one.
+            {roleDenial ? (
+              <>An idea is raised on a board, against one of its idea types.</>
+            ) : (
+              <>
+                An idea is raised on a board, against one of its idea types. Use &ldquo;New
+                idea&rdquo; in the top bar to add the first one.
+              </>
+            )}
           </EmptyState>
         ) : (
           <>
