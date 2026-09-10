@@ -174,6 +174,29 @@ invite exactly the call CORS would then have to permit.
 Do not add CORS to make something work. If a browser request to the API host is being blocked,
 something is calling the API from the wrong side of the app.
 
+### Security headers
+
+`apps/web/vercel.json` sets four response headers on every path. Vercel supplies HSTS on its own
+(`Strict-Transport-Security`, §12 needs nothing for it); nothing supplies the rest.
+
+| Header | Value | Why |
+|---|---|---|
+| `X-Frame-Options` | `DENY` | The app has no embeddable surface. Clickjacking on a board is a real action, not a page view. |
+| `X-Content-Type-Options` | `nosniff` | Portraits are user-uploaded bytes served back (`portrait_png`); sniffing is how those become script. |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Board and idea ids live in the path; the origin is all any third party needs. |
+| `Permissions-Policy` | camera, microphone, geolocation, interest-cohort off | Nothing in the product asks for them, so nothing embedded in it should be able to. |
+
+`apps/api` gets none: it is never reached by a browser (above), so a header aimed at browser
+behaviour has no reader there.
+
+**A Content-Security-Policy is owed and deliberately not shipped yet.** Next injects inline
+bootstrap scripts, so `script-src 'self'` breaks the app on the first load and `'unsafe-inline'`
+would leave a policy that permits the attack it is named for. Doing it properly means a nonce
+generated per request in middleware and threaded through `next.config.ts` — real work, worth its
+own slice, and worth doing after there is a deployment to test it against. Until then the app has
+no CSP; say so rather than assuming one is there. Whoever writes it should start from Vercel's own
+allowances for its toolbar (`vercel.live`, `ws-us3.pusher.com`), which previews load.
+
 ---
 
 ## 5. Database and migrations
