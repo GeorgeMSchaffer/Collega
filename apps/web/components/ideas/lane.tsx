@@ -17,7 +17,7 @@ export function Lane({
   previousStatusId,
   nextStatusId,
   canMove,
-  canUpvote,
+  upvoteDenial,
 }: {
   status: Status
   ideas: Idea[]
@@ -25,7 +25,7 @@ export function Lane({
   previousStatusId: string | null
   nextStatusId: string | null
   canMove: boolean
-  canUpvote: boolean
+  upvoteDenial: string | null
 }) {
   return (
     <div className="w-72 shrink-0 rounded-lg border bg-muted/50 p-2">
@@ -47,7 +47,7 @@ export function Lane({
             previousStatusId={previousStatusId}
             nextStatusId={nextStatusId}
             canMove={canMove}
-            canUpvote={canUpvote}
+            upvoteDenial={upvoteDenial}
           />
         ))
       )}

@@ -43,7 +43,7 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
   // Upvoting is engagement, not authorship, and the two part company for exactly one role: a Read
   // Only account may vote and may not write (`UpvoteService.toggle` — "All authenticated users,
   // including Read Only, can upvote"). Gating the chip on `roleDenial` would take that away.
-  const canUpvote = engagementDenial(currentUser().role) === null
+  const upvoteDenial = engagementDenial(currentUser().role)
 
   // The catalogs only the create form reads, and only when there is a form to fill — two requests
   // that would otherwise be paid on every board view by everyone who cannot author.
@@ -98,7 +98,7 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
               previousStatusId={board.lanes[index - 1]?.id ?? null}
               nextStatusId={board.lanes[index + 1]?.id ?? null}
               canMove={canMove}
-              canUpvote={canUpvote}
+              upvoteDenial={upvoteDenial}
             />
           ))}
         </div>

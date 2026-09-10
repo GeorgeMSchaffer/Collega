@@ -23,14 +23,14 @@ export function IdeaCard({
   previousStatusId,
   nextStatusId,
   canMove,
-  canUpvote,
+  upvoteDenial,
 }: {
   idea: Idea
   boardId: string
   previousStatusId: string | null
   nextStatusId: string | null
   canMove: boolean
-  canUpvote: boolean
+  upvoteDenial: string | null
 }) {
   return (
     <div className="mb-1.5 rounded-xl border bg-card p-3 text-foreground shadow-sm hover:shadow-md">
@@ -60,7 +60,7 @@ export function IdeaCard({
           previousStatusId={previousStatusId}
           nextStatusId={nextStatusId}
           canMove={canMove}
-          canUpvote={canUpvote}
+          upvoteDenial={upvoteDenial}
         />
       </div>
     </div>

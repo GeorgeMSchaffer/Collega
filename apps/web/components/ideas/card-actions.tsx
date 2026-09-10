@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@collega/design-system'
+import { cn, Denied } from '@collega/design-system'
 import { useActionState } from 'react'
 import type { Idea } from '@/lib/data'
 import { type ActionState, moveIdea, toggleUpvote } from '@/lib/server/idea-actions'
@@ -28,6 +28,11 @@ const ARROW =
  * A card with no lane that way gets a `disabled` arrow rather than an `aria-disabled` one, which is
  * the opposite of what a *denied* control does (`GatedAction`): there is no reason to keep reachable
  * — the button is inert because the board ends there, and the lane beside it says so.
+ *
+ * A denied *vote* is the other case again, and takes the reason with it. The arrows disappear for a
+ * role that may not move a card because the paragraph above the lanes has already said why; the
+ * chip has nothing above it saying anything, so it goes through `Denied` like every other refused
+ * control rather than rendering as a count that quietly does not respond.
  */
 export function CardActions({
   idea,
@@ -35,7 +40,7 @@ export function CardActions({
   previousStatusId,
   nextStatusId,
   canMove,
-  canUpvote,
+  upvoteDenial,
 }: {
   idea: Idea
   boardId: string
@@ -43,16 +48,21 @@ export function CardActions({
   previousStatusId: string | null
   nextStatusId: string | null
   canMove: boolean
-  canUpvote: boolean
+  /** Why this role may not vote, or null when it may. */
+  upvoteDenial: string | null
 }) {
   const [moveState, move, moving] = useActionState(moveIdea, IDLE)
   const [voteState, vote, voting] = useActionState(toggleUpvote, IDLE)
 
   const error = moveState.error ?? voteState.error
 
+  // One per card: `Denied` points `aria-describedby` at this id, and thirty cards sharing one would
+  // have every chip describe the first card's reason.
+  const denialId = `why-upvote-${idea.id}`
+
   return (
     <>
-      {canUpvote ? (
+      {upvoteDenial === null ? (
         <form action={vote}>
           <input type="hidden" name="boardId" value={boardId} />
           <input type="hidden" name="ideaId" value={idea.id} />
@@ -71,9 +81,19 @@ export function CardActions({
           </button>
         </form>
       ) : (
-        <span className={CHIP}>
-          <span aria-hidden="true">▲</span> {idea.upvotes}
-        </span>
+        // A button outside any form, not the vote form's own: `aria-disabled` marks a control
+        // without inerting it, so this inside the form above would still submit when pressed.
+        <Denied reason={upvoteDenial} id={denialId}>
+          <button
+            type="button"
+            aria-disabled="true"
+            aria-describedby={denialId}
+            aria-label={`Upvote ${idea.title}`}
+            className={CHIP}
+          >
+            <span aria-hidden="true">▲</span> {idea.upvotes}
+          </button>
+        </Denied>
       )}
 
       {canMove ? (
