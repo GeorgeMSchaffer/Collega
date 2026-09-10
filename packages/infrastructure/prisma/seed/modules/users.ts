@@ -69,8 +69,11 @@ export const usersSeed: SeedModule = {
       now,
     })
 
-    const configuredEmail = process.env.SITE_ADMIN_EMAIL
-    const configuredPassword = process.env.SITE_ADMIN_PASSWORD
+    // Trimmed to match both the API's `required()` and `bootstrap-site-admin.ts`. The two seeding
+    // paths must hash the same bytes: whichever ran first would otherwise own the row, and a
+    // password with a trailing space would silently not be the one the operator set.
+    const configuredEmail = process.env.SITE_ADMIN_EMAIL?.trim()
+    const configuredPassword = process.env.SITE_ADMIN_PASSWORD?.trim()
     if (configuredEmail && configuredPassword) {
       await upsertUser(prisma, {
         id: seedId('user', 'configured-site-admin', normalizeEmail(configuredEmail)),

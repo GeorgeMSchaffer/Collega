@@ -107,7 +107,19 @@
       "mcp__claude-in-chrome__read_page",
       "mcp__claude-in-chrome__get_page_text",
       "mcp__claude-in-chrome__find",
-      "mcp__claude-in-chrome__read_console_messages"
+      "mcp__claude-in-chrome__read_console_messages",
+      "Bash(pnpm check)",
+      "Bash(pnpm build)",
+      "Bash(git fetch origin *)",
+      "mcp__github__pull_request_read",
+      "mcp__github__list_pull_requests",
+      "mcp__github__actions_list",
+      "mcp__github__get_job_logs",
+      "mcp__Vercel__search_vercel_documentation",
+      "mcp__Vercel__get_deployment_build_logs",
+      "mcp__Context7__query-docs",
+      "Bash(pnpm exec biome check *)",
+      "Bash(npx biome check *)"
     ],
     "additionalDirectories": [
       "/tmp"

@@ -48,9 +48,10 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 ## Technical and Deployment Plans
 
 - `50-technical-implementation-plan.md` — implementation plan across layers
-- `50-azure-deployment.md`, `50-azure-api-cicd.md` — Azure target (Sprint 8; renumbered from 7 on 2026-08-11)
+- `50-vercel-deployment.md` — **the deployment spec for the shipping stack.** The two Vercel projects and their settings, the environment matrix, where `prisma migrate deploy` runs, the preview/staging topology, how the first administrator is created, the rollback posture, and a handoff checklist for the account holder. Authoritative for anything about deploying `apps/web` or `apps/api`.
+- `50-azure-deployment.md`, `50-azure-api-cicd.md` — **superseded**; the cancelled Azure target for the frozen .NET stack (Sprint 8; renumbered from 7 on 2026-08-11). Kept for the cost model and topology reasoning, not as build instructions.
 - `50-postgres-migration.md` — Postgres migration plan (Sprint 5)
-- `50-kubernetes-deployment.md` — Kubernetes deployment notes
+- `50-kubernetes-deployment.md` — **superseded**; Kubernetes notes for the frozen .NET stack
 - `typescript-conversion-map/` — the twelve conversion tickets and the charting map behind `50-typescript-migration.md`; its `README.md` records which tickets are answered and one open conflict on ticket `01`
 - `50-typescript-migration.md` — **the costed, sequenced plan for the .NET → TypeScript conversion** (Sprint 9; assembles the `wayfinder` map in `typescript-conversion-map/`). Its Wave A has a deadline earlier than the sprint: golden capture must run **before or during Sprint 8**, while the .NET API still exists.
 

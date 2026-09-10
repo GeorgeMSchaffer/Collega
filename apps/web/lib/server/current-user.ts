@@ -38,7 +38,7 @@ import { toCurrentUser } from '../api/adapt'
 // `apiGet` and this module calls `apiGet` from inside `resolveCurrentUser`, so neither runs during
 // the other's evaluation. They are two halves of one seam — an authenticated HTTP client — kept in
 // separate files only because the credential half is what the lint rule pins down.
-import { apiGet, isApiStatus } from '../api/client'
+import { apiGet, apiPath, isApiStatus } from '../api/client'
 import { SESSION_COOKIE_NAME } from '../api/config'
 import type { WireCurrentUser, WireOrganization } from '../api/wire'
 import { setCurrentUser } from '../session'
@@ -135,7 +135,7 @@ export async function requireCurrentUser(): Promise<CurrentUser> {
 const loadPrincipal = cache(async (): Promise<CurrentUser | null> => {
   let me: WireCurrentUser
   try {
-    me = await apiGet<WireCurrentUser>('resolveCurrentUser', '/auth/me')
+    me = await apiGet<WireCurrentUser>('resolveCurrentUser', apiPath`/auth/me`)
   } catch (error) {
     if (isApiStatus(error, 401)) return null
     throw error
@@ -160,7 +160,7 @@ async function organizationName(organizationId: string | null): Promise<string |
   try {
     const organization = await apiGet<WireOrganization>(
       'organizationName',
-      `/organizations/${organizationId}`,
+      apiPath`/organizations/${organizationId}`,
     )
     return organization.title
   } catch {

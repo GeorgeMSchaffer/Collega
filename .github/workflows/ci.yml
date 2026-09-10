@@ -1,8 +1,8 @@
 name: CI
 
-# The repo's first automated check on a pull request. deploy-api.yml and deploy-client.yml are
-# push:main Azure workflows kept as a record of the cancelled Sprint 8 (SPEC/decisions.md
-# 2026-09-04) — they are not gates and nothing here depends on them.
+# The repo's first automated check on a pull request, and now the only workflow: the two Azure
+# deploy workflows were deleted on 2026-09-10, having survived the cancellation of Sprint 8
+# (SPEC/decisions.md 2026-09-04) only as a record of it.
 #
 # No dotnet step: src/Collega.* and tests/ are frozen (SPEC/decisions.md 2026-09-06) and nothing
 # in this workspace builds them. Slice F6 deletes them.

@@ -10,6 +10,7 @@
     "pnpm": ">=12.3.4"
   },
   "scripts": {
+    "start": "node tools/local/start.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "dev": "turbo run dev",

@@ -13,91 +13,65 @@ Vitest + Playwright · pnpm workspaces + Turborepo
 
 ---
 
-## What runs today
-
-| | |
-|---|---|
-| **`apps/web`** | **Runs.** `pnpm dev` → http://localhost:3000. Sign-in, desk shell, boards, ideas, the docked inspector and the settings surfaces, all against fixtures. |
-| `apps/api` | **Does not run.** The Nest host exists; feature controllers are Wave D, in progress. |
-| Data | Hard-coded in [`apps/web/lib/mock.ts`](apps/web/lib/mock.ts), mirroring the demo seed. When the API lands, that file is the only thing deleted. |
-
-So the web app is real and clickable but talks to nothing yet. For a **complete working product with
-real data**, the frozen .NET app is still the only option — see [`DOTNET.md`](DOTNET.md).
-
-Wave-by-wave status lives in
-[`SPEC/implementation-agent-tracker.md`](SPEC/implementation-agent-tracker.md).
-
----
-
-## Prerequisites
-
-| Requirement | Notes |
-|---|---|
-| Node **≥ 24.20** | |
-| pnpm **≥ 12.3.4** | `corepack enable && corepack prepare pnpm@12.3.4 --activate` |
-| Docker Desktop | Runs the local PostgreSQL 16 container |
-
----
-
-## Setup
-
-### 1. Create your local `.env`
-
-`.env` is gitignored. Copy the template and set real values:
-
-```bash
-cp .env.example .env
-```
-
-```dotenv
-POSTGRES_USER=collega
-POSTGRES_PASSWORD=<your-password>
-POSTGRES_HOST_PORT=5432
-
-SITE_ADMIN_EMAIL=admin@collega.local
-SITE_ADMIN_PASSWORD=<your-password>
-
-# Optional. Empty is a supported state, not a misconfiguration.
-ANTHROPIC_API_KEY=
-```
-
-`POSTGRES_USER` is **`collega`**, not `postgres` — the container creates exactly one login role and
-names it `collega`, so local, in-cluster and application connection strings all name the same role.
-It is still the container's superuser. `psql -U postgres` fails with `role "postgres" does not exist`.
-
-`ANTHROPIC_API_KEY` powers AI-assisted idea drafting. Leaving it empty runs the feature **dark** —
-the brainstorm falls back to scripted prompts and the API answers "unavailable" rather than erroring
-([`SPEC/20-feature-ai-idea-assist.md`](SPEC/20-feature-ai-idea-assist.md) rule 31). One
-deployment-level key is shared by every organization. Node 24 reads `.env` natively, so no loader is
-needed.
-
-### 2. Start PostgreSQL
-
-```bash
-docker compose up -d postgres
-docker inspect -f '{{.State.Health.Status}}' collega-postgres
-```
-
-The healthcheck runs `pg_isready`, which proves the server accepts connections but does **not**
-authenticate — a healthy container is not evidence your password is right. Data persists in the
-named volume `collega_postgres-data`.
-
-### 3. Install and run
+## Run it
 
 ```bash
 pnpm install
-pnpm dev          # apps/web on http://localhost:3000
+pnpm start
 ```
 
-`pnpm install` generates the Prisma client as a postinstall step.
+That is the whole thing: Next on http://localhost:3000, Nest on
+http://localhost:3001/api/v1, a migrated and seeded PostgreSQL behind them. Ctrl+C stops both.
+
+[`tools/local/start.ts`](tools/local/start.ts) is what it runs, and it is idempotent — copy `.env`
+from the example if it is missing, start the `postgres` compose service **only** if nothing is
+already listening at the host and port `DATABASE_URL` names, build, `prisma migrate deploy`, seed,
+then run both halves. Run it as often as you like. It reloads the web app on save; **re-run it after
+changing `apps/api`**, which it runs as built output rather than under a watcher.
+
+You need Node **≥ 24.20**, pnpm **≥ 12.3.4** (`corepack enable && corepack prepare pnpm@12.3.4
+--activate`), and — unless you already run a PostgreSQL 16 — **Docker**, which is what the database
+container needs. Point `DATABASE_URL` at a cluster you already run **on this machine** and Docker is
+not involved at all.
+
+It refuses to run against anything else. The script migrates and seeds whatever `DATABASE_URL`
+names, so a host that is not loopback stops it before the first write with the address it read;
+`COLLEGA_ALLOW_REMOTE_DATABASE=1` is the way to say you meant it. Nothing here is a substitute for
+that being your own database — the seed upserts demo organizations and users.
+
+`.env` is gitignored and copied from [`.env.example`](.env.example), whose defaults are placeholders
+for a throwaway local container. Two are worth knowing about: `POSTGRES_USER` is **`collega`**, not
+`postgres` — the container creates exactly one login role, so `psql -U postgres` fails with `role
+"postgres" does not exist` — and `ANTHROPIC_API_KEY` may be left empty, which runs AI-assisted idea
+drafting **dark** rather than broken ([`SPEC/20-feature-ai-idea-assist.md`](SPEC/20-feature-ai-idea-assist.md)
+rule 31).
+
+### What works, and what is still a fixture
+
+| | |
+|---|---|
+| `apps/api` | **Runs.** Every feature controller, against the real database. |
+| Sign-in, boards, board detail | **Live.** Real identity, real boards, real cards — and the board writes: author an idea, move a card between lanes, toggle an upvote. |
+| The ideas list, the idea inspector, delivery, settings | **Fixtures**, from [`apps/web/lib/mock.ts`](apps/web/lib/mock.ts). Clickable, but not talking to anything. |
+
+So the board is the screen to look at. Which of the two a screen gets is decided in
+[`apps/web/lib/data/`](apps/web/lib/data) and nowhere else — a reader there is either a `fetch` or a
+fixture, and the call sites cannot tell. Where a fixture reader would otherwise be joined against
+real rows it is named `getFixture*`, so `grep getFixture` finds the screens that are waiting on a
+conversion rather than merely unconverted. Wave-by-wave status lives in
+[`SPEC/implementation-agent-tracker.md`](SPEC/implementation-agent-tracker.md).
+
+For the parts nothing has replaced yet, the frozen .NET app is still the only place to see how a
+screen behaved — see [`DOTNET.md`](DOTNET.md).
 
 ---
 
 ## Commands
 
 ```bash
-pnpm dev          # apps/web on http://localhost:3000
-pnpm check        # lint + typecheck + test — the gate
+pnpm start        # the whole application — API, web, database
+pnpm dev          # apps/web alone, against whatever API is already running
+pnpm check        # lint + typecheck + test + build — the gate
 pnpm build
 pnpm test         # every package except the Playwright suite
 pnpm test:e2e     # Playwright; needs a running app
@@ -105,8 +79,12 @@ pnpm lint:fix     # Biome, with fixes applied
 ```
 
 **`pnpm check` is what "green" means** — Biome (lint, format, and the layer-boundary rules), `tsc`
-across every package, and Vitest. Run it before calling anything done. A single package:
-`pnpm --filter @collega/api test`.
+across every package, Vitest, and `next build`. Run it before calling anything done. A single
+package: `pnpm --filter @collega/api test`.
+
+The build is in the gate because `tsc` cannot stand in for it: a `'use client'` file that reaches a
+server-only module through a barrel typechecks cleanly and then fails to build. Turbo caches it, so
+a second run costs nothing.
 
 Turborepo caches aggressively, and a cached pass has twice hidden a real regression in this
 repository. When you need a result you can trust, force it:
@@ -130,9 +108,14 @@ pnpm --filter @collega/infrastructure db:migrate    # apply migrations
 pnpm --filter @collega/infrastructure db:seed
 ```
 
-`DATABASE_URL` is optional locally — leave it unset and the config module composes the URL from the
-`POSTGRES_*` parts, so a password has one home. In deployment it is set verbatim, which is the shape
-Prisma Postgres hands over.
+The Nest host composes `DATABASE_URL` from the `POSTGRES_*` parts when it is unset, so a password has
+one home. **The Prisma CLI cannot** — `migrate`, `db pull` and `studio` read `env("DATABASE_URL")`
+straight out of the schema — which is why `pnpm start` writes the composed value back into `.env` the
+first time. In deployment it is set verbatim, which is the shape Prisma Postgres hands over.
+
+To start over (**destroys all local data**): `docker compose down -v`, then `pnpm start`. The seed
+rebuilds the demo data from committed code in under four seconds, so there is nothing in the local
+database worth protecting.
 
 ---
 
@@ -149,7 +132,8 @@ packages/
   design-system            Comp P tokens and primitives, on Tailwind v4 + shadcn/ui
 e2e/                       Playwright suite
 tools/
-  golden                   Capture/replay harness — the conversion's only oracle
+  local/start.ts           `pnpm start` — database, API and web in one command
+  golden                   Capture/replay harness — the conversion's regression detector
   boundaries  arch         Architecture tests over the layer rules
 
 SPEC/                      Canonical specs — the source of truth
@@ -182,11 +166,18 @@ writing production React against an undecided design.
 
 ## Accounts
 
-The demo seed creates two organizations with one account per role each, all at password `Abc123!`.
-The full roster — every address, display name and role — is [`demo.md`](demo.md).
+`pnpm start` seeds two organizations with one account per role each, and gives all of them the same
+development-only password — `DEMO_PASSWORD` in
+[`packages/infrastructure/prisma/seed/modules/scenario.ts`](packages/infrastructure/prisma/seed/modules/scenario.ts),
+which the seed refuses to run in production. The three worth signing in as:
 
-Those accounts are seeded by the frozen .NET app. `apps/web` currently uses the fixture identity in
-`apps/web/lib/mock.ts`; sign-in becomes real when Wave D lands.
+| | |
+|---|---|
+| `orgadmin@acme-robotics.demo.collega.test` | Creates, moves and administers |
+| `user@acme-robotics.demo.collega.test` | Creates and moves, subject to the board's own setting |
+| `readonly@acme-robotics.demo.collega.test` | Reads and upvotes; authoring is refused, with the reason shown |
+
+The full roster — every address, display name and role — is [`demo.md`](demo.md).
 
 ---
 
@@ -207,8 +198,13 @@ docker exec -it collega-postgres \
 (**destroys all local data**): `docker compose down -v`.
 
 **`pnpm check` fails on `apps/web/next-env.d.ts`**
-A running `next dev` rewrites that generated file in a style Biome rejects.
-`git checkout -- apps/web/next-env.d.ts` and re-run.
+That file is generated, and `next dev` and `next build` write different versions of it, so a dev
+server left running rewrites it under you. `git checkout -- apps/web/next-env.d.ts` and re-run.
+
+**`pnpm start` says something is already on 3000 or 3001**
+A previous run was killed hard enough that its servers outlived it. `pnpm start` puts each server in
+its own process group and signals the group, so Ctrl+C leaves nothing behind; `kill -9` on the
+launcher does not.
 
 **`pnpm install` fails on an engine version** — the workspace requires Node ≥ 24.20 and
 pnpm ≥ 12.3.4. `corepack prepare pnpm@12.3.4 --activate`.
