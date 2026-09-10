@@ -631,7 +631,7 @@ CSV columns:
 Behavior rules:
 - each created user receives a system-generated temporary password and must change it on first login
 - rows with invalid data or duplicate emails are rejected individually without failing the whole import
-- **Bounded (added 2026-09-10):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**, the same two bounds and the same messages as the idea import below. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. This endpoint had no bound at all until now, which was an oversight rather than a policy difference: the body buffers into the serving process's heap, so one request could exhaust it
+- **Bounded (added 2026-09-10):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**, the same two bounds and the same messages as the idea import below. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. The two answer differently, according to where the upload is stopped: the body limit is enforced at the request pipeline, before the handler runs, and answers `413`; the row ceiling is the handler's own and answers the field-keyed `400`. This endpoint had no bound at all until now, which was an oversight rather than a policy difference: the body buffers into the serving process's heap, so one request could exhaust it
 
 Success response `200`:
 - `createdCount`
@@ -639,10 +639,11 @@ Success response `200`:
 - `rows` per-row outcome list with `rowNumber`, `email`, `outcome`, `error` nullable, and `temporaryPassword` for created rows
 
 Error responses:
-- `400` file is missing, malformed, or not a valid CSV
+- `400` file is missing, malformed, or not a valid CSV, or it exceeds 5,000 rows
 - `401` caller is not authenticated
 - `403` caller is authenticated but not allowed to create users in this organization
 - `404` organization does not exist or is outside caller scope
+- `413` the request body exceeds 5 MB; the pipeline refuses it before it reaches the handler
 
 ### `GET /api/v1/users/{userId}`
 Purpose: Return user detail.
@@ -973,7 +974,7 @@ Behavior:
 - Each data row creates a new idea. Required columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`. `Status` is optional (must name a board swimlane; defaults to the left-most swimlane); `Due Date`, `Tags`, and per-UDF-field columns are optional.
 - `Idea Type` and `Business Impact` are matched by name (case-insensitive) against active options; a missing or unknown value rejects that row. Dropdown/MultiSelect UDF columns are matched by option label; Boolean accepts `Yes`/`No` or `true`/`false`.
 - Invalid rows are rejected individually with a per-row message; valid rows still import.
-- **Bounded (added 2026-08-11, Sprint 4):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import.
+- **Bounded (added 2026-08-11, Sprint 4):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. The body limit is enforced at the request pipeline and answers `413`; the row ceiling is the handler's own and answers the field-keyed `400`.
 - A leading guard apostrophe written by the export is stripped on import (see the export contract above), so re-importing an exported file is lossless.
 
 Success response `200`:
@@ -982,8 +983,8 @@ Success response `200`:
 - `rows` array of `{ rowNumber, title, outcome (`Created`/`Rejected`), error }`
 
 Error responses:
-- `400` the file is missing/empty, its header lacks the required columns, it exceeds 5 MB, or it exceeds 5,000 rows
-- `413` the request body exceeds the server's size limit before it reaches the handler
+- `400` the file is missing/empty, its header lacks the required columns, or it exceeds 5,000 rows
+- `413` the request body exceeds 5 MB; the pipeline refuses it before it reaches the handler
 
 ### `POST /api/v1/boards/{boardId}/ideas`
 Purpose: Create a new idea on a board.

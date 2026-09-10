@@ -336,8 +336,8 @@ export class IdeasController {
 
   /**
    * Create-only CSV import onto a board. Rows are rejected individually and reported in the
-   * response, so a file with one bad row still imports the rest and answers 200; only a missing,
-   * empty, oversized or over-long file is a 400.
+   * response, so a file with one bad row still imports the rest and answers 200; a missing, empty
+   * or over-long file is a 400, and one over the body limit is a 413 from the pipeline below.
    *
    * Idea import requires a View As session where user import does not
    * (`SPEC/50-typescript-migration.md`, C2's note). That rule lives in `IdeaService` - bulk create
@@ -346,6 +346,9 @@ export class IdeasController {
    */
   @Post('boards/:boardId/ideas/import')
   @HttpCode(200)
+  // The body bound in full: multer aborts an upload over the limit at the pipeline and Nest turns
+  // that into a `413`, so the handler is never handed an oversized buffer and has no size check of
+  // its own to make. `SPEC/30-Contracts.md` documents the 413 for both CSV imports.
   @UseInterceptors(FileInterceptor('csvFile', { limits: { fileSize: MAX_IMPORT_BYTES } }))
   async importCsv(
     @Param('boardId', UuidParamPipe) boardId: string,
@@ -357,17 +360,6 @@ export class IdeasController {
       // rather than failing model binding, so this renders with a `traceId` and no charset.
       throw new ValidationError('One or more fields are invalid.', {
         csvFile: ['A CSV file is required.'],
-      })
-    }
-
-    // The multer limit above is the port of `[RequestSizeLimit]`, which refused an oversized body
-    // at the pipeline; this is the port of the second, explicit check .NET made once the length
-    // was known, which turns the same condition into the standard problem-details 400.
-    if (buffer.length > MAX_IMPORT_BYTES) {
-      throw new ValidationError('One or more fields are invalid.', {
-        csvFile: [
-          `The file is larger than the ${MAX_IMPORT_BYTES / (1024 * 1024)} MB import limit.`,
-        ],
       })
     }
 
