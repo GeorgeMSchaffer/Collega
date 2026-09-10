@@ -192,7 +192,7 @@ export class AuthService {
       accessToken: token.token,
       expiresInSeconds: token.expiresInSeconds,
       requiresPasswordChange: loggedIn.mustChangePassword,
-      user: toSummary(loggedIn),
+      user: toSummary(loggedIn, await this.organizationTitle(loggedIn)),
     }
   }
 
@@ -202,7 +202,7 @@ export class AuthService {
       throw new UnauthorizedError('Caller identity could not be resolved.')
     }
 
-    return toSummary(user)
+    return toSummary(user, await this.organizationTitle(user))
   }
 
   /** Self-service update of the caller's own first/last name (auth requirement #20). */
@@ -233,7 +233,7 @@ export class AuthService {
       null,
     )
 
-    return toSummary(updated)
+    return toSummary(updated, await this.organizationTitle(updated))
   }
 
   /** Validates raw uploaded image bytes through the image pipeline (reject non-images /
@@ -276,7 +276,7 @@ export class AuthService {
       null,
     )
 
-    return toSummary(updated)
+    return toSummary(updated, await this.organizationTitle(updated))
   }
 
   /** Clears the caller's stored portrait so the initials avatar is shown again. */
@@ -298,7 +298,7 @@ export class AuthService {
       null,
     )
 
-    return toSummary(updated)
+    return toSummary(updated, await this.organizationTitle(updated))
   }
 
   async changePassword(command: ChangePasswordCommand): Promise<void> {
@@ -485,6 +485,23 @@ export class AuthService {
     return user
   }
 
+  /**
+   * The title of the user's organization, or `null` when they belong to none.
+   *
+   * One read on the endpoint the client already calls once per request, which is the point: the
+   * sidebar names the organization on every authenticated page, and the alternative it replaces
+   * was a second HTTP call to `GET /organizations/{id}` - an endpoint only a Site Admin or an
+   * in-scope Org Admin may reach, so a `User` or `ReadOnly` reader paid a guaranteed 403 for it
+   * and got no name (SPEC/decisions.md 2026-09-10).
+   */
+  private async organizationTitle(user: User): Promise<string | null> {
+    if (user.organizationId === null) {
+      return null
+    }
+    const organization = await this.organizations.getById(user.organizationId)
+    return organization?.title ?? null
+  }
+
   private async audit(
     eventType: string,
     organizationId: string | null,
@@ -509,10 +526,11 @@ export class AuthService {
   }
 }
 
-function toSummary(user: User): CurrentUserSummary {
+function toSummary(user: User, organizationTitle: string | null): CurrentUserSummary {
   return {
     userId: user.id,
     organizationId: user.organizationId,
+    organizationTitle,
     role: user.role,
     firstName: user.firstName,
     lastName: user.lastName,

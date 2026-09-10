@@ -138,6 +138,7 @@ Purpose: Return the currently authenticated user summary.
 Success response `200`:
 - `userId`
 - `organizationId`
+- `organizationTitle` string or `null` — the organization's display title
 - `role`
 - `firstName`
 - `lastName`
@@ -146,9 +147,17 @@ Success response `200`:
 - `portraitDataUrl` string or `null`
 - `viewingAs` object or `null` — populated while a View As session is live
 
-The last two were missing from this document until 2026-09-09 and are **not** optional: every
-recorded fixture carries them, and the client depends on `viewingAs` to render the effective role
-during impersonation. Verified against `tools/golden/fixtures/auth.me.*`.
+`portraitDataUrl` and `viewingAs` were missing from this document until 2026-09-09 and are **not**
+optional: every recorded fixture carries them, and the client depends on `viewingAs` to render the
+effective role during impersonation. Verified against `tools/golden/fixtures/auth.me.*`.
+
+`organizationTitle` was added 2026-09-10 (`SPEC/decisions.md`) so the client can name the
+organization from the one call it already makes per request. `null` means the caller belongs to no
+organization — a Site Admin, whose surfaces read "All organizations" — and nothing else: a caller
+with an `organizationId` always has a string here. It is **not** a fallback for a title that could
+not be resolved, and clients must keep the two cases apart. This shape is shared by every response
+that returns an authenticated user summary: `POST /auth/login` (under `user`), `PUT /auth/me`,
+`PUT`/`DELETE /auth/me/portrait`, and both identities on `POST /auth/view-as`.
 
 Error responses:
 - `401` caller is not authenticated
@@ -1074,6 +1083,21 @@ Success response `200`:
 - `upvoteCount`
 - `hasUpvoted` boolean for the current caller
 - `commentCount` integer
+- `author` object using the same assignee item shape, or `null` — who raised the idea
+- `createdAtUtc` timestamp
+
+`author` and `createdAtUtc` were added 2026-09-10: the detail header renders "by {author} on
+{date}" and had no source for either. `author` is the full persona rather than the bare
+`authorUserId` the list item carries, so the name renders without a second request per idea
+opened. It is nullable only because `ideas.author_user_id` carries no foreign key; no code path
+deletes a user, so a `null` there is data damage rather than an ordinary case to design a label
+for.
+
+There is deliberately **no** `reference` field. The comps show `IDEA-101`, but no reference column
+exists and the Prisma schema is frozen at S0.2 — a real reference needs a per-organization
+sequence and therefore a schema amendment slice.
+
+`PUT /api/v1/ideas/{ideaId}` answers this same detail shape, and carries both fields with it.
 
 ### `PUT /api/v1/ideas/{ideaId}`
 Purpose: Update idea content.

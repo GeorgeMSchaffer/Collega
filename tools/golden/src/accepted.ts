@@ -141,6 +141,116 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'was never a recorded number to compare against.',
     kind: 'extra',
   },
+  {
+    cases: [
+      'aiassist.org',
+      'auth.me.orgadmin',
+      'auth.me.readonly',
+      'auth.me.siteadmin',
+      'auth.me.update',
+      'auth.me.user',
+      'boards.org',
+      'businessimpacts.org',
+      'comments.org',
+      'fielddefinitions.org',
+      'ideaassist.org',
+      'ideas.org',
+      'ideatypes.org',
+      'organizations.org',
+      'profile.me.update.orgadmin',
+      'profile.me.update.readonly',
+      'profile.me.update.siteadmin',
+      'profile.me.update.user',
+      'profile.org',
+      'profile.portrait.clear.orgadmin',
+      'profile.portrait.clear.readonly',
+      'profile.portrait.clear.siteadmin',
+      'profile.portrait.clear.user',
+      'profile.portrait.set.orgadmin',
+      'profile.portrait.set.readonly',
+      'profile.portrait.set.siteadmin',
+      'profile.portrait.set.user',
+      'statuses.org',
+      'tags.org',
+      'users.org',
+    ],
+    path: 'body.organizationTitle',
+    decided: '2026-09-10',
+    reason:
+      'A deliberate improvement, not drift. The sidebar names the organization on every ' +
+      'authenticated page and the summary carried only an `organizationId`, so the client resolved ' +
+      'the title through GET /organizations/{id} - an endpoint `OrganizationService` gates behind ' +
+      'Site Admin or an in-scope Org Admin. A `User` or `ReadOnly` reader therefore paid a ' +
+      'guaranteed 403 per request and still got no name, rendering the Site Admin branch ("All ' +
+      'organizations") on every page. The title is now projected here and SPEC/30-Contracts.md and ' +
+      'SPEC/decisions.md 2026-09-10 both say so. Every case listed answers a CurrentUserSummary - ' +
+      'the four /auth/me role cases, the profile edits and portrait set/clear that echo it back, ' +
+      'and the `*.org` setup steps that resolve the caller before doing something else. The ' +
+      "accepted difference is the field's appearance and only that, which is what `kind` says: " +
+      'every other field of the summary is still compared, so a `role` or `viewingAs` that moved ' +
+      'still fails. The value is not pinned: `shape` is a per-side regex checked against BOTH ' +
+      'sides, and the recording has no such field for it to hold - the same reason the board ' +
+      "list's `ideaCount` above carries none. What it must not do is confuse the two null cases, " +
+      'and the replay is the evidence it does not: the Site Admin cases answer `null` here while ' +
+      'every organization member answers "Acme Robotics".',
+    kind: 'extra',
+  },
+  {
+    cases: ['auth.login.orgadmin'],
+    path: 'body.user.organizationTitle',
+    decided: '2026-09-10',
+    reason:
+      'The same field as the entry above, on the summary nested in the login response - login ' +
+      'returns a CurrentUserSummary under `user`, so it gains the title with it. Listed separately ' +
+      'because an entry names one path and this one is nested. This case also carries the accepted ' +
+      'absence of `body.accessToken`; both are accepted here, which is what lets the case pass, and ' +
+      'a case is only accepted when EVERY mismatch is.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.author',
+    decided: '2026-09-10',
+    reason:
+      'A deliberate improvement, not drift. The idea detail header renders "by {author}" and the ' +
+      'payload carried no author at all - not even the `authorUserId` the list item has - so the ' +
+      'screen stayed on fixture data while the board beside it was live, and a tester clicking a ' +
+      'real card read invented names. It now carries the full persona under `author`, in the same ' +
+      'shape `assignees` uses, so the name renders without a second request per idea opened; ' +
+      'SPEC/30-Contracts.md names it. Both `GET /ideas/{ideaId}` and `PUT /ideas/{ideaId}` answer ' +
+      'the detail, hence the update cases. The accepted difference is the appearance of the object, ' +
+      'which is what `kind` says: every other field of the detail is still compared. Its contents ' +
+      'are not pinned - `shape` is a per-side regex over strings and this value is an object, and ' +
+      'the recording has no such field to compare against either way.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.createdAtUtc',
+    decided: '2026-09-10',
+    reason:
+      'The other half of the same change: the detail header renders "on {date}" beside the author ' +
+      'and had no source for it. The column has been on `ideas` all along - the list item already ' +
+      'projects it - so this is the detail catching up, not new data. A separate entry from ' +
+      '`body.author` because an entry names one path. Not pinned to a shape: the value normalizes ' +
+      'to the corpus timestamp placeholder rather than a comparable string, and the recording has ' +
+      'no such field.',
+    kind: 'extra',
+  },
 ]
 
 /** One entry as it applies to one of its cases - the unit staleness is reported at. */

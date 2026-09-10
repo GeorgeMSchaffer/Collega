@@ -157,11 +157,31 @@ export class ViewAsService {
     )
 
     return {
-      impersonating: summarize(target),
-      realUser: summarize(realUser),
+      impersonating: summarize(target, targetOrganization),
+      realUser: summarize(realUser, await this.realUserOrganization(realUser, targetOrganization)),
       startedAtUtc: session.startedAtUtc,
       expiresAtUtc: session.absoluteExpiresAtUtc,
     }
+  }
+
+  /**
+   * The real administrator's own organization, for the `realUser` summary this call returns.
+   *
+   * A Site Admin belongs to none. An Org Admin may only act as a member of their own, so the
+   * target's organization is already the answer and is already loaded - only the Site Admin case
+   * could reach the fetch below, and it returns before it.
+   */
+  private async realUserOrganization(
+    realUser: ImpersonationUserSummary,
+    targetOrganization: ImpersonationOrganizationSummary | null,
+  ): Promise<ImpersonationOrganizationSummary | null> {
+    if (realUser.organizationId === null) {
+      return null
+    }
+    if (realUser.organizationId === targetOrganization?.id) {
+      return targetOrganization
+    }
+    return this.organizations.getById(realUser.organizationId)
   }
 
   /** Idempotent (contract): ending with no active session is a success, not an error. */
@@ -343,10 +363,14 @@ export class ViewAsService {
 }
 
 /** Same shape `GET /auth/me` returns, so a client can bind both with one type. */
-function summarize(user: ImpersonationUserSummary): CurrentUserSummary {
+function summarize(
+  user: ImpersonationUserSummary,
+  organization: ImpersonationOrganizationSummary | null,
+): CurrentUserSummary {
   return {
     userId: user.id,
     organizationId: user.organizationId,
+    organizationTitle: organization?.title ?? null,
     role: user.role,
     firstName: user.firstName,
     lastName: user.lastName,

@@ -9,6 +9,38 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-10 — The organization's title rides on `/auth/me`, not on a second call to an admin endpoint
+
+**`GET /auth/me` now carries `organizationTitle`.** The sidebar names the organization on every
+authenticated page and the summary carried only an `organizationId`, so `apps/web` resolved the
+title by calling `GET /organizations/{organizationId}` alongside it.
+
+That workaround was not merely wasteful, it was **wrong for two of the four roles**. That endpoint
+goes through `OrganizationService.getById` → `loadForAdministration`, which throws `ForbiddenError`
+for anything that is not a Site Admin or an in-scope Org Admin. The web side swallowed the 403 to
+`null`, and `null` is the Site Admin branch — so every `User` and `ReadOnly` account read "All
+organizations" on every page, and paid a guaranteed-403 round trip per request for it. The bug was
+invisible because the fallback rendered something plausible.
+
+**The alternative considered and rejected: widening `GET /organizations/{id}`'s read scope.** The
+sidebar needs a name, not an administrative view — that payload carries the invite code, the
+primary contact and the AI scope statement — and loosening an admin endpoint to serve a label is a
+larger authorization surface than the problem deserves. `/auth/me` is already fetched exactly once
+per request, so putting the title there removes the second call instead of authorizing it.
+
+**`null` means "belongs to no organization" and nothing else.** A Site Admin is the only caller
+that gets it; `users.organization_id` carries a restricted foreign key and `organizations.title` is
+`NOT NULL`, so a caller with an organization always has a string, empty if it was named that way.
+The two cases must stay distinguishable or the client's branch is back to guessing, which is the
+defect this entry closes.
+
+The field is on the shared `CurrentUserSummary`, so it appears on every response that returns one —
+login, the profile and portrait edits, and both identities on `POST /auth/view-as`. It cost 31
+accepted golden diffs (`tools/golden/src/accepted.ts`, 2026-09-10), which is the third answer under
+the 2026-09-09 entry: a deliberate improvement, recorded rather than fixed.
+
+---
+
 ## 2026-09-10 — How the two Vercel projects are configured, and how production gets its first administrator
 
 **Decided while writing `SPEC/50-vercel-deployment.md`**, which is now canonical for deployment and
