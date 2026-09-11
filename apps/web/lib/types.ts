@@ -48,6 +48,23 @@ export type CurrentUser = {
 }
 
 /**
+ * The signed-in account's own record, as `/settings/profile` edits it.
+ *
+ * The same `GET /auth/me` payload `CurrentUser` comes from, read for different fields. The
+ * principal carries what the shell renders — a display name and initials — while the form edits the
+ * two parts that name is composed from and shows the email read-only beside them. Keeping them as
+ * two view types rather than widening `CurrentUser` is what stops one screen's fields appearing on
+ * every gated component's principal.
+ *
+ * No `role`: the form renders `currentUser().roleLabel`, which is already resolved.
+ */
+export type Profile = {
+  firstName: string
+  lastName: string
+  email: string
+}
+
+/**
  * `colorName` is the human name shown in the status settings table, and it has no API field —
  * a status carries a hex colour and nothing else. Optional rather than invented: the settings
  * screen renders the swatch alone when the name is absent, which is honest, and inventing
