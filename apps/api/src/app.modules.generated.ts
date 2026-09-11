@@ -8,8 +8,10 @@ import { CommentsModule } from './comments/comments.module.js'
 import { FieldDefinitionsModule } from './field-definitions/field-definitions.module.js'
 import { IdeaTypesModule } from './idea-types/idea-types.module.js'
 import { IdeasModule } from './ideas/ideas.module.js'
+import { IssueTasksModule } from './issue-tasks/issue-tasks.module.js'
 import { NotificationsModule } from './notifications/notifications.module.js'
 import { OrganizationsModule } from './organizations/organizations.module.js'
+import { SprintsModule } from './sprints/sprints.module.js'
 import { StatusesModule } from './statuses/statuses.module.js'
 import { TagsModule } from './tags/tags.module.js'
 import { UsersModule } from './users/users.module.js'
@@ -23,8 +25,10 @@ export const FEATURE_MODULES = [
   FieldDefinitionsModule,
   IdeaTypesModule,
   IdeasModule,
+  IssueTasksModule,
   NotificationsModule,
   OrganizationsModule,
+  SprintsModule,
   StatusesModule,
   TagsModule,
   UsersModule,

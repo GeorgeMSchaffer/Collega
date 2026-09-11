@@ -26,6 +26,7 @@ import { AuthModule } from '../auth/auth.module.js'
 import { PersistenceModule } from '../common/persistence/persistence.module.js'
 import { PORT_TOKENS } from '../common/tokens.js'
 import { NotificationsModule } from '../notifications/notifications.module.js'
+import { DeliveryController } from './delivery.controller.js'
 import { IdeasController } from './ideas.controller.js'
 
 /**
@@ -60,7 +61,7 @@ import { IdeasController } from './ideas.controller.js'
  */
 @Module({
   imports: [PersistenceModule, AuthModule, NotificationsModule],
-  controllers: [IdeasController],
+  controllers: [IdeasController, DeliveryController],
   providers: [
     {
       provide: IdeaService,
@@ -136,5 +137,8 @@ import { IdeasController } from './ideas.controller.js'
       ],
     },
   ],
+  // `SprintsModule` composes a sprint with its Issues, and a delivery card is this service's
+  // projection - exporting it is what keeps that from being a second fifteen-dependency factory.
+  exports: [IdeaService],
 })
 export class IdeasModule {}

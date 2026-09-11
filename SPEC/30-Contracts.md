@@ -1206,6 +1206,396 @@ Query behavior:
 - normal board, list, and detail endpoints exclude soft-deleted ideas
 - no restore endpoint is exposed in this release
 
+## Delivery Contracts
+
+Added 2026-09-11, Issues and Delivery Slice 1 (`SPEC/20-feature-issues-and-delivery.md`). **An Issue
+is not a new resource** — it is the same `ideas` row in its `Delivery` phase, so every route below
+addresses an idea by its existing `{ideaId}` and there is no `/issues` root. The Slice 2 Outcome and
+Roadmap routes are deliberately absent; nothing here carries an `outcomeId`.
+
+Two refusals are distinct on purpose and must not be collapsed:
+- **`409`** — the item is in the wrong phase *for the phase transition itself*: promoting something
+  already in `Delivery`, or returning something already in `Discovery`. There is nothing to fix in
+  the request; the item has already reached the state being asked for.
+- **`400`** — a *delivery operation* on a `Discovery` item (delivery status, sprint assignment,
+  tasks). The request names a field that has no meaning until the item is promoted, and the response
+  is field-keyed like any other invalid field.
+
+**A `sprintId` in a request body is a `400`, never a `404`.** The route addresses the idea, which
+exists; the sprint is a value in the body, so an unknown, deleted, cross-organization or malformed
+id is a field-keyed validation failure keyed `sprintId`, exactly as an unknown `ideaTypeId` is on
+`PUT /api/v1/ideas/{ideaId}`. Only the path id decides between `200` and `404`.
+
+Cross-organization access answers `404` throughout, never `403` — confirming that a sprint, Issue or
+task exists in somebody else's organization is the thing a prober is fishing for.
+
+**A Site Admin acting directly is refused every mutation here with `403`**, and reads it all with
+`200`. Promotion, delivery status, sprint management and tasks are organization content under
+`SPEC/20-feature-view-as.md` rules 25/25c; View As is the path, and while a View As session is live
+the effective role is the target's, so the guard does not fire.
+
+### `POST /api/v1/ideas/{ideaId}/promote`
+Purpose: The promotion gate — the explicit, audited decision that flips an idea from `Discovery` to `Delivery`. The row, its ideation `statusId`, its upvotes, its tags and its whole comment thread are retained; nothing is copied and no second object is created.
+
+Authorization: the idea's author, or an in-scope admin. A direct Site Admin is refused.
+
+Request body:
+- `effort` **required** string: `Low`, `Medium`, or `High`. There is no default — choosing the size is the point of the gate.
+- `sprintId` optional GUID string or `null` — the sprint to promote into. `null` or omitted promotes straight to the delivery backlog. Must name a non-`Completed` sprint in the idea's organization.
+- `note` optional string — free text recorded on the promotion audit event only. It is **not** stored on the idea and is not returned by any read.
+
+Behavior:
+- sets `phase` to `Delivery` and `deliveryStatus` to `Pending`, and records `effort`, `promotedAtUtc`, `promotedByUserId`, and an `upvoteCountAtPromotion` snapshot read at this moment
+- the ideation `statusId` is **never cleared** — it is frozen at its last Discovery value for provenance, and ideation `Complete` and delivery `Complete` remain distinct terminal states
+- writes an `IdeaPromotedToIssue` audit event and an `IdeaPromoted` notification to the author and assignees, self-suppressed
+- the item leaves the ideation board (which filters to `Discovery`) and appears on the sprint board or backlog
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `400` `effort` is missing or not one of the three values (keyed `effort`); `sprintId` names no assignable sprint in this organization, or names a `Completed` one (keyed `sprintId`)
+- `401` caller is not authenticated
+- `403` caller is neither the author nor an in-scope admin, or is a Site Admin acting directly
+- `404` idea does not exist, is deleted, or is outside caller scope
+- `409` the idea is already in `Delivery` — `"This idea is already in delivery."`
+
+Authorization is evaluated **before** the phase check, so an unauthorized caller gets `403` even when the item is already promoted: a caller who may not promote must not learn the item's phase.
+
+### `POST /api/v1/ideas/{ideaId}/return-to-discovery`
+Purpose: Recover a mis-promotion. Deliberately reversible rather than prevented by a stronger confirm.
+
+Authorization: in-scope admin only — not the author. A direct Site Admin is refused.
+
+Request body: none.
+
+Behavior:
+- sets `phase` back to `Discovery` and clears `sprintId` and `deliveryStatus`
+- **retains** `effort`, the promotion snapshot (`promotedAtUtc`, `promotedByUserId`, `upvoteCountAtPromotion`) and the Issue's **tasks**, so a re-promote is lossless and the audit trail stays coherent. Tasks are hidden with the checklist, never deleted.
+- writes an `IssueReturnedToDiscovery` audit event. No notification.
+- the item reappears on its ideation board at the `statusId` it was frozen at
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is not an in-scope admin, or is a Site Admin acting directly
+- `404` idea does not exist, is deleted, or is outside caller scope
+- `409` the idea is already in `Discovery` — `"This idea is not in delivery."`
+
+### `PUT /api/v1/ideas/{ideaId}/delivery-status`
+Purpose: Move an Issue between the five fixed delivery statuses — the sprint board's swimlanes.
+
+Authorization: the idea's author, any Issue assignee, or an in-scope admin. A direct Site Admin is refused. `Read Only` is refused.
+
+Request body:
+- `deliveryStatus` required string: `Pending`, `Scoping`, `Development`, `Review`, or `Complete`. The set is fixed in this slice and not org-configurable.
+
+Behavior:
+- **any status may follow any other.** The board is a kanban and dragging backwards is a normal correction, not an invariant violation.
+- **outstanding tasks never block `Complete`.** The UI warns; the API permits. Enforcing "all tasks done" would make the checklist a gate, which this feature explicitly refuses.
+- re-applying the status the Issue already has is a no-op: no audit event, no notification
+- otherwise writes an `IssueDeliveryStatusChanged` audit event and a notification of the same name to the author and assignees, self-suppressed
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `400` `deliveryStatus` is missing or not one of the five (keyed `deliveryStatus`); **or the idea is still in `Discovery`** — keyed `deliveryStatus`, `"A delivery status applies only to a promoted idea."` This is a `400` and not the `409` a wrong-phase promotion gets: see the section preamble.
+- `401` caller is not authenticated
+- `403` caller is not the author, an assignee, or an in-scope admin, or is a Site Admin acting directly
+- `404` idea does not exist, is deleted, or is outside caller scope
+
+### `PUT /api/v1/ideas/{ideaId}/sprint`
+Purpose: Pull an Issue into a sprint, or return it to the delivery backlog.
+
+Authorization: in-scope admin only in this slice. A direct Site Admin is refused.
+
+Request body:
+- `sprintId` required GUID string **or `null`** — `null` means the delivery backlog. The target must be a non-`Completed` sprint in the idea's organization.
+
+Behavior:
+- assigning the sprint the Issue is already in is a no-op: no audit event
+- otherwise writes an `IssueSprintAssignmentChanged` audit event. No notification — sprint membership is a planning decision, not something to page the room about.
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `400` `sprintId` names no assignable sprint in this organization, or names a `Completed` one — `"A completed sprint cannot take new issues."` (keyed `sprintId`); **or the idea is still in `Discovery`** — keyed `sprintId`, `"Only a promoted idea can be assigned to a sprint."`
+- `401` caller is not authenticated
+- `403` caller is not an in-scope admin, or is a Site Admin acting directly
+- `404` idea does not exist, is deleted, or is outside caller scope
+
+### `GET /api/v1/organizations/{organizationId}/delivery`
+Purpose: The sprint board and the delivery backlog — `Delivery`-phase items as cards. Readable by **every** member of the organization, `Read Only` included.
+
+Query parameters:
+- `sprintId` optional GUID — the sprint whose Issues to return. **Omitting it reads the BACKLOG** (`Delivery` items with no sprint), not every delivery item: that is the list an admin pulls from, and "everything" is not a view this feature has. A value that is not a canonical GUID applies a filter that matches nothing and returns an empty list rather than a `400` (the same deliberate divergence `statusId` carries on the board list).
+- `deliveryStatus` optional — `Pending`, `Scoping`, `Development`, `Review`, or `Complete`. An unrecognised value is ignored rather than refused, matching the board list's other optional filters.
+
+Success response `200`: an **unpaged** array (a sprint is a bounded, human-sized set) of the `GET /api/v1/boards/{boardId}/ideas` item shape plus:
+- `phase` string — always `Delivery` for this endpoint
+- `effort` string or `null`: `Low`, `Medium`, `High`
+- `deliveryStatus` string or `null`
+- `sprint` object or `null`: `sprintId`, `name`, `startDate`, `endDate`
+- `taskSummary` object: `{ done, total }`. `done` counts only `Done` tasks — `InProgress` is explicitly not half a point, because a task count must not become a velocity proxy.
+- `provenance` object: `promotedAtUtc`, `promotedByUserId`, `promotedByDisplayName`, `upvoteCountAtPromotion`, each nullable. `upvoteCountAtPromotion` sits beside the card's live `upvoteCount` deliberately — "42 upvotes when we committed, 61 now" is a more useful fact than either number alone.
+
+Error responses:
+- `401` caller is not authenticated
+- `404` the organization does not exist or is outside caller scope
+
+## Sprint Contracts
+
+Added 2026-09-11, Issues and Delivery Slice 1. A Sprint is an organization-scoped, soft-deletable, time-boxed container. **Flat** — it is never nested under a Slice 2 Outcome, and an Issue belongs to zero or one Sprint through a nullable `sprintId` on the idea, with no join entity.
+
+**Management is admin-only; reading is open to every member of the organization** including `Read Only`, because the sprint board and backlog are ticked for every role in the feature's Permissions table. A direct Site Admin is refused every mutation and allowed every read.
+
+Sprint item shape (returned by list, create, update, and embedded in the detail read):
+- `sprintId`
+- `organizationId`
+- `name` string, max 100 characters
+- `goal` string or `null`, max 500 characters
+- `startDate` date string (`YYYY-MM-DD`)
+- `endDate` date string (`YYYY-MM-DD`)
+- `ownerUserId` GUID string or `null`
+- `ownerDisplayName` string or `null`
+- `state` string: `Planned`, `Active`, or `Completed`
+- `issueCount` integer, `doneCount` integer — **derived per read, never stored.** A stored counter is a second source of truth that drifts the first time an Issue moves without going through the sprint.
+
+Sprint names are **not** unique: "Sprint 12" may legitimately recur across years.
+
+### `GET /api/v1/organizations/{organizationId}/sprints`
+Purpose: The organization's sprints. Soft-deleted sprints are excluded.
+
+Query parameters:
+- `state` optional — `Planned`, `Active`, or `Completed`. Omitted returns every state. An **unrecognised** value is a `400` keyed `state` rather than being read as absent: silently listing everything would answer `200` with rows the caller explicitly excluded.
+
+Success response `200`: an unpaged array of the sprint item shape.
+
+Error responses:
+- `400` `state` is not one of the three values
+- `401` caller is not authenticated
+- `404` the organization does not exist or is outside caller scope
+
+### `GET /api/v1/organizations/{organizationId}/sprints/{sprintId}`
+Purpose: One sprint with the Issues assigned to it — the sprint board in a single read.
+
+Success response `200`: the sprint item shape plus:
+- `issues` array of the delivery card shape from `GET /api/v1/organizations/{organizationId}/delivery`
+
+`issues` is the same projection that endpoint answers, filtered to this sprint, so the sprint board and the backlog render from one card shape. It is composed at the API boundary rather than embedded in the sprint read, so there is one place that knows how to build a delivery card.
+
+Error responses:
+- `401` caller is not authenticated
+- `404` the sprint does not exist, is soft-deleted, or belongs to another organization
+
+### `POST /api/v1/organizations/{organizationId}/sprints`
+Purpose: Create a sprint. It always starts `Planned`; `state` is not accepted on the body.
+
+Authorization: in-scope admin. A direct Site Admin is refused.
+
+Request body:
+- `name` required string, max 100 characters, trimmed
+- `goal` optional string or `null`, max 500 characters, trimmed; blank is stored as `null`
+- `startDate` required date string (`YYYY-MM-DD`)
+- `endDate` required date string (`YYYY-MM-DD`), must be **on or after** `startDate`
+- `ownerUserId` optional GUID string or `null` — must be an active user in this organization
+
+Success response `201`: the sprint item shape, with `state` `Planned` and both counts `0`.
+
+Error responses:
+- `400` `name` is blank or too long; `goal` is too long; either date is not a calendar date; `endDate` is before `startDate` (`"End Date must be on or after Start Date."`); `ownerUserId` is not an active user in this organization
+- `401` caller is not authenticated
+- `403` caller is not an in-scope admin, or is a Site Admin acting directly
+- `404` the organization does not exist or is outside caller scope
+
+### `PUT /api/v1/organizations/{organizationId}/sprints/{sprintId}`
+Purpose: Rename, re-goal, re-date, or reassign the owner. Body is identical to create; the update is a full replacement of those five fields.
+
+Authorization: in-scope admin. A direct Site Admin is refused.
+
+Behavior:
+- allowed while `Planned` or `Active`
+- **the dates of a `Completed` sprint are locked.** Its window is now a historical record of when the work actually happened, and anything reading back "what shipped in Q3" would silently change answer. Name, goal and owner stay editable there — fixing a typo on a finished sprint rewrites no history.
+- `state` is not settable here; use `start` and `complete`
+
+Success response `200`: the sprint item shape.
+
+Error responses:
+- `400` same field rules as create; plus `"A completed sprint cannot be re-dated."` (keyed `startDate`) when either date differs on a `Completed` sprint
+- `401` caller is not authenticated
+- `403` caller is not an in-scope admin, or is a Site Admin acting directly
+- `404` the sprint does not exist, is soft-deleted, or belongs to another organization
+
+### `POST /api/v1/organizations/{organizationId}/sprints/{sprintId}/start`
+Purpose: `Planned` → `Active`.
+
+Authorization: in-scope admin. A direct Site Admin is refused.
+
+Request body: none.
+
+An explicit action, never derived from `startDate` passing: a sprint the team has not actually picked up is not in progress, whatever the calendar says. There is **no single-active-sprint constraint** in this slice — an organization may run several concurrently.
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `400` the sprint is not `Planned` — keyed `state`, `"Only a planned sprint can be started."`
+- `401`/`403`/`404` as for update
+
+### `POST /api/v1/organizations/{organizationId}/sprints/{sprintId}/complete`
+Purpose: `Active` → `Completed`, with deterministic carry-over.
+
+Authorization: in-scope admin. A direct Site Admin is refused.
+
+Request body: none.
+
+Behavior:
+- every assigned Issue whose `deliveryStatus` is not `Complete` is unassigned back to the **delivery backlog** (`sprintId` set to `null`). Carry-over-to-the-next-sprint is a P1 refinement, not this slice's default.
+- no Issue is deleted, and Issues already `Complete` stay on the sprint as its record of what shipped
+- the transition and every unassignment commit together, so a sprint can never end up `Completed` with unfinished Issues still pointing at it
+- writes a `SprintCompleted` audit event carrying the carried-over count and ids
+- a `Completed` sprint will not accept new Issues: a later `PUT /api/v1/ideas/{ideaId}/sprint` naming it is a `400`
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `400` the sprint is not `Active` — keyed `state`, `"Only an active sprint can be completed."`
+- `401`/`403`/`404` as for update
+
+### `DELETE /api/v1/organizations/{organizationId}/sprints/{sprintId}`
+Purpose: Soft-delete a sprint.
+
+Authorization: in-scope admin. A direct Site Admin is refused.
+
+Behavior:
+- **every assigned Issue is unassigned to the backlog first.** No Issue is ever deleted with a sprint; `ideas.sprint_id` is `ON DELETE RESTRICT` precisely so unassignment cannot be skipped.
+- soft-delete, so existing audit references keep resolving. There is no restore endpoint in this release.
+- **not idempotent**: a soft-deleted sprint is gone as far as every route here is concerned, so a second `DELETE` answers `404`, as do `GET`, `PUT`, `start` and `complete` on it. This matches the soft-delete behaviour of statuses and ideas.
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `401`/`403`/`404` as for update
+
+## Issue Task Contracts
+
+Added 2026-09-11, Issues and Delivery Slice 1. A Task is a **checklist step on an Issue**, not a work item: no sprint of its own, no dates, no estimate, no comments, no upvotes, no tags, no nesting, and no promotion path. Anything needing one of those is an Issue, not a Task.
+
+Nested under the Issue that owns them because a task has no life outside it and carries **no organization of its own** — every route resolves the parent idea first and authorizes against that, which keeps `ideas`' organization scoping the single enforcement point.
+
+Authorization: reading is open to anyone who can see the Issue, `Read Only` included. Every mutation is the idea's author, any Issue assignee, or an in-scope admin — the same set that may change the Issue's delivery status. A direct Site Admin is refused every mutation.
+
+**Task mutations are deliberately NOT audited.** This is a conscious asymmetry with every other mutation in the feature: a checklist ticked a dozen times a day would drown the audit log that exists to answer "who committed us to this work". `completedAtUtc`/`completedByUserId` on the row carry the only record that matters. The one notification anywhere in this surface is `IssueTaskAssigned` to a task's new assignee, self-suppressed — ticking a box must not page the room.
+
+Task item shape:
+- `taskId`
+- `ideaId` — the parent Issue
+- `title` string, max 200 characters, trimmed
+- `assigneeUserId` GUID string or `null`
+- `assignee` object or `null` — `userId`, `firstName`, `lastName`, `displayName`, `isActive`, `portraitDataUrl`, so a row renders a name and an avatar without a second request
+- `state` string: `NotStarted`, `InProgress`, or `Done`
+- `sortOrder` integer — **dense and contiguous, `0..n-1`** within the parent Issue, maintained on insert, delete and reorder
+- `completedAtUtc` timestamp or `null`, `completedByUserId` GUID string or `null`
+
+### `GET /api/v1/ideas/{ideaId}/tasks`
+Purpose: An Issue's checklist in `sortOrder`.
+
+Success response `200`: an unpaged array of the task item shape. An idea with no tasks — including one still in `Discovery` — returns `[]`.
+
+Error responses:
+- `401` caller is not authenticated
+- `404` the idea does not exist, is deleted, or is outside caller scope
+
+### `POST /api/v1/ideas/{ideaId}/tasks`
+Purpose: Append a task to the end of the checklist.
+
+Request body:
+- `title` required string, max 200 characters, trimmed
+- `assigneeUserId` optional GUID string or `null` — any **active user in the Issue's organization**, who **need not** be an assignee of the parent Issue. This is the one place delivery work is divided between people; constraining it to the Issue's assignees would force spurious Issue assignments just to name a helper.
+
+Behavior:
+- appends at `sortOrder = n`, and the `N of M done` rollup on the delivery card updates
+- notifies a newly named assignee with `IssueTaskAssigned` (link `/ideas/{ideaId}`), self-suppressed
+
+Success response `201`: the task item shape.
+
+Error responses:
+- `400` `title` is blank or too long; `assigneeUserId` is not an active user in this organization; **or the parent idea is still in `Discovery`** — keyed `ideaId`, `"Only a promoted idea can carry tasks."` A task list is a delivery artifact; ideas in Discovery do not have one.
+- `401` caller is not authenticated
+- `403` caller is not the author, an assignee, or an in-scope admin, or is a Site Admin acting directly
+- `404` the idea does not exist, is deleted, or is outside caller scope
+
+### `PUT /api/v1/ideas/{ideaId}/tasks/{taskId}`
+Purpose: Rename and/or reassign a task — the two edits the row exposes together. Full replacement of both fields.
+
+Request body: same as create.
+
+Only a genuinely **new** assignee is notified; re-saving a row without touching its assignee must not re-page them.
+
+Success response `200`: the task item shape.
+
+Error responses:
+- `400` `title` is blank or too long; `assigneeUserId` is not an active user in this organization
+- `401` caller is not authenticated
+- `403` as for create
+- `404` the idea does not exist or is outside caller scope, **or `{taskId}`'s parent is not `{ideaId}`** — `404`, never `403`, so the nested route cannot be used to probe for ideas in other organizations
+
+### `PUT /api/v1/ideas/{ideaId}/tasks/{taskId}/state`
+Purpose: Move a task between its three states.
+
+Request body:
+- `state` required string: `NotStarted`, `InProgress`, or `Done`
+
+Three states rather than a bare checkbox, because "started but not finished" is the state a standup actually asks about.
+
+Behavior:
+- reaching `Done` stamps `completedAtUtc` and `completedByUserId`; moving **off** `Done` clears both
+- re-applying the state a task already has returns it untouched — re-stamping would quietly overwrite who actually finished it, and when
+- a task's state never gates the parent Issue: it may be set to delivery `Complete` with tasks outstanding
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `400` `state` is missing or not one of the three (keyed `state`)
+- `401`/`403`/`404` as for update
+
+### `PUT /api/v1/ideas/{ideaId}/tasks/order`
+Purpose: Rewrite the whole checklist's order.
+
+Request body:
+- `taskIds` required array of GUID strings, in the intended order
+
+`taskIds` must name **each of this Issue's tasks exactly once** — no missing id, no unknown id, no duplicate. A partial reorder is rejected rather than interpreted, because every reading of a partial list ("move these to the front"? "drop the rest"?) is a guess at what the caller meant. `sortOrder` is then `0..n-1`; unmoved tasks are left untouched so a drag does not re-stamp the whole checklist, and the rewrite commits atomically so a failure cannot leave the list half-renumbered.
+
+Success response:
+- `204 No Content`
+
+An omitted `taskIds` key is read as the empty list, which matches exactly when the Issue has no tasks (a `204` no-op) and is a `400` otherwise. A present `taskIds` that is not an array is a `400` keyed `taskIds` (`"Task Ids is invalid."`), the same rule `tagNames` and `mentionEmails` carry — reading it as absent would accept the request and silently discard an order the caller asked for.
+
+Error responses:
+- `400` the id set does not match the Issue's tasks exactly, or `taskIds` is present and not an array — keyed `taskIds`
+- `401`/`403`/`404` as for update
+
+This route is declared **before** `PUT /api/v1/ideas/{ideaId}/tasks/{taskId}`; `order` is a literal segment, not a task id.
+
+### `DELETE /api/v1/ideas/{ideaId}/tasks/{taskId}`
+Purpose: Remove a task from the checklist.
+
+A **hard delete** — the one place in this feature that is not a soft delete. A checklist step keeps no history of its own beyond the completion stamps on the row, so there is nothing to preserve. The survivors are re-densified afterwards, so `sortOrder` stays `0..n-1`.
+
+Success response:
+- `204 No Content`
+
+Error responses:
+- `401`/`403`/`404` as for update
+
 ## Idea Field Option Contracts
 
 Idea Type and Business Impact are dedicated organization-scoped option collections. Active labels are trimmed, case-insensitively unique within their field and organization, and returned in ascending `sortOrder`. The first active option is the default. Every organization must retain at least one active option in each collection.
