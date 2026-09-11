@@ -261,37 +261,52 @@ model idea_upvotes {
   @@index([user_id], map: "IX_idea_upvotes_user_id")
 }
 
+/// The delivery facets (`phase` through `upvote_count_at_promotion`) are Issues-and-Delivery
+/// Slice 1: an Issue is this same row in the `Delivery` phase, so there is no second table and
+/// nothing is copied on promotion. `status_id` keeps its last Discovery value forever - ideation
+/// `Complete` and delivery `Complete` are different terminal states and both are retained.
 model ideas {
-  id                 String              @id(map: "PK_ideas") @db.Uuid
-  organization_id    String              @db.Uuid
-  board_id           String              @db.Uuid
-  status_id          String              @db.Uuid
-  title              String              @db.VarChar(150)
-  description        String              @db.VarChar(4000)
-  priority           Priority
-  idea_type_id       String              @db.Uuid
-  business_impact_id String              @db.Uuid
-  due_date           DateTime?           @db.Date
-  author_user_id     String              @db.Uuid
-  is_deleted         Boolean
-  created_at_utc     DateTime            @db.Timestamptz(6)
-  updated_at_utc     DateTime            @db.Timestamptz(6)
-  created_by_user_id String?             @db.Uuid
-  updated_by_user_id String?             @db.Uuid
-  comments           comments[]
-  idea_assignees     idea_assignees[]
-  idea_field_values  idea_field_values[]
-  idea_mentions      idea_mentions[]
-  idea_tags          idea_tags[]
-  idea_upvotes       idea_upvotes[]
-  business_impacts   business_impacts    @relation(fields: [business_impact_id], references: [id], onUpdate: NoAction, map: "FK_ideas_business_impacts_business_impact_id")
-  idea_types         idea_types          @relation(fields: [idea_type_id], references: [id], onUpdate: NoAction, map: "FK_ideas_idea_types_idea_type_id")
-  organizations      organizations       @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_ideas_organizations_organization_id")
+  id                        String              @id(map: "PK_ideas") @db.Uuid
+  organization_id           String              @db.Uuid
+  board_id                  String              @db.Uuid
+  status_id                 String              @db.Uuid
+  title                     String              @db.VarChar(150)
+  description               String              @db.VarChar(4000)
+  priority                  Priority
+  idea_type_id              String              @db.Uuid
+  business_impact_id        String              @db.Uuid
+  due_date                  DateTime?           @db.Date
+  author_user_id            String              @db.Uuid
+  is_deleted                Boolean
+  created_at_utc            DateTime            @db.Timestamptz(6)
+  updated_at_utc            DateTime            @db.Timestamptz(6)
+  created_by_user_id        String?             @db.Uuid
+  updated_by_user_id        String?             @db.Uuid
+  phase                     IdeaPhase           @default(Discovery)
+  effort                    EffortLevel?
+  delivery_status           DeliveryStatus?
+  sprint_id                 String?             @db.Uuid
+  promoted_at_utc           DateTime?           @db.Timestamptz(6)
+  promoted_by_user_id       String?             @db.Uuid
+  upvote_count_at_promotion Int?
+  comments                  comments[]
+  idea_assignees            idea_assignees[]
+  idea_field_values         idea_field_values[]
+  idea_mentions             idea_mentions[]
+  idea_tags                 idea_tags[]
+  idea_upvotes              idea_upvotes[]
+  issue_tasks               issue_tasks[]
+  business_impacts          business_impacts    @relation(fields: [business_impact_id], references: [id], onUpdate: NoAction, map: "FK_ideas_business_impacts_business_impact_id")
+  idea_types                idea_types          @relation(fields: [idea_type_id], references: [id], onUpdate: NoAction, map: "FK_ideas_idea_types_idea_type_id")
+  organizations             organizations       @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_ideas_organizations_organization_id")
+  sprints                   sprints?            @relation(fields: [sprint_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_ideas_sprints_sprint_id")
 
   @@index([business_impact_id], map: "IX_ideas_business_impact_id")
   @@index([idea_type_id], map: "IX_ideas_idea_type_id")
   @@index([board_id, is_deleted], map: "ix_ideas_board_id_is_deleted")
   @@index([organization_id, is_deleted], map: "ix_ideas_organization_id_is_deleted")
+  @@index([organization_id, phase], map: "ix_ideas_organization_id_phase")
+  @@index([sprint_id], map: "ix_ideas_sprint_id")
 }
 
 model impersonation_sessions {
@@ -308,6 +323,29 @@ model impersonation_sessions {
 
   @@index([target_user_id], map: "IX_impersonation_sessions_target_user_id")
   @@index([real_user_id, ended_at_utc], map: "ix_impersonation_sessions_real_user_id_ended_at_utc")
+}
+
+/// A checklist step on an Issue (Issues-and-Delivery Slice 1). Deliberately not a work item: no
+/// sprint, no dates, no estimate, no comments. Org scope is inherited through the parent idea and
+/// is NOT duplicated here, so `ideas`' org scoping stays the single enforcement point - every
+/// query reaches a task through its idea. `ON DELETE CASCADE` is the one place cascade is right in
+/// this feature: a checklist has no meaning without its Issue.
+model issue_tasks {
+  id                   String         @id(map: "PK_issue_tasks") @db.Uuid
+  idea_id              String         @db.Uuid
+  title                String         @db.VarChar(200)
+  assignee_user_id     String?        @db.Uuid
+  state                IssueTaskState
+  sort_order           Int
+  completed_at_utc     DateTime?      @db.Timestamptz(6)
+  completed_by_user_id String?        @db.Uuid
+  created_at_utc       DateTime       @db.Timestamptz(6)
+  updated_at_utc       DateTime       @db.Timestamptz(6)
+  created_by_user_id   String?        @db.Uuid
+  updated_by_user_id   String?        @db.Uuid
+  ideas                ideas          @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_issue_tasks_ideas_idea_id")
+
+  @@index([idea_id, sort_order], map: "ix_issue_tasks_idea_id_sort_order")
 }
 
 model notification_events {
@@ -353,9 +391,34 @@ model organizations {
   field_definitions          field_definitions[]
   idea_types                 idea_types[]
   ideas                      ideas[]
+  sprints                    sprints[]
   statuses                   statuses[]
   tags                       tags[]
   users                      users[]
+}
+
+/// A time-boxed container Issues are pulled into (Issues-and-Delivery Slice 1). Flat: it has no
+/// roadmap parent, and an Issue's membership is the nullable `ideas.sprint_id` rather than a join
+/// table. `owner_user_id` carries no FK, matching `ideas.author_user_id` - the active-user check
+/// lives in the Application layer beside the assignee checks.
+model sprints {
+  id                 String        @id(map: "PK_sprints") @db.Uuid
+  organization_id    String        @db.Uuid
+  name               String        @db.VarChar(100)
+  goal               String?       @db.VarChar(500)
+  start_date         DateTime      @db.Date
+  end_date           DateTime      @db.Date
+  owner_user_id      String?       @db.Uuid
+  state              SprintState
+  is_deleted         Boolean
+  created_at_utc     DateTime      @db.Timestamptz(6)
+  updated_at_utc     DateTime      @db.Timestamptz(6)
+  created_by_user_id String?       @db.Uuid
+  updated_by_user_id String?       @db.Uuid
+  ideas              ideas[]
+  organizations      organizations @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_sprints_organizations_organization_id")
+
+  @@index([organization_id, state], map: "ix_sprints_organization_id_state")
 }
 
 model statuses {
