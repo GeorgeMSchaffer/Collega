@@ -190,8 +190,9 @@ export type RegisterState = {
  * succeeded — a branch with no honest message.
  *
  * Every rejection the submitted details earn is attributable to a field: a 400 names them in its
- * `errors` bag. The one refusal that is not is the rate limiter's 429, which is about the address
- * the request came from and so carries a banner message with no field beside it.
+ * `errors` bag, and the 409 is only ever the email. The one refusal that is not is the rate
+ * limiter's 429, which is about the address the request came from and so carries a banner message
+ * with no field beside it.
  */
 export async function register(_previous: RegisterState, form: FormData): Promise<RegisterState> {
   const values = {
@@ -208,9 +209,17 @@ export async function register(_previous: RegisterState, form: FormData): Promis
     cache: 'no-store',
   })
 
-  if (response.status === 400) {
+  if (response.status === 400 || response.status === 409) {
     const problem = (await response.json()) as ProblemDetails
-    const errors = fieldErrors(problem.errors)
+    // A 409 carries no `errors` bag — it is `ConflictError('Email is already in use.')`, whose text
+    // lands in `detail`. Keying it onto `email` here is what lets the screen treat both refusals
+    // identically instead of growing a second rendering path for the one status that skips the bag.
+    const errors =
+      response.status === 409
+        ? {
+            email: typeof problem.detail === 'string' ? problem.detail : 'Email is already in use.',
+          }
+        : fieldErrors(problem.errors)
 
     return {
       // Named rather than generic, because the invite code is the one field a person cannot simply

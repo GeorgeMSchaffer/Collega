@@ -5,7 +5,7 @@
   "basePath": "/api/v1",
   "seed": "3b95e96df018b8ff",
   "corpusVersion": 1,
-  "fixtures": 446,
+  "fixtures": 447,
   "scenarios": [
     "aiassist",
     "auth",

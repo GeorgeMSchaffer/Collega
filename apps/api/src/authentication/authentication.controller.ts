@@ -238,14 +238,17 @@ export class AuthenticationController {
 
   /**
    * Anonymous by design - the invite code is the credential. `AuthService.register` owns every
-   * rejection past field presence, and every one of them is now a `400` keyed on a field:
-   * an unknown, expired or archived code on `inviteCode`, an unusable email on `email`. All are
-   * thrown from Application code and therefore carry a `traceId` rather than the model-binding
-   * shape this handler's own check produces, which is how the two envelopes stay distinguishable.
+   * rejection past field presence: an unknown, expired or archived code is a `400` keyed on
+   * `inviteCode`, a password failing the policy a `400` keyed on `password`, and an email already
+   * in use a `409`. All are thrown from Application code and therefore carry a `traceId` rather
+   * than the model-binding shape this handler's own check produces, which is how the two
+   * envelopes stay distinguishable.
    *
-   * The `409` this used to answer for an email already in use is gone on purpose - it let an
-   * anonymous caller enumerate accounts across every tenant. See `AuthService.register` and
-   * `SPEC/decisions.md` 2026-09-10.
+   * **The `409` is deliberate and does not need hiding again.** It was replaced with a generic
+   * `400` on 2026-09-10 to stop anonymous cross-tenant account enumeration, and reverted on
+   * 2026-09-11 because it did not stop it: a free address still answered `201` and a taken one
+   * still answered a refusal, which is the same oracle. See `AuthService.register` and
+   * `SPEC/decisions.md` 2026-09-11.
    */
   @Post('register')
   @HttpCode(201)

@@ -22,6 +22,7 @@ import {
   type AuditEventWriter,
   attributeAudit,
   type Clock,
+  ConflictError,
   type CurrentUserContext,
   ForbiddenError,
   LockedOutError,
@@ -366,26 +367,20 @@ export class AuthService {
     const email = command.email ?? ''
     const normalizedEmail = normalizeEmail(email)
     if (await this.users.existsByNormalizedEmail(normalizedEmail)) {
-      // Surfaced as a generic refusal, for the same reason the archived organization above is
-      // surfaced as "unknown code", and the sameness is deliberate - DO NOT make this specific
-      // again. `users.normalized_email` is globally unique, so this check spans every tenant:
-      // a distinguishable "Email is already in use." let anyone holding one organization's
-      // invite code enumerate accounts across all of them, Site Admins included, while
-      // unauthenticated (SPEC/decisions.md 2026-09-10).
+      // Says why, deliberately, and unlike the archived organization above it is NOT collapsed
+      // into the generic refusal. That was tried on 2026-09-10 and reverted the next day: the
+      // enumeration oracle here is not the wording of the refusal, it is that registration
+      // answers synchronously at all. With a valid invite code a free address still answers 201
+      // and a taken one still answers a refusal, whatever that refusal is called - the same
+      // per-address boolean, now paid for with a junk account per negative probe. Hiding the
+      // status bought nothing and cost the corpus a pinned refusal on an anonymous endpoint.
       //
-      // The real reason is not lost, only moved off the wire - an operator reads it here.
-      await this.audit(
-        'UserSelfRegistrationRejected',
-        organization.id,
-        null,
-        null,
-        'Self-registration rejected: the email address is already in use.',
-        now,
-        { reason: 'EmailInUse', email: normalizedEmail },
-      )
-      throw new ValidationError(VALIDATION_TITLE, {
-        email: ['We could not create an account with those details.'],
-      })
+      // `users.normalized_email` is globally unique, so the oracle spans every tenant. The
+      // per-IP rate limit on this route is the only thing bounding it today; the actual fix is
+      // registration that answers 201 and sends a verification email, so nothing on the wire
+      // depends on whether the address was free. Read SPEC/decisions.md 2026-09-11 before
+      // reaching for a vaguer message again.
+      throw new ConflictError('Email is already in use.')
     }
 
     const passwordHash = this.passwordHasher.hash(command.password)
