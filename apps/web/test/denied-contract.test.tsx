@@ -150,7 +150,7 @@ describe('upvoting', () => {
 describe('commenting', () => {
   it('offers a Read Only account the comment form', () => {
     actAs('ReadOnly')
-    render(<CommentBox />)
+    render(<CommentBox ideaId="idea-1" />)
 
     expect(screen.getByLabelText('Add a comment')).toBeTruthy()
     expectAllowedControl(screen.getByRole('button', { name: 'Comment' }))
@@ -158,7 +158,7 @@ describe('commenting', () => {
 
   it('replaces the form with a reason for a Site Admin', () => {
     actAs('SiteAdmin')
-    render(<CommentBox />)
+    render(<CommentBox ideaId="idea-1" />)
 
     expect(screen.queryByLabelText('Add a comment')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Comment' })).toBeNull()

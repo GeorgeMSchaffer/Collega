@@ -144,7 +144,7 @@ export async function IdeaInspector({ idea, closeHref }: { idea: IdeaDetail; clo
               </div>
             ))
           )}
-          <CommentBox />
+          <CommentBox ideaId={idea.id} />
         </div>
       </div>
     </aside>

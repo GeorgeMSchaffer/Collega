@@ -1,7 +1,6 @@
 import { Button, Denied } from '@collega/design-system'
-import { InertForm } from '@/components/common/inert-form'
 import { currentUser, engagementDenial } from '@/lib/session'
-import { UpvoteForm } from './engagement-controls'
+import { CommentForm, UpvoteForm } from './engagement-controls'
 
 /**
  * Upvote and comment controls.
@@ -11,10 +10,10 @@ import { UpvoteForm } from './engagement-controls'
  * of the organization. Collapsing the two into one "can write" check silently takes voting away
  * from Read Only, which is the opposite of what the product intends.
  *
- * The gate lives here, in a Server Component, and the live control is a client one next door.
- * That split is what keeps a denied reader from downloading a form and a Server Function
- * reference in order to be shown a button they may not press — and it is only a courtesy either
- * way: the action is an HTTP endpoint anyone can post to, and the API refuses it on its own.
+ * The gate lives here, in a Server Component, and the live control is a client one next door. That
+ * split is what keeps a denied reader from downloading a form and a Server Function reference in
+ * order to be shown a button they may not press — and it is only a courtesy either way: both
+ * actions are HTTP endpoints anyone can post to, and the API refuses them on its own.
  */
 export function UpvoteButton({
   ideaId,
@@ -50,7 +49,7 @@ export function UpvoteButton({
   return <UpvoteForm ideaId={ideaId} boardId={boardId} count={count} hasUpvoted={hasUpvoted} />
 }
 
-export function CommentBox() {
+export function CommentBox({ ideaId }: { ideaId: string }) {
   const denial = engagementDenial(currentUser().role)
 
   if (denial) {
@@ -61,15 +60,5 @@ export function CommentBox() {
     )
   }
 
-  return (
-    <InertForm className="flex flex-col gap-2">
-      <label htmlFor="comment" className="sr-only">
-        Add a comment
-      </label>
-      <textarea id="comment" rows={2} maxLength={2000} placeholder="Add a comment…" />
-      <Button size="sm" className="self-start" type="submit">
-        Comment
-      </Button>
-    </InertForm>
-  )
+  return <CommentForm ideaId={ideaId} />
 }

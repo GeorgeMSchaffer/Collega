@@ -1,9 +1,8 @@
 'use server'
 
 /**
- * The three writes a board supports: author an idea, move a card between lanes, toggle an upvote.
- * The last of those is also the inspector's, which renders the same control against the same
- * action rather than a second one.
+ * The writes an idea supports: author one, move a card between lanes, toggle an upvote, post a
+ * comment. The first three are reachable from a board, the last two from the inspector as well.
  *
  * ## Identity, and why none of these reads the principal
  *
@@ -82,8 +81,8 @@ function revalidateBoard(boardId: string): void {
 /**
  * Re-read the idea's own page, escaped for the same reason `revalidateBoard` escapes a board id.
  *
- * One path covers both halves of that screen: the inspector holding the vote chip, and the
- * companion list beside it, whose row carries the same count.
+ * One path covers both halves of that screen: the inspector holding the vote chip and the comment
+ * thread, and the companion list beside it, whose row carries the same vote count.
  */
 function revalidateIdea(ideaId: string): void {
   revalidatePath(`/ideas/${encodeURIComponent(ideaId)}`)
@@ -155,5 +154,32 @@ export async function toggleUpvote(_previous: ActionState, form: FormData): Prom
   revalidateBoard(boardId)
   revalidateIdea(ideaId)
   revalidatePath('/ideas')
+  return { error: null }
+}
+
+/**
+ * Post a comment on an idea.
+ *
+ * Nothing is echoed back the way `createIdea` echoes a refused title, because the composer holds
+ * its text in React state rather than in the DOM — a controlled field keeps what was typed across
+ * the reset React performs when an action resolves, so there is nothing for the server to restore.
+ *
+ * No `mentionEmails`. The API resolves each address against the idea's organization and **rejects**
+ * one it cannot place (`SPEC/30-Contracts.md`, corrected 2026-09-06); the composer offers no way to
+ * pick a person, so sending the field could only ever turn typed prose into a 400.
+ *
+ * Only the idea's own page is revalidated: a board card shows a vote count but no comment count, so
+ * there is nothing stale on the lanes to refresh.
+ */
+export async function addComment(_previous: ActionState, form: FormData): Promise<ActionState> {
+  const ideaId = String(form.get('ideaId') ?? '')
+
+  try {
+    await apiPost(apiPath`/ideas/${ideaId}/comments`, { body: String(form.get('body') ?? '') })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateIdea(ideaId)
   return { error: null }
 }
