@@ -1,7 +1,8 @@
 'use server'
 
 /**
- * Sign in and sign out, as Server Functions.
+ * The account's own writes, as Server Functions: sign in and out, register, edit the profile,
+ * change the password.
  *
  * The browser posts to Next, Next posts to the API, and the session cookie is re-issued on Next's
  * own origin. That is one hop more than posting straight at the API, and it buys the two things
@@ -9,14 +10,26 @@
  * cookie instead of two hosts that have to agree about its domain in every environment.
  *
  * The credential never touches client JavaScript state — the form posts a `FormData` the framework
- * serializes, and the password exists only for the length of this function.
+ * serializes, and the password exists only for the length of this function. **No state returned
+ * from here ever carries a password**, on any branch: an address is echoed so a mistyped password
+ * does not also cost the email, and that is the only thing echoed from a form that has one.
+ *
+ * Every function here calls `fetch` directly rather than going through `lib/api/client.ts`, and
+ * the two halves of the file do it for different reasons. `signIn` and `register` are anonymous,
+ * so there is no session for `apiGet`/`apiPost` to forward. `updateProfile` and `changePassword`
+ * have one — `sessionHeader()` carries it, from the single module allowed to read the cookie — but
+ * they need two things a thrown `ApiError` has already discarded by the time it is caught: the
+ * `Retry-After` header, and the problem envelope's `type`, which on this surface is the only thing
+ * separating two refusals that share a status. See `KERNEL_UNAUTHORIZED`.
  */
 
+import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { apiPath } from '../api/client'
 import { apiBaseUrl, SESSION_COOKIE_NAME } from '../api/config'
 import { fieldErrors, type ProblemDetails } from '../api/problem'
 import type { WireLoginResponse } from '../api/wire'
-import { clearSession, issueSession } from './current-user'
+import { clearSession, issueSession, sessionHeader } from './current-user'
 
 /**
  * What the sign-in form renders back.
@@ -249,6 +262,202 @@ export async function register(_previous: RegisterState, form: FormData): Promis
 
   // `redirect` signals by throwing, so it must be the last thing and must not sit inside a `try`.
   redirect('/login?registered=1')
+}
+
+/**
+ * The problem `type` an Application-layer refusal carries, as opposed to a guard's.
+ *
+ * **This is the only thing separating the two 401s `POST /auth/change-password` can answer**, and
+ * they need entirely different outcomes: `AuthGuard` rejects a request with no usable session, so
+ * the reader has to sign in again, while `AuthService.changePassword` rejects a wrong current
+ * password, which is a message beside a field on a screen they should stay on. Conflating them
+ * either signs out everyone who mistypes, or tells a signed-out reader their password is wrong and
+ * leaves them on a form that cannot work.
+ *
+ * `status` cannot tell them apart and neither can `detail` — a guard's is the generic "No further
+ * details are available for this 401 response." today, which is a sentence, not a contract.
+ * `type` is the contract: `problem-details.filter.ts` exists to keep these two envelopes distinct
+ * and the golden corpus records both shapes. Checked against a live API before this was written.
+ */
+const KERNEL_UNAUTHORIZED = 'https://collega.dev/problems/unauthorized'
+
+/**
+ * What the profile form renders back.
+ *
+ * `saved` is the quiet confirmation comp P puts beside a submit button rather than in a banner —
+ * nothing about the screen changes when a name is saved to the name it already displayed, so
+ * without it a successful save and a request that never left are indistinguishable.
+ */
+export type ProfileState = {
+  error: string | null
+  errors: Readonly<Record<string, string>>
+  values: Readonly<Record<'firstName' | 'lastName', string>>
+  saved: boolean
+}
+
+/**
+ * Renames the signed-in account (comp P `s-profile`, "Profile details").
+ *
+ * No user id is read from the form and none is accepted: `PUT /auth/me` acts on whoever the
+ * forwarded cookie names, and an id in the payload would be a parameter anyone could post a
+ * different value for. Email, role and organization are not sent at all — the form renders them
+ * read-only and the endpoint refuses to change them (`SPEC/30-Contracts.md`).
+ */
+export async function updateProfile(
+  _previous: ProfileState,
+  form: FormData,
+): Promise<ProfileState> {
+  const values = {
+    firstName: String(form.get('firstName') ?? ''),
+    lastName: String(form.get('lastName') ?? ''),
+  }
+
+  const response = await fetch(`${apiBaseUrl()}${apiPath`/auth/me`}`, {
+    method: 'PUT',
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json',
+      ...(await sessionHeader()),
+    },
+    body: JSON.stringify(values),
+    cache: 'no-store',
+  })
+
+  if (response.status === 400) {
+    const problem = (await response.json()) as ProblemDetails
+    return {
+      error: 'Check the highlighted fields and try again.',
+      errors: fieldErrors(problem.errors),
+      values,
+      saved: false,
+    }
+  }
+
+  // The session ended between this screen rendering and Save being pressed. Only a guard answers
+  // 401 here — `updateMe` throws nothing of its own — so there is no second meaning to rule out.
+  if (response.status === 401) redirect('/login?expired=1')
+
+  // An administrator issued a temporary password while this screen was open, so a rotation is now
+  // owed. `PUT /auth/me` is deliberately not on the mid-rotation allowlist (`AuthenticationController
+  // .updateMe`), and the rotation is the only thing that clears it — so the screen this refusal
+  // sends them to is the one that can act on it, not a banner offering a retry that would fail again.
+  if (response.status === 403) redirect('/change-password')
+
+  if (!response.ok) {
+    throw new Error(`PUT /auth/me answered ${response.status}`)
+  }
+
+  // The name is in the sidebar, which the desk layout renders from its own `/auth/me` — a layout
+  // above this page, so revalidating the page alone leaves the old name in the chrome until a full
+  // reload. `'/'` with `'layout'` is the root layout and everything beneath it, which is the
+  // smallest thing that covers a value rendered app-wide.
+  revalidatePath('/', 'layout')
+
+  return { error: null, errors: {}, values, saved: true }
+}
+
+/**
+ * What both password forms render back.
+ *
+ * Deliberately has no `values`: every field on these forms is a password, so there is nothing here
+ * that may be echoed and nothing to lose by clearing them — retyping a password is what a person
+ * does after getting one wrong anyway.
+ */
+export type PasswordState = {
+  error: string | null
+  errors: Readonly<Record<string, string>>
+}
+
+/** Comp Q's wording, on `s-first-signin`, for the one refusal the API never sees. */
+const PASSWORDS_DIFFER = 'The new password and confirmation don’t match. Nothing has been changed.'
+
+/**
+ * Changes the signed-in account's password — both the forced first-sign-in rotation
+ * (comp P `s-first-signin`) and the voluntary change under Settings › Profile.
+ *
+ * **One function for both screens, because the outcome is identical and it is not "you are done".**
+ * `changeUserPassword` regenerates the user's `SecurityStamp`, and every issued JWT embeds the
+ * stamp current at issuance (`SPEC/30-Contracts.md`), so the cookie in the reader's browser is
+ * dead the instant this succeeds. Dropping it here is therefore not a policy choice this file is
+ * making — it is telling the truth about a session that has already ended, and the alternative is
+ * a reader who appears signed in until their next request 401s. Comp P states the same outcome as
+ * copy on both screens: *"Saving signs you out. Sign in again with the new password."*
+ *
+ * The confirmation field is checked here and nowhere else: `POST /auth/change-password` takes two
+ * fields, not three, so the only thing that can compare them is whatever assembled the request.
+ * It is checked **before** the call, so a mistyped confirmation costs no rate-limit allowance and
+ * writes no `AuthPasswordChangeFailed` audit event for something that was never an attempt.
+ *
+ * No 403 branch: this endpoint carries `@AllowWhilePasswordChangeRequired()`, which is the only
+ * thing that produces one here, so a 403 would be the API contradicting itself rather than a
+ * refusal to render.
+ */
+export async function changePassword(
+  _previous: PasswordState,
+  form: FormData,
+): Promise<PasswordState> {
+  const newPassword = String(form.get('newPassword') ?? '')
+
+  if (newPassword !== String(form.get('confirmPassword') ?? '')) {
+    return {
+      error: PASSWORDS_DIFFER,
+      errors: { confirmPassword: 'Must match the new password exactly.' },
+    }
+  }
+
+  const response = await fetch(`${apiBaseUrl()}${apiPath`/auth/change-password`}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json',
+      ...(await sessionHeader()),
+    },
+    body: JSON.stringify({
+      currentPassword: String(form.get('currentPassword') ?? ''),
+      newPassword,
+    }),
+    cache: 'no-store',
+  })
+
+  // No `isRateLimited` check, for the reason `register` gives: this route has no account lockout —
+  // `AuthService.changePassword` counts nothing and locks nothing — so the limiter is the only
+  // thing here that can answer 429, and there is no second 429 to tell it apart from.
+  if (response.status === 429) {
+    return { error: tooManyAttempts(response.headers.get('retry-after')), errors: {} }
+  }
+
+  if (response.status === 400 || response.status === 401) {
+    const problem = (await response.json()) as ProblemDetails
+
+    if (response.status === 401) {
+      // A guard's 401, not the service's: no session, so nothing on this form can succeed.
+      if (problem.type !== KERNEL_UNAUTHORIZED) redirect('/login?expired=1')
+
+      return {
+        error: 'Your current password is incorrect. Nothing has been changed.',
+        errors: {
+          currentPassword:
+            typeof problem.detail === 'string' ? problem.detail : 'Current password is incorrect.',
+        },
+      }
+    }
+
+    // A 400 is always `newPassword`: `currentPassword` is only ever checked for presence, and the
+    // policy failures arrive keyed by field in the `errors` bag either way.
+    return {
+      error: 'Check the highlighted fields and try again.',
+      errors: fieldErrors(problem.errors),
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(`POST /auth/change-password answered ${response.status}`)
+  }
+
+  await clearSession()
+
+  // `redirect` signals by throwing, so it must be the last thing and must not sit inside a `try`.
+  redirect('/login?passwordChanged=1')
 }
 
 /**

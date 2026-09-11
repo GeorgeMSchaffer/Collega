@@ -20,11 +20,12 @@ export const metadata = { title: 'Sign in · Collega' }
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ expired?: string; registered?: string }>
+  searchParams: Promise<{ expired?: string; registered?: string; passwordChanged?: string }>
 }) {
   const query = await searchParams
   const expired = 'expired' in query
   const registered = 'registered' in query
+  const passwordChanged = 'passwordChanged' in query
 
   return (
     <>
@@ -52,7 +53,7 @@ export default async function LoginPage({
             One email, one account. We&rsquo;ll take you straight to your organization.
           </p>
 
-          <LoginForm expired={expired} registered={registered} />
+          <LoginForm expired={expired} registered={registered} passwordChanged={passwordChanged} />
 
           <p className="mt-4 text-sm text-muted-foreground">
             Have an invite code? <Link href="/register">Create an account</Link>.

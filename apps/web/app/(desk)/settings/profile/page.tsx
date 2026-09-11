@@ -6,13 +6,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Field,
   FileButton,
-  Input,
 } from '@collega/design-system'
 import Link from 'next/link'
-import { InertForm } from '@/components/common/inert-form'
 import { Topbar } from '@/components/nav/topbar'
+import { PasswordForm } from '@/components/settings/password-form'
+import { ProfileForm } from '@/components/settings/profile-form'
 import { getProfile } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
@@ -25,6 +24,13 @@ export const metadata = { title: 'Profile · Collega' }
  * Deliberately **not** wrapped in `SettingsPage`, which gates every route it frames to an
  * administrator. This is the one settings surface comp Q gives all four roles — it is the reason the
  * hub stays ungated — so gating it would strand a member with no route to their own account.
+ *
+ * **The Portrait card is still inert.** Everything else on this screen writes. `PUT /auth/me/portrait`
+ * has no section in `SPEC/30-Contracts.md` at all, `Avatar` renders initials and has no image
+ * variant to show an uploaded portrait in, and the endpoint 500s rather than refusing anything a
+ * camera produces — `apps/api` sets no body limit, so Express's 100kb default caps the Base64 at
+ * roughly a 74kB file and overflows as an unhandled `PayloadTooLargeError`. Wiring a picker on top
+ * of that would ship a control that fails on most real photographs with no message to render.
  */
 export default async function ProfilePage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
@@ -77,49 +83,12 @@ export default async function ProfilePage() {
               <CardDescription>Your name appears throughout Collega.</CardDescription>
             </CardHeader>
             <CardContent>
-              <InertForm>
-                <div className="grid gap-x-4 sm:grid-cols-2">
-                  <Field htmlFor="firstName" label="First name">
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      type="text"
-                      defaultValue={profile.firstName}
-                    />
-                  </Field>
-                  <Field htmlFor="lastName" label="Last name">
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      defaultValue={profile.lastName}
-                    />
-                  </Field>
-                </div>
-                <Field
-                  htmlFor="email"
-                  label="Email"
-                  hint="Email is your sign-in identity and cannot be changed here."
-                >
-                  <Input
-                    id="email"
-                    name="email"
-                    type="text"
-                    readOnly
-                    defaultValue={profile.email}
-                  />
-                </Field>
-                <Field htmlFor="role" label="Role" hint="Your role is set by an administrator.">
-                  <Input
-                    id="role"
-                    name="role"
-                    type="text"
-                    readOnly
-                    defaultValue={currentUser().roleLabel}
-                  />
-                </Field>
-                <Button type="submit">Save profile</Button>
-              </InertForm>
+              <ProfileForm
+                firstName={profile.firstName}
+                lastName={profile.lastName}
+                email={profile.email}
+                roleLabel={currentUser().roleLabel}
+              />
             </CardContent>
           </Card>
 
@@ -131,35 +100,7 @@ export default async function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <InertForm>
-                <Field htmlFor="currentPassword" label="Current password">
-                  <Input
-                    id="currentPassword"
-                    name="currentPassword"
-                    type="password"
-                    autoComplete="current-password"
-                  />
-                </Field>
-                <div className="grid gap-x-4 sm:grid-cols-2">
-                  <Field htmlFor="newPassword" label="New password" hint="At least 12 characters.">
-                    <Input
-                      id="newPassword"
-                      name="newPassword"
-                      type="password"
-                      autoComplete="new-password"
-                    />
-                  </Field>
-                  <Field htmlFor="confirmPassword" label="Confirm new password">
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      autoComplete="new-password"
-                    />
-                  </Field>
-                </div>
-                <Button type="submit">Change password</Button>
-              </InertForm>
+              <PasswordForm />
             </CardContent>
           </Card>
         </div>
