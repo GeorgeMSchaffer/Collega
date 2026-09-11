@@ -19,12 +19,15 @@ import { type LoginState, signIn } from '@/lib/server/auth-actions'
  * `?error=`, which a bookmark or a shared link could reproduce out of nowhere, and which meant a
  * failed sign-in was a navigation.
  *
- * The notices are the exception, and neither is a failure. `expired` means `proxy.ts` sent the
- * reader here after dropping a session the API refused; `registered` means they have just created an
- * account, which per comp P's `s-register` ends here rather than signed in. Without a word for
- * either, the form looks like it appeared for no reason. Both give way to a real sign-in failure
- * rather than stacking with one — by then the reader is being told about the attempt they just
- * made, not how they arrived.
+ * The notices are the exception, and none is a failure. Comp Q's `s-returned` gives the screen
+ * three and says why they exist: *"Every route back to this page carries its reason: an expired
+ * session, a changed password, or a freshly created account. A deliberate sign-out carries none."*
+ * `expired` means `proxy.ts` sent the reader here after dropping a session the API refused;
+ * `registered` means they have just created an account, which per comp P's `s-register` ends here
+ * rather than signed in; `passwordChanged` means the change invalidated the session it was made
+ * with, which is what `changePassword` explains. Without a word for any of them, the form looks
+ * like it appeared for no reason. All give way to a real sign-in failure rather than stacking with
+ * one — by then the reader is being told about the attempt they just made, not how they arrived.
  *
  * They are `role="status"` and not the default `role="alert"`, which is comp P's rule for all three
  * of its notice strings and not a detail: an alert interrupts a screen reader mid-sentence, and
@@ -33,9 +36,11 @@ import { type LoginState, signIn } from '@/lib/server/auth-actions'
 export function LoginForm({
   expired = false,
   registered = false,
+  passwordChanged = false,
 }: {
   expired?: boolean
   registered?: boolean
+  passwordChanged?: boolean
 }) {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(signIn, {
     error: null,
@@ -66,7 +71,17 @@ export function LoginForm({
         </Alert>
       ) : null}
 
-      {expired && !state.error ? (
+      {passwordChanged && !state.error ? (
+        <Alert variant="note" role="status" className="mb-4">
+          <span>Your password was changed. Please sign in with your new password.</span>
+        </Alert>
+      ) : null}
+
+      {/* Last of the three, and the only one that can arrive alongside another: a rotation drops
+          the cookie, so `proxy.ts` has nothing to call expired — but a reader who leaves this page
+          open and comes back through a stale link can carry both flags. The password is the newer
+          fact and the one they need in hand, so it is the one that shows. */}
+      {expired && !state.error && !passwordChanged ? (
         <Alert variant="note" role="status" className="mb-4">
           <span>Your session has ended. Sign in again to pick up where you left off.</span>
         </Alert>
