@@ -2,6 +2,8 @@
 
 /**
  * The three writes a board supports: author an idea, move a card between lanes, toggle an upvote.
+ * The last of those is also the inspector's, which renders the same control against the same
+ * action rather than a second one.
  *
  * ## Identity, and why none of these reads the principal
  *
@@ -77,6 +79,16 @@ function revalidateBoard(boardId: string): void {
   revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
 }
 
+/**
+ * Re-read the idea's own page, escaped for the same reason `revalidateBoard` escapes a board id.
+ *
+ * One path covers both halves of that screen: the inspector holding the vote chip, and the
+ * companion list beside it, whose row carries the same count.
+ */
+function revalidateIdea(ideaId: string): void {
+  revalidatePath(`/ideas/${encodeURIComponent(ideaId)}`)
+}
+
 export async function createIdea(
   _previous: CreateIdeaState,
   form: FormData,
@@ -123,6 +135,13 @@ export async function moveIdea(_previous: ActionState, form: FormData): Promise<
   return { error: null }
 }
 
+/**
+ * Toggle the caller's vote, from a lane card or from the inspector.
+ *
+ * One action for both, with the same fields, so the two controls cannot drift. Three screens show
+ * the count and all three are revalidated whichever one was pressed: leaving the other two stale
+ * means closing the inspector, or opening one, shows a number that has already changed.
+ */
 export async function toggleUpvote(_previous: ActionState, form: FormData): Promise<ActionState> {
   const boardId = String(form.get('boardId') ?? '')
   const ideaId = String(form.get('ideaId') ?? '')
@@ -134,5 +153,7 @@ export async function toggleUpvote(_previous: ActionState, form: FormData): Prom
   }
 
   revalidateBoard(boardId)
+  revalidateIdea(ideaId)
+  revalidatePath('/ideas')
   return { error: null }
 }
