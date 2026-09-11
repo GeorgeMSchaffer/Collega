@@ -21,6 +21,7 @@ import { toMember, toOrganization, toProfile } from '../api/adapt'
 import { apiGet, apiPath } from '../api/client'
 import type {
   WireCurrentUser,
+  WireOrganizationDetail,
   WireOrganizationListItem,
   WirePage,
   WireUserListItem,
@@ -29,6 +30,7 @@ import * as fixture from '../mock'
 import { currentUser } from '../session'
 import type { Member, Organization, Profile } from '../types'
 import { failIfRequested, resolve } from './latency'
+import { organizationScope } from './scope'
 
 export type { FieldDefinition, IdeaType, Probe, PromptVersion, UsageRow } from '../mock'
 export {
@@ -120,6 +122,31 @@ export async function getMembersForOrganization(organizationId: string): Promise
   )
 
   return page.items.map((item) => toMember(item, null))
+}
+
+/**
+ * The caller's own organization's invite code, or null when they have no organization.
+ *
+ * A standing credential (`Organization` in `lib/types.ts` says what that obliges), read from the
+ * organization detail because that is the only route that carries it for a single organization —
+ * a Site Admin gets it on the list item instead.
+ *
+ * Null for a Site Admin, who belongs to no organization and so has no code of their own to share.
+ * The endpoint refuses a plain User outright, so the one screen that calls this asks only when the
+ * reader is an Org Admin.
+ */
+export async function getInviteCode(): Promise<string | null> {
+  failIfRequested('getInviteCode')
+
+  const scope = organizationScope()
+  if (scope === null) return null
+
+  const organization = await apiGet<WireOrganizationDetail>(
+    'getInviteCode',
+    apiPath`/organizations/${scope}`,
+  )
+
+  return organization.inviteCode
 }
 
 export async function getIdeaTypes(): Promise<fixture.IdeaType[]> {

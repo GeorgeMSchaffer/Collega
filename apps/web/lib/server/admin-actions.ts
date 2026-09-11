@@ -1,7 +1,8 @@
 'use server'
 
 /**
- * The administration writes the people screens make.
+ * The two administration writes the people screens make: bulk-create accounts from a CSV, and
+ * regenerate an organization's invite code.
  *
  * ## Identity, and why an organization id is a parameter here
  *
@@ -21,7 +22,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { toImportOutcome } from '../api/adapt'
-import { apiPath } from '../api/client'
+import { ApiError, apiPath, apiPost } from '../api/client'
 import { apiBaseUrl } from '../api/config'
 import { fieldErrors, type ProblemDetails } from '../api/problem'
 import type { WireUserImportResult } from '../api/wire'
@@ -143,4 +144,37 @@ export async function importUsers(_previous: ImportState, form: FormData): Promi
   revalidatePath('/settings/users')
 
   return { error: null, errors: {}, outcome }
+}
+
+/** What the invite-code card renders back: the API's refusal, or nothing. */
+export type InviteCodeState = { error: string | null }
+
+/**
+ * Issue a new invite code for `organizationId`, invalidating the one it replaces.
+ *
+ * The new code is deliberately **not** returned. `apiPost` discards the response body and the screen
+ * re-reads the code from the server when `revalidatePath` re-renders it — one source of truth for a
+ * standing credential rather than two that could disagree, and nothing carries it back through the
+ * action's own result. Anyone already registered with the old code keeps their account; only future
+ * registrations are affected.
+ */
+export async function regenerateInviteCode(
+  _previous: InviteCodeState,
+  form: FormData,
+): Promise<InviteCodeState> {
+  const organizationId = String(form.get('organizationId') ?? '')
+
+  try {
+    await apiPost(apiPath`/organizations/${organizationId}/invite-code/regenerate`)
+  } catch (error) {
+    if (error instanceof ApiError) {
+      if (error.status === 401) redirect('/login?expired=1')
+      if (error.status === 403 || error.status === 404) return { error: error.detail }
+    }
+    throw error
+  }
+
+  revalidatePath('/settings/users')
+  revalidatePath('/settings/organizations')
+  return { error: null }
 }

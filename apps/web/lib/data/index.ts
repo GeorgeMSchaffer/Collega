@@ -8,7 +8,7 @@
  *
  * Converted so far: the board readers, every idea reader — `getIdeasForBoard`, `getIdeaOptions`,
  * `getOrganizationIdeas` and `getIdea` — and the people-and-organization readers: `getProfile`,
- * `getOrganizations`, `getMembers` and `getMembersForOrganization`. Between them,
+ * `getOrganizations`, `getMembers`, `getMembersForOrganization` and `getInviteCode`. Between them,
  * everything `/boards`, `/boards/[boardId]`, `/ideas`, `/ideas/[ideaId]`, `/settings/users`,
  * `/settings/users/import` and `/settings/organizations` read and write. Delivery, the catalogs and
  * the AI screens still answer from `lib/mock.ts`, and the readers that a half-converted screen would

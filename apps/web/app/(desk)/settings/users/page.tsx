@@ -2,8 +2,10 @@ import { Avatar, Badge, Button, buttonVariants, EmptyState } from '@collega/desi
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { CrossOrgNote } from '@/components/settings/cross-org'
+import { InviteCodeCard } from '@/components/settings/invite-code'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import {
+  getInviteCode,
   getMembers,
   getMembersForOrganization,
   getOrganizations,
@@ -54,6 +56,7 @@ export default async function UsersPage() {
 
   let rows: Member[] = []
   let organizations: Organization[] = []
+  let inviteCode: string | null = null
 
   // Nothing is read for a role that may not read it. `AdminOnly` below already refuses a member,
   // and so does the API — but a reader runs before the gate renders, so calling anyway would land
@@ -61,7 +64,10 @@ export default async function UsersPage() {
   if (siteAdmin) {
     ;[rows, organizations] = await Promise.all([getMembers(), getOrganizations()])
   } else if (user.role === 'OrgAdmin' && user.organizationId !== null) {
-    rows = await getMembersForOrganization(user.organizationId)
+    ;[rows, inviteCode] = await Promise.all([
+      getMembersForOrganization(user.organizationId),
+      getInviteCode(),
+    ])
   }
 
   return (
@@ -89,6 +95,12 @@ export default async function UsersPage() {
       }
     >
       {siteAdmin ? <CrossOrgNote what="An account" /> : null}
+
+      {/* Comp P puts this above the table on the Org Admin's own screen, and the empty state below
+          points at it by name. A Site Admin has no organization and so no code of their own. */}
+      {inviteCode !== null && user.organizationId !== null ? (
+        <InviteCodeCard organizationId={user.organizationId} inviteCode={inviteCode} />
+      ) : null}
 
       {rows.length === 0 ? (
         <NoUsers siteAdmin={siteAdmin} />

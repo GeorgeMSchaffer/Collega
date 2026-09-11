@@ -61,6 +61,23 @@ export type WireOrganizationListItem = {
 }
 
 /**
+ * `GET /organizations/{id}`, read for the invite code alone.
+ *
+ * The detail carries eighteen more fields — logo, address, contact, AI-key metadata — and none of
+ * them is on this surface, so none is written down. Narrow on purpose (see this file's header).
+ */
+export type WireOrganizationDetail = {
+  organizationId: string
+  title: string
+  inviteCode: string
+}
+
+/** `POST /organizations/{id}/invite-code/regenerate`. */
+export type WireInviteCode = {
+  inviteCode: string
+}
+
+/**
  * `GET /organizations/{id}/users` — the admin listing, which carries role and status.
  *
  * Not to be confused with `/members`, which is the assignee picker's id-name-email view and is
