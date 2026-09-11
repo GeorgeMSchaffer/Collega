@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { getOrganizations, getStatuses, getStatusesByOrganization } from '@/lib/data'
+import { getStatuses, getStatusesByOrganization } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -51,21 +51,18 @@ export default async function StatusesPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const [organizations, statuses, statusesByOrganization] = await Promise.all([
-    getOrganizations(),
-    getStatuses(),
-    getStatusesByOrganization(),
-  ])
   const siteAdmin = currentUser().role === 'SiteAdmin'
 
-  // A status belongs to exactly one organization, so the cross-org list is a union of distinct
-  // rows. Repeating one organization's statuses per organization would assert the opposite of the
-  // rule this screen exists to teach.
-  const rows = siteAdmin
-    ? organizations.flatMap((org) =>
-        (statusesByOrganization[org.id] ?? []).map((status) => ({ status, org: org.name })),
-      )
-    : statuses.map((status) => ({ status, org: currentUser().organizationName ?? '' }))
+  // Two genuinely different reads, not one filtered two ways: a Site Admin belongs to no
+  // organization and reads every organization's catalog in turn, while everyone else reads the one
+  // they are in. Asking for both would issue a fan-out nobody renders.
+  const catalogs = siteAdmin
+    ? await getStatusesByOrganization()
+    : [{ organization: currentUser().organizationName ?? '', statuses: await getStatuses() }]
+
+  const rows = catalogs.flatMap((catalog) =>
+    catalog.statuses.map((status) => ({ status, org: catalog.organization })),
+  )
 
   return (
     <SettingsPage
@@ -79,13 +76,14 @@ export default async function StatusesPage() {
       actions={siteAdmin ? undefined : <Button>Add status</Button>}
     >
       {siteAdmin ? <CrossOrgNote what="A status" /> : null}
+
       {rows.length === 0 ? (
         <NoStatuses siteAdmin={siteAdmin} />
       ) : (
         <AdminTable
           summary={
             siteAdmin
-              ? `${rows.length} statuses across ${organizations.length} organizations.`
+              ? `${rows.length} statuses across ${catalogs.length} organizations.`
               : `${rows.length} statuses, in board order.`
           }
         >
@@ -107,7 +105,9 @@ export default async function StatusesPage() {
                 <td className="px-4 py-2.5">
                   <Marker>
                     <Dot color={status.color} />
-                    {status.colorName}
+                    {/* The hex itself, because a real status carries no colour name and one
+                            invented from `#64748B` would be a lookup table nobody maintains. */}
+                    {status.colorName ?? status.color}
                   </Marker>
                 </td>
                 <td className="px-4 py-2.5 text-right">

@@ -7,16 +7,15 @@
  * disagreeing — they render side by side on the same screen.
  */
 
-import { toProfile } from '../api/adapt'
+import { toFieldDefinition, toIdeaType, toProfile } from '../api/adapt'
 import { apiGet, apiPath } from '../api/client'
-import type { WireCurrentUser } from '../api/wire'
+import type { WireCurrentUser, WireFieldDefinition, WireIdeaType } from '../api/wire'
 import * as fixture from '../mock'
-import type { Profile } from '../types'
+import type { FieldDefinition, IdeaType, Profile } from '../types'
 import { failIfRequested, resolve } from './latency'
+import { everyOrganization, organizationScope } from './scope'
 
 export type {
-  FieldDefinition,
-  IdeaType,
   ImportRow,
   Member,
   Organization,
@@ -31,7 +30,7 @@ export {
   SYSTEM_PROMPT_MAX,
   totalTokens,
 } from '../mock'
-export type { Profile } from '../types'
+export type { FieldDefinition, IdeaType, Profile } from '../types'
 
 export async function getOrganizations(): Promise<fixture.Organization[]> {
   failIfRequested('getOrganizations')
@@ -48,14 +47,87 @@ export async function getMembersForOrganization(organizationId: string): Promise
   return resolve(fixture.membersForOrganization(organizationId))
 }
 
-export async function getIdeaTypes(): Promise<fixture.IdeaType[]> {
+export async function getIdeaTypes(): Promise<IdeaType[]> {
   failIfRequested('getIdeaTypes')
-  return resolve(fixture.ideaTypes)
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  return (await listIdeaTypes(scope, 'getIdeaTypes')).map(toIdeaType)
 }
 
-export async function getFieldDefinitions(): Promise<fixture.FieldDefinition[]> {
+/** Every organization's idea types, for the cross-organization list a Site Admin reads. */
+export async function getIdeaTypesByOrganization(): Promise<
+  { organization: string; ideaTypes: IdeaType[] }[]
+> {
+  failIfRequested('getIdeaTypesByOrganization')
+
+  const organizations = await everyOrganization('getIdeaTypesByOrganization')
+
+  return Promise.all(
+    organizations.map(async (organization) => ({
+      organization: organization.name,
+      ideaTypes: (await listIdeaTypes(organization.id, 'getIdeaTypesByOrganization')).map(
+        toIdeaType,
+      ),
+    })),
+  )
+}
+
+function listIdeaTypes(organizationId: string, reader: string): Promise<readonly WireIdeaType[]> {
+  return apiGet<readonly WireIdeaType[]>(
+    reader,
+    apiPath`/organizations/${organizationId}/idea-types`,
+  )
+}
+
+/**
+ * The organization's custom fields, each carrying the idea types that ask for it.
+ *
+ * Two requests rather than one, because "used by" runs the other way round: an idea type owns an
+ * ordered selection of fields, and a field definition has no column pointing back. Joining here
+ * rather than in the page keeps the screen a renderer, and keeps the one rule the join encodes —
+ * that an `AllActiveFields` type shows *every* active field, not an empty selection — in the same
+ * place for both callers.
+ */
+export async function getFieldDefinitions(): Promise<FieldDefinition[]> {
   failIfRequested('getFieldDefinitions')
-  return resolve(fixture.fieldDefinitions)
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  return fieldDefinitionsFor(scope, 'getFieldDefinitions')
+}
+
+/** Every organization's custom fields, for the cross-organization list a Site Admin reads. */
+export async function getFieldDefinitionsByOrganization(): Promise<
+  { organization: string; fields: FieldDefinition[] }[]
+> {
+  failIfRequested('getFieldDefinitionsByOrganization')
+
+  const organizations = await everyOrganization('getFieldDefinitionsByOrganization')
+
+  return Promise.all(
+    organizations.map(async (organization) => ({
+      organization: organization.name,
+      fields: await fieldDefinitionsFor(organization.id, 'getFieldDefinitionsByOrganization'),
+    })),
+  )
+}
+
+async function fieldDefinitionsFor(
+  organizationId: string,
+  reader: string,
+): Promise<FieldDefinition[]> {
+  const [fields, ideaTypes] = await Promise.all([
+    apiGet<readonly WireFieldDefinition[]>(
+      reader,
+      apiPath`/organizations/${organizationId}/field-definitions`,
+    ),
+    listIdeaTypes(organizationId, reader),
+  ])
+
+  return fields.map((field) => toFieldDefinition(field, ideaTypes))
 }
 
 /**

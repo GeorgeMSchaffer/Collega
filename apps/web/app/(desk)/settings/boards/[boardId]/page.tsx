@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { BoardForm, BoardRefusal } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { getBoardAdminEntry, getFixtureBoard, getStatuses } from '@/lib/data'
+import { getBoard, getStatuses } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -12,12 +12,12 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
   await requireCurrentUser()
 
   const { boardId } = await params
-  const [board, entry, statuses] = await Promise.all([
-    getFixtureBoard(boardId),
-    getBoardAdminEntry(boardId),
-    getStatuses(),
-  ])
-  if (!board || !entry) notFound()
+
+  // The board's own lanes, not the organization's catalog: `getBoard` answers what this board
+  // actually shows, in its own order, which is the thing being edited. The catalog beside it is
+  // what may be added.
+  const [board, statuses] = await Promise.all([getBoard(boardId), getStatuses()])
+  if (!board) notFound()
 
   if (currentUser().role === 'SiteAdmin') {
     return <BoardRefusal title="Edit board" reading="this board" />
@@ -27,13 +27,19 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
     <SettingsPage
       title="Edit board"
       gate="boards"
-      lead={`${board.name} · ${entry.swimlaneIds.length} swimlanes, drawn from this organization’s statuses.`}
+      lead={`${board.name} · ${board.lanes.length} swimlanes, drawn from this organization’s statuses.`}
     >
       <BoardForm
         defaultName={board.name}
-        userStatusMoves={entry.userStatusMoves}
-        swimlaneIds={entry.swimlaneIds}
-        statuses={statuses}
+        userStatusMoves={board.allowUserStatusUpdate}
+        swimlaneIds={board.lanes.map((lane) => lane.id)}
+        // A board may hold a lane whose status has since been archived, and the catalog excludes
+        // those. Merging them in is what keeps such a lane visible and removable rather than
+        // silently dropped from the picker — and silently dropped from the board on the next save.
+        statuses={[
+          ...statuses,
+          ...board.lanes.filter((lane) => !statuses.some((status) => status.id === lane.id)),
+        ]}
         submitLabel="Save changes"
         explainerHeading="Edit board"
       />

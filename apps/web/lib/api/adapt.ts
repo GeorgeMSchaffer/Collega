@@ -13,8 +13,10 @@ import { roleLabel } from '../roles'
 import type {
   Comment,
   CurrentUser,
+  FieldDefinition,
   Idea,
   IdeaDetail,
+  IdeaType,
   Person,
   Priority,
   Profile,
@@ -24,10 +26,12 @@ import type {
 } from '../types'
 import type {
   WireCurrentUser,
+  WireFieldDefinition,
   WireIdeaAssignee,
   WireIdeaComment,
   WireIdeaDetail,
   WireIdeaListItem,
+  WireIdeaType,
   WireStatus,
   WireSwimlane,
   WireViewingAs,
@@ -107,6 +111,50 @@ export function swimlaneToStatus(wire: WireSwimlane): Status {
 /** The organization's status catalog, as the settings screens list it. */
 export function toStatus(wire: WireStatus): Status {
   return { id: wire.statusId, name: wire.name, color: wire.color }
+}
+
+/**
+ * An idea type as its settings row renders it.
+ *
+ * `Curated` is the only mode with a countable selection. `AllActiveFields` means the type shows
+ * every active field in the organization, which is not a number this payload knows — and is not
+ * zero, which is what `fields.length` would say. `null` is the distinction; `lib/types.ts` says why
+ * the row needs it.
+ */
+export function toIdeaType(wire: WireIdeaType): IdeaType {
+  return {
+    id: wire.ideaTypeId,
+    name: wire.name,
+    curatedFieldCount: wire.fieldMode === 'Curated' ? wire.fields.length : null,
+  }
+}
+
+/**
+ * A field definition, plus the idea types that ask for it.
+ *
+ * The mapping is owned by the type, so the answer is assembled from the type catalog rather than
+ * read off the field. A `Curated` type asks for exactly what it selected; an `AllActiveFields` one
+ * asks for every active field there is, so it names itself against all of them — that is the rule
+ * `SPEC/30-Contracts.md` states for the mode, and reading it as "selected nothing" would print an
+ * empty cell for a type that in fact shows the field.
+ */
+export function toFieldDefinition(
+  wire: WireFieldDefinition,
+  ideaTypes: readonly WireIdeaType[],
+): FieldDefinition {
+  return {
+    id: wire.fieldDefinitionId,
+    name: wire.name,
+    fieldType: wire.fieldType,
+    required: wire.isRequired,
+    usedBy: ideaTypes
+      .filter(
+        (type) =>
+          type.fieldMode !== 'Curated' ||
+          type.fields.some((field) => field.fieldDefinitionId === wire.fieldDefinitionId),
+      )
+      .map((type) => type.name),
+  }
 }
 
 /**
