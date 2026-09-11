@@ -25,8 +25,10 @@ import {
   PrismaIdeaTypeRepository,
   PrismaIdeaUpvoteRepository,
   PrismaImpersonationSessionRepository,
+  PrismaIssueTaskRepository,
   PrismaNotificationEventRepository,
   PrismaOrganizationRepository,
+  PrismaSprintRepository,
   PrismaStatusRepository,
   PrismaTagRepository,
   PrismaUserRepository,
@@ -38,7 +40,7 @@ import type { Config } from '../config/index.js'
 import { PORT_TOKENS } from '../tokens.js'
 import { AlsUnitOfWork } from './als-unit-of-work.js'
 
-// The 22 concrete adapters, one provider each, keyed by class reference. Port tokens below alias
+// The 24 concrete adapters, one provider each, keyed by class reference. Port tokens below alias
 // onto these - see ../tokens.ts for why aliasing rather than one provider per port.
 
 const CONCRETE_ADAPTERS: Provider[] = [
@@ -129,6 +131,18 @@ const CONCRETE_ADAPTERS: Provider[] = [
     provide: PrismaImpersonationSessionRepository,
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaImpersonationSessionRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaIssueTaskRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaIssueTaskRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaSprintRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaSprintRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
@@ -284,6 +298,16 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.CommentsPort, useExisting: IdeaCommentsLookupRepository },
   { provide: PORT_TOKENS.IdeaClassificationPort, useExisting: IdeaClassificationRepository },
   { provide: PORT_TOKENS.IdeaFieldValuesPort, useExisting: PrismaIdeaFieldValuesRepository },
+  { provide: PORT_TOKENS.SprintLookupPort, useExisting: PrismaSprintRepository },
+  { provide: PORT_TOKENS.IssueTaskRollupPort, useExisting: PrismaIssueTaskRepository },
+
+  { provide: PORT_TOKENS.SprintRepository, useExisting: PrismaSprintRepository },
+  { provide: PORT_TOKENS.SprintIssuesPort, useExisting: PrismaIdeaRepository },
+  { provide: PORT_TOKENS.SprintUsersPort, useExisting: PrismaUserRepository },
+
+  { provide: PORT_TOKENS.IssueTaskRepository, useExisting: PrismaIssueTaskRepository },
+  { provide: PORT_TOKENS.IssueTaskIdeaPort, useExisting: PrismaIdeaRepository },
+  { provide: PORT_TOKENS.IssueTaskUsersPort, useExisting: PrismaUserRepository },
 
   {
     provide: PORT_TOKENS.NotificationEventRepository,

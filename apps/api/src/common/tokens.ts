@@ -79,6 +79,18 @@ export const PORT_TOKENS = {
   CommentsPort: 'CommentsPort',
   IdeaClassificationPort: 'IdeaClassificationPort',
   IdeaFieldValuesPort: 'IdeaFieldValuesPort',
+  SprintLookupPort: 'SprintLookupPort',
+  IssueTaskRollupPort: 'IssueTaskRollupPort',
+
+  // Sprints (packages/application/src/sprints/ports.ts) ------------------------------------------
+  SprintRepository: 'SprintRepository',
+  SprintIssuesPort: 'SprintIssuesPort',
+  SprintUsersPort: 'SprintUsersPort',
+
+  // Issue tasks (packages/application/src/issue-tasks/ports.ts) ----------------------------------
+  IssueTaskRepository: 'IssueTaskRepository',
+  IssueTaskIdeaPort: 'IssueTaskIdeaPort',
+  IssueTaskUsersPort: 'IssueTaskUsersPort',
 
   // Notifications (packages/application/src/notifications/ports.ts) ------------------------------
   NotificationEventRepository: 'NotificationEventRepository',

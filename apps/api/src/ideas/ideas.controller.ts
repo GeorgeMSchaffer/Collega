@@ -213,6 +213,7 @@ export class IdeasController {
       sortDirection: optional(query.sortDirection),
       fieldFilters: parseFieldFilters(query),
       tag: optional(query.tag),
+      phase: optional(query.phase),
       user: optionalGuid(query.user),
     })
   }
