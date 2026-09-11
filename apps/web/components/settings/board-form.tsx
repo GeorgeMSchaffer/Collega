@@ -1,4 +1,7 @@
+'use client'
+
 import {
+  Alert,
   Button,
   buttonVariants,
   Card,
@@ -9,18 +12,33 @@ import {
   Input,
 } from '@collega/design-system'
 import Link from 'next/link'
-import { InertForm } from '@/components/common/inert-form'
-import { Topbar } from '@/components/nav/topbar'
-import { RefusalPanel } from '@/components/settings/admin-only'
+import { useActionState } from 'react'
 import { SwimlanePicker } from '@/components/settings/swimlane-picker'
-import type { Status } from '@/lib/data'
+import type { BoardFormState } from '@/lib/server/board-actions'
+import { createBoard, saveBoard } from '@/lib/server/board-actions'
+import type { Status } from '@/lib/types'
+
+const IDLE: BoardFormState = { error: null }
 
 /**
  * Create and edit are the same form with different seed values, so they are the same component.
  * The one thing edit does *not* add is a delete: a board's ideas outlive the board, and no screen
  * in comp Q offers to discard them as a side effect of tidying up the columns.
+ *
+ * `boardId` is what tells the two apart, and it decides the action rather than being a flag beside
+ * one — a board with an id is saved, a board without one is created, and there is no third state
+ * for the two to disagree about.
+ *
+ * The statuses arrive as a prop because `SwimlanePicker` cannot await, and the picker posts its own
+ * hidden fields, so the order the person arranged is the order this form submits. Nothing about the
+ * lanes is read back out of the picker by this component.
+ *
+ * **Not `@/lib/data` for the `Status` type.** That barrel re-exports the API-backed readers, which
+ * reach `lib/api/client.ts` and its `server-only` import, so pulling a type through it drags the
+ * whole module into the client graph and fails the build — the same trap `SwimlanePicker` documents.
  */
 export function BoardForm({
+  boardId,
   defaultName = '',
   userStatusMoves,
   swimlaneIds,
@@ -28,6 +46,8 @@ export function BoardForm({
   submitLabel,
   explainerHeading,
 }: {
+  /** The board being edited, or null on the create route. */
+  boardId: string | null
   defaultName?: string
   userStatusMoves: boolean
   swimlaneIds: string[]
@@ -36,11 +56,21 @@ export function BoardForm({
   submitLabel: string
   explainerHeading: string
 }) {
+  const [state, submit, pending] = useActionState(boardId === null ? createBoard : saveBoard, IDLE)
+
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_356px]">
       <Card>
         <CardContent>
-          <InertForm>
+          {state.error ? (
+            <Alert variant="destructive" className="mb-4">
+              <span>{state.error}</span>
+            </Alert>
+          ) : null}
+
+          <form action={submit}>
+            {boardId === null ? null : <input type="hidden" name="boardId" value={boardId} />}
+
             <Field
               htmlFor="board-name"
               label="Name"
@@ -78,12 +108,14 @@ export function BoardForm({
             <SwimlanePicker selected={swimlaneIds} statuses={statuses} />
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              <Button type="submit">{submitLabel}</Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? 'Saving…' : submitLabel}
+              </Button>
               <Link href="/settings/boards" className={buttonVariants({ variant: 'outline' })}>
                 Cancel
               </Link>
             </div>
-          </InertForm>
+          </form>
         </CardContent>
       </Card>
 
@@ -105,36 +137,5 @@ export function BoardForm({
         </CardContent>
       </Card>
     </div>
-  )
-}
-
-/**
- * The Site Admin variant of both form routes.
- *
- * It cannot go through `SettingsPage`: that frame renders the screen's own heading before its gate
- * decides anything, and a refusal headed "New board" reads as the form failing to load rather than
- * the role being wrong. So this supplies the frame itself and hands the whole `main` to
- * `RefusalPanel`, the way `AdminOnly` does one layer down.
- */
-export function BoardRefusal({ title, reading }: { title: string; reading: string }) {
-  return (
-    <>
-      <Topbar
-        title={
-          <span className="text-sm font-normal text-muted-foreground">
-            <Link href="/settings">Settings</Link> /{' '}
-            <b className="font-medium text-foreground">{title}</b>
-          </span>
-        }
-      />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
-        <RefusalPanel heading="A Site Admin cannot create or change a board">
-          Boards are organization-owned content, and a Site Admin is refused every mutation of it.
-          Reading {reading} is fine; saving is not, so the form is absent rather than present and
-          doomed. Use View As to act as an administrator of this organization, and this screen
-          becomes ordinary.
-        </RefusalPanel>
-      </main>
-    </>
   )
 }

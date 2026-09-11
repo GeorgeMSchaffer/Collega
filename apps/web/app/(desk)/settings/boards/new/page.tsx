@@ -1,4 +1,5 @@
-import { BoardForm, BoardRefusal } from '@/components/settings/board-form'
+import { BoardRefusal } from '@/components/settings/admin-only'
+import { BoardForm } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
 import { getStatuses, SWIMLANE_FLOOR } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -26,6 +27,7 @@ export default async function NewBoardPage() {
       lead="Name it, then choose which of this organization’s statuses become its columns."
     >
       <BoardForm
+        boardId={null}
         userStatusMoves={true}
         // The first lanes of the catalog, because the API refuses a board with fewer than two and
         // a form that opens below its own floor cannot be submitted until the person works out

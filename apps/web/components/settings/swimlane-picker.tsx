@@ -11,9 +11,15 @@ import type { Status } from '@/lib/types'
  * Which statuses become a board's columns, and in what order.
  *
  * Interactive rather than a static list because the order *is* the setting — a picker that cannot
- * reorder would leave the one thing that distinguishes two boards unexpressible. Nothing here is
- * saved; the state is local until Wave D gives the form an endpoint.
+ * reorder would leave the one thing that distinguishes two boards unexpressible.
  *
+ * It posts its own state, as one hidden input per selected status in list order. `FormData.getAll`
+ * preserves document order, so the arrangement on screen *is* the submitted order and there is no
+ * second copy of it for the form to keep in sync. The inputs are rendered from `ids` rather than
+ * from `lanes`, so a lane whose status the caller did not supply is still submitted rather than
+ * quietly dropped from the board on save.
+ *
+
  * The organization's statuses arrive as a prop because this component cannot await: the route that
  * renders it reads them and hands them down.
  *
@@ -43,6 +49,9 @@ export function SwimlanePicker({ selected, statuses }: { selected: string[]; sta
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
+      {ids.map((id) => (
+        <input key={id} type="hidden" name="swimlaneIds" value={id} />
+      ))}
       <div>
         <h3 className="m-0 mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           On this board &mdash; in order

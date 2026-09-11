@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
-import { BoardForm, BoardRefusal } from '@/components/settings/board-form'
+import { BoardRefusal } from '@/components/settings/admin-only'
+import { BoardForm } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
 import { getBoard, getStatuses } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -30,6 +31,7 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
       lead={`${board.name} · ${board.lanes.length} swimlanes, drawn from this organization’s statuses.`}
     >
       <BoardForm
+        boardId={board.id}
         defaultName={board.name}
         userStatusMoves={board.allowUserStatusUpdate}
         swimlaneIds={board.lanes.map((lane) => lane.id)}
