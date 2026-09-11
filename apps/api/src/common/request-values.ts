@@ -159,6 +159,23 @@ export function guidOrEmpty(value: unknown): string {
   return isGuid(value) ? value.trim() : EMPTY_GUID
 }
 
+/**
+ * A `Guid?` body property or query parameter (`statusId`, `user`, `sprintId`): the value when it is
+ * a canonical GUID, `null` when absent or blank, and `EMPTY_GUID` when it is present but not a GUID.
+ *
+ * That last case is the interesting one. ASP.NET answered 400 - the same unreproducible
+ * model-binding message `optionalInt` describes - and passing the raw text on instead is NOT an
+ * option here: it reaches a `uuid` column, Prisma raises `P2023`, and the caller gets a **500**.
+ * That is precisely the fault D1 shipped and had to fix. `EMPTY_GUID` is the honest middle: the
+ * filter is applied and matches nothing, so a nonsense id narrows the list to empty rather than
+ * being silently ignored (which would answer 200 with everything) or crashing. On a BODY property
+ * it reaches a lookup that resolves against no row, which is the field-keyed 400 the route wants.
+ */
+export function optionalGuid(value: unknown): string | null {
+  const text = optional(value)
+  return text === null ? null : guidOrEmpty(text)
+}
+
 /** Whether a value is a canonical GUID - for the callers that must SKIP one rather than blank it. */
 export function isGuid(value: unknown): value is string {
   return typeof value === 'string' && UUID.test(value.trim())

@@ -32,7 +32,14 @@ import type { Response } from 'express'
 import { AuthGuard } from '../auth/auth.guard.js'
 import { writeCsv } from '../common/csv/write-csv.js'
 import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
-import { guidOrEmpty, isGuid, optional, optionalInt, stringList } from '../common/request-values.js'
+import {
+  guidOrEmpty,
+  isGuid,
+  optional,
+  optionalGuid,
+  optionalInt,
+  stringList,
+} from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** Hard ceiling on a CSV import body, from .NET's `IdeasController.MaxImportBytes`. */
@@ -64,22 +71,6 @@ type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'>
 type ChangeIdeaStatusBody = { statusId?: unknown }
 
 type ReassignIdeaTypeBody = { ideaTypeId?: unknown }
-
-/**
- * A `Guid?` query parameter (`statusId`, `user`): the value when it is a canonical GUID, `null`
- * when absent or blank, and `EMPTY_GUID` when it is present but not a GUID.
- *
- * That last case is the interesting one. ASP.NET answered 400 - the same unreproducible
- * model-binding message `optionalInt` describes - and passing the raw text on instead is NOT an
- * option here: it reaches a `uuid` column, Prisma raises `P2023`, and the caller gets a **500**.
- * That is precisely the fault D1 shipped and had to fix. `EMPTY_GUID` is the honest middle: the
- * filter is applied and matches nothing, so a nonsense id narrows the list to empty rather than
- * being silently ignored (which would answer 200 with everything) or crashing.
- */
-function optionalGuid(value: unknown): string | null {
-  const text = optional(value)
-  return text === null ? null : guidOrEmpty(text)
-}
 
 /** `List<Guid>?` - absent stays absent, so the Application layer can tell "not provided" apart. */
 function guidList(value: unknown): readonly string[] | null {
