@@ -1,27 +1,34 @@
 /**
  * Ideas, the comments on them, and the board lanes they sit in.
  *
- * `getIdeasForBoard` is a reader rather than a filter the caller applies to `getIdeas`, because it
- * is a different request — the API scopes by board server-side, and pulling every idea to drop most
- * of them is the shape that quietly stops scaling. That reasoning was written against the fixture
- * and is now simply true.
+ * A board's ideas and the organization's ideas are separate readers rather than one list the caller
+ * filters, because they are separate requests: the API scopes by board server-side, and pulling
+ * every idea to drop most of them is the shape that quietly stops scaling.
  *
- * **Only the board-scoped readers are real** — the lane cards, and the catalogs the create form
- * picks from. `getIdeas`, `getIdea` and `getCommentsForIdea` still
- * answer from the fixture, and deliberately so: `GET /ideas/{id}` carries no author and no created
- * date, so the inspector's byline has no source on the wire. That is a contract gap, not something
- * to paper over with a blank line on the screen — see the slice report.
+ * **Every reader in this module is real.** The lane cards, the organization-wide table, the
+ * catalogs the create form picks from, and now the idea detail behind the inspector. `GET
+ * /ideas/{id}` gained an `author` and a `createdAtUtc`, plus an `author` on each embedded comment,
+ * which were the fields the byline and the thread had no source for and the reason this one stayed
+ * on the fixture as long as it did.
  */
 
-import { toIdea } from '../api/adapt'
-import { apiGet, apiPath } from '../api/client'
-import type { WireBusinessImpact, WireIdeaListItem, WireIdeaType, WirePage } from '../api/wire'
-import * as fixture from '../mock'
-import type { Idea, IdeaDetail, IdeaOptions } from '../types'
-import { failIfRequested, resolve } from './latency'
+import { toIdea, toIdeaDetail } from '../api/adapt'
+import { apiGet, apiPath, isApiStatus } from '../api/client'
+import type {
+  WireBusinessImpact,
+  WireIdeaDetail,
+  WireIdeaListItem,
+  WireIdeaType,
+  WirePage,
+} from '../api/wire'
+import type { Idea, IdeaDetail, IdeaOptions, IdeaPage } from '../types'
+import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
 
-export type { Comment, Idea, IdeaDetail, IdeaOptions, Priority } from '../types'
+export type { Comment, Idea, IdeaDetail, IdeaOptions, IdeaPage, Priority } from '../types'
+
+/** Rows per page of the organization-wide list. See `getOrganizationIdeas` for why it is paged. */
+const PAGE_SIZE = 20
 
 /**
  * Every idea on one board, in the order the API returns them.
@@ -74,17 +81,66 @@ export async function getIdeaOptions(): Promise<IdeaOptions> {
   }
 }
 
-export async function getIdeas(): Promise<IdeaDetail[]> {
-  failIfRequested('getIdeas')
-  return resolve(fixture.ideas)
+/**
+ * One page of every idea in the organization, newest first.
+ *
+ * **Paged, not bounded.** `getIdeasForBoard` can ask for one page of 100 and be right, because a
+ * board is a bounded thing a person reads at a glance. This list is every board at once and has no
+ * such ceiling, so a single large page would be a silent truncation the day an organization
+ * outgrows it — the screen would look complete and be wrong. `PAGE_SIZE` is the API's own default
+ * (`packages/application` `DEFAULT_PAGE_SIZE`), which keeps the second page reachable in the demo
+ * data rather than theoretical.
+ *
+ * **Newest first**, where the API's default is oldest first. That is the order the screen is opened
+ * to answer: an idea raised a minute ago is the first row rather than the last row of the last
+ * page, which is exactly what someone checks after creating one.
+ *
+ * No search, no filter and no sort control — the screen has none to offer. When it grows them they
+ * belong in this query string, not in a `.filter()` over the rows below: filtering one page in the
+ * client would report "3 results" from the twenty rows that happened to arrive.
+ */
+export async function getOrganizationIdeas(page: number): Promise<IdeaPage> {
+  failIfRequested('getOrganizationIdeas')
+
+  const scope = organizationScope()
+  if (scope === null) return { ideas: [], page: 1, pageSize: PAGE_SIZE, totalCount: 0 }
+
+  const result = await apiGet<WirePage<WireIdeaListItem>>(
+    'getOrganizationIdeas',
+    apiPath`/organizations/${scope}/ideas?page=${String(page)}&pageSize=${String(PAGE_SIZE)}&sortBy=createdAt&sortDirection=desc`,
+  )
+
+  return {
+    ideas: result.items.map(toIdea),
+    page: result.page,
+    pageSize: result.pageSize,
+    totalCount: result.totalCount,
+  }
 }
 
+/**
+ * One idea, with its prose, its provenance and its whole comment thread.
+ *
+ * **The thread comes from here, not from `GET /ideas/{id}/comments`.** Both are real and both now
+ * carry author names, so the choice is about which one tells the truth about *this* screen. The
+ * detail embeds every comment, chronologically and unpaged (`CommentsPort.listByIdea`), while the
+ * comments endpoint is paged and would show the first twenty of a longer thread under a heading
+ * counting all of them. Reading the embedded copy is also one round trip rather than two, and its
+ * `commentCount` is computed in the same request as the comments themselves — so the count beside
+ * "Discussion" cannot disagree with the number of comments under it, which two requests racing each
+ * other could arrange.
+ *
+ * `null` for a missing idea rather than a throw, and that covers the cross-organization case too:
+ * `IdeaService.getById` answers 404 for an idea in another organization rather than 403, declining
+ * to confirm it exists, and so does this — the caller reaches `notFound()` either way.
+ */
 export async function getIdea(id: string): Promise<IdeaDetail | null> {
   failIfRequested('getIdea')
-  return resolve(fixture.ideaById(id) ?? null)
-}
 
-export async function getCommentsForIdea(ideaId: string): Promise<fixture.Comment[]> {
-  failIfRequested('getCommentsForIdea')
-  return resolve(fixture.commentsForIdea(ideaId))
+  try {
+    return toIdeaDetail(await apiGet<WireIdeaDetail>('getIdea', apiPath`/ideas/${id}`))
+  } catch (error) {
+    if (isApiStatus(error, 404)) return null
+    throw error
+  }
 }

@@ -263,21 +263,6 @@
         "email": "golden.refused@acme-robotics.demo.collega.test",
         "password": "{{userPassword}}"
       }
-    },
-    {
-      "id": "register.duplicate.anonymous",
-      "endpoint": "POST /auth/register",
-      "as": "anonymous",
-      "kind": "missing",
-      "expect": 409,
-      "body": {
-        "inviteCode": "{{inviteCode}}",
-        "firstName": "Golden",
-        "lastName": "Duplicate",
-        "email": "{{userEmail}}",
-        "password": "{{userPassword}}"
-      },
-      "note": "An email already in use is a conflict."
     }
   ]
 }

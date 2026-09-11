@@ -20,20 +20,51 @@ TypeScript stack. Rewriting them for the Next client is slice **F2**, and QA wri
 F2 starts from a list of what was covered rather than from the deleted specs.
 
 What replaced them, `tests/harness.spec.ts`, asserts only that a route renders server-side and that
-client-side navigation works. If it ever needs a fixture or a login, it has stopped being a harness
-check and belongs in a spec of its own.
+the route gate redirects an anonymous visitor to `/login`. If it ever needs a fixture or a login, it
+has stopped being a harness check and belongs in a spec of its own.
 
 ## What the tests can and cannot see
 
-`apps/web` reads `apps/web/lib/mock.ts`. Nothing here reaches `apps/api` or a database, so a flow
-that creates, edits or deletes anything cannot pass yet however it is written — the fixtures do not
-persist. Read-only flows against the demo fixture are writable today; stateful ones wait for Wave D.
+**`playwright.config.ts` starts `apps/web` and nothing else. There is no API in this suite.** That
+used to cost nothing, because every screen answered from `apps/web/lib/mock.ts`. It is now the
+single thing blocking product coverage.
 
-When Wave D lands, `apps/api` becomes a second `webServer` entry in `playwright.config.ts` and the
-fixtures give way to a seeded throwaway database. **The database half of that is ready**: five seed
-modules under `packages/infrastructure/prisma/seed/modules/` build the demo dataset — 2
-organizations, 10 users, 4 boards, 44 ideas, with accounts that sign in — and a throwaway database
-is three commands and under four seconds:
+These four screens are wired to the real API and `fetch` `apps/api` on render:
+
+| Screen | Route |
+|---|---|
+| Boards list | `/boards` |
+| Board detail | `/boards/[boardId]` |
+| Ideas list | `/ideas` |
+| Idea detail, inspector included | `/ideas/[ideaId]` |
+
+With no API running they do not render a degraded page — **they fail at render**, so a spec written
+over any of them fails here however carefully it is written. Do not read a failure on one of these
+as a bug in your test. `apps/web/lib/data/index.ts` is the seam and names exactly which readers have
+been converted; check it before assuming a screen is fixture-backed. Delivery and the settings
+surfaces still answer from `lib/mock.ts` and still work — and being fixtures, they do not persist,
+so a flow that creates, edits or deletes anything cannot pass there either.
+
+Which leaves the harness able to prove only what `tests/harness.spec.ts` proves. Adding coverage
+means doing this first.
+
+## The prerequisite: `apps/api` as a second `webServer`
+
+Covering the four screens above needs `apps/api` added as a second `webServer` entry in
+`playwright.config.ts`, listening on `:3001` (`apps/web/lib/api/config.ts` defaults
+`COLLEGA_API_URL` to `http://127.0.0.1:3001/api/v1`), pointed at a database dropped and seeded per
+run. Two things are worth knowing before starting:
+
+- **`apps/api` has no `dev` or `start` script.** It builds and typechecks; nothing launches it. That
+  script is part of this work, not a given.
+- **Sign-in has to go through the app.** The session is an httpOnly cookie the API issues, and only
+  the Next server talks to the API — the browser never does. So a spec cannot inject a token; it
+  signs in through `/login` like a reader, or reuses a Playwright storage state captured that way.
+
+**The database half is ready.** Five seed modules under
+`packages/infrastructure/prisma/seed/modules/` build the demo dataset — 2 organizations, 10 users,
+4 boards, 44 ideas, with accounts that sign in — and a throwaway database is three commands and
+under four seconds:
 
 ```bash
 dropdb CollegaE2E && createdb CollegaE2E
@@ -41,9 +72,12 @@ DATABASE_URL=…/CollegaE2E pnpm --filter @collega/infrastructure db:migrate
 DATABASE_URL=…/CollegaE2E pnpm --filter @collega/infrastructure db:seed
 ```
 
-So the remaining gate on stateful specs is **Wave D alone** — there is no API for the browser to
-drive. Re-running the seed against an existing database is inert by design, so a spec that needs a
-clean slate must drop and recreate rather than re-seed.
+Re-running the seed against an existing database is inert by design, so a spec that needs a clean
+slate must drop and recreate rather than re-seed.
+
+So the remaining gate is the wiring itself, not the pieces: `apps/api` exists and the four screens
+above already call it, but this suite never starts it. Until it does, the honest coverage here is
+the harness check and nothing more.
 
 ## Claude Code on the web
 

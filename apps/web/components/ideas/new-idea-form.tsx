@@ -1,8 +1,8 @@
 'use client'
 
-import { Alert, Button, Denied, Field, Input, Select, Textarea } from '@collega/design-system'
+import { Alert, Button, Field, Input, Select, Textarea } from '@collega/design-system'
 import { useActionState, useEffect, useRef } from 'react'
-import type { IdeaOptions } from '@/lib/data'
+import type { Board, IdeaOptions } from '@/lib/data'
 import { type CreateIdeaState, createIdea } from '@/lib/server/idea-actions'
 
 const IDLE: CreateIdeaState = { error: null, title: '', description: '' }
@@ -22,19 +22,36 @@ const PRIORITIES = ['Low', 'Medium', 'High', 'Critical']
  * when it does not — an idea refused for a reason the person can fix (an empty title) is a reason to
  * still be looking at the form.
  *
- * The Denied branch is here rather than at the call site so the button is one component either way:
- * a Read Only account and a Site Admin see the same control, disabled with its reason beside it,
- * rather than a hole where the topbar action was.
+ * **Rendered only for a role that may author.** The refusal is the call site's, through
+ * `GatedAction`, which renders the identical `Denied` + `aria-disabled` button from the same
+ * `writeDenial` copy — so a Read Only account and a Site Admin still see the control with its
+ * reason beside it, never a hole where the topbar action was. Keeping the branch out of here is
+ * what stops a denied reader downloading an entire dialog, a server-action reference and
+ * `useActionState` in order to be shown a button they cannot press.
+ *
+ * ## The board field, and why it only sometimes exists
+ *
+ * `POST /boards/{boardId}/ideas` needs a board, and comp P's create column has no board field
+ * because it is docked onto a board — the breadcrumb reads `Boards / Ideas` and the column's own
+ * meta line names the board. There, the board is context and asking for it again would be a
+ * question the screen has already answered.
+ *
+ * `/ideas` is every board at once, so it has no such answer. Comp P routes its topbar `New idea`
+ * through the brainstorm screen, which lands the person on a board and supplies the context that
+ * way; that screen does not exist yet. Choosing a board on their behalf is the one thing not to do
+ * — an idea filed to the wrong board is a silent, wrong write — so when there is no board in
+ * context the form asks, and only then.
  */
 export function NewIdeaForm({
   boardId,
+  boards,
   options,
-  denial,
 }: {
-  boardId: string
-  /** Empty when the reader may not author, since the catalogs are only fetched if they may. */
+  /** The board in context, or null on a screen that spans them all — see above. */
+  boardId: string | null
+  /** Offered only when `boardId` is null; ignored otherwise. */
+  boards?: Board[]
   options: IdeaOptions
-  denial: string | null
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [state, submit, pending] = useActionState(createIdea, IDLE)
@@ -43,7 +60,11 @@ export function NewIdeaForm({
   // organization whose administrators archived every idea type renders a select with no options,
   // posts an empty id and gets "Idea Type not found" back — a configuration state wearing the
   // clothes of a bug. Saying so, and refusing to submit, is the difference.
+  // A board with nothing to file against is the same shape of problem, and reachable the same way:
+  // an organization whose only board was archived offers an empty picker, posts an empty id and
+  // gets a 404 that reads like a bug rather than like a board being needed first.
   const missing = [
+    boardId === null && (boards ?? []).length === 0 ? 'boards' : null,
     options.ideaTypes.length === 0 ? 'idea types' : null,
     options.businessImpacts.length === 0 ? 'business impacts' : null,
   ].filter((catalog) => catalog !== null)
@@ -54,16 +75,6 @@ export function NewIdeaForm({
   useEffect(() => {
     if (state !== IDLE && state.error === null) dialog.current?.close()
   }, [state])
-
-  if (denial) {
-    return (
-      <Denied reason={denial} id="why-new-board">
-        <Button aria-disabled="true" aria-describedby="why-new-board">
-          New idea
-        </Button>
-      </Denied>
-    )
-  }
 
   return (
     <>
@@ -78,7 +89,9 @@ export function NewIdeaForm({
           New idea
         </h2>
         <p className="mt-0 mb-4 text-sm text-muted-foreground">
-          It lands in the left-most lane of this board.
+          {boardId === null
+            ? 'It lands in the left-most lane of the board you choose.'
+            : 'It lands in the left-most lane of this board.'}
         </p>
 
         {state.error ? (
@@ -91,13 +104,28 @@ export function NewIdeaForm({
           <Alert variant="destructive" className="mb-4">
             <span>
               This organization has no {missing.join(' and no ')} to choose from. An idea requires
-              both, so an Org Admin has to add them in Settings before one can be raised here.
+              every one of them, so an Org Admin has to add them in Settings before one can be
+              raised here.
             </span>
           </Alert>
         ) : null}
 
         <form action={submit}>
-          <input type="hidden" name="boardId" value={boardId} />
+          {/* Same field name either way, so the action reads one `boardId` and never asks where it
+              came from. */}
+          {boardId === null ? (
+            <Field htmlFor="idea-board" label="Board">
+              <Select id="idea-board" name="boardId" required>
+                {(boards ?? []).map((board) => (
+                  <option key={board.id} value={board.id}>
+                    {board.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          ) : (
+            <input type="hidden" name="boardId" value={boardId} />
+          )}
 
           <Field htmlFor="idea-title" label="Title">
             <Input

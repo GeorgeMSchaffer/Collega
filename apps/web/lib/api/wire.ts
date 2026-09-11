@@ -18,6 +18,8 @@
 export type WireCurrentUser = {
   userId: string
   organizationId: string | null
+  /** `null` means "belongs to no organization" — a Site Admin — and nothing else. */
+  organizationTitle: string | null
   role: string
   firstName: string
   lastName: string
@@ -39,12 +41,6 @@ export type WireLoginResponse = {
   expiresInSeconds: number
   requiresPasswordChange: boolean
   user: WireCurrentUser
-}
-
-/** `GET /organizations/{id}`. */
-export type WireOrganization = {
-  organizationId: string
-  title: string
 }
 
 /** `GET /organizations/{id}/boards`. */
@@ -102,6 +98,50 @@ export type WireIdeaAssignee = {
   lastName: string
   displayName: string
   isActive: boolean
+}
+
+/**
+ * One comment as the idea detail embeds it.
+ *
+ * `author` is nullable on the API's own DTO: `comments.author_user_id` is `NOT NULL` but carries no
+ * foreign key and the schema is frozen at S0.2, so nothing structurally guarantees the row. A
+ * deactivated commenter is *not* this case — they still come back named, with `isActive` false.
+ */
+export type WireIdeaComment = {
+  commentId: string
+  author: WireIdeaAssignee | null
+  body: string
+  createdAtUtc: string
+}
+
+/**
+ * `GET /ideas/{id}`.
+ *
+ * Carries its own `statusName`, so the inspector needs no status catalog to name the lane — which
+ * matters, because the catalog readers are still fixture-backed and a real `statusId` matches none
+ * of their ids.
+ *
+ * There is no `reference` here and no column behind one. See `IdeaDetail` in `lib/types.ts`.
+ */
+export type WireIdeaDetail = {
+  ideaId: string
+  boardId: string
+  title: string
+  description: string
+  priority: string
+  ideaTypeName: string
+  businessImpactName: string
+  assignees: readonly WireIdeaAssignee[]
+  tagNames: readonly string[]
+  statusId: string
+  statusName: string
+  comments: readonly WireIdeaComment[]
+  upvoteCount: number
+  hasUpvoted: boolean
+  commentCount: number
+  /** Nullable for the same reason a comment's author is. */
+  author: WireIdeaAssignee | null
+  createdAtUtc: string
 }
 
 /** `GET /boards/{id}/ideas` and `GET /organizations/{id}/ideas` items. */

@@ -26,6 +26,7 @@ import 'server-only'
 import { failIfRequested, resolve } from '../data/latency'
 import { sessionHeader } from '../server/current-user'
 import { apiBaseUrl } from './config'
+import { fieldMessages, type ProblemDetails } from './problem'
 
 declare const API_PATH: unique symbol
 
@@ -42,13 +43,33 @@ export type ApiPath = string & { readonly [API_PATH]: true }
  * `/api/v1` entirely — which would turn three Server Functions into a general-purpose authenticated
  * proxy to every route the API has, against the boundary `config.ts` states as a decision.
  *
- * `encodeURIComponent` leaves a UUID untouched and renders everything else into one inert segment,
- * which the API answers 404 for and `refusal()` puts beside the control. The branded return type is
- * the point of the tag: it is the only thing `apiGet` and `apiPost` accept, so a path assembled any
- * other way does not compile and the next caller does not have to remember this.
+ * `encodeURIComponent` closes most of that: `/` becomes `%2F` and `#` becomes `%23`, so no value can
+ * span segments or start a fragment. **It does not close `.` and `..`**, which are unreserved in a
+ * URI and left alone — and which are exactly the two the URL parser reads as path operators. So
+ * `apiPath`/boards/${'..'}/ideas`` resolves to `/api/v1/ideas` with nothing escaped at all, one
+ * segment up and into whatever route lives there.
+ *
+ * Those two are refused rather than escaped, because there is no escaping available: an encoded
+ * `%2e%2e` is a different string the API would 404, not the value the caller meant. They are also
+ * the only two raw values that survive as operators — `%2e%2e` double-encodes to `%252e%252e`, and
+ * `../..` keeps the escaped slash that makes it inert — so this is the whole of the hole. Every
+ * interpolation here is an id or a page number, neither of which is ever `.` or `..`, so a value
+ * that is one is a bug or an attack and a throw is the honest answer to both.
+ *
+ * Everything else becomes one inert segment, which the API answers 404 for and `refusal()` puts
+ * beside the control. The branded return type is the point of the tag: it is the only thing `apiGet`
+ * and `apiPost` accept, so a path assembled any other way does not compile and the next caller does
+ * not have to remember this.
  */
 export function apiPath(literals: TemplateStringsArray, ...values: string[]): ApiPath {
-  return String.raw({ raw: literals }, ...values.map(encodeURIComponent)) as ApiPath
+  return String.raw({ raw: literals }, ...values.map(escapeSegment)) as ApiPath
+}
+
+function escapeSegment(value: string): string {
+  if (value === '.' || value === '..') {
+    throw new Error(`An API path cannot interpolate "${value}": it re-routes the request.`)
+  }
+  return encodeURIComponent(value)
 }
 
 /**
@@ -76,26 +97,6 @@ export class ApiError extends Error {
     this.path = path
     this.detail = detail
   }
-}
-
-/** The API's RFC 7807 problem envelope, as much of it as a message needs. */
-type ProblemDetails = { title?: unknown; detail?: unknown; errors?: unknown }
-
-/**
- * The field-level messages a validation 400 carries.
- *
- * Worth reaching for because that envelope's `detail` is "The request failed validation. See the
- * errors property for field-level details." — true, and useless to the person who left the title
- * empty. The first message per field, joined, is what they actually need to read.
- */
-function fieldMessages(errors: unknown): string | null {
-  if (typeof errors !== 'object' || errors === null) return null
-
-  const messages = Object.values(errors)
-    .map((list) => (Array.isArray(list) ? list.find((entry) => typeof entry === 'string') : null))
-    .filter((message) => typeof message === 'string')
-
-  return messages.length > 0 ? messages.join(' ') : null
 }
 
 async function describeFailure(response: Response): Promise<string> {

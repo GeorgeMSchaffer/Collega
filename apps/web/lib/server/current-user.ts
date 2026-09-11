@@ -40,7 +40,7 @@ import { toCurrentUser } from '../api/adapt'
 // separate files only because the credential half is what the lint rule pins down.
 import { apiGet, apiPath, isApiStatus } from '../api/client'
 import { SESSION_COOKIE_NAME } from '../api/config'
-import type { WireCurrentUser, WireOrganization } from '../api/wire'
+import type { WireCurrentUser } from '../api/wire'
 import { setCurrentUser } from '../session'
 import type { CurrentUser } from '../types'
 
@@ -141,29 +141,5 @@ const loadPrincipal = cache(async (): Promise<CurrentUser | null> => {
     throw error
   }
 
-  return toCurrentUser(me, await organizationName(me.organizationId))
+  return toCurrentUser(me)
 })
-
-/**
- * The organization's display title, which `/auth/me` does not carry.
- *
- * A second request, and worth it: the sidebar names the organization on every page, and the
- * alternative is either widening the API's contract or printing an id at a person. A Site Admin
- * belongs to no organization, so they cost nothing.
- *
- * A failure here is swallowed to `null` on purpose — that is precisely the branch the sidebar and
- * the settings hub already render for a Site Admin ("All organizations"), so a slow or unhappy
- * organizations endpoint degrades the label instead of taking down every authenticated page.
- */
-async function organizationName(organizationId: string | null): Promise<string | null> {
-  if (organizationId === null) return null
-  try {
-    const organization = await apiGet<WireOrganization>(
-      'organizationName',
-      apiPath`/organizations/${organizationId}`,
-    )
-    return organization.title
-  } catch {
-    return null
-  }
-}

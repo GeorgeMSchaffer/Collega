@@ -9,6 +9,121 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-10 — The auth rate limiter sends `Retry-After` and nothing else
+
+**`ThrottlerModule` runs with `setHeaders: false`.** Left at its default it decorated every
+login, register and change-password response with `X-RateLimit-Limit-authBurst`,
+`-Remaining-authBurst`, `-Reset-authBurst` and the matching `authHourly` trio, and added
+`Retry-After-authBurst` beside the real `Retry-After` on a `429`. `SPEC/30-Contracts.md` promised
+one header; the API sent seven, none of them written down.
+
+**The suffix is the reason, not the count.** `authBurst` and `authHourly` are constants in
+`apps/api/src/auth/rate-limit.guard.ts` chosen to read well in that file. Emitting them makes an
+internal name something callers can read, and renaming a bucket — or splitting one, which the
+serverless storage note in `app.module.ts` says is likely — silently becomes a breaking change to a
+surface nobody agreed to. `Retry-After` also had two writers, the library's suffixed copy and
+`ProblemDetailsFilter`'s from `RateLimitedError.retryAfterSeconds`, which is one too many for a
+value clients act on.
+
+**What this gives up.** `X-RateLimit-*` is genuinely useful: it lets a client pace itself rather
+than discovering the limit by hitting it. That case is worth revisiting — as unsuffixed headers,
+specified in the contract first. Turning the library's own back on is not the way to get there.
+
+**Not affected: the `429` itself.** Status, problem-details envelope and `Retry-After` are
+unchanged, so nothing a client can legitimately depend on moved — including `Retry-After`'s
+presence, which is the only thing separating the limiter's `429` from an account lockout's.
+
+---
+
+## 2026-09-10 — `POST /auth/register` refuses a taken email generically, and no longer answers `409`
+
+**An email address already in use is now the same field-keyed `400` every other registration
+refusal produces**, keyed on `email` and worded so it does not say the account exists. The `409
+"Email is already in use."` the frozen .NET API returned is gone. `SPEC/30-Contracts.md` is
+updated.
+
+**The reason is cross-tenant account enumeration by an anonymous caller.** `register()` checks
+`existsByNormalizedEmail`, and `users.normalized_email` is globally `@unique`
+(`packages/infrastructure/prisma/schema.prisma`) — the check therefore spans every organization,
+not the one whose invite code was supplied. Anyone holding any organization's invite code, which
+is a standing non-expiring credential printed on an admin screen, could ask "does this address
+have an account here" about **every tenant**, Site Admins included, without signing in. A security
+audit confirmed it against the running API. Scoping the check per organization is not available:
+the uniqueness constraint is global and the schema is frozen at S0.2.
+
+**The precedent this follows is three lines above it in the same function.** An archived
+organization's invite code is already "surfaced identically to 'unknown code' so the API doesn't
+leak archive state to an anonymous caller." Same shape of problem, same answer, and both now carry
+a comment saying the sameness is deliberate — the failure mode for this kind of fix is a later
+reader deciding the vague message is unhelpful and making it specific again.
+
+**The real reason is not lost, it is moved off the wire.** The rejection writes a
+`UserSelfRegistrationRejected` audit event carrying the organization, the normalized email and
+`reason: 'EmailInUse'`, through the audit path that already existed; an operator can still answer
+"why did this person's registration fail". Nothing new was built for it.
+
+**Separately, `validatePassword` moved above the email check.** It stands on its own and would
+have been worth doing under either outcome: a probe now costs a request carrying a policy-valid
+password rather than any request at all.
+
+**What this does not claim.** The endpoint still refuses, so a caller learns that *some* detail is
+unacceptable — the residual oracle is weaker but not zero, and closing it entirely means
+registration that answers `201` and sends a verification email instead, which is a feature nobody
+has asked for. The rate limit added the same day bounds how fast the residue can be sampled.
+
+**Cost: the golden case `profile.register.duplicate.anonymous` is retired, not accepted.** This is
+the one place the 2026-09-09 entry's "accept and record it" answer is unavailable, and that is
+deliberate rather than an oversight in the harness. `tools/golden/test/accepted.test.ts` asserts
+that **no accepted-diff entry may name `status` or a header** — "would let an entry excuse
+transport or an authorization outcome" — because a status that quietly moved is exactly how an
+authorization regression would hide. A 409 becoming a 400 is a status change and nothing else, so
+the corpus cannot express it, and an entry that tried was refused by that test. The scenario step
+and its fixture are therefore removed together, leaving `register.anonymous` (201) and
+`register.bad-code.anonymous` (400) still pinning the endpoint including one refusal.
+
+**What that gives up, and how to get it back.** No recorded case now pins what a taken email
+answers, so the two specs above are the only statement of it. The case should be re-recorded
+against the Nest stack once F1 has replayed clean — at that point the corpus stops being a .NET
+recording anyway, and this endpoint gets a pinned refusal again.
+
+**Downstream:** `apps/web/lib/server/auth-actions.ts` already handles a `400` with an `errors` bag
+and keys it onto the same field, so the register screen renders the new refusal without a change.
+Its `409` branch and the two comments describing it are now dead and should be removed.
+
+---
+
+## 2026-09-10 — The organization's title rides on `/auth/me`, not on a second call to an admin endpoint
+
+**`GET /auth/me` now carries `organizationTitle`.** The sidebar names the organization on every
+authenticated page and the summary carried only an `organizationId`, so `apps/web` resolved the
+title by calling `GET /organizations/{organizationId}` alongside it.
+
+That workaround was not merely wasteful, it was **wrong for two of the four roles**. That endpoint
+goes through `OrganizationService.getById` → `loadForAdministration`, which throws `ForbiddenError`
+for anything that is not a Site Admin or an in-scope Org Admin. The web side swallowed the 403 to
+`null`, and `null` is the Site Admin branch — so every `User` and `ReadOnly` account read "All
+organizations" on every page, and paid a guaranteed-403 round trip per request for it. The bug was
+invisible because the fallback rendered something plausible.
+
+**The alternative considered and rejected: widening `GET /organizations/{id}`'s read scope.** The
+sidebar needs a name, not an administrative view — that payload carries the invite code, the
+primary contact and the AI scope statement — and loosening an admin endpoint to serve a label is a
+larger authorization surface than the problem deserves. `/auth/me` is already fetched exactly once
+per request, so putting the title there removes the second call instead of authorizing it.
+
+**`null` means "belongs to no organization" and nothing else.** A Site Admin is the only caller
+that gets it; `users.organization_id` carries a restricted foreign key and `organizations.title` is
+`NOT NULL`, so a caller with an organization always has a string, empty if it was named that way.
+The two cases must stay distinguishable or the client's branch is back to guessing, which is the
+defect this entry closes.
+
+The field is on the shared `CurrentUserSummary`, so it appears on every response that returns one —
+login, the profile and portrait edits, and both identities on `POST /auth/view-as`. It cost 31
+accepted golden diffs (`tools/golden/src/accepted.ts`, 2026-09-10), which is the third answer under
+the 2026-09-09 entry: a deliberate improvement, recorded rather than fixed.
+
+---
+
 ## 2026-09-10 — How the two Vercel projects are configured, and how production gets its first administrator
 
 **Decided while writing `SPEC/50-vercel-deployment.md`**, which is now canonical for deployment and

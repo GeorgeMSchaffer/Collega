@@ -191,6 +191,12 @@ export class IdeaTypesController {
    * the badge - `MaxLengthAttribute.IsValid(null)` returns true, and `validateFields` reaches the
    * same answer by judging a non-string as `''`. The `#RRGGBB` shape is the domain's rule, not
    * this one's, and produces the Application envelope.
+   *
+   * That claim is true HERE and was not true of the status and business-impact colours, which is
+   * why those two now carry a `hexColor` rule and this does not: `setIdeaTypeAppearance` really
+   * does test `/^#[0-9a-fA-F]{6}$/`, and `IDEA_TYPE_COLOR_HEX_LENGTH` is 7 - too short to hold
+   * even `url(//a)`. Adding a second, looser copy of the rule at the boundary would introduce an
+   * inconsistency rather than remove one.
    */
   @Put('organizations/:organizationId/idea-types/:ideaTypeId/appearance')
   @HttpCode(204)

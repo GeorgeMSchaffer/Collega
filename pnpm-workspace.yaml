@@ -47,6 +47,19 @@ allowBuilds:
   '@prisma/engines': true
   prisma: true
 
+# Transitive versions we pin past what the dependency that pulls them in asks for.
+#
+# HERE, NOT IN package.json: pnpm 12 no longer reads `pnpm.overrides` from package.json and
+# ignores it with a warning, so an override written there looks applied and does nothing.
+#
+# multer is @nestjs/platform-express's, reaching us through `FileInterceptor` on the two CSV
+# import endpoints. 2.2.0 carries four high DoS advisories, all remotely triggerable by an
+# uploader (crafted multipart field names, a file-descriptor leak on an aborted upload, an
+# oversized array index) plus a file-size-limit bypass; 2.3.0 fixes them and platform-express
+# has not moved its own pin. Drop this once it does.
+overrides:
+  multer: ^2.3.0
+
 # pnpm 12 holds back very recently published versions by default as a supply-chain
 # measure. Playwright 1.63.0 is pinned deliberately, so it is excluded from that hold.
 minimumReleaseAgeExclude:

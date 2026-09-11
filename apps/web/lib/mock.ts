@@ -13,10 +13,29 @@
  * rather than by inspection.
  */
 
-import type { Board, Comment, IdeaDetail, Priority, Role, Status } from './types'
+import type { Board, Idea, Priority, Role, Status } from './types'
 
 export { engagementDenial, isAdministrator, writeDenial } from './roles'
-export type { Board, Comment, CurrentUser, Idea, IdeaDetail, Priority, Role, Status } from './types'
+export type { Board, CurrentUser, Idea, Priority, Role, Status } from './types'
+
+/**
+ * The ideas below are the fixture's own shape, not the screens'.
+ *
+ * They stopped being `IdeaDetail` when the inspector went to the API: a real idea has no
+ * `reference` and carries its thread inline. Keeping the fixture on the view types would either
+ * drag a field with no column back into what the screens render, or force this file to invent the
+ * parts it cannot know. Nothing in `lib/data/` reads this any more — only the tests that assert
+ * the fixture's own distribution do.
+ *
+ * The comment fixtures that sat beside it are gone: the thread comes off `GET /ideas/{id}` now,
+ * and nothing — not a screen, not a test — had read them since.
+ */
+type FixtureIdea = Idea & {
+  reference: string
+  description: string
+  authorName: string
+  createdOn: string
+}
 
 /**
  * Priority has its own colour scale, independent of status.
@@ -103,8 +122,8 @@ const ASSIGNEES = [null, 'NC', 'MC', 'OA']
 /** The seed's 3/2/2/1/3 spread across the five statuses, in canonical order. */
 const PER_STATUS = [3, 2, 2, 1, 3]
 
-function buildIdeas(boardId: string): IdeaDetail[] {
-  const out: IdeaDetail[] = []
+function buildIdeas(boardId: string): FixtureIdea[] {
+  const out: FixtureIdea[] = []
   let index = 0
 
   PER_STATUS.forEach((count, statusIndex) => {
@@ -118,6 +137,7 @@ function buildIdeas(boardId: string): IdeaDetail[] {
         reference: `IDEA-${100 + (boardId === 'ideas' ? 0 : 50) + index + 1}`,
         boardId,
         statusId: status.id,
+        statusName: status.name,
         title,
         description: DESCRIPTIONS[index] ?? '',
         priority: PRIORITIES[index % PRIORITIES.length] ?? 'Medium',
@@ -138,9 +158,9 @@ function buildIdeas(boardId: string): IdeaDetail[] {
   return out
 }
 
-export const ideas: IdeaDetail[] = boards.flatMap((board) => buildIdeas(board.id))
+export const ideas: FixtureIdea[] = boards.flatMap((board) => buildIdeas(board.id))
 
-export function ideasForBoard(boardId: string): IdeaDetail[] {
+export function ideasForBoard(boardId: string): FixtureIdea[] {
   return ideas.filter((idea) => idea.boardId === boardId)
 }
 
@@ -152,38 +172,8 @@ export function boardById(id: string): Board | undefined {
   return boards.find((board) => board.id === id)
 }
 
-export function ideaById(id: string): IdeaDetail | undefined {
+export function ideaById(id: string): FixtureIdea | undefined {
   return ideas.find((idea) => idea.id === id)
-}
-
-/** Three comments on the first two ideas of each board, matching the seed's shape. */
-const COMMENT_SEED: ReadonlyArray<
-  readonly [offset: number, author: string, initials: string, body: string]
-> = [
-  [0, 'Maya Collaborator', 'MC', "Thanks for raising this - I'll take a first look."],
-  [0, 'Olivia Administer', 'OA', "Agreed, let's prioritize it for the next review."],
-  [1, 'Noah Contributor', 'NC', 'Following along - this would help my team too.'],
-]
-
-export const comments: Comment[] = boards.flatMap((board) =>
-  COMMENT_SEED.flatMap(([offset, authorName, authorInitials, body], n) => {
-    const idea = ideasForBoard(board.id)[offset]
-    if (!idea) return []
-    return [
-      {
-        id: `${board.id}-c${n}`,
-        ideaId: idea.id,
-        authorName,
-        authorInitials,
-        postedOn: `2026-09-0${n + 1}`,
-        body,
-      },
-    ]
-  }),
-)
-
-export function commentsForIdea(ideaId: string): Comment[] {
-  return comments.filter((comment) => comment.ideaId === ideaId)
 }
 
 export const navCounts = {

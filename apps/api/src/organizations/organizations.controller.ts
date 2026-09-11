@@ -50,6 +50,19 @@ import {
 import { optional, optionalInt, queryBool } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
+/**
+ * Hard ceilings on a CSV import body and its parsed rows, both the same figures
+ * `ideas.controller.ts` applies to the sibling idea import.
+ *
+ * Same numbers because this is the same upload with a different header row, not a different
+ * policy - the idea import got them from .NET's `IdeasController.MaxImportBytes` and this one was
+ * simply never given any. Nest's `FileInterceptor` buffers into the function heap by default and
+ * `buffer.toString('utf8')` doubles it, so an unbounded body was a way to exhaust a serverless
+ * function's memory with one request.
+ */
+const MAX_IMPORT_BYTES = 5 * 1024 * 1024
+const MAX_IMPORT_ROWS = 5_000
+
 /** The seven optional address/contact fields shared by create and update. */
 type OrganizationProfileBody = {
   address?: string
@@ -293,7 +306,10 @@ export class OrganizationsController {
    */
   @Post(':organizationId/users/import')
   @HttpCode(200)
-  @UseInterceptors(FileInterceptor('csvFile'))
+  // The body bound in full: multer aborts an upload over the limit at the pipeline and Nest turns
+  // that into a `413`, so the handler is never handed an oversized buffer and has no size check of
+  // its own to make. `SPEC/30-Contracts.md` documents the 413 for both CSV imports.
+  @UseInterceptors(FileInterceptor('csvFile', { limits: { fileSize: MAX_IMPORT_BYTES } }))
   async importUsers(
     @Param('organizationId', UuidParamPipe) organizationId: string,
     @UploadedFile() csvFile: { buffer?: Buffer } | undefined,
@@ -309,6 +325,17 @@ export class OrganizationsController {
       })
     }
 
-    return this.users.import(organizationId, parseUserImportCsv(buffer.toString('utf8')))
+    // Bounded HERE rather than during import: the upload is buffered into a string and then
+    // re-materialised as parsed records before any per-row work happens.
+    const rows = parseUserImportCsv(buffer.toString('utf8'))
+    if (rows.length > MAX_IMPORT_ROWS) {
+      throw new ValidationError('One or more fields are invalid.', {
+        csvFile: [
+          `The file has ${rows.length} rows, which is more than the ${MAX_IMPORT_ROWS} this import supports. Split it into smaller files.`,
+        ],
+      })
+    }
+
+    return this.users.import(organizationId, rows)
   }
 }

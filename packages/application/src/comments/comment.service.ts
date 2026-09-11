@@ -24,6 +24,7 @@ import {
   type UnitOfWork,
   ValidationError,
 } from '../common/index.js'
+import type { IdeaAssigneeDto } from '../ideas/models.js'
 import type { NotificationWriter } from '../notifications/index.js'
 import type {
   CommentListItem,
@@ -33,7 +34,13 @@ import type {
   CreateCommentResult,
   UpdateCommentCommand,
 } from './models.js'
-import type { CommentRepository, IdeaLookupPort, IdeaSummary, UsersPort } from './ports.js'
+import type {
+  CommentRepository,
+  IdeaLookupPort,
+  IdeaSummary,
+  UserSummary,
+  UsersPort,
+} from './ports.js'
 
 const VALIDATION_TITLE = 'One or more fields are invalid.'
 const MENTION_FIELD = 'mentionEmails'
@@ -68,8 +75,10 @@ export class CommentService {
       sortDirection: query.sortDirection,
     })
 
+    const authors = await this.loadAuthors(page.items.map((comment) => comment.authorUserId))
+
     return {
-      items: page.items.map(toListItem),
+      items: page.items.map((comment) => toListItem(comment, authors)),
       page: page.page,
       pageSize: page.pageSize,
       totalCount: page.totalCount,
@@ -154,7 +163,7 @@ export class CommentService {
       idea.id,
     )
 
-    return toListItem(updated)
+    return toListItem(updated, await this.loadAuthors([updated.authorUserId]))
   }
 
   async delete(commentId: string): Promise<void> {
@@ -185,6 +194,18 @@ export class CommentService {
       now,
       idea.id,
     )
+  }
+
+  /** The commenters on one page, keyed by id - one read however many comments they wrote. */
+  private async loadAuthors(
+    authorUserIds: readonly string[],
+  ): Promise<ReadonlyMap<string, UserSummary>> {
+    const ids = [...new Set(authorUserIds)]
+    if (ids.length === 0) {
+      return new Map()
+    }
+    const users = await this.users.listByIds(ids)
+    return new Map(users.map((user) => [user.id, user]))
   }
 
   private async loadIdeaInScope(ideaId: string): Promise<IdeaSummary> {
@@ -342,14 +363,39 @@ export class CommentService {
   }
 }
 
-function toListItem(comment: Comment): CommentListItem {
+function toListItem(comment: Comment, authors: ReadonlyMap<string, UserSummary>): CommentListItem {
+  const author = authors.get(comment.authorUserId)
   return {
     commentId: comment.id,
     ideaId: comment.ideaId,
     authorUserId: comment.authorUserId,
+    author: author ? toPersonDto(author) : null,
     body: comment.body,
     createdAtUtc: comment.createdAtUtc,
     updatedAtUtc: comment.updatedAtUtc,
+  }
+}
+
+/**
+ * One user as a comment's `author`.
+ *
+ * A local copy of the identical projection in Ideas' `idea.service.ts`, on the same footing as the
+ * mention-resolution logic the two features already duplicate (ports.ts): the *shape* is shared -
+ * `IdeaAssigneeDto`, so a field cannot be added on one side alone without breaking the other - and
+ * only these six lines are restated, which is less than a cross-feature dependency on a service
+ * module would cost.
+ */
+function toPersonDto(user: UserSummary): IdeaAssigneeDto {
+  return {
+    userId: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    displayName: `${user.firstName} ${user.lastName}`.trim(),
+    isActive: user.status === UserStatus.Active,
+    portraitDataUrl:
+      user.portraitPng && user.portraitPng.length > 0
+        ? `data:image/png;base64,${Buffer.from(user.portraitPng).toString('base64')}`
+        : null,
   }
 }
 

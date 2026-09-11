@@ -19,14 +19,27 @@ import { type LoginState, signIn } from '@/lib/server/auth-actions'
  * `?error=`, which a bookmark or a shared link could reproduce out of nowhere, and which meant a
  * failed sign-in was a navigation.
  *
- * `expired` is the one exception, and it is not a failure: `proxy.ts` sends the reader here after
- * dropping a session the API refused, and without a word for it the form looks like it appeared for
- * no reason. It gives way to a real sign-in failure rather than stacking with one — by then the
- * reader is being told about the attempt they just made, not the session they lost.
+ * The notices are the exception, and neither is a failure. `expired` means `proxy.ts` sent the
+ * reader here after dropping a session the API refused; `registered` means they have just created an
+ * account, which per comp P's `s-register` ends here rather than signed in. Without a word for
+ * either, the form looks like it appeared for no reason. Both give way to a real sign-in failure
+ * rather than stacking with one — by then the reader is being told about the attempt they just
+ * made, not how they arrived.
+ *
+ * They are `role="status"` and not the default `role="alert"`, which is comp P's rule for all three
+ * of its notice strings and not a detail: an alert interrupts a screen reader mid-sentence, and
+ * nothing here went wrong.
  */
-export function LoginForm({ expired = false }: { expired?: boolean }) {
+export function LoginForm({
+  expired = false,
+  registered = false,
+}: {
+  expired?: boolean
+  registered?: boolean
+}) {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(signIn, {
     error: null,
+    rateLimited: false,
     email: '',
   })
 
@@ -35,14 +48,26 @@ export function LoginForm({ expired = false }: { expired?: boolean }) {
       {state.error ? (
         <Alert variant="destructive" className="mb-4">
           <span>
-            <b>{state.error}</b> Five failed attempts within 15 minutes lock the account for 15
-            minutes.
+            <b>{state.error}</b>
+            {/* The lockout rule belongs beside a refusal of the credential, and nowhere else. A
+                request the rate limiter turned away never reached the account, so pairing it with
+                "five failed attempts" tells the reader they got their password wrong — which is
+                the mistake this sentence is here to prevent, not cause. */}
+            {state.rateLimited
+              ? null
+              : ' Five failed attempts within 15 minutes lock the account for 15 minutes.'}
           </span>
         </Alert>
       ) : null}
 
+      {registered && !state.error ? (
+        <Alert variant="note" role="status" className="mb-4">
+          <span>Your account was created. Sign in to get started.</span>
+        </Alert>
+      ) : null}
+
       {expired && !state.error ? (
-        <Alert variant="note" className="mb-4">
+        <Alert variant="note" role="status" className="mb-4">
           <span>Your session has ended. Sign in again to pick up where you left off.</span>
         </Alert>
       ) : null}

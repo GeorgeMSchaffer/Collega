@@ -95,6 +95,16 @@ Rules:
 
 Before this gate, the rule was enforced only client-side: the issued token was valid everywhere, so a caller holding an admin-issued temporary password could skip the rotation entirely by calling the API directly and continue on a credential the issuing admin still knew.
 
+### Rate limiting on the authentication surface
+
+`POST /api/v1/auth/login`, `POST /api/v1/auth/register` and `POST /api/v1/auth/change-password` are limited **per caller IP and per route** — each keeps its own counter, so spending the register allowance does not close login. The limits are 10 requests per minute (20 on login) and 100 per hour. Exceeding either answers `429` with the standard problem-details envelope, `type` `https://collega.dev/problems/too-many-requests`, and a `Retry-After` header in seconds. This is the same `429` shape the AI assist endpoints already use for their own limits.
+
+`Retry-After` is the **only** rate-limit header sent, and it is also the only thing on the wire that separates this `429` from the one a locked-out account produces — those two carry the same `type`, the same `title`, and differ only in `detail`, which is prose. A client that must tell "this address has asked too often" from "this account is locked after five failed attempts" reads the header's presence: the lockout sends none. They are deliberately distinct refusals — one is about a caller's volume, the other about one account's failed attempts — and `apps/web` depends on telling them apart, because only one of them means the password was wrong. No `X-RateLimit-*` headers are exposed: the library's are suffixed with the internal bucket names, which are not contract surface. Adding unsuffixed ones is a change to make here first.
+
+Two properties clients must not read more into than is there. The caller IP is taken from `x-forwarded-for` **only when the process is running on Vercel**, which overwrites that header with the real client address; anywhere else the socket address is used, so a self-hosted run cannot be steered by a caller-supplied header. And the counters live in the serving process, which on serverless is neither shared between concurrent instances nor preserved across cold starts — the limit bounds volume, it is not a guarantee of an exact ceiling. A shared store is what would make it one.
+
+This does **not** replace the account lockout below, and does not prevent it: five failed attempts still lock an account, and five is below any limit that lets real people sign in.
+
 ### `POST /api/v1/auth/login`
 Purpose: Authenticate a user with globally unique email credentials.
 
@@ -131,6 +141,7 @@ Error responses:
 - `401` invalid credentials
 - `403` inactive account
 - `429` locked out after 5 failed attempts within 15 minutes
+- `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `GET /api/v1/auth/me`
 Purpose: Return the currently authenticated user summary.
@@ -138,6 +149,7 @@ Purpose: Return the currently authenticated user summary.
 Success response `200`:
 - `userId`
 - `organizationId`
+- `organizationTitle` string or `null` — the organization's display title
 - `role`
 - `firstName`
 - `lastName`
@@ -146,9 +158,17 @@ Success response `200`:
 - `portraitDataUrl` string or `null`
 - `viewingAs` object or `null` — populated while a View As session is live
 
-The last two were missing from this document until 2026-09-09 and are **not** optional: every
-recorded fixture carries them, and the client depends on `viewingAs` to render the effective role
-during impersonation. Verified against `tools/golden/fixtures/auth.me.*`.
+`portraitDataUrl` and `viewingAs` were missing from this document until 2026-09-09 and are **not**
+optional: every recorded fixture carries them, and the client depends on `viewingAs` to render the
+effective role during impersonation. Verified against `tools/golden/fixtures/auth.me.*`.
+
+`organizationTitle` was added 2026-09-10 (`SPEC/decisions.md`) so the client can name the
+organization from the one call it already makes per request. `null` means the caller belongs to no
+organization — a Site Admin, whose surfaces read "All organizations" — and nothing else: a caller
+with an `organizationId` always has a string here. It is **not** a fallback for a title that could
+not be resolved, and clients must keep the two cases apart. This shape is shared by every response
+that returns an authenticated user summary: `POST /auth/login` (under `user`), `PUT /auth/me`,
+`PUT`/`DELETE /auth/me/portrait`, and both identities on `POST /auth/view-as`.
 
 Error responses:
 - `401` caller is not authenticated
@@ -183,6 +203,7 @@ Error responses:
 - `400` invalid password policy
 - `401` invalid current password
 - `403` caller is authenticated but not allowed to change the password in the current state
+- `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `POST /api/v1/users/{userId}/temporary-password`
 Purpose: MVP/P1 admin-issued temporary password reset.
@@ -516,6 +537,8 @@ Behavior rules:
 - the invite code determines the organization the user is associated with
 - the created user receives role `User` and status `Active`
 - registration against an archived organization is rejected as an invalid invite code
+- an email address that is already registered — in **any** organization, since `normalized_email` is globally unique — is refused with the same field-keyed `400` every other refusal produces, carrying a message that does not say the account exists. The response must not fork on whether it does: an anonymous caller holding one organization's invite code could otherwise enumerate accounts across every tenant, Site Admins included (`SPEC/decisions.md` 2026-09-10). The real reason is written to the audit log as `UserSelfRegistrationRejected` and is never sent to the caller
+- the password is validated **before** the email is looked up, so a probe costs a request carrying a policy-valid password rather than any request at all
 
 Success response `201`:
 - `userId`
@@ -527,7 +550,8 @@ Success response `201`:
 Error responses:
 - `400` request body is malformed or violates field constraints
 - `400` invite code is missing or invalid; response prompts the user to provide a correct invite code
-- `409` email is already in use
+- `400` the account could not be created for the supplied details, keyed on `email`. This is what an address already in use answers; it is deliberately not distinguishable, and **superseded the `409` the frozen .NET API returned** (2026-09-10)
+- `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 
 ### `GET /api/v1/organizations/{organizationId}/users`
 Purpose: List users within an organization with pagination.
@@ -609,6 +633,7 @@ CSV columns:
 Behavior rules:
 - each created user receives a system-generated temporary password and must change it on first login
 - rows with invalid data or duplicate emails are rejected individually without failing the whole import
+- **Bounded (added 2026-09-10):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**, the same two bounds and the same messages as the idea import below. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. The two answer differently, according to where the upload is stopped: the body limit is enforced at the request pipeline, before the handler runs, and answers `413`; the row ceiling is the handler's own and answers the field-keyed `400`. This endpoint had no bound at all until now, which was an oversight rather than a policy difference: the body buffers into the serving process's heap, so one request could exhaust it
 
 Success response `200`:
 - `createdCount`
@@ -616,10 +641,11 @@ Success response `200`:
 - `rows` per-row outcome list with `rowNumber`, `email`, `outcome`, `error` nullable, and `temporaryPassword` for created rows
 
 Error responses:
-- `400` file is missing, malformed, or not a valid CSV
+- `400` file is missing, malformed, or not a valid CSV, or it exceeds 5,000 rows
 - `401` caller is not authenticated
 - `403` caller is authenticated but not allowed to create users in this organization
 - `404` organization does not exist or is outside caller scope
+- `413` the request body exceeds 5 MB; the pipeline refuses it before it reaches the handler
 
 ### `GET /api/v1/users/{userId}`
 Purpose: Return user detail.
@@ -667,7 +693,7 @@ Purpose: Create a new organization status.
 
 Request body:
 - `name` required string
-- `color` optional CSS/hex color string (max 20 chars); defaults to `#64748B` when omitted — drives the swimlane color dot and idea-card status chip
+- `color` optional string in `#RRGGBB` format (max 20 chars, but the format is what is enforced); defaults to `#64748B` when omitted — drives the swimlane color dot and idea-card status chip. **Format-checked since 2026-09-10**: it was previously length-checked only, and twenty characters is enough for a working CSS `url()`, which the client renders into a `style` attribute
 - `sortOrder` optional integer (organization-level catalog order); appended after the current maximum when omitted
 
 Success response `201`:
@@ -681,7 +707,7 @@ Purpose: Rename or update a status.
 
 Request body:
 - `name` required string
-- `color` optional CSS/hex color string (max 20 chars)
+- `color` optional string in `#RRGGBB` format (max 20 chars, but the format is what is enforced)
 - `sortOrder` optional integer
 
 ### `POST /api/v1/organizations/{organizationId}/statuses/reorder`
@@ -950,7 +976,7 @@ Behavior:
 - Each data row creates a new idea. Required columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`. `Status` is optional (must name a board swimlane; defaults to the left-most swimlane); `Due Date`, `Tags`, and per-UDF-field columns are optional.
 - `Idea Type` and `Business Impact` are matched by name (case-insensitive) against active options; a missing or unknown value rejects that row. Dropdown/MultiSelect UDF columns are matched by option label; Boolean accepts `Yes`/`No` or `true`/`false`.
 - Invalid rows are rejected individually with a per-row message; valid rows still import.
-- **Bounded (added 2026-08-11, Sprint 4):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import.
+- **Bounded (added 2026-08-11, Sprint 4):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. The body limit is enforced at the request pipeline and answers `413`; the row ceiling is the handler's own and answers the field-keyed `400`.
 - A leading guard apostrophe written by the export is stripped on import (see the export contract above), so re-importing an exported file is lossless.
 
 Success response `200`:
@@ -959,8 +985,8 @@ Success response `200`:
 - `rows` array of `{ rowNumber, title, outcome (`Created`/`Rejected`), error }`
 
 Error responses:
-- `400` the file is missing/empty, its header lacks the required columns, it exceeds 5 MB, or it exceeds 5,000 rows
-- `413` the request body exceeds the server's size limit before it reaches the handler
+- `400` the file is missing/empty, its header lacks the required columns, or it exceeds 5,000 rows
+- `413` the request body exceeds 5 MB; the pipeline refuses it before it reaches the handler
 
 ### `POST /api/v1/boards/{boardId}/ideas`
 Purpose: Create a new idea on a board.
@@ -1061,6 +1087,8 @@ Success response `200`:
 - `priority`
 - `ideaTypeId`
 - `ideaTypeName`
+- `ideaTypeColorHex` string or `null` — the Idea Type's chip colour
+- `ideaTypeIcon` string or `null` — the Idea Type's icon name
 - `businessImpactId`
 - `businessImpactName`
 - `businessImpactColor`
@@ -1070,10 +1098,31 @@ Success response `200`:
 - `statusName`
 - `tagNames`
 - `mentions`
-- `comments`
+- `comments` array using the comment item shape from `GET /api/v1/ideas/{ideaId}/comments`, every comment on the idea in chronological order and unpaged
+- `fieldValues` array of resolved User-Defined Field values (`fieldDefinitionId`, `fieldName`, `fieldType`, `value`), per `SPEC/20-feature-user-defined-fields.md`
 - `upvoteCount`
 - `hasUpvoted` boolean for the current caller
 - `commentCount` integer
+- `author` object using the same assignee item shape, or `null` — who raised the idea
+- `createdAtUtc` timestamp
+
+`author` and `createdAtUtc` were added 2026-09-10: the detail header renders "by {author} on
+{date}" and had no source for either. `author` is the full persona rather than the bare
+`authorUserId` the list item carries, so the name renders without a second request per idea
+opened. It is nullable only because `ideas.author_user_id` carries no foreign key; no code path
+deletes a user, so a `null` there is data damage rather than an ordinary case to design a label
+for.
+
+`ideaTypeColorHex`, `ideaTypeIcon` and `fieldValues` were **missing from this document, not from
+the endpoint** — all three have been returned since long before the 2026-09-10 additions above, and
+the recorded corpus carries them. Written down 2026-09-10 because a contract that omits fields the
+endpoint really answers misleads every reader of it; nothing about the response changed.
+
+There is deliberately **no** `reference` field. The comps show `IDEA-101`, but no reference column
+exists and the Prisma schema is frozen at S0.2 — a real reference needs a per-organization
+sequence and therefore a schema amendment slice.
+
+`PUT /api/v1/ideas/{ideaId}` answers this same detail shape, and carries both fields with it.
 
 ### `PUT /api/v1/ideas/{ideaId}`
 Purpose: Update idea content.
@@ -1239,9 +1288,23 @@ Success response `200` paged item shape:
 - `commentId`
 - `ideaId`
 - `authorUserId`
+- `author` object using the idea-list assignee item shape, or `null` — who wrote the comment
 - `body`
 - `createdAtUtc`
 - `updatedAtUtc`
+
+`author` was added 2026-09-10 for the reason `GET /api/v1/ideas/{ideaId}` gained its own: the
+comment thread renders a name and an avatar per comment, and `authorUserId` alone would cost one
+request per distinct commenter to turn into either — so the inspector rendered invented commenters
+from fixture data instead. It is the **same object** an assignee and the idea's `author` are, and
+the same object the detail's embedded `comments` carry, so a thread rendered from either endpoint
+agrees with the other and a client needs one way to read a person off an idea payload.
+
+`null` there means no user row for `authorUserId`, and only that. It is nullable because
+`comments.author_user_id` carries no foreign key (the schema is frozen at S0.2), and since no code
+path deletes a user it does not occur in practice — a `null` is data damage rather than an ordinary
+case to design a label for. **A deactivated commenter is not that case**: the row still exists, so
+the author comes back named with `isActive` false, exactly as a deactivated assignee does.
 
 ### `POST /api/v1/ideas/{ideaId}/comments`
 Purpose: Add a comment to an idea.
@@ -1262,6 +1325,10 @@ Purpose: Edit a comment authored by the caller.
 
 Request body:
 - `body` required string, max 2000 characters, plain text with line breaks
+
+Success response `200`: the edited comment, in the same item shape the list above answers —
+`author` included, so the composer can replace the edited comment in place without refetching the
+thread.
 
 UX rules:
 - clients should show a live character counter and inline overflow validation

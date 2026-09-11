@@ -12,7 +12,7 @@ export const metadata = { title: 'Sign in · Collega' }
  * `components/auth/login-form.tsx`, which holds the accessibility contract this screen must keep.
  *
  * Reading `searchParams` is what makes this route server-rendered rather than prerendered, and it
- * is the cheaper of the two ways to notice `?expired=1`: `useSearchParams` in the form would need a
+ * is the cheaper of the two ways to notice a notice flag: `useSearchParams` in the form would need a
  * Suspense boundary around it on a static route, and that turns the sign-in form itself into a
  * client-rendered fallback. There is nothing to fetch here, so rendering per request costs a
  * template.
@@ -20,9 +20,11 @@ export const metadata = { title: 'Sign in · Collega' }
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ expired?: string }>
+  searchParams: Promise<{ expired?: string; registered?: string }>
 }) {
-  const expired = 'expired' in (await searchParams)
+  const query = await searchParams
+  const expired = 'expired' in query
+  const registered = 'registered' in query
 
   return (
     <>
@@ -50,10 +52,10 @@ export default async function LoginPage({
             One email, one account. We&rsquo;ll take you straight to your organization.
           </p>
 
-          <LoginForm expired={expired} />
+          <LoginForm expired={expired} registered={registered} />
 
           <p className="mt-4 text-sm text-muted-foreground">
-            Have an invite code? <Link href="/login">Create an account</Link>.
+            Have an invite code? <Link href="/register">Create an account</Link>.
             <br />
             Forgot your password? Ask your organization admin to reset it.
           </p>
