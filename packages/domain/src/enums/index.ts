@@ -59,11 +59,20 @@ export enum ImpersonationEndReason {
   RealUserNoLongerAuthorized = 'RealUserNoLongerAuthorized',
 }
 
+/**
+ * The last three are Issues-and-Delivery Slice 1 and have no .NET ancestor either. They are the
+ * only notification-carrying events the feature has: promotion, a delivery-status move, and being
+ * given a task. Every other delivery mutation audits without notifying - a checklist ticked a
+ * dozen times a day must not page the room.
+ */
 export enum NotificationEventType {
   IdeaMention = 'IdeaMention',
   CommentMention = 'CommentMention',
   CommentAdded = 'CommentAdded',
   IdeaStatusChanged = 'IdeaStatusChanged',
+  IdeaPromoted = 'IdeaPromoted',
+  IssueDeliveryStatusChanged = 'IssueDeliveryStatusChanged',
+  IssueTaskAssigned = 'IssueTaskAssigned',
 }
 
 export enum AiCallOutcome {

@@ -10,7 +10,9 @@ import type {
   IdeaClassificationPort,
   IdeaFieldValuesPort,
   IdeaRepository,
+  IssueTaskRollupPort,
   NotificationsPort,
+  SprintLookupPort,
   TagsPort,
   UpvoteCountsPort,
   UsersPort,
@@ -30,16 +32,18 @@ import { IdeasController } from './ideas.controller.js'
  * D3's idea surface: the eleven routes on `IdeasController`, spanning both services the .NET
  * controller reached through one interface.
  *
- * **The thirteen `IdeaService` dependencies, and where each comes from.** Twelve resolve straight
+ * **The fifteen `IdeaService` dependencies, and where each comes from.** Fourteen resolve straight
  * from `PORT_TOKENS` - `IdeaRepository`, `BoardsPort`, `UsersPort`, `TagsPort`, `CommentsPort`,
- * `IdeaClassificationPort`, `IdeaFieldValuesPort`, `UpvoteCountsPort`, and the four kernel ports
+ * `IdeaClassificationPort`, `IdeaFieldValuesPort`, `UpvoteCountsPort`, `SprintLookupPort`,
+ * `IssueTaskRollupPort` (the two delivery read slices, aliased onto `PrismaSprintRepository` and
+ * `PrismaIssueTaskRepository`), and the four kernel ports
  * (`UnitOfWork`, `AuditEventWriter`, `CurrentUserContext`, `Clock`). Several of those are
  * cross-feature read ports rather than this feature's own repository, and several share one
  * concrete adapter: `BoardsPort` and `UpvoteCountsPort` alias onto `PrismaBoardRepository` and
  * `PrismaIdeaUpvoteRepository`, `UsersPort` onto `PrismaUserRepository`. None of that is decided
  * here - `common/persistence/adapters.providers.ts` owns it and `common/tokens.ts` explains why.
  *
- * The thirteenth is `NotificationsPort`, which is deliberately NOT a token: `common/tokens.ts`
+ * The fifteenth is `NotificationsPort`, which is deliberately NOT a token: `common/tokens.ts`
  * says so by name, because it is satisfied by an Application-layer class built from ports that
  * are. `NotificationsModule` builds it; this module imports it and injects it by class reference,
  * the same way `UsersModule` imports `AuthenticationModule` for `AuthService`.
@@ -69,6 +73,8 @@ import { IdeasController } from './ideas.controller.js'
         classification: IdeaClassificationPort,
         fieldValues: IdeaFieldValuesPort,
         upvoteCounts: UpvoteCountsPort,
+        sprints: SprintLookupPort,
+        taskRollup: IssueTaskRollupPort,
         notifications: NotificationsPort,
         unitOfWork: UnitOfWork,
         auditEvents: AuditEventWriter,
@@ -84,6 +90,8 @@ import { IdeasController } from './ideas.controller.js'
           classification,
           fieldValues,
           upvoteCounts,
+          sprints,
+          taskRollup,
           notifications,
           unitOfWork,
           auditEvents,
@@ -99,6 +107,8 @@ import { IdeasController } from './ideas.controller.js'
         PORT_TOKENS.IdeaClassificationPort,
         PORT_TOKENS.IdeaFieldValuesPort,
         PORT_TOKENS.UpvoteCountsPort,
+        PORT_TOKENS.SprintLookupPort,
+        PORT_TOKENS.IssueTaskRollupPort,
         NotificationService,
         PORT_TOKENS.UnitOfWork,
         PORT_TOKENS.AuditEventWriter,

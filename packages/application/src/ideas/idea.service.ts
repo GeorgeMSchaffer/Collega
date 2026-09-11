@@ -1,23 +1,38 @@
 import { randomUUID } from 'node:crypto'
-import { Priority, Role, UserStatus } from '@collega/domain/enums'
+import {
+  DeliveryStatus,
+  EffortLevel,
+  IdeaPhase,
+  Priority,
+  Role,
+  SprintState,
+  UserStatus,
+} from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
 import {
+  assignIdeaToSprint,
+  changeIdeaDeliveryStatus,
   changeIdeaStatus,
   createIdea,
   IdeaDomainError,
+  IdeaPhaseConflictError,
   MAX_ASSIGNEES,
   MAX_TAGS,
+  promoteIdeaToIssue,
   reassignIdeaType as reassignIdeaTypeOf,
   replaceIdeaAssignees,
   replaceIdeaFieldValues,
   replaceIdeaMentions,
   replaceIdeaTags,
+  returnIdeaToDiscovery,
+  setIdeaEffort,
   softDeleteIdea,
   updateIdeaContent,
 } from '@collega/domain/ideas'
 import type { AuditEventWriter, Clock, CurrentUserContext, UnitOfWork } from '../common/index.js'
 import {
   attributeAudit,
+  ConflictError,
   ensureNotDirectSiteAdmin,
   ForbiddenError,
   MAX_PAGE_SIZE,
@@ -27,9 +42,13 @@ import {
   ValidationError,
 } from '../common/index.js'
 import type {
+  AssignIssueToSprintCommand,
+  ChangeDeliveryStatusCommand,
   ChangeIdeaStatusCommand,
   CreateIdeaCommand,
   CreateIdeaResult,
+  DeliveryCard,
+  DeliveryListQuery,
   IdeaAssigneeDto,
   IdeaCommentDto,
   IdeaCsvExport,
@@ -42,8 +61,10 @@ import type {
   IdeaListItem,
   IdeaListQuery,
   IdeaPage,
+  IssueProvenance,
   MentionDto,
   OrganizationIdeaListQuery,
+  PromoteIdeaCommand,
   UpdateIdeaCommand,
 } from './models.js'
 import {
@@ -61,8 +82,11 @@ import type {
   IdeaFieldValuesPort,
   IdeaRepository,
   IdeaTypeSummary,
+  IssueTaskRollupPort,
   NotificationEventType,
   NotificationsPort,
+  SprintLookupPort,
+  SprintSummary,
   StatusInfo,
   TagSummary,
   TagsPort,
@@ -98,6 +122,8 @@ export class IdeaService {
     private readonly classification: IdeaClassificationPort,
     private readonly fieldValues: IdeaFieldValuesPort,
     private readonly upvoteCounts: UpvoteCountsPort,
+    private readonly sprints: SprintLookupPort,
+    private readonly taskRollup: IssueTaskRollupPort,
     private readonly notifications: NotificationsPort,
     private readonly unitOfWork: UnitOfWork,
     private readonly auditEvents: AuditEventWriter,
@@ -123,6 +149,11 @@ export class IdeaService {
       tag: trimOrNull(query.tag),
       priority: parseOptionalPriority(query.priority),
       dueBefore: parseOptionalDate(query.dueBefore),
+      // The ideation board is Discovery, always: a promoted item leaves it (no data loss - the row
+      // and its ideation status are retained, and it reappears here if it is returned to
+      // Discovery). Nothing is promoted until somebody promotes something, so for an organization
+      // that never uses delivery this filter matches every idea and the board is unchanged.
+      phase: IdeaPhase.Discovery,
       sortBy: query.sortBy,
       sortDirection: normalizeSortDirection(query.sortDirection),
     })
@@ -169,6 +200,9 @@ export class IdeaService {
       tag: trimOrNull(query.tag),
       associatedUserId: trimOrNull(query.user),
       searchCreatedOnDate,
+      // Defaults to both phases, unlike the board: this list is where somebody looks for an item
+      // they cannot find on a board, so hiding promoted ones here would lose them.
+      phase: parseOptionalPhaseFilter(query.phase),
     })
 
     const items = await this.projectListItems(organizationId, ideasPage.items)
@@ -373,6 +407,12 @@ export class IdeaService {
       now,
       actorId,
     )
+    // Three-state, unlike every other field on this command: an ABSENT `effort` key leaves the
+    // estimate alone, so a client that predates the field cannot clear it on an unrelated edit.
+    // `setIdeaEffort` itself refuses a Delivery-phase item - see `UpdateIdeaCommand.effort`.
+    if (command.effort !== undefined) {
+      idea = runDomain(setIdeaEffort, idea, parseOptionalEffort(command.effort), now, actorId)
+    }
     idea = runDomain(replaceIdeaAssignees, idea, assigneeIds, now, actorId)
     idea = runDomain(replaceIdeaTags, idea, tagIds, now, actorId)
     idea = replaceIdeaMentions(idea, mentionIds, now, actorId)
@@ -494,6 +534,213 @@ export class IdeaService {
     await this.notifyIdeaFollowers('IdeaStatusChanged', idea, actorId)
   }
 
+  // Delivery (Issues-and-Delivery Slice 1) -----------------------------------------------------
+  //
+  // These live on IdeaService rather than in a sibling service because an Issue IS an Idea - the
+  // same row - so they mutate the same aggregate through the same repository, and the delivery
+  // card is the ideation card plus five fields. A sibling would have had to duplicate
+  // `projectListItems` and its five batched lookups, or hide them behind a shared projector
+  // abstraction; neither is cheaper than the ~250 lines below. The spec asks for the same thing
+  // ("extend `IdeaService`").
+
+  /**
+   * The promotion gate: an explicit, audited decision that flips an idea into Delivery.
+   *
+   * Authorized to the author or an in-scope admin. The upvote count is read HERE, at the moment of
+   * commitment, and frozen on the row - "how much support did this have when we committed" is a
+   * fact that stops being recoverable the moment the next person upvotes.
+   */
+  async promote(ideaId: string, command: PromoteIdeaCommand): Promise<void> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    let idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+
+    const now = this.clock.now()
+    const actorId = this.requireAuthenticatedUserId()
+
+    if (!this.canAdministerIdeaContent(idea, actorId)) {
+      throw new ForbiddenError('You are not allowed to promote this idea.')
+    }
+
+    const effort = parseEffort(command.effort)
+    const sprintId = await this.resolveAssignableSprint(idea.organizationId, command.sprintId)
+    const currentUpvoteCount = await this.upvoteCounts.countByIdea(idea.id)
+
+    idea = runDelivery(
+      promoteIdeaToIssue,
+      idea,
+      { effort, sprintId, currentUpvoteCount },
+      now,
+      actorId,
+    )
+
+    await this.ideaRepository.update(idea)
+    await this.unitOfWork.saveChanges()
+
+    await this.auditIdea(
+      'IdeaPromotedToIssue',
+      idea,
+      actorId,
+      `Idea '${idea.title}' promoted to an issue.`,
+      now,
+      {
+        effort,
+        sprintId,
+        upvoteCountAtPromotion: currentUpvoteCount,
+        note: trimOrNull(command.note),
+      },
+    )
+
+    await this.notifyIdeaFollowers('IdeaPromoted', idea, actorId)
+  }
+
+  /** Recovers a mis-promotion (admin-only). Clears the sprint and delivery status; `effort`, the
+   * promotion snapshot and the Issue's tasks are all retained so a re-promote is lossless. */
+  async returnToDiscovery(ideaId: string): Promise<void> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireAuthenticatedRole()
+
+    let idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+
+    if (!this.canAdministerIdeaContent(idea, null, true)) {
+      throw new ForbiddenError('You are not allowed to return an issue to discovery.')
+    }
+
+    const now = this.clock.now()
+    const actorId = this.requireAuthenticatedUserId()
+    const previousSprintId = idea.sprintId
+
+    idea = runDelivery(returnIdeaToDiscovery, idea, now, actorId)
+
+    await this.ideaRepository.update(idea)
+    await this.unitOfWork.saveChanges()
+
+    await this.auditIdea(
+      'IssueReturnedToDiscovery',
+      idea,
+      actorId,
+      `Issue '${idea.title}' returned to discovery.`,
+      now,
+      { previousSprintId },
+    )
+  }
+
+  /** Moves an Issue between the five fixed delivery statuses. Author, an assignee, or an in-scope
+   * admin - the same set that may edit the Issue's tasks. */
+  async changeDeliveryStatus(ideaId: string, command: ChangeDeliveryStatusCommand): Promise<void> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    let idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+
+    const now = this.clock.now()
+    const actorId = this.requireAuthenticatedUserId()
+
+    if (!this.canAdministerIdeaContent(idea, actorId) && !idea.assigneeUserIds.includes(actorId)) {
+      throw new ForbiddenError("You are not allowed to change this issue's delivery status.")
+    }
+
+    const deliveryStatus = parseDeliveryStatus(command.deliveryStatus)
+    if (idea.deliveryStatus === deliveryStatus) {
+      return
+    }
+    const previousDeliveryStatus = idea.deliveryStatus
+
+    idea = runDelivery(changeIdeaDeliveryStatus, idea, deliveryStatus, now, actorId)
+
+    await this.ideaRepository.update(idea)
+    await this.unitOfWork.saveChanges()
+
+    await this.auditIdea(
+      'IssueDeliveryStatusChanged',
+      idea,
+      actorId,
+      `Issue '${idea.title}' moved to ${deliveryStatus}.`,
+      now,
+      { fromDeliveryStatus: previousDeliveryStatus, toDeliveryStatus: deliveryStatus },
+    )
+
+    await this.notifyIdeaFollowers('IssueDeliveryStatusChanged', idea, actorId)
+  }
+
+  /** Pulls an Issue into a sprint, or back to the backlog with `null`. Admin-only in this slice. */
+  async assignToSprint(ideaId: string, command: AssignIssueToSprintCommand): Promise<void> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireAuthenticatedRole()
+
+    let idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+
+    if (!this.canAdministerIdeaContent(idea, null, true)) {
+      throw new ForbiddenError('You are not allowed to assign issues to a sprint.')
+    }
+
+    const now = this.clock.now()
+    const actorId = this.requireAuthenticatedUserId()
+    const sprintId = await this.resolveAssignableSprint(idea.organizationId, command.sprintId)
+    if (idea.sprintId === sprintId) {
+      return
+    }
+    const previousSprintId = idea.sprintId
+
+    idea = runDelivery(assignIdeaToSprint, idea, sprintId, now, actorId)
+
+    await this.ideaRepository.update(idea)
+    await this.unitOfWork.saveChanges()
+
+    await this.auditIdea(
+      'IssueSprintAssignmentChanged',
+      idea,
+      actorId,
+      sprintId
+        ? `Issue '${idea.title}' assigned to a sprint.`
+        : `Issue '${idea.title}' returned to the delivery backlog.`,
+      now,
+      { fromSprintId: previousSprintId, toSprintId: sprintId },
+    )
+  }
+
+  /**
+   * The sprint board and the delivery backlog. Readable by every member of the organization,
+   * Read Only included - "View Sprint board, backlog, and provenance" is ticked for every role.
+   *
+   * Omitting `sprintId` reads the BACKLOG (Delivery items with no sprint), not everything: that is
+   * what the route documents, and it is the list an admin pulls from.
+   */
+  async listDelivery(
+    organizationId: string,
+    query: DeliveryListQuery,
+  ): Promise<readonly DeliveryCard[]> {
+    this.requireAuthenticatedRole()
+    this.ensureOrganizationScope(organizationId)
+
+    const sprintId = trimOrNull(query.sprintId)
+    const ideas = await this.ideaRepository.listDelivery({
+      organizationId,
+      sprintId,
+      backlogOnly: sprintId === null,
+      deliveryStatus: parseOptionalDeliveryStatus(query.deliveryStatus),
+    })
+
+    return this.projectDeliveryCards(organizationId, ideas)
+  }
+
   async delete(ideaId: string): Promise<void> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
     ensureNotDirectSiteAdmin(this.currentUser)
@@ -547,6 +794,9 @@ export class IdeaService {
         tag: null,
         priority: null,
         dueBefore: null,
+        // Same Discovery filter as the board itself: the export is "this board's ideas", and a
+        // file that disagreed with the screen it was exported from would be the bug.
+        phase: IdeaPhase.Discovery,
         sortBy: 'createdat',
         sortDirection: 'asc',
       })
@@ -891,6 +1141,107 @@ export class IdeaService {
       authorUserId: idea.authorUserId,
       createdAtUtc: idea.createdAtUtc,
     }))
+  }
+
+  /**
+   * The ideation card plus the delivery facets.
+   *
+   * Every added lookup is BATCHED over the whole board, matching `projectListItems`: one task
+   * rollup for all the cards, one sprint read for all the distinct sprints, and the promoters are
+   * folded into the same user lookup the assignees already need. A sprint board is 5 swimlanes of
+   * cards; a per-card sprint or task query would be exactly the N+1 this shape avoids.
+   */
+  private async projectDeliveryCards(
+    organizationId: string,
+    ideas: readonly Idea[],
+  ): Promise<readonly DeliveryCard[]> {
+    if (ideas.length === 0) {
+      return []
+    }
+
+    const base = await this.projectListItems(organizationId, ideas)
+    const baseById = new Map(base.map((item) => [item.ideaId, item]))
+
+    const taskSummaries = await this.taskRollup.summaryByIdeaIds(ideas.map((i) => i.id))
+
+    const sprintIds = [...new Set(ideas.flatMap((i) => (i.sprintId ? [i.sprintId] : [])))]
+    const sprints = sprintIds.length > 0 ? await this.sprints.listByIds(sprintIds) : []
+    const sprintsById = new Map(sprints.map((s) => [s.id, s]))
+
+    const promoterIds = [
+      ...new Set(ideas.flatMap((i) => (i.promotedByUserId ? [i.promotedByUserId] : []))),
+    ]
+    const promoters = await this.loadUserLookup(promoterIds)
+
+    return ideas.flatMap((idea) => {
+      const card = baseById.get(idea.id)
+      if (!card) {
+        return []
+      }
+      const sprint = idea.sprintId ? sprintsById.get(idea.sprintId) : undefined
+      return [
+        {
+          ...card,
+          phase: idea.phase,
+          effort: idea.effort,
+          deliveryStatus: idea.deliveryStatus,
+          sprint: sprint
+            ? {
+                sprintId: sprint.id,
+                name: sprint.name,
+                startDate: sprint.startDate,
+                endDate: sprint.endDate,
+              }
+            : null,
+          taskSummary: taskSummaries.get(idea.id) ?? { done: 0, total: 0 },
+          provenance: this.projectProvenance(idea, promoters),
+        },
+      ]
+    })
+  }
+
+  private projectProvenance(
+    idea: Idea,
+    promoters: ReadonlyMap<string, UserSummary>,
+  ): IssueProvenance {
+    const promoter = idea.promotedByUserId ? promoters.get(idea.promotedByUserId) : undefined
+    return {
+      promotedAtUtc: idea.promotedAtUtc,
+      promotedByUserId: idea.promotedByUserId,
+      promotedByDisplayName: promoter ? displayName(promoter) : null,
+      upvoteCountAtPromotion: idea.upvoteCountAtPromotion,
+    }
+  }
+
+  /**
+   * Validates a promotion/assignment sprint target: it must be a live, non-`Completed` sprint in
+   * the same organization, or `null` for the backlog.
+   *
+   * A cross-organization or deleted sprint is a field-keyed `400` rather than a `404`, because the
+   * thing being addressed by the route is the IDEA, which does exist and is visible - the sprint
+   * is a value in the body, and a bad value in a body is a validation failure.
+   */
+  private async resolveAssignableSprint(
+    organizationId: string,
+    sprintId: string | null,
+  ): Promise<string | null> {
+    const trimmed = trimOrNull(sprintId)
+    if (trimmed === null) {
+      return null
+    }
+
+    const sprint = await this.sprints.getById(trimmed)
+    if (!sprint || sprint.isDeleted || sprint.organizationId !== organizationId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        sprintId: ['Sprint must be an active sprint in this organization.'],
+      })
+    }
+    if (sprint.state === SprintState.Completed) {
+      throw new ValidationError('One or more fields are invalid.', {
+        sprintId: ['A completed sprint cannot take new issues.'],
+      })
+    }
+    return sprint.id
   }
 
   private async projectDetail(idea: Idea): Promise<IdeaDetail> {
@@ -1615,4 +1966,94 @@ function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T,
 
 function createIdeaOrThrow(props: Parameters<typeof createIdea>[0]): Idea {
   return runDomain(createIdea, props)
+}
+
+/**
+ * `runDomain` plus the phase-conflict case.
+ *
+ * `IdeaPhaseConflictError` is deliberately NOT an `IdeaDomainError` (see that class's comment):
+ * promoting an already-promoted item, or returning one that was never promoted, answers `409` per
+ * the contract, whereas every `IdeaDomainError` catch site answers a field-keyed `400`. Inheriting
+ * would have silently produced the wrong status; a sibling class surfaced as a 500 until mapped
+ * here, which is the louder failure of the two. This is that mapping.
+ */
+function runDelivery<Args extends readonly unknown[], T>(
+  fn: (...args: Args) => T,
+  ...args: Args
+): T {
+  try {
+    return runDomain(fn, ...args)
+  } catch (error) {
+    if (error instanceof IdeaPhaseConflictError) {
+      throw new ConflictError(error.message)
+    }
+    throw error
+  }
+}
+
+function parseEffort(value: string | null): EffortLevel {
+  const parsed = parseOptionalEffort(value)
+  if (parsed === null) {
+    throw new ValidationError('One or more fields are invalid.', {
+      effort: [
+        `Effort must be one of: ${EffortLevel.Low}, ${EffortLevel.Medium}, ${EffortLevel.High}.`,
+      ],
+    })
+  }
+  return parsed
+}
+
+/** A blank/absent value is `null` (cleared); an unrecognised one is rejected rather than silently
+ * treated as "no estimate" - a typo'd effort must not read as a deliberate clear. */
+function parseOptionalEffort(value: string | null | undefined): EffortLevel | null {
+  const trimmed = value?.trim()
+  if (!trimmed) {
+    return null
+  }
+  const lower = trimmed.toLowerCase()
+  const match = Object.values(EffortLevel).find((e) => e.toLowerCase() === lower)
+  if (!match) {
+    throw new ValidationError('One or more fields are invalid.', {
+      effort: [
+        `Effort must be one of: ${EffortLevel.Low}, ${EffortLevel.Medium}, ${EffortLevel.High}.`,
+      ],
+    })
+  }
+  return match
+}
+
+function parseDeliveryStatus(value: string | null): DeliveryStatus {
+  const parsed = parseOptionalDeliveryStatus(value)
+  if (parsed === null) {
+    throw new ValidationError('One or more fields are invalid.', {
+      deliveryStatus: [
+        `Delivery Status must be one of: ${Object.values(DeliveryStatus).join(', ')}.`,
+      ],
+    })
+  }
+  return parsed
+}
+
+function parseOptionalDeliveryStatus(value: string | null | undefined): DeliveryStatus | null {
+  const trimmed = value?.trim()
+  if (!trimmed) {
+    return null
+  }
+  const lower = trimmed.toLowerCase()
+  return Object.values(DeliveryStatus).find((s) => s.toLowerCase() === lower) ?? null
+}
+
+/** `All` (or anything unrecognised) spans both phases; `Ideas` is Discovery and `Issues` is
+ * Delivery. The wire values are the user-facing words, not the enum members. */
+function parseOptionalPhaseFilter(value: string | null | undefined): IdeaPhase | null {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'ideas':
+    case 'discovery':
+      return IdeaPhase.Discovery
+    case 'issues':
+    case 'delivery':
+      return IdeaPhase.Delivery
+    default:
+      return null
+  }
 }

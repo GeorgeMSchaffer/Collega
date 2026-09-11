@@ -283,6 +283,32 @@ export function changeIdeaStatus(
 }
 
 /**
+ * Sets or clears the optional Discovery-phase effort estimate.
+ *
+ * Discovery only, deliberately. In Delivery, `effort` is no longer a working estimate - it is half
+ * of what the promotion gate recorded, sitting beside `promotedByUserId` and
+ * `upvoteCountAtPromotion`, and a later edit through the ordinary update path would quietly rewrite
+ * the answer to "how big did we think this was when we committed to it". Re-estimating a live Issue
+ * is not modelled in this slice; the gate is where an effort is chosen.
+ *
+ * A `null` clears it, matching `dueDate` - the only other optional scalar on the edit path.
+ */
+export function setIdeaEffort(
+  idea: Idea,
+  effort: EffortLevel | null,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Idea {
+  if (idea.phase !== IdeaPhase.Discovery) {
+    throw new IdeaDomainError(
+      'effort',
+      'Effort is recorded at the promotion gate and cannot be changed on an issue.',
+    )
+  }
+  return markUpdated({ ...idea, effort }, nowUtc, actorUserId)
+}
+
+/**
  * The promotion gate: flips this idea into Delivery, where it is called an Issue
  * (SPEC/20-feature-issues-and-delivery.md "Domain Model"). An explicit decision with an actor and
  * a timestamp - never a side effect of reaching some ideation status, which is the overloading the

@@ -1,3 +1,4 @@
+import type { DeliveryStatus, EffortLevel, IdeaPhase } from '@collega/domain/enums'
 import type { IdeaFieldValueInput } from '@collega/domain/ideas'
 import type { Page, PageRequest, SortDirection } from '../common/index.js'
 
@@ -39,10 +40,87 @@ export type UpdateIdeaCommand = {
   /** `null`/omitted means "not provided" - existing UDF values are left untouched. Only an
    * explicit (possibly empty) list reconciles them (see `Idea.replaceFieldValues`). */
   readonly fieldValues: readonly IdeaFieldValueWrite[] | null
+  /**
+   * The optional Discovery-phase effort estimate (`Low`/`Medium`/`High`).
+   *
+   * THREE-STATE, unlike `dueDate`: the key being ABSENT means "not provided, leave it alone", an
+   * explicit `null` clears it, and a value sets it. A two-state optional would make every client
+   * that predates this field silently clear the estimate on an unrelated edit - and on an Issue
+   * that estimate is half of what the promotion gate recorded.
+   *
+   * Setting it on a `Delivery`-phase item is rejected (`400`, field `effort`): effort is chosen at
+   * the gate, and re-estimating a live Issue is not modelled in this slice.
+   */
+  readonly effort?: string | null
 }
 
 export type ChangeIdeaStatusCommand = {
   readonly statusId: string
+}
+
+// Delivery (Issues-and-Delivery Slice 1) --------------------------------------------------------
+
+export type PromoteIdeaCommand = {
+  /** Required at the gate: `Low`, `Medium` or `High`. */
+  readonly effort: string
+  /** `null` promotes straight to the delivery backlog. */
+  readonly sprintId: string | null
+  /** Free text recorded on the promotion audit event; it is not stored on the idea. */
+  readonly note: string | null
+}
+
+export type ChangeDeliveryStatusCommand = {
+  readonly deliveryStatus: string
+}
+
+export type AssignIssueToSprintCommand = {
+  readonly sprintId: string | null
+}
+
+/** The sprint board and the delivery backlog. Omit `sprintId` for the backlog (`SprintId is
+ * null`); pass one to read that sprint's Issues. */
+export type DeliveryListQuery = {
+  readonly sprintId: string | null
+  readonly deliveryStatus: string | null
+}
+
+/** `N of M done` over an Issue's checklist. `done` counts only `Done` tasks - `InProgress` is
+ * explicitly not half a point, because a task count must not become a velocity proxy. */
+export type IssueTaskSummary = {
+  readonly done: number
+  readonly total: number
+}
+
+export type IssueSprintSummary = {
+  readonly sprintId: string
+  readonly name: string
+  readonly startDate: string
+  readonly endDate: string
+}
+
+/**
+ * Where an Issue came from, which is the whole point of the feature: mid-sprint, "why are we
+ * building this?" is answered from the card without leaving the board.
+ *
+ * `upvoteCountAtPromotion` sits beside the card's live `upvoteCount` deliberately - "42 upvotes
+ * when we committed, 61 now" is a different and more useful fact than either number alone.
+ */
+export type IssueProvenance = {
+  readonly promotedAtUtc: Date | null
+  readonly promotedByUserId: string | null
+  readonly promotedByDisplayName: string | null
+  readonly upvoteCountAtPromotion: number | null
+}
+
+/** The existing compact card plus the delivery facets. Same shape as an ideation card so the
+ * sprint board can reuse the board card as the spec requires. */
+export type DeliveryCard = IdeaListItem & {
+  readonly phase: IdeaPhase
+  readonly effort: EffortLevel | null
+  readonly deliveryStatus: DeliveryStatus | null
+  readonly sprint: IssueSprintSummary | null
+  readonly taskSummary: IssueTaskSummary
+  readonly provenance: IssueProvenance
 }
 
 export type IdeaListQuery = {
@@ -90,6 +168,15 @@ export type OrganizationIdeaListQuery = {
   readonly fieldFilters: ReadonlyMap<string, string> | null
   readonly tag: string | null
   readonly user: string | null
+  /**
+   * `All` (default) / `Ideas` (Discovery only) / `Issues` (Delivery only), so search and
+   * provenance span both phases (spec "Board & idea-list phase filtering").
+   *
+   * Default `All`, NOT `Ideas`: the global list is where somebody goes to find an item they
+   * cannot see on a board, and hiding promoted ones there would lose them. The ideation *board*
+   * is the surface that filters, and it does so unconditionally.
+   */
+  readonly phase: string | null
 }
 
 // Results / DTOs -------------------------------------------------------------------------------

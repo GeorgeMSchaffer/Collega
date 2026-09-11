@@ -926,6 +926,14 @@ Query parameters:
 - `sortBy` optional `createdAt`, `updatedAt`, `upvoteCount`, `priority`, or `dueDate`
 - `sortDirection` optional `asc` or `desc`
 
+**Phase filtering (added 2026-09-11, Issues and Delivery Slice 1).** This list is the ideation
+board, so it returns only `Discovery`-phase items — an idea that has been promoted to an Issue
+drops off it, with no data loss (the row and its ideation `statusId` are retained, and it reappears
+here if the Issue is returned to Discovery). There is no query parameter for this; the filter is
+unconditional. Delivery-phase items are read through `GET /api/v1/organizations/{orgId}/delivery`,
+or through the global `/ideas` list with `phase=Issues`. For an organization that has promoted
+nothing every idea is `Discovery`, so this endpoint's response is unchanged.
+
 Success response `200` paged item shape:
 - `ideaId`
 - `boardId`
@@ -960,6 +968,7 @@ Query parameters:
 - `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name)
 - `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first). All sorts apply a stable `ideaId` tiebreaker so ordering is deterministic across pages.
 - `fieldFilters[<fieldDefinitionId>]=<value>` optional, repeatable — filter by User-Defined Field value (T059). Semantics per field type: `Text`/`Url` contains; `Number` range `<min>:<max>` (either side omittable); `Date` range `<from>:<to>` (ISO-8601, either side omittable); `Boolean` `true`/`false`; `Dropdown` exact option id; `MultiSelect` any-of (matches when the stored option ids include the value). Unknown/invalid `fieldDefinitionId` keys and unparseable values are silently ignored.
+- `phase` optional (added 2026-09-11, Issues and Delivery Slice 1) — `All` (**default**), `Ideas` (`Discovery`-phase only), or `Issues` (`Delivery`-phase only). Unrecognised values are treated as `All`. Unlike the board list this defaults to spanning **both** phases: this is the list somebody uses to find an item they cannot see on a board, and hiding promoted ones would lose them. Omitting it therefore leaves the response exactly as it was before the parameter existed.
 
 Success response `200`: same paged item shape as `GET /api/v1/boards/{boardId}/ideas`.
 
@@ -969,6 +978,7 @@ Purpose: Export a board's active ideas as CSV (T059/T060).
 Success response `200`:
 - `Content-Type: text/csv` (UTF-8 with BOM), attachment `ideas.csv`
 - Columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`, `Status`, `Due Date`, `Tags`, then one column per active User-Defined Field (header = field name). Dropdown/MultiSelect values render as option labels.
+- **`Discovery`-phase only** (added 2026-09-11), matching the board list above: the export is "this board's ideas", and a file that disagreed with the screen it was exported from would be the bug. Unchanged for any organization that has promoted nothing.
 
 Limits and escaping (added 2026-08-11, Sprint 4):
 - **Bounded at 10,000 ideas.** A board above the cap is refused with `400` rather than truncated — a silently short extract is worse than a clear failure for a file people use as a reporting export. The whole dataset is materialised in memory, and the endpoint is reachable by any member including Read Only, so the bound is what keeps it from being a cheap way to pressure the host.
@@ -1145,6 +1155,19 @@ Request body:
 - `assigneeUserIds` optional array of zero to five distinct GUID strings; every newly selected user must be active and belong to the idea's organization
 - `tagNames` optional array of no more than 10 distinct normalized tag names
 - `mentionEmails` optional string array
+- `effort` optional string: `Low`, `Medium`, or `High` — the optional Discovery-phase effort estimate (added 2026-09-11, Issues and Delivery Slice 1)
+
+**`effort` is three-state, and that is deliberate** — it is the only field on this payload that is.
+The key being **absent** means "not provided": the stored estimate is left untouched. An explicit
+**`null`** clears it. A **value** sets it. A plain two-state optional (absent reading as `null`, the
+way `dueDate` does) would make every client that predates this field silently clear the estimate on
+an unrelated edit, and on a promoted Issue that estimate is half of what the promotion gate
+recorded. An unrecognised value is a field-keyed `400`.
+
+`effort` may only be set while the idea is in the **`Discovery`** phase. Supplying it for a
+`Delivery`-phase item returns `400` keyed on `effort`: effort is chosen at the promotion gate,
+alongside `promotedByUserId` and `upvoteCountAtPromotion`, and re-estimating a live Issue is not
+modelled in this slice. Omitting the key on an Issue is always valid.
 
 UI behavior contract:
 - board cards remain compact and show `title`, `priority`, Business Impact chip, the first three alphabetical `tagNames` plus tag overflow count, the first three ordered `assignees` plus assignee overflow count, viewer-local age derived from `createdAtUtc`, current-user upvote state/count, and comment count.
