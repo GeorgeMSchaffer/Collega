@@ -430,6 +430,15 @@ model users {
 // meaning lived only in C#: nothing in the schema recorded it. The integer each member
 // had is written beside it below, because F3's transform needs exactly that mapping and
 // there is no other surviving record of it once the .NET solution is deleted.
+//
+// Five more were added by Issues-and-Delivery Slice 1 (decisions.md 2026-09-11) and have no
+// .NET ancestor: DeliveryStatus, EffortLevel, IdeaPhase, IssueTaskState, SprintState. No
+// legacy column holds them, so F3 has nothing to transform. The integers beside their members
+// are the spec's declaration order, recorded for traceability only - the stored value is the
+// member name, as it is for every enum here.
+//
+// Declaration order across the block is alphabetical because that is what `prisma db pull`
+// emits; new enums are interleaved rather than appended so the next introspection is a no-op.
 // ---------------------------------------------------------------------------
 
 enum AiCallOutcome {
@@ -443,6 +452,23 @@ enum AiKeySource {
   Organization // 1
 }
 
+/// The fixed delivery lifecycle; the sprint board's five swimlanes. Separate from the
+/// org-configured ideation statuses, and an item keeps both.
+enum DeliveryStatus {
+  Pending // 0
+  Scoping // 1
+  Development // 2
+  Review // 3
+  Complete // 4
+}
+
+/// T-shirt sizing, deliberately not story points.
+enum EffortLevel {
+  Low // 0
+  Medium // 1
+  High // 2
+}
+
 /// Stored as int. F3 maps 1..7 to these in declaration order - note it starts at 1, not 0.
 enum FieldType {
   Text // 1
@@ -452,6 +478,13 @@ enum FieldType {
   Dropdown // 5
   MultiSelect // 6
   Url // 7
+}
+
+/// Which half of its life an item is in. An Issue is an Idea in the `Delivery` phase - the same
+/// row, not a second entity.
+enum IdeaPhase {
+  Discovery // 0
+  Delivery // 1
 }
 
 /// Stored as int.
@@ -466,6 +499,13 @@ enum ImpersonationEndReason {
   AbsoluteTimeout // 2
   TargetNoLongerValid // 3
   RealUserNoLongerAuthorized // 4
+}
+
+/// Three states, not a checkbox: "started but not finished" is what a standup asks about.
+enum IssueTaskState {
+  NotStarted // 0
+  InProgress // 1
+  Done // 2
 }
 
 enum NotificationEventType {
@@ -487,6 +527,13 @@ enum Role {
   OrgAdmin // 1
   User // 2
   ReadOnly // 3
+}
+
+/// Start and complete are explicit actions, never derived from the sprint's dates.
+enum SprintState {
+  Planned // 0
+  Active // 1
+  Completed // 2
 }
 
 enum UserStatus {
