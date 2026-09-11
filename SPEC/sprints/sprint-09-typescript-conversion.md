@@ -98,8 +98,13 @@ The ceiling says what is *safe*; the reviewer says what is *sustainable*.
 
 Beyond `SPEC/90-definition-of-done.md`:
 
-- **F1 green** — all 81 endpoints × 4 roles replay clean against Nest. This is the gate;
-  nothing cuts over before it.
+- **F1 reviewed, not green** — the replay runs and every difference has an answer: fixed,
+  recorded in `tools/golden/src/accepted.ts`, or deliberately better. A case that no longer
+  replays because the TypeScript app is *right* and the .NET recording is stale is an expected
+  outcome, not a defect, and does not hold anything up. **The replay is not a gate**
+  (`decisions.md` 2026-09-11, superseding the "all 447 replay clean" wording that stood here):
+  it is a regression detector, and the product working outranks fidelity to an app that was
+  never finished.
 - **F2 green** — the adapted Playwright suite passes against the comp P UI.
 - Layer boundaries pass lint — `biome.json` overrides since 2026-09-06 (`decisions.md`),
   including the rule that `apps/web` never imports `packages/application`, and

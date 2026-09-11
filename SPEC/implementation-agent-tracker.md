@@ -24,7 +24,9 @@ Before making any status, planning, or scope claim about this project — in thi
 > **The .NET stack is FROZEN as of 2026-09-06** (`SPEC/decisions.md`). Rows below that describe
 > `src/Collega.*` or `tests/` are **status, not instructions** — no features, no fixes, no tests, no
 > migrations there. It stays on disk only as a golden-fixture recorder and as the last runnable
-> reference for existing behaviour, and is deleted in slice **F6** once F1 replays clean.
+> reference for existing behaviour, and is deleted in slice **F6**. That deletion used to wait on
+> "once F1 replays clean"; the replay stopped being a gate on 2026-09-11 (`decisions.md`), so F6
+> proceeds on its own merits.
 
 | Area | State | Detail / authority |
 |---|---|---|
