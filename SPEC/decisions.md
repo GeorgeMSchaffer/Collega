@@ -9,6 +9,42 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-11 — The golden replay is not a gate, and never was meant to be one
+
+**Resolves a conflict between two canonical documents, in favour of the older one.**
+`SPEC/sprints/sprint-09-typescript-conversion.md` said *"F1 green — all 81 endpoints × 4 roles
+replay clean against Nest. This is the gate; nothing cuts over before it."* `decisions.md`
+2026-09-09 said the corpus is *"a regression detector, not the specification"* and that
+*"shipping for feedback outranks fidelity to the frozen app."* Both were canonical, they
+disagreed, and the sprint wording is the one that got followed — because a numeric gate is
+easier to act on than a judgement.
+
+**The cost of that.** Work was repeatedly redirected toward making fixtures replay rather than
+toward the product: a pinned refusal case was deleted to pay for an API wording change, and an
+auth rate limiter that protects real users was reported as *blocking the merge* because it made
+the replay exceed its login budget. That is the tail wagging the dog. The .NET app being
+replayed against **was never finished**, so byte-fidelity to it was never the goal and matching
+it is not evidence of correctness.
+
+**Decided.** The replay is a signal, not a gate. It runs, and every difference gets one of the
+three answers 2026-09-09 already named — fix it, record it in `tools/golden/src/accepted.ts`, or
+deliberately do better. **A failing or unrunnable replay does not block a merge, a cutover, or a
+release.** Where a real control (rate limiting, auth, validation) makes the harness unhappy, the
+harness changes, not the control. The sprint's definition of done is amended to match.
+
+**What does gate:** `pnpm check` — lint, layer boundaries, `tsc`, Vitest and `next build`. That
+is the fast, honest gate, and it stays.
+
+**What this does not mean.** The corpus is not deleted and is still worth consulting: it is the
+only broad record of what the old app did, and it has caught real regressions. Keep recording
+accepted differences when they are cheap. Do not spend a slice on fidelity.
+
+**Consequence for F6.** `implementation-agent-tracker.md` chained deleting `src/Collega.*` and
+`tests/` to *"once F1 replays clean."* That chain is cut — F6 is now free to proceed on its own
+merits, since the thing it was waiting for is no longer a gate.
+
+---
+
 ## 2026-09-11 — Registration answers `409` again; hiding the status did not close the enumeration oracle
 
 **Supersedes 2026-09-10's "`POST /auth/register` refuses a taken email generically".** That entry
