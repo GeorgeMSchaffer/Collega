@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { getFieldDefinitions, getOrganizations } from '@/lib/data'
+import { getFieldDefinitions, getFieldDefinitionsByOrganization } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -45,14 +45,15 @@ export default async function FieldsPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const [fieldDefinitions, organizations] = await Promise.all([
-    getFieldDefinitions(),
-    getOrganizations(),
-  ])
   const siteAdmin = currentUser().role === 'SiteAdmin'
-  const rows = siteAdmin
-    ? fieldDefinitions
-    : fieldDefinitions.filter((field) => field.organizationId === 'acme-robotics')
+
+  const catalogs = siteAdmin
+    ? await getFieldDefinitionsByOrganization()
+    : [{ organization: currentUser().organizationName ?? '', fields: await getFieldDefinitions() }]
+
+  const rows = catalogs.flatMap((catalog) =>
+    catalog.fields.map((field) => ({ field, org: catalog.organization })),
+  )
 
   return (
     <SettingsPage
@@ -72,7 +73,7 @@ export default async function FieldsPage() {
         <AdminTable
           summary={
             siteAdmin
-              ? `${rows.length} fields across ${organizations.length} organizations.`
+              ? `${rows.length} fields across ${catalogs.length} organizations.`
               : `${rows.length} fields.`
           }
         >
@@ -89,14 +90,10 @@ export default async function FieldsPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((field) => (
-              <tr key={field.id} className="border-b last:border-0">
+            {rows.map(({ field, org }) => (
+              <tr key={`${org}-${field.id}`} className="border-b last:border-0">
                 <td className="px-4 py-2.5 font-medium">{field.name}</td>
-                {siteAdmin ? (
-                  <td className="px-4 py-2.5 text-muted-foreground">
-                    {organizations.find((org) => org.id === field.organizationId)?.name}
-                  </td>
-                ) : null}
+                {siteAdmin ? <td className="px-4 py-2.5 text-muted-foreground">{org}</td> : null}
                 <td className="px-4 py-2.5 text-muted-foreground">{field.fieldType}</td>
                 <td className="px-4 py-2.5">
                   {field.required ? (
@@ -106,11 +103,18 @@ export default async function FieldsPage() {
                   )}
                 </td>
                 <td className="px-4 py-2.5">
-                  <span className="flex flex-wrap gap-1.5">
-                    {field.ideaTypeNames.map((name) => (
-                      <Tag key={name}>{name}</Tag>
-                    ))}
-                  </span>
+                  {field.usedBy.length === 0 ? (
+                    // Reachable, and not the same as "no types exist": every type in the
+                    // organization can be `Curated` and none of them have selected this field, so
+                    // it is defined and shown nowhere.
+                    <span className="text-xs text-muted-foreground">No idea type</span>
+                  ) : (
+                    <span className="flex flex-wrap gap-1.5">
+                      {field.usedBy.map((name) => (
+                        <Tag key={name}>{name}</Tag>
+                      ))}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-2.5 text-right">
                   <Button

@@ -65,16 +65,139 @@ export type Profile = {
 }
 
 /**
- * `colorName` is the human name shown in the status settings table, and it has no API field —
- * a status carries a hex colour and nothing else. Optional rather than invented: the settings
- * screen renders the swatch alone when the name is absent, which is honest, and inventing
- * "Slate" from `#64748B` would be a lookup table nobody maintains.
+/**
+ * A tenant, as the Site Admin's list renders one.
+ *
+ * **`inviteCode` is a standing credential, not a label.** It never expires, and anyone holding one
+ * can self-register into the organization it names (`app/(auth)/register/page.tsx` argues this at
+ * length for the same value). So it may be rendered in the body of a page a Site Admin is already
+ * reading, and it must never reach a URL, a query string or a link — those are copied into browser
+ * history, request logs and a `Referer` without anybody choosing to copy them.
+ *
+ * No member, board or idea counts: comp P's table does not show them and `GET /organizations` does
+ * not return them. The fixture had all three, which promised a column the endpoint cannot fill.
+ *
+ * `location` is comp P's single "Detroit, MI" cell, composed from the two nullable columns behind
+ * it, and null when neither is recorded.
+ */
+export type Organization = {
+  id: string
+  name: string
+  description: string
+  location: string | null
+  inviteCode: string
+  isArchived: boolean
+}
+
+/**
+ * An account on an administration list.
+ *
+ * `organizationId` and `organizationName` are nullable for two different reasons, and both are real:
+ * a Site Admin belongs to no organization, and the org-scoped listing does not carry the
+ * organization's title because the route already named it. Only the cross-organization table renders
+ * the name, and only `getMembers` — which reads the organization list to fan out — can supply it.
+ */
+export type Member = {
+  id: string
+  displayName: string
+  initials: string
+  email: string
+  organizationId: string | null
+  organizationName: string | null
+  role: Role
+  roleLabel: string
+  status: 'Active' | 'Inactive'
+}
+
+/**
+ * One row of a finished user import.
+ *
+ * `detail` is the temporary password when the row created an account and the reason when it did
+ * not. One field rather than two because the column is one column: comp P's *"Temporary password /
+ * reason"*, which renders as a credential chip or as prose according to `created`.
+ */
+export type ImportRow = {
+  row: number
+  email: string
+  created: boolean
+  detail: string
+}
+
+/**
+ * What an import did, in full.
+ *
+ * **This is the response to a write, not something that can be read back.** The API stores no import
+ * history and offers no endpoint for one, and the temporary passwords in it are generated once and
+ * never retrievable again — so comp P's "Last import" panel can only ever show the import the
+ * reader has just run, in the same session that ran it.
+ */
+export type ImportOutcome = {
+  created: number
+  rejected: number
+  rows: ImportRow[]
+}
+
+/**
+ * `colorName` is the human name comp P shows in the status settings table, and it has no API field
+ * — a status carries a hex colour and nothing else, so a real one never has it and the settings
+ * screen prints the hex beside the swatch instead. Optional rather than invented: inventing "Slate"
+ * from `#64748B` would be a lookup table nobody maintains, and the hex is the value an
+ * administrator typed into the create form anyway.
  */
 export type Status = {
   id: string
   name: string
   color: string
   colorName?: string
+}
+
+/**
+ * A board as `/settings/boards` administers it, which is a different question from what the
+ * workspace list shows.
+ *
+ * `Board` answers "what is on it" — an idea count, for someone choosing where to look. This
+ * answers "how is it configured" — how many lanes it has and who may move a card between them.
+ * Both come from `GET /organizations/{id}/boards`, which carries every field either one needs;
+ * they are two projections of one response rather than two requests.
+ */
+export type BoardAdmin = {
+  id: string
+  name: string
+  laneCount: number
+  /** Whether a plain User may move a card between lanes, or only an administrator. */
+  userStatusMoves: boolean
+}
+
+/**
+ * One of the kinds of idea people may raise.
+ *
+ * **No description and no idea count**, which comp Q's table has columns for: neither has a source.
+ * `idea_types` carries no description column and the schema is frozen at S0.2, and no endpoint
+ * reports how many ideas hold a given type. Rendering them empty would be worse than omitting the
+ * columns — a reader cannot tell an empty description from an unwritten one. See `IdeaDetail` in
+ * this file for the same decision about an idea's reference.
+ *
+ * `curatedFieldCount` is `null` for a type in `AllActiveFields` mode, which is not "no fields" but
+ * "every active field in the organization" — a different sentence, so a different value.
+ */
+export type IdeaType = {
+  id: string
+  name: string
+  curatedFieldCount: number | null
+}
+
+/**
+ * One custom field an idea type may ask for.
+ *
+ * `usedBy` is the idea types that show this field, resolved by the reader from the idea-type
+ * catalog: the mapping is owned by the type, so a field has no way to answer for itself.
+ */
+export type FieldDefinition = {
+  id: string
+  name: string
+  fieldType: string
+  required: boolean
+  usedBy: string[]
 }
 
 /** `focus` is demo-seed copy with no column behind it, so a real board simply has none. */

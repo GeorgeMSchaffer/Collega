@@ -43,6 +43,83 @@ export type WireLoginResponse = {
   user: WireCurrentUser
 }
 
+/**
+ * `GET /organizations` — a Site Admin's list of every tenant.
+ *
+ * `inviteCode` rides on the list item rather than needing a detail request per row, which is what
+ * lets the table comp P locks show it in a column. It is a standing credential: see `Organization`
+ * in `lib/types.ts` for what that obliges the screens to do with it.
+ *
+ * The API spells the name `title`; everything above `lib/api/` calls it a name. The cross-organization
+ * settings lists read only that field, but they share this one mirror — two narrower copies of the
+ * same endpoint is how the duplicate that had to be merged away here came about.
+ */
+export type WireOrganizationListItem = {
+  organizationId: string
+  title: string
+  description: string
+  inviteCode: string
+  city: string | null
+  state: string | null
+  isArchived: boolean
+}
+
+/**
+ * `GET /organizations/{id}`, read for the invite code alone.
+ *
+ * The detail carries eighteen more fields — logo, address, contact, AI-key metadata — and none of
+ * them is on this surface, so none is written down. Narrow on purpose (see this file's header).
+ */
+export type WireOrganizationDetail = {
+  organizationId: string
+  title: string
+  inviteCode: string
+}
+
+/** `POST /organizations/{id}/invite-code/regenerate`. */
+export type WireInviteCode = {
+  inviteCode: string
+}
+
+/**
+ * `GET /organizations/{id}/users` — the admin listing, which carries role and status.
+ *
+ * Not to be confused with `/members`, which is the assignee picker's id-name-email view and is
+ * readable by any member. This one is Org Admin and above.
+ *
+ * No organization title: the route already names the organization, so the caller knows it.
+ */
+export type WireUserListItem = {
+  userId: string
+  organizationId: string | null
+  firstName: string
+  lastName: string
+  email: string
+  role: string
+  status: string
+}
+
+/**
+ * One row of a finished CSV import.
+ *
+ * `temporaryPassword` is populated only for a created row and `error` only for a rejected one, and
+ * `email` is nullable because a row can be rejected for having no email to report.
+ */
+export type WireUserImportRow = {
+  rowNumber: number
+  email: string | null
+  outcome: string
+  error: string | null
+  temporaryPassword: string | null
+}
+
+/** `POST /organizations/{id}/users/import`. */
+export type WireUserImportResult = {
+  createdCount: number
+  rejectedCount: number
+  rows: readonly WireUserImportRow[]
+}
+
 /** `GET /organizations/{id}/boards`. */
 export type WireBoardListItem = {
   boardId: string
@@ -80,10 +157,32 @@ export type WireStatus = {
   isDeleted: boolean
 }
 
-/** `GET /organizations/{id}/idea-types`. The archived ones are already excluded by default. */
+/**
+ * `GET /organizations/{id}/idea-types`. The archived ones are already excluded by default.
+ *
+ * `fieldMode` is `AllActiveFields` or `Curated` (`SPEC/30-Contracts.md` "Idea-Type Field
+ * Contracts"), and `fields` carries the curated selection — empty for an `AllActiveFields` type,
+ * which shows every active field in the organization instead of a chosen subset.
+ */
 export type WireIdeaType = {
   ideaTypeId: string
   name: string
+  fieldMode: string
+  fields: readonly { fieldDefinitionId: string }[]
+}
+
+/**
+ * `GET /organizations/{id}/field-definitions`.
+ *
+ * No "used by" — a field does not know which idea types selected it, only the other way round. The
+ * settings screen renders that column by joining the idea-type catalog, which is the direction the
+ * mapping actually runs.
+ */
+export type WireFieldDefinition = {
+  fieldDefinitionId: string
+  name: string
+  fieldType: string
+  isRequired: boolean
 }
 
 /** `GET /organizations/{id}/business-impacts`, same default. */

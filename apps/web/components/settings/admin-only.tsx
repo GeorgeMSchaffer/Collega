@@ -1,6 +1,7 @@
 import { buttonVariants } from '@collega/design-system'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { Topbar } from '@/components/nav/topbar'
 import { currentUser, isAdministrator } from '@/lib/session'
 
 /**
@@ -60,5 +61,39 @@ export function SiteAdminOnly({ children }: { children: ReactNode }) {
       The list of organizations is deployment configuration, not an organization&rsquo;s own. This
       route exists so a Site Admin can inspect an organization they do not belong to.
     </RefusalPanel>
+  )
+}
+
+/**
+ * The Site Admin variant of both board form routes.
+ *
+ * It cannot go through `SettingsPage`: that frame renders the screen's own heading before its gate
+ * decides anything, and a refusal headed "New board" reads as the form failing to load rather than
+ * the role being wrong. So this supplies the frame itself and hands the whole `main` to
+ * `RefusalPanel`, the way `AdminOnly` does one layer down.
+ *
+ * Here rather than beside the form it replaces, because that file is a client component now —
+ * `BoardForm` holds the action state — and a static refusal has no business in the client bundle.
+ */
+export function BoardRefusal({ title, reading }: { title: string; reading: string }) {
+  return (
+    <>
+      <Topbar
+        title={
+          <span className="text-sm font-normal text-muted-foreground">
+            <Link href="/settings">Settings</Link> /{' '}
+            <b className="font-medium text-foreground">{title}</b>
+          </span>
+        }
+      />
+      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+        <RefusalPanel heading="A Site Admin cannot create or change a board">
+          Boards are organization-owned content, and a Site Admin is refused every mutation of it.
+          Reading {reading} is fine; saving is not, so the form is absent rather than present and
+          doomed. Use View As to act as an administrator of this organization, and this screen
+          becomes ordinary.
+        </RefusalPanel>
+      </main>
+    </>
   )
 }

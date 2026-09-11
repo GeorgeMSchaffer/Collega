@@ -6,17 +6,32 @@
  * a reader replaces a body, never a signature. Before it existed, 37 files imported the fixture
  * module directly, so wiring the API meant editing all 37.
  *
- * Converted so far: the board readers and every idea reader — `getIdeasForBoard`, `getIdeaOptions`,
- * `getOrganizationIdeas` and `getIdea`. Between them, everything `/boards`, `/boards/[boardId]`,
- * `/ideas` and `/ideas/[ideaId]` read and write, the inspector included. Delivery and the settings
- * surfaces still answer from `lib/mock.ts`, and the readers that a half-converted screen would
- * otherwise join against real data are named `getFixtureBoards` / `getFixtureBoard` so it is
- * visible which ones those are. `settings/boards` is the last screen calling them.
+ * Converted so far: every board, idea, catalog and people reader. The idea surfaces
+ * (`getIdeasForBoard`, `getIdeaOptions`, `getOrganizationIdeas`, `getIdea`), the boards
+ * (`getBoards`, `getBoard`, `getBoardAdmin`), the organization's statuses, idea types and custom
+ * fields, and the accounts behind them (`getProfile`, `getOrganizations`, `getMembers`,
+ * `getMembersForOrganization`, `getInviteCode`). Between them, everything `/boards`, `/ideas`,
+ * `/settings/statuses`, `/settings/idea-types`, `/settings/fields`, `/settings/boards/*`,
+ * `/settings/users`, `/settings/users/import`, `/settings/profile` and `/settings/organizations`
+ * read and write.
  *
- * The status catalog readers stay on the fixture deliberately, and converting them is a separate
- * decision: `settings/statuses` and `settings/boards/*` are still fixture screens, and a real
- * status carries a UUID that a fixture board's `statusId` matches nowhere. Nothing on the idea
- * surfaces needs them any more — a real idea names its own status.
+ * **There are no `getFixtureBoard*` readers any more.** They existed so a screen that joined a
+ * board id against a fixture could not accidentally be handed real boards, and `settings/boards`
+ * was the last caller; converting it deleted both the call site and the reader. The status readers
+ * were held back for the same reason and are real for the same reason - a fixture board's
+ * `statusId` matched no real status, and there is no longer a fixture board to match.
+ *
+ * The Site Admin's cross-organization status list was briefly broken by exactly that seam: it joins
+ * the real organization list against `getStatusesByOrganization`, which was still keyed by the
+ * fixture's `'acme-robotics'`/`'blue-harbor'` ids, so every lookup missed. Both halves are real now
+ * and the join resolves. It is recorded here because the failure was silent - an empty state, not
+ * an error - and the next half-converted join will look the same.
+ *
+ * There is no `getLastImport` and there cannot be: `lib/data/admin.ts` says why where it used to be.
+ *
+ * What still answers from `lib/mock.ts`: delivery, and the two AI settings screens with their usage
+ * meter. `lib/mock.ts` also still holds the seeded boards and ideas the unit tests are written
+ * against, which is not a screen reading a fixture - no reader returns them.
  *
  * **Identity does not live here** — see `lib/session.ts` for why it stays synchronous, and
  * `lib/server/current-user.ts` for the one place it is fetched.

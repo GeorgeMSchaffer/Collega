@@ -6,24 +6,28 @@
  * API answers 404 the same way — so the call sites did not change when the bodies did. That was the
  * point of writing them against a promise from the start.
  *
- * The status readers are still fixture-backed, because the screens that use them
- * (`settings/statuses`, `settings/boards/*`) are still fixture-backed and a half-real screen is
- * worse than an honest fixture: real statuses carry UUIDs, and a fixture idea's `statusId` would
- * match none of them. `/ideas` is off that list now, and not by converting them — a real idea
- * arrives carrying its own status name, so the list has nothing left to look up.
+ * The status readers are real too, as of the slice that converted `settings/statuses` and
+ * `settings/boards/*`. They were held back while those screens were fixture-backed — a real status
+ * carries a UUID a fixture board's `statusId` matches nowhere — and that reason expired with the
+ * last fixture screen that could have joined the two.
  */
 
-import { swimlaneToStatus } from '../api/adapt'
+import { swimlaneToStatus, toStatus } from '../api/adapt'
 import { apiGet, apiPath, isApiStatus } from '../api/client'
-import type { WireBoardDetail, WireBoardListItem, WireIdeaListItem, WirePage } from '../api/wire'
+import type {
+  WireBoardDetail,
+  WireBoardListItem,
+  WireIdeaListItem,
+  WirePage,
+  WireStatus,
+} from '../api/wire'
 import * as fixture from '../mock'
-import type { Board, BoardWithLanes } from '../types'
+import type { Board, BoardAdmin, BoardWithLanes, Status } from '../types'
 import { failIfRequested, resolve } from './latency'
-import { organizationScope } from './scope'
+import { everyOrganization, organizationScope } from './scope'
 
-export type { BoardAdmin } from '../mock'
 export { SWIMLANE_FLOOR } from '../mock'
-export type { Board, BoardWithLanes, Status } from '../types'
+export type { Board, BoardAdmin, BoardWithLanes, Status } from '../types'
 
 /**
  * The organization's boards, each with the number of ideas on it.
@@ -82,48 +86,79 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
 }
 
 /**
- * The boards the still-fixture screens see.
+ * The same boards again, as `/settings/boards` administers them.
  *
- * The idea inspector and `settings/boards` both join a board id against a fixture — a fixture
- * idea's `boardId`, a `BoardAdmin` row — so handing them real boards would join UUIDs
- * against `'ideas'` and render a row with no board name. Named for what it is, so it is obvious
- * which screens are still waiting and so that converting one of them deletes a call site rather
- * than changing a meaning.
+ * A second projection of `GET /organizations/{id}/boards` rather than a second request shape: that
+ * response carries the lane count and the user-moves flag beside the idea count, so the two screens
+ * ask the same endpoint different questions. Splitting them is what keeps `Board` — the type the
+ * workspace list and the ideas table render — from growing a field only the settings table reads.
  */
-export async function getFixtureBoards(): Promise<Board[]> {
-  failIfRequested('getFixtureBoards')
-  return resolve(fixture.boards)
-}
-
-export async function getFixtureBoard(id: string): Promise<Board | null> {
-  return resolve(fixture.boardById(id) ?? null)
-}
-
-export async function getStatuses(): Promise<fixture.Status[]> {
-  failIfRequested('getStatuses')
-  return resolve(fixture.statuses)
-}
-
-export async function getStatusesForOrganization(
-  organizationId: string,
-): Promise<fixture.Status[]> {
-  failIfRequested('getStatusesForOrganization')
-  return resolve(fixture.statusesByOrganization[organizationId] ?? [])
-}
-
-/** Every organization's statuses, for the cross-organization list a Site Admin reads. */
-export async function getStatusesByOrganization(): Promise<Record<string, fixture.Status[]>> {
-  failIfRequested('getStatusesByOrganization')
-  return resolve(fixture.statusesByOrganization)
-}
-
-export async function getBoardAdmin(): Promise<fixture.BoardAdmin[]> {
+export async function getBoardAdmin(): Promise<BoardAdmin[]> {
   failIfRequested('getBoardAdmin')
-  return resolve(fixture.boardAdmin)
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  const boards = await apiGet<readonly WireBoardListItem[]>(
+    'getBoardAdmin',
+    apiPath`/organizations/${scope}/boards`,
+  )
+
+  return boards.map((board) => ({
+    id: board.boardId,
+    name: board.name,
+    laneCount: board.swimlaneCount,
+    userStatusMoves: board.allowUserStatusUpdate,
+  }))
 }
 
-export async function getBoardAdminEntry(id: string): Promise<fixture.BoardAdmin | null> {
-  return resolve(fixture.boardAdminById(id) ?? null)
+/**
+ * The organization's status catalog, in the order it defines.
+ *
+ * The API sorts by `sortOrder` then name (`StatusService.list`), and that order is the setting —
+ * comp P's lead says so: "Order here is the order on every board." So nothing is re-sorted here.
+ *
+ * Soft-deleted statuses are excluded, because `includeDeleted` is absent: an archived status is not
+ * part of the catalog an administrator is configuring, and a board that still has one as a lane
+ * gets it from its own swimlanes rather than from here.
+ */
+export async function getStatuses(): Promise<Status[]> {
+  failIfRequested('getStatuses')
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  return (
+    await apiGet<readonly WireStatus[]>('getStatuses', apiPath`/organizations/${scope}/statuses`)
+  ).map(toStatus)
+}
+
+/**
+ * Every organization's statuses, for the cross-organization list a Site Admin reads.
+ *
+ * One request per organization plus one for the list of them — see `everyOrganization` for why
+ * that fan-out is the shape of the data rather than a missing endpoint. A Site Admin may read any
+ * organization's catalog (`StatusService.ensureReadScope`) and may change none of it, which is
+ * exactly the screen comp P draws for that role.
+ */
+export async function getStatusesByOrganization(): Promise<
+  { organization: string; statuses: Status[] }[]
+> {
+  failIfRequested('getStatusesByOrganization')
+
+  const organizations = await everyOrganization('getStatusesByOrganization')
+
+  return Promise.all(
+    organizations.map(async (organization) => ({
+      organization: organization.name,
+      statuses: (
+        await apiGet<readonly WireStatus[]>(
+          'getStatusesByOrganization',
+          apiPath`/organizations/${organization.id}/statuses`,
+        )
+      ).map(toStatus),
+    })),
+  )
 }
 
 /**

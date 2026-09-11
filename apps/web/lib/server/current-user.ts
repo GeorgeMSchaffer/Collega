@@ -125,6 +125,25 @@ export async function requireCurrentUser(): Promise<CurrentUser> {
 }
 
 /**
+ * The organization the caller is acting in, for a Server Function that has to name one in a path.
+ *
+ * Most of the catalog writes hang off `/organizations/{id}/...`, and that id is not the caller's to
+ * choose — it is whichever organization the session belongs to. A hidden form field would make it
+ * exactly that: something anyone can post a different value for. So it is asked of the API, which
+ * is the thing that knows who is calling, rather than read off the request that is being judged.
+ *
+ * Not `organizationScope()` and not `requireCurrentUser()`: both read the request-scoped holder in
+ * `lib/session.ts`, which a Server Function runs outside of — it throws there, deliberately. This
+ * is a plain request with the cookie forwarded, so it carries no ambient state to get wrong.
+ *
+ * `null` means the caller belongs to no organization, which is a Site Admin and nothing else.
+ */
+export async function actingOrganizationId(): Promise<string | null> {
+  const me = await apiGet<WireCurrentUser>('actingOrganizationId', apiPath`/auth/me`)
+  return me.organizationId
+}
+
+/**
  * The acting user, or `null` when the request carries no usable session.
  *
  * `cache`d, so the layout and the page each asking for identity is one request, not two.

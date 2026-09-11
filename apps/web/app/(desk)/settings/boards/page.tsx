@@ -2,7 +2,7 @@ import { Badge, buttonVariants, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { getBoardAdmin, getFixtureBoards } from '@/lib/data'
+import { getBoardAdmin } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -12,7 +12,7 @@ export default async function SettingsBoardsPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const [boardAdmin, boards] = await Promise.all([getBoardAdmin(), getFixtureBoards()])
+  const boards = await getBoardAdmin()
 
   // A Site Admin passes the administrator gate, so the branch has to be taken here rather than
   // left to `SettingsPage` - otherwise the one role with no organization gets the org-scoped screen.
@@ -47,11 +47,15 @@ export default async function SettingsBoardsPage() {
             Go to the boards list
           </Link>
         </div>
-      ) : boardAdmin.length === 0 ? (
+      ) : boards.length === 0 ? (
         <EmptyState
           heading="No boards yet"
           action={
-            <GatedAction id="why-create-first-board" label="Create the first board" denial={null} />
+            <GatedAction id="why-create-first-board" label="Create the first board" denial={null}>
+              <Link href="/settings/boards/new" className={buttonVariants()}>
+                Create the first board
+              </Link>
+            </GatedAction>
           }
         >
           A board is where ideas get worked. Without one there is nowhere for an idea to go, so this
@@ -70,33 +74,30 @@ export default async function SettingsBoardsPage() {
             </tr>
           </thead>
           <tbody>
-            {boardAdmin.map((entry) => {
-              const name = boards.find((board) => board.id === entry.id)?.name ?? entry.id
-              return (
-                <tr key={entry.id} className="border-b last:border-0">
-                  <td className="px-4 py-2.5">
-                    <b className="font-medium">{name}</b>
-                  </td>
-                  <td className="px-4 py-2.5 tabular-nums">{entry.swimlaneIds.length}</td>
-                  <td className="px-4 py-2.5">
-                    {entry.userStatusMoves ? (
-                      <Badge variant="success">Allowed</Badge>
-                    ) : (
-                      <Badge variant="outline">Admins only</Badge>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5 text-right">
-                    <Link
-                      href={`/settings/boards/${entry.id}`}
-                      className={buttonVariants({ variant: 'outline', size: 'sm' })}
-                      aria-label={`Edit ${name}`}
-                    >
-                      Edit
-                    </Link>
-                  </td>
-                </tr>
-              )
-            })}
+            {boards.map((board) => (
+              <tr key={board.id} className="border-b last:border-0">
+                <td className="px-4 py-2.5">
+                  <b className="font-medium">{board.name}</b>
+                </td>
+                <td className="px-4 py-2.5 tabular-nums">{board.laneCount}</td>
+                <td className="px-4 py-2.5">
+                  {board.userStatusMoves ? (
+                    <Badge variant="success">Allowed</Badge>
+                  ) : (
+                    <Badge variant="outline">Admins only</Badge>
+                  )}
+                </td>
+                <td className="px-4 py-2.5 text-right">
+                  <Link
+                    href={`/settings/boards/${board.id}`}
+                    className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                    aria-label={`Edit ${board.name}`}
+                  >
+                    Edit
+                  </Link>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </AdminTable>
       )}

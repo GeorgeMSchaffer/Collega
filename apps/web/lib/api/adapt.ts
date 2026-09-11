@@ -13,8 +13,13 @@ import { roleLabel } from '../roles'
 import type {
   Comment,
   CurrentUser,
+  FieldDefinition,
   Idea,
   IdeaDetail,
+  IdeaType,
+  ImportOutcome,
+  Member,
+  Organization,
   Person,
   Priority,
   Profile,
@@ -24,12 +29,17 @@ import type {
 } from '../types'
 import type {
   WireCurrentUser,
+  WireFieldDefinition,
   WireIdeaAssignee,
   WireIdeaComment,
   WireIdeaDetail,
   WireIdeaListItem,
+  WireIdeaType,
+  WireOrganizationListItem,
   WireStatus,
   WireSwimlane,
+  WireUserImportResult,
+  WireUserListItem,
   WireViewingAs,
 } from './wire'
 
@@ -51,6 +61,20 @@ function toPriority(value: string): Priority {
   const priority = PRIORITIES.find((candidate) => candidate === value)
   if (!priority) throw new Error(`The API returned an unknown priority: ${value}`)
   return priority
+}
+
+/**
+ * The wire spells a user's status as a free string too, and only two values are real: the domain
+ * has `Active` and `Inactive` and nothing else (`SPEC/30-Contracts.md` — comp Q's "suspended" demo
+ * account is `Inactive`). Narrowed here for the reason `toRole` is: a third value would otherwise
+ * reach a badge that styles on equality and render as an ordinary outline with no sign anything
+ * was wrong.
+ */
+function toUserStatus(value: string): 'Active' | 'Inactive' {
+  if (value !== 'Active' && value !== 'Inactive') {
+    throw new Error(`The API returned an unknown user status: ${value}`)
+  }
+  return value
 }
 
 /** First letter of each name, which is what the avatar renders. */
@@ -104,9 +128,118 @@ export function swimlaneToStatus(wire: WireSwimlane): Status {
   return { id: wire.statusId, name: wire.statusName, color: wire.statusColor }
 }
 
+/**
+ * A tenant, as the Site Admin's table lists it.
+ *
+ * City and state become comp P's single "Detroit, MI" cell here rather than in the row, so the two
+ * nullable columns are reconciled once: either alone still reads as a location, and neither means
+ * the cell is empty rather than showing a stray comma.
+ */
+export function toOrganization(wire: WireOrganizationListItem): Organization {
+  return {
+    id: wire.organizationId,
+    name: wire.title,
+    description: wire.description,
+    location: [wire.city, wire.state].filter(Boolean).join(', ') || null,
+    inviteCode: wire.inviteCode,
+    isArchived: wire.isArchived,
+  }
+}
+
+/**
+ * An account on an administration list.
+ *
+ * `organizationName` is passed in rather than read off the payload because the listing does not
+ * carry it — the route named the organization, so the API does not repeat it per row. Only the
+ * cross-organization view has a name to supply, which is why the parameter is nullable rather than
+ * required.
+ */
+export function toMember(wire: WireUserListItem, organizationName: string | null): Member {
+  const role = toRole(wire.role)
+  return {
+    id: wire.userId,
+    displayName: `${wire.firstName} ${wire.lastName}`.trim(),
+    initials: initialsOf(wire.firstName, wire.lastName),
+    email: wire.email,
+    organizationId: wire.organizationId,
+    organizationName,
+    role,
+    roleLabel: roleLabel(role),
+    status: toUserStatus(wire.status),
+  }
+}
+
+/**
+ * A finished import, as comp P's outcome table reads it.
+ *
+ * The two nullable halves of a wire row collapse into one `detail` column here, chosen by the
+ * outcome: a created row shows the temporary password it generated, a rejected one shows why. The
+ * fallbacks are not defensive — a row can genuinely be rejected before an email was parsed out of
+ * it, and the table still has to name the row number that failed.
+ */
+export function toImportOutcome(wire: WireUserImportResult): ImportOutcome {
+  return {
+    created: wire.createdCount,
+    rejected: wire.rejectedCount,
+    rows: wire.rows.map((row) => {
+      const created = row.outcome === 'created'
+      return {
+        row: row.rowNumber,
+        email: row.email ?? '—',
+        created,
+        detail: (created ? row.temporaryPassword : row.error) ?? '',
+      }
+    }),
+  }
+}
+
 /** The organization's status catalog, as the settings screens list it. */
 export function toStatus(wire: WireStatus): Status {
   return { id: wire.statusId, name: wire.name, color: wire.color }
+}
+
+/**
+ * An idea type as its settings row renders it.
+ *
+ * `Curated` is the only mode with a countable selection. `AllActiveFields` means the type shows
+ * every active field in the organization, which is not a number this payload knows — and is not
+ * zero, which is what `fields.length` would say. `null` is the distinction; `lib/types.ts` says why
+ * the row needs it.
+ */
+export function toIdeaType(wire: WireIdeaType): IdeaType {
+  return {
+    id: wire.ideaTypeId,
+    name: wire.name,
+    curatedFieldCount: wire.fieldMode === 'Curated' ? wire.fields.length : null,
+  }
+}
+
+/**
+ * A field definition, plus the idea types that ask for it.
+ *
+ * The mapping is owned by the type, so the answer is assembled from the type catalog rather than
+ * read off the field. A `Curated` type asks for exactly what it selected; an `AllActiveFields` one
+ * asks for every active field there is, so it names itself against all of them — that is the rule
+ * `SPEC/30-Contracts.md` states for the mode, and reading it as "selected nothing" would print an
+ * empty cell for a type that in fact shows the field.
+ */
+export function toFieldDefinition(
+  wire: WireFieldDefinition,
+  ideaTypes: readonly WireIdeaType[],
+): FieldDefinition {
+  return {
+    id: wire.fieldDefinitionId,
+    name: wire.name,
+    fieldType: wire.fieldType,
+    required: wire.isRequired,
+    usedBy: ideaTypes
+      .filter(
+        (type) =>
+          type.fieldMode !== 'Curated' ||
+          type.fields.some((field) => field.fieldDefinitionId === wire.fieldDefinitionId),
+      )
+      .map((type) => type.name),
+  }
 }
 
 /**

@@ -1,26 +1,26 @@
-import {
-  Alert,
-  Badge,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Code,
-  CodeChip,
-  EmptyState,
-  FileButton,
-} from '@collega/design-system'
-import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { getLastImport } from '@/lib/data'
+import { Alert } from '@collega/design-system'
+import { SettingsPage } from '@/components/settings/settings-page'
+import { UserImportForm } from '@/components/settings/user-import'
 import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Import users · Collega' }
 
+/**
+ * Bulk account creation from a CSV (comp P `s-import`).
+ *
+ * Nothing is read: there is no import history to fetch, so the whole screen is the form and what
+ * the form's own write returned. `lib/data/admin.ts` says why, where `getLastImport` used to be.
+ *
+ * **A Site Admin gets the explanation rather than the form.** The import creates accounts *in an
+ * organization*, and a Site Admin belongs to none, so there is no organization in scope for the
+ * control to target — the same position `lib/data/scope.ts` takes for every organization-scoped
+ * read. Comp P reaches a Site Admin's import through `s-org-import`, a route that carries an
+ * organization in its path; that route does not exist yet, so naming the absence is the honest
+ * screen. Inventing an organization picker here would be inventing an endpoint's caller.
+ */
 export default async function ImportUsersPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
-  await requireCurrentUser()
-
-  const lastImport = await getLastImport()
+  const user = await requireCurrentUser()
 
   return (
     <SettingsPage
@@ -28,85 +28,17 @@ export default async function ImportUsersPage() {
       gate="user import"
       lead="Create many accounts at once from a CSV. Every new account gets a temporary password and must change it at first sign-in."
     >
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_356px]">
-        <div className="flex min-w-0 flex-col gap-4">
-          {/* The whole results column goes, not just the table: the "Last import" heading and the
-              password warning both assert an import happened. No action either — the file picker
-              beside this is the action, and a second button would only point at it. */}
-          {lastImport.rows.length === 0 ? (
-            <EmptyState heading="Nothing imported yet">
-              Choose a CSV to see each row&rsquo;s outcome here, with the temporary password for
-              every account it creates.
-            </EmptyState>
-          ) : (
-            <>
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="m-0 text-base font-semibold tracking-tight">
-                  Last import &mdash; {lastImport.completedAt}
-                </h2>
-                <Badge variant="secondary">{lastImport.created} created</Badge>
-                <Badge variant="secondary">{lastImport.rejected} rejected</Badge>
-              </div>
-
-              <AdminTable
-                summary={`${lastImport.rows.length} rows — ${lastImport.created} created, ${lastImport.rejected} rejected.`}
-              >
-                <thead>
-                  <tr className="border-b bg-muted/40">
-                    <Th className="w-16">Row</Th>
-                    <Th>Email</Th>
-                    <Th className="w-28">Outcome</Th>
-                    <Th>Temporary password / reason</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lastImport.rows.map((row) => (
-                    <tr key={row.row} className="border-b last:border-0">
-                      <td className="px-4 py-2.5 text-muted-foreground">{row.row}</td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
-                        {row.email}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <Badge variant={row.created ? 'success' : 'warning'}>
-                          {row.created ? 'Created' : 'Rejected'}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        {row.created ? (
-                          <CodeChip>{row.detail}</CodeChip>
-                        ) : (
-                          <span className="text-muted-foreground">{row.detail}</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </AdminTable>
-
-              <Alert role="status">
-                <span>
-                  <b>Copy the temporary passwords now.</b> They are generated once and never shown
-                  again &mdash; a person whose password is lost here needs a fresh reset from their
-                  row on the users screen.
-                </span>
-              </Alert>
-            </>
-          )}
-        </div>
-
-        <Card className="self-start">
-          <CardHeader>
-            <CardTitle>Choose a file</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FileButton id="csv" name="csv" label="Choose CSV…" accept=".csv" />
-            <p className="m-0 mt-3 text-sm text-muted-foreground">
-              Columns: <Code>firstName</Code>, <Code>lastName</Code>, <Code>email</Code>, and
-              optionally <Code>role</Code>. A missing role becomes <b>User</b>.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {user.organizationId === null ? (
+        <Alert variant="note" className="max-w-prose">
+          <span>
+            An import creates accounts in one organization, and a Site Admin belongs to none — so
+            there is no organization in scope here to import into. Open an organization and import
+            from its own users screen.
+          </span>
+        </Alert>
+      ) : (
+        <UserImportForm organizationId={user.organizationId} />
+      )}
     </SettingsPage>
   )
 }

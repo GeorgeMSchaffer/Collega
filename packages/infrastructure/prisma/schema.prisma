@@ -571,11 +571,16 @@ enum IssueTaskState {
   Done // 2
 }
 
+/// The last three are Issues-and-Delivery Slice 1: promotion, a delivery-status move, and being
+/// given a task. No other delivery mutation notifies anyone.
 enum NotificationEventType {
   IdeaMention // 0
   CommentMention // 1
   CommentAdded // 2
   IdeaStatusChanged // 3
+  IdeaPromoted // 4
+  IssueDeliveryStatusChanged // 5
+  IssueTaskAssigned // 6
 }
 
 enum Priority {

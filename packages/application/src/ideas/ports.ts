@@ -1,4 +1,11 @@
-import type { Priority, Role, UserStatus } from '@collega/domain/enums'
+import type {
+  DeliveryStatus,
+  IdeaPhase,
+  Priority,
+  Role,
+  SprintState,
+  UserStatus,
+} from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
 import type { PageRequest, SortDirection } from '../common/index.js'
 import type { IdeaFieldValueFilter, IdeaFieldValueWrite, IdeaPage } from './models.js'
@@ -13,6 +20,12 @@ export type IdeaListFilter = {
   readonly tag: string | null
   readonly priority: Priority | null
   readonly dueBefore: string | null
+  /**
+   * `Discovery` for every ideation-board read (spec "Board & idea-list phase filtering"): a
+   * promoted item leaves the board without losing its row or its ideation status. `null` means
+   * both phases, which nothing on the board path asks for.
+   */
+  readonly phase: IdeaPhase | null
   /**
    * TOTAL ORDER IS MANDATORY. A golden-capture finding: four list endpoints ordered by something
    * that ties, broken only by a generated id - stable inside one deployment but not reproducible
@@ -40,6 +53,8 @@ export type OrganizationIdeaListFilter = {
   /** Set only when `search` parses as an ISO `yyyy-MM-dd` date: additionally matches ideas
    * created on that (UTC) calendar day. */
   readonly searchCreatedOnDate: string | null
+  /** `null` (the default) spans both phases - see `OrganizationIdeaListQuery.phase`. */
+  readonly phase: IdeaPhase | null
   /**
    * TOTAL ORDER IS MANDATORY here too - see `IdeaListFilter.sortBy` above for the finding and the
    * required tie-break (`createdAtUtc` then `title`, never id). Repeated rather than cross-
@@ -73,6 +88,28 @@ export interface IdeaRepository {
   /** User-Defined Field values for a set of ideas, for bulk projection such as CSV export. Empty
    * when no ids are given. */
   getFieldValuesByIdeaIds(ideaIds: readonly string[]): Promise<readonly IdeaFieldValueSnapshot[]>
+
+  /**
+   * `Delivery`-phase ideas for the sprint board and the delivery backlog, excluding soft-deleted
+   * ones. Unpaged, like the comment thread: a sprint is a deliberately small, time-boxed set of
+   * Issues, and a board that pages is not a board.
+   *
+   * TOTAL ORDER, as everywhere else here: `createdAtUtc` then `title`, never id.
+   */
+  listDelivery(filter: DeliveryFilter): Promise<readonly Idea[]>
+
+  /** Every `Delivery`-phase idea in one sprint, for sprint completion's carry-over and for
+   * unassigning before a sprint is deleted (satisfies `sprints.SprintIssuesPort`). */
+  listBySprint(sprintId: string): Promise<readonly Idea[]>
+}
+
+export type DeliveryFilter = {
+  readonly organizationId: string
+  /** `null` with `backlogOnly` false spans every Delivery item in the organization. */
+  readonly sprintId: string | null
+  /** True reads the backlog: Delivery items with no sprint. */
+  readonly backlogOnly: boolean
+  readonly deliveryStatus: DeliveryStatus | null
 }
 
 // Notifications (B4) -----------------------------------------------------------------------
@@ -86,6 +123,8 @@ export type NotificationEventType =
   | 'CommentMention'
   | 'CommentAdded'
   | 'IdeaStatusChanged'
+  | 'IdeaPromoted'
+  | 'IssueDeliveryStatusChanged'
 
 export type NotificationInput = {
   readonly eventType: NotificationEventType
@@ -118,6 +157,37 @@ export interface UpvoteCountsPort {
   countByIdeaIds(ideaIds: readonly string[]): Promise<ReadonlyMap<string, number>>
   /** The subset of `ideaIds` the given user has an active upvote on. */
   getUpvotedIdeaIds(userId: string, ideaIds: readonly string[]): Promise<ReadonlySet<string>>
+}
+
+// Sprints / Tasks (Issues-and-Delivery Slice 1) --------------------------------------------------
+//
+// Two narrow read-only slices of the sibling delivery features, declared here for the same reason
+// `UpvoteCountsPort` is: the promotion gate has to validate a target sprint and the delivery card
+// carries a sprint label and a task rollup, while the mutations on both belong solely to
+// `SprintService` and `IssueTaskService`. One concrete adapter per entity satisfies both sides.
+
+export type SprintSummary = {
+  readonly id: string
+  readonly organizationId: string
+  readonly name: string
+  readonly startDate: string
+  readonly endDate: string
+  readonly state: SprintState
+  readonly isDeleted: boolean
+}
+
+export interface SprintLookupPort {
+  getById(sprintId: string): Promise<SprintSummary | null>
+
+  listByIds(sprintIds: readonly string[]): Promise<readonly SprintSummary[]>
+}
+
+export interface IssueTaskRollupPort {
+  /** `{ done, total }` per idea, in ONE query for the whole board - a per-card count is the N+1
+   * this exists to avoid. Ideas with no tasks are simply absent from the map. */
+  summaryByIdeaIds(
+    ideaIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { readonly done: number; readonly total: number }>>
 }
 
 // Boards (B2) ----------------------------------------------------------------------------------
