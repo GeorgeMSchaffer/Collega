@@ -1,6 +1,7 @@
-import { BoardForm, BoardRefusal } from '@/components/settings/board-form'
+import { BoardRefusal } from '@/components/settings/admin-only'
+import { BoardForm } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { getStatuses } from '@/lib/data'
+import { getStatuses, SWIMLANE_FLOOR } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -26,8 +27,13 @@ export default async function NewBoardPage() {
       lead="Name it, then choose which of this organization’s statuses become its columns."
     >
       <BoardForm
+        boardId={null}
         userStatusMoves={true}
-        swimlaneIds={['new', 'review']}
+        // The first lanes of the catalog, because the API refuses a board with fewer than two and
+        // a form that opens below its own floor cannot be submitted until the person works out
+        // why. Which two is not a decision worth making for them — the picker is right there —
+        // but starting at the minimum with the catalog's own leading statuses is.
+        swimlaneIds={statuses.slice(0, SWIMLANE_FLOOR).map((status) => status.id)}
         statuses={statuses}
         submitLabel="Create board"
         explainerHeading="New board"

@@ -137,22 +137,22 @@ export async function apiGet<T>(reader: string, path: ApiPath): Promise<T> {
 }
 
 /**
- * A POST against the API, as the signed-in caller.
+ * A write against the API, as the signed-in caller.
  *
- * The response body is discarded rather than returned, and that is not laziness: all three
- * mutations behind it answer with what they just wrote, and the screen re-reads that from the
- * server anyway when `revalidatePath` re-renders it. Returning it would invite a second source of
- * truth for the same row — one from the write, one from the following read — that could disagree.
+ * The response body is discarded rather than returned, and that is not laziness: every mutation
+ * behind it answers with what it just wrote, and the screen re-reads that from the server anyway
+ * when `revalidatePath` re-renders it. Returning it would invite a second source of truth for the
+ * same row — one from the write, one from the following read — that could disagree.
  *
  * No `reader` name and no `failIfRequested`: `MOCK_FAIL` exists so a screen's `error.tsx` can be
  * exercised, and a mutation has no such boundary — a refusal here is a message beside the control.
  *
  * The default body is `{}` rather than nothing, so the upvote toggle — the one route here that
- * takes no payload — is the same request shape as the other two instead of a branch.
+ * takes no payload — is the same request shape as the rest instead of a branch.
  */
-export async function apiPost(path: ApiPath, body: unknown = {}): Promise<void> {
+async function send(method: string, path: ApiPath, body: unknown): Promise<void> {
   const response = await fetch(`${apiBaseUrl()}${path}`, {
-    method: 'POST',
+    method,
     headers: {
       accept: 'application/json',
       'content-type': 'application/json',
@@ -165,6 +165,20 @@ export async function apiPost(path: ApiPath, body: unknown = {}): Promise<void> 
   if (!response.ok) {
     throw new ApiError(response.status, path, await describeFailure(response))
   }
+}
+
+export async function apiPost(path: ApiPath, body: unknown = {}): Promise<void> {
+  return send('POST', path, body)
+}
+
+/**
+ * The verb the catalogs use for an edit. Named separately rather than passed as an argument,
+ * because which verb a route answers is the contract's decision and not the caller's: `apps/api`
+ * creates with POST and replaces with PUT, and a Server Function picking the wrong one gets a 404
+ * from the router rather than a refusal it can render.
+ */
+export async function apiPut(path: ApiPath, body: unknown = {}): Promise<void> {
+  return send('PUT', path, body)
 }
 
 /** Whether a thrown value is the API answering `status`. */

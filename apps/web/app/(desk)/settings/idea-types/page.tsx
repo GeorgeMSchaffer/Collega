@@ -2,8 +2,9 @@ import { Button, buttonVariants, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { CrossOrgNote } from '@/components/settings/cross-org'
+import { IdeaTypeForm } from '@/components/settings/idea-type-form'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { getIdeaTypes, getOrganizations } from '@/lib/data'
+import { getIdeaTypes, getIdeaTypesByOrganization } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -34,7 +35,11 @@ function NoIdeaTypes({ siteAdmin }: { siteAdmin: boolean }) {
     <EmptyState
       heading="No idea types yet"
       action={
-        <GatedAction id="why-add-first-idea-type" label="Add the first idea type" denial={null} />
+        <GatedAction id="why-add-first-idea-type" label="Add the first idea type" denial={null}>
+          <a href="#add-idea-type" className={buttonVariants()}>
+            Add the first idea type
+          </a>
+        </GatedAction>
       }
     >
       Every idea is exactly one type, chosen at creation, so ideas cannot be created until at least
@@ -47,11 +52,15 @@ export default async function IdeaTypesPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const [ideaTypes, organizations] = await Promise.all([getIdeaTypes(), getOrganizations()])
   const siteAdmin = currentUser().role === 'SiteAdmin'
-  const rows = siteAdmin
-    ? ideaTypes
-    : ideaTypes.filter((type) => type.organizationId === 'acme-robotics')
+
+  const catalogs = siteAdmin
+    ? await getIdeaTypesByOrganization()
+    : [{ organization: currentUser().organizationName ?? '', ideaTypes: await getIdeaTypes() }]
+
+  const rows = catalogs.flatMap((catalog) =>
+    catalog.ideaTypes.map((type) => ({ type, org: catalog.organization })),
+  )
 
   return (
     <SettingsPage
@@ -64,57 +73,70 @@ export default async function IdeaTypesPage() {
       }
       // No create control for a Site Admin: an idea type belongs to one organization, so there is
       // nothing for a button on the combined list to create. Comp Q marks it data-roles="OrgAdmin".
-      actions={siteAdmin ? undefined : <Button>Add idea type</Button>}
+      actions={
+        siteAdmin ? undefined : (
+          <a href="#add-idea-type" className={buttonVariants()}>
+            Add idea type
+          </a>
+        )
+      }
     >
       {siteAdmin ? <CrossOrgNote what="An idea type" /> : null}
-      {rows.length === 0 ? (
-        <NoIdeaTypes siteAdmin={siteAdmin} />
-      ) : (
-        <AdminTable
-          summary={
-            siteAdmin
-              ? `${rows.length} idea types across ${organizations.length} organizations.`
-              : `${rows.length} idea types.`
-          }
-        >
-          <thead>
-            <tr className="border-b bg-muted/40">
-              <Th>Name</Th>
-              {siteAdmin ? <Th className="w-56">Organization</Th> : null}
-              <Th>Description</Th>
-              <Th className="w-28">Fields</Th>
-              <Th className="w-28">Ideas</Th>
-              <Th className="w-24">
-                <span className="sr-only">Actions</span>
-              </Th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((type) => (
-              <tr key={type.id} className="border-b last:border-0">
-                <td className="px-4 py-2.5 font-medium">{type.name}</td>
-                {siteAdmin ? (
-                  <td className="px-4 py-2.5 text-muted-foreground">
-                    {organizations.find((org) => org.id === type.organizationId)?.name}
-                  </td>
-                ) : null}
-                <td className="px-4 py-2.5 text-muted-foreground">{type.description}</td>
-                <td className="px-4 py-2.5 tabular-nums">{type.fieldCount}</td>
-                <td className="px-4 py-2.5 tabular-nums">{type.ideaCount}</td>
-                <td className="px-4 py-2.5 text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    aria-label={`${siteAdmin ? 'Manage' : 'Edit'} ${type.name}`}
-                  >
-                    {siteAdmin ? 'Manage' : 'Edit'}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </AdminTable>
-      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_356px]">
+        <div className="min-w-0">
+          {rows.length === 0 ? (
+            <NoIdeaTypes siteAdmin={siteAdmin} />
+          ) : (
+            <AdminTable
+              summary={
+                siteAdmin
+                  ? `${rows.length} idea types across ${catalogs.length} organizations.`
+                  : `${rows.length} idea types.`
+              }
+            >
+              <thead>
+                <tr className="border-b bg-muted/40">
+                  <Th>Name</Th>
+                  {siteAdmin ? <Th className="w-56">Organization</Th> : null}
+                  {/* No Description and no Ideas column. Comp Q draws both and neither has a
+                      source — see `IdeaType` in `lib/types.ts`. */}
+                  <Th className="w-56">Fields</Th>
+                  <Th className="w-24">
+                    <span className="sr-only">Actions</span>
+                  </Th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(({ type, org }) => (
+                  <tr key={`${org}-${type.id}`} className="border-b last:border-0">
+                    <td className="px-4 py-2.5 font-medium">{type.name}</td>
+                    {siteAdmin ? (
+                      <td className="px-4 py-2.5 text-muted-foreground">{org}</td>
+                    ) : null}
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {type.curatedFieldCount === null
+                        ? 'Every active field'
+                        : `${type.curatedFieldCount} chosen`}
+                    </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label={`${siteAdmin ? 'Manage' : 'Edit'} ${type.name}`}
+                      >
+                        {siteAdmin ? 'Manage' : 'Edit'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </AdminTable>
+          )}
+        </div>
+
+        {siteAdmin ? null : <IdeaTypeForm />}
+      </div>
     </SettingsPage>
   )
 }

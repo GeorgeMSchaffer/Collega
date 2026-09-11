@@ -80,10 +80,43 @@ export type WireStatus = {
   isDeleted: boolean
 }
 
-/** `GET /organizations/{id}/idea-types`. The archived ones are already excluded by default. */
+/**
+ * `GET /organizations`, which only a Site Admin may call — the cross-organization settings lists
+ * name the organization each row belongs to, and this is where that name comes from.
+ *
+ * The API spells it `title`; everything above `lib/api/` calls it a name.
+ */
+export type WireOrganizationListItem = {
+  organizationId: string
+  title: string
+}
+
+/**
+ * `GET /organizations/{id}/idea-types`. The archived ones are already excluded by default.
+ *
+ * `fieldMode` is `AllActiveFields` or `Curated` (`SPEC/30-Contracts.md` "Idea-Type Field
+ * Contracts"), and `fields` carries the curated selection — empty for an `AllActiveFields` type,
+ * which shows every active field in the organization instead of a chosen subset.
+ */
 export type WireIdeaType = {
   ideaTypeId: string
   name: string
+  fieldMode: string
+  fields: readonly { fieldDefinitionId: string }[]
+}
+
+/**
+ * `GET /organizations/{id}/field-definitions`.
+ *
+ * No "used by" — a field does not know which idea types selected it, only the other way round. The
+ * settings screen renders that column by joining the idea-type catalog, which is the direction the
+ * mapping actually runs.
+ */
+export type WireFieldDefinition = {
+  fieldDefinitionId: string
+  name: string
+  fieldType: string
+  isRequired: boolean
 }
 
 /** `GET /organizations/{id}/business-impacts`, same default. */

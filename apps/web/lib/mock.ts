@@ -6,11 +6,15 @@
  * and the same screen built against the real API differ only in where the data came from. Nothing
  * else in `apps/web` may invent its own fixtures.
  *
- * **Shrinking, not static.** The board readers are real now; the ideas list, the delivery surfaces
- * and every settings screen still answer from here. Each converted reader deletes its section, and
- * when the last one goes so does this file. The types are no longer declared here either — they
- * live in `lib/types.ts`, so a fixture and a real response are the same shape by construction
- * rather than by inspection.
+ * **Shrinking, not static.** The boards, ideas and catalog readers are real now; delivery, the
+ * organization and member lists, the user import and the AI settings still answer from here. Each
+ * converted reader deletes its section, and when the last one goes so does this file. The types are
+ * no longer declared here either — they live in `lib/types.ts`, so a fixture and a real response
+ * are the same shape by construction rather than by inspection.
+ *
+ * `boards`, `ideas` and `statuses` outlived their readers: nothing in `lib/data/` returns them any
+ * more, and the unit tests in `apps/web/test/` are written against them. They are seeded data for
+ * the tests now rather than a stand-in for an endpoint.
  */
 
 import type { Board, Idea, Priority, Role, Status } from './types'
@@ -60,17 +64,6 @@ export const statuses: Status[] = [
   { id: 'client', name: 'Client Review', color: 'var(--pink)', colorName: 'Pink' },
   { id: 'done', name: 'Complete', color: 'var(--green)', colorName: 'Green' },
 ]
-
-/** Blue Harbor runs its own workflow. Comp Q's cross-org list is distinct rows, not a cross-product. */
-export const statusesByOrganization: Record<string, Status[]> = {
-  'acme-robotics': statuses,
-  'blue-harbor': [
-    { id: 'intake', name: 'Intake', color: 'var(--pink)', colorName: 'Pink' },
-    { id: 'scheduled', name: 'Scheduled', color: 'var(--teal)', colorName: 'Teal' },
-    { id: 'dispatched', name: 'Dispatched', color: 'var(--orange)', colorName: 'Orange' },
-    { id: 'signed-off', name: 'Signed off', color: 'var(--green)', colorName: 'Green' },
-  ],
-}
 
 export const boards: Board[] = [
   { id: 'ideas', name: 'Ideas', focus: 'Assembly cell reliability', ideaCount: 11, laneCount: 5 },
@@ -168,10 +161,6 @@ export function statusById(id: string): Status | undefined {
   return statuses.find((status) => status.id === id)
 }
 
-export function boardById(id: string): Board | undefined {
-  return boards.find((board) => board.id === id)
-}
-
 export function ideaById(id: string): FixtureIdea | undefined {
   return ideas.find((idea) => idea.id === id)
 }
@@ -255,86 +244,6 @@ export const members: Member[] = organizations.flatMap((org) =>
 export function membersForOrganization(organizationId: string): Member[] {
   return members.filter((member) => member.organizationId === organizationId)
 }
-
-export type IdeaType = {
-  id: string
-  name: string
-  organizationId: string
-  description: string
-  fieldCount: number
-  ideaCount: number
-}
-
-export const ideaTypes: IdeaType[] = [
-  {
-    id: 'process-revision',
-    name: 'Process Revision',
-    organizationId: 'acme-robotics',
-    description: 'A change to how an existing process runs.',
-    fieldCount: 2,
-    ideaCount: 12,
-  },
-  {
-    id: 'continuous-improvement',
-    name: 'Continuous Improvement',
-    organizationId: 'acme-robotics',
-    description: 'An incremental gain against a current baseline.',
-    fieldCount: 1,
-    ideaCount: 10,
-  },
-  {
-    id: 'route-change',
-    name: 'Route Change',
-    organizationId: 'blue-harbor',
-    description: 'A change to a scheduled delivery route.',
-    fieldCount: 1,
-    ideaCount: 7,
-  },
-]
-
-export type FieldDefinition = {
-  id: string
-  name: string
-  organizationId: string
-  fieldType: 'Text' | 'Number' | 'Date' | 'Choice' | 'Checkbox'
-  required: boolean
-  ideaTypeNames: string[]
-}
-
-export const fieldDefinitions: FieldDefinition[] = [
-  {
-    id: 'f1',
-    name: 'Current cycle time',
-    organizationId: 'acme-robotics',
-    fieldType: 'Number',
-    required: true,
-    ideaTypeNames: ['Process Revision'],
-  },
-  {
-    id: 'f2',
-    name: 'Affected team',
-    organizationId: 'acme-robotics',
-    fieldType: 'Choice',
-    required: true,
-    ideaTypeNames: ['Process Revision', 'Continuous Improvement'],
-  },
-  {
-    id: 'f3',
-    name: 'Target date',
-    organizationId: 'acme-robotics',
-    fieldType: 'Date',
-    required: false,
-    ideaTypeNames: ['Process Revision'],
-  },
-  {
-    id: 'f4',
-    name: 'Depot',
-    organizationId: 'blue-harbor',
-    fieldType: 'Choice',
-    required: true,
-    ideaTypeNames: ['Route Change'],
-  },
-]
 
 // ---------------------------------------------------------------------------
 // Delivery fixtures (Wave E6)
@@ -583,31 +492,6 @@ export function issuesForOutcome(outcomeId: string): Issue[] {
 // ---------------------------------------------------------------------------
 // Remaining settings surfaces (Wave E7)
 // ---------------------------------------------------------------------------
-
-/**
- * Boards as the administration screens see them.
- *
- * `boards` above is the workspace view — what a board is *about* and how many ideas sit on it.
- * Administration cares about neither: it configures which statuses become the board's swimlanes and
- * whether a User may move a card between them. Same boards, different columns, so the id is what
- * ties a row here to a row there.
- */
-export type BoardAdmin = {
-  id: string
-  /** Status ids, in the board's own left-to-right column order. */
-  swimlaneIds: string[]
-  /** Comp Q's "User status moves" column: whether a User may move a card, or only administrators. */
-  userStatusMoves: boolean
-}
-
-export const boardAdmin: BoardAdmin[] = [
-  { id: 'ideas', swimlaneIds: ['new', 'review', 'progress', 'done'], userStatusMoves: true },
-  { id: 'opportunities', swimlaneIds: ['new', 'review', 'done'], userStatusMoves: false },
-]
-
-export function boardAdminById(id: string): BoardAdmin | undefined {
-  return boardAdmin.find((entry) => entry.id === id)
-}
 
 /**
  * A board needs at least two swimlanes.

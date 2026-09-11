@@ -65,8 +65,9 @@ function ActAsAMember() {
 }
 
 async function ScopeStatement({ org }: { org: string }) {
-  const [aiAssist, ideaTypes] = await Promise.all([getAiAssist(), getIdeaTypes()])
-  const inScope = ideaTypes.filter((type) => type.organizationId === 'acme-robotics')
+  // No organization filter: `getIdeaTypes` is scoped to the caller's own organization now, and
+  // this branch only renders for a role that has one.
+  const [aiAssist, inScope] = await Promise.all([getAiAssist(), getIdeaTypes()])
 
   return (
     <div className="flex max-w-[720px] flex-col gap-4">
