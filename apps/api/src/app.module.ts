@@ -33,7 +33,17 @@ import { RequestContextMiddleware } from './common/request-context/request-conte
     // instance - but do not read these numbers as a bound anyone can rely on. A shared store
     // (Redis / Vercel KV) behind `ThrottlerModule`'s `storage` option is what would make them one;
     // that is a dependency and an operational cost, so it is a recommendation, not this change.
-    ThrottlerModule.forRoot({ throttlers: [...AUTH_THROTTLERS] }),
+    //
+    // `setHeaders: false` because the library's own headers are named after this file's internals.
+    // Left on it sends `X-RateLimit-Limit-authBurst`, `-Remaining-authBurst`, `-Reset-authBurst`
+    // and the `authHourly` trio on every auth response, plus `Retry-After-authBurst` beside the
+    // real `Retry-After` on a 429 - so `AUTH_BURST_THROTTLER`'s value, an implementation detail,
+    // becomes something callers can read and depend on, and renaming a bucket becomes a breaking
+    // change. `ProblemDetailsFilter` already sends the one header `SPEC/30-Contracts.md` promises,
+    // from `RateLimitedError.retryAfterSeconds`, so this leaves exactly one writer for it rather
+    // than two. Reversible, and worth reversing as a deliberate choice: unsuffixed `X-RateLimit-*`
+    // are genuinely useful to a client, but they belong in the contract first.
+    ThrottlerModule.forRoot({ throttlers: [...AUTH_THROTTLERS], setHeaders: false }),
     AuthModule,
     HealthModule,
     ...FEATURE_MODULES,

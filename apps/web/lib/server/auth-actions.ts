@@ -24,8 +24,12 @@ import { clearSession, issueSession } from './current-user'
  * `email` is echoed so the field can be refilled after a failure. React resets an uncontrolled form
  * once its action resolves, which would otherwise blank both fields and make a mistyped password
  * cost the address as well. The password is deliberately not echoed.
+ *
+ * `rateLimited` is what the screen needs to know beyond the sentence itself: `LoginForm` prints the
+ * five-attempts lockout rule beside every failure, and that rule is not what happened when the
+ * limiter turned the request away.
  */
-export type LoginState = { error: string | null; email: string }
+export type LoginState = { error: string | null; rateLimited: boolean; email: string }
 
 /**
  * The same message for an unknown email as for a wrong password.
@@ -37,8 +41,9 @@ export type LoginState = { error: string | null; email: string }
 const SIGN_IN_FAILED = 'Incorrect email or password.'
 
 /**
- * Every status `POST /auth/login` uses to decline: 400 a field is missing, 401 the credential is
- * wrong, 403 the account is inactive, 429 it is locked out after five failed attempts.
+ * Every status `POST /auth/login` uses to decline about *this account*: 400 a field is missing,
+ * 401 the credential is wrong, 403 the account is inactive, 429 it is locked out after five failed
+ * attempts.
  *
  * **All four render as `SIGN_IN_FAILED`, deliberately.** The last two describe *this* account, so
  * naming them tells an anonymous caller that the address is registered — five wrong guesses would
@@ -47,9 +52,52 @@ const SIGN_IN_FAILED = 'Incorrect email or password.'
  * uninformed by the choice: `LoginForm` already prints the fifteen-minute lockout rule beside every
  * failure, so the person who has just locked themselves out reads how long to wait regardless.
  *
+ * **429 is on this list for the lockout only, and reaching it means `isRateLimited` said no first.**
+ * The endpoint has been rate limited per caller IP since 2026-09-10, and that 429 is not about the
+ * account at all — folding it in here tells an office behind one NAT egress that its passwords are
+ * wrong. See `isRateLimited` for how the two are told apart.
+ *
  * Anything not on this list is an outage or a misrouted request and must reach the error boundary.
  */
 const SIGN_IN_REFUSALS: readonly number[] = [400, 401, 403, 429]
+
+/**
+ * Tells the rate limiter's 429 from the account lockout's.
+ *
+ * **The body cannot do it.** `ProblemDetailsFilter` renders `RateLimitedError` and `LockedOutError`
+ * through the same branch, so both carry `type` `https://collega.dev/problems/too-many-requests`
+ * and the title `Too Many Requests`; only `detail` differs, and that is prose someone will reword.
+ * `Retry-After` is the difference that is contractual — `SPEC/30-Contracts.md`, "Rate limiting on
+ * the authentication surface", promises it on the limiter's 429, and the lockout sends no header at
+ * all. Both shapes were checked against a live API before this was written.
+ *
+ * Presence, not the value: a header that arrived unparseable still identifies which 429 this is,
+ * and the wait is a detail of the sentence rather than of the decision.
+ *
+ * Deliberately not the throttler's `X-RateLimit-*` headers, which are undocumented library output
+ * naming its internal buckets — nothing promises they will be sent at all, and `apps/api` does not
+ * send them.
+ */
+function isRateLimited(response: Response): boolean {
+  return response.status === 429 && response.headers.has('retry-after')
+}
+
+/**
+ * The refusal that is about the caller's address rather than their account.
+ *
+ * Rounded up to whole minutes from `Retry-After`, which is a window boundary rather than a
+ * countdown: by the time the sentence is read "in 47 seconds" is already wrong, where "in a minute"
+ * still holds. Both auth limits are reachable, and they are a minute and an hour apart, so the
+ * number is worth printing rather than assuming the shorter one.
+ */
+function tooManyAttempts(retryAfter: string | null): string {
+  const seconds = Number(retryAfter)
+  const minutes = Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds / 60) : 1
+
+  return `Too many attempts from this network. Try again in ${
+    minutes === 1 ? 'a minute' : `${minutes} minutes`
+  }.`
+}
 
 /**
  * Lifts the session out of the API's `Set-Cookie` and onto ours.
@@ -84,10 +132,18 @@ export async function signIn(_previous: LoginState, form: FormData): Promise<Log
     cache: 'no-store',
   })
 
+  // Before the fold, and the one refusal that must not join it: this reader's credentials may be
+  // perfect. Nothing about it is account-specific — the limiter answers ahead of the handler, to
+  // an address that has never held an account — so it is no more of an enumeration oracle than a
+  // connection refused.
+  if (isRateLimited(response)) {
+    return { error: tooManyAttempts(response.headers.get('retry-after')), rateLimited: true, email }
+  }
+
   // Every designed refusal is "that did not sign you in" to a person typing into a form; the API
   // separates them for an API client's benefit, not a reader's. See `SIGN_IN_REFUSALS`.
   if (SIGN_IN_REFUSALS.includes(response.status)) {
-    return { error: SIGN_IN_FAILED, email }
+    return { error: SIGN_IN_FAILED, rateLimited: false, email }
   }
   if (!response.ok) {
     throw new Error(`POST /auth/login answered ${response.status}`)
@@ -133,8 +189,9 @@ export type RegisterState = {
  * *sign-in* refusal (a lockout, a rejected credential) for someone whose account demonstrably just
  * succeeded — a branch with no honest message.
  *
- * Every rejection is attributable to a field, so there is no generic-failure path: a 400 names the
- * fields in its `errors` bag.
+ * Every rejection the submitted details earn is attributable to a field: a 400 names them in its
+ * `errors` bag. The one refusal that is not is the rate limiter's 429, which is about the address
+ * the request came from and so carries a banner message with no field beside it.
  */
 export async function register(_previous: RegisterState, form: FormData): Promise<RegisterState> {
   const values = {
@@ -164,6 +221,17 @@ export async function register(_previous: RegisterState, form: FormData): Promis
       errors,
       values,
     }
+  }
+
+  // Not a field's fault and not an outage, so neither of the branches around it will do. Register
+  // is limited to ten a minute per address, which one onboarding session or one classroom reaches
+  // — and throwing here crashes the page, losing an invite code, a name and an address that were
+  // typed correctly. `errors` stays empty because no field is at fault; `values` comes back for
+  // the same reason it does above.
+  //
+  // No `isRateLimited` check: register has no lockout, so every 429 it answers is the limiter.
+  if (response.status === 429) {
+    return { error: tooManyAttempts(response.headers.get('retry-after')), errors: {}, values }
   }
 
   if (!response.ok) {

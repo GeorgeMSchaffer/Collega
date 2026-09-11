@@ -306,6 +306,9 @@ export class OrganizationsController {
    */
   @Post(':organizationId/users/import')
   @HttpCode(200)
+  // The body bound in full: multer aborts an upload over the limit at the pipeline and Nest turns
+  // that into a `413`, so the handler is never handed an oversized buffer and has no size check of
+  // its own to make. `SPEC/30-Contracts.md` documents the 413 for both CSV imports.
   @UseInterceptors(FileInterceptor('csvFile', { limits: { fileSize: MAX_IMPORT_BYTES } }))
   async importUsers(
     @Param('organizationId', UuidParamPipe) organizationId: string,
@@ -319,17 +322,6 @@ export class OrganizationsController {
       // source is the only evidence of which of the two envelopes it produced.
       throw new ValidationError('One or more fields are invalid.', {
         csvFile: ['A CSV file is required.'],
-      })
-    }
-
-    // The multer limit above refuses an oversized body at the pipeline; this second, explicit
-    // check turns the same condition into the standard problem-details 400 once the length is
-    // known. Both halves and both messages are `ideas.controller.ts`'s, deliberately.
-    if (buffer.length > MAX_IMPORT_BYTES) {
-      throw new ValidationError('One or more fields are invalid.', {
-        csvFile: [
-          `The file is larger than the ${MAX_IMPORT_BYTES / (1024 * 1024)} MB import limit.`,
-        ],
       })
     }
 

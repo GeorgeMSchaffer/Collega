@@ -97,7 +97,9 @@ Before this gate, the rule was enforced only client-side: the issued token was v
 
 ### Rate limiting on the authentication surface
 
-`POST /api/v1/auth/login`, `POST /api/v1/auth/register` and `POST /api/v1/auth/change-password` are limited **per caller IP and per route** — each keeps its own counter, so spending the register allowance does not close login. The limits are 10 requests per minute (20 on login) and 100 per hour. Exceeding either answers `429` with the standard problem-details envelope, `type` `https://collega.dev/problems/too-many-requests`, and a `Retry-After` header in seconds. This is the same `429` shape the AI assist endpoints already use for their own limits, and is deliberately distinct from the `429` a locked-out account produces, which is about one account's failed attempts rather than a caller's volume.
+`POST /api/v1/auth/login`, `POST /api/v1/auth/register` and `POST /api/v1/auth/change-password` are limited **per caller IP and per route** — each keeps its own counter, so spending the register allowance does not close login. The limits are 10 requests per minute (20 on login) and 100 per hour. Exceeding either answers `429` with the standard problem-details envelope, `type` `https://collega.dev/problems/too-many-requests`, and a `Retry-After` header in seconds. This is the same `429` shape the AI assist endpoints already use for their own limits.
+
+`Retry-After` is the **only** rate-limit header sent, and it is also the only thing on the wire that separates this `429` from the one a locked-out account produces — those two carry the same `type`, the same `title`, and differ only in `detail`, which is prose. A client that must tell "this address has asked too often" from "this account is locked after five failed attempts" reads the header's presence: the lockout sends none. They are deliberately distinct refusals — one is about a caller's volume, the other about one account's failed attempts — and `apps/web` depends on telling them apart, because only one of them means the password was wrong. No `X-RateLimit-*` headers are exposed: the library's are suffixed with the internal bucket names, which are not contract surface. Adding unsuffixed ones is a change to make here first.
 
 Two properties clients must not read more into than is there. The caller IP is taken from `x-forwarded-for` **only when the process is running on Vercel**, which overwrites that header with the real client address; anywhere else the socket address is used, so a self-hosted run cannot be steered by a caller-supplied header. And the counters live in the serving process, which on serverless is neither shared between concurrent instances nor preserved across cold starts — the limit bounds volume, it is not a guarantee of an exact ceiling. A shared store is what would make it one.
 
@@ -631,7 +633,7 @@ CSV columns:
 Behavior rules:
 - each created user receives a system-generated temporary password and must change it on first login
 - rows with invalid data or duplicate emails are rejected individually without failing the whole import
-- **Bounded (added 2026-09-10):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**, the same two bounds and the same messages as the idea import below. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. This endpoint had no bound at all until now, which was an oversight rather than a policy difference: the body buffers into the serving process's heap, so one request could exhaust it
+- **Bounded (added 2026-09-10):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**, the same two bounds and the same messages as the idea import below. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. The two answer differently, according to where the upload is stopped: the body limit is enforced at the request pipeline, before the handler runs, and answers `413`; the row ceiling is the handler's own and answers the field-keyed `400`. This endpoint had no bound at all until now, which was an oversight rather than a policy difference: the body buffers into the serving process's heap, so one request could exhaust it
 
 Success response `200`:
 - `createdCount`
@@ -639,10 +641,11 @@ Success response `200`:
 - `rows` per-row outcome list with `rowNumber`, `email`, `outcome`, `error` nullable, and `temporaryPassword` for created rows
 
 Error responses:
-- `400` file is missing, malformed, or not a valid CSV
+- `400` file is missing, malformed, or not a valid CSV, or it exceeds 5,000 rows
 - `401` caller is not authenticated
 - `403` caller is authenticated but not allowed to create users in this organization
 - `404` organization does not exist or is outside caller scope
+- `413` the request body exceeds 5 MB; the pipeline refuses it before it reaches the handler
 
 ### `GET /api/v1/users/{userId}`
 Purpose: Return user detail.
@@ -973,7 +976,7 @@ Behavior:
 - Each data row creates a new idea. Required columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`. `Status` is optional (must name a board swimlane; defaults to the left-most swimlane); `Due Date`, `Tags`, and per-UDF-field columns are optional.
 - `Idea Type` and `Business Impact` are matched by name (case-insensitive) against active options; a missing or unknown value rejects that row. Dropdown/MultiSelect UDF columns are matched by option label; Boolean accepts `Yes`/`No` or `true`/`false`.
 - Invalid rows are rejected individually with a per-row message; valid rows still import.
-- **Bounded (added 2026-08-11, Sprint 4):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import.
+- **Bounded (added 2026-08-11, Sprint 4):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. The body limit is enforced at the request pipeline and answers `413`; the row ceiling is the handler's own and answers the field-keyed `400`.
 - A leading guard apostrophe written by the export is stripped on import (see the export contract above), so re-importing an exported file is lossless.
 
 Success response `200`:
@@ -982,8 +985,8 @@ Success response `200`:
 - `rows` array of `{ rowNumber, title, outcome (`Created`/`Rejected`), error }`
 
 Error responses:
-- `400` the file is missing/empty, its header lacks the required columns, it exceeds 5 MB, or it exceeds 5,000 rows
-- `413` the request body exceeds the server's size limit before it reaches the handler
+- `400` the file is missing/empty, its header lacks the required columns, or it exceeds 5,000 rows
+- `413` the request body exceeds 5 MB; the pipeline refuses it before it reaches the handler
 
 ### `POST /api/v1/boards/{boardId}/ideas`
 Purpose: Create a new idea on a board.
