@@ -9,9 +9,13 @@
  * This file is only reached because the bootstrap is named `src/bootstrap.ts` and not `src/main.ts`.
  * Vercel's NestJS preset resolves an entrypoint in a fixed order, and every `src/` candidate --
  * `main`, `app`, `index`, `server` -- outranks every root-level one. While `src/main.ts` existed the
- * preset compiled it with its own toolchain and this file was never consulted, which is what the
- * `functions` glob in `vercel.json` asserts against: if the preset ever chooses something else, the
- * pattern matches nothing and the build says so instead of deploying the wrong artifact.
+ * preset compiled it with its own toolchain and this file was never consulted. So the name is load
+ * bearing: reintroducing `src/main.ts`, or renaming this file, silently hands the deployment back
+ * to a source-compiled artifact.
+ *
+ * Nothing in this repository asserts that. `vercel.json` cannot: `functions` keys must match source
+ * files inside an `api` directory, so a glob naming this file is rejected before the build starts.
+ * `maxDuration` lives in the project's settings for the same reason.
  */
 
 import './dist/bootstrap.js'
