@@ -9,6 +9,49 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-11 — The S0.2 schema freeze is amended once, for Issues-and-Delivery Slice 1
+
+**The freeze otherwise stands.** This is the amendment ticket `06` anticipated, not a general
+licence: `06` settled that the Prisma schema freezes after S0.2 and that net-new entities are not
+a forced reshape, so **net-new scope buys a schema amendment slice**. `SPEC/20-feature-issues-and-
+delivery.md` is net-new scope, and this is that slice. Anything else still needs its own entry
+here before it touches `schema.prisma`.
+
+**What was added**, in `20260911000000_add_delivery_and_sprints` — additive only, nothing dropped,
+renamed or retyped:
+
+- **Five enums**, none with a .NET ancestor: `IdeaPhase`, `EffortLevel`, `DeliveryStatus`,
+  `SprintState`, `IssueTaskState`. The spec numbers their members because it is written in the C#
+  idiom; they are stored as the member **name**, like every other enum in the schema, and the
+  integers survive only as comments. No legacy column holds them, so F3 has nothing to transform.
+- **Seven columns on `ideas`** — `phase`, `effort`, `delivery_status`, `sprint_id`,
+  `promoted_at_utc`, `promoted_by_user_id`, `upvote_count_at_promotion` — plus indexes
+  `(organization_id, phase)` and `(sprint_id)`.
+- **Two tables**: `sprints` (org-scoped, soft-deletable, `Planned → Active → Completed`) and
+  `issue_tasks` (a checklist on an Issue, `ON DELETE CASCADE` from `ideas`).
+
+**Why `ideas` grows instead of an `issues` table.** The feature's central decision is that an Issue
+*is* the Idea in a later phase — the same row. A second table would recreate the handoff data loss
+the whole feature exists to remove, and would make provenance a join to maintain rather than a fact
+that is simply already there. The seven columns are the price of not having that table.
+
+**Existing data is untouched.** `phase` is `NOT NULL DEFAULT 'Discovery'`, so every idea already in
+the database backfills as the column is added, in the same statement — there is no separate
+`UPDATE` to get wrong. Verified against a copy of the seeded local database: all 46 ideas read
+`Discovery` afterwards, no row has any other delivery facet set, and `migrate diff` against the
+result is empty. `dropdb` → `db:migrate` → `db:seed` from scratch still produces the standard demo
+seed (2 organizations, 4 boards, 44 ideas, all Discovery) with both new tables empty. Ideation
+boards filter to Discovery and therefore show exactly what they showed before.
+
+**The `DEFAULT` stays on the column** rather than being dropped after the backfill, and
+`schema.prisma` declares `@default(Discovery)` to match, so the next `prisma db pull` reports no
+drift.
+
+**Slice 2 is not in this.** No `outcomes` table and no `ideas.outcome_id` — the 2026-09-02
+single-parent decision stands unchanged and unimplemented, and its own migration is still owed.
+
+---
+
 ## 2026-09-11 — The golden replay is not a gate, and never was meant to be one
 
 **Resolves a conflict between two canonical documents, in favour of the older one.**

@@ -26,7 +26,7 @@ import type {
   IdeaRepository,
   OrganizationIdeaListFilter,
 } from '@collega/application/ideas'
-import type { Priority } from '@collega/domain/enums'
+import type { DeliveryStatus, EffortLevel, IdeaPhase, Priority } from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueRecord } from '@collega/domain/ideas'
 import type {
   idea_assignees as AssigneeRow,
@@ -84,6 +84,13 @@ function fromRow(row: IdeaRowFull): Idea {
     tagIds: row.idea_tags.map((t) => t.tag_id),
     mentionedUserIds: row.idea_mentions.map((m) => m.mentioned_user_id),
     fieldValues,
+    phase: row.phase as IdeaPhase,
+    effort: row.effort as EffortLevel | null,
+    deliveryStatus: row.delivery_status as DeliveryStatus | null,
+    sprintId: row.sprint_id,
+    promotedAtUtc: row.promoted_at_utc,
+    promotedByUserId: row.promoted_by_user_id,
+    upvoteCountAtPromotion: row.upvote_count_at_promotion,
     createdAtUtc: row.created_at_utc,
     updatedAtUtc: row.updated_at_utc,
     createdByUserId: row.created_by_user_id,
@@ -185,6 +192,13 @@ export class PrismaIdeaRepository implements IdeaRepository {
       due_date: fromDueDateString(idea.dueDate),
       author_user_id: idea.authorUserId,
       is_deleted: idea.isDeleted,
+      phase: idea.phase,
+      effort: idea.effort,
+      delivery_status: idea.deliveryStatus,
+      sprint_id: idea.sprintId,
+      promoted_at_utc: idea.promotedAtUtc,
+      promoted_by_user_id: idea.promotedByUserId,
+      upvote_count_at_promotion: idea.upvoteCountAtPromotion,
       created_at_utc: idea.createdAtUtc,
       updated_at_utc: idea.updatedAtUtc,
       created_by_user_id: idea.createdByUserId,
