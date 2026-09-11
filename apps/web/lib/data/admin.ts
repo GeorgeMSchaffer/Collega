@@ -2,27 +2,39 @@
  * The administration surfaces: organizations, members, idea types, fields, the profile, the user
  * import, and the two AI settings screens plus their usage meter.
  *
+ * Organizations and members are real now; the catalogs and the AI screens are still fixtures.
+ *
  * `getUsage` returns the rows and the totals together. The totals are derived from the rows, and
  * deriving them here rather than in each caller is what stops the budget card and the table footer
  * disagreeing — they render side by side on the same screen.
+ *
+ * ## One page, and no pager
+ *
+ * The list endpoints page, and `MAX_PAGE_SIZE` on the API is 100. None of these screens has a pager
+ * — comp P gives them filters instead — so the readers below take one page of 100 and report what
+ * came back. A deployment with more than 100 organizations, or more than 100 accounts in one
+ * organization, would show the first 100; that is a known ceiling rather than an oversight, and the
+ * filters comp P specifies are what it is waiting on.
  */
 
-import { toFieldDefinition, toIdeaType, toProfile } from '../api/adapt'
+import { toFieldDefinition, toIdeaType, toMember, toOrganization, toProfile } from '../api/adapt'
 import { apiGet, apiPath } from '../api/client'
-import type { WireCurrentUser, WireFieldDefinition, WireIdeaType } from '../api/wire'
+import type {
+  WireCurrentUser,
+  WireFieldDefinition,
+  WireIdeaType,
+  WireOrganizationDetail,
+  WireOrganizationListItem,
+  WirePage,
+  WireUserListItem,
+} from '../api/wire'
 import * as fixture from '../mock'
-import type { FieldDefinition, IdeaType, Profile } from '../types'
+import { currentUser } from '../session'
+import type { FieldDefinition, IdeaType, Member, Organization, Profile } from '../types'
 import { failIfRequested, resolve } from './latency'
 import { everyOrganization, organizationScope } from './scope'
 
-export type {
-  ImportRow,
-  Member,
-  Organization,
-  Probe,
-  PromptVersion,
-  UsageRow,
-} from '../mock'
+export type { Probe, PromptVersion, UsageRow } from '../mock'
 export {
   compactTokens,
   DAILY_TOKEN_BUDGET,
@@ -30,21 +42,121 @@ export {
   SYSTEM_PROMPT_MAX,
   totalTokens,
 } from '../mock'
-export type { FieldDefinition, IdeaType, Profile } from '../types'
+export type {
+  FieldDefinition,
+  IdeaType,
+  ImportOutcome,
+  ImportRow,
+  Member,
+  Organization,
+  Profile,
+} from '../types'
 
-export async function getOrganizations(): Promise<fixture.Organization[]> {
+/**
+ * Every organization on the deployment.
+ *
+ * **Answers empty for anyone but a Site Admin rather than asking**, because `GET /organizations`
+ * refuses every other role with a 403 and this reader is called by four settings screens whose own
+ * gates already refuse those roles. Reading first would land that 403 on the error boundary in place
+ * of the refusal panel comp P specifies — the reader would be the reason a correctly gated screen
+ * showed a crash. It is the same judgement `organizationScope()` makes, and it is a decision about
+ * what to *ask for*: the API is still the only thing that authorizes the answer.
+ *
+ * Archived organizations are excluded, which is the endpoint's default and what comp P's footer
+ * promises ("Archived ones are hidden unless filtered in"). `isArchived` still rides on every row,
+ * because the filter that would include them is the same table.
+ */
+export async function getOrganizations(): Promise<Organization[]> {
   failIfRequested('getOrganizations')
-  return resolve(fixture.organizations)
+  if (currentUser().role !== 'SiteAdmin') return []
+
+  const page = await apiGet<WirePage<WireOrganizationListItem>>(
+    'getOrganizations',
+    // `pageSize` written into the literal rather than interpolated: `apiPath` escapes what it
+    // interpolates, so a value spliced in here would arrive as `pageSize%3D100` and be ignored.
+    apiPath`/organizations?pageSize=100`,
+  )
+
+  return page.items.map(toOrganization)
 }
 
-export async function getMembers(): Promise<fixture.Member[]> {
+/**
+ * Every account on the deployment, for the Site Admin's cross-organization list.
+ *
+ * **There is no cross-organization user endpoint**, so this is the fan-out comp P describes in that
+ * screen's own error copy — *"This view queries every organization in turn, so a single organization
+ * failing empties the whole list."* One request for the organizations, then one per organization,
+ * in parallel. The organization's title comes from the first request, which is the only place it
+ * exists: an org-scoped listing does not repeat the name the route already carried.
+ *
+ * `getOrganizations` answers empty for anyone but a Site Admin, so this does too, and no per-user
+ * request is made for a role that may not read them.
+ */
+export async function getMembers(): Promise<Member[]> {
   failIfRequested('getMembers')
-  return resolve(fixture.members)
+
+  const organizations = await getOrganizations()
+  const pages = await Promise.all(
+    organizations.map((organization) =>
+      apiGet<WirePage<WireUserListItem>>(
+        'getMembers',
+        apiPath`/organizations/${organization.id}/users?pageSize=100`,
+      ),
+    ),
+  )
+
+  return pages.flatMap((page, index) =>
+    page.items.map((item) => toMember(item, organizations[index]?.name ?? null)),
+  )
 }
 
-export async function getMembersForOrganization(organizationId: string): Promise<fixture.Member[]> {
+/**
+ * One organization's accounts, with their role and status.
+ *
+ * `/users` and not `/members`: the latter is the assignee picker's id-name-email view, open to every
+ * member of the organization and carrying neither of the two columns this table exists to show.
+ *
+ * The name of the organization is not filled in — this reader does not fetch it, and the screen that
+ * calls it renders its own organization's name from the principal rather than per row.
+ *
+ * An Org Admin naming another organization is answered 404, not 403, and that is the API declining
+ * to confirm it exists. Nothing here catches it: the only call site passes the caller's own
+ * organization id, taken from the resolved principal, so there is no id a reader could steer.
+ */
+export async function getMembersForOrganization(organizationId: string): Promise<Member[]> {
   failIfRequested('getMembersForOrganization')
-  return resolve(fixture.membersForOrganization(organizationId))
+
+  const page = await apiGet<WirePage<WireUserListItem>>(
+    'getMembersForOrganization',
+    apiPath`/organizations/${organizationId}/users?pageSize=100`,
+  )
+
+  return page.items.map((item) => toMember(item, null))
+}
+
+/**
+ * The caller's own organization's invite code, or null when they have no organization.
+ *
+ * A standing credential (`Organization` in `lib/types.ts` says what that obliges), read from the
+ * organization detail because that is the only route that carries it for a single organization —
+ * a Site Admin gets it on the list item instead.
+ *
+ * Null for a Site Admin, who belongs to no organization and so has no code of their own to share.
+ * The endpoint refuses a plain User outright, so the one screen that calls this asks only when the
+ * reader is an Org Admin.
+ */
+export async function getInviteCode(): Promise<string | null> {
+  failIfRequested('getInviteCode')
+
+  const scope = organizationScope()
+  if (scope === null) return null
+
+  const organization = await apiGet<WireOrganizationDetail>(
+    'getInviteCode',
+    apiPath`/organizations/${scope}`,
+  )
+
+  return organization.inviteCode
 }
 
 export async function getIdeaTypes(): Promise<IdeaType[]> {
@@ -145,20 +257,16 @@ export async function getProfile(): Promise<Profile> {
   return resolve(toProfile(await apiGet<WireCurrentUser>('getProfile', apiPath`/auth/me`)))
 }
 
-export async function getLastImport(): Promise<{
-  completedAt: string
-  rows: fixture.ImportRow[]
-  created: number
-  rejected: number
-}> {
-  failIfRequested('getLastImport')
-  return resolve({
-    completedAt: fixture.lastImport.completedAt,
-    rows: fixture.lastImport.rows,
-    created: fixture.importCounts.created,
-    rejected: fixture.importCounts.rejected,
-  })
-}
+/*
+ * There is no `getLastImport`, and there cannot be one.
+ *
+ * The fixture had a "last import" to read back because a fixture can hold anything. The API stores
+ * no import history — `POST /organizations/{id}/users/import` answers with what it just did and
+ * keeps nothing — and the temporary passwords the screen exists to show are generated once and are
+ * never retrievable again, so an endpoint that returned them later would be a worse idea than a
+ * missing one. Comp P's "Last import" panel is therefore the response to the write, held in the
+ * form's own state: see `lib/server/admin-actions.ts` and `components/settings/user-import.tsx`.
+ */
 
 export async function getAiAssist(): Promise<typeof fixture.aiAssist> {
   failIfRequested('getAiAssist')

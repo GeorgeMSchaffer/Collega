@@ -17,7 +17,7 @@
  * the tests now rather than a stand-in for an endpoint.
  */
 
-import type { Board, Idea, Priority, Role, Status } from './types'
+import type { Board, Idea, Member, Priority, Role, Status } from './types'
 
 export { engagementDenial, isAdministrator, writeDenial } from './roles'
 export type { Board, CurrentUser, Idea, Priority, Role, Status } from './types'
@@ -179,46 +179,6 @@ export const navCounts = {
 // Administration fixtures (Wave E5)
 // ---------------------------------------------------------------------------
 
-export type Organization = {
-  id: string
-  name: string
-  description: string
-  memberCount: number
-  boardCount: number
-  ideaCount: number
-}
-
-export const organizations: Organization[] = [
-  {
-    id: 'acme-robotics',
-    name: 'Acme Robotics',
-    description: 'Industrial robotics and automation manufacturer.',
-    memberCount: 4,
-    boardCount: 2,
-    ideaCount: 22,
-  },
-  {
-    id: 'blue-harbor',
-    name: 'Blue Harbor Logistics',
-    description: 'Regional freight and warehousing operator.',
-    memberCount: 4,
-    boardCount: 2,
-    ideaCount: 22,
-  },
-]
-
-export type Member = {
-  id: string
-  displayName: string
-  initials: string
-  email: string
-  organizationId: string
-  organizationName: string
-  role: Role
-  roleLabel: string
-  status: 'Active' | 'Inactive'
-}
-
 const ROLE_SEED: ReadonlyArray<readonly [string, string, string, Role, string]> = [
   ['Olivia Administer', 'OA', 'orgadmin', 'OrgAdmin', 'Org Admin'],
   ['Noah Contributor', 'NC', 'user', 'User', 'User'],
@@ -226,24 +186,32 @@ const ROLE_SEED: ReadonlyArray<readonly [string, string, string, Role, string]> 
   ['Rosa Observer', 'RO', 'readonly', 'ReadOnly', 'Read Only'],
 ]
 
-/** The demo seed: four accounts per organization, one per role. See `demo.md`. */
-export const members: Member[] = organizations.flatMap((org) =>
+const DEMO_ORGANIZATIONS: ReadonlyArray<readonly [string, string]> = [
+  ['acme-robotics', 'Acme Robotics'],
+  ['blue-harbor', 'Blue Harbor Logistics'],
+]
+
+/**
+ * The demo seed: four accounts per organization, one per role. See `demo.md`.
+ *
+ * **The settings screens no longer read this** — `getMembers` and `getMembersForOrganization` call
+ * the API. It stays because `test/support/acting-role.ts` builds each role's whole identity from a
+ * row here rather than inventing one, which is what keeps the unit tests' principals honest against
+ * the seed. Nothing in `app/` may use it.
+ */
+export const members: Member[] = DEMO_ORGANIZATIONS.flatMap(([organizationId, organizationName]) =>
   ROLE_SEED.map(([displayName, initials, localPart, role, roleLabel], n) => ({
-    id: `${org.id}-u${n + 1}`,
+    id: `${organizationId}-u${n + 1}`,
     displayName,
     initials,
-    email: `${localPart}@${org.id}.demo.collega.test`,
-    organizationId: org.id,
-    organizationName: org.name,
+    email: `${localPart}@${organizationId}.demo.collega.test`,
+    organizationId,
+    organizationName,
     role,
     roleLabel,
     status: 'Active' as const,
   })),
 )
-
-export function membersForOrganization(organizationId: string): Member[] {
-  return members.filter((member) => member.organizationId === organizationId)
-}
 
 // ---------------------------------------------------------------------------
 // Delivery fixtures (Wave E6)
@@ -501,56 +469,6 @@ export function issuesForOutcome(outcomeId: string): Issue[] {
  * rule the rest of the product follows for a refused action.
  */
 export const SWIMLANE_FLOOR = 2
-
-/**
- * The outcome of the last user CSV import, for `/settings/users/import`.
- *
- * Temporary passwords are shown once and never again, which is the whole reason this screen keeps a
- * result table rather than a bare success message. `SPEC/20-feature-client-ui.md`: user CSV import
- * is the bootstrap exception, so it stays direct for a Site Admin rather than going through View As.
- */
-export type ImportRow = {
-  row: number
-  email: string
-  created: boolean
-  /** The temporary password when created, or the reason when rejected. */
-  detail: string
-}
-
-export const lastImport: { completedAt: string; rows: ImportRow[] } = {
-  completedAt: '12 March, 09:41',
-  rows: [
-    {
-      row: 2,
-      email: 'tomas@acme-robotics.demo.collega.test',
-      created: true,
-      detail: 'Xq7-4mVt-92',
-    },
-    {
-      row: 3,
-      email: 'jaewon@acme-robotics.demo.collega.test',
-      created: true,
-      detail: 'Bn3-9wKp-51',
-    },
-    {
-      row: 4,
-      email: 'user@acme-robotics.demo.collega.test',
-      created: false,
-      detail: 'Already has an account.',
-    },
-    { row: 5, email: 'not-an-address', created: false, detail: 'Not a valid email address.' },
-    { row: 6, email: 'dana@acme-robotics.demo.collega.test', created: true, detail: 'Rk8-2hLm-77' },
-  ],
-}
-
-export const importCounts = {
-  get created() {
-    return lastImport.rows.filter((row) => row.created).length
-  },
-  get rejected() {
-    return lastImport.rows.filter((row) => !row.created).length
-  },
-}
 
 /**
  * The organization's AI scope statement (`SPEC/20-feature-ai-idea-assist.md` rule 6).
