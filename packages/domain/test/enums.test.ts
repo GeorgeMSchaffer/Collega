@@ -1,12 +1,16 @@
-// The nine domain enums are hand-mirrored from packages/infrastructure/prisma/schema.prisma
+// The domain enums are hand-mirrored from packages/infrastructure/prisma/schema.prisma
 // (packages/domain imports nothing - that is the layer rule biome.json enforces, so it
-// cannot re-export the generated Prisma client's enums). The schema is frozen after S0.2,
-// and drift between the two copies is exactly the kind of thing nothing else would catch:
-// TypeScript compiles either way, and nothing at runtime compares them.
+// cannot re-export the generated Prisma client's enums). Drift between the two copies is
+// exactly the kind of thing nothing else would catch: TypeScript compiles either way, and
+// nothing at runtime compares them.
 //
 // This parses the schema's `enum` blocks directly rather than trusting a remembered list, so
-// a ninth enum added to the schema without a domain counterpart - or a member renamed on one
+// an enum added to the schema without a domain counterpart - or a member renamed on one
 // side only - fails here first.
+//
+// Nine of these came from the .NET domain at S0.2; five (IdeaPhase, EffortLevel,
+// DeliveryStatus, SprintState, IssueTaskState) were added by Issues-and-Delivery Slice 1
+// under the schema amendment recorded in SPEC/decisions.md 2026-09-11.
 
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -60,6 +64,11 @@ const DOMAIN_ENUMS: Record<string, Record<string, string>> = {
   NotificationEventType: Enums.NotificationEventType,
   AiCallOutcome: Enums.AiCallOutcome,
   AiKeySource: Enums.AiKeySource,
+  IdeaPhase: Enums.IdeaPhase,
+  EffortLevel: Enums.EffortLevel,
+  DeliveryStatus: Enums.DeliveryStatus,
+  SprintState: Enums.SprintState,
+  IssueTaskState: Enums.IssueTaskState,
 }
 
 describe('domain enums vs packages/infrastructure/prisma/schema.prisma', () => {
@@ -67,7 +76,7 @@ describe('domain enums vs packages/infrastructure/prisma/schema.prisma', () => {
     expect(Object.keys(prismaEnums).length).toBeGreaterThan(0)
   })
 
-  it('the schema has exactly the nine enums the domain package hand-mirrors - no more, no fewer', () => {
+  it('the schema has exactly the enums the domain package hand-mirrors - no more, no fewer', () => {
     expect(Object.keys(prismaEnums).sort()).toEqual(Object.keys(DOMAIN_ENUMS).sort())
   })
 

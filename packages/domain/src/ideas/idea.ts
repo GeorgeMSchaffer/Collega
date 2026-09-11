@@ -1,7 +1,8 @@
 import type { Auditable } from '../common/index.js'
 import { markCreated, markUpdated } from '../common/index.js'
-import type { Priority } from '../enums/index.js'
-import { IdeaDomainError } from './errors.js'
+import type { EffortLevel, Priority } from '../enums/index.js'
+import { DeliveryStatus, IdeaPhase } from '../enums/index.js'
+import { IdeaDomainError, IdeaPhaseConflictError } from './errors.js'
 
 export const TITLE_MAX_LENGTH = 150
 export const DESCRIPTION_MAX_LENGTH = 4000
@@ -35,11 +36,21 @@ export type IdeaFieldValueRecord = {
  * FK, never a join table) belongs to a later slice - the frozen `ideas` table for this slice
  * carries no `outcome_id` column ("Nothing in Slice 1 depended on this"), so it is deliberately not
  * modeled here.
+ *
+ * The delivery facets below are Issues-and-Delivery Slice 1
+ * (SPEC/20-feature-issues-and-delivery.md). An Issue is not a second entity: it is this same idea
+ * with `phase === Delivery`. That is the point of the feature - promotion copies nothing, so the
+ * proposer, upvotes, business impact and the whole comment debate arrive in the sprint intact.
  */
 export type Idea = Auditable & {
   readonly id: string
   readonly organizationId: string
   readonly boardId: string
+  /**
+   * The ideation status. Frozen at its last Discovery value on promotion and never cleared:
+   * ideation `Complete` and delivery `Complete` are distinct terminal states, and an item in
+   * Delivery keeps both.
+   */
   readonly statusId: string
   readonly title: string
   readonly description: string
@@ -53,6 +64,18 @@ export type Idea = Auditable & {
   readonly tagIds: readonly string[]
   readonly mentionedUserIds: readonly string[]
   readonly fieldValues: readonly IdeaFieldValueRecord[]
+  /** `Discovery` (ideation board) or `Delivery` (sprint board). Every existing idea is Discovery. */
+  readonly phase: IdeaPhase
+  /** Optional while in Discovery; required at the promotion gate, and retained after a return. */
+  readonly effort: EffortLevel | null
+  /** Null in Discovery; `Pending` from promotion onward. */
+  readonly deliveryStatus: DeliveryStatus | null
+  /** Null means the delivery backlog. Only meaningful in Delivery. */
+  readonly sprintId: string | null
+  /** Promotion snapshot: who committed to this work, when, and how much support it had then. */
+  readonly promotedAtUtc: Date | null
+  readonly promotedByUserId: string | null
+  readonly upvoteCountAtPromotion: number | null
 }
 
 export type CreateIdeaProps = {
@@ -182,6 +205,13 @@ export function createIdea(props: CreateIdeaProps): Idea {
     tagIds: normalizeTags(props.tagIds),
     mentionedUserIds: distinctIds(props.mentionedUserIds),
     fieldValues: [],
+    phase: IdeaPhase.Discovery,
+    effort: null,
+    deliveryStatus: null,
+    sprintId: null,
+    promotedAtUtc: null,
+    promotedByUserId: null,
+    upvoteCountAtPromotion: null,
     // Rule 15: authorship records the TARGET (the acting user), never rewritten to the real
     // administrator - content created through View As genuinely belongs to that organization.
     ...markCreated(props.nowUtc, authorUserId),
@@ -250,6 +280,121 @@ export function changeIdeaStatus(
     nowUtc,
     actorUserId,
   )
+}
+
+/**
+ * The promotion gate: flips this idea into Delivery, where it is called an Issue
+ * (SPEC/20-feature-issues-and-delivery.md "Domain Model"). An explicit decision with an actor and
+ * a timestamp - never a side effect of reaching some ideation status, which is the overloading the
+ * feature exists to avoid.
+ *
+ * `effort` is required here even though it is optional in Discovery: committing to work without
+ * saying roughly how big it is is the thing the gate is for.
+ *
+ * Note what is NOT touched: `statusId`. The ideation status freezes at its last Discovery value
+ * and is kept for provenance, because ideation `Complete` ("the discussion is finished") and
+ * delivery `Complete` ("the work is built") are different facts and losing either one is losing
+ * history.
+ */
+export function promoteIdeaToIssue(
+  idea: Idea,
+  input: {
+    readonly effort: EffortLevel
+    /** `null` promotes straight to the delivery backlog. */
+    readonly sprintId: string | null
+    /** The idea's upvote count right now, frozen as the support-at-commitment snapshot. */
+    readonly currentUpvoteCount: number
+  },
+  nowUtc: Date,
+  actorUserId: string,
+): Idea {
+  // Re-promoting is rejected rather than treated as an update: a second promotion would overwrite
+  // the snapshot of who committed to this work and how much support it had at the time, which is
+  // the one piece of provenance this feature genuinely stores rather than inherits.
+  if (idea.phase === IdeaPhase.Delivery) {
+    throw new IdeaPhaseConflictError('This idea is already in delivery.')
+  }
+  const promotedByUserId = assertRequiredId('actorUserId', actorUserId, 'Actor id is required.')
+
+  return markUpdated(
+    {
+      ...idea,
+      phase: IdeaPhase.Delivery,
+      deliveryStatus: DeliveryStatus.Pending,
+      effort: input.effort,
+      sprintId: input.sprintId,
+      promotedAtUtc: nowUtc,
+      promotedByUserId,
+      upvoteCountAtPromotion: input.currentUpvoteCount,
+    },
+    nowUtc,
+    actorUserId,
+  )
+}
+
+/**
+ * Recovers a mis-promotion (admin-only, per the permissions table). Clears the two facts that only
+ * make sense in Delivery - the sprint membership and the delivery status - and deliberately
+ * RETAINS `effort` and the promotion snapshot.
+ *
+ * Retaining them is what keeps both the audit trail and a later re-promote coherent: the snapshot
+ * records that this item *was* committed to once, which is history and not a mistake to erase, and
+ * a re-promote then has the earlier effort estimate to offer as a default. Tasks are retained for
+ * the same reason (they hang off the idea, so nothing here has to do it).
+ *
+ * Rejected from Discovery rather than treated as a no-op: succeeding silently would write an
+ * `IssueReturnedToDiscovery` audit event for an item that was never promoted.
+ */
+export function returnIdeaToDiscovery(idea: Idea, nowUtc: Date, actorUserId: string | null): Idea {
+  if (idea.phase !== IdeaPhase.Delivery) {
+    throw new IdeaPhaseConflictError('This idea is not in delivery.')
+  }
+
+  return markUpdated(
+    { ...idea, phase: IdeaPhase.Discovery, deliveryStatus: null, sprintId: null },
+    nowUtc,
+    actorUserId,
+  )
+}
+
+/**
+ * Moves an Issue between the five fixed delivery statuses - the sprint board's swimlanes.
+ *
+ * Any status may follow any other: the board is a kanban and dragging backwards is a normal
+ * correction, not an invariant violation. Outstanding tasks never block `Complete` either - the UI
+ * warns, the domain permits, because enforcing "all tasks done" would turn the checklist into a
+ * gate, which is exactly the ceremony this feature refuses.
+ */
+export function changeIdeaDeliveryStatus(
+  idea: Idea,
+  deliveryStatus: DeliveryStatus,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Idea {
+  requireDeliveryPhase(idea, 'deliveryStatus', 'A delivery status applies only to a promoted idea.')
+  return markUpdated({ ...idea, deliveryStatus }, nowUtc, actorUserId)
+}
+
+/** Pulls an Issue into a sprint, or back to the delivery backlog with `null`. */
+export function assignIdeaToSprint(
+  idea: Idea,
+  sprintId: string | null,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Idea {
+  requireDeliveryPhase(idea, 'sprintId', 'Only a promoted idea can be assigned to a sprint.')
+  return markUpdated({ ...idea, sprintId }, nowUtc, actorUserId)
+}
+
+/**
+ * The two mutations above are meaningless on a Discovery item, and the contract answers `400`
+ * there (not the `409` a wrong-phase promotion gets) - so this raises the field-keyed
+ * `IdeaDomainError` the Application layer already maps to a 400.
+ */
+function requireDeliveryPhase(idea: Idea, field: string, message: string): void {
+  if (idea.phase !== IdeaPhase.Delivery) {
+    throw new IdeaDomainError(field, message)
+  }
 }
 
 export function replaceIdeaAssignees(
