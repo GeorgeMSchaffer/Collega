@@ -15,6 +15,7 @@ import type {
   CurrentUser,
   Idea,
   IdeaDetail,
+  ImportOutcome,
   Member,
   Organization,
   Person,
@@ -33,6 +34,7 @@ import type {
   WireOrganizationListItem,
   WireStatus,
   WireSwimlane,
+  WireUserImportResult,
   WireUserListItem,
   WireViewingAs,
 } from './wire'
@@ -160,6 +162,30 @@ export function toMember(wire: WireUserListItem, organizationName: string | null
     role,
     roleLabel: roleLabel(role),
     status: toUserStatus(wire.status),
+  }
+}
+
+/**
+ * A finished import, as comp P's outcome table reads it.
+ *
+ * The two nullable halves of a wire row collapse into one `detail` column here, chosen by the
+ * outcome: a created row shows the temporary password it generated, a rejected one shows why. The
+ * fallbacks are not defensive — a row can genuinely be rejected before an email was parsed out of
+ * it, and the table still has to name the row number that failed.
+ */
+export function toImportOutcome(wire: WireUserImportResult): ImportOutcome {
+  return {
+    created: wire.createdCount,
+    rejected: wire.rejectedCount,
+    rows: wire.rows.map((row) => {
+      const created = row.outcome === 'created'
+      return {
+        row: row.rowNumber,
+        email: row.email ?? '—',
+        created,
+        detail: (created ? row.temporaryPassword : row.error) ?? '',
+      }
+    }),
   }
 }
 

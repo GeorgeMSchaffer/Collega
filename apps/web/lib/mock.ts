@@ -587,56 +587,6 @@ export function boardAdminById(id: string): BoardAdmin | undefined {
 export const SWIMLANE_FLOOR = 2
 
 /**
- * The outcome of the last user CSV import, for `/settings/users/import`.
- *
- * Temporary passwords are shown once and never again, which is the whole reason this screen keeps a
- * result table rather than a bare success message. `SPEC/20-feature-client-ui.md`: user CSV import
- * is the bootstrap exception, so it stays direct for a Site Admin rather than going through View As.
- */
-export type ImportRow = {
-  row: number
-  email: string
-  created: boolean
-  /** The temporary password when created, or the reason when rejected. */
-  detail: string
-}
-
-export const lastImport: { completedAt: string; rows: ImportRow[] } = {
-  completedAt: '12 March, 09:41',
-  rows: [
-    {
-      row: 2,
-      email: 'tomas@acme-robotics.demo.collega.test',
-      created: true,
-      detail: 'Xq7-4mVt-92',
-    },
-    {
-      row: 3,
-      email: 'jaewon@acme-robotics.demo.collega.test',
-      created: true,
-      detail: 'Bn3-9wKp-51',
-    },
-    {
-      row: 4,
-      email: 'user@acme-robotics.demo.collega.test',
-      created: false,
-      detail: 'Already has an account.',
-    },
-    { row: 5, email: 'not-an-address', created: false, detail: 'Not a valid email address.' },
-    { row: 6, email: 'dana@acme-robotics.demo.collega.test', created: true, detail: 'Rk8-2hLm-77' },
-  ],
-}
-
-export const importCounts = {
-  get created() {
-    return lastImport.rows.filter((row) => row.created).length
-  },
-  get rejected() {
-    return lastImport.rows.filter((row) => !row.created).length
-  },
-}
-
-/**
  * The organization's AI scope statement (`SPEC/20-feature-ai-idea-assist.md` rule 6).
  *
  * Max 500 characters, optional, Org Admin owned. Empty is valid and means "no narrowing beyond the

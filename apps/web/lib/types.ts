@@ -109,6 +109,34 @@ export type Member = {
 }
 
 /**
+ * One row of a finished user import.
+ *
+ * `detail` is the temporary password when the row created an account and the reason when it did
+ * not. One field rather than two because the column is one column: comp P's *"Temporary password /
+ * reason"*, which renders as a credential chip or as prose according to `created`.
+ */
+export type ImportRow = {
+  row: number
+  email: string
+  created: boolean
+  detail: string
+}
+
+/**
+ * What an import did, in full.
+ *
+ * **This is the response to a write, not something that can be read back.** The API stores no import
+ * history and offers no endpoint for one, and the temporary passwords in it are generated once and
+ * never retrievable again — so comp P's "Last import" panel can only ever show the import the
+ * reader has just run, in the same session that ran it.
+ */
+export type ImportOutcome = {
+  created: number
+  rejected: number
+  rows: ImportRow[]
+}
+
+/**
  * `colorName` is the human name shown in the status settings table, and it has no API field —
  * a status carries a hex colour and nothing else. Optional rather than invented: the settings
  * screen renders the swatch alone when the name is absent, which is honest, and inventing

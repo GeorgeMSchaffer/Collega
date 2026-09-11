@@ -30,14 +30,7 @@ import { currentUser } from '../session'
 import type { Member, Organization, Profile } from '../types'
 import { failIfRequested, resolve } from './latency'
 
-export type {
-  FieldDefinition,
-  IdeaType,
-  ImportRow,
-  Probe,
-  PromptVersion,
-  UsageRow,
-} from '../mock'
+export type { FieldDefinition, IdeaType, Probe, PromptVersion, UsageRow } from '../mock'
 export {
   compactTokens,
   DAILY_TOKEN_BUDGET,
@@ -45,7 +38,7 @@ export {
   SYSTEM_PROMPT_MAX,
   totalTokens,
 } from '../mock'
-export type { Member, Organization, Profile } from '../types'
+export type { ImportOutcome, ImportRow, Member, Organization, Profile } from '../types'
 
 /**
  * Every organization on the deployment.
@@ -154,20 +147,16 @@ export async function getProfile(): Promise<Profile> {
   return resolve(toProfile(await apiGet<WireCurrentUser>('getProfile', apiPath`/auth/me`)))
 }
 
-export async function getLastImport(): Promise<{
-  completedAt: string
-  rows: fixture.ImportRow[]
-  created: number
-  rejected: number
-}> {
-  failIfRequested('getLastImport')
-  return resolve({
-    completedAt: fixture.lastImport.completedAt,
-    rows: fixture.lastImport.rows,
-    created: fixture.importCounts.created,
-    rejected: fixture.importCounts.rejected,
-  })
-}
+/*
+ * There is no `getLastImport`, and there cannot be one.
+ *
+ * The fixture had a "last import" to read back because a fixture can hold anything. The API stores
+ * no import history — `POST /organizations/{id}/users/import` answers with what it just did and
+ * keeps nothing — and the temporary passwords the screen exists to show are generated once and are
+ * never retrievable again, so an endpoint that returned them later would be a worse idea than a
+ * missing one. Comp P's "Last import" panel is therefore the response to the write, held in the
+ * form's own state: see `lib/server/admin-actions.ts` and `components/settings/user-import.tsx`.
+ */
 
 export async function getAiAssist(): Promise<typeof fixture.aiAssist> {
   failIfRequested('getAiAssist')

@@ -78,6 +78,27 @@ export type WireUserListItem = {
   status: string
 }
 
+/**
+ * One row of a finished CSV import.
+ *
+ * `temporaryPassword` is populated only for a created row and `error` only for a rejected one, and
+ * `email` is nullable because a row can be rejected for having no email to report.
+ */
+export type WireUserImportRow = {
+  rowNumber: number
+  email: string | null
+  outcome: string
+  error: string | null
+  temporaryPassword: string | null
+}
+
+/** `POST /organizations/{id}/users/import`. */
+export type WireUserImportResult = {
+  createdCount: number
+  rejectedCount: number
+  rows: readonly WireUserImportRow[]
+}
+
 /** `GET /organizations/{id}/boards`. */
 export type WireBoardListItem = {
   boardId: string
