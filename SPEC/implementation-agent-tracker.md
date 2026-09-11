@@ -116,6 +116,11 @@ Accessibility and bug paydown: the ten `Bug Triage.md` items from the 2026-08-16
 - TypeScript conversion, decided 2026-09-03 → `SPEC/decisions.md`: the .NET test suite is **discarded** (golden contract corpus plus per-slice Vitest, written by a QA agent); deployment is **Vercel + Prisma Postgres**, so Nest runs serverless and keeps no in-process state; net-new scope is **Wave G** — Loop, decision records, commitment strip, Triage Mode — starting only once F1 is green, with momentum, duplicate clustering and vote budget out.
 - Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/archive/sprint-04-qa-review-debt.md`.
 
+### Known open risks (recorded, deliberately unscheduled — do not read as "handled")
+Both are on the anonymous auth surface, both were confirmed against running code, and both are in `SPEC/decisions.md` 2026-09-11 with the reasoning. Named here so a planning pass meets them.
+- **Account-lockout denial of service.** Five failed sign-ins lock an account for 15 minutes, and five is below any per-IP rate limit that lets real people sign in — so five anonymous requests deny sign-in to any user whose email is known, repeatably. Fixing it needs a per-IP failure counter, which needs state outliving a request: either a schema change (frozen at S0.2) or a shared store. **Schedule it with the Redis/Vercel KV work the rate limiter already needs** to be a real ceiling rather than a per-warm-instance speed bump — one dependency, two problems. Not fixed now; no production users yet, and the first real tenant is what changes that.
+- **Registration is a cross-tenant account-enumeration oracle.** A valid invite code plus `201`-vs-`409` tells an anonymous caller whether any address has an account, in any organization, because `users.normalized_email` is globally unique. Hiding the status was tried on 2026-09-10 and reverted — it changed nothing, because the fork is the oracle. The real fix is asynchronous verify-by-email registration. The per-IP rate limit is the only bound today.
+
 ### Out of sprint scope — leave intact
 User-owned, landed on `dev`: the `e2e/` Playwright suite (`7a92dda`). The AI-brainstorm WIP that used to sit here shipped in Sprint 7 and is no longer out of scope.
 

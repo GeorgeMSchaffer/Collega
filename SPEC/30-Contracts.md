@@ -105,6 +105,8 @@ Two properties clients must not read more into than is there. The caller IP is t
 
 This does **not** replace the account lockout below, and does not prevent it: five failed attempts still lock an account, and five is below any limit that lets real people sign in.
 
+**Known open risk, following directly from that sentence: the lockout is an anonymous denial of service.** Five failed sign-ins against a known email address lock that account for 15 minutes, repeatable indefinitely, from a caller who holds no account, no invite code and no session. Bounding it needs a per-IP failed-attempt counter, and that needs state outliving a request — either a schema change (frozen at S0.2) or the shared store the rate limiter above already needs to be a real ceiling. Tracked, deliberately not fixed: `SPEC/decisions.md` 2026-09-11.
+
 ### `POST /api/v1/auth/login`
 Purpose: Authenticate a user with globally unique email credentials.
 

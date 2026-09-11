@@ -68,6 +68,33 @@ the mitigation.** That is this entry's whole reason for existing.
 
 ---
 
+## 2026-09-11 — The account-lockout denial of service is a known open risk; not fixed now
+
+**Five failed sign-ins lock an account for 15 minutes** (`SPEC/20-feature-auth.md`,
+`SPEC/30-Contracts.md`). Five is below any per-IP rate limit that still lets real people sign in —
+the contract already says so — so **five anonymous requests deny sign-in to any user whose email
+address is known, and the attacker can repeat that indefinitely.** No account, no invite code and no
+session is needed. Combined with the registration entry above, which hands an anonymous caller a way
+to confirm an address has an account, the target list is discoverable too.
+
+**Decided: track it, do not fix it now.** Both candidate fixes need state that outlives a single
+request, and neither is available cheaply:
+
+- **A per-IP failed-attempt counter beside the per-account one**, so the lockout is not the first
+  thing a caller can reach. Persisting it means a schema change, and the Prisma schema is **frozen
+  at S0.2**.
+- **A shared store — Redis or Vercel KV.** This is the same dependency the auth rate limiter
+  already needs to be a real control rather than a per-warm-instance speed bump (2026-09-10), so
+  the two should be priced and built together rather than separately. It is new infrastructure,
+  new configuration and new failure modes on the sign-in path.
+
+**Why it is acceptable to carry:** no production users yet. **What would change that:** the first
+real tenant. Whoever schedules the shared store should close this at the same time; a per-IP
+counter that lives in one warm serverless instance is not a fix, for the same reason the limiter's
+own counters are not a bound.
+
+---
+
 ## 2026-09-10 — The auth rate limiter sends `Retry-After` and nothing else
 
 **`ThrottlerModule` runs with `setHeaders: false`.** Left at its default it decorated every
