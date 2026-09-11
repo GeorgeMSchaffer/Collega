@@ -7,7 +7,11 @@
  * disagreeing — they render side by side on the same screen.
  */
 
+import { toProfile } from '../api/adapt'
+import { apiGet, apiPath } from '../api/client'
+import type { WireCurrentUser } from '../api/wire'
 import * as fixture from '../mock'
+import type { Profile } from '../types'
 import { failIfRequested, resolve } from './latency'
 
 export type {
@@ -17,7 +21,6 @@ export type {
   Member,
   Organization,
   Probe,
-  Profile,
   PromptVersion,
   UsageRow,
 } from '../mock'
@@ -28,6 +31,7 @@ export {
   SYSTEM_PROMPT_MAX,
   totalTokens,
 } from '../mock'
+export type { Profile } from '../types'
 
 export async function getOrganizations(): Promise<fixture.Organization[]> {
   failIfRequested('getOrganizations')
@@ -54,9 +58,19 @@ export async function getFieldDefinitions(): Promise<fixture.FieldDefinition[]> 
   return resolve(fixture.fieldDefinitions)
 }
 
-export async function getProfile(): Promise<fixture.Profile> {
+/**
+ * The signed-in account's own record, from `GET /auth/me`.
+ *
+ * A second request for a payload this render has already fetched — `requireCurrentUser` resolves
+ * the principal from the same endpoint — and deliberately so. That resolution is memoized as a
+ * `CurrentUser`, which drops `firstName`, `lastName` and `email` on the way through `toCurrentUser`
+ * because nothing but this screen needs them. Sharing it would mean widening the principal every
+ * gated component reads to carry three fields for one form; one extra call on one settings screen
+ * is the cheaper of the two.
+ */
+export async function getProfile(): Promise<Profile> {
   failIfRequested('getProfile')
-  return resolve(fixture.profile)
+  return resolve(toProfile(await apiGet<WireCurrentUser>('getProfile', apiPath`/auth/me`)))
 }
 
 export async function getLastImport(): Promise<{

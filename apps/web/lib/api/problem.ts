@@ -8,8 +8,18 @@
  * `apiPost`, because they have no session to send — need them.
  */
 
-/** The envelope, as much of it as a message needs. */
-export type ProblemDetails = { title?: unknown; detail?: unknown; errors?: unknown }
+/**
+ * The envelope, as much of it as a message needs.
+ *
+ * `type` is here because on the auth surface it is the only thing separating two refusals that
+ * share a status — see `KERNEL_UNAUTHORIZED` in `lib/server/auth-actions.ts`.
+ */
+export type ProblemDetails = {
+  type?: unknown
+  title?: unknown
+  detail?: unknown
+  errors?: unknown
+}
 
 /**
  * The field-level messages a validation 400 carries, still keyed by field.

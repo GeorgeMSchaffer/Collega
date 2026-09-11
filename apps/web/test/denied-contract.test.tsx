@@ -125,7 +125,7 @@ describe('an administrator-only delivery action', () => {
 describe('upvoting', () => {
   it('is denied to SiteAdmin with its reason reachable', () => {
     actAs('SiteAdmin')
-    render(<UpvoteButton count={2} />)
+    render(<UpvoteButton ideaId="idea-1" boardId="board-1" count={2} hasUpvoted={false} />)
 
     const reason = engagementDenial('SiteAdmin')
     expect(reason).not.toBeNull()
@@ -139,7 +139,7 @@ describe('upvoting', () => {
     it(`stays a live control for ${role}`, () => {
       // Read Only is the load-bearing case: it is denied authorship and keeps its vote.
       actAs(role)
-      render(<UpvoteButton count={2} />)
+      render(<UpvoteButton ideaId="idea-1" boardId="board-1" count={2} hasUpvoted={false} />)
       expectAllowedControl(
         screen.getByRole('button', { name: 'Upvote this idea, currently 2 votes' }),
       )
@@ -150,7 +150,7 @@ describe('upvoting', () => {
 describe('commenting', () => {
   it('offers a Read Only account the comment form', () => {
     actAs('ReadOnly')
-    render(<CommentBox />)
+    render(<CommentBox ideaId="idea-1" />)
 
     expect(screen.getByLabelText('Add a comment')).toBeTruthy()
     expectAllowedControl(screen.getByRole('button', { name: 'Comment' }))
@@ -158,7 +158,7 @@ describe('commenting', () => {
 
   it('replaces the form with a reason for a Site Admin', () => {
     actAs('SiteAdmin')
-    render(<CommentBox />)
+    render(<CommentBox ideaId="idea-1" />)
 
     expect(screen.queryByLabelText('Add a comment')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Comment' })).toBeNull()

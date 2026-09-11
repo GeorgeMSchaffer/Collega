@@ -1,6 +1,5 @@
-import { Alert, Button, Field, Input } from '@collega/design-system'
+import { ChangePasswordForm } from '@/components/auth/change-password-form'
 import { AuthPitch } from '@/components/auth-pitch'
-import { InertForm } from '@/components/common/inert-form'
 
 export const metadata = { title: 'Change your password · Collega' }
 
@@ -8,16 +7,16 @@ export const metadata = { title: 'Change your password · Collega' }
  * Forced first-sign-in password change (comp Q `s-first-signin`).
  *
  * The pitch copy states the rule that makes this screen non-optional: until the temporary password
- * is replaced the server refuses every other request, so this is a gate rather than a prompt.
+ * is replaced the server refuses every other request, so this is a gate rather than a prompt. The
+ * API enforces exactly that — only `GET /auth/me` and this change carry
+ * `@AllowWhilePasswordChangeRequired()` — which is also why comp P gives the screen no sidebar: a
+ * navigation rail here would be a rail of dead ends.
+ *
+ * No `searchParams`. The mismatch used to arrive as `?error=mismatch`, which a bookmark or a shared
+ * link could reproduce out of nowhere, and which made a refused submission a navigation; the form
+ * holds its own refusals now. That leaves nothing per-request to read, so this prerenders.
  */
-export default async function ChangePasswordPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>
-}) {
-  const { error } = await searchParams
-  const mismatch = error === 'mismatch'
-
+export default function ChangePasswordPage() {
   return (
     <>
       <AuthPitch heading="Choose your own password.">
@@ -35,57 +34,7 @@ export default async function ChangePasswordPage({
             For security, choose a new password before continuing.
           </p>
 
-          {mismatch ? (
-            <Alert variant="destructive" className="mb-4">
-              <span>
-                <b>The new password and confirmation don&rsquo;t match.</b> Nothing has been
-                changed.
-              </span>
-            </Alert>
-          ) : null}
-
-          <InertForm>
-            <Field
-              htmlFor="currentPassword"
-              label="Current password"
-              hint="The temporary password you just signed in with."
-            >
-              <Input
-                id="currentPassword"
-                name="currentPassword"
-                type="password"
-                autoComplete="current-password"
-              />
-            </Field>
-            <Field
-              htmlFor="newPassword"
-              label="New password"
-              hint="At least 6 characters, with an uppercase letter, a lowercase letter, a number and a symbol."
-            >
-              <Input
-                id="newPassword"
-                name="newPassword"
-                type="password"
-                autoComplete="new-password"
-              />
-            </Field>
-            <Field
-              htmlFor="confirmPassword"
-              label="Confirm new password"
-              {...(mismatch ? { error: 'Must match the new password exactly.' } : {})}
-            >
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                invalid={mismatch}
-              />
-            </Field>
-            <Button type="submit" className="w-full">
-              Update password
-            </Button>
-          </InertForm>
+          <ChangePasswordForm />
 
           <p className="mt-4 text-sm text-muted-foreground">
             Saving signs you out. Sign in again with the new password and you will land on Home.

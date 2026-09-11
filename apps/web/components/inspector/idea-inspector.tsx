@@ -66,7 +66,12 @@ export async function IdeaInspector({ idea, closeHref }: { idea: IdeaDetail; clo
         <p className="m-0 text-sm">{idea.description}</p>
 
         <div className="flex flex-wrap items-center gap-2">
-          <UpvoteButton count={idea.upvotes} />
+          <UpvoteButton
+            ideaId={idea.id}
+            boardId={idea.boardId}
+            count={idea.upvotes}
+            hasUpvoted={idea.hasUpvoted}
+          />
           {/* Nullable now that the tags are real: most seeded ideas carry none, and an empty chip
               beside the vote count reads as a tag whose name failed to load. */}
           {idea.tag ? <Tag>{idea.tag}</Tag> : null}
@@ -139,7 +144,7 @@ export async function IdeaInspector({ idea, closeHref }: { idea: IdeaDetail; clo
               </div>
             ))
           )}
-          <CommentBox />
+          <CommentBox ideaId={idea.id} />
         </div>
       </div>
     </aside>

@@ -585,27 +585,6 @@ export function issuesForOutcome(outcomeId: string): Issue[] {
 // ---------------------------------------------------------------------------
 
 /**
- * The signed-in account's own record, for `/settings/profile`.
- *
- * The resolved principal carries what the shell renders — a display name and initials. The profile form
- * edits the parts it is composed from, so those live here: a first and last name the form owns, and
- * the email and role it shows read-only. Comp Q labels the `User` role "Member" on this one screen;
- * every other surface in this app calls it "User", and two names for one role is worse than
- * disagreeing with the mockup, so `roleLabel` is used here too.
- */
-export type Profile = {
-  firstName: string
-  lastName: string
-  email: string
-}
-
-export const profile: Profile = {
-  firstName: 'Olivia',
-  lastName: 'Administer',
-  email: 'orgadmin@acme-robotics.demo.collega.test',
-}
-
-/**
  * Boards as the administration screens see them.
  *
  * `boards` above is the workspace view — what a board is *about* and how many ideas sit on it.

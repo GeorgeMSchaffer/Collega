@@ -1,6 +1,6 @@
 import { Button, Denied } from '@collega/design-system'
-import { InertForm } from '@/components/common/inert-form'
 import { currentUser, engagementDenial } from '@/lib/session'
+import { CommentForm, UpvoteForm } from './engagement-controls'
 
 /**
  * Upvote and comment controls.
@@ -9,13 +9,30 @@ import { currentUser, engagementDenial } from '@/lib/session'
  * Only account may vote and comment but not edit, and a Site Admin may do none of it — not a member
  * of the organization. Collapsing the two into one "can write" check silently takes voting away
  * from Read Only, which is the opposite of what the product intends.
+ *
+ * The gate lives here, in a Server Component, and the live control is a client one next door. That
+ * split is what keeps a denied reader from downloading a form and a Server Function reference in
+ * order to be shown a button they may not press — and it is only a courtesy either way: both
+ * actions are HTTP endpoints anyone can post to, and the API refuses them on its own.
  */
-export function UpvoteButton({ count }: { count: number }) {
+export function UpvoteButton({
+  ideaId,
+  boardId,
+  count,
+  hasUpvoted,
+}: {
+  ideaId: string
+  boardId: string
+  count: number
+  hasUpvoted: boolean
+}) {
   const denial = engagementDenial(currentUser().role)
 
   if (denial) {
     return (
       <Denied reason={denial} id="why-upvote">
+        {/* Outside any form, and `aria-disabled` rather than `disabled`, so the reason beside it
+            stays reachable — `Denied`'s whole contract. */}
         <Button
           variant="outline"
           size="sm"
@@ -29,14 +46,10 @@ export function UpvoteButton({ count }: { count: number }) {
     )
   }
 
-  return (
-    <Button variant="outline" size="sm" aria-label={`Upvote this idea, currently ${count} votes`}>
-      ▲ {count}
-    </Button>
-  )
+  return <UpvoteForm ideaId={ideaId} boardId={boardId} count={count} hasUpvoted={hasUpvoted} />
 }
 
-export function CommentBox() {
+export function CommentBox({ ideaId }: { ideaId: string }) {
   const denial = engagementDenial(currentUser().role)
 
   if (denial) {
@@ -47,15 +60,5 @@ export function CommentBox() {
     )
   }
 
-  return (
-    <InertForm className="flex flex-col gap-2">
-      <label htmlFor="comment" className="sr-only">
-        Add a comment
-      </label>
-      <textarea id="comment" rows={2} maxLength={2000} placeholder="Add a comment…" />
-      <Button size="sm" className="self-start" type="submit">
-        Comment
-      </Button>
-    </InertForm>
-  )
+  return <CommentForm ideaId={ideaId} />
 }

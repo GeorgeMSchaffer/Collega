@@ -17,6 +17,7 @@ import type {
   IdeaDetail,
   Person,
   Priority,
+  Profile,
   Role,
   Status,
   ViewingAs,
@@ -85,6 +86,17 @@ export function toCurrentUser(wire: WireCurrentUser): CurrentUser {
     organizationName: wire.organizationTitle,
     viewingAs: toViewingAs(wire.viewingAs),
   }
+}
+
+/**
+ * The same payload again, as the profile form's fields rather than as the principal.
+ *
+ * Untrimmed on purpose: these are what the form posts straight back to `PUT /auth/me`, and the API
+ * trims on the way in (`SPEC/30-Contracts.md`). Trimming here as well would show a name the stored
+ * one does not match if a trailing space ever reached the column.
+ */
+export function toProfile(wire: WireCurrentUser): Profile {
+  return { firstName: wire.firstName, lastName: wire.lastName, email: wire.email }
 }
 
 /** A board's own lane, which carries the status's display fields inline. */
