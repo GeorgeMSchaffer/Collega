@@ -255,7 +255,7 @@ function stop(child: ReturnType<typeof server>, signal: NodeJS.Signals = 'SIGTER
   }
 }
 
-const api = server('node', [join('apps', 'api', 'dist', 'main.js')], serverEnv)
+const api = server('node', [join('apps', 'api', 'dist', 'bootstrap.js')], serverEnv)
 
 say(`API — starting on ${API_PORT}`)
 if (!(await waitForPort(Number(API_PORT), 30))) {
