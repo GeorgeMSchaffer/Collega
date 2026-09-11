@@ -9,6 +9,92 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-11 — Registration answers `409` again; hiding the status did not close the enumeration oracle
+
+**Supersedes 2026-09-10's "`POST /auth/register` refuses a taken email generically".** That entry
+stays below, marked, because its reasoning is persuasive and someone will arrive at it again.
+
+**What was tried.** A taken email had answered `409 "Email is already in use."`. On 2026-09-10 that
+was replaced with the generic field-keyed `400` every other registration refusal produces, worded
+so it did not say the account exists, with the real reason moved to a `UserSelfRegistrationRejected`
+audit event. The stated goal was closing anonymous cross-tenant account enumeration.
+
+**Why it did not work — the oracle is the fork, not the status.** With a valid invite code, a free
+address still answered `201` and a taken one still answered `400`. `201`-vs-`400` is the same
+perfect per-address boolean `201`-vs-`409` was; the attacker reads the status line either way and
+does not care what it is called. Confirmed live against the running API by a reviewer, and
+re-confirmed from the code path. **Nothing about the enumeration got harder.** The only thing that
+changed is that a *negative* probe — an address with no account — now created a real junk user in
+the invite code's organization, where before it created nothing. Noisier and auditable, which is
+worth something, but it is not the property the change was made for.
+
+**Two ways it was worse than a no-op.** `SPEC/30-Contracts.md` came to assert "The response must
+not fork on whether it does", which was simply false while the code forked `201`/`400` — and
+`CLAUDE.md` tells every reader to treat `SPEC/*.md` as the source of truth, so the next person to
+look would have concluded this was handled and not built the real mitigation. And the audit event
+created two problems of its own: an unauthenticated caller gained a write amplification into
+`audit_events`, and each row was attributed to the invite code's organization while carrying an
+email address that may belong to a different tenant or to a Site Admin — so an Org Admin reading
+their own audit log would see other tenants' addresses. That event is removed; it had no other
+caller.
+
+**Restored:** `throw new ConflictError('Email is already in use.')`; `409` in the contract;
+`apps/web`'s `409` branch in `lib/server/auth-actions.ts`, which keys `detail` onto the `email`
+field so the screen renders one refusal path rather than two; and the golden case
+`profile.register.duplicate.anonymous`, fixture and scenario step together. The corpus is 447 cases
+again. **Retiring that case was the worst part of the trade** — a pinned refusal on an anonymous
+auth endpoint is among the most valuable things in the corpus, and it was spent on a reworded
+string. `tools/golden/test/accepted.test.ts` was right to refuse an accepted-diff entry naming
+`status`; the lesson is that a change the corpus cannot express is a change to think harder about,
+not a case to delete.
+
+**Kept from the reverted change:** `validatePassword` stays above the email check. It stands on its
+own — a probe now costs a request carrying a policy-valid password rather than any request at all —
+and it is the only part of 2026-09-10 that bought anything.
+
+**What is true now, stated plainly so it is not mistaken for handled.** A caller holding a valid
+invite code can determine whether any email address has an account, across every tenant, because
+`users.normalized_email` is globally unique so the check spans all organizations rather than the one
+the invite code names. An invite code is a standing, non-expiring credential printed on an admin
+screen. The per-IP rate limit on the route is the only bound on this today, and per the 2026-09-10
+limiter entry it is best-effort rather than a ceiling. This is recorded as a known open risk in
+`SPEC/30-Contracts.md` under `POST /auth/register`.
+
+**The real fix, for whoever picks it up:** asynchronous verify-by-email registration. The response
+becomes identical whether or not the address was free, and the outcome is delivered to whoever owns
+the mailbox — which is the only thing that makes the two cases indistinguishable to the caller. It
+is a feature with a mail dependency, not a wording change. **Do not re-propose a vaguer message as
+the mitigation.** That is this entry's whole reason for existing.
+
+---
+
+## 2026-09-11 — The account-lockout denial of service is a known open risk; not fixed now
+
+**Five failed sign-ins lock an account for 15 minutes** (`SPEC/20-feature-auth.md`,
+`SPEC/30-Contracts.md`). Five is below any per-IP rate limit that still lets real people sign in —
+the contract already says so — so **five anonymous requests deny sign-in to any user whose email
+address is known, and the attacker can repeat that indefinitely.** No account, no invite code and no
+session is needed. Combined with the registration entry above, which hands an anonymous caller a way
+to confirm an address has an account, the target list is discoverable too.
+
+**Decided: track it, do not fix it now.** Both candidate fixes need state that outlives a single
+request, and neither is available cheaply:
+
+- **A per-IP failed-attempt counter beside the per-account one**, so the lockout is not the first
+  thing a caller can reach. Persisting it means a schema change, and the Prisma schema is **frozen
+  at S0.2**.
+- **A shared store — Redis or Vercel KV.** This is the same dependency the auth rate limiter
+  already needs to be a real control rather than a per-warm-instance speed bump (2026-09-10), so
+  the two should be priced and built together rather than separately. It is new infrastructure,
+  new configuration and new failure modes on the sign-in path.
+
+**Why it is acceptable to carry:** no production users yet. **What would change that:** the first
+real tenant. Whoever schedules the shared store should close this at the same time; a per-IP
+counter that lives in one warm serverless instance is not a fix, for the same reason the limiter's
+own counters are not a bound.
+
+---
+
 ## 2026-09-10 — The auth rate limiter sends `Retry-After` and nothing else
 
 **`ThrottlerModule` runs with `setHeaders: false`.** Left at its default it decorated every
@@ -36,6 +122,13 @@ presence, which is the only thing separating the limiter's `429` from an account
 ---
 
 ## 2026-09-10 — `POST /auth/register` refuses a taken email generically, and no longer answers `409`
+
+> **SUPERSEDED by 2026-09-11 — "Registration answers `409` again; hiding the status did not close
+> the enumeration oracle".** The change described below was reverted on 2026-09-11 because it did
+> not do what this entry claims: `201`-vs-`400` is the same per-address boolean as `201`-vs-`409`.
+> Kept in full because the reasoning reads convincingly and will be arrived at again; read the
+> 2026-09-11 entry before acting on any of it. The one part that survived the revert is
+> `validatePassword` moving above the email check.
 
 **An email address already in use is now the same field-keyed `400` every other registration
 refusal produces**, keyed on `email` and worded so it does not say the account exists. The `409

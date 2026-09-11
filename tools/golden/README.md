@@ -13,9 +13,11 @@ itself, as a self-check. In Wave F it is Nest, and the failure list is the
 remaining work.
 
 **Captured 2026-09-03**: 447 cases over all 81 endpoints, replaying clean against
-a freshly seeded .NET instance. **446 stand today** — `profile.register.duplicate.anonymous`
-was retired on 2026-09-10, when register stopped answering `409` and the corpus turned
-out to have no way to express a status that moved (`SPEC/decisions.md`). Re-capture only
+a freshly seeded .NET instance, and **all 447 stand today**. One of them,
+`profile.register.duplicate.anonymous`, was retired on 2026-09-10 and restored on
+2026-09-11 when the register change it was paying for was reverted
+(`SPEC/decisions.md`) — worth knowing only because a pinned refusal on an anonymous
+auth endpoint is not a reasonable thing to trade for a reworded string. Re-capture only
 if the API changes — and only while it still exists. Once cutover deletes the .NET
 solution the recording cannot be made again, and the conversion has no oracle at all.
 
@@ -96,8 +98,8 @@ psql -h 127.0.0.1 -U collega -d Collega -tAc \
 | `src/coverage.ts` | A1 | Endpoint × role × case-kind coverage, including "happy path only". |
 | `src/scaffold.ts` | A1 | Generates the full grid of stubs so A2 is filling in blanks rather than remembering which of 405 cells it has not written. |
 | `replay/replay.ts` | A3 | Compare, report, exit non-zero. |
-| `scenarios/` | A2 | What to ask, in what order, as whom. 446 cases over 15 files. |
-| `fixtures/` | A2 | The corpus: 446 recorded exchanges covering all 81 endpoints. Committed — it *is* the oracle. |
+| `scenarios/` | A2 | What to ask, in what order, as whom. 447 cases over 15 files. |
+| `fixtures/` | A2 | The corpus: 447 recorded exchanges covering all 81 endpoints. Committed — it *is* the oracle. |
 
 ## Normalization, and why labels rather than ordinals
 

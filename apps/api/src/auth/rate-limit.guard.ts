@@ -22,10 +22,15 @@ export const AUTH_HOURLY_THROTTLER = 'authHourly'
  * - The minute figure only stops that hundred being spent in half a second, which is what the
  *   security audit confirmed was possible (40 anonymous registers in 485ms).
  * - Login is raised to twenty because it is the one endpoint a shared egress hits repeatedly with
- *   DIFFERENT people behind it, and because the golden replay signs in eight times per run from
- *   one address (`tools/golden`, four role sessions plus three recorded login steps plus one
- *   credential override) - ten would leave the F1 gate two requests of headroom and `pnpm check`
- *   does not run the replay, so it would fail later and somewhere else.
+ *   DIFFERENT people behind it.
+ *
+ * **Twenty is NOT enough for the golden replay, and the note that used to say so was wrong.** It
+ * claimed the replay signs in eight times per run; `cli.ts` calls `runner.resetSessions()` after
+ * every scenario, so all 15 re-authenticate every role they use and the run exhausts both buckets
+ * partway through. Measured 2026-09-11: the replay cannot complete against this stack at all.
+ * `pnpm check` does not run the replay, so this surfaces only at the F1 gate - see
+ * `SPEC/Bug Triage.md`. Raising the numbers here is one of three candidate fixes and not
+ * obviously the right one, so the limits are unchanged pending that decision.
  *
  * **This does NOT stop the account-lockout denial of service.** Five failed attempts lock an
  * account for fifteen minutes (`packages/domain/src/users/user.ts`), and five is below any limit
