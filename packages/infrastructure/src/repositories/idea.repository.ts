@@ -20,13 +20,16 @@
 import { randomUUID } from 'node:crypto'
 import type { SortDirection } from '@collega/application/common'
 import type {
+  DeliveryFilter,
   IdeaFieldValueSnapshot,
   IdeaListFilter,
   IdeaPage,
   IdeaRepository,
   OrganizationIdeaListFilter,
 } from '@collega/application/ideas'
+import type { SprintIssueCounts, SprintIssuesPort } from '@collega/application/sprints'
 import type { DeliveryStatus, EffortLevel, IdeaPhase, Priority } from '@collega/domain/enums'
+import { DeliveryStatus as Delivery, IdeaPhase as Phase } from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueRecord } from '@collega/domain/ideas'
 import type {
   idea_assignees as AssigneeRow,
@@ -98,7 +101,7 @@ function fromRow(row: IdeaRowFull): Idea {
   }
 }
 
-export class PrismaIdeaRepository implements IdeaRepository {
+export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly unitOfWork: PrismaUnitOfWork,
@@ -222,6 +225,68 @@ export class PrismaIdeaRepository implements IdeaRepository {
     }))
   }
 
+  // Delivery (Issues-and-Delivery Slice 1) ------------------------------------------------------
+
+  /**
+   * The sprint board and the delivery backlog. Unpaged - a sprint is a small, time-boxed set and a
+   * board that pages is not a board - but still totally ordered on `createdAtUtc` then `title`,
+   * never id, per the golden-capture finding in this file's header: the sprint board groups by
+   * delivery status client-side, so a wobbling order inside a swimlane is just as visible.
+   */
+  async listDelivery(filter: DeliveryFilter): Promise<readonly Idea[]> {
+    const rows = await this.prisma.ideas.findMany({
+      where: {
+        organization_id: filter.organizationId,
+        is_deleted: false,
+        phase: Phase.Delivery,
+        ...(filter.backlogOnly ? { sprint_id: null } : {}),
+        ...(filter.sprintId ? { sprint_id: filter.sprintId } : {}),
+        ...(filter.deliveryStatus ? { delivery_status: filter.deliveryStatus } : {}),
+      },
+      include: IDEA_INCLUDE,
+      orderBy: [{ created_at_utc: 'asc' }, { title: 'asc' }],
+    })
+    return rows.map(fromRow)
+  }
+
+  async listBySprint(sprintId: string): Promise<readonly Idea[]> {
+    const rows = await this.prisma.ideas.findMany({
+      where: { sprint_id: sprintId, is_deleted: false },
+      include: IDEA_INCLUDE,
+      orderBy: [{ created_at_utc: 'asc' }, { title: 'asc' }],
+    })
+    return rows.map(fromRow)
+  }
+
+  /** One grouped query for every sprint on the page - see `SprintIssuesPort.countsBySprintIds`. */
+  async countsBySprintIds(
+    sprintIds: readonly string[],
+  ): Promise<ReadonlyMap<string, SprintIssueCounts>> {
+    if (sprintIds.length === 0) {
+      return new Map()
+    }
+
+    const grouped = await this.prisma.ideas.groupBy({
+      by: ['sprint_id', 'delivery_status'],
+      where: { sprint_id: { in: [...sprintIds] }, is_deleted: false },
+      _count: { _all: true },
+    })
+
+    const counts = new Map<string, SprintIssueCounts>()
+    for (const group of grouped) {
+      if (!group.sprint_id) {
+        continue
+      }
+      const current = counts.get(group.sprint_id) ?? { issueCount: 0, doneCount: 0 }
+      const count = group._count._all
+      counts.set(group.sprint_id, {
+        issueCount: current.issueCount + count,
+        doneCount: current.doneCount + (group.delivery_status === Delivery.Complete ? count : 0),
+      })
+    }
+    return counts
+  }
+
   async listByBoard(filter: IdeaListFilter): Promise<IdeaPage<Idea>> {
     const direction: SortDirection = filter.sortDirection === 'desc' ? 'desc' : 'asc'
 
@@ -235,6 +300,7 @@ export class PrismaIdeaRepository implements IdeaRepository {
         : {}),
       ...(filter.search ? { title: { contains: filter.search, mode: 'insensitive' } } : {}),
       ...(filter.tag ? { idea_tags: { some: { tags: { normalized_name: filter.tag } } } } : {}),
+      ...(filter.phase ? { phase: filter.phase } : {}),
     }
 
     // TOTAL ORDER: the requested sort, then the mandated tie-break (createdAtUtc, title) -
@@ -307,6 +373,9 @@ export class PrismaIdeaRepository implements IdeaRepository {
       Prisma.sql`i.is_deleted = false`,
     ]
 
+    if (filter.phase) {
+      conditions.push(Prisma.sql`i.phase = ${filter.phase}::"IdeaPhase"`)
+    }
     if (filter.createdByUserId) {
       conditions.push(Prisma.sql`i.author_user_id = ${filter.createdByUserId}::uuid`)
     }
