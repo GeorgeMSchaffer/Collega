@@ -15,6 +15,8 @@ import type {
   CurrentUser,
   Idea,
   IdeaDetail,
+  Member,
+  Organization,
   Person,
   Priority,
   Profile,
@@ -28,8 +30,10 @@ import type {
   WireIdeaComment,
   WireIdeaDetail,
   WireIdeaListItem,
+  WireOrganizationListItem,
   WireStatus,
   WireSwimlane,
+  WireUserListItem,
   WireViewingAs,
 } from './wire'
 
@@ -51,6 +55,20 @@ function toPriority(value: string): Priority {
   const priority = PRIORITIES.find((candidate) => candidate === value)
   if (!priority) throw new Error(`The API returned an unknown priority: ${value}`)
   return priority
+}
+
+/**
+ * The wire spells a user's status as a free string too, and only two values are real: the domain
+ * has `Active` and `Inactive` and nothing else (`SPEC/30-Contracts.md` — comp Q's "suspended" demo
+ * account is `Inactive`). Narrowed here for the reason `toRole` is: a third value would otherwise
+ * reach a badge that styles on equality and render as an ordinary outline with no sign anything
+ * was wrong.
+ */
+function toUserStatus(value: string): 'Active' | 'Inactive' {
+  if (value !== 'Active' && value !== 'Inactive') {
+    throw new Error(`The API returned an unknown user status: ${value}`)
+  }
+  return value
 }
 
 /** First letter of each name, which is what the avatar renders. */
@@ -102,6 +120,47 @@ export function toProfile(wire: WireCurrentUser): Profile {
 /** A board's own lane, which carries the status's display fields inline. */
 export function swimlaneToStatus(wire: WireSwimlane): Status {
   return { id: wire.statusId, name: wire.statusName, color: wire.statusColor }
+}
+
+/**
+ * A tenant, as the Site Admin's table lists it.
+ *
+ * City and state become comp P's single "Detroit, MI" cell here rather than in the row, so the two
+ * nullable columns are reconciled once: either alone still reads as a location, and neither means
+ * the cell is empty rather than showing a stray comma.
+ */
+export function toOrganization(wire: WireOrganizationListItem): Organization {
+  return {
+    id: wire.organizationId,
+    name: wire.title,
+    description: wire.description,
+    location: [wire.city, wire.state].filter(Boolean).join(', ') || null,
+    inviteCode: wire.inviteCode,
+    isArchived: wire.isArchived,
+  }
+}
+
+/**
+ * An account on an administration list.
+ *
+ * `organizationName` is passed in rather than read off the payload because the listing does not
+ * carry it — the route named the organization, so the API does not repeat it per row. Only the
+ * cross-organization view has a name to supply, which is why the parameter is nullable rather than
+ * required.
+ */
+export function toMember(wire: WireUserListItem, organizationName: string | null): Member {
+  const role = toRole(wire.role)
+  return {
+    id: wire.userId,
+    displayName: `${wire.firstName} ${wire.lastName}`.trim(),
+    initials: initialsOf(wire.firstName, wire.lastName),
+    email: wire.email,
+    organizationId: wire.organizationId,
+    organizationName,
+    role,
+    roleLabel: roleLabel(role),
+    status: toUserStatus(wire.status),
+  }
 }
 
 /** The organization's status catalog, as the settings screens list it. */

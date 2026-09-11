@@ -3,7 +3,13 @@ import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { CrossOrgNote } from '@/components/settings/cross-org'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { getMembers, getMembersForOrganization, getOrganizations } from '@/lib/data'
+import {
+  getMembers,
+  getMembersForOrganization,
+  getOrganizations,
+  type Member,
+  type Organization,
+} from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -43,13 +49,20 @@ function NoUsers({ siteAdmin }: { siteAdmin: boolean }) {
 
 export default async function UsersPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
-  await requireCurrentUser()
+  const user = await requireCurrentUser()
+  const siteAdmin = user.role === 'SiteAdmin'
 
-  const siteAdmin = currentUser().role === 'SiteAdmin'
-  const [rows, organizations] = await Promise.all([
-    siteAdmin ? getMembers() : getMembersForOrganization('acme-robotics'),
-    getOrganizations(),
-  ])
+  let rows: Member[] = []
+  let organizations: Organization[] = []
+
+  // Nothing is read for a role that may not read it. `AdminOnly` below already refuses a member,
+  // and so does the API — but a reader runs before the gate renders, so calling anyway would land
+  // that 403 on the error boundary in place of the refusal panel comp P specifies for this route.
+  if (siteAdmin) {
+    ;[rows, organizations] = await Promise.all([getMembers(), getOrganizations()])
+  } else if (user.role === 'OrgAdmin' && user.organizationId !== null) {
+    rows = await getMembersForOrganization(user.organizationId)
+  }
 
   return (
     <SettingsPage
@@ -57,7 +70,11 @@ export default async function UsersPage() {
       gate="users"
       lead={
         siteAdmin
-          ? 'Every account on the deployment. Open an organization to change its membership.'
+          ? // Comp P's own words, and load-bearing now that the rows are real: this list is
+            // assembled per organization, so an account belonging to none — a Site Admin's own —
+            // appears on it nowhere. "Every account on the deployment" would be a promise the
+            // available endpoints cannot keep.
+            'Every account across every organization. Open an organization to change its membership.'
           : `Who is in ${currentUser().organizationName}, and what each of them may do.`
       }
       actions={
@@ -72,6 +89,7 @@ export default async function UsersPage() {
       }
     >
       {siteAdmin ? <CrossOrgNote what="An account" /> : null}
+
       {rows.length === 0 ? (
         <NoUsers siteAdmin={siteAdmin} />
       ) : (
@@ -79,7 +97,7 @@ export default async function UsersPage() {
           summary={
             siteAdmin
               ? `${rows.length} accounts across ${organizations.length} organizations.`
-              : `${rows.length} members — one per role.`
+              : `${rows.length} members.`
           }
         >
           <thead>

@@ -13,7 +13,7 @@
  * rather than by inspection.
  */
 
-import type { Board, Idea, Priority, Role, Status } from './types'
+import type { Board, Idea, Member, Priority, Role, Status } from './types'
 
 export { engagementDenial, isAdministrator, writeDenial } from './roles'
 export type { Board, CurrentUser, Idea, Priority, Role, Status } from './types'
@@ -190,46 +190,6 @@ export const navCounts = {
 // Administration fixtures (Wave E5)
 // ---------------------------------------------------------------------------
 
-export type Organization = {
-  id: string
-  name: string
-  description: string
-  memberCount: number
-  boardCount: number
-  ideaCount: number
-}
-
-export const organizations: Organization[] = [
-  {
-    id: 'acme-robotics',
-    name: 'Acme Robotics',
-    description: 'Industrial robotics and automation manufacturer.',
-    memberCount: 4,
-    boardCount: 2,
-    ideaCount: 22,
-  },
-  {
-    id: 'blue-harbor',
-    name: 'Blue Harbor Logistics',
-    description: 'Regional freight and warehousing operator.',
-    memberCount: 4,
-    boardCount: 2,
-    ideaCount: 22,
-  },
-]
-
-export type Member = {
-  id: string
-  displayName: string
-  initials: string
-  email: string
-  organizationId: string
-  organizationName: string
-  role: Role
-  roleLabel: string
-  status: 'Active' | 'Inactive'
-}
-
 const ROLE_SEED: ReadonlyArray<readonly [string, string, string, Role, string]> = [
   ['Olivia Administer', 'OA', 'orgadmin', 'OrgAdmin', 'Org Admin'],
   ['Noah Contributor', 'NC', 'user', 'User', 'User'],
@@ -237,24 +197,32 @@ const ROLE_SEED: ReadonlyArray<readonly [string, string, string, Role, string]> 
   ['Rosa Observer', 'RO', 'readonly', 'ReadOnly', 'Read Only'],
 ]
 
-/** The demo seed: four accounts per organization, one per role. See `demo.md`. */
-export const members: Member[] = organizations.flatMap((org) =>
+const DEMO_ORGANIZATIONS: ReadonlyArray<readonly [string, string]> = [
+  ['acme-robotics', 'Acme Robotics'],
+  ['blue-harbor', 'Blue Harbor Logistics'],
+]
+
+/**
+ * The demo seed: four accounts per organization, one per role. See `demo.md`.
+ *
+ * **The settings screens no longer read this** — `getMembers` and `getMembersForOrganization` call
+ * the API. It stays because `test/support/acting-role.ts` builds each role's whole identity from a
+ * row here rather than inventing one, which is what keeps the unit tests' principals honest against
+ * the seed. Nothing in `app/` may use it.
+ */
+export const members: Member[] = DEMO_ORGANIZATIONS.flatMap(([organizationId, organizationName]) =>
   ROLE_SEED.map(([displayName, initials, localPart, role, roleLabel], n) => ({
-    id: `${org.id}-u${n + 1}`,
+    id: `${organizationId}-u${n + 1}`,
     displayName,
     initials,
-    email: `${localPart}@${org.id}.demo.collega.test`,
-    organizationId: org.id,
-    organizationName: org.name,
+    email: `${localPart}@${organizationId}.demo.collega.test`,
+    organizationId,
+    organizationName,
     role,
     roleLabel,
     status: 'Active' as const,
   })),
 )
-
-export function membersForOrganization(organizationId: string): Member[] {
-  return members.filter((member) => member.organizationId === organizationId)
-}
 
 export type IdeaType = {
   id: string

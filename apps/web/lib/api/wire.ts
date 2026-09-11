@@ -43,6 +43,41 @@ export type WireLoginResponse = {
   user: WireCurrentUser
 }
 
+/**
+ * `GET /organizations` — a Site Admin's list of every tenant.
+ *
+ * `inviteCode` rides on the list item rather than needing a detail request per row, which is what
+ * lets the table comp P locks show it in a column. It is a standing credential: see `Organization`
+ * in `lib/types.ts` for what that obliges the screens to do with it.
+ */
+export type WireOrganizationListItem = {
+  organizationId: string
+  title: string
+  description: string
+  inviteCode: string
+  city: string | null
+  state: string | null
+  isArchived: boolean
+}
+
+/**
+ * `GET /organizations/{id}/users` — the admin listing, which carries role and status.
+ *
+ * Not to be confused with `/members`, which is the assignee picker's id-name-email view and is
+ * readable by any member. This one is Org Admin and above.
+ *
+ * No organization title: the route already names the organization, so the caller knows it.
+ */
+export type WireUserListItem = {
+  userId: string
+  organizationId: string | null
+  firstName: string
+  lastName: string
+  email: string
+  role: string
+  status: string
+}
+
 /** `GET /organizations/{id}/boards`. */
 export type WireBoardListItem = {
   boardId: string
