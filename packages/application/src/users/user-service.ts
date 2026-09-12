@@ -39,7 +39,7 @@ import type {
   UserListQuery,
   UserListResult,
 } from './models.js'
-import type { UserRepository } from './ports.js'
+import type { OrganizationExistenceLookup, UserRepository } from './ports.js'
 
 const VALIDATION_TITLE = 'One or more fields are invalid.'
 
@@ -84,6 +84,7 @@ export class UserService {
   constructor(
     private readonly users: UserRepository,
     private readonly passwordHasher: PasswordHasher,
+    private readonly organizations: OrganizationExistenceLookup,
     private readonly unitOfWork: UnitOfWork,
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
@@ -140,6 +141,7 @@ export class UserService {
 
   async create(organizationId: string, command: CreateUserCommand): Promise<CreateUserResult> {
     await this.authorizeOrganizationScope(organizationId)
+    await this.ensureOrganizationExists(organizationId)
 
     const now = this.clock.now()
     const role = parseAssignableRole(command.role)
@@ -205,8 +207,11 @@ export class UserService {
 
   async import(organizationId: string, rows: readonly UserImportRow[]): Promise<UserImportResult> {
     // Authorize once up front so an out-of-scope caller gets a single failure rather than
-    // per-row failures.
+    // per-row failures. The existence check has to be up front for the same reason: `create`
+    // makes it too, but from there the not-found is an ApplicationError the per-row catch would
+    // report as one rejected row per line of the file.
     await this.authorizeOrganizationScope(organizationId)
+    await this.ensureOrganizationExists(organizationId)
 
     const results: UserImportRowResult[] = []
     let created = 0
@@ -373,6 +378,12 @@ export class UserService {
         'You cannot deactivate yourself because you are the last Org Admin in this organization.',
       ],
     })
+  }
+
+  private async ensureOrganizationExists(organizationId: string): Promise<void> {
+    if (!(await this.organizations.existsById(organizationId))) {
+      throw new NotFoundError('Organization not found.')
+    }
   }
 
   /** Verifies the caller may administer users in the target organization; not-found if it does

@@ -17,7 +17,11 @@ import {
   ValidationError,
 } from '../../src/common/index.js'
 import type { CreateUserCommand, UpdateUserCommand, UserListQuery } from '../../src/users/models.js'
-import type { UserListFilter, UserRepository } from '../../src/users/ports.js'
+import type {
+  OrganizationExistenceLookup,
+  UserListFilter,
+  UserRepository,
+} from '../../src/users/ports.js'
 import { UserService } from '../../src/users/user-service.js'
 import {
   countingUnitOfWork,
@@ -79,7 +83,9 @@ function harness(options: {
   currentUser: CurrentUserContext
   users?: readonly User[]
   activeOrgAdminCount?: number
+  organizations?: readonly string[]
 }) {
+  const existingOrgs = new Set(options.organizations ?? [ORG_A, ORG_B])
   const byId = new Map((options.users ?? [user()]).map((u) => [u.id, u]))
   const added: User[] = []
   const updated: User[] = []
@@ -140,12 +146,19 @@ function harness(options: {
     verify: (plain, hash) => hash === `hashed:${plain}`,
   }
 
+  const organizations: OrganizationExistenceLookup = {
+    async existsById(id) {
+      return existingOrgs.has(id)
+    },
+  }
+
   const audit = recordingAudit()
 
   return {
     service: new UserService(
       users,
       passwordHasher,
+      organizations,
       countingUnitOfWork(),
       audit,
       options.currentUser,
@@ -232,6 +245,28 @@ describe('UserService cross-organization isolation', () => {
 
     expect(added).toHaveLength(1)
     expect(added[0]?.organizationId).toBe(ORG_B)
+  })
+
+  // A Site Admin passes the scope check for every organization id, so nothing but the existence
+  // check stands between a typo'd id and a user row staged against it - which the foreign key on
+  // users.organization_id then turns into a 500 at commit rather than the 404 every sibling
+  // service returns.
+  it('reports a nonexistent organization as not-found even to a Site Admin', async () => {
+    const { service, added } = harness({ currentUser: siteAdmin(), organizations: [ORG_A] })
+
+    await expect(service.create('org-nowhere', CREATE)).rejects.toThrow(NotFoundError)
+    expect(added).toHaveLength(0)
+  })
+
+  it('reports a nonexistent organization on the import path too, rather than per rejected row', async () => {
+    const { service, added } = harness({ currentUser: siteAdmin(), organizations: [ORG_A] })
+
+    await expect(
+      service.import('org-nowhere', [
+        { rowNumber: 1, firstName: 'A', lastName: 'One', email: 'a@beta.test', role: Role.User },
+      ]),
+    ).rejects.toThrow(NotFoundError)
+    expect(added).toHaveLength(0)
   })
 })
 
@@ -432,6 +467,11 @@ describe('UserService.import', () => {
         },
       },
       { hash: (plain) => `hashed:${plain}`, verify: () => true },
+      {
+        async existsById() {
+          return true
+        },
+      },
       countingUnitOfWork(),
       recordingAudit(),
       orgAdmin(ORG_A),
