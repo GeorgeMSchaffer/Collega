@@ -51,6 +51,14 @@ export interface UserRepository {
   update(user: User): Promise<void>
 }
 
+/**
+ * Narrow existence check so this feature does not need to depend on the Organizations
+ * partition's full repository port just to answer "does this organization id exist".
+ */
+export interface OrganizationExistenceLookup {
+  existsById(organizationId: string): Promise<boolean>
+}
+
 // Clock, UnitOfWork, and AuditEventWriter/AuditEventInput come from the shared kernel
 // (packages/application/src/common) - not redeclared here. PasswordHasher is declared once, in
 // ../auth/ports.js, and imported here rather than duplicated.

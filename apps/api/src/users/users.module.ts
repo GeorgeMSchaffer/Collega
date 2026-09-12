@@ -5,7 +5,11 @@ import type {
   CurrentUserContext,
   UnitOfWork,
 } from '@collega/application/common'
-import { type UserRepository, UserService } from '@collega/application/users'
+import {
+  type OrganizationExistenceLookup,
+  type UserRepository,
+  UserService,
+} from '@collega/application/users'
 import { Module } from '@nestjs/common'
 import { AuthModule } from '../auth/auth.module.js'
 import { AuthenticationModule } from '../authentication/authentication.module.js'
@@ -33,14 +37,25 @@ import { UsersController } from './users.controller.js'
       useFactory: (
         users: UserRepository,
         passwordHasher: PasswordHasher,
+        organizations: OrganizationExistenceLookup,
         unitOfWork: UnitOfWork,
         auditEvents: AuditEventWriter,
         currentUser: CurrentUserContext,
         clock: Clock,
-      ) => new UserService(users, passwordHasher, unitOfWork, auditEvents, currentUser, clock),
+      ) =>
+        new UserService(
+          users,
+          passwordHasher,
+          organizations,
+          unitOfWork,
+          auditEvents,
+          currentUser,
+          clock,
+        ),
       inject: [
         PORT_TOKENS.UserRepository,
         PORT_TOKENS.PasswordHasher,
+        PORT_TOKENS.OrganizationExistenceLookup,
         PORT_TOKENS.UnitOfWork,
         PORT_TOKENS.AuditEventWriter,
         PORT_TOKENS.CurrentUserContext,
