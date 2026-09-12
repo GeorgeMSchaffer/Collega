@@ -187,9 +187,7 @@ describe('StatusService admin scope', () => {
     // guard from an accidental fall-through.
     const { service } = harness({ currentUser: siteAdmin() })
 
-    const error = await service.create(ORG_A, CREATE).catch((e: Error) => e)
-
-    expect(error.message).toContain('View As')
+    await expect(service.create(ORG_A, CREATE)).rejects.toThrow(/View As/)
   })
 
   it('lets that Site Admin create once acting as an Org Admin through View As', async () => {
