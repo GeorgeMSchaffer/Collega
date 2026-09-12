@@ -120,6 +120,39 @@ Accessibility and bug paydown: the ten `Bug Triage.md` items from the 2026-08-16
 - TypeScript conversion, decided 2026-09-03 → `SPEC/decisions.md`: the .NET test suite is **discarded** (golden contract corpus plus per-slice Vitest, written by a QA agent); deployment is **Vercel + Prisma Postgres**, so Nest runs serverless and keeps no in-process state; net-new scope is **Wave G** — Loop, decision records, commitment strip, Triage Mode — starting only once F1 is green, with momentum, duplicate clustering and vote budget out.
 - Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/archive/sprint-04-qa-review-debt.md`.
 
+### Agreed order of work (2026-09-12, decided with the user)
+Settled in one sitting, so a later reader meets the whole set rather than one row of it. Items are
+sequenced, not merely listed.
+
+1. **`apps/web/lib/data/delivery.ts` onto the API.** The last data module still entirely on
+   `../mock`; every other reader in `lib/data/` is at least partly converted. The five delivery
+   screens already exist from Wave E and the eighteen endpoints are live and seeded, so this is the
+   seam working as designed — replace reader bodies, not signatures. **Open question handed over
+   with it: Outcomes have no backend at all** (no table, no entity, no endpoint; fixture and spec
+   only, and the roadmap screen is built on them). Leave the three outcome readers on the fixture,
+   or amend the schema again under ticket `06` — decide, do not invent.
+2. **QA pass over `packages/application`,** in its own worktree, by an agent that did not write the
+   code. 13,006 lines, six test files, and it carries authorization. Scheduled 2026-09-08 and never
+   started; it is the only layer of consequence with no such pass. The D1 round is the pattern —
+   26 → 87 tests, two divergences found that implementer and reviewer both missed.
+3. **D6 and D7 together as one slice** — AI assist and View As, the last fifteen of the eighty-one.
+   Taken together rather than View-As-first so Wave D closes in one pass.
+4. **F6 deletes the .NET stack, after D6/D7** — not before. It is the only place to see how those
+   two features behaved, and they are exactly what is left to convert. The specs are canonical for
+   the conversion itself, and the tree stays in history regardless, so this is convenience rather
+   than preservation.
+
+Deferred with reasons recorded in `SPEC/decisions.md` 2026-09-12: the rate limiter's collision with
+the golden replay. Amended there the same day: the account lockout, which no longer needs the shared
+store to stop being a denial-of-service.
+
+**Owner-side and not blocked on code:** the `collega` web project still carries the settings §11
+describes (no Root Directory, Output Directory pinned to `public`, framework unset) and cannot be
+fixed through the API — `create_git_project` reuses a linked project rather than recreating it, and
+applies `rootDirectory` only at creation. Its production branch is `main`, which was fast-forwarded
+to `dev` on 2026-09-12 so at least the code is current. Preview's `DATABASE_URL` points at the
+database holding the real Site Admin, confirmed from a build log rather than inferred.
+
 ### Known open risks (recorded, deliberately unscheduled — do not read as "handled")
 Both are on the anonymous auth surface, both were confirmed against running code, and both are in `SPEC/decisions.md` 2026-09-11 with the reasoning. Named here so a planning pass meets them.
 - **Account-lockout denial of service.** Five failed sign-ins lock an account for 15 minutes, and five is below any per-IP rate limit that lets real people sign in — so five anonymous requests deny sign-in to any user whose email is known, repeatably. Fixing it needs a per-IP failure counter, which needs state outliving a request: either a schema change (frozen at S0.2) or a shared store. **Schedule it with the Redis/Vercel KV work the rate limiter already needs** to be a real ceiling rather than a per-warm-instance speed bump — one dependency, two problems. Not fixed now; no production users yet, and the first real tenant is what changes that.

@@ -9,6 +9,48 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-12 — A lockout refuses a wrong password, not a right one
+
+**Amends `SPEC/20-feature-auth.md` requirement #6**, which said five failed attempts inside
+fifteen minutes trigger a fifteen-minute account lockout, full stop. The rule as written is a
+denial-of-service: five anonymous requests deny sign-in to any user whose address is known, and
+five is below any per-IP rate limit that lets real people in. That was recorded as an open risk on
+2026-09-11 and scheduled against a shared store it did not yet have.
+
+The rule changes instead. The counter, the window and the fifteen minutes all stay; what changes
+is that the lockout is checked **after** the password is verified rather than before, so a locked
+account still admits whoever knows the credential. An attacker who does not know the password
+cannot deny access to someone who does, and brute force is still refused and still rate limited.
+
+Chosen over keying the lockout on account-plus-IP (needs the address persisted, so a schema
+amendment, and a distributed attacker still gets through) and over exponential backoff (furthest
+from the original requirement, and needs per-account timing state). This one needs no schema, no
+shared store and no new infrastructure: it is a reordering inside `auth-service.ts`.
+
+Nothing in the golden corpus pins lockout behaviour, so there is no oracle to disagree with.
+
+The shared store is still wanted — the rate limiter is a per-warm-instance speed bump without it,
+and `AUTH_THROTTLERS`' own note says so. It is no longer carrying a denial-of-service fix with it.
+
+---
+
+## 2026-09-12 — The rate limiter's collision with the golden replay is deferred, knowingly
+
+The replay re-authenticates every role in all fifteen scenarios, so it exhausts the login bucket
+partway through and cannot complete. Measured 2026-09-11 against Nest on a fresh seed.
+
+Three fixes were offered and none is taken: caching sessions across scenarios weakens the
+isolation `resetSessions` exists to give; exempting a replay caller means the replay stops
+exercising the guard, and a path that skips a guard in testing is a path that can skip it
+elsewhere; raising the allowance lets a test harness set a number that should be set by what a
+real person needs, which is how the wrong twenty got there.
+
+It is deferred because the replay stopped gating on 2026-09-11 — `pnpm check` is the gate — so
+nothing is blocked. Revisit with the shared store, where the limit stops being per-instance and
+the right number can be chosen on its own terms.
+
+---
+
 ## 2026-09-11 — The S0.2 schema freeze is amended once, for Issues-and-Delivery Slice 1
 
 **The freeze otherwise stands.** This is the amendment ticket `06` anticipated, not a general
