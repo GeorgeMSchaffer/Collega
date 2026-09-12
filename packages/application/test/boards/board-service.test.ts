@@ -209,6 +209,18 @@ describe('BoardService admin scope', () => {
     expect(saved).toHaveLength(0)
   })
 
+  it('tells the refused Site Admin to use View As, rather than falling through to the generic refusal', async () => {
+    // Without `ensureNotDirectSiteAdmin` the role would still be refused - by the final
+    // `throw new ForbiddenError` below the OrgAdmin branch - so asserting the error TYPE alone
+    // cannot tell the two apart. The message is what distinguishes "you may not do this" from
+    // "here is the path that works", and it is the only externally visible difference.
+    const { service } = harness({ currentUser: siteAdmin() })
+
+    const error = await service.create(ORG_A, CREATE).catch((e: Error) => e)
+
+    expect(error.message).toContain('View As')
+  })
+
   it('lets that Site Admin create once acting as an Org Admin through View As', async () => {
     const { service, added } = harness({
       currentUser: impersonating({

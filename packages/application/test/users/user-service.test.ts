@@ -259,10 +259,24 @@ describe('UserService role matrix', () => {
     },
   )
 
-  it('refuses Site Admin as an assignable role on create', async () => {
+  it('refuses Site Admin as an assignable role on create, at the service rather than the domain', async () => {
+    // The domain also refuses it, so a ValidationError alone proves nothing about which layer
+    // rejected it. The service's message names the three assignable roles; the domain's does not.
+    const { service, added } = harness({ currentUser: siteAdmin() })
+
+    const error = await service
+      .create(ORG_A, { ...CREATE, role: Role.SiteAdmin })
+      .catch((e: ValidationError) => e)
+
+    expect(error).toBeInstanceOf(ValidationError)
+    expect((error as ValidationError).failures.role?.[0]).toContain('Role must be one of')
+    expect(added).toHaveLength(0)
+  })
+
+  it('refuses a role string that is not a role at all', async () => {
     const { service } = harness({ currentUser: siteAdmin() })
 
-    await expect(service.create(ORG_A, { ...CREATE, role: Role.SiteAdmin })).rejects.toThrow(
+    await expect(service.create(ORG_A, { ...CREATE, role: 'Wizard' })).rejects.toThrow(
       ValidationError,
     )
   })

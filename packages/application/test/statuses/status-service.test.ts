@@ -181,6 +181,17 @@ describe('StatusService admin scope', () => {
     expect(saved).toHaveLength(0)
   })
 
+  it('tells the refused Site Admin to use View As, rather than falling through to the generic refusal', async () => {
+    // Same reasoning as the board suite: the final `throw new ForbiddenError` below the OrgAdmin
+    // branch also refuses a Site Admin, so only the message distinguishes the deliberate rule-25
+    // guard from an accidental fall-through.
+    const { service } = harness({ currentUser: siteAdmin() })
+
+    const error = await service.create(ORG_A, CREATE).catch((e: Error) => e)
+
+    expect(error.message).toContain('View As')
+  })
+
   it('lets that Site Admin create once acting as an Org Admin through View As', async () => {
     const { service, added } = harness({
       currentUser: impersonating({
