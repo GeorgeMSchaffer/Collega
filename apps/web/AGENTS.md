@@ -12,8 +12,19 @@ new value needs a new build, and the commit that would carry it usually changes 
 build that should have picked the value up cancelled itself while production carried on serving the
 old one.
 
-If a deploy must happen and the diff does not justify it, use Vercel's own Redeploy — it bypasses the
-ignore step — rather than inventing a commit to trick the check.
+If a deploy must happen and the diff does not justify it, redeploy from Vercel — but redeploy **this**
+project and its **latest** deployment. Redeploying `collega-api`, or an older commit, rebuilds
+something nobody asked about and cancels for the same reason.
+
+The exact behaviour, since `|| exit 1` reads backwards at a glance:
+
+- Turbo **errors** — an empty `VERCEL_GIT_PREVIOUS_SHA`, which happens on a first deployment — exits
+  non-zero, so `|| exit 1` fires and the build **runs**.
+- Turbo **succeeds and reports nothing affected** exits 0, and the build is **cancelled**.
+
+So it fails open on an error and closed on a clean answer. `apps/api` carries the same line and had
+been erroring its way into building on every deployment, which looked like different behaviour and
+was not.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
