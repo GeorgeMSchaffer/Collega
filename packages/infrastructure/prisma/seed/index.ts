@@ -12,6 +12,7 @@ import { PrismaClient } from '../../src/generated/prisma/client.js'
 import { order } from './compose.ts'
 import { boardsAndStatusesSeed } from './modules/boards-and-statuses.ts'
 import { commentsSeed } from './modules/comments.ts'
+import { deliverySeed } from './modules/delivery.ts'
 import { ideasAndUpvotesSeed } from './modules/ideas-and-upvotes.ts'
 import { organizationsSeed } from './modules/organizations.ts'
 import { usersSeed } from './modules/users.ts'
@@ -28,6 +29,7 @@ const MODULES: readonly SeedModule[] = [
   boardsAndStatusesSeed, // B2
   ideasAndUpvotesSeed, // B3
   commentsSeed, // B4
+  deliverySeed, // Issues and Delivery
 ]
 
 async function main(): Promise<void> {
