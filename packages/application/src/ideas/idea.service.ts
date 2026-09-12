@@ -1657,9 +1657,12 @@ export class IdeaService {
     adminOnly = false,
   ): boolean {
     const role = this.requireAuthenticatedRole()
-    if (role === Role.SiteAdmin) {
-      return true
-    }
+
+    // No SiteAdmin pass-through, deliberately (the same call this comment's twin in
+    // board-service.ts's `ensureAdminScope` records): every caller runs
+    // `ensureNotDirectSiteAdmin` first, and a View As target is never a Site Admin (D-SCOPE), so
+    // a `return true` here would be dead code that reads like a live bypass - and then like the
+    // reason Site Admins are handled at all, which is the guard above.
     if (role === Role.OrgAdmin && this.currentUser.organizationId === idea.organizationId) {
       return true
     }
