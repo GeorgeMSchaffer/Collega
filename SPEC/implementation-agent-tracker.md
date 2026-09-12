@@ -120,6 +120,30 @@ Accessibility and bug paydown: the ten `Bug Triage.md` items from the 2026-08-16
 - TypeScript conversion, decided 2026-09-03 → `SPEC/decisions.md`: the .NET test suite is **discarded** (golden contract corpus plus per-slice Vitest, written by a QA agent); deployment is **Vercel + Prisma Postgres**, so Nest runs serverless and keeps no in-process state; net-new scope is **Wave G** — Loop, decision records, commitment strip, Triage Mode — starting only once F1 is green, with momentum, duplicate clustering and vote budget out.
 - Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/archive/sprint-04-qa-review-debt.md`.
 
+### The Application QA pass ran (2026-09-12)
+Scheduled 2026-09-08, executed 2026-09-12 on `feature/qa-application`, by an agent that had not
+written the code. **`packages/application` went 35 → 414 tests**, 6 → 20 files, and stopped passing
+`--passWithNoTests`. Merged to `dev`.
+
+**67 mutations designed, 64 caught on the first pass.** The three survivors were reported rather
+than quietly patched, which is the part worth keeping: none was a hole in the source. Two were
+Site-Admin guards sitting behind a generic refusal that already denied the same caller — only the
+*message* differed, so asserting the error type proved nothing — and one was a role check the domain
+enforces as well. Strengthened to assert the specific message; second pass 67/67. **A guard that is
+defence in depth cannot be tested by asserting a refusal happens.**
+
+Two defects went to `SPEC/Bug Triage.md` unrepaired, per the role split: `UserService.create` never
+verifying its organization exists, and `IdeaService.canAdministerIdeaContent`'s unreachable Site
+Admin branch. A third — `ViewAsService`'s constraint-name match that no real Prisma error satisfies
+— was already documented in `packages/infrastructure/src/persistence/constraint-errors.ts` and is
+restated there rather than re-queued.
+
+Named friction, not defects: `IdeaService` takes **fifteen** constructor dependencies, so asserting
+one authorization rule means constructing all fifteen — that suite's harness is 250 lines because of
+it. And `IdeaAssistContextBuilder` is a concrete class with seven injected ports and no interface, so
+a double cannot be structurally typed against it; the suite casts through `unknown`. That is the cost
+of the no-interfaces-for-single-implementations rule showing up, not a reason to change it.
+
 ### Agreed order of work (2026-09-12, decided with the user)
 Settled in one sitting, so a later reader meets the whole set rather than one row of it. Items are
 sequenced, not merely listed.
