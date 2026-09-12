@@ -4,10 +4,16 @@
 // The cross-tenant answer here is 404 on every path, deliberately: a 403 would confirm the sprint
 // exists in somebody else's organization, which is the thing the probe is after.
 
-import { DeliveryStatus, IdeaPhase, Role, SprintState, UserStatus } from '@collega/domain/enums'
+import {
+  DeliveryStatus,
+  IdeaPhase,
+  Priority,
+  Role,
+  SprintState,
+  UserStatus,
+} from '@collega/domain/enums'
 import type { Idea } from '@collega/domain/ideas'
 import { createIdea, promoteIdeaToIssue } from '@collega/domain/ideas'
-import { Priority } from '@collega/domain/enums'
 import { createSprint, type Sprint, softDeleteSprint, startSprint } from '@collega/domain/sprints'
 import { describe, expect, it } from 'vitest'
 import type { CurrentUserContext } from '../../src/common/index.js'
@@ -24,6 +30,7 @@ import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  member,
   NOW,
   ORG_A,
   ORG_B,
@@ -31,13 +38,14 @@ import {
   readOnly,
   recordingAudit,
   siteAdmin,
-  member,
 } from '../support/fixtures.js'
 
 const SPRINT_A = 'sprint-a'
 const SPRINT_B = 'sprint-b'
 
-function sprint(overrides: { id?: string; organizationId?: string; ownerUserId?: string | null } = {}): Sprint {
+function sprint(
+  overrides: { id?: string; organizationId?: string; ownerUserId?: string | null } = {},
+): Sprint {
   return createSprint({
     id: overrides.id ?? SPRINT_A,
     organizationId: overrides.organizationId ?? ORG_A,
@@ -51,7 +59,9 @@ function sprint(overrides: { id?: string; organizationId?: string; ownerUserId?:
   })
 }
 
-function issue(overrides: { id?: string; deliveryStatus?: DeliveryStatus; sprintId?: string } = {}): Idea {
+function issue(
+  overrides: { id?: string; deliveryStatus?: DeliveryStatus; sprintId?: string } = {},
+): Idea {
   const base = createIdea({
     id: overrides.id ?? 'idea-1',
     organizationId: ORG_A,
@@ -106,7 +116,10 @@ function harness(options: {
     },
     async listByOrganization(organizationId, state) {
       return [...byId.values()].filter(
-        (s) => s.organizationId === organizationId && !s.isDeleted && (state === null || s.state === state),
+        (s) =>
+          s.organizationId === organizationId &&
+          !s.isDeleted &&
+          (state === null || s.state === state),
       )
     },
     async add(s) {

@@ -24,20 +24,22 @@ import type {
 import {
   countingUnitOfWork,
   fixedClock,
+  member,
   NOW,
   ORG_A,
   ORG_B,
   orgAdmin,
   readOnly,
   siteAdmin,
-  member,
 } from '../support/fixtures.js'
 
 const ISSUE_A = 'issue-a'
 const ISSUE_B = 'issue-b'
 const AUTHOR = 'author-1'
 
-function issue(overrides: { id?: string; organizationId?: string; assigneeUserIds?: string[] } = {}): Idea {
+function issue(
+  overrides: { id?: string; organizationId?: string; assigneeUserIds?: string[] } = {},
+): Idea {
   const base = createIdea({
     id: overrides.id ?? ISSUE_A,
     organizationId: overrides.organizationId ?? ORG_A,
@@ -263,11 +265,7 @@ describe('IssueTaskService role matrix', () => {
   it('lets the issue author, an assignee, or an in-scope Org Admin edit tasks', async () => {
     const parent = issue({ assigneeUserIds: ['helper-1'] })
 
-    for (const caller of [
-      member(ORG_A, AUTHOR),
-      member(ORG_A, 'helper-1'),
-      orgAdmin(ORG_A),
-    ]) {
+    for (const caller of [member(ORG_A, AUTHOR), member(ORG_A, 'helper-1'), orgAdmin(ORG_A)]) {
       const { service, added } = harness({ currentUser: caller, ideas: [parent] })
       await service.create(ISSUE_A, { title: 'X', assigneeUserId: null })
       expect(added).toHaveLength(1)
@@ -388,7 +386,10 @@ describe('IssueTaskService checklist behaviour', () => {
       tasks: [assigned],
       users: [helper],
     })
-    await unchanged.service.update(ISSUE_A, 'task-1', { title: 'Renamed', assigneeUserId: 'helper-1' })
+    await unchanged.service.update(ISSUE_A, 'task-1', {
+      title: 'Renamed',
+      assigneeUserId: 'helper-1',
+    })
     expect(unchanged.notifications).toHaveLength(0)
   })
 

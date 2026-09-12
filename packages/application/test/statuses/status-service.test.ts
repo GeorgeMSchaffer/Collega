@@ -18,6 +18,7 @@ import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  member,
   NOW,
   ORG_A,
   ORG_B,
@@ -25,15 +26,9 @@ import {
   readOnly,
   recordingAudit,
   siteAdmin,
-  member,
 } from '../support/fixtures.js'
 
-function status(
-  id: string,
-  organizationId = ORG_A,
-  sortOrder = 10,
-  name = `Status ${id}`,
-): Status {
+function status(id: string, organizationId = ORG_A, sortOrder = 10, name = `Status ${id}`): Status {
   return createStatus({
     id,
     organizationId,
@@ -54,7 +49,9 @@ function harness(options: {
   referencedStatusIds?: readonly string[]
   organizations?: readonly string[]
 }) {
-  const all = [...(options.statuses ?? [status('s1'), status('s2', ORG_A, 20), status('s3', ORG_A, 30)])]
+  const all = [
+    ...(options.statuses ?? [status('s1'), status('s2', ORG_A, 20), status('s3', ORG_A, 30)]),
+  ]
   const referenced = new Set(options.referencedStatusIds ?? [])
   const existingOrgs = new Set(options.organizations ?? [ORG_A, ORG_B])
   const added: Status[] = []

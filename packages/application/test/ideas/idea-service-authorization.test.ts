@@ -45,6 +45,7 @@ import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  member as memberContext,
   NOW,
   ORG_A,
   ORG_B,
@@ -52,7 +53,6 @@ import {
   readOnly,
   recordingAudit,
   siteAdmin,
-  member as memberContext,
 } from '../support/fixtures.js'
 
 const BOARD_A = 'board-a'
@@ -196,14 +196,28 @@ function harness(options: {
     async listByBoard(filter) {
       boardFilters.push(filter)
       const items = [...ideasById.values()].filter((i) => i.boardId === filter.boardId)
-      return { items, page: 1, pageSize: 20, totalCount: items.length, sortBy: null, sortDirection: 'asc' }
+      return {
+        items,
+        page: 1,
+        pageSize: 20,
+        totalCount: items.length,
+        sortBy: null,
+        sortDirection: 'asc',
+      }
     },
     async listByOrganization(filter) {
       orgFilters.push(filter)
       const items = [...ideasById.values()].filter(
         (i) => i.organizationId === filter.organizationId,
       )
-      return { items, page: 1, pageSize: 20, totalCount: items.length, sortBy: null, sortDirection: 'asc' }
+      return {
+        items,
+        page: 1,
+        pageSize: 20,
+        totalCount: items.length,
+        sortBy: null,
+        sortDirection: 'asc',
+      }
     },
     async getFieldValuesByIdeaIds() {
       return []
@@ -267,8 +281,22 @@ function harness(options: {
   }
 
   const ideaTypes: readonly IdeaTypeSummary[] = [
-    { id: TYPE_A, organizationId: ORG_A, name: 'Improvement', colorHex: null, icon: null, isDeleted: false },
-    { id: 'type-b', organizationId: ORG_B, name: 'Beta Type', colorHex: null, icon: null, isDeleted: false },
+    {
+      id: TYPE_A,
+      organizationId: ORG_A,
+      name: 'Improvement',
+      colorHex: null,
+      icon: null,
+      isDeleted: false,
+    },
+    {
+      id: 'type-b',
+      organizationId: ORG_B,
+      name: 'Beta Type',
+      colorHex: null,
+      icon: null,
+      isDeleted: false,
+    },
   ]
   const businessImpacts: readonly BusinessImpactSummary[] = [
     { id: IMPACT_A, organizationId: ORG_A, name: 'Medium', color: '#888', isDeleted: false },
@@ -794,9 +822,9 @@ describe('IdeaService board scoping', () => {
   it('rejects a status that is not a swimlane on the board', async () => {
     const { service } = harness({ currentUser: orgAdmin(ORG_A) })
 
-    await expect(service.create(BOARD_A, { ...CREATE, statusId: 'status-elsewhere' })).rejects.toThrow(
-      ValidationError,
-    )
+    await expect(
+      service.create(BOARD_A, { ...CREATE, statusId: 'status-elsewhere' }),
+    ).rejects.toThrow(ValidationError)
   })
 
   it('defaults a new idea to the left-most swimlane (rule #27)', async () => {

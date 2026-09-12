@@ -4,6 +4,7 @@
 // administers organizations without View As, so `ensureNotDirectSiteAdmin` is deliberately absent.
 // The tests below pin both halves of that - the Site Admin passes, and no other role stands in.
 
+import { Role } from '@collega/domain/enums'
 import { createOrganization, type Organization } from '@collega/domain/organizations'
 import { describe, expect, it } from 'vitest'
 import type { CurrentUserContext } from '../../src/common/index.js'
@@ -23,6 +24,7 @@ import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  member,
   NOW,
   ORG_A,
   ORG_B,
@@ -30,9 +32,7 @@ import {
   readOnly,
   recordingAudit,
   siteAdmin,
-  member,
 } from '../support/fixtures.js'
-import { Role } from '@collega/domain/enums'
 
 const EMPTY_PROFILE = {
   address: null,
@@ -310,9 +310,9 @@ describe('OrganizationService.setLogo', () => {
   ])('rejects %s', async (_label, dataUri) => {
     const { service } = harness({ currentUser: siteAdmin() })
 
-    await expect(service.setLogo(ORG_A, { thumbnailDataUri: dataUri, heightPx: 40 })).rejects.toThrow(
-      ValidationError,
-    )
+    await expect(
+      service.setLogo(ORG_A, { thumbnailDataUri: dataUri, heightPx: 40 }),
+    ).rejects.toThrow(ValidationError)
   })
 
   it('accepts an image data URI', async () => {

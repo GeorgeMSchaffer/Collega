@@ -5,14 +5,16 @@
 // reaches the client. Everything the model returns is untrusted; the retrieved context is the
 // only authority on what a valid id is.
 
-import { AiCallOutcome, Priority, Role } from '@collega/domain/enums'
+import { AiCallOutcome, type Priority, Role } from '@collega/domain/enums'
 import { createOrganization, type Organization } from '@collega/domain/organizations'
 import { describe, expect, it } from 'vitest'
-import type { CurrentUserContext } from '../../src/common/index.js'
-import { ForbiddenError, NotFoundError, ValidationError } from '../../src/common/index.js'
 import { AiAssistUnavailableError } from '../../src/ai/errors.js'
+import {
+  IdeaAssistService,
+  MAX_TRANSCRIPT_ENTRIES,
+  TRANSCRIPT_ENTRY_MAX_LENGTH,
+} from '../../src/ai/idea-assist.service.js'
 import type { IdeaAssistContextBuilder } from '../../src/ai/idea-assist-context-builder.js'
-import { IdeaAssistService, MAX_TRANSCRIPT_ENTRIES, TRANSCRIPT_ENTRY_MAX_LENGTH } from '../../src/ai/idea-assist.service.js'
 import type {
   AiTokenUsage,
   AiUsageReservation,
@@ -30,10 +32,13 @@ import type {
   IdeaDraftModel,
 } from '../../src/ai/ports.js'
 import { IdeaDraftModelError } from '../../src/ai/ports.js'
+import type { CurrentUserContext } from '../../src/common/index.js'
+import { ForbiddenError, NotFoundError, ValidationError } from '../../src/common/index.js'
 import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  member,
   NOW,
   ORG_A,
   ORG_B,
@@ -41,7 +46,6 @@ import {
   readOnly,
   recordingAudit,
   siteAdmin,
-  member,
 } from '../support/fixtures.js'
 
 const BOARD_A = 'board-a'
@@ -108,7 +112,11 @@ function harness(options: {
   const orgsById = new Map((options.organizations ?? []).map((o) => [o.id, o]))
   const settlements: Settlement[] = []
   const reservations: ReserveAiUsageInput[] = []
-  const modelCalls: { context: IdeaAssistContext; transcript: readonly IdeaAssistTurn[]; draft: IdeaDraft }[] = []
+  const modelCalls: {
+    context: IdeaAssistContext
+    transcript: readonly IdeaAssistTurn[]
+    draft: IdeaDraft
+  }[] = []
   const updatedOrganizations: Organization[] = []
 
   const model: IdeaDraftModel = {
@@ -122,11 +130,13 @@ function harness(options: {
     },
   }
 
+  // Only `build` is reachable from the service; the builder's six retrieval ports are its own
+  // business and constructing them here would test the fake, not the service.
   const contextBuilder = {
     async build() {
       return options.context ?? context()
     },
-  } as IdeaAssistContextBuilder
+  } as unknown as IdeaAssistContextBuilder
 
   const boards: AiBoardLookupPort = {
     async getById(boardId) {
@@ -545,7 +555,10 @@ describe('IdeaAssistService scope gate', () => {
     const currentDraft: IdeaDraft = { ...EMPTY_IDEA_DRAFT, title: 'Existing title' }
     const { service, settlements } = harness({
       currentUser: member(ORG_A),
-      response: modelResponse({ inScope: false, draft: { ...EMPTY_IDEA_DRAFT, title: 'Hijacked' } }),
+      response: modelResponse({
+        inScope: false,
+        draft: { ...EMPTY_IDEA_DRAFT, title: 'Hijacked' },
+      }),
     })
 
     const result = await service.continueTurn({

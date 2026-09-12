@@ -18,6 +18,7 @@ import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  member,
   NOW,
   ORG_A,
   ORG_B,
@@ -25,7 +26,6 @@ import {
   readOnly,
   recordingAudit,
   siteAdmin,
-  member,
 } from '../support/fixtures.js'
 
 const STATUS_1 = 'status-1'

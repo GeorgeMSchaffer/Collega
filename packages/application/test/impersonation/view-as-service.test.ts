@@ -23,6 +23,7 @@ import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  member as memberContext,
   NOW,
   ORG_A,
   ORG_B,
@@ -30,7 +31,6 @@ import {
   readOnly,
   recordingAudit,
   siteAdmin,
-  member as memberContext,
 } from '../support/fixtures.js'
 
 function user(overrides: Partial<ImpersonationUserSummary> = {}): ImpersonationUserSummary {
@@ -216,7 +216,10 @@ describe('ViewAsService.start', () => {
   it('refuses a Site Admin as a target - acting as a peer grants nothing and is a lateral move', async () => {
     const { service } = harness({
       currentUser: siteAdmin('site-admin-1'),
-      users: [SITE_ADMIN, user({ id: 'other-site-admin', organizationId: null, role: Role.SiteAdmin })],
+      users: [
+        SITE_ADMIN,
+        user({ id: 'other-site-admin', organizationId: null, role: Role.SiteAdmin }),
+      ],
     })
 
     await expect(service.start('other-site-admin')).rejects.toThrow(ForbiddenError)

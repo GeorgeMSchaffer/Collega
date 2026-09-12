@@ -10,13 +10,19 @@ import { createOrganizationUser, type User } from '@collega/domain/users'
 import { describe, expect, it } from 'vitest'
 import type { PasswordHasher } from '../../src/auth/ports.js'
 import type { CurrentUserContext } from '../../src/common/index.js'
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../src/common/index.js'
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../src/common/index.js'
 import type { CreateUserCommand, UpdateUserCommand, UserListQuery } from '../../src/users/models.js'
 import type { UserListFilter, UserRepository } from '../../src/users/ports.js'
 import { UserService } from '../../src/users/user-service.js'
 import {
   countingUnitOfWork,
   fixedClock,
+  member,
   NOW,
   ORG_A,
   ORG_B,
@@ -24,7 +30,6 @@ import {
   readOnly,
   recordingAudit,
   siteAdmin,
-  member,
 } from '../support/fixtures.js'
 
 const VALID_PASSWORD = 'Abc123!xyz'
@@ -146,6 +151,7 @@ function harness(options: {
       options.currentUser,
       fixedClock(),
     ),
+    repository: users,
     added,
     updated,
     filters,
@@ -157,7 +163,9 @@ describe('UserService cross-organization isolation', () => {
   it('reports another organization as not-found to an Org Admin, never forbidden', async () => {
     const { service } = harness({ currentUser: orgAdmin(ORG_A) })
 
-    await expect(service.listByOrganization(ORG_B, LIST_QUERY)).rejects.toBeInstanceOf(NotFoundError)
+    await expect(service.listByOrganization(ORG_B, LIST_QUERY)).rejects.toBeInstanceOf(
+      NotFoundError,
+    )
   })
 
   it('refuses an Org Admin creating a user in another organization', async () => {
@@ -242,11 +250,14 @@ describe('UserService role matrix', () => {
   it.each([
     ['User', member(ORG_A)],
     ['ReadOnly', readOnly(ORG_A)],
-  ])('lets %s read the assignable-member list of their own organization', async (_l, currentUser) => {
-    const { service } = harness({ currentUser })
+  ])(
+    'lets %s read the assignable-member list of their own organization',
+    async (_l, currentUser) => {
+      const { service } = harness({ currentUser })
 
-    await expect(service.listAssignableMembers(ORG_A)).resolves.toHaveLength(1)
-  })
+      await expect(service.listAssignableMembers(ORG_A)).resolves.toHaveLength(1)
+    },
+  )
 
   it('refuses Site Admin as an assignable role on create', async () => {
     const { service } = harness({ currentUser: siteAdmin() })
@@ -333,7 +344,13 @@ describe('UserService.import', () => {
     const result = await service.import(ORG_A, [
       { rowNumber: 1, firstName: 'Valid', lastName: 'Row', email: 'v1@acme.test', role: Role.User },
       { rowNumber: 2, firstName: '', lastName: '', email: '', role: Role.User },
-      { rowNumber: 3, firstName: 'Also', lastName: 'Valid', email: 'v3@acme.test', role: Role.User },
+      {
+        rowNumber: 3,
+        firstName: 'Also',
+        lastName: 'Valid',
+        email: 'v3@acme.test',
+        role: Role.User,
+      },
     ])
 
     expect(result.createdCount).toBe(2)
@@ -390,22 +407,22 @@ describe('UserService.import', () => {
   })
 
   it('lets a genuine defect propagate rather than reporting it as a rejected row', async () => {
-    const exploding = harness({ currentUser: orgAdmin(ORG_A) })
-    // A non-ApplicationError from the store must not be swallowed into a per-row message.
+    // The per-row catch is for ApplicationError only. A TypeError from the store is a bug, and
+    // reporting it as "this row was rejected" would hide an outage behind a plausible CSV error.
+    const broken = harness({ currentUser: orgAdmin(ORG_A) })
     const service = new UserService(
       {
-        ...({} as never),
+        ...broken.repository,
         async existsByNormalizedEmail() {
           throw new TypeError('store is broken')
         },
-      } as never,
-      { hash: () => 'h', verify: () => true },
+      },
+      { hash: (plain) => `hashed:${plain}`, verify: () => true },
       countingUnitOfWork(),
       recordingAudit(),
       orgAdmin(ORG_A),
       fixedClock(),
     )
-    void exploding
 
     await expect(
       service.import(ORG_A, [

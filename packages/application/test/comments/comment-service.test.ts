@@ -21,14 +21,15 @@ import type { CurrentUserContext } from '../../src/common/index.js'
 import { ForbiddenError, NotFoundError, ValidationError } from '../../src/common/index.js'
 import type { NotificationInput } from '../../src/notifications/models.js'
 import type {
-  IdeaLookupPort as UpvoteIdeaLookupPort,
   IdeaUpvoteRepository,
+  IdeaLookupPort as UpvoteIdeaLookupPort,
 } from '../../src/upvotes/ports.js'
 import { UpvoteService } from '../../src/upvotes/upvote.service.js'
 import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  member,
   NOW,
   ORG_A,
   ORG_B,
@@ -36,7 +37,6 @@ import {
   readOnly,
   recordingAudit,
   siteAdmin,
-  member,
 } from '../support/fixtures.js'
 
 const IDEA_A = 'idea-a'
