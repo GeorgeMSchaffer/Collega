@@ -13,12 +13,13 @@ export type Page<T> = {
   readonly totalCount: number
 }
 
-// These are NOT free choices. The golden corpus - 447 recorded cases that Wave F replays
-// against Nest - was captured from the .NET API, whose PageRequest used exactly these two
-// numbers. Changing either silently changes what a page contains for every list endpoint
-// that does not pass an explicit size, and the replay diff would read as a data bug rather
-// than as a wrong constant. Both were read off the original's PageRequest
-// while it still existed to check against; the corpus is what holds them to it now.
+// These are NOT free choices. Both were read off the PageRequest of the application this
+// replaced, while it still existed to check against. Changing either silently changes what a
+// page contains for every list endpoint that does not pass an explicit size.
+//
+// What holds them now is `test/pagination.test.ts`, which pins the default and the clamp - not
+// the golden corpus, which records `pageSize: 20` on 32 fixtures, never exercises the maximum,
+// and stopped gating anything on 2026-09-11 (`SPEC/decisions.md`).
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 100
 

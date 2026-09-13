@@ -95,8 +95,9 @@ export type FieldRules = {
   readonly hexColor?: boolean
   /**
    * The fixed allow-list a `[AllowedValues]` property carries - the transcript entry's `role` is
-   * the only one in the API. Comparison is ordinal and case-SENSITIVE, matching the attribute this
-   * transcribes.
+   * the only one in the API. Comparison is ordinal and case-SENSITIVE, which is inherited rather
+   * than chosen - the declarative attribute this transcribes compared that way. Nothing in the
+   * corpus records a rejection here, so `test/request-validation.test.ts` is what pins it.
    *
    * An absent or blank value passes, matching that attribute's own "absence is a separate concern
    * owned by RequiredFieldAttribute" short-circuit on null - pair it with `required` when both

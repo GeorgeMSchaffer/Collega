@@ -17,7 +17,6 @@
 
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 export type HttpVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -35,16 +34,15 @@ export type Endpoint = {
   params: string[]
   /** The success and error statuses the endpoint declared. */
   statuses: number[]
-  /** The file the route was read from, at capture time. That tree no longer exists. */
-  source: string
 }
 
-const SNAPSHOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'inventory.json')
+const SNAPSHOT = path.join(import.meta.dirname, '..', 'inventory.json')
 
-/** The recorded inventory. The argument exists so a test can point at a different snapshot. */
-export async function readInventory(snapshot: string = SNAPSHOT): Promise<Endpoint[]> {
-  return JSON.parse(await readFile(snapshot, 'utf8')) as Endpoint[]
+/** The recorded inventory. */
+export async function readInventory(): Promise<Endpoint[]> {
+  return JSON.parse(await readFile(SNAPSHOT, 'utf8')) as Endpoint[]
 }
 
+/** The four roles the corpus must cover. Authorization is behaviour, not decoration. */
 export const ROLES = ['SiteAdmin', 'OrgAdmin', 'User', 'ReadOnly'] as const
 export type Role = (typeof ROLES)[number]

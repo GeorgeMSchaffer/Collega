@@ -4,7 +4,7 @@
 //
 //   node tools/golden/src/cli.ts inventory
 //   node tools/golden/src/cli.ts scaffold
-//   GOLDEN_PASSWORD=... node tools/golden/src/cli.ts capture --base-url http://localhost:3001/api/v1
+//   GOLDEN_PASSWORD=... node tools/golden/src/cli.ts capture --base-url http://localhost:3001
 //   GOLDEN_PASSWORD=... node tools/golden/src/cli.ts replay  --base-url http://localhost:3000
 //   node tools/golden/src/cli.ts coverage
 
@@ -65,8 +65,8 @@ async function run(
   const { byId } = await endpointMap()
   const scenarios = await loadScenarios(PATHS.scenarios)
   // `--auth cookie` drives the same corpus against a stack that carries its session in an httpOnly
-  // cookie rather than a bearer token (`SPEC/decisions.md` `08`). Bearer stays the default so a
-  // The recorded corpus came from a bearer-token capture; Wave F's replay against Nest passes the flag.
+  // cookie rather than a bearer token (`SPEC/decisions.md` `08`). Bearer stays the default because
+  // that is how the corpus was recorded; Wave F's replay against Nest passes the flag.
   const auth = args.flags.get('auth') ?? 'bearer'
   if (auth !== 'bearer' && auth !== 'cookie') {
     throw new Error(`--auth must be bearer or cookie, not "${auth}"`)
@@ -181,7 +181,8 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
     }
     const manifest = await writeCorpus(PATHS.fixtures, exchanges, {
       capturedAt: new Date().toISOString(),
-      // No default: the recorded corpus says 'dotnet' and a new capture is from something else.
+      // Provenance only - nothing reads it back. Defaults to 'unknown' rather than to the
+      // recorded corpus's 'dotnet', which a new capture would not be.
       stack: args.flags.get('stack') ?? 'unknown',
       baseUrl,
       basePath: args.flags.get('base-path') ?? DEFAULT_BASE_PATH,

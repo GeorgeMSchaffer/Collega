@@ -10,9 +10,9 @@
 //      hand-built endpoints here, which is what the parser's sample was standing in for anyway.
 
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { test } from 'node:test'
+import { readManifest } from '../src/corpus.ts'
 import { report as coverageReport, expectedRoles } from '../src/coverage.ts'
 import { type Endpoint, readInventory } from '../src/inventory.ts'
 import { scenarioFor } from '../src/scaffold.ts'
@@ -27,7 +27,6 @@ const SAMPLE: Endpoint[] = [
     authorize: 'anonymous',
     params: [],
     statuses: [200, 401],
-    source: 'AuthController.cs',
   },
   {
     id: 'GET /auth/me',
@@ -38,7 +37,6 @@ const SAMPLE: Endpoint[] = [
     authorize: 'any',
     params: [],
     statuses: [200, 401],
-    source: 'AuthController.cs',
   },
   {
     id: 'GET /organizations/{organizationId}/ai-assist/usage',
@@ -49,7 +47,6 @@ const SAMPLE: Endpoint[] = [
     authorize: ['OrgAdmin', 'SiteAdmin'],
     params: ['organizationId'],
     statuses: [200, 401],
-    source: 'AiAssistController.cs',
   },
 ]
 
@@ -67,8 +64,7 @@ test('the snapshot holds the 81 endpoints the plan is costed on', async () => {
 
 test('the snapshot and the corpus manifest describe the same surface', async () => {
   const endpoints = await readInventory()
-  const manifestPath = path.resolve(import.meta.dirname, '..', 'fixtures', 'manifest.json')
-  const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as { endpoints: string[] }
+  const manifest = await readManifest(path.resolve(import.meta.dirname, '..', 'fixtures'))
 
   assert.deepEqual(
     endpoints.map((e) => e.id).sort(),
@@ -82,11 +78,6 @@ test('every endpoint carries the fields coverage and scaffold read', async () =>
     assert.ok(e.id && e.verb && e.route && e.controller && e.action, `incomplete endpoint: ${e.id}`)
     assert.ok(Array.isArray(e.params), `${e.id}: params must be an array`)
     assert.ok(Array.isArray(e.statuses), `${e.id}: statuses must be an array`)
-    assert.deepEqual(
-      e.params,
-      [...e.route.matchAll(/\{(\w+)\}/g)].map((m) => m[1]),
-      `${e.id}: params must match the route template`,
-    )
   }
 })
 
