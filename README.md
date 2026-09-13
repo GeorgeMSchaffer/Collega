@@ -70,7 +70,7 @@ screen behaved — see [`DOTNET.md`](DOTNET.md).
 
 ```bash
 pnpm start        # the whole application — API, web, database
-pnpm dev          # apps/web alone, against whatever API is already running
+pnpm dev          # an alias for `pnpm start`; there is no web-only mode any more
 pnpm check        # lint + typecheck + test + build — the gate
 pnpm build
 pnpm test         # every package except the Playwright suite

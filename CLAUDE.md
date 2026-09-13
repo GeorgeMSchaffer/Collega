@@ -33,7 +33,7 @@ This file carries only the rules that must be true *before* touching code. Refer
 
 ```bash
 pnpm install
-pnpm dev          # apps/web on http://localhost:3000
+pnpm dev          # the whole application - an alias for `pnpm start`
 pnpm check        # lint + typecheck + test — run this before calling anything done
 pnpm build
 pnpm test:e2e     # Playwright, separate because it needs a running app
