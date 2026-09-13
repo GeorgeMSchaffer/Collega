@@ -275,3 +275,57 @@ export type WirePage<T> = {
   pageSize: number
   totalCount: number
 }
+
+/**
+ * `GET /organizations/{id}/sprints`, and the header of `.../sprints/{sprintId}`.
+ *
+ * `startDate`/`endDate` are `YYYY-MM-DD`: the column is `@db.Date` and the Application layer hands
+ * them over as plain day strings rather than instants, so there is no timezone to get wrong.
+ *
+ * `state` is `Planned`, `Active` or `Completed`, and it is what a sprint *is* — never derived from
+ * the dates. Starting and completing are explicit actions
+ * (`SPEC/20-feature-issues-and-delivery.md`), so a sprint whose window has passed is still `Active`
+ * until somebody completes it.
+ *
+ * The detail response carries an `issues` array beside these fields. It is not written down here
+ * because the sprint board reads its cards from `/delivery?sprintId=` instead — `getIssuesInSprint`
+ * says why one of the two had to be picked.
+ *
+ * Not a `WirePage`: the sprint list is one of the few that answers a bare array.
+ */
+export type WireSprint = {
+  sprintId: string
+  name: string
+  goal: string | null
+  startDate: string
+  endDate: string
+  state: string
+  issueCount: number
+  doneCount: number
+}
+
+/**
+ * `GET /organizations/{id}/delivery` — one Issue, as the sprint board and the backlog render it.
+ *
+ * An Issue is the same `ideas` row in its `Delivery` phase, so this is an idea list item plus the
+ * delivery facets, and only the facets the delivery screens read are written down (see this file's
+ * header). `effort` and `deliveryStatus` are nullable on the wire because the columns are nullable
+ * for a Discovery idea — this route returns none of those, so in practice both are populated.
+ *
+ * **No `outcomeId`.** `SPEC/30-Contracts.md` "Delivery Contracts" says so outright: the Outcome and
+ * Roadmap routes are Slice 2 and nothing here carries one. See `lib/data/delivery.ts`.
+ *
+ * `provenance.upvoteCountAtPromotion` is the snapshot taken at the gate, deliberately beside the
+ * live `upvoteCount` rather than instead of it — "9 upvotes when we committed" is a different fact
+ * from "9 upvotes now", and the backlog orders on the first.
+ */
+export type WireDeliveryCard = {
+  ideaId: string
+  title: string
+  effort: string | null
+  deliveryStatus: string | null
+  sprint: { sprintId: string } | null
+  assignees: readonly WireIdeaAssignee[]
+  upvoteCount: number
+  provenance: { upvoteCountAtPromotion: number | null }
+}

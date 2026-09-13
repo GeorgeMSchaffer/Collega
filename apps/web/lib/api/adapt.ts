@@ -9,26 +9,32 @@
  * identity — which is what makes it testable without a server.
  */
 
+import { DELIVERY_STATUSES } from '../display'
 import { roleLabel } from '../roles'
 import type {
   Comment,
   CurrentUser,
+  Effort,
   FieldDefinition,
   Idea,
   IdeaDetail,
   IdeaType,
   ImportOutcome,
+  Issue,
   Member,
   Organization,
   Person,
   Priority,
   Profile,
   Role,
+  Sprint,
+  SprintState,
   Status,
   ViewingAs,
 } from '../types'
 import type {
   WireCurrentUser,
+  WireDeliveryCard,
   WireFieldDefinition,
   WireIdeaAssignee,
   WireIdeaComment,
@@ -36,6 +42,7 @@ import type {
   WireIdeaListItem,
   WireIdeaType,
   WireOrganizationListItem,
+  WireSprint,
   WireStatus,
   WireSwimlane,
   WireUserImportResult,
@@ -45,6 +52,8 @@ import type {
 
 const ROLES: readonly Role[] = ['SiteAdmin', 'OrgAdmin', 'User', 'ReadOnly']
 const PRIORITIES: readonly Priority[] = ['Low', 'Medium', 'High', 'Critical']
+const EFFORTS: readonly Effort[] = ['Low', 'Medium', 'High']
+const SPRINT_STATES: readonly SprintState[] = ['Planned', 'Active', 'Completed']
 
 /**
  * The wire spells role and priority as free strings. Narrowing them here rather than casting
@@ -325,5 +334,92 @@ export function toIdea(wire: WireIdeaListItem): Idea {
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
     upvotes: wire.upvoteCount,
     hasUpvoted: wire.hasUpvoted,
+  }
+}
+
+/**
+ * A sprint's window, as comp Q writes it: `18 Aug – 31 Aug 2026`.
+ *
+ * The year appears on the end alone, because a sprint that does not span a new year would otherwise
+ * print it twice in one line. `en-GB` rather than the `en-US` `DATE` above for the same reason —
+ * this is a range and `Aug 18, – Aug 31, 2026` does not read as one.
+ *
+ * The value arriving is a calendar day (`YYYY-MM-DD`), not an instant, so it is parsed as UTC
+ * midnight and formatted in UTC. Handing the bare string to `new Date` would do the same thing
+ * today and something else the moment a component reformats it locally — a sprint that starts a day
+ * earlier for every reader west of Greenwich.
+ */
+const SPRINT_DAY = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+})
+const SPRINT_DAY_YEAR = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+function toSprintState(value: string): SprintState {
+  const state = SPRINT_STATES.find((candidate) => candidate === value)
+  if (!state) throw new Error(`The API returned an unknown sprint state: ${value}`)
+  return state
+}
+
+/** One sprint, with its window formatted for the header that renders it. */
+export function toSprint(wire: WireSprint): Sprint {
+  return {
+    id: wire.sprintId,
+    name: wire.name,
+    goal: wire.goal,
+    startsOn: SPRINT_DAY.format(new Date(`${wire.startDate}T00:00:00Z`)),
+    endsOn: SPRINT_DAY_YEAR.format(new Date(`${wire.endDate}T00:00:00Z`)),
+    state: toSprintState(wire.state),
+  }
+}
+
+/**
+ * Effort and delivery status are nullable on the wire and cannot be null here.
+ *
+ * Both columns are nullable because a Discovery idea has neither, and `/delivery` returns no
+ * Discovery items — the promotion gate requires an effort and sets `Pending` in the same write, so
+ * a card missing either is data damage rather than an ordinary case to design a label for. Narrowed
+ * with a throw for the reason `toRole` is: `deliveryStatusId: ''` would join no lane and the card
+ * would simply not appear on the board, which is the silent failure this seam exists to avoid.
+ */
+function toEffort(value: string | null): Effort {
+  const effort = EFFORTS.find((candidate) => candidate === value)
+  if (!effort) throw new Error(`The API returned an Issue with no usable effort: ${value}`)
+  return effort
+}
+
+function toDeliveryStatusId(value: string | null): string {
+  const status = DELIVERY_STATUSES.find((candidate) => candidate.id === value)
+  if (!status) throw new Error(`The API returned an Issue with no usable delivery status: ${value}`)
+  return status.id
+}
+
+/**
+ * One delivery card into the shape the sprint board, the backlog and the issue page render.
+ *
+ * `outcomeId` is hard `null` and is not read off the payload, because there is nothing to read: see
+ * `lib/data/delivery.ts` for why Outcomes have no source at all yet.
+ *
+ * `upvotesAtPromotion` falls back to the live count only if the snapshot is missing, which the
+ * promotion gate does not allow — the fallback is there so the backlog's sort has a number rather
+ * than `null` if it ever is.
+ */
+export function toIssue(wire: WireDeliveryCard): Issue {
+  const assignee = wire.assignees[0]
+  return {
+    id: wire.ideaId,
+    title: wire.title,
+    deliveryStatusId: toDeliveryStatusId(wire.deliveryStatus),
+    sprintId: wire.sprint?.sprintId ?? null,
+    outcomeId: null,
+    effort: toEffort(wire.effort),
+    assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
+    upvotesAtPromotion: wire.provenance.upvoteCountAtPromotion ?? wire.upvoteCount,
   }
 }
