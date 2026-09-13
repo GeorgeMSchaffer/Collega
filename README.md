@@ -19,13 +19,19 @@ pnpm install
 You need **Node ≥ 24.20** and **pnpm ≥ 12.3.4**. `pnpm install` fails on an engine mismatch rather
 than installing something that will not run.
 
-Unless you already run a PostgreSQL 16 on this machine, you also need **Docker** — that is the only
-thing the database container needs. Point `DATABASE_URL` at a cluster you already run locally and
-Docker is not involved at all. If you can run neither, see
-[Working without a local database](#working-without-a-local-database).
-
 `packages/infrastructure` runs `prisma generate` on postinstall, so the Prisma client is built for
 you. It reads the schema and does not need a reachable database.
+
+### Then pick a database
+
+| | You need | Good for |
+|---|---|---|
+| **A local container** *(default)* | **Docker** | Ordinary development. Disposable, offline, and yours alone |
+| **A PostgreSQL 16 you already run** | Nothing more | A machine that already has one |
+| **Vercel Postgres** | A Vercel account | A machine that cannot run a database server, or sharing one database across machines |
+
+All three are the same setting — `DATABASE_URL` in `.env` at the repository root — and `pnpm start`
+behaves accordingly. The next section covers each.
 
 ---
 
@@ -46,7 +52,8 @@ changing `apps/api`**, which it runs as built output rather than under a watcher
 
 It refuses to run against anything but your own machine. The script migrates and seeds whatever
 `DATABASE_URL` names, so a host that is not loopback stops it before the first write, quoting the
-address it read. `COLLEGA_ALLOW_REMOTE_DATABASE=1` is how you say you meant it.
+address it read — see [Against Vercel Postgres](#against-vercel-postgres) for the deliberate way
+past that.
 
 `.env` is gitignored and copied from [`.env.example`](.env.example), whose defaults are placeholders
 for a throwaway local container. Two are worth knowing about:
@@ -55,6 +62,62 @@ for a throwaway local container. Two are worth knowing about:
   `psql -U postgres` fails with `role "postgres" does not exist`.
 - `ANTHROPIC_API_KEY` may be left empty, which runs AI-assisted idea drafting **dark** rather than
   broken ([`SPEC/20-feature-ai-idea-assist.md`](SPEC/20-feature-ai-idea-assist.md) rule 31).
+
+### Against Vercel Postgres
+
+For a machine that cannot run a database server, or to share one database between machines. It is
+the same `pnpm start`; only `DATABASE_URL` changes, plus one flag that says you meant it.
+
+**1. Get the connection string out of Vercel**, into a scratch file rather than over your `.env`:
+
+```bash
+cd apps/api && vercel link                                   # once, to collega-api
+vercel env pull /tmp/collega-preview.env --environment=preview
+```
+
+`vercel env pull` writes **every** variable for that environment, `SITE_ADMIN_PASSWORD` and
+`ANTHROPIC_API_KEY` included. Pulling it straight onto `.env` would overwrite your local one and put
+deployment credentials on disk, so pull it somewhere else and copy across the single line you want.
+
+**2. Find the direct connection string.** Storage integrations inject several keys and the names
+differ by provider. Take the one whose value begins `postgresql://` — that is the direct connection.
+A `prisma+postgres://` value is the Accelerate proxy, and `prisma migrate deploy` cannot run through
+it, so it is not the one you want here.
+
+**3. Put it in `.env` at the repository root**, as `DATABASE_URL`:
+
+```
+DATABASE_URL=postgresql://…
+```
+
+`.env` is the file this repository reads — both [`tools/local/start.ts`](tools/local/start.ts) and
+the Nest host load it from the repository root, and neither reads `.env.local`. An exported
+`DATABASE_URL` in your shell wins over the file, if you would rather not write it down at all.
+
+**4. Run it:**
+
+```bash
+COLLEGA_ALLOW_REMOTE_DATABASE=1 pnpm start
+```
+
+Docker is never involved: `start.ts` reads the host out of the connection string, sees it is not this
+machine, and does not start a container that the string would not reach anyway.
+
+**Why the flag exists, and why it should stay a flag.** `pnpm start` runs `prisma migrate deploy` and
+then the demo seed against whatever `DATABASE_URL` names. On a staging database that is exactly
+right. On a production one it is a catastrophe, and the two differ by a string in a file. So the
+script refuses a non-loopback host outright and `COLLEGA_ALLOW_REMOTE_DATABASE=1` is the way to say
+you meant it — **per command, not exported in a shell profile**, where it would silently apply to
+every run afterwards.
+
+Two consequences worth expecting:
+
+- **The demo data will be there, and it is shared.** The seed upserts, so re-running is safe, but
+  everybody pointed at that database sees the same organizations, ideas and comments — including
+  each other's edits. That is the point of sharing one, and it is not a local sandbox.
+- **The passwords are published.** Every seeded account uses `DEMO_PASSWORD` from
+  [`scenario.ts`](packages/infrastructure/prisma/seed/modules/scenario.ts), which is in this
+  repository. A database holding that data must never be one that matters.
 
 ### What is real, and what is still a fixture
 
@@ -199,27 +262,16 @@ provisioned staging database comes up with the bootstrap admin and nothing else:
 no boards, no ideas. Demo data goes in from a shell where `NODE_ENV` is unset — yours:
 
 ```bash
-vercel env pull .env.local --environment=preview     # the URL, without reading it yourself
-DATABASE_URL='<the pulled URL>' pnpm --filter @collega/infrastructure db:seed
+vercel env pull /tmp/collega-preview.env --environment=preview
+DATABASE_URL='<the postgresql:// value from that file>'   pnpm --filter @collega/infrastructure db:seed
 ```
 
-### Working without a local database
+Pull to a scratch path, not onto `.env` — the pull carries every variable for that environment,
+deployment credentials included. See [Against Vercel Postgres](#against-vercel-postgres) for the
+same steps in more detail.
 
-A machine that cannot run a database server — no Docker, or a locked-down host — runs against the
-staging database instead:
-
-```bash
-COLLEGA_ALLOW_REMOTE_DATABASE=1 DATABASE_URL='<staging URL>' pnpm start
-```
-
-`tools/local/start.ts` refuses a non-loopback host by default, because it migrates and seeds whatever
-it is given and a shared cluster should not be that by accident. `COLLEGA_ALLOW_REMOTE_DATABASE=1` is
-how you say you meant it; the script then skips Docker entirely, since starting a container here
-would not be the database the connection string names.
-
-Note what that command does: it **migrates and seeds** the remote database, demo organizations and
-users included. That is correct for a staging database and wrong for a production one. The guard is
-the only thing standing between those two outcomes, so do not export the variable in a shell profile.
+Developers point at this same staging database when they cannot run one locally —
+[Against Vercel Postgres](#against-vercel-postgres) under "Run it locally" has those steps.
 
 ### Two things that are load-bearing and invisible
 
@@ -349,6 +401,13 @@ launcher does not.
 **`prisma migrate deploy` fails with `P3005` — "the database schema is not empty"**
 The database has tables Prisma did not create. Drop it and let `pnpm start` rebuild it; the seed
 makes that cheap.
+
+**`pnpm start` says `DATABASE_URL points at <host>, which is not this machine`**
+Working as intended. The script migrates and seeds whatever it is given, so it will not write to a
+host it cannot see is yours. If that host really is a staging database, prefix the command with
+`COLLEGA_ALLOW_REMOTE_DATABASE=1` — see
+[Against Vercel Postgres](#against-vercel-postgres). If it is not, look at `DATABASE_URL` in `.env`
+and at your shell, which overrides the file.
 
 **`pnpm install` fails on an engine version** — the workspace requires Node ≥ 24.20 and
 pnpm ≥ 12.3.4. `corepack prepare pnpm@12.3.4 --activate`.
