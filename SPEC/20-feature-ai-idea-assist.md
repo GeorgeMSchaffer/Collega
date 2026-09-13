@@ -2,6 +2,13 @@
 
 **Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/sprint-07-ai-idea-assist.md`) — after the Postgres migration (Sprint 5) and View As (Sprint 6), before Azure deployment (Sprint 8). Design decisions locked 2026-08-11 by user interview; `Anthropic` NuGet package approved by the user the same day.
 
+> **A rescope is scheduled (`SPEC/decisions.md` 2026-09-13).** What is specified below is built and
+> live, and it stays. But it covers exactly one job — draft one new idea, in a chat, from a standing
+> start — and **no further AI feature work starts on this spec**: the integration is rescoped and
+> respecified after the current batch of work. Ingestion and refinement of existing ideas have no
+> spec at all, and prompt changes are currently unmeasurable because F6 deleted the evaluation
+> runner. Read that entry before building anything AI-shaped.
+
 ## Overview
 
 `Components/IdeaBrainstormModal.razor` already fronts idea creation on the Ideas list with a ChatGPT-style chat. Today it is **scripted**: three canned assistant nudges cycle, and the transcript of the user's own messages is handed to `IdeaCreateModal.InitialDescription` as a seed description. This feature replaces the scripted nudges with a real model-backed conversation that additionally **maps the user's answers onto Idea form fields**, while keeping the conversation confined to idea drafting for this organization.

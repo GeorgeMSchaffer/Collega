@@ -9,6 +9,50 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-13 — The AI integration is rescoped and respecified after the current batch
+
+**Decided by the user.** Sequencing, not cancellation: finish the batch in flight — the remainder of
+Wave F — and then rescope and spec the AI integration before any further AI work is built.
+
+**What "the AI integration" is today.** `SPEC/20-feature-ai-idea-assist.md`, shipped in Sprint 7 and
+live behind **eleven endpoints** in `apps/api/src/ai-assist/`. It does exactly one job: draft **one
+new idea**, in a chat, from a standing start, mapping answers onto form fields. Everything below is
+already known to sit outside that job or to have stopped working, which is why it is written down
+here rather than rediscovered:
+
+- **Ingestion has no spec.** Material that did not begin as a chat turn — a pasted transcript, a
+  meeting note, a document, a backlog from elsewhere — has no door in. The only entry today is a
+  person typing into a capped conversation. `SPEC/ideas-inbox.md` names the questions a spec must
+  answer: formats, one idea or many from one input, what happens to the source, and whether a human
+  confirms each extraction or a batch.
+- **Refinement has no spec either, and is a different problem.** Helping with ideas that *already
+  exist* — sharpening a thin description, reconciling two that say the same thing — acts on records
+  with authors, upvotes and history. Conflating it with ingestion produces a feature that rewrites
+  somebody else's idea without asking, which is the failure the containment rules exist to prevent.
+- **Similar-idea retrieval is deferred to v2** (D-DEDUPE), as are org playbook and SOP documents
+  (rule 14). Both want embeddings and `pgvector`, and the schema has neither.
+- **The admin surface is not wired.** `ai-prompt` and `ai-usage` exist on the API; the four readers
+  in `apps/web/lib/data/admin.ts` — `getAiAssist`, `getAiPrompt`, `getUsage`,
+  `getUsageForOrganization` — still answer from fixtures. It is the last fixture-backed surface in
+  the product.
+- **Prompt changes are currently unmeasurable.** The corpus-scale evaluation runner was deleted with
+  the .NET stack in F6; the corpus survives as `tools/prompt-eval` with no tool to run it. The scope
+  gate it measured is a security control, and requirement 37c already measured that a handful of
+  interactive probes proves almost nothing. A rescope that adds AI surface area without restoring
+  measurement is adding unmeasured security-relevant behaviour.
+- **Per-organization credentials remain deliberately unimplemented** (rule 29/30): one
+  deployment-level key. That is a scoping decision the rescope may revisit, not an oversight.
+
+**What this does not mean.** The shipped feature is not paused, deprecated or in question — it works
+and stays. This constrains *new* AI scope only: no further AI feature work starts on the current
+spec. When the rescope happens it produces a spec, and the spec is what gets built.
+
+**Why after the batch rather than now.** The same argument as cutting Wave G on 2026-09-08 — decide
+the sequence now so it stops attaching itself to every estimate, and do the work with the real cost
+of F known rather than estimated.
+
+---
+
 ## 2026-09-13 — The .NET stack is deleted; stale pointers go, inherited rationale stays
 
 Slice **F6**. `src/Collega.*`, `tests/`, `Collega.sln`, `global.json`,

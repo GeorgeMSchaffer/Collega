@@ -8,9 +8,11 @@
 
 ## Chat assistant: ingestion, and refining ideas that already exist (needs a spec)
 
-> Raised 2026-09-13. **Not specified, not scheduled.** Captured because the gap is now visible in
-> shipped code rather than hypothetical: `SPEC/20-feature-ai-idea-assist.md` is live behind eleven
-> endpoints, and it is scoped to exactly one job.
+> Raised 2026-09-13. **Still unrefined, but no longer unowned:** the AI integration is rescoped and
+> respecified after the current batch (`SPEC/decisions.md` 2026-09-13), and this is one of the things
+> that rescope has to answer. Captured because the gap is visible in shipped code rather than
+> hypothetical: `SPEC/20-feature-ai-idea-assist.md` is live behind eleven endpoints, and it is scoped
+> to exactly one job.
 
 What exists today drafts **one new idea**, in a chat, from a standing start. The spec is explicit
 about its edges, which is what makes the missing half easy to name:

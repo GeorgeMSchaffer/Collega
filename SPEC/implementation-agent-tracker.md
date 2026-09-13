@@ -181,6 +181,15 @@ sequenced, not merely listed.
    moved to `tools/prompt-eval`** because its .NET runner did not survive, which is a **capability
    lost, not relocated** (see "Known open risks"). Gate: 23/23, `0 cached`.
 
+5. **Rescope and spec the AI integration — after this batch, decided 2026-09-13.** Sequencing, not
+   cancellation. `SPEC/20-feature-ai-idea-assist.md` is live behind eleven endpoints and does one
+   job: draft one new idea, in a chat, from a standing start. Ingestion and refinement have no spec,
+   similar-idea retrieval and org documents are deferred to v2 on `pgvector` the schema does not
+   have, the admin surface is the last fixture-backed screen in the product, and prompt changes
+   became unmeasurable when F6 deleted the evaluation runner. **No further AI feature work starts on
+   the current spec.** The full entry, including what it does not mean, is `SPEC/decisions.md`
+   2026-09-13.
+
 Deferred with reasons recorded in `SPEC/decisions.md` 2026-09-12: the rate limiter's collision with
 the golden replay. Amended there the same day: the account lockout, which no longer needs the shared
 store to stop being a denial-of-service.
