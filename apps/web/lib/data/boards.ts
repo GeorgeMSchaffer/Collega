@@ -17,11 +17,11 @@ import { apiGet, apiPath, isApiStatus } from '../api/client'
 import type {
   WireBoardDetail,
   WireBoardListItem,
+  WireDeliveryCard,
   WireIdeaListItem,
   WirePage,
   WireStatus,
 } from '../api/wire'
-import * as fixture from '../mock'
 import type { Board, BoardAdmin, BoardWithLanes, Status } from '../types'
 import { failIfRequested, resolve } from './latency'
 import { everyOrganization, organizationScope } from './scope'
@@ -167,24 +167,28 @@ export async function getStatusesByOrganization(): Promise<
  * A single reader rather than one per figure: the sidebar renders them together, and three
  * separate awaits would be three round trips once this is a real API.
  *
- * Boards and ideas are real; `backlog` counts the delivery fixture, which has no endpoint behind it
- * yet. A count that is a fixture sitting beside two that are not is the honest state of a partly
- * converted app, and the alternative — leaving all three on the fixture — would have the sidebar
- * disagree with the boards page it links to.
+ * All three are real now. `backlog` was the last fixture figure in the shell, and it counted three
+ * invented issues beside two counts that were not — which is the disagreement the sidebar is worst
+ * placed to have, since it sits next to the link to the page that would contradict it.
+ *
+ * The backlog is counted by reading it, not by a `totalCount`: `/delivery` does not page and
+ * answers a bare array, so there is no envelope to ask. It is the one list here small enough by
+ * construction for that to be the same request either way.
  */
 export async function getNavCounts(): Promise<{ boards: number; ideas: number; backlog: number }> {
   const scope = organizationScope()
   if (scope === null) {
-    return resolve({ boards: 0, ideas: 0, backlog: fixture.navCounts.backlog })
+    return resolve({ boards: 0, ideas: 0, backlog: 0 })
   }
 
-  const [boards, ideas] = await Promise.all([
+  const [boards, ideas, backlog] = await Promise.all([
     apiGet<readonly WireBoardListItem[]>('getNavCounts', apiPath`/organizations/${scope}/boards`),
     apiGet<WirePage<WireIdeaListItem>>(
       'getNavCounts',
       apiPath`/organizations/${scope}/ideas?pageSize=1`,
     ),
+    apiGet<readonly WireDeliveryCard[]>('getNavCounts', apiPath`/organizations/${scope}/delivery`),
   ])
 
-  return { boards: boards.length, ideas: ideas.totalCount, backlog: fixture.navCounts.backlog }
+  return { boards: boards.length, ideas: ideas.totalCount, backlog: backlog.length }
 }

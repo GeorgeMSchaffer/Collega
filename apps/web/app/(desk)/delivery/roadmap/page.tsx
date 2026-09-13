@@ -15,6 +15,12 @@ export const metadata = { title: 'Roadmap · Collega' }
  * one outcome. Under the rejected multi-parent design each row would be a cover rather than a count
  * and the rows would not add up — which is why the ungrouped row exists: an outcome is optional, so
  * without it the totals would silently fail to close.
+ *
+ * **This screen renders its empty state, and will until Slice 2 lands.** The issues are real;
+ * Outcomes have no table, service or route, so `getOutcomes` answers empty rather than handing back
+ * invented themes to group live work under — `lib/data/delivery.ts` argues that at length. The
+ * empty state below is the whole screen today, and it says the true thing: N delivery issues, and
+ * nothing to group them by.
  */
 export default async function RoadmapPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
@@ -82,8 +88,7 @@ export default async function RoadmapPage() {
                         key={issue.id}
                         className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-5 py-2.5 text-sm last:border-0"
                       >
-                        <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
-                        <Link href={`/delivery/issues/${issue.key}`}>{issue.title}</Link>
+                        <Link href={`/delivery/issues/${issue.id}`}>{issue.title}</Link>
                         <span className="ml-auto text-xs text-muted-foreground">
                           {statuses.find((row) => row.id === issue.deliveryStatusId)?.name}
                         </span>

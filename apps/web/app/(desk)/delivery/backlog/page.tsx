@@ -18,7 +18,9 @@ export default async function BacklogPage() {
     getOutcomes(),
     getDeliveryStatuses(),
   ])
-  const next = sprints.find((sprint) => !sprint.active)
+  // The next sprint is a `Planned` one, not merely "not the active one": a `Completed` sprint is
+  // also not active, and offering to start one that has already run is worse than offering nothing.
+  const next = sprints.find((sprint) => sprint.state === 'Planned')
 
   return (
     <>
@@ -85,8 +87,7 @@ export default async function BacklogPage() {
                     return (
                       <tr key={issue.id} className="border-b last:border-0">
                         <td className="px-4 py-2.5">
-                          <Link href={`/delivery/issues/${issue.key}`}>{issue.title}</Link>
-                          <div className="font-mono text-xs text-muted-foreground">{issue.key}</div>
+                          <Link href={`/delivery/issues/${issue.id}`}>{issue.title}</Link>
                         </td>
                         <td className="px-4 py-2.5">
                           {outcome ? (
