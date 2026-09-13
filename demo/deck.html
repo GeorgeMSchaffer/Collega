@@ -1,0 +1,523 @@
+<title>Collega Product Walkthrough</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap"
+/>
+<style>
+  :root {
+    --ground: #eef2f6;
+    --surface: #ffffff;
+    --ink: #1b2634;
+    --ink-muted: #5d6c7e;
+    --ink-faint: #8593a2;
+    --accent: #46647f;
+    --hairline: #d7dee5;
+    --mat: #e1e8ef;
+    --mat-edge: #ccd6df;
+    --chip: #e3eaf0;
+    --shadow: 0 1px 2px rgba(27, 38, 52, 0.06), 0 14px 34px rgba(27, 38, 52, 0.1);
+
+    --display: "Newsreader", Georgia, "Times New Roman", serif;
+    --body: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #111820;
+      --surface: #19212b;
+      --ink: #e3eaf1;
+      --ink-muted: #96a4b3;
+      --ink-faint: #6f7e8e;
+      --accent: #93b3ce;
+      --hairline: #29343f;
+      --chip: #233040;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #111820;
+    --surface: #19212b;
+    --ink: #e3eaf1;
+    --ink-muted: #96a4b3;
+    --ink-faint: #6f7e8e;
+    --accent: #93b3ce;
+    --hairline: #29343f;
+    --chip: #233040;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-inline: 24px;
+    padding-block: 56px 72px;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  a:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  /* --- masthead ------------------------------------------------------------------------------ */
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .masthead h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .masthead h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .thesis {
+    margin: 0;
+    max-width: 62ch;
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--ink-muted);
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--ink-muted);
+  }
+
+  .facts b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* --- contents ------------------------------------------------------------------------------ */
+
+  .contents {
+    padding-block: 32px 8px;
+  }
+
+  .contents h2 {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 16px;
+  }
+
+  .contents ol {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2px 32px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .contents a {
+    display: flex;
+    gap: 14px;
+    padding: 7px 0;
+    text-decoration: none;
+    font-size: 15px;
+    color: var(--ink-muted);
+  }
+
+  .contents a:hover {
+    color: var(--ink);
+  }
+
+  .step {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+
+  /* --- plates -------------------------------------------------------------------------------- */
+
+  .plates {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .plate {
+    padding-block: 52px;
+    border-top: 1px solid var(--hairline);
+    scroll-margin-top: 24px;
+  }
+
+  .plate-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .route {
+    color: var(--ink-muted);
+    letter-spacing: 0.01em;
+  }
+
+  .role {
+    margin-left: auto;
+    padding: 3px 9px;
+    border-radius: 3px;
+    background: var(--chip);
+    color: var(--ink-muted);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .plate h2 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(26px, 3.2vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin: 0 0 12px;
+    max-width: 24ch;
+    text-wrap: balance;
+  }
+
+  .caption {
+    margin: 0 0 28px;
+    max-width: 68ch;
+    font-size: 16.5px;
+    color: var(--ink-muted);
+  }
+
+  /* The screenshots are light-theme captures, so they sit on a light mat in both themes: a frame
+     the page puts around them deliberately, rather than a bright rectangle punched into a dark
+     page. */
+  .mat {
+    margin: 0;
+    padding: clamp(12px, 2.2vw, 26px);
+    background: var(--mat);
+    border: 1px solid var(--mat-edge);
+    border-radius: 8px;
+  }
+
+  .mat img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid rgba(27, 38, 52, 0.14);
+    box-shadow: var(--shadow);
+    background: #ffffff;
+  }
+
+  /* --- colophon ------------------------------------------------------------------------------ */
+
+  .colophon {
+    margin-top: 52px;
+    padding: 28px 30px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+  }
+
+  .colophon h2 {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 14px;
+  }
+
+  .colophon p {
+    margin: 0 0 14px;
+    max-width: 68ch;
+    font-size: 15.5px;
+    color: var(--ink-muted);
+  }
+
+  .colophon p:last-child {
+    margin-bottom: 0;
+  }
+
+  .colophon code,
+  .colophon pre {
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .colophon pre {
+    margin: 0 0 16px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    background: var(--ground);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    color: var(--ink);
+  }
+
+  @media (max-width: 640px) {
+    .page {
+      padding-block: 36px 48px;
+    }
+
+    .plate {
+      padding-block: 38px;
+    }
+
+    .role {
+      margin-left: 0;
+    }
+  }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <p class="eyebrow">Product walkthrough</p>
+    <h1>Collega, from first rough note <em>through delivery</em>.</h1>
+    <p class="thesis">
+      Eleven screens in the order a demo runs them, each one photographed from a running build
+      against the seeded Acme Robotics organization. Nothing here is a mockup, and nothing has been
+      retouched.
+    </p>
+    <ul class="facts">
+      <li><b>11</b> screens</li>
+      <li><b>3</b> permission levels</li>
+      <li><b>22</b> ideas across <b>2</b> boards</li>
+      <li>captured at <b>1600×1000</b> @2x</li>
+    </ul>
+  </header>
+
+  <nav class="contents" aria-label="Contents">
+    <h2>The run of show</h2>
+    <ol>
+      <li><a href="#sign-in"><span class="step">01</span>One account, scoped to one organization</a></li>
+      <li><a href="#boards"><span class="step">02</span>Boards organize the same ideas different ways</a></li>
+      <li><a href="#board-kanban"><span class="step">03</span>The board is the workflow</a></li>
+      <li><a href="#board-kanban-right"><span class="step">04</span>Through to Complete</a></li>
+      <li><a href="#new-idea"><span class="step">05</span>Raising an idea takes five fields</a></li>
+      <li><a href="#ideas-list"><span class="step">06</span>Every idea in the organization, one list</a></li>
+      <li><a href="#idea-inspector"><span class="step">07</span>Open an idea without losing the list</a></li>
+      <li><a href="#discussion"><span class="step">08</span>The conversation stays attached to the idea</a></li>
+      <li><a href="#palette"><span class="step">09</span>Keyboard-first navigation</a></li>
+      <li><a href="#role-user"><span class="step">10</span>Same board, seen as a contributor</a></li>
+      <li><a href="#role-readonly"><span class="step">11</span>Same board, seen read-only</a></li>
+    </ol>
+  </nav>
+
+  <main class="plates">
+
+      <article class="plate" id="sign-in">
+        <div class="plate-meta">
+          <span class="step">01</span>
+          <span class="route">/login</span>
+          <span class="role">anonymous</span>
+        </div>
+        <h2>One account, scoped to one organization</h2>
+        <p class="caption">Sign-in is the whole front door. An account belongs to exactly one organization, and every board, idea and person it can reach is inside that boundary — there is no workspace switcher to get wrong.</p>
+        <figure class="mat">
+          <img src="screenshots/01-sign-in.png" alt="One account, scoped to one organization — the /login screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="boards">
+        <div class="plate-meta">
+          <span class="step">02</span>
+          <span class="route">/boards</span>
+          <span class="role">Org Admin</span>
+        </div>
+        <h2>Boards organize the same ideas different ways</h2>
+        <p class="caption">An organization defines its own boards, and each one picks its own lanes from the organization’s status catalog. The counts are live: two boards, eleven ideas apiece, twenty-two in the organization.</p>
+        <figure class="mat">
+          <img src="screenshots/02-boards.png" alt="Boards organize the same ideas different ways — the /boards screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="board-kanban">
+        <div class="plate-meta">
+          <span class="step">03</span>
+          <span class="route">/boards/:boardId</span>
+          <span class="role">Org Admin</span>
+        </div>
+        <h2>The board is the workflow</h2>
+        <p class="caption">Lanes come from the board’s own status list, not a fixed set. A card carries its priority, tags, assignee and vote count; the arrows move it one lane at a time and each move saves immediately, so the board always shows what the server holds.</p>
+        <figure class="mat">
+          <img src="screenshots/03-board-kanban.png" alt="The board is the workflow — the /boards/:boardId screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="board-kanban-right">
+        <div class="plate-meta">
+          <span class="step">04</span>
+          <span class="route">/boards/:boardId</span>
+          <span class="role">Org Admin</span>
+        </div>
+        <h2>Through to Complete</h2>
+        <p class="caption">The same board, scrolled to its right-hand lanes. Client Review and Complete are ordinary statuses the organization configured — a team that works differently configures different ones.</p>
+        <figure class="mat">
+          <img src="screenshots/04-board-kanban-complete.png" alt="Through to Complete — the /boards/:boardId screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="new-idea">
+        <div class="plate-meta">
+          <span class="step">05</span>
+          <span class="route">/boards/:boardId</span>
+          <span class="role">Org Admin</span>
+        </div>
+        <h2>Raising an idea takes five fields</h2>
+        <p class="caption">Title, description, priority, idea type and business impact. Idea type and business impact are per-organization catalogs, so the vocabulary on this form is the organization’s own — and the new idea lands in the board’s left-most lane.</p>
+        <figure class="mat">
+          <img src="screenshots/05-new-idea.png" alt="Raising an idea takes five fields — the /boards/:boardId screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="ideas-list">
+        <div class="plate-meta">
+          <span class="step">06</span>
+          <span class="route">/ideas</span>
+          <span class="role">Org Admin</span>
+        </div>
+        <h2>Every idea in the organization, one list</h2>
+        <p class="caption">The list view crosses boards: title, board, status, priority, assignee and votes, newest first. It is the view for triage — the board view is for working.</p>
+        <figure class="mat">
+          <img src="screenshots/06-ideas-list.png" alt="Every idea in the organization, one list — the /ideas screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="idea-inspector">
+        <div class="plate-meta">
+          <span class="step">07</span>
+          <span class="route">/ideas/:ideaId</span>
+          <span class="role">Org Admin</span>
+        </div>
+        <h2>Open an idea without losing the list</h2>
+        <p class="caption">The inspector opens beside the list rather than over it, and its URL is addressable — a link to an idea opens the list with that idea already open. Classification, votes, tags and assignee all read from the same record.</p>
+        <figure class="mat">
+          <img src="screenshots/07-idea-inspector.png" alt="Open an idea without losing the list — the /ideas/:ideaId screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="discussion">
+        <div class="plate-meta">
+          <span class="step">08</span>
+          <span class="route">/ideas/:ideaId</span>
+          <span class="role">User (Noah)</span>
+        </div>
+        <h2>The conversation stays attached to the idea</h2>
+        <p class="caption">Comments live on the idea, not in a thread somewhere else, and an @mention resolves against the organization’s members. Three people, one record, no context to reassemble later.</p>
+        <figure class="mat">
+          <img src="screenshots/08-discussion.png" alt="The conversation stays attached to the idea — the /ideas/:ideaId screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="palette">
+        <div class="plate-meta">
+          <span class="step">09</span>
+          <span class="route">Ctrl K · any route</span>
+          <span class="role">Org Admin</span>
+        </div>
+        <h2>Keyboard-first navigation</h2>
+        <p class="caption">Ctrl K from anywhere; arrow keys and Enter navigate. It jumps between surfaces today and is where idea search lands next.</p>
+        <figure class="mat">
+          <img src="screenshots/09-command-palette.png" alt="Keyboard-first navigation — the Ctrl K · any route screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="role-user">
+        <div class="plate-meta">
+          <span class="step">10</span>
+          <span class="route">/boards/:boardId</span>
+          <span class="role">User (Noah)</span>
+        </div>
+        <h2>Same board, seen as a contributor</h2>
+        <p class="caption">A plain User raises ideas, votes and comments. Whether they may move a card between lanes is the board’s own setting, not their role — so one board can let contributors drive the workflow while another keeps it with administrators.</p>
+        <figure class="mat">
+          <img src="screenshots/10-role-user.png" alt="Same board, seen as a contributor — the /boards/:boardId screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+
+      <article class="plate" id="role-readonly">
+        <div class="plate-meta">
+          <span class="step">11</span>
+          <span class="route">/boards/:boardId</span>
+          <span class="role">Read Only (Rosa)</span>
+        </div>
+        <h2>Same board, seen read-only</h2>
+        <p class="caption">A Read Only account still sees everything and can still upvote — engagement is not authorship. The refusal is shown rather than hidden: “New idea” stays visible, disabled, and says why.</p>
+        <figure class="mat">
+          <img src="screenshots/11-role-readonly.png" alt="Same board, seen read-only — the /boards/:boardId screen" width="3200" height="2000" loading="lazy" />
+        </figure>
+      </article>
+  </main>
+
+  <footer class="colophon">
+    <h2>How these were made</h2>
+    <p>
+      Every image on this page is written by <code>tools/demo-shots</code>, which drives Chromium
+      against a local Collega and signs in as the seeded demo accounts. A screen that changes is
+      re-photographed by re-running it — there is no folder of hand-cropped PNGs to keep in step.
+    </p>
+    <pre>pnpm start   # API on :3001, web on :3000, database seeded
+pnpm shots   # writes demo/screenshots
+pnpm deck    # rebuilds this page</pre>
+    <p>
+      The accounts, the two organizations and the twenty-two ideas all come from the demo seed;
+      <code>demo.md</code> lists them. The discussion on screen 08 is a real comment, posted through
+      the UI by Noah Contributor while the capture was running.
+    </p>
+  </footer>
+</div>
