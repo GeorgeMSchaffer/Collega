@@ -6,6 +6,49 @@
 >
 > **Promotion path:** idea → user discussion → canonical spec (`SPEC/20-feature-*.md`) → sprint plan (`SPEC/sprints/`). Once an idea is promoted, delete it here — the spec becomes its home.
 
+## Chat assistant: ingestion, and refining ideas that already exist (needs a spec)
+
+> Raised 2026-09-13. **Not specified, not scheduled.** Captured because the gap is now visible in
+> shipped code rather than hypothetical: `SPEC/20-feature-ai-idea-assist.md` is live behind eleven
+> endpoints, and it is scoped to exactly one job.
+
+What exists today drafts **one new idea**, in a chat, from a standing start. The spec is explicit
+about its edges, which is what makes the missing half easy to name:
+
+- The conversation confines itself to idea drafting and maps answers onto form fields.
+- **D-DEDUPE defers similar-idea retrieval to v2** — v1 retrieves structured org data only. No
+  embeddings, no `pgvector`.
+- Rule 14 also defers **org playbook / SOP documents** to v2.
+- Board and Status are never proposed; board is chosen before the chat opens.
+
+So two things have no spec at all, and they are different problems wearing one name:
+
+**Ingestion.** Getting material *in* that did not start as a chat turn — a pasted transcript, a
+meeting note, a document, a list of requests, a backlog exported from somewhere else. Today the only
+door is a person typing into a 20-entry conversation, capped at roughly ten user turns. The
+questions a spec has to answer: what formats, one idea or many out of one input, what happens to
+the source after extraction, and whether a human confirms each extracted idea or a batch.
+
+**Refinement of ideas that already exist.** The assistant can help write an idea and then never
+speaks to it again. There is no way to ask it to sharpen a thin description, reconcile two ideas
+that say the same thing, or re-classify something filed under the wrong idea type. This is where
+D-DEDUPE's deferral actually bites — "this looks like idea #214" is the cheapest version of it, and
+it needs embeddings.
+
+**Why they are worth separating before either is specified:** ingestion is a *write* problem, with
+provenance and confirmation at its centre; refinement is a *read-then-suggest* problem over records
+that already have authors, upvotes and history. Conflating them produces a feature that rewrites
+somebody else's idea without asking, which is the same failure mode the existing spec's containment
+rules exist to prevent.
+
+**Both are blocked on the same thing:** `pgvector`, which rule 14 and D-DEDUPE both wait on. A spec
+should say whether that dependency is still the intended route.
+
+Read `SPEC/20-feature-ai-idea-assist.md` before opening this — it already answers what the assistant
+does today, and several of its rules constrain what either of these may do.
+
+---
+
 ## Roadmaps → Sprints → Issues (still being explored)
 
 > **Kept here deliberately, not an oversight** (user decision, 2026-08-27). The promote-and-delete rule below would normally send this to its spec and delete it here — but the user is still exploring the shape and expects to revisit it **after the MVP, or immediately before it**. Until then this stays as the original unrefined brainstorm.
