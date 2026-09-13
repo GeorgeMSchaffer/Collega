@@ -17,6 +17,23 @@ node tools/golden/src/cli.ts inventory     # the 81 endpoints, read from the con
 node --test "tools/golden/test/*.test.ts"  # the harness's own tests
 ```
 
+## demo-shots
+
+The demo screenshot set and the page that presents it. It drives a local Collega in Chromium,
+signs in as the seeded accounts from `demo.md`, and writes `demo/screenshots/` — then builds
+`demo/deck.html` around those images from the captions in `tools/demo-shots/shots.ts`.
+
+```bash
+pnpm start   # in one terminal: API on :3001, web on :3000, database seeded
+pnpm shots   # re-photograph every screen
+pnpm deck    # rebuild demo/deck.html
+```
+
+`shots.ts` is the only place the order, the captions and the file names live, so adding a screen
+means adding an entry there and re-running both. The capture writes through the UI — the discussion
+screen is a real comment posted by a real account — and refuses to run against anything but
+localhost, because the passwords it uses are published in `demo.md`.
+
 ## Two playgrounds, two jobs
 
 Both make real, billed calls. They answer different questions, and neither should grow into the other.

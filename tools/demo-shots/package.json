@@ -1,0 +1,14 @@
+{
+  "name": "@collega/demo-shots",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Drives a running Collega in Chromium and writes the demo screenshot set to demo/screenshots, then builds demo/deck.html around it.",
+  "scripts": {
+    "capture": "node capture.ts",
+    "deck": "node deck.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}
