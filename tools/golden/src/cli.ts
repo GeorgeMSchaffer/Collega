@@ -4,7 +4,7 @@
 //
 //   node tools/golden/src/cli.ts inventory
 //   node tools/golden/src/cli.ts scaffold
-//   GOLDEN_PASSWORD=... node tools/golden/src/cli.ts capture --base-url http://localhost:5000
+//   GOLDEN_PASSWORD=... node tools/golden/src/cli.ts capture --base-url http://localhost:3001/api/v1
 //   GOLDEN_PASSWORD=... node tools/golden/src/cli.ts replay  --base-url http://localhost:3000
 //   node tools/golden/src/cli.ts coverage
 
@@ -26,7 +26,6 @@ const ROOT = path.resolve(HERE, '..')
 const REPO = path.resolve(ROOT, '..', '..')
 
 const PATHS = {
-  controllers: path.join(REPO, 'src', 'Collega.API', 'Controllers'),
   scenarios: path.join(ROOT, 'scenarios'),
   fixtures: path.join(ROOT, 'fixtures'),
 }
@@ -46,7 +45,7 @@ function parseArgs(argv: string[]): Args {
 }
 
 async function endpointMap(): Promise<{ list: Endpoint[]; byId: Map<string, Endpoint> }> {
-  const list = await readInventory(PATHS.controllers)
+  const list = await readInventory()
   return { list, byId: new Map(list.map((e) => [e.id, e])) }
 }
 
@@ -67,7 +66,7 @@ async function run(
   const scenarios = await loadScenarios(PATHS.scenarios)
   // `--auth cookie` drives the same corpus against a stack that carries its session in an httpOnly
   // cookie rather than a bearer token (`SPEC/decisions.md` `08`). Bearer stays the default so a
-  // capture against .NET is unchanged; Wave F's replay against Nest passes the flag.
+  // The recorded corpus came from a bearer-token capture; Wave F's replay against Nest passes the flag.
   const auth = args.flags.get('auth') ?? 'bearer'
   if (auth !== 'bearer' && auth !== 'cookie') {
     throw new Error(`--auth must be bearer or cookie, not "${auth}"`)
@@ -171,7 +170,7 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
 
   async capture(args) {
     const baseUrl = args.flags.get('base-url') ?? DEFAULT_BASE_URL
-    console.log(`capturing from ${baseUrl} (the .NET API)`)
+    console.log(`capturing from ${baseUrl}`)
     const exchanges: Exchange[] = []
     const summary = await run(args, exchanges)
     reportRun(summary)
@@ -182,7 +181,8 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
     }
     const manifest = await writeCorpus(PATHS.fixtures, exchanges, {
       capturedAt: new Date().toISOString(),
-      stack: args.flags.get('stack') ?? 'dotnet',
+      // No default: the recorded corpus says 'dotnet' and a new capture is from something else.
+      stack: args.flags.get('stack') ?? 'unknown',
       baseUrl,
       basePath: args.flags.get('base-path') ?? DEFAULT_BASE_PATH,
       seed: summary.seed,
@@ -246,9 +246,9 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
       [
         'golden — the Wave A capture and replay harness',
         '',
-        '  inventory [--json]            list the endpoints read from the .NET controllers',
+        '  inventory [--json]            list the endpoints the corpus was recorded against',
         '  scaffold  [--force]           write a scenario stub per controller, every endpoint x role',
-        '  capture   [--base-url URL]    record the corpus from the live .NET API  (slice A2)',
+        '  capture   [--base-url URL]    record a corpus from a live API           (slice A2)',
         '  replay    [--base-url URL] [--auth bearer|cookie]',
         '                                re-run the corpus and diff against it     (slice A3)',
         '  coverage  [--from fixtures]   what the corpus does and does not pin',

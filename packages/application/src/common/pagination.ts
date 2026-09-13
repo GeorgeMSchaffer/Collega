@@ -17,8 +17,8 @@ export type Page<T> = {
 // against Nest - was captured from the .NET API, whose PageRequest used exactly these two
 // numbers. Changing either silently changes what a page contains for every list endpoint
 // that does not pass an explicit size, and the replay diff would read as a data bug rather
-// than as a wrong constant. Source: src/Collega.Application/Common (DefaultPageSize,
-// MaxPageSize), while the .NET solution still exists to check against.
+// than as a wrong constant. Both were read off the original's PageRequest
+// while it still existed to check against; the corpus is what holds them to it now.
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 100
 

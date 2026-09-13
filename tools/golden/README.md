@@ -90,7 +90,7 @@ psql -h 127.0.0.1 -U collega -d Collega -tAc \
 
 | Path | Slice | What it is |
 |---|---|---|
-| `src/inventory.ts` | A1 | Reads `src/Collega.API/Controllers/*.cs` for routes, roles and declared statuses. Coverage is measured against this, so a route change shows up as a coverage hole rather than as silence. |
+| `src/inventory.ts` | A1 | Reads `inventory.json` — the 81 routes, roles and declared statuses the corpus was recorded against. It was parsed from controller source until slice F6 deleted that source; the snapshot is now the record, and `test/inventory.test.ts` holds it and the fixture manifest to each other. |
 | `src/scenarios.ts` | A1 | The scenario format: data, never code. Loading, validation, `{{variable}}` interpolation, and the small `$.body.x[0].y` pointer used to bind an id out of one response into the next request. |
 | `src/runner.ts` | A1 | One execution engine, used by both capture and replay — if they drove the API differently, a diff would report the harness. |
 | `src/normalize.ts` | A1 | Volatile-value handling. See below; it is the part most worth reading. |

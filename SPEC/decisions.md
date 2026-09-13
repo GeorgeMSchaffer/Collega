@@ -9,6 +9,49 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-13 — The .NET stack is deleted; stale pointers go, inherited rationale stays
+
+Slice **F6**. `src/Collega.*`, `tests/`, `Collega.sln`, `global.json`,
+`.config/dotnet-tools.json`, `DOTNET.md`, `tools/Collega.AiPlayground`, `deploy/azure`,
+`docker/proxy-ca`, the compose `api` and `web` services and `.claude/launch.json` are gone —
+481 files. It supersedes nothing; it executes the 2026-09-06 freeze.
+
+**The sweep rule, decided with the user: remove stale pointers, keep rationale.** These are
+different things and conflating them would have cost the repository its best comments. A path
+into a deleted tree (`src/Collega.API/Parsing/Csv.cs`) is a dangling pointer and was removed or
+reworded. A comment explaining *why* a handler answers 404 rather than 400 — because a route
+constraint in the application this replaced matched that way, and the corpus pins it — is
+**rationale, and it stays**. The behaviour was inherited; hiding where it came from makes the
+code less explicable, not more current. Roughly 115 files carry that second kind and were left
+alone, as were the 448 golden fixtures, which are data.
+
+**`SPEC/` history was not rewritten.** `decisions.md`, the sprint archives and the superseded
+Azure and Kubernetes specs describe the old stack because that is what happened. `SPEC/README.MD`
+marks each one's status instead.
+
+**Two things needed real work rather than deletion:**
+
+1. **The golden harness parsed the controllers.** `tools/golden/src/inventory.ts` read
+   `src/Collega.API/Controllers/*.cs` on every run, and `endpointMap()` feeds `replay` and
+   `coverage`, not just `inventory` — so the deletion would have broken replay, silently, until
+   someone next needed it. The inventory it produced is now committed as
+   `tools/golden/inventory.json` (81 endpoints, verified identical to the fixture manifest), the
+   parser is gone, and `inventory.test.ts` holds the snapshot and the manifest to each other so
+   the pair cannot drift. Coverage still reports 81/81.
+2. **The prompt playground's corpus outlives its runner.** `tools/Collega.AiPlayground` was the
+   only corpus-scale evaluation tool for the AI-assist system prompt. Its nine cases and three
+   fixtures moved to `tools/prompt-eval/` with the methodology that makes them worth keeping; the
+   C# runner was deleted. **This is a capability lost, not relocated** — there is currently no way
+   to ask "is this prompt better than that one, across the corpus?", and the scope gate it measured
+   is a security control. Recorded here rather than quietly absorbed.
+
+**`README.md` was rewritten**, covering installation, running locally, seeding (three seeds, and
+which one is safe in production) and deployment (two Vercel projects, the environment matrix, the
+load-bearing `server.js` / `bootstrap.ts` naming, and the ignore step's env-var blind spot). The
+deployment section did not exist before.
+
+---
+
 ## 2026-09-13 — The usage report returns the contract's `totals`, not the frozen app's flat fields
 
 `GET /api/v1/ai-assist/usage` and its per-organization sibling now return a `totals` object

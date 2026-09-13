@@ -1,5 +1,5 @@
-// markCreated/markUpdated are the TS replacement for the .NET AuditableEntityBase's
-// protected MarkCreated/MarkUpdated (src/Collega.Domain/Common/AuditableEntityBase.cs).
+// markCreated/markUpdated are the TS replacement for the original AuditableEntityBase's
+// protected MarkCreated/MarkUpdated.
 // Two behaviours of the original are easy to lose in the immutable-function rewrite and
 // both are replay-diff sensitive against the golden corpus, so they get dedicated tests
 // rather than folding into a single "happy path" case:

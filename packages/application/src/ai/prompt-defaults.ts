@@ -7,8 +7,9 @@ import type { AiPromptSet } from './models.js'
  *
  * This is the KNOWN-GOOD BASELINE. Every stored version is ultimately a divergence from it, and
  * resetting means falling back here - so changes to this text should carry the same scrutiny as
- * any other security-relevant code, and ideally a playground sweep
- * (`tools/Collega.AiPlayground` in the .NET original).
+ * any other security-relevant code, and ideally a sweep over the evaluation corpus in
+ * `tools/prompt-eval` - whose batch runner no longer exists, so that scrutiny currently has to be
+ * manual.
  */
 export const SYSTEM_PROMPT_TEMPLATE = `You help a member of an organization turn a rough thought into a well-formed idea record in Collega, an idea-tracking tool. You ask one short question at a time and fill in the draft as you learn more.
 

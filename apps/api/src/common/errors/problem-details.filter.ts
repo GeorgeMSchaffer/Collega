@@ -11,8 +11,8 @@ import type { Request, Response } from 'express'
 import { RequestValidationError } from './request-validation.error.js'
 
 /**
- * The one place every non-2xx response is built. Mirrors `src/Collega.API/ErrorHandling/
- * AppExceptionHandler.cs`, and reproduces its most important property: THE SAME STATUS CODE
+ * The one place every non-2xx response is built. It reproduces the exception handler this
+ * replaced, and with it that handler's most important property: THE SAME STATUS CODE
  * RENDERS DIFFERENTLY DEPENDING ON WHICH LAYER REJECTED THE REQUEST. The golden corpus records
  * two distinct 401 shapes and two distinct 403 shapes for exactly this reason (447 fixtures;
  * 80+2 at 401, 24+122 at 403 - see the D0 slice report):

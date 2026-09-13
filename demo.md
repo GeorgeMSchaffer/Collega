@@ -1,12 +1,11 @@
 # Demo accounts and data
 
-Everything below is created by [`StartupSeeder`](src/Collega.Infrastructure/Seeding/StartupSeeder.cs)
-on startup. It exists so you can sign in and click around without reading the seeder.
+Everything below is created by the seed modules in
+[`packages/infrastructure/prisma/seed/`](packages/infrastructure/prisma/seed). It exists so you can
+sign in and click around without reading them.
 
-> **This is the frozen .NET app** ([`SPEC/decisions.md`](SPEC/decisions.md) 2026-09-06). It is kept
-> runnable until slice F6 because it is still the only complete working product — the reference for
-> how a screen behaved, and the source a golden fixture is re-recorded from. Do not build on it. The
-> TypeScript client (`pnpm dev`) will grow its own seed as Waves D and E land.
+`pnpm start` runs the seed for you. It **refuses to run when `NODE_ENV=production`** — the passwords
+here are published, so this data must never reach a real deployment.
 
 The seed is **idempotent** and re-checks each account on every boot, so it is safe to rerun — and
 deleting a demo account is undone by the next restart.
@@ -42,15 +41,16 @@ curl -s -X POST http://localhost:5103/api/v1/auth/login \
 ### The configured Site Admin is not in that table
 
 A second Site Admin is seeded from `SITE_ADMIN_EMAIL` / `SITE_ADMIN_PASSWORD` — your own values, from
-the gitignored `.env` under Docker, or user-secrets for `dotnet run`. Those are deployment
+the gitignored `.env`. Those are deployment
 credentials, so they are deliberately not written down here.
 
 It is also created with `MustChangePassword: true`, so signing in as it forces a password change
 before anything else works. Use `siteadmin@demo.collega.test` above instead — it exists precisely so
 the platform-admin perspective is testable without that secret and without the forced change.
 
-Locked yourself out of the configured account? `dotnet run --project ./src/Collega.API -- --seed:auth=reset`
-recreates it from configuration.
+Locked yourself out of the configured account?
+`pnpm --filter @collega/infrastructure db:bootstrap-admin` recreates it from `SITE_ADMIN_EMAIL` and
+`SITE_ADMIN_PASSWORD`.
 
 ## What the demo data contains
 
@@ -71,24 +71,27 @@ nothing, which is what makes it a genuine read-only perspective.
 
 ## Getting the data
 
-Demo seeding runs automatically under the `Development` environment:
+`pnpm start` starts the database, migrates it and seeds it, all idempotently — so for the normal
+case there is nothing to run by hand:
 
 ```bash
-docker compose up -d postgres
-dotnet run --project src/Collega.API/Collega.API.csproj
+pnpm start
 ```
 
-To force it in any environment, name the seed explicitly:
+Against a database `pnpm start` did not create, run the seed on its own:
 
 ```bash
-dotnet run --project src/Collega.API/Collega.API.csproj -- --seed:demo
+pnpm --filter @collega/infrastructure db:migrate
+pnpm --filter @collega/infrastructure db:seed
 ```
 
-Naming any `--seed:*` flag switches to explicit mode: only the seeds you name run. So `--seed:demo`
-alone skips the Site Admin seed, and `--seed:auth` alone suppresses demo data even in Development.
+The seed upserts, so re-running it is safe and takes about four seconds. To start from nothing
+instead (**destroys all local data**): `docker compose down -v`, then `pnpm start`.
+
+The Site Admin is a **separate** seed — `db:bootstrap-admin`, which reads `SITE_ADMIN_EMAIL` and
+`SITE_ADMIN_PASSWORD` and is the one that is safe in production.
 
 ## Related
 
-- [`src/Collega.API/CLAUDE.md`](src/Collega.API/CLAUDE.md#seeding-flags) — full `--seed:*` semantics
-- [`src/Collega.Infrastructure/CLAUDE.md`](src/Collega.Infrastructure/CLAUDE.md#seeding) — seeding mechanics and the local PostgreSQL container
+- [`packages/infrastructure/prisma/seed/`](packages/infrastructure/prisma/seed) — the seed modules themselves; `modules/scenario.ts` holds every name, address and password in one place
 - [`README.md`](README.md) — first-time setup

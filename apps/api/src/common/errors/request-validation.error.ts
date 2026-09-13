@@ -77,8 +77,9 @@ function isEmailAddress(value: string): boolean {
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/
 
 /**
- * One field's constraints - the transcription of the `[RequiredField]` / `[MaxLengthField]` /
- * `[EmailFormat]` attributes the matching request DTO under `src/Collega.API/Contracts/` carries.
+ * One field's constraints. Each is a transcription of a declarative validation attribute the
+ * matching request contract carried in the stack this replaced; `SPEC/30-Contracts.md` is now the
+ * only authority for which field gets which rule.
  */
 export type FieldRules = {
   readonly value: unknown
@@ -94,8 +95,8 @@ export type FieldRules = {
   readonly hexColor?: boolean
   /**
    * The fixed allow-list a `[AllowedValues]` property carries - the transcript entry's `role` is
-   * the only one in the API (`src/Collega.API/Contracts/Ai/IdeaAssistContracts.cs`). Comparison is
-   * ordinal and case-SENSITIVE, as `AllowedValuesAttribute.IsValid` was.
+   * the only one in the API. Comparison is ordinal and case-SENSITIVE, matching the attribute this
+   * transcribes.
    *
    * An absent or blank value passes, matching that attribute's own "absence is a separate concern
    * owned by RequiredFieldAttribute" short-circuit on null - pair it with `required` when both
@@ -105,10 +106,8 @@ export type FieldRules = {
   /**
    * The name the MESSAGE uses, when it is not derivable from the key. Needed only for a NESTED
    * property, where the two genuinely part company: ASP.NET keyed the failure by the whole path
-   * (`Options[0].Label`, camelCased to `options[0].label` by `ToCamelCasePath` in
-   * `src/Collega.API/ErrorHandling/ProblemDetailsServiceCollectionExtensions.cs:66-90`) but built
-   * the message from `ModelMetadata.DisplayName`, which `SpacedDisplayNameMetadataProvider` filled
-   * from the property's own name alone - so the entry reads `"Label is required."`, not
+   * (`Options[0].Label`, camelCased segment by segment to `options[0].label`) but built the message
+   * from the display name, which was filled from the property's own name alone - so the entry reads `"Label is required."`, not
    * `"Options[0].label is required."`.
    */
   readonly displayName?: string
@@ -121,10 +120,9 @@ export type FieldRules = {
  * `[RequiredField]` and `[EmailFormat]` both, and reported two messages under the one key.
  *
  * The required/max-length/email templates cover the D1 contracts; `allowedValues` was added for
- * D6, the one `[AllowedValues]` property in the API. Wording comes from `src/Collega.API/Validation/
- * ValidationMessages.cs`, which is the canonical source for all six templates in
- * `SPEC/30-Contracts.md` "Validation Message Conventions"; the corpus records the required variant
- * only, so the other two are matched against the .NET source rather than a fixture.
+ * D6, the one `[AllowedValues]` property in the API. All six templates are recorded in
+ * `SPEC/30-Contracts.md` "Validation Message Conventions", which is now their canonical source; the
+ * corpus records the required variant only, so the other two are pinned by the spec alone.
  *
  * An OMITTED field is judged as `''`, not skipped, because that is what it was on the .NET side:
  * every string property on those DTOs is initialised to `string.Empty`, and System.Text.Json

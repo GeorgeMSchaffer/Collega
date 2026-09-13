@@ -135,7 +135,7 @@ One loop, not three features: *mention → notification → reply → read*. The
 Two things to settle before this could be specced:
 
 - **The email column is a promise the platform has not made.** `SPEC/00-project-brief.md` defers guaranteed outbound email delivery; the comp flags its own email toggles as writing a cheque against that. In-app inbox only is the safe first slice.
-- **A locked colour rule is knowingly bent.** The comp uses indigo for unread badges and markers, arguing an unread notification *is* "a primary action waiting for you" — an extension of the accent's existing meaning rather than a new one. It presents this as a reviewer decision and offers a no-hue fallback (weight + filled ink dot + left rule). Per `src/Collega.Client/CLAUDE.md`, introducing or extending a state colour is a deliberate decision, so this needs an explicit yes or no.
+- **A locked colour rule is knowingly bent.** The comp uses indigo for unread badges and markers, arguing an unread notification *is* "a primary action waiting for you" — an extension of the accent's existing meaning rather than a new one. It presents this as a reviewer decision and offers a no-hue fallback (weight + filled ink dot + left rule). Introducing or extending a state colour is a deliberate decision — the design system is locked to comp P/Q — so this needs an explicit yes or no.
 
 Mentioning does not grant access — a Read Only member mentioned on an idea still sees it read-only.
 

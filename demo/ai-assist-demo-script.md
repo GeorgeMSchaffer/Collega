@@ -11,12 +11,13 @@ Three things silently break the demo if skipped. All three were true on a workin
 1. **Configure a key.** With none, the feature is dark and `+ New idea` skips the chat entirely, opening the create drawer instead (rule 32a). That is correct behaviour, but it is not the demo.
 
    ```bash
-   dotnet user-secrets set "ANTHROPIC_API_KEY" "<key>" --project src/Collega.API
+   # in .env, which the API reads on start
+   ANTHROPIC_API_KEY=<key>
    ```
 
    Verify: `GET /api/v1/ai-assist/availability` should return `{"available":true}` for any signed-in user. A **404** means the API predates the endpoint — restart it; hot reload cannot add a controller type. A **401** means you sent no token.
 
-2. **Sign in as a role that can create ideas.** `+ New idea` is hidden for **Site Admin** and **Read Only** (`CanMutate` in `BoardDetail.razor`), and the server enforces it independently through `OrgContentMutationGuard`. A Site Admin must **View As** an org member first. Use `orgadmin@acme-robotics.demo.collega.test` / `Abc123!` for the simple path.
+2. **Sign in as a role that can create ideas.** `+ New idea` is hidden for **Site Admin** and **Read Only**, and the server enforces it independently rather than trusting the hidden control. A Site Admin must **View As** an org member first. Use `orgadmin@acme-robotics.demo.collega.test` / `Abc123!` for the simple path.
 
 3. **Set a scope statement** if you plan to demo scope refusals (prompt 10). The demo seed leaves both organizations' statements empty, and an empty statement means "no narrowing beyond Idea Types" — so the gate applies only the structural test and several off-topic prompts will pass.
 
