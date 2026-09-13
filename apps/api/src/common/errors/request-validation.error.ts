@@ -93,6 +93,16 @@ export type FieldRules = {
    */
   readonly hexColor?: boolean
   /**
+   * The fixed allow-list a `[AllowedValues]` property carries - the transcript entry's `role` is
+   * the only one in the API (`src/Collega.API/Contracts/Ai/IdeaAssistContracts.cs`). Comparison is
+   * ordinal and case-SENSITIVE, as `AllowedValuesAttribute.IsValid` was.
+   *
+   * An absent or blank value passes, matching that attribute's own "absence is a separate concern
+   * owned by RequiredFieldAttribute" short-circuit on null - pair it with `required` when both
+   * apply, exactly as the .NET property does.
+   */
+  readonly allowedValues?: readonly string[]
+  /**
    * The name the MESSAGE uses, when it is not derivable from the key. Needed only for a NESTED
    * property, where the two genuinely part company: ASP.NET keyed the failure by the whole path
    * (`Options[0].Label`, camelCased to `options[0].label` by `ToCamelCasePath` in
@@ -110,8 +120,8 @@ export type FieldRules = {
  * matters within a field as well as across them: a `RegisterRequest` with no `email` at all failed
  * `[RequiredField]` and `[EmailFormat]` both, and reported two messages under the one key.
  *
- * Only the required/max-length/email templates are implemented, because those are the only
- * attributes the D1 contracts use. Wording comes from `src/Collega.API/Validation/
+ * The required/max-length/email templates cover the D1 contracts; `allowedValues` was added for
+ * D6, the one `[AllowedValues]` property in the API. Wording comes from `src/Collega.API/Validation/
  * ValidationMessages.cs`, which is the canonical source for all six templates in
  * `SPEC/30-Contracts.md` "Validation Message Conventions"; the corpus records the required variant
  * only, so the other two are matched against the .NET source rather than a fixture.
@@ -152,6 +162,11 @@ export function validateFields(fields: Readonly<Record<string, FieldRules>>): vo
     }
     if (rules.hexColor === true && value.trim() !== '' && !HEX_COLOR.test(value.trim())) {
       messages.push(`${shown} must be a hex color such as #2563EB.`)
+    }
+    // Untrimmed and case-sensitive, as `AllowedValuesAttribute` compared it; blank is `required`'s
+    // question, not this one's, so a missing field reports one message rather than two.
+    if (rules.allowedValues !== undefined && value !== '' && !rules.allowedValues.includes(value)) {
+      messages.push(`${shown} must be one of: ${rules.allowedValues.join(', ')}.`)
     }
 
     if (messages.length > 0) {
