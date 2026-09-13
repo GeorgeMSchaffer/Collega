@@ -1,6 +1,7 @@
 // GENERATED FILE - do not hand-edit. Run `pnpm generate:modules` (apps/api) to refresh;
 // `pnpm build` and `pnpm typecheck` do this automatically via the package.json pre* hooks.
 // Source: apps/api/scripts/generate-modules.mjs, scanning apps/api/src/*/*.module.ts.
+import { AiAssistModule } from './ai-assist/ai-assist.module.js'
 import { AuthenticationModule } from './authentication/authentication.module.js'
 import { BoardsModule } from './boards/boards.module.js'
 import { BusinessImpactsModule } from './business-impacts/business-impacts.module.js'
@@ -19,6 +20,7 @@ import { ViewAsModule } from './view-as/view-as.module.js'
 
 /** Every Wave D feature module discovered under apps/api/src/, in directory-name order. */
 export const FEATURE_MODULES = [
+  AiAssistModule,
   AuthenticationModule,
   BoardsModule,
   BusinessImpactsModule,
