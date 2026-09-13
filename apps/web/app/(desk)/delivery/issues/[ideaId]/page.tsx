@@ -2,15 +2,21 @@ import { Alert, Avatar, Button, buttonVariants, Denied, Dot, Marker } from '@col
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Topbar } from '@/components/nav/topbar'
-import { getDeliveryStatus, getIssueByKey, getOutcome, getSprint } from '@/lib/data'
+import { getDeliveryStatus, getIssue, getOutcome, getSprint } from '@/lib/data'
 import { EFFORT_COLORS } from '@/lib/display'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, deliveryAdminDenial } from '@/lib/session'
 
-export async function generateMetadata({ params }: { params: Promise<{ issueKey: string }> }) {
-  const { issueKey } = await params
-  const issue = await getIssueByKey(issueKey)
-  return { title: issue ? `${issue.key} ${issue.title} · Collega` : 'Collega' }
+export async function generateMetadata({ params }: { params: Promise<{ ideaId: string }> }) {
+  // Metadata is its own render, so it establishes identity like any other segment that reads it —
+  // `lib/server/current-user.ts` says why, and `loadPrincipal` is cached so this costs no request.
+  // Without it the reader below reaches `organizationScope()` with no principal and the title alone
+  // fails, quietly: the page still renders and the tab is left saying "Collega".
+  await requireCurrentUser()
+
+  const { ideaId } = await params
+  const issue = await getIssue(ideaId)
+  return { title: issue ? `${issue.title} · Collega` : 'Collega' }
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -28,13 +34,16 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  * The issue **is** the idea it was promoted from — same record, same history — which is why the
  * provenance row shows the upvote count captured at promotion rather than a live one. That snapshot
  * answers "how much support did this have when we committed", and a live count could not.
+ *
+ * It is also why the segment is `[ideaId]` and the title carries no `CLG-` eyebrow: an Issue is not
+ * a resource of its own, so it has no key of its own (`lib/types.ts`, `Issue`).
  */
-export default async function IssuePage({ params }: { params: Promise<{ issueKey: string }> }) {
+export default async function IssuePage({ params }: { params: Promise<{ ideaId: string }> }) {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const { issueKey } = await params
-  const issue = await getIssueByKey(issueKey)
+  const { ideaId } = await params
+  const issue = await getIssue(ideaId)
   if (!issue) notFound()
 
   const [status, sprint, outcome] = await Promise.all([
@@ -58,16 +67,13 @@ export default async function IssuePage({ params }: { params: Promise<{ issueKey
                 <Link href="/delivery/backlog">Backlog</Link> /{' '}
               </>
             )}
-            <b className="font-medium text-foreground">{issue.key}</b>
+            <b className="font-medium text-foreground">{issue.title}</b>
           </span>
         }
       />
       <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="rounded-md border px-2 py-0.5 font-mono text-xs text-muted-foreground">
-              {issue.key}
-            </span>
             <Marker>
               <Dot color={status?.color} />
               {status?.name}
@@ -96,7 +102,7 @@ export default async function IssuePage({ params }: { params: Promise<{ issueKey
                 {sprint ? (
                   <span className="inline-flex items-center gap-2">
                     {sprint.name}
-                    {sprint.active ? (
+                    {sprint.state === 'Active' ? (
                       <Marker>
                         <Dot color="var(--green)" />
                         Active
@@ -148,7 +154,7 @@ export default async function IssuePage({ params }: { params: Promise<{ issueKey
                 </Denied>
               ) : (
                 <Link
-                  href={`/delivery/issues/${issue.key}/outcome`}
+                  href={`/delivery/issues/${issue.id}/outcome`}
                   className={buttonVariants({ variant: 'outline', size: 'sm' })}
                 >
                   Set outcome
@@ -160,10 +166,12 @@ export default async function IssuePage({ params }: { params: Promise<{ issueKey
 
         <Alert variant="note" className="max-w-2xl">
           <span>
-            Moving this issue, assigning it, or changing its sprint needs{' '}
-            <code className="font-mono text-xs">PATCH /issues/&#123;key&#125;</code>, which arrives
-            with Wave D. Setting the outcome is the one flow built here, and it is also read-only
-            until then.
+            Everything above is read. Moving this issue is{' '}
+            <code className="font-mono text-xs">PUT /ideas/&#123;id&#125;/delivery-status</code> and
+            changing its sprint is{' '}
+            <code className="font-mono text-xs">PUT /ideas/&#123;id&#125;/sprint</code> &mdash; both
+            live, neither wired to a control yet. Setting the outcome has no endpoint at all: that
+            is Slice 2, and the picker reflects it.
           </span>
         </Alert>
       </main>

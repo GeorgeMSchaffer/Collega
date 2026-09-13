@@ -325,3 +325,75 @@ export type IdeaDetail = Idea & {
   createdOn: string
   comments: Comment[]
 }
+
+/**
+ * The five fixed delivery statuses — `Pending`, `Scoping`, `Development`, `Review`, `Complete`.
+ *
+ * **Not the org-configurable ideation `Status` above**, and the two never mix: ideation statuses
+ * govern Discovery, these govern Delivery, and an Issue retains both — ideation `Complete` and
+ * delivery `Complete` are different terminal states (`SPEC/20-feature-issues-and-delivery.md`).
+ *
+ * `id` is the domain enum's own spelling, which is what arrives on `WireDeliveryCard.deliveryStatus`
+ * — so the sprint board's lane join is an equality test against the value the API sent rather than
+ * a lookup through a table the client invented.
+ */
+export type DeliveryStatus = { id: string; name: string; color: string }
+
+/** T-shirt sizing, deliberately not story points. Required at the promotion gate. */
+export type Effort = 'Low' | 'Medium' | 'High'
+
+/** Explicit, never derived from the dates: a sprint past its end date is `Active` until completed. */
+export type SprintState = 'Planned' | 'Active' | 'Completed'
+
+/**
+ * One sprint, as its header and the backlog's "start the next one" control read it.
+ *
+ * `startsOn`/`endsOn` are already formatted for display, because the wire's `YYYY-MM-DD` is a day
+ * rather than an instant and formatting it in a component would invite `new Date(...)` and the
+ * off-by-one-day that follows in any timezone west of Greenwich.
+ *
+ * `goal` is nullable — a sprint may be planned before anybody has written down what it is for.
+ */
+export type Sprint = {
+  id: string
+  name: string
+  goal: string | null
+  startsOn: string
+  endsOn: string
+  state: SprintState
+}
+
+/**
+ * An Issue **is** the Idea, promoted — the same record carrying its own history and provenance
+ * (`SPEC/20-feature-issues-and-delivery.md`), which is why it keeps an upvote snapshot from the
+ * moment it was committed.
+ *
+ * **There is no `key`.** Comp Q's `CLG-114` eyebrow has no column behind it, exactly as
+ * `IdeaDetail`'s `IDEA-101` does not — `SPEC/30-Contracts.md` "Delivery Contracts" is explicit that
+ * an Issue is not a new resource and every route addresses it by `{ideaId}`. So the issue screens
+ * are addressed by `id`, and nothing derives a plausible-looking key from it.
+ *
+ * `outcomeId` is nullable and **single-valued** — with one outcome per issue every roadmap total is
+ * a plain count, where a checkbox list would make each total a cover, and covers do not add up
+ * (`SPEC/decisions.md` 2026-09-02). It is present on the type and always `null` in practice, which
+ * `lib/data/delivery.ts` explains: Outcomes are Slice 2 and have no table, service or route yet.
+ */
+export type Issue = {
+  id: string
+  title: string
+  deliveryStatusId: string
+  sprintId: string | null
+  outcomeId: string | null
+  effort: Effort
+  assigneeInitials: string | null
+  upvotesAtPromotion: number
+}
+
+/**
+ * A named, dated theme that Issues are grouped under — a lens over the delivery set, not a
+ * container that owns it (`SPEC/20-feature-issues-and-delivery.md` Slice 2).
+ *
+ * The type exists because the roadmap and the outcome picker are built; nothing populates it. See
+ * `lib/data/delivery.ts` for why those readers answer empty rather than inventing rows.
+ */
+export type Outcome = { id: string; name: string; color: string; quarter: string }

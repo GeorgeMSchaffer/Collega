@@ -6,18 +6,22 @@
  * and the same screen built against the real API differ only in where the data came from. Nothing
  * else in `apps/web` may invent its own fixtures.
  *
- * **Shrinking, not static.** The boards, ideas and catalog readers are real now; delivery, the
+ * **Shrinking, not static.** The boards, ideas, catalog and delivery readers are real now; the
  * organization and member lists, the user import and the AI settings still answer from here. Each
  * converted reader deletes its section, and when the last one goes so does this file. The types are
  * no longer declared here either — they live in `lib/types.ts`, so a fixture and a real response
  * are the same shape by construction rather than by inspection.
+ *
+ * The delivery block is gone with its readers, and with it the invented `CLG-` issue keys and the
+ * three outcomes. `lib/data/delivery.ts` records what replaced each — including the two that had no
+ * replacement to be pointed at.
  *
  * `boards`, `ideas` and `statuses` outlived their readers: nothing in `lib/data/` returns them any
  * more, and the unit tests in `apps/web/test/` are written against them. They are seeded data for
  * the tests now rather than a stand-in for an endpoint.
  */
 
-import type { Board, Idea, Member, Priority, Role, Status } from './types'
+import type { Board, Effort, Idea, Member, Priority, Role, Status } from './types'
 
 export { engagementDenial, isAdministrator, writeDenial } from './roles'
 export type { Board, CurrentUser, Idea, Priority, Role, Status } from './types'
@@ -168,11 +172,6 @@ export function ideaById(id: string): FixtureIdea | undefined {
 export const navCounts = {
   boards: boards.length,
   ideas: ideas.length,
-  // Derived, not a literal: this renders in the sidebar beside the backlog page's own count, so a
-  // hard-coded figure disagrees with the list it claims to count.
-  get backlog() {
-    return backlogIssues().length
-  },
 }
 
 // ---------------------------------------------------------------------------
@@ -213,248 +212,17 @@ export const members: Member[] = DEMO_ORGANIZATIONS.flatMap(([organizationId, or
   })),
 )
 
-// ---------------------------------------------------------------------------
-// Delivery fixtures (Wave E6)
-// ---------------------------------------------------------------------------
-
 /**
- * The fixed delivery status set — `Pending`, `Scoping`, `Development`, `Review`, `Complete`
- * (`SPEC/20-feature-issues-and-delivery.md`).
+ * The effort scale's colour, which outlived the delivery fixtures around it.
  *
- * **Not organization-configurable**, unlike ideation statuses, which are. The two systems never
- * mix: ideation statuses govern Discovery, these govern Delivery, and an issue retains both.
+ * A display constant rather than a stand-in for an endpoint — `lib/display.ts` re-exports it beside
+ * `PRIORITY_COLORS` for the same reason. Low is deliberately uncoloured: it is the ordinary case,
+ * and a dot on every card would stop the other two meaning anything.
  */
-export type DeliveryStatus = { id: string; name: string; color: string }
-
-export const deliveryStatuses: DeliveryStatus[] = [
-  { id: 'pending', name: 'Pending', color: 'var(--ink-faint)' },
-  { id: 'scoping', name: 'Scoping', color: 'var(--purple)' },
-  { id: 'development', name: 'Development', color: 'var(--sky)' },
-  { id: 'review', name: 'Review', color: 'var(--pink)' },
-  { id: 'complete', name: 'Complete', color: 'var(--green)' },
-]
-
-export type Effort = 'Low' | 'Medium' | 'High'
-
 export const EFFORT_COLORS: Record<Effort, string | undefined> = {
   Low: undefined,
   Medium: 'var(--teal)',
   High: 'var(--orange)',
-}
-
-export type Outcome = { id: string; name: string; color: string; quarter: string }
-
-export const outcomes: Outcome[] = [
-  { id: 'reporting', name: 'Cut reporting effort', color: 'var(--sky)', quarter: 'Q3 2026' },
-  { id: 'handoffs', name: 'Remove manual handoffs', color: 'var(--teal)', quarter: 'Q3 2026' },
-  { id: 'visibility', name: 'Make exceptions visible', color: 'var(--purple)', quarter: 'Q4 2026' },
-]
-
-export type Sprint = {
-  id: string
-  name: string
-  goal: string
-  startsOn: string
-  endsOn: string
-  active: boolean
-}
-
-export const sprints: Sprint[] = [
-  {
-    id: 's12',
-    name: 'Sprint 12',
-    goal: 'Cut weekly reporting effort in half.',
-    startsOn: '18 Aug',
-    endsOn: '31 Aug 2026',
-    active: true,
-  },
-  {
-    id: 's13',
-    name: 'Sprint 13',
-    goal: 'Close the exception-handling gap.',
-    startsOn: '1 Sep',
-    endsOn: '14 Sep 2026',
-    active: false,
-  },
-]
-
-/**
- * An Issue **is** the Idea, promoted — the same record carrying its own history and provenance
- * (`SPEC/20-feature-issues-and-delivery.md`), which is why it keeps an upvote snapshot from the
- * moment it was committed.
- *
- * `outcomeId` is nullable and **single-valued**. That is the whole difference from the rejected
- * multi-parent design: with one outcome per issue every roadmap total is a plain count, where a
- * checkbox list would make each total a cover, and covers do not add up.
- */
-export type Issue = {
-  id: string
-  key: string
-  title: string
-  deliveryStatusId: string
-  sprintId: string | null
-  outcomeId: string | null
-  effort: Effort
-  assigneeInitials: string | null
-  upvotesAtPromotion: number
-}
-
-export const issues: Issue[] = [
-  {
-    id: 'i1',
-    key: 'CLG-114',
-    title: 'Automate weekly reporting',
-    deliveryStatusId: 'development',
-    sprintId: 's12',
-    outcomeId: 'reporting',
-    effort: 'Medium',
-    assigneeInitials: 'MC',
-    upvotesAtPromotion: 12,
-  },
-  {
-    id: 'i2',
-    key: 'CLG-118',
-    title: 'Standardize the intake checklist',
-    deliveryStatusId: 'scoping',
-    sprintId: 's12',
-    outcomeId: 'handoffs',
-    effort: 'Low',
-    assigneeInitials: 'NC',
-    upvotesAtPromotion: 9,
-  },
-  {
-    id: 'i3',
-    key: 'CLG-121',
-    title: 'Reduce manual handoffs',
-    deliveryStatusId: 'development',
-    sprintId: 's12',
-    outcomeId: 'handoffs',
-    effort: 'High',
-    assigneeInitials: 'OA',
-    upvotesAtPromotion: 8,
-  },
-  {
-    id: 'i4',
-    key: 'CLG-125',
-    title: 'Improve exception visibility',
-    deliveryStatusId: 'review',
-    sprintId: 's12',
-    outcomeId: 'visibility',
-    effort: 'Medium',
-    assigneeInitials: 'MC',
-    upvotesAtPromotion: 7,
-  },
-  {
-    id: 'i5',
-    key: 'CLG-129',
-    title: 'Create a shared playbook',
-    deliveryStatusId: 'complete',
-    sprintId: 's12',
-    outcomeId: 'reporting',
-    effort: 'Low',
-    assigneeInitials: 'NC',
-    upvotesAtPromotion: 6,
-  },
-  {
-    id: 'i6',
-    key: 'CLG-131',
-    title: 'Add proactive alerts',
-    deliveryStatusId: 'pending',
-    sprintId: null,
-    outcomeId: 'visibility',
-    effort: 'High',
-    assigneeInitials: null,
-    upvotesAtPromotion: 11,
-  },
-  {
-    id: 'i7',
-    key: 'CLG-134',
-    title: 'Pilot a faster review path',
-    deliveryStatusId: 'pending',
-    sprintId: null,
-    outcomeId: 'reporting',
-    effort: 'Medium',
-    assigneeInitials: null,
-    upvotesAtPromotion: 10,
-  },
-  {
-    id: 'i8',
-    key: 'CLG-137',
-    title: 'Measure time saved',
-    deliveryStatusId: 'pending',
-    sprintId: null,
-    outcomeId: null,
-    effort: 'Low',
-    assigneeInitials: null,
-    upvotesAtPromotion: 5,
-  },
-  {
-    id: 'i9',
-    key: 'CLG-140',
-    title: 'Retire the legacy step',
-    deliveryStatusId: 'pending',
-    sprintId: null,
-    outcomeId: 'handoffs',
-    effort: 'Medium',
-    assigneeInitials: null,
-    upvotesAtPromotion: 4,
-  },
-  {
-    id: 'i10',
-    key: 'CLG-142',
-    title: 'Validate the customer feedback loop',
-    deliveryStatusId: 'pending',
-    sprintId: null,
-    outcomeId: null,
-    effort: 'Low',
-    assigneeInitials: 'OA',
-    upvotesAtPromotion: 3,
-  },
-  {
-    id: 'i11',
-    key: 'CLG-145',
-    title: 'Roll out the proven workflow',
-    deliveryStatusId: 'pending',
-    sprintId: null,
-    outcomeId: 'visibility',
-    effort: 'High',
-    assigneeInitials: null,
-    upvotesAtPromotion: 2,
-  },
-]
-
-export const activeSprint = sprints.find((sprint) => sprint.active) ?? null
-
-export function issuesInSprint(sprintId: string): Issue[] {
-  return issues.filter((issue) => issue.sprintId === sprintId)
-}
-
-/** Committed but not yet in a sprint. Most upvoted first, so it reads as the org's own priority. */
-export function backlogIssues(): Issue[] {
-  return issues
-    .filter((issue) => issue.sprintId === null)
-    .sort((a, b) => b.upvotesAtPromotion - a.upvotesAtPromotion)
-}
-
-export function issueByKey(key: string): Issue | undefined {
-  return issues.find((issue) => issue.key.toLowerCase() === key.toLowerCase())
-}
-
-export function deliveryStatusById(id: string): DeliveryStatus | undefined {
-  return deliveryStatuses.find((status) => status.id === id)
-}
-
-export function outcomeById(id: string | null): Outcome | undefined {
-  return id ? outcomes.find((outcome) => outcome.id === id) : undefined
-}
-
-export function sprintById(id: string | null): Sprint | undefined {
-  return id ? sprints.find((sprint) => sprint.id === id) : undefined
-}
-
-/** These counts add up precisely because an issue has one outcome. */
-export function issuesForOutcome(outcomeId: string): Issue[] {
-  return issues.filter((issue) => issue.outcomeId === outcomeId)
 }
 
 // ---------------------------------------------------------------------------

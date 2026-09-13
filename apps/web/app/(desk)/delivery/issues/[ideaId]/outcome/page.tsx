@@ -4,15 +4,18 @@ import { notFound } from 'next/navigation'
 import { InertForm } from '@/components/common/inert-form'
 import { CloseOnEscape } from '@/components/inspector/close-on-escape'
 import { Topbar } from '@/components/nav/topbar'
-import { getIssueByKey, getIssuesForOutcome, getOutcome, getOutcomes } from '@/lib/data'
+import { getIssue, getIssuesForOutcome, getOutcome, getOutcomes } from '@/lib/data'
 import { EFFORT_COLORS } from '@/lib/display'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, deliveryAdminDenial } from '@/lib/session'
 
-export async function generateMetadata({ params }: { params: Promise<{ issueKey: string }> }) {
-  const { issueKey } = await params
-  const issue = await getIssueByKey(issueKey)
-  return { title: issue ? `Set outcome · ${issue.key} · Collega` : 'Collega' }
+export async function generateMetadata({ params }: { params: Promise<{ ideaId: string }> }) {
+  // Identity here too, for the reason the issue page's own `generateMetadata` gives.
+  await requireCurrentUser()
+
+  const { ideaId } = await params
+  const issue = await getIssue(ideaId)
+  return { title: issue ? `Set outcome · ${issue.title} · Collega` : 'Collega' }
 }
 
 /**
@@ -25,17 +28,18 @@ export async function generateMetadata({ params }: { params: Promise<{ issueKey:
  *
  * Docked as a third column rather than a drawer, like the idea inspector: nothing is covered,
  * nothing needs `inert`, there is no focus trap, and Escape closes.
+ *
+ * **The list is empty and the only choice is "No outcome"**, because Outcomes are Slice 2 and have
+ * no table, service or route — `lib/data/delivery.ts` says why the readers answer empty rather than
+ * offering three invented themes. The screen is left standing rather than deleted: its shape is the
+ * decided one, and the form was already inert.
  */
-export default async function SetOutcomePage({
-  params,
-}: {
-  params: Promise<{ issueKey: string }>
-}) {
+export default async function SetOutcomePage({ params }: { params: Promise<{ ideaId: string }> }) {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const { issueKey } = await params
-  const issue = await getIssueByKey(issueKey)
+  const { ideaId } = await params
+  const issue = await getIssue(ideaId)
   if (!issue) notFound()
 
   const [current, outcomes] = await Promise.all([getOutcome(issue.outcomeId), getOutcomes()])
@@ -49,7 +53,7 @@ export default async function SetOutcomePage({
       ),
     ),
   )
-  const backHref = `/delivery/issues/${issue.key}`
+  const backHref = `/delivery/issues/${issue.id}`
 
   // Grouping an issue is administrator-only (SPEC/20-feature-issues-and-delivery.md): a Site Admin
   // reaches it through View As, a member not at all. Without this the picker rendered fully
@@ -61,7 +65,7 @@ export default async function SetOutcomePage({
       <Topbar
         title={
           <span className="text-sm font-normal text-muted-foreground">
-            Delivery / <Link href={backHref}>{issue.key}</Link> /{' '}
+            Delivery / <Link href={backHref}>{issue.title}</Link> /{' '}
             <b className="font-medium text-foreground">Set outcome</b>
           </span>
         }
@@ -74,9 +78,6 @@ export default async function SetOutcomePage({
       <div className="grid min-w-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px]">
         <main className="min-w-0 p-6">
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="rounded-md border px-2 py-0.5 font-mono text-xs text-muted-foreground">
-              {issue.key}
-            </span>
             <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
               <Dot color={EFFORT_COLORS[issue.effort]} />
               {issue.effort} effort
@@ -116,7 +117,7 @@ export default async function SetOutcomePage({
               </Link>
             </div>
             <h2 className="text-lg font-semibold leading-tight">
-              Which outcome does {issue.key} serve?
+              Which outcome does this issue serve?
             </h2>
             <div className="text-xs text-muted-foreground">
               One outcome per issue. Picking another moves it.
@@ -195,8 +196,10 @@ export default async function SetOutcomePage({
               </Button>
             )}
             <p className="m-0 text-xs italic text-muted-foreground">
-              Saving needs <code className="font-mono">PATCH /issues/{issue.key}</code>, which
-              arrives with Wave D.
+              There is nothing to pick yet: outcomes have no table, no service and no route, so
+              saving would need{' '}
+              <code className="font-mono">PUT /ideas/&#123;id&#125;/outcomes</code> and the outcome
+              CRUD behind it &mdash; Slice 2 of Issues and Delivery.
             </p>
           </InertForm>
         </aside>

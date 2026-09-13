@@ -44,9 +44,9 @@ export default async function SprintBoardPage() {
           <h1>Sprint board</h1>
           <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">
             Issues committed to the running sprint, in five fixed delivery statuses. Only the person
-            who raised it, an assignee, or an administrator can move one — and moving needs{' '}
-            <code className="font-mono text-xs">PATCH /issues/&#123;key&#125;</code>, which arrives
-            with Wave D.
+            who raised it, an assignee, or an administrator can move one &mdash; and moving needs{' '}
+            <code className="font-mono text-xs">PUT /ideas/&#123;id&#125;/delivery-status</code>,
+            which is live but not yet wired to a control.
           </p>
         </div>
 
@@ -61,9 +61,11 @@ export default async function SprintBoardPage() {
                     Active
                   </span>
                 </div>
-                <div className="mt-0.5 text-sm text-muted-foreground">
-                  Goal &mdash; {sprint.goal}
-                </div>
+                {sprint.goal ? (
+                  <div className="mt-0.5 text-sm text-muted-foreground">
+                    Goal &mdash; {sprint.goal}
+                  </div>
+                ) : null}
               </div>
               <div className="text-sm tabular-nums text-muted-foreground">
                 {sprint.startsOn} &ndash; {sprint.endsOn}
