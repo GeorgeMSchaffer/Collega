@@ -3,6 +3,7 @@
 import { Alert, Button, Field, Input, Select, Textarea } from '@collega/design-system'
 import { useActionState, useEffect, useRef } from 'react'
 import type { Board, IdeaOptions } from '@/lib/data'
+import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/lib/limits'
 import { type CreateIdeaState, createIdea } from '@/lib/server/idea-actions'
 
 const IDLE: CreateIdeaState = { error: null, title: '', description: '' }
@@ -132,7 +133,7 @@ export function NewIdeaForm({
               id="idea-title"
               name="title"
               required
-              maxLength={200}
+              maxLength={TITLE_MAX_LENGTH}
               defaultValue={state.title}
             />
           </Field>
@@ -142,6 +143,7 @@ export function NewIdeaForm({
               id="idea-description"
               name="description"
               required
+              maxLength={DESCRIPTION_MAX_LENGTH}
               defaultValue={state.description}
             />
           </Field>

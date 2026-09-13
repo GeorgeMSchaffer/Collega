@@ -28,6 +28,7 @@ import type {
   WirePage,
   WireUserListItem,
 } from '../api/wire'
+import { API_MAX_PAGE_SIZE } from '../limits'
 import * as fixture from '../mock'
 import { currentUser } from '../session'
 import type { FieldDefinition, IdeaType, Member, Organization, Profile } from '../types'
@@ -74,7 +75,7 @@ export async function getOrganizations(): Promise<Organization[]> {
     'getOrganizations',
     // `pageSize` written into the literal rather than interpolated: `apiPath` escapes what it
     // interpolates, so a value spliced in here would arrive as `pageSize%3D100` and be ignored.
-    apiPath`/organizations?pageSize=100`,
+    apiPath`/organizations?pageSize=${String(API_MAX_PAGE_SIZE)}`,
   )
 
   return page.items.map(toOrganization)
@@ -100,7 +101,7 @@ export async function getMembers(): Promise<Member[]> {
     organizations.map((organization) =>
       apiGet<WirePage<WireUserListItem>>(
         'getMembers',
-        apiPath`/organizations/${organization.id}/users?pageSize=100`,
+        apiPath`/organizations/${organization.id}/users?pageSize=${String(API_MAX_PAGE_SIZE)}`,
       ),
     ),
   )
@@ -128,7 +129,7 @@ export async function getMembersForOrganization(organizationId: string): Promise
 
   const page = await apiGet<WirePage<WireUserListItem>>(
     'getMembersForOrganization',
-    apiPath`/organizations/${organizationId}/users?pageSize=100`,
+    apiPath`/organizations/${organizationId}/users?pageSize=${String(API_MAX_PAGE_SIZE)}`,
   )
 
   return page.items.map((item) => toMember(item, null))

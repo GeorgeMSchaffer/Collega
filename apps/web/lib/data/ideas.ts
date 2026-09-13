@@ -21,6 +21,7 @@ import type {
   WireIdeaType,
   WirePage,
 } from '../api/wire'
+import { API_DEFAULT_PAGE_SIZE, API_MAX_PAGE_SIZE } from '../limits'
 import type { Idea, IdeaDetail, IdeaOptions, IdeaPage } from '../types'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
@@ -28,7 +29,7 @@ import { organizationScope } from './scope'
 export type { Comment, Idea, IdeaDetail, IdeaOptions, IdeaPage, Priority } from '../types'
 
 /** Rows per page of the organization-wide list. See `getOrganizationIdeas` for why it is paged. */
-const PAGE_SIZE = 20
+const PAGE_SIZE = API_DEFAULT_PAGE_SIZE
 
 /**
  * Every idea on one board, in the order the API returns them.
@@ -43,7 +44,7 @@ export async function getIdeasForBoard(boardId: string): Promise<Idea[]> {
 
   const page = await apiGet<WirePage<WireIdeaListItem>>(
     'getIdeasForBoard',
-    apiPath`/boards/${boardId}/ideas?pageSize=100`,
+    apiPath`/boards/${boardId}/ideas?pageSize=${String(API_MAX_PAGE_SIZE)}`,
   )
   return page.items.map(toIdea)
 }

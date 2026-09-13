@@ -18,6 +18,7 @@
 
 import { apiGet, apiPath } from '../api/client'
 import type { WireOrganizationListItem, WirePage } from '../api/wire'
+import { API_MAX_PAGE_SIZE } from '../limits'
 import { currentUser } from '../session'
 
 export function organizationScope(): string | null {
@@ -37,16 +38,21 @@ export function organizationScope(): string | null {
  * throw here reaches the route's `error.tsx`, which is where that belongs.
  *
  * `GET /organizations` is Site Admin only and pages, so this is not a reader for anyone else; the
- * pages call it from a branch they have already taken on the role. The page size is the ceiling on
- * how many organizations a single cross-organization screen will show, and it is deliberately one
- * request: paging it would mean paging three settings tables that comp P draws unpaged.
+ * pages call it from a branch they have already taken on the role. Deliberately one request: paging
+ * it would mean paging three settings tables that comp P draws unpaged.
+ *
+ * **The ceiling is the API's, not ours.** `normalizePageRequest` clamps to `MAX_PAGE_SIZE`, so
+ * asking for more than that returns that many and says nothing. This asked for 200 until
+ * 2026-09-13 and was answered with 100 - a deployment with 150 organizations would have lost 50
+ * from every cross-organization screen, silently. Raising this past the API's maximum cannot work;
+ * raising the maximum is an API change.
  */
 export async function everyOrganization(
   reader: string,
 ): Promise<readonly { id: string; name: string }[]> {
   const page = await apiGet<WirePage<WireOrganizationListItem>>(
     reader,
-    apiPath`/organizations?pageSize=200`,
+    apiPath`/organizations?pageSize=${String(API_MAX_PAGE_SIZE)}`,
   )
   return page.items.map((organization) => ({
     id: organization.organizationId,
