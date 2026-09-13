@@ -9,6 +9,34 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-13 — The usage report returns the contract's `totals`, not the frozen app's flat fields
+
+`GET /api/v1/ai-assist/usage` and its per-organization sibling now return a `totals` object
+carrying the same six numeric fields as an organization row, summed. `SPEC/30-Contracts.md`
+specified that and nothing ever implemented it: the .NET app serialized three flat properties —
+`totalCalls`, `totalTokens`, `totalEstimatedCost` — with no per-token breakdown, and the golden
+corpus recorded that shape on 2026-09-03.
+
+So this is not a reshape of the same data. The contract promises six summed fields where the
+frozen app returned three, and the missing three are the token breakdown a reader would need to see
+where spend came from. Following the corpus would have shipped the smaller thing because it was
+what existed.
+
+**The replay will report this as a difference, and it is an accepted one.** The corpus is a
+regression detector rather than the specification (2026-09-11), so a diff is a question with three
+answers — fix it, accept it, or deliberately do better — and this is the third. Recorded here so the
+next reader meets the reasoning rather than a mismatch.
+
+Chosen over correcting the contract to match what shipped. Nothing in `apps/web` consumes this
+endpoint yet, so there is no client to break either way, and the moment to honour a contract is
+while it still costs nothing.
+
+The totals are summed in `apps/api/src/ai-assist/ai-usage.controller.ts` rather than in the
+Application layer. `AiUsageReport` already carries every addend; giving it derived state would mean
+keeping that state consistent for a shape that is a presentation concern.
+
+---
+
 ## 2026-09-12 — A lockout refuses a wrong password, not a right one
 
 **Amends `SPEC/20-feature-auth.md` requirement #6**, which said five failed attempts inside

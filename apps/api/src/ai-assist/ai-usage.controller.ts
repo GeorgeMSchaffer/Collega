@@ -1,10 +1,5 @@
 import type { AiUsageReport, AiUsageSummary } from '@collega/application/ai'
-import {
-  AiUsageService,
-  reportTotalCalls,
-  reportTotalEstimatedCost,
-  reportTotalTokens,
-} from '@collega/application/ai'
+import { AiUsageService } from '@collega/application/ai'
 import { Role } from '@collega/domain/enums'
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
@@ -14,24 +9,63 @@ import { optional } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /**
- * The wire shape of a usage report. `AiUsageReport` carries the window, the rows and the ceiling;
- * the three totals are free functions beside it (`reportTotalCalls` and friends) rather than
- * fields, because the .NET record computed them as properties and System.Text.Json serialized them
- * flat. Composing them here keeps the response identical without giving the Application model
- * derived state to keep consistent.
+ * The wire shape of a usage report. `AiUsageReport` carries the window, the rows and the ceiling,
+ * and the totals are composed here rather than held on it - a sum of rows the report already has is
+ * derived state the Application model would then have to keep consistent.
+ *
+ * The frozen app serialized three flat properties and no per-token breakdown. This returns the
+ * `totals` object `SPEC/30-Contracts.md` specifies, which is a deliberate difference and an accepted
+ * corpus one (`SPEC/decisions.md` 2026-09-13).
  *
  * `dailyTokenLimit` and `tokensUsedToday` are null on the single-organization report: the ceiling
  * is platform-wide and is not an organization's business.
  */
+/**
+ * `totals` carries the same six numeric fields as an organization entry, summed across them -
+ * `SPEC/30-Contracts.md`, and a deliberate difference from the frozen app, which returned three
+ * flat fields (`totalCalls`, `totalTokens`, `totalEstimatedCost`) and no per-token breakdown.
+ *
+ * The corpus records the flat shape, so the replay reports this as a difference. It is an accepted
+ * one: `SPEC/decisions.md` 2026-09-13. Summing here rather than in the application layer keeps the
+ * shape a presentation concern, which is what it is - `AiUsageReport` already carries every addend.
+ */
+type AiUsageTotals = {
+  calls: number
+  inputTokens: number
+  outputTokens: number
+  cacheReadInputTokens: number
+  cacheCreationInputTokens: number
+  estimatedCost: number
+}
+
 type AiUsageResponse = {
   fromUtc: Date
   toUtc: Date
   organizations: readonly AiUsageSummary[]
   dailyTokenLimit: number | null
   tokensUsedToday: number | null
-  totalCalls: number
-  totalTokens: number
-  totalEstimatedCost: number
+  totals: AiUsageTotals
+}
+
+function sumTotals(organizations: readonly AiUsageSummary[]): AiUsageTotals {
+  return organizations.reduce<AiUsageTotals>(
+    (totals, o) => ({
+      calls: totals.calls + o.calls,
+      inputTokens: totals.inputTokens + o.inputTokens,
+      outputTokens: totals.outputTokens + o.outputTokens,
+      cacheReadInputTokens: totals.cacheReadInputTokens + o.cacheReadInputTokens,
+      cacheCreationInputTokens: totals.cacheCreationInputTokens + o.cacheCreationInputTokens,
+      estimatedCost: totals.estimatedCost + o.estimatedCost,
+    }),
+    {
+      calls: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      cacheReadInputTokens: 0,
+      cacheCreationInputTokens: 0,
+      estimatedCost: 0,
+    },
+  )
 }
 
 function toResponse(report: AiUsageReport): AiUsageResponse {
@@ -41,9 +75,7 @@ function toResponse(report: AiUsageReport): AiUsageResponse {
     organizations: report.organizations,
     dailyTokenLimit: report.dailyTokenLimit,
     tokensUsedToday: report.tokensUsedToday,
-    totalCalls: reportTotalCalls(report),
-    totalTokens: reportTotalTokens(report),
-    totalEstimatedCost: reportTotalEstimatedCost(report),
+    totals: sumTotals(report.organizations),
   }
 }
 
