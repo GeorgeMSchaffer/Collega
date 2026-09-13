@@ -21,7 +21,8 @@ than installing something that will not run.
 
 Unless you already run a PostgreSQL 16 on this machine, you also need **Docker** — that is the only
 thing the database container needs. Point `DATABASE_URL` at a cluster you already run locally and
-Docker is not involved at all.
+Docker is not involved at all. If you can run neither, see
+[Working without a local database](#working-without-a-local-database).
 
 `packages/infrastructure` runs `prisma generate` on postinstall, so the Prisma client is built for
 you. It reads the schema and does not need a reachable database.
@@ -162,6 +163,63 @@ without a manual step.
 | `COLLEGA_API_URL` | `collega` | The API's origin. The web app is HTTP-only and reaches the API through this and nothing else |
 | `SITE_ADMIN_EMAIL`, `SITE_ADMIN_PASSWORD` | `collega-api` | Consumed by `db:bootstrap-admin` at build time |
 | `ANTHROPIC_API_KEY` | `collega-api` | Optional. Absent means the AI feature runs dark |
+
+### Environments and their databases
+
+Three environments, and the thing worth getting right is which database each one writes to.
+
+| Environment | Database | Who reaches it |
+|---|---|---|
+| **Production** | The production Prisma Postgres | `collega-api` on `main` |
+| **Preview** | A separate staging database | Preview deployments, and a developer with no local PostgreSQL |
+| **Local** | A `postgres:16` container, via `docker compose` | `pnpm start` |
+
+**Status: the staging database is not provisioned yet.** Until it is, Preview shares Production's
+database — so every schema change already lands there from a preview build, which is the reason to
+do this before the next migration rather than after. To provision it:
+
+```bash
+npm i -g vercel && vercel login
+cd apps/api && vercel link                                      # link to collega-api
+vercel install prisma-postgres --name collega-dev --environment preview
+```
+
+**Two things will bite otherwise.**
+
+**The staging database gets Production's Site Admin.** The API's build command ends with
+`db:bootstrap-admin`, so the first preview build after provisioning migrates and bootstraps the new
+database on its own — which is what you want. But that script reads `SITE_ADMIN_EMAIL` and
+`SITE_ADMIN_PASSWORD`, and unless those are scoped per-environment it installs the production
+credential into staging, which is the separation you were trying to create. Set Preview-scoped
+throwaway values first.
+
+**The demo seed will never run on Vercel, by design.** `prisma/seed/index.ts` throws when
+`NODE_ENV === 'production'`, and Vercel sets that for *every* build, preview included. So a freshly
+provisioned staging database comes up with the bootstrap admin and nothing else: no organizations,
+no boards, no ideas. Demo data goes in from a shell where `NODE_ENV` is unset — yours:
+
+```bash
+vercel env pull .env.local --environment=preview     # the URL, without reading it yourself
+DATABASE_URL='<the pulled URL>' pnpm --filter @collega/infrastructure db:seed
+```
+
+### Working without a local database
+
+A machine that cannot run a database server — no Docker, or a locked-down host — runs against the
+staging database instead:
+
+```bash
+COLLEGA_ALLOW_REMOTE_DATABASE=1 DATABASE_URL='<staging URL>' pnpm start
+```
+
+`tools/local/start.ts` refuses a non-loopback host by default, because it migrates and seeds whatever
+it is given and a shared cluster should not be that by accident. `COLLEGA_ALLOW_REMOTE_DATABASE=1` is
+how you say you meant it; the script then skips Docker entirely, since starting a container here
+would not be the database the connection string names.
+
+Note what that command does: it **migrates and seeds** the remote database, demo organizations and
+users included. That is correct for a staging database and wrong for a production one. The guard is
+the only thing standing between those two outcomes, so do not export the variable in a shell profile.
 
 ### Two things that are load-bearing and invisible
 
