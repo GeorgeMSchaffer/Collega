@@ -15,6 +15,7 @@ import { SprintsModule } from './sprints/sprints.module.js'
 import { StatusesModule } from './statuses/statuses.module.js'
 import { TagsModule } from './tags/tags.module.js'
 import { UsersModule } from './users/users.module.js'
+import { ViewAsModule } from './view-as/view-as.module.js'
 
 /** Every Wave D feature module discovered under apps/api/src/, in directory-name order. */
 export const FEATURE_MODULES = [
@@ -32,4 +33,5 @@ export const FEATURE_MODULES = [
   StatusesModule,
   TagsModule,
   UsersModule,
+  ViewAsModule,
 ] as const
