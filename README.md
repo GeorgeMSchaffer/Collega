@@ -1,27 +1,48 @@
 # Collega
 
 Organization-scoped collaboration and idea tracking. Organizations contain users, boards, statuses
-and ideas; boards arrange ideas by status in swimlanes.
+and ideas; boards arrange ideas by status in swimlanes, and an idea promoted out of a board becomes
+an issue that moves through sprints.
 
 **Stack:** TypeScript · Next.js · Nest.js · Prisma · PostgreSQL 16 · Tailwind v4 + shadcn/ui ·
-Vitest + Playwright · pnpm workspaces + Turborepo
-
-> **Mid-conversion.** The product is being re-expressed from .NET into TypeScript in one cutover
-> ([`SPEC/50-typescript-migration.md`](SPEC/50-typescript-migration.md)). `apps/` and `packages/` are
-> the application. The .NET code in `src/` and `tests/` is **frozen** — not maintained, deleted in
-> conversion slice F6 — and its instructions no longer apply: [`DOTNET.md`](DOTNET.md).
+Vitest + Playwright · pnpm workspaces + Turborepo · deployed on Vercel
 
 ---
 
-## Run it
+## Install
 
 ```bash
+corepack enable && corepack prepare pnpm@12.3.4 --activate
 pnpm install
+```
+
+You need **Node ≥ 24.20** and **pnpm ≥ 12.3.4**. `pnpm install` fails on an engine mismatch rather
+than installing something that will not run.
+
+`packages/infrastructure` runs `prisma generate` on postinstall, so the Prisma client is built for
+you. It reads the schema and does not need a reachable database.
+
+### Then pick a database
+
+| | You need | Good for |
+|---|---|---|
+| **A local container** *(default)* | **Docker** | Ordinary development. Disposable, offline, and yours alone |
+| **A PostgreSQL 16 you already run** | Nothing more | A machine that already has one |
+| **Vercel Postgres** | A Vercel account | A machine that cannot run a database server, or sharing one database across machines |
+
+All three are the same setting — `DATABASE_URL` in `.env` at the repository root — and `pnpm start`
+behaves accordingly. The next section covers each.
+
+---
+
+## Run it locally
+
+```bash
 pnpm start
 ```
 
-That is the whole thing: Next on http://localhost:3000, Nest on
-http://localhost:3001/api/v1, a migrated and seeded PostgreSQL behind them. Ctrl+C stops both.
+That is the whole thing: Next on http://localhost:3000, Nest on http://localhost:3001/api/v1, and a
+migrated and seeded PostgreSQL behind them. Ctrl+C stops both.
 
 [`tools/local/start.ts`](tools/local/start.ts) is what it runs, and it is idempotent — copy `.env`
 from the example if it is missing, start the `postgres` compose service **only** if nothing is
@@ -29,40 +50,91 @@ already listening at the host and port `DATABASE_URL` names, build, `prisma migr
 then run both halves. Run it as often as you like. It reloads the web app on save; **re-run it after
 changing `apps/api`**, which it runs as built output rather than under a watcher.
 
-You need Node **≥ 24.20**, pnpm **≥ 12.3.4** (`corepack enable && corepack prepare pnpm@12.3.4
---activate`), and — unless you already run a PostgreSQL 16 — **Docker**, which is what the database
-container needs. Point `DATABASE_URL` at a cluster you already run **on this machine** and Docker is
-not involved at all.
-
-It refuses to run against anything else. The script migrates and seeds whatever `DATABASE_URL`
-names, so a host that is not loopback stops it before the first write with the address it read;
-`COLLEGA_ALLOW_REMOTE_DATABASE=1` is the way to say you meant it. Nothing here is a substitute for
-that being your own database — the seed upserts demo organizations and users.
+It refuses to run against anything but your own machine. The script migrates and seeds whatever
+`DATABASE_URL` names, so a host that is not loopback stops it before the first write, quoting the
+address it read — see [Against Vercel Postgres](#against-vercel-postgres) for the deliberate way
+past that.
 
 `.env` is gitignored and copied from [`.env.example`](.env.example), whose defaults are placeholders
-for a throwaway local container. Two are worth knowing about: `POSTGRES_USER` is **`collega`**, not
-`postgres` — the container creates exactly one login role, so `psql -U postgres` fails with `role
-"postgres" does not exist` — and `ANTHROPIC_API_KEY` may be left empty, which runs AI-assisted idea
-drafting **dark** rather than broken ([`SPEC/20-feature-ai-idea-assist.md`](SPEC/20-feature-ai-idea-assist.md)
-rule 31).
+for a throwaway local container. Two are worth knowing about:
 
-### What works, and what is still a fixture
+- `POSTGRES_USER` is **`collega`**, not `postgres`. The container creates exactly one login role, so
+  `psql -U postgres` fails with `role "postgres" does not exist`.
+- `ANTHROPIC_API_KEY` may be left empty, which runs AI-assisted idea drafting **dark** rather than
+  broken ([`SPEC/20-feature-ai-idea-assist.md`](SPEC/20-feature-ai-idea-assist.md) rule 31).
+
+### Against Vercel Postgres
+
+For a machine that cannot run a database server, or to share one database between machines. It is
+the same `pnpm start`; only `DATABASE_URL` changes, plus one flag that says you meant it.
+
+**1. Get the connection string out of Vercel**, into a scratch file rather than over your `.env`:
+
+```bash
+cd apps/api && vercel link                                   # once, to collega-api
+vercel env pull /tmp/collega-preview.env --environment=preview
+```
+
+`vercel env pull` writes **every** variable for that environment, `SITE_ADMIN_PASSWORD` and
+`ANTHROPIC_API_KEY` included. Pulling it straight onto `.env` would overwrite your local one and put
+deployment credentials on disk, so pull it somewhere else and copy across the single line you want.
+
+**2. Find the direct connection string.** Storage integrations inject several keys and the names
+differ by provider. Take the one whose value begins `postgresql://` — that is the direct connection.
+A `prisma+postgres://` value is the Accelerate proxy, and `prisma migrate deploy` cannot run through
+it, so it is not the one you want here.
+
+**3. Put it in `.env` at the repository root**, as `DATABASE_URL`:
+
+```
+DATABASE_URL=postgresql://…
+```
+
+`.env` is the file this repository reads — both [`tools/local/start.ts`](tools/local/start.ts) and
+the Nest host load it from the repository root, and neither reads `.env.local`. An exported
+`DATABASE_URL` in your shell wins over the file, if you would rather not write it down at all.
+
+**4. Run it:**
+
+```bash
+COLLEGA_ALLOW_REMOTE_DATABASE=1 pnpm start
+```
+
+Docker is never involved: `start.ts` reads the host out of the connection string, sees it is not this
+machine, and does not start a container that the string would not reach anyway.
+
+**Why the flag exists, and why it should stay a flag.** `pnpm start` runs `prisma migrate deploy` and
+then the demo seed against whatever `DATABASE_URL` names. On a staging database that is exactly
+right. On a production one it is a catastrophe, and the two differ by a string in a file. So the
+script refuses a non-loopback host outright and `COLLEGA_ALLOW_REMOTE_DATABASE=1` is the way to say
+you meant it — **per command, not exported in a shell profile**, where it would silently apply to
+every run afterwards.
+
+Two consequences worth expecting:
+
+- **The demo data will be there, and it is shared.** The seed upserts, so re-running is safe, but
+  everybody pointed at that database sees the same organizations, ideas and comments — including
+  each other's edits. That is the point of sharing one, and it is not a local sandbox.
+- **The passwords are published.** Every seeded account uses `DEMO_PASSWORD` from
+  [`scenario.ts`](packages/infrastructure/prisma/seed/modules/scenario.ts), which is in this
+  repository. A database holding that data must never be one that matters.
+
+### What is real, and what is still a fixture
+
+Nearly everything reads the API. Sign-in, boards and board detail, the ideas list and the idea
+inspector, delivery, and the settings screens are all live against the real database, including the
+writes: author an idea, move a card between lanes, toggle an upvote, promote an idea to an issue.
+
+Two things are not:
 
 | | |
 |---|---|
-| `apps/api` | **Runs.** Every feature controller, against the real database. |
-| Sign-in, boards, board detail | **Live.** Real identity, real boards, real cards — and the board writes: author an idea, move a card between lanes, toggle an upvote. |
-| The ideas list, the idea inspector, delivery, settings | **Fixtures**, from [`apps/web/lib/mock.ts`](apps/web/lib/mock.ts). Clickable, but not talking to anything. |
+| The **AI-assist admin screens** — prompt editor, probes, usage | Fixtures, from [`apps/web/lib/mock.ts`](apps/web/lib/mock.ts). The API side exists; the web side is not wired to it yet. |
+| **Outcomes and the roadmap** | Empty, deliberately. They are Slice 2 of Issues-and-Delivery: no table, no entity, no route. [`SPEC/30-Contracts.md`](SPEC/30-Contracts.md) says so outright, and `apps/web/lib/data/delivery.ts` explains why empty beats invented. |
 
-So the board is the screen to look at. Which of the two a screen gets is decided in
-[`apps/web/lib/data/`](apps/web/lib/data) and nowhere else — a reader there is either a `fetch` or a
-fixture, and the call sites cannot tell. Where a fixture reader would otherwise be joined against
-real rows it is named `getFixture*`, so `grep getFixture` finds the screens that are waiting on a
-conversion rather than merely unconverted. Wave-by-wave status lives in
-[`SPEC/implementation-agent-tracker.md`](SPEC/implementation-agent-tracker.md).
-
-For the parts nothing has replaced yet, the frozen .NET app is still the only place to see how a
-screen behaved — see [`DOTNET.md`](DOTNET.md).
+Which of the two a screen gets is decided in [`apps/web/lib/data/`](apps/web/lib/data) and nowhere
+else — a reader there is either a `fetch` or a fixture, and the call sites cannot tell. Wave-by-wave
+status lives in [`SPEC/implementation-agent-tracker.md`](SPEC/implementation-agent-tracker.md).
 
 ---
 
@@ -70,7 +142,7 @@ screen behaved — see [`DOTNET.md`](DOTNET.md).
 
 ```bash
 pnpm start        # the whole application — API, web, database
-pnpm dev          # apps/web alone, against whatever API is already running
+pnpm dev          # an alias for `pnpm start`; there is no web-only mode
 pnpm check        # lint + typecheck + test + build — the gate
 pnpm build
 pnpm test         # every package except the Playwright suite
@@ -97,25 +169,151 @@ That reports `0 cached` and is the only form worth quoting as evidence.
 
 ---
 
-## Database
+## Database and seeding
 
-Prisma owns the schema ([`packages/infrastructure/prisma/schema.prisma`](packages/infrastructure/prisma/schema.prisma)),
-frozen at conversion slice S0.2 — 25 models, 9 enums.
+Prisma owns the schema
+([`packages/infrastructure/prisma/schema.prisma`](packages/infrastructure/prisma/schema.prisma)) —
+25 models, 9 enums, frozen at conversion slice S0.2.
 
 ```bash
-pnpm --filter @collega/infrastructure db:generate   # regenerate the client
-pnpm --filter @collega/infrastructure db:migrate    # apply migrations
-pnpm --filter @collega/infrastructure db:seed
+pnpm --filter @collega/infrastructure db:generate   # regenerate the client from the schema
+pnpm --filter @collega/infrastructure db:migrate    # prisma migrate deploy
+pnpm --filter @collega/infrastructure db:seed       # the demo data
 ```
+
+`pnpm start` runs all three for you. You only need them by hand when working against a database it
+did not create.
+
+### Three seeds, for three different jobs
+
+| | | |
+|---|---|---|
+| `db:seed` | The demo data — two organizations, one account per role each, boards, ideas, comments, sprints and issues | **Refuses to run when `NODE_ENV=production`.** |
+| `db:bootstrap-admin` | One Site Admin, so a fresh deployment is reachable at all | Safe in production; it is what the API's deploy build runs |
+| `db:bootstrap-organization` | One empty organization with an admin | Safe in production |
+
+The demo seed rebuilds from committed code in about four seconds, which is why nothing in a local
+database is worth protecting. To start over (**destroys all local data**): `docker compose down -v`,
+then `pnpm start`.
 
 The Nest host composes `DATABASE_URL` from the `POSTGRES_*` parts when it is unset, so a password has
 one home. **The Prisma CLI cannot** — `migrate`, `db pull` and `studio` read `env("DATABASE_URL")`
 straight out of the schema — which is why `pnpm start` writes the composed value back into `.env` the
 first time. In deployment it is set verbatim, which is the shape Prisma Postgres hands over.
 
-To start over (**destroys all local data**): `docker compose down -v`, then `pnpm start`. The seed
-rebuilds the demo data from committed code in under four seconds, so there is nothing in the local
-database worth protecting.
+---
+
+## Deployment
+
+Two Vercel projects from this one repository, each rooted at its own app directory, each with its own
+`vercel.json`:
+
+| Project | Root directory | Framework |
+|---|---|---|
+| `collega` | `apps/web` | Next.js |
+| `collega-api` | `apps/api` | Nest.js |
+
+Both install and build from the workspace root (`cd ../.. && pnpm install --frozen-lockfile`), so
+Turborepo resolves the package graph exactly as it does locally. The API's build command also runs
+`db:migrate` and `db:bootstrap-admin`, which is what makes a newly provisioned database usable
+without a manual step.
+
+### Environment variables
+
+| Variable | Where | Notes |
+|---|---|---|
+| `DATABASE_URL` | `collega-api` | Set verbatim; the Prisma CLI cannot compose it from parts |
+| `COLLEGA_API_URL` | `collega` | The API's origin. The web app is HTTP-only and reaches the API through this and nothing else |
+| `SITE_ADMIN_EMAIL`, `SITE_ADMIN_PASSWORD` | `collega-api` | Consumed by `db:bootstrap-admin` at build time |
+| `ANTHROPIC_API_KEY` | `collega-api` | Optional. Absent means the AI feature runs dark |
+
+### Environments and their databases
+
+Three environments, and the thing worth getting right is which database each one writes to.
+
+| Environment | Database | Who reaches it |
+|---|---|---|
+| **Production** | The production Prisma Postgres | `collega-api` on `main` |
+| **Preview** | A separate staging database | Preview deployments, and a developer with no local PostgreSQL |
+| **Local** | A `postgres:16` container, via `docker compose` | `pnpm start` |
+
+**Status: the staging database is not provisioned yet.** Until it is, Preview shares Production's
+database — so every schema change already lands there from a preview build, which is the reason to
+do this before the next migration rather than after. To provision it:
+
+```bash
+npm i -g vercel && vercel login
+cd apps/api && vercel link                                      # link to collega-api
+vercel install prisma-postgres --name collega-dev --environment preview
+```
+
+**Three things will bite otherwise.** The first one stops the deploy; the other two are quieter.
+
+**Nothing reads the variables the store generates.** A connected store injects several URLs under a
+prefix of its own — typically `<PREFIX>_POSTGRES_URL`, `<PREFIX>_DATABASE_URL` and a
+`prisma+postgres://` one. This repository reads **none** of them. `schema.prisma` reads
+`env("DATABASE_URL")`, and the Nest host reads `DATABASE_URL` or the unprefixed `POSTGRES_*` parts
+and nothing else — so a prefixed store leaves `db:migrate` and `db:bootstrap-admin` with no
+connection string and the build fails at the migrate step.
+
+Copy the **`postgres://`** value into a plain `DATABASE_URL` on the project, scoped to Preview. Not
+the `prisma+postgres://` one: that is the Accelerate protocol and needs an extension this workspace
+does not install.
+
+**The staging database gets Production's Site Admin.** The API's build command ends with
+`db:bootstrap-admin`, so the first preview build after provisioning migrates and bootstraps the new
+database on its own — which is what you want. But that script reads `SITE_ADMIN_EMAIL` and
+`SITE_ADMIN_PASSWORD`, and unless those are scoped per-environment it installs the production
+credential into staging, which is the separation you were trying to create. Set Preview-scoped
+throwaway values first.
+
+**The demo seed will never run on Vercel, by design.** `prisma/seed/index.ts` throws when
+`NODE_ENV === 'production'`, and Vercel sets that for *every* build, preview included. So a freshly
+provisioned staging database comes up with the bootstrap admin and nothing else: no organizations,
+no boards, no ideas. Demo data goes in from a shell where `NODE_ENV` is unset — yours:
+
+```bash
+vercel env pull /tmp/collega-preview.env --environment=preview
+DATABASE_URL='<the postgresql:// value from that file>'   pnpm --filter @collega/infrastructure db:seed
+```
+
+Pull to a scratch path, not onto `.env` — the pull carries every variable for that environment,
+deployment credentials included. See [Against Vercel Postgres](#against-vercel-postgres) for the
+same steps in more detail.
+
+Developers point at this same staging database when they cannot run one locally —
+[Against Vercel Postgres](#against-vercel-postgres) under "Run it locally" has those steps.
+
+### Two things that are load-bearing and invisible
+
+**The API's entrypoint is `apps/api/server.js`, and the bootstrap is `src/bootstrap.ts` — not
+`src/main.ts`.** Vercel's NestJS preset resolves an entrypoint in a fixed order, and every `src/`
+candidate (`main`, `app`, `index`, `server`) outranks every root-level one. While `src/main.ts`
+existed, the preset compiled it with its own toolchain and `server.js` was never consulted.
+Reintroducing `src/main.ts`, or renaming `server.js`, silently hands the deployment back to a
+source-compiled artifact. The file's own header comment says this too; read it before touching
+either name.
+
+**`maxDuration` lives in the project's settings, not in `vercel.json`.** A `functions` block is
+rejected before the build starts unless its patterns match source files inside an `api/` directory,
+which this layout has none of.
+
+### The ignore step
+
+Both projects set an `ignoreCommand` that asks Turborepo whether the app is affected by the commit.
+It reasons correctly on source changes — a commit touching only `packages/application` genuinely
+does not affect `apps/web`, which cannot import it. The gap is **environment-variable changes**: they
+leave no diff, so the ignore step sees an unaffected app and cancels a build you actually wanted.
+Push an empty commit to force one.
+
+### CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `pnpm check` on every pull request and on
+pushes to `dev` and `main`. It deliberately does **not** set `DATABASE_URL`: `packages/infrastructure`
+guards a suite with `skipIf(!DATABASE_URL)`, so the variable's mere presence stops it skipping and it
+then tries to reach a database CI does not have.
+
+Branches flow `feature/<NNN>-<short-description>` → `dev` → `main`.
 
 ---
 
@@ -134,18 +332,19 @@ e2e/                       Playwright suite
 tools/
   local/start.ts           `pnpm start` — database, API and web in one command
   golden                   Capture/replay harness — the conversion's regression detector
-  boundaries  arch         Architecture tests over the layer rules
-
+  boundaries               Architecture tests over the layer rules
+  demo-shots               Screenshots the demo deck is built from
+  prompt-eval              The AI-assist evaluation corpus (data only; its runner is gone)
 SPEC/                      Canonical specs — the source of truth
 SPEC/mockups/              UI comps; comp-q-*.html is the locked reference rendering
-
-src/  tests/               FROZEN .NET application — see DOTNET.md. Deleted in slice F6.
 ```
 
 Dependencies flow inward, and the boundaries are **enforced rather than conventional**:
 `biome.json`'s `noRestrictedImports` overrides fail the lint run on a cross-layer import, and
-`tools/boundaries` is an architecture test over those rules. `apps/web` reaching into
-`packages/application` is a lint error, deliberately.
+`tools/boundaries` is an architecture test over those rules — it writes probe files and confirms
+Biome reports them, because a lint config that looks right and enforces nothing is the failure mode
+that actually happened here. `apps/web` reaching into `packages/application` is a lint error,
+deliberately.
 
 Business rules live in `domain` and `application` — never in controllers or React components.
 
@@ -166,10 +365,10 @@ writing production React against an undecided design.
 
 ## Accounts
 
-`pnpm start` seeds two organizations with one account per role each, and gives all of them the same
+`pnpm start` seeds two organizations with one account per role each, all sharing the same
 development-only password — `DEMO_PASSWORD` in
-[`packages/infrastructure/prisma/seed/modules/scenario.ts`](packages/infrastructure/prisma/seed/modules/scenario.ts),
-which the seed refuses to run in production. The three worth signing in as:
+[`packages/infrastructure/prisma/seed/modules/scenario.ts`](packages/infrastructure/prisma/seed/modules/scenario.ts).
+The three worth signing in as:
 
 | | |
 |---|---|
@@ -201,10 +400,25 @@ docker exec -it collega-postgres \
 That file is generated, and `next dev` and `next build` write different versions of it, so a dev
 server left running rewrites it under you. `git checkout -- apps/web/next-env.d.ts` and re-run.
 
+**`pnpm check` fails with `EPIPE` or `EPERM` on a Prisma engine, on Windows**
+A running app holds `packages/infrastructure/dist/generated/prisma` open. Stop `pnpm start` before
+running the gate, and do not run two `pnpm` commands against this workspace at once.
+
 **`pnpm start` says something is already on 3000 or 3001**
 A previous run was killed hard enough that its servers outlived it. `pnpm start` puts each server in
 its own process group and signals the group, so Ctrl+C leaves nothing behind; `kill -9` on the
 launcher does not.
+
+**`prisma migrate deploy` fails with `P3005` — "the database schema is not empty"**
+The database has tables Prisma did not create. Drop it and let `pnpm start` rebuild it; the seed
+makes that cheap.
+
+**`pnpm start` says `DATABASE_URL points at <host>, which is not this machine`**
+Working as intended. The script migrates and seeds whatever it is given, so it will not write to a
+host it cannot see is yours. If that host really is a staging database, prefix the command with
+`COLLEGA_ALLOW_REMOTE_DATABASE=1` — see
+[Against Vercel Postgres](#against-vercel-postgres). If it is not, look at `DATABASE_URL` in `.env`
+and at your shell, which overrides the file.
 
 **`pnpm install` fails on an engine version** — the workspace requires Node ≥ 24.20 and
 pnpm ≥ 12.3.4. `corepack prepare pnpm@12.3.4 --activate`.

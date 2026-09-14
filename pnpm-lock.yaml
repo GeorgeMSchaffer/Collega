@@ -361,6 +361,12 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
+  tools/demo-shots:
+    devDependencies:
+      '@playwright/test':
+        specifier: 1.63.0
+        version: 1.63.0
+
   tools/golden:
     devDependencies:
       '@types/node':

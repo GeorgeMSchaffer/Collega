@@ -90,7 +90,11 @@ export default async function UsersPage() {
           </Link>
           {/* Bootstrap exception: user import stays direct for a Site Admin, but inviting one
               member into an organization they do not belong to has no referent. */}
-          {siteAdmin ? null : <Button>Invite user</Button>}
+          {siteAdmin ? null : (
+            <Link href="/settings/users/new" className={buttonVariants()}>
+              Add user
+            </Link>
+          )}
         </span>
       }
     >

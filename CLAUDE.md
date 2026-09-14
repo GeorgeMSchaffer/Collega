@@ -2,7 +2,7 @@
 
 Guidance for Claude Code (claude.ai/code) working in this repository.
 
-This file carries only the rules that must be true *before* touching code. Reference detail lives closer to the code it describes — each `src/*` project, `tests/`, and `tests/Collega.E2E.Tests/` has its own `CLAUDE.md` covering that area's layout, conventions, commands, and gotchas. Read those when you work in them; don't duplicate them here.
+This file carries only the rules that must be true *before* touching code. Reference detail lives closer to the code it describes — `apps/web/AGENTS.md`, `e2e/README.md`, `tools/README.md` and the per-package notes cover their own area's layout, conventions, commands, and gotchas. Read those when you work in them; don't duplicate them here.
 
 
 ## Working Rules
@@ -33,7 +33,7 @@ This file carries only the rules that must be true *before* touching code. Refer
 
 ```bash
 pnpm install
-pnpm dev          # apps/web on http://localhost:3000
+pnpm dev          # the whole application - an alias for `pnpm start`
 pnpm check        # lint + typecheck + test — run this before calling anything done
 pnpm build
 pnpm test:e2e     # Playwright, separate because it needs a running app
@@ -44,21 +44,22 @@ every package, Vitest, and `next build`. The build is part of the gate because `
 for it — a `'use client'` file that reaches a server-only module through a barrel typechecks and
 then fails to build — and Turbo caches it, so a second run costs nothing.
 
-### The .NET commands are frozen, not current
+### There is no .NET here any more
 
-`dotnet build Collega.sln` still works, and the golden-capture harness still needs it to. But
-`src/Collega.*` and `tests/` are **frozen** — see `SPEC/decisions.md` 2026-09-06 and the banner at
-the top of each of their `CLAUDE.md` files. Do not build features, fix bugs, or write tests there.
-They are deleted in slice **F6**, once F1 replays clean.
+`src/Collega.*`, `tests/`, `Collega.sln` and `global.json` were deleted in slice **F6** (2026-09-13).
+`pnpm check` is the only build, and `pnpm start` runs the only application. A reference to a
+`dotnet` command, a `.csproj`, or a path under `src/Collega.*` anywhere in this repository is stale
+— report it rather than following it.
 
-Until Waves D and E land, the .NET app is the only *runnable* full application, so `README.md` and
-`demo.md` still document how to start it — as the thing to look at and re-record from, not to
-extend.
+What the deletion deliberately kept: `SPEC/` (including the dated history in `decisions.md`, which
+still describes the old stack because that is what happened), the golden corpus in `tools/golden`,
+and the AI-assist evaluation corpus in `tools/prompt-eval`.
+
 
 ## Repository State
 
 
-Repo layout beyond the `src/` and `tests/` projects:
+Repo layout beyond `apps/` and `packages/`:
 
 - `SPEC/implementation-agent-tracker.md` Use to track the current state of development with upcoming and completed features
 - `SPEC/` — canonical specs, the implementation tracker, and delivery/sprint plans (source of truth, see below)
@@ -102,7 +103,7 @@ overrides fail the lint run on a cross-layer import, and `tools/boundaries` asse
 themselves still work. `apps/web` reaching into `packages/application` is a lint error, and that is
 deliberate (`SPEC/50-typescript-migration.md` §4.3).
 
-The frozen .NET projects map one-to-one onto these — `Collega.Domain` → `packages/domain`, and so
+The deleted projects mapped one-to-one onto these — `Collega.Domain` → `packages/domain`, and so
 on. `SPEC/50-typescript-migration.md` §4 has the full mapping.
 
 ## Technology Stack
@@ -118,33 +119,26 @@ on. `SPEC/50-typescript-migration.md` §4 has the full mapping.
 | Tests | Vitest per package, plus the Playwright suite in `e2e/`, plus the golden corpus in `tools/golden` |
 | Hosting | Vercel |
 
-### The .NET stack (frozen)
+### What the deleted stack left behind
 
-`src/Collega.*`, `tests/`, `Collega.sln` and `global.json` are the .NET 8 / ASP.NET Core / Blazor
-WebAssembly / EF Core application this replaces. **They are frozen and no longer applicable**
-(`SPEC/decisions.md` 2026-09-06): read them only to learn what the old behaviour was, never as a
-pattern. Every `CLAUDE.md` under `src/` and `tests/` carries a banner saying so.
+The .NET 8 / ASP.NET Core / Blazor WebAssembly / EF Core application this replaced was deleted in
+slice **F6** on 2026-09-13. Two of its artefacts survive, and both are **data, not patterns**:
 
-Two things keep them on disk until slice **F6**:
+- **The golden corpus** (`tools/golden`) — 447 cases across all 81 endpoints × 4 roles, recorded
+  2026-09-03. It cannot be re-recorded against its original, so it is a fixed record now, frozen
+  alongside `tools/golden/inventory.json`. **It is a regression detector, not the specification**
+  (`SPEC/decisions.md` 2026-09-09): shipping for feedback outranks fidelity to the old app, so a
+  diff is a question — fix it, accept and record it, or deliberately do better — rather than
+  automatically a defect. Read that entry before treating a corpus difference as work.
+- **The AI-assist evaluation corpus** (`tools/prompt-eval`) — nine cases and three fixtures. Its
+  batch runner was .NET and went with the rest, so corpus-scale prompt evaluation currently has no
+  tool. `tools/prompt-eval/README.md` says what that costs.
 
-- **The golden corpus is the conversion's only broad safety net.** Wave A recorded 447 cases across
-  all 81 endpoints × 4 roles on 2026-09-03 (`tools/golden`), and re-recording a missing or wrong one
-  needs the .NET API to still boot. Waves D and E are exactly where such a gap surfaces.
-  **It is a regression detector, not the specification** (`SPEC/decisions.md` 2026-09-09): shipping
-  for feedback outranks fidelity to the frozen app, so a diff is a question — fix it, accept and
-  record it, or deliberately do better — rather than automatically a defect. Read that entry before
-  treating a corpus difference as work.
-- **It is the only runnable full application** until D and E land — the thing to look at when you
-  need to know how a screen actually behaved.
+The .NET test suite was **discarded**, not ported (ticket `10`). The database was never on the
+keep list after 2026-09-09 (`SPEC/decisions.md`): the seed modules rebuild it from committed code in
+under four seconds — `dropdb`, `db:migrate`, `db:seed` — so nothing about cutover needed to preserve
+it.
 
-The .NET test suite is **discarded**, not ported (ticket `10`). Cutover deletes the solution;
-nothing runs side by side. What survives: `SPEC/` and `tools/golden`.
-
-**The database is no longer on that list** (2026-09-09, `SPEC/decisions.md`). It was, while it held
-the only copy of the demo data and could not be recreated. The seed modules now rebuild it from
-committed code in under four seconds — `dropdb`, `db:migrate`, `db:seed` — so nothing about cutover
-needs to preserve it. F3 and F4 should be planned on that basis: if the target is seeded fresh there
-is no data to migrate.
 
 ## Session, Branch, and Source Control
 

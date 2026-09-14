@@ -1,5 +1,5 @@
 /**
- * The WRITE half of .NET's `src/Collega.API/Parsing/Csv.cs`, for the idea CSV export.
+ * The WRITE half of the CSV helper this API layer inherited, for the idea CSV export.
  *
  * The read half is already ported and lives in `packages/infrastructure/src/integrations/csv/`
  * (`parseCsvRecords` + `stripFormulaGuard`). The write half has no home there: nothing in

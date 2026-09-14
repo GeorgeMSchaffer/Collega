@@ -13,12 +13,14 @@
     "start": "node tools/local/start.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "dev": "turbo run dev",
+    "dev": "pnpm start",
     "format": "biome format --write .",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --filter=!collega-e2e",
     "test:e2e": "turbo run test --filter=collega-e2e",
+    "shots": "pnpm --filter @collega/demo-shots capture",
+    "deck": "pnpm --filter @collega/demo-shots deck",
     "check": "pnpm run lint && turbo run typecheck test build --filter=!collega-e2e"
   },
   "devDependencies": {

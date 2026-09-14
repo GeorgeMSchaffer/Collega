@@ -1,0 +1,1481 @@
+[
+  {
+    "id": "GET /ai-assist/usage",
+    "verb": "GET",
+    "route": "/ai-assist/usage",
+    "controller": "AiAssist",
+    "action": "GetPlatformUsage",
+    "authorize": [
+      "SiteAdmin"
+    ],
+    "params": [],
+    "statuses": [
+      200,
+      400,
+      401,
+      403
+    ],
+    "source": "AiAssistController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/ai-assist/usage",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/ai-assist/usage",
+    "controller": "OrganizationAiAssist",
+    "action": "GetOrganizationUsage",
+    "authorize": [
+      "OrgAdmin",
+      "SiteAdmin"
+    ],
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "AiAssistController.cs"
+  },
+  {
+    "id": "POST /auth/login",
+    "verb": "POST",
+    "route": "/auth/login",
+    "controller": "Auth",
+    "action": "Login",
+    "authorize": "anonymous",
+    "params": [],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      429
+    ],
+    "source": "AuthController.cs"
+  },
+  {
+    "id": "GET /auth/me",
+    "verb": "GET",
+    "route": "/auth/me",
+    "controller": "Auth",
+    "action": "Me",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      200,
+      401
+    ],
+    "source": "AuthController.cs"
+  },
+  {
+    "id": "PUT /auth/me",
+    "verb": "PUT",
+    "route": "/auth/me",
+    "controller": "Auth",
+    "action": "UpdateMe",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      200,
+      400,
+      401
+    ],
+    "source": "AuthController.cs"
+  },
+  {
+    "id": "PUT /auth/me/portrait",
+    "verb": "PUT",
+    "route": "/auth/me/portrait",
+    "controller": "Auth",
+    "action": "UpdatePortrait",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      200,
+      400,
+      401
+    ],
+    "source": "AuthController.cs"
+  },
+  {
+    "id": "DELETE /auth/me/portrait",
+    "verb": "DELETE",
+    "route": "/auth/me/portrait",
+    "controller": "Auth",
+    "action": "RemovePortrait",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      200,
+      401
+    ],
+    "source": "AuthController.cs"
+  },
+  {
+    "id": "POST /auth/change-password",
+    "verb": "POST",
+    "route": "/auth/change-password",
+    "controller": "Auth",
+    "action": "ChangePassword",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      204,
+      400,
+      401,
+      403
+    ],
+    "source": "AuthController.cs"
+  },
+  {
+    "id": "POST /auth/register",
+    "verb": "POST",
+    "route": "/auth/register",
+    "controller": "Auth",
+    "action": "Register",
+    "authorize": "anonymous",
+    "params": [],
+    "statuses": [
+      201,
+      400,
+      409
+    ],
+    "source": "AuthController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/boards",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/boards",
+    "controller": "Boards",
+    "action": "List",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "BoardsController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/boards",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/boards",
+    "controller": "Boards",
+    "action": "Create",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "BoardsController.cs"
+  },
+  {
+    "id": "GET /boards/{boardId}",
+    "verb": "GET",
+    "route": "/boards/{boardId}",
+    "controller": "Boards",
+    "action": "GetById",
+    "authorize": "any",
+    "params": [
+      "boardId"
+    ],
+    "statuses": [
+      200,
+      201,
+      401,
+      403,
+      404
+    ],
+    "source": "BoardsController.cs"
+  },
+  {
+    "id": "PUT /boards/{boardId}",
+    "verb": "PUT",
+    "route": "/boards/{boardId}",
+    "controller": "Boards",
+    "action": "Update",
+    "authorize": "any",
+    "params": [
+      "boardId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "BoardsController.cs"
+  },
+  {
+    "id": "POST /boards/{boardId}/swimlanes/reorder",
+    "verb": "POST",
+    "route": "/boards/{boardId}/swimlanes/reorder",
+    "controller": "Boards",
+    "action": "ReorderSwimlanes",
+    "authorize": "any",
+    "params": [
+      "boardId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "BoardsController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/business-impacts",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/business-impacts",
+    "controller": "BusinessImpacts",
+    "action": "List",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "BusinessImpactsController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/business-impacts",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/business-impacts",
+    "controller": "BusinessImpacts",
+    "action": "Create",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "BusinessImpactsController.cs"
+  },
+  {
+    "id": "PUT /business-impacts/{businessImpactId}",
+    "verb": "PUT",
+    "route": "/business-impacts/{businessImpactId}",
+    "controller": "BusinessImpacts",
+    "action": "Update",
+    "authorize": "any",
+    "params": [
+      "businessImpactId"
+    ],
+    "statuses": [
+      200,
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "BusinessImpactsController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/business-impacts/reorder",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/business-impacts/reorder",
+    "controller": "BusinessImpacts",
+    "action": "Reorder",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "BusinessImpactsController.cs"
+  },
+  {
+    "id": "DELETE /business-impacts/{businessImpactId}",
+    "verb": "DELETE",
+    "route": "/business-impacts/{businessImpactId}",
+    "controller": "BusinessImpacts",
+    "action": "Delete",
+    "authorize": "any",
+    "params": [
+      "businessImpactId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "BusinessImpactsController.cs"
+  },
+  {
+    "id": "GET /ideas/{ideaId}/comments",
+    "verb": "GET",
+    "route": "/ideas/{ideaId}/comments",
+    "controller": "Comments",
+    "action": "ListByIdea",
+    "authorize": "any",
+    "params": [
+      "ideaId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "CommentsController.cs"
+  },
+  {
+    "id": "POST /ideas/{ideaId}/comments",
+    "verb": "POST",
+    "route": "/ideas/{ideaId}/comments",
+    "controller": "Comments",
+    "action": "Create",
+    "authorize": "any",
+    "params": [
+      "ideaId"
+    ],
+    "statuses": [
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "CommentsController.cs"
+  },
+  {
+    "id": "PUT /comments/{commentId}",
+    "verb": "PUT",
+    "route": "/comments/{commentId}",
+    "controller": "Comments",
+    "action": "Update",
+    "authorize": "any",
+    "params": [
+      "commentId"
+    ],
+    "statuses": [
+      200,
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "CommentsController.cs"
+  },
+  {
+    "id": "DELETE /comments/{commentId}",
+    "verb": "DELETE",
+    "route": "/comments/{commentId}",
+    "controller": "Comments",
+    "action": "Delete",
+    "authorize": "any",
+    "params": [
+      "commentId"
+    ],
+    "statuses": [
+      204,
+      401,
+      403,
+      404
+    ],
+    "source": "CommentsController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/field-definitions",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/field-definitions",
+    "controller": "FieldDefinitions",
+    "action": "List",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "FieldDefinitionsController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/field-definitions/{id}",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/field-definitions/{id}",
+    "controller": "FieldDefinitions",
+    "action": "Get",
+    "authorize": "any",
+    "params": [
+      "organizationId",
+      "id"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "FieldDefinitionsController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/field-definitions",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/field-definitions",
+    "controller": "FieldDefinitions",
+    "action": "Create",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "FieldDefinitionsController.cs"
+  },
+  {
+    "id": "PUT /organizations/{organizationId}/field-definitions/reorder",
+    "verb": "PUT",
+    "route": "/organizations/{organizationId}/field-definitions/reorder",
+    "controller": "FieldDefinitions",
+    "action": "Reorder",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      201,
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "FieldDefinitionsController.cs"
+  },
+  {
+    "id": "PUT /organizations/{organizationId}/field-definitions/{id}",
+    "verb": "PUT",
+    "route": "/organizations/{organizationId}/field-definitions/{id}",
+    "controller": "FieldDefinitions",
+    "action": "Update",
+    "authorize": "any",
+    "params": [
+      "organizationId",
+      "id"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "FieldDefinitionsController.cs"
+  },
+  {
+    "id": "DELETE /organizations/{organizationId}/field-definitions/{id}",
+    "verb": "DELETE",
+    "route": "/organizations/{organizationId}/field-definitions/{id}",
+    "controller": "FieldDefinitions",
+    "action": "Delete",
+    "authorize": "any",
+    "params": [
+      "organizationId",
+      "id"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "FieldDefinitionsController.cs"
+  },
+  {
+    "id": "GET /health",
+    "verb": "GET",
+    "route": "/health",
+    "controller": "Health",
+    "action": "Get",
+    "authorize": "anonymous",
+    "params": [],
+    "statuses": [
+      200
+    ],
+    "source": "HealthController.cs"
+  },
+  {
+    "id": "POST /boards/{boardId}/idea-assist/turns",
+    "verb": "POST",
+    "route": "/boards/{boardId}/idea-assist/turns",
+    "controller": "IdeaAssist",
+    "action": "Continue",
+    "authorize": "any",
+    "params": [
+      "boardId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404,
+      503
+    ],
+    "source": "IdeaAssistController.cs"
+  },
+  {
+    "id": "GET /ai-assist/availability",
+    "verb": "GET",
+    "route": "/ai-assist/availability",
+    "controller": "AiAssistAvailability",
+    "action": "GetAvailability",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      200,
+      401
+    ],
+    "source": "IdeaAssistController.cs"
+  },
+  {
+    "id": "GET /ai-assist/prompt",
+    "verb": "GET",
+    "route": "/ai-assist/prompt",
+    "controller": "AiPrompt",
+    "action": "Get",
+    "authorize": [
+      "SiteAdmin"
+    ],
+    "params": [],
+    "statuses": [
+      200,
+      401,
+      403
+    ],
+    "source": "IdeaAssistController.cs"
+  },
+  {
+    "id": "PUT /ai-assist/prompt",
+    "verb": "PUT",
+    "route": "/ai-assist/prompt",
+    "controller": "AiPrompt",
+    "action": "Publish",
+    "authorize": [
+      "SiteAdmin"
+    ],
+    "params": [],
+    "statuses": [
+      200,
+      400,
+      401,
+      403
+    ],
+    "source": "IdeaAssistController.cs"
+  },
+  {
+    "id": "POST /ai-assist/prompt/versions/{version}/restore",
+    "verb": "POST",
+    "route": "/ai-assist/prompt/versions/{version}/restore",
+    "controller": "AiPrompt",
+    "action": "Restore",
+    "authorize": [
+      "SiteAdmin"
+    ],
+    "params": [
+      "version"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaAssistController.cs"
+  },
+  {
+    "id": "POST /ai-assist/prompt/reset",
+    "verb": "POST",
+    "route": "/ai-assist/prompt/reset",
+    "controller": "AiPrompt",
+    "action": "Reset",
+    "authorize": [
+      "SiteAdmin"
+    ],
+    "params": [],
+    "statuses": [
+      200,
+      401,
+      403
+    ],
+    "source": "IdeaAssistController.cs"
+  },
+  {
+    "id": "POST /ai-assist/prompt/probe",
+    "verb": "POST",
+    "route": "/ai-assist/prompt/probe",
+    "controller": "AiPrompt",
+    "action": "Probe",
+    "authorize": [
+      "SiteAdmin"
+    ],
+    "params": [],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      503
+    ],
+    "source": "IdeaAssistController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/ai-assist/settings",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/ai-assist/settings",
+    "controller": "OrganizationAiAssistSettings",
+    "action": "GetSettings",
+    "authorize": [
+      "OrgAdmin",
+      "SiteAdmin"
+    ],
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaAssistController.cs"
+  },
+  {
+    "id": "PUT /organizations/{organizationId}/ai-assist/settings",
+    "verb": "PUT",
+    "route": "/organizations/{organizationId}/ai-assist/settings",
+    "controller": "OrganizationAiAssistSettings",
+    "action": "UpdateSettings",
+    "authorize": [
+      "OrgAdmin",
+      "SiteAdmin"
+    ],
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaAssistController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/idea-types",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/idea-types",
+    "controller": "IdeaTypes",
+    "action": "List",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaTypesController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/idea-types",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/idea-types",
+    "controller": "IdeaTypes",
+    "action": "Create",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaTypesController.cs"
+  },
+  {
+    "id": "PUT /idea-types/{ideaTypeId}",
+    "verb": "PUT",
+    "route": "/idea-types/{ideaTypeId}",
+    "controller": "IdeaTypes",
+    "action": "Update",
+    "authorize": "any",
+    "params": [
+      "ideaTypeId"
+    ],
+    "statuses": [
+      200,
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaTypesController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/idea-types/reorder",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/idea-types/reorder",
+    "controller": "IdeaTypes",
+    "action": "Reorder",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaTypesController.cs"
+  },
+  {
+    "id": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/fields",
+    "verb": "PUT",
+    "route": "/organizations/{organizationId}/idea-types/{ideaTypeId}/fields",
+    "controller": "IdeaTypes",
+    "action": "SetFields",
+    "authorize": "any",
+    "params": [
+      "organizationId",
+      "ideaTypeId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaTypesController.cs"
+  },
+  {
+    "id": "PUT /organizations/{organizationId}/idea-types/{ideaTypeId}/appearance",
+    "verb": "PUT",
+    "route": "/organizations/{organizationId}/idea-types/{ideaTypeId}/appearance",
+    "controller": "IdeaTypes",
+    "action": "SetAppearance",
+    "authorize": "any",
+    "params": [
+      "organizationId",
+      "ideaTypeId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaTypesController.cs"
+  },
+  {
+    "id": "DELETE /idea-types/{ideaTypeId}",
+    "verb": "DELETE",
+    "route": "/idea-types/{ideaTypeId}",
+    "controller": "IdeaTypes",
+    "action": "Delete",
+    "authorize": "any",
+    "params": [
+      "ideaTypeId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeaTypesController.cs"
+  },
+  {
+    "id": "GET /boards/{boardId}/ideas",
+    "verb": "GET",
+    "route": "/boards/{boardId}/ideas",
+    "controller": "Ideas",
+    "action": "ListByBoard",
+    "authorize": "any",
+    "params": [
+      "boardId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/ideas",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/ideas",
+    "controller": "Ideas",
+    "action": "ListByOrganization",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "POST /boards/{boardId}/ideas",
+    "verb": "POST",
+    "route": "/boards/{boardId}/ideas",
+    "controller": "Ideas",
+    "action": "Create",
+    "authorize": "any",
+    "params": [
+      "boardId"
+    ],
+    "statuses": [
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "GET /ideas/{ideaId}",
+    "verb": "GET",
+    "route": "/ideas/{ideaId}",
+    "controller": "Ideas",
+    "action": "GetById",
+    "authorize": "any",
+    "params": [
+      "ideaId"
+    ],
+    "statuses": [
+      200,
+      201,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "PUT /ideas/{ideaId}",
+    "verb": "PUT",
+    "route": "/ideas/{ideaId}",
+    "controller": "Ideas",
+    "action": "Update",
+    "authorize": "any",
+    "params": [
+      "ideaId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type",
+    "verb": "PUT",
+    "route": "/organizations/{organizationId}/ideas/{ideaId}/idea-type",
+    "controller": "Ideas",
+    "action": "ReassignIdeaType",
+    "authorize": "any",
+    "params": [
+      "organizationId",
+      "ideaId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "POST /ideas/{ideaId}/status",
+    "verb": "POST",
+    "route": "/ideas/{ideaId}/status",
+    "controller": "Ideas",
+    "action": "ChangeStatus",
+    "authorize": "any",
+    "params": [
+      "ideaId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "DELETE /ideas/{ideaId}",
+    "verb": "DELETE",
+    "route": "/ideas/{ideaId}",
+    "controller": "Ideas",
+    "action": "Delete",
+    "authorize": "any",
+    "params": [
+      "ideaId"
+    ],
+    "statuses": [
+      204,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "POST /ideas/{ideaId}/upvote/toggle",
+    "verb": "POST",
+    "route": "/ideas/{ideaId}/upvote/toggle",
+    "controller": "Ideas",
+    "action": "ToggleUpvote",
+    "authorize": "any",
+    "params": [
+      "ideaId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "GET /boards/{boardId}/ideas/export",
+    "verb": "GET",
+    "route": "/boards/{boardId}/ideas/export",
+    "controller": "Ideas",
+    "action": "ExportCsv",
+    "authorize": "any",
+    "params": [
+      "boardId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "POST /boards/{boardId}/ideas/import",
+    "verb": "POST",
+    "route": "/boards/{boardId}/ideas/import",
+    "controller": "Ideas",
+    "action": "ImportCsv",
+    "authorize": "any",
+    "params": [
+      "boardId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "IdeasController.cs"
+  },
+  {
+    "id": "GET /organizations",
+    "verb": "GET",
+    "route": "/organizations",
+    "controller": "Organizations",
+    "action": "List",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      200,
+      401,
+      403
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "POST /organizations",
+    "verb": "POST",
+    "route": "/organizations",
+    "controller": "Organizations",
+    "action": "Create",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      201,
+      400,
+      401,
+      403
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}",
+    "controller": "Organizations",
+    "action": "GetById",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      201,
+      401,
+      403,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "PUT /organizations/{organizationId}",
+    "verb": "PUT",
+    "route": "/organizations/{organizationId}",
+    "controller": "Organizations",
+    "action": "Update",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/invite-code/regenerate",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/invite-code/regenerate",
+    "controller": "Organizations",
+    "action": "RegenerateInviteCode",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/archive",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/archive",
+    "controller": "Organizations",
+    "action": "Archive",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      204,
+      401,
+      403,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "PUT /organizations/{organizationId}/logo",
+    "verb": "PUT",
+    "route": "/organizations/{organizationId}/logo",
+    "controller": "Organizations",
+    "action": "SetLogo",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "DELETE /organizations/{organizationId}/logo",
+    "verb": "DELETE",
+    "route": "/organizations/{organizationId}/logo",
+    "controller": "Organizations",
+    "action": "ClearLogo",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/users",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/users",
+    "controller": "Organizations",
+    "action": "ListUsers",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/members",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/members",
+    "controller": "Organizations",
+    "action": "ListMembers",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/users",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/users",
+    "controller": "Organizations",
+    "action": "CreateUser",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/users/import",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/users/import",
+    "controller": "Organizations",
+    "action": "ImportUsers",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "OrganizationsController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/statuses",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/statuses",
+    "controller": "Statuses",
+    "action": "List",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "StatusesController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/statuses",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/statuses",
+    "controller": "Statuses",
+    "action": "Create",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "StatusesController.cs"
+  },
+  {
+    "id": "PUT /statuses/{statusId}",
+    "verb": "PUT",
+    "route": "/statuses/{statusId}",
+    "controller": "Statuses",
+    "action": "Update",
+    "authorize": "any",
+    "params": [
+      "statusId"
+    ],
+    "statuses": [
+      200,
+      201,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "StatusesController.cs"
+  },
+  {
+    "id": "POST /organizations/{organizationId}/statuses/reorder",
+    "verb": "POST",
+    "route": "/organizations/{organizationId}/statuses/reorder",
+    "controller": "Statuses",
+    "action": "Reorder",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "StatusesController.cs"
+  },
+  {
+    "id": "DELETE /statuses/{statusId}",
+    "verb": "DELETE",
+    "route": "/statuses/{statusId}",
+    "controller": "Statuses",
+    "action": "Delete",
+    "authorize": "any",
+    "params": [
+      "statusId"
+    ],
+    "statuses": [
+      204,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "StatusesController.cs"
+  },
+  {
+    "id": "GET /organizations/{organizationId}/tags",
+    "verb": "GET",
+    "route": "/organizations/{organizationId}/tags",
+    "controller": "Tags",
+    "action": "Suggest",
+    "authorize": "any",
+    "params": [
+      "organizationId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "TagsController.cs"
+  },
+  {
+    "id": "GET /users/{userId}",
+    "verb": "GET",
+    "route": "/users/{userId}",
+    "controller": "Users",
+    "action": "GetById",
+    "authorize": "any",
+    "params": [
+      "userId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "UsersController.cs"
+  },
+  {
+    "id": "PUT /users/{userId}",
+    "verb": "PUT",
+    "route": "/users/{userId}",
+    "controller": "Users",
+    "action": "Update",
+    "authorize": "any",
+    "params": [
+      "userId"
+    ],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404
+    ],
+    "source": "UsersController.cs"
+  },
+  {
+    "id": "POST /users/{userId}/temporary-password",
+    "verb": "POST",
+    "route": "/users/{userId}/temporary-password",
+    "controller": "Users",
+    "action": "IssueTemporaryPassword",
+    "authorize": "any",
+    "params": [
+      "userId"
+    ],
+    "statuses": [
+      200,
+      401,
+      403,
+      404
+    ],
+    "source": "UsersController.cs"
+  },
+  {
+    "id": "POST /auth/view-as",
+    "verb": "POST",
+    "route": "/auth/view-as",
+    "controller": "ViewAs",
+    "action": "Start",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      200,
+      400,
+      401,
+      403,
+      404,
+      409
+    ],
+    "source": "ViewAsController.cs"
+  },
+  {
+    "id": "DELETE /auth/view-as",
+    "verb": "DELETE",
+    "route": "/auth/view-as",
+    "controller": "ViewAs",
+    "action": "End",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      204,
+      401
+    ],
+    "source": "ViewAsController.cs"
+  },
+  {
+    "id": "GET /auth/view-as/candidates",
+    "verb": "GET",
+    "route": "/auth/view-as/candidates",
+    "controller": "ViewAs",
+    "action": "Candidates",
+    "authorize": "any",
+    "params": [],
+    "statuses": [
+      200,
+      401,
+      403
+    ],
+    "source": "ViewAsController.cs"
+  }
+]

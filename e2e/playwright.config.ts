@@ -11,25 +11,29 @@ import { defineConfig, devices } from '@playwright/test'
 const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_PATH
 
 /**
- * Collega browser E2E. Drives `apps/web` (Next.js, http://localhost:3000), which Playwright starts
- * itself - so `pnpm test:e2e` needs nothing running beforehand.
+ * Collega browser E2E. Drives the whole application - `apps/web` on :3000 against `apps/api` on
+ * :3001 - both started by Playwright, so `pnpm test:e2e` needs nothing running beforehand.
  *
  * The suite this replaces drove the frozen Blazor client at :5098 against the .NET API at :5103,
- * and its seven specs were retired with it (see e2e/README.md). What remains here is the harness:
- * F2 owns the flows that go back on top of it.
+ * and its seven specs were retired with it (see e2e/README.md).
  *
- * **This config starts `apps/web` and nothing else, and that is now a limit rather than a
- * simplification.** `/boards`, `/boards/[boardId]`, `/ideas` and `/ideas/[ideaId]` no longer read
- * `lib/mock.ts` - they `fetch` `apps/api` (see `apps/web/lib/data/index.ts`). With no API running,
- * those screens fail at render, so a spec written over any of them fails here however it is
- * written. Delivery and the settings surfaces are still fixture-backed and still work.
+ * **The API is here because the screens need it.** `/boards`, `/boards/[boardId]`, `/ideas` and
+ * `/ideas/[ideaId]` stopped reading `lib/mock.ts` during Wave D - they `fetch` `apps/api` - and with
+ * no API running they fail *at render*, so a spec written over any of them failed however carefully
+ * it was written. That was the gate on every product spec, and this config is F2 removing it.
  *
- * Adding `apps/api` as a second `webServer` entry, against a dropped-and-seeded throwaway database,
- * is the prerequisite for covering them. It is not done, and it is the gate on every product spec -
- * see README.md, "What the tests can and cannot see".
+ * `global-setup.ts` drops and rebuilds a schema of its own before either server starts, so a run
+ * begins from the seeded state rather than from whatever the last run left. It refuses to do that
+ * to anything but a local `collega_e2e` schema; read its comments before pointing it anywhere.
+ *
+ * **Order matters here.** Playwright starts `webServer` entries in parallel, so the web app may be
+ * ready before the API is - but the web app renders nothing that fetches until a test navigates,
+ * and each entry's own `url` is polled until it answers. The API's is its health endpoint, which
+ * depends on nothing, so it answers as soon as the host is listening.
  */
 export default defineConfig({
   testDir: './tests',
+  globalSetup: './global-setup.ts',
   fullyParallel: false,
   workers: 1,
   retries: 0,
@@ -54,19 +58,55 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    // Through turbo, from the repository root, because `@collega/design-system` resolves to its
-    // `dist/` - so `next dev` on its own fails to resolve every primitive on a fresh clone. The
-    // `dev` task already declares `^build`; this reuses that graph rather than restating it.
-    //
-    // `dev` rather than `build && start`: the fixtures are in-process either way, and a cold
-    // production build costs more than it buys while there is no server data to render.
-    command: 'pnpm exec turbo run dev --filter=@collega/web',
-    cwd: '..',
-    url: 'http://localhost:3000/login',
-    timeout: 120_000,
-    reuseExistingServer: !process.env.CI,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  webServer: [
+    {
+      // Built output rather than a watcher, matching `tools/local/start.ts`: nothing in a test run
+      // edits the API, and `global-setup.ts` has already built it.
+      //
+      // `DATABASE_URL` is read from the variable global setup writes back, so this starts against
+      // the schema it just rebuilt. Re-deriving it here could answer differently and the failure
+      // would look like a seeding bug.
+      command: 'node apps/api/dist/bootstrap.js',
+      cwd: '..',
+      // Health depends on nothing, so it answers the moment the host is listening - which is what
+      // makes it the right readiness probe rather than a route that needs the database.
+      url: 'http://localhost:3001/api/v1/health',
+      timeout: 120_000,
+      reuseExistingServer: !process.env.CI,
+      stdout: 'ignore',
+      stderr: 'pipe',
+      env: {
+        PORT: '3001',
+        DATABASE_URL: process.env.COLLEGA_E2E_DATABASE_URL ?? '',
+        NODE_ENV: 'test',
+        // Deterministic across runs, and never a real key: the token this signs lives for the
+        // length of one suite.
+        ACCESS_TOKEN_SIGNING_KEY: 'e2e-signing-key-not-a-secret-32-chars-min',
+        // The config fragment requires these at boot (auth requirement #8), but nothing in a test
+        // run uses them: `db:bootstrap-admin` is not part of this setup, and the specs sign in as
+        // the seeded demo accounts. A deliberately unused address, so it cannot be mistaken for one.
+        SITE_ADMIN_EMAIL: 'unused-by-e2e@collega.invalid',
+        SITE_ADMIN_PASSWORD: 'NotUsed!ByAnySpec1',
+      },
+    },
+    {
+      // Through turbo, from the repository root, because `@collega/design-system` resolves to its
+      // `dist/` - so `next dev` on its own fails to resolve every primitive on a fresh clone. The
+      // `dev` task already declares `^build`; this reuses that graph rather than restating it.
+      //
+      // `dev` rather than `build && start`: a cold production build costs more than it buys, and
+      // the screens render the same either way.
+      command: 'pnpm exec turbo run dev --filter=@collega/web',
+      cwd: '..',
+      url: 'http://localhost:3000/login',
+      timeout: 120_000,
+      reuseExistingServer: !process.env.CI,
+      stdout: 'ignore',
+      stderr: 'pipe',
+      // No COLLEGA_API_URL: `apps/web/lib/api/config.ts` defaults to this exact address, and setting
+      // it here would hide the day that default stops being right. `tools/local/start.ts` makes the
+      // same choice for the same reason.
+      env: { PORT: '3000', NODE_ENV: 'test' },
+    },
+  ],
 })

@@ -7,11 +7,13 @@
 import { ROLES, type Role } from './inventory.ts'
 import type { RoleCredentials } from './runner.ts'
 
-export const DEFAULT_BASE_URL = 'http://localhost:5000'
+// The local Nest API. The corpus was recorded from a different host on :5000; that one is gone,
+// and nothing should default to it.
+export const DEFAULT_BASE_URL = 'http://localhost:3001'
 export const DEFAULT_BASE_PATH = '/api/v1'
 
 /**
- * Demo-seed accounts, as `StartupSeeder` actually creates them: the three
+ * Demo-seed accounts, as the seed actually creates them: the three
  * organization roles are slug-scoped, and Acme Robotics is the organization the
  * corpus works in. The convenience Site Admin belongs to no organization.
  */

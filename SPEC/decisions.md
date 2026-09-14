@@ -9,6 +9,93 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-13 — The AI integration is rescoped and respecified after the current batch
+
+**Decided by the user.** Sequencing, not cancellation: finish the batch in flight — the remainder of
+Wave F — and then rescope and spec the AI integration before any further AI work is built.
+
+**What "the AI integration" is today.** `SPEC/20-feature-ai-idea-assist.md`, shipped in Sprint 7 and
+live behind **eleven endpoints** in `apps/api/src/ai-assist/`. It does exactly one job: draft **one
+new idea**, in a chat, from a standing start, mapping answers onto form fields. Everything below is
+already known to sit outside that job or to have stopped working, which is why it is written down
+here rather than rediscovered:
+
+- **Ingestion has no spec.** Material that did not begin as a chat turn — a pasted transcript, a
+  meeting note, a document, a backlog from elsewhere — has no door in. The only entry today is a
+  person typing into a capped conversation. `SPEC/ideas-inbox.md` names the questions a spec must
+  answer: formats, one idea or many from one input, what happens to the source, and whether a human
+  confirms each extraction or a batch.
+- **Refinement has no spec either, and is a different problem.** Helping with ideas that *already
+  exist* — sharpening a thin description, reconciling two that say the same thing — acts on records
+  with authors, upvotes and history. Conflating it with ingestion produces a feature that rewrites
+  somebody else's idea without asking, which is the failure the containment rules exist to prevent.
+- **Similar-idea retrieval is deferred to v2** (D-DEDUPE), as are org playbook and SOP documents
+  (rule 14). Both want embeddings and `pgvector`, and the schema has neither.
+- **The admin surface is not wired.** `ai-prompt` and `ai-usage` exist on the API; the four readers
+  in `apps/web/lib/data/admin.ts` — `getAiAssist`, `getAiPrompt`, `getUsage`,
+  `getUsageForOrganization` — still answer from fixtures. It is the last fixture-backed surface in
+  the product.
+- **Prompt changes are currently unmeasurable.** The corpus-scale evaluation runner was deleted with
+  the .NET stack in F6; the corpus survives as `tools/prompt-eval` with no tool to run it. The scope
+  gate it measured is a security control, and requirement 37c already measured that a handful of
+  interactive probes proves almost nothing. A rescope that adds AI surface area without restoring
+  measurement is adding unmeasured security-relevant behaviour.
+- **Per-organization credentials remain deliberately unimplemented** (rule 29/30): one
+  deployment-level key. That is a scoping decision the rescope may revisit, not an oversight.
+
+**What this does not mean.** The shipped feature is not paused, deprecated or in question — it works
+and stays. This constrains *new* AI scope only: no further AI feature work starts on the current
+spec. When the rescope happens it produces a spec, and the spec is what gets built.
+
+**Why after the batch rather than now.** The same argument as cutting Wave G on 2026-09-08 — decide
+the sequence now so it stops attaching itself to every estimate, and do the work with the real cost
+of F known rather than estimated.
+
+---
+
+## 2026-09-13 — The .NET stack is deleted; stale pointers go, inherited rationale stays
+
+Slice **F6**. `src/Collega.*`, `tests/`, `Collega.sln`, `global.json`,
+`.config/dotnet-tools.json`, `DOTNET.md`, `tools/Collega.AiPlayground`, `deploy/azure`,
+`docker/proxy-ca`, the compose `api` and `web` services and `.claude/launch.json` are gone —
+481 files. It supersedes nothing; it executes the 2026-09-06 freeze.
+
+**The sweep rule, decided with the user: remove stale pointers, keep rationale.** These are
+different things and conflating them would have cost the repository its best comments. A path
+into a deleted tree (`src/Collega.API/Parsing/Csv.cs`) is a dangling pointer and was removed or
+reworded. A comment explaining *why* a handler answers 404 rather than 400 — because a route
+constraint in the application this replaced matched that way, and the corpus pins it — is
+**rationale, and it stays**. The behaviour was inherited; hiding where it came from makes the
+code less explicable, not more current. Roughly 115 files carry that second kind and were left
+alone, as were the 448 golden fixtures, which are data.
+
+**`SPEC/` history was not rewritten.** `decisions.md`, the sprint archives and the superseded
+Azure and Kubernetes specs describe the old stack because that is what happened. `SPEC/README.MD`
+marks each one's status instead.
+
+**Two things needed real work rather than deletion:**
+
+1. **The golden harness parsed the controllers.** `tools/golden/src/inventory.ts` read
+   `src/Collega.API/Controllers/*.cs` on every run, and `endpointMap()` feeds `replay` and
+   `coverage`, not just `inventory` — so the deletion would have broken replay, silently, until
+   someone next needed it. The inventory it produced is now committed as
+   `tools/golden/inventory.json` (81 endpoints, verified identical to the fixture manifest), the
+   parser is gone, and `inventory.test.ts` holds the snapshot and the manifest to each other so
+   the pair cannot drift. Coverage still reports 81/81.
+2. **The prompt playground's corpus outlives its runner.** `tools/Collega.AiPlayground` was the
+   only corpus-scale evaluation tool for the AI-assist system prompt. Its nine cases and three
+   fixtures moved to `tools/prompt-eval/` with the methodology that makes them worth keeping; the
+   C# runner was deleted. **This is a capability lost, not relocated** — there is currently no way
+   to ask "is this prompt better than that one, across the corpus?", and the scope gate it measured
+   is a security control. Recorded here rather than quietly absorbed.
+
+**`README.md` was rewritten**, covering installation, running locally, seeding (three seeds, and
+which one is safe in production) and deployment (two Vercel projects, the environment matrix, the
+load-bearing `server.js` / `bootstrap.ts` naming, and the ignore step's env-var blind spot). The
+deployment section did not exist before.
+
+---
+
 ## 2026-09-13 — The usage report returns the contract's `totals`, not the frozen app's flat fields
 
 `GET /api/v1/ai-assist/usage` and its per-organization sibling now return a `totals` object

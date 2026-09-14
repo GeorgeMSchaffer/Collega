@@ -24,7 +24,6 @@ const ENDPOINTS: Endpoint[] = [
     authorize: 'anonymous',
     params: [],
     statuses: [200, 401],
-    source: 'stub',
   },
   {
     id: 'GET /auth/me',
@@ -35,7 +34,6 @@ const ENDPOINTS: Endpoint[] = [
     authorize: 'any',
     params: [],
     statuses: [200, 401],
-    source: 'stub',
   },
   {
     id: 'POST /organizations/{organizationId}/boards',
@@ -46,7 +44,6 @@ const ENDPOINTS: Endpoint[] = [
     authorize: 'any',
     params: ['organizationId'],
     statuses: [201, 400, 401, 403],
-    source: 'stub',
   },
   {
     id: 'GET /boards/{boardId}',
@@ -57,7 +54,6 @@ const ENDPOINTS: Endpoint[] = [
     authorize: 'any',
     params: ['boardId'],
     statuses: [200, 401, 404],
-    source: 'stub',
   },
 ]
 const BY_ID = new Map(ENDPOINTS.map((e) => [e.id, e]))

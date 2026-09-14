@@ -1,7 +1,6 @@
-// AuditEventInput mirrors Collega.Domain.Auditing.AuditEvent.Create's parameter list
-// (src/Collega.Domain/Auditing/AuditEvent.cs), minus validation - Create threw on blank
-// eventType/entityType/message, which the type system can't express and Wave C's writer
-// is expected to enforce instead.
+// AuditEventInput mirrors the original AuditEvent.Create's parameter list, minus validation -
+// Create threw on blank eventType/entityType/message, which the type system can't express and
+// Wave C's writer is expected to enforce instead.
 //
 // The property under test here is entirely compile-time: `attribution` being the branded
 // `Attribution` type, not a raw { actorUserId, onBehalfOfUserId } pair, is the only thing

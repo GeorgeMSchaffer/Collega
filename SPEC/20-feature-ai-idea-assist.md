@@ -2,6 +2,13 @@
 
 **Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/sprint-07-ai-idea-assist.md`) — after the Postgres migration (Sprint 5) and View As (Sprint 6), before Azure deployment (Sprint 8). Design decisions locked 2026-08-11 by user interview; `Anthropic` NuGet package approved by the user the same day.
 
+> **A rescope is scheduled (`SPEC/decisions.md` 2026-09-13).** What is specified below is built and
+> live, and it stays. But it covers exactly one job — draft one new idea, in a chat, from a standing
+> start — and **no further AI feature work starts on this spec**: the integration is rescoped and
+> respecified after the current batch of work. Ingestion and refinement of existing ideas have no
+> spec at all, and prompt changes are currently unmeasurable because F6 deleted the evaluation
+> runner. Read that entry before building anything AI-shaped.
+
 ## Overview
 
 `Components/IdeaBrainstormModal.razor` already fronts idea creation on the Ideas list with a ChatGPT-style chat. Today it is **scripted**: three canned assistant nudges cycle, and the transcript of the user's own messages is handed to `IdeaCreateModal.InitialDescription` as a seed description. This feature replaces the scripted nudges with a real model-backed conversation that additionally **maps the user's answers onto Idea form fields**, while keeping the conversation confined to idea drafting for this organization.
@@ -165,7 +172,7 @@ The deployment key is shared by every organization (rule 29), so without a ceili
 
     37a. Probes run against a **synthetic catalog**, never a real organization's. A Site Admin has no organization of their own; borrowing one would pick a winner arbitrarily and expose that organization's private option names to a platform admin. Synthetic also makes a probe run reproducible.
 
-    37c. **How much the probes actually prove — measured 2026-08-17, and less than they look.** Removing the scope sentence from the default template and probing it returned **3 of 3 refused**, identical to the unmodified default. Two reasons, both worth knowing before trusting a green run: the `inScope` **schema description independently defines scope**, so the prompt sentence is not load-bearing on its own (this is the strongest argument yet for the deferred schema-description work); and three probes is a low-powered instrument for an effect the playground measured at roughly 7%. Treat a passing run as *"nothing is grossly broken"*, never as *"this edit is safe"*. Real measurement is `tools/Collega.AiPlayground`, over a corpus, with repeats.
+    37c. **How much the probes actually prove — measured 2026-08-17, and less than they look.** Removing the scope sentence from the default template and probing it returned **3 of 3 refused**, identical to the unmodified default. Two reasons, both worth knowing before trusting a green run: the `inScope` **schema description independently defines scope**, so the prompt sentence is not load-bearing on its own (this is the strongest argument yet for the deferred schema-description work); and three probes is a low-powered instrument for an effect the playground measured at roughly 7%. Treat a passing run as *"nothing is grossly broken"*, never as *"this edit is safe"*. Real measurement is over a corpus, with repeats — `tools/prompt-eval` holds that corpus, but its runner was deleted with the stack it was written in (slice F6), so there is currently no way to take that measurement. Read `tools/prompt-eval/README.md` before relying on a probe run.
 
     37b. *Metering.* The global daily budget gate (28a) applies, but probes are **not** per-organization rate limited and **not** written to the usage meter — both require an organization to attribute spend to, and `AiUsageRecord.OrganizationId` is deliberately required (28c). The exposure is bounded by construction instead: a fixed three prompts, Site Admin only, no loop. A probe call that fails is reported as unavailable rather than as a passed probe — turning an outage into a clean bill of health is the one wrong answer this surface can give.
 

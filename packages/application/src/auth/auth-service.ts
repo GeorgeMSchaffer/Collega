@@ -119,21 +119,6 @@ export class AuthService {
       throw new ForbiddenError('This account is inactive.')
     }
 
-    if (isUserLockedOut(user, now)) {
-      await this.audit(
-        'AuthLoginFailed',
-        user.organizationId,
-        user.id,
-        null,
-        'Login failed: account is locked out.',
-        now,
-        { reason: 'LockedOut' },
-      )
-      throw new LockedOutError(
-        'This account is locked due to too many failed login attempts. Try again in 15 minutes.',
-      )
-    }
-
     // An admin-issued temporary password that has expired unused (auth requirement #13) is
     // treated as an invalid credential even if the hash still matches.
     const credentialIsUsable = !isTemporaryPasswordExpired(user, now)
@@ -141,6 +126,32 @@ export class AuthService {
       credentialIsUsable && this.passwordHasher.verify(command.password ?? '', user.passwordHash)
 
     if (!passwordMatches) {
+      // The lockout is checked HERE, after the password, and never before it - amending auth
+      // requirement #6 per `SPEC/decisions.md` 2026-09-12. Checked first, it was a denial of
+      // service anyone could run: five anonymous requests against a known address locked its
+      // owner out even when the owner knew the password, and five is below any per-IP limit
+      // that lets real people in. Checked here, an attacker who does not know the credential
+      // cannot deny access to someone who does, while brute force is still refused and still
+      // counted. The counter, the window and the fifteen minutes are all unchanged.
+      //
+      // A correct password on a locked account therefore signs in, and `registerSuccessfulLogin`
+      // clears the lockout on the way through - that clearing is the other half of this rule,
+      // not an incidental tidy-up.
+      if (isUserLockedOut(user, now)) {
+        await this.audit(
+          'AuthLoginFailed',
+          user.organizationId,
+          user.id,
+          null,
+          'Login failed: account is locked out.',
+          now,
+          { reason: 'LockedOut' },
+        )
+        throw new LockedOutError(
+          'This account is locked due to too many failed login attempts. Try again in 15 minutes.',
+        )
+      }
+
       const afterFailure = registerFailedLoginAttempt(user, now)
       await this.users.update(afterFailure)
       await this.unitOfWork.saveChanges()

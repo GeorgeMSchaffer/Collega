@@ -122,8 +122,7 @@ function fieldDefinitionBodyRules(body: CreateFieldDefinitionBody): Record<strin
  * <FormatName>.`), with "GUID" as the format name that section's "Shared Data Rules" already uses
  * for identifiers.
  *
- * The KEY is settled from source rather than invented: `ToCamelCasePath`
- * (`src/Collega.API/ErrorHandling/ProblemDetailsServiceCollectionExtensions.cs:66-90`) camelCases
+ * The KEY was settled from the original's own path-camelCasing rather than invented: it camelCases
  * each segment and re-attaches the `[n]` suffix, so a nested failure keys as
  * `options[0].optionId` - the same shape as the `options[0].label` rule above.
  *

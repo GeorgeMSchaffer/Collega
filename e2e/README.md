@@ -25,11 +25,26 @@ has stopped being a harness check and belongs in a spec of its own.
 
 ## What the tests can and cannot see
 
-**`playwright.config.ts` starts `apps/web` and nothing else. There is no API in this suite.** That
-used to cost nothing, because every screen answered from `apps/web/lib/mock.ts`. It is now the
-single thing blocking product coverage.
+**The suite drives the whole application.** `playwright.config.ts` starts `apps/api` on :3001 and
+`apps/web` on :3000, and `global-setup.ts` drops and rebuilds a schema of its own before either
+starts — so a run begins from the seeded demo data rather than from whatever the last run left.
+Nothing needs to be running beforehand.
 
-These four screens are wired to the real API and `fetch` `apps/api` on render:
+**The database is a schema, not a second database.** `collega_e2e` inside whatever `DATABASE_URL`
+names, so `public` — where `pnpm dev` keeps your demo data — is untouched, and no CREATE DATABASE
+privilege is needed. `COLLEGA_E2E_DATABASE_URL` overrides it for CI. The setup **refuses** any URL
+that is not a local `collega_e2e`: it drops the schema it is given, and that is not a mistake worth
+making once.
+
+Until F2 this said the opposite, and the paragraph below is what it said. It is kept because it
+explains why the suite had one spec:
+
+> `playwright.config.ts` starts `apps/web` and nothing else. That used to cost nothing, because
+> every screen answered from `apps/web/lib/mock.ts`. It is now the single thing blocking product
+> coverage.
+
+These four screens are wired to the real API and `fetch` `apps/api` on render — **they now work
+here**, and before F2 they failed at render however carefully a spec was written:
 
 | Screen | Route |
 |---|---|
@@ -38,15 +53,21 @@ These four screens are wired to the real API and `fetch` `apps/api` on render:
 | Ideas list | `/ideas` |
 | Idea detail, inspector included | `/ideas/[ideaId]` |
 
-With no API running they do not render a degraded page — **they fail at render**, so a spec written
-over any of them fails here however carefully it is written. Do not read a failure on one of these
-as a bug in your test. `apps/web/lib/data/index.ts` is the seam and names exactly which readers have
-been converted; check it before assuming a screen is fixture-backed. Delivery and the settings
-surfaces still answer from `lib/mock.ts` and still work — and being fixtures, they do not persist,
-so a flow that creates, edits or deletes anything cannot pass there either.
+They render because the API is here. Note what that means for a failure: if one of these screens
+fails to render at all, suspect the API server rather than the assertion — its output is on stderr,
+and `global-setup.ts`'s migrate and seed run before either server starts, so a database problem
+surfaces there rather than in a test.
 
-Which leaves the harness able to prove only what `tests/harness.spec.ts` proves. Adding coverage
-means doing this first.
+`apps/web/lib/data/index.ts` is the seam and names exactly which readers have been converted; check
+it before assuming a screen is fixture-backed. **The AI-assist admin screens are the exception that
+remains** — `getAiAssist`, `getAiPrompt`, `getUsage` and `getUsageForOrganization` in
+`lib/data/admin.ts` still answer from `lib/mock.ts`, so nothing they show persists and a flow that
+writes through them cannot pass. The outcome readers answer empty by design (Slice 2 has no
+backend), which is not the same thing and is not a gap to cover.
+
+`tests/signs-in.spec.ts` is the spec that proves all of the above is actually wired: it could not
+have passed before F2, because signing in needs the API, the database and the seed at once. If the
+second `webServer` entry ever stops working, that is the test that should say so.
 
 ## The prerequisite: `apps/api` as a second `webServer`
 

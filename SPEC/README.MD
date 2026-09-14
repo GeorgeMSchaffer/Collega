@@ -49,9 +49,9 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 
 - `50-technical-implementation-plan.md` — implementation plan across layers
 - `50-vercel-deployment.md` — **the deployment spec for the shipping stack.** The two Vercel projects and their settings, the environment matrix, where `prisma migrate deploy` runs, the preview/staging topology, how the first administrator is created, the rollback posture, and a handoff checklist for the account holder. Authoritative for anything about deploying `apps/web` or `apps/api`.
-- `50-azure-deployment.md`, `50-azure-api-cicd.md` — **superseded**; the cancelled Azure target for the frozen .NET stack (Sprint 8; renumbered from 7 on 2026-08-11). Kept for the cost model and topology reasoning, not as build instructions.
-- `50-postgres-migration.md` — Postgres migration plan (Sprint 5)
-- `50-kubernetes-deployment.md` — **superseded**; Kubernetes notes for the frozen .NET stack
+- `50-azure-deployment.md`, `50-azure-api-cicd.md` — **superseded**; the cancelled Azure target for the .NET stack, which was deleted in slice F6 on 2026-09-13 (Sprint 8; renumbered from 7 on 2026-08-11). Kept for the cost model and topology reasoning, not as build instructions.
+- `50-postgres-migration.md` — **done**; the Sprint 5 Postgres migration plan, written against EF Core. The migration landed; Prisma has since replaced the ORM it describes.
+- `50-kubernetes-deployment.md` — **superseded**; Kubernetes notes for the .NET stack, deleted in slice F6. Every path it names is gone.
 - `typescript-conversion-map/` — the twelve conversion tickets and the charting map behind `50-typescript-migration.md`; its `README.md` records which tickets are answered and one open conflict on ticket `01`
 - `50-typescript-migration.md` — **the costed, sequenced plan for the .NET → TypeScript conversion** (Sprint 9; assembles the `wayfinder` map in `typescript-conversion-map/`). Its Wave A has a deadline earlier than the sprint: golden capture must run **before or during Sprint 8**, while the .NET API still exists.
 
@@ -70,7 +70,7 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 | `implementation-agent-tracker-archive.md` | Full narrative history — per-slice write-ups, judgment calls, UI sign-off history, the original T001-T052 backlog | Split from the live tracker to keep Current Status short |
 | `70-delivery-backlog.md` | Original epic/task breakdown | Asserts every epic is "planned and pending"; T001-T067 are merged |
 | `80-workstream-roadmap.md` | Original milestone/workstream sequencing | Asserts no milestone is in progress or complete |
-| `85-implementation-timeline.md` | Advisory agent-day estimates | Lists `global.json`, `Collega.sln`, and the `src/` skeletons as not yet created; all exist |
+| `85-implementation-timeline.md` | Advisory agent-day estimates | Written before the .NET solution existed, and it has since been built and deleted (slice F6). Nothing it schedules is actionable |
 | `bugs.md` | Historical bug log | Superseded by `Bug Triage.md`, the active queue |
 | `bug-triage-completed.md` | Resolved bug-triage items, plus the decision record for entries promoted into specs/sprints | Split out 2026-08-12 to keep the queue short |
 | `draft-porting-proposal.md` | **⛔ DO NOT IMPLEMENT.** Unapproved TypeScript/Next.js/NestJS evaluation draft | Never approved; the canonical stack is unchanged |

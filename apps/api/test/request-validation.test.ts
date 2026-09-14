@@ -6,8 +6,8 @@
 // a refactor to sequential early-return checks must break loudly here rather than quietly halve
 // the errors an existing client renders.
 //
-// Every expected string is taken from `src/Collega.API/Validation/ValidationMessages.cs` or from a
-// recorded fixture (`tools/golden/fixtures/auth.viewas.start.missing-target.json` for the
+// Every expected string is taken from `SPEC/30-Contracts.md` "Validation Message Conventions" or
+// from a recorded fixture (`tools/golden/fixtures/auth.viewas.start.missing-target.json` for the
 // "Target User Id" spelling); none is invented.
 
 import { describe, expect, it } from 'vitest'

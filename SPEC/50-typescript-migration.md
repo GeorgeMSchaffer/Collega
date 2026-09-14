@@ -188,11 +188,12 @@ ability to record again.
 |---|---|---|
 | **A1** Capture harness | `tools/golden/` | **Built 2026-09-03.** Drives the live .NET API and records request/response pairs across all four roles — Site Admin, Org Admin, User, Read Only — because authorization is behaviour, not decoration. Zero-dependency TypeScript on Node's own type stripping; 48 self-tests. `tools/golden/README.md`. |
 | **A2** Golden corpus | `tools/golden/fixtures/` | **Recorded 2026-09-03.** **447 cases over all 81 endpoints** at four roles and anonymous, error paths and validation failures included, replaying 447/447 clean against a fresh seed. This is the oracle. `golden scaffold` generates the full grid of cases; `golden coverage` reports the holes, and `tools/golden/README.md` names the two deliberate ones. |
-| **A3** Replay harness | `tools/golden/replay/` | **Built 2026-09-03.** Replays the corpus against a target base URL and diffs. Written now against .NET as a self-check (it must pass against the stack it recorded), pointed at Nest in Wave F. |
+| **A3** Replay harness | `tools/golden/replay/` | **Built 2026-09-03.** Replays the corpus against a target base URL and diffs. Written as a self-check against the stack it recorded, pointed at Nest in Wave F. |
 
-The endpoint count above is not quoted, it is read: `golden inventory` parses
-`src/Collega.API/Controllers/*.cs` and reports 81 across 19 controllers, and the harness's
-tests fail if that stops being true. Coverage is measured against the same list, so a route
+The endpoint count above is not quoted, it was read: `golden inventory` parsed the controller
+source and reported 81 across 19 controllers. Slice F6 deleted that source, so the result is
+committed as `tools/golden/inventory.json` and the harness's tests fail if it stops agreeing with
+the fixture manifest. Coverage is measured against the same list, so a route
 the corpus never touches shows up as a hole rather than as silence.
 
 > **Until Wave F, the .NET stack must stay runnable** even though no development happens on
@@ -283,7 +284,7 @@ the delivery comp was regenerated on the decision. No Open Question remains in
 | **F3** Data migration | The transform, plus an answer to whether it is reversible |
 | **F4** Cutover runbook | Sequence, rollback posture, the go/no-go checklist |
 | **F5** Spec reconciliation | Ticket `11` — `SPEC/*.md` updated to describe the shipped stack, including reconciling `20-feature-client-ui.md` against comp P |
-| **F6** Delete the .NET solution | `src/Collega.*`, `tests/`, `Collega.sln`, `global.json`, the compose `api` service, and every .NET instruction file. One commit. **Gated on F1 green** |
+| **F6** Delete the .NET solution | **Done 2026-09-13.** `src/Collega.*`, `tests/`, `Collega.sln`, `global.json`, `.config/dotnet-tools.json`, `tools/Collega.AiPlayground`, `deploy/azure`, `docker/proxy-ca`, `DOTNET.md`, the compose `api` and `web` services, and the launch config — 481 files. Plus a sweep of the stale pointers left behind and a rewritten `README.md`. Two things needed real work rather than deletion: `tools/golden` parsed the controllers for its endpoint inventory, so that is now a committed snapshot; and `tools/Collega.AiPlayground`'s evaluation corpus was moved to `tools/prompt-eval` because it outlives its runner |
 
 F1, F2 and F3 parallelise. F4 needs all three. F5 and F6 land last.
 
@@ -430,8 +431,8 @@ assumed.
 - **The .NET solution itself.** It is replaced, not maintained in parallel — that is what
   big-bang means. **Frozen 2026-09-06** (`SPEC/decisions.md`): its code and every instruction file
   under `src/` and `tests/` are no longer applicable guidance, and nothing may be built, fixed or
-  tested there. It stays on disk until **F6** solely as a golden-fixture recorder and as the only
-  runnable reference for existing behaviour.
+  tested there. It stayed on disk until **F6** (2026-09-13) solely as a golden-fixture recorder
+  and as the only runnable reference for existing behaviour; both jobs are over.
 - **The 16,900-line C# test suite**, as C#. Its *coverage* is replaced by F1 + F2 +
   re-derived Vitest tests (ticket `10`).
 - **Sprint 7.5.** Implemented on .NET before this starts. **Sprint 8 was cancelled**

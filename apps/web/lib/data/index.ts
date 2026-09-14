@@ -6,7 +6,7 @@
  * a reader replaces a body, never a signature. Before it existed, 37 files imported the fixture
  * module directly, so wiring the API meant editing all 37.
  *
- * Converted so far: every board, idea, catalog and people reader. The idea surfaces
+ * Converted so far: every board, idea, catalog, people and delivery reader. The idea surfaces
  * (`getIdeasForBoard`, `getIdeaOptions`, `getOrganizationIdeas`, `getIdea`), the boards
  * (`getBoards`, `getBoard`, `getBoardAdmin`), the organization's statuses, idea types and custom
  * fields, and the accounts behind them (`getProfile`, `getOrganizations`, `getMembers`,
@@ -29,9 +29,15 @@
  *
  * There is no `getLastImport` and there cannot be: `lib/data/admin.ts` says why where it used to be.
  *
- * What still answers from `lib/mock.ts`: delivery, and the two AI settings screens with their usage
- * meter. `lib/mock.ts` also still holds the seeded boards and ideas the unit tests are written
- * against, which is not a screen reading a fixture - no reader returns them.
+ * What still answers from `lib/mock.ts`: the two AI settings screens with their usage meter.
+ * `lib/mock.ts` also still holds the seeded boards and ideas the unit tests are written against,
+ * which is not a screen reading a fixture - no reader returns them.
+ *
+ * **Delivery was the last whole module on the fixture, and converting it did not make every
+ * delivery screen real.** Sprints and issues are; outcomes have no table, no service and no route
+ * to be pointed at, so `getOutcomes`, `getOutcome` and `getIssuesForOutcome` answer empty rather
+ * than keeping three invented themes beside live issues. `lib/data/delivery.ts` argues it properly.
+ * The roadmap therefore renders its empty state, which is the true thing to render.
  *
  * **Identity does not live here** — see `lib/session.ts` for why it stays synchronous, and
  * `lib/server/current-user.ts` for the one place it is fetched.

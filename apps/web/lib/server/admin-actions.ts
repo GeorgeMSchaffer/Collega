@@ -1,8 +1,8 @@
 'use server'
 
 /**
- * The two administration writes the people screens make: bulk-create accounts from a CSV, and
- * regenerate an organization's invite code.
+ * The administration writes the people and organization screens make: create an organization,
+ * create a user in one, bulk-create accounts from a CSV, and regenerate an invite code.
  *
  * ## Identity, and why an organization id is a parameter here
  *
@@ -28,6 +28,91 @@ import { fieldErrors, type ProblemDetails } from '../api/problem'
 import type { WireUserImportResult } from '../api/wire'
 import type { ImportOutcome } from '../types'
 import { sessionHeader } from './current-user'
+
+/** What both create forms render back. `null` while nothing has been submitted. */
+export type CreateState = { error: string | null }
+
+/**
+ * Turns an API refusal into the sentence the form shows.
+ *
+ * Field errors are joined rather than mapped onto inputs, and that is the deliberate simple choice:
+ * these two forms exist to unblock a demo, and per-field wiring is the half that gets thrown away
+ * when the screens are revised. The API's own wording reaching the screen unedited is also the
+ * point - it is how a wrong message gets noticed.
+ */
+function refusalText(error: unknown): string {
+  // `detail` rather than `message`: `ApiError` keeps them apart deliberately - `message` is written
+  // for a log line and reads as one, while `detail` is what the API said on its own, which is the
+  // half a person should see.
+  if (error instanceof ApiError && error.detail.length > 0) return error.detail
+  return 'Something went wrong. Try again.'
+}
+
+/**
+ * Creates an organization, which is the one write a Site Admin owns outright.
+ *
+ * Rule 26's bootstrap exemption: the org-content mutation guard refuses a direct Site Admin
+ * everywhere else, and organization administration is the named exception - without it a fresh
+ * deployment has no way to become useful, since the only account that exists belongs to no
+ * organization.
+ *
+ * The API does more than insert a row: it answers with a `defaultBoardId` and a
+ * `defaultStatusCount`, because creating an organization provisions its first board and its status
+ * catalog. That is why this redirects to the list rather than into a setup wizard - there is
+ * nothing left to set up.
+ */
+export async function createOrganization(
+  _previous: CreateState,
+  form: FormData,
+): Promise<CreateState> {
+  try {
+    await apiPost(apiPath`/organizations`, {
+      title: String(form.get('title') ?? ''),
+      description: String(form.get('description') ?? ''),
+    })
+  } catch (error) {
+    return { error: refusalText(error) }
+  }
+
+  // The sidebar and the organization list both render above this route.
+  revalidatePath('/', 'layout')
+
+  // `redirect` signals by throwing, so it is last and outside the `try`.
+  redirect('/settings/organizations')
+}
+
+/**
+ * Creates a user inside an organization.
+ *
+ * **The administrator sets the password; the API does not generate one.** That is the opposite of
+ * the CSV import above, and it matters for what this form can show: there is no credential to
+ * display once, because whoever filled the form already knows it. `CreateUserResult` carries no
+ * password field for the same reason.
+ *
+ * The account is created with `mustChangePassword`, so the person signing in with it is sent
+ * straight to the change-password screen - which is requirement 9 working, and is worth expecting
+ * rather than reading as a fault during a demo.
+ *
+ * `organizationId` is a target rather than a claim, for the reason this file's header gives.
+ */
+export async function createUser(_previous: CreateState, form: FormData): Promise<CreateState> {
+  const organizationId = String(form.get('organizationId') ?? '')
+
+  try {
+    await apiPost(apiPath`/organizations/${organizationId}/users`, {
+      firstName: String(form.get('firstName') ?? ''),
+      lastName: String(form.get('lastName') ?? ''),
+      email: String(form.get('email') ?? ''),
+      role: String(form.get('role') ?? ''),
+      initialPassword: String(form.get('initialPassword') ?? ''),
+    })
+  } catch (error) {
+    return { error: refusalText(error) }
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/settings/users')
+}
 
 /**
  * What the import form renders back.

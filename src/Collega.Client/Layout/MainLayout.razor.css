@@ -1,6 +1,0 @@
-/* The rail column is fixed at 64px (see .shell in app.css); the main column
-   owns its own vertical scroll so the rail stays pinned. */
-.shell-main {
-    min-width: 0;
-    min-height: 100vh;
-}

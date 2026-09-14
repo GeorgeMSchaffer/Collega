@@ -194,8 +194,8 @@ test('a string that looks like a number is a type mismatch', () => {
 })
 
 test("every password-shaped field in the API's contracts is redacted", () => {
-  // Grepped from src/Collega.API/Contracts and the Application models: these are
-  // the field names that carry a credential in or out. A new one added later is
+  // Grepped from the API contracts and the Application models when the corpus was
+  // recorded: these are the field names that carry a credential in or out. A new one added later is
   // the gap this test exists to catch.
   const carriers = {
     password: 'Abc123!',

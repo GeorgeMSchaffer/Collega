@@ -4,9 +4,8 @@
 
 **Collega is a TypeScript monorepo.** pnpm workspaces + Turborepo, Node ≥ 24.20, pnpm ≥ 12.3.4.
 
-The .NET application in `src/Collega.*` and `tests/` is **frozen** — it is being replaced, not
-maintained. See [The frozen .NET stack](#the-frozen-net-stack) below before you touch anything
-there.
+The .NET application it replaced was deleted in slice F6 on 2026-09-13. See
+[The stack that was replaced](#the-stack-that-was-replaced) below for what survived it and why.
 
 ## Build and Test
 
@@ -50,7 +49,7 @@ cannot express, including the identity chokepoint (only the auth folder reads a 
 | `e2e/` | Playwright suite (TypeScript), adapted to comp P in F2 |
 | `tools/golden` | Capture/replay harness — **the conversion's only oracle** |
 | `tools/boundaries`, `tools/arch` | Architecture tests |
-| `src/`, `tests/`, `Collega.sln` | **Frozen .NET application.** Deleted in slice F6 |
+| `tools/prompt-eval` | The AI-assist evaluation corpus — data only, its runner is gone |
 
 ## Source of Truth
 
@@ -100,21 +99,26 @@ review before writing production React against an undecided design.
 - **SQL:** UPPERCASE keywords, lowercase table/column names, no `SELECT *`, meaningful aliases.
 - Do not add dependencies without approval.
 
-## The frozen .NET stack
+## The stack that was replaced
 
-`src/Collega.*`, `tests/`, `Collega.sln` and `global.json` are the .NET 8 / ASP.NET Core / Blazor
-WebAssembly / EF Core application being replaced (`SPEC/decisions.md` 2026-09-06).
+The .NET 8 / ASP.NET Core / Blazor WebAssembly / EF Core application was **deleted** in slice **F6**
+on 2026-09-13 (`SPEC/decisions.md` 2026-09-06 froze it; 2026-09-13 removed it). There is nothing to
+read there and nothing to fix there.
 
-**Their instructions are no longer applicable.** Do not fix bugs, add features, write tests, add
-migrations, or refactor there. A defect found in .NET is recorded against the TypeScript port. Every
-`CLAUDE.md` under `src/` and `tests/` carries a banner saying so.
+A reference anywhere in this repository to a `dotnet` command, a `.csproj`, or a path under
+`src/Collega.*` is stale — report it rather than following it. Narrative comments explaining *why*
+a behaviour is what it is ("ASP.NET answered 400 here, so this does too") are deliberate and stay:
+the behaviour was inherited, the golden corpus still pins it, and `SPEC/30-Contracts.md` is the
+authority.
 
-They stay on disk until slice **F6** for exactly two reasons:
+Two artefacts survive as **data, not patterns**:
 
-1. **Re-recording a golden fixture** needs the .NET API to boot. The corpus is the conversion's only
-   oracle, and Waves D/E are where a gap in it surfaces.
-2. It is the **only runnable full application** until Waves D and E land — the reference for how a
-   screen actually behaved. `README.md` and `demo.md` document how to start it for that purpose.
+- `tools/golden` — 447 cases across 81 endpoints × 4 roles, recorded 2026-09-03. It cannot be
+  re-recorded against its original, so it is a fixed record, frozen alongside `inventory.json`. A
+  **regression detector, not the specification** (`SPEC/decisions.md` 2026-09-09).
+- `tools/prompt-eval` — the AI-assist evaluation corpus. Its batch runner was .NET and went with the
+  rest, so corpus-scale prompt evaluation currently has no tool.
+
 
 ## Branching
 

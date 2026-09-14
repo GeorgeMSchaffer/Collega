@@ -3,9 +3,9 @@ import { createHash } from 'node:crypto'
 /**
  * The demo scenario, and the identifiers derived from it.
  *
- * Ported from the frozen `src/Collega.Infrastructure/Seeding/StartupSeeder.cs`, which is the only
- * record of what the demo data actually was - the database it produced is the one remaining copy,
- * and it cannot be rebuilt from itself. The shape is fixed by the definition of done: 2
+ * Ported from the startup seeder in the stack this replaced, which was the only record of what the
+ * demo data actually was. This file is now that record, and it rebuilds the data from scratch in
+ * about four seconds. The shape is fixed by the definition of done: 2
  * organizations, 10 users, 4 boards, 44 ideas.
  *
  * **Every upsert in these modules has an empty `update`.** A row that already exists is left
