@@ -30,6 +30,22 @@ promotion whose range includes a change under `apps/api` or `apps/web` gives the
 answer. There is no dashboard button that substitutes for it, which is the part worth remembering:
 the setting is applied instantly and reaches nothing until something rebuilds.
 
+**The change does not have to be code, only a path.** `turbo query affected` is path-based, not
+content-aware, so any file under the app's directory counts — a comment, a README, this file.
+Demonstrated by the commit that added the paragraph above: it edited `SPEC/50-vercel-deployment.md`
+and `apps/web/AGENTS.md`, nothing else, and `collega` built **READY** while `collega-api` cancelled.
+
+So the lever for each project is a path, and they are not the same one:
+
+| To rebuild | Touch something under |
+|---|---|
+| `collega` (web) | `apps/web/` — including its markdown |
+| `collega-api` | `apps/api/` — its own markdown will do |
+
+Editing a file under `apps/web/` will not rebuild the API, which is exactly the trap that left
+`COLLEGA_ALLOW_DEMO_SEED` inert: the variable is read by `apps/api`, and every commit since it was
+set had touched only the web app or `SPEC/`.
+
 The exact behaviour, since `|| exit 1` reads backwards at a glance:
 
 - Turbo **errors** — an empty `VERCEL_GIT_PREVIOUS_SHA`, which happens on a first deployment — exits
