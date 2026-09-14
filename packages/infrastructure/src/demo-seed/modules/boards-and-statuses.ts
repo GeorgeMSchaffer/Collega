@@ -1,7 +1,7 @@
 import { DEFAULT_STATUSES } from '@collega/application/organizations'
-import type { PrismaClient } from '../../../src/generated/prisma/client.js'
-import type { SeedModule } from '../types.ts'
-import { DEMO_ORGANIZATIONS, seedId } from './scenario.ts'
+import type { PrismaClient } from '../../generated/prisma/client.js'
+import type { SeedModule } from '../types.js'
+import { DEMO_ORGANIZATIONS, seedId } from './scenario.js'
 
 /**
  * Wave B2's contribution: the five default statuses per organization, the two demo boards, and the

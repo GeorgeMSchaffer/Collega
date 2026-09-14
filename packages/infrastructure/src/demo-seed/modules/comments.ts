@@ -1,6 +1,6 @@
-import type { PrismaClient } from '../../../src/generated/prisma/client.js'
-import type { SeedModule } from '../types.ts'
-import { CONTRIBUTOR_LOCAL_PARTS, DEMO_ORGANIZATIONS, IDEA_SCENARIOS, seedId } from './scenario.ts'
+import type { PrismaClient } from '../../generated/prisma/client.js'
+import type { SeedModule } from '../types.js'
+import { CONTRIBUTOR_LOCAL_PARTS, DEMO_ORGANIZATIONS, IDEA_SCENARIOS, seedId } from './scenario.js'
 
 /**
  * Wave B4's contribution: a short thread on the first two ideas of every board, so the engagement

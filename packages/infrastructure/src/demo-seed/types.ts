@@ -1,4 +1,4 @@
-import type { PrismaClient } from '../../src/generated/prisma/client.js'
+import type { PrismaClient } from '../generated/prisma/client.js'
 
 /**
  * One feature's contribution to the demo seed.

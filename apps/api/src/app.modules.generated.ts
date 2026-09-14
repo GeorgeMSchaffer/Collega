@@ -6,6 +6,7 @@ import { AuthenticationModule } from './authentication/authentication.module.js'
 import { BoardsModule } from './boards/boards.module.js'
 import { BusinessImpactsModule } from './business-impacts/business-impacts.module.js'
 import { CommentsModule } from './comments/comments.module.js'
+import { DemoSeedModule } from './demo-seed/demo-seed.module.js'
 import { FieldDefinitionsModule } from './field-definitions/field-definitions.module.js'
 import { IdeaTypesModule } from './idea-types/idea-types.module.js'
 import { IdeasModule } from './ideas/ideas.module.js'
@@ -25,6 +26,7 @@ export const FEATURE_MODULES = [
   BoardsModule,
   BusinessImpactsModule,
   CommentsModule,
+  DemoSeedModule,
   FieldDefinitionsModule,
   IdeaTypesModule,
   IdeasModule,

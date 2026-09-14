@@ -1,7 +1,7 @@
 import { DEFAULT_BUSINESS_IMPACTS, DEFAULT_IDEA_TYPES } from '@collega/application/organizations'
-import type { PrismaClient } from '../../../src/generated/prisma/client.js'
-import type { SeedModule } from '../types.ts'
-import { DEMO_ORGANIZATIONS, seedId } from './scenario.ts'
+import type { PrismaClient } from '../../generated/prisma/client.js'
+import type { SeedModule } from '../types.js'
+import { DEMO_ORGANIZATIONS, seedId } from './scenario.js'
 
 /**
  * Wave B1's contribution: the two demo organizations and the per-organization catalogs every

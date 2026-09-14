@@ -3,15 +3,15 @@ import {
   DEFAULT_IDEA_TYPES,
   DEFAULT_STATUSES,
 } from '@collega/application/organizations'
-import type { PrismaClient } from '../../../src/generated/prisma/client.js'
-import type { SeedModule } from '../types.ts'
+import type { PrismaClient } from '../../generated/prisma/client.js'
+import type { SeedModule } from '../types.js'
 import {
   CONTRIBUTOR_LOCAL_PARTS,
   DEMO_ORGANIZATIONS,
   IDEA_SCENARIOS,
   IDEAS_PER_STATUS,
   seedId,
-} from './scenario.ts'
+} from './scenario.js'
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'] as const
 

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { normalizeEmail } from '@collega/domain/users'
-import type { PrismaClient } from '../../../src/generated/prisma/client.js'
-import { Pbkdf2PasswordHasher } from '../../../src/security/pbkdf2-password-hasher.ts'
-import type { SeedModule } from '../types.ts'
+import type { PrismaClient } from '../../generated/prisma/client.js'
+import { Pbkdf2PasswordHasher } from '../../security/pbkdf2-password-hasher.js'
+import type { SeedModule } from '../types.js'
 import {
   DEMO_ACCOUNTS,
   DEMO_ORGANIZATIONS,
@@ -10,7 +10,7 @@ import {
   DEMO_SITE_ADMIN_EMAIL,
   demoEmail,
   seedId,
-} from './scenario.ts'
+} from './scenario.js'
 
 /**
  * Wave B1's second contribution: the demo accounts.

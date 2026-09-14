@@ -53,6 +53,13 @@ function sectionsFor(role: Role): Section[] {
         badge: 'Site Admin',
       },
       {
+        href: '/settings/demo-data',
+        title: 'Demo data',
+        blurb:
+          'Fill this deployment with the demo organizations, or reset them. A fresh deployment has nobody to view as until you do.',
+        badge: 'Site Admin',
+      },
+      {
         href: '/settings/users',
         title: 'Users',
         blurb: 'Every account on the deployment. Open an organization to change its membership.',

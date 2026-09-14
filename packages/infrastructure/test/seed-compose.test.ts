@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { order } from '../prisma/seed/compose.js'
-import type { SeedModule } from '../prisma/seed/types.js'
+import { order } from '../src/demo-seed/compose.js'
+import type { SeedModule } from '../src/demo-seed/types.js'
 
 const stub = (name: string, dependsOn?: string[]): SeedModule => ({
   name,
