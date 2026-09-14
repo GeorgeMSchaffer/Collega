@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 /**
  * Signing in, and telling the two refusals apart.
@@ -33,33 +33,43 @@ export async function signIn(page: Page, email: string, password: string): Promi
   await page.getByLabel(/password/i).fill(password)
   await page.getByRole('button', { name: /sign in/i }).click()
 
-  // The alert and the navigation race, so whichever settles first decides. Waiting for the URL
-  // alone is what produced the unreadable timeout this function exists to replace.
-  const refusal = page.getByRole('alert').filter({ hasText: /sign in|password|incorrect|try/i })
-  await Promise.race([
-    page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 30_000 }),
-    refusal.first().waitFor({ state: 'visible', timeout: 30_000 }),
-  ]).catch(() => undefined)
+  // **Navigation first, and nothing raced against it.** Racing an alert locator loses twice over:
+  // the login page already carries an empty `role="alert"`, so the race resolves instantly and
+  // reports a refusal that has not happened, and `/change-password` renders one of its own saying
+  // "Change your password", so a *successful* sign-in by an account mid-rotation reads as refused.
+  // Leaving the login page is the only unambiguous success signal there is.
+  const left = await page
+    .waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 20_000 })
+    .then(() => true)
+    .catch(() => false)
+  if (left) return
 
-  if (
-    await refusal
+  // Still here, so something refused it. The alert says which, and the distinction is invisible on
+  // screen: the limiter's sentence and a wrong password's are the same but for the trailing
+  // lockout note, which is deliberately absent when the request never reached the account.
+  const text = (
+    await page
+      .getByRole('alert')
+      .filter({ hasText: /\S/ })
       .first()
-      .isVisible()
-      .catch(() => false)
-  ) {
-    const text = (await refusal.first().innerText()).replace(/\s+/g, ' ').trim()
-    const limited = !text.includes('Five failed attempts')
-    throw new Error(
-      limited
-        ? `Sign-in for ${email} was RATE LIMITED, not refused.\n\n` +
-            `The login endpoint allows 20 attempts per minute per IP and this suite signs in about\n` +
-            `27 times per run. The credential is almost certainly fine. Re-run a single spec, or wait\n` +
-            `a minute. The page said: "${text}"`
-        : `Sign-in for ${email} was refused: "${text}"`,
-    )
+      .innerText()
+      .catch(() => '')
+  )
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (text === '') {
+    throw new Error(`Sign-in for ${email} never left /login, and the page showed no reason.`)
   }
 
-  await expect(page, `sign-in for ${email} never left /login`).not.toHaveURL(/\/login/, {
-    timeout: 30_000,
-  })
+  throw new Error(
+    text.includes('Five failed attempts')
+      ? `Sign-in for ${email} was refused: "${text}"`
+      : `Sign-in for ${email} was RATE LIMITED, not refused.
+
+` +
+          'The login endpoint allows 20 attempts per minute per caller IP. The credential is almost' +
+          ' certainly fine - re-run the spec on its own, or wait a minute.' +
+          ` The page said: "${text}"`,
+  )
 }

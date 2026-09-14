@@ -77,8 +77,25 @@ export default defineConfig({
     navigationTimeout: 45_000,
   },
   projects: [
+    /**
+     * Signs in once per seeded role and saves the cookie; everything else depends on it.
+     *
+     * The suite used to sign in twenty-seven times per run against a login limit of twenty per
+     * minute, so running it whole exhausted the limiter and failed specs that were not about
+     * authentication - see `tests/auth.setup.ts`. Its own sign-ins are real, which is why it is a
+     * project rather than a `globalSetup` step: it needs a browser.
+     */
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(chromiumPath ? { launchOptions: { executablePath: chromiumPath } } : {}),
+      },
+    },
     {
       name: 'chromium',
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         ...(chromiumPath ? { launchOptions: { executablePath: chromiumPath } } : {}),

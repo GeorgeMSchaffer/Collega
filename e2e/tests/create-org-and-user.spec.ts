@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { SEEDED } from '../seeded-accounts'
 import { signIn } from './sign-in'
 
 /**
@@ -15,9 +16,10 @@ const SITE_ADMIN = 'siteadmin@demo.collega.test'
 const DEMO_PASSWORD = 'Abc123!'
 
 test.describe('creating an organization', () => {
-  test('a site admin creates one and it appears in the list', async ({ page }) => {
-    await signIn(page, SITE_ADMIN, DEMO_PASSWORD)
+  // The stored site-admin session: these are about the create form, not about signing in.
+  test.use({ storageState: SEEDED.siteAdmin.file })
 
+  test('a site admin creates one and it appears in the list', async ({ page }) => {
     // A name unique to this run: the suite reseeds, but asserting on a fixed name would pass for
     // the wrong reason if a create silently failed and a seeded row matched instead.
     const name = `Playwright Industries ${Date.now()}`
@@ -34,7 +36,6 @@ test.describe('creating an organization', () => {
   test('the empty form is refused by the API, and the refusal reaches the screen', async ({
     page,
   }) => {
-    await signIn(page, SITE_ADMIN, DEMO_PASSWORD)
     await page.goto('/settings/organizations/new')
 
     // `required` stops the browser submitting an empty field, so the way to reach the API's own
@@ -52,10 +53,11 @@ test.describe('creating an organization', () => {
 })
 
 test.describe('creating a user', () => {
-  test('an org admin adds someone who can then sign in', async ({ page }) => {
-    const ORG_ADMIN = 'orgadmin@acme-robotics.demo.collega.test'
-    await signIn(page, ORG_ADMIN, DEMO_PASSWORD)
+  // The org admin arrives from the stored session; the account this test creates signs in for real
+  // below, which is the half that matters here.
+  test.use({ storageState: SEEDED.orgAdmin.file })
 
+  test('an org admin adds someone who can then sign in', async ({ page }) => {
     const email = `new.person.${Date.now()}@acme-robotics.demo.collega.test`
     const password = 'Str0ng!Pass'
 
