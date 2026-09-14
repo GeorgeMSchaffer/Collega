@@ -329,3 +329,21 @@ export type WireDeliveryCard = {
   upvoteCount: number
   provenance: { upvoteCountAtPromotion: number | null }
 }
+
+/**
+ * A row of `GET /auth/view-as/candidates`.
+ *
+ * `selectable` is the server's own verdict on whether this row may be acted as. The client renders
+ * it; it does not compute it.
+ */
+export type WireViewAsCandidate = {
+  userId: string
+  firstName: string
+  lastName: string
+  email: string
+  role: string
+  status: string
+  organizationId: string
+  organizationName: string
+  selectable: boolean
+}

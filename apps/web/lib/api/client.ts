@@ -181,6 +181,20 @@ export async function apiPut(path: ApiPath, body: unknown = {}): Promise<void> {
   return send('PUT', path, body)
 }
 
+/**
+ * The verb for ending something the caller opened.
+ *
+ * One route uses it — `DELETE /auth/view-as` — and it is **idempotent by contract**: with no
+ * session open it still answers 204. That is what lets the View As banner offer "stop" without
+ * first asking whether there is anything to stop.
+ *
+ * It goes through `send`, so it carries the same empty JSON body as the rest. The route takes none
+ * and ignores it; one request shape across every mutation is worth more than saving two bytes.
+ */
+export async function apiDelete(path: ApiPath): Promise<void> {
+  return send('DELETE', path, {})
+}
+
 /** Whether a thrown value is the API answering `status`. */
 export function isApiStatus(error: unknown, status: number): boolean {
   return error instanceof ApiError && error.status === status

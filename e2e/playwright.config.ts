@@ -1,4 +1,21 @@
+import { existsSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig, devices } from '@playwright/test'
+
+/**
+ * The repository's own `.env`, loaded before anything reads `process.env`.
+ *
+ * Playwright starts this process itself, so nothing else has loaded it - `pnpm dev` loads the same
+ * file through `tools/local/start.ts`, and without this the suite could only be run through a
+ * wrapper that did. `DATABASE_URL` is the one that matters: global setup derives the throwaway
+ * schema from it and refuses to run at all when it is missing.
+ *
+ * Real environment variables win, which is what lets CI point `DATABASE_URL` or
+ * `COLLEGA_E2E_DATABASE_URL` somewhere else without editing a file.
+ */
+const envFile = resolve(dirname(fileURLToPath(import.meta.url)), '..', '.env')
+if (existsSync(envFile)) process.loadEnvFile(envFile)
 
 /**
  * Where to find a Chromium, when the one Playwright wants is not downloadable.

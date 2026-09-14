@@ -69,10 +69,42 @@ async function signInAndRotate(page: Page, email: string, from: string, to: stri
   }
 }
 
+/**
+ * The picker row for one person, addressed by email.
+ *
+ * **Not by display name.** Every run creates a "Journey Member", so after a few runs the name
+ * matches several rows and Playwright refuses the ambiguity - correctly. The email carries this
+ * run's timestamp and is the only unique thing on the row, which is also why the picker shows it.
+ */
+/**
+ * Signs in as the site admin, as themselves.
+ *
+ * **A View As session outlives the sign-out that follows it.** It is a server-side row keyed on the
+ * real user, not anything in the cookie — which is the security property that makes the whole
+ * feature safe, and also means signing out and back in leaves you still acting as somebody. A
+ * previous run of this file left a session open and the next run's site admin arrived already
+ * impersonating, which is how this was found.
+ *
+ * So the session is ended first, unconditionally. `DELETE /auth/view-as` is idempotent by contract,
+ * so this costs one request and never needs to ask whether there is anything to end.
+ */
+async function signInAsSelf(page: Page): Promise<void> {
+  await signIn(page, SITE_ADMIN, DEMO_PASSWORD)
+  const banner = page.getByRole('alert').filter({ hasText: /viewing as/i })
+  if ((await banner.count()) > 0) {
+    await page.getByRole('button', { name: /stop viewing as/i }).click()
+    await expect(banner).toHaveCount(0, { timeout: 30_000 })
+  }
+}
+
+function viewAsRowFor(page: Page, email: string) {
+  return page.locator('li').filter({ hasText: email })
+}
+
 test.describe
   .serial('a deployment, from nothing', () => {
     test('1. the site admin creates an organization', async ({ page }) => {
-      await signIn(page, SITE_ADMIN, DEMO_PASSWORD)
+      await signInAsSelf(page)
 
       await page.goto('/settings/organizations/new')
       await page.getByLabel(/name/i).fill(world.organization)
@@ -84,7 +116,7 @@ test.describe
     })
 
     test('2. the site admin creates an org admin inside it', async ({ page }) => {
-      await signIn(page, SITE_ADMIN, DEMO_PASSWORD)
+      await signInAsSelf(page)
 
       await page.goto('/settings/users/new')
 
@@ -183,7 +215,49 @@ test.describe
       ).toBeVisible({ timeout: 30_000 })
     })
 
-    test('8. the org admin edits the status catalog they were given', async ({ page }) => {
+    test('8. the site admin views as the member, and the banner says so', async ({ page }) => {
+      await signInAsSelf(page)
+
+      await page.goto('/settings/view-as')
+
+      // The member this journey created, not a seeded one.
+      const button = viewAsRowFor(page, world.memberEmail).getByRole('button', { name: /view as/i })
+      await expect(button).toBeVisible({ timeout: 30_000 })
+      await button.click()
+
+      // Landing on home is the point: acting as someone is a change of vantage, so the first thing
+      // shown is what they see.
+      await expect(page).toHaveURL(/\/home/, { timeout: 30_000 })
+
+      // The banner is the control that stops somebody misreading the whole product. It names who they
+      // are acting as and who they really are, and it is an `alert` so a screen reader interrupts.
+      const banner = page.getByRole('alert').filter({ hasText: /viewing as/i })
+      await expect(banner).toBeVisible({ timeout: 30_000 })
+      await expect(banner).toContainText('Journey Member')
+
+      // And the session is real: the organization now shown is the member's, which the site admin
+      // has none of on their own.
+      await expect(page.getByText(world.organization).first()).toBeVisible({ timeout: 30_000 })
+    })
+
+    test('9. stopping returns the site admin to themselves', async ({ page }) => {
+      await signInAsSelf(page)
+      await page.goto('/settings/view-as')
+      await viewAsRowFor(page, world.memberEmail)
+        .getByRole('button', { name: /view as/i })
+        .click()
+      await expect(page).toHaveURL(/\/home/, { timeout: 30_000 })
+
+      await page.getByRole('button', { name: /stop viewing as/i }).click()
+
+      // The banner goes, and it goes because the server ended the session rather than because a
+      // client hid it -- `/auth/me` is what the next render reads.
+      await expect(page.getByRole('alert').filter({ hasText: /viewing as/i })).toHaveCount(0, {
+        timeout: 30_000,
+      })
+    })
+
+    test('10. the org admin edits the status catalog they were given', async ({ page }) => {
       await signIn(page, world.adminEmail, world.adminPasswordRotated)
       await page.goto('/settings/statuses')
 

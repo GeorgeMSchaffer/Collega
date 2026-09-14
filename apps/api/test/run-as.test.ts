@@ -10,6 +10,7 @@ describe('runAs', () => {
       organizationId: 'org-1',
       role: Role.User,
       isImpersonating: false,
+      impersonation: null,
       realUserId: 'u1',
     }
     runAs(identity, () => {

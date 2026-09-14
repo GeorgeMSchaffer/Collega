@@ -28,6 +28,7 @@ import {
   requirePresent,
   validateFields,
 } from '../common/errors/request-validation.error.js'
+import { AlsCurrentUserContext } from '../common/request-context/als-current-user-context.js'
 import { PORT_TOKENS } from '../common/tokens.js'
 
 /** `POST /auth/login` request body (`SPEC/30-Contracts.md`). */
@@ -119,6 +120,7 @@ export class AuthenticationController {
   constructor(
     private readonly auth: AuthService,
     @Inject(PORT_TOKENS.CurrentUserContext) private readonly currentUser: CurrentUserContext,
+    private readonly ambient: AlsCurrentUserContext,
   ) {}
 
   /**
@@ -171,6 +173,12 @@ export class AuthenticationController {
    * `userId` is the ACTING user, so during a live View As session this returns the impersonated
    * user with `viewingAs` populated. That is the whole reason the client refreshes its principal
    * from here rather than trusting what login handed it (Sprint 6.5's finding).
+   *
+   * The overlay happens here rather than in `AuthService.getCurrentUser` because the application
+   * layer has no way to know: the identity that reaches it describes the impersonated user and
+   * nothing else, which is precisely what makes every authorization check apply unchanged. So this
+   * is the one endpoint that asks `AlsCurrentUserContext` for the real administrator by name -
+   * the banner is the only thing in the product that is allowed to care.
    */
   @Get('me')
   @UseGuards(AuthGuard)
@@ -182,7 +190,19 @@ export class AuthenticationController {
       // is a far better failure than dereferencing null.
       throw new UnauthorizedException()
     }
-    return this.auth.getCurrentUser(userId)
+    const summary = await this.auth.getCurrentUser(userId)
+    const impersonation = this.ambient.impersonation
+    if (!impersonation) return summary
+
+    return {
+      ...summary,
+      viewingAs: {
+        realUserId: impersonation.realUserId,
+        realUserName: `${impersonation.realUserFirstName} ${impersonation.realUserLastName}`.trim(),
+        startedAtUtc: impersonation.startedAtUtc,
+        expiresAtUtc: impersonation.expiresAtUtc,
+      },
+    }
   }
 
   /**

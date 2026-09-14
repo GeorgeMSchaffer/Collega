@@ -40,6 +40,13 @@ function sectionsFor(role: Role): Section[] {
     return [
       PROFILE,
       {
+        href: '/settings/view-as',
+        title: 'View as',
+        blurb:
+          'Act as a member of an organization. The only way a Site Admin reaches organization content, which rule 25 refuses them directly.',
+        badge: 'Site Admin',
+      },
+      {
         href: '/settings/organizations',
         title: 'Organizations',
         blurb: 'Every organization on the deployment, and its size.',
