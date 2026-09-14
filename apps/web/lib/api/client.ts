@@ -167,6 +167,35 @@ async function send(method: string, path: ApiPath, body: unknown): Promise<void>
   }
 }
 
+/**
+ * A write whose answer the caller genuinely needs, rather than discards.
+ *
+ * **The exception to the rule above, and it stays an exception.** One flow needs it: creating an
+ * organization and its first administrator together. The administrator is created against
+ * `/organizations/{id}/users`, and that id exists nowhere until the organization is written - so
+ * there is no re-read that could supply it, which is precisely the case `send` cannot serve.
+ *
+ * Reach for `apiPost` unless the next request cannot be built without this one's answer.
+ */
+export async function apiPostReturning<T>(path: ApiPath, body: unknown = {}): Promise<T> {
+  const response = await fetch(`${apiBaseUrl()}${path}`, {
+    method: 'POST',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/json',
+      ...(await sessionHeader()),
+    },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    throw new ApiError(response.status, path, await describeFailure(response))
+  }
+
+  return (await response.json()) as T
+}
+
 export async function apiPost(path: ApiPath, body: unknown = {}): Promise<void> {
   return send('POST', path, body)
 }

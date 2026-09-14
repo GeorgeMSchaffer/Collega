@@ -15,6 +15,10 @@ import { signIn } from './sign-in'
 const SITE_ADMIN = 'siteadmin@demo.collega.test'
 const DEMO_PASSWORD = 'Abc123!'
 
+// Exact names, not `/name/i`. The organization form grew a first-administrator block on
+// 2026-09-14, so a case-insensitive substring now matches Name, First name and Last name at once -
+// and Playwright refuses the ambiguity, correctly. The same trap caught the journey spec's status
+// rename; `e2e/tests/journey.spec.ts` keeps the longer note.
 test.describe('creating an organization', () => {
   // The stored site-admin session: these are about the create form, not about signing in.
   test.use({ storageState: SEEDED.siteAdmin.file })
@@ -25,8 +29,10 @@ test.describe('creating an organization', () => {
     const name = `Playwright Industries ${Date.now()}`
 
     await page.goto('/settings/organizations/new')
-    await page.getByLabel(/name/i).fill(name)
-    await page.getByLabel(/description/i).fill('Created by the E2E suite.')
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name)
+    await page
+      .getByRole('textbox', { name: 'Description', exact: true })
+      .fill('Created by the E2E suite.')
     await page.getByRole('button', { name: /create organization/i }).click()
 
     await expect(page).toHaveURL(/\/settings\/organizations$/, { timeout: 30_000 })
@@ -41,8 +47,8 @@ test.describe('creating an organization', () => {
     // `required` stops the browser submitting an empty field, so the way to reach the API's own
     // refusal is a value that passes the browser and fails the server. Whitespace does both:
     // `validateFields` trims before checking required.
-    await page.getByLabel(/name/i).fill('   ')
-    await page.getByLabel(/description/i).fill('   ')
+    await page.getByRole('textbox', { name: 'Name', exact: true }).fill('   ')
+    await page.getByRole('textbox', { name: 'Description', exact: true }).fill('   ')
     await page.getByRole('button', { name: /create organization/i }).click()
 
     // Still on the form, with the API's sentence rendered rather than swallowed. This is the whole

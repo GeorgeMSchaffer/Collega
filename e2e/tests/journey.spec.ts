@@ -28,6 +28,9 @@ const SITE_ADMIN = 'siteadmin@demo.collega.test'
 /** One run's world, built as the tests go and read by the ones after. */
 const world = {
   organization: `Journey Co ${Date.now()}`,
+  pairedOrganization: `Paired Co ${Date.now()}`,
+  pairedAdminEmail: `paired.admin.${Date.now()}@journey.test`,
+  pairedAdminPassword: 'Journey!Paired1',
   adminEmail: `journey.admin.${Date.now()}@journey.test`,
   adminPassword: 'Journey!Admin1',
   adminPasswordRotated: 'Journey!Admin2',
@@ -183,8 +186,15 @@ test.describe
       await signInAsSelf(page)
 
       await page.goto('/settings/organizations/new')
-      await page.getByLabel(/name/i).fill(world.organization)
-      await page.getByLabel(/description/i).fill('Created by the journey suite.')
+      await textbox(page, 'Name').fill(world.organization)
+      await page
+        .getByRole('textbox', { name: 'Description', exact: true })
+        .fill('Created by the journey suite.')
+
+      // Deliberately left empty, so the next step still proves a Site Admin can add somebody to an
+      // organization that has nobody. The form offers a first administrator precisely so that state
+      // is avoidable - but avoidable is not the same as impossible, and the escape has to keep
+      // working for an organization created before the form asked.
       await page.getByRole('button', { name: /create organization/i }).click()
 
       await expect(page).toHaveURL(/\/settings\/organizations$/, { timeout: 30_000 })
@@ -194,7 +204,13 @@ test.describe
     test('2. the site admin creates an org admin inside it', async ({ page }) => {
       await signInAsSelf(page)
 
-      await page.goto('/settings/users/new')
+      // **Reached by clicking, not by `goto`, and that is the point.** This step used to navigate
+      // straight to the URL, so it passed for weeks while the only link to that page was hidden from
+      // a Site Admin - the exact role the page exists for. A test that types the address cannot tell
+      // a working screen from an unreachable one. Found 2026-09-14, in production, by a person.
+      await page.goto('/settings/users')
+      await page.getByRole('link', { name: /add user/i }).click()
+      await expect(page).toHaveURL(/\/settings\/users\/new$/, { timeout: 30_000 })
 
       // A Site Admin belongs to no organization, so the form must ask which one. This is the step the
       // page refused outright until 2026-09-14, sending them to View As instead — which does not exist.
@@ -419,7 +435,43 @@ test.describe
       })
     })
 
-    test('13. the site admin corrects the organization they created', async ({ page }) => {
+    test('13. an organization and its first administrator are created together', async ({
+      page,
+    }) => {
+      await signInAsSelf(page)
+      await page.goto('/settings/organizations/new')
+
+      await textbox(page, 'Name').fill(world.pairedOrganization)
+      await page
+        .getByRole('textbox', { name: 'Description', exact: true })
+        .fill('Created with its administrator in one step.')
+      await textbox(page, 'First name').fill('Paired')
+      await textbox(page, 'Last name').fill('Admin')
+      await textbox(page, 'Email').fill(world.pairedAdminEmail)
+      await textbox(page, 'Initial password').fill(world.pairedAdminPassword)
+
+      await page.getByRole('button', { name: /create organization/i }).click()
+      await expect(page).toHaveURL(/\/settings\/organizations$/, { timeout: 30_000 })
+      await expect(page.getByText(world.pairedOrganization)).toBeVisible({ timeout: 30_000 })
+
+      // **The administrator is the assertion, not the organization.** Creating the pair exists to
+      // close a loop: rule 25 sends a Site Admin to View as, View as can only target an existing
+      // member, and an organization created empty has none - so the account made here is the thing
+      // that makes the organization usable at all. Signing in as them proves it was really created,
+      // where reading the people list would only prove a row was written.
+      await signInAndRotate(
+        page,
+        'paired-admin',
+        world.pairedAdminEmail,
+        world.pairedAdminPassword,
+        `${world.pairedAdminPassword}2`,
+      )
+      await expect(page.getByText(world.pairedOrganization).first()).toBeVisible({
+        timeout: 30_000,
+      })
+    })
+
+    test('14. the site admin corrects the organization they created', async ({ page }) => {
       await signInAsSelf(page)
       await page.goto('/settings/organizations')
 

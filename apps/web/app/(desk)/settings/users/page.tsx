@@ -88,13 +88,16 @@ export default async function UsersPage() {
           <Link href="/settings/users/import" className={buttonVariants({ variant: 'outline' })}>
             Import users
           </Link>
-          {/* Bootstrap exception: user import stays direct for a Site Admin, but inviting one
-              member into an organization they do not belong to has no referent. */}
-          {siteAdmin ? null : (
-            <Link href="/settings/users/new" className={buttonVariants()}>
-              Add user
-            </Link>
-          )}
+          {/* **Shown to a Site Admin too, and hiding it was a trap.** The reasoning here used to be
+              that inviting somebody into an organization you do not belong to has no referent -
+              true until `/settings/users/new` grew an organization picker, and never revisited
+              after. The page accepted a Site Admin while the only link to it did not, so the role
+              that has to populate a new organization had no way to reach the form: rule 25 sends
+              them to View as, View as can only target an existing member, and a new organization
+              has none. Reported 2026-09-14 by somebody who hit the loop. */}
+          <Link href="/settings/users/new" className={buttonVariants()}>
+            Add user
+          </Link>
         </span>
       }
     >
