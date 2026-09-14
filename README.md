@@ -244,21 +244,34 @@ do this before the next migration rather than after. To provision it:
 ```bash
 npm i -g vercel && vercel login
 cd apps/api && vercel link                                      # link to collega-api
+
+# No --prefix. That flag is what leaves the app with no DATABASE_URL to find.
 vercel install prisma-postgres --name collega-dev --environment preview
+
+vercel env ls                                                   # confirm DATABASE_URL is there
 ```
 
 **Three things will bite otherwise.** The first one stops the deploy; the other two are quieter.
 
-**Nothing reads the variables the store generates.** A connected store injects several URLs under a
-prefix of its own — typically `<PREFIX>_POSTGRES_URL`, `<PREFIX>_DATABASE_URL` and a
-`prisma+postgres://` one. This repository reads **none** of them. `schema.prisma` reads
-`env("DATABASE_URL")`, and the Nest host reads `DATABASE_URL` or the unprefixed `POSTGRES_*` parts
-and nothing else — so a prefixed store leaves `db:migrate` and `db:bootstrap-admin` with no
-connection string and the build fails at the migrate step.
+**One variable name, every environment.** `DATABASE_URL` is the only connection string this
+repository reads — `schema.prisma` reads `env("DATABASE_URL")`, and the Nest host reads that or the
+unprefixed `POSTGRES_*` parts and nothing else. Vercel scopes variables per environment, so the same
+name holds the production database in Production and the staging one in Preview. That is the whole
+mechanism; nothing needs to know which environment it is in.
 
-Copy the **`postgres://`** value into a plain `DATABASE_URL` on the project, scoped to Preview. Not
-the `prisma+postgres://` one: that is the Accelerate protocol and needs an extension this workspace
-does not install.
+**So connect the store without a prefix.** `--prefix` exists to avoid collisions with variables you
+already have, and it is the thing that breaks this: a prefixed store injects
+`<PREFIX>_POSTGRES_URL` and friends, which nothing here reads, so `db:migrate` and
+`db:bootstrap-admin` find no connection string and the build fails at the migrate step. Unprefixed,
+the integration writes `DATABASE_URL` itself — and keeps it current if the store ever rotates its
+credentials.
+
+Copying the value into a `DATABASE_URL` of your own also works and is the fallback when the
+integration will not write that name. Know what it costs: it is a snapshot, so a credential rotation
+updates the store's variable and leaves your copy pointing at the old one.
+
+Either way, take the **`postgres://`** value, not the `prisma+postgres://` one — that is the
+Accelerate protocol and needs an extension this workspace does not install.
 
 **The staging database gets Production's Site Admin.** The API's build command ends with
 `db:bootstrap-admin`, so the first preview build after provisioning migrates and bootstraps the new
