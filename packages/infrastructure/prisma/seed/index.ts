@@ -16,6 +16,7 @@ import { deliverySeed } from './modules/delivery.ts'
 import { ideasAndUpvotesSeed } from './modules/ideas-and-upvotes.ts'
 import { organizationsSeed } from './modules/organizations.ts'
 import { usersSeed } from './modules/users.ts'
+import { loadRepositoryEnv } from './repository-env.ts'
 import type { SeedModule } from './types.ts'
 
 /**
@@ -33,6 +34,8 @@ const MODULES: readonly SeedModule[] = [
 ]
 
 async function main(): Promise<void> {
+  loadRepositoryEnv()
+
   if (process.env.NODE_ENV === 'production') {
     throw new Error('The demo seed must never run against production.')
   }
