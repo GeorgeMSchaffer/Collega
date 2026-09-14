@@ -352,6 +352,15 @@ from a run without a database is never reused for a run with one. Leave all thre
 - **Preview** — every other branch, including `dev`. All previews of `collega-web` point at **one
   shared staging API**, backed by **one shared staging database**.
 
+> **Unverified as of 2026-09-14: `api.collega-ai.com` does not resolve.** A DNS lookup fails
+> outright — not a 404 from a host that is up, no host at all. Production sign-in works, so
+> `COLLEGA_API_URL` evidently points somewhere else that is correct; the value is marked Sensitive
+> and cannot be read back from the CLI or the dashboard, so this document cannot say what it is.
+> **Treat the hostname below as the intent, not as fact**, and reconcile it against the variable
+> before quoting it. Recorded rather than corrected because guessing at the real value would be
+> worse than naming the gap. The two custom domains that *do* answer are `www.collega-ai.com`
+> (production web, public) and `dev.collega-ai.com` (staging web, behind Vercel SSO).
+
 **Production is a custom domain, `api.collega-ai.com`,** bound to the API project — decided
 2026-09-10. Vercel's generated hostname is derived from the project name, so it changes if the
 project is renamed or recreated, and the web app would keep pointing at a host that no longer

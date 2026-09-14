@@ -12,9 +12,23 @@ new value needs a new build, and the commit that would carry it usually changes 
 build that should have picked the value up cancelled itself while production carried on serving the
 old one.
 
-If a deploy must happen and the diff does not justify it, redeploy from Vercel — but redeploy **this**
-project and its **latest** deployment. Redeploying `collega-api`, or an older commit, rebuilds
-something nobody asked about and cancels for the same reason.
+**A redeploy does not work. Corrected 2026-09-14, from the build log of two that did not.** This
+file used to say "redeploy from Vercel" here, and that advice cannot succeed: the ignore step asks
+what changed since `VERCEL_GIT_PREVIOUS_SHA`, and on a redeploy of a commit the previous SHA *is*
+that commit — so the honest answer is "nothing affected" and the build stops. Twice, on
+`collega-api` production, while a newly added `COLLEGA_ALLOW_DEMO_SEED` went on being invisible to
+the running function:
+
+```
+Running "turbo query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @collega/api --exit-code"
+{ "affectedPackages": { "items": [], "length": 0 } }
+The deployment was canceled because the Ignored Build Step command returned exit code 0.
+```
+
+**Ship a commit that touches the app instead.** For production that means moving `main` — a
+promotion whose range includes a change under `apps/api` or `apps/web` gives the ignore step a real
+answer. There is no dashboard button that substitutes for it, which is the part worth remembering:
+the setting is applied instantly and reaches nothing until something rebuilds.
 
 The exact behaviour, since `|| exit 1` reads backwards at a glance:
 
