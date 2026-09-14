@@ -2,6 +2,7 @@ import { type ReactNode, Suspense } from 'react'
 import { navGroupsWithoutCounts } from '@/components/nav/nav-items'
 import { Sidebar } from '@/components/nav/sidebar'
 import { SidebarNav } from '@/components/nav/sidebar-nav'
+import { ViewAsBanner } from '@/components/nav/view-as-banner'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { SessionProvider } from '@/lib/session-client'
 
@@ -35,7 +36,12 @@ export default async function DeskLayout({ children }: { children: ReactNode }) 
         <Suspense fallback={<SidebarNav groups={navGroupsWithoutCounts} />}>
           <Sidebar />
         </Suspense>
-        <div className="flex min-w-0 flex-col">{children}</div>
+        <div className="flex min-w-0 flex-col">
+          {/* Above the content rather than inside a screen: acting as someone changes what every
+              screen means, so it cannot be something one route remembers to render. */}
+          <ViewAsBanner />
+          {children}
+        </div>
       </div>
     </SessionProvider>
   )

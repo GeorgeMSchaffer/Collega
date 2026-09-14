@@ -88,9 +88,13 @@ export default async function OrganizationsPage() {
                   </Badge>
                 </td>
                 <td className="px-4 py-2.5 text-right">
-                  <Button variant="outline" size="sm" aria-label={`Manage ${org.name}`}>
+                  <Link
+                    href={`/settings/organizations/${org.id}`}
+                    className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                    aria-label={`Manage ${org.name}`}
+                  >
                     Manage
-                  </Button>
+                  </Link>
                 </td>
               </tr>
             ))}

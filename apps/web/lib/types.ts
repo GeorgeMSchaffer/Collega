@@ -90,6 +90,34 @@ export type Organization = {
 }
 
 /**
+ * One organization as its edit form needs it, which is a different question from what the list
+ * shows.
+ *
+ * `Organization` answers "which one is this" — a composed `location` cell, for someone scanning a
+ * table. This answers "what is recorded about it", with the profile columns kept apart because a
+ * form has to post each one back separately.
+ *
+ * **Every field here is on the form because `PUT /organizations/{id}` is a full replace.** A field
+ * the form omits is written as null, so reading fewer than it writes would quietly erase an
+ * address every time somebody corrected a title. That is the whole reason this type is wider than
+ * anything on this surface would otherwise justify.
+ */
+export type OrganizationDetail = {
+  id: string
+  name: string
+  description: string
+  inviteCode: string
+  isArchived: boolean
+  address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  phone: string | null
+  primaryContactFirstName: string | null
+  primaryContactLastName: string | null
+}
+
+/**
  * An account on an administration list.
  *
  * `organizationId` and `organizationName` are nullable for two different reasons, and both are real:
@@ -107,6 +135,24 @@ export type Member = {
   role: Role
   roleLabel: string
   status: 'Active' | 'Inactive'
+}
+
+/**
+ * One account as its edit form needs it.
+ *
+ * `Member` answers "who is this" for a table — a composed `displayName` and initials. This answers
+ * "what is recorded", with the name in the two columns `PUT /users/{id}` actually requires. Every
+ * field here is posted back for the reason `OrganizationDetail` gives: the update is a replace.
+ */
+export type MemberDetail = {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  organizationId: string | null
+  role: Role
+  status: 'Active' | 'Inactive'
+  mustChangePassword: boolean
 }
 
 /**
@@ -198,6 +244,27 @@ export type FieldDefinition = {
   fieldType: string
   required: boolean
   usedBy: string[]
+}
+
+/**
+ * One custom field as its edit form needs it.
+ *
+ * `FieldDefinition` answers "what is this field and who asks for it" for a table. This answers
+ * "what is recorded", including the options — whose `id` is the part that matters most, because
+ * `PUT` treats an option without one as new and an option missing entirely as deleted, along with
+ * every idea value pointing at it.
+ *
+ * `fieldType` is here to be posted back unchanged. The service refuses to change it after creation
+ * outright, so the form shows it and does not offer to edit it.
+ */
+export type FieldDefinitionDetail = {
+  id: string
+  name: string
+  description: string | null
+  fieldType: string
+  required: boolean
+  displayOrder: number
+  options: { id: string; label: string; displayOrder: number }[]
 }
 
 /** `focus` is demo-seed copy with no column behind it, so a real board simply has none. */

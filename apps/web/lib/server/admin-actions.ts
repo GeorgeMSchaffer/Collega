@@ -22,7 +22,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { toImportOutcome } from '../api/adapt'
-import { ApiError, apiPath, apiPost } from '../api/client'
+import { ApiError, apiPath, apiPost, apiPut } from '../api/client'
 import { apiBaseUrl } from '../api/config'
 import { fieldErrors, type ProblemDetails } from '../api/problem'
 import type { WireUserImportResult } from '../api/wire'
@@ -78,6 +78,106 @@ export async function createOrganization(
   revalidatePath('/', 'layout')
 
   // `redirect` signals by throwing, so it is last and outside the `try`.
+  redirect('/settings/organizations')
+}
+
+/**
+ * Edits an organization, and archives one.
+ *
+ * **`PUT /organizations/{id}` is a full replace, not a patch**, and that is the single fact this
+ * action is shaped around. `optional()` at the request boundary turns an absent field into `null`,
+ * so a body carrying only a corrected title writes away the address, the phone and both contact
+ * names. The form therefore reads every profile field and posts every one back — which is why
+ * `OrganizationDetail` exists and is wider than anything else on this surface.
+ *
+ * The logo is deliberately not among them. It has two routes of its own
+ * (`PUT`/`DELETE …/{id}/logo`), it is not in this body, and the API leaves it alone when the key
+ * is absent — so the one field that would be lost by omission is the one that is not lost.
+ */
+export async function updateOrganization(
+  _previous: CreateState,
+  form: FormData,
+): Promise<CreateState> {
+  const organizationId = String(form.get('organizationId') ?? '')
+  const text = (field: string) => String(form.get(field) ?? '')
+
+  try {
+    await apiPut(apiPath`/organizations/${organizationId}`, {
+      title: text('title'),
+      description: text('description'),
+      address: text('address'),
+      city: text('city'),
+      state: text('state'),
+      zip: text('zip'),
+      phone: text('phone'),
+      primaryContactFirstName: text('primaryContactFirstName'),
+      primaryContactLastName: text('primaryContactLastName'),
+    })
+  } catch (error) {
+    return { error: refusalText(error) }
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/settings/organizations')
+}
+
+/**
+ * Edits an account (`PUT /users/{id}`).
+ *
+ * A replace like the organization update, and every field it requires is on the form:
+ * `firstName`, `lastName`, `email`, `role` and `status`. There is no partial version of this route.
+ *
+ * **Deactivating is `status`, not a delete.** There is no user delete endpoint anywhere in the API,
+ * which is the right call for a product that attributes ideas and comments to people — so the form
+ * offers Active and Inactive, and an inactive account is refused at sign-in while everything it
+ * wrote keeps resolving.
+ *
+ * Nothing here resets a password: that is `POST /users/{id}/temporary-password`, which answers with
+ * a credential that can never be read again, and a form that might silently mint one while saving a
+ * corrected surname would be the wrong shape entirely.
+ */
+export async function updateUser(_previous: CreateState, form: FormData): Promise<CreateState> {
+  const userId = String(form.get('userId') ?? '')
+
+  try {
+    await apiPut(apiPath`/users/${userId}`, {
+      firstName: String(form.get('firstName') ?? ''),
+      lastName: String(form.get('lastName') ?? ''),
+      email: String(form.get('email') ?? ''),
+      role: String(form.get('role') ?? ''),
+      status: String(form.get('status') ?? ''),
+    })
+  } catch (error) {
+    return { error: refusalText(error) }
+  }
+
+  // The sidebar renders the acting user's own name, so an administrator editing themselves would
+  // otherwise keep seeing the old one until something else revalidated the layout.
+  revalidatePath('/', 'layout')
+  redirect('/settings/users')
+}
+
+/**
+ * Archives an organization (`POST /organizations/{id}/archive`).
+ *
+ * A soft delete, like every other archive in the product: its people, boards and ideas keep
+ * resolving, and the organization stops appearing as somewhere new work can be filed. The list
+ * marks archived rows rather than hiding them, so this is visible afterwards rather than a
+ * disappearance.
+ */
+export async function archiveOrganization(
+  _previous: CreateState,
+  form: FormData,
+): Promise<CreateState> {
+  const organizationId = String(form.get('organizationId') ?? '')
+
+  try {
+    await apiPost(apiPath`/organizations/${organizationId}/archive`)
+  } catch (error) {
+    return { error: refusalText(error) }
+  }
+
+  revalidatePath('/', 'layout')
   redirect('/settings/organizations')
 }
 

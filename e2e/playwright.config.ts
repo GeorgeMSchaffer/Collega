@@ -1,4 +1,17 @@
 import { defineConfig, devices } from '@playwright/test'
+import { e2eDatabaseUrl, loadRepositoryEnv } from './database-url'
+
+// Before anything below reads `process.env` - `webServer[].env` is evaluated as this module loads.
+loadRepositoryEnv()
+
+/**
+ * The schema every server below is pointed at.
+ *
+ * Derived here rather than read back from what `global-setup.ts` exports into the environment,
+ * because this object literal is evaluated before global setup runs - see `database-url.ts` for
+ * what that cost when it was the other way round.
+ */
+const DATABASE_URL = e2eDatabaseUrl()
 
 /**
  * Where to find a Chromium, when the one Playwright wants is not downloadable.
@@ -64,8 +77,25 @@ export default defineConfig({
     navigationTimeout: 45_000,
   },
   projects: [
+    /**
+     * Signs in once per seeded role and saves the cookie; everything else depends on it.
+     *
+     * The suite used to sign in twenty-seven times per run against a login limit of twenty per
+     * minute, so running it whole exhausted the limiter and failed specs that were not about
+     * authentication - see `tests/auth.setup.ts`. Its own sign-ins are real, which is why it is a
+     * project rather than a `globalSetup` step: it needs a browser.
+     */
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(chromiumPath ? { launchOptions: { executablePath: chromiumPath } } : {}),
+      },
+    },
     {
       name: 'chromium',
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         ...(chromiumPath ? { launchOptions: { executablePath: chromiumPath } } : {}),
@@ -77,9 +107,8 @@ export default defineConfig({
       // Built output rather than a watcher, matching `tools/local/start.ts`: nothing in a test run
       // edits the API, and `global-setup.ts` has already built it.
       //
-      // `DATABASE_URL` is read from the variable global setup writes back, so this starts against
-      // the schema it just rebuilt. Re-deriving it here could answer differently and the failure
-      // would look like a seeding bug.
+      // The same string global setup rebuilds, from the same function, so the server cannot end up
+      // pointed at a different schema than the one that was just seeded.
       command: 'node apps/api/dist/bootstrap.js',
       cwd: '..',
       // Health depends on nothing, so it answers the moment the host is listening - which is what
@@ -91,7 +120,7 @@ export default defineConfig({
       stderr: 'pipe',
       env: {
         PORT: '3001',
-        DATABASE_URL: process.env.COLLEGA_E2E_DATABASE_URL ?? '',
+        DATABASE_URL,
         NODE_ENV: 'test',
         // Deterministic across runs, and never a real key: the token this signs lives for the
         // length of one suite.

@@ -28,8 +28,9 @@ const IDLE: CreateState = { error: null }
  * is likelier during a demo than during a code review.
  *
  * Only `title` and `description` are asked for. The API accepts a full profile — address, contact,
- * phone — and requires none of it, so the form asks for what it must and leaves the rest to the
- * organization's own settings screen, which already edits them.
+ * phone — and requires none of it, so the form asks for what it must and leaves the rest to
+ * `OrganizationEditForm`, reached from the list's Manage control. Until 2026-09-14 that form did
+ * not exist and this comment claimed it did.
  */
 export function CreateOrganizationForm() {
   const [state, action, pending] = useActionState(createOrganization, IDLE)

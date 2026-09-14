@@ -90,8 +90,11 @@ export function BoardRefusal({ title, reading }: { title: string; reading: strin
         <RefusalPanel heading="A Site Admin cannot create or change a board">
           Boards are organization-owned content, and a Site Admin is refused every mutation of it.
           Reading {reading} is fine; saving is not, so the form is absent rather than present and
-          doomed. Use View As to act as an administrator of this organization, and this screen
-          becomes ordinary.
+          doomed. Use{' '}
+          <a href="/settings/view-as" className="underline">
+            View as
+          </a>{' '}
+          to act as an administrator of this organization, and this screen becomes ordinary.
         </RefusalPanel>
       </main>
     </>

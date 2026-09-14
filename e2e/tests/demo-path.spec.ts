@@ -1,4 +1,6 @@
 import { expect, type Page, test } from '@playwright/test'
+import { SEEDED } from '../seeded-accounts'
+import { signIn } from './sign-in'
 
 /**
  * The walkthrough the product is demonstrated with, covered end to end.
@@ -14,18 +16,8 @@ import { expect, type Page, test } from '@playwright/test'
  * The accounts are the seeded demo roster, whose password is published in `demo.md`. Safe here and
  * only here: `global-setup.ts` refuses to seed anything but a local `collega_e2e` schema.
  */
-const ORG_ADMIN = 'orgadmin@acme-robotics.demo.collega.test'
-const READ_ONLY = 'readonly@acme-robotics.demo.collega.test'
+const ORG_ADMIN = SEEDED.orgAdmin.email
 const DEMO_PASSWORD = 'Abc123!'
-
-async function signIn(page: Page, email: string, password: string): Promise<void> {
-  await page.context().clearCookies()
-  await page.goto('/login')
-  await page.getByLabel(/email/i).fill(email)
-  await page.getByLabel(/password/i).fill(password)
-  await page.getByRole('button', { name: /sign in/i }).click()
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 })
-}
 
 /**
  * Opens the first board from the workspace list.
@@ -82,9 +74,11 @@ test.describe('changing a password', () => {
 })
 
 test.describe('boards', () => {
-  test('an org admin creates a board and it appears in the workspace', async ({ page }) => {
-    await signIn(page, ORG_ADMIN, DEMO_PASSWORD)
+  // The stored session rather than a sign-in: these tests are about boards, and making each one
+  // prove the login flow first is what exhausted the rate limiter (`auth.setup.ts`).
+  test.use({ storageState: SEEDED.orgAdmin.file })
 
+  test('an org admin creates a board and it appears in the workspace', async ({ page }) => {
     const name = `Demo Board ${Date.now()}`
 
     await page.goto('/settings/boards/new')
@@ -103,9 +97,9 @@ test.describe('boards', () => {
 })
 
 test.describe('ideas on a board', () => {
-  test('authoring an idea puts it on the board', async ({ page }) => {
-    await signIn(page, ORG_ADMIN, DEMO_PASSWORD)
+  test.use({ storageState: SEEDED.orgAdmin.file })
 
+  test('authoring an idea puts it on the board', async ({ page }) => {
     await page.goto('/boards')
     await openFirstBoard(page)
 
@@ -124,8 +118,6 @@ test.describe('ideas on a board', () => {
   })
 
   test('an idea moves a lane to the right and stays there across a reload', async ({ page }) => {
-    await signIn(page, ORG_ADMIN, DEMO_PASSWORD)
-
     await page.goto('/boards')
     await openFirstBoard(page)
 
@@ -156,9 +148,9 @@ test.describe('ideas on a board', () => {
 })
 
 test.describe('read only', () => {
-  test('sees the board and is refused authoring, with the reason shown', async ({ page }) => {
-    await signIn(page, READ_ONLY, DEMO_PASSWORD)
+  test.use({ storageState: SEEDED.readOnly.file })
 
+  test('sees the board and is refused authoring, with the reason shown', async ({ page }) => {
     await page.goto('/boards')
     await openFirstBoard(page)
 

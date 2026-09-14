@@ -125,13 +125,27 @@ export default async function StatusesPage() {
                       </Marker>
                     </td>
                     <td className="px-4 py-2.5 text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        aria-label={`${siteAdmin ? 'Manage' : 'Edit'} ${status.name}`}
-                      >
-                        {siteAdmin ? 'Manage' : 'Edit'}
-                      </Button>
+                      {/* A Site Admin gets the disabled control rather than a link: every write
+                          behind it is refused for that role, so a page they could reach would only
+                          ever be a form that cannot save. */}
+                      {siteAdmin ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          aria-label={`Manage ${status.name}`}
+                        >
+                          Manage
+                        </Button>
+                      ) : (
+                        <Link
+                          href={`/settings/statuses/${status.id}`}
+                          className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                          aria-label={`Edit ${status.name}`}
+                        >
+                          Edit
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}
