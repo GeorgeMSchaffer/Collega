@@ -39,3 +39,12 @@ export const API_MAX_PAGE_SIZE = 100
  * What a list endpoint returns when the request names no size.
  */
 export const API_DEFAULT_PAGE_SIZE = 20
+
+/** `packages/domain/src/organizations/organization.ts` — `ORGANIZATION_TITLE_MAX_LENGTH`. */
+export const ORGANIZATION_TITLE_MAX_LENGTH = 200
+
+/** `packages/domain/src/organizations/organization.ts` — `ORGANIZATION_DESCRIPTION_MAX_LENGTH`. */
+export const ORGANIZATION_DESCRIPTION_MAX_LENGTH = 1000
+
+/** `packages/domain/src/users/user.ts` — the person-name cap the API applies to both name fields. */
+export const PERSON_NAME_MAX_LENGTH = 100

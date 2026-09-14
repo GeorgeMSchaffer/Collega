@@ -1,5 +1,5 @@
-import { Badge, Button, CodeChip, EmptyState } from '@collega/design-system'
-import { GatedAction } from '@/components/common/gated-action'
+import { Badge, Button, buttonVariants, CodeChip, EmptyState } from '@collega/design-system'
+import Link from 'next/link'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getOrganizations } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -36,7 +36,11 @@ export default async function OrganizationsPage() {
       gate="organizations"
       siteAdminOnly
       lead="Every organization on this deployment. Open one to change its boards, statuses, types and membership."
-      actions={<Button>Add organization</Button>}
+      actions={
+        <Link href="/settings/organizations/new" className={buttonVariants()}>
+          Add organization
+        </Link>
+      }
     >
       {organizations.length === 0 ? (
         <EmptyState
@@ -44,11 +48,9 @@ export default async function OrganizationsPage() {
           // The bootstrap exception: creating the first tenant is the one write a Site Admin owns,
           // so this action is live rather than gated.
           action={
-            <GatedAction
-              id="why-create-first-organization"
-              label="Create the first organization"
-              denial={null}
-            />
+            <Link href="/settings/organizations/new" className={buttonVariants()}>
+              Create the first organization
+            </Link>
           }
         >
           Collega has no tenants. Creating the first one is the only thing that can happen on this
