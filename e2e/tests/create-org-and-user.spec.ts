@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { signIn } from './sign-in'
 
 /**
  * The demo path's first two steps, which had no UI at all until this spec's feature existed.
@@ -12,14 +13,6 @@ import { expect, test } from '@playwright/test'
  */
 const SITE_ADMIN = 'siteadmin@demo.collega.test'
 const DEMO_PASSWORD = 'Abc123!'
-
-async function signIn(page: import('@playwright/test').Page, email: string, password: string) {
-  await page.goto('/login')
-  await page.getByLabel(/email/i).fill(email)
-  await page.getByLabel(/password/i).fill(password)
-  await page.getByRole('button', { name: /sign in/i }).click()
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 })
-}
 
 test.describe('creating an organization', () => {
   test('a site admin creates one and it appears in the list', async ({ page }) => {

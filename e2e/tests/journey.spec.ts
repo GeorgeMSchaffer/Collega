@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
+import { signIn } from './sign-in'
 
 /**
  * The product built from nothing, by one person, in order.
@@ -35,15 +36,6 @@ const world = {
   memberPasswordRotated: 'Journey!Member2',
   board: `Journey Board ${Date.now()}`,
   idea: `Journey idea ${Date.now()}`,
-}
-
-async function signIn(page: Page, email: string, password: string): Promise<void> {
-  await page.context().clearCookies()
-  await page.goto('/login')
-  await page.getByLabel(/email/i).fill(email)
-  await page.getByLabel(/password/i).fill(password)
-  await page.getByRole('button', { name: /sign in/i }).click()
-  await expect(page, `sign-in failed for ${email}`).not.toHaveURL(/\/login/, { timeout: 30_000 })
 }
 
 /**

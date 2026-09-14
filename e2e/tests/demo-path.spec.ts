@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
+import { signIn } from './sign-in'
 
 /**
  * The walkthrough the product is demonstrated with, covered end to end.
@@ -17,15 +18,6 @@ import { expect, type Page, test } from '@playwright/test'
 const ORG_ADMIN = 'orgadmin@acme-robotics.demo.collega.test'
 const READ_ONLY = 'readonly@acme-robotics.demo.collega.test'
 const DEMO_PASSWORD = 'Abc123!'
-
-async function signIn(page: Page, email: string, password: string): Promise<void> {
-  await page.context().clearCookies()
-  await page.goto('/login')
-  await page.getByLabel(/email/i).fill(email)
-  await page.getByLabel(/password/i).fill(password)
-  await page.getByRole('button', { name: /sign in/i }).click()
-  await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 })
-}
 
 /**
  * Opens the first board from the workspace list.
