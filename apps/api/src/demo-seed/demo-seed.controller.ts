@@ -39,8 +39,15 @@ export type DemoSeedResult = {
  *
  * **The role check is the coarse gate and the variable is the real one.** A Site Admin acting
  * through View As carries the target's role, so the guard alone would already refuse them - but the
- * variable is what decides whether the capability exists in this environment, and it is checked per
- * request rather than at boot so flipping it does not need a redeploy.
+ * variable is what decides whether the capability exists in this environment.
+ *
+ * It is read per request rather than captured at boot, so a warm container picks up a change
+ * without waiting to be recycled. **That is not the same as taking effect without a redeploy, and
+ * saying so once was wrong.** Vercel bakes environment variables into a deployment at build time,
+ * so a function built before the variable existed never sees it however often it is read -
+ * `apps/web/AGENTS.md` records the morning this cost, when a corrected `COLLEGA_API_URL` sat unused
+ * because the build that should have carried it cancelled itself. Setting this variable requires a
+ * new build of `collega-api` before the buttons work.
  *
  * ## What reset can and cannot reach
  *

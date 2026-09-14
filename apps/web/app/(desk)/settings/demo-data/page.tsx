@@ -16,6 +16,10 @@ export const metadata = { title: 'Demo data · Collega' }
  * can be reached in an environment where the buttons will be declined. That is deliberate: the
  * refusal names the variable, which is more useful than hiding the page and leaving somebody to
  * wonder where it went.
+ *
+ * Setting that variable is not enough on its own. Vercel bakes environment variables into a
+ * deployment, so `collega-api` has to be built again before it sees one that was added after the
+ * fact - and the refusal will keep naming the variable until it is.
  */
 export default async function DemoDataPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
