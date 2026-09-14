@@ -247,7 +247,18 @@ cd apps/api && vercel link                                      # link to colleg
 vercel install prisma-postgres --name collega-dev --environment preview
 ```
 
-**Two things will bite otherwise.**
+**Three things will bite otherwise.** The first one stops the deploy; the other two are quieter.
+
+**Nothing reads the variables the store generates.** A connected store injects several URLs under a
+prefix of its own — typically `<PREFIX>_POSTGRES_URL`, `<PREFIX>_DATABASE_URL` and a
+`prisma+postgres://` one. This repository reads **none** of them. `schema.prisma` reads
+`env("DATABASE_URL")`, and the Nest host reads `DATABASE_URL` or the unprefixed `POSTGRES_*` parts
+and nothing else — so a prefixed store leaves `db:migrate` and `db:bootstrap-admin` with no
+connection string and the build fails at the migrate step.
+
+Copy the **`postgres://`** value into a plain `DATABASE_URL` on the project, scoped to Preview. Not
+the `prisma+postgres://` one: that is the Accelerate protocol and needs an extension this workspace
+does not install.
 
 **The staging database gets Production's Site Admin.** The API's build command ends with
 `db:bootstrap-admin`, so the first preview build after provisioning migrates and bootstraps the new
