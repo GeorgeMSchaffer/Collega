@@ -1,37 +1,33 @@
-import { Denied } from '@collega/design-system'
 import { CreateUserForm } from '@/components/settings/create-user-form'
 import { SettingsPage } from '@/components/settings/settings-page'
+import { getOrganizations } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'New user · Collega' }
 
 /**
- * Adding a person to the acting organization.
+ * Adding a person to an organization.
  *
- * A Site Admin is branched out rather than gated, for the reason `settings/boards/new` gives: they
- * pass `isAdministrator`, so the ordinary gate would hand them a form whose every submit is refused
- * — the API answers on an organization id, and a Site Admin has none. View As is the path, and
- * saying so is more use than a form that cannot work.
+ * **A Site Admin picks the organization; they are not turned away.** This page refused them until
+ * 2026-09-14, on the reasoning that a Site Admin belongs to no organization and so has none to add
+ * to — and sent them to View As, which has no implementation at all. Both halves were wrong.
+ * `UserService.authorizeOrganizationScope` returns immediately for a Site Admin: user administration
+ * is rule 26's bootstrap exemption, and refusing here blocked the one path that makes a fresh
+ * deployment usable.
+ *
+ * So the organization is a field rather than an assumption. An Org Admin never sees it — theirs is
+ * the only one they may write to, and asking would be a question the session has already answered.
  */
 export default async function NewUserPage() {
+  // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const organizationId = currentUser().organizationId
+  const siteAdmin = currentUser().role === 'SiteAdmin'
 
-  if (organizationId === null) {
-    return (
-      <SettingsPage title="New user" gate="people" lead="Adding a person to an organization.">
-        <Denied
-          id="why-no-organization-to-add-to"
-          reason="A Site Admin belongs to no organization."
-        >
-          There is no organization to add a person to. Use View As to act as an administrator of
-          one, then add them there.
-        </Denied>
-      </SettingsPage>
-    )
-  }
+  // Only a Site Admin needs the list, and only a Site Admin may read it.
+  const organizations = siteAdmin ? await getOrganizations() : []
+  const organizationId = siteAdmin ? null : currentUser().organizationId
 
   return (
     <SettingsPage
@@ -39,7 +35,10 @@ export default async function NewUserPage() {
       gate="people"
       lead="They will be asked to change the password you set the first time they sign in."
     >
-      <CreateUserForm organizationId={organizationId} />
+      <CreateUserForm
+        organizationId={organizationId}
+        organizations={organizations.map((o) => ({ id: o.id, name: o.name }))}
+      />
     </SettingsPage>
   )
 }
