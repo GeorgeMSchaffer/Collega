@@ -76,3 +76,9 @@ ds-bundle/
 # screenshots is roughly 3.8 MB per capture, and git would keep every capture forever.
 demo/screenshots/
 demo/deck.html
+
+# Playwright output. `test-results/` is per-run scratch; `recordings/` is the watchable copy
+# `record.mjs` makes, and a full run writes one video per test.
+e2e/test-results/
+e2e/recordings/
+e2e/playwright-report/

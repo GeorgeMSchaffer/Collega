@@ -163,3 +163,24 @@ Three things the old suite learned the hard way, all still true of the product:
   unreliable to automate; the drawer control exercises the same server call.
 - **A plain User can set an assignee** on an idea they authored — the picker reads
   `GET /organizations/{id}/members`, which any in-org caller may read, not the Org-Admin+ user list.
+
+## Watching a run
+
+```bash
+pnpm --filter collega-e2e test:record            # the whole suite
+pnpm --filter collega-e2e test:record journey    # one file
+```
+
+Writes `e2e/recordings/` as `NN - <spec> › <describe> › <title>.webm`, **numbered in the order the
+tests ran** rather than by filename. That ordering is the point for `journey.spec.ts`, which is a
+chain — sorting its clips any other way puts step 7 before step 1. A test that did not pass carries
+its status in the name.
+
+`record.mjs` reads Playwright's JSON reporter rather than the `test-results/` directory names, which
+carry a hash in the middle and give every file the same name. Video is off by default; an ordinary
+`pnpm test:e2e` still keeps it only for failures.
+
+**Known: a full run is not repeatable within the hour.** It signs in 27 times against an hourly
+per-IP limit of 100, so roughly the fourth consecutive run starts failing on the login screen for a
+reason that has nothing to do with the product. Recorded in `SPEC/Bug Triage.md`. Until it is fixed,
+a spec that fails in a full run is worth re-running on its own before believing it.

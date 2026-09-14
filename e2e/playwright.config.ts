@@ -39,13 +39,27 @@ export default defineConfig({
   retries: 0,
   timeout: 90_000,
   expect: { timeout: 20_000 },
-  reporter: [['list']],
+  // `record.mjs` adds a JSON reporter through the environment so it can read the run back in
+  // declaration order; an ordinary run keeps just the list.
+  reporter: process.env.COLLEGA_E2E_VIDEO === 'on' ? [['list'], ['json']] : [['list']],
   use: {
     baseURL: 'http://localhost:3000',
     headless: true,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+
+    /**
+     * Video, and why it is worth keeping on a pass.
+     *
+     * `COLLEGA_E2E_VIDEO=on` records every test rather than only the ones that fail, which is how
+     * you watch the suite instead of reading its output. A green run that nobody has watched is a
+     * green run nobody has checked: these specs drive real screens, so the recording is the only
+     * artefact that shows what the screens actually looked like while they passed.
+     *
+     * Off by default because a full run writes a file per test and none of it is wanted in CI.
+     * `pnpm --filter collega-e2e test:record` sets it.
+     */
+    video: process.env.COLLEGA_E2E_VIDEO === 'on' ? 'on' : 'retain-on-failure',
     actionTimeout: 20_000,
     navigationTimeout: 45_000,
   },
