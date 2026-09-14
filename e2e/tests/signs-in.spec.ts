@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { signIn } from './sign-in'
 
 /**
  * The first spec that could not have passed before F2.
@@ -17,15 +18,11 @@ const DEMO_PASSWORD = 'Abc123!'
 
 test.describe('signing in', () => {
   test('an org admin reaches the application and sees their own organization', async ({ page }) => {
-    await page.goto('/login')
-
-    await page.getByLabel(/email/i).fill(ORG_ADMIN)
-    await page.getByLabel(/password/i).fill(DEMO_PASSWORD)
-    await page.getByRole('button', { name: /sign in/i }).click()
-
     // Off the login page is the assertion that matters: the redirect only happens once the API has
-    // answered with a session, which needs a real row in a real database.
-    await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 })
+    // answered with a session, which needs a real row in a real database. `signIn` also tells a
+    // rate-limited refusal from a wrong credential, which this spec used to report as a bare
+    // timeout.
+    await signIn(page, ORG_ADMIN, DEMO_PASSWORD)
 
     // Acme Robotics is seeded by `scenario.ts`. Its name on the page is data that travelled from
     // Postgres through the API to the browser - the whole path this slice exists to cover.
@@ -52,6 +49,13 @@ test.describe('signing in', () => {
     // "Incorrect", not "Invalid": the screen owns this sentence and the API's own wording is
     // different. Matching the API's text here would pass for the wrong reason the day the mask is
     // removed.
-    await expect(page.getByText('Incorrect email or password.')).toBeVisible({ timeout: 20_000 })
+    //
+    // If this fails with the element simply missing, read the alert that IS on the page before
+    // suspecting the mask: the rate limiter renders its own sentence here, and a full suite run
+    // exhausts the twenty-per-minute login bucket. That is how this failed on 2026-09-14.
+    await expect(
+      page.getByText('Incorrect email or password.'),
+      'no masked refusal — if the page shows a different alert, this is the rate limiter, not the mask',
+    ).toBeVisible({ timeout: 20_000 })
   })
 })

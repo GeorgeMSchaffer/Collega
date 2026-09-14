@@ -25,7 +25,7 @@ export const boardsAndStatusesSeed: SeedModule = {
         const id = seedId('status', scenario.slug, status.name)
         await prisma.statuses.upsert({
           where: { id },
-          update: {},
+          update: { name: status.name, sort_order: status.sortOrder, is_deleted: false },
           create: {
             id,
             organization_id: organizationId,
@@ -43,7 +43,7 @@ export const boardsAndStatusesSeed: SeedModule = {
         const boardId = seedId('board', scenario.slug, board.name)
         await prisma.boards.upsert({
           where: { id: boardId },
-          update: {},
+          update: { name: board.name },
           create: {
             id: boardId,
             organization_id: organizationId,

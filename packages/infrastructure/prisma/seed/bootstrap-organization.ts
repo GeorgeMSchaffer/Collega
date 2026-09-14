@@ -37,8 +37,11 @@ import { PrismaClient } from '../../src/generated/prisma/client.js'
 import { RandomInviteCodeGenerator } from '../../src/integrations/organizations/random-invite-code-generator.ts'
 import { Pbkdf2PasswordHasher } from '../../src/security/pbkdf2-password-hasher.ts'
 import { seedId } from './modules/scenario.ts'
+import { loadRepositoryEnv } from './repository-env.ts'
 
 async function main(): Promise<void> {
+  loadRepositoryEnv()
+
   const title = process.env.BOOTSTRAP_ORG_TITLE?.trim()
   const description = process.env.BOOTSTRAP_ORG_DESCRIPTION?.trim()
   const adminEmail = process.env.BOOTSTRAP_ORG_ADMIN_EMAIL?.trim()

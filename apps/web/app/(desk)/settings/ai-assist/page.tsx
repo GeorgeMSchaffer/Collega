@@ -57,8 +57,11 @@ function ActAsAMember() {
       </h3>
       <p className="m-0 max-w-prose text-sm text-muted-foreground">
         A scope statement describes one organization&rsquo;s subject matter, and a Site Admin
-        belongs to none, so there is nothing for this page to load. Use View As to enter an
-        organization, then return here.
+        belongs to none, so there is nothing for this page to load. Use{' '}
+        <a href="/settings/view-as" className="underline">
+          View as
+        </a>{' '}
+        to enter an organization, then return here.
       </p>
     </div>
   )

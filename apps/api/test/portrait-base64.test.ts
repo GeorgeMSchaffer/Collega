@@ -21,6 +21,7 @@ import { Role, UserStatus } from '@collega/domain/enums'
 import { describe, expect, it } from 'vitest'
 import { AuthenticationController } from '../src/authentication/authentication.controller.js'
 import { RequestValidationError } from '../src/common/errors/request-validation.error.js'
+import type { AlsCurrentUserContext } from '../src/common/request-context/als-current-user-context.js'
 
 /** The one recorded portrait payload - a 1x1 PNG. Read from the corpus, never retyped. */
 const FIXTURE_PAYLOAD: string = (
@@ -57,7 +58,11 @@ function controllerRecordingBytes() {
       return SUMMARY
     },
   } as unknown as AuthService
-  const controller = new AuthenticationController(auth, {} as CurrentUserContext)
+  const controller = new AuthenticationController(
+    auth,
+    {} as CurrentUserContext,
+    {} as AlsCurrentUserContext,
+  )
   return { controller, received }
 }
 

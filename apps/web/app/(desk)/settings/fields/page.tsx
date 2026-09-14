@@ -117,13 +117,26 @@ export default async function FieldsPage() {
                   )}
                 </td>
                 <td className="px-4 py-2.5 text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    aria-label={`${siteAdmin ? 'Manage' : 'Edit'} ${field.name}`}
-                  >
-                    {siteAdmin ? 'Manage' : 'Edit'}
-                  </Button>
+                  {/* Disabled for a Site Admin rather than linked: they belong to no organization,
+                      so there is no scope for the request the page would make. */}
+                  {siteAdmin ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled
+                      aria-label={`Manage ${field.name}`}
+                    >
+                      Manage
+                    </Button>
+                  ) : (
+                    <Link
+                      href={`/settings/fields/${field.id}`}
+                      className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                      aria-label={`Edit ${field.name}`}
+                    >
+                      Edit
+                    </Link>
+                  )}
                 </td>
               </tr>
             ))}

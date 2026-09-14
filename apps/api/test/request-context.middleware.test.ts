@@ -33,6 +33,7 @@ describe('RequestContextMiddleware', () => {
         organizationId: null,
         role: 0 as never, // value irrelevant here; only mutability is under test
         isImpersonating: false,
+        impersonation: null,
         realUserId: 'u1',
       }
       expect(requestContextStorage.getStore()?.identity?.userId).toBe('u1')

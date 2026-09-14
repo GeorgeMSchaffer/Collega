@@ -20,6 +20,12 @@ const TARGET: ResolvedIdentity = {
   role: Role.OrgAdmin,
   isImpersonating: true,
   realUserId: 'admin-user',
+  impersonation: {
+    realUserFirstName: 'Ada',
+    realUserLastName: 'Lovelace',
+    startedAtUtc: new Date('2026-09-14T09:00:00Z'),
+    expiresAtUtc: new Date('2026-09-14T11:00:00Z'),
+  },
 }
 
 const OTHER: ResolvedIdentity = {
@@ -28,6 +34,7 @@ const OTHER: ResolvedIdentity = {
   role: Role.User,
   isImpersonating: false,
   realUserId: 'other-user',
+  impersonation: null,
 }
 
 describe('AlsCurrentUserContext', () => {

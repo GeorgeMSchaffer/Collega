@@ -42,7 +42,15 @@ const ROLES = ['OrgAdmin', 'User', 'ReadOnly'] as const
  * change-password screen. That is auth requirement 9 working rather than a fault, and it is worth
  * knowing before it happens in front of an audience.
  */
-export function CreateUserForm({ organizationId }: { organizationId: string }) {
+export function CreateUserForm({
+  organizationId,
+  organizations,
+}: {
+  /** The acting organization, or null for a Site Admin, who picks one below. */
+  organizationId: string | null
+  /** Every organization, for a Site Admin. Empty for anyone else, who may not read the list. */
+  organizations: readonly { id: string; name: string }[]
+}) {
   const [state, action, pending] = useActionState(createUser, IDLE)
 
   return (
@@ -54,9 +62,25 @@ export function CreateUserForm({ organizationId }: { organizationId: string }) {
         <form action={action} className="flex flex-col gap-4">
           {state.error ? <Alert variant="destructive">{state.error}</Alert> : null}
 
-          {/* The organization being administered, bound while the page was still inside a request
-              from the resolved principal. A target, not a claim — see admin-actions.ts's header. */}
-          <input type="hidden" name="organizationId" value={organizationId} />
+          {/* The organization being administered. A target, not a claim — the API decides what the
+              session may do with it, so a Site Admin choosing one here is authorized the same way an
+              Org Admin's hidden value is. See admin-actions.ts's header. */}
+          {organizationId === null ? (
+            <Field htmlFor="user-organization" label="Organization">
+              <Select id="user-organization" name="organizationId" required defaultValue="">
+                <option value="" disabled>
+                  Choose an organization…
+                </option>
+                {organizations.map((organization) => (
+                  <option key={organization.id} value={organization.id}>
+                    {organization.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          ) : (
+            <input type="hidden" name="organizationId" value={organizationId} />
+          )}
 
           <Field htmlFor="user-first-name" label="First name">
             <Input

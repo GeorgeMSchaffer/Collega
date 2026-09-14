@@ -1,3 +1,4 @@
+import type { ImpersonationContext } from '@collega/application/auth'
 import type { CurrentUserContext } from '@collega/application/common'
 import type { Role } from '@collega/domain/enums'
 import { Injectable } from '@nestjs/common'
@@ -49,5 +50,19 @@ export class AlsCurrentUserContext implements CurrentUserContext {
 
   get realUserId(): string | null {
     return this.store.identity?.realUserId ?? null
+  }
+
+  /**
+   * The real administrator behind a live View As session, for `GET /auth/me` to build its banner
+   * from. Null when nobody is impersonating.
+   *
+   * Not part of `CurrentUserContext`: authorization must never branch on impersonation - that is
+   * the property rule 4 exists to protect - so this deliberately sits outside the interface every
+   * application service depends on, reachable only by asking for this class by name.
+   */
+  get impersonation(): ImpersonationContext | null {
+    const identity = this.store.identity
+    if (!identity?.impersonation) return null
+    return { realUserId: identity.realUserId, ...identity.impersonation }
   }
 }

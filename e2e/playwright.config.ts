@@ -1,4 +1,17 @@
 import { defineConfig, devices } from '@playwright/test'
+import { e2eDatabaseUrl, loadRepositoryEnv } from './database-url'
+
+// Before anything below reads `process.env` - `webServer[].env` is evaluated as this module loads.
+loadRepositoryEnv()
+
+/**
+ * The schema every server below is pointed at.
+ *
+ * Derived here rather than read back from what `global-setup.ts` exports into the environment,
+ * because this object literal is evaluated before global setup runs - see `database-url.ts` for
+ * what that cost when it was the other way round.
+ */
+const DATABASE_URL = e2eDatabaseUrl()
 
 /**
  * Where to find a Chromium, when the one Playwright wants is not downloadable.
@@ -39,19 +52,50 @@ export default defineConfig({
   retries: 0,
   timeout: 90_000,
   expect: { timeout: 20_000 },
-  reporter: [['list']],
+  // `record.mjs` adds a JSON reporter through the environment so it can read the run back in
+  // declaration order; an ordinary run keeps just the list.
+  reporter: process.env.COLLEGA_E2E_VIDEO === 'on' ? [['list'], ['json']] : [['list']],
   use: {
     baseURL: 'http://localhost:3000',
     headless: true,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+
+    /**
+     * Video, and why it is worth keeping on a pass.
+     *
+     * `COLLEGA_E2E_VIDEO=on` records every test rather than only the ones that fail, which is how
+     * you watch the suite instead of reading its output. A green run that nobody has watched is a
+     * green run nobody has checked: these specs drive real screens, so the recording is the only
+     * artefact that shows what the screens actually looked like while they passed.
+     *
+     * Off by default because a full run writes a file per test and none of it is wanted in CI.
+     * `pnpm --filter collega-e2e test:record` sets it.
+     */
+    video: process.env.COLLEGA_E2E_VIDEO === 'on' ? 'on' : 'retain-on-failure',
     actionTimeout: 20_000,
     navigationTimeout: 45_000,
   },
   projects: [
+    /**
+     * Signs in once per seeded role and saves the cookie; everything else depends on it.
+     *
+     * The suite used to sign in twenty-seven times per run against a login limit of twenty per
+     * minute, so running it whole exhausted the limiter and failed specs that were not about
+     * authentication - see `tests/auth.setup.ts`. Its own sign-ins are real, which is why it is a
+     * project rather than a `globalSetup` step: it needs a browser.
+     */
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(chromiumPath ? { launchOptions: { executablePath: chromiumPath } } : {}),
+      },
+    },
     {
       name: 'chromium',
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         ...(chromiumPath ? { launchOptions: { executablePath: chromiumPath } } : {}),
@@ -63,9 +107,8 @@ export default defineConfig({
       // Built output rather than a watcher, matching `tools/local/start.ts`: nothing in a test run
       // edits the API, and `global-setup.ts` has already built it.
       //
-      // `DATABASE_URL` is read from the variable global setup writes back, so this starts against
-      // the schema it just rebuilt. Re-deriving it here could answer differently and the failure
-      // would look like a seeding bug.
+      // The same string global setup rebuilds, from the same function, so the server cannot end up
+      // pointed at a different schema than the one that was just seeded.
       command: 'node apps/api/dist/bootstrap.js',
       cwd: '..',
       // Health depends on nothing, so it answers the moment the host is listening - which is what
@@ -77,7 +120,7 @@ export default defineConfig({
       stderr: 'pipe',
       env: {
         PORT: '3001',
-        DATABASE_URL: process.env.COLLEGA_E2E_DATABASE_URL ?? '',
+        DATABASE_URL,
         NODE_ENV: 'test',
         // Deterministic across runs, and never a real key: the token this signs lives for the
         // length of one suite.

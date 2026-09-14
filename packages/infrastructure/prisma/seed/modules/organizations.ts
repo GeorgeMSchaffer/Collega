@@ -26,7 +26,12 @@ export const organizationsSeed: SeedModule = {
 
       await prisma.organizations.upsert({
         where: { id: organizationId },
-        update: {},
+        // **Restores the name, rather than leaving whatever is there.** Every other upsert in the
+        // seed passes `update: {}`, which makes re-seeding fill gaps but never correct anything -
+        // so a demo organization somebody renamed while trying the product stayed renamed, and
+        // `db:seed` silently did nothing about it. The catalog rows are the ones that matters for,
+        // because they are what the screens are read from and what the E2E suite edits.
+        update: { title: scenario.title, description: scenario.description, is_archived: false },
         create: {
           id: organizationId,
           title: scenario.title,
@@ -45,7 +50,7 @@ export const organizationsSeed: SeedModule = {
         const id = seedId('idea-type', scenario.slug, ideaType.name)
         await prisma.idea_types.upsert({
           where: { id },
-          update: {},
+          update: { name: ideaType.name, sort_order: ideaType.sortOrder, is_deleted: false },
           create: {
             id,
             organization_id: organizationId,

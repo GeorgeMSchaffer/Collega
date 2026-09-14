@@ -27,8 +27,11 @@ import type { Role, UserStatus } from '../../src/generated/prisma/client.js'
 import { PrismaClient } from '../../src/generated/prisma/client.js'
 import { Pbkdf2PasswordHasher } from '../../src/security/pbkdf2-password-hasher.ts'
 import { seedId } from './modules/scenario.ts'
+import { loadRepositoryEnv } from './repository-env.ts'
 
 async function main(): Promise<void> {
+  loadRepositoryEnv()
+
   const email = process.env.SITE_ADMIN_EMAIL?.trim()
   const password = process.env.SITE_ADMIN_PASSWORD?.trim()
 

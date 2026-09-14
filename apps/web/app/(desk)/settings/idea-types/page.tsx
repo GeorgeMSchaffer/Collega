@@ -120,13 +120,26 @@ export default async function IdeaTypesPage() {
                         : `${type.curatedFieldCount} chosen`}
                     </td>
                     <td className="px-4 py-2.5 text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        aria-label={`${siteAdmin ? 'Manage' : 'Edit'} ${type.name}`}
-                      >
-                        {siteAdmin ? 'Manage' : 'Edit'}
-                      </Button>
+                      {/* Disabled for a Site Admin rather than linked: every write behind it is
+                          refused for that role, so the page could only be a form that cannot save. */}
+                      {siteAdmin ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          aria-label={`Manage ${type.name}`}
+                        >
+                          Manage
+                        </Button>
+                      ) : (
+                        <Link
+                          href={`/settings/idea-types/${type.id}`}
+                          className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                          aria-label={`Edit ${type.name}`}
+                        >
+                          Edit
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}

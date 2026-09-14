@@ -12,6 +12,24 @@ export interface ResolvedIdentity {
   readonly role: Role
   readonly isImpersonating: boolean
   readonly realUserId: string
+
+  /**
+   * The real administrator and the session's clock, for the banner and nothing else.
+   *
+   * Kept whole rather than flattened because `GET /auth/me` has to answer with all four fields and
+   * they have no other route to it: the identity that reaches `packages/application` describes the
+   * impersonated user by design, which is exactly what makes authorization apply unchanged. Without
+   * this, `viewingAs` can only ever be null and somebody acting as another person has no indication
+   * of it at all - which is how it shipped until 2026-09-14.
+   *
+   * Null whenever `isImpersonating` is false.
+   */
+  readonly impersonation: {
+    readonly realUserFirstName: string
+    readonly realUserLastName: string
+    readonly startedAtUtc: Date
+    readonly expiresAtUtc: Date
+  } | null
 }
 
 export interface RequestContext {

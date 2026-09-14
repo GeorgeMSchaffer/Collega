@@ -1,37 +1,14 @@
 import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { e2eDatabaseUrl, loadRepositoryEnv } from './database-url.js'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
-/**
- * The suite's own database, and the guard that keeps it its own.
- *
- * Every spec below runs against a schema this file drops and rebuilds, because a suite that shares
- * a database with the developer running it is a suite that either fails on their data or destroys
- * it. The isolation is a Postgres **schema** rather than a second database: `prisma migrate reset`
- * drops and re-applies into whatever `?schema=` names, so this needs no CREATE DATABASE privilege
- * and no second container, and `public` — where `pnpm dev` keeps the demo data — is untouched.
- *
- * `COLLEGA_E2E_DATABASE_URL` overrides it outright, for CI with a database of its own.
- */
-function e2eDatabaseUrl(): string {
-  const explicit = process.env.COLLEGA_E2E_DATABASE_URL?.trim()
-  if (explicit) return explicit
-
-  const base = process.env.DATABASE_URL?.trim()
-  if (!base) {
-    throw new Error(
-      'Neither COLLEGA_E2E_DATABASE_URL nor DATABASE_URL is set.\n\n' +
-        'The E2E suite needs a database it may drop. Run `pnpm dev` once to write DATABASE_URL into\n' +
-        '.env, or set COLLEGA_E2E_DATABASE_URL to a throwaway of your own.',
-    )
-  }
-
-  const url = new URL(base)
-  url.searchParams.set('schema', 'collega_e2e')
-  return url.toString()
-}
+// The suite runs against its own Postgres **schema** rather than a second database: everything
+// below drops and rebuilds `collega_e2e`, so `public` - where `pnpm dev` keeps the demo data - is
+// untouched. The derivation lives in `database-url.ts` because `playwright.config.ts` needs the
+// same answer at module-load time; read that file before changing where it points.
 
 /**
  * Refuses to reset anything a developer is using.
@@ -91,6 +68,10 @@ function run(command: string, args: string[], env: NodeJS.ProcessEnv, stdin?: st
 }
 
 export default function globalSetup(): void {
+  // Idempotent, and here as well as in the config because Playwright may load this module in a
+  // process that has not evaluated the config - real environment variables win either way.
+  loadRepositoryEnv()
+
   const databaseUrl = e2eDatabaseUrl()
   refuseIfNotDisposable(databaseUrl)
 

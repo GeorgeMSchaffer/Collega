@@ -28,8 +28,10 @@ export type RegisterCommand = {
  * persistent banner from this rather than from remembered local state, so a session ended or
  * expired server-side cannot leave a stale banner on screen (SPEC/30-Contracts.md -> View As).
  *
- * Populated by the API layer from the token's resolved `AuthenticatedPrincipal.impersonation`
- * (Wave D), not by this slice's `AuthService.getCurrentUser` - see the slice report.
+ * Populated by `AuthenticationController.me`, which overlays it from the resolved
+ * `AuthenticatedPrincipal.impersonation`, not by `AuthService.getCurrentUser` - the identity that
+ * reaches this layer describes the impersonated user and nothing else, which is what makes every
+ * authorization check apply to them unchanged.
  */
 export type ViewingAsSummary = {
   readonly realUserId: string
