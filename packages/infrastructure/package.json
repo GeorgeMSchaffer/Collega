@@ -5,10 +5,6 @@
   "type": "module",
   "description": "Prisma client, repositories and external integrations. Implements application and domain abstractions.",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
     "./*": {
       "types": "./dist/*/index.d.ts",
       "default": "./dist/*/index.js"

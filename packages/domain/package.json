@@ -5,10 +5,6 @@
   "type": "module",
   "description": "Entities, enums, value objects and invariants. Depends on nothing.",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
     "./*": {
       "types": "./dist/*/index.d.ts",
       "default": "./dist/*/index.js"

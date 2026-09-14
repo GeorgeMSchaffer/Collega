@@ -44,4 +44,5 @@ if a change needs different data, change the seed module, don't patch rows.
 - Seeding is composed (`compose.ts`) from per-area modules and must stay deterministic and
   idempotent — no clock, no randomness.
 
-`src/index.ts` is still the Wave 0 placeholder; the package is consumed through subpaths.
+There is deliberately no root entrypoint: `package.json` exports only `./*`, so
+`@collega/infrastructure` on its own does not resolve. Import the feature subpath.

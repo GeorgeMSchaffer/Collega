@@ -33,5 +33,5 @@ deep file path. Inside the package, relative imports carry the `.js` extension (
 - Limits that the contract pins (`TITLE_MAX_LENGTH`, `MAX_ASSIGNEES`, …) are exported constants,
   so the application layer validates against the same number the entity enforces.
 
-`src/index.ts` is still the Wave 0 placeholder; the package is consumed through subpaths, so
-nothing should be added to it.
+There is deliberately no root entrypoint: `package.json` exports only `./*`, so
+`@collega/domain` on its own does not resolve. Import the feature subpath.
