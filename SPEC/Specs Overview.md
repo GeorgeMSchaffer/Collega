@@ -8,6 +8,8 @@
 > - **Do not edit behavior here.** Update the canonical spec first; this summary is regenerated from it.
 >
 > Kept because a single-file overview is genuinely useful for orientation and onboarding. Read it for shape, never for detail.
+>
+> **See also `SPEC/05-product-definition.md`** — a second derived document, generated 2026-09-14, covering what this one does not: user stories with acceptance criteria, per-capability delivery state, and the completion criteria. It is newer than this file, so where the two disagree prefer it; where either disagrees with a canonical spec, the canonical spec wins.
 
 ## Document Metadata
 - Status: **Derived summary — non-canonical**
