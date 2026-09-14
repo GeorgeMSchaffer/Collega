@@ -257,21 +257,35 @@ test.describe
       })
     })
 
-    test('10. the org admin edits the status catalog they were given', async ({ page }) => {
+    test('10. the org admin renames a status and the board follows', async ({ page }) => {
       await signIn(page, world.adminEmail, world.adminPasswordRotated)
       await page.goto('/settings/statuses')
 
-      // **Expected to fail while Edit does nothing.** Every row carries an Edit control and none of
-      // them is wired to anything — verified in a browser on 2026-09-14. Left failing deliberately:
-      // it names the gap, and it turns green when the form exists rather than needing to be written
-      // then.
-      const edit = page.getByRole('button', { name: /^Edit / }).first()
+      // By position rather than by name: this organization's catalog is whatever creating it
+      // provisioned, and pinning a default status's name here would make this spec fail the day
+      // that default changes for reasons having nothing to do with renaming.
+      const edit = page.getByRole('link', { name: /^Edit / }).first()
       await expect(edit).toBeVisible({ timeout: 30_000 })
 
-      const before = page.url()
+      const original = ((await edit.getAttribute('aria-label')) ?? '').replace(/^Edit /, '')
+      expect(original, 'the Edit control should name the status it edits').not.toBe('')
+
       await edit.click()
-      await page.waitForTimeout(800)
-      const moved = page.url() !== before || (await page.locator('dialog[open]').count()) > 0
-      expect(moved, 'Edit on the statuses catalog does nothing — no form is wired to it').toBe(true)
+      await expect(page.getByLabel('Name')).toHaveValue(original)
+
+      const renamed = `Renamed ${String(Date.now())}`
+      await page.getByLabel('Name').fill(renamed)
+      await page.getByRole('button', { name: 'Save changes' }).click()
+
+      // Back on the list, and carrying the new name — proving the write landed rather than that the
+      // form navigated.
+      await expect(page).toHaveURL(/\/settings\/statuses$/)
+      await expect(page.getByRole('cell', { name: renamed, exact: true })).toBeVisible()
+
+      // And the lane header on the board, which is the reason a rename matters: statuses are the
+      // columns, so a catalog change that did not reach them would be a rename in name only.
+      await page.goto('/boards')
+      await page.locator('a[href^="/boards/"]').first().click()
+      await expect(page.getByText(renamed).first()).toBeVisible()
     })
   })
