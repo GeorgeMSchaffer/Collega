@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test'
+import { type BrowserContext, expect, type Page, test } from '@playwright/test'
 import { signIn } from './sign-in'
 
 /**
@@ -50,7 +50,13 @@ const world = {
  * admin issues a temporary password. A helper that assumed the session survived is what this
  * originally had, and it failed here rather than in production, which is the point.
  */
-async function signInAndRotate(page: Page, email: string, from: string, to: string): Promise<void> {
+async function signInAndRotate(
+  page: Page,
+  identity: string,
+  email: string,
+  from: string,
+  to: string,
+): Promise<void> {
   await signIn(page, email, from)
   if (/change-password/.test(page.url())) {
     await page.getByLabel(/current password/i).fill(from)
@@ -60,6 +66,11 @@ async function signInAndRotate(page: Page, email: string, from: string, to: stri
     await expect(page).toHaveURL(/\/login/, { timeout: 30_000 })
     await signIn(page, email, to)
   }
+
+  // The session this ends up holding is the one every later step for this identity reuses. Caching
+  // it here rather than letting the next step sign in again is what makes the rotation cost two
+  // sign-ins instead of three.
+  sessions.set(identity, await page.context().cookies())
 }
 
 /**
@@ -82,7 +93,10 @@ async function signInAndRotate(page: Page, email: string, from: string, to: stri
  * so this costs one request and never needs to ask whether there is anything to end.
  */
 async function signInAsSelf(page: Page): Promise<void> {
-  await signIn(page, SITE_ADMIN, DEMO_PASSWORD)
+  await actAs(page, 'site-admin', () => signIn(page, SITE_ADMIN, DEMO_PASSWORD))
+
+  // **After the restore as well as after a sign-in.** A View As session is a server-side row keyed
+  // on the real user, so a restored cookie lands in it exactly as a fresh sign-in does.
   const banner = page.getByRole('alert').filter({ hasText: /viewing as/i })
   if ((await banner.count()) > 0) {
     await page.getByRole('button', { name: /stop viewing as/i }).click()
@@ -92,6 +106,39 @@ async function signInAsSelf(page: Page): Promise<void> {
 
 function viewAsRowFor(page: Page, email: string) {
   return page.locator('li').filter({ hasText: email })
+}
+
+/**
+ * The cookie each identity in this chain has already earned, so a step does not sign in again.
+ *
+ * This chain changes identity seven times across thirteen steps, and every step used to start with
+ * a real sign-in - fourteen of them. `POST /auth/login` allows twenty per minute per caller IP, so
+ * the journey alone came close to the limit and a full suite run crossed it, failing specs that had
+ * nothing to do with authentication (`sign-in.ts` says what that looked like).
+ *
+ * **Cookies rather than a shared browser context**, which is the other way to do this. A context
+ * created by hand in `beforeAll` is not the one Playwright's fixtures manage, so it gets no trace
+ * and no video - and the artefacts are how a failure in a thirteen-step chain gets diagnosed at
+ * all. This keeps the ordinary `page` and moves only the session.
+ *
+ * It falls back to signing in whenever the restored cookie does not land, which is not a
+ * hypothetical: changing a password rotates the security stamp and invalidates every token issued
+ * to that user, and two steps here do exactly that.
+ */
+const sessions = new Map<string, Awaited<ReturnType<BrowserContext['cookies']>>>()
+
+async function actAs(page: Page, identity: string, signInAs: () => Promise<void>): Promise<void> {
+  await page.context().clearCookies()
+
+  const saved = sessions.get(identity)
+  if (saved) {
+    await page.context().addCookies(saved)
+    await page.goto('/home')
+    if (!/\/login/.test(page.url())) return
+  }
+
+  await signInAs()
+  sessions.set(identity, await page.context().cookies())
 }
 
 /**
@@ -164,14 +211,22 @@ test.describe
     })
 
     test('3. that org admin signs in and rotates the forced password', async ({ page }) => {
-      await signInAndRotate(page, world.adminEmail, world.adminPassword, world.adminPasswordRotated)
+      await signInAndRotate(
+        page,
+        'org-admin',
+        world.adminEmail,
+        world.adminPassword,
+        world.adminPasswordRotated,
+      )
 
       // Their own organization, not the seed's — the whole point of building the world here.
       await expect(page.getByText(world.organization).first()).toBeVisible({ timeout: 30_000 })
     })
 
     test('4. the org admin adds a member to their own organization', async ({ page }) => {
-      await signIn(page, world.adminEmail, world.adminPasswordRotated)
+      await actAs(page, 'org-admin', () =>
+        signIn(page, world.adminEmail, world.adminPasswordRotated),
+      )
 
       await page.goto('/settings/users/new')
       await page.getByLabel(/first name/i).fill('Journey')
@@ -186,7 +241,9 @@ test.describe
     })
 
     test('5. the org admin creates a board', async ({ page }) => {
-      await signIn(page, world.adminEmail, world.adminPasswordRotated)
+      await actAs(page, 'org-admin', () =>
+        signIn(page, world.adminEmail, world.adminPasswordRotated),
+      )
 
       await page.goto('/settings/boards/new')
       await page.getByLabel(/name/i).fill(world.board)
@@ -203,6 +260,7 @@ test.describe
     test('6. the member signs in and authors an idea on that board', async ({ page }) => {
       await signInAndRotate(
         page,
+        'member',
         world.memberEmail,
         world.memberPassword,
         world.memberPasswordRotated,
@@ -224,7 +282,9 @@ test.describe
     })
 
     test('7. the idea moves through the statuses and stays moved', async ({ page }) => {
-      await signIn(page, world.memberEmail, world.memberPasswordRotated)
+      await actAs(page, 'member', () =>
+        signIn(page, world.memberEmail, world.memberPasswordRotated),
+      )
 
       await page.goto('/boards')
       await page.getByRole('link', { name: world.board }).click()
@@ -287,7 +347,9 @@ test.describe
     })
 
     test('10. the org admin renames a status and the board follows', async ({ page }) => {
-      await signIn(page, world.adminEmail, world.adminPasswordRotated)
+      await actAs(page, 'org-admin', () =>
+        signIn(page, world.adminEmail, world.adminPasswordRotated),
+      )
       await page.goto('/settings/statuses')
 
       // By position rather than by name: this organization's catalog is whatever creating it
@@ -313,7 +375,9 @@ test.describe
     })
 
     test('11. the org admin renames an idea type', async ({ page }) => {
-      await signIn(page, world.adminEmail, world.adminPasswordRotated)
+      await actAs(page, 'org-admin', () =>
+        signIn(page, world.adminEmail, world.adminPasswordRotated),
+      )
       await page.goto('/settings/idea-types')
 
       await openEditForm(page, 'Name')
@@ -327,7 +391,9 @@ test.describe
     })
 
     test('12. the org admin changes a member role and it takes effect', async ({ page }) => {
-      await signIn(page, world.adminEmail, world.adminPasswordRotated)
+      await actAs(page, 'org-admin', () =>
+        signIn(page, world.adminEmail, world.adminPasswordRotated),
+      )
       await page.goto('/settings/users')
 
       // The member this run created, by email: every run makes a "Journey Member", so the display
@@ -344,7 +410,9 @@ test.describe
       // **The assertion that matters is not the table.** A role written to a row proves a form
       // posted; a role that changes what the person may do proves the product read it. Read Only
       // sees the New idea control disabled — the documented behaviour, rather than its absence.
-      await signIn(page, world.memberEmail, world.memberPasswordRotated)
+      await actAs(page, 'member', () =>
+        signIn(page, world.memberEmail, world.memberPasswordRotated),
+      )
       await page.goto('/ideas')
       await expect(page.getByRole('button', { name: /new idea/i }).first()).toBeDisabled({
         timeout: 30_000,
