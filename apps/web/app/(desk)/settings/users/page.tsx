@@ -150,13 +150,15 @@ export default async function UsersPage() {
                   </Badge>
                 </td>
                 <td className="px-4 py-2.5 text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  {/* A link for both roles here, unlike the catalogs: user administration is rule
+                      26's bootstrap exemption, so a Site Admin genuinely may write these rows. */}
+                  <Link
+                    href={`/settings/users/${member.id}`}
+                    className={buttonVariants({ variant: 'outline', size: 'sm' })}
                     aria-label={`${siteAdmin ? 'Manage' : 'Edit'} ${member.displayName}`}
                   >
                     {siteAdmin ? 'Manage' : 'Edit'}
-                  </Button>
+                  </Link>
                 </td>
               </tr>
             ))}

@@ -32,6 +32,7 @@ const world = {
   adminPasswordRotated: 'Journey!Admin2',
   memberEmail: `journey.member.${Date.now()}@journey.test`,
   memberPassword: 'Journey!Member1',
+  memberPasswordRotated: 'Journey!Member2',
   board: `Journey Board ${Date.now()}`,
   idea: `Journey idea ${Date.now()}`,
 }
@@ -99,6 +100,42 @@ async function signInAsSelf(page: Page): Promise<void> {
 
 function viewAsRowFor(page: Page, email: string) {
   return page.locator('li').filter({ hasText: email })
+}
+
+/**
+ * A text box by its label, unambiguously.
+ *
+ * **`getByLabel('Name')` is not safe on these screens**, and the reason is worth keeping: it
+ * matches accessible names by case-insensitive *substring*, and every list row carries an
+ * `aria-label` of "Edit <thing>". Rename a thing to anything containing "name" - which
+ * "Re**name**d" does - and the control and the input both match, and the step fails as a strict-mode
+ * violation that reads like a missing element.
+ */
+function textbox(page: Page, label: string) {
+  return page.getByRole('textbox', { name: label, exact: true })
+}
+
+/**
+ * Opens an edit form from a list and waits until it is safe to type into.
+ *
+ * **Waiting for the field to carry its loaded value is the whole point**, not politeness. These
+ * pages stream, so the input exists and accepts `fill` before React has hydrated the subtree -
+ * and hydration then replaces it, discarding what was typed. The form submits its original value,
+ * the API answers 200 for a write that changed nothing, and the failure surfaces later as "the
+ * list does not show the new name", which looks like a caching bug and is not one. Cost a while to
+ * find on 2026-09-14.
+ *
+ * Returns the current value, so a caller can assert against what was actually loaded rather than
+ * pinning a default that may change.
+ */
+async function openEditForm(page: Page, field: string): Promise<string> {
+  const edit = page.getByRole('link', { name: /^Edit / }).first()
+  await expect(edit).toBeVisible({ timeout: 30_000 })
+  await edit.click()
+
+  const input = textbox(page, field)
+  await expect(input).not.toHaveValue('', { timeout: 30_000 })
+  return (await input.inputValue()).trim()
 }
 
 test.describe
@@ -176,7 +213,7 @@ test.describe
         page,
         world.memberEmail,
         world.memberPassword,
-        world.memberPassword + 'x',
+        world.memberPasswordRotated,
       )
 
       await page.goto('/boards')
@@ -195,7 +232,7 @@ test.describe
     })
 
     test('7. the idea moves through the statuses and stays moved', async ({ page }) => {
-      await signIn(page, world.memberEmail, world.memberPassword + 'x')
+      await signIn(page, world.memberEmail, world.memberPasswordRotated)
 
       await page.goto('/boards')
       await page.getByRole('link', { name: world.board }).click()
@@ -264,17 +301,11 @@ test.describe
       // By position rather than by name: this organization's catalog is whatever creating it
       // provisioned, and pinning a default status's name here would make this spec fail the day
       // that default changes for reasons having nothing to do with renaming.
-      const edit = page.getByRole('link', { name: /^Edit / }).first()
-      await expect(edit).toBeVisible({ timeout: 30_000 })
-
-      const original = ((await edit.getAttribute('aria-label')) ?? '').replace(/^Edit /, '')
-      expect(original, 'the Edit control should name the status it edits').not.toBe('')
-
-      await edit.click()
-      await expect(page.getByLabel('Name')).toHaveValue(original)
+      const original = await openEditForm(page, 'Name')
+      expect(original, 'the edit form should load the status it names').not.toBe('')
 
       const renamed = `Renamed ${String(Date.now())}`
-      await page.getByLabel('Name').fill(renamed)
+      await textbox(page, 'Name').fill(renamed)
       await page.getByRole('button', { name: 'Save changes' }).click()
 
       // Back on the list, and carrying the new name — proving the write landed rather than that the
@@ -287,5 +318,78 @@ test.describe
       await page.goto('/boards')
       await page.locator('a[href^="/boards/"]').first().click()
       await expect(page.getByText(renamed).first()).toBeVisible()
+    })
+
+    test('11. the org admin renames an idea type', async ({ page }) => {
+      await signIn(page, world.adminEmail, world.adminPasswordRotated)
+      await page.goto('/settings/idea-types')
+
+      await openEditForm(page, 'Name')
+
+      const renamed = `Type ${String(Date.now())}`
+      await textbox(page, 'Name').fill(renamed)
+      await page.getByRole('button', { name: 'Save changes' }).click()
+
+      await expect(page).toHaveURL(/\/settings\/idea-types$/)
+      await expect(page.getByRole('cell', { name: renamed, exact: true })).toBeVisible()
+    })
+
+    test('12. the org admin changes a member role and it takes effect', async ({ page }) => {
+      await signIn(page, world.adminEmail, world.adminPasswordRotated)
+      await page.goto('/settings/users')
+
+      // The member this run created, by email: every run makes a "Journey Member", so the display
+      // name matches several rows after a few runs and the email is the only unique cell.
+      await page.locator('tr').filter({ hasText: world.memberEmail }).getByRole('link').click()
+
+      // Hydration again: the select accepts an option before React has taken the form over, and
+      // the change is lost when it does. Waiting for a field the server filled proves it is ready.
+      await expect(textbox(page, 'First name')).not.toHaveValue('', { timeout: 30_000 })
+      await page.getByLabel('Role').selectOption('ReadOnly')
+      await page.getByRole('button', { name: 'Save changes' }).click()
+      await expect(page).toHaveURL(/\/settings\/users$/)
+
+      // **The assertion that matters is not the table.** A role written to a row proves a form
+      // posted; a role that changes what the person may do proves the product read it. Read Only
+      // sees the New idea control disabled — the documented behaviour, rather than its absence.
+      await signIn(page, world.memberEmail, world.memberPasswordRotated)
+      await page.goto('/ideas')
+      await expect(page.getByRole('button', { name: /new idea/i }).first()).toBeDisabled({
+        timeout: 30_000,
+      })
+    })
+
+    test('13. the site admin corrects the organization they created', async ({ page }) => {
+      await signInAsSelf(page)
+      await page.goto('/settings/organizations')
+
+      await page
+        .locator('tr')
+        .filter({ hasText: world.organization })
+        .getByRole('link', { name: /^Manage / })
+        .click()
+
+      // A contact field rather than the name: the name is what the row is found by, and the point
+      // of this step is that the profile columns survive a save. `PUT /organizations/{id}` replaces
+      // rather than patches, so a form that posted only the name would null these.
+      await expect(textbox(page, 'Name')).not.toHaveValue('', { timeout: 30_000 })
+      const city = `City ${String(Date.now())}`
+      await textbox(page, 'City').fill(city)
+      await page.getByRole('button', { name: 'Save changes' }).click()
+      await expect(page).toHaveURL(/\/settings\/organizations$/)
+
+      // Reopened rather than read off the list, because the list shows a composed location cell and
+      // this is asking whether the column itself was written.
+      await page
+        .locator('tr')
+        .filter({ hasText: world.organization })
+        .getByRole('link', { name: /^Manage / })
+        .click()
+      await expect(textbox(page, 'City')).toHaveValue(city, { timeout: 30_000 })
+
+      // And the description is still there, which is the half a replacing PUT would have erased.
+      await expect(page.getByRole('textbox', { name: 'Description', exact: true })).toHaveValue(
+        'Created by the journey suite.',
+      )
     })
   })

@@ -1,21 +1,17 @@
-import { existsSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { defineConfig, devices } from '@playwright/test'
+import { e2eDatabaseUrl, loadRepositoryEnv } from './database-url'
+
+// Before anything below reads `process.env` - `webServer[].env` is evaluated as this module loads.
+loadRepositoryEnv()
 
 /**
- * The repository's own `.env`, loaded before anything reads `process.env`.
+ * The schema every server below is pointed at.
  *
- * Playwright starts this process itself, so nothing else has loaded it - `pnpm dev` loads the same
- * file through `tools/local/start.ts`, and without this the suite could only be run through a
- * wrapper that did. `DATABASE_URL` is the one that matters: global setup derives the throwaway
- * schema from it and refuses to run at all when it is missing.
- *
- * Real environment variables win, which is what lets CI point `DATABASE_URL` or
- * `COLLEGA_E2E_DATABASE_URL` somewhere else without editing a file.
+ * Derived here rather than read back from what `global-setup.ts` exports into the environment,
+ * because this object literal is evaluated before global setup runs - see `database-url.ts` for
+ * what that cost when it was the other way round.
  */
-const envFile = resolve(dirname(fileURLToPath(import.meta.url)), '..', '.env')
-if (existsSync(envFile)) process.loadEnvFile(envFile)
+const DATABASE_URL = e2eDatabaseUrl()
 
 /**
  * Where to find a Chromium, when the one Playwright wants is not downloadable.
@@ -94,9 +90,8 @@ export default defineConfig({
       // Built output rather than a watcher, matching `tools/local/start.ts`: nothing in a test run
       // edits the API, and `global-setup.ts` has already built it.
       //
-      // `DATABASE_URL` is read from the variable global setup writes back, so this starts against
-      // the schema it just rebuilt. Re-deriving it here could answer differently and the failure
-      // would look like a seeding bug.
+      // The same string global setup rebuilds, from the same function, so the server cannot end up
+      // pointed at a different schema than the one that was just seeded.
       command: 'node apps/api/dist/bootstrap.js',
       cwd: '..',
       // Health depends on nothing, so it answers the moment the host is listening - which is what
@@ -108,7 +103,7 @@ export default defineConfig({
       stderr: 'pipe',
       env: {
         PORT: '3001',
-        DATABASE_URL: process.env.COLLEGA_E2E_DATABASE_URL ?? '',
+        DATABASE_URL,
         NODE_ENV: 'test',
         // Deterministic across runs, and never a real key: the token this signs lives for the
         // length of one suite.

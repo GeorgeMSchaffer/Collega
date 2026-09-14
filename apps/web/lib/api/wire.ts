@@ -65,15 +65,48 @@ export type WireOrganizationListItem = {
 }
 
 /**
- * `GET /organizations/{id}`, read for the invite code alone.
+ * `GET /organizations/{id}`.
  *
- * The detail carries eighteen more fields — logo, address, contact, AI-key metadata — and none of
- * them is on this surface, so none is written down. Narrow on purpose (see this file's header).
+ * **Wider than the header's narrowness rule usually allows, and for a specific reason:**
+ * `PUT /organizations/{id}` is a full replace, so every profile field the form does not post comes
+ * back null. The edit form therefore has to read them all in order to write them all back, which
+ * makes these fields load-bearing rather than speculative.
+ *
+ * Still not everything the detail carries. The logo trio and the AI-key metadata stay off: the
+ * logo has its own two routes and no screen posts it through this one, and nothing on this surface
+ * reads the key fields.
  */
 export type WireOrganizationDetail = {
   organizationId: string
   title: string
+  description: string
   inviteCode: string
+  address: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  phone: string | null
+  primaryContactFirstName: string | null
+  primaryContactLastName: string | null
+  isArchived: boolean
+}
+
+/**
+ * `GET /users/{id}`, for the screen that edits one.
+ *
+ * `firstName` and `lastName` apart rather than the list's composed `displayName`, because
+ * `PUT /users/{id}` requires both separately — and there is no way back from a display name to the
+ * two columns that made it.
+ */
+export type WireUserDetail = {
+  userId: string
+  organizationId: string | null
+  firstName: string
+  lastName: string
+  email: string
+  role: string
+  status: string
+  mustChangePassword: boolean
 }
 
 /** `POST /organizations/{id}/invite-code/regenerate`. */
@@ -183,6 +216,24 @@ export type WireFieldDefinition = {
   name: string
   fieldType: string
   isRequired: boolean
+}
+
+/**
+ * `GET /organizations/{id}/field-definitions/{id}`, for the screen that edits one.
+ *
+ * Wider than the list item because `PUT` on the same path is a full replace — including
+ * `options`, whose ids carry the identity of every idea value already referencing them. A body
+ * without them does not leave the options alone; it deletes them.
+ */
+export type WireFieldDefinitionDetail = {
+  fieldDefinitionId: string
+  organizationId: string
+  name: string
+  description: string | null
+  fieldType: string
+  isRequired: boolean
+  displayOrder: number
+  options: readonly { optionId: string; label: string; displayOrder: number }[]
 }
 
 /** `GET /organizations/{id}/business-impacts`, same default. */

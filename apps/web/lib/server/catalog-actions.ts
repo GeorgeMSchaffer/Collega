@@ -19,15 +19,16 @@
  *
  * ## What is not here
  *
- * Reorder, and the idea-type equivalents of rename and recolour. Both have endpoints
- * (`POST …/statuses/reorder`, `PUT /idea-types/{id}`); comp P puts reorder behind drag-and-drop,
- * which does not exist yet, and the idea-type row `Edit` stays inert until it gets the same
- * treatment statuses got here.
+ * Reorder, for either catalog (`POST …/statuses/reorder`, `POST …/idea-types/reorder`). Comp P puts
+ * it behind drag-and-drop, which does not exist yet, and both routes replace the whole order at
+ * once rather than moving one row — so there is nothing to call until something can express an
+ * order. Also absent: an idea type's curated field selection and its badge appearance, which are
+ * separate routes and separate screens.
  *
- * Renaming, recolouring and archiving a status DO live here, on a small page of their own rather
- * than in comp P's docked inspector. That is a deliberate downgrade: the inspector is a larger
- * piece of work than the write it wraps, and a catalog nobody can correct is worse than one
- * corrected on a plain page. The inspector can replace the page later without touching the action.
+ * Renaming and archiving both catalogs DO live here, on small pages of their own rather than in
+ * comp P's docked inspector. That is a deliberate downgrade: the inspector is a larger piece of
+ * work than the writes it wraps, and a catalog nobody can correct is worse than one corrected on a
+ * plain page. The inspector can replace those pages later without touching these actions.
  */
 
 import { revalidatePath } from 'next/cache'
@@ -191,4 +192,145 @@ function revalidateCatalog(): void {
   revalidatePath('/settings/statuses')
   revalidatePath('/settings/boards')
   revalidatePath('/boards', 'layout')
+}
+
+/**
+ * Renames one idea type (`PUT /idea-types/{id}`).
+ *
+ * Name only, and no `sortOrder`, for the reason `updateStatus` sends none: absent means "leave it",
+ * so renaming cannot reorder the catalog as a side effect.
+ *
+ * It deliberately does not touch the type's curated field selection either. That is
+ * `PUT …/{id}/fields`, it replaces the whole selection, and a rename form that posted an empty one
+ * would silently turn a curated type back into "every active field".
+ */
+export async function updateIdeaType(
+  _previous: EditCatalogItemState,
+  form: FormData,
+): Promise<EditCatalogItemState> {
+  const ideaTypeId = String(form.get('ideaTypeId') ?? '')
+
+  try {
+    await apiPut(apiPath`/idea-types/${ideaTypeId}`, { name: String(form.get('name') ?? '') })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateIdeaTypes()
+  redirect('/settings/idea-types')
+}
+
+/**
+ * Archives one idea type (`DELETE /idea-types/{id}`).
+ *
+ * Soft, like the status equivalent: ideas already of this type keep resolving it, so the option
+ * leaves the create form rather than the record leaving the database.
+ */
+export async function deleteIdeaType(
+  _previous: EditCatalogItemState,
+  form: FormData,
+): Promise<EditCatalogItemState> {
+  const ideaTypeId = String(form.get('ideaTypeId') ?? '')
+
+  try {
+    await apiDelete(apiPath`/idea-types/${ideaTypeId}`)
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateIdeaTypes()
+  redirect('/settings/idea-types')
+}
+
+/** The catalog screen, and the create-idea form whose type picker reads the same list. */
+function revalidateIdeaTypes(): void {
+  revalidatePath('/settings/idea-types')
+  revalidatePath('/ideas')
+}
+
+/**
+ * Edits one custom field (`PUT /organizations/{orgId}/field-definitions/{id}`).
+ *
+ * **The options are the dangerous part, and the reason this action is longer than the others.**
+ * The route replaces them wholesale: an option posted with its `optionId` keeps its identity and
+ * every idea value referencing it, an option posted without one is created, and an option simply
+ * not posted is *deleted along with those values*. So the form renders every existing option and
+ * this reassembles the complete list — an empty `options` on a Dropdown would silently empty it.
+ *
+ * `fieldType` is posted back unchanged because the service refuses to change it after creation, and
+ * `displayOrder` because omitting it would move the field to the front of the list as a side effect
+ * of renaming it.
+ *
+ * Blank labels are dropped rather than sent. That is what makes the trailing empty row on the form
+ * an "add one" affordance instead of a validation failure: `fieldDefinitionBodyRules` marks every
+ * option label required, so an untouched blank row would be a 400 on a form nobody typed in.
+ */
+export async function updateFieldDefinition(
+  _previous: EditCatalogItemState,
+  form: FormData,
+): Promise<EditCatalogItemState> {
+  const fieldDefinitionId = String(form.get('fieldDefinitionId') ?? '')
+
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) return { error: NO_ORGANIZATION }
+
+  const options = form
+    .getAll('optionLabel')
+    .map((label, index) => ({
+      // Empty means a row the form rendered blank for adding, so there is no option to target.
+      optionId: String(form.getAll('optionId')[index] ?? '') || null,
+      label: String(label).trim(),
+      displayOrder: index,
+    }))
+    .filter((option) => option.label !== '')
+
+  try {
+    await apiPut(apiPath`/organizations/${organizationId}/field-definitions/${fieldDefinitionId}`, {
+      name: String(form.get('name') ?? ''),
+      description: String(form.get('description') ?? ''),
+      fieldType: String(form.get('fieldType') ?? ''),
+      isRequired: form.get('isRequired') === 'on',
+      displayOrder: Number(form.get('displayOrder') ?? 0),
+      options,
+    })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateFields()
+  redirect('/settings/fields')
+}
+
+/**
+ * Archives one custom field (`DELETE /organizations/{orgId}/field-definitions/{id}`).
+ *
+ * Soft, like every other archive here: the values ideas already carry for this field keep
+ * resolving, and the field stops being asked for on the create form.
+ */
+export async function deleteFieldDefinition(
+  _previous: EditCatalogItemState,
+  form: FormData,
+): Promise<EditCatalogItemState> {
+  const fieldDefinitionId = String(form.get('fieldDefinitionId') ?? '')
+
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) return { error: NO_ORGANIZATION }
+
+  try {
+    await apiDelete(
+      apiPath`/organizations/${organizationId}/field-definitions/${fieldDefinitionId}`,
+    )
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateFields()
+  redirect('/settings/fields')
+}
+
+/** The field list, and the idea screens whose forms ask for these fields. */
+function revalidateFields(): void {
+  revalidatePath('/settings/fields')
+  revalidatePath('/settings/idea-types')
+  revalidatePath('/ideas')
 }

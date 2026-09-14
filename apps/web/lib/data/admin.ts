@@ -22,16 +22,27 @@ import { apiGet, apiPath } from '../api/client'
 import type {
   WireCurrentUser,
   WireFieldDefinition,
+  WireFieldDefinitionDetail,
   WireIdeaType,
   WireOrganizationDetail,
   WireOrganizationListItem,
   WirePage,
+  WireUserDetail,
   WireUserListItem,
 } from '../api/wire'
 import { API_MAX_PAGE_SIZE } from '../limits'
 import * as fixture from '../mock'
 import { currentUser } from '../session'
-import type { FieldDefinition, IdeaType, Member, Organization, Profile } from '../types'
+import type {
+  FieldDefinition,
+  FieldDefinitionDetail,
+  IdeaType,
+  Member,
+  MemberDetail,
+  Organization,
+  OrganizationDetail,
+  Profile,
+} from '../types'
 import { failIfRequested, resolve } from './latency'
 import { everyOrganization, organizationScope } from './scope'
 
@@ -158,6 +169,102 @@ export async function getInviteCode(): Promise<string | null> {
   )
 
   return organization.inviteCode
+}
+
+/**
+ * One organization, whole, for the screen that edits it.
+ *
+ * Reads the same route `getInviteCode` does and keeps everything rather than one field, because
+ * `PUT /organizations/{id}` replaces the profile wholesale — see `OrganizationDetail`. Site Admin
+ * only in practice: the list it is reached from is theirs, and rule 26's bootstrap exemption is
+ * what lets them write it.
+ */
+export async function getOrganizationDetail(organizationId: string): Promise<OrganizationDetail> {
+  failIfRequested('getOrganizationDetail')
+
+  const organization = await apiGet<WireOrganizationDetail>(
+    'getOrganizationDetail',
+    apiPath`/organizations/${organizationId}`,
+  )
+
+  return {
+    id: organization.organizationId,
+    name: organization.title,
+    description: organization.description,
+    inviteCode: organization.inviteCode,
+    isArchived: organization.isArchived,
+    address: organization.address,
+    city: organization.city,
+    state: organization.state,
+    zip: organization.zip,
+    phone: organization.phone,
+    primaryContactFirstName: organization.primaryContactFirstName,
+    primaryContactLastName: organization.primaryContactLastName,
+  }
+}
+
+/**
+ * One custom field, whole, for the screen that edits it.
+ *
+ * Organization-scoped in the path like every other field-definition route, so this asks the API
+ * whose session it is rather than taking an organization from the caller — the same reasoning
+ * `catalog-actions.ts` gives for not making that a form field.
+ */
+export async function getFieldDefinitionDetail(
+  fieldDefinitionId: string,
+): Promise<FieldDefinitionDetail | null> {
+  failIfRequested('getFieldDefinitionDetail')
+
+  const scope = organizationScope()
+  if (scope === null) return null
+
+  const field = await apiGet<WireFieldDefinitionDetail>(
+    'getFieldDefinitionDetail',
+    apiPath`/organizations/${scope}/field-definitions/${fieldDefinitionId}`,
+  )
+
+  return {
+    id: field.fieldDefinitionId,
+    name: field.name,
+    description: field.description,
+    fieldType: field.fieldType,
+    required: field.isRequired,
+    displayOrder: field.displayOrder,
+    options: field.options.map((option) => ({
+      id: option.optionId,
+      label: option.label,
+      displayOrder: option.displayOrder,
+    })),
+  }
+}
+
+/**
+ * One account, for the screen that edits it.
+ *
+ * `GET /users/{id}` rather than a `find` over the people list, unlike the catalog edit pages: the
+ * single-item route exists here, and the list deliberately composes `displayName` from the two name
+ * columns — so finding the row would hand back a name that cannot be posted to a form asking for
+ * first and last separately.
+ *
+ * `role` and `status` are narrowed from the wire's plain strings. The API answers with the domain's
+ * own spellings and nothing else, so the cast asserts what the contract already guarantees rather
+ * than papering over a real uncertainty.
+ */
+export async function getMemberDetail(userId: string): Promise<MemberDetail> {
+  failIfRequested('getMemberDetail')
+
+  const user = await apiGet<WireUserDetail>('getMemberDetail', apiPath`/users/${userId}`)
+
+  return {
+    id: user.userId,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    organizationId: user.organizationId,
+    role: user.role as MemberDetail['role'],
+    status: user.status as MemberDetail['status'],
+    mustChangePassword: user.mustChangePassword,
+  }
 }
 
 export async function getIdeaTypes(): Promise<IdeaType[]> {
