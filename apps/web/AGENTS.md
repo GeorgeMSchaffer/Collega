@@ -1,3 +1,41 @@
+# apps/web
+
+The Next.js client (App Router). **HTTP only** — it may import `@collega/design-system` and nothing
+else from the workspace. An import of `@collega/application`, `@collega/domain` or
+`@collega/infrastructure` is a lint error, and that is deliberate
+(`SPEC/50-typescript-migration.md` §4.3): the browser tier reaches `apps/api` over the wire.
+
+## Layout
+
+| Path | Holds |
+|---|---|
+| `app/(auth)/`, `app/(desk)/` | The route groups — login/register/change-password, and the signed-in surfaces |
+| `app/(desk)/design-system/` | The primitive gallery; check a design-system change here first |
+| `app/globals.css` | Tailwind entry point only — the theme lives in `@collega/design-system` |
+| `components/` | Screen components, grouped by surface |
+| `lib/data/` | **The data seam** — every reader the screens call |
+| `lib/api/` | `fetch` client, wire types, Problem Details handling |
+| `lib/server/` | Server actions (`*-actions.ts`) |
+| `lib/mock.ts` | Fixtures for the surfaces not yet pointed at the API |
+| `test/` | Vitest |
+
+Use the `@/…` alias (`@/lib`, `@/components`, `@/app`) rather than relative paths.
+
+## Conventions
+
+- **Screens call `lib/data/`, never `lib/api/` or `lib/mock.ts` directly.** Each reader there is
+  either a real `fetch` or still a fixture, and the call site cannot tell — converting a reader
+  replaces a body, never a signature. Read that file's header before adding one.
+- **Fixtures live only in `lib/mock.ts`**, and mirror the demo seed exactly. No screen invents its
+  own.
+- **No business rules here.** Validation that decides an outcome belongs in
+  `packages/application`; the client validates for feedback, not for authority.
+- Build from `@collega/design-system` primitives; don't restyle shadcn per screen or reach for raw
+  colours.
+- `'use client'` only where interaction needs it. A client file that reaches a server-only module
+  through a barrel typechecks and then fails `next build`, which is why the build is part of
+  `pnpm check`.
+
 ## A deploy can be cancelled by the ignore step, and that is not a failure
 
 `vercel.json`'s `ignoreCommand` asks Turbo whether `@collega/web` was affected since the previous
