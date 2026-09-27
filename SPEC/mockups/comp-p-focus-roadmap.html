@@ -1102,7 +1102,12 @@ input[type=file]{font-family:inherit;font-size:14px}
     </aside>
   <div class="main">
     <div class="topbar"><span class="crumb"><a href="#" data-go="s-home">Home</a> / <b>Boards</b></span><span class="spacer"></span>
-      <a class="btn" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Manage boards</a></div>
+      <a class="btn" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Manage boards</a>
+      <a class="btn pri" href="#" data-go="comp-p-admin.html#s-board-new" data-roles="OrgAdmin">New board</a>
+      <span class="deniedwrap" data-roles="User ReadOnly"><button class="btn" aria-disabled="true" aria-describedby="p-why-mb-mem">Manage boards</button><span class="denied" id="p-why-mb-mem">Administrators only</span></span>
+      <span class="deniedwrap" data-roles="User ReadOnly"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-nb-mem">New board</button><span class="denied" id="p-why-nb-mem">Administrators only</span></span>
+      <span class="deniedwrap" data-roles="SiteAdmin"><button class="btn" aria-disabled="true" aria-describedby="p-why-mb-sa">Manage boards</button><span class="denied" id="p-why-mb-sa">Act as a member</span></span>
+      <span class="deniedwrap" data-roles="SiteAdmin"><button class="btn pri" aria-disabled="true" aria-describedby="p-why-nb-sa">New board</button><span class="denied" id="p-why-nb-sa">Act as a member</span></span></div>
     <div class="work">
       <div class="pgh"><div class="grow"><h1>Boards</h1>
         <div class="sub" data-roles="OrgAdmin User ReadOnly">Boards you can access. Selecting a board opens its swim lanes.</div>
@@ -1129,7 +1134,7 @@ input[type=file]{font-family:inherit;font-size:14px}
         </table>
       </div>
 
-      <div class="note"><b>A list, not a command center.</b> Boards are created and configured under Settings, so this page has no create action; it exists so a member can find a board by name and see, before opening it, whether members may move cards on it. &ldquo;User status moves&rdquo; is the board&rsquo;s <code>AllowUserStatusUpdate</code> flag written as a marker with a label, never a bare colour. A Site Admin sees the same table with an Organization column and every organization&rsquo;s boards in it.</div>
+      <div class="note"><b>A chooser that also leads to board settings.</b> Boards are created and configured under Settings; since 2026-09-27 (<code>SPEC/decisions.md</code>) this page carries the way there &mdash; Manage boards and New board &mdash; live for an Org Admin and disabled with the reason for everyone else. It exists so a member can find a board by name and see, before opening it, whether members may move cards on it. &ldquo;User status moves&rdquo; is the board&rsquo;s <code>AllowUserStatusUpdate</code> flag written as a marker with a label, never a bare colour. A Site Admin sees the same table with an Organization column and every organization&rsquo;s boards in it.</div>
     </div>
   </div>
 </div></section>
@@ -1312,6 +1317,9 @@ input[type=file]{font-family:inherit;font-size:14px}
       <div class="seg" role="group" aria-label="View"><button aria-pressed="false" data-go="s-ideas">List</button><button aria-pressed="true">Lanes</button></div>
       <label for="p-boardpick" class="vh">Board</label><select id="p-boardpick" style="width:auto"><option selected>Ideas</option><option>Opportunities</option></select>
       <button class="btn">Export CSV</button>
+      <a class="btn" href="#" data-go="comp-p-admin.html#s-board-edit" data-roles="OrgAdmin">Edit board</a>
+      <span class="deniedwrap" data-roles="User ReadOnly"><button class="btn" aria-disabled="true" aria-describedby="p-why-eb-mem">Edit board</button><span class="denied" id="p-why-eb-mem">Administrators only</span></span>
+      <span class="deniedwrap" data-roles="SiteAdmin"><button class="btn" aria-disabled="true" aria-describedby="p-why-eb-sa">Edit board</button><span class="denied" id="p-why-eb-sa">Act as a member</span></span>
       <button class="btn" data-roles="OrgAdmin User" aria-expanded="true">Hide import</button>
       <span class="deniedwrap" data-roles="SiteAdmin"><button class="btn" aria-disabled="true" aria-describedby="p-why-bi-sa">Import CSV</button><span class="denied" id="p-why-bi-sa">Through View As</span></span>
       <button class="btn pri" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>

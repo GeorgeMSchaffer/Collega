@@ -9,6 +9,29 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-27 — Desk screens use the full width, and the Boards screens carry the board actions
+
+**Decided by the user.** Two changes to comp P's structure, both prompted by using the app on a
+wide monitor as an Org Admin.
+
+- **No content cap.** Comp P capped `.work` at 1320px. On a wide screen a board's lanes scrolled
+  sideways beside a band of empty space, which is the one layout a kanban board must not have. The
+  cap is removed from every desk screen and from the comp P/Q sources (`_build/extra.css`,
+  `build_q.py`), and the comps are regenerated so they still match. Prose keeps its own measure
+  (`max-w-prose`, `max-w-2xl`), so only tables, grids and lanes widen. Sprint 6.5 made the same
+  call for the old admin pages (`max-width: none`).
+- **Board actions where boards are.** Creating and editing a board lived only under Settings →
+  Boards, and nothing on the Boards screens led there. The workspace Boards screen now carries
+  **Manage boards** and **New board** in its topbar and **Edit** on each board; a board's own topbar
+  carries **Edit board**. This supersedes comp P's `s-boards` note that the page "has no create
+  action" and `20-feature-client-ui-revisions.md`'s "the Boards page displays ONLY a list".
+  They follow "Denied is shown, not hidden" (2026-09-08): every role other than Org Admin sees them
+  disabled with the reason (*Administrators only*, or *Act as a member* for a Site Admin). An
+  earlier draft hid them for other roles, citing comp P's `data-roles`; that is the comp Q habit
+  2026-09-08 already declined to follow, so it was corrected before merge.
+
+---
+
 ## 2026-09-13 — The AI integration is rescoped and respecified after the current batch
 
 **Decided by the user.** Sequencing, not cancellation: finish the batch in flight — the remainder of
