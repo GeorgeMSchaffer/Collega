@@ -34,7 +34,28 @@ for what is live until v2 ships.
   mapping accuracy and scope-gate results. `ai-draft` and `ai-polish`, specified and never built,
   are withdrawn.
 
-## 2026-09-27 — Terrazzo is the palette, with a per-user theme picker
+## 2026-09-27 — The S0.2 schema freeze is amended a third time, for structured ideas and board archive
+
+**Decided by the user**, with the rescope above and board archive ("One list and detail pattern"
+below). Under the 2026-09-11 rule — the freeze stands, and each change to `schema.prisma` needs
+its own entry here — this is that entry. It is not a general licence either.
+
+- **`ideas`** gains `problem VARCHAR(2000)`, `proposed_solutions TEXT[]` (1 to 5 items, enforced in
+  the domain) and `impact_rationale VARCHAR(1000)`; **`description` changes from `NOT NULL` to
+  nullable**, since it is now an optional summary.
+- **`boards`** gains `is_archived BOOLEAN` and `archived_at_utc` (timestamp, nullable), for archive
+  in place of delete.
+- **The migrations backfill** per rule 2a of `20-feature-ideas-and-engagement.md`: Problem takes the
+  idea's Description, or *Not captured before 2026-09-27.* when that is empty; Proposed solutions
+  takes the single item *Not captured before 2026-09-27.*; Impact rationale takes the same text.
+  Every existing board reads not archived. After the backfill the three idea columns are required
+  on every save.
+
+**Golden corpus.** This changes the idea detail and list response shapes and makes `description`
+nullable, so the replay will differ there. Those differences are accepted, and slice 099 records
+them in `tools/golden/src/accepted.ts`.
+
+## 2026-09-27 — Terrazzo is the palette, with a theme picker
 
 **Decided by the user** after comparing palettes live in comp R. Comp P left the palette open; this
 closes it. **Terrazzo** (slate blue with pistachio and blush) is the default. A theme picker at the
@@ -60,8 +81,8 @@ candidates (Sprout, Blueprint, the bright Piazza, Mercato) were reviewed and dro
 - **Row actions a role may not use are hidden**, narrowing "Denied is shown, not hidden"
   (2026-09-02, 2026-09-08) with a third exception. Page-level actions still show disabled with the
   reason, so a member still learns what exists.
-- **Boards are archived, not deleted**, replacing "boards have no delete". Their ideas are never
-  orphaned.
+- **Boards are archived, not deleted.** Until now boards had no delete endpoint or action;
+  archiving fills that gap, and their ideas are never orphaned.
 - **"Add New {Item}"** in title case, right-aligned level with the page's H1 and description.
 - **Bug Triage exception granted** for this work (answered the same day), on one condition: the
   first slice also fixes the "two level-1 headings" item, since the new page header rewrites those
@@ -90,6 +111,10 @@ descriptions), so neither view costs a request per board. `SPEC/20-feature-clien
 ---
 
 ## 2026-09-27 — Desk screens use the full width, and the Boards screens carry the board actions
+
+> **Superseded in part 2026-09-27** by "One list and detail pattern, and a drawer instead of the
+> docked inspector": the topbar's *Manage boards* / *New board* pair became the page header's single
+> *Add New Board*, and *Edit* opens the board form in the drawer instead of going to Settings.
 
 **Decided by the user.** Two changes to comp P's structure, both prompted by using the app on a
 wide monitor as an Org Admin.
@@ -816,6 +841,10 @@ not been shown to fail has not been shown to do anything.
 
 ## 2026-09-08 — An empty state's action is disabled with a reason, never omitted
 
+> **Superseded in part 2026-09-27** by "One list and detail pattern, and a drawer instead of the
+> docked inspector": "Denied is shown, not hidden" gains a third exception — per-row actions in a
+> list a role may not use are hidden. Page-level and empty-state actions are unchanged.
+
 **The conflict.** Comp Q applies two different rules to the same situation. Its delivery screens
 (`s-sprint`, `s-roadmap`, `s-issue` tasks) render an empty state's action three ways under
 `data-roles`: live for an Org Admin, `aria-disabled` for a Site Admin with *"Act as an Acme Robotics
@@ -1371,6 +1400,10 @@ bind the TypeScript stack.
 
 ## 2026-09-03 — Comp P is the canonical comp; the client is built on Tailwind CSS + shadcn/ui
 
+> **Superseded in part 2026-09-27** by "Terrazzo is the palette, with a theme picker" (fonts are per
+> theme, not Geist alone) and "One list and detail pattern, and a drawer instead of the docked
+> inspector" (the drawer replaces the docked inspector for detail, edit and create).
+
 **Decided:** comp P is the canonical UI comp for the product and the target of the
 TypeScript conversion's Wave E — its structure, information architecture and copy model are
 what ships. The client is built on a framework rather than hand-rolled CSS: **Tailwind CSS
@@ -1465,6 +1498,10 @@ included) and A3 (replay harness) are live work now and belong on Sprint 8's cal
 
 ## 2026-08-31 — Comp P is the locked UI direction; colour stays open
 
+> **Superseded in part 2026-09-27**: the palette is decided — Terrazzo ("Terrazzo is the palette,
+> with a theme picker") — and the drawer replaces the docked inspector ("One list and detail
+> pattern, and a drawer instead of the docked inspector").
+
 **Decided:** `SPEC/mockups/comp-p-focus-roadmap.html` is the locked structural direction
 for the client UI. Its **layout, information architecture, and copy model are locked**.
 Its **palette is explicitly not locked** and is expected to be tweaked.
@@ -1557,6 +1594,10 @@ reasoning in `SPEC/50-typescript-migration.md`.
 ---
 
 ## 2026-09-02 — A denied admin route shows a refusal, not a disabled page
+
+> **Superseded in part 2026-09-27** by "One list and detail pattern, and a drawer instead of the
+> docked inspector": the "disabled with a reason" rule this entry builds on is narrowed — per-row
+> actions a role may not use are hidden. Refusal panels for denied routes are unchanged.
 
 The comp P refresh plan settled that denied actions should render **disabled with a
 reason** rather than hidden, which is the right rule for a control inside a page the
