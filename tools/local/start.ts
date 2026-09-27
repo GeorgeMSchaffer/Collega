@@ -95,13 +95,16 @@ function canBind(port: number): Promise<boolean> {
 /**
  * The first free port from `preferred` upward, skipping `taken`.
  *
- * Both checks, because neither is enough alone: on Windows a dual-stack bind succeeds beside a
- * server that holds only `127.0.0.1`, and a bound-but-not-yet-listening port refuses a connection.
+ * All three checks, because none is enough alone: on Windows a dual-stack bind succeeds beside a
+ * server that holds only `127.0.0.1` or only `::1` (what `localhost` resolves to first there), and
+ * a bound-but-not-yet-listening port refuses a connection.
  */
 async function freePort(preferred: number, taken: number[] = []): Promise<number> {
   for (let port = preferred; port < preferred + 100; port++) {
     if (taken.includes(port)) continue
-    if ((await canBind(port)) && !(await listening(port))) return port
+    if ((await canBind(port)) && !(await listening(port)) && !(await listening(port, '::1'))) {
+      return port
+    }
   }
   return fail(`No free port between ${preferred} and ${preferred + 99}.`)
 }
@@ -271,9 +274,9 @@ const serverEnv: NodeJS.ProcessEnv = {
 /**
  * Each server in its own process group, so stopping it stops what it started.
  *
- * `pnpm --filter @collega/web dev` is a wrapper around a wrapper: killing the pnpm process leaves
- * `next dev` holding port 3000, and the next run of this script fails on a port that nothing
- * visible owns. Signalling the whole group (`-pid`) is what actually ends it. Windows has no
+ * `pnpm --filter @collega/web exec next dev` is a wrapper around a wrapper: killing the pnpm
+ * process leaves `next dev` holding its port, and the next run of this script moves off a port
+ * that nothing visible owns. Signalling the whole group (`-pid`) is what actually ends it. Windows has no
  * process groups, so there the pid is signalled directly and pnpm passes it down itself.
  */
 const GROUPED = process.platform !== 'win32'
