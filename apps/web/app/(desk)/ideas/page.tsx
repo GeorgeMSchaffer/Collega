@@ -2,6 +2,7 @@ import { Button, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { GatedAction } from '@/components/common/gated-action'
+import { PageHeader } from '@/components/common/page-header'
 import { IdeasTable } from '@/components/ideas/ideas-table'
 import { NewIdeaForm } from '@/components/ideas/new-idea-form'
 import { Topbar } from '@/components/nav/topbar'
@@ -46,31 +47,35 @@ export default async function IdeasPage({
   return (
     <>
       <Topbar
-        title="Ideas"
+        title={<b>Ideas</b>}
         actions={
           <>
             <Link href="/boards">
               <Button variant="outline">Lane view</Button>
             </Link>
             <Button variant="outline">Export CSV</Button>
-            {roleDenial ? (
-              <GatedAction id="why-new-ideas" label="New idea" denial={roleDenial} />
-            ) : (
-              <NewIdeaForm boardId={null} boards={boards} options={options} />
-            )}
           </>
         }
       />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
-        <div>
-          <h1>Ideas</h1>
-          {totalCount > 0 ? (
-            <p className="m-0 mt-1 text-sm text-muted-foreground">
-              {totalCount} {totalCount === 1 ? 'idea' : 'ideas'} across every board in this
-              organization, newest first. Open one to inspect it.
-            </p>
-          ) : null}
-        </div>
+        <PageHeader
+          title="Ideas"
+          description={
+            totalCount > 0 ? (
+              <>
+                {totalCount} {totalCount === 1 ? 'idea' : 'ideas'} across every board in this
+                organization, newest first. Open one to inspect it.
+              </>
+            ) : null
+          }
+          action={
+            roleDenial ? (
+              <GatedAction id="why-new-ideas" label="Add New Idea" denial={roleDenial} />
+            ) : (
+              <NewIdeaForm boardId={null} boards={boards} options={options} />
+            )
+          }
+        />
         {/* Empty means empty, and says so. There is no filter control on this screen, so "nothing
             matched" would be a lie — and this is the answer a Site Admin gets every time, having no
             organization to list ideas from. */}
@@ -78,12 +83,12 @@ export default async function IdeasPage({
           <EmptyState
             heading="No ideas yet"
             // Only where the role may NOT author, for the reason the board's empty state gives: a
-            // second live "New idea" would be a second copy of the same dialog, with the same
-            // heading and the same field ids as the working one in the top bar. Where the role may
+            // second live "Add New Idea" would be a second copy of the same dialog, with the same
+            // heading and the same field ids as the working one in the page header. Where the role may
             // author, the copy points at that one instead.
             action={
               roleDenial ? (
-                <GatedAction id="why-new-idea-empty" label="New idea" denial={roleDenial} />
+                <GatedAction id="why-new-idea-empty" label="Add New Idea" denial={roleDenial} />
               ) : undefined
             }
           >
@@ -91,8 +96,8 @@ export default async function IdeasPage({
               <>An idea is raised on a board, against one of its idea types.</>
             ) : (
               <>
-                An idea is raised on a board, against one of its idea types. Use &ldquo;New
-                idea&rdquo; in the top bar to add the first one.
+                An idea is raised on a board, against one of its idea types. Use &ldquo;Add New
+                Idea&rdquo; above to add the first one.
               </>
             )}
           </EmptyState>

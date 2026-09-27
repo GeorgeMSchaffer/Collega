@@ -1,5 +1,6 @@
 import { buttonVariants, Dot, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
+import { PageHeader } from '@/components/common/page-header'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { IssueCard } from '@/components/delivery/issue-card'
 import { Topbar } from '@/components/nav/topbar'
@@ -40,15 +41,18 @@ export default async function SprintBoardPage() {
         }
       />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
-        <div>
-          <h1>Sprint board</h1>
-          <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">
-            Issues committed to the running sprint, in five fixed delivery statuses. Only the person
-            who raised it, an assignee, or an administrator can move one &mdash; and moving needs{' '}
-            <code className="font-mono text-xs">PUT /ideas/&#123;id&#125;/delivery-status</code>,
-            which is live but not yet wired to a control.
-          </p>
-        </div>
+        <PageHeader
+          title="Sprint board"
+          description={
+            <>
+              Issues committed to the running sprint, in five fixed delivery statuses. Only the
+              person who raised it, an assignee, or an administrator can move one &mdash; and moving
+              needs{' '}
+              <code className="font-mono text-xs">PUT /ideas/&#123;id&#125;/delivery-status</code>,
+              which is live but not yet wired to a control.
+            </>
+          }
+        />
 
         {sprint ? (
           <>

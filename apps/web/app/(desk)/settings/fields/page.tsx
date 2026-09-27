@@ -64,7 +64,7 @@ export default async function FieldsPage() {
           ? 'Custom fields across every organization. Open an organization to change its fields.'
           : "Extra questions attached to an idea type. A field appears on an idea only when that idea's type asks for it."
       }
-      actions={siteAdmin ? undefined : <Button>Add field</Button>}
+      actions={siteAdmin ? undefined : <Button>Add New Field</Button>}
     >
       {siteAdmin ? <CrossOrgNote what="A field" /> : null}
       {rows.length === 0 ? (

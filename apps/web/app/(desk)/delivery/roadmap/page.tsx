@@ -1,5 +1,6 @@
 import { Dot, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
+import { PageHeader } from '@/components/common/page-header'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { Topbar } from '@/components/nav/topbar'
 import { getDeliveryStatuses, getIssues, getIssuesForOutcome, getOutcomes } from '@/lib/data'
@@ -45,17 +46,19 @@ export default async function RoadmapPage() {
             Delivery / <b className="font-medium text-foreground">Roadmap</b>
           </span>
         }
-        actions={<AdminAction id="why-outcome" label="Add outcome" />}
       />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
-        <div>
-          <h1>Roadmap</h1>
-          <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">
-            What the quarter is for. Each outcome groups the issues that serve it; an issue sits
-            under one outcome, so every count here is a plain count and the rows add up to the
-            delivery set.
-          </p>
-        </div>
+        <PageHeader
+          title="Roadmap"
+          description={
+            <>
+              What the quarter is for. Each outcome groups the issues that serve it; an issue sits
+              under one outcome, so every count here is a plain count and the rows add up to the
+              delivery set.
+            </>
+          }
+          action={<AdminAction id="why-outcome" label="Add New Outcome" />}
+        />
 
         {outcomes.length === 0 ? (
           <EmptyState

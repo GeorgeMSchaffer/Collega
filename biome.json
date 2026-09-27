@@ -329,7 +329,7 @@
       }
     },
     {
-      "includes": ["apps/web/lib/server/current-user.ts"],
+      "includes": ["apps/web/lib/server/current-user.ts", "apps/web/lib/server/theme.ts"],
       "linter": {
         "rules": {
           "style": {

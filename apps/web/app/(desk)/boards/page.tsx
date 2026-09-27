@@ -4,6 +4,7 @@ import { BoardCard } from '@/components/boards/board-card'
 import { BoardTable } from '@/components/boards/board-table'
 import { type BoardsView, ViewToggle } from '@/components/boards/view-toggle'
 import { GatedAction } from '@/components/common/gated-action'
+import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { getBoardOverviews } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -32,35 +33,42 @@ export default async function BoardsPage({
           actions are an Org Admin's, and every other role sees them disabled with the reason
           ("Denied is shown, not hidden", `SPEC/20-feature-client-ui.md`). */}
       <Topbar
-        title="Boards"
+        title={<b>Boards</b>}
         actions={
-          <>
-            <GatedAction
-              id="why-manage-boards"
-              label="Manage boards"
-              denial={adminDenial}
-              variant="outline"
-            >
-              <Link href="/settings/boards" className={buttonVariants({ variant: 'outline' })}>
-                Manage boards
-              </Link>
-            </GatedAction>
-            <GatedAction id="why-new-board" label="New board" denial={adminDenial}>
-              <Link href="/settings/boards/new" className={buttonVariants()}>
-                New board
-              </Link>
-            </GatedAction>
-          </>
+          <GatedAction
+            id="why-manage-boards"
+            label="Manage boards"
+            denial={adminDenial}
+            variant="outline"
+          >
+            <Link href="/settings/boards" className={buttonVariants({ variant: 'outline' })}>
+              Manage boards
+            </Link>
+          </GatedAction>
         }
       />
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="m-0 max-w-2xl text-muted-foreground">
-            Every board organizes the same organization&rsquo;s ideas by status. Open one to see its
-            lanes.
-          </p>
-          {boards.length === 0 ? null : <ViewToggle view={view} />}
-        </div>
+        <PageHeader
+          title="Boards"
+          description={
+            <>
+              Every board organizes the same organization&rsquo;s ideas by status. Open one to see
+              its lanes.
+            </>
+          }
+          action={
+            <GatedAction id="why-new-board" label="Add New Board" denial={adminDenial}>
+              <Link href="/settings/boards/new" className={buttonVariants()}>
+                Add New Board
+              </Link>
+            </GatedAction>
+          }
+        />
+        {boards.length === 0 ? null : (
+          <div className="flex justify-end">
+            <ViewToggle view={view} />
+          </div>
+        )}
         {boards.length === 0 ? (
           <EmptyState
             heading="No boards yet"

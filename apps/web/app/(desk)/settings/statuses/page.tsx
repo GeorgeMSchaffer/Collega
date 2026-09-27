@@ -76,11 +76,11 @@ export default async function StatusesPage() {
           : 'The columns your boards group ideas by. Order here is the order on every board.'
       }
       // An anchor rather than a button: the create form is a card on this page (comp P puts it
-      // beside the list rather than in a drawer), so the topbar action's job is to reach it.
+      // beside the list rather than in a drawer), so the header action's job is to reach it.
       actions={
         siteAdmin ? undefined : (
           <a href="#add-status" className={buttonVariants()}>
-            Add status
+            Add New Status
           </a>
         )
       }

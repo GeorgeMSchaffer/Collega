@@ -30,7 +30,7 @@ export default async function SettingsBoardsPage() {
       actions={
         siteAdmin ? undefined : (
           <Link href="/settings/boards/new" className={buttonVariants()}>
-            New board
+            Add New Board
           </Link>
         )
       }

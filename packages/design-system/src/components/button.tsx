@@ -15,7 +15,7 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground shadow-xs hover:bg-primary/90',
+        default: 'bg-primary text-primary-foreground shadow-xs hover:bg-[var(--primary-hover)]',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         outline:
           'border border-input bg-card shadow-xs hover:bg-accent hover:text-accent-foreground',
@@ -24,10 +24,11 @@ export const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        sm: 'h-8 rounded-md px-3',
-        default: 'h-9 px-4 py-2',
-        lg: 'h-10 rounded-md px-6',
-        icon: 'size-9',
+        // Heights are the shared control tokens in globals.css, so density is one edit there.
+        sm: 'h-[var(--control-h-sm)] rounded-md px-3',
+        default: 'h-[var(--control-h)] px-4 py-2',
+        lg: 'h-[var(--control-h-lg)] rounded-md px-6',
+        icon: 'size-[var(--control-h)]',
       },
     },
     defaultVariants: { variant: 'default', size: 'default' },

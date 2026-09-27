@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@collega/design-system'
 import Link from 'next/link'
+import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, isAdministrator, type Role } from '@/lib/session'
@@ -158,18 +159,18 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <Topbar title="Settings" />
+      <Topbar title={<b>Settings</b>} />
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
-        <div>
-          <h1>Settings</h1>
-          <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">
-            {currentUser().role === 'SiteAdmin'
+        <PageHeader
+          title="Settings"
+          description={
+            currentUser().role === 'SiteAdmin'
               ? 'Deployment-wide configuration. Open an organization to change what belongs to it.'
               : admin
                 ? `Configuration for ${currentUser().organizationName}.`
-                : 'Your own account. Everything else here belongs to an organization administrator.'}
-          </p>
-        </div>
+                : 'Your own account. Everything else here belongs to an organization administrator.'
+          }
+        />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sections.map((section) => (

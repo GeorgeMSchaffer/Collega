@@ -2,6 +2,7 @@ import { buttonVariants, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { GatedAction } from '@/components/common/gated-action'
+import { PageHeader } from '@/components/common/page-header'
 import { Lane } from '@/components/ideas/lane'
 import { NewIdeaForm } from '@/components/ideas/new-idea-form'
 import { Topbar } from '@/components/nav/topbar'
@@ -79,31 +80,33 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
                 Edit board
               </Link>
             </GatedAction>
-            {/* The board is context here, so the form asks for everything except that. A role that
-                may not author gets the same control, disabled with its reason, and none of the
-                form's client bundle. */}
-            {roleDenial ? (
-              <GatedAction id="why-new-board" label="New idea" denial={roleDenial} />
-            ) : (
-              <NewIdeaForm boardId={board.id} options={options} />
-            )}
           </>
         }
       />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
-        <div>
-          <h1>{board.name}</h1>
-          <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">
-            {canMove ? (
+        <PageHeader
+          title={board.name}
+          description={
+            canMove ? (
               <>
                 Move a card between lanes with the arrows on it. A move saves immediately and the
                 board re-reads itself, so what you see after it is what the server holds.
               </>
             ) : (
               <>{moveDenial}. Cards open read-only, and nothing here can be moved.</>
-            )}
-          </p>
-        </div>
+            )
+          }
+          action={
+            // The board is context here, so the form asks for everything except that. A role that
+            // may not author gets the same control, disabled with its reason, and none of the
+            // form's client bundle.
+            roleDenial ? (
+              <GatedAction id="why-new-board" label="Add New Idea" denial={roleDenial} />
+            ) : (
+              <NewIdeaForm boardId={board.id} options={options} />
+            )
+          }
+        />
 
         <div className="flex items-start gap-3 overflow-x-auto pb-3">
           {/* The board's own lanes, in the board's own order — not the organization's status
@@ -128,8 +131,8 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
 
             The action below appears only for a role that may NOT author, which is the opposite of
             the usual shape and is what "shown, not hidden" actually asks for here: the refusal is
-            the thing worth showing, and a second live "New idea" would mean a second dialog in the
-            document with the same heading and the same ids as the working one in the top bar. The
+            the thing worth showing, and a second live "Add New Idea" would mean a second dialog in the
+            document with the same heading and the same ids as the working one in the page header. The
             copy points at that one instead.
 
             It is gated on `roleDenial`, not `moveDenial`: authoring is refused for ReadOnly alone
@@ -140,7 +143,7 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
             heading="No ideas on this board yet"
             action={
               roleDenial ? (
-                <GatedAction id="why-new-board-empty" label="New idea" denial={roleDenial} />
+                <GatedAction id="why-new-board-empty" label="Add New Idea" denial={roleDenial} />
               ) : undefined
             }
           >
@@ -148,7 +151,7 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
               <>Nothing has been raised here yet.</>
             ) : (
               <>
-                Use &ldquo;New idea&rdquo; in the top bar to add the first one. It lands in{' '}
+                Use &ldquo;Add New Idea&rdquo; above to add the first one. It lands in{' '}
                 {board.lanes[0]?.name ?? 'the left-most lane'}.
               </>
             )}

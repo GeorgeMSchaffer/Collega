@@ -18,7 +18,10 @@ export function Label({ className, ...props }: LabelProps) {
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: htmlFor is required by LabelProps, so every render is bound
     <label
-      className={cn('mb-1.5 block text-sm font-medium text-foreground', className)}
+      className={cn(
+        'mb-1.5 block text-[length:var(--label-size)] font-medium text-foreground',
+        className,
+      )}
       {...props}
     />
   )

@@ -1,5 +1,6 @@
 import { Avatar, buttonVariants, Dot, EmptyState, Marker } from '@collega/design-system'
 import Link from 'next/link'
+import { PageHeader } from '@/components/common/page-header'
 import { AdminAction } from '@/components/delivery/admin-action'
 import { Topbar } from '@/components/nav/topbar'
 import { getBacklogIssues, getDeliveryStatuses, getOutcomes, getSprints } from '@/lib/data'
@@ -33,14 +34,16 @@ export default async function BacklogPage() {
         actions={next ? <AdminAction id="why-start" label={`Start ${next.name}`} /> : undefined}
       />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
-        <div>
-          <h1>Backlog</h1>
-          <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">
-            Issues that are committed but not yet in a sprint, most upvoted first &mdash; so the
-            list reads as the organization&rsquo;s own priority order. Assigning a sprint moves the
-            row; it is still the same idea, still carrying its history.
-          </p>
-        </div>
+        <PageHeader
+          title="Backlog"
+          description={
+            <>
+              Issues that are committed but not yet in a sprint, most upvoted first &mdash; so the
+              list reads as the organization&rsquo;s own priority order. Assigning a sprint moves
+              the row; it is still the same idea, still carrying its history.
+            </>
+          }
+        />
 
         {rows.length === 0 ? (
           <EmptyState

@@ -209,7 +209,7 @@ test.describe
       // a Site Admin - the exact role the page exists for. A test that types the address cannot tell
       // a working screen from an unreachable one. Found 2026-09-14, in production, by a person.
       await page.goto('/settings/users')
-      await page.getByRole('link', { name: /add user/i }).click()
+      await page.getByRole('link', { name: /add new user/i }).click()
       await expect(page).toHaveURL(/\/settings\/users\/new$/, { timeout: 30_000 })
 
       // A Site Admin belongs to no organization, so the form must ask which one. This is the step the
