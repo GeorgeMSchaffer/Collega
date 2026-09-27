@@ -320,7 +320,10 @@ let seq = 0;
 const ideas = IDEAS_SEED.map((i, n) => {
   const short = i.title.split(': ').slice(1).join(': ') || i.title;
   const custom = i.type === 'Process Revision' ? { owner: 'Olivia Administer', safety: n % 3 === 0 } : { hours: 2 + (n % 5), area: i.board === 'Opportunities' ? 'Field service' : 'Assembly' };
-  return { ...i, id: 'i' + ++seq, short, sample: true, due: null, custom,
+  // Authors are illustrative (the seed's author ids aren't in this sample); they drive the edit rule
+  // for Problem, Proposed solutions and Impact rationale: the author or an Org Admin only.
+  const author = ['Noah Contributor', 'Maya Collaborator', 'Olivia Administer'][n % 3];
+  return { ...i, id: 'i' + ++seq, short, sample: true, due: null, custom, author, thread: [], voted: false,
     problem: `Sample: today there is no way to ${short.charAt(0).toLowerCase() + short.slice(1)}, so the team works around it by hand.`,
     solutions: [`Sample: ${short}.`],
     rationale: 'Sample: saves time for the people doing the work and reduces errors.',
@@ -333,11 +336,14 @@ const boards = [
 ];
 
 const S = { screen: 'boards', role: 'OrgAdmin', board: 'Opportunities', lists: {}, drawer: null, returnFocus: null, ai: 'ok' };
+const archivedBoard = (name) => boards.find((b) => b.name === name)?.archived;
 const can = {
-  createIdea: () => S.role !== 'ReadOnly', editIdea: () => S.role !== 'ReadOnly', deleteIdea: () => S.role === 'OrgAdmin',
-  createBoard: () => S.role === 'OrgAdmin', editBoard: () => S.role === 'OrgAdmin', archiveBoard: () => S.role === 'OrgAdmin',
+  createIdea: () => S.role !== 'ReadOnly', editIdea: (i) => S.role !== 'ReadOnly' && !archivedBoard(i?.board), deleteIdea: (i) => S.role === 'OrgAdmin' && !archivedBoard(i?.board),
+  // The substance of an idea is its author's: Problem, Proposed solutions and Impact rationale.
+  editSubstance: (i) => !i || S.role === 'OrgAdmin' || i.author === ROLES[S.role][0],
+  createBoard: () => S.role === 'OrgAdmin', editBoard: (b) => S.role === 'OrgAdmin' && !b?.archived, archiveBoard: () => S.role === 'OrgAdmin',
 };
-const why = { board: 'Administrators only', idea: 'Read-only account' };
+const why = { board: 'Administrators only', idea: 'Read-only account', archived: 'This board is archived' };
 
 const fmtDate = (d) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const boardIdeas = (name) => ideas.filter((i) => i.board === name);
@@ -357,13 +363,12 @@ const DEFS = {
     filters: [{ key: 'state', label: 'Status', options: ['Active', 'Archived'], get: (b) => (b.archived ? 'Archived' : 'Active'), initial: ['Active'] }],
     cols: [
       { key: 'name', label: 'Board', sort: (b) => b.name.toLowerCase(), cell: (b) => `<button class="ttl" data-view="${b.id}">${esc(b.name)}</button><span class="sub">${esc(b.description ?? 'No description yet.')}</span>` },
-      { key: 'ideas', label: 'Ideas', num: true, sort: (b) => boardIdeas(b.name).length, cell: (b) => boardIdeas(b.name).length },
-      { key: 'lanes', label: 'Lanes', num: true, sort: (b) => (b.archived ? 4 : 5), cell: (b) => (b.archived ? 4 : 5) },
+      { key: 'ideas', label: 'Ideas by lane', sort: (b) => boardIdeas(b.name).length, cell: (b) => laneMix(b) },
       { key: 'tags', label: 'Top tags', sort: (b) => topTags(boardIdeas(b.name))[0]?.[0] ?? '', cell: (b) => tagsHtml(topTags(boardIdeas(b.name)).map((t) => t[0]), 2) },
       { key: 'created', label: 'Created', sort: (b) => b.created, cell: (b) => `${fmtDate(b.created)}<span class="sub">${esc(b.by)}</span>` },
       { key: 'state', label: 'Status', sort: (b) => (b.archived ? 1 : 0), cell: (b) => `<span class="chip ${b.archived ? 'state-arch' : 'state-act'}">${b.archived ? 'Archived' : 'Active'}</span>` },
     ],
-    actions: (b) => [['eye', 'View', 'view', true], ['edit', 'Edit', 'edit', can.editBoard()], [b.archived ? 'unarchive' : 'archive', b.archived ? 'Unarchive' : 'Archive', 'archive', can.archiveBoard()]],
+    actions: (b) => [['eye', 'View', 'view', true], ['edit', 'Edit', 'edit', can.editBoard(b)], [b.archived ? 'unarchive' : 'archive', b.archived ? 'Unarchive' : 'Archive', 'archive', can.archiveBoard()]],
     card: (b) => { const list = boardIdeas(b.name); return `<article class="card">
       <div class="top"><button class="ttl" data-view="${b.id}" style="font:var(--h-weight) 17px var(--display)">${esc(b.name)}</button>${b.archived ? '<span class="chip state-arch">Archived</span>' : ''}</div>
       <span style="color:var(--muted);font-size:13px">${esc(b.description ?? 'No description yet.')}</span>
@@ -375,7 +380,7 @@ const DEFS = {
     noun: 'Idea', views: ['list', 'cards'], rows: () => ideas,
     text: (i) => [i.title, i.board, i.status, i.priority, i.impact, i.problem, ...i.tags, ...i.assignees].join(' '),
     filters: [
-      { key: 'board', label: 'Board', options: () => boards.filter((b) => !b.archived).map((b) => b.name), get: (i) => i.board },
+      { key: 'board', label: 'Board', options: () => boards.map((b) => b.name + (b.archived ? ' (archived)' : '')), get: (i) => i.board + (archivedBoard(i.board) ? ' (archived)' : '') },
       { key: 'status', label: 'Status', options: STATUSES.map((s) => s[0]), get: (i) => i.status },
       { key: 'priority', label: 'Priority', options: PRIOS, get: (i) => i.priority },
       { key: 'tags', label: 'Tags', options: () => [...new Set(ideas.flatMap((i) => i.tags))].sort(), get: (i) => i.tags },
@@ -389,7 +394,7 @@ const DEFS = {
       { key: 'tags', label: 'Tags', sort: (i) => i.tags[0] ?? '', cell: (i) => tagsHtml(i.tags, 2) },
       { key: 'votes', label: 'Votes', num: true, sort: (i) => i.votes, cell: (i) => votes(i.votes) },
     ],
-    actions: (i) => [['eye', 'View', 'view', true], ['edit', 'Edit', 'edit', can.editIdea()], ['trash', 'Delete', 'delete', can.deleteIdea()]],
+    actions: (i) => [['eye', 'View', 'view', true], ['edit', 'Edit', 'edit', can.editIdea(i)], ['trash', 'Delete', 'delete', can.deleteIdea(i)]],
     card: (i) => `<article class="card">
       <div class="top"><button class="ttl" data-view="${i.id}">${esc(i.short)}</button>${votes(i.votes)}</div>
       <div class="meta">${statusChip(i.status)}${prioChip(i.priority)}</div>
@@ -414,6 +419,10 @@ function filtered(key) {
     const s = st.sel[f.key]; if (!s.size) return true; const v = f.get(r); return Array.isArray(v) ? v.some((x) => s.has(x)) : s.has(v); }));
   if (st.sort) { const c = d.cols.find((x) => x.key === st.sort); rows = [...rows].sort((a, b) => { const x = c.sort(a), y = c.sort(b); return (x > y ? 1 : x < y ? -1 : 0) * st.dir; }); }
   return rows;
+}
+function laneMix(b) {
+  const list = boardIdeas(b.name), first = list.filter((i) => i.status === STATUSES[0][0]).length, last = list.filter((i) => i.status === STATUSES[4][0]).length;
+  return `<div class="lstrip" style="margin-bottom:4px">${STATUSES.map(([s, c]) => { const n = list.filter((i) => i.status === s).length; return n ? `<span style="flex:${n};background:${c}"></span>` : ''; }).join('')}</div><span class="sub"><b style="color:var(--ink)">${list.length}</b> ideas · ${first} new · ${list.length - first - last} in between · ${last} complete</span>`;
 }
 function rowActions(key, r) {
   return DEFS[key === 'board' ? 'ideas' : key].actions(r).filter((a) => a[3])
@@ -471,7 +480,7 @@ function render() {
   let head;
   if (key === 'boards') { crumb.innerHTML = '<b>Boards</b>'; head = header('Boards', 'Every board organizes the same organization’s ideas by status. Open one to see its lanes.', 'Board', can.createBoard(), why.board); }
   else if (key === 'ideas') { crumb.innerHTML = '<b>Ideas</b>'; head = header('Ideas', 'Every idea on every board. Filter, sort, or open one to read and edit it.', 'Idea', can.createIdea(), why.idea); }
-  else { const b = boards.find((x) => x.name === S.board); crumb.innerHTML = `<button data-go="boards">Boards</button> / <b>${esc(b.name)}</b>`; head = header(b.name, esc(b.description), 'Idea', can.createIdea(), why.idea); }
+  else { const b = boards.find((x) => x.name === S.board); crumb.innerHTML = `<button data-go="boards">Boards</button> / <b>${esc(b.name)}</b>`; head = header(b.name, esc(b.description), 'Idea', can.createIdea() && !b.archived, b.archived ? why.archived : why.idea) + (b.archived ? `<div class="notice" role="status">${svg('archive')}<span style="flex:1">This board is archived. Its lanes and ideas are read-only.</span>${can.archiveBoard() ? `<button class="btn sm" data-act="archive" data-id="${b.id}">Unarchive</button>` : ''}</div>` : ''); }
   let body;
   if (st.view === 'lanes') body = lanes(rows);
   else { const page = rows.slice((st.page - 1) * st.size, st.page * st.size); body = (st.view === 'list' ? table(key, page) : `<div class="cards">${page.map(DEFS[key].card).join('') || '<div class="empty">Nothing matches these filters.</div>'}</div>`) + pager(key, rows.length); }
@@ -491,7 +500,7 @@ function openDrawer(mode, id, trigger) {
   drawer.classList.remove('wide');
   if (mode === 'create' && key !== 'boards') return openCreateIdea();
   drawer.innerHTML = drawerHtml(key, mode, id); drawer.classList.add('open');
-  if (mode === 'edit' && key !== 'boards') wireIdeaForm(findRow(id));
+  if (mode === 'edit' && key !== 'boards') { const row = findRow(id); wireIdeaForm(row); if (!can.editSubstance(row)) lockSubstance(); }
   focusHeading();
   if (key === 'board') render();
 }
@@ -512,7 +521,7 @@ function drawerHtml(key, mode, id) {
       <div><dt>Created</dt><dd>${fmtDate(r.created)}</dd></div><div><dt>By</dt><dd>${avatars([r.by])} ${esc(r.by)}</dd></div>
       <div><dt>User status moves</dt><dd>${r.userMoves ? 'Allowed' : 'Admins only'}</dd></div><div><dt>Top tags</dt><dd>${tagsHtml(topTags(list).map((t) => t[0])) || '—'}</dd></div></dl>
       <div class="lstrip">${STATUSES.map(([s, c]) => { const n = list.filter((i) => i.status === s).length; return n ? `<span style="flex:${n};background:${c}"></span>` : ''; }).join('')}</div></div>`,
-      `${r.archived ? '' : `<button class="btn pri" data-open-board="${esc(r.name)}">Open board</button>`}${can.editBoard() ? `<button class="btn" data-act="edit" data-id="${r.id}">${svg('edit')}Edit</button>` : ''}<span class="sp"></span>${can.archiveBoard() ? `<button class="btn ghost" data-act="archive" data-id="${r.id}">${svg(r.archived ? 'unarchive' : 'archive')}${r.archived ? 'Unarchive' : 'Archive'}</button>` : ''}`);
+      `<button class="btn pri" data-open-board="${esc(r.name)}">Open board</button>${can.editBoard(r) ? `<button class="btn" data-act="edit" data-id="${r.id}">${svg('edit')}Edit</button>` : ''}<span class="sp"></span>${can.archiveBoard() ? `<button class="btn ghost" data-act="archive" data-id="${r.id}">${svg(r.archived ? 'unarchive' : 'archive')}${r.archived ? 'Unarchive' : 'Archive'}</button>` : ''}`);
   }
   if (key === 'boards') {
     return shell(mode === 'create' ? 'New board' : 'Edit board', mode === 'create' ? 'Add New Board' : esc(r.name), `<form id="dform" class="dbody" novalidate>
@@ -533,8 +542,11 @@ function drawerHtml(key, mode, id) {
       <div class="sect"><h3>Impact rationale</h3><p>${esc(r.rationale)}</p></div>
       ${cf ? `<div class="sect"><h3>${esc(r.type)} fields</h3><dl class="facts">${cf}</dl></div>` : ''}
       ${r.sample ? '<span class="samp">Problem, solutions, rationale and custom-field values on seeded ideas are sample copy.</span>' : ''}
-      <div style="display:flex;gap:10px;align-items:center">${votes(r.votes)}<span class="sub">${r.comments} comments · raised ${fmtDate(r.created)}</span></div></div>`,
-      `${can.editIdea() ? `<button class="btn pri" data-act="edit" data-id="${r.id}">${svg('edit')}Edit</button>` : ''}<span class="sp"></span>${can.deleteIdea() ? `<button class="btn ghost" style="color:var(--hot-t)" data-act="delete" data-id="${r.id}">${svg('trash')}Delete</button>` : ''}`);
+      <div class="sect"><h3>Discussion</h3>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px"><button class="btn sm" data-act="vote" data-id="${r.id}" aria-pressed="${r.voted}">${svg('up')}${r.voted ? 'Upvoted' : 'Upvote'} · ${r.votes}</button><span class="sub">raised ${fmtDate(r.created)} by ${esc(r.author)}</span></div>
+        ${r.thread.length ? r.thread.map((c) => `<div class="msg bot" style="max-width:100%;margin-bottom:6px"><b>${esc(c.by)}</b><br>${esc(c.text)}</div>`).join('') : `<p class="sub" style="margin-bottom:6px">${r.comments ? r.comments + ' earlier comments are not in this sample.' : 'No comments yet.'}</p>`}
+        <form id="comment-form" data-id="${r.id}" style="display:flex;gap:6px"><label class="vh" for="c-comment">Add a comment</label><input id="c-comment" placeholder="Add a comment… @ to mention" style="flex:1;border:1px solid var(--line2);border-radius:8px;padding:8px 10px"><button class="btn sm">Comment</button></form></div></div>`,
+      `${can.editIdea(r) ? `<button class="btn pri" data-act="edit" data-id="${r.id}">${svg('edit')}Edit</button>` : ''}<span class="sp"></span>${can.deleteIdea(r) ? `<button class="btn ghost" style="color:var(--hot-t)" data-act="delete" data-id="${r.id}">${svg('trash')}Delete</button>` : ''}`);
   }
   // edit: the structured form, without the assistant
   return shell(`Edit · ${esc(r.board)}`, esc(r.short), `<form id="dform" class="dbody" novalidate>${ideaFormFields('edit')}</form>`,
@@ -600,7 +612,7 @@ function wireIdeaForm(draft) {
   });
   drawer.querySelector('#dform').addEventListener('change', (e) => { if (e.target.id?.startsWith('c-') || e.target.closest('#f-assignees') || e.target.tagName === 'SELECT') e.target.dispatchEvent(new Event('input', { bubbles: true })); });
   drawer.querySelector('#dform').addEventListener('click', (e) => {
-    if (e.target.closest('[data-sol-add]')) { D.solutions.push(''); own('solutions'); drawSolutions(); drawer.querySelector(`[data-sol="${D.solutions.length - 1}"]`).focus(); }
+    if (e.target.closest('[data-sol-add]')) { if (D.solutions.length >= 5) { toast('An idea holds up to 5 solutions'); return; } D.solutions.push(''); own('solutions'); drawSolutions(); drawer.querySelector(`[data-sol="${D.solutions.length - 1}"]`).focus(); }
     const del = e.target.closest('[data-sol-del]'); if (del) { D.solutions.splice(+del.dataset.solDel, 1); own('solutions'); drawSolutions(); }
   });
   // The assistant's write path: fills unless the person owns the field, and reports what it did.
@@ -627,13 +639,17 @@ function wireIdeaForm(draft) {
   S.form = D;
   return D;
 }
+// Problem, Proposed solutions and Impact rationale belong to the author (or an Org Admin).
+function lockSubstance() {
+  ['problem', 'solutions', 'rationale'].forEach((k) => { const box = drawer.querySelector(`[data-f="${k}"]`); box.querySelectorAll('input, textarea, button').forEach((x) => (x.disabled = true)); const n = document.createElement('small'); n.textContent = 'Only the author or an Org Admin can change this.'; box.append(n); });
+}
 function saveIdea(id) {
   const D = S.form, m = D.missing(); D.showErrors(m); if (m.length) return;
   const sol = D.solutions.map((s) => s.trim()).filter(Boolean);
   let i = ideas.find((x) => x.id === id);
   if (!i) { i = { id: 'i' + ++seq, board: drawer.querySelector('#f-board')?.value ?? D.board, votes: 0, comments: 0, created: '2026-09-27', status: 'New / Pending', sample: false }; ideas.unshift(i); }
   Object.assign(i, { short: D.title.trim(), title: D.title.trim(), problem: D.problem.trim(), solutions: sol, rationale: D.rationale.trim(), impact: D.impact, priority: D.priority, type: D.type,
-    status: id ? D.status : i.status, due: D.due, assignees: D.assignees, tags: D.tags, description: D.description || `${D.problem.trim()} Proposed: ${sol.join('; ')}`, custom: D.custom, sample: false });
+    status: id ? D.status : i.status, due: D.due, assignees: D.assignees, tags: D.tags, description: D.description.trim() || null, custom: D.custom, sample: false, author: i.author ?? ROLES[S.role][0] });
   render(); toast(id ? 'Saved' : 'Idea created'); S.returnFocus = null; openDrawer('view', i.id);
 }
 function saveBoard(id) {
@@ -718,10 +734,21 @@ function send(text) {
     done = true; think.remove(); chat.pending = null;
     // A failed turn still keeps what was typed: it is mapped onto the form before the hand-off, so
     // nothing the person said is lost when the conversation moves to the form.
-    if (S.ai === 'fail') { S.ai = 'ok'; controls(); extract(text); bot('I’m not able to respond right now. Everything you’ve told me is in the form, so let’s finish there.'); setTimeout(() => toFormMode('failed'), 900); return; }
+    if (S.ai === 'fail') { S.ai = 'ok'; controls(); placeFailedTurn(text); bot('I’m not able to respond right now. Everything you’ve told me is in the form, so let’s finish there.'); setTimeout(() => toFormMode('failed'), 900); return; }
     const { filled, kept } = extract(text);
     ask(filled, kept);
   }, 650);
+}
+
+// A failed turn has no model reply to map from, so its text is placed by a fixed rule (v2 spec
+// "Failure and hand-off"): the field just asked about, else Problem, else appended to Problem.
+function placeFailedTurn(text) {
+  const D = S.form, step = chat.step, clean = cap(text.trim());
+  const free = (k) => !D.owned.has(k) && !(k === 'solutions' ? D.solutions.some((s) => s.trim()) : String((k.startsWith('custom.') ? D.custom[k.slice(7)] : D[k]) ?? '').trim());
+  if (['problem', 'rationale', 'custom.owner', 'solutions'].includes(step) && free(step)) D.suggest(step, step === 'solutions' ? [clean] : clean);
+  else if (free('problem')) D.suggest('problem', clean);
+  else if (!D.owned.has('problem')) D.suggest('problem', `${D.problem} ${clean}`);
+  if (free('title')) D.suggest('title', cap(text.split(/\bbecause\b|[.;!?—]|,\s/i)[0].trim()).slice(0, 80));
 }
 
 function extract(text) {
@@ -777,7 +804,9 @@ function chip(btn) {
   if (kind === 'say') { send(val); return; }
   if (kind === 'manual') { toFormMode('manual'); return; }
   if (kind === 'sol') {
-    const on = btn.getAttribute('aria-pressed') !== 'true'; btn.setAttribute('aria-pressed', on);
+    const on = btn.getAttribute('aria-pressed') !== 'true';
+    if (on && D.solutions.filter((s) => s.trim()).length >= 5) { bot('An idea holds up to 5 solutions. Remove one in the form to add another.'); return; }
+    btn.setAttribute('aria-pressed', on);
     const list = D.solutions.filter((s) => s.trim() && s !== val); if (on) list.push(val);
     D.owned.delete('solutions'); D.suggest('solutions', list);
     if (!btn.parentElement.querySelector('[data-chip="next"]')) { const n = document.createElement('button'); n.type = 'button'; n.dataset.chip = 'next'; n.textContent = 'Done with solutions'; btn.parentElement.append(n); }
@@ -857,9 +886,12 @@ document.addEventListener('click', (e) => {
   else if (act === 'manual') toFormMode('manual');
   else if (act === 'assistant') toChatMode();
   else if (act === 'stop') chat.cancel?.();
+  else if (act === 'vote') { const r = findRow(t.dataset.id); r.voted = !r.voted; r.votes += r.voted ? 1 : -1; openDrawer('view', r.id); render(); drawer.querySelector('[data-act="vote"]')?.focus(); }
   else if (act === 'delete' || act === 'archive') confirmAction(act, t.dataset.id);
 });
-document.addEventListener('submit', (e) => { if (e.target.id === 'composer') { e.preventDefault(); const ta = drawer.querySelector('#c-text'); send(ta.value); ta.value = ''; } else e.preventDefault(); });
+document.addEventListener('submit', (e) => {
+  if (e.target.id === 'comment-form') { e.preventDefault(); const r = findRow(e.target.dataset.id), v = drawer.querySelector('#c-comment').value.trim(); if (!v) return; r.thread.push({ by: ROLES[S.role][0], text: v }); r.comments++; openDrawer('view', r.id); drawer.querySelector('#c-comment').focus(); return; }
+  if (e.target.id === 'composer') { e.preventDefault(); const ta = drawer.querySelector('#c-text'); send(ta.value); ta.value = ''; } else e.preventDefault(); });
 document.addEventListener('keydown', (e) => {
   if (e.target.id === 'c-text' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.form.requestSubmit(); return; }
   if (e.key === 'Escape') { if (document.querySelector('.pop')) closeMs(); else if (!modal.innerHTML) closeDrawer(); }
@@ -869,7 +901,7 @@ document.addEventListener('change', (e) => { if (e.target.id?.startsWith('size-'
 
 // ---------- prototype controls ----------
 const ps = document.getElementById('p-screens'), pr = document.getElementById('p-roles'), pt = document.getElementById('theme'), pa = document.getElementById('p-ai');
-// The theme is a per-user preference in the product; here it lives in this browser only.
+// The theme is remembered per browser, in a cookie in the product (here, localStorage).
 function setTheme(k) { document.documentElement.dataset.protoTheme = k; pt.value = k; try { localStorage.setItem('collega-theme', k); } catch {} }
 let saved = 'terrazzo'; try { saved = localStorage.getItem('collega-theme') || 'terrazzo'; } catch {}
 setTheme(THEMES.some(([k]) => k === saved) ? saved : 'terrazzo');
