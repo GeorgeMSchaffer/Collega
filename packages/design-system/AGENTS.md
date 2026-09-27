@@ -19,10 +19,15 @@ roots — the theme itself is not duplicated there.
 
 ## Conventions
 
-- **Comp P's structure is locked; the palette is open** (`SPEC/decisions.md` 2026-09-03). Comp Q
-  (`SPEC/mockups/comp-q-*.html`) is the reference rendering, carried over from
-  `SPEC/mockups/_build/q.css`. Change a token here and in the comps together, or the comps stop
-  being a reference.
+- **Comp P's structure is locked; the palette is five themes** (`SPEC/decisions.md` 2026-09-27):
+  Terrazzo (the default and the bare `:root`), Portico, Piazza Sera, Lagoon and Notte, each one
+  self-contained `[data-theme]` block in `src/globals.css` — colours, fonts, radius, suggestion hue.
+  Comp R (`SPEC/mockups/comp-r-portico-prototype.html`) holds the values; comp Q
+  (`SPEC/mockups/comp-q-*.html`) is rendered in Terrazzo from `SPEC/mockups/_build/q.css`. Change a
+  token here and in the comps together, or the comps stop being a reference.
+- **Control geometry is tokens** (`--control-h`, `--control-h-sm`, `--control-h-lg`,
+  `--control-px`, `--label-size` in `src/globals.css`), read by `Button`, `Label` and the base
+  layer's inputs. Change density there, not per component.
 - **Component classes from the comps (`.btn`, `.panel`, `.marker`, …) are deliberately not carried
   into CSS.** Each one is a real component in `src/components/` instead. Don't reintroduce them as
   global classes.
