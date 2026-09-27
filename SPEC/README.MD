@@ -27,6 +27,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 | `20-feature-idea-type-fields.md` | Idea types and per-type fields | In MVP scope |
 | `20-feature-view-as.md` | View As (act-as impersonation) | Post-MVP, **scheduled Sprint 6** |
 | `20-feature-ai-idea-assist.md` | AI-assisted idea drafting (brainstorm chat → Idea fields) | Post-MVP, **scheduled Sprint 7** |
+| `20-feature-ai-idea-assist-v2.md` | Idea assistant v2 — co-author beside the create form, structured idea fields (supersedes v1 once shipped) | Specified 2026-09-27; **phase 3** of comp R |
 | `20-feature-issues-and-delivery.md` | Idea → execution handoff | Post-MVP |
 | `20-feature-oauth.md` | OAuth/SSO | **Deferred** |
 | `20-feature-saml.md` | SAML | **Deferred** |

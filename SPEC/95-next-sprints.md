@@ -46,5 +46,14 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 7.5 | Accessibility and bug paydown — the ten `Bug Triage.md` items from the 2026-08-16 browser pass | `SPEC/sprints/sprint-07.5-accessibility-and-bug-paydown.md` | **Closed 2026-09-04** — implemented, verification stood down when Sprint 8 was cancelled | Small–Medium |
 | 8 | ~~Azure deployment (provision + first deploy + CI/CD)~~ | `SPEC/sprints/sprint-08-azure-deployment.md` | **CANCELLED 2026-09-04** — never started. The .NET stack is never deployed; both apps and the database go to Vercel at the end of the conversion (`SPEC/decisions.md`). Its one product item, the rule 32c flash, moves to Wave E. | — |
 | 9 | TypeScript conversion — **the active sprint** | `SPEC/sprints/sprint-09-typescript-conversion.md` | **In Progress (2026-09-04)** — Wave A complete; Wave 0 is the frontier | Large |
+| 10 | Comp R, phase 1 — themes, the list and detail pattern on Boards, a board and Ideas, structured idea fields, board archive | `SPEC/sprints/sprint-10-comp-r-phase-1.md` | Not started (planned 2026-09-27) | Large |
+
+**Comp R work (added 2026-09-27, `SPEC/decisions.md` "One list and detail pattern").** Three phases, in
+order: **phase 1** — themes, the list and detail pattern on Boards, a board and Ideas, the structured
+idea fields with their backfill, board archive and the two-`h1` fix — is **Sprint 10**,
+`SPEC/sprints/sprint-10-comp-r-phase-1.md` (Not started); **phase 2** is the TypeScript prompt-eval
+runner; **phase 3** is idea assistant v2 (`20-feature-ai-idea-assist-v2.md`). Settings and Delivery
+lists move to the pattern afterwards. The Bug Triage exception for this work is recorded in the same
+decision.
 
 Update the Status column here whenever a sprint file's own `Status:` line changes (Not started → In Progress → Complete), and move the file to `SPEC/sprints/archive/` once Complete.
