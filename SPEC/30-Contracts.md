@@ -871,7 +871,7 @@ Success response `200` item shape:
 - `name`
 - `allowUserStatusUpdate` boolean
 - `swimlaneCount`
-- `ideaCount` — live ideas on the board, excluding soft-deleted ones, so it matches the `totalCount` of `GET /api/v1/boards/{boardId}/ideas`. Added 2026-09-10: the boards list renders the figure on every card, and without it a client has to issue one idea request per board. This endpoint does not page, so that fan-out is unbounded.
+- `ideaCount` — live ideas on the board, excluding soft-deleted ones, so it matches the `totalCount` of `GET /api/v1/boards/{boardId}/ideas`. Added 2026-09-10: the boards list renders the figure on every card, and without it a client has to issue one idea request per board. This endpoint does not page, so that fan-out is unbounded. Like that list it counts only `Discovery`-phase ideas (corrected 2026-09-27 — it had also counted promoted Issues, so a board with promoted items reported more ideas than it showed).
 
 Added 2026-09-27 (`SPEC/decisions.md`), for the richer board cards. Every aggregate below counts the same ideas `ideaCount` does, and all of them are computed with a fixed number of grouped queries for the whole list, never one query per board:
 - `description` string or `null`

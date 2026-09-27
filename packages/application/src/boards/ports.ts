@@ -21,8 +21,8 @@ export interface BoardRepository {
   isStatusReferenced(statusId: string): Promise<boolean>
 
   /**
-   * Live ideas per board, keyed by board id, for the whole list in one query. Soft-deleted ideas
-   * are excluded, matching what `IdeaRepository.listByBoard` counts.
+   * Live ideas per board, keyed by board id, for the whole list in one query. Soft-deleted and
+   * Delivery-phase ideas are excluded, matching what the board's own idea list shows.
    *
    * On this port rather than a narrow lookup of its own (the `OrganizationExistenceLookup`
    * pattern) because it needs no wiring: the same adapter already serves `BoardRepository`, and a

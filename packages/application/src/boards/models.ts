@@ -33,8 +33,8 @@ export type BoardListItem = {
   readonly name: string
   readonly allowUserStatusUpdate: boolean
   readonly swimlaneCount: number
-  /** Live ideas on the board, excluding soft-deleted ones - the same population the board's own
-   * idea list counts, so a card reading "11 ideas" opens onto eleven. */
+  /** Live, Discovery-phase ideas on the board - the same population the board's own idea list
+   * counts, so a card reading "11 ideas" opens onto eleven. */
   readonly ideaCount: number
   readonly description: string | null
   readonly createdAtUtc: Date

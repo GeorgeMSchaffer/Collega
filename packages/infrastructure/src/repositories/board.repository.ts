@@ -18,6 +18,7 @@ import type {
 } from '@collega/application/boards'
 import type { BoardsPort } from '@collega/application/ideas'
 import type { Board, BoardSwimlane } from '@collega/domain/boards'
+import { IdeaPhase } from '@collega/domain/enums'
 import type {
   boards as BoardRow,
   board_swimlanes as SwimlaneRow,
@@ -47,10 +48,14 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
   }
 }
 
-/** The ideas every board-list aggregate counts: live ones, which is what the board's own idea list
- * shows, so a card's figures agree with the board it opens onto. */
+/**
+ * The ideas every board-list aggregate counts: exactly what `GET /boards/{id}/ideas` lists - live
+ * (not soft-deleted) and in the `Discovery` phase, since a promoted Issue leaves the ideation board
+ * (`IdeaService.listByBoard`). Counting Delivery items too made a card read "11 ideas" over a board
+ * showing six.
+ */
 function boardIdeasWhere(boardIds: readonly string[]): Prisma.ideasWhereInput {
-  return { board_id: { in: [...boardIds] }, is_deleted: false }
+  return { board_id: { in: [...boardIds] }, is_deleted: false, phase: IdeaPhase.Discovery }
 }
 
 export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort, BoardsPort {
@@ -75,8 +80,8 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     return rows.map(boardFromRow)
   }
 
-  /** `is_deleted: false` matches `PrismaIdeaRepository.listByBoard`'s filter, so this count and
-   * that endpoint's `totalCount` answer the same question. */
+  /** `boardIdeasWhere` matches the board idea list's filter, so this count and that endpoint's
+   * `totalCount` answer the same question. */
   async countIdeasByBoard(boardIds: readonly string[]): Promise<ReadonlyMap<string, number>> {
     if (boardIds.length === 0) {
       return new Map()
@@ -124,6 +129,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       INNER JOIN tags AS tag ON tag.id = idea_tag.tag_id
       WHERE idea.board_id IN (${Prisma.join(boardIds.map((id) => Prisma.sql`${id}::uuid`))})
         AND idea.is_deleted = FALSE
+        AND idea.phase = ${IdeaPhase.Discovery}::"IdeaPhase"
       GROUP BY idea.board_id, tag.id, tag.name
     `)
     return rows.map((row) => ({
