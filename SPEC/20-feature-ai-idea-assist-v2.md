@@ -182,4 +182,9 @@ extraction, and polishing belongs to the refinement spec.
   (`20-feature-ideas-and-engagement.md` rule 2a).
 - **Q2 — Description.** Kept as an optional summary, drafted by the assistant.
 - **Q3 — solution-list size.** 1 to 5 items.
+- **Q4 — an archived board's page.** Opens read-only with an *Archived* banner
+  (`20-feature-boards-and-statuses.md` rule 13).
 - **Q5 — the Suggested colour.** A per-theme suggestion hue distinct from the accent, plus the label.
+- **Edit rights.** Problem, Proposed solutions and Impact rationale are editable by the idea's author
+  or an in-scope Org Admin (Site Admin through View As), the same rule as Description
+  (`20-feature-ideas-and-engagement.md` rule 2a).
