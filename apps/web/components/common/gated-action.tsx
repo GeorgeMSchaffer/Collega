@@ -21,6 +21,7 @@ export function GatedAction({
   children,
   variant,
   size,
+  deniedLabel,
 }: {
   /** Ties the control to its reason. Must be unique on the page. */
   id: string
@@ -32,6 +33,8 @@ export function GatedAction({
   /** Match the live control's look, so granting the role changes its state and not its shape. */
   variant?: ButtonProps['variant']
   size?: ButtonProps['size']
+  /** An accessible name for the denied button when `label` alone repeats, e.g. one Edit per row. */
+  deniedLabel?: string
 }) {
   if (!denial) {
     return (
@@ -45,7 +48,13 @@ export function GatedAction({
 
   return (
     <Denied reason={denial} id={id}>
-      <Button variant={variant} size={size} aria-disabled="true" aria-describedby={id}>
+      <Button
+        variant={variant}
+        size={size}
+        aria-disabled="true"
+        aria-describedby={id}
+        aria-label={deniedLabel}
+      >
         {label}
       </Button>
     </Denied>

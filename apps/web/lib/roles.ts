@@ -24,12 +24,13 @@ export function writeDenial(role: Role): string | null {
 
 /**
  * Whether the role may create or configure boards. Not `writeDenial`: that answers whether a role
- * may author an idea, and a board is an administrator's write. A Site Admin is refused for the
- * usual reason — they belong to no organization — and a member for a different one.
+ * may author an idea, and a board is an administrator's write. A Site Admin is sent to View As as
+ * an administrator, not a member: acting as a member (view-as rule 11 gives the target's role)
+ * would still be refused.
  */
 export function boardAdminDenial(role: Role): string | null {
   if (role === 'OrgAdmin') return null
-  if (role === 'SiteAdmin') return 'Act as a member'
+  if (role === 'SiteAdmin') return 'Act as an organization administrator'
   return 'Administrators only'
 }
 

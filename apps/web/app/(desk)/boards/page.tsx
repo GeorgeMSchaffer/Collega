@@ -83,6 +83,7 @@ export default async function BoardsPage() {
                   <GatedAction
                     id={`why-edit-${board.id}`}
                     label="Edit"
+                    deniedLabel={`Edit ${board.name}`}
                     denial={adminDenial}
                     variant="ghost"
                     size="sm"

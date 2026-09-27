@@ -26,7 +26,8 @@ wide monitor as an Org Admin.
   carries **Edit board**. This supersedes comp P's `s-boards` note that the page "has no create
   action" and `20-feature-client-ui-revisions.md`'s "the Boards page displays ONLY a list".
   They follow "Denied is shown, not hidden" (2026-09-08): every role other than Org Admin sees them
-  disabled with the reason (*Administrators only*, or *Act as a member* for a Site Admin). An
+  disabled with the reason (*Administrators only*, or *Act as an organization administrator* for a
+  Site Admin, since View As as a member would still be refused). An
   earlier draft hid them for other roles, citing comp P's `data-roles`; that is the comp Q habit
   2026-09-08 already declined to follow, so it was corrected before merge.
 

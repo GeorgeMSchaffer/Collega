@@ -76,7 +76,8 @@ because an idea is always raised against a board.
 
 The topbar carries **Manage boards** (to Settings → Boards) and **New board**, and each board
 carries **Edit** (to Settings → Boards → Edit). All three are an Org Admin's; every other role sees
-them disabled with the reason (*Administrators only*; a Site Admin, *Act as a member*). Decided
+them disabled with the reason (*Administrators only*; a Site Admin, *Act as an organization
+administrator*). Decided
 2026-09-27.
 
 ## `/board/{boardId}` — Kanban Board
