@@ -12,6 +12,7 @@
 import { DELIVERY_STATUSES } from '../display'
 import { roleLabel } from '../roles'
 import type {
+  BoardOverview,
   Comment,
   CurrentUser,
   Effort,
@@ -33,6 +34,7 @@ import type {
   ViewingAs,
 } from '../types'
 import type {
+  WireBoardListItem,
   WireCurrentUser,
   WireDeliveryCard,
   WireFieldDefinition,
@@ -264,6 +266,29 @@ const DATE = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
   timeZone: 'UTC',
 })
+
+/** `GET /organizations/{id}/boards` into a card or row on the workspace Boards screen. */
+export function toBoardOverview(wire: WireBoardListItem): BoardOverview {
+  return {
+    id: wire.boardId,
+    name: wire.name,
+    description: wire.description,
+    ideaCount: wire.ideaCount,
+    laneCount: wire.swimlaneCount,
+    createdOn: DATE.format(new Date(wire.createdAtUtc)),
+    createdBy: wire.createdBy?.displayName ?? null,
+    lanes: [...wire.laneCounts]
+      .sort((a, b) => a.order - b.order)
+      .map((lane) => ({
+        id: lane.statusId,
+        name: lane.statusName,
+        color: lane.statusColor,
+        ideaCount: lane.ideaCount,
+      })),
+    topTags: [...wire.topTags],
+    tagCount: wire.tagCount,
+  }
+}
 
 function toPerson(wire: WireIdeaAssignee | null): Person | null {
   if (!wire) return null

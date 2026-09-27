@@ -277,6 +277,25 @@ export type Board = {
 }
 
 /**
+ * A board as the workspace Boards screen shows it, card or row.
+ *
+ * Its own type rather than more fields on `Board`, which the ideas table and the new-idea form
+ * also take: they would carry a description, a creator and a tag tally they never render.
+ */
+export type BoardOverview = {
+  id: string
+  name: string
+  description: string | null
+  ideaCount: number
+  laneCount: number
+  createdOn: string
+  createdBy: string | null
+  lanes: { id: string; name: string; color: string; ideaCount: number }[]
+  topTags: { name: string; ideaCount: number }[]
+  tagCount: number
+}
+
+/**
  * A board opened, rather than listed.
  *
  * The lanes belong to the board and not to the organization: a board picks a subset of the status
@@ -290,6 +309,7 @@ export type BoardWithLanes = {
   lanes: Status[]
   /** Whether a plain User may move a card between lanes, or only an administrator. */
   allowUserStatusUpdate: boolean
+  description: string | null
 }
 
 /**
