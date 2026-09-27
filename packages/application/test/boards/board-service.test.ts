@@ -10,7 +10,13 @@ import { createStatus, type Status, softDeleteStatus } from '@collega/domain/sta
 import { describe, expect, it } from 'vitest'
 import { BoardService } from '../../src/boards/board-service.js'
 import type { CreateBoardCommand, UpdateBoardCommand } from '../../src/boards/models.js'
-import type { BoardRepository, OrganizationExistenceLookup } from '../../src/boards/ports.js'
+import type {
+  BoardRepository,
+  BoardStatusIdeaCount,
+  BoardTagIdeaCount,
+  OrganizationExistenceLookup,
+  UserName,
+} from '../../src/boards/ports.js'
 import type { CurrentUserContext } from '../../src/common/index.js'
 import { ForbiddenError, NotFoundError, ValidationError } from '../../src/common/index.js'
 import type { StatusRepository } from '../../src/statuses/ports.js'
@@ -72,12 +78,17 @@ function harness(options: {
   boards?: readonly Board[]
   statuses?: readonly Status[]
   organizations?: readonly string[]
+  statusCounts?: readonly BoardStatusIdeaCount[]
+  tagCounts?: readonly BoardTagIdeaCount[]
+  userNames?: Readonly<Record<string, UserName>>
 }) {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.id, b]))
   const allStatuses = options.statuses ?? [status(STATUS_1), status(STATUS_2, ORG_A, 20)]
   const existingOrgs = new Set(options.organizations ?? [ORG_A, ORG_B])
   const added: Board[] = []
   const saved: Board[] = []
+  /** Every repository read `list` makes, by method, with the ids it was handed. */
+  const reads: { method: string; ids: readonly string[] }[] = []
 
   const boards: BoardRepository = {
     async add(b) {
@@ -96,16 +107,21 @@ function harness(options: {
       return false
     },
     async countIdeasByBoard(ids) {
+      reads.push({ method: 'countIdeasByBoard', ids })
       return new Map(ids.map((id) => [id, 3]))
     },
-    async countIdeasByBoardAndStatus() {
-      return []
+    async countIdeasByBoardAndStatus(ids) {
+      reads.push({ method: 'countIdeasByBoardAndStatus', ids })
+      return (options.statusCounts ?? []).filter((row) => ids.includes(row.boardId))
     },
-    async countIdeasByBoardAndTag() {
-      return []
+    async countIdeasByBoardAndTag(ids) {
+      reads.push({ method: 'countIdeasByBoardAndTag', ids })
+      return (options.tagCounts ?? []).filter((row) => ids.includes(row.boardId))
     },
-    async getUserNames() {
-      return new Map()
+    async getUserNames(ids) {
+      reads.push({ method: 'getUserNames', ids })
+      const names = options.userNames ?? {}
+      return new Map(ids.flatMap((id) => (names[id] ? [[id, names[id]] as const] : [])))
     },
   }
 
@@ -150,6 +166,7 @@ function harness(options: {
     added,
     saved,
     audit,
+    reads,
   }
 }
 
@@ -385,5 +402,236 @@ describe('BoardService listing order', () => {
     const result = await service.list(ORG_A)
 
     expect(result[0]?.ideaCount).toBe(3)
+  })
+})
+
+describe('BoardService list card aggregates', () => {
+  const threeLaneStatuses = [
+    status(STATUS_1),
+    status(STATUS_2, ORG_A, 20),
+    status(STATUS_3, ORG_A, 30),
+  ]
+
+  function threeLaneBoard(id = 'board-a', createdByUserId: string | null = 'creator-1'): Board {
+    return createBoard({
+      id,
+      organizationId: ORG_A,
+      name: `Board ${id}`,
+      allowUserStatusUpdate: false,
+      // Deliberately not the statuses' own sort order: lanes follow the board, not the status.
+      orderedStatusIds: [STATUS_3, STATUS_1, STATUS_2],
+      nowUtc: NOW,
+      actorUserId: createdByUserId,
+    })
+  }
+
+  it('lists every swimlane in board order, with zero for a lane that has no ideas', async () => {
+    const { service } = harness({
+      currentUser: member(ORG_A),
+      boards: [threeLaneBoard()],
+      statuses: threeLaneStatuses,
+      statusCounts: [
+        { boardId: 'board-a', statusId: STATUS_1, ideaCount: 4 },
+        { boardId: 'board-a', statusId: STATUS_3, ideaCount: 2 },
+      ],
+    })
+
+    const [card] = await service.list(ORG_A)
+
+    expect(card?.laneCounts.map((lane) => [lane.statusId, lane.order, lane.ideaCount])).toEqual([
+      [STATUS_3, 0, 2],
+      [STATUS_1, 1, 4],
+      [STATUS_2, 2, 0],
+    ])
+    expect(card?.laneCounts[0]).toMatchObject({
+      statusName: `Status ${STATUS_3}`,
+      statusColor: '#123456',
+    })
+  })
+
+  it('keeps each board’s lane counts to its own ideas', async () => {
+    const { service } = harness({
+      currentUser: member(ORG_A),
+      boards: [threeLaneBoard('board-a'), threeLaneBoard('board-b')],
+      statuses: threeLaneStatuses,
+      statusCounts: [{ boardId: 'board-b', statusId: STATUS_1, ideaCount: 7 }],
+    })
+
+    const cards = await service.list(ORG_A)
+
+    const byId = new Map(cards.map((card) => [card.boardId, card]))
+    expect(byId.get('board-a')?.laneCounts.map((lane) => lane.ideaCount)).toEqual([0, 0, 0])
+    expect(byId.get('board-b')?.laneCounts.map((lane) => lane.ideaCount)).toEqual([0, 7, 0])
+  })
+
+  it('shows the three most-used tags, breaking a count tie by name ignoring case', async () => {
+    const { service } = harness({
+      currentUser: member(ORG_A),
+      boards: [board()],
+      tagCounts: [
+        { boardId: 'board-a', tagName: 'rare', ideaCount: 1 },
+        // A case-sensitive sort would put 'Zeta' before 'alpha'; the card must not.
+        { boardId: 'board-a', tagName: 'Zeta', ideaCount: 2 },
+        { boardId: 'board-a', tagName: 'alpha', ideaCount: 2 },
+        { boardId: 'board-a', tagName: 'safety', ideaCount: 5 },
+      ],
+    })
+
+    const [card] = await service.list(ORG_A)
+
+    expect(card?.topTags).toEqual([
+      { name: 'safety', ideaCount: 5 },
+      { name: 'alpha', ideaCount: 2 },
+      { name: 'Zeta', ideaCount: 2 },
+    ])
+  })
+
+  it('counts every distinct tag in tagCount, not just the three shown', async () => {
+    const { service } = harness({
+      currentUser: member(ORG_A),
+      boards: [board()],
+      tagCounts: ['a', 'b', 'c', 'd', 'e'].map((tagName) => ({
+        boardId: 'board-a',
+        tagName,
+        ideaCount: 1,
+      })),
+    })
+
+    const [card] = await service.list(ORG_A)
+
+    expect(card?.topTags.map((tag) => tag.name)).toEqual(['a', 'b', 'c'])
+    expect(card?.tagCount).toBe(5)
+  })
+
+  it('reports no tags and a zero tag count for a board with no tagged ideas', async () => {
+    const { service } = harness({ currentUser: member(ORG_A), boards: [board()] })
+
+    const [card] = await service.list(ORG_A)
+
+    expect(card?.topTags).toEqual([])
+    expect(card?.tagCount).toBe(0)
+  })
+
+  it('names the creator by first and last name, with the creation time', async () => {
+    const { service } = harness({
+      currentUser: member(ORG_A),
+      boards: [threeLaneBoard('board-a', 'creator-1')],
+      statuses: threeLaneStatuses,
+      userNames: { 'creator-1': { firstName: 'Ada', lastName: 'Lovelace' } },
+    })
+
+    const [card] = await service.list(ORG_A)
+
+    expect(card?.createdBy).toEqual({ userId: 'creator-1', displayName: 'Ada Lovelace' })
+    expect(card?.createdAtUtc).toEqual(NOW)
+  })
+
+  it('reports no creator when the board records none, without looking one up', async () => {
+    const { service, reads } = harness({
+      currentUser: member(ORG_A),
+      boards: [threeLaneBoard('board-a', null)],
+      statuses: threeLaneStatuses,
+    })
+
+    const [card] = await service.list(ORG_A)
+
+    expect(card?.createdBy).toBeNull()
+    expect(reads.find((read) => read.method === 'getUserNames')?.ids).toEqual([])
+  })
+
+  it('reports no creator when the creator id no longer resolves to a user', async () => {
+    const { service } = harness({
+      currentUser: member(ORG_A),
+      boards: [threeLaneBoard('board-a', 'deleted-user')],
+      statuses: threeLaneStatuses,
+    })
+
+    const [card] = await service.list(ORG_A)
+
+    expect(card?.createdBy).toBeNull()
+  })
+
+  it('carries the board description through', async () => {
+    const described = { ...board(), description: 'Assembly cell reliability.' }
+    const { service } = harness({ currentUser: member(ORG_A), boards: [described] })
+
+    const [card] = await service.list(ORG_A)
+
+    expect(card?.description).toBe('Assembly cell reliability.')
+  })
+
+  it('reads the aggregates in a fixed number of batched calls, however many boards there are', async () => {
+    const readsFor = async (boardCount: number) => {
+      const boards = Array.from({ length: boardCount }, (_, i) =>
+        threeLaneBoard(`board-${i}`, `creator-${i % 2}`),
+      )
+      const { service, reads } = harness({
+        currentUser: member(ORG_A),
+        boards,
+        statuses: threeLaneStatuses,
+      })
+      await service.list(ORG_A)
+      return reads
+    }
+
+    const one = await readsFor(1)
+    const many = await readsFor(12)
+
+    expect(many.map((read) => read.method).sort()).toEqual(one.map((read) => read.method).sort())
+    for (const method of [
+      'countIdeasByBoard',
+      'countIdeasByBoardAndStatus',
+      'countIdeasByBoardAndTag',
+    ]) {
+      const calls = many.filter((read) => read.method === method)
+      expect(calls).toHaveLength(1)
+      expect(calls[0]?.ids).toHaveLength(12)
+    }
+    // Twelve boards, two distinct creators: the lookup is de-duplicated.
+    expect(many.find((read) => read.method === 'getUserNames')?.ids).toHaveLength(2)
+  })
+})
+
+describe('BoardService description', () => {
+  const describedBoard: Board = { ...board(), description: 'Original description.' }
+
+  it('stores a trimmed description on create', async () => {
+    const { service, added } = harness({ currentUser: orgAdmin(ORG_A) })
+
+    await service.create(ORG_A, { ...CREATE, description: '  Fewer stoppages.  ' })
+
+    expect(added[0]?.description).toBe('Fewer stoppages.')
+  })
+
+  it('leaves the description unchanged when an update omits it', async () => {
+    const { service, saved } = harness({ currentUser: orgAdmin(ORG_A), boards: [describedBoard] })
+
+    const detail = await service.update('board-a', UPDATE)
+
+    expect(saved[0]?.description).toBe('Original description.')
+    expect(detail.description).toBe('Original description.')
+  })
+
+  it.each([
+    ['null', null],
+    ['blank', '   '],
+  ])('clears the description when an update sends %s', async (_label, description) => {
+    const { service, saved } = harness({ currentUser: orgAdmin(ORG_A), boards: [describedBoard] })
+
+    await service.update('board-a', { ...UPDATE, description })
+
+    expect(saved[0]?.description).toBeNull()
+  })
+
+  it('refuses an over-long description as a validation failure keyed on description', async () => {
+    const { service, saved } = harness({ currentUser: orgAdmin(ORG_A), boards: [describedBoard] })
+
+    const error = await service
+      .update('board-a', { ...UPDATE, description: 'd'.repeat(501) })
+      .catch((thrown: unknown) => thrown)
+
+    expect(error).toBeInstanceOf(ValidationError)
+    expect(Object.keys((error as ValidationError).failures)).toEqual(['description'])
+    expect(saved).toHaveLength(0)
   })
 })
