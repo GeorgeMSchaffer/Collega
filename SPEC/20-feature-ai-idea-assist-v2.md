@@ -5,7 +5,7 @@ built.** It supersedes `20-feature-ai-idea-assist.md` for all new work; that spe
 live today and stays authoritative for it until this one ships. The reference rendering is comp R,
 `SPEC/mockups/comp-r-portico-prototype.html` (the New Idea flow on any board or the Ideas list).
 
-**Items marked _Open_ are awaiting a user answer** and are not built until resolved.
+Its open questions were answered on 2026-09-27; see "Resolved questions" at the end.
 
 ## Why this exists
 
@@ -79,15 +79,16 @@ Supersedes v1 D-PREFILL.
 | Priority | urgency cues only ("urgent", "asap") | otherwise left at the default |
 | Tags | matches against the organization's existing tag vocabulary | never invents a tag |
 | Custom fields | values for the fields the chosen Idea Type carries: numbers, dropdown options, names | only fields visible for that type; option values must be real option ids |
-| Summary (Description) | drafted from Problem + Proposed solutions | optional field; see _Open_ Q2 |
+| Summary (Description) | drafted from Problem + Proposed solutions | optional summary (Q2) |
 
 Never proposed: Board, Status, Assignees, Due date. (Assignees and dates are the person's call;
 Board and Status come from where *Add New Idea* was pressed.)
 
 ## Suggested vs owned
 
-- A value the assistant writes is **Suggested**: marked `✦ Suggested` beside the label, with a
-  tinted field. It animates once when filled (skipped under reduced motion).
+- A value the assistant writes is **Suggested**: marked `✦ Suggested` beside the label, with the
+  field tinted in the theme's **suggestion hue** (`--suggest-tint`, border `--suggest`), which is
+  distinct from the accent so a suggestion never reads as "selected" (Q5; carries v1 D-SUGGEST). It animates once when filled (skipped under reduced motion).
 - **The moment the person edits a field it is theirs.** The mark clears, and the assistant never
   overwrites it again for the rest of the conversation. When a later turn would have changed it, the
   assistant says so in its reply ("I kept your edit to Problem").
@@ -175,10 +176,10 @@ extraction, and polishing belongs to the refinement spec.
 - [ ] Off-topic, cap and cancel behave as v1.
 - [ ] The prompt-eval runner reports v2 mapping accuracy and scope-gate results before enablement.
 
-## Open questions
+## Resolved questions (2026-09-27)
 
-- **Q1 — existing ideas and the new required fields.** See `20-feature-ideas-and-engagement.md` rule 2a.
-- **Q2 — Description.** Keep it as an optional summary (as drawn in comp R), or retire it in favour
-  of the three structured fields?
-- **Q3 — solution-list size.** Comp R allows any number; proposed cap 5.
-- **Q5 — the Suggested colour.** v1 D-SUGGEST required a suggestion colour distinct from the accent. Comp R marks suggestions with the `✦ Suggested` label and a tint of the accent. Keep a distinct suggestion hue per theme, or accept label-plus-tint?
+- **Q1 — existing ideas.** Required on every create and save; the migration backfills older ideas
+  (`20-feature-ideas-and-engagement.md` rule 2a).
+- **Q2 — Description.** Kept as an optional summary, drafted by the assistant.
+- **Q3 — solution-list size.** 1 to 5 items.
+- **Q5 — the Suggested colour.** A per-theme suggestion hue distinct from the accent, plus the label.

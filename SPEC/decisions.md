@@ -18,8 +18,9 @@ for what is live until v2 ships.
 - **Ideas gain three dedicated fields: Problem, Proposed solutions (a list), Impact rationale.**
   Chosen over three custom fields (every organization would have to configure them) and over
   sections inside Description (not enforceable, not searchable). Custom fields attached through the
-  Idea Type are unchanged and follow the core fields. Description becomes an optional summary,
-  pending the answer to Q2. This is a schema and contract change (`30-Contracts.md`, rule 2a of
+  Idea Type are unchanged and follow the core fields. Description becomes an optional summary.
+  Existing ideas are backfilled so the three fields are required on every save; a solution list
+  holds 1 to 5 items. This is a schema and contract change (`30-Contracts.md`, rule 2a of
   `20-feature-ideas-and-engagement.md`).
 - **The assistant maps, interviews and brainstorms.** Free text fills fields visibly; it asks for
   the next missing field in a fixed order; it offers solution ideas, a sharper problem statement and
@@ -38,8 +39,10 @@ for what is live until v2 ships.
 **Decided by the user** after comparing palettes live in comp R. Comp P left the palette open; this
 closes it. **Terrazzo** (slate blue with pistachio and blush) is the default. A theme picker at the
 right of the top bar offers Terrazzo, Portico, Piazza Sera and Lagoon as light themes and Notte as
-the dark theme, as a per-user preference. Every theme is one token set in `packages/design-system`,
-checked to 4.5:1 for text, so adding or retiring a theme never touches components. Earlier
+the dark theme. Every theme is one token set in `packages/design-system`,
+checked to 4.5:1 for text, so adding or retiring a theme never touches components. The choice is
+remembered per browser in a cookie, not on the user profile (answered the same day), and each theme
+carries a suggestion hue distinct from its accent for the idea assistant. Earlier
 candidates (Sprout, Blueprint, the bright Piazza, Mercato) were reviewed and dropped the same day.
 
 ## 2026-09-27 — One list and detail pattern, and a drawer instead of the docked inspector
@@ -60,8 +63,12 @@ candidates (Sprout, Blueprint, the bright Piazza, Mercato) were reviewed and dro
 - **Boards are archived, not deleted**, replacing "boards have no delete". Their ideas are never
   orphaned.
 - **"Add New {Item}"** in title case, right-aligned level with the page's H1 and description.
-- **This is new feature work while `SPEC/Bug Triage.md` has open items.** _Open: the exception is
-  confirmed with the user before implementation starts._
+- **Bug Triage exception granted** for this work (answered the same day), on one condition: the
+  first slice also fixes the "two level-1 headings" item, since the new page header rewrites those
+  screens anyway. The other open items stay queued.
+- **Order of work:** phase 1 is themes, this pattern on Boards, a board and Ideas, the structured
+  idea fields with their backfill, board archive and the heading fix; phase 2 the prompt-eval
+  runner; phase 3 idea assistant v2. Settings and Delivery lists move to the pattern afterwards.
 
 ---
 

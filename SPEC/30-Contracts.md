@@ -942,7 +942,7 @@ Request body:
 ### `POST /api/v1/boards/{boardId}/archive` and `POST /api/v1/boards/{boardId}/unarchive`
 Purpose: Archive a board, or bring it back (added 2026-09-27, replacing "boards have no delete"; `decisions.md`). Org Admin of the board's organization only; a direct Site Admin is refused like every other org-content write.
 
-Archiving keeps the board, its swimlanes and every idea on it. An archived board leaves the default board list and the board pickers, accepts no new ideas, and its ideas stay reachable from `GET /api/v1/organizations/{organizationId}/ideas`. _Open (Q4): whether an archived board's own page opens read-only or not at all._
+Archiving keeps the board, its swimlanes and every idea on it. An archived board leaves the default board list and the board pickers, accepts no new ideas, and its ideas stay reachable from `GET /api/v1/organizations/{organizationId}/ideas`. An archived board's own page opens **read-only** with an *Archived* banner (Q4, answered 2026-09-27): no new ideas, no moves, no edits; an Org Admin sees *Unarchive* there.
 
 Success response: `204 No Content`. Archiving an archived board, or unarchiving an active one, is also `204`.
 
@@ -1065,7 +1065,7 @@ Request body:
 - `problem` required string, max 2000 characters (added 2026-09-27, `20-feature-ideas-and-engagement.md` rule 2a)
 - `proposedSolutions` required array of 1 to 5 strings, each max 500 characters, order preserved (added 2026-09-27)
 - `impactRationale` required string, max 1000 characters (added 2026-09-27)
-- `description` optional string, max 4000 characters — **changed 2026-09-27 from required** to an optional summary; _Open (Q2)_
+- `description` optional string, max 4000 characters — **changed 2026-09-27 from required** to an optional summary (kept, Q2)
 - `priority` required string: `Low`, `Medium`, `High`, or `Critical`
 - `ideaTypeId` required GUID string referencing an active Idea Type in the board's organization
 - `businessImpactId` required GUID string referencing an active Business Impact in the board's organization
@@ -1211,7 +1211,7 @@ Request body:
 - `problem` required string, max 2000 characters (added 2026-09-27, `20-feature-ideas-and-engagement.md` rule 2a)
 - `proposedSolutions` required array of 1 to 5 strings, each max 500 characters, order preserved (added 2026-09-27)
 - `impactRationale` required string, max 1000 characters (added 2026-09-27)
-- `description` optional string, max 4000 characters — **changed 2026-09-27 from required** to an optional summary; _Open (Q2)_
+- `description` optional string, max 4000 characters — **changed 2026-09-27 from required** to an optional summary (kept, Q2)
 - `priority` required string: `Low`, `Medium`, `High`, or `Critical`
 - `ideaTypeId` required GUID string referencing an active Idea Type in the idea's organization
 - `businessImpactId` required GUID string referencing an active Business Impact in the idea's organization

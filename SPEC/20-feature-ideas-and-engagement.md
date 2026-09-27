@@ -29,7 +29,7 @@ Users can create, discuss, organize, and support ideas within their organization
    - Problem (required, max 2000 characters) — what is going wrong, for whom, and how often. Added 2026-09-27.
    - Proposed solutions (required, 1 to 5 items, each max 500 characters) — an ordered list. Added 2026-09-27.
    - Impact rationale (required, max 1000 characters) — why it matters to the business, ideally quantified. Added 2026-09-27.
-   - Description (max 4000 characters) — **changed 2026-09-27 to an optional one-or-two-line summary** shown on cards and lists; the structured fields above carry the substance. _Open (Q2): keep or retire._
+   - Description (max 4000 characters) — **changed 2026-09-27 to an optional one-or-two-line summary** shown on cards and lists; the structured fields above carry the substance. Kept, answered 2026-09-27 (Q2).
    - Priority (required): `Low`, `Medium`, `High`, or `Critical`
    - Idea Type (required): one active organization-configured Idea Type
    - Business Impact (required): one active organization-configured Business Impact
@@ -43,8 +43,12 @@ Users can create, discuss, organize, and support ideas within their organization
 2a. **Structured fields (2026-09-27, `decisions.md`).** Problem, Proposed solutions and Impact rationale are
    dedicated fields, not sections of Description, so they can be required, searched and filled by the idea
    assistant (`20-feature-ai-idea-assist-v2.md`). Custom fields attached through the Idea Type
-   (`20-feature-idea-type-fields.md`) are unaffected and appear after the core fields. _Open (Q1): how ideas
-   created before 2026-09-27 satisfy the new required fields._
+   (`20-feature-idea-type-fields.md`) are unaffected and appear after the core fields. **Existing ideas
+   (Q1, answered 2026-09-27): the three fields are required on every create and every save, and the
+   migration backfills ideas created before the change** — Problem takes the idea's Description (or
+   *Not captured before 2026-09-27.* when it is empty), Proposed solutions takes a single item
+   *Not captured before 2026-09-27.*, and Impact rationale takes the same text. Description is kept as
+   the summary. The demo seed writes real values for all three.
 3. Board cards must remain compact and display:
    - Title
    - Priority

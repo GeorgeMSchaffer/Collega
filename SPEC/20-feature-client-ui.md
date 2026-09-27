@@ -362,9 +362,12 @@ which the comps A–O were re-rendered to. Whichever palette is chosen must keep
 **Palette decided: Terrazzo** — slate blue `#3D5A80`, pistachio and blush accents, Schibsted
 Grotesk for headings and Public Sans for text. It is the default. A **theme picker** at the right
 of the top bar offers **Light:** Terrazzo, Portico, Piazza Sera, Lagoon, and **Dark:** Notte. The
-choice is a per-user preference. Every theme is the same token set (`packages/design-system`), so
+choice is remembered **per browser**, in a cookie the server reads so the first render is already in
+the chosen theme (answered 2026-09-27: not stored on the user profile). Every theme is the same token set (`packages/design-system`), so
 components never name a colour; each theme's pairs are checked to 4.5:1 for text. Token values are
-in comp R. The two rules in "Color palette" above still apply to every theme.
+in comp R. The two rules in "Color palette" above still apply to every theme. Each theme also defines
+a **suggestion hue** (`--suggest`, `--suggest-tint`) distinct from its accent, for fields the idea
+assistant filled (`20-feature-ai-idea-assist-v2.md` Q5).
 
 ## ERROR DISPLAY
 
