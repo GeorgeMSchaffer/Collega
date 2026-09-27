@@ -130,13 +130,18 @@ export type DeliveryCard = IdeaListItem & {
   readonly provenance: IssueProvenance
 }
 
+/**
+ * `statusIds`, `tags` and `priorities` are the repeatable filters of the list pattern
+ * (SPEC/30-Contracts.md, 2026-09-27): values of one parameter combine as any-of, different
+ * parameters as AND. An empty list is no filter.
+ */
 export type IdeaListQuery = {
   readonly page: number | null
   readonly pageSize: number | null
   readonly search: string | null
-  readonly statusId: string | null
-  readonly tag: string | null
-  readonly priority: string | null
+  readonly statusIds: readonly string[]
+  readonly tags: readonly string[]
+  readonly priorities: readonly string[]
   readonly dueBefore: string | null
   readonly sortBy: string | null
   readonly sortDirection: string | null
@@ -173,7 +178,11 @@ export type OrganizationIdeaListQuery = {
   readonly sortBy: string | null
   readonly sortDirection: string | null
   readonly fieldFilters: ReadonlyMap<string, string> | null
-  readonly tag: string | null
+  /** Repeatable, any-of within each, AND across them and the rest (2026-09-27). */
+  readonly boardIds: readonly string[]
+  readonly statusIds: readonly string[]
+  readonly priorities: readonly string[]
+  readonly tags: readonly string[]
   readonly user: string | null
   /**
    * `All` (default) / `Ideas` (Discovery only) / `Issues` (Delivery only), so search and

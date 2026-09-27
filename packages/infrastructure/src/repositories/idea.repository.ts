@@ -9,13 +9,13 @@
 // `board.repository.ts`'s swimlanes.
 //
 // `listByBoard` and `listByOrganization` both carry a MANDATORY total order, tie-broken on
-// `createdAtUtc` then `title` - NEVER on id - per the golden-capture finding documented on
-// `IdeaListFilter.sortBy` and repeated on `OrganizationIdeaListFilter`. `listByOrganization`'s
-// search/sort additionally needs the author's, an assignee's, and the status's NAME, and the
-// frozen schema declares no Prisma relation from `ideas` to `users` (author) or `statuses` - only
-// `organization_id`/`business_impact_id`/`idea_type_id` are modelled as relations there - so that
-// one query is raw SQL rather than Prisma's typed query builder, which cannot express the join.
-// Everything else in this file uses the typed API.
+// `createdAtUtc` then `title` - never on id alone - per the golden-capture finding documented on
+// `IdeaListFilter.sortBy` and repeated on `OrganizationIdeaListFilter`; the id follows them only
+// as the last key. Both lists' search/sort need the author's, an assignee's, the status's and the
+// board's NAME, and the frozen schema declares no Prisma relation from `ideas` to `users`
+// (author), `statuses` or `boards` - only `organization_id`/`business_impact_id`/`idea_type_id`
+// are modelled as relations there - so those two queries are raw SQL rather than Prisma's typed
+// query builder, which cannot express the join. Everything else in this file uses the typed API.
 
 import { randomUUID } from 'node:crypto'
 import type { SortDirection } from '@collega/application/common'
@@ -102,6 +102,16 @@ function fromRow(row: IdeaRowFull): Idea {
     createdByUserId: row.created_by_user_id,
     updatedByUserId: row.updated_by_user_id,
   }
+}
+
+/** Live upvotes on the idea, for the `upvoteCount` sort. */
+const UPVOTE_COUNT_SQL = Prisma.sql`(SELECT COUNT(*) FROM idea_upvotes iu WHERE iu.idea_id = i.id)`
+
+/** The idea's alphabetically-first tag, case-insensitively, for the `tags` sort; NULL untagged. */
+const FIRST_TAG_SQL = Prisma.sql`(SELECT MIN(LOWER(t.name)) FROM idea_tags it JOIN tags t ON t.id = it.tag_id WHERE it.idea_id = i.id)`
+
+function uuidList(ids: readonly string[]): Prisma.Sql {
+  return Prisma.join(ids.map((id) => Prisma.sql`${id}::uuid`))
 }
 
 export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
@@ -296,91 +306,73 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
   async listByBoard(filter: IdeaListFilter): Promise<IdeaPage<Idea>> {
     const direction: SortDirection = filter.sortDirection === 'desc' ? 'desc' : 'asc'
 
-    const where: Prisma.ideasWhereInput = {
-      board_id: filter.boardId,
-      is_deleted: false,
-      ...(filter.statusId ? { status_id: filter.statusId } : {}),
-      ...(filter.priority ? { priority: filter.priority } : {}),
-      ...(filter.dueBefore
-        ? { due_date: { lt: new Date(`${filter.dueBefore}T00:00:00.000Z`) } }
-        : {}),
-      ...(filter.search ? { title: { contains: filter.search, mode: 'insensitive' } } : {}),
-      ...(filter.tag ? { idea_tags: { some: { tags: { normalized_name: filter.tag } } } } : {}),
-      ...(filter.phase ? { phase: filter.phase } : {}),
-    }
-
-    // TOTAL ORDER: the requested sort, then the mandated tie-break (createdAtUtc, title) -
-    // NEVER id (golden-capture finding, see the file header).
-    const orderBy: Prisma.ideasOrderByWithRelationInput[] = [
-      ...this.boardSortOrderBy(filter.sortBy, direction),
-      { created_at_utc: 'asc' },
-      { title: 'asc' },
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`i.board_id = ${filter.boardId}::uuid`,
+      Prisma.sql`i.is_deleted = FALSE`,
+      ...this.listFilterConditions(filter),
     ]
-
-    const [rows, totalCount] = await Promise.all([
-      this.prisma.ideas.findMany({
-        where,
-        include: IDEA_INCLUDE,
-        orderBy,
-        skip: (filter.page.page - 1) * filter.page.pageSize,
-        take: filter.page.pageSize,
-      }),
-      this.prisma.ideas.count({ where }),
-    ])
-
-    return {
-      items: rows.map(fromRow),
-      page: filter.page.page,
-      pageSize: filter.page.pageSize,
-      totalCount,
-      sortBy: filter.sortBy,
-      sortDirection: direction,
+    if (filter.phase) {
+      conditions.push(Prisma.sql`i.phase = ${filter.phase}::"IdeaPhase"`)
     }
+    if (filter.dueBefore) {
+      conditions.push(Prisma.sql`i.due_date < ${filter.dueBefore}::date`)
+    }
+    if (filter.search) {
+      conditions.push(this.searchCondition(filter, false))
+    }
+
+    return this.listPage({
+      conditions,
+      sortSql: this.boardSortSql(filter.sortBy),
+      direction,
+      page: filter.page,
+      sortBy: filter.sortBy,
+    })
   }
 
-  private boardSortOrderBy(
-    sortBy: string | null,
-    direction: SortDirection,
-  ): Prisma.ideasOrderByWithRelationInput[] {
-    // Matched on the trimmed, lowercased value, as `SortBy?.Trim().ToLowerInvariant()` did in
-    // `EfIdeaRepository` - so `PRIORITY` and ` dueDate ` sort the way they read.
+  /**
+   * `sortBy` for the board list, matched on the trimmed, lowercased value as
+   * `SortBy?.Trim().ToLowerInvariant()` did in `EfIdeaRepository` - so `PRIORITY` and ` dueDate `
+   * sort the way they read. `title`, `status` (lane order), `assignedTo` and `tags` were added
+   * 2026-09-27; anything unrecognised is createdAt.
+   */
+  private boardSortSql(sortBy: string | null): Prisma.Sql {
     switch ((sortBy ?? '').trim().toLowerCase()) {
       case 'updatedat':
-        return [{ updated_at_utc: direction }]
+        return Prisma.sql`i.updated_at_utc`
       case 'priority':
-        return [{ priority: direction }]
+        return Prisma.sql`i.priority`
       case 'duedate':
-        return [{ due_date: direction }]
+        return Prisma.sql`i.due_date`
       case 'upvotecount':
-        return [{ idea_upvotes: { _count: direction } }]
+        return UPVOTE_COUNT_SQL
+      case 'title':
+        return Prisma.sql`i.title`
+      case 'status':
+        return Prisma.sql`(SELECT bs.display_order FROM board_swimlanes bs WHERE bs.board_id = i.board_id AND bs.status_id = i.status_id)`
+      case 'assignedto':
+        return Prisma.sql`assignee.name`
+      case 'tags':
+        return FIRST_TAG_SQL
       default:
-        return [{ created_at_utc: direction }]
+        return Prisma.sql`i.created_at_utc`
     }
   }
 
   async listByOrganization(filter: OrganizationIdeaListFilter): Promise<IdeaPage<Idea>> {
     const direction: SortDirection = filter.sortDirection === 'desc' ? 'desc' : 'asc'
-    // Matched on the trimmed, lowercased value, as `SortBy?.Trim().ToLowerInvariant()` did in
-    // `EfIdeaRepository`; anything else falls back to createdAt.
-    const sortKey = (filter.sortBy ?? '').trim().toLowerCase()
-    const sortBy =
-      sortKey === 'title'
-        ? 'title'
-        : sortKey === 'createdby'
-          ? 'createdBy'
-          : sortKey === 'assignedto'
-            ? 'assignedTo'
-            : sortKey === 'status'
-              ? 'status'
-              : 'createdAt'
 
     const conditions: Prisma.Sql[] = [
       Prisma.sql`i.organization_id = ${filter.organizationId}::uuid`,
-      Prisma.sql`i.is_deleted = false`,
+      Prisma.sql`i.is_deleted = FALSE`,
+      ...this.listFilterConditions(filter),
     ]
 
     if (filter.phase) {
       conditions.push(Prisma.sql`i.phase = ${filter.phase}::"IdeaPhase"`)
+    }
+    if (filter.boardIds.length > 0) {
+      conditions.push(Prisma.sql`i.board_id IN (${uuidList(filter.boardIds)})`)
     }
     if (filter.createdByUserId) {
       conditions.push(Prisma.sql`i.author_user_id = ${filter.createdByUserId}::uuid`)
@@ -388,11 +380,6 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     if (filter.assignedToUserId) {
       conditions.push(
         Prisma.sql`EXISTS (SELECT 1 FROM idea_assignees ia WHERE ia.idea_id = i.id AND ia.user_id = ${filter.assignedToUserId}::uuid)`,
-      )
-    }
-    if (filter.tag) {
-      conditions.push(
-        Prisma.sql`EXISTS (SELECT 1 FROM idea_tags it JOIN tags t ON t.id = it.tag_id WHERE it.idea_id = i.id AND t.normalized_name = ${filter.tag})`,
       )
     }
     if (filter.associatedUserId) {
@@ -407,45 +394,135 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       }
     }
     if (filter.search) {
-      const term = `%${filter.search}%`
-      const searchClauses: Prisma.Sql[] = [
-        Prisma.sql`i.title ILIKE ${term}`,
-        Prisma.sql`(au.first_name ILIKE ${term} OR au.last_name ILIKE ${term} OR (au.first_name || ' ' || au.last_name) ILIKE ${term})`,
-        Prisma.sql`EXISTS (SELECT 1 FROM idea_assignees ia3 JOIN users u3 ON u3.id = ia3.user_id WHERE ia3.idea_id = i.id AND (u3.first_name ILIKE ${term} OR u3.last_name ILIKE ${term} OR (u3.first_name || ' ' || u3.last_name) ILIKE ${term}))`,
-        Prisma.sql`s.name ILIKE ${term}`,
-      ]
-      if (filter.searchTextFieldIds.length > 0) {
-        searchClauses.push(
-          Prisma.sql`EXISTS (SELECT 1 FROM idea_field_values v WHERE v.idea_id = i.id AND v.field_definition_id IN (${Prisma.join(filter.searchTextFieldIds.map((id) => Prisma.sql`${id}::uuid`))}) AND v.value ILIKE ${term})`,
-        )
-      }
-      if (filter.searchCreatedOnDate) {
-        searchClauses.push(
-          Prisma.sql`i.created_at_utc >= ${filter.searchCreatedOnDate}::date AND i.created_at_utc < (${filter.searchCreatedOnDate}::date + 1)`,
-        )
-      }
-      conditions.push(Prisma.sql`(${Prisma.join(searchClauses, ' OR ')})`)
+      conditions.push(this.searchCondition(filter, true))
     }
 
-    const whereClause = Prisma.join(conditions, ' AND ')
+    return this.listPage({
+      conditions,
+      sortSql: this.organizationSortSql(filter.sortBy),
+      direction,
+      page: filter.page,
+      sortBy: filter.sortBy,
+    })
+  }
 
-    const sortColumn: Record<typeof sortBy, Prisma.Sql> = {
-      createdAt: Prisma.sql`i.created_at_utc`,
-      title: Prisma.sql`i.title`,
-      createdBy: Prisma.sql`(au.first_name || ' ' || au.last_name)`,
-      assignedTo: Prisma.sql`assigned_to_name`,
-      status: Prisma.sql`s.name`,
+  /**
+   * `sortBy` for the organization list, matched the same way as the board list's. `board`,
+   * `priority` (Low to Critical, the enum's declared order), `upvoteCount` and `tags` were added
+   * 2026-09-27; anything unrecognised is createdAt.
+   */
+  private organizationSortSql(sortBy: string | null): Prisma.Sql {
+    switch ((sortBy ?? '').trim().toLowerCase()) {
+      case 'title':
+        return Prisma.sql`i.title`
+      case 'createdby':
+        return Prisma.sql`(au.first_name || ' ' || au.last_name)`
+      case 'assignedto':
+        return Prisma.sql`assignee.name`
+      case 'status':
+        return Prisma.sql`s.name`
+      case 'board':
+        return Prisma.sql`b.name`
+      case 'priority':
+        return Prisma.sql`i.priority`
+      case 'upvotecount':
+        return UPVOTE_COUNT_SQL
+      case 'tags':
+        return FIRST_TAG_SQL
+      default:
+        return Prisma.sql`i.created_at_utc`
     }
-    const directionSql = direction === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`
+  }
 
-    // TOTAL ORDER: the requested sort, then the mandated tie-break (createdAtUtc, title) - NEVER
-    // id - matching `listByBoard` and the finding this repository's file header documents.
-    const orderByClause = Prisma.sql`ORDER BY ${sortColumn[sortBy]} ${directionSql}, i.created_at_utc ASC, i.title ASC`
+  /** The repeatable filters both lists share: any-of within one, AND across them. */
+  private listFilterConditions(filter: {
+    readonly statusIds: readonly string[]
+    readonly priorities: readonly string[]
+    readonly tags: readonly string[]
+  }): Prisma.Sql[] {
+    const conditions: Prisma.Sql[] = []
+    if (filter.statusIds.length > 0) {
+      conditions.push(Prisma.sql`i.status_id IN (${uuidList(filter.statusIds)})`)
+    }
+    if (filter.priorities.length > 0) {
+      conditions.push(
+        Prisma.sql`i.priority IN (${Prisma.join(filter.priorities.map((p) => Prisma.sql`${p}::"Priority"`))})`,
+      )
+    }
+    if (filter.tags.length > 0) {
+      conditions.push(
+        Prisma.sql`EXISTS (SELECT 1 FROM idea_tags it JOIN tags t ON t.id = it.tag_id WHERE it.idea_id = i.id AND t.normalized_name IN (${Prisma.join(filter.tags)}))`,
+      )
+    }
+    return conditions
+  }
+
+  /**
+   * The all-column search (SPEC/30-Contracts.md): case-insensitive substring over title, author
+   * and assignee names, status name, priority, tag names, Problem and the Text/Url field values,
+   * plus ideas created on the day the term names when it is an ISO date. The organization list also
+   * matches the board name; on a board's own list every idea shares one, so it would match all or
+   * nothing.
+   */
+  private searchCondition(
+    filter: {
+      readonly search: string | null
+      readonly searchTextFieldIds: readonly string[]
+      readonly searchCreatedOnDate: string | null
+    },
+    includeBoardName: boolean,
+  ): Prisma.Sql {
+    const term = `%${filter.search ?? ''}%`
+    const clauses: Prisma.Sql[] = [
+      Prisma.sql`i.title ILIKE ${term}`,
+      Prisma.sql`i.problem ILIKE ${term}`,
+      Prisma.sql`i.priority::text ILIKE ${term}`,
+      Prisma.sql`(au.first_name ILIKE ${term} OR au.last_name ILIKE ${term} OR (au.first_name || ' ' || au.last_name) ILIKE ${term})`,
+      Prisma.sql`EXISTS (SELECT 1 FROM idea_assignees ia3 JOIN users u3 ON u3.id = ia3.user_id WHERE ia3.idea_id = i.id AND (u3.first_name ILIKE ${term} OR u3.last_name ILIKE ${term} OR (u3.first_name || ' ' || u3.last_name) ILIKE ${term}))`,
+      Prisma.sql`s.name ILIKE ${term}`,
+      Prisma.sql`EXISTS (SELECT 1 FROM idea_tags it2 JOIN tags t2 ON t2.id = it2.tag_id WHERE it2.idea_id = i.id AND t2.name ILIKE ${term})`,
+    ]
+    if (includeBoardName) {
+      clauses.push(Prisma.sql`b.name ILIKE ${term}`)
+    }
+    if (filter.searchTextFieldIds.length > 0) {
+      clauses.push(
+        Prisma.sql`EXISTS (SELECT 1 FROM idea_field_values v WHERE v.idea_id = i.id AND v.field_definition_id IN (${uuidList(filter.searchTextFieldIds)}) AND v.value ILIKE ${term})`,
+      )
+    }
+    if (filter.searchCreatedOnDate) {
+      clauses.push(
+        Prisma.sql`i.created_at_utc >= ${filter.searchCreatedOnDate}::date AND i.created_at_utc < (${filter.searchCreatedOnDate}::date + 1)`,
+      )
+    }
+    return Prisma.sql`(${Prisma.join(clauses, ' OR ')})`
+  }
+
+  /**
+   * One page of ideas in a TOTAL ORDER: the requested sort, then the mandated tie-break
+   * (createdAtUtc, title) and finally the id, which can only decide between ideas those two leave
+   * tied (see the file header and `IdeaListFilter.sortBy`).
+   *
+   * Raw SQL for both lists, because search and sort need the author's, an assignee's, the
+   * status's and the board's names and the frozen schema models no relation from `ideas` to
+   * `users`, `statuses` or `boards`.
+   */
+  private async listPage(input: {
+    readonly conditions: readonly Prisma.Sql[]
+    readonly sortSql: Prisma.Sql
+    readonly direction: SortDirection
+    readonly page: { readonly page: number; readonly pageSize: number }
+    readonly sortBy: string | null
+  }): Promise<IdeaPage<Idea>> {
+    const whereClause = Prisma.join([...input.conditions], ' AND ')
+    const directionSql = input.direction === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`
+    const orderByClause = Prisma.sql`ORDER BY ${input.sortSql} ${directionSql}, i.created_at_utc ASC, i.title ASC, i.id ASC`
 
     const fromClause = Prisma.sql`
       FROM ideas i
       LEFT JOIN users au ON au.id = i.author_user_id
       LEFT JOIN statuses s ON s.id = i.status_id
+      LEFT JOIN boards b ON b.id = i.board_id
       LEFT JOIN LATERAL (
         SELECT (u.first_name || ' ' || u.last_name) AS name
         FROM idea_assignees ia
@@ -453,15 +530,15 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
         WHERE ia.idea_id = i.id
         ORDER BY u.first_name ASC, u.last_name ASC
         LIMIT 1
-      ) assignee ON true
+      ) assignee ON TRUE
     `
 
     const idRows = await this.prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
-      SELECT i.id, assignee.name AS assigned_to_name
+      SELECT i.id
       ${fromClause}
       WHERE ${whereClause}
       ${orderByClause}
-      LIMIT ${filter.page.pageSize} OFFSET ${(filter.page.page - 1) * filter.page.pageSize}
+      LIMIT ${input.page.pageSize} OFFSET ${(input.page.page - 1) * input.page.pageSize}
     `)
 
     const countRows = await this.prisma.$queryRaw<{ count: bigint }[]>(Prisma.sql`
@@ -484,11 +561,11 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
 
     return {
       items,
-      page: filter.page.page,
-      pageSize: filter.page.pageSize,
+      page: input.page.page,
+      pageSize: input.page.pageSize,
       totalCount,
-      sortBy: filter.sortBy,
-      sortDirection: direction,
+      sortBy: input.sortBy,
+      sortDirection: input.direction,
     }
   }
 

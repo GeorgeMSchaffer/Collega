@@ -39,10 +39,12 @@ import { writeCsv } from '../common/csv/write-csv.js'
 import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
 import {
   guidOrEmpty,
+  guidQueryList,
   isGuid,
   optional,
   optionalGuid,
   optionalInt,
+  queryList,
   stringList,
 } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
@@ -197,9 +199,9 @@ export class IdeasController {
       page: optionalInt(query.page),
       pageSize: optionalInt(query.pageSize),
       search: optional(query.search),
-      statusId: optionalGuid(query.statusId),
-      tag: optional(query.tag),
-      priority: optional(query.priority),
+      statusIds: guidQueryList(query.statusId),
+      tags: queryList(query.tag),
+      priorities: queryList(query.priority),
       dueBefore: optional(query.dueBefore),
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
@@ -220,7 +222,10 @@ export class IdeasController {
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
       fieldFilters: parseFieldFilters(query),
-      tag: optional(query.tag),
+      boardIds: guidQueryList(query.boardId),
+      statusIds: guidQueryList(query.statusId),
+      priorities: queryList(query.priority),
+      tags: queryList(query.tag),
       phase: optional(query.phase),
       user: optionalGuid(query.user),
     })

@@ -142,14 +142,26 @@ export class IdeaService {
     }
     this.ensureOrganizationScope(board.organizationId)
 
+    const search = trimOrNull(query.search)
+    const searchTextFieldIds = search
+      ? (
+          await this.fieldValues.translateListFilters({
+            organizationId: board.organizationId,
+            raw: null,
+          })
+        ).searchTextFieldIds
+      : []
+
     const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
     const ideasPage = await this.ideaRepository.listByBoard({
       boardId,
       page,
-      search: trimOrNull(query.search),
-      statusId: query.statusId,
-      tag: trimOrNull(query.tag),
-      priority: parseOptionalPriority(query.priority),
+      search,
+      searchTextFieldIds,
+      searchCreatedOnDate: search && isValidIsoDate(search) ? search : null,
+      statusIds: distinctNonEmpty(query.statusIds),
+      tags: normalizeTagFilters(query.tags),
+      priorities: parsePriorityFilters(query.priorities),
       dueBefore: parseOptionalDate(query.dueBefore),
       // The ideation board is Discovery, always: a promoted item leaves it (no data loss - the row
       // and its ideation status are retained, and it reappears here if it is returned to
@@ -199,7 +211,10 @@ export class IdeaService {
       sortDirection: normalizeSortDirection(query.sortDirection),
       fieldFilters,
       searchTextFieldIds,
-      tag: trimOrNull(query.tag),
+      boardIds: distinctNonEmpty(query.boardIds),
+      statusIds: distinctNonEmpty(query.statusIds),
+      priorities: parsePriorityFilters(query.priorities),
+      tags: normalizeTagFilters(query.tags),
       associatedUserId: trimOrNull(query.user),
       searchCreatedOnDate,
       // Defaults to both phases, unlike the board: this list is where somebody looks for an item
@@ -798,9 +813,11 @@ export class IdeaService {
         boardId,
         page: { page: pageNumber, pageSize: MAX_PAGE_SIZE },
         search: null,
-        statusId: null,
-        tag: null,
-        priority: null,
+        searchTextFieldIds: [],
+        searchCreatedOnDate: null,
+        statusIds: [],
+        tags: [],
+        priorities: [],
         dueBefore: null,
         // Same Discovery filter as the board itself: the export is "this board's ideas", and a
         // file that disagreed with the screen it was exported from would be the bug.
@@ -1943,6 +1960,16 @@ function parsePriority(value: string | null): Priority {
     })
   }
   return parsed
+}
+
+/** A repeatable `priority` filter: unrecognised values are dropped, as a single one always was. */
+function parsePriorityFilters(values: readonly string[]): Priority[] {
+  return [...new Set(values.flatMap((value) => parseOptionalPriority(value) ?? []))]
+}
+
+/** A repeatable `tag` filter, matched against the tag's normalized (trimmed, lowercased) name. */
+function normalizeTagFilters(values: readonly string[]): string[] {
+  return [...new Set(values.flatMap((value) => trimOrNull(value)?.toLowerCase() ?? []))]
 }
 
 function parseOptionalPriority(value: string | null | undefined): Priority | null {
