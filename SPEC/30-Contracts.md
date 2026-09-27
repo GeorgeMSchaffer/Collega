@@ -34,6 +34,7 @@ Defines the system contracts that implementations must follow.
 - Organization, user, idea, and comment list endpoints support pagination in MVP.
 - Smaller configuration collections such as statuses, boards, and tags may return full result sets unless a feature-specific contract says otherwise.
 - Paginated collections support basic filtering plus one explicit sort field and sort direction.
+- **List pattern (2026-09-27, `20-feature-client-ui.md` "List and detail pattern").** Applies to `GET /api/v1/organizations/{organizationId}/ideas` and `GET /api/v1/boards/{boardId}/ideas`; the users and organizations lists join it only when their screens move to the pattern. The list screens send `pageSize` of `10` (their default), `25`, `50` or `100`. **The API's paging is unchanged** (corrected 2026-09-27): any other value keeps its existing treatment — absent is `20`, and values are clamped to 1–100 (`packages/application/src/common/pagination.ts`) — so no caller gains a `400` and the golden corpus records no paging difference. Finite-value filters are **repeatable** (`statusId=a&statusId=b`): values of one parameter combine as any-of, different parameters as AND. `sortBy` accepts every column the list screen displays; each endpoint lists its values. Unsorted lists keep their existing default order.
 - Archived organizations are hidden from list results by default unless explicitly filtered with `isArchived=true` or an equivalent include-archived flag.
 
 ## Update Conventions
@@ -938,6 +939,15 @@ Request body:
 - `description` optional string or `null` (added 2026-09-27) — same rules as on create. **Absent leaves the stored description unchanged**; `null` or a blank string clears it.
 - `swimlanes` required array of `statusId` and `order`
 
+### `POST /api/v1/boards/{boardId}/archive` and `POST /api/v1/boards/{boardId}/unarchive`
+Purpose: Archive a board, or bring it back (added 2026-09-27; `decisions.md`). Until then boards had no delete endpoint or action; archiving replaces that absence. Org Admin of the board's organization only; a direct Site Admin is refused like every other org-content write.
+
+Archiving keeps the board, its swimlanes and every idea on it. An archived board leaves the default board list and the board pickers, accepts no new ideas, and its ideas stay reachable from `GET /api/v1/organizations/{organizationId}/ideas`. An archived board's own page opens **read-only** with an *Archived* banner (Q4, answered 2026-09-27): no new ideas, no moves, no edits; an Org Admin sees *Unarchive* there. **The board's own settings are frozen too** (added 2026-09-27): `PUT /api/v1/boards/{boardId}` (name, description, lanes) and the swimlane reorder are refused for an archived board with `409 Conflict` — unarchive it first. Creating an idea on it, and moving or editing one of its ideas, are refused the same way.
+
+Success response: `204 No Content`. Archiving an archived board, or unarchiving an active one, is also `204`.
+
+The board list gains `includeArchived` optional boolean (default `false`), and each item gains `isArchived` boolean and `archivedAtUtc` timestamp or `null`.
+
 ### `POST /api/v1/boards/{boardId}/swimlanes/reorder`
 Purpose: Persist swimlane reorder immediately after drag-and-drop.
 
@@ -957,12 +967,13 @@ Purpose: List ideas on a board with pagination.
 Query parameters:
 - `page`
 - `pageSize`
-- `search` optional
+- `search` optional — defined 2026-09-27: the same matching as the organization list's `search` below (case-insensitive substring over title, author and assignee names, status name, priority, tag names, Problem and Text/Url User-Defined Field values, plus the ISO-date rule for Created Date), **minus board name**, since every item is on this board
 - `statusId` optional
 - `tag` optional
 - `priority` optional `Low`, `Medium`, `High`, or `Critical`
 - `dueBefore` optional date string (`YYYY-MM-DD`)
-- `sortBy` optional `createdAt`, `updatedAt`, `upvoteCount`, `priority`, or `dueDate`
+- `sortBy` optional `createdAt`, `updatedAt`, `upvoteCount`, `priority`, or `dueDate`; **added 2026-09-27**: `title`, `status` (lane order), `assignedTo`, `tags`
+- `statusId`, `priority` and `tag` are repeatable from 2026-09-27 (any-of within a parameter)
 - `sortDirection` optional `asc` or `desc`
 
 **Phase filtering (added 2026-09-11, Issues and Delivery Slice 1).** This list is the ideation
@@ -1000,11 +1011,12 @@ Purpose: Cross-board, organization-scoped idea list for the global `/ideas` page
 Query parameters:
 - `page`
 - `pageSize`
-- `search` optional — all-column search across every column the `/ideas` list displays: the idea **Title**, **Created By** (author first/last/full name), **Assigned To** (any assignee's first/last/full name), and **Status** (status name); it also scans the values of Text/Url User-Defined Fields. When the term is a full ISO date (`YYYY-MM-DD`) it additionally matches the **Created Date** column (ideas created on that UTC calendar day). Matching is case-insensitive substring (`LIKE '%term%'`) except the date term, which matches the whole calendar day.
+- `search` optional — all-column search across every column the `/ideas` list displays: the idea **Title**, **Created By** (author first/last/full name), **Assigned To** (any assignee's first/last/full name), and **Status** (status name); it also scans the values of Text/Url User-Defined Fields. When the term is a full ISO date (`YYYY-MM-DD`) it additionally matches the **Created Date** column (ideas created on that UTC calendar day). Matching is case-insensitive substring (`LIKE '%term%'`) except the date term, which matches the whole calendar day. **Added 2026-09-27** (the list pattern's text filter): it also matches the **board name**, the **priority**, **tag names**, and the idea's **Problem**, with the same substring semantics.
 - `scope` optional `all` (default), `created` (authored by the caller), or `assigned` (assigned to the caller) — the caller's me-chips
 - `tag` optional — filter to ideas carrying a tag whose normalized name equals the given value (same normalization/semantics as the board list's `tag`)
 - `user` optional GUID — user-association search box: filter to ideas the given user **authored or is assigned to** (`SPEC/Bug Triage.md`). `Guid.Empty` is treated as absent. Composes (AND) with `scope`/`tag`/`search`/`fieldFilters` when combined.
-- `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name)
+- `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name); **added 2026-09-27** for the list pattern: `board` (board name), `priority` (Low→Critical order), `upvoteCount`, and `tags` (alphabetically-first tag)
+- `boardId`, `statusId`, `priority` optional and repeatable (added 2026-09-27); `tag` becomes repeatable with any-of semantics
 - `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first). All sorts apply a stable `ideaId` tiebreaker so ordering is deterministic across pages.
 - `fieldFilters[<fieldDefinitionId>]=<value>` optional, repeatable — filter by User-Defined Field value (T059). Semantics per field type: `Text`/`Url` contains; `Number` range `<min>:<max>` (either side omittable); `Date` range `<from>:<to>` (ISO-8601, either side omittable); `Boolean` `true`/`false`; `Dropdown` exact option id; `MultiSelect` any-of (matches when the stored option ids include the value). Unknown/invalid `fieldDefinitionId` keys and unparseable values are silently ignored.
 - `phase` optional (added 2026-09-11, Issues and Delivery Slice 1) — `All` (**default**), `Ideas` (`Discovery`-phase only), or `Issues` (`Delivery`-phase only). Unrecognised values are treated as `All`. Unlike the board list this defaults to spanning **both** phases: this is the list somebody uses to find an item they cannot see on a board, and hiding promoted ones would lose them. Omitting it therefore leaves the response exactly as it was before the parameter existed.
@@ -1017,6 +1029,7 @@ Purpose: Export a board's active ideas as CSV (T059/T060).
 Success response `200`:
 - `Content-Type: text/csv` (UTF-8 with BOM), attachment `ideas.csv`
 - Columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`, `Status`, `Due Date`, `Tags`, then one column per active User-Defined Field (header = field name). Dropdown/MultiSelect values render as option labels.
+- **Added 2026-09-27:** `Problem`, `Proposed Solutions` and `Impact Rationale` (`20-feature-ideas-and-engagement.md` rule 2a). Proposed Solutions writes the ordered list joined with a newline inside the one quoted cell (1 to 5 items). `Description` may be empty, since it is now optional.
 - **`Discovery`-phase only** (added 2026-09-11), matching the board list above: the export is "this board's ideas", and a file that disagreed with the screen it was exported from would be the bug. Unchanged for any organization that has promoted nothing.
 
 Limits and escaping (added 2026-08-11, Sprint 4):
@@ -1030,11 +1043,12 @@ Error responses:
 Purpose: Create-only CSV import of ideas onto a board (T059/T060). Multipart form field `csvFile`.
 
 Behavior:
-- Each data row creates a new idea. Required columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`. `Status` is optional (must name a board swimlane; defaults to the left-most swimlane); `Due Date`, `Tags`, and per-UDF-field columns are optional.
+- Each data row creates a new idea. Required columns: `Title`, `Priority`, `Idea Type`, `Business Impact`; **`Description` is optional since 2026-09-27** (an optional summary). `Status` is optional (must name a board swimlane; defaults to the left-most swimlane); `Due Date`, `Tags`, and per-UDF-field columns are optional.
 - `Idea Type` and `Business Impact` are matched by name (case-insensitive) against active options; a missing or unknown value rejects that row. Dropdown/MultiSelect UDF columns are matched by option label; Boolean accepts `Yes`/`No` or `true`/`false`.
 - Invalid rows are rejected individually with a per-row message; valid rows still import.
 - **Bounded (added 2026-08-11, Sprint 4):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. The body limit is enforced at the request pipeline and answers `413`; the row ceiling is the handler's own and answers the field-keyed `400`.
-- A leading guard apostrophe written by the export is stripped on import (see the export contract above), so re-importing an exported file is lossless.
+- **Structured fields (added 2026-09-27).** `Problem` (max 2000), `Proposed Solutions` (1 to 5 items separated by newlines within the cell, each max 500) and `Impact Rationale` (max 1000) are optional columns. A row that lacks one, or leaves it blank, gets the backfill of `20-feature-ideas-and-engagement.md` rule 2a: Problem takes the row's `Description`, or *Not captured before 2026-09-27.* when that is blank too; Proposed Solutions takes the single item *Not captured before 2026-09-27.*; Impact Rationale takes the same text. A value over its limit, or more than five solutions, rejects the row.
+- A leading guard apostrophe written by the export is stripped on import (see the export contract above). With the three structured columns in the export, re-importing an exported file is lossless.
 
 Success response `200`:
 - `createdCount` integer
@@ -1050,7 +1064,10 @@ Purpose: Create a new idea on a board.
 
 Request body:
 - `title` required string, max 150 characters
-- `description` required string, max 4000 characters
+- `problem` required string, max 2000 characters (added 2026-09-27, `20-feature-ideas-and-engagement.md` rule 2a)
+- `proposedSolutions` required array of 1 to 5 strings, each max 500 characters, order preserved (added 2026-09-27)
+- `impactRationale` required string, max 1000 characters (added 2026-09-27)
+- `description` optional string, max 4000 characters — **changed 2026-09-27 from required** to an optional summary (kept, Q2)
 - `priority` required string: `Low`, `Medium`, `High`, or `Critical`
 - `ideaTypeId` required GUID string referencing an active Idea Type in the board's organization
 - `businessImpactId` required GUID string referencing an active Business Impact in the board's organization
@@ -1071,6 +1088,8 @@ Success response `201`:
 - `dueDate`
 
 ### `POST /api/v1/boards/{boardId}/ideas/ai-draft`
+> **Withdrawn 2026-09-27** (`20-feature-ai-idea-assist-v2.md` "Contract changes"): never built, and extraction is covered by the v2 turn endpoint. Kept for history.
+
 Purpose: Turn a plain-English description into a pre-filled, unsaved idea draft for review. This endpoint never creates an idea; the client submits the reviewed result to `POST /api/v1/boards/{boardId}/ideas` as normal.
 
 Authorized for the same roles as manual idea creation: Site Admin, Org Admin, and `User`. `Read Only` is rejected with `403`.
@@ -1116,6 +1135,8 @@ Error responses:
 `409` and `503` are feature-specific extensions to the standard error responses. The client treats both as recoverable by falling back to the blank manual idea form.
 
 ### `POST /api/v1/boards/{boardId}/ideas/ai-polish`
+> **Withdrawn 2026-09-27**: never built; polishing belongs to the future refinement spec. Kept for history.
+
 Purpose: Rewrite a draft description on explicit user request. This is the opt-in "Polish with AI" action and is never invoked automatically.
 
 Authorized for the same roles as `ai-draft`.
@@ -1140,7 +1161,10 @@ Success response `200`:
 - `ideaId`
 - `boardId`
 - `title`
-- `description`
+- `problem` string (added 2026-09-27)
+- `proposedSolutions` string array (added 2026-09-27)
+- `impactRationale` string (added 2026-09-27)
+- `description` string or `null`
 - `priority`
 - `ideaTypeId`
 - `ideaTypeName`
@@ -1186,7 +1210,10 @@ Purpose: Update idea content.
 
 Request body:
 - `title` required string, max 150 characters
-- `description` required string, max 4000 characters
+- `problem` required string, max 2000 characters (added 2026-09-27, `20-feature-ideas-and-engagement.md` rule 2a)
+- `proposedSolutions` required array of 1 to 5 strings, each max 500 characters, order preserved (added 2026-09-27)
+- `impactRationale` required string, max 1000 characters (added 2026-09-27)
+- `description` optional string, max 4000 characters — **changed 2026-09-27 from required** to an optional summary (kept, Q2)
 - `priority` required string: `Low`, `Medium`, `High`, or `Critical`
 - `ideaTypeId` required GUID string referencing an active Idea Type in the idea's organization
 - `businessImpactId` required GUID string referencing an active Business Impact in the idea's organization
@@ -1820,6 +1847,8 @@ Contract-wide rules for this section:
 - suggested option ids are always active options in the caller's organization; the server rejects a model response containing any id outside the retrieved set rather than passing it to the client
 
 ### `POST /api/v1/boards/{boardId}/idea-assist/turns`
+> **Changes in v2 (specified 2026-09-27, not built):** `draft` carries the structured fields, the request adds `lockedFields` and `step`, and the response returns `changes`, `suggestions` and `nextStep` instead of `draft`. `20-feature-ai-idea-assist-v2.md` "Contract changes" is authoritative for them; the shape below is v1, live today.
+
 Purpose: Advance the idea-drafting conversation by one turn and return the updated draft.
 
 Request body:

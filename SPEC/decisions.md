@@ -9,7 +9,94 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-27 — The idea assistant is rescoped as a co-author, and ideas gain structured fields
+
+**Decided by the user**, reviewing an interactive prototype (comp R). This is the rescope
+2026-09-13 scheduled. `20-feature-ai-idea-assist-v2.md` is the spec; the v1 spec stays authoritative
+for what is live until v2 ships.
+
+- **Ideas gain three dedicated fields: Problem, Proposed solutions (a list), Impact rationale.**
+  Chosen over three custom fields (every organization would have to configure them) and over
+  sections inside Description (not enforceable, not searchable). Custom fields attached through the
+  Idea Type are unchanged and follow the core fields. Description becomes an optional summary.
+  Existing ideas are backfilled so the three fields are required on every save; a solution list
+  holds 1 to 5 items. This is a schema and contract change (`30-Contracts.md`, rule 2a of
+  `20-feature-ideas-and-engagement.md`).
+- **The assistant maps, interviews and brainstorms.** Free text fills fields visibly; it asks for
+  the next missing field in a fixed order; it offers solution ideas, a sharper problem statement and
+  measurable rationales as chips the person accepts. It never overwrites a field the person has
+  edited, and that is enforced on the server (`lockedFields`).
+- **Skip is always one click, and any failure hands off to the form** with everything captured,
+  including the failing turn's own text. v1's scripted-nudge fallback is dropped for v2.
+- **Surface:** the create drawer opens wide with the assistant beside the form, replacing v1's
+  720px modal followed by a create modal.
+- **Measurement comes first**: v2 is not enabled until a TypeScript prompt-eval runner reports
+  mapping accuracy and scope-gate results. `ai-draft` and `ai-polish`, specified and never built,
+  are withdrawn.
+
+## 2026-09-27 — The S0.2 schema freeze is amended a third time, for structured ideas and board archive
+
+**Decided by the user**, with the rescope above and board archive ("One list and detail pattern"
+below). Under the 2026-09-11 rule — the freeze stands, and each change to `schema.prisma` needs
+its own entry here — this is that entry. It is not a general licence either.
+
+- **`ideas`** gains `problem VARCHAR(2000)`, `proposed_solutions TEXT[]` (1 to 5 items, enforced in
+  the domain) and `impact_rationale VARCHAR(1000)`; **`description` changes from `NOT NULL` to
+  nullable**, since it is now an optional summary.
+- **`boards`** gains `is_archived BOOLEAN` and `archived_at_utc` (timestamp, nullable), for archive
+  in place of delete.
+- **The migrations backfill** per rule 2a of `20-feature-ideas-and-engagement.md`: Problem takes the
+  idea's Description, or *Not captured before 2026-09-27.* when that is empty; Proposed solutions
+  takes the single item *Not captured before 2026-09-27.*; Impact rationale takes the same text.
+  Every existing board reads not archived. After the backfill the three idea columns are required
+  on every save.
+
+**Golden corpus.** This changes the idea detail and list response shapes and makes `description`
+nullable, so the replay will differ there. Those differences are accepted, and slice 099 records
+them in `tools/golden/src/accepted.ts`.
+
+## 2026-09-27 — Terrazzo is the palette, with a theme picker
+
+**Decided by the user** after comparing palettes live in comp R. Comp P left the palette open; this
+closes it. **Terrazzo** (slate blue with pistachio and blush) is the default. A theme picker at the
+right of the top bar offers Terrazzo, Portico, Piazza Sera and Lagoon as light themes and Notte as
+the dark theme. Every theme is one token set in `packages/design-system`,
+checked to 4.5:1 for text, so adding or retiring a theme never touches components. The choice is
+remembered per browser in a cookie, not on the user profile (answered the same day), and each theme
+carries a suggestion hue distinct from its accent for the idea assistant. Earlier
+candidates (Sprout, Blueprint, the bright Piazza, Mercato) were reviewed and dropped the same day.
+
+## 2026-09-27 — One list and detail pattern, and a drawer instead of the docked inspector
+
+**Decided by the user** from comp R, `SPEC/mockups/comp-r-portico-prototype.html`.
+`20-feature-client-ui.md` "List and detail pattern" is the rule; in short:
+
+- **Detail, edit and create open in a drawer that overlays the right of the page** instead of the
+  docked inspector column. The docked column squeezed the board and gave it a horizontal scrollbar;
+  an overlay never resizes what is under it. This supersedes the inspector for Boards, boards and
+  Ideas now, and for the other list screens as they move to the pattern.
+- **Every list has the same toolbar, sorting, paging (10 default; 25, 50, 100) and an Actions
+  column** (View, Edit, Delete or Archive). **List is the default view** everywhere except a
+  board's own page, where Lanes is. This supersedes the same day's "cards by default" on Boards.
+- **Row actions a role may not use are hidden**, narrowing "Denied is shown, not hidden"
+  (2026-09-02, 2026-09-08) with a third exception. Page-level actions still show disabled with the
+  reason, so a member still learns what exists.
+- **Boards are archived, not deleted.** Until now boards had no delete endpoint or action;
+  archiving fills that gap, and their ideas are never orphaned.
+- **"Add New {Item}"** in title case, right-aligned level with the page's H1 and description.
+- **Bug Triage exception granted** for this work (answered the same day), on one condition: the
+  first slice also fixes the "two level-1 headings" item, since the new page header rewrites those
+  screens anyway. The other open items stay queued.
+- **Order of work:** phase 1 is themes, this pattern on Boards, a board and Ideas, the structured
+  idea fields with their backfill, board archive and the heading fix; phase 2 the prompt-eval
+  runner; phase 3 idea assistant v2. Settings and Delivery lists move to the pattern afterwards.
+
+---
+
 ## 2026-09-27 — The Boards screen has a card view and a list view
+
+> **Default view superseded later the same day** by "One list and detail pattern": List is the
+> default and Cards the alternative.
 
 **Decided by the user**, choosing between three reviewed directions (card grid, one row per board,
 wide tiles with a lane chart), each shown in its own palette. Cards are the default and a list view
@@ -24,6 +111,10 @@ descriptions), so neither view costs a request per board. `SPEC/20-feature-clien
 ---
 
 ## 2026-09-27 — Desk screens use the full width, and the Boards screens carry the board actions
+
+> **Superseded in part 2026-09-27** by "One list and detail pattern, and a drawer instead of the
+> docked inspector": the topbar's *Manage boards* / *New board* pair became the page header's single
+> *Add New Board*, and *Edit* opens the board form in the drawer instead of going to Settings.
 
 **Decided by the user.** Two changes to comp P's structure, both prompted by using the app on a
 wide monitor as an Org Admin.
@@ -750,6 +841,10 @@ not been shown to fail has not been shown to do anything.
 
 ## 2026-09-08 — An empty state's action is disabled with a reason, never omitted
 
+> **Superseded in part 2026-09-27** by "One list and detail pattern, and a drawer instead of the
+> docked inspector": "Denied is shown, not hidden" gains a third exception — per-row actions in a
+> list a role may not use are hidden. Page-level and empty-state actions are unchanged.
+
 **The conflict.** Comp Q applies two different rules to the same situation. Its delivery screens
 (`s-sprint`, `s-roadmap`, `s-issue` tasks) render an empty state's action three ways under
 `data-roles`: live for an Org Admin, `aria-disabled` for a Site Admin with *"Act as an Acme Robotics
@@ -1305,6 +1400,10 @@ bind the TypeScript stack.
 
 ## 2026-09-03 — Comp P is the canonical comp; the client is built on Tailwind CSS + shadcn/ui
 
+> **Superseded in part 2026-09-27** by "Terrazzo is the palette, with a theme picker" (fonts are per
+> theme, not Geist alone) and "One list and detail pattern, and a drawer instead of the docked
+> inspector" (the drawer replaces the docked inspector for detail, edit and create).
+
 **Decided:** comp P is the canonical UI comp for the product and the target of the
 TypeScript conversion's Wave E — its structure, information architecture and copy model are
 what ships. The client is built on a framework rather than hand-rolled CSS: **Tailwind CSS
@@ -1399,6 +1498,10 @@ included) and A3 (replay harness) are live work now and belong on Sprint 8's cal
 
 ## 2026-08-31 — Comp P is the locked UI direction; colour stays open
 
+> **Superseded in part 2026-09-27**: the palette is decided — Terrazzo ("Terrazzo is the palette,
+> with a theme picker") — and the drawer replaces the docked inspector ("One list and detail
+> pattern, and a drawer instead of the docked inspector").
+
 **Decided:** `SPEC/mockups/comp-p-focus-roadmap.html` is the locked structural direction
 for the client UI. Its **layout, information architecture, and copy model are locked**.
 Its **palette is explicitly not locked** and is expected to be tweaked.
@@ -1491,6 +1594,10 @@ reasoning in `SPEC/50-typescript-migration.md`.
 ---
 
 ## 2026-09-02 — A denied admin route shows a refusal, not a disabled page
+
+> **Superseded in part 2026-09-27** by "One list and detail pattern, and a drawer instead of the
+> docked inspector": the "disabled with a reason" rule this entry builds on is narrowed — per-row
+> actions a role may not use are hidden. Refusal panels for denied routes are unchanged.
 
 The comp P refresh plan settled that denied actions should render **disabled with a
 reason** rather than hidden, which is the right rule for a control inside a page the

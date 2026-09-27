@@ -16,6 +16,12 @@ These mockups are static SVG artifacts based on the current Collega specs and sh
 - `11-idea-detail-editorial-variant.svg`: alternate editorial visual direction for idea collaboration and activity rail
 - `12-idea-card-and-overlay.svg`: dedicated compact card plus detail overlay interaction mockup
 
+## Comp R — list and detail pattern, themes, idea assistant v2 (2026-09-27)
+
+`comp-r-portico-prototype.html` is an **interactive** prototype, not a generated static set: open it in a browser and use the dark bar at the top to switch screen (Boards, Board: Opportunities, Ideas), role (Org Admin, User, Read Only) and the assistant's health (Healthy, Fails next turn, Unavailable). The theme picker sits in the product's own top bar. Seeded Acme Robotics ideas are inlined; edits live only in the page.
+
+It is the reference for `SPEC/20-feature-client-ui.md` "List and detail pattern" and "Themes", and for `SPEC/20-feature-ai-idea-assist-v2.md`. It supersedes comp P/Q's docked inspector and create column for Boards, boards and Ideas; comp P/Q remain the reference for every screen comp R does not draw. Structure is otherwise unchanged from comp P. The file is hand-written, not built by `_build/`.
+
 ## Full-App Comps (2026-07-30)
 
 Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with Fluent UI Blazor components.
