@@ -38,7 +38,7 @@ export default async function OrganizationsPage() {
       lead="Every organization on this deployment. Open one to change its boards, statuses, types and membership."
       actions={
         <Link href="/settings/organizations/new" className={buttonVariants()}>
-          Add organization
+          Add New Organization
         </Link>
       }
     >

@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@collega/design-system'
+import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { requireCurrentUser } from '@/lib/server/current-user'
 
@@ -44,12 +45,12 @@ export default async function Page() {
 
   return (
     <>
-      <Topbar title="Design system" actions={<Badge variant="warning">Wave E0</Badge>} />
+      <Topbar title={<b>Design system</b>} actions={<Badge variant="warning">Wave E0</Badge>} />
       <main className="flex max-w-5xl flex-col gap-6 p-6">
-        <p className="m-0 max-w-2xl text-muted-foreground">
-          The theme and every primitive the design system exports, so a change to the palette or a
-          variant is visible without booting a feature screen.
-        </p>
+        <PageHeader
+          title="Design system"
+          description="The theme and every primitive the design system exports, so a change to the palette or a variant is visible without booting a feature screen. Switch the theme in the top bar to check all five."
+        />
 
         <Card>
           <CardHeader>

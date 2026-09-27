@@ -9,6 +9,7 @@ import {
   FileButton,
 } from '@collega/design-system'
 import Link from 'next/link'
+import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { PasswordForm } from '@/components/settings/password-form'
 import { ProfileForm } from '@/components/settings/profile-form'
@@ -49,12 +50,10 @@ export default async function ProfilePage() {
         }
       />
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
-        <div>
-          <h1>My Profile</h1>
-          <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">
-            Edit your name and change your password. Email and role are read-only.
-          </p>
-        </div>
+        <PageHeader
+          title="My Profile"
+          description={<>Edit your name and change your password. Email and role are read-only.</>}
+        />
 
         <div className="flex max-w-[720px] flex-col gap-4">
           <Card>

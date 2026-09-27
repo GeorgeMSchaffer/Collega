@@ -96,7 +96,7 @@ export default async function UsersPage() {
               them to View as, View as can only target an existing member, and a new organization
               has none. Reported 2026-09-14 by somebody who hit the loop. */}
           <Link href="/settings/users/new" className={buttonVariants()}>
-            Add user
+            Add New User
           </Link>
         </span>
       }

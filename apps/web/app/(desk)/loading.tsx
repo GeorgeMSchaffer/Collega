@@ -12,8 +12,10 @@ import { Topbar } from '@/components/nav/topbar'
 export default function DeskLoading() {
   return (
     <>
-      <Topbar title="Collega" />
+      <Topbar title={<b>Collega</b>} />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
+        {/* The page's own heading has not arrived yet; this one says why the region is empty. */}
+        <h1 className="sr-only">Loading</h1>
         <SkeletonRegion label="Loading the page" className="gap-4">
           <SkeletonRows rows={2} className="max-w-md" />
           <div className="rounded-lg border bg-card p-4">

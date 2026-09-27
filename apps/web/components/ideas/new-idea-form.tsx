@@ -12,7 +12,7 @@ const IDLE: CreateIdeaState = { error: null, title: '', description: '' }
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical']
 
 /**
- * "New idea" on a board, as a modal form (comp Q's `s-board` topbar action).
+ * "Add New Idea" on a board, as a modal form (comp Q's `s-board` topbar action).
  *
  * A native `<dialog>` rather than a component built out of a div: `showModal()` already does the
  * focus trap, the backdrop, Escape-to-close and the inert background, and every one of those is a
@@ -79,7 +79,7 @@ export function NewIdeaForm({
 
   return (
     <>
-      <Button onClick={() => dialog.current?.showModal()}>New idea</Button>
+      <Button onClick={() => dialog.current?.showModal()}>Add New Idea</Button>
 
       <dialog
         ref={dialog}

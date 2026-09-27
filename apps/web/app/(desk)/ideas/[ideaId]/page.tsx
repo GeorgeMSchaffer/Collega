@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { PageHeader } from '@/components/common/page-header'
 import { IdeasTable } from '@/components/ideas/ideas-table'
 import { IdeaInspector } from '@/components/inspector/idea-inspector'
 import { Topbar } from '@/components/nav/topbar'
@@ -60,7 +61,13 @@ export default async function IdeaPage({
         }
       />
       <div className="grid min-w-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <main className="min-w-0 p-6">
+        <main className="flex min-w-0 flex-col gap-4 p-6">
+          {/* The list this idea was opened from, so the page's heading is the list's. The idea's own
+              title is the inspector's heading beside it. */}
+          <PageHeader
+            title="Ideas"
+            description="Every idea across this organization's boards, with the one you opened beside the list."
+          />
           <IdeasTable rows={ideas.ideas} boards={boards} page={page} selectedId={idea.id} />
         </main>
         <IdeaInspector idea={idea} closeHref={listHref} />
