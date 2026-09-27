@@ -18,6 +18,8 @@ import {
   IdeaPhaseConflictError,
   MAX_ASSIGNEES,
   MAX_TAGS,
+  NOT_CAPTURED_TEXT,
+  PROBLEM_MAX_LENGTH,
   promoteIdeaToIssue,
   reassignIdeaType as reassignIdeaTypeOf,
   replaceIdeaAssignees,
@@ -264,7 +266,10 @@ export class IdeaService {
       boardId,
       statusId,
       title: command.title ?? '',
-      description: command.description ?? '',
+      description: command.description,
+      problem: command.problem ?? '',
+      proposedSolutions: command.proposedSolutions ?? [],
+      impactRationale: command.impactRationale ?? '',
       priority,
       ideaTypeId: command.ideaTypeId,
       businessImpactId: command.businessImpactId,
@@ -338,15 +343,15 @@ export class IdeaService {
     const existingAssignees = [...idea.assigneeUserIds]
     const existingMentions = new Set(idea.mentionedUserIds)
     const requestedAssignees = distinctNonEmpty(command.assigneeUserIds)
-    const descriptionChanged = (command.description ?? '').trim() !== idea.description
+    const contentChanged = structuredContentChanged(idea, command)
     const assigneesChanged = !setsEqual(new Set(existingAssignees), new Set(requestedAssignees))
 
-    // Description and assignee changes are restricted to the author or an in-scope admin
-    // (SPEC/20-feature-ideas-and-engagement.md "Permissions"); other fields use the general
-    // idea-edit permission already checked above.
-    if ((descriptionChanged || assigneesChanged) && !this.canAdministerIdeaContent(idea, actorId)) {
+    // Description, Problem, Proposed solutions, Impact rationale and assignee changes are
+    // restricted to the author or an in-scope admin (SPEC/20-feature-ideas-and-engagement.md
+    // "Permissions", rule 2a); other fields use the general idea-edit permission checked above.
+    if ((contentChanged || assigneesChanged) && !this.canAdministerIdeaContent(idea, actorId)) {
       throw new ForbiddenError(
-        "You are not allowed to change this idea's description or assignees.",
+        "You are not allowed to change this idea's description, problem, proposed solutions, impact rationale or assignees.",
       )
     }
 
@@ -399,7 +404,10 @@ export class IdeaService {
       idea,
       {
         title: command.title ?? '',
-        description: command.description ?? '',
+        description: command.description,
+        problem: command.problem ?? '',
+        proposedSolutions: command.proposedSolutions ?? [],
+        impactRationale: command.impactRationale ?? '',
         priority,
         businessImpactId: command.businessImpactId,
         dueDate,
@@ -843,7 +851,11 @@ export class IdeaService {
     for (const idea of ideas) {
       const cells: string[] = [
         idea.title,
-        idea.description,
+        idea.description ?? '',
+        idea.problem,
+        // One quoted cell, one solution per line (SPEC/30-Contracts.md export).
+        idea.proposedSolutions.join('\n'),
+        idea.impactRationale,
         idea.priority,
         this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
         this.businessImpactName(businessImpactLookup, idea.businessImpactId),
@@ -923,6 +935,17 @@ export class IdeaService {
 
       const title = cell(IdeaCsvColumns.title)
       const description = cell(IdeaCsvColumns.description)
+      // Rule 2a's backfill for a row that lacks a structured field or leaves it blank (CSV Import
+      // rule 3a): the same text the migration wrote into ideas created before the fields existed.
+      // A Description longer than Problem allows is cut to fit, as the migration did, so a file
+      // written before these columns existed still imports.
+      const problem =
+        cell(IdeaCsvColumns.problem) ??
+        description?.slice(0, PROBLEM_MAX_LENGTH).trimEnd() ??
+        NOT_CAPTURED_TEXT
+      const solutionsCell = cell(IdeaCsvColumns.proposedSolutions)
+      const proposedSolutions = solutionsCell ? solutionsCell.split(/\r?\n/) : [NOT_CAPTURED_TEXT]
+      const impactRationale = cell(IdeaCsvColumns.impactRationale) ?? NOT_CAPTURED_TEXT
       const priorityRaw = cell(IdeaCsvColumns.priority)
       const typeName = cell(IdeaCsvColumns.ideaType)
       const impactName = cell(IdeaCsvColumns.businessImpact)
@@ -937,10 +960,6 @@ export class IdeaService {
 
       if (!title) {
         reject('Title is required.')
-        continue
-      }
-      if (!description) {
-        reject('Description is required.')
         continue
       }
 
@@ -1051,6 +1070,9 @@ export class IdeaService {
           statusId,
           title,
           description,
+          problem,
+          proposedSolutions,
+          impactRationale,
           priority,
           ideaTypeId: ideaType.id,
           businessImpactId,
@@ -1305,6 +1327,9 @@ export class IdeaService {
       ideaId: idea.id,
       boardId: idea.boardId,
       title: idea.title,
+      problem: idea.problem,
+      proposedSolutions: idea.proposedSolutions,
+      impactRationale: idea.impactRationale,
       description: idea.description,
       priority: idea.priority,
       ideaTypeId: idea.ideaTypeId,
@@ -1853,6 +1878,26 @@ function distinctNonEmpty(ids: readonly string[] | null | undefined): string[] {
     result.push(id)
   }
   return result
+}
+
+/**
+ * Whether an update touches the author-or-admin fields: Description, and since 2026-09-27 Problem,
+ * Proposed solutions and Impact rationale. Compared the way the domain normalizes them (trimmed,
+ * blank description as none, blank solutions dropped), so resubmitting the stored values unchanged
+ * is not an edit.
+ */
+function structuredContentChanged(idea: Idea, command: UpdateIdeaCommand): boolean {
+  const solutions = (command.proposedSolutions ?? []).flatMap((s) => {
+    const trimmed = s?.trim()
+    return trimmed ? [trimmed] : []
+  })
+  return (
+    trimOrNull(command.description) !== idea.description ||
+    (command.problem ?? '').trim() !== idea.problem ||
+    (command.impactRationale ?? '').trim() !== idea.impactRationale ||
+    solutions.length !== idea.proposedSolutions.length ||
+    solutions.some((solution, index) => solution !== idea.proposedSolutions[index])
+  )
 }
 
 function setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {

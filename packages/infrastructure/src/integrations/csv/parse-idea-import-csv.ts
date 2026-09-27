@@ -1,5 +1,9 @@
 import { ValidationError } from '@collega/application/common'
-import { IDEA_CSV_REQUIRED_KEYS, type IdeaImportRow } from '@collega/application/ideas'
+import {
+  IDEA_CSV_IMPORT_ALIASES,
+  IDEA_CSV_REQUIRED_KEYS,
+  type IdeaImportRow,
+} from '@collega/application/ideas'
 import { stripFormulaGuard } from './formula-guard.js'
 import { parseCsvRecords } from './parse-csv-records.js'
 
@@ -28,7 +32,10 @@ export function parseIdeaImportCsv(content: string): readonly IdeaImportRow[] {
     throw emptyFileError()
   }
 
-  const headers = headerRecord.map((cell) => cell.trim().toLowerCase())
+  const headers = headerRecord.map((cell) => {
+    const header = cell.trim().toLowerCase()
+    return IDEA_CSV_IMPORT_ALIASES[header] ?? header
+  })
   const missing = IDEA_CSV_REQUIRED_KEYS.filter((key) => !headers.includes(key))
   if (missing.length > 0) {
     throw new ValidationError('The CSV file is invalid.', {
