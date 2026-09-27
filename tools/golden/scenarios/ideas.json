@@ -204,6 +204,9 @@
       "body": {
         "title": "Golden capture idea",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "Medium",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -219,6 +222,9 @@
       "body": {
         "title": "Golden capture idea",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "Medium",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -234,6 +240,9 @@
       "body": {
         "title": "Golden capture idea",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "Medium",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -252,6 +261,9 @@
       "body": {
         "title": "Golden capture idea",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "Medium",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -267,6 +279,9 @@
       "body": {
         "title": "Golden capture idea",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "Medium",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -281,6 +296,9 @@
       "path": "/boards/{{boardId}}/ideas",
       "body": {
         "description": "No title.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "Medium",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -336,6 +354,9 @@
       "body": {
         "title": "Golden capture idea, edited",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "High",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -351,6 +372,9 @@
       "body": {
         "title": "Golden capture idea, edited",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "High",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -366,6 +390,9 @@
       "body": {
         "title": "Golden capture idea, edited",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "High",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -381,6 +408,9 @@
       "body": {
         "title": "Golden capture idea, edited",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "High",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -396,6 +426,9 @@
       "body": {
         "title": "Golden capture idea, edited",
         "description": "Recorded by the golden capture.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "High",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
@@ -727,6 +760,9 @@
       "body": {
         "title": "Golden capture idea, the author's own",
         "description": "Created so its author can delete it.",
+        "problem": "Recorded by the golden capture.",
+        "proposedSolutions": ["Recorded by the golden capture."],
+        "impactRationale": "Recorded by the golden capture.",
         "priority": "Low",
         "ideaTypeId": "{{ideaTypeId}}",
         "businessImpactId": "{{impactId}}"
