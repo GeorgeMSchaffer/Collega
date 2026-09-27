@@ -9,7 +9,66 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-27 — The idea assistant is rescoped as a co-author, and ideas gain structured fields
+
+**Decided by the user**, reviewing an interactive prototype (comp R). This is the rescope
+2026-09-13 scheduled. `20-feature-ai-idea-assist-v2.md` is the spec; the v1 spec stays authoritative
+for what is live until v2 ships.
+
+- **Ideas gain three dedicated fields: Problem, Proposed solutions (a list), Impact rationale.**
+  Chosen over three custom fields (every organization would have to configure them) and over
+  sections inside Description (not enforceable, not searchable). Custom fields attached through the
+  Idea Type are unchanged and follow the core fields. Description becomes an optional summary,
+  pending the answer to Q2. This is a schema and contract change (`30-Contracts.md`, rule 2a of
+  `20-feature-ideas-and-engagement.md`).
+- **The assistant maps, interviews and brainstorms.** Free text fills fields visibly; it asks for
+  the next missing field in a fixed order; it offers solution ideas, a sharper problem statement and
+  measurable rationales as chips the person accepts. It never overwrites a field the person has
+  edited, and that is enforced on the server (`lockedFields`).
+- **Skip is always one click, and any failure hands off to the form** with everything captured,
+  including the failing turn's own text. v1's scripted-nudge fallback is dropped for v2.
+- **Surface:** the create drawer opens wide with the assistant beside the form, replacing v1's
+  720px modal followed by a create modal.
+- **Measurement comes first**: v2 is not enabled until a TypeScript prompt-eval runner reports
+  mapping accuracy and scope-gate results. `ai-draft` and `ai-polish`, specified and never built,
+  are withdrawn.
+
+## 2026-09-27 — Terrazzo is the palette, with a per-user theme picker
+
+**Decided by the user** after comparing palettes live in comp R. Comp P left the palette open; this
+closes it. **Terrazzo** (slate blue with pistachio and blush) is the default. A theme picker at the
+right of the top bar offers Terrazzo, Portico, Piazza Sera and Lagoon as light themes and Notte as
+the dark theme, as a per-user preference. Every theme is one token set in `packages/design-system`,
+checked to 4.5:1 for text, so adding or retiring a theme never touches components. Earlier
+candidates (Sprout, Blueprint, the bright Piazza, Mercato) were reviewed and dropped the same day.
+
+## 2026-09-27 — One list and detail pattern, and a drawer instead of the docked inspector
+
+**Decided by the user** from comp R, `SPEC/mockups/comp-r-portico-prototype.html`.
+`20-feature-client-ui.md` "List and detail pattern" is the rule; in short:
+
+- **Detail, edit and create open in a drawer that overlays the right of the page** instead of the
+  docked inspector column. The docked column squeezed the board and gave it a horizontal scrollbar;
+  an overlay never resizes what is under it. This supersedes the inspector for Boards, boards and
+  Ideas now, and for the other list screens as they move to the pattern.
+- **Every list has the same toolbar, sorting, paging (10 default; 25, 50, 100) and an Actions
+  column** (View, Edit, Delete or Archive). **List is the default view** everywhere except a
+  board's own page, where Lanes is. This supersedes the same day's "cards by default" on Boards.
+- **Row actions a role may not use are hidden**, narrowing "Denied is shown, not hidden"
+  (2026-09-02, 2026-09-08) with a third exception. Page-level actions still show disabled with the
+  reason, so a member still learns what exists.
+- **Boards are archived, not deleted**, replacing "boards have no delete". Their ideas are never
+  orphaned.
+- **"Add New {Item}"** in title case, right-aligned level with the page's H1 and description.
+- **This is new feature work while `SPEC/Bug Triage.md` has open items.** _Open: the exception is
+  confirmed with the user before implementation starts._
+
+---
+
 ## 2026-09-27 — The Boards screen has a card view and a list view
+
+> **Default view superseded later the same day** by "One list and detail pattern": List is the
+> default and Cards the alternative.
 
 **Decided by the user**, choosing between three reviewed directions (card grid, one row per board,
 wide tiles with a lane chart), each shown in its own palette. Cards are the default and a list view

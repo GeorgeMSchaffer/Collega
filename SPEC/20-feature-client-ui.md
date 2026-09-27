@@ -61,7 +61,11 @@ reason, never the `disabled` attribute — so a keyboard or screen-reader user m
 control and the explanation. A route the viewer may not open at all renders a short refusal
 panel (title, who the route is for, a way back), not the live page with every control
 disabled. The two exceptions that stay hidden are the View As entry control (view-as rule 9:
-hidden *and* refused) and admin links a member has no business seeing on the Settings hub.
+hidden *and* refused) and admin links a member has no business seeing on the Settings hub. **A third
+exception since 2026-09-27: per-row actions in a list** (Edit, Delete, Archive in the Actions column
+or on a card) are hidden when the role may not take them — a column of disabled icons is noise, and
+the capability is still announced by the page-level action, which stays disabled with its reason
+(for example *Add New Board* for a member).
 
 When an authenticated API request returns `401` because the persisted token is expired or
 its security stamp is no longer valid, the client clears the persisted session and returns to
@@ -83,11 +87,18 @@ Each board shows its **description** (two lines at most, or *No description yet*
 one bar split by lane in the board's lane order and status colours, with a count per lane and empty
 lanes dimmed rather than dropped — its **most-used tags** (three, then *+N*), who **created** it and
 when, and its idea and lane totals. The counts are the board's live Discovery ideas, the same set
-the board itself shows. Two views of the same facts, switched by a **Cards / List** control:
-**Cards** (default) is a responsive grid; **List** (`/boards?view=list`) is one table row per board
+the board itself shows. Two views of the same facts, switched by a **List / Cards** control:
+**List** (default since 2026-09-27; it was Cards) is one table row per board; **Cards** is a responsive grid. The list is one table row per board
 with fixed columns — board and one-line description, lane mix with first-lane / in-between /
 last-lane figures, two tags then *+N*, created — for comparing many boards. The view is a URL, not
 stored state, so a link opens the view it names. Decided 2026-09-27.
+
+**Since the list and detail pattern (2026-09-27, below):** the screen follows it — filters, sorting,
+paging, and an Actions column with **View**, **Edit** and **Archive** (Org Admin). Boards are
+**archived, not deleted** (`30-Contracts.md` archive endpoints): an archived board leaves the list
+unless the Status filter includes *Archived*, and its ideas stay in Ideas. The topbar's *Manage
+boards* / *New board* pair becomes the page header's single **Add New Board**, and *Edit* opens the
+board form in the drawer instead of navigating to Settings.
 
 ## `/board/{boardId}` — Kanban Board
 
@@ -224,7 +235,48 @@ generated set, at four roles and four states per screen; the sources are
 - **Two copy voices, kept apart**: product copy lives inside the app frame and is written to ship; anything addressed to a reviewer lives in the chrome band outside it (`decisions.md` 2026-08-31).
 - **Auth screens** are a two-column split: a pitch band in the secondary colour on the left, the form on the right. Login, Register and the forced first-login change carry no sidebar; the forced change deliberately has no navigation escape (auth rule 32a).
 
+### List and detail pattern (comp R — 2026-09-27)
+
+`SPEC/mockups/comp-r-portico-prototype.html` is the reference rendering. It **supersedes the next
+section for detail, edit and create** on Boards, a board, and Ideas, and is the pattern every other
+list screen (Settings entities, Delivery lists) moves to as it is touched.
+
+- **Page header:** the H1 and its one-line description on the left; the one creation action on the
+  right, vertically centred on that block, worded **Add New {Item}** in title case (*Add New Idea*,
+  *Add New Board*). A role that may not create sees it disabled with the reason.
+- **Toolbar:** a text filter that matches every displayed column (on Ideas: title, board, status,
+  priority, tags, people; plus Problem), then a multi-select filter with type-to-find for each
+  finite-valued column (Board, Status, Priority, Tags; Boards: Status Active/Archived, defaulting to
+  Active), then the view switch on the right.
+- **Views:** **List** is the default everywhere except a board's own page, where **Lanes** is the
+  default and **List** is the alternative. Ideas and Boards also offer **Cards**. Filters, sorting
+  and paging apply identically to every view of a screen (paging to List and Cards; Lanes shows all
+  filtered cards).
+- **Sorting:** every displayed column sorts; a header click cycles ascending → descending → off,
+  with `aria-sort` on the active header.
+- **Paging:** 10 per page by default, with 25, 50 and 100; the pager states *{from}–{to} of {total}*.
+  Server-side for ideas (`30-Contracts.md` list pattern); boards are few enough to page in the client.
+- **Actions column** at the right of every list row, and the same icons on each card: **View** (eye)
+  opens the detail; **Edit** (pencil) opens the form; **Delete** (trash) — or **Archive** for boards —
+  asks for confirmation first. Edit and Delete/Archive are hidden when the role may not use them (the
+  Denied rule's row-action exception).
+- **The drawer** replaces the docked inspector. It slides in from the right and **overlays** the page
+  (`clamp(380px, 28vw, 520px)`; full width below 900px), so the list or board underneath never
+  resizes or gains a scrollbar. It is not modal: no scrim, no focus trap; focus moves to its heading
+  on open and returns to the trigger on close; Escape and × close it. Modes: **view** (facts,
+  structured sections, custom fields, Edit / Delete in the footer), **edit** (the form in place,
+  Save / Cancel), and **create** — which for ideas opens **wide** with the idea assistant beside the
+  form (`20-feature-ai-idea-assist-v2.md` "Surface").
+- **Confirmation** for Delete and Archive is the one destructive modal: `role="alertdialog"`,
+  focus trapped between Cancel (focused first) and the action, Escape cancels.
+- **Lanes** are quiet full-height columns (a soft tint and hairline border per lane) with the
+  status-tinted header, so a board reads as swimlanes rather than loose cards.
+
 ### Surfaces: docked inspector, inline create, one modal
+
+> **Superseded 2026-09-27 for detail, edit and create by the list and detail pattern above**
+> (`decisions.md`). Kept because the Settings entities and Delivery screens still follow it until
+> they move to the pattern.
 
 - **Detail and edit → the docked inspector.** Clicking an idea title from the Ideas list, a Board row or a lane card opens the inspector as a **third grid column** (404px) beside the list or board, which stays live and scrollable. It is **never a modal**: nothing is covered, there is no focus trap and no `inert`, and Escape closes the column. The originating row shows a selected state (a 3px primary rule plus a soft ground, both readable in greyscale). The inspector opens in a read view (eyebrow *{board} · #IDEA-{n} · {status}*, title, meta, a facts grid, custom fields with archived values labelled, description, discussion with the upvote control and comment composer) with an **Edit idea** action; edit swaps the body in place and reveals a Cancel / Save footer.
 - **Create → the docked column too.** *New idea* and a lane's *+ Add idea* open the create form in the same column, over the board it will add to. On success the card appears in New / Pending and the column closes; Cancel or Escape dismisses without saving. Arriving from the brainstorm chat, suggested values carry the teal *Suggested* chip, tinted field and 3px left rule (`20-feature-ai-idea-assist.md` D-SUGGEST); arriving because the assistant was unavailable, the column shows the rule 32c flash.
@@ -304,6 +356,15 @@ which the comps A–O were re-rendered to. Whichever palette is chosen must keep
 
 - Only a near-black ink is used as body text; chromatic values are fills, chips or dots only, each paired with an `-ink` derived to clear 4.5:1 **against its own soft tint**, not merely against white.
 - The `D-SUGGEST` teal (`--sug: #116b5e`) must stay unmistakable against the accent — re-check the suggestion chip, tinted field and left rule whenever the accent changes.
+
+### Themes (2026-09-27)
+
+**Palette decided: Terrazzo** — slate blue `#3D5A80`, pistachio and blush accents, Schibsted
+Grotesk for headings and Public Sans for text. It is the default. A **theme picker** at the right
+of the top bar offers **Light:** Terrazzo, Portico, Piazza Sera, Lagoon, and **Dark:** Notte. The
+choice is a per-user preference. Every theme is the same token set (`packages/design-system`), so
+components never name a colour; each theme's pairs are checked to 4.5:1 for text. Token values are
+in comp R. The two rules in "Color palette" above still apply to every theme.
 
 ## ERROR DISPLAY
 

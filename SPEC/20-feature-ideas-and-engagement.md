@@ -26,7 +26,10 @@ Users can create, discuss, organize, and support ideas within their organization
 1. A board can contain zero or more ideas.
 2. Each idea must include:
    - Title (required, max 150 characters)
-   - Description (required, max 4000 characters)
+   - Problem (required, max 2000 characters) — what is going wrong, for whom, and how often. Added 2026-09-27.
+   - Proposed solutions (required, 1 to 5 items, each max 500 characters) — an ordered list. Added 2026-09-27.
+   - Impact rationale (required, max 1000 characters) — why it matters to the business, ideally quantified. Added 2026-09-27.
+   - Description (max 4000 characters) — **changed 2026-09-27 to an optional one-or-two-line summary** shown on cards and lists; the structured fields above carry the substance. _Open (Q2): keep or retire._
    - Priority (required): `Low`, `Medium`, `High`, or `Critical`
    - Idea Type (required): one active organization-configured Idea Type
    - Business Impact (required): one active organization-configured Business Impact
@@ -37,6 +40,11 @@ Users can create, discuss, organize, and support ideas within their organization
    - Mentions
    - Comments
    - Number of Upvotes
+2a. **Structured fields (2026-09-27, `decisions.md`).** Problem, Proposed solutions and Impact rationale are
+   dedicated fields, not sections of Description, so they can be required, searched and filled by the idea
+   assistant (`20-feature-ai-idea-assist-v2.md`). Custom fields attached through the Idea Type
+   (`20-feature-idea-type-fields.md`) are unaffected and appear after the core fields. _Open (Q1): how ideas
+   created before 2026-09-27 satisfy the new required fields._
 3. Board cards must remain compact and display:
    - Title
    - Priority
