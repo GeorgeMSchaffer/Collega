@@ -64,6 +64,13 @@ nothing.
   are computed with a fixed number of grouped queries per request, never one query per board —
   the list does not page, so per-board queries would be unbounded.
 
+**`ideaCount` is corrected.** It and the new aggregates now count only live, `Discovery`-phase
+ideas, matching `GET /boards/{id}/ideas`; it had also counted promoted Issues, so a board with
+promoted items reported more ideas than it showed.
+
+**The golden corpus differences are accepted** — the new list fields and the detail's
+`description` — and recorded in `tools/golden/src/accepted.ts`.
+
 ---
 
 ## 2026-09-13 — The AI integration is rescoped and respecified after the current batch
