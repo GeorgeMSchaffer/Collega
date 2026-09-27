@@ -7,7 +7,7 @@ import { NewIdeaForm } from '@/components/ideas/new-idea-form'
 import { Topbar } from '@/components/nav/topbar'
 import { getBoard, getIdeaOptions, getIdeasForBoard } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
-import { currentUser, engagementDenial, writeDenial } from '@/lib/session'
+import { boardAdminDenial, currentUser, engagementDenial, writeDenial } from '@/lib/session'
 
 export async function generateMetadata({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params
@@ -66,6 +66,19 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
             <Link href="/ideas" className={buttonVariants({ variant: 'outline' })}>
               List view
             </Link>
+            <GatedAction
+              id="why-edit-board"
+              label="Edit board"
+              denial={boardAdminDenial(currentUser().role)}
+              variant="outline"
+            >
+              <Link
+                href={`/settings/boards/${board.id}`}
+                className={buttonVariants({ variant: 'outline' })}
+              >
+                Edit board
+              </Link>
+            </GatedAction>
             {/* The board is context here, so the form asks for everything except that. A role that
                 may not author gets the same control, disabled with its reason, and none of the
                 form's client bundle. */}
@@ -77,7 +90,7 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
           </>
         }
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <div>
           <h1>{board.name}</h1>
           <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">

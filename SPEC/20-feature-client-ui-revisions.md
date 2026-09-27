@@ -140,6 +140,10 @@ Applies to Settings pages for Organizations, Users, and Boards & Statuses.
 
 ## Boards Page
 
+> **Superseded 2026-09-27** (`SPEC/decisions.md`): the Boards page also carries the board actions
+> (Manage boards, New board, Edit per board). `SPEC/20-feature-client-ui.md` "`/boards` — Boards"
+> is current.
+
 - The Boards page displays ONLY a list of boards the user can access.
 - Columns: Name, Board Type, Status (Active/Archived).
 - Clicking a board row navigates to that board's swimlane/kanban view.

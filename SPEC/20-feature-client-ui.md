@@ -69,6 +69,17 @@ Login with the expired-session message instead of leaving the current page in an
 
 - Compatibility redirects: `/board` → `/boards`; `/workflow` and `/workflows` → `/boards`; `/workflow/{boardId}` → `/board/{boardId}`
 
+## `/boards` — Boards
+
+Every board the viewer can access. Choosing one opens its lanes; there is no **New idea** here,
+because an idea is always raised against a board.
+
+The topbar carries **Manage boards** (to Settings → Boards) and **New board**, and each board
+carries **Edit** (to Settings → Boards → Edit). All three are an Org Admin's; every other role sees
+them disabled with the reason (*Administrators only*; a Site Admin, *Act as an organization
+administrator*). Decided
+2026-09-27.
+
 ## `/board/{boardId}` — Kanban Board
 
 Route: `/board/{boardId}`
@@ -80,7 +91,8 @@ Ideas are displayed as cards arranged in swimlane columns, where each column rep
 The top bar carries the breadcrumb (*Boards / {board name}*), the **List / Lanes** view
 switch, the **Board** picker (only when the user can reach more than one board), **Export
 CSV** (any member, Read Only included — the CSV is a read), **Import CSV** (members and Org
-Admins; a Site Admin sees it disabled with *Idea import goes through View As*), and the
+Admins; a Site Admin sees it disabled with *Idea import goes through View As*), **Edit board**
+(Org Admin; disabled with the reason for every other role, 2026-09-27), and the
 primary **New idea**. New idea opens the brainstorm chat when AI assist is available and the
 docked create column otherwise (`20-feature-ai-idea-assist.md` rules 32a–32c), pre-populating
 the target status as the left-most column. For Read Only and Site Admin it renders disabled

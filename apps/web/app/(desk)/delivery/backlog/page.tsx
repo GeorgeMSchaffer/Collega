@@ -32,7 +32,7 @@ export default async function BacklogPage() {
         }
         actions={next ? <AdminAction id="why-start" label={`Start ${next.name}`} /> : undefined}
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <div>
           <h1>Backlog</h1>
           <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">

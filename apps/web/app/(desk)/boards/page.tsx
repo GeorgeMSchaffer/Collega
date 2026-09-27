@@ -1,23 +1,19 @@
-import { Card, CardContent, CardHeader, CardTitle, EmptyState } from '@collega/design-system'
+import {
+  buttonVariants,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+} from '@collega/design-system'
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { Topbar } from '@/components/nav/topbar'
 import { getBoards } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
-import { currentUser } from '@/lib/session'
+import { boardAdminDenial, currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Boards · Collega' }
-
-/**
- * Not `writeDenial`: that answers whether a role may author an idea, and creating a board is an
- * administrator's write. A Site Admin is refused here for the usual reason — they belong to no
- * organization — while a member is refused for a different one, and the two must not be conflated.
- */
-function createBoardDenial() {
-  if (currentUser().role === 'OrgAdmin') return null
-  if (currentUser().role === 'SiteAdmin') return 'Act as a member'
-  return 'Administrators only'
-}
 
 export default async function BoardsPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
@@ -27,14 +23,37 @@ export default async function BoardsPage() {
   // board to call `.length` on them, which was free against a fixture and would have been a full
   // table scan per card against a database.
   const boards = await getBoards()
+  const adminDenial = boardAdminDenial(currentUser().role)
 
   return (
     <>
-      {/* No "New idea" here, by design. Comp P's `s-boards` topbar carries one action — "Manage
-          boards", for an Org Admin — because this screen chooses a board rather than acting on one,
-          and an idea is always raised against a board. The list of boards *is* the chooser. */}
-      <Topbar title="Boards" />
-      <main className="flex max-w-[1320px] flex-col gap-6 p-6">
+      {/* No "New idea" here, by design: this screen chooses a board rather than acting on one, and
+          an idea is always raised against a board. The list of boards *is* the chooser. The board
+          actions are an Org Admin's, and every other role sees them disabled with the reason
+          ("Denied is shown, not hidden", `SPEC/20-feature-client-ui.md`). */}
+      <Topbar
+        title="Boards"
+        actions={
+          <>
+            <GatedAction
+              id="why-manage-boards"
+              label="Manage boards"
+              denial={adminDenial}
+              variant="outline"
+            >
+              <Link href="/settings/boards" className={buttonVariants({ variant: 'outline' })}>
+                Manage boards
+              </Link>
+            </GatedAction>
+            <GatedAction id="why-new-board" label="New board" denial={adminDenial}>
+              <Link href="/settings/boards/new" className={buttonVariants()}>
+                New board
+              </Link>
+            </GatedAction>
+          </>
+        }
+      />
+      <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
         <p className="m-0 max-w-2xl text-muted-foreground">
           Every board organizes the same organization&rsquo;s ideas by status. Open one to see its
           lanes.
@@ -43,11 +62,11 @@ export default async function BoardsPage() {
           <EmptyState
             heading="No boards yet"
             action={
-              <GatedAction
-                id="why-create-board"
-                label="Create a board"
-                denial={createBoardDenial()}
-              />
+              <GatedAction id="why-create-board" label="Create a board" denial={adminDenial}>
+                <Link href="/settings/boards/new" className={buttonVariants()}>
+                  Create a board
+                </Link>
+              </GatedAction>
             }
           >
             An organization admin can create boards under Settings. A new organization starts with
@@ -57,10 +76,26 @@ export default async function BoardsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {boards.map((board) => (
               <Card key={board.id}>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-start justify-between gap-2">
                   <CardTitle>
                     <Link href={`/boards/${board.id}`}>{board.name}</Link>
                   </CardTitle>
+                  <GatedAction
+                    id={`why-edit-${board.id}`}
+                    label="Edit"
+                    deniedLabel={`Edit ${board.name}`}
+                    denial={adminDenial}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    <Link
+                      href={`/settings/boards/${board.id}`}
+                      className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+                      aria-label={`Edit ${board.name}`}
+                    >
+                      Edit
+                    </Link>
+                  </GatedAction>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                   {/* A board has no "focus" column — that line was demo-seed copy. Rendered only

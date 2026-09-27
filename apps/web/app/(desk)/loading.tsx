@@ -13,7 +13,7 @@ export default function DeskLoading() {
   return (
     <>
       <Topbar title="Collega" />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <SkeletonRegion label="Loading the page" className="gap-4">
           <SkeletonRows rows={2} className="max-w-md" />
           <div className="rounded-lg border bg-card p-4">
