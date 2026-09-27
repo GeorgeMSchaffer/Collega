@@ -1,4 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle, EmptyState } from '@collega/design-system'
+import {
+  buttonVariants,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+} from '@collega/design-system'
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { Topbar } from '@/components/nav/topbar'
@@ -27,14 +34,30 @@ export default async function BoardsPage() {
   // board to call `.length` on them, which was free against a fixture and would have been a full
   // table scan per card against a database.
   const boards = await getBoards()
+  const orgAdmin = currentUser().role === 'OrgAdmin'
 
   return (
     <>
-      {/* No "New idea" here, by design. Comp P's `s-boards` topbar carries one action — "Manage
-          boards", for an Org Admin — because this screen chooses a board rather than acting on one,
-          and an idea is always raised against a board. The list of boards *is* the chooser. */}
-      <Topbar title="Boards" />
-      <main className="flex max-w-[1320px] flex-col gap-6 p-6">
+      {/* No "New idea" here, by design: this screen chooses a board rather than acting on one, and
+          an idea is always raised against a board. The list of boards *is* the chooser. The board
+          actions are an Org Admin's only — comp P's `s-boards` carries "Manage boards" under
+          `data-roles="OrgAdmin"`, and "New board" beside it saves the detour through Settings. */}
+      <Topbar
+        title="Boards"
+        actions={
+          orgAdmin ? (
+            <>
+              <Link href="/settings/boards" className={buttonVariants({ variant: 'outline' })}>
+                Manage boards
+              </Link>
+              <Link href="/settings/boards/new" className={buttonVariants()}>
+                New board
+              </Link>
+            </>
+          ) : undefined
+        }
+      />
+      <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
         <p className="m-0 max-w-2xl text-muted-foreground">
           Every board organizes the same organization&rsquo;s ideas by status. Open one to see its
           lanes.
@@ -57,10 +80,19 @@ export default async function BoardsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {boards.map((board) => (
               <Card key={board.id}>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-start justify-between gap-2">
                   <CardTitle>
                     <Link href={`/boards/${board.id}`}>{board.name}</Link>
                   </CardTitle>
+                  {orgAdmin ? (
+                    <Link
+                      href={`/settings/boards/${board.id}`}
+                      className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+                      aria-label={`Edit ${board.name}`}
+                    >
+                      Edit
+                    </Link>
+                  ) : null}
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                   {/* A board has no "focus" column — that line was demo-seed copy. Rendered only
