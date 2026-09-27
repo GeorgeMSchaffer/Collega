@@ -10,13 +10,19 @@
 
 import { randomUUID } from 'node:crypto'
 import type { AiBoardLookupPort } from '@collega/application/ai'
-import type { BoardRepository } from '@collega/application/boards'
+import type {
+  BoardRepository,
+  BoardStatusIdeaCount,
+  BoardTagIdeaCount,
+  UserName,
+} from '@collega/application/boards'
 import type { BoardsPort } from '@collega/application/ideas'
 import type { Board, BoardSwimlane } from '@collega/domain/boards'
 import type {
   boards as BoardRow,
   board_swimlanes as SwimlaneRow,
 } from '../generated/prisma/index.js'
+import { Prisma } from '../generated/prisma/index.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 import type { PrismaUnitOfWork } from '../persistence/unit-of-work.js'
 
@@ -31,6 +37,7 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
     id: row.id,
     organizationId: row.organization_id,
     name: row.name,
+    description: row.description,
     allowUserStatusUpdate: row.allow_user_status_update,
     swimlanes,
     createdAtUtc: row.created_at_utc,
@@ -38,6 +45,12 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
     createdByUserId: row.created_by_user_id,
     updatedByUserId: row.updated_by_user_id,
   }
+}
+
+/** The ideas every board-list aggregate counts: live ones, which is what the board's own idea list
+ * shows, so a card's figures agree with the board it opens onto. */
+function boardIdeasWhere(boardIds: readonly string[]): Prisma.ideasWhereInput {
+  return { board_id: { in: [...boardIds] }, is_deleted: false }
 }
 
 export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort, BoardsPort {
@@ -70,10 +83,67 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     }
     const rows = await this.prisma.ideas.groupBy({
       by: ['board_id'],
-      where: { board_id: { in: [...boardIds] }, is_deleted: false },
+      where: boardIdeasWhere(boardIds),
       _count: { _all: true },
     })
     return new Map(rows.map((row) => [row.board_id, row._count._all]))
+  }
+
+  async countIdeasByBoardAndStatus(
+    boardIds: readonly string[],
+  ): Promise<readonly BoardStatusIdeaCount[]> {
+    if (boardIds.length === 0) {
+      return []
+    }
+    const rows = await this.prisma.ideas.groupBy({
+      by: ['board_id', 'status_id'],
+      where: boardIdeasWhere(boardIds),
+      _count: { _all: true },
+    })
+    return rows.map((row) => ({
+      boardId: row.board_id,
+      statusId: row.status_id,
+      ideaCount: row._count._all,
+    }))
+  }
+
+  /** Raw SQL because the tag name is two joins away from the board, and `groupBy` cannot join.
+   * The idea filter must stay the one `boardIdeasWhere` expresses. */
+  async countIdeasByBoardAndTag(
+    boardIds: readonly string[],
+  ): Promise<readonly BoardTagIdeaCount[]> {
+    if (boardIds.length === 0) {
+      return []
+    }
+    const rows = await this.prisma.$queryRaw<
+      { board_id: string; tag_name: string; idea_count: number }[]
+    >(Prisma.sql`
+      SELECT idea.board_id, tag.name AS tag_name, COUNT(*)::int AS idea_count
+      FROM idea_tags AS idea_tag
+      INNER JOIN ideas AS idea ON idea.id = idea_tag.idea_id
+      INNER JOIN tags AS tag ON tag.id = idea_tag.tag_id
+      WHERE idea.board_id IN (${Prisma.join(boardIds.map((id) => Prisma.sql`${id}::uuid`))})
+        AND idea.is_deleted = FALSE
+      GROUP BY idea.board_id, tag.id, tag.name
+    `)
+    return rows.map((row) => ({
+      boardId: row.board_id,
+      tagName: row.tag_name,
+      ideaCount: row.idea_count,
+    }))
+  }
+
+  async getUserNames(userIds: readonly string[]): Promise<ReadonlyMap<string, UserName>> {
+    if (userIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.users.findMany({
+      where: { id: { in: [...userIds] } },
+      select: { id: true, first_name: true, last_name: true },
+    })
+    return new Map(
+      rows.map((row) => [row.id, { firstName: row.first_name, lastName: row.last_name }]),
+    )
   }
 
   async isStatusReferenced(statusId: string): Promise<boolean> {
@@ -134,6 +204,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
           id: board.id,
           organization_id: board.organizationId,
           name: board.name,
+          description: board.description,
           allow_user_status_update: board.allowUserStatusUpdate,
           created_at_utc: board.createdAtUtc,
           updated_at_utc: board.updatedAtUtc,
@@ -153,6 +224,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
         where: { id: board.id },
         data: {
           name: board.name,
+          description: board.description,
           allow_user_status_update: board.allowUserStatusUpdate,
           updated_at_utc: board.updatedAtUtc,
           updated_by_user_id: board.updatedByUserId,

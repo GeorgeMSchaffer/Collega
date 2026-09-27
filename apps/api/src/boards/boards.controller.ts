@@ -8,7 +8,11 @@ import {
 import { BOARD_NAME_MAX_LENGTH } from '@collega/domain/boards'
 import { Body, Controller, Get, HttpCode, Param, Post, Put, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
-import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
+import {
+  type FieldRules,
+  RequestValidationError,
+  validateFields,
+} from '../common/errors/request-validation.error.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** One entry of a request's `swimlanes` array - `SwimlaneRequest` on the .NET side. */
@@ -16,6 +20,7 @@ type SwimlaneBody = { statusId?: string; order?: number }
 
 type CreateBoardBody = {
   name?: string
+  description?: string | null
   allowUserStatusUpdate?: boolean
   swimlanes?: readonly SwimlaneBody[]
 }
@@ -39,6 +44,19 @@ function boardBodyRules(body: CreateBoardBody): Record<string, FieldRules> {
   return {
     name: { value: body.name, required: true, maxLength: BOARD_NAME_MAX_LENGTH },
   }
+}
+
+/**
+ * `description` as the command wants it: absent stays `undefined` (on `PUT`, "leave it alone"),
+ * `null` stays `null`, and a string passes through for the domain to trim and length-check. The
+ * body type is compile-time only, so anything else - a number, an object - is refused here rather
+ * than stored as its string form.
+ */
+function toDescription(description: unknown): string | null | undefined {
+  if (description === undefined || description === null || typeof description === 'string') {
+    return description
+  }
+  throw new RequestValidationError({ description: ['Description must be a string.'] })
 }
 
 /**
@@ -97,6 +115,7 @@ export class BoardsController {
 
     return this.boards.create(organizationId, {
       name: body.name ?? '',
+      description: toDescription(body.description),
       // A .NET `bool` (not `bool?`): an absent value bound to false.
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
@@ -117,6 +136,7 @@ export class BoardsController {
 
     return this.boards.update(boardId, {
       name: body.name ?? '',
+      description: toDescription(body.description),
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
     })

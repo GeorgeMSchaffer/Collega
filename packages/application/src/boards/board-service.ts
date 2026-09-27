@@ -30,6 +30,7 @@ import type { StatusRepository } from '../statuses/index.js'
 import type {
   BoardDetail,
   BoardListItem,
+  BoardTagCount,
   CreateBoardCommand,
   CreateBoardResult,
   ReorderSwimlanesCommand,
@@ -58,16 +59,59 @@ export class BoardService {
     // One query for every board's idea count. The client used to ask each board's idea endpoint
     // for a single row and read `totalCount` off the envelope, which is one round trip per board
     // from one render - fine at four boards, two hundred concurrent requests at two hundred.
-    const ideaCounts = await this.boards.countIdeasByBoard(boards.map((board) => board.id))
+    // The card aggregates follow the same rule: a fixed number of grouped reads for the whole
+    // list, never one per board.
+    const boardIds = boards.map((board) => board.id)
+    const creatorIds = [...new Set(boards.flatMap((board) => board.createdByUserId ?? []))]
+    const [ideaCounts, statusCounts, tagCounts, creatorNames, statusLookup] = await Promise.all([
+      this.boards.countIdeasByBoard(boardIds),
+      this.boards.countIdeasByBoardAndStatus(boardIds),
+      this.boards.countIdeasByBoardAndTag(boardIds),
+      this.boards.getUserNames(creatorIds),
+      this.loadStatusLookup(organizationId),
+    ])
 
-    return [...boards].sort(compareBoardsForListing).map((board) => ({
-      boardId: board.id,
-      organizationId: board.organizationId,
-      name: board.name,
-      allowUserStatusUpdate: board.allowUserStatusUpdate,
-      swimlaneCount: board.swimlanes.length,
-      ideaCount: ideaCounts.get(board.id) ?? 0,
-    }))
+    const laneIdeaCounts = new Map(
+      statusCounts.map((row) => [laneKey(row.boardId, row.statusId), row.ideaCount]),
+    )
+    const tagsByBoard = new Map<string, BoardTagCount[]>()
+    for (const row of tagCounts) {
+      const tags = tagsByBoard.get(row.boardId) ?? []
+      tags.push({ name: row.tagName, ideaCount: row.ideaCount })
+      tagsByBoard.set(row.boardId, tags)
+    }
+
+    return [...boards].sort(compareBoardsForListing).map((board) => {
+      const tags = tagsByBoard.get(board.id) ?? []
+      const creatorName =
+        board.createdByUserId === null ? undefined : creatorNames.get(board.createdByUserId)
+      return {
+        boardId: board.id,
+        organizationId: board.organizationId,
+        name: board.name,
+        allowUserStatusUpdate: board.allowUserStatusUpdate,
+        swimlaneCount: board.swimlanes.length,
+        ideaCount: ideaCounts.get(board.id) ?? 0,
+        description: board.description,
+        createdAtUtc: board.createdAtUtc,
+        createdBy:
+          board.createdByUserId === null || creatorName === undefined
+            ? null
+            : {
+                userId: board.createdByUserId,
+                displayName: `${creatorName.firstName} ${creatorName.lastName}`.trim(),
+              },
+        laneCounts: buildSwimlaneDetails(board, statusLookup).map((lane) => ({
+          statusId: lane.statusId,
+          statusName: lane.statusName,
+          statusColor: lane.statusColor,
+          order: lane.order,
+          ideaCount: laneIdeaCounts.get(laneKey(board.id, lane.statusId)) ?? 0,
+        })),
+        topTags: [...tags].sort(compareTagsForCard).slice(0, TOP_TAG_LIMIT),
+        tagCount: tags.length,
+      }
+    })
   }
 
   async create(organizationId: string, command: CreateBoardCommand): Promise<CreateBoardResult> {
@@ -82,6 +126,7 @@ export class BoardService {
       id: randomUUID(),
       organizationId,
       name: command.name,
+      description: command.description ?? null,
       allowUserStatusUpdate: command.allowUserStatusUpdate,
       orderedStatusIds,
       nowUtc: now,
@@ -135,6 +180,7 @@ export class BoardService {
       existing,
       {
         name: command.name,
+        description: command.description,
         allowUserStatusUpdate: command.allowUserStatusUpdate,
         orderedStatusIds,
       },
@@ -345,9 +391,25 @@ function toDetail(board: Board, statusLookup: ReadonlyMap<string, Status>): Boar
     boardId: board.id,
     organizationId: board.organizationId,
     name: board.name,
+    description: board.description,
     allowUserStatusUpdate: board.allowUserStatusUpdate,
     swimlanes: buildSwimlaneDetails(board, statusLookup),
   }
+}
+
+const TOP_TAG_LIMIT = 3
+
+function laneKey(boardId: string, statusId: string): string {
+  return `${boardId}:${statusId}`
+}
+
+/** Most-used first; a count tie reads alphabetically, ignoring case, then by exact spelling. */
+function compareTagsForCard(a: BoardTagCount, b: BoardTagCount): number {
+  return (
+    b.ideaCount - a.ideaCount ||
+    compareStrings(a.name.toLowerCase(), b.name.toLowerCase()) ||
+    compareStrings(a.name, b.name)
+  )
 }
 
 function buildSwimlaneDetails(
