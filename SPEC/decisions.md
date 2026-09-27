@@ -33,6 +33,39 @@ wide monitor as an Org Admin.
 
 ---
 
+## 2026-09-27 — Boards gain a description, and the board list carries what a card needs
+
+**Decided by the user**, with two explicit exceptions to standing rules:
+
+- **The S0.2 schema freeze is amended a second time**, for one nullable column:
+  `boards.description VARCHAR(500) NULL`, in `20260927000000_add_board_description`. Additive only;
+  every existing board reads `NULL`, which is "no description", so there is no backfill. Like the
+  2026-09-11 amendment this is not a general licence — the next change to `schema.prisma` still
+  needs its own entry here.
+- **The `SPEC/Bug Triage.md` gate is waived for this work.** Open `TODO` items there normally block
+  new feature work; the user approved starting this ahead of them.
+
+**Why.** The workspace Boards page is getting richer cards, and a board had nothing to say about
+itself beyond a name — there was no field a description could come from. The other things a card
+shows (how the board's ideas spread across its lanes, the tags most used on it, who created it and
+when) are all derivable from existing rows, so they cost the contract some fields and the schema
+nothing.
+
+**Contract additions** (`SPEC/30-Contracts.md` "Board Contracts"):
+
+- `description` — optional on `POST /organizations/{id}/boards` and `PUT /boards/{id}`, returned by
+  `GET /boards/{id}` and the board list. Trimmed; blank is none; over 500 characters is a
+  field-keyed `400`. On `PUT` an **absent** `description` leaves the stored value alone, while
+  `null` or blank clears it — so a client written before the field existed cannot wipe one out by
+  omission.
+- On each `GET /organizations/{id}/boards` item: `description`, `createdAtUtc`, `createdBy`
+  (`{ userId, displayName }` or `null`), `laneCounts` (every swimlane, zero-count ones included),
+  `topTags` (up to three) and `tagCount`. The aggregates count the same ideas `ideaCount` does, and
+  are computed with a fixed number of grouped queries per request, never one query per board —
+  the list does not page, so per-board queries would be unbounded.
+
+---
+
 ## 2026-09-13 — The AI integration is rescoped and respecified after the current batch
 
 **Decided by the user.** Sequencing, not cancellation: finish the batch in flight — the remainder of

@@ -45,6 +45,7 @@ Organizations can manage idea boards using configurable status swimlanes.
 9. User-facing copy uses `Board` or `Boards`, never `Workflow` or `Workflows`.
 10. The canonical client routes are `/boards` for the board list and `/board/{boardId}` for board detail. `/board`, `/workflow`, `/workflows`, and `/workflow/{boardId}` redirect to the corresponding canonical route.
 11. Internal application service and namespace names may retain `Workflow` where they are not user-visible.
+12. A board may carry an optional description of at most 500 characters. It is trimmed; a blank description is stored as none. Site Admin and Org Admin set it when creating or editing the board (added 2026-09-27, `SPEC/decisions.md`).
 
 ## Approval Workflow Decisions (Post-MVP — Deferred)
 The following decisions apply to a future post-MVP approval workflow for board status transitions. **None of these behaviors are implemented in MVP.**
