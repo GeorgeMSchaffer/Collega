@@ -4,7 +4,7 @@
  * The two writes `/settings/boards` supports: create a board, and save an existing one.
  *
  * One payload shape for both — `POST /organizations/{id}/boards` and `PUT /boards/{id}` take the
- * same three fields (`SPEC/30-Contracts.md` "Board Contracts") — so the screens are one form with
+ * same fields (`SPEC/30-Contracts.md` "Board Contracts") — so the screens are one form with
  * different seed values, and these are one body builder with different verbs and paths.
  *
  * Identity follows `idea-actions.ts`: nothing here reads the principal, because a Server Function
@@ -55,11 +55,15 @@ function refusal(error: unknown): string {
  */
 function boardBody(form: FormData): {
   name: string
+  description: string
   allowUserStatusUpdate: boolean
   swimlanes: { statusId: string; order: number }[]
 } {
   return {
     name: String(form.get('name') ?? ''),
+    // Always sent, blank included: on `PUT` an absent description means "leave it", so emptying the
+    // field has to arrive as an empty string for the API to clear it.
+    description: String(form.get('description') ?? ''),
     allowUserStatusUpdate: form.get('userStatusMoves') !== null,
     swimlanes: form.getAll('swimlaneIds').map((statusId, order) => ({
       statusId: String(statusId),

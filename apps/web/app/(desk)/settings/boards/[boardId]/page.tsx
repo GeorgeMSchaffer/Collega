@@ -33,6 +33,7 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
       <BoardForm
         boardId={board.id}
         defaultName={board.name}
+        defaultDescription={board.description ?? ''}
         userStatusMoves={board.allowUserStatusUpdate}
         swimlaneIds={board.lanes.map((lane) => lane.id)}
         // A board may hold a lane whose status has since been archived, and the catalog excludes

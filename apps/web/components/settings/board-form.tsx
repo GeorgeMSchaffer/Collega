@@ -10,6 +10,7 @@ import {
   CardTitle,
   Field,
   Input,
+  Textarea,
 } from '@collega/design-system'
 import Link from 'next/link'
 import { useActionState } from 'react'
@@ -40,6 +41,7 @@ const IDLE: BoardFormState = { error: null }
 export function BoardForm({
   boardId,
   defaultName = '',
+  defaultDescription = '',
   userStatusMoves,
   swimlaneIds,
   statuses,
@@ -49,6 +51,7 @@ export function BoardForm({
   /** The board being edited, or null on the create route. */
   boardId: string | null
   defaultName?: string
+  defaultDescription?: string
   userStatusMoves: boolean
   swimlaneIds: string[]
   /** Drilled to `SwimlanePicker`, which is a client component and cannot read them itself. */
@@ -77,6 +80,20 @@ export function BoardForm({
               hint="Required. What this board is called everywhere it appears."
             >
               <Input id="board-name" name="name" defaultValue={defaultName} required />
+            </Field>
+
+            <Field
+              htmlFor="board-description"
+              label="Description"
+              hint="Optional, up to 500 characters. The first two lines show on the board's card."
+            >
+              <Textarea
+                id="board-description"
+                name="description"
+                defaultValue={defaultDescription}
+                maxLength={500}
+                rows={3}
+              />
             </Field>
 
             <div className="mb-4">
