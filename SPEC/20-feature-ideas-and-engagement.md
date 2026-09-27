@@ -77,7 +77,7 @@ Users can create, discuss, organize, and support ideas within their organization
     - **All-column search** covers every column the list displays — Title, Created By (author name), Assigned To (assignee names), Status (status name), and Created Date — plus the values of Text/Url User-Defined Fields. Text columns match as a case-insensitive substring; the Created Date column matches when the search term is a full ISO `YYYY-MM-DD` date (ideas created on that UTC calendar day). **Added 2026-09-27:** it also matches board name, priority, tag names and Problem (`30-Contracts.md`).
     - **Tag filter** narrows to ideas carrying a tag with the given (normalized) name.
     - **User-association filter** narrows to ideas a specific chosen user either authored or is assigned to (the user search box in `SPEC/Bug Triage.md`), distinct from the caller-scoped `All`/`Created by me`/`Assigned to me` chips.
-    - **Column sort** is supported on Title, Created By, Assigned To (alphabetically-first assignee), Status, and Created Date, ascending or descending, with a stable idea-id tiebreaker so paging is deterministic.
+    - **Column sort** is supported on Title, Created By, Assigned To (alphabetically-first assignee), Status, and Created Date (since 2026-09-27 also Board, Priority, Votes and Tags; `30-Contracts.md` lists the `sortBy` values), ascending or descending, with a stable idea-id tiebreaker so paging is deterministic.
 
 ## Organization-Managed Idea Fields
 1. Site Admin and Org Admin can create, rename, reorder, and soft-delete Idea Type and Business Impact options within their authorized organization scope.

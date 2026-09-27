@@ -390,7 +390,8 @@ choice is remembered **per browser**, in a cookie the server reads so the first 
 the chosen theme (answered 2026-09-27: not stored on the user profile). Every theme is the same token set (`packages/design-system`), so
 components never name a colour; each theme's pairs are checked to 4.5:1 for text. Token values are
 in comp R. Rule 1 in "Color palette" above (near-black ink for
-text; each `-ink` cleared against its own tint) applies to every theme. Rule 2 is now per theme: each
+text; each `-ink` cleared against its own tint) applies to every theme, read for a dark theme as
+its inverse: one near-white neutral ink on the dark ground. Rule 2 is now per theme: each
 theme defines a **suggestion hue** (`--suggest`, `--suggest-tint`) distinct from its accent, for
 fields the idea assistant filled (`20-feature-ai-idea-assist-v2.md` Q5). Each theme also carries its
 own fonts (Typography above).
