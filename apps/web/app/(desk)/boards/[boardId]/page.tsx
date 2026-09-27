@@ -7,7 +7,7 @@ import { NewIdeaForm } from '@/components/ideas/new-idea-form'
 import { Topbar } from '@/components/nav/topbar'
 import { getBoard, getIdeaOptions, getIdeasForBoard } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
-import { currentUser, engagementDenial, writeDenial } from '@/lib/session'
+import { boardAdminDenial, currentUser, engagementDenial, writeDenial } from '@/lib/session'
 
 export async function generateMetadata({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params
@@ -66,16 +66,19 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
             <Link href="/ideas" className={buttonVariants({ variant: 'outline' })}>
               List view
             </Link>
-            {/* Omitted rather than disabled for everyone else, as comp P's `data-roles` does with
-                "Manage boards": configuring a board is administration, not a denied action. */}
-            {currentUser().role === 'OrgAdmin' ? (
+            <GatedAction
+              id="why-edit-board"
+              label="Edit board"
+              denial={boardAdminDenial(currentUser().role)}
+              variant="outline"
+            >
               <Link
                 href={`/settings/boards/${board.id}`}
                 className={buttonVariants({ variant: 'outline' })}
               >
                 Edit board
               </Link>
-            ) : null}
+            </GatedAction>
             {/* The board is context here, so the form asks for everything except that. A role that
                 may not author gets the same control, disabled with its reason, and none of the
                 form's client bundle. */}

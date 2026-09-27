@@ -1,4 +1,4 @@
-import { Button, Denied } from '@collega/design-system'
+import { Button, type ButtonProps, Denied } from '@collega/design-system'
 import type { ReactNode } from 'react'
 
 /**
@@ -19,6 +19,8 @@ export function GatedAction({
   label,
   denial,
   children,
+  variant,
+  size,
 }: {
   /** Ties the control to its reason. Must be unique on the page. */
   id: string
@@ -27,14 +29,23 @@ export function GatedAction({
   denial: string | null
   /** An alternative to the default Button — a Link styled as one, say. */
   children?: ReactNode
+  /** Match the live control's look, so granting the role changes its state and not its shape. */
+  variant?: ButtonProps['variant']
+  size?: ButtonProps['size']
 }) {
   if (!denial) {
-    return children ?? <Button>{label}</Button>
+    return (
+      children ?? (
+        <Button variant={variant} size={size}>
+          {label}
+        </Button>
+      )
+    )
   }
 
   return (
     <Denied reason={denial} id={id}>
-      <Button aria-disabled="true" aria-describedby={id}>
+      <Button variant={variant} size={size} aria-disabled="true" aria-describedby={id}>
         {label}
       </Button>
     </Denied>

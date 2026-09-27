@@ -43,7 +43,13 @@
 import { cache } from 'react'
 import type { CurrentUser, Role } from './types'
 
-export { engagementDenial, isAdministrator, roleLabel, writeDenial } from './roles'
+export {
+  boardAdminDenial,
+  engagementDenial,
+  isAdministrator,
+  roleLabel,
+  writeDenial,
+} from './roles'
 export type { CurrentUser, Role, ViewingAs } from './types'
 
 type Holder = { user: CurrentUser | null }
