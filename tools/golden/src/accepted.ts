@@ -143,6 +143,135 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
   },
   {
     cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].description',
+    decided: '2026-09-27',
+    reason:
+      'A deliberate improvement, not drift (SPEC/decisions.md 2026-09-27, "Boards gain a ' +
+      'description"). The Boards page renders richer cards - a description, the ideas across the ' +
+      "board's lanes, its most-used tags, and who created it and when - and the list item now " +
+      'carries each of them, computed for the whole list in a fixed number of grouped queries so ' +
+      'the client does not fan out per board. SPEC/30-Contracts.md names every field. Same cases ' +
+      'and same reasoning as `body[].ideaCount` above: the accepted difference is the appearance of ' +
+      'the field and only that, which is what `kind` says, so every recorded field of every element ' +
+      'and the array length are still compared. Not pinned to a shape - the recording has no such ' +
+      'field to compare against. One entry per new field, because an entry names one path.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].createdAtUtc',
+    decided: '2026-09-27',
+    reason:
+      "The same change as `body[].description` above, which carries the full reasoning: the board's creation time, from the column `boards` has always had. " +
+      'Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].createdBy',
+    decided: '2026-09-27',
+    reason:
+      'The same change as `body[].description` above, which carries the full reasoning: who created the board, `{ userId, displayName }` or null. ' +
+      'Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].laneCounts',
+    decided: '2026-09-27',
+    reason:
+      "The same change as `body[].description` above, which carries the full reasoning: the board's ideas per swimlane, every lane included. " +
+      'Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].topTags',
+    decided: '2026-09-27',
+    reason:
+      "The same change as `body[].description` above, which carries the full reasoning: up to three of the tags most used on the board's ideas. " +
+      'Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].tagCount',
+    decided: '2026-09-27',
+    reason:
+      "The same change as `body[].description` above, which carries the full reasoning: the number of distinct tags on the board's ideas. " +
+      'Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'boards.get.orgadmin',
+      'boards.get.readonly',
+      'boards.get.siteadmin',
+      'boards.get.user',
+      'boards.update.orgadmin',
+    ],
+    path: 'body.description',
+    decided: '2026-09-27',
+    reason:
+      'A deliberate addition, not drift (SPEC/decisions.md 2026-09-27, "Boards gain a ' +
+      'description"): boards gained an optional description, and the board detail returns it. ' +
+      '`PUT /boards/{boardId}` answers the same detail, hence the one successful update case; the ' +
+      'other update roles are refused before a body is built. The accepted difference is the ' +
+      'appearance of the field, which is what `kind` says: every recorded field of the detail, ' +
+      'swimlanes included, is still compared. Create and reorder are unaffected - the create ' +
+      'response does not carry the description and reorder answers 204.',
+    kind: 'extra',
+  },
+  {
+    cases: [
       'aiassist.org',
       'auth.me.orgadmin',
       'auth.me.readonly',

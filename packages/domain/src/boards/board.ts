@@ -10,6 +10,7 @@
 import { type Auditable, markCreated, markUpdated } from '../common/index.js'
 
 export const BOARD_NAME_MAX_LENGTH = 150
+export const BOARD_DESCRIPTION_MAX_LENGTH = 500
 export const MIN_SWIMLANES = 2
 
 /**
@@ -37,6 +38,8 @@ export type Board = Auditable & {
   readonly id: string
   readonly organizationId: string
   readonly name: string
+  /** Trimmed; `null` when the board has none - a blank description is stored as none. */
+  readonly description: string | null
   /** Controls whether the User role can move ideas on this board. */
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly BoardSwimlane[]
@@ -58,6 +61,20 @@ function requireName(name: string): string {
     throw new BoardInvariantError(
       'name',
       `Name must be ${BOARD_NAME_MAX_LENGTH} characters or fewer.`,
+    )
+  }
+  return trimmed
+}
+
+function normalizeDescription(description: string | null): string | null {
+  const trimmed = description?.trim() ?? ''
+  if (trimmed.length === 0) {
+    return null
+  }
+  if (trimmed.length > BOARD_DESCRIPTION_MAX_LENGTH) {
+    throw new BoardInvariantError(
+      'description',
+      `Description must be ${BOARD_DESCRIPTION_MAX_LENGTH} characters or fewer.`,
     )
   }
   return trimmed
@@ -85,6 +102,7 @@ export function createBoard(params: {
   readonly id: string
   readonly organizationId: string
   readonly name: string
+  readonly description?: string | null | undefined
   readonly allowUserStatusUpdate: boolean
   readonly orderedStatusIds: readonly string[]
   readonly nowUtc: Date
@@ -94,12 +112,14 @@ export function createBoard(params: {
     throw new BoardInvariantError('organizationId', 'Organization id is required.')
   }
   const name = requireName(params.name)
+  const description = normalizeDescription(params.description ?? null)
   const swimlanes = toSwimlanes(params.orderedStatusIds)
 
   return {
     id: params.id,
     organizationId: params.organizationId,
     name,
+    description,
     allowUserStatusUpdate: params.allowUserStatusUpdate,
     swimlanes,
     ...markCreated(params.nowUtc, params.actorUserId),
@@ -111,12 +131,14 @@ export function createBoard(params: {
  * (SPEC/30-Contracts.md `PUT /boards/{id}`). `orderedStatusIds` may add or remove statuses
  * relative to the current swimlanes but must keep at least `MIN_SWIMLANES` distinct statuses
  * (rule #3) and may only draw from the organization's statuses (subset support, validated by the
- * Application layer).
+ * Application layer). An `undefined` description leaves the current one in place; `null` or blank
+ * clears it.
  */
 export function updateBoard(
   board: Board,
   params: {
     readonly name: string
+    readonly description?: string | null | undefined
     readonly allowUserStatusUpdate: boolean
     readonly orderedStatusIds: readonly string[]
   },
@@ -124,10 +146,12 @@ export function updateBoard(
   actorUserId: string | null,
 ): Board {
   const name = requireName(params.name)
+  const description =
+    params.description === undefined ? board.description : normalizeDescription(params.description)
   const swimlanes = toSwimlanes(params.orderedStatusIds)
 
   return markUpdated(
-    { ...board, name, allowUserStatusUpdate: params.allowUserStatusUpdate, swimlanes },
+    { ...board, name, description, allowUserStatusUpdate: params.allowUserStatusUpdate, swimlanes },
     nowUtc,
     actorUserId,
   )

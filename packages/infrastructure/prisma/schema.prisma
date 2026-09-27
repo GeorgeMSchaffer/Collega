@@ -79,6 +79,7 @@ model boards {
   id                       String            @id(map: "PK_boards") @db.Uuid
   organization_id          String            @db.Uuid
   name                     String            @db.VarChar(150)
+  description              String?           @db.VarChar(500)
   allow_user_status_update Boolean
   created_at_utc           DateTime          @db.Timestamptz(6)
   updated_at_utc           DateTime          @db.Timestamptz(6)

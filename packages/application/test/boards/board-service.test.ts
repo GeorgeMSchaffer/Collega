@@ -98,6 +98,15 @@ function harness(options: {
     async countIdeasByBoard(ids) {
       return new Map(ids.map((id) => [id, 3]))
     },
+    async countIdeasByBoardAndStatus() {
+      return []
+    },
+    async countIdeasByBoardAndTag() {
+      return []
+    },
+    async getUserNames() {
+      return new Map()
+    },
   }
 
   const statuses: StatusRepository = {

@@ -871,7 +871,42 @@ Success response `200` item shape:
 - `name`
 - `allowUserStatusUpdate` boolean
 - `swimlaneCount`
-- `ideaCount` — live ideas on the board, excluding soft-deleted ones, so it matches the `totalCount` of `GET /api/v1/boards/{boardId}/ideas`. Added 2026-09-10: the boards list renders the figure on every card, and without it a client has to issue one idea request per board. This endpoint does not page, so that fan-out is unbounded.
+- `ideaCount` — live ideas on the board, excluding soft-deleted ones, so it matches the `totalCount` of `GET /api/v1/boards/{boardId}/ideas`. Added 2026-09-10: the boards list renders the figure on every card, and without it a client has to issue one idea request per board. This endpoint does not page, so that fan-out is unbounded. Like that list it counts only `Discovery`-phase ideas (corrected 2026-09-27 — it had also counted promoted Issues, so a board with promoted items reported more ideas than it showed).
+
+Added 2026-09-27 (`SPEC/decisions.md`), for the richer board cards. Every aggregate below counts the same ideas `ideaCount` does, and all of them are computed with a fixed number of grouped queries for the whole list, never one query per board:
+- `description` string or `null`
+- `createdAtUtc` ISO 8601 UTC timestamp
+- `createdBy` — `{ userId, displayName }`, or `null` when the board records no creator or the creator no longer resolves to a user. `displayName` is `"First Last"`, as elsewhere in the API.
+- `laneCounts` — one entry per swimlane, in swimlane order, **including lanes with no ideas**:
+	- `statusId`
+	- `statusName`
+	- `statusColor`
+	- `order` integer
+	- `ideaCount` integer
+- `topTags` — at most three `{ name, ideaCount }`, the tags on the most of the board's ideas; ordered by `ideaCount` descending, then `name` ascending (case-insensitive). Empty when no idea is tagged.
+- `tagCount` integer — distinct tags across the board's ideas
+
+Example item:
+
+```json
+{
+  "boardId": "6f0c…",
+  "organizationId": "1b2e…",
+  "name": "Ideas",
+  "allowUserStatusUpdate": true,
+  "swimlaneCount": 5,
+  "ideaCount": 6,
+  "description": "Assembly cell reliability: fewer stoppages, safer cells, shorter cycle times.",
+  "createdAtUtc": "2026-09-27T10:00:00.000Z",
+  "createdBy": { "userId": "9a41…", "displayName": "Olivia Administer" },
+  "laneCounts": [
+    { "statusId": "…", "statusName": "New", "statusColor": "#…", "order": 0, "ideaCount": 3 },
+    { "statusId": "…", "statusName": "Complete", "statusColor": "#…", "order": 4, "ideaCount": 0 }
+  ],
+  "topTags": [{ "name": "automation", "ideaCount": 4 }],
+  "tagCount": 4
+}
+```
 
 ### `POST /api/v1/organizations/{organizationId}/boards`
 Purpose: Create a board with at least two swimlanes.
@@ -879,6 +914,7 @@ Purpose: Create a board with at least two swimlanes.
 Request body:
 - `name` required string
 - `allowUserStatusUpdate` required boolean
+- `description` optional string or `null` (added 2026-09-27) — trimmed; blank or `null` stores no description; more than 500 characters returns `400` keyed `description`
 - `swimlanes` required array of
 	- `statusId` GUID string
 	- `order` integer
@@ -891,12 +927,15 @@ Success response `201`:
 ### `GET /api/v1/boards/{boardId}`
 Purpose: Return board detail including swimlanes.
 
+Success response `200`: `boardId`, `organizationId`, `name`, `description` (string or `null`, added 2026-09-27), `allowUserStatusUpdate`, and `swimlanes` — each `statusId`, `statusName`, `statusColor`, `order`, `statusIsDeleted`. `PUT /api/v1/boards/{boardId}` returns the same shape.
+
 ### `PUT /api/v1/boards/{boardId}`
 Purpose: Update board name or selected statuses.
 
 Request body:
 - `name` required string
 - `allowUserStatusUpdate` required boolean
+- `description` optional string or `null` (added 2026-09-27) — same rules as on create. **Absent leaves the stored description unchanged**; `null` or a blank string clears it.
 - `swimlanes` required array of `statusId` and `order`
 
 ### `POST /api/v1/boards/{boardId}/swimlanes/reorder`
