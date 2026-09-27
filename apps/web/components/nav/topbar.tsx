@@ -1,11 +1,15 @@
 import type { ReactNode } from 'react'
+import { ThemePicker } from '@/components/theme/theme-picker'
 
-/** Comp Q's `.topbar`. Actions are per-page, so the shell only supplies the frame and the title. */
+/** Comp R's `.topbar`: the title, the page's actions, and the theme picker at the right. */
 export function Topbar({ title, actions }: { title: ReactNode; actions?: ReactNode }) {
   return (
-    <header className="flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2">
+    <header className="flex min-h-14 flex-wrap items-center gap-2 border-b bg-card px-6 py-2">
       <h1 className="text-base font-semibold tracking-tight">{title}</h1>
-      {actions ? <div className="ml-auto flex items-center gap-2">{actions}</div> : null}
+      <div className="ml-auto flex flex-wrap items-center gap-2">
+        {actions}
+        <ThemePicker />
+      </div>
     </header>
   )
 }

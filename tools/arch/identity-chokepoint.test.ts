@@ -45,6 +45,8 @@ const ALLOWLIST = [
   'apps/api/src/common/request-context/request-context.middleware.ts',
   'apps/api/src/common/request-context/run-as.ts',
   'apps/web/lib/server/current-user.ts',
+  // Not identity: the root layout's theme cookie. It needs `next/headers` and reads nothing else.
+  'apps/web/lib/server/theme.ts',
   'packages/infrastructure/src/security/jwt-access-token.service.ts',
 ]
 
