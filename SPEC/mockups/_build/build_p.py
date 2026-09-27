@@ -45,8 +45,8 @@ ROLES = ["SiteAdmin", "OrgAdmin", "User", "ReadOnly"]
 # render the same fragments under a different skin: the label in the chrome,
 # the web-font link, the stylesheet, and a hook run over the finished body.
 BRAND = "Comp P"
-FONT_LINK = ('<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700'
-             '&display=swap" rel="stylesheet">')
+FONT_LINK = ('<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700'
+             '&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">')
 POST = None
 STATES = ["normal", "empty", "loading", "error"]
 

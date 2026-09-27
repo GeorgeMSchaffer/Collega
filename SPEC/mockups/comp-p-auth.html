@@ -6,7 +6,7 @@
 <title>Collega — Comp P: auth and identity</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    DESIGN.md — "Notion Analysis" — applied verbatim.
@@ -890,6 +890,21 @@ input[type=file]{font-family:inherit;font-size:14px}
 
 .seg a{border-radius:6px;padding:var(--s-xxs) var(--s-sm);color:var(--ink-muted);text-decoration:none}
 .seg a[aria-current="page"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--e1)}
+
+/* ===== Terrazzo (SPEC/decisions.md 2026-09-27) =====
+   tokens.css stays DESIGN.md verbatim because comp O shares it; comp P
+   takes the decided palette and faces from this override, last so it
+   wins. --secondary is comp P's dark pitch band, so it maps to
+   Terrazzo's dark bar rather than to a soft grey. */
+:root{
+  --primary:#3D5A80; --primary-active:#324B6B; --secondary:#1E2733; --on-primary:#ffffff;
+  --canvas:#ffffff; --canvas-soft:#F5F6F8; --surface:#ffffff;
+  --ink:#1E2733; --ink-secondary:#36414F; --ink-muted:#5E6978; --ink-faint:#5E6978;
+  --hairline:#E3E6EB;
+  --sug:#3F6B2E; --sug-soft:#E6F2DF;
+  --font:"Public Sans",-apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif;
+}
+h1,h2,h3,.title{font-family:"Schibsted Grotesk",var(--font)}
 
 </style>
 </head>
