@@ -3,8 +3,10 @@ import {
   DEFAULT_IDEA_TYPES,
   DEFAULT_STATUSES,
 } from '@collega/application/organizations'
+import { NOT_CAPTURED_TEXT } from '@collega/domain/ideas'
 import type { PrismaClient } from '../../generated/prisma/client.js'
 import type { SeedModule } from '../types.js'
+import { IDEA_DETAILS_BY_FOCUS } from './idea-details.js'
 import {
   CONTRIBUTOR_LOCAL_PARTS,
   DEMO_ORGANIZATIONS,
@@ -91,6 +93,16 @@ export const ideasAndUpvotesSeed: SeedModule = {
           const dueDate =
             i % 3 === 0 ? null : new Date(now.getTime() + (7 + i) * 24 * 60 * 60 * 1000)
 
+          const details = IDEA_DETAILS_BY_FOCUS[board.focus]?.[i]
+          if (details === undefined) {
+            throw new Error(`No Problem/solutions/rationale for idea ${i + 1} of '${board.focus}'.`)
+          }
+          const structured = {
+            problem: details.problem,
+            proposed_solutions: [...details.proposedSolutions],
+            impact_rationale: details.impactRationale,
+          }
+
           await prisma.ideas.upsert({
             where: { id: ideaId },
             update: {},
@@ -101,6 +113,7 @@ export const ideasAndUpvotesSeed: SeedModule = {
               status_id: seedId('status', scenario.slug, status.name),
               title: `${board.focus}: ${ideaScenario.title}`,
               description: `${ideaScenario.description} This scenario supports ${board.focus.toLowerCase()} at ${scenario.title}.`,
+              ...structured,
               priority: PRIORITIES[i % PRIORITIES.length] as (typeof PRIORITIES)[number],
               idea_type_id: seedId(
                 'idea-type',
@@ -119,6 +132,13 @@ export const ideasAndUpvotesSeed: SeedModule = {
               created_at_utc: createdAt,
               updated_at_utc: createdAt,
             },
+          })
+          // A database seeded before 2026-09-27 holds these ideas with the migration's rule 2a
+          // backfill. Replace exactly that text, once, with the real values - an idea somebody has
+          // since edited no longer carries it and is left alone, and a second run matches nothing.
+          await prisma.ideas.updateMany({
+            where: { id: ideaId, impact_rationale: NOT_CAPTURED_TEXT },
+            data: structured,
           })
 
           const relatedCount = i % 3

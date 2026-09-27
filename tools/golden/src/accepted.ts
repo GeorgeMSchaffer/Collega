@@ -78,6 +78,11 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'requires a PNG data URL, so a portrait that silently became null or a bare string fails.',
     shape: /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/,
   },
+  // Since 2026-09-27 the export also writes Problem, Proposed Solutions and Impact Rationale
+  // (SPEC/decisions.md, rule 2a), so the header and every row differ and this entry no longer
+  // excuses these cases. That is left unexplained on purpose rather than accepted: the new cells
+  // hold arbitrary text, so no `shape` or `mask` could accept them without leaving the rest of the
+  // body unchecked - exactly the muting the header of this file warns against.
   {
     cases: [
       'ideas.export.orgadmin',
@@ -272,6 +277,79 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
   },
   {
     cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].isArchived',
+    decided: '2026-09-27',
+    reason:
+      'A deliberate addition, not drift (SPEC/decisions.md 2026-09-27, "One list and detail ' +
+      'pattern" - boards are archived, not deleted - and "The S0.2 schema freeze is amended a ' +
+      'third time"). Every list item carries whether its board is archived; SPEC/30-Contracts.md ' +
+      'names the field. The default list leaves archived boards out, and no recorded board is ' +
+      'archived, so the recorded elements and the array length are all still compared - the ' +
+      'accepted difference is the appearance of the field and only that, which is what `kind` ' +
+      'says. Not pinned to a shape: `shape` is a per-side regex over strings, and this is a ' +
+      'boolean the recording has no counterpart for.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].archivedAtUtc',
+    decided: '2026-09-27',
+    reason:
+      'The other half of `body[].isArchived` above, which carries the full reasoning: when the ' +
+      'board was archived, or null. Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'boards.get.orgadmin',
+      'boards.get.readonly',
+      'boards.get.siteadmin',
+      'boards.get.user',
+      'boards.update.orgadmin',
+    ],
+    path: 'body.isArchived',
+    decided: '2026-09-27',
+    reason:
+      "The list item change above, on the board detail: an archived board's own page opens " +
+      'read-only with a banner (SPEC/20-feature-boards-and-statuses.md rule 13), so the detail ' +
+      'says whether it is archived. `PUT /boards/{boardId}` answers the same detail, hence the one ' +
+      'successful update case, exactly as for `body.description`. Accepted as the field appearing, ' +
+      'and only that; every recorded field of the detail, swimlanes included, is still compared.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'boards.get.orgadmin',
+      'boards.get.readonly',
+      'boards.get.siteadmin',
+      'boards.get.user',
+      'boards.update.orgadmin',
+    ],
+    path: 'body.archivedAtUtc',
+    decided: '2026-09-27',
+    reason:
+      'The other half of `body.isArchived` above: when the board was archived, or null. Accepted ' +
+      'as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
       'aiassist.org',
       'auth.me.orgadmin',
       'auth.me.readonly',
@@ -378,6 +456,65 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       '`body.author` because an entry names one path. Not pinned to a shape: the value normalizes ' +
       'to the corpus timestamp placeholder rather than a comparable string, and the recording has ' +
       'no such field.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.problem',
+    decided: '2026-09-27',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-09-27, "The idea assistant is ' +
+      'rescoped as a co-author, and ideas gain structured fields" and "The S0.2 schema freeze is ' +
+      'amended a third time"; SPEC/20-feature-ideas-and-engagement.md rule 2a). Ideas gained three ' +
+      'required fields - Problem, Proposed solutions, Impact rationale - and the detail returns ' +
+      'them; `PUT /ideas/{ideaId}` answers the same detail, hence the update cases. Because the ' +
+      'fields are required on every create and save, the `ideas` scenario now sends them on each ' +
+      'create and update request (the recorded requests predate them and would answer 400); the ' +
+      'recorded responses are untouched. The accepted difference is the appearance of the field ' +
+      'and only that, which is what `kind` says: every recorded field of the detail is still ' +
+      'compared. The same change made `description` nullable, which the corpus cannot show - every ' +
+      'recorded request supplies a description, so every recorded response still carries one and ' +
+      'it is compared as before. Not pinned to a shape: the recording has no such field.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.proposedSolutions',
+    decided: '2026-09-27',
+    reason:
+      'The same change as `body.problem` above, which carries the full reasoning: the ordered list ' +
+      'of 1 to 5 proposed solutions. Accepted as the field appearing, and only that - an array, so ' +
+      'no `shape` could pin it anyway.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.impactRationale',
+    decided: '2026-09-27',
+    reason:
+      'The same change as `body.problem` above, which carries the full reasoning: why the idea ' +
+      'matters to the business. Accepted as the field appearing, and only that.',
     kind: 'extra',
   },
   {

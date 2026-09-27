@@ -18,6 +18,8 @@ import {
   IdeaPhaseConflictError,
   MAX_ASSIGNEES,
   MAX_TAGS,
+  NOT_CAPTURED_TEXT,
+  PROBLEM_MAX_LENGTH,
   promoteIdeaToIssue,
   reassignIdeaType as reassignIdeaTypeOf,
   replaceIdeaAssignees,
@@ -29,6 +31,7 @@ import {
   softDeleteIdea,
   updateIdeaContent,
 } from '@collega/domain/ideas'
+import { normalizeTagName } from '@collega/domain/tags'
 import type { AuditEventWriter, Clock, CurrentUserContext, UnitOfWork } from '../common/index.js'
 import {
   attributeAudit,
@@ -140,14 +143,26 @@ export class IdeaService {
     }
     this.ensureOrganizationScope(board.organizationId)
 
+    const search = trimOrNull(query.search)
+    const searchTextFieldIds = search
+      ? (
+          await this.fieldValues.translateListFilters({
+            organizationId: board.organizationId,
+            raw: null,
+          })
+        ).searchTextFieldIds
+      : []
+
     const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
     const ideasPage = await this.ideaRepository.listByBoard({
       boardId,
       page,
-      search: trimOrNull(query.search),
-      statusId: query.statusId,
-      tag: trimOrNull(query.tag),
-      priority: parseOptionalPriority(query.priority),
+      search,
+      searchTextFieldIds,
+      searchCreatedOnDate: search && isValidIsoDate(search) ? search : null,
+      statusIds: distinctNonEmpty(query.statusIds),
+      tags: normalizeTagFilters(query.tags),
+      priorities: parsePriorityFilters(query.priorities),
       dueBefore: parseOptionalDate(query.dueBefore),
       // The ideation board is Discovery, always: a promoted item leaves it (no data loss - the row
       // and its ideation status are retained, and it reappears here if it is returned to
@@ -197,7 +212,10 @@ export class IdeaService {
       sortDirection: normalizeSortDirection(query.sortDirection),
       fieldFilters,
       searchTextFieldIds,
-      tag: trimOrNull(query.tag),
+      boardIds: distinctNonEmpty(query.boardIds),
+      statusIds: distinctNonEmpty(query.statusIds),
+      priorities: parsePriorityFilters(query.priorities),
+      tags: normalizeTagFilters(query.tags),
       associatedUserId: trimOrNull(query.user),
       searchCreatedOnDate,
       // Defaults to both phases, unlike the board: this list is where somebody looks for an item
@@ -219,6 +237,7 @@ export class IdeaService {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
+    ensureBoardNotArchived(board)
 
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
@@ -264,7 +283,10 @@ export class IdeaService {
       boardId,
       statusId,
       title: command.title ?? '',
-      description: command.description ?? '',
+      description: command.description,
+      problem: command.problem ?? '',
+      proposedSolutions: command.proposedSolutions ?? [],
+      impactRationale: command.impactRationale ?? '',
       priority,
       ideaTypeId: command.ideaTypeId,
       businessImpactId: command.businessImpactId,
@@ -329,6 +351,7 @@ export class IdeaService {
       throw new NotFoundError('Idea not found.')
     }
     this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -338,15 +361,15 @@ export class IdeaService {
     const existingAssignees = [...idea.assigneeUserIds]
     const existingMentions = new Set(idea.mentionedUserIds)
     const requestedAssignees = distinctNonEmpty(command.assigneeUserIds)
-    const descriptionChanged = (command.description ?? '').trim() !== idea.description
+    const contentChanged = structuredContentChanged(idea, command)
     const assigneesChanged = !setsEqual(new Set(existingAssignees), new Set(requestedAssignees))
 
-    // Description and assignee changes are restricted to the author or an in-scope admin
-    // (SPEC/20-feature-ideas-and-engagement.md "Permissions"); other fields use the general
-    // idea-edit permission already checked above.
-    if ((descriptionChanged || assigneesChanged) && !this.canAdministerIdeaContent(idea, actorId)) {
+    // Description, Problem, Proposed solutions, Impact rationale and assignee changes are
+    // restricted to the author or an in-scope admin (SPEC/20-feature-ideas-and-engagement.md
+    // "Permissions", rule 2a); other fields use the general idea-edit permission checked above.
+    if ((contentChanged || assigneesChanged) && !this.canAdministerIdeaContent(idea, actorId)) {
       throw new ForbiddenError(
-        "You are not allowed to change this idea's description or assignees.",
+        "You are not allowed to change this idea's description, problem, proposed solutions, impact rationale or assignees.",
       )
     }
 
@@ -399,7 +422,10 @@ export class IdeaService {
       idea,
       {
         title: command.title ?? '',
-        description: command.description ?? '',
+        description: command.description,
+        problem: command.problem ?? '',
+        proposedSolutions: command.proposedSolutions ?? [],
+        impactRationale: command.impactRationale ?? '',
         priority,
         businessImpactId: command.businessImpactId,
         dueDate,
@@ -459,6 +485,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError("You are not allowed to reassign an idea's type.")
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     // 400 when the target type is unknown or archived in the organization.
     await this.getActiveIdeaType(idea.organizationId, ideaTypeId)
@@ -508,6 +535,7 @@ export class IdeaService {
     }
 
     this.ensureCanMoveIdea(board)
+    ensureBoardNotArchived(board)
 
     if (idea.statusId === command.statusId) {
       return
@@ -566,6 +594,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, actorId)) {
       throw new ForbiddenError('You are not allowed to promote this idea.')
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const effort = parseEffort(command.effort)
     const sprintId = await this.resolveAssignableSprint(idea.organizationId, command.sprintId)
@@ -614,6 +643,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to return an issue to discovery.')
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -757,6 +787,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to delete ideas.')
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -790,9 +821,11 @@ export class IdeaService {
         boardId,
         page: { page: pageNumber, pageSize: MAX_PAGE_SIZE },
         search: null,
-        statusId: null,
-        tag: null,
-        priority: null,
+        searchTextFieldIds: [],
+        searchCreatedOnDate: null,
+        statusIds: [],
+        tags: [],
+        priorities: [],
         dueBefore: null,
         // Same Discovery filter as the board itself: the export is "this board's ideas", and a
         // file that disagreed with the screen it was exported from would be the bug.
@@ -843,7 +876,11 @@ export class IdeaService {
     for (const idea of ideas) {
       const cells: string[] = [
         idea.title,
-        idea.description,
+        idea.description ?? '',
+        idea.problem,
+        // One quoted cell, one solution per line (SPEC/30-Contracts.md export).
+        idea.proposedSolutions.join('\n'),
+        idea.impactRationale,
         idea.priority,
         this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
         this.businessImpactName(businessImpactLookup, idea.businessImpactId),
@@ -881,6 +918,7 @@ export class IdeaService {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
+    ensureBoardNotArchived(board)
 
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
@@ -923,6 +961,17 @@ export class IdeaService {
 
       const title = cell(IdeaCsvColumns.title)
       const description = cell(IdeaCsvColumns.description)
+      // Rule 2a's backfill for a row that lacks a structured field or leaves it blank (CSV Import
+      // rule 3a): the same text the migration wrote into ideas created before the fields existed.
+      // A Description longer than Problem allows is cut to fit, as the migration did, so a file
+      // written before these columns existed still imports.
+      const problem =
+        cell(IdeaCsvColumns.problem) ??
+        description?.slice(0, PROBLEM_MAX_LENGTH).trimEnd() ??
+        NOT_CAPTURED_TEXT
+      const solutionsCell = cell(IdeaCsvColumns.proposedSolutions)
+      const proposedSolutions = solutionsCell ? solutionsCell.split(/\r?\n/) : [NOT_CAPTURED_TEXT]
+      const impactRationale = cell(IdeaCsvColumns.impactRationale) ?? NOT_CAPTURED_TEXT
       const priorityRaw = cell(IdeaCsvColumns.priority)
       const typeName = cell(IdeaCsvColumns.ideaType)
       const impactName = cell(IdeaCsvColumns.businessImpact)
@@ -937,10 +986,6 @@ export class IdeaService {
 
       if (!title) {
         reject('Title is required.')
-        continue
-      }
-      if (!description) {
-        reject('Description is required.')
         continue
       }
 
@@ -1051,6 +1096,9 @@ export class IdeaService {
           statusId,
           title,
           description,
+          problem,
+          proposedSolutions,
+          impactRationale,
           priority,
           ideaTypeId: ideaType.id,
           businessImpactId,
@@ -1305,6 +1353,9 @@ export class IdeaService {
       ideaId: idea.id,
       boardId: idea.boardId,
       title: idea.title,
+      problem: idea.problem,
+      proposedSolutions: idea.proposedSolutions,
+      impactRationale: idea.impactRationale,
       description: idea.description,
       priority: idea.priority,
       ideaTypeId: idea.ideaTypeId,
@@ -1638,6 +1689,14 @@ export class IdeaService {
     }
   }
 
+  /** `ensureBoardNotArchived` for an idea already loaded, whose board context is not. */
+  private async ensureIdeaBoardNotArchived(idea: Idea): Promise<void> {
+    const board = await this.boards.getBoardContext(idea.boardId)
+    if (board) {
+      ensureBoardNotArchived(board)
+    }
+  }
+
   /** User-role status moves are allowed only when the board opts in (rule #34); Site Admin and
    * in-scope Org Admin may always move; Read Only never. */
   private ensureCanMoveIdea(board: BoardContext): void {
@@ -1803,6 +1862,17 @@ export class IdeaService {
 
 // Module-level helpers ---------------------------------------------------------------------------
 
+/**
+ * An archived board is read-only (SPEC/20-feature-boards-and-statuses.md rule 13): no new ideas,
+ * and no moving, editing or deleting the ones on it - `409`, unarchive it first. Comments and
+ * upvotes are separate features and stay open.
+ */
+function ensureBoardNotArchived(board: BoardContext): void {
+  if (board.isArchived) {
+    throw new ConflictError('This board is archived. Unarchive it before changing its ideas.')
+  }
+}
+
 /** One user as the idea payloads carry a person - assignees and the detail's author alike. */
 function toPersonDto(user: UserSummary): IdeaAssigneeDto {
   return {
@@ -1855,6 +1925,26 @@ function distinctNonEmpty(ids: readonly string[] | null | undefined): string[] {
   return result
 }
 
+/**
+ * Whether an update touches the author-or-admin fields: Description, and since 2026-09-27 Problem,
+ * Proposed solutions and Impact rationale. Compared the way the domain normalizes them (trimmed,
+ * blank description as none, blank solutions dropped), so resubmitting the stored values unchanged
+ * is not an edit.
+ */
+function structuredContentChanged(idea: Idea, command: UpdateIdeaCommand): boolean {
+  const solutions = (command.proposedSolutions ?? []).flatMap((s) => {
+    const trimmed = s?.trim()
+    return trimmed ? [trimmed] : []
+  })
+  return (
+    trimOrNull(command.description) !== idea.description ||
+    (command.problem ?? '').trim() !== idea.problem ||
+    (command.impactRationale ?? '').trim() !== idea.impactRationale ||
+    solutions.length !== idea.proposedSolutions.length ||
+    solutions.some((solution, index) => solution !== idea.proposedSolutions[index])
+  )
+}
+
 function setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
   if (a.size !== b.size) {
     return false
@@ -1898,6 +1988,16 @@ function parsePriority(value: string | null): Priority {
     })
   }
   return parsed
+}
+
+/** A repeatable `priority` filter: unrecognised values are dropped, as a single one always was. */
+function parsePriorityFilters(values: readonly string[]): Priority[] {
+  return [...new Set(values.flatMap((value) => parseOptionalPriority(value) ?? []))]
+}
+
+/** A repeatable `tag` filter, matched against the tag's normalized (trimmed, lowercased) name. */
+function normalizeTagFilters(values: readonly string[]): string[] {
+  return [...new Set(values.map(normalizeTagName).filter((name) => name !== ''))]
 }
 
 function parseOptionalPriority(value: string | null | undefined): Priority | null {

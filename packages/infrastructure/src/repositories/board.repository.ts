@@ -41,6 +41,8 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
     description: row.description,
     allowUserStatusUpdate: row.allow_user_status_update,
     swimlanes,
+    isArchived: row.is_archived,
+    archivedAtUtc: row.archived_at_utc,
     createdAtUtc: row.created_at_utc,
     updatedAtUtc: row.updated_at_utc,
     createdByUserId: row.created_by_user_id,
@@ -166,6 +168,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     readonly organizationId: string
     readonly name: string
     readonly allowUserStatusUpdate: boolean
+    readonly isArchived: boolean
     readonly swimlanes: readonly { readonly statusId: string; readonly displayOrder: number }[]
   } | null> {
     const board = await this.getById(boardId)
@@ -177,6 +180,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       organizationId: board.organizationId,
       name: board.name,
       allowUserStatusUpdate: board.allowUserStatusUpdate,
+      isArchived: board.isArchived,
       swimlanes: board.swimlanes,
     }
   }
@@ -212,6 +216,8 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
           name: board.name,
           description: board.description,
           allow_user_status_update: board.allowUserStatusUpdate,
+          is_archived: board.isArchived,
+          archived_at_utc: board.archivedAtUtc,
           created_at_utc: board.createdAtUtc,
           updated_at_utc: board.updatedAtUtc,
           created_by_user_id: board.createdByUserId,
@@ -232,6 +238,8 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
           name: board.name,
           description: board.description,
           allow_user_status_update: board.allowUserStatusUpdate,
+          is_archived: board.isArchived,
+          archived_at_utc: board.archivedAtUtc,
           updated_at_utc: board.updatedAtUtc,
           updated_by_user_id: board.updatedByUserId,
         },

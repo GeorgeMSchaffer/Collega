@@ -29,6 +29,19 @@ export class BoardInvariantError extends Error {
   }
 }
 
+/**
+ * An archived board refuses edits to its own settings - name, description, lanes and their order -
+ * until it is unarchived (SPEC/20-feature-boards-and-statuses.md rule 13). The contract answers
+ * `409`, so this is a sibling of `BoardInvariantError` rather than a subclass: every catch site of
+ * that one answers a field-keyed `400`.
+ */
+export class BoardArchivedError extends Error {
+  constructor() {
+    super('This board is archived. Unarchive it first.')
+    this.name = 'BoardArchivedError'
+  }
+}
+
 export type BoardSwimlane = {
   readonly statusId: string
   readonly displayOrder: number
@@ -43,6 +56,9 @@ export type Board = Auditable & {
   /** Controls whether the User role can move ideas on this board. */
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly BoardSwimlane[]
+  /** Archived in place of deletion (rule 13): kept with its lanes and ideas, but read-only. */
+  readonly isArchived: boolean
+  readonly archivedAtUtc: Date | null
 }
 
 /**
@@ -122,6 +138,8 @@ export function createBoard(params: {
     description,
     allowUserStatusUpdate: params.allowUserStatusUpdate,
     swimlanes,
+    isArchived: false,
+    archivedAtUtc: null,
     ...markCreated(params.nowUtc, params.actorUserId),
   }
 }
@@ -145,6 +163,7 @@ export function updateBoard(
   nowUtc: Date,
   actorUserId: string | null,
 ): Board {
+  requireNotArchived(board)
   const name = requireName(params.name)
   const description =
     params.description === undefined ? board.description : normalizeDescription(params.description)
@@ -168,6 +187,7 @@ export function reorderBoardSwimlanes(
   nowUtc: Date,
   actorUserId: string | null,
 ): Board {
+  requireNotArchived(board)
   const swimlanes = toSwimlanes(orderedStatusIds)
 
   const current = new Set(board.swimlanes.map((swimlane) => swimlane.statusId))
@@ -182,4 +202,29 @@ export function reorderBoardSwimlanes(
   }
 
   return markUpdated({ ...board, swimlanes }, nowUtc, actorUserId)
+}
+
+function requireNotArchived(board: Board): void {
+  if (board.isArchived) {
+    throw new BoardArchivedError()
+  }
+}
+
+/**
+ * Archives the board (rule 13). Idempotent: an archived board comes back unchanged, keeping the
+ * time it was first archived, so the caller can tell nothing happened.
+ */
+export function archiveBoard(board: Board, nowUtc: Date, actorUserId: string | null): Board {
+  if (board.isArchived) {
+    return board
+  }
+  return markUpdated({ ...board, isArchived: true, archivedAtUtc: nowUtc }, nowUtc, actorUserId)
+}
+
+/** Brings an archived board back unchanged apart from the flag. Idempotent, like `archiveBoard`. */
+export function unarchiveBoard(board: Board, nowUtc: Date, actorUserId: string | null): Board {
+  if (!board.isArchived) {
+    return board
+  }
+  return markUpdated({ ...board, isArchived: false, archivedAtUtc: null }, nowUtc, actorUserId)
 }

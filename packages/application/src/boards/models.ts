@@ -46,6 +46,14 @@ export type BoardListItem = {
   readonly topTags: readonly BoardTagCount[]
   /** Distinct tags across the same ideas as `ideaCount`. */
   readonly tagCount: number
+  /** Archived in place of deletion (2026-09-27); listed only with `includeArchived`. */
+  readonly isArchived: boolean
+  readonly archivedAtUtc: Date | null
+}
+
+export type BoardListQuery = {
+  /** Default `false`: archived boards leave the default list and every board picker. */
+  readonly includeArchived: boolean
 }
 
 export type BoardCreator = {
@@ -83,6 +91,9 @@ export type BoardDetail = {
   readonly description: string | null
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly SwimlaneDetail[]
+  /** The same two fields the list item carries, so a board's own page can open read-only. */
+  readonly isArchived: boolean
+  readonly archivedAtUtc: Date | null
 }
 
 /** Shape matches the `POST /organizations/{id}/boards` create response. */

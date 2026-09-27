@@ -15,10 +15,18 @@ import type { IdeaFieldValueFilter, IdeaFieldValueWrite, IdeaPage } from './mode
 export type IdeaListFilter = {
   readonly boardId: string
   readonly page: PageRequest
+  /**
+   * The organization list's search minus board name (SPEC/30-Contracts.md 2026-09-27): title,
+   * author and assignee names, status name, priority, tag names, Problem, the Text/Url field
+   * values in `searchTextFieldIds`, and ideas created on `searchCreatedOnDate`.
+   */
   readonly search: string | null
-  readonly statusId: string | null
-  readonly tag: string | null
-  readonly priority: Priority | null
+  readonly searchTextFieldIds: readonly string[]
+  readonly searchCreatedOnDate: string | null
+  /** Any-of within each list, AND across them; an empty list is no filter. Tags are normalized. */
+  readonly statusIds: readonly string[]
+  readonly tags: readonly string[]
+  readonly priorities: readonly Priority[]
   readonly dueBefore: string | null
   /**
    * `Discovery` for every ideation-board read (spec "Board & idea-list phase filtering"): a
@@ -32,7 +40,10 @@ export type IdeaListFilter = {
    * across a fresh seed, so under paging the tie-break silently decided what was on a page.
    *
    * The repository implementation (Wave C) MUST tie-break the requested `sortBy` on
-   * `createdAtUtc` then `title` (both ascending). NEVER tie-break on id.
+   * `createdAtUtc` then `title` (both ascending). NEVER tie-break on id alone. Since 2026-09-27
+   * the id follows them as the last key, so two ideas created in the same instant with the same
+   * title still page deterministically (SPEC/30-Contracts.md's "stable `ideaId` tiebreaker");
+   * it can only decide between ideas the two keys before it leave tied.
    */
   readonly sortBy: string | null
   readonly sortDirection: SortDirection
@@ -48,7 +59,11 @@ export type OrganizationIdeaListFilter = {
   readonly sortDirection: SortDirection
   readonly fieldFilters: readonly IdeaFieldValueFilter[]
   readonly searchTextFieldIds: readonly string[]
-  readonly tag: string | null
+  /** Any-of within each list, AND across them; an empty list is no filter. Tags are normalized. */
+  readonly boardIds: readonly string[]
+  readonly statusIds: readonly string[]
+  readonly priorities: readonly Priority[]
+  readonly tags: readonly string[]
   readonly associatedUserId: string | null
   /** Set only when `search` parses as an ISO `yyyy-MM-dd` date: additionally matches ideas
    * created on that (UTC) calendar day. */
@@ -202,6 +217,8 @@ export type BoardContext = {
   readonly organizationId: string
   readonly name: string
   readonly allowUserStatusUpdate: boolean
+  /** An archived board takes no new ideas, moves or edits (boards rule 13); reads stay open. */
+  readonly isArchived: boolean
   readonly swimlanes: readonly SwimlaneInfo[]
 }
 
