@@ -161,6 +161,23 @@ export type WireBoardListItem = {
   allowUserStatusUpdate: boolean
   swimlaneCount: number
   ideaCount: number
+  description: string | null
+  createdAtUtc: string
+  /** Null when the board predates creator tracking or its creator no longer resolves. */
+  createdBy: { userId: string; displayName: string } | null
+  /** One per swimlane, in swimlane order, zero-count lanes included. */
+  laneCounts: readonly WireBoardLaneCount[]
+  /** At most three, most-used first. */
+  topTags: readonly { name: string; ideaCount: number }[]
+  tagCount: number
+}
+
+export type WireBoardLaneCount = {
+  statusId: string
+  statusName: string
+  statusColor: string
+  order: number
+  ideaCount: number
 }
 
 /** `GET /boards/{id}` — the lanes, in the order the board defines. */
@@ -169,6 +186,7 @@ export type WireBoardDetail = {
   organizationId: string
   name: string
   allowUserStatusUpdate: boolean
+  description: string | null
   swimlanes: readonly WireSwimlane[]
 }
 

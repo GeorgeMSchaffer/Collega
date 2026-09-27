@@ -12,7 +12,7 @@
  * last fixture screen that could have joined the two.
  */
 
-import { swimlaneToStatus, toStatus } from '../api/adapt'
+import { swimlaneToStatus, toBoardOverview, toStatus } from '../api/adapt'
 import { apiGet, apiPath, isApiStatus } from '../api/client'
 import type {
   WireBoardDetail,
@@ -22,12 +22,12 @@ import type {
   WirePage,
   WireStatus,
 } from '../api/wire'
-import type { Board, BoardAdmin, BoardWithLanes, Status } from '../types'
+import type { Board, BoardAdmin, BoardOverview, BoardWithLanes, Status } from '../types'
 import { failIfRequested, resolve } from './latency'
 import { everyOrganization, organizationScope } from './scope'
 
 export { SWIMLANE_FLOOR } from '../mock'
-export type { Board, BoardAdmin, BoardWithLanes, Status } from '../types'
+export type { Board, BoardAdmin, BoardOverview, BoardWithLanes, Status } from '../types'
 
 /**
  * The organization's boards, each with the number of ideas on it.
@@ -57,6 +57,26 @@ export async function getBoards(): Promise<Board[]> {
 }
 
 /**
+ * The same boards again, as the workspace Boards screen shows them.
+ *
+ * A third projection of `GET /organizations/{id}/boards`, for the reason `getBoardAdmin` gives:
+ * the lane counts, top tags and creator arrive on the list item, so the cards cost no request
+ * beyond the one list, and `Board` does not grow fields only this screen reads.
+ */
+export async function getBoardOverviews(): Promise<BoardOverview[]> {
+  failIfRequested('getBoardOverviews')
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  const boards = await apiGet<readonly WireBoardListItem[]>(
+    'getBoardOverviews',
+    apiPath`/organizations/${scope}/boards`,
+  )
+  return boards.map(toBoardOverview)
+}
+
+/**
  * One board and the lanes it actually defines.
  *
  * The lanes come from the board, not from the organization's status catalog. Those are different
@@ -73,6 +93,7 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
       id: board.boardId,
       name: board.name,
       allowUserStatusUpdate: board.allowUserStatusUpdate,
+      description: board.description,
       // Deleted statuses still hold ideas that have to go somewhere, so their lane stays on the
       // board — hiding it would silently drop cards off a screen that claims to show all of them.
       lanes: [...board.swimlanes].sort((a, b) => a.order - b.order).map(swimlaneToStatus),

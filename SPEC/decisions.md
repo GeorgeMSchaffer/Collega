@@ -9,6 +9,20 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-27 — The Boards screen has a card view and a list view
+
+**Decided by the user**, choosing between three reviewed directions (card grid, one row per board,
+wide tiles with a lane chart), each shown in its own palette. Cards are the default and a list view
+sits beside them behind a **Cards / List** toggle; the list is the row layout from the second
+direction. **The palette stays comp P's** — neither alternative palette was adopted, so
+`packages/design-system` is unchanged. The toggle is a URL parameter (`?view=list`) rather than a
+stored preference: the server renders the right view first, and a shared link opens what it names.
+The data behind both views is the board list's own aggregates (the other 2026-09-27 entry on board
+descriptions), so neither view costs a request per board. `SPEC/20-feature-client-ui.md`
+"`/boards` — Boards" and comp P `s-boards` carry the detail.
+
+---
+
 ## 2026-09-27 — Desk screens use the full width, and the Boards screens carry the board actions
 
 **Decided by the user.** Two changes to comp P's structure, both prompted by using the app on a
