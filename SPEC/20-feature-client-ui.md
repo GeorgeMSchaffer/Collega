@@ -77,7 +77,17 @@ because an idea is always raised against a board.
 The topbar carries **Manage boards** (to Settings → Boards) and **New board**, and each board
 carries **Edit** (to Settings → Boards → Edit). All three are an Org Admin's; every other role sees
 them disabled with the reason (*Administrators only*; a Site Admin, *Act as an organization
-administrator*). Decided
+administrator*).
+
+Each board shows its **description** (two lines at most, or *No description yet*), a **lane mix** —
+one bar split by lane in the board's lane order and status colours, with a count per lane and empty
+lanes dimmed rather than dropped — its **most-used tags** (three, then *+N*), who **created** it and
+when, and its idea and lane totals. The counts are the board's live Discovery ideas, the same set
+the board itself shows. Two views of the same facts, switched by a **Cards / List** control:
+**Cards** (default) is a responsive grid; **List** (`/boards?view=list`) is one table row per board
+with fixed columns — board and one-line description, lane mix with first-lane / in-between /
+last-lane figures, two tags then *+N*, created — for comparing many boards. The view is a URL, not
+stored state, so a link opens the view it names. Decided 2026-09-27. Decided
 2026-09-27.
 
 ## `/board/{boardId}` — Kanban Board
