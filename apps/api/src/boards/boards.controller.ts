@@ -6,13 +6,14 @@ import {
   type SwimlaneInput,
 } from '@collega/application/boards'
 import { BOARD_NAME_MAX_LENGTH } from '@collega/domain/boards'
-import { Body, Controller, Get, HttpCode, Param, Post, Put, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
 import {
   type FieldRules,
   RequestValidationError,
   validateFields,
 } from '../common/errors/request-validation.error.js'
+import { queryBool } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** One entry of a request's `swimlanes` array - `SwimlaneRequest` on the .NET side. */
@@ -101,8 +102,9 @@ export class BoardsController {
   @Get('organizations/:organizationId/boards')
   async list(
     @Param('organizationId', UuidParamPipe) organizationId: string,
+    @Query('includeArchived') includeArchived: unknown,
   ): Promise<readonly BoardListItem[]> {
-    return this.boards.list(organizationId)
+    return this.boards.list(organizationId, { includeArchived: queryBool(includeArchived) })
   }
 
   @Post('organizations/:organizationId/boards')
@@ -156,5 +158,21 @@ export class BoardsController {
     await this.boards.reorderSwimlanes(boardId, {
       swimlanes: toSwimlaneInputs(body.swimlanes),
     })
+  }
+
+  /**
+   * Archive in place of delete (added 2026-09-27). Both answer 204 whether or not anything
+   * changed - archiving an archived board, or unarchiving an active one, is not an error.
+   */
+  @Post('boards/:boardId/archive')
+  @HttpCode(204)
+  async archive(@Param('boardId', UuidParamPipe) boardId: string): Promise<void> {
+    await this.boards.archive(boardId)
+  }
+
+  @Post('boards/:boardId/unarchive')
+  @HttpCode(204)
+  async unarchive(@Param('boardId', UuidParamPipe) boardId: string): Promise<void> {
+    await this.boards.unarchive(boardId)
   }
 }

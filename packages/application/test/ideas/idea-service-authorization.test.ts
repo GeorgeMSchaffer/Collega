@@ -69,6 +69,7 @@ function board(overrides: Partial<BoardContext> = {}): BoardContext {
     organizationId: ORG_A,
     name: 'Acme Board',
     allowUserStatusUpdate: false,
+    isArchived: false,
     swimlanes: [
       { statusId: STATUS_1, displayOrder: 0 },
       { statusId: STATUS_2, displayOrder: 1 },

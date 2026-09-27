@@ -5,11 +5,14 @@
 
 import { randomUUID } from 'node:crypto'
 import {
+  archiveBoard,
   type Board,
+  BoardArchivedError,
   BoardInvariantError,
   createBoard,
   MIN_SWIMLANES,
   reorderBoardSwimlanes,
+  unarchiveBoard,
   updateBoard,
 } from '@collega/domain/boards'
 import { Role } from '@collega/domain/enums'
@@ -18,6 +21,7 @@ import {
   type AuditEventWriter,
   attributeAudit,
   type Clock,
+  ConflictError,
   type CurrentUserContext,
   ensureNotDirectSiteAdmin,
   ForbiddenError,
@@ -30,6 +34,7 @@ import type { StatusRepository } from '../statuses/index.js'
 import type {
   BoardDetail,
   BoardListItem,
+  BoardListQuery,
   BoardTagCount,
   CreateBoardCommand,
   CreateBoardResult,
@@ -51,11 +56,16 @@ export class BoardService {
     private readonly clock: Clock,
   ) {}
 
-  async list(organizationId: string): Promise<readonly BoardListItem[]> {
+  async list(
+    organizationId: string,
+    query: BoardListQuery = { includeArchived: false },
+  ): Promise<readonly BoardListItem[]> {
     this.ensureReadScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
 
-    const boards = await this.boards.listByOrganization(organizationId)
+    const boards = (await this.boards.listByOrganization(organizationId)).filter(
+      (board) => query.includeArchived || !board.isArchived,
+    )
     // One query for every board's idea count. The client used to ask each board's idea endpoint
     // for a single row and read `totalCount` off the envelope, which is one round trip per board
     // from one render - fine at four boards, two hundred concurrent requests at two hundred.
@@ -110,6 +120,8 @@ export class BoardService {
         })),
         topTags: [...tags].sort(compareTagsForCard).slice(0, TOP_TAG_LIMIT),
         tagCount: tags.length,
+        isArchived: board.isArchived,
+        archivedAtUtc: board.archivedAtUtc,
       }
     })
   }
@@ -249,6 +261,51 @@ export class BoardService {
     )
   }
 
+  /**
+   * Archives a board in place of deleting it (SPEC/20-feature-boards-and-statuses.md rule 13):
+   * Org Admin of its organization only, and a direct Site Admin is refused like every other
+   * org-content write. Archiving an archived board succeeds and changes nothing.
+   */
+  async archive(boardId: string): Promise<void> {
+    await this.setArchived(boardId, archiveBoard, 'BoardArchived', 'archived')
+  }
+
+  /** Brings an archived board back unchanged. Unarchiving an active board changes nothing. */
+  async unarchive(boardId: string): Promise<void> {
+    await this.setArchived(boardId, unarchiveBoard, 'BoardUnarchived', 'unarchived')
+  }
+
+  private async setArchived(
+    boardId: string,
+    transition: (board: Board, nowUtc: Date, actorUserId: string | null) => Board,
+    eventType: string,
+    verb: string,
+  ): Promise<void> {
+    const existing = await this.boards.getById(boardId)
+    if (existing === null) {
+      throw new NotFoundError('Board not found.')
+    }
+
+    this.ensureAdminScope(existing.organizationId)
+
+    const now = this.clock.now()
+    const board = transition(existing, now, this.currentUser.userId)
+    if (board === existing) {
+      return
+    }
+    await this.boards.save(board)
+    await this.unitOfWork.saveChanges()
+
+    await this.audit(
+      eventType,
+      board.organizationId,
+      board.id,
+      `Board '${board.name}' ${verb}.`,
+      now,
+      null,
+    )
+  }
+
   private async loadStatusLookup(organizationId: string): Promise<ReadonlyMap<string, Status>> {
     // Include deleted so board detail can still surface a prior status name if one was later
     // removed (rule #8); create/update validation rejects deleted statuses separately.
@@ -382,6 +439,9 @@ function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T,
         [error.field]: [error.message],
       })
     }
+    if (error instanceof BoardArchivedError) {
+      throw new ConflictError(error.message)
+    }
     throw error
   }
 }
@@ -394,6 +454,8 @@ function toDetail(board: Board, statusLookup: ReadonlyMap<string, Status>): Boar
     description: board.description,
     allowUserStatusUpdate: board.allowUserStatusUpdate,
     swimlanes: buildSwimlaneDetails(board, statusLookup),
+    isArchived: board.isArchived,
+    archivedAtUtc: board.archivedAtUtc,
   }
 }
 

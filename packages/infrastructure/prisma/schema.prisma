@@ -81,6 +81,8 @@ model boards {
   name                     String            @db.VarChar(150)
   description              String?           @db.VarChar(500)
   allow_user_status_update Boolean
+  is_archived              Boolean           @default(false)
+  archived_at_utc          DateTime?         @db.Timestamptz(6)
   created_at_utc           DateTime          @db.Timestamptz(6)
   updated_at_utc           DateTime          @db.Timestamptz(6)
   created_by_user_id       String?           @db.Uuid

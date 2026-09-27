@@ -236,6 +236,7 @@ export class IdeaService {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
+    ensureBoardNotArchived(board)
 
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
@@ -349,6 +350,7 @@ export class IdeaService {
       throw new NotFoundError('Idea not found.')
     }
     this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -482,6 +484,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError("You are not allowed to reassign an idea's type.")
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     // 400 when the target type is unknown or archived in the organization.
     await this.getActiveIdeaType(idea.organizationId, ideaTypeId)
@@ -531,6 +534,7 @@ export class IdeaService {
     }
 
     this.ensureCanMoveIdea(board)
+    ensureBoardNotArchived(board)
 
     if (idea.statusId === command.statusId) {
       return
@@ -589,6 +593,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, actorId)) {
       throw new ForbiddenError('You are not allowed to promote this idea.')
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const effort = parseEffort(command.effort)
     const sprintId = await this.resolveAssignableSprint(idea.organizationId, command.sprintId)
@@ -637,6 +642,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to return an issue to discovery.')
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -780,6 +786,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to delete ideas.')
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -910,6 +917,7 @@ export class IdeaService {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
+    ensureBoardNotArchived(board)
 
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
@@ -1680,6 +1688,14 @@ export class IdeaService {
     }
   }
 
+  /** `ensureBoardNotArchived` for an idea already loaded, whose board context is not. */
+  private async ensureIdeaBoardNotArchived(idea: Idea): Promise<void> {
+    const board = await this.boards.getBoardContext(idea.boardId)
+    if (board) {
+      ensureBoardNotArchived(board)
+    }
+  }
+
   /** User-role status moves are allowed only when the board opts in (rule #34); Site Admin and
    * in-scope Org Admin may always move; Read Only never. */
   private ensureCanMoveIdea(board: BoardContext): void {
@@ -1844,6 +1860,17 @@ export class IdeaService {
 }
 
 // Module-level helpers ---------------------------------------------------------------------------
+
+/**
+ * An archived board is read-only (SPEC/20-feature-boards-and-statuses.md rule 13): no new ideas,
+ * and no moving, editing or deleting the ones on it - `409`, unarchive it first. Comments and
+ * upvotes are separate features and stay open.
+ */
+function ensureBoardNotArchived(board: BoardContext): void {
+  if (board.isArchived) {
+    throw new ConflictError('This board is archived. Unarchive it before changing its ideas.')
+  }
+}
 
 /** One user as the idea payloads carry a person - assignees and the detail's author alike. */
 function toPersonDto(user: UserSummary): IdeaAssigneeDto {

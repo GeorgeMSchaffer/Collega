@@ -217,6 +217,8 @@ export type BoardContext = {
   readonly organizationId: string
   readonly name: string
   readonly allowUserStatusUpdate: boolean
+  /** An archived board takes no new ideas, moves or edits (boards rule 13); reads stay open. */
+  readonly isArchived: boolean
   readonly swimlanes: readonly SwimlaneInfo[]
 }
 
