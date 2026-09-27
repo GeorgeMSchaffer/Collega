@@ -9,7 +9,9 @@ import {
 } from '@collega/design-system'
 import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
+import { getBoardOverviews } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
+import { ListKitDemo } from './list-kit-demo'
 
 /**
  * Wave E0's verification surface: it renders the theme and every primitive the design system
@@ -25,6 +27,8 @@ const SWATCHES = [
   ['muted', 'Muted'],
   ['accent', 'Accent'],
   ['destructive', 'Destructive'],
+  ['suggest', 'Suggested'],
+  ['suggest-tint', 'Suggested tint'],
   ['border', 'Border'],
 ] as const
 
@@ -43,6 +47,9 @@ export default async function Page() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
+  // Real boards rather than invented rows: the kit is shown on the data slice 101 will give it.
+  const boards = await getBoardOverviews()
+
   return (
     <>
       <Topbar title={<b>Design system</b>} actions={<Badge variant="warning">Wave E0</Badge>} />
@@ -56,8 +63,8 @@ export default async function Page() {
           <CardHeader>
             <CardTitle>Palette</CardTitle>
             <CardDescription>
-              Semantic tokens from <code className="font-mono text-xs">globals.css</code>, carried
-              over from <code className="font-mono text-xs">SPEC/mockups/_build/q.css</code>.
+              Semantic tokens from the active theme&rsquo;s block in{' '}
+              <code className="font-mono text-xs">globals.css</code>; the values are comp R&rsquo;s.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
@@ -139,6 +146,8 @@ export default async function Page() {
             </select>
           </CardContent>
         </Card>
+
+        <ListKitDemo boards={boards} />
       </main>
     </>
   )
