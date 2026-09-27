@@ -48,7 +48,7 @@ export default async function ProfilePage() {
           </span>
         }
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-6 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
         <div>
           <h1>My Profile</h1>
           <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">

@@ -61,7 +61,7 @@ export default async function IdeasPage({
           </>
         }
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <div>
           <h1>Ideas</h1>
           {totalCount > 0 ? (

@@ -22,7 +22,7 @@ export default function DeskError({
       {/* The topbar is rendered by each page, not the layout, so a boundary that replaces the page
           loses it. Restating it keeps the chrome whole rather than leaving a headless panel. */}
       <Topbar title="Collega" />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <RouteError what="this page" error={error} reset={reset} />
       </main>
     </>

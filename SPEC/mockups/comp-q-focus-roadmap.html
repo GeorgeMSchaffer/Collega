@@ -367,9 +367,6 @@
   .max-w-\[78\%\] {
     max-width: 78%;
   }
-  .max-w-\[1320px\] {
-    max-width: 1320px;
-  }
   .min-w-0 {
     min-width: calc(var(--spacing) * 0);
   }
@@ -2725,7 +2722,7 @@
       <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-hn-sa">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-hn-sa">Act as a member of an organization to add ideas</span></span>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="ReadOnly"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-hn-ro">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-hn-ro">Read-only accounts can&rsquo;t create ideas</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4" data-roles="OrgAdmin"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Olivia</h1>
         <div class="sub">Here&rsquo;s what needs you today. Acme Robotics has 22 ideas across 2 boards and 16 delivery issues in flight &mdash; press <span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">Ctrl K</span> to jump straight to any of them.</div></div></div>
       <div class="pgh mb-6 flex flex-wrap items-end gap-4" data-roles="User"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Umar</h1>
@@ -2869,7 +2866,7 @@
   <div class="main">
     <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-home">Home</a> / <b>Boards</b></span><span class="spacer flex-1"></span>
       <a class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Manage boards</a></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Boards</h1>
         <div class="sub" data-roles="OrgAdmin User ReadOnly">Boards you can access. Selecting a board opens its swim lanes.</div>
         <div class="sub" data-roles="SiteAdmin">Every board in every organization. Selecting a board opens its swim lanes, read-only.</div></div></div>
@@ -2930,7 +2927,7 @@
       <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-in-sa">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-in-sa">Act as a member of an organization to add ideas</span></span>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="ReadOnly"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-in-ro">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-in-ro">Read-only accounts can&rsquo;t create ideas</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Ideas</h1>
         <div class="sub" data-roles="OrgAdmin User ReadOnly">Every idea in Acme Robotics, across all boards.</div>
         <div class="sub" data-roles="SiteAdmin">Every idea in every organization, read-only from here. Act as a member to change one.</div></div></div>
@@ -3083,7 +3080,7 @@
       <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-bn-sa">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-bn-sa">Act as a member</span></span>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="ReadOnly"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-bn-ro">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-bn-ro">Read-only account</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Ideas</h1>
         <div class="sub" data-roles="OrgAdmin User">Move a card with drag, or focus it and press <span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">&larr;</span> <span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">&rarr;</span>. Both paths do the same thing. Members may move cards on this board; an administrator can turn that off per board.</div>
         <div class="sub" data-roles="SiteAdmin ReadOnly">Cards open read-only for your role, and nothing here can be moved. Export is still yours &mdash; the CSV is a read.</div></div></div>
@@ -3203,7 +3200,7 @@
   <div class="main">
     <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-home">Home</a> / <b>Ideas</b></span><span class="spacer flex-1"></span>
       <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Ideas</h1>
         <div class="sub">The list stays live and scrollable while the inspector is open.</div></div></div>
       <div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
@@ -3327,7 +3324,7 @@
   <div class="main">
     <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span><span class="spacer flex-1"></span>
       <div class="seg inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground" role="group" aria-label="View"><button aria-pressed="false" data-go="s-ideas">List</button><button aria-pressed="true">Lanes</button></div></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Ideas</h1>
         <div class="sub">The board stays where it is while the idea is written on the right. When it is saved, the card appears in New / Pending and the column closes.</div></div></div>
       <div class="lanes flex items-start gap-3 overflow-x-auto pb-3" aria-hidden="true">
@@ -3449,7 +3446,7 @@
     </aside>
     <div class="main">
       <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+      <div class="work min-w-0 flex-1 p-6">
         <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Not available</h1><div class="sub">Creating an idea is a member&rsquo;s action.</div></div></div>
         <div class="empty rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center">
           <h3 data-roles="SiteAdmin">A Site Admin does not raise ideas directly</h3>
@@ -3490,7 +3487,7 @@
       <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
     </aside>
     <div class="main"><div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground">Boards / <b>Ideas</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Ideas</h1></div><div class="lanes flex items-start gap-3 overflow-x-auto pb-3"><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div></div></div></div>
+      <div class="work min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Ideas</h1></div><div class="lanes flex items-start gap-3 overflow-x-auto pb-3"><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div></div></div></div>
   </div>
   <div class="cp-back fixed inset-0 z-50 grid items-start justify-center bg-black/60 pt-[12vh]">
     <div class="chatm flex max-h-[86vh] w-[min(720px,92vw)] flex-col overflow-hidden rounded-lg border bg-background shadow-lg" role="dialog" aria-modal="true" aria-labelledby="p-bs-title">
@@ -3558,7 +3555,7 @@
     </aside>
     <div class="main">
       <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+      <div class="work min-w-0 flex-1 p-6">
         <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Not available</h1><div class="sub">The idea assistant opens from New idea, which is a member&rsquo;s action.</div></div></div>
         <div class="empty rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center">
           <h3>Nothing to brainstorm for this role</h3>
@@ -3597,7 +3594,7 @@
       <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
     </aside>
     <div class="main"><div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground">Home / <b>Roadmap</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Roadmap</h1></div><div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm" style="height:300px"></div></div></div>
+      <div class="work min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Roadmap</h1></div><div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm" style="height:300px"></div></div></div>
   </div>
   <div class="cp-back fixed inset-0 z-50 grid items-start justify-center bg-black/60 pt-[12vh]">
     <div class="cp h-fit w-[min(620px,92vw)] overflow-hidden rounded-lg border bg-popover text-popover-foreground shadow-lg" role="dialog" aria-modal="true" aria-label="Command palette">

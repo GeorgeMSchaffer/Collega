@@ -47,7 +47,7 @@ export default async function RoadmapPage() {
         }
         actions={<AdminAction id="why-outcome" label="Add outcome" />}
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <div>
           <h1>Roadmap</h1>
           <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">

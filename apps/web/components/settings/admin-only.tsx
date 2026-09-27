@@ -86,7 +86,7 @@ export function BoardRefusal({ title, reading }: { title: string; reading: strin
           </span>
         }
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <RefusalPanel heading="A Site Admin cannot create or change a board">
           Boards are organization-owned content, and a Site Admin is refused every mutation of it.
           Reading {reading} is fine; saving is not, so the form is absent rather than present and

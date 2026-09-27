@@ -56,7 +56,7 @@ REG = {
     "crumb":   ("Breadcrumb", "text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"),
     "spacer":  ("—", "flex-1"),
     "grow":    ("—", "min-w-0 flex-1"),
-    "work":    ("SidebarInset main", "max-w-[1320px] min-w-0 flex-1 p-6"),
+    "work":    ("SidebarInset main", "min-w-0 flex-1 p-6"),
     "pgh":     ("page header", "mb-6 flex flex-wrap items-end gap-4"),
     "filters": ("toolbar", "mb-4 flex flex-wrap items-end gap-3"),
     "fw":      ("—", "min-w-40"),

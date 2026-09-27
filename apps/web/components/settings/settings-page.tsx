@@ -45,7 +45,7 @@ export function SettingsPage({
         }
         actions={canAct ? actions : undefined}
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <Gate siteAdminOnly={siteAdminOnly} what={gate}>
           <div>
             <h1>{title}</h1>

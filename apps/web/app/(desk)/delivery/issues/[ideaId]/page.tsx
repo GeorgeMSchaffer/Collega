@@ -71,7 +71,7 @@ export default async function IssuePage({ params }: { params: Promise<{ ideaId: 
           </span>
         }
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <Marker>
