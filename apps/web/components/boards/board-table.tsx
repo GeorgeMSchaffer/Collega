@@ -42,6 +42,7 @@ export function BoardTable({
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">
       <table className="w-full min-w-[860px] border-collapse text-sm">
+        <caption className="sr-only">Boards</caption>
         <thead>
           <tr className="border-b bg-muted/40 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase">
             <th className="px-4 py-2 font-medium">Board</th>

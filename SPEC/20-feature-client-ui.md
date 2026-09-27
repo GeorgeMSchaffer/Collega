@@ -87,8 +87,7 @@ the board itself shows. Two views of the same facts, switched by a **Cards / Lis
 **Cards** (default) is a responsive grid; **List** (`/boards?view=list`) is one table row per board
 with fixed columns — board and one-line description, lane mix with first-lane / in-between /
 last-lane figures, two tags then *+N*, created — for comparing many boards. The view is a URL, not
-stored state, so a link opens the view it names. Decided 2026-09-27. Decided
-2026-09-27.
+stored state, so a link opens the view it names. Decided 2026-09-27.
 
 ## `/board/{boardId}` — Kanban Board
 

@@ -888,6 +888,9 @@ input[type=file]{font-family:inherit;font-size:14px}
 .wrap1 .bd{height:auto;flex-wrap:wrap;margin-top:4px;line-height:1.43}
 .wrap1 .bd .tag{white-space:nowrap}
 
+.seg a{border-radius:6px;padding:var(--s-xxs) var(--s-sm);color:var(--ink-muted);text-decoration:none}
+.seg a[aria-current="page"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--e1)}
+
 </style>
 </head>
 <body data-role="OrgAdmin">
@@ -1123,7 +1126,7 @@ input[type=file]{font-family:inherit;font-size:14px}
       </div>
 
       <div data-when="normal" style="display:flex;justify-content:flex-end;margin-bottom:var(--s-md)">
-        <div class="seg" role="group" aria-label="Boards view"><button aria-pressed="true">Cards</button><button aria-pressed="false">List</button></div>
+        <nav class="seg" aria-label="Boards view"><a href="#" aria-current="page">Cards</a><a href="#">List</a></nav>
       </div>
 
       <div data-when="normal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:var(--s-md)">

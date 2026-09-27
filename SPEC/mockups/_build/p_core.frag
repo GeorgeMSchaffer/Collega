@@ -152,7 +152,7 @@
       </div>
 
       <div data-when="normal" style="display:flex;justify-content:flex-end;margin-bottom:var(--s-md)">
-        <div class="seg" role="group" aria-label="Boards view"><button aria-pressed="true">Cards</button><button aria-pressed="false">List</button></div>
+        <nav class="seg" aria-label="Boards view"><a href="#" aria-current="page">Cards</a><a href="#">List</a></nav>
       </div>
 
       <div data-when="normal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:var(--s-md)">

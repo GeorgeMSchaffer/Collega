@@ -1627,6 +1627,34 @@
     border: 0;
     background: transparent;
   }
+  .seg a {
+    display: inline-flex;
+    height: calc(var(--spacing) * 7);
+    align-items: center;
+    justify-content: center;
+    border-radius: calc(var(--radius) - 2px);
+    padding-inline: calc(var(--spacing) * 3);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    color: var(--muted-foreground);
+    text-decoration-line: none;
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+    &[aria-current="page"] {
+      background-color: var(--background);
+    }
+    &[aria-current="page"] {
+      color: var(--foreground);
+    }
+    &[aria-current="page"] {
+      --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
   .feed li {
     display: flex;
     align-items: center;
@@ -2886,7 +2914,7 @@
       </div>
 
       <div data-when="normal" style="display:flex;justify-content:flex-end;margin-bottom:var(--s-md)">
-        <div class="seg inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground" role="group" aria-label="Boards view"><button aria-pressed="true">Cards</button><button aria-pressed="false">List</button></div>
+        <nav class="seg inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground" aria-label="Boards view"><a href="#" aria-current="page">Cards</a><a href="#">List</a></nav>
       </div>
 
       <div data-when="normal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:var(--s-md)">
