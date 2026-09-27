@@ -42,7 +42,8 @@ pnpm start
 ```
 
 That is the whole thing: Next on http://localhost:3000, Nest on http://localhost:3001/api/v1, and a
-migrated and seeded PostgreSQL behind them. Ctrl+C stops both.
+migrated and seeded PostgreSQL behind them. Ctrl+C stops both. If either port is taken, that server
+moves up to the next free one and the launcher prints where it went.
 
 [`tools/local/start.ts`](tools/local/start.ts) is what it runs, and it is idempotent — copy `.env`
 from the example if it is missing, start the `postgres` compose service **only** if nothing is
@@ -116,7 +117,7 @@ Two consequences worth expecting:
   everybody pointed at that database sees the same organizations, ideas and comments — including
   each other's edits. That is the point of sharing one, and it is not a local sandbox.
 - **The passwords are published.** Every seeded account uses `DEMO_PASSWORD` from
-  [`scenario.ts`](packages/infrastructure/prisma/seed/modules/scenario.ts), which is in this
+  [`scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts), which is in this
   repository. A database holding that data must never be one that matters.
 
 ### What is real, and what is still a fixture
@@ -380,7 +381,7 @@ writing production React against an undecided design.
 
 `pnpm start` seeds two organizations with one account per role each, all sharing the same
 development-only password — `DEMO_PASSWORD` in
-[`packages/infrastructure/prisma/seed/modules/scenario.ts`](packages/infrastructure/prisma/seed/modules/scenario.ts).
+[`packages/infrastructure/src/demo-seed/modules/scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts).
 The three worth signing in as:
 
 | | |
@@ -417,8 +418,8 @@ server left running rewrites it under you. `git checkout -- apps/web/next-env.d.
 A running app holds `packages/infrastructure/dist/generated/prisma` open. Stop `pnpm start` before
 running the gate, and do not run two `pnpm` commands against this workspace at once.
 
-**`pnpm start` says something is already on 3000 or 3001**
-A previous run was killed hard enough that its servers outlived it. `pnpm start` puts each server in
+**`pnpm start` moved to other ports than 3000 and 3001**
+Something else holds them — often a previous run killed hard enough that its servers outlived it. `pnpm start` puts each server in
 its own process group and signals the group, so Ctrl+C leaves nothing behind; `kill -9` on the
 launcher does not.
 

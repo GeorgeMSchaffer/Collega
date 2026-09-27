@@ -18,14 +18,15 @@
 
 import { spawn, spawnSync } from 'node:child_process'
 import { appendFileSync, copyFileSync, existsSync, readFileSync } from 'node:fs'
-import { createConnection } from 'node:net'
+import { createConnection, createServer } from 'node:net'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const ENV_FILE = join(ROOT, '.env')
-const API_PORT = '3001'
-const WEB_PORT = '3000'
+// Preferred, not fixed: a busy port moves the server up to the next free one (section 5).
+const PREFERRED_API_PORT = 3001
+const PREFERRED_WEB_PORT = 3000
 
 function say(message: string): void {
   console.log(`\n\x1b[36m▸ ${message}\x1b[0m`)
@@ -80,6 +81,32 @@ function listening(port: number, host = '127.0.0.1'): Promise<boolean> {
     socket.once('timeout', () => settle(false))
     socket.once('error', () => settle(false))
   })
+}
+
+/** Whether a server could bind there now. */
+function canBind(port: number): Promise<boolean> {
+  return new Promise((done) => {
+    const probe = createServer()
+    probe.once('error', () => done(false))
+    probe.listen(port, () => probe.close(() => done(true)))
+  })
+}
+
+/**
+ * The first free port from `preferred` upward, skipping `taken`.
+ *
+ * All three checks, because none is enough alone: on Windows a dual-stack bind succeeds beside a
+ * server that holds only `127.0.0.1` or only `::1` (what `localhost` resolves to first there), and
+ * a bound-but-not-yet-listening port refuses a connection.
+ */
+async function freePort(preferred: number, taken: number[] = []): Promise<number> {
+  for (let port = preferred; port < preferred + 100; port++) {
+    if (taken.includes(port)) continue
+    if ((await canBind(port)) && !(await listening(port)) && !(await listening(port, '::1'))) {
+      return port
+    }
+  }
+  return fail(`No free port between ${preferred} and ${preferred + 99}.`)
 }
 
 async function waitForPort(port: number, seconds: number, host = '127.0.0.1'): Promise<boolean> {
@@ -225,6 +252,18 @@ run('pnpm', ['--filter', '@collega/infrastructure', 'db:seed'], {
 // --- 5. Both halves, until Ctrl+C -----------------------------------------------------------------
 // The API is the built output rather than a watcher: it is the half nobody editing a screen touches,
 // and `next dev` is the half that has to reload. Re-run this script after changing the API.
+//
+// Ports are chosen here, once, rather than left to each server: `next dev` would find its own free
+// port, but the API would not, and the web server has to be told where the API ended up.
+const API_PORT = String(await freePort(PREFERRED_API_PORT))
+const WEB_PORT = String(await freePort(PREFERRED_WEB_PORT, [Number(API_PORT)]))
+for (const [name, port, preferred] of [
+  ['API', API_PORT, PREFERRED_API_PORT],
+  ['Web', WEB_PORT, PREFERRED_WEB_PORT],
+] as const) {
+  if (Number(port) !== preferred) say(`${name} — ${preferred} is in use, using ${port}`)
+}
+
 const serverEnv: NodeJS.ProcessEnv = {
   ...process.env,
   ...Object.fromEntries(env),
@@ -235,9 +274,9 @@ const serverEnv: NodeJS.ProcessEnv = {
 /**
  * Each server in its own process group, so stopping it stops what it started.
  *
- * `pnpm --filter @collega/web dev` is a wrapper around a wrapper: killing the pnpm process leaves
- * `next dev` holding port 3000, and the next run of this script fails on a port that nothing
- * visible owns. Signalling the whole group (`-pid`) is what actually ends it. Windows has no
+ * `pnpm --filter @collega/web exec next dev` is a wrapper around a wrapper: killing the pnpm
+ * process leaves `next dev` holding its port, and the next run of this script moves off a port
+ * that nothing visible owns. Signalling the whole group (`-pid`) is what actually ends it. Windows has no
  * process groups, so there the pid is signalled directly and pnpm passes it down itself.
  */
 const GROUPED = process.platform !== 'win32'
@@ -263,9 +302,20 @@ if (!(await waitForPort(Number(API_PORT), 30))) {
   fail('The API did not start. Its output is above.')
 }
 
-// No COLLEGA_API_URL: `apps/web/lib/api/config.ts` defaults to this exact address, and setting it
-// here would hide the day that default stops being right.
-const web = server('pnpm', ['--filter', '@collega/web', 'dev'], { ...serverEnv, PORT: WEB_PORT })
+// COLLEGA_API_URL only when the API moved: `apps/web/lib/api/config.ts` defaults to the preferred
+// address, and always setting it here would hide the day that default stops being right.
+// `exec next dev` rather than the package's `dev` script, which pins `--port 3000`.
+const web = server(
+  'pnpm',
+  ['--filter', '@collega/web', 'exec', 'next', 'dev', '--port', WEB_PORT],
+  {
+    ...serverEnv,
+    PORT: WEB_PORT,
+    ...(Number(API_PORT) === PREFERRED_API_PORT
+      ? {}
+      : { COLLEGA_API_URL: `http://127.0.0.1:${API_PORT}/api/v1` }),
+  },
+)
 
 console.log(`
 \x1b[32m▸ Collega is running.\x1b[0m
@@ -275,7 +325,7 @@ console.log(`
 
   Sign in with any demo account — the seed gives all of them the same
   development-only password, which is DEMO_PASSWORD in
-  packages/infrastructure/prisma/seed/modules/scenario.ts:
+  packages/infrastructure/src/demo-seed/modules/scenario.ts:
 
     orgadmin@acme-robotics.demo.collega.test    creates, moves and administers
     user@acme-robotics.demo.collega.test        creates and moves

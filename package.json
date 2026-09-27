@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Collega monorepo. Mid-conversion (Sprint 9): apps/* and packages/* are the TypeScript stack being built, src/Collega.* is the .NET application it replaces - see SPEC/50-typescript-migration.md.",
+  "description": "Collega monorepo: apps/* (Next.js web, Nest.js API) over packages/* (domain, application, infrastructure, design-system). See AGENTS.md.",
   "packageManager": "pnpm@12.3.4",
   "engines": {
     "node": ">=24.20.0",
