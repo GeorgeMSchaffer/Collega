@@ -120,6 +120,14 @@ function ideaBodyRules(body: CreateIdeaBody): Record<string, FieldRules> {
     // domain's (a field-keyed 400 all the same).
     description: { value: body.description, maxLength: DESCRIPTION_MAX_LENGTH },
     problem: { value: body.problem, required: true, maxLength: PROBLEM_MAX_LENGTH },
+    // Present here only so a missing list is a 400 before authorization: without it, a non-author's
+    // `[]` reads as a change to structured content and answers 403 instead.
+    proposedSolutions: {
+      value: Array.isArray(body.proposedSolutions)
+        ? body.proposedSolutions.filter((entry) => typeof entry === 'string').join('')
+        : '',
+      required: true,
+    },
     impactRationale: {
       value: body.impactRationale,
       required: true,

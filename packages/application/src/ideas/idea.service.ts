@@ -31,6 +31,7 @@ import {
   softDeleteIdea,
   updateIdeaContent,
 } from '@collega/domain/ideas'
+import { normalizeTagName } from '@collega/domain/tags'
 import type { AuditEventWriter, Clock, CurrentUserContext, UnitOfWork } from '../common/index.js'
 import {
   attributeAudit,
@@ -1996,7 +1997,7 @@ function parsePriorityFilters(values: readonly string[]): Priority[] {
 
 /** A repeatable `tag` filter, matched against the tag's normalized (trimmed, lowercased) name. */
 function normalizeTagFilters(values: readonly string[]): string[] {
-  return [...new Set(values.flatMap((value) => trimOrNull(value)?.toLowerCase() ?? []))]
+  return [...new Set(values.map(normalizeTagName).filter((name) => name !== ''))]
 }
 
 function parseOptionalPriority(value: string | null | undefined): Priority | null {

@@ -179,6 +179,11 @@ function normalizeProposedSolutions(solutions: readonly string[]): string[] {
       `An idea can have at most ${MAX_PROPOSED_SOLUTIONS} proposed solutions.`,
     )
   }
+  // CSV export writes one solution per line of a cell, so a line break inside one would not survive
+  // the round trip.
+  if (kept.some((solution) => /[\r\n]/.test(solution))) {
+    throw new IdeaDomainError('proposedSolutions', 'A proposed solution must fit on one line.')
+  }
   if (kept.some((solution) => solution.length > PROPOSED_SOLUTION_MAX_LENGTH)) {
     throw new IdeaDomainError(
       'proposedSolutions',
