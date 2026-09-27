@@ -322,7 +322,7 @@ console.log(`
 
   Sign in with any demo account — the seed gives all of them the same
   development-only password, which is DEMO_PASSWORD in
-  packages/infrastructure/prisma/seed/modules/scenario.ts:
+  packages/infrastructure/src/demo-seed/modules/scenario.ts:
 
     orgadmin@acme-robotics.demo.collega.test    creates, moves and administers
     user@acme-robotics.demo.collega.test        creates and moves
