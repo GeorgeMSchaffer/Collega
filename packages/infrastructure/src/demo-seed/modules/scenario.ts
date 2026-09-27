@@ -51,6 +51,7 @@ export function seedId(...parts: readonly string[]): string {
 
 export type DemoBoardScenario = {
   readonly name: string
+  readonly description: string
   readonly focus: string
   readonly tagNames: readonly string[]
 }
@@ -73,11 +74,15 @@ export const DEMO_ORGANIZATIONS: readonly DemoOrganizationScenario[] = [
     boards: [
       {
         name: 'Ideas',
+        description:
+          'Assembly cell reliability: fewer stoppages, safer cells, shorter cycle times.',
         focus: 'Assembly cell reliability',
         tagNames: ['automation', 'safety', 'quality', 'cycle-time'],
       },
       {
         name: SECOND_BOARD_NAME,
+        description:
+          'Field service: faster diagnosis, the right parts on the van, less customer downtime.',
         focus: 'Field service enablement',
         tagNames: ['service', 'diagnostics', 'customer-impact', 'parts'],
       },
@@ -90,11 +95,14 @@ export const DEMO_ORGANIZATIONS: readonly DemoOrganizationScenario[] = [
     boards: [
       {
         name: 'Ideas',
+        description: 'Warehouse throughput: quicker picking, accurate inventory, safer docks.',
         focus: 'Warehouse throughput',
         tagNames: ['warehouse', 'safety', 'inventory', 'cycle-time'],
       },
       {
         name: SECOND_BOARD_NAME,
+        description:
+          'Route and delivery performance: better schedules, fuller trucks, on-time drops.',
         focus: 'Route and delivery performance',
         tagNames: ['routing', 'fleet', 'customer-impact', 'scheduling'],
       },

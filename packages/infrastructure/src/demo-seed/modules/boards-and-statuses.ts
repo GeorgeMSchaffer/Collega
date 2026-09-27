@@ -39,18 +39,29 @@ export const boardsAndStatusesSeed: SeedModule = {
         })
       }
 
+      // The board list names who created each board; the organization's admin is who would have.
+      // No foreign key backs `created_by_user_id`, so the users module need not run first.
+      const creatorId = seedId('user', scenario.slug, 'orgadmin')
+
       for (const board of scenario.boards) {
         const boardId = seedId('board', scenario.slug, board.name)
         await prisma.boards.upsert({
           where: { id: boardId },
-          update: { name: board.name },
+          update: {
+            name: board.name,
+            description: board.description,
+            created_by_user_id: creatorId,
+          },
           create: {
             id: boardId,
             organization_id: organizationId,
             name: board.name,
+            description: board.description,
             allow_user_status_update: true,
             created_at_utc: now,
             updated_at_utc: now,
+            created_by_user_id: creatorId,
+            updated_by_user_id: creatorId,
           },
         })
 
