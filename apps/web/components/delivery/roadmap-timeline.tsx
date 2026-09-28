@@ -110,10 +110,19 @@ function SprintRow({ sprint, range }: { sprint: Sprint; range: RoadmapWindow }) 
   const dates = `${sprint.startsOn} – ${sprint.endsOn}`
   // Inside the bar when it fits; beside it when the bar is too short for its words (a two-week
   // sprint in Quarters), so the bar keeps its true length rather than stretching to fit the text.
+  // Beside means before the bar when it ends near the right edge, where after would overflow.
+  const besideBefore = span.left + span.width > 85
   const text = (
     <>
       <span className="hidden px-2 @min-[6.5rem]:inline">{label}</span>
-      <span className="absolute left-full ml-1.5 @min-[6.5rem]:hidden">{label}</span>
+      <span
+        className={cn(
+          'absolute @min-[6.5rem]:hidden',
+          besideBefore ? 'right-full mr-1.5' : 'left-full ml-1.5',
+        )}
+      >
+        {label}
+      </span>
     </>
   )
 
