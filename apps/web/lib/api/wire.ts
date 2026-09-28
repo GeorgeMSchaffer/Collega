@@ -168,7 +168,7 @@ export type WireBoardListItem = {
   /** One per swimlane, in swimlane order, zero-count lanes included. */
   laneCounts: readonly WireBoardLaneCount[]
   /** At most three, most-used first. */
-  topTags: readonly { name: string; ideaCount: number }[]
+  topTags: readonly { name: string; ideaCount: number; color: string }[]
   tagCount: number
   isArchived: boolean
   archivedAtUtc: string | null
@@ -328,6 +328,8 @@ export type WireIdeaDetail = {
   dueDate: string | null
   assignees: readonly WireIdeaAssignee[]
   tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order, with their colours. */
+  tags: readonly WireIdeaTag[]
   statusId: string
   statusName: string
   /** Sent back on every save: `PUT` replaces the mentions, so leaving them out clears them. */
@@ -352,6 +354,25 @@ export type WireIdeaFieldValue = {
   value: string
 }
 
+/** A tag as an idea carries it. */
+export type WireIdeaTag = { tagId: string; name: string; color: string }
+
+/**
+ * `GET /organizations/{id}/tags/catalog` items, and what `POST …/tags` and `PUT /tags/{id}` answer.
+ * `color` is upper-case `#RRGGBB`.
+ */
+export type WireTagItem = {
+  tagId: string
+  name: string
+  color: string
+  /** Live ideas carrying it, both phases. */
+  ideaCount: number
+  /** The boards those ideas are on, by name; archived ones included. */
+  boards: readonly { boardId: string; name: string }[]
+  createdAtUtc: string
+  createdBy: { userId: string; displayName: string } | null
+}
+
 /** `POST /boards/{id}/ideas` answers more than this; the id is all the drawer needs. */
 export type WireCreatedIdea = { ideaId: string }
 
@@ -365,6 +386,10 @@ export type WireIdeaListItem = {
   businessImpactName: string
   assignees: readonly WireIdeaAssignee[]
   tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order, with their colours. */
+  tags: readonly WireIdeaTag[]
+  /** `Low`, `Medium` or `High`; optional in Discovery, so often null. */
+  effort: string | null
   statusId: string
   statusName: string
   upvoteCount: number

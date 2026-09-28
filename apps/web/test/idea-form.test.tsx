@@ -48,6 +48,7 @@ function idea(overrides: Partial<IdeaDetail> = {}): IdeaDetail {
     assignees: [],
     upvotes: 0,
     hasUpvoted: false,
+    effort: null,
     problem: 'Changeovers take two hours.',
     proposedSolutions: ['Pre-stage tooling'],
     impactRationale: 'Six hours a week of idle line.',

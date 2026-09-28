@@ -1,4 +1,4 @@
-import { Badge, Dot, Tag } from '@collega/design-system'
+import { Badge, Dot, Tag, TagChip } from '@collega/design-system'
 import type { BoardOverview } from '@/lib/types'
 
 /**
@@ -50,7 +50,7 @@ export function TopTags({ board, limit }: { board: BoardOverview; limit: number 
     <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0" aria-label="Most-used tags">
       {shown.map((tag) => (
         <li key={tag.name}>
-          <Tag>{tag.name}</Tag>
+          <TagChip color={tag.color}>{tag.name}</TagChip>
         </li>
       ))}
       {more > 0 ? (

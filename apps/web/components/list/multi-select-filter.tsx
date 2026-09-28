@@ -1,13 +1,16 @@
 'use client'
 
 import { cn } from '@collega/design-system'
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react'
+import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { Icon } from './icons'
 
-export type FilterOption = string | { value: string; label: string }
+/** `display` renders the option in the list (a tag's chip); `label` is still what finds it. */
+export type FilterOption = string | { value: string; label: string; display?: ReactNode }
 
 const optionValue = (option: FilterOption) => (typeof option === 'string' ? option : option.value)
 const optionLabel = (option: FilterOption) => (typeof option === 'string' ? option : option.label)
+const optionDisplay = (option: FilterOption) =>
+  typeof option === 'string' ? option : (option.display ?? option.label)
 
 /**
  * Comp R's `.ms`: a pill button naming the filter and what it holds ("Status: Complete",
@@ -18,7 +21,7 @@ const optionLabel = (option: FilterOption) => (typeof option === 'string' ? opti
  * the popover stays open.
  *
  * `onFindChange` hears the type-to-find text, for a filter whose values are too many to hand over
- * up front (Tags): the screen looks matches up and passes them back in as `options`.
+ * up front: the screen looks matches up and passes them back in as `options`.
  */
 export function MultiSelectFilter({
   label,
@@ -146,7 +149,7 @@ export function MultiSelectFilter({
                       checked={selected.includes(value)}
                       onChange={(event) => toggle(value, event.target.checked)}
                     />
-                    {optionLabel(option)}
+                    {optionDisplay(option)}
                   </label>
                 )
               })

@@ -1,7 +1,7 @@
 'use client'
 
-import { Alert } from '@collega/design-system'
-import { useMemo, useRef, useState, useTransition } from 'react'
+import { Alert, EffortBar, TagChip } from '@collega/design-system'
+import { useMemo, useState, useTransition } from 'react'
 import {
   type Column,
   ConfirmDialog,
@@ -14,9 +14,9 @@ import {
   ViewSwitch,
 } from '@/components/list'
 import { engagementDenial, mayDeleteIdeas, mayEditIdeaContent, writeDenial } from '@/lib/roles'
-import { deleteIdea, findTags } from '@/lib/server/idea-actions'
+import { deleteIdea } from '@/lib/server/idea-actions'
 import { useCurrentUser } from '@/lib/session-client'
-import type { BoardRef, Idea, IdeaDetail, IdeaFormOptions, Status } from '@/lib/types'
+import type { BoardRef, Idea, IdeaDetail, IdeaFormOptions, Status, TagRef } from '@/lib/types'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 import { type DrawerMode, IdeaDrawer } from './idea-drawer'
 import { BOARD_LIST, IDEAS_LIST, PRIORITIES } from './idea-list-config'
@@ -49,7 +49,7 @@ export function IdeaWorkspace({
   total,
   boards,
   statuses,
-  organizationId,
+  tags,
   board,
   drawer,
 }: {
@@ -59,8 +59,8 @@ export function IdeaWorkspace({
   boards: BoardRef[]
   /** The Status filter's options and colours: the organization's, or the board's own lanes. */
   statuses: Status[]
-  /** For the Tags typeahead; null for a Site Admin, who has no organization. */
-  organizationId: string | null
+  /** The Tags filter's options: the organization's whole catalog. */
+  tags: TagRef[]
   board: BoardContext | null
   drawer: { mode: DrawerMode | null; idea: IdeaDetail | null; formOptions: IdeaFormOptions | null }
 }) {
@@ -73,8 +73,6 @@ export function IdeaWorkspace({
   const [removing, setRemoving] = useState<Removing | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
   const [deleting, startDelete] = useTransition()
-  const [tagMatches, setTagMatches] = useState<string[]>([])
-  const findTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const boardsById = useMemo(() => new Map(boards.map((b) => [b.id, b])), [boards])
   const statusById = useMemo(() => new Map(statuses.map((s) => [s.id, s])), [statuses])
@@ -106,25 +104,19 @@ export function IdeaWorkspace({
     })
   }
 
-  const findTag = (text: string) => {
-    clearTimeout(findTimer.current)
-    if (organizationId === null || text.trim().length < 2) return
-    findTimer.current = setTimeout(() => {
-      findTags(organizationId, text)
-        .then(setTagMatches)
-        .catch(() => setTagMatches([]))
-    }, 200)
-  }
-
   const selectedTags = state.filters.tag ?? []
+  // The filter is by name. A selected name the catalog no longer has (a link to a deleted tag) stays
+  // an option, so it can be cleared.
   const tagOptions = [
-    ...new Set([
-      ...boards.flatMap((b) => b.topTags),
-      ...rows.flatMap((r) => r.tags),
-      ...selectedTags,
-      ...tagMatches,
-    ]),
-  ].sort((a, b) => a.localeCompare(b))
+    ...tags.map((tag) => ({
+      value: tag.name,
+      label: tag.name,
+      display: <TagChip color={tag.color}>{tag.name}</TagChip>,
+    })),
+    ...selectedTags
+      .filter((name) => !tags.some((tag) => tag.name === name))
+      .map((name) => ({ value: name, label: name })),
+  ]
 
   const filtering = state.q !== '' || Object.values(state.filters).some((v) => v.length > 0)
   const empty = filtering ? 'Nothing matches these filters.' : 'No ideas yet.'
@@ -149,13 +141,16 @@ export function IdeaWorkspace({
       key: 'title',
       header: 'Title',
       cell: (idea) => (
-        <button
-          type="button"
-          onClick={(event) => view(idea.id, event.currentTarget)}
-          className="text-left font-semibold hover:text-accent-foreground hover:underline"
-        >
-          {idea.title}
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={(event) => view(idea.id, event.currentTarget)}
+            className="text-left font-semibold hover:text-accent-foreground hover:underline"
+          >
+            {idea.title}
+          </button>
+          {idea.effort ? <EffortBar effort={idea.effort} className="mt-1 flex w-fit" /> : null}
+        </>
       ),
     },
     ...(board
@@ -239,7 +234,6 @@ export function IdeaWorkspace({
           options={tagOptions}
           selected={selectedTags}
           onChange={(next) => update({ filters: { ...state.filters, tag: next } })}
-          onFindChange={findTag}
         />
       </ListToolbar>
 
@@ -309,6 +303,7 @@ export function IdeaWorkspace({
                         color={statusById.get(idea.statusId)?.color}
                       />
                       <PriorityMarker priority={idea.priority} />
+                      {idea.effort ? <EffortBar effort={idea.effort} /> : null}
                     </div>
                     <TagList tags={idea.tags} />
                     <div className="mt-auto flex items-center justify-between gap-2 border-t pt-2 text-xs text-muted-foreground">

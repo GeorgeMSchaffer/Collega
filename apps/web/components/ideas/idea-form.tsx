@@ -46,7 +46,7 @@ function initialDraft(idea: IdeaDetail | null, boardId: string | null): Draft {
     ideaTypeId: idea?.ideaTypeId ?? '',
     businessImpactId: idea?.businessImpactId ?? '',
     dueDate: idea?.dueDate ?? '',
-    tags: idea?.tags.join(', ') ?? '',
+    tags: idea?.tags.map((tag) => tag.name).join(', ') ?? '',
     fields: Object.fromEntries(idea?.formFields.map((field) => [field.id, field.value]) ?? []),
   }
 }
