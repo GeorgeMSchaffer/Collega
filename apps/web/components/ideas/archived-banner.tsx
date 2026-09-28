@@ -3,7 +3,7 @@
 import { Alert, Button } from '@collega/design-system'
 import { useState, useTransition } from 'react'
 import { Icon } from '@/components/list/icons'
-import { unarchiveBoard } from '@/lib/server/board-actions'
+import { setBoardArchived } from '@/lib/server/board-actions'
 
 /**
  * The Archived banner on an archived board's own page (`20-feature-boards-and-statuses.md` rule 13):
@@ -31,7 +31,7 @@ export function ArchivedBanner({
           disabled={pending}
           onClick={() =>
             startTransition(async () => {
-              setError((await unarchiveBoard(boardId)).error)
+              setError((await setBoardArchived(boardId, false)).error)
             })
           }
         >
