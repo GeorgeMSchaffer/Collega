@@ -30,20 +30,26 @@ export function ColorPicker({
   legend?: string | undefined
   className?: string | undefined
 }) {
-  const inPalette = TAG_PALETTE.some((c) => c === value.toUpperCase())
-  const [custom, setCustom] = useState(!inPalette)
+  const inPalette = (color: string) => TAG_PALETTE.some((c) => c === color.toUpperCase())
+  const [custom, setCustom] = useState(!inPalette(value))
   const [draft, setDraft] = useState(value.toUpperCase())
+  // The last colour this picker sent, so its own echo is told apart from the caller changing it.
+  const [sent, setSent] = useState<string | null>(null)
 
-  // A new value from outside (a swatch here, or the caller resetting the form) replaces the draft.
+  // A new value replaces the draft. One the caller set (a reset, a different tag) also decides
+  // whether a swatch shows as chosen; one this picker sent keeps the mode the person chose.
   const [seen, setSeen] = useState(value)
   if (seen !== value) {
     setSeen(value)
     setDraft(value.toUpperCase())
+    if (value.toUpperCase() !== sent) setCustom(!inPalette(value))
   }
 
   const choose = (color: string, fromCustom: boolean) => {
+    const next = color.toUpperCase()
     setCustom(fromCustom)
-    onChange(color.toUpperCase())
+    setSent(next)
+    onChange(next)
   }
 
   return (
@@ -82,6 +88,7 @@ export function ColorPicker({
           pattern="#[0-9A-Fa-f]{6}"
           spellCheck={false}
           aria-describedby={`${id}-custom-hint`}
+          aria-invalid={!isHexColor(draft) || undefined}
           onChange={(event) => {
             setDraft(event.target.value)
             if (isHexColor(event.target.value)) choose(event.target.value, true)
