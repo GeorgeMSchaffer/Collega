@@ -42,6 +42,7 @@ run as "nothing is grossly broken", never as "this edit is safe."
 | `acme` | The demo catalog, no scope statement — matches the seeded state |
 | `acme-scoped` | Same, with a scope statement set. Rules 7–9 are unmeasurable without it |
 | `hostile-catalog` | Every value is an injection attempt. Deliberately adversarial: option names written to look like closing tags, which is what keeps the fencing around `<organization_data>` honest |
+| `acme-v2` | The acme catalog plus typed custom fields (number, dropdown, text) for the v2 cases. Kept apart from `acme` so the v1 fixtures' hashes do not move |
 
 Option ids are derived from names, so they are stable across runs and machines and nobody
 hand-writes a GUID. Cases therefore name options in prose
@@ -59,6 +60,12 @@ nothing else.
 
 `happy-*` are the normal paths, `scope-*` the in-scope / out-of-scope boundary, `refuse-*`
 the prompt-injection and off-topic refusals.
+
+`v2-*` are cases for idea assistant v2 (structured fields, the interview order, brainstorm offers,
+locked fields, custom fields). A case's `assistant` key says which turn it measures: `v1` (the
+default), `v2`, or `both` for the `refuse-*` and `scope-*` cases that must hold under either. The
+v2 format is provisional until the v2 turn is built, and v2 cases are validated but not run until
+then (`SPEC/20-feature-prompt-eval-runner.md` rules 3-5).
 
 **The deliberate pair.** `scope-coffee-narrowed` expects **false** and
 `scope-coffee-unnarrowed` expects **true** for the *same sentence*. That pair is the only
