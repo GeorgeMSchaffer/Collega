@@ -452,7 +452,11 @@ export function toSprint(wire: WireSprint): Sprint {
     goal: wire.goal,
     startsOn: SPRINT_DAY.format(new Date(`${wire.startDate}T00:00:00Z`)),
     endsOn: SPRINT_DAY_YEAR.format(new Date(`${wire.endDate}T00:00:00Z`)),
+    startDate: wire.startDate,
+    endDate: wire.endDate,
     state: toSprintState(wire.state),
+    issueCount: wire.issueCount,
+    doneCount: wire.doneCount,
   }
 }
 

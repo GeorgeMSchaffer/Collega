@@ -507,6 +507,9 @@ export type SprintState = 'Planned' | 'Active' | 'Completed'
  * off-by-one-day that follows in any timezone west of Greenwich.
  *
  * `goal` is nullable — a sprint may be planned before anybody has written down what it is for.
+ *
+ * `startDate`/`endDate` keep the wire's `YYYY-MM-DD` days for the Roadmap, which places them on a
+ * calendar rather than printing them. `issueCount`/`doneCount` are the API's, derived per read.
  */
 export type Sprint = {
   id: string
@@ -514,7 +517,11 @@ export type Sprint = {
   goal: string | null
   startsOn: string
   endsOn: string
+  startDate: string
+  endDate: string
   state: SprintState
+  issueCount: number
+  doneCount: number
 }
 
 /**
