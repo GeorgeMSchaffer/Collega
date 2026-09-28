@@ -83,6 +83,12 @@ function parseTagBody(body: TagBody | undefined): { name: string; color: string 
   const color = body?.color
   return {
     name: typeof name === 'string' ? name : '',
-    color: color === undefined || color === null ? null : String(color),
+    // Serialized rather than `String()`: `String(['#112233'])` is a valid colour, JSON is not.
+    color:
+      color === undefined || color === null
+        ? null
+        : typeof color === 'string'
+          ? color
+          : JSON.stringify(color),
   }
 }

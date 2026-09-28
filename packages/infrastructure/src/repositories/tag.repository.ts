@@ -30,7 +30,7 @@
 
 import { randomUUID } from 'node:crypto'
 import type { AiTagsPort } from '@collega/application/ai'
-import { ValidationError } from '@collega/application/common'
+import { NotFoundError, ValidationError } from '@collega/application/common'
 import type { TagsPort as IdeasTagsPort } from '@collega/application/ideas'
 import {
   DUPLICATE_TAG_NAME_MESSAGE,
@@ -75,6 +75,16 @@ function translateNameConflict(error: unknown): unknown {
   })
   validationError.cause = error
   return validationError
+}
+
+/** A tag deleted between the service's read and this write is the contract's 404, not a 500. */
+function translateMissingTag(error: unknown): unknown {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+    const notFound = new NotFoundError('Tag not found.')
+    notFound.cause = error
+    return notFound
+  }
+  return error
 }
 
 function toRow(tag: Tag): TagRow {
@@ -294,14 +304,18 @@ export class PrismaTagRepository implements TagRepository, IdeasTagsPort, AiTags
     try {
       await this.prisma.tags.update({ where: { id }, data: changes })
     } catch (error) {
-      throw translateNameConflict(error)
+      throw translateMissingTag(translateNameConflict(error))
     }
   }
 
   async delete(tagId: string): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.idea_tags.deleteMany({ where: { tag_id: tagId } }),
-      this.prisma.tags.delete({ where: { id: tagId } }),
-    ])
+    try {
+      await this.prisma.$transaction([
+        this.prisma.idea_tags.deleteMany({ where: { tag_id: tagId } }),
+        this.prisma.tags.delete({ where: { id: tagId } }),
+      ])
+    } catch (error) {
+      throw translateMissingTag(error)
+    }
   }
 }
