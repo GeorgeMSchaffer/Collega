@@ -75,7 +75,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-06 | `.env` is the single home for configuration; a typed config module reads it | active | [2026-09-04 to 2026-09-10](decisions/archive-2026-09-04-to-2026-09-10.md) |
 | 2026-09-06 | Layer boundaries are enforced by Biome, not eslint-plugin-boundaries | active | [2026-09-04 to 2026-09-10](decisions/archive-2026-09-04-to-2026-09-10.md) |
 | 2026-09-04 | .NET development stops; the conversion starts now | active | [2026-09-04 to 2026-09-10](decisions/archive-2026-09-04-to-2026-09-10.md) |
-| 2026-09-04 | Sprint 8 is cancelled: the .NET stack is never deployed | active | [2026-09-04 to 2026-09-10](decisions/archive-2026-09-04-to-2026-09-10.md) |
+| 2026-09-04 | Sprint 8 is cancelled: the .NET stack is never deployed | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-04 | The idea-type badge moves to the tag row on swimlane cards | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-04 | The session lives in a cookie Nest issues; the reshape takes only what introspection forces | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-03 | The conversion's remaining gates: net-new scope, the test suite, and where it deploys | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
@@ -428,6 +428,8 @@ its own entry here — this is that entry. It is not a general licence either.
 **Golden corpus.** This changes the idea detail and list response shapes and makes `description`
 nullable, so the replay will differ there. Those differences are accepted, and slice 099 records
 them in `tools/golden/src/accepted.ts`.
+
+---
 
 ## Earlier decisions
 
