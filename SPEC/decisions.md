@@ -9,25 +9,63 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — The comp R iteration's open questions are answered
+
+**Decided by the user**, answering the ten questions left open by the adoption entry below, plus the
+order of work. Each answer is written into the spec where it applies, and the *(pending answer)*
+markers are gone.
+
+1. **Outcomes: the screen now, the backend later.** Sprint 11 restructures the Roadmap against the
+   data that exists — the Weeks / Months / Quarters axis, the TODAY rule, the organization's sprints
+   as rows, and an empty state where outcomes will go, with *Add New Outcome* disabled and its
+   reason given. Slice 2's backend (the `outcomes` table with its colour, `ideas.outcome_id`, the
+   routes and the roadmap read) is a gap for a later sprint, with its own schema amendment; the
+   fourth amendment covers `tags.color` only. Chosen over building Slice 2 now and over deferring
+   the whole Roadmap.
+2. **Bug Triage exception granted for Sprint 11, on one condition:** slice 106 also fixes the
+   `db:seed` `P2002` on `board_swimlanes` item, since it changes the seed anyway. The other four
+   `TODO` items stay queued.
+3. **Issue keys are left out of every screen for now**, and decided separately.
+4. **Colours are the palette plus a custom colour.** The picker offers ten swatches and a Custom
+   input; the API accepts any `#RRGGBB`. Because a custom colour can be anything, a chip's text
+   colour is computed per theme to clear 4.5:1 rather than fixed (`20-feature-client-ui.md` "Tag
+   colours and the effort bar"), and a test proves it over the palette and the extreme colours.
+   Outcome colours follow when Outcomes are built, with their bar label's contrast computed too.
+5. **Settings → Tags is Org Admins' only**, read-only for a Site Admin; members do not see it. The
+   tag catalog read stays open to members, because the Ideas Tags filter every role uses needs the
+   full set (`30-Contracts.md` says why).
+6. **The effort bar is on idea cards and rows too**, whenever an effort is set; idea list items carry
+   `effort`.
+7. **An Issue opens in the drawer** from the Sprint board, the Backlog and the Roadmap, with its
+   delivery facts — status selector, effort, sprint, outcome, provenance and tasks.
+8. **Plan next sprint opens an Add New Sprint form in the drawer** (name, goal, dates, owner) on the
+   existing `POST /organizations/{orgId}/sprints`.
+9. **The Roadmap's window is fixed and anchored on today:** Weeks shows 16 weeks from two weeks back,
+   Months 7 months from this month, Quarters 4 quarters from this quarter; no panning.
+10. **No keyboard shortcuts anywhere:** no *Ctrl ↵* save, no zoom keys, no key-hint chips. Escape
+    still closes the drawer and the dialogs.
+11. **Order of work:** Sprint 11 first, then the prompt-eval runner, then idea assistant v2.
+
+---
+
 ## 2026-09-28 — The S0.2 schema freeze is amended a fourth time, for tag colours
 
 **Decided by the user** with the adoption below ("Tags get a colour picker; by default a tag gets a
 random colour"). Under the 2026-09-11 rule — the freeze stands, and each change to `schema.prisma`
 needs its own entry here — this is that entry, and it is not a general licence.
 
-- **`tags`** gains `color VARCHAR(7) NOT NULL` — `#RRGGBB`, upper case, one of the ten palette
-  colours (`20-feature-ideas-and-engagement.md` Tags rule 9). No other column: `tags` already has
+- **`tags`** gains `color VARCHAR(7) NOT NULL` — any `#RRGGBB`, stored upper case
+  (`20-feature-ideas-and-engagement.md` Tags rule 9). No other column: `tags` already has
   `created_at_utc` and `created_by_user_id`, which Settings → Tags shows.
 - **The migration backfills every existing tag** from a hash of its `normalized_name` into the
   palette (for example the first byte of `md5(normalized_name)` modulo ten), so the result is
   repeatable across databases and replays; then sets `NOT NULL`. The demo seed uses the same
   mapping. Tags created afterwards take a random palette colour chosen by the application, from an
   injected random source.
-- **Part B, pending an answer — Outcomes.** If Sprint 11 builds Issues-and-Delivery Slice 2, the
-  same amendment also covers what that spec's "Migration Strategy" lists for it: the new `outcomes`
-  table (with `color VARCHAR(7) NOT NULL`, added 2026-09-28) and `ideas.outcome_id` (nullable,
-  `ON DELETE SET NULL`). Until the user answers, Part B is **not** approved and nothing may be written
-  for it.
+- **Not covered: Outcomes.** Sprint 11 builds the Roadmap screen, not its backend (the answers
+  entry above), so the `outcomes` table — with its `color VARCHAR(7) NOT NULL`, added to the spec
+  2026-09-28 — and `ideas.outcome_id` wait for the later sprint that builds Slice 2, under an
+  amendment of their own.
 - **Not covered:** an issue key or idea reference (comp R's `IDE-01`). That needs its own decision
   and its own amendment.
 
@@ -80,15 +118,12 @@ edit (name and colour), delete, and add in advance of use.
   rule. Inline creation while tagging an idea is unchanged.
 - **Two things comp R draws have no backend, and this adoption does not invent one.** Issue keys
   (`IDE-01`) are left out of every screen until they are decided separately; Outcomes (Slice 2)
-  stay specified and unbuilt until the user says whether Sprint 11 builds them. Both are recorded
-  as gaps in `30-Contracts.md`.
+  stay specified and unbuilt — Sprint 11 builds the Roadmap screen without them (answered the same
+  day). Both are recorded as gaps in `30-Contracts.md`.
 - **Where comp R and the spec disagree, the spec wins** and the difference is written down: the
   outcome drawer's Delete confirms (comp R deletes at once), and comp R's *Ctrl ↵* save is not built.
-- **Open at adoption** (the tracker's slice 105 row carries them): whether Sprint 11 builds Outcomes;
-  issue keys; palette-only or custom colours; who may open Settings → Tags; the effort bar on idea
-  cards; where an Issue opens from the Sprint board and Roadmap; what *Plan next sprint* does; the
-  Roadmap's visible window; and whether "no keyboard shortcuts" reaches beyond the Roadmap. The spec
-  text marks each assumption *(pending answer)*.
+- **Open at adoption, answered the same day** — see "The comp R iteration's open questions are
+  answered" above.
 
 ---
 
