@@ -41,7 +41,7 @@ Routes (unchanged):
 - `/settings` — Settings hub with My Profile and role-scoped admin links
   - `/settings/profile` — edit first and last name and change the password; email and role read-only
   - `/settings/organizations`, `/settings/organizations/{orgId}/users`, `…/statuses`, `…/idea-types`, `…/fields`, `…/boards` — organization administration (the full 23-route set is rendered in `comp-p-admin.html`)
-  - `/settings/tags` — **Settings → Tags** (added 2026-09-28): the organization's tags on the list and detail pattern, with each tag's colour (`20-feature-ideas-and-engagement.md` "Tags", rules 9–15). An Org Admin's link card on the Settings hub. Who else sees it is *(pending answer)* — drafted as Org Admin only, with a Site Admin's read-only roll-up like the other admin entities. Comp R also shows a *Tags* item in the sidebar under Configure; that is read as a prototype convenience (its Settings item is disabled), not a navigation change *(pending answer)*.
+  - `/settings/tags` — **Settings → Tags** (added 2026-09-28): the organization's tags on the list and detail pattern, with each tag's colour (`20-feature-ideas-and-engagement.md` "Tags", rules 9–15). An Org Admin's link card on the Settings hub, and **Org Admins only** (answered 2026-09-28): a Site Admin gets the read-only roll-up the other admin entities have, and members and Read Only accounts neither see the card nor may open the route (the refusal panel, per the Denied rule). Comp R's *Tags* item in the sidebar under Configure is a prototype convenience (its Settings item is disabled), not a navigation change.
 
 Site Admin is a global account and never requires an organization membership or
 `organizationId` claim to browse platform data. Home, Boards, Ideas, Users, Statuses and
@@ -321,21 +321,35 @@ Icons" below and the control heights slice 100 shipped (`--control-h` 36px). Val
   (`--font-code`) at 10.5–11px with 0.04–0.06em tracking. The idea assistant's *✦ Suggested* marker
   and the required-fields counter in a form's footer use it too; in a three-to-a-row group the
   marker shortens to *✦*.
-- **No new keyboard shortcuts** (the user, 2026-09-28: "no keyboard shortcuts for now"). Comp R's
-  *Ctrl ↵* save and its `esc` / `Ctrl ↵` key chips are not built. Escape still closes the drawer, as
-  the pattern above already says. *(pending answer: whether "for now" covers only the Roadmap.)*
+- **No keyboard shortcuts, anywhere** (answered 2026-09-28: "no keyboard shortcuts for now" covers
+  every screen, not only the Roadmap). Comp R's *Ctrl ↵* save, any zoom keys and its `esc` /
+  `Ctrl ↵` key-hint chips are not built. Escape still closes the drawer and the dialogs, and Enter
+  still submits a form through its native submit control — those are the platform's behaviour and
+  rules already in this spec, not shortcuts.
 
 ### Tag colours and the effort bar (comp R — 2026-09-28)
 
-- **Every tag has a colour** (`20-feature-ideas-and-engagement.md` "Tags"). A tag chip mixes that
-  colour with the theme — a soft tint of it for the ground, a shade of it toward the ink for the
-  text, a hairline of it for the border — so one stored colour reads in every theme. **The text must
-  clear 4.5:1 against the chip's own ground in every theme.** Comp R's mix (62% tag colour into the
-  ink) does not: measured 2026-09-28 it gives 3.4–4.4:1 for six of the ten palette colours in each
-  light theme, and passes only in Graphite. At 40% tag colour into the ink every palette colour
-  clears 5.2:1 in all five themes. The implementation sets the mix per theme, and a test asserts the
-  ratio for every palette colour in every theme. Colour never carries meaning alone — the tag's name
-  is always the chip's text.
+- **Every tag has a colour** (`20-feature-ideas-and-engagement.md` "Tags") — a palette colour or,
+  since an administrator may pick a custom one (answered 2026-09-28), **any** `#RRGGBB`. A tag chip
+  mixes that colour with the theme so one stored colour reads in every theme, and **its text must
+  clear 4.5:1 against the chip's own ground in every theme, for every colour**. Comp R's fixed mix
+  (62% tag colour into the ink) does not: measured 2026-09-28 it gives 3.4–4.4:1 for six of the ten
+  palette colours in each light theme. So the text colour is **computed**, not fixed:
+  - **ground** — the tag colour mixed 16% into the theme's card colour; **border** — the tag colour
+    at 30% over transparent (decorative, no ratio required);
+  - **text** — the tag colour mixed into the theme's ink at the theme's starting share (40% in the
+    light themes, 62% in Graphite), and while the text is under 4.5:1 against the ground (WCAG
+    relative luminance), the share steps down by 5 points; at 0% the text is the theme's ink.
+  - Measured 2026-09-28 over a 16-step grid of every RGB channel (4,096 colours) in all five themes:
+    the rule always stops at or above 4.5:1, within at most four steps, and plain ink is never
+    below it. It runs in `packages/design-system` as a pure function (CSS `color-mix` cannot
+    branch on contrast), so the server-rendered chip already has its final colours.
+  - **The test** asserts, for every theme, the ratio of the computed text against the computed
+    ground is ≥ 4.5 for the ten palette colours, for the eight RGB corners (`#000000`, `#FFFFFF`,
+    `#FF0000`, `#00FF00`, `#0000FF`, `#FFFF00`, `#00FFFF`, `#FF00FF`) and for mid-greys (`#808080`,
+    `#777777`), and that a palette colour in a light theme keeps its 40% share (so the chip still
+    reads as its colour where it can).
+  - Colour never carries meaning alone — the tag's name is always the chip's text.
 - **The effort bar** shows an `effort` (Low, Medium, High) as three short segments (10 × 4px, 2px
   apart): one filled for Low, two for Medium, three for High, in the theme's **metric** colour
   (`--metric`: the primary in the light themes, cyan in Graphite), the unfilled ones in the strong

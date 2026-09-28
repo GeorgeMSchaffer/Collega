@@ -128,12 +128,11 @@ Users can create, discuss, organize, and support ideas within their organization
 
 **Colour and administration (added 2026-09-28, comp R; `decisions.md` 2026-09-28).**
 
-9. **Every tag has a colour**, stored on the tag as `#RRGGBB`. It is chosen from a fixed palette of
-   ten: `#E5484D`, `#F5A524`, `#3FB86B`, `#2F9E8F`, `#5CC8E0`, `#6B9BF2`, `#B08CF5`, `#E879A6`,
-   `#A87B2F`, `#94A3B8`. Whether an administrator may also pick a colour outside the palette (comp
-   R offers a *Custom* colour input) is *(pending answer)*; drafted as palette only. How a chip
-   renders the colour, and the 4.5:1 rule it must meet, is `20-feature-client-ui.md` "Tag colours
-   and the effort bar".
+9. **Every tag has a colour**, stored on the tag as `#RRGGBB`. The picker offers a palette of ten —
+   `#E5484D`, `#F5A524`, `#3FB86B`, `#2F9E8F`, `#5CC8E0`, `#6B9BF2`, `#B08CF5`, `#E879A6`,
+   `#A87B2F`, `#94A3B8` — **and a Custom input for any `#RRGGBB`** (answered 2026-09-28). Any valid
+   six-digit colour is accepted, because the chip computes its text colour per theme to clear 4.5:1
+   whatever the colour is (`20-feature-client-ui.md` "Tag colours and the effort bar").
 10. **A new tag gets a random palette colour**, whether it was created inline while tagging an idea
     (rule 5) or in Settings → Tags without choosing one. The random source is injected, so tests fix
     it. Tags that existed before 2026-09-28 are given a colour by the migration from a hash of their
@@ -151,8 +150,10 @@ Users can create, discuss, organize, and support ideas within their organization
     board), or *Not used yet. It will be offered when anyone tags an idea.* Footer: Edit, Delete.
     *Create and edit*: **Tag** (required, up to 100 characters, hint *Up to 100 characters. Tags are
     matched without regard to case.*), **Colour** (the palette as a radio group of swatches, each
-    named by its hex for assistive technology; on create one is preselected at random, rule 10) and
-    a live **Preview** chip. Footer: Cancel and *Create tag* / *Save changes*.
+    named by its hex for assistive technology; on create one is preselected at random, rule 10),
+    then a labelled **Custom** colour input — choosing it clears the swatch selection, choosing a
+    swatch sets it — and a live **Preview** chip in the current theme. Footer: Cancel and *Create
+    tag* / *Save changes*.
 13. **Adding a tag in advance** creates it unused; it is offered by autocomplete like any other
     (rule 4). Its name follows rules 3 and 6; a name that matches an existing tag
     case-insensitively is refused on the field — *A tag with this name already exists.*
@@ -172,9 +173,10 @@ Adding Settings → Tags follows the other organization configuration screens (s
 custom fields): **an in-scope Org Admin** adds in advance, edits and deletes; a **Site Admin** does
 so only through View As (tags are organization content, `20-feature-view-as.md` rules 25–25b; the
 contract's Site Admin guard already lists tags) and otherwise reads. Creating a tag inline while
-tagging an idea (rule 2) is unchanged and open to every role that may edit the idea. Whether Users
-and Read Only accounts may **open** Settings → Tags to read it is *(pending answer)*; drafted as
-not — the Settings hub shows a member only Profile.
+tagging an idea (rule 2) is unchanged and open to every role that may edit the idea. **Settings →
+Tags is Org Admins' only** (answered 2026-09-28): a Site Admin sees it read-only, and Users and Read
+Only accounts do not see it — the Settings hub shows a member only Profile. Members still read every
+tag's name and colour where tags appear (chips, the Ideas Tags filter).
 
 ## Mentions
 1. Users can mention other users in their organization using the `@` trigger and an email-based lookup.
