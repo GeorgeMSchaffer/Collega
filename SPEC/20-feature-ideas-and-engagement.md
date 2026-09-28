@@ -135,8 +135,10 @@ Users can create, discuss, organize, and support ideas within their organization
    whatever the colour is (`20-feature-client-ui.md` "Tag colours and the effort bar").
 10. **A new tag gets a random palette colour**, whether it was created inline while tagging an idea
     (rule 5) or in Settings → Tags without choosing one. The random source is injected, so tests fix
-    it. Tags that existed before 2026-09-28 are given a colour by the migration from a hash of their
-    normalized name, so the backfill is repeatable, and the demo seed does the same.
+    it. Tags that existed before 2026-09-28 are given a colour by the migration: the palette colour
+    at index `get_byte(decode(md5(normalized_name), 'hex'), 0) % 10`, counting rule 9's palette in
+    its listed order from 0. The backfill is therefore repeatable, and the demo seed computes the
+    same index in `node:crypto` (first byte of the MD5 digest of the normalized name, modulo 10).
 11. **Settings → Tags** (`/settings/tags`) manages the organization's tags on the list and detail
     pattern (`20-feature-client-ui.md`): a List view only, with columns **Tag** (the coloured chip,
     which opens the drawer), **Ideas** (how many live ideas carry it, both phases), **Boards** (the
@@ -164,8 +166,11 @@ Users can create, discuss, organize, and support ideas within their organization
 15. **Deleting** a tag asks for confirmation — *Delete this tag? "{name}" is removed from N ideas.
     Anyone who types it again creates a new tag.* — then removes it from every idea that carries
     it, in either phase and on archived boards too, and deletes the tag. It cannot be undone.
-    Neither editing nor deleting a tag writes an audit event or a notification, the same as the
-    other organization configuration collections (statuses, idea types).
+    **A rename and a delete each write one audit event** (decided by the user, 2026-09-28):
+    `TagRenamed` and `TagDeleted`, recording the tag's id, its old and new name (a delete records
+    the name it had) and how many ideas it was on. The ideas themselves are not touched — no
+    per-idea event, and no idea's `updatedAtUtc` changes. A colour-only edit and adding a tag in
+    advance write no event. No tag change sends a notification.
 
 **Who administers tags (added 2026-09-28).** The rules above never named an administrator: rule 2
 lets anyone who can edit ideas *create* tags, and nothing let anyone rename, recolour or delete one.

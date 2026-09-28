@@ -9,9 +9,9 @@ stay, and the older one is marked.
 
 ---
 
-## 2026-09-28 — Starting a sprint, a single-Issue read, and the Roadmap's sprint rows
+## 2026-09-28 — Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events
 
-**Decided by the user**, answering the three points the answers entry below left open.
+**Decided by the user**, answering the three points the answers entry below left open, and on review of this slice, the audit of tag changes.
 
 - **Start sprint on the Sprint board.** When no sprint is `Active`, the board shows the next
   `Planned` sprint (earliest start) with **Start sprint** behind a confirmation, on the existing
@@ -25,6 +25,10 @@ stay, and the older one is marked.
   is still no `/issues` root.
 - **The Roadmap's sprint rows stay** as drafted; whether they stay once Outcomes exist is decided in
   the Outcomes sprint.
+- **A tag rename and a tag delete each write one audit event** — `TagRenamed` and `TagDeleted`,
+  with the tag's id, its old and new name and the number of ideas affected. The ideas are not
+  touched: no per-idea events, and their `updatedAtUtc` stays. This replaces the adoption draft's
+  "no audit event" for tags (`20-feature-ideas-and-engagement.md` rule 15, `30-Contracts.md`).
 
 ---
 
@@ -76,10 +80,11 @@ needs its own entry here — this is that entry, and it is not a general licence
 - **`tags`** gains `color VARCHAR(7) NOT NULL` — any `#RRGGBB`, stored upper case
   (`20-feature-ideas-and-engagement.md` Tags rule 9). No other column: `tags` already has
   `created_at_utc` and `created_by_user_id`, which Settings → Tags shows.
-- **The migration backfills every existing tag** from a hash of its `normalized_name` into the
-  palette (for example the first byte of `md5(normalized_name)` modulo ten), so the result is
-  repeatable across databases and replays; then sets `NOT NULL`. The demo seed uses the same
-  mapping. Tags created afterwards take a random palette colour chosen by the application, from an
+- **The migration backfills every existing tag** with the palette colour at index
+  `get_byte(decode(md5(normalized_name), 'hex'), 0) % 10`, indexing Tags rule 9's palette in its
+  listed order (`#E5484D` is 0, `#94A3B8` is 9), so the result is repeatable across databases and
+  replays; then sets `NOT NULL`. The demo seed computes the same index in `node:crypto` (the first
+  byte of the MD5 digest of the normalized name, modulo 10). Tags created afterwards take a random palette colour chosen by the application, from an
   injected random source.
 - **Not covered: Outcomes.** Sprint 11 builds the Roadmap screen, not its backend (the answers
   entry above), so the `outcomes` table — with its `color VARCHAR(7) NOT NULL`, added to the spec
@@ -88,8 +93,9 @@ needs its own entry here — this is that entry, and it is not a general licence
 - **Not covered:** an issue key or idea reference (comp R's `IDE-01`). That needs its own decision
   and its own amendment.
 
-**Golden corpus.** Board list items gain `topTags[].color`, and idea list, detail and delivery items
-gain `tags`, so the replay will differ there. Those differences are accepted, and the backend slice
+**Golden corpus.** Board list items gain `topTags[].color`; idea list, detail and delivery items
+gain `tags`; and idea list items (the board list and the organization list) gain `effort` — so the
+replay will differ there. Those differences are accepted, and the backend slice
 records them in `tools/golden/src/accepted.ts`.
 
 ## 2026-09-28 — Graphite replaces Notte as the dark theme
@@ -123,12 +129,12 @@ edit (name and colour), delete, and add in advance of use.
   "Tags" rules 9–15. Sprint board, Roadmap and the effort bar's placement:
   `20-feature-issues-and-delivery.md` "Comp R iteration". Contracts: `30-Contracts.md`, each
   addition dated 2026-09-28. The work is planned as Sprint 11
-  (`SPEC/sprints/sprint-11-comp-r-phase-2.md`).
+  (`SPEC/sprints/sprint-11-comp-r-iteration.md`).
 - **The denser layout applies in every theme**, not only Graphite: 32px buttons, 34px fields,
   12px labels, short fields three or two to a row. It supersedes the control heights slice 100
   shipped.
 - **Tag chip text is required to clear 4.5:1 in every theme.** Comp R's colour mix fails it in the
-  light themes for six of the ten palette colours; the spec keeps the rule and fixes the mix rather
+  light themes for seven of the ten palette colours; the spec keeps the rule and fixes the mix rather
   than accepting the comp.
 - **Tags are administered by the Org Admin** (a Site Admin through View As), like the other
   organization configuration collections. The tag rules had never named an administrator — anyone
@@ -254,6 +260,11 @@ candidates (Sprout, Blueprint, the bright Piazza, Mercato) were reviewed and dro
 - **Order of work:** phase 1 is themes, this pattern on Boards, a board and Ideas, the structured
   idea fields with their backfill, board archive and the heading fix; phase 2 the prompt-eval
   runner; phase 3 idea assistant v2. Settings and Delivery lists move to the pattern afterwards.
+  > **Superseded in part 2026-09-28** ("The comp R iteration's open questions are answered", item
+  > 11): Sprint 11, the comp R iteration, goes first after phase 1; the prompt-eval runner and idea
+  > assistant v2 keep their order after it. Settings → Tags and the Delivery screens (Sprint board,
+  > Backlog's Issue drawer, Roadmap) move to the pattern in Sprint 11; the other Settings entities
+  > still move afterwards.
 
 ---
 

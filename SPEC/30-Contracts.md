@@ -1480,8 +1480,8 @@ the same code, so the card cannot differ between the list and this read.
 
 Error responses:
 - `401` caller is not authenticated
-- `404` no such idea; the idea is soft-deleted; it is in `Discovery` (not an Issue); or it belongs to
-  another organization — never `403`, as throughout this section. A malformed id is `404` too.
+- `404` no such idea; the idea is soft-deleted; it is in `Discovery` (not an Issue); or it is outside
+  caller scope — never `403`, as throughout this section. A malformed id is `404` too.
 
 ## Sprint Contracts
 
@@ -1906,20 +1906,21 @@ Authorization: in-scope Org Admin.
 
 Request body:
 - `name` required string — trimmed; 1–100 characters
-- `color` optional — see *Colour*; absent means a random palette colour
+- `color` optional — see *Colour*; absent **or `null`** means a random palette colour
 
 Success response `201`: the tag item shape (`ideaCount` `0`, `boards` empty).
 
 Error responses:
-- `400` `name` missing, blank or over 100 characters (keyed `name`); `name` matches an existing tag's
-  normalized name — keyed `name`, `"A tag with this name already exists."`; `color` invalid (keyed
-  `color`)
+- `400` keyed `name`: missing or blank — `"Tag name is required."`; over 100 characters — `"Tag must
+  be 100 characters or fewer."`; matches an existing tag's normalized name — `"A tag with this name
+  already exists."`. Keyed `color`: invalid — `"Color must be a valid #RRGGBB color."`
 - `401` caller is not authenticated
 - `403` caller is not an in-scope Org Admin, or is a Site Admin acting directly
 - `404` the organization does not exist or is outside caller scope
 
 A concurrent create of the same normalized name answers the same field-keyed `400` to the loser
-(the unique index `ux_tags_organization_id_normalized_name` decides), not a `500`. This differs from
+(the unique index `ux_tags_organization_id_normalized_name` decides), not a `500`; so does a
+concurrent `PUT` rename onto a name another request has just taken. This differs from
 inline creation while tagging an idea, which merges (ideas rule 7), because here the caller asked
 for a new tag by name and should learn it exists.
 
@@ -1930,19 +1931,23 @@ Authorization: in-scope Org Admin.
 
 Request body:
 - `name` required string — trimmed; 1–100 characters
-- `color` optional — absent leaves the stored colour alone (the `description` rule on
-  `PUT /api/v1/boards/{boardId}`)
+- `color` optional — absent **or `null`** leaves the stored colour alone (like the `description`
+  rule on `PUT /api/v1/boards/{boardId}`, except that `null` does not clear: a tag always has a
+  colour)
 
 Behavior:
 - a rename takes effect on every idea carrying the tag, since ideas reference the tag's id
 - renaming onto **another** tag's normalized name is refused — there is no merge; a case-only rename
   of the same tag is allowed (its normalized name does not change)
-- no audit event and no notification (ideas rule 15)
+- when the name changes, writes one `TagRenamed` audit event (`entityType` `Tag`, `entityId` the tag
+  id; metadata `tagId`, `oldName`, `newName`, `ideaCount` — the ideas carrying it). A colour-only
+  change writes none. No per-idea event, no idea's `updatedAtUtc` changes, no notification
+  (ideas rule 15; decided by the user 2026-09-28)
 
 Success response `200`: the tag item shape.
 
 Error responses:
-- `400` as for create, keyed `name` or `color`
+- `400` as for create, keyed `name` or `color`, including the concurrent-duplicate case above
 - `401` caller is not authenticated
 - `403` caller is not an in-scope Org Admin, or is a Site Admin acting directly
 - `404` the tag does not exist or belongs to another organization
@@ -1953,10 +1958,13 @@ Purpose: Delete a tag and remove it from every idea.
 Authorization: in-scope Org Admin.
 
 Behavior:
-- removes the tag from every idea that carries it — both phases, archived boards included — and
-  deletes the tag, in one transaction. A hard delete: there is no soft-delete or restore. An idea's
-  `updatedAtUtc` is **not** touched; its content did not change, its labels did.
-- no audit event and no notification (ideas rule 15)
+- removes **every** `idea_tags` row for the tag — both phases, archived boards and soft-deleted
+  ideas included, since `FK_idea_tags_tags_tag_id` has no cascade and the delete would otherwise
+  fail — and deletes the tag, in one transaction. A hard delete: there is no soft-delete or
+  restore. An idea's `updatedAtUtc` is **not** touched; its content did not change, its labels did.
+- writes one `TagDeleted` audit event (`entityType` `Tag`, `entityId` the tag id; metadata `tagId`,
+  `name`, `ideaCount` — the live ideas it was removed from). No per-idea event, no notification
+  (ideas rule 15; decided by the user 2026-09-28)
 
 Success response `204 No Content`.
 
