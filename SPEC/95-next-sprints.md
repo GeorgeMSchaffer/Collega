@@ -48,6 +48,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 9 | TypeScript conversion — **the active sprint** | `SPEC/sprints/sprint-09-typescript-conversion.md` | **In Progress (2026-09-04)** — Wave A complete; Wave 0 is the frontier | Large |
 | 10 | Comp R, phase 1 — themes, the list and detail pattern on Boards, a board and Ideas, structured idea fields, board archive | `SPEC/sprints/sprint-10-comp-r-phase-1.md` | Not started (planned 2026-09-27) | Large |
 | 11 | Comp R iteration — Graphite and the denser controls, tag colours and Settings → Tags, the effort bar, the Sprint board and the Roadmap | `SPEC/sprints/sprint-11-comp-r-iteration.md` | Not started (planned 2026-09-28; questions answered the same day) | Large |
+| 12 | Prompt-eval runner — the TypeScript replacement for the runner F6 deleted; measures v1, commits a baseline, and gates idea assistant v2 | `SPEC/sprints/sprint-12-prompt-eval-runner.md` | Not started (planned 2026-09-28; slice 113's questions answered the same day) | Medium |
 
 **Comp R work (added 2026-09-27, `SPEC/decisions.md` "One list and detail pattern").** Three phases, in
 order: **phase 1** — themes, the list and detail pattern on Boards, a board and Ideas, the structured
@@ -66,5 +67,11 @@ It runs first, then the prompt-eval runner, then idea assistant v2 (answered 202
 Roadmap is built without its Outcomes backend, which is a later sprint's. Settings → Tags is the
 first Settings entity on the pattern. The Bug Triage exception for it is conditional on slice 106
 fixing the `db:seed` `P2002` swimlane item.
+
+**The prompt-eval runner** (phase 2 of the comp R work) is **Sprint 12**,
+`SPEC/sprints/sprint-12-prompt-eval-runner.md`, specified in `SPEC/20-feature-prompt-eval-runner.md`
+(slice 113): the runner core, metrics and compare, the v1 baseline, the v2 case format, and QA —
+slices 114–118. It follows Sprint 11 and precedes idea assistant v2, which it gates. Slice 113's open questions were
+answered 2026-09-28.
 
 Update the Status column here whenever a sprint file's own `Status:` line changes (Not started → In Progress → Complete), and move the file to `SPEC/sprints/archive/` once Complete.

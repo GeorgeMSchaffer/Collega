@@ -9,6 +9,72 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — The prompt-eval runner's open questions are answered
+
+**Decided by the user**, answering the eleven questions slice 113 left open, each with the
+recommended option. Each answer is written into `20-feature-prompt-eval-runner.md` and
+`SPEC/sprints/sprint-12-prompt-eval-runner.md`, and the *(pending answer)* markers are gone. This
+completes the entry below, which said which key and who pays were open.
+
+1. **Packaging:** a new workspace package, `@collega/prompt-eval`, in `tools/prompt-eval`, depending
+   on `@collega/application` and `@collega/infrastructure`, with no new third-party package. It is
+   the first `tools/` package allowed to depend on infrastructure, approved for this.
+2. **What a run drives:** the `IdeaDraftModel` port on the production `AnthropicIdeaDraftModel`, with
+   `sanitizeDraft` exported from the idea-assist service so the output is scored as the service
+   returns it. Not the whole service with fake ports, and not the HTTP API.
+3. **Model:** production's model and effort, read from the shared constant, with `--model` and
+   `--effort` overrides that the run header records and `compare` flags.
+4. **Key:** a dedicated evaluation key, never the production deployment key, supplied as
+   `ANTHROPIC_API_KEY` from the environment or the root `.env`. *The variable name is superseded by
+   answer 12.*
+5. **The scope gate's positive class is a refusal**, so recall is the security figure.
+6. **Defaults:** 5 repeats, `--max-calls 200`, `--max-tokens 1,000,000`, concurrency 1, and `--yes`
+   required when a run plans more than 100 calls.
+7. **Thresholds:** refusal recall of 1.0 on the `refuse-*` cases as an absolute floor; every other
+   metric judged against the committed baseline; a collapse in cache reads and a surviving locked
+   field fail outright. Revisited once the first baseline shows the real rates. The spec's 10%
+   errored-trial limit, above which a run is invalid, is provisional with these thresholds.
+8. **v1 and v2:** v1 is measured now and its baseline committed; the v2 case format and scorer are
+   built now; the live v2 run lands with v2.
+9. **Case format:** the optional `pair` and `assistant` keys are added.
+10. **Run outputs:** `runs/` is gitignored; only promoted baselines are committed.
+11. **No CI for now.** Runs are local, and the summary goes with the review of a prompt change.
+12. **The runner's key has its own name** (decided after the other eleven). The runner reads only
+    `PROMPT_EVAL_ANTHROPIC_API_KEY`, from the environment or the root `.env`, and refuses to run
+    without it. It never reads `ANTHROPIC_API_KEY`, so it cannot pick up the API's key by accident —
+    both would otherwise sit in the same `.env` under the same name. It passes the key to the
+    production adapter explicitly. This supersedes in part the entry below ("One key, under the name
+    already fixed") and answer 4's variable name.
+
+---
+
+## 2026-09-28 — The prompt-eval runner: what existing decisions already settle
+
+**Recorded, not newly decided.** Slice 113 specifies the runner (`20-feature-prompt-eval-runner.md`)
+as the phase the order of work below puts next. Each point here follows from text the user has
+already approved; everything else in that spec is marked *(pending answer)* until answered.
+
+- **It is TypeScript, and it gates v2.** v2 is not enabled until the runner reports, at minimum,
+  scope-gate precision/recall and field-mapping accuracy against the corpus extended with v2 cases
+  (2026-09-27 "Measurement comes first"; `20-feature-ai-idea-assist-v2.md` "Prerequisite:
+  measurement").
+- **The corpus is `tools/prompt-eval` as it stands, with its methodology**: repeats reported as
+  rates, only declared expectations scored, refused turns dropped mid-case, the coffee pair read
+  together, compare like with like (`tools/prompt-eval/README.md`, carried over by the 2026-09-13
+  F6 entry).
+- **It never runs in the hermetic gate.** Tests make no network call (`AGENTS.md`) and the provider
+  is never called from the test suite (`40-test-strategy.md` "AI Idea Assist"). A live run is a
+  separate command.
+- **One key, under the name already fixed.** `ANTHROPIC_API_KEY` (v1 rule 29); per-organization keys
+  stay unimplemented (tracker rule 30). Which key value it uses, and who pays, is open.
+  *Superseded in part 2026-09-28 (the answers entry above, answer 12): the runner reads its own
+  `PROMPT_EVAL_ANTHROPIC_API_KEY` and never `ANTHROPIC_API_KEY`. One key, and no per-organization
+  keys, still stand.*
+- **The `tools/*` conventions hold**: `node:test`, Node's own type stripping, no test framework
+  (`tools/arch/identity-chokepoint.test.ts` records why), and no new dependency without approval.
+
+---
+
 ## 2026-09-28 — Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events
 
 **Decided by the user**, answering the three points the answers entry below left open, and on review of this slice, the audit of tag changes.

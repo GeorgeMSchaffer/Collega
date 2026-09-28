@@ -48,7 +48,8 @@ things at once:
 adding unmeasured security-relevant behaviour." **v2 does not ship until a TypeScript runner for
 `tools/prompt-eval` exists** and reports, at minimum, scope-gate precision/recall and field-mapping
 accuracy against the corpus, extended with v2 cases (structured fields, brainstorm turns, locked
-fields). The runner is its own slice and lands before the v2 prompt is enabled.
+fields). The runner is its own slice and lands before the v2 prompt is enabled; it is specified in
+`20-feature-prompt-eval-runner.md`.
 
 ## Surface
 
