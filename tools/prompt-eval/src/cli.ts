@@ -481,7 +481,12 @@ export async function main(
 
     const cases = selectCases(corpus, options.cases)
     if (options.dryRun) {
+      // Read as a live run would, so a bad --baseline fails here rather than after the spend.
+      const baseline = options.baseline === undefined ? null : await loadBaseline(options.baseline)
       printDryRun(options, prompt, cases, fixtures)
+      if (baseline !== null) {
+        console.log(`Baseline   ${baseline.path} (${baseline.run.trials.length} trials, readable)`)
+      }
       return EXIT_PASS
     }
     return await liveRun(deps, options, prompt, cases, fixtures)
