@@ -19,7 +19,9 @@ Primary navigation is a **fixed left sidebar** (248px) on every signed-in screen
 **Workspace** — Home, Boards, Ideas; **Delivery** — Sprint board, Backlog, Roadmap (specified
 in `20-feature-issues-and-delivery.md`; *reconciled 2026-09-28:* the Sprint board and Backlog are
 built on the Slice 1 API, and the Sprint board and Roadmap follow comp R from 2026-09-28 — see that
-spec's "Client UI"); **Configure** — Settings. Above the groups sit the brand mark, the organization line
+spec's "Client UI"; *superseded 2026-09-28, as written before:* "specified in
+`20-feature-issues-and-delivery.md`, unbuilt; the comp renders them under a *not built* strip");
+**Configure** — Settings. Above the groups sit the brand mark, the organization line
 (the viewer's organization, or *All organizations* for a Site Admin) and the command-palette
 launcher (`Ctrl K`). Pinned to the bottom is the identity block: avatar, name and role — and
 during a View As session, the impersonated user's, not the administrator's (view-as rule 23).
@@ -333,8 +335,11 @@ Icons" below and the control heights slice 100 shipped (`--control-h` 36px). Val
   since an administrator may pick a custom one (answered 2026-09-28), **any** `#RRGGBB`. A tag chip
   mixes that colour with the theme so one stored colour reads in every theme, and **its text must
   clear 4.5:1 against the chip's own ground in every theme, for every colour**. Comp R's fixed mix
-  (62% tag colour into the ink) does not: measured 2026-09-28 it gives 3.4–4.4:1 for six of the ten
-  palette colours in each light theme. So the text colour is **computed**, not fixed:
+  (62% tag colour into the ink) does not: measured 2026-09-28 it gives 3.39–4.45:1 for **seven** of
+  the ten palette colours in every light theme (`#F5A524`, `#3FB86B`, `#5CC8E0`, `#6B9BF2`,
+  `#B08CF5`, `#E879A6`, `#94A3B8`; only `#E5484D`, `#2F9E8F` and `#A87B2F` pass). So the text colour is **computed**, not fixed:
+  - every mix is **per channel in gamma-encoded sRGB**, exactly what CSS `color-mix(in srgb …)`
+    computes — not in linear light or OKLCH — so the function and any CSS fallback agree;
   - **ground** — the tag colour mixed 16% into the theme's card colour; **border** — the tag colour
     at 30% over transparent (decorative, no ratio required);
   - **text** — the tag colour mixed into the theme's ink at the theme's starting share (40% in the

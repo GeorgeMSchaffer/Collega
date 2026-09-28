@@ -451,7 +451,8 @@ The page for the organization's running sprint (`/delivery/sprint`, as built).
   existing `POST /organizations/{orgId}/sprints`; the new sprint is `Planned`, the drawer closes and
   a toast says *Sprint created*. Field errors from the API sit beside their fields.
 - **Sprint strip** under the header, a definition list of four cells with mono uppercase terms:
-  **STATE** (*ACTIVE* or *COMPLETED*, plus *{N} DAYS PAST END* in the warning colour while an
+  **STATE** (*ACTIVE* or *PLANNED* — the board shows the running sprint, or the next planned one
+  when none is running — plus *{N} DAYS PAST END* in the warning colour while an
   Active sprint is past its end date, counted in the viewer's local calendar days), **WINDOW**
   (*10–24 SEP*), **ISSUES** (*{n} · {d} DONE*) and **PROGRESS** (one segment per Issue, filled in
   the Complete colour when done, labelled *{d} of {n} done* for assistive technology). The cells

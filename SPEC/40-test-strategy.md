@@ -89,7 +89,7 @@ not in the corpus:
 - Activity from pointer, keyboard, touch, scroll, and document visibility plus logout/expiry signals synchronize across tabs.
 - Idle and absolute expiry clear authentication in every tab and show the specific session-expired Login message; explicit logout and password-change logout do not.
 - My Profile updates the displayed first/last name immediately, keeps email and role read-only, and voluntary and required password changes both return to Login with confirmation before re-login lands on Dashboard.
-- Text-like controls render at a stable 36px height with vertically centered content, and Fluent icon actions expose accessible names, tooltips, keyboard focus, and disabled states on desktop and narrow layouts.
+- *Superseded 2026-09-28 for the height by `20-feature-client-ui.md` "Forms and controls" (34px fields, 32px buttons):* Text-like controls render at a stable 36px height with vertically centered content, and Fluent icon actions expose accessible names, tooltips, keyboard focus, and disabled states on desktop and narrow layouts.
 - Client unit-test and Playwright infrastructure is intentionally excluded from this batch because a parallel branch owns browser automation; these items remain pending until user manual acceptance.
 
 ## AI Idea Assist (Sprint 7 — `SPEC/20-feature-ai-idea-assist.md`)
