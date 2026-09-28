@@ -12,18 +12,61 @@ import { cn } from '../lib/cn.js'
  * optional is how the binding quietly gets dropped. The a11y rule cannot see across a component
  * boundary to verify it, so the type does the enforcing instead.
  */
-export type LabelProps = LabelHTMLAttributes<HTMLLabelElement> & { htmlFor: string }
+export type LabelProps = LabelHTMLAttributes<HTMLLabelElement> & {
+  htmlFor: string
+  /**
+   * Shows the `*`. Only a mark: it is hidden from assistive technology, because the control's own
+   * `required` is what announces the fact.
+   */
+  required?: boolean | undefined
+}
 
-export function Label({ className, ...props }: LabelProps) {
+export function Label({ className, required, children, ...props }: LabelProps) {
   return (
     // biome-ignore lint/a11y/noLabelWithoutControl: htmlFor is required by LabelProps, so every render is bound
     <label
       className={cn(
-        'mb-1.5 block text-[length:var(--label-size)] font-medium text-foreground',
+        'mb-[5px] block text-[length:var(--label-size)] font-medium text-secondary-foreground',
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+      {required ? (
+        <span aria-hidden="true" className="ml-0.5 text-destructive">
+          *
+        </span>
+      ) : null}
+    </label>
+  )
+}
+
+/**
+ * Short related fields side by side (comp R's `.row3` and `.row2`): three to a row for short
+ * selects, two for pairs, and one column below 900px. In a row of three the labels never wrap.
+ * Long text, lists, people and tags keep a full row each, outside this.
+ */
+export function FieldRow({
+  cols,
+  className,
+  children,
+}: {
+  cols: 2 | 3
+  className?: string | undefined
+  children: ReactNode
+}) {
+  return (
+    <div
+      className={cn(
+        'grid grid-cols-1 gap-x-3',
+        cols === 3
+          ? 'min-[900px]:grid-cols-3 [&_label]:whitespace-nowrap'
+          : 'min-[900px]:grid-cols-2',
+        className,
+      )}
+    >
+      {children}
+    </div>
   )
 }
 
@@ -47,11 +90,14 @@ export function Field({
   label,
   hint,
   error,
+  required,
   className,
   children,
 }: {
   htmlFor: string
   label: string
+  /** Marks the label; the control still needs its own `required`. */
+  required?: boolean | undefined
   // `| undefined` explicitly, because `exactOptionalPropertyTypes` is on and these are the two
   // props a caller computes rather than writes: `error={errors.email}` is the whole point of them,
   // and without this every such caller has to spread a conditional object instead.
@@ -72,14 +118,16 @@ export function Field({
 
   return (
     <div className={cn('mb-4', className)} data-invalid={error ? '' : undefined}>
-      <Label htmlFor={htmlFor}>{label}</Label>
+      <Label htmlFor={htmlFor} required={required}>
+        {label}
+      </Label>
       {control}
       {error ? (
-        <span id={describedBy} className="mt-1 block text-[0.8rem] font-medium text-destructive">
+        <span id={describedBy} className="mt-1 block text-xs font-semibold text-destructive">
           {error}
         </span>
       ) : hint ? (
-        <span id={describedBy} className="mt-1 block text-[0.8rem] text-muted-foreground">
+        <span id={describedBy} className="mt-1 block text-xs text-muted-foreground">
           {hint}
         </span>
       ) : null}

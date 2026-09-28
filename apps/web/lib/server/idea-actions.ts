@@ -2,7 +2,7 @@
 
 /**
  * The writes an idea supports: create or save one from the drawer's form, delete one, move a card
- * between lanes, toggle an upvote, post a comment — and one read, the Tags filter's typeahead.
+ * between lanes, toggle an upvote, post a comment.
  *
  * ## Identity, and why none of these reads the principal
  *
@@ -28,16 +28,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import {
-  ApiError,
-  apiDelete,
-  apiGet,
-  apiPath,
-  apiPost,
-  apiPostReturning,
-  apiPut,
-  withQuery,
-} from '../api/client'
+import { ApiError, apiDelete, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
 import type { WireCreatedIdea } from '../api/wire'
 
 /** What a card's controls render back: the API's refusal, or nothing. */
@@ -100,6 +91,11 @@ function refusal(error: unknown): string {
 function revalidateIdeaScreens(boardId: string): void {
   revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
   revalidatePath('/ideas')
+  // Tag counts, and tags created inline while tagging.
+  revalidatePath('/settings/tags')
+  // An Issue is an idea, and its drawer on the delivery screens votes, comments and edits too.
+  revalidatePath('/delivery/sprint')
+  revalidatePath('/delivery/backlog')
 }
 
 export async function saveIdea(input: IdeaInput): Promise<SaveIdeaResult> {
@@ -155,22 +151,6 @@ export async function deleteIdea(ideaId: string, boardId: string): Promise<Actio
   revalidateIdeaScreens(boardId)
   revalidatePath('/', 'layout')
   return { error: null }
-}
-
-/**
- * Tag names in the organization starting with `prefix`, for the Tags filter's typeahead. The API
- * answers nothing below two characters, so neither does this. `organizationId` is bound by the
- * screen, for the reason at the top of this file.
- */
-export async function findTags(organizationId: string, prefix: string): Promise<string[]> {
-  if (prefix.trim().length < 2) return []
-  const params = new URLSearchParams({ search: prefix.trim(), limit: '20' })
-  return [
-    ...(await apiGet<readonly string[]>(
-      'findTags',
-      withQuery(apiPath`/organizations/${organizationId}/tags`, params),
-    )),
-  ]
 }
 
 export async function moveIdea(_previous: ActionState, form: FormData): Promise<ActionState> {

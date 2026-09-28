@@ -1,6 +1,6 @@
 'use client'
 
-import { Alert, Field, Input, Select, Textarea } from '@collega/design-system'
+import { Alert, Field, FieldRow, Input, Select, Textarea } from '@collega/design-system'
 import { type FormEvent, useEffect, useId, useState, useTransition } from 'react'
 import { Icon } from '@/components/list/icons'
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/lib/limits'
@@ -34,27 +34,7 @@ type Draft = {
   fields: Record<string, string>
 }
 
-/**
- * The detail answers a value as a reader would say it — a Boolean as Yes or No, a Dropdown or
- * MultiSelect as option labels — and the write takes `true`/`false` and option ids.
- */
-function storedToInput(field: IdeaFormField, value: string): string {
-  if (field.fieldType === 'Boolean') return value === 'Yes' ? 'true' : value === 'No' ? 'false' : ''
-  if (field.fieldType !== 'Dropdown' && field.fieldType !== 'MultiSelect') return value
-  const ids = value
-    .split(', ')
-    .map((label) => field.options.find((option) => option.label === label)?.id)
-    .filter((id): id is string => id !== undefined)
-  return ids.join(',')
-}
-
-function initialDraft(
-  idea: IdeaDetail | null,
-  boardId: string | null,
-  options: IdeaFormOptions,
-): Draft {
-  const type = options.ideaTypes.find((t) => t.id === idea?.ideaTypeId)
-  const stored = new Map(idea?.fieldValues.map((f) => [f.fieldDefinitionId, f.value]) ?? [])
+function initialDraft(idea: IdeaDetail | null, boardId: string | null): Draft {
   return {
     boardId: idea?.boardId ?? boardId ?? '',
     title: idea?.title ?? '',
@@ -66,13 +46,8 @@ function initialDraft(
     ideaTypeId: idea?.ideaTypeId ?? '',
     businessImpactId: idea?.businessImpactId ?? '',
     dueDate: idea?.dueDate ?? '',
-    tags: idea?.tags.join(', ') ?? '',
-    fields: Object.fromEntries(
-      (type?.fields ?? []).map((field) => [
-        field.id,
-        storedToInput(field, stored.get(field.id) ?? ''),
-      ]),
-    ),
+    tags: idea?.tags.map((tag) => tag.name).join(', ') ?? '',
+    fields: Object.fromEntries(idea?.formFields.map((field) => [field.id, field.value]) ?? []),
   }
 }
 
@@ -118,7 +93,7 @@ export function IdeaForm({
   onPendingChange: (pending: boolean) => void
 }) {
   const id = useId()
-  const [draft, setDraft] = useState(() => initialDraft(idea, boardId, options))
+  const [draft, setDraft] = useState(() => initialDraft(idea, boardId))
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -127,10 +102,9 @@ export function IdeaForm({
 
   const editing = idea !== null
   const type = options.ideaTypes.find((t) => t.id === draft.ideaTypeId)
-  const customFields = type?.fields ?? []
-  // An idea whose type has since been archived: the catalog lists active types only, so its fields
-  // are unknown here, and the save leaves their values untouched rather than clearing them.
-  const archivedType = editing && !type
+  // The type is fixed once created, so an edit shows the idea's own fields, which the detail
+  // resolves even when the type has since been archived and left the catalog.
+  const customFields = idea ? idea.formFields : (type?.fields ?? [])
   const openBoards = boards?.filter((board) => !board.isArchived) ?? null
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
@@ -194,12 +168,10 @@ export function IdeaForm({
           .filter(Boolean),
         assigneeUserIds: idea?.assignees.map((person) => person.id) ?? [],
         mentionEmails: idea?.mentionEmails ?? [],
-        fieldValues: archivedType
-          ? null
-          : customFields.map((field) => ({
-              fieldDefinitionId: field.id,
-              value: draft.fields[field.id] ?? '',
-            })),
+        fieldValues: customFields.map((field) => ({
+          fieldDefinitionId: field.id,
+          value: draft.fields[field.id] ?? '',
+        })),
       })
       if (result.ok) {
         onSaved(result.ideaId)
@@ -328,7 +300,7 @@ export function IdeaForm({
         />
       </Field>
 
-      <div className="grid grid-cols-1 gap-x-3 sm:grid-cols-2">
+      <FieldRow cols={3}>
         <Field htmlFor={fid('impact')} label="Business impact" error={errors.businessImpactId}>
           <Select
             id={fid('impact')}
@@ -341,21 +313,6 @@ export function IdeaForm({
             {options.businessImpacts.map((impact) => (
               <option key={impact.id} value={impact.id}>
                 {impact.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field htmlFor={fid('priority')} label="Priority" error={errors.priority}>
-          <Select
-            id={fid('priority')}
-            data-error-key="priority"
-            value={draft.priority}
-            onChange={(event) => set('priority', event.target.value)}
-            aria-invalid={errors.priority ? true : undefined}
-          >
-            {PRIORITIES.map((priority) => (
-              <option key={priority} value={priority}>
-                {priority}
               </option>
             ))}
           </Select>
@@ -387,6 +344,24 @@ export function IdeaForm({
             ) : null}
           </Select>
         </Field>
+        <Field htmlFor={fid('priority')} label="Priority" error={errors.priority}>
+          <Select
+            id={fid('priority')}
+            data-error-key="priority"
+            value={draft.priority}
+            onChange={(event) => set('priority', event.target.value)}
+            aria-invalid={errors.priority ? true : undefined}
+          >
+            {PRIORITIES.map((priority) => (
+              <option key={priority} value={priority}>
+                {priority}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </FieldRow>
+
+      <FieldRow cols={2}>
         <Field htmlFor={fid('due')} label="Due date (optional)" error={errors.dueDate}>
           <Input
             id={fid('due')}
@@ -397,7 +372,7 @@ export function IdeaForm({
             aria-invalid={errors.dueDate ? true : undefined}
           />
         </Field>
-      </div>
+      </FieldRow>
 
       <Field
         htmlFor={fid('tags')}
@@ -434,18 +409,9 @@ export function IdeaForm({
 
       <fieldset className="m-0 flex flex-col border-0 border-t p-0 pt-3">
         <legend className="float-left mb-3 w-full text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {type
-            ? `${type.name} fields`
-            : archivedType
-              ? `${idea?.ideaType} fields`
-              : 'Custom fields'}
+          {idea ? `${idea.ideaType} fields` : type ? `${type.name} fields` : 'Custom fields'}
         </legend>
-        {archivedType ? (
-          <p className="m-0 mb-4 text-xs text-muted-foreground">
-            This idea type is archived, so its custom fields can’t be edited here. Saving leaves
-            their values as they are.
-          </p>
-        ) : !type ? (
+        {!idea && !type ? (
           <p className="m-0 mb-4 text-xs text-muted-foreground">
             Pick an Idea Type to see its custom fields.
           </p>
@@ -488,7 +454,7 @@ function SolutionsField({
       className="m-0 mb-4 flex flex-col gap-1.5 border-0 p-0"
       data-invalid={error ? '' : undefined}
     >
-      <legend className="mb-1.5 text-[length:var(--label-size)] font-medium">
+      <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
         Proposed solutions
       </legend>
       {solutions.map((solution, index) => (
@@ -530,21 +496,24 @@ function SolutionsField({
         </button>
       ) : null}
       {error ? (
-        <span id={messageId} className="block text-[0.8rem] font-medium text-destructive">
+        <span id={messageId} className="block text-xs font-semibold text-destructive">
           {error}
         </span>
       ) : locked ? (
-        <span id={messageId} className="block text-[0.8rem] text-muted-foreground">
+        <span id={messageId} className="block text-xs text-muted-foreground">
           Only the author or an Org Admin can change this.
         </span>
       ) : (
-        <span className="block text-[0.8rem] text-muted-foreground">Up to {SOLUTIONS_MAX}.</span>
+        <span className="block text-xs text-muted-foreground">Up to {SOLUTIONS_MAX}.</span>
       )}
     </fieldset>
   )
 }
 
-/** One custom field, as its type asks to be entered. */
+const optionLabel = (option: IdeaFormField['options'][number]) =>
+  option.archived ? `${option.label} (archived)` : option.label
+
+/** One custom field, as its type asks to be entered. Archived options show only while chosen. */
 function CustomField({
   id,
   field,
@@ -565,17 +534,21 @@ function CustomField({
     'aria-invalid': error ? true : undefined,
   }
 
+  const chosen = value ? value.split(',') : []
+  const options = field.options.filter((option) => !option.archived || chosen.includes(option.id))
+
   if (field.fieldType === 'MultiSelect') {
-    const chosen = value ? value.split(',') : []
     return (
       <fieldset
         className="m-0 mb-4 border-0 p-0"
         data-invalid={error ? '' : undefined}
         aria-describedby={error ? `${id}-msg` : undefined}
       >
-        <legend className="mb-1.5 text-[length:var(--label-size)] font-medium">{label}</legend>
+        <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
+          {label}
+        </legend>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
-          {field.options.map((option, index) => (
+          {options.map((option, index) => (
             <label key={option.id} className="m-0 inline-flex items-center gap-1.5 font-normal">
               <input
                 type="checkbox"
@@ -590,12 +563,12 @@ function CustomField({
                   )
                 }
               />
-              {option.label}
+              {optionLabel(option)}
             </label>
           ))}
         </div>
         {error ? (
-          <span id={`${id}-msg`} className="mt-1 block text-[0.8rem] font-medium text-destructive">
+          <span id={`${id}-msg`} className="mt-1 block text-xs font-semibold text-destructive">
             {error}
           </span>
         ) : null}
@@ -614,9 +587,9 @@ function CustomField({
               <option value="false">No</option>
             </>
           ) : (
-            field.options.map((option) => (
+            options.map((option) => (
               <option key={option.id} value={option.id}>
-                {option.label}
+                {optionLabel(option)}
               </option>
             ))
           )}

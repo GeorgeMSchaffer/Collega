@@ -35,33 +35,38 @@ export function IdeaView({
   idea,
   statusColor,
   engagementDenial,
+  facts = true,
 }: {
   idea: IdeaDetail
   statusColor: string | undefined
   engagementDenial: string | null
+  /** False in the Issue drawer, which shows its delivery facts in their place. */
+  facts?: boolean
 }) {
   return (
     <>
-      <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3">
-        <Fact label="Status">
-          <StatusMarker name={idea.statusName} color={statusColor} />
-        </Fact>
-        <Fact label="Priority">
-          <PriorityMarker priority={idea.priority} />
-        </Fact>
-        <Fact label="Business impact">{idea.businessImpact}</Fact>
-        <Fact label="Idea type">{idea.ideaType}</Fact>
-        <Fact label="Assignees">
-          <People people={idea.assignees} />
-          {idea.assignees.length > 0 ? (
-            <span aria-hidden="true">{idea.assignees.map((p) => p.name).join(', ')}</span>
-          ) : null}
-        </Fact>
-        <Fact label="Tags">
-          {idea.tags.length > 0 ? <TagList tags={idea.tags} max={10} /> : '—'}
-        </Fact>
-        {idea.dueDate ? <Fact label="Due">{idea.dueDate}</Fact> : null}
-      </dl>
+      {facts ? (
+        <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3">
+          <Fact label="Status">
+            <StatusMarker name={idea.statusName} color={statusColor} />
+          </Fact>
+          <Fact label="Priority">
+            <PriorityMarker priority={idea.priority} />
+          </Fact>
+          <Fact label="Business impact">{idea.businessImpact}</Fact>
+          <Fact label="Idea type">{idea.ideaType}</Fact>
+          <Fact label="Assignees">
+            <People people={idea.assignees} />
+            {idea.assignees.length > 0 ? (
+              <span aria-hidden="true">{idea.assignees.map((p) => p.name).join(', ')}</span>
+            ) : null}
+          </Fact>
+          <Fact label="Tags">
+            {idea.tags.length > 0 ? <TagList tags={idea.tags} max={10} /> : '—'}
+          </Fact>
+          {idea.dueDate ? <Fact label="Due">{idea.dueDate}</Fact> : null}
+        </dl>
+      ) : null}
 
       <Section title="Problem">
         <p className="m-0 whitespace-pre-line text-sm">{idea.problem}</p>

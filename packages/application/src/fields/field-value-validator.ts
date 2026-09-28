@@ -33,11 +33,19 @@ export type FieldValueWrite = {
   readonly value: string | null
 }
 
+/**
+ * `stored` is the idea's current values when editing it. A Dropdown or MultiSelect may keep an
+ * option id it already stores after the field stops offering that option (options are
+ * hard-deleted), so an unchanged save does not fail; it may not add one (SPEC/20-feature-user-
+ * defined-fields.md). Absent on create, where every option must be current.
+ */
 export function validateFieldValues(
   effectiveFields: readonly EffectiveField[],
   submitted: readonly FieldValueWrite[] | null | undefined,
   knownFieldNames?: ReadonlyMap<string, string>,
+  stored?: readonly FieldValueInput[],
 ): readonly FieldValueInput[] {
+  const storedById = new Map(stored?.map((s) => [s.fieldDefinitionId, s.value] as const))
   const resolvedById = new Map(effectiveFields.map((f) => [f.field.id, f] as const))
   const errors: Record<string, string[]> = {}
   const addError = (key: string, message: string): void => {
@@ -84,7 +92,13 @@ export function validateFieldValues(
       continue
     }
 
-    const normalization = normalizeFieldValue(definition, trimmed)
+    const kept = new Set(
+      (storedById.get(definition.id) ?? '')
+        .split(',')
+        .map((id) => id.trim().toLowerCase())
+        .filter((id) => id.length > 0),
+    )
+    const normalization = normalizeFieldValue(definition, trimmed, kept)
     if (!normalization.ok) {
       addError(definition.name, normalization.error)
       continue
@@ -124,7 +138,11 @@ type NormalizationResult =
   | { readonly ok: true; readonly value: string }
   | { readonly ok: false; readonly error: string }
 
-function normalizeFieldValue(definition: FieldDefinition, value: string): NormalizationResult {
+function normalizeFieldValue(
+  definition: FieldDefinition,
+  value: string,
+  kept: ReadonlySet<string>,
+): NormalizationResult {
   switch (definition.fieldType) {
     case FieldType.Text:
       if (value.length > TEXT_MAX_LENGTH) {
@@ -168,7 +186,7 @@ function normalizeFieldValue(definition: FieldDefinition, value: string): Normal
       return { ok: false, error: `${definition.name} must be true or false.` }
 
     case FieldType.Dropdown: {
-      const optionId = findOptionId(definition, value)
+      const optionId = findOptionId(definition, value, kept)
       if (optionId === null) {
         return { ok: false, error: `${definition.name} must be one of the field's options.` }
       }
@@ -176,14 +194,18 @@ function normalizeFieldValue(definition: FieldDefinition, value: string): Normal
     }
 
     case FieldType.MultiSelect:
-      return normalizeMultiSelect(definition, value)
+      return normalizeMultiSelect(definition, value, kept)
 
     default:
       return { ok: false, error: `${definition.name} has an unsupported field type.` }
   }
 }
 
-function normalizeMultiSelect(definition: FieldDefinition, value: string): NormalizationResult {
+function normalizeMultiSelect(
+  definition: FieldDefinition,
+  value: string,
+  kept: ReadonlySet<string>,
+): NormalizationResult {
   const segments = value
     .split(',')
     .map((s) => s.trim())
@@ -192,7 +214,7 @@ function normalizeMultiSelect(definition: FieldDefinition, value: string): Norma
   const seen = new Set<string>()
   const ids: string[] = []
   for (const segment of segments) {
-    const optionId = findOptionId(definition, segment)
+    const optionId = findOptionId(definition, segment, kept)
     if (optionId === null) {
       return { ok: false, error: `${definition.name} must contain only the field's options.` }
     }
@@ -206,14 +228,19 @@ function normalizeMultiSelect(definition: FieldDefinition, value: string): Norma
   return { ok: true, value: ids.join(',') }
 }
 
-/** Matches `raw` against `definition`'s options by id (case-insensitively), returning the
- * canonical (lower-cased) id, or null if `raw` is not a GUID or names no option. */
-function findOptionId(definition: FieldDefinition, raw: string): string | null {
+/** Matches `raw` against `definition`'s options, or the ids in `kept`, by id (case-insensitively),
+ * returning the canonical (lower-cased) id, or null if `raw` is not a GUID or names neither. */
+function findOptionId(
+  definition: FieldDefinition,
+  raw: string,
+  kept: ReadonlySet<string>,
+): string | null {
   if (!GUID_PATTERN.test(raw)) {
     return null
   }
   const normalized = raw.toLowerCase()
-  return definition.options.some((option) => option.id.toLowerCase() === normalized)
+  return kept.has(normalized) ||
+    definition.options.some((option) => option.id.toLowerCase() === normalized)
     ? normalized
     : null
 }

@@ -106,10 +106,7 @@ async function ScopeStatement({ org }: { org: string }) {
                 defaultValue={aiAssist.scopeStatement}
                 aria-describedby="scopeStatement-count"
               />
-              <span
-                id="scopeStatement-count"
-                className="mt-1 block text-[0.8rem] text-muted-foreground"
-              >
+              <span id="scopeStatement-count" className="mt-1 block text-xs text-muted-foreground">
                 {aiAssist.scopeStatement.length} / {SCOPE_STATEMENT_MAX}
               </span>
             </Field>

@@ -1,7 +1,11 @@
 'use server'
 
 /**
- * The two writes `/settings/boards` supports: create a board, and save an existing one.
+ * The board writes: create a board, save an existing one, and archive or unarchive it.
+ *
+ * Create and save come twice. `createBoard` / `saveBoard` serve `/settings/boards` and redirect back
+ * to it; `createBoardInPlace` / `saveBoardInPlace` serve the Boards screen's drawer, which stays on
+ * its page and decides for itself where to go once the write succeeds.
  *
  * One payload shape for both — `POST /organizations/{id}/boards` and `PUT /boards/{id}` take the
  * same fields (`SPEC/30-Contracts.md` "Board Contracts") — so the screens are one form with
@@ -12,13 +16,13 @@
  * that rendered the form, exactly as it is for a move or an upvote. The organization id on the
  * create path is neither — it is asked of the API, for the reason `actingOrganizationId` gives.
  *
- * **There is no delete.** A board's ideas outlive the board, no endpoint removes one, and no screen
- * in comp Q offers to discard a board's contents as a side effect of tidying up its columns.
+ * **There is no delete.** A board's ideas outlive the board, so a board is archived instead
+ * (`SPEC/20-feature-boards-and-statuses.md` rule 13), and unarchiving restores it unchanged.
  */
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { ApiError, apiPath, apiPost, apiPut } from '../api/client'
+import { ApiError, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
 import { actingOrganizationId } from './current-user'
 
 /**
@@ -30,10 +34,14 @@ import { actingOrganizationId } from './current-user'
  */
 export type BoardFormState = { error: string | null }
 
+/** The drawer's form. `savedId` is the board written, its cue to move on: nothing redirects it. */
+export type BoardDrawerState = { error: string | null; savedId: string | null }
+
 function refusal(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) redirect('/login?expired=1')
-    if (error.status === 400 || error.status === 403 || error.status === 404) return error.detail
+    // 409 is an archived board: its settings are frozen until it is unarchived.
+    if ([400, 403, 404, 409].includes(error.status)) return error.detail
   }
   throw error
 }
@@ -72,10 +80,8 @@ function boardBody(form: FormData): {
   }
 }
 
-export async function createBoard(
-  _previous: BoardFormState,
-  form: FormData,
-): Promise<BoardFormState> {
+/** Creates the board, answering its id, or the refusal to show. */
+async function create(form: FormData): Promise<{ boardId: string } | { error: string }> {
   const organizationId = await actingOrganizationId()
   if (organizationId === null) {
     return {
@@ -85,8 +91,15 @@ export async function createBoard(
     }
   }
 
+  let boardId: string
   try {
-    await apiPost(apiPath`/organizations/${organizationId}/boards`, boardBody(form))
+    // The exception `apiPostReturning` exists for: the drawer opens the new board next, and its id
+    // exists nowhere until this answers.
+    const created = await apiPostReturning<{ boardId: string }>(
+      apiPath`/organizations/${organizationId}/boards`,
+      boardBody(form),
+    )
+    boardId = created.boardId
   } catch (error) {
     return { error: refusal(error) }
   }
@@ -94,11 +107,35 @@ export async function createBoard(
   // The sidebar's board count and the workspace list both change, and both are rendered above this
   // route rather than by it, so the page alone is not enough.
   revalidatePath('/', 'layout')
+  return { boardId }
+}
+
+/** Saves the board, answering the refusal to show or `null` once it is written. */
+async function save(form: FormData): Promise<string | null> {
+  const boardId = String(form.get('boardId') ?? '')
+
+  try {
+    await apiPut(apiPath`/boards/${boardId}`, boardBody(form))
+  } catch (error) {
+    return refusal(error)
+  }
+
+  // The lanes changed, so the board itself is stale as well as the lists. Escaped for the reason
+  // `apiPath` gives: a cache path is a path, and an id that names no route revalidates nothing,
+  // which is the right outcome for a write the API refused to believe in.
+  revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
+  revalidatePath('/', 'layout')
+  return null
+}
+
+export async function createBoard(
+  _previous: BoardFormState,
+  form: FormData,
+): Promise<BoardFormState> {
+  const result = await create(form)
+  if ('error' in result) return result
 
   // `redirect` signals by throwing, so it must be the last thing and must not sit inside a `try`.
-  // Back to the list rather than into the new board: `apiPost` discards the response, so the id it
-  // answered with is not in hand, and re-reading it to navigate would be a request for a number
-  // the list is about to show anyway.
   redirect('/settings/boards')
 }
 
@@ -106,35 +143,47 @@ export async function saveBoard(
   _previous: BoardFormState,
   form: FormData,
 ): Promise<BoardFormState> {
-  const boardId = String(form.get('boardId') ?? '')
-
-  try {
-    await apiPut(apiPath`/boards/${boardId}`, boardBody(form))
-  } catch (error) {
-    return { error: refusal(error) }
-  }
-
-  // The lanes changed, so the board itself is stale as well as the settings list. Escaped for the
-  // reason `apiPath` gives: a cache path is a path, and an id that names no route revalidates
-  // nothing, which is the right outcome for a write the API refused to believe in.
-  revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
-  revalidatePath('/', 'layout')
-
+  const error = await save(form)
+  if (error !== null) return { error }
   redirect('/settings/boards')
 }
 
+export async function createBoardInPlace(
+  _previous: BoardDrawerState,
+  form: FormData,
+): Promise<BoardDrawerState> {
+  const result = await create(form)
+  return 'error' in result
+    ? { error: result.error, savedId: null }
+    : { error: null, savedId: result.boardId }
+}
+
+export async function saveBoardInPlace(
+  _previous: BoardDrawerState,
+  form: FormData,
+): Promise<BoardDrawerState> {
+  const error = await save(form)
+  return { error, savedId: error === null ? String(form.get('boardId') ?? '') : null }
+}
+
 /**
- * Unarchive a board from its own page's Archived banner (`20-feature-boards-and-statuses.md` rule
- * 13). Org Admin only, which is the API's to enforce; the banner only offers it to one.
+ * Archive or unarchive, once the screen has asked for confirmation. Both answer 204 whether or not
+ * anything changed, so a second click from a stale page is harmless.
  */
-export async function unarchiveBoard(boardId: string): Promise<BoardFormState> {
+export async function setBoardArchived(
+  boardId: string,
+  archived: boolean,
+): Promise<{ error: string | null }> {
   try {
-    await apiPost(apiPath`/boards/${boardId}/unarchive`)
+    await apiPost(
+      archived ? apiPath`/boards/${boardId}/archive` : apiPath`/boards/${boardId}/unarchive`,
+    )
   } catch (error) {
     return { error: refusal(error) }
   }
 
-  // The board rejoins the board lists and pickers, which the layout's sidebar count reads too.
+  // An archived board leaves the sidebar count and every board picker, not only this list.
+  revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
   revalidatePath('/', 'layout')
   return { error: null }
 }

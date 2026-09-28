@@ -25,6 +25,7 @@ export function Drawer({
   wide = false,
   footer,
   returnFocusTo,
+  focusKey,
   children,
 }: {
   open: boolean
@@ -36,6 +37,11 @@ export function Drawer({
   wide?: boolean
   footer?: ReactNode
   returnFocusTo?: HTMLElement | null
+  /**
+   * Changing it while open moves focus to the heading again, as opening does — for a drawer that
+   * swaps its content in place (view → edit), where the control that did it has just gone.
+   */
+  focusKey?: string
   children: ReactNode
 }) {
   const headingId = useId()
@@ -65,6 +71,10 @@ export function Drawer({
       if (target?.isConnected) target.focus()
     }
   }, [open])
+
+  useEffect(() => {
+    if (open && focusKey !== undefined) heading.current?.focus()
+  }, [open, focusKey])
 
   return (
     <aside

@@ -88,6 +88,7 @@ describe.skipIf(!DATABASE_URL)(
             organization_id: organizationId,
             name,
             normalized_name: name.toLowerCase(),
+            color: '#E5484D',
             created_at_utc: AT,
             updated_at_utc: AT,
           },

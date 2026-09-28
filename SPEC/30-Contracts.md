@@ -884,7 +884,7 @@ Added 2026-09-27 (`SPEC/decisions.md`), for the richer board cards. Every aggreg
 	- `statusColor`
 	- `order` integer
 	- `ideaCount` integer
-- `topTags` — at most three `{ name, ideaCount }`, the tags on the most of the board's ideas; ordered by `ideaCount` descending, then `name` ascending (case-insensitive). Empty when no idea is tagged.
+- `topTags` — at most three `{ name, ideaCount }`, the tags on the most of the board's ideas; ordered by `ideaCount` descending, then `name` ascending (case-insensitive). Empty when no idea is tagged. **Added 2026-09-28:** each item also carries `color` (`#RRGGBB`, the tag's colour — "Tag Contracts" below).
 - `tagCount` integer — distinct tags across the board's ideas
 
 Example item:
@@ -1004,6 +1004,18 @@ Success response `200` paged item shape:
 - `commentCount` integer
 - `authorUserId`
 - `createdAtUtc`
+
+Added 2026-09-28 (comp R, `SPEC/decisions.md` 2026-09-28):
+- `tags` array — the same tags as `tagNames`, in the same order, each `{ tagId, name, color }`, so a
+  card can colour its chips without a second request. `tagNames` stays, unchanged, for every client
+  written before it.
+- `effort` string or `null`: `Low`, `Medium`, `High` — the idea's effort, for the effort bar on idea
+  cards and rows, which shows whenever it is set (answered 2026-09-28). The delivery card already
+  carried `effort`; it is the same field.
+
+Because `GET /api/v1/organizations/{organizationId}/ideas` and the delivery card
+(`GET /api/v1/organizations/{organizationId}/delivery`) reuse this item shape, both carry `tags`,
+and the organization list carries `effort`.
 
 ### `GET /api/v1/organizations/{organizationId}/ideas`
 Purpose: Cross-board, organization-scoped idea list for the global `/ideas` page (`SPEC/20-feature-client-ui-revisions.md` "Ideas Page"). Scoped to the caller's organization.
@@ -1178,9 +1190,18 @@ Success response `200`:
 - `statusId`
 - `statusName`
 - `tagNames`
+- `tags` array of `{ tagId, name, color }`, in `tagNames` order (added 2026-09-28)
 - `mentions`
 - `comments` array using the comment item shape from `GET /api/v1/ideas/{ideaId}/comments`, every comment on the idea in chronological order and unpaged
 - `fieldValues` array of resolved User-Defined Field values (`fieldDefinitionId`, `fieldName`, `fieldType`, `value`), per `SPEC/20-feature-user-defined-fields.md`
+- `formFields` array — the idea's own effective fields, for editing it: resolved from its Idea Type
+  even when that type is archived, in form order. Each item is the `effectiveFields` item shape
+  above plus `value`, the stored value in the form the write accepts (`true`/`false` for
+  `Boolean`, option ids — comma-separated for `MultiSelect` — for choice fields, `YYYY-MM-DD` for
+  `Date`), or `null` when unset. An option the idea stores that the field no longer offers is
+  still listed in that item's `options`, with `isArchived: true`, so an unchanged save keeps it.
+  Options are hard-deleted, so such an option's `label` falls back to its `optionId`.
+  `fieldValues` stays as the display projection (labels, `Yes`/`No`). Added 2026-09-27.
 - `upvoteCount`
 - `hasUpvoted` boolean for the current caller
 - `commentCount` integer
@@ -1294,6 +1315,34 @@ id is a field-keyed validation failure keyed `sprintId`, exactly as an unknown `
 
 Cross-organization access answers `404` throughout, never `403` — confirming that a sprint, Issue or
 task exists in somebody else's organization is the thing a prober is fishing for.
+
+**Comp R's Sprint board and Roadmap (2026-09-28) — what these contracts do and do not cover.**
+`SPEC/20-feature-issues-and-delivery.md` "Comp R iteration" is the screen spec.
+- **The Sprint board needs nothing new.** Its strip is derived from the sprint item and the delivery
+  cards (`issueCount`/`doneCount`, the window, days past end in the viewer's calendar); moving uses
+  `PUT /ideas/{ideaId}/delivery-status`; *Complete sprint* uses
+  `POST /organizations/{organizationId}/sprints/{sprintId}/complete`; the effort bar reads the card's
+  `effort`; tag chips read the card's `tags` (added above).
+- **Gap: issue keys.** Comp R labels Issues `IDE-01`; there is no key or reference field anywhere in
+  this document and none is added (see `GET /api/v1/ideas/{ideaId}`, "no `reference` field").
+- **Plan next sprint** uses the existing `POST /organizations/{organizationId}/sprints`, and **Start
+  sprint** the existing `POST /organizations/{organizationId}/sprints/{sprintId}/start` — nothing new.
+- **The Issue drawer** reads the delivery card, `GET /ideas/{ideaId}` and `GET /ideas/{ideaId}/tasks`;
+  for a deep link, and for `/delivery/issues/{ideaId}`, the card comes from the **one addition**,
+  `GET /api/v1/ideas/{ideaId}/delivery` (added 2026-09-28, below).
+- **The Roadmap in Sprint 11 needs nothing new either**: its sprint rows read
+  `GET /organizations/{organizationId}/sprints`, and its empty state counts delivery cards.
+- **Gap, for a later sprint: Outcomes and the roadmap read** (answered 2026-09-28: Sprint 11 builds
+  the screen, not the backend). The Slice 2 routes remain absent. When they are written here, the
+  Roadmap as comp R draws it needs, beyond the routes `20-feature-issues-and-delivery.md` already
+  lists: an Outcome `color` (any `#RRGGBB`, as for tags, with the bar label's contrast computed —
+  see the Outcome entity); a roadmap read that returns **every** Outcome with its window, colour,
+  derived counts, derived sprint span and grouped Issues (title, delivery status, effort, assignees)
+  in one request, with **no** `granularity` parameter (the client draws Weeks, Months or Quarters);
+  and a way for the Outcome form to set the grouping of several Issues in one save (either
+  `issueIds` on the Outcome write or one `PUT /ideas/{ideaId}/outcomes` per change — that slice
+  decides and writes it here). The `outcomes.color` column comes with that slice's own schema
+  amendment.
 
 **A Site Admin acting directly is refused every mutation here with `403`**, and reads it all with
 `200`. Promotion, delivery status, sprint management and tasks are organization content under
@@ -1412,6 +1461,27 @@ Success response `200`: an **unpaged** array (a sprint is a bounded, human-sized
 Error responses:
 - `401` caller is not authenticated
 - `404` the organization does not exist or is outside caller scope
+
+### `GET /api/v1/ideas/{ideaId}/delivery`
+Added 2026-09-28 (the user's decision; `SPEC/decisions.md` 2026-09-28). Purpose: one Issue's
+delivery card, for the Issue drawer's deep link and `/delivery/issues/{ideaId}`. Until now the only
+way to read one was to list every sprint and the backlog and search them.
+
+Like every route in this section it addresses the idea by its `{ideaId}`: an Issue is the `ideas`
+row in its `Delivery` phase, not a new resource.
+
+Authorization: the same as `GET /api/v1/organizations/{organizationId}/delivery` — every member of
+the Issue's organization, `Read Only` included; a Site Admin reads it directly.
+
+Success response `200`: exactly one item of the delivery card shape from
+`GET /api/v1/organizations/{organizationId}/delivery` (the board idea item plus `phase`, `effort`,
+`deliveryStatus`, `sprint`, `taskSummary`, `provenance`, and since 2026-09-28 `tags`), composed by
+the same code, so the card cannot differ between the list and this read.
+
+Error responses:
+- `401` caller is not authenticated
+- `404` no such idea; the idea is soft-deleted; it is in `Discovery` (not an Issue); or it is outside
+  caller scope — never `403`, as throughout this section. A malformed id is `404` too.
 
 ## Sprint Contracts
 
@@ -1675,6 +1745,19 @@ Success response `200` item shape:
 - `name` string, max 100 characters
 - `sortOrder` integer
 - `isDeleted` boolean
+- `effectiveFields` array — the custom fields an idea of this type shows, in form order, resolved by
+  the effective-field rule (`SPEC/20-feature-idea-type-fields.md` "Effective-field resolution"). An
+  archived type (returned under `includeDeleted=true`) resolves the same way. Item shape:
+  - `fieldDefinitionId` GUID string
+  - `name` string
+  - `fieldType` one of `Text`, `Number`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`, `Url`
+  - `isRequired` boolean — required for this type, not the field's global flag
+  - `options` array of `{ optionId, label }` in display order; empty for a field that is not
+    `Dropdown` or `MultiSelect`
+
+`effectiveFields` was added 2026-09-27 so the idea form stops re-deriving the rule in the browser,
+where it could drift from the validator (`SPEC/decisions.md` 2026-09-27, "The API sends the custom
+field list").
 
 ### `POST /api/v1/organizations/{organizationId}/idea-types`
 Purpose: Create an Idea Type option. Site Admin and in-scope Org Admin only.
@@ -1759,6 +1842,136 @@ Success response `200`:
 Rules:
 - matching is case-insensitive by normalized tag prefix
 - suggestions are organization-scoped
+
+### Tag colour and management (added 2026-09-28)
+
+Comp R gives every tag a colour and adds Settings → Tags (`SPEC/20-feature-ideas-and-engagement.md`
+"Tags" rules 9–15; `SPEC/decisions.md` 2026-09-28). The autocomplete above is **unchanged**: it
+still answers bare names, because the idea form's tag field only needs names.
+
+**Colour.** `color` is **any** `#RRGGBB` string (answered 2026-09-28: the palette plus a custom
+colour) — the same six-hex-digit format rule the status, business impact and idea type colours
+follow (`^#[0-9a-fA-F]{6}$`), stored and returned in upper case. Anything else is a `400` keyed
+`color`, `"Color must be a valid #RRGGBB color."` The ten palette values — `#E5484D`, `#F5A524`,
+`#3FB86B`, `#2F9E8F`, `#5CC8E0`, `#6B9BF2`, `#B08CF5`, `#E879A6`, `#A87B2F`, `#94A3B8` — are what
+the picker offers first and what random colours are drawn from; the API gives them no other
+privilege. **Every tag created without a colour gets a random palette colour** — the
+management create below when `color` is absent, and every tag created inline by
+`POST /api/v1/boards/{boardId}/ideas`, `PUT /api/v1/ideas/{ideaId}` or CSV import. The server picks
+it, from an injected random source.
+
+Tag item shape (the list, create and update below):
+- `tagId`
+- `name` — as stored (trimmed; case preserved)
+- `color`
+- `ideaCount` integer — live (not soft-deleted) ideas carrying the tag, **both phases**
+- `boards` array of `{ boardId, name }`, the boards those ideas are on, ordered by `name`
+  (case-insensitive); archived boards included
+- `createdAtUtc`
+- `createdBy` — `{ userId, displayName }`, or `null`, as on the board list item
+
+A Site Admin acting directly is refused every mutation below with `403` (the guard already lists
+tags) and reads with `200`; View As is the path. Cross-organization access answers `404`.
+
+#### `GET /api/v1/organizations/{organizationId}/tags/catalog`
+Purpose: Every tag in the organization, for Settings → Tags and for any tag filter that needs the
+full set (the Ideas screen's Tags filter has had to assemble its options from other reads — slice
+102's recorded deviation).
+
+Authorization: every member of the organization, `Read Only` included. **Kept member-readable on
+purpose (2026-09-28)**, although Settings → Tags itself is Org Admins' only: the Ideas screen's
+**Tags filter** is used by every role and needs the organization's full tag set with colours —
+today it assembles its options from the boards' top tags, the rows in view and a typeahead, so a tag
+that is on none of those cannot be picked (slice 102's recorded deviation). Scoping this read to
+admins would leave that defect in place for members. It exposes nothing a member cannot already see:
+every idea in the organization is visible to its members, and with it every tag's name, colour,
+usage and board.
+
+Success response `200`: an **unpaged** array of the tag item shape (tags are a small configuration
+collection, per "Collection Conventions"), ordered by `name` ascending (case-insensitive). The counts
+and board lists are computed with a fixed number of grouped queries for the whole list, never one
+query per tag.
+
+The drawer's *Used on* list is not a new read: it is
+`GET /api/v1/organizations/{organizationId}/ideas?tag={name}` with its existing paging.
+
+Error responses:
+- `401` caller is not authenticated
+- `404` the organization does not exist or is outside caller scope
+
+#### `POST /api/v1/organizations/{organizationId}/tags`
+Purpose: Add a tag in advance of use.
+
+Authorization: in-scope Org Admin.
+
+Request body:
+- `name` required string — trimmed; 1–100 characters
+- `color` optional — see *Colour*; absent **or `null`** means a random palette colour
+
+Success response `201`: the tag item shape (`ideaCount` `0`, `boards` empty).
+
+Error responses:
+- `400` keyed `name`: missing or blank — `"Tag name is required."`; over 100 characters — `"Tag must
+  be 100 characters or fewer."`; matches an existing tag's normalized name — `"A tag with this name
+  already exists."`. Keyed `color`: invalid — `"Color must be a valid #RRGGBB color."`
+- `401` caller is not authenticated
+- `403` caller is not an in-scope Org Admin, or is a Site Admin acting directly
+- `404` the organization does not exist or is outside caller scope
+
+A concurrent create of the same normalized name answers the same field-keyed `400` to the loser
+(the unique index `ux_tags_organization_id_normalized_name` decides), not a `500`; so does a
+concurrent `PUT` rename onto a name another request has just taken. This differs from
+inline creation while tagging an idea, which merges (ideas rule 7), because here the caller asked
+for a new tag by name and should learn it exists.
+
+#### `PUT /api/v1/tags/{tagId}`
+Purpose: Rename or recolour a tag.
+
+Authorization: in-scope Org Admin.
+
+Request body:
+- `name` required string — trimmed; 1–100 characters
+- `color` optional — absent **or `null`** leaves the stored colour alone (like the `description`
+  rule on `PUT /api/v1/boards/{boardId}`, except that `null` does not clear: a tag always has a
+  colour)
+
+Behavior:
+- a rename takes effect on every idea carrying the tag, since ideas reference the tag's id
+- renaming onto **another** tag's normalized name is refused — there is no merge; a case-only rename
+  of the same tag is allowed (its normalized name does not change)
+- when the name changes, writes one `TagRenamed` audit event (`entityType` `Tag`, `entityId` the tag
+  id; metadata `tagId`, `oldName`, `newName`, `ideaCount` — the ideas carrying it). A colour-only
+  change writes none. No per-idea event, no idea's `updatedAtUtc` changes, no notification
+  (ideas rule 15; decided by the user 2026-09-28)
+
+Success response `200`: the tag item shape.
+
+Error responses:
+- `400` as for create, keyed `name` or `color`, including the concurrent-duplicate case above
+- `401` caller is not authenticated
+- `403` caller is not an in-scope Org Admin, or is a Site Admin acting directly
+- `404` the tag does not exist or belongs to another organization
+
+#### `DELETE /api/v1/tags/{tagId}`
+Purpose: Delete a tag and remove it from every idea.
+
+Authorization: in-scope Org Admin.
+
+Behavior:
+- removes **every** `idea_tags` row for the tag — both phases, archived boards and soft-deleted
+  ideas included, since `FK_idea_tags_tags_tag_id` has no cascade and the delete would otherwise
+  fail — and deletes the tag, in one transaction. A hard delete: there is no soft-delete or
+  restore. An idea's `updatedAtUtc` is **not** touched; its content did not change, its labels did.
+- writes one `TagDeleted` audit event (`entityType` `Tag`, `entityId` the tag id; metadata `tagId`,
+  `name`, `ideaCount` — the live ideas it was removed from). No per-idea event, no notification
+  (ideas rule 15; decided by the user 2026-09-28)
+
+Success response `204 No Content`.
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is not an in-scope Org Admin, or is a Site Admin acting directly
+- `404` the tag does not exist or belongs to another organization
 
 ## Comment Contracts
 

@@ -8,7 +8,12 @@ import type {
 } from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
 import type { PageRequest, SortDirection } from '../common/index.js'
-import type { IdeaFieldValueFilter, IdeaFieldValueWrite, IdeaPage } from './models.js'
+import type {
+  IdeaFieldValueFilter,
+  IdeaFieldValueWrite,
+  IdeaFormFieldDto,
+  IdeaPage,
+} from './models.js'
 
 // Persistence --------------------------------------------------------------------------------
 
@@ -276,11 +281,14 @@ export interface UsersPort {
 export type TagSummary = {
   readonly id: string
   readonly name: string
+  readonly color: string
 }
 
 export type GetOrCreateTagsInput = {
   readonly organizationId: string
   readonly requestedNames: readonly string[]
+  /** Called once per tag actually created, for its colour (Tags rule 10). */
+  readonly pickNewTagColor: () => string
   readonly nowUtc: Date
   readonly actorUserId: string | null
 }
@@ -368,11 +376,14 @@ export type ImportCellTranslation =
 export interface IdeaFieldValuesPort {
   /** Resolves the effective/required fields for `ideaTypeId` and validates + normalizes
    * `submitted` against them, throwing the kernel's `ValidationError` (field-name-keyed) on any
-   * problem. Mirrors `IdeaTypeFieldResolver.ResolveEffectiveFields` + `FieldValueValidator.Validate`. */
+   * problem. Mirrors `IdeaTypeFieldResolver.ResolveEffectiveFields` + `FieldValueValidator.Validate`.
+   * `stored` is the idea's current values on an edit, so an option it already holds may be kept
+   * after the field stops offering it; absent on create. */
   resolveAndValidate(input: {
     organizationId: string
     ideaTypeId: string
     submitted: readonly IdeaFieldValueWrite[]
+    stored?: readonly { fieldDefinitionId: string; value: string }[]
   }): Promise<readonly IdeaFieldValueInput[]>
 
   /** The field-definition ids `ideaTypeId` currently resolves to - the reconcile scope passed to
@@ -395,6 +406,14 @@ export interface IdeaFieldValuesPort {
     ideaTypeId: string
     stored: readonly { fieldDefinitionId: string; value: string }[]
   }): Promise<readonly IdeaFieldValueView[]>
+
+  /** The idea's effective fields for the edit form, resolved from its type even when that type is
+   * archived, each carrying its stored value in write format (SPEC/30-Contracts.md `formFields`). */
+  describeFormFields(input: {
+    organizationId: string
+    ideaTypeId: string
+    stored: readonly { fieldDefinitionId: string; value: string }[]
+  }): Promise<readonly IdeaFormFieldDto[]>
 
   /** Translates the raw `fieldFilters[<id>]=<value>` map into typed predicates per each field's
    * type (T059), silently dropping unknown ids, blank values, and values that don't parse for

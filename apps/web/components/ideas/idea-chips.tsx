@@ -1,6 +1,6 @@
-import { Avatar, Dot, Marker, Tag } from '@collega/design-system'
+import { Avatar, Dot, Marker, TagChip } from '@collega/design-system'
 import { PRIORITY_COLORS } from '@/lib/display'
-import type { PersonRef, Priority } from '@/lib/types'
+import type { PersonRef, Priority, TagRef } from '@/lib/types'
 
 /** The markers an idea row, card and drawer share. Each dot has its label beside it. */
 
@@ -22,14 +22,16 @@ export function PriorityMarker({ priority }: { priority: Priority }) {
   )
 }
 
-/** The first `max` tags, and `+N` naming the rest for assistive technology. */
-export function TagList({ tags, max = 3 }: { tags: readonly string[]; max?: number }) {
+/** The first `max` tags in their colours, and `+N` naming the rest for assistive technology. */
+export function TagList({ tags, max = 3 }: { tags: readonly TagRef[]; max?: number }) {
   if (tags.length === 0) return null
-  const hidden = tags.slice(max)
+  const hidden = tags.slice(max).map((tag) => tag.name)
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
       {tags.slice(0, max).map((tag) => (
-        <Tag key={tag}>{tag}</Tag>
+        <TagChip key={tag.id} color={tag.color}>
+          {tag.name}
+        </TagChip>
       ))}
       {hidden.length > 0 ? (
         <span className="text-xs text-muted-foreground" title={hidden.join(', ')}>

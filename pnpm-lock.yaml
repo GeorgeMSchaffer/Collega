@@ -376,6 +376,22 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
+  tools/prompt-eval:
+    dependencies:
+      '@collega/application':
+        specifier: workspace:*
+        version: link:../../packages/application
+      '@collega/infrastructure':
+        specifier: workspace:*
+        version: link:../../packages/infrastructure
+    devDependencies:
+      '@types/node':
+        specifier: 26.4.1
+        version: 26.4.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
 packages:
 
   '@alloc/quick-lru@5.3.0':

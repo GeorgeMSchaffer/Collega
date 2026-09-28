@@ -7,7 +7,7 @@ import { IdeaWorkspace } from '@/components/ideas/idea-workspace'
 import { loadIdeaDrawer } from '@/components/ideas/load-idea-drawer'
 import { readListState } from '@/components/list/list-state'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoardRefs, getIdeaList, getStatuses } from '@/lib/data'
+import { getBoardRefs, getIdeaList, getStatuses, getTagRefs } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, writeDenial } from '@/lib/session'
 
@@ -32,10 +32,11 @@ export default async function IdeasPage({
   const state = readListState(params, IDEAS_LIST)
   const query = toIdeaListQuery(state)
 
-  const [first, boards, statuses, drawer] = await Promise.all([
+  const [first, boards, statuses, tags, drawer] = await Promise.all([
     getIdeaList(query),
     getBoardRefs(),
     getStatuses(),
+    getTagRefs(),
     loadIdeaDrawer(params, roleDenial === null),
   ])
 
@@ -74,7 +75,7 @@ export default async function IdeasPage({
           total={ideas.totalCount}
           boards={boards}
           statuses={statuses}
-          organizationId={user.organizationId}
+          tags={tags}
           board={null}
           drawer={drawer}
         />

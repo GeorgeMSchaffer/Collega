@@ -32,7 +32,13 @@ import {
   updateIdeaContent,
 } from '@collega/domain/ideas'
 import { normalizeTagName } from '@collega/domain/tags'
-import type { AuditEventWriter, Clock, CurrentUserContext, UnitOfWork } from '../common/index.js'
+import type {
+  AuditEventWriter,
+  Clock,
+  CurrentUserContext,
+  RandomSource,
+  UnitOfWork,
+} from '../common/index.js'
 import {
   attributeAudit,
   ConflictError,
@@ -44,6 +50,7 @@ import {
   UnauthorizedError,
   ValidationError,
 } from '../common/index.js'
+import { randomTagColor } from '../tags/random-color.js'
 import type {
   AssignIssueToSprintCommand,
   ChangeDeliveryStatusCommand,
@@ -64,6 +71,7 @@ import type {
   IdeaListItem,
   IdeaListQuery,
   IdeaPage,
+  IdeaTagDto,
   IssueProvenance,
   MentionDto,
   OrganizationIdeaListQuery,
@@ -132,6 +140,7 @@ export class IdeaService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly random: RandomSource,
   ) {}
 
   async listByBoard(boardId: string, query: IdeaListQuery): Promise<IdeaPage<IdeaListItem>> {
@@ -414,6 +423,7 @@ export class IdeaService {
         organizationId: idea.organizationId,
         ideaTypeId: idea.ideaTypeId,
         submitted: command.fieldValues ?? [],
+        stored: idea.fieldValues,
       })
     }
 
@@ -769,6 +779,30 @@ export class IdeaService {
     })
 
     return this.projectDeliveryCards(organizationId, ideas)
+  }
+
+  /**
+   * One Issue's delivery card, composed by `projectDeliveryCards` like the list's, so the two
+   * cannot differ. Readable as the list is. A missing, soft-deleted, Discovery-phase or
+   * out-of-scope idea is a 404 - never 403, as throughout delivery.
+   */
+  async getDelivery(ideaId: string): Promise<DeliveryCard> {
+    this.requireAuthenticatedRole()
+
+    const idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+    if (idea.phase !== IdeaPhase.Delivery) {
+      throw new NotFoundError('Idea not found.')
+    }
+
+    const [card] = await this.projectDeliveryCards(idea.organizationId, [idea])
+    if (!card) {
+      throw new NotFoundError('Idea not found.')
+    }
+    return card
   }
 
   async delete(ideaId: string): Promise<void> {
@@ -1181,6 +1215,8 @@ export class IdeaService {
       dueDate: idea.dueDate,
       assignees: this.projectAssignees(idea, userLookup),
       tagNames: this.projectTagNames(idea, tagLookup),
+      tags: this.projectTags(idea, tagLookup),
+      effort: idea.effort,
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
       upvoteCount: upvoteCounts.get(idea.id) ?? 0,
@@ -1231,7 +1267,6 @@ export class IdeaService {
         {
           ...card,
           phase: idea.phase,
-          effort: idea.effort,
           deliveryStatus: idea.deliveryStatus,
           sprint: sprint
             ? {
@@ -1319,6 +1354,11 @@ export class IdeaService {
       ideaTypeId: idea.ideaTypeId,
       stored: idea.fieldValues,
     })
+    const formFields = await this.fieldValues.describeFormFields({
+      organizationId: idea.organizationId,
+      ideaTypeId: idea.ideaTypeId,
+      stored: idea.fieldValues,
+    })
 
     const mentions: readonly MentionDto[] = mentionUserIds.flatMap((id) => {
       const user = userLookup.get(id)
@@ -1370,12 +1410,14 @@ export class IdeaService {
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
       tagNames: this.projectTagNames(idea, tagLookup),
+      tags: this.projectTags(idea, tagLookup),
       mentions,
       comments: commentDtos,
       upvoteCount,
       hasUpvoted: upvoted.has(idea.id),
       commentCount,
       fieldValues,
+      formFields,
       author: this.projectAuthor(idea, userLookup),
       createdAtUtc: idea.createdAtUtc,
     }
@@ -1481,12 +1523,20 @@ export class IdeaService {
     idea: Idea,
     tagLookup: ReadonlyMap<string, TagSummary>,
   ): readonly string[] {
+    return this.projectTags(idea, tagLookup).map((tag) => tag.name)
+  }
+
+  /** `tagNames`' order, which is what the contract pins `tags` to. */
+  private projectTags(
+    idea: Idea,
+    tagLookup: ReadonlyMap<string, TagSummary>,
+  ): readonly IdeaTagDto[] {
     return idea.tagIds
       .flatMap((id) => {
         const tag = tagLookup.get(id)
-        return tag ? [tag.name] : []
+        return tag ? [{ tagId: tag.id, name: tag.name, color: tag.color }] : []
       })
-      .sort(compareIgnoreCase)
+      .sort((a, b) => compareIgnoreCase(a.name, b.name))
   }
 
   // Resolution helpers -----------------------------------------------------------------------
@@ -1574,6 +1624,7 @@ export class IdeaService {
     const tags = await this.tags.getOrCreate({
       organizationId,
       requestedNames: distinctNormalized,
+      pickNewTagColor: () => randomTagColor(this.random),
       nowUtc,
       actorUserId,
     })

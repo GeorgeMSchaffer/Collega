@@ -9,7 +9,7 @@ function Check() {
       viewBox="0 0 20 20"
       fill="currentColor"
       aria-hidden="true"
-      className="mt-px shrink-0 text-[var(--sky)]"
+      className="mt-px shrink-0 text-primary-foreground/70"
     >
       <path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z" />
     </svg>
@@ -28,13 +28,13 @@ export function AuthPitch({
 }) {
   return (
     <div className="hidden flex-col justify-center bg-primary px-14 py-16 text-primary-foreground lg:flex">
-      <div className="mb-6 flex size-9 items-center justify-center rounded-md bg-white/15 text-xs font-bold">
+      <div className="mb-6 flex size-9 items-center justify-center rounded-md bg-primary-foreground/15 text-xs font-bold">
         CG
       </div>
-      <h2 className="mb-4 max-w-[17ch] text-2xl font-semibold tracking-tight text-white">
+      <h2 className="mb-4 max-w-[17ch] text-2xl font-semibold tracking-tight text-primary-foreground">
         {heading}
       </h2>
-      <div className="mb-6 max-w-[48ch] text-base leading-relaxed text-white/80 [&_p]:m-0">
+      <div className="mb-6 max-w-[48ch] text-base leading-relaxed text-primary-foreground/80 [&_p]:m-0">
         {children}
       </div>
       {points ? (
@@ -42,7 +42,7 @@ export function AuthPitch({
           {points.map((point, i) => (
             // Static copy in source order; there is no id to key on and the list never reorders.
             // biome-ignore lint/suspicious/noArrayIndexKey: fixed, non-reordering static list
-            <li key={i} className="flex items-start gap-2.5 text-[15px] leading-snug text-white/90">
+            <li key={i} className="flex items-start gap-2.5 text-[15px] leading-snug">
               <Check />
               <span>{point}</span>
             </li>

@@ -10,7 +10,7 @@ import { IdeaWorkspace } from '@/components/ideas/idea-workspace'
 import { loadIdeaDrawer } from '@/components/ideas/load-idea-drawer'
 import { readListState } from '@/components/list/list-state'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoard, getBoardIdeaList } from '@/lib/data'
+import { getBoard, getBoardIdeaList, getTagRefs } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { boardAdminDenial, currentUser, writeDenial } from '@/lib/session'
 
@@ -60,8 +60,9 @@ export default async function BoardPage({
   const state = readListState(query, BOARD_LIST)
   const listQuery = toIdeaListQuery(state)
 
-  const [first, drawer] = await Promise.all([
+  const [first, tags, drawer] = await Promise.all([
     getBoardIdeaList(board.id, listQuery),
+    getTagRefs(),
     loadIdeaDrawer(query, authorDenial === null),
   ])
 
@@ -88,7 +89,7 @@ export default async function BoardPage({
             variant="outline"
           >
             <Link
-              href={`/settings/boards/${board.id}`}
+              href={`/boards?board=${encodeURIComponent(board.id)}&mode=edit`}
               className={buttonVariants({ variant: 'outline' })}
             >
               Edit board
@@ -130,9 +131,9 @@ export default async function BoardPage({
         <IdeaWorkspace
           rows={ideas.ideas}
           total={ideas.totalCount}
-          boards={[{ id: board.id, name: board.name, isArchived: board.isArchived, topTags: [] }]}
+          boards={[{ id: board.id, name: board.name, isArchived: board.isArchived }]}
           statuses={board.lanes}
-          organizationId={user.organizationId}
+          tags={tags}
           board={{
             id: board.id,
             name: board.name,

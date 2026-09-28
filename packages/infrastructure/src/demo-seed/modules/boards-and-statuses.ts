@@ -65,16 +65,18 @@ export const boardsAndStatusesSeed: SeedModule = {
           },
         })
 
-        // Every board carries all five statuses, in catalog order.
+        // Every board carries all five statuses, in catalog order. Keyed on (board, status), not
+        // the seed id: saving a board's lanes rewrites their rows under fresh ids, and an upsert by
+        // id would then collide with ux_board_swimlanes_board_id_status_id.
         for (const [index, status] of DEFAULT_STATUSES.entries()) {
-          const swimlaneId = seedId('swimlane', scenario.slug, board.name, status.name)
+          const statusId = seedId('status', scenario.slug, status.name)
           await prisma.board_swimlanes.upsert({
-            where: { id: swimlaneId },
+            where: { board_id_status_id: { board_id: boardId, status_id: statusId } },
             update: {},
             create: {
-              id: swimlaneId,
+              id: seedId('swimlane', scenario.slug, board.name, status.name),
               board_id: boardId,
-              status_id: seedId('status', scenario.slug, status.name),
+              status_id: statusId,
               display_order: index,
             },
           })

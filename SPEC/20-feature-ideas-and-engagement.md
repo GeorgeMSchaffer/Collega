@@ -108,6 +108,7 @@ Users can create, discuss, organize, and support ideas within their organization
 - To support assignee selection and mention lookup, any authenticated caller scoped to an organization (User and Read Only included, not only admins) can read a minimal list of its active members — id, name, and email only — via `GET /organizations/{organizationId}/members`. This is deliberately narrower than the admin user listing (`GET /organizations/{organizationId}/users`), which exposes roles, status filters, and full user administration and remains Org-Admin+. Callers outside the organization receive a 404.
 - Idea deletion generates an audit event.
 - Read Only cannot edit or delete idea content.
+- Adding a tag in advance, and renaming, recolouring or deleting a tag, is an in-scope Org Admin's (Site Admin through View As) — Tags, "Who administers tags" (added 2026-09-28).
 - User can update idea status for any idea on a board if allowed by board configuration.
 
 ## Site Admin Organization Context
@@ -124,6 +125,63 @@ Users can create, discuss, organize, and support ideas within their organization
 6. Tags are trimmed, compared case-insensitively, and must be unique within an organization.
 7. If concurrent saves attempt to create the same normalized tag, the system merges them into a single tag.
 8. An idea can have no more than 10 distinct tags. Duplicate normalized names in one request are treated as one tag.
+
+**Colour and administration (added 2026-09-28, comp R; `decisions.md` 2026-09-28).**
+
+9. **Every tag has a colour**, stored on the tag as `#RRGGBB`. The picker offers a palette of ten —
+   `#E5484D`, `#F5A524`, `#3FB86B`, `#2F9E8F`, `#5CC8E0`, `#6B9BF2`, `#B08CF5`, `#E879A6`,
+   `#A87B2F`, `#94A3B8` — **and a Custom input for any `#RRGGBB`** (answered 2026-09-28). Any valid
+   six-digit colour is accepted, because the chip computes its text colour per theme to clear 4.5:1
+   whatever the colour is (`20-feature-client-ui.md` "Tag colours and the effort bar").
+10. **A new tag gets a random palette colour**, whether it was created inline while tagging an idea
+    (rule 5) or in Settings → Tags without choosing one. The random source is injected, so tests fix
+    it. Tags that existed before 2026-09-28 are given a colour by the migration: the palette colour
+    at index `get_byte(decode(md5(normalized_name), 'hex'), 0) % 10`, counting rule 9's palette in
+    its listed order from 0. The backfill is therefore repeatable, and the demo seed computes the
+    same index in `node:crypto` (first byte of the MD5 digest of the normalized name, modulo 10).
+11. **Settings → Tags** (`/settings/tags`) manages the organization's tags on the list and detail
+    pattern (`20-feature-client-ui.md`): a List view only, with columns **Tag** (the coloured chip,
+    which opens the drawer), **Ideas** (how many live ideas carry it, both phases), **Boards** (the
+    boards those ideas are on) and **Created** (date and who); a text filter over the name and a
+    **Usage** filter (*Used*, *Unused*); every column sorts; paging per the pattern, in the client,
+    since tags are a small configuration collection. Page header: *Tags*, *Labels for ideas on every
+    board. A new tag gets a colour from the palette at random; an admin can change it here, or add
+    tags before anyone uses them.*, and **Add New Tag**. Row actions **View**, **Edit**, **Delete**.
+12. **The tag drawer.** *View*: the chip at a larger size; facts Ideas, Colour (swatch and hex),
+    Created, By; and **Used on**, the ideas carrying it (title, which opens that idea, and its
+    board), or *Not used yet. It will be offered when anyone tags an idea.* Footer: Edit, Delete.
+    *Create and edit*: **Tag** (required, up to 100 characters, hint *Up to 100 characters. Tags are
+    matched without regard to case.*), **Colour** (the palette as a radio group of swatches, each
+    named by its hex for assistive technology; on create one is preselected at random, rule 10),
+    then a labelled **Custom** colour input — choosing it clears the swatch selection, choosing a
+    swatch sets it — and a live **Preview** chip in the current theme. Footer: Cancel and *Create
+    tag* / *Save changes*.
+13. **Adding a tag in advance** creates it unused; it is offered by autocomplete like any other
+    (rule 4). Its name follows rules 3 and 6; a name that matches an existing tag
+    case-insensitively is refused on the field — *A tag with this name already exists.*
+14. **Editing** changes the name, the colour or both. A rename applies on every idea that carries
+    the tag at once, since ideas reference the tag, not its text. Renaming onto another tag's
+    normalized name is refused as in rule 13; there is no merge. A case-only rename of the same tag
+    is allowed.
+15. **Deleting** a tag asks for confirmation — *Delete this tag? "{name}" is removed from N ideas.
+    Anyone who types it again creates a new tag.* — then removes it from every idea that carries
+    it, in either phase and on archived boards too, and deletes the tag. It cannot be undone.
+    **A rename and a delete each write one audit event** (decided by the user, 2026-09-28):
+    `TagRenamed` and `TagDeleted`, recording the tag's id, its old and new name (a delete records
+    the name it had) and how many ideas it was on. The ideas themselves are not touched — no
+    per-idea event, and no idea's `updatedAtUtc` changes. A colour-only edit and adding a tag in
+    advance write no event. No tag change sends a notification.
+
+**Who administers tags (added 2026-09-28).** The rules above never named an administrator: rule 2
+lets anyone who can edit ideas *create* tags, and nothing let anyone rename, recolour or delete one.
+Adding Settings → Tags follows the other organization configuration screens (statuses, idea types,
+custom fields): **an in-scope Org Admin** adds in advance, edits and deletes; a **Site Admin** does
+so only through View As (tags are organization content, `20-feature-view-as.md` rules 25–25b; the
+contract's Site Admin guard already lists tags) and otherwise reads. Creating a tag inline while
+tagging an idea (rule 2) is unchanged and open to every role that may edit the idea. **Settings →
+Tags is Org Admins' only** (answered 2026-09-28): a Site Admin sees it read-only, and Users and Read
+Only accounts do not see it — the Settings hub shows a member only Profile. Members still read every
+tag's name and colour where tags appear (chips, the Ideas Tags filter).
 
 ## Mentions
 1. Users can mention other users in their organization using the `@` trigger and an email-based lookup.

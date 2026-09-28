@@ -205,6 +205,6 @@ Applies to Organizations, Users, Ideas, Boards, and any future entity list page.
 - [ ] My Profile edits first and last name with immediate shell refresh, keeps email/role read-only, and provides voluntary password change.
 - [ ] Successful required and voluntary password changes clear authentication, return to Login with confirmation, and re-login lands on Dashboard.
 - [ ] The 28-minute idle warning, 30-minute expiry, Stay signed in action, absolute expiry, and cross-tab activity/logout behavior match the canonical authentication spec.
-- [ ] Native and Fluent text-like controls render at a stable 36px height with vertically centered content; textareas retain independent content-sized geometry.
+- [ ] *Superseded 2026-09-28 for the height by `20-feature-client-ui.md` "Forms and controls" (34px fields, 32px buttons):* Native and Fluent text-like controls render at a stable 36px height with vertically centered content; textareas retain independent content-sized geometry.
 - [ ] Rail and reorder/drag actions use Fluent System Icons with stable dimensions, accessible labels/tooltips, visible focus, and disabled states instead of emoji or Unicode glyphs.
 - [ ] Session, password redirect, control geometry, and icon behavior receive user manual acceptance on desktop and narrow layouts before their Bug Triage items move to `SPEC/archive/bug-triage-completed.md`.

@@ -123,7 +123,6 @@ export type IssueProvenance = {
  * sprint board can reuse the board card as the spec requires. */
 export type DeliveryCard = IdeaListItem & {
   readonly phase: IdeaPhase
-  readonly effort: EffortLevel | null
   readonly deliveryStatus: DeliveryStatus | null
   readonly sprint: IssueSprintSummary | null
   readonly taskSummary: IssueTaskSummary
@@ -249,6 +248,31 @@ export type IdeaFieldValueDto = {
   readonly value: string
 }
 
+/** One of the idea's own custom fields as the edit form needs it: the `effectiveFields` item shape
+ * plus `value`, the stored value in the form the write accepts, or `null` when unset. An option the
+ * idea stores that the field no longer offers is listed with `isArchived: true`. */
+export type IdeaFormFieldDto = {
+  readonly fieldDefinitionId: string
+  readonly name: string
+  readonly fieldType: string
+  readonly isRequired: boolean
+  readonly options: readonly IdeaFormFieldOptionDto[]
+  readonly value: string | null
+}
+
+export type IdeaFormFieldOptionDto = {
+  readonly optionId: string
+  readonly label: string
+  readonly isArchived?: true
+}
+
+/** A tag on an idea, with its colour so a chip needs no second request (added 2026-09-28). */
+export type IdeaTagDto = {
+  readonly tagId: string
+  readonly name: string
+  readonly color: string
+}
+
 export type IdeaListItem = {
   readonly ideaId: string
   readonly boardId: string
@@ -264,6 +288,9 @@ export type IdeaListItem = {
   readonly dueDate: string | null
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order. */
+  readonly tags: readonly IdeaTagDto[]
+  readonly effort: EffortLevel | null
   readonly statusId: string
   readonly statusName: string
   readonly upvoteCount: number
@@ -294,12 +321,15 @@ export type IdeaDetail = {
   readonly statusId: string
   readonly statusName: string
   readonly tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order. */
+  readonly tags: readonly IdeaTagDto[]
   readonly mentions: readonly MentionDto[]
   readonly comments: readonly IdeaCommentDto[]
   readonly upvoteCount: number
   readonly hasUpvoted: boolean
   readonly commentCount: number
   readonly fieldValues: readonly IdeaFieldValueDto[]
+  readonly formFields: readonly IdeaFormFieldDto[]
   /**
    * Who raised it, as the full persona rather than the bare `authorUserId` the list item carries:
    * the detail header renders a name, and an id there would cost a second request per idea opened.

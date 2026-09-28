@@ -2,10 +2,10 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Comp R: the interactive reference for the list and detail pattern, the themes and idea assistant v2 (2026-09-27). Self-contained; open in a browser. Seeded Acme Robotics data is inlined. -->
+<!-- Comp R: the interactive reference for the list and detail pattern, the themes (Graphite the dark one since 2026-09-28), the dense form layout, idea assistant v2, the Sprint board, the Roadmap and Settings -> Tags. Self-contained; open in a browser. Seeded Acme Robotics data is inlined. -->
 <title>Collega Portico Prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Young+Serif&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Young+Serif&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* A product prototype: each theme is one complete product palette, chosen from the prototype bar.
    Every colour the app uses is a token below, so a theme is only a block of values. */
@@ -28,11 +28,14 @@
 --pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
 --side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
 --av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
-:root[data-proto-theme="notte"]{--suggest:#86C9A0;--suggest-tint:#183228;color-scheme:dark;--bg:#0F1A1D;--ink:#E4EEF0;--ink2:#C4D3D6;--muted:#93A7AB;--line:#22343A;--line2:#2E454C;--card:#152327;--soft:#1B2C31;--rowh:#1A2A2F;--thead:#172529;--facts:#1A2A2F;
---pri:#4FB0C9;--pri-h:#6CC2D8;--pri-t:#7CCCE0;--pri-tint:#173A44;--pri-ink:#0B1417;--vote:#F2B28A;--vote-ink:#0F1A1D;--hot:#E07A63;--hot-t:#F09A85;--hot-tint:#3A211C;--ok-t:#86C9A0;--ok-tint:#183228;--warn-t:#F2B97F;--warn-tint:#37291A;
---side:#111E22;--side-ink:#C4D3D6;--side-line:#22343A;--side-hover:#18282D;--side-on:#173A44;--side-on-ink:#E4EEF0;--bar:#070D0F;--bar-ink:#C4D3D6;--tag:#173A44;--tag-ink:#9FD6E4;
---av1:#4FB0C9;--av1i:#0B1417;--av2:#F2B28A;--av2i:#0F1A1D;--av3:#A68BD1;--av3i:#0F1A1D;--av4:#7DC39C;--av4i:#0F1A1D;--shadow:0 0 0}
-:root{--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column}
@@ -247,6 +250,97 @@ td.actions,th.actions{text-align:right;white-space:nowrap;width:1%}
 
 @media (max-width:900px){.app{grid-template-columns:1fr}.side{display:none}.lanes{grid-template-columns:repeat(5,minmax(200px,1fr));overflow-x:auto}:root{--drawer:100vw;--drawer-wide:100vw}.split{grid-template-columns:1fr;grid-template-rows:minmax(240px,45%) 1fr}.chat{border-right:0;border-bottom:1px solid var(--line)}.row2{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.drawer{transition:none}.field.flash input,.field.flash textarea,.field.flash select{animation:none}.thinking i{animation:none}}
+
+/* Controls and forms (2026-09-27): 32px buttons, 34px fields, small labels with inline marks. */
+.btn{height:32px;padding:0 12px;font-size:13px;border-radius:var(--rs)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.kbd{font:500 10.5px var(--mono);color:var(--muted);border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;padding:0 5px;line-height:16px;background:var(--soft);display:inline-block}
+.btn.pri .kbd{color:inherit;background:transparent;border-color:color-mix(in srgb,currentColor 35%,transparent)}
+.field{gap:5px}
+.field>label,.field .flabel{font-size:12px;font-weight:500;color:var(--ink2)}
+.field input:not([type=checkbox]),.field select,.field textarea{min-height:34px;padding:7px 10px;font-size:13px;line-height:1.45;border-radius:var(--rs);background:var(--field)}
+.field.suggested input:not([type=checkbox]),.field.suggested textarea,.field.suggested select{border-color:var(--suggest-line);background:var(--suggest-tint)}
+.sugg{font:400 10.5px var(--mono);color:var(--suggest);background:none;padding:0;border-radius:0}
+.owntag{display:none;font:400 10.5px var(--mono);color:var(--muted)}
+.creating .field.owned .owntag{display:inline}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sol .num{font:500 11px var(--mono);color:var(--suggest);min-width:18px}
+.dfoot .left{font:500 11px var(--mono);color:var(--muted);letter-spacing:.02em}
+.chathd .count{font:500 10.5px var(--mono);color:var(--muted)}
+.msg.me{background:var(--me);color:var(--me-ink)}
+/* The assistant speaks in the suggestion hue, so its chips and controls never read as the page's own actions. */
+.chips button{border-color:var(--suggest-line);background:var(--suggest-tint);color:var(--ink);font-weight:500;border-radius:var(--rs);padding:6px 10px}
+.chips button[aria-pressed="true"]{background:color-mix(in srgb,var(--suggest) 22%,var(--suggest-tint));border-color:var(--suggest);color:var(--ink)}
+.chips button[aria-pressed="true"]::before{content:"✓ ";color:var(--suggest)}
+.spark{background:var(--suggest-tint);color:var(--suggest);border:1px solid var(--suggest-line)}
+.compose .btn.pri{background:var(--suggest);border-color:var(--suggest);color:var(--suggest-tint)}
+.row3 .field>label{white-space:nowrap}
+.row3 .sugg{font-size:0}.row3 .sugg::before{content:"✦";font-size:11px}
+@media (max-width:900px){.row3{grid-template-columns:1fr}}
+
+/* Roadmap: outcomes as rows on a timeline, then one card per outcome listing its issues. */
+.rm-meta{font:500 11px var(--mono);color:var(--muted);letter-spacing:.04em}
+.timeline{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow-x:auto;position:relative}
+.tl-grid{min-width:760px;position:relative}
+.tl-row{display:grid;grid-template-columns:260px minmax(0,1fr);align-items:center;min-height:44px;border-bottom:1px solid var(--line)}
+.tl-row:last-child{border-bottom:0}
+.tl-head{min-height:32px;font:500 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.tl-label{padding:0 16px;display:flex;align-items:center;gap:8px;font-size:13px;min-width:0}
+.tl-label button{border:0;background:none;padding:0;color:var(--ink);font:inherit;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-label button:hover{color:var(--pri-t);text-decoration:underline}
+.tl-track{position:relative;height:100%;min-height:44px}
+.tl-cols{position:absolute;inset:0;display:grid}
+.tl-cols span{border-left:1px solid color-mix(in srgb,var(--line) 70%,transparent);padding:8px 0 0 6px}
+.tl-bar{border:0;cursor:pointer;position:absolute;top:11px;height:22px;border-radius:4px;display:flex;align-items:center;padding:0 8px;font:500 10.5px var(--mono);white-space:nowrap;overflow:hidden;color:#0F1113}
+.tl-bar.planned{background:transparent!important;border:1px dashed currentColor}
+.tl-span{position:absolute;top:36px;height:2px;border-radius:1px;opacity:.7}
+.tl-today{position:absolute;top:0;bottom:0;width:1px;background:var(--pri);pointer-events:none}
+.tl-today b{position:absolute;bottom:4px;left:4px;font:500 10px var(--mono);color:var(--pri-t);letter-spacing:.06em}
+.sw{width:10px;height:10px;border-radius:2px;flex:none}
+.sw.planned{background:transparent!important;border:1.5px dashed currentColor}
+.oc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-content:start}
+.oc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.oc.wide{grid-column:span 2}
+.oc-h{display:flex;align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap}
+.oc-h h2{margin:0;font:var(--h-weight) 15px var(--display)}
+.oc-h h2 button{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer}
+.oc-h h2 button:hover{color:var(--pri-t);text-decoration:underline}
+.oc-prog{display:flex;gap:2px;width:160px;height:6px;border-radius:3px;overflow:hidden;background:var(--soft)}
+.ir{display:grid;grid-template-columns:72px minmax(0,1fr) 120px 130px 28px;align-items:center;gap:12px;min-height:34px;padding:4px 16px;font-size:13px;border-top:1px solid var(--line)}
+.ir .id{font:500 11px var(--mono);color:var(--muted)}
+.ir .eff{font:500 11px var(--mono);color:var(--muted)}
+.ir button.ttl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dstat{display:inline-flex;align-items:center;gap:6px;font-size:12px}
+.oc-empty{padding:10px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+@media (max-width:900px){.oc-grid{grid-template-columns:1fr}.oc.wide{grid-column:auto}.ir{grid-template-columns:60px minmax(0,1fr) 90px}.ir .eff,.ir .avs{display:none}}
+
+/* Effort: three segments, one to three filled for Low, Medium, High; the label always sits beside it. */
+.effbar{display:inline-flex;gap:2px;vertical-align:middle;margin-right:6px}
+.effbar i{width:10px;height:4px;border-radius:1px;background:var(--line2);display:block}
+.effbar.e1 i:nth-child(1),.effbar.e2 i:nth-child(-n+2),.effbar.e3 i{background:var(--metric)}
+
+/* Tags carry a colour (--tc); the chip mixes it with the theme so it reads in light and dark. */
+.tag{background:color-mix(in srgb,var(--tc,var(--muted)) 16%,var(--card));color:color-mix(in srgb,var(--tc,var(--muted)) 62%,var(--ink));border:1px solid color-mix(in srgb,var(--tc,var(--muted)) 30%,transparent)}
+.tag.lg{font-size:14px;padding:3px 12px}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.swatches label{position:relative;cursor:pointer}
+.swatches input{position:absolute;opacity:0;width:1px;height:1px}
+.swatches span{display:block;width:28px;height:28px;border-radius:50%;border:2px solid var(--card);box-shadow:0 0 0 1px var(--line2)}
+.swatches input:checked+span{box-shadow:0 0 0 2px var(--ink)}
+.swatches input:focus-visible+span{outline:2px solid var(--pri);outline-offset:2px}
+/* Sprint board */
+.spr{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:minmax(0,1fr) repeat(3,minmax(120px,160px))}
+.spr>div{padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+.spr>div+div{border-left:1px solid var(--line)}
+.spr dt{font:500 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.spr dd{margin:0;font:500 13px var(--mono)}
+.badge{font:500 10.5px var(--mono);border:1px solid currentColor;border-radius:4px;padding:0 6px;line-height:18px;letter-spacing:.04em}
+.badge.ok{color:var(--ok-t)}.badge.warn{color:var(--warn-t)}.badge.mute{color:var(--muted)}
+.dlanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:stretch}
+.kcard .key{font:500 11px var(--mono);color:var(--muted)}
+.kcard .eff{font:500 11px var(--mono);color:var(--muted)}
+.kcard.done{opacity:.75}
+@media (max-width:900px){.spr{grid-template-columns:1fr}.spr>div+div{border-left:0;border-top:1px solid var(--line)}.dlanes{grid-template-columns:repeat(5,minmax(200px,1fr));overflow-x:auto}}
 </style>
 
 <div class="proto" role="region" aria-label="Prototype controls">
@@ -262,16 +356,18 @@ td.actions,th.actions{text-align:right;white-space:nowrap;width:1%}
     <button class="nav" data-go="boards"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg><span>Boards</span><small id="n-boards"></small></button>
     <button class="nav" data-go="ideas"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Ideas</span><small id="n-ideas"></small></button>
     <div class="navlbl">Delivery</div>
-    <button class="nav" disabled><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h10M4 18h6"/></svg><span>Sprint board</span></button>
+    <button class="nav" data-go="sprint"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h10M4 18h6"/></svg><span>Sprint board</span></button>
     <button class="nav" disabled><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Backlog</span></button>
+    <button class="nav" data-go="roadmap"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><span>Roadmap</span></button>
     <div class="navlbl">Configure</div>
+    <button class="nav" data-go="tags"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span>Tags</span></button>
     <button class="nav" disabled><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span>Settings</span></button>
     <div class="me"><span class="av" id="me-av">OA</span><span><b id="me-name">Olivia Administer</b><small id="me-role">Org Admin</small></span></div>
   </aside>
   <div class="main">
     <div class="topbar"><span class="crumb" id="crumb"></span><span class="sp"></span>
       <label class="themepick" for="theme"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>Theme
-        <select id="theme"><optgroup label="Light"><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></optgroup><optgroup label="Dark"><option value="notte">Notte</option></optgroup></select></label></div>
+        <select id="theme"><optgroup label="Light"><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></optgroup><optgroup label="Dark"><option value="graphite">Graphite</option></optgroup></select></label></div>
     <main class="work" id="work"></main>
   </div>
 </div>
@@ -296,7 +392,7 @@ const svg = (n, c = 'i') => `<svg class="${c}" viewBox="0 0 24 24" fill="none" s
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
-const THEMES = [['terrazzo', 'Terrazzo'], ['portico', 'Portico'], ['sera', 'Piazza Sera'], ['lagoon', 'Lagoon'], ['notte', 'Notte']];
+const THEMES = [['terrazzo', 'Terrazzo'], ['portico', 'Portico'], ['sera', 'Piazza Sera'], ['lagoon', 'Lagoon'], ['graphite', 'Graphite']];
 const STATUSES = [['New / Pending', '#64748B'], ['In Review', '#D97706'], ['In Progress', '#2563EB'], ['Client Review', '#7C3AED'], ['Complete', '#16A34A']];
 const SCOLOR = Object.fromEntries(STATUSES);
 const PRIOS = ['Low', 'Medium', 'High', 'Critical'];
@@ -335,12 +431,32 @@ const boards = [
   { id: 'b-war', name: 'Warehouse Retrofit', description: 'Illustrative archived board, to show how archiving reads.', created: '2026-09-20', by: 'Olivia Administer', archived: true, userMoves: false },
 ];
 
+// Roadmap sample: outcomes group Issues (promoted ideas), each Issue under at most one Outcome.
+// Every rollup (done count, span) is derived at render time, never stored (issues-and-delivery spec).
+const DSTAT = { Pending: '#94A3B8', Scoping: '#B08CF5', Development: '#6B9BF2', Review: '#E0913A', Complete: '#3FB86B' };
+const TODAY = '2026-09-27';
+const SPRINTS = { cur: ['2026-09-10', '2026-09-24', 'Current sprint'], next: ['2026-09-25', '2026-10-09', 'Next sprint'] };
+const issues = [
+  { key: 'IDE-01', title: 'Retire the legacy step', status: 'Complete', effort: 'Low', who: 'Noah Contributor', outcome: 'o1', sprint: 'cur' },
+  { key: 'IDE-11', title: 'Reduce manual handoffs', status: 'Development', effort: 'High', who: null, outcome: 'o1', sprint: 'cur' },
+  { key: 'IDE-10', title: 'Add proactive alerts', status: 'Review', effort: 'Medium', who: 'Noah Contributor', outcome: 'o1', sprint: 'cur' },
+  { key: 'IDE-09', title: 'Standardize the intake checklist', status: 'Scoping', effort: 'Low', who: 'Maya Collaborator', outcome: 'o2', sprint: 'cur' },
+  { key: 'OPP-04', title: 'Validate the customer feedback loop', status: 'Pending', effort: 'Low', who: 'Noah Contributor', outcome: 'o3', sprint: null },
+  { key: 'OPP-06', title: 'Automate weekly reporting', status: 'Pending', effort: 'Medium', who: 'Maya Collaborator', outcome: null, sprint: null },
+];
+const SPRINT = { name: 'Current sprint', goal: 'Move assembly cell reliability forward with something measurable.', start: '2026-09-10', end: '2026-09-24', state: 'Active' };
+const outcomes = [
+  { id: 'o1', name: 'Reliable assembly cells', color: '#F5A524', start: '2026-09-01', end: '2026-11-30', description: 'Fewer stoppages on the assembly cells, measured weekly.' },
+  { id: 'o2', name: 'Cut reporting effort', color: '#6B9BF2', start: '2026-10-01', end: '2026-12-31', description: 'Stop copying numbers by hand into spreadsheets.' },
+  { id: 'o3', name: 'Faster field feedback', color: '#5CC8E0', start: '2027-01-01', end: '2027-02-28', description: 'Hear from customers within a day of a site visit.' },
+];
 const S = { screen: 'boards', role: 'OrgAdmin', board: 'Opportunities', lists: {}, drawer: null, returnFocus: null, ai: 'ok' };
 const archivedBoard = (name) => boards.find((b) => b.name === name)?.archived;
 const can = {
   createIdea: () => S.role !== 'ReadOnly', editIdea: (i) => S.role !== 'ReadOnly' && !archivedBoard(i?.board), deleteIdea: (i) => S.role === 'OrgAdmin' && !archivedBoard(i?.board),
   // The substance of an idea is its author's: Problem, Proposed solutions and Impact rationale.
   editSubstance: (i) => !i || S.role === 'OrgAdmin' || i.author === ROLES[S.role][0],
+  manageOutcomes: () => S.role === 'OrgAdmin', manageTags: () => S.role === 'OrgAdmin', runSprint: () => S.role === 'OrgAdmin',
   createBoard: () => S.role === 'OrgAdmin', editBoard: (b) => S.role === 'OrgAdmin' && !b?.archived, archiveBoard: () => S.role === 'OrgAdmin',
 };
 const why = { board: 'Administrators only', idea: 'Read-only account', archived: 'This board is archived' };
@@ -353,7 +469,24 @@ const prioChip = (p) => `<span class="chip prio-${p}">${p}</span>`;
 const impactChip = (p) => (p ? `<span class="chip prio-${p}">${p}</span>` : '—');
 const statusChip = (s) => `<span class="chip" style="background:color-mix(in srgb,${SCOLOR[s]} 14%,var(--card));color:color-mix(in srgb,${SCOLOR[s]} 55%,var(--ink))"><span class="dot" style="background:${SCOLOR[s]}"></span>${esc(s)}</span>`;
 const votes = (n) => `<span class="votes${n ? ' has' : ''}">${svg('up')}${n}</span>`;
-const tagsHtml = (t, max = 3) => t.slice(0, max).map((x) => `<span class="tag">${esc(x)}</span>`).join('') + (t.length > max ? `<span class="tag">+${t.length - max}</span>` : '');
+// Every tag has a colour. A new tag takes one from the palette at random; an admin can change it in Settings → Tags.
+const TAG_PALETTE = ['#E5484D', '#F5A524', '#3FB86B', '#2F9E8F', '#5CC8E0', '#6B9BF2', '#B08CF5', '#E879A6', '#A87B2F', '#94A3B8'];
+const tagReg = new Map();
+const normTag = (n) => n.trim().toLowerCase();
+function ensureTag(name, how = 'random') {
+  const k = normTag(name); if (!k) return null;
+  if (!tagReg.has(k)) {
+    // Seeded tags get a stable colour so reviews are repeatable; tags created in the page get a random one.
+    const idx = how === 'seed' ? [...k].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % TAG_PALETTE.length : Math.floor(Math.random() * TAG_PALETTE.length);
+    tagReg.set(k, { id: 't' + ++seq, name: name.trim(), color: TAG_PALETTE[idx], created: how === 'seed' ? '2026-09-14' : TODAY, by: how === 'seed' ? 'Olivia Administer' : ROLES[S.role][0] });
+  }
+  return tagReg.get(k);
+}
+const tagColor = (n) => tagReg.get(normTag(n))?.color;
+const tagChip = (x, cls = '') => `<span class="tag ${cls}" style="--tc:${tagColor(x) ?? 'var(--muted)'}">${esc(x)}</span>`;
+const tagsHtml = (t, max = 3) => t.slice(0, max).map((x) => tagChip(x)).join('') + (t.length > max ? `<span class="tag">+${t.length - max}</span>` : '');
+const tagUse = (tg) => ideas.filter((i) => i.tags.some((x) => normTag(x) === normTag(tg.name)));
+ideas.forEach((i) => i.tags.forEach((x) => ensureTag(x, 'seed')));
 
 // ---------- list definitions: one pattern, three screens ----------
 const DEFS = {
@@ -402,6 +535,18 @@ const DEFS = {
       <div class="foot"><span>${esc(i.board)} ${avatars(i.assignees)}</span><span>${rowActions('ideas', i)}</span></div></article>`,
   },
 };
+DEFS.tags = {
+  noun: 'Tag', views: ['list'], rows: () => [...tagReg.values()],
+  text: (tg) => tg.name,
+  filters: [{ key: 'usage', label: 'Usage', options: ['Used', 'Unused'], get: (tg) => (tagUse(tg).length ? 'Used' : 'Unused') }],
+  cols: [
+    { key: 'name', label: 'Tag', sort: (tg) => tg.name.toLowerCase(), cell: (tg) => `<button class="ttl" data-view="${tg.id}">${tagChip(tg.name)}</button>` },
+    { key: 'ideas', label: 'Ideas', num: true, sort: (tg) => tagUse(tg).length, cell: (tg) => tagUse(tg).length },
+    { key: 'boards', label: 'Boards', sort: (tg) => [...new Set(tagUse(tg).map((i) => i.board))].join(), cell: (tg) => esc([...new Set(tagUse(tg).map((i) => i.board))].join(', ') || '—') },
+    { key: 'created', label: 'Created', sort: (tg) => tg.created, cell: (tg) => `${fmtDate(tg.created)}<span class="sub">${esc(tg.by)}</span>` },
+  ],
+  actions: () => [['eye', 'View', 'view', true], ['edit', 'Edit', 'edit', can.manageTags()], ['trash', 'Delete', 'delete-tag', can.manageTags()]],
+};
 DEFS.board = { ...DEFS.ideas, views: ['lanes', 'list'], rows: () => boardIdeas(S.board),
   filters: DEFS.ideas.filters.filter((f) => f.key !== 'board'), cols: DEFS.ideas.cols.filter((c) => c.key !== 'board') };
 
@@ -426,7 +571,7 @@ function laneMix(b) {
 }
 function rowActions(key, r) {
   return DEFS[key === 'board' ? 'ideas' : key].actions(r).filter((a) => a[3])
-    .map(([icon, label, act]) => `<button class="iconbtn${act === 'delete' ? ' del' : ''}" data-act="${act}" data-id="${r.id}" aria-label="${label} ${esc(r.short ?? r.name)}" title="${label}">${svg(icon)}</button>`).join('');
+    .map(([icon, label, act]) => `<button class="iconbtn${act.startsWith('delete') ? ' del' : ''}" data-act="${act}" data-id="${r.id}" aria-label="${label} ${esc(r.short ?? r.name)}" title="${label}">${svg(icon)}</button>`).join('');
 }
 
 // ---------- rendering ----------
@@ -441,10 +586,10 @@ function toolbar(key) {
   const d = DEFS[key], st = listState(key);
   const labels = { list: 'List', cards: 'Cards', lanes: 'Lanes' };
   return `<div class="toolbar" role="search">
-    <label class="search">${svg('search')}<span class="vh">Filter</span><input id="q-${key}" type="search" value="${esc(st.q)}" placeholder="Filter by ${key === 'boards' ? 'name, description, tag' : 'title, board, status, tag, person'}…"></label>
+    <label class="search">${svg('search')}<span class="vh">Filter</span><input id="q-${key}" type="search" value="${esc(st.q)}" placeholder="Filter by ${key === 'boards' ? 'name, description, tag' : key === 'tags' ? 'tag name' : 'title, board, status, tag, person'}…"></label>
     ${d.filters.map((f) => { const n = st.sel[f.key].size; return `<div class="ms"><button class="msbtn" data-ms="${f.key}" aria-expanded="false" data-active="${n > 0}">${f.label}${n ? `: ${n === 1 ? esc([...st.sel[f.key]][0]) : n + ' selected'}` : ''} ${svg('down')}</button></div>`; }).join('')}
     <span class="tb-sp"></span>
-    <div class="seg" role="group" aria-label="View">${d.views.map((v) => `<button data-viewmode="${v}" aria-pressed="${st.view === v}">${labels[v]}</button>`).join('')}</div>
+    ${d.views.length > 1 ? `<div class="seg" role="group" aria-label="View">${d.views.map((v) => `<button data-viewmode="${v}" aria-pressed="${st.view === v}">${labels[v]}</button>`).join('')}</div>` : ''}
   </div>`;
 }
 function table(key, rows) {
@@ -468,8 +613,69 @@ function lanes(rows) {
     ${inLane.map((i) => `<button class="kcard" data-view="${i.id}"${st.open === i.id ? ' aria-current="true"' : ''}><h4>${esc(i.short)}</h4><div class="krow">${prioChip(i.priority)}${avatars(i.assignees)}</div><div class="krow"><span>${tagsHtml(i.tags, 1)}</span>${votes(i.votes)}</div></button>`).join('') || '<div class="empty">Nothing here yet</div>'}
   </section>`; }).join('')}</div>`;
 }
+const day = (d) => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10));
+const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const fmtMonth = (d) => { const x = new Date(day(d)); return MON[x.getUTCMonth()] + ' ' + x.getUTCFullYear(); };
+// The visible range and its columns for each zoom level.
+function scale(zoom) {
+  if (zoom === 'weeks') { const start = day('2026-09-07'); const cols = Array.from({ length: 16 }, (_, n) => { const d = new Date(start + n * 7 * 864e5); return (n === 0 || d.getUTCDate() <= 7 ? MON[d.getUTCMonth()] + ' ' : '') + d.getUTCDate(); }); return { start, end: start + 16 * 7 * 864e5, cols }; }
+  if (zoom === 'quarters') return { start: day('2026-07-01'), end: day('2027-07-01'), cols: ['Q3 2026', 'Q4 2026', 'Q1 2027', 'Q2 2027'] };
+  return { start: day('2026-09-01'), end: day('2027-04-01'), cols: ['SEP', 'OCT', 'NOV', 'DEC', 'JAN 27', 'FEB', 'MAR'] };
+}
+const pct = (sc, d) => Math.max(0, Math.min(100, ((d - sc.start) / (sc.end - sc.start)) * 100));
+const outcomeIssues = (o) => issues.filter((i) => i.outcome === o.id);
+const isPlanned = (o) => day(o.start) > day(TODAY) && outcomeIssues(o).every((i) => i.status === 'Pending');
+function roadmap() {
+  const zoom = S.zoom ?? 'months', sc = scale(zoom);
+  const today = pct(sc, day(TODAY));
+  const label = (o) => { const list = outcomeIssues(o), done = list.filter((i) => i.status === 'Complete').length; return `${isPlanned(o) ? 'PLANNED · ' : ''}${done} / ${list.length}${done && !isPlanned(o) ? ' DONE' : ''}`; };
+  const span = (o) => { const sp = outcomeIssues(o).map((i) => SPRINTS[i.sprint]).filter(Boolean); if (!sp.length) return ''; const a = Math.min(...sp.map((s) => day(s[0]))), b = Math.max(...sp.map((s) => day(s[1]))); return `<span class="tl-span" title="Sprint span of its issues" style="left:${pct(sc, a)}%;width:${Math.max(0.6, pct(sc, b) - pct(sc, a))}%;background:${o.color}"></span>`; };
+  const rows = outcomes.map((o) => `<div class="tl-row"><div class="tl-label"><span class="sw${isPlanned(o) ? ' planned' : ''}" style="background:${o.color};color:${o.color}"></span><button data-outcome="${o.id}">${esc(o.name)}</button></div>
+    <div class="tl-track"><div class="tl-cols" style="grid-template-columns:repeat(${sc.cols.length},1fr)">${sc.cols.map(() => '<span></span>').join('')}</div>
+    <button class="tl-bar${isPlanned(o) ? ' planned' : ''}" data-outcome="${o.id}" aria-label="${esc(o.name)}, ${fmtDate(o.start)} to ${fmtDate(o.end)}" style="left:${pct(sc, day(o.start))}%;width:${Math.max(2, pct(sc, day(o.end)) - pct(sc, day(o.start)))}%;background:${o.color};color:${isPlanned(o) ? o.color : '#0F1113'}">${label(o)}</button>${span(o)}</div></div>`).join('');
+  const timeline = `<section class="timeline" aria-label="Timeline"><div class="tl-grid">
+    <div class="tl-row tl-head"><span style="padding-left:16px">OUTCOME</span><div class="tl-track" style="min-height:32px"><div class="tl-cols" style="grid-template-columns:repeat(${sc.cols.length},1fr)">${sc.cols.map((c) => `<span>${c}</span>`).join('')}</div></div></div>
+    ${rows}
+    <div class="tl-today" aria-hidden="true" style="left:calc(260px + (100% - 260px) * ${today / 100})"><b>TODAY</b></div></div></section>`;
+  const card = (o) => { const list = outcomeIssues(o), done = list.filter((i) => i.status === 'Complete').length;
+    return `<section class="oc${list.length > 2 ? ' wide' : ''}" aria-labelledby="oc-${o.id}"><div class="oc-h"><span class="sw${isPlanned(o) ? ' planned' : ''}" style="background:${o.color};color:${o.color}"></span>
+      <h2 id="oc-${o.id}"><button data-outcome="${o.id}">${esc(o.name)}</button></h2><span class="rm-meta">${fmtMonth(o.start).split(' ')[0]} – ${fmtMonth(o.end)}</span><span style="flex:1"></span>
+      ${list.length > 1 ? `<div class="oc-prog" aria-hidden="true">${list.map((i) => `<span style="flex:1;background:${DSTAT[i.status]}"></span>`).join('')}</div>` : ''}<span class="rm-meta" style="color:var(--ink2)">${done} / ${list.length}</span></div>
+      ${list.map((i) => `<div class="ir"><span class="id">${i.key}</span><button class="ttl" data-issue="${i.key}">${esc(i.title)}</button><span class="dstat"><span class="dot" style="background:${DSTAT[i.status]}"></span>${i.status}</span><span class="eff"><span class="effbar e${{ Low: 1, Medium: 2, High: 3 }[i.effort]}" aria-hidden="true"><i></i><i></i><i></i></span>${i.effort} effort</span>${i.who ? avatars([i.who]) : '<span class="av" style="background:transparent;border:1px dashed var(--line2);color:var(--muted)" title="Unassigned">—</span>'}</div>`).join('') || '<div class="oc-empty">No issues grouped here yet.</div>'}</section>`; };
+  const loose = issues.filter((i) => !i.outcome).length;
+  return `${timeline}<div class="oc-grid">${outcomes.map(card).join('')}</div>
+    <p class="samp" style="margin:0">Sample outcomes and issue keys for the prototype. ${loose} issue${loose === 1 ? ' is' : 's are'} not under any outcome yet. Each issue sits under at most one outcome, so the counts add up to the delivery set.</p>`;
+}
+
+function sprintBoard() {
+  const sp = SPRINT, list = issues.filter((i) => i.sprint === 'cur'), done = list.filter((i) => i.status === 'Complete').length;
+  const past = Math.round((day(TODAY) - day(sp.end)) / 864e5);
+  const act = (label, cls, a) => can.runSprint() ? `<button class="btn ${cls}" data-act="${a}">${label}</button>` : `<span class="denywrap"><button class="btn ${cls}" aria-disabled="true" aria-describedby="why-${a}">${label}</button></span>`;
+  const head = `<div class="pghead"><div><h1>${esc(sp.name)}</h1><p>Goal: ${esc(sp.goal)}</p></div><div style="display:flex;gap:8px;align-items:center">${act('Plan next sprint', '', 'plan-sprint')}${sp.state === 'Active' ? act('Complete sprint', 'pri', 'complete-sprint') : ''}${can.runSprint() ? '' : '<span class="why" id="why-complete-sprint">Administrators only</span><span class="vh" id="why-plan-sprint">Administrators only</span>'}</div></div>`;
+  const strip = `<dl class="spr" style="margin:0"><div><dt>STATE</dt><dd style="display:flex;gap:8px;flex-wrap:wrap">${sp.state === 'Active' ? '<span class="badge ok">● ACTIVE</span>' : '<span class="badge mute">COMPLETED</span>'}${sp.state === 'Active' && past > 0 ? `<span class="badge warn">${past} DAYS PAST END</span>` : ''}</dd></div>
+    <div><dt>WINDOW</dt><dd>10–24 SEP</dd></div><div><dt>ISSUES</dt><dd>${list.length} · ${done} DONE</dd></div>
+    <div><dt>PROGRESS</dt><dd><span class="oc-prog" style="width:100%;display:flex" aria-label="${done} of ${list.length} done">${list.map((i) => `<span style="flex:1;background:${i.status === 'Complete' ? DSTAT.Complete : 'var(--line2)'}"></span>`).join('')}</span></dd></div></dl>`;
+  const lanes = Object.keys(DSTAT).map((s) => { const inLane = list.filter((i) => i.status === s);
+    return `<section class="lane" aria-label="${s}"><div class="lanehd" style="background:color-mix(in srgb,${DSTAT[s]} 14%,var(--card));color:color-mix(in srgb,${DSTAT[s]} 55%,var(--ink))"><span>${s}</span><small>${inLane.length}</small></div>
+      ${inLane.map((i) => `<button class="kcard${i.status === 'Complete' ? ' done' : ''}" data-issue="${i.key}"><div class="krow"><span class="key">${i.key}</span>${i.who ? avatars([i.who]) : '<span class="av" style="background:transparent;border:1px dashed var(--line2);color:var(--muted)">—</span>'}</div><h4>${esc(i.title)}</h4><span class="eff"><span class="effbar e${{ Low: 1, Medium: 2, High: 3 }[i.effort]}" aria-hidden="true"><i></i><i></i><i></i></span>${i.effort} effort</span></button>`).join('') || '<div class="empty">No issues</div>'}</section>`; }).join('');
+  return head + strip + `<div class="dlanes">${lanes}</div><p class="samp" style="margin:0">Sample sprint and issues for the prototype. Only the person who raised an issue, an assignee or an admin can move it.</p>`;
+}
+
 function render() {
   const key = S.screen;
+  if (key === 'sprint') {
+    document.querySelectorAll('.nav[data-go]').forEach((n) => (n.dataset.go === 'sprint' ? n.setAttribute('aria-current', 'page') : n.removeAttribute('aria-current')));
+    document.getElementById('crumb').innerHTML = 'Delivery / <b>Sprint board</b>';
+    work.innerHTML = sprintBoard(); controls(); return;
+  }
+  if (key === 'roadmap') {
+    document.querySelectorAll('.nav[data-go]').forEach((n) => (n.dataset.go === 'roadmap' ? n.setAttribute('aria-current', 'page') : n.removeAttribute('aria-current')));
+    document.getElementById('crumb').innerHTML = `Delivery / <b>Roadmap</b> <span class="rm-meta" style="margin-left:10px">${outcomes.length} OUTCOMES · ${issues.length} ISSUES</span>`;
+    const zoom = S.zoom ?? 'months';
+    work.innerHTML = header('Roadmap', 'The outcomes the team is working toward, when, and the issues under each.', 'Outcome', can.manageOutcomes(), why.board)
+      + `<div class="toolbar"><span class="tb-sp"></span><div class="seg" role="group" aria-label="Zoom">${['weeks', 'months', 'quarters'].map((z) => `<button data-zoom="${z}" aria-pressed="${zoom === z}">${cap(z)}</button>`).join('')}</div></div>` + roadmap();
+    controls(); return;
+  }
   document.querySelectorAll('.nav[data-go]').forEach((n) => (n.dataset.go === (key === 'board' ? 'boards' : key) ? n.setAttribute('aria-current', 'page') : n.removeAttribute('aria-current')));
   document.getElementById('n-boards').textContent = boards.filter((b) => !b.archived).length;
   document.getElementById('n-ideas').textContent = ideas.length;
@@ -478,7 +684,8 @@ function render() {
   const crumb = document.getElementById('crumb');
   const st = listState(key), rows = filtered(key);
   let head;
-  if (key === 'boards') { crumb.innerHTML = '<b>Boards</b>'; head = header('Boards', 'Every board organizes the same organization’s ideas by status. Open one to see its lanes.', 'Board', can.createBoard(), why.board); }
+  if (key === 'tags') { crumb.innerHTML = 'Settings / <b>Tags</b>'; head = header('Tags', 'Labels for ideas on every board. A new tag gets a colour from the palette at random; an admin can change it here, or add tags before anyone uses them.', 'Tag', can.manageTags(), why.board); }
+  else if (key === 'boards') { crumb.innerHTML = '<b>Boards</b>'; head = header('Boards', 'Every board organizes the same organization’s ideas by status. Open one to see its lanes.', 'Board', can.createBoard(), why.board); }
   else if (key === 'ideas') { crumb.innerHTML = '<b>Ideas</b>'; head = header('Ideas', 'Every idea on every board. Filter, sort, or open one to read and edit it.', 'Idea', can.createIdea(), why.idea); }
   else { const b = boards.find((x) => x.name === S.board); crumb.innerHTML = `<button data-go="boards">Boards</button> / <b>${esc(b.name)}</b>`; head = header(b.name, esc(b.description), 'Idea', can.createIdea() && !b.archived, b.archived ? why.archived : why.idea) + (b.archived ? `<div class="notice" role="status">${svg('archive')}<span style="flex:1">This board is archived. Its lanes and ideas are read-only.</span>${can.archiveBoard() ? `<button class="btn sm" data-act="archive" data-id="${b.id}">Unarchive</button>` : ''}</div>` : ''); }
   let body;
@@ -492,26 +699,112 @@ function render() {
 
 // ---------- drawer ----------
 const drawer = document.getElementById('drawer');
-function findRow(id) { return ideas.find((i) => i.id === id) ?? boards.find((b) => b.id === id); }
+function findTag(id) { return [...tagReg.values()].find((x) => x.id === id); }
+function findRow(id) { return ideas.find((i) => i.id === id) ?? boards.find((b) => b.id === id) ?? findTag(id); }
+// Which drawer: from the thing opened, or for create, from the screen.
+function drawerKind(mode, id) {
+  if (id) return outcomes.some((o) => o.id === id) ? 'roadmap' : findTag(id) ? 'tags' : boards.some((b) => b.id === id) ? 'boards' : 'ideas';
+  return ['boards', 'roadmap', 'tags'].includes(S.screen) ? S.screen : 'ideas';
+}
 function openDrawer(mode, id, trigger) {
   S.drawer = { mode, id }; S.returnFocus = trigger ?? S.returnFocus ?? document.activeElement;
-  const key = S.screen;
-  if (key === 'board') listState('board').open = id;
-  drawer.classList.remove('wide');
-  if (mode === 'create' && key !== 'boards') return openCreateIdea();
+  const key = drawerKind(mode, id);
+  if (S.screen === 'board') listState('board').open = id;
+  drawer.classList.remove('wide', 'creating');
+  if (mode === 'create' && key === 'ideas') return openCreateIdea();
   drawer.innerHTML = drawerHtml(key, mode, id); drawer.classList.add('open');
-  if (mode === 'edit' && key !== 'boards') { const row = findRow(id); wireIdeaForm(row); if (!can.editSubstance(row)) lockSubstance(); }
+  if (key === 'tags' && mode !== 'view') wireTagForm();
+  if (mode === 'edit' && key === 'ideas') { const row = findRow(id); wireIdeaForm(row); if (!can.editSubstance(row)) lockSubstance(); }
   focusHeading();
-  if (key === 'board') render();
+  if (S.screen === 'board') render();
 }
 function focusHeading() { const h = drawer.querySelector('h2'); h?.setAttribute('tabindex', '-1'); h?.focus(); }
 function closeDrawer() {
-  if (!S.drawer) return; S.drawer = null; drawer.classList.remove('open', 'wide'); chat.cancel?.();
+  if (!S.drawer) return; S.drawer = null; drawer.classList.remove('open', 'wide', 'creating'); chat.cancel?.();
   if (S.screen === 'board') { listState('board').open = null; render(); }
   S.returnFocus?.isConnected && S.returnFocus.focus(); S.returnFocus = null;
 }
-const shell = (eb, title, body, foot) => `<div class="dhead"><div><div class="eb">${eb}</div><h2 id="d-title">${title}</h2></div><button class="iconbtn x" data-act="close" aria-label="Close">${svg('x')}</button></div>${body}<div class="dfoot">${foot}</div>`;
+const shell = (eb, title, body, foot) => `<div class="dhead"><div><div class="eb">${eb}</div><h2 id="d-title">${title}</h2></div><span class="kbd" aria-hidden="true" style="margin-left:auto;align-self:center">esc</span><button class="iconbtn x" data-act="close" aria-label="Close" style="margin-left:4px">${svg('x')}</button></div>${body}<div class="dfoot">${foot}</div>`;
+function outcomeDrawer(mode, id) {
+  const o = outcomes.find((x) => x.id === id);
+  if (mode === 'view') {
+    const list = outcomeIssues(o), done = list.filter((i) => i.status === 'Complete').length;
+    return shell(`Outcome · ${fmtMonth(o.start)} – ${fmtMonth(o.end)}`, esc(o.name), `<div class="dbody">
+      <p style="margin:0">${esc(o.description || 'No description yet.')}</p>
+      <dl class="facts"><div><dt>Window</dt><dd>${fmtDate(o.start)} – ${fmtDate(o.end)}</dd></div><div><dt>Done</dt><dd>${done} of ${list.length} issues</dd></div>
+      <div><dt>State</dt><dd>${isPlanned(o) ? 'Planned' : day(o.end) < day(TODAY) ? 'Past its window' : 'In its window'}</dd></div><div><dt>Colour</dt><dd><span class="sw" style="background:${o.color}"></span></dd></div></dl>
+      <div class="sect"><h3>Issues</h3>${list.length ? '<ul>' + list.map((i) => `<li>${i.key} · ${esc(i.title)} <span class="sub" style="display:inline">(${i.status})</span></li>`).join('') + '</ul>' : '<p class="sub">No issues grouped here yet.</p>'}</div></div>`,
+      `${can.manageOutcomes() ? `<button class="btn pri" data-act="edit" data-id="${o.id}">${svg('edit')}Edit</button>` : ''}<span class="sp"></span>${can.manageOutcomes() ? `<button class="btn ghost" style="color:var(--hot-t)" data-act="delete-outcome" data-id="${o.id}">${svg('trash')}Delete</button>` : ''}`);
+  }
+  const pick = issues.map((i) => { const other = i.outcome && i.outcome !== o?.id ? outcomes.find((x) => x.id === i.outcome) : null;
+    return `<label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" value="${i.key}"${o && i.outcome === o.id ? ' checked' : ''}><span class="id" style="font:500 11px var(--mono);color:var(--muted)">${i.key}</span>${esc(i.title)}${other ? `<span class="sub" style="display:inline"> · moves from ${esc(other.name)}</span>` : ''}</label>`; }).join('');
+  return shell(mode === 'create' ? 'New outcome' : 'Edit outcome', mode === 'create' ? 'Add New Outcome' : esc(o.name), `<form id="dform" class="dbody" novalidate>
+    <div class="field"><label for="o-name">Name <span class="req">*</span></label><input id="o-name" required value="${esc(o?.name ?? '')}"></div>
+    <div class="row2"><div class="field"><label for="o-start">Target start <span class="req">*</span></label><input id="o-start" type="date" required value="${o?.start ?? ''}"></div>
+    <div class="field"><label for="o-end">Target end <span class="req">*</span></label><input id="o-end" type="date" required value="${o?.end ?? ''}"><small>On or after the start.</small></div></div>
+    <div class="field"><label for="o-color">Colour</label><input id="o-color" type="color" value="${o?.color ?? '#6B9BF2'}" style="max-width:80px;padding:2px"></div>
+    <div class="field"><label for="o-desc">Description</label><textarea id="o-desc" rows="2">${esc(o?.description ?? '')}</textarea></div>
+    <fieldset class="field" style="border:0;padding:0;margin:0"><legend class="flabel" style="font-size:12px;font-weight:500;margin-bottom:6px">Issues under this outcome</legend>${pick}<small>An issue sits under one outcome at most; choosing one here moves it.</small></fieldset></form>`,
+    `<button class="btn" data-act="${mode === 'create' ? 'close' : 'view'}" data-id="${o?.id ?? ''}">Cancel</button><span class="sp"></span><button class="btn pri" data-act="save-outcome" data-id="${o?.id ?? ''}">${mode === 'create' ? 'Create outcome' : 'Save changes'}</button>`);
+}
+function saveOutcome(id) {
+  const v = (x) => drawer.querySelector('#' + x).value.trim();
+  const name = v('o-name'), start = v('o-start'), end = v('o-end');
+  if (!name || !start || !end) return drawer.querySelector(!name ? '#o-name' : !start ? '#o-start' : '#o-end').reportValidity();
+  if (end < start) { const e = drawer.querySelector('#o-end'); e.setCustomValidity('Target end must be on or after the start.'); e.reportValidity(); e.setCustomValidity(''); return; }
+  let o = outcomes.find((x) => x.id === id);
+  if (!o) { o = { id: 'o' + ++seq }; outcomes.push(o); }
+  Object.assign(o, { name, start, end, color: v('o-color'), description: v('o-desc') });
+  const chosen = new Set([...drawer.querySelectorAll('fieldset input:checked')].map((c) => c.value));
+  issues.forEach((i) => { if (chosen.has(i.key)) i.outcome = o.id; else if (i.outcome === o.id) i.outcome = null; });
+  render(); toast(id ? 'Saved' : 'Outcome created'); openDrawer('view', o.id);
+}
+
+function tagDrawer(mode, id) {
+  const tg = id ? findTag(id) : null;
+  if (mode === 'view') {
+    const used = tagUse(tg);
+    return shell('Tag', esc(tg.name), `<div class="dbody"><div>${tagChip(tg.name, 'lg')}</div>
+      <dl class="facts"><div><dt>Ideas</dt><dd>${used.length}</dd></div><div><dt>Colour</dt><dd><span class="sw" style="background:${tg.color}"></span><code>${tg.color}</code></dd></div>
+      <div><dt>Created</dt><dd>${fmtDate(tg.created)}</dd></div><div><dt>By</dt><dd>${esc(tg.by)}</dd></div></dl>
+      <div class="sect"><h3>Used on</h3>${used.length ? '<ul>' + used.map((i) => `<li><button class="ttl" data-view="${i.id}">${esc(i.short)}</button> <span class="sub" style="display:inline">· ${esc(i.board)}</span></li>`).join('') + '</ul>' : '<p class="sub">Not used yet. It will be offered when anyone tags an idea.</p>'}</div></div>`,
+      `${can.manageTags() ? `<button class="btn pri" data-act="edit" data-id="${tg.id}">${svg('edit')}Edit</button>` : ''}<span class="sp"></span>${can.manageTags() ? `<button class="btn ghost" style="color:var(--hot-t)" data-act="delete-tag" data-id="${tg.id}">${svg('trash')}Delete</button>` : ''}`);
+  }
+  const color = tg?.color ?? TAG_PALETTE[Math.floor(Math.random() * TAG_PALETTE.length)];
+  return shell(mode === 'create' ? 'New tag' : 'Edit tag', mode === 'create' ? 'Add New Tag' : esc(tg.name), `<form id="dform" class="dbody" novalidate>
+    <div class="field"><label for="tg-name">Tag <span class="req">*</span></label><input id="tg-name" maxlength="100" required value="${esc(tg?.name ?? '')}"><small>Up to 100 characters. Tags are matched without regard to case.</small><span class="err" hidden></span></div>
+    <fieldset class="field" style="border:0;padding:0;margin:0"><legend class="flabel" style="font-size:12px;font-weight:500;margin-bottom:6px">Colour</legend>
+      <div class="swatches">${TAG_PALETTE.map((c, n) => `<label title="${c}"><input type="radio" name="tg-color" value="${c}"${c.toLowerCase() === color.toLowerCase() ? ' checked' : ''} aria-label="Colour ${n + 1} (${c})"><span style="background:${c}"></span></label>`).join('')}</div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--muted)">Custom <input type="color" id="tg-custom" value="${color}" style="width:44px;height:28px;padding:0;border:1px solid var(--line2);border-radius:6px"></label></fieldset>
+    <div class="field"><span class="flabel">Preview</span><div id="tg-preview">${tagChip(tg?.name || 'new-tag')}</div></div></form>`,
+    `<button class="btn" data-act="${mode === 'create' ? 'close' : 'view'}" data-id="${tg?.id ?? ''}">Cancel</button><span class="sp"></span><button class="btn pri" data-act="save-tag" data-id="${tg?.id ?? ''}">${mode === 'create' ? 'Create tag' : 'Save changes'}</button>`);
+}
+function wireTagForm() {
+  const name = drawer.querySelector('#tg-name'), custom = drawer.querySelector('#tg-custom'), prev = drawer.querySelector('#tg-preview');
+  const pick = () => drawer.querySelector('input[name="tg-color"]:checked')?.value ?? custom.value;
+  const draw = () => { prev.innerHTML = `<span class="tag" style="--tc:${pick()}">${esc(name.value.trim() || 'new-tag')}</span>`; };
+  drawer.querySelector('#dform').addEventListener('input', (e) => { if (e.target === custom) drawer.querySelectorAll('input[name="tg-color"]').forEach((r) => (r.checked = false)); draw(); });
+  draw();
+}
+function saveTag(id) {
+  const box = drawer.querySelector('#tg-name').closest('.field'), err = box.querySelector('.err');
+  const name = drawer.querySelector('#tg-name').value.trim();
+  const color = drawer.querySelector('input[name="tg-color"]:checked')?.value ?? drawer.querySelector('#tg-custom').value;
+  const clash = tagReg.get(normTag(name));
+  const bad = !name ? 'Required' : clash && clash.id !== id ? 'A tag with this name already exists' : '';
+  box.classList.toggle('invalid', !!bad); err.hidden = !bad; err.textContent = bad; if (bad) return drawer.querySelector('#tg-name').focus();
+  let tg = id ? findTag(id) : null;
+  if (tg) {
+    const old = normTag(tg.name);
+    ideas.forEach((i) => (i.tags = i.tags.map((x) => (normTag(x) === old ? name : x))));
+    tagReg.delete(old); Object.assign(tg, { name, color }); tagReg.set(normTag(name), tg);
+  } else { tg = { id: 't' + ++seq, name, color, created: TODAY, by: ROLES[S.role][0] }; tagReg.set(normTag(name), tg); }
+  render(); toast(id ? 'Saved' : 'Tag created'); openDrawer('view', tg.id);
+}
+
 function drawerHtml(key, mode, id) {
+  if (key === 'roadmap') return outcomeDrawer(mode, id);
+  if (key === 'tags') return tagDrawer(mode, id);
   const r = id ? findRow(id) : null;
   if (key === 'boards' && mode === 'view') {
     const list = boardIdeas(r.name);
@@ -555,19 +848,19 @@ function drawerHtml(key, mode, id) {
 
 // ---------- the structured idea form ----------
 function ideaFormFields(mode) {
-  const f = (key, label, input, opts = {}) => `<div class="field" data-f="${key}"><label ${opts.for === false ? '' : `for="f-${key}"`} class="${opts.for === false ? 'flabel' : ''}">${label}${opts.req ? ' <span class="req" aria-hidden="true">*</span>' : ''}<span class="sugg">✦ Suggested</span></label>${input}${opts.hint ? `<small>${opts.hint}</small>` : ''}<span class="err" hidden></span></div>`;
+  const f = (key, label, input, opts = {}) => `<div class="field" data-f="${key}"><label ${opts.for === false ? '' : `for="f-${key}"`} class="${opts.for === false ? 'flabel' : ''}">${label}${opts.req ? ' <span class="req" aria-hidden="true">*</span>' : ''}<span class="sugg">✦ Suggested</span><span class="owntag">· yours</span></label>${input}${opts.hint ? `<small>${opts.hint}</small>` : ''}<span class="err" hidden></span></div>`;
   return `
     ${mode === 'create' && S.screen === 'ideas' ? f('board', 'Board', `<select id="f-board">${boards.filter((b) => !b.archived).map((b) => `<option>${esc(b.name)}</option>`).join('')}</select>`, { req: true }) : ''}
     ${f('title', 'Title', '<input id="f-title" maxlength="150" required>', { req: true })}
     ${f('problem', 'Problem', '<textarea id="f-problem" rows="3" required></textarea>', { req: true, hint: 'What is going wrong, for whom, and how often.' })}
     ${f('solutions', 'Proposed solutions', '<div id="f-solutions" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="linkbtn" data-sol-add style="align-self:flex-start">+ Add a solution</button>', { req: true, for: false })}
     ${f('rationale', 'Impact rationale', '<textarea id="f-rationale" rows="2" required></textarea>', { req: true, hint: 'Why it matters, ideally with a number: hours, cost, incidents.' })}
-    <div class="row2">
+    <div class="row3">
       ${f('impact', 'Business impact', `<select id="f-impact"><option value="">Choose…</option>${IMPACTS.map((x) => `<option>${x}</option>`).join('')}</select>`, { req: true })}
+      ${f('type', 'Idea type', `<select id="f-type"${mode === 'edit' ? ' disabled' : ''}><option value="">Choose…</option>${TYPES.map((x) => `<option>${x}</option>`).join('')}</select>`, { req: true, hint: mode === 'edit' ? 'Can’t change after creation.' : '' })}
       ${f('priority', 'Priority', `<select id="f-priority">${PRIOS.map((x) => `<option${x === 'Medium' ? ' selected' : ''}>${x}</option>`).join('')}</select>`)}
     </div>
     <div class="row2">
-      ${f('type', 'Idea type', `<select id="f-type"${mode === 'edit' ? ' disabled' : ''}><option value="">Choose…</option>${TYPES.map((x) => `<option>${x}</option>`).join('')}</select>`, { req: true, hint: mode === 'edit' ? 'Can’t change after creation.' : '' })}
       ${mode === 'edit' ? f('status', 'Status', `<select id="f-status">${STATUSES.map(([s]) => `<option>${s}</option>`).join('')}</select>`) : f('due', 'Due date', '<input id="f-due" type="date">')}
     </div>
     ${f('assignees', 'Assignees', `<div class="people" id="f-assignees">${PEOPLE.map((p) => `<label><input type="checkbox" value="${esc(p)}">${avatars([p])}${esc(p.split(' ')[0])}</label>`).join('')}</div>`, { for: false })}
@@ -585,7 +878,7 @@ function wireIdeaForm(draft) {
   const el = (id) => drawer.querySelector('#f-' + id);
   const setVal = (key) => { const e = el(key); if (!e) return; if (key === 'tags') e.value = D.tags.join(', '); else if (key !== 'solutions' && key !== 'assignees') e.value = D[key] ?? ''; };
   const drawSolutions = () => {
-    el('solutions').innerHTML = (D.solutions.length ? D.solutions : ['']).map((s, n) => `<div class="sol"><input aria-label="Solution ${n + 1}" data-sol="${n}" value="${esc(s)}"><button type="button" class="iconbtn" data-sol-del="${n}" aria-label="Remove solution ${n + 1}">${svg('x')}</button></div>`).join('');
+    el('solutions').innerHTML = (D.solutions.length ? D.solutions : ['']).map((s, n) => `<div class="sol"><span class="num" aria-hidden="true">${String(n + 1).padStart(2, '0')}</span><input aria-label="Solution ${n + 1}" data-sol="${n}" value="${esc(s)}"><button type="button" class="iconbtn" data-sol-del="${n}" aria-label="Remove solution ${n + 1}">${svg('x')}</button></div>`).join('');
   };
   const drawCustom = () => {
     const defs = CUSTOM[D.type] ?? [];
@@ -600,7 +893,7 @@ function wireIdeaForm(draft) {
   ['title', 'problem', 'rationale', 'impact', 'priority', 'type', 'status', 'due', 'tags', 'description'].forEach(setVal);
   drawer.querySelectorAll('#f-assignees input').forEach((c) => (c.checked = D.assignees.includes(c.value)));
   drawSolutions(); drawCustom();
-  const own = (key) => { D.owned.add(key); D.sugg.delete(key); drawer.querySelector(`[data-f="${key}"]`)?.classList.remove('suggested'); };
+  const own = (key) => { D.owned.add(key); D.sugg.delete(key); const b = drawer.querySelector(`[data-f="${key}"]`); b?.classList.remove('suggested'); b?.classList.add('owned'); updateLeft(); };
   drawer.querySelector('#dform').addEventListener('input', (e) => {
     const t = e.target;
     if (t.dataset.sol !== undefined) { D.solutions[+t.dataset.sol] = t.value; own('solutions'); return; }
@@ -622,6 +915,7 @@ function wireIdeaForm(draft) {
     D.sugg.add(key);
     if (key === 'solutions') drawSolutions(); else if (key === 'type') { setVal('type'); drawCustom(); } else if (key.startsWith('custom.')) drawCustom(); else setVal(key);
     const box = drawer.querySelector(`[data-f="${key}"]`); if (box) { box.classList.add('suggested', 'flash'); setTimeout(() => box.classList.remove('flash'), 950); }
+    updateLeft();
     return 'filled';
   };
   D.missing = () => {
@@ -637,11 +931,18 @@ function wireIdeaForm(draft) {
     if (m.length) drawer.querySelector(`[data-f="${m[0]}"] input, [data-f="${m[0]}"] textarea, [data-f="${m[0]}"] select`)?.focus();
   };
   S.form = D;
+  updateLeft();
   return D;
 }
 // Problem, Proposed solutions and Impact rationale belong to the author (or an Org Admin).
 function lockSubstance() {
   ['problem', 'solutions', 'rationale'].forEach((k) => { const box = drawer.querySelector(`[data-f="${k}"]`); box.querySelectorAll('input, textarea, button').forEach((x) => (x.disabled = true)); const n = document.createElement('small'); n.textContent = 'Only the author or an Org Admin can change this.'; box.append(n); });
+}
+const FIELD_NAME = { title: 'Title', problem: 'Problem', solutions: 'Proposed solutions', rationale: 'Impact rationale', impact: 'Business impact', type: 'Idea type', 'custom.hours': 'Hours saved', 'custom.owner': 'Process owner' };
+function updateLeft() {
+  const el = drawer.querySelector('#req-left'); if (!el || !S.form) return;
+  const m = S.form.missing();
+  el.textContent = m.length ? `${m.length} REQUIRED LEFT · ${(FIELD_NAME[m[0]] ?? m[0]).toUpperCase()}` : 'READY TO CREATE';
 }
 function saveIdea(id) {
   const D = S.form, m = D.missing(); D.showErrors(m); if (m.length) return;
@@ -649,7 +950,7 @@ function saveIdea(id) {
   let i = ideas.find((x) => x.id === id);
   if (!i) { i = { id: 'i' + ++seq, board: drawer.querySelector('#f-board')?.value ?? D.board, votes: 0, comments: 0, created: '2026-09-27', status: 'New / Pending', sample: false }; ideas.unshift(i); }
   Object.assign(i, { short: D.title.trim(), title: D.title.trim(), problem: D.problem.trim(), solutions: sol, rationale: D.rationale.trim(), impact: D.impact, priority: D.priority, type: D.type,
-    status: id ? D.status : i.status, due: D.due, assignees: D.assignees, tags: D.tags, description: D.description.trim() || null, custom: D.custom, sample: false, author: i.author ?? ROLES[S.role][0] });
+    status: id ? D.status : i.status, due: D.due, assignees: D.assignees, tags: D.tags.map((x) => ensureTag(x)?.name ?? x), description: D.description.trim() || null, custom: D.custom, sample: false, author: i.author ?? ROLES[S.role][0] });
   render(); toast(id ? 'Saved' : 'Idea created'); S.returnFocus = null; openDrawer('view', i.id);
 }
 function saveBoard(id) {
@@ -682,7 +983,7 @@ function openCreateIdea() {
   const off = S.ai === 'off';
   drawer.innerHTML = shell(`New idea${S.screen === 'board' ? ' · ' + esc(S.board) : ''}`, 'Add New Idea', `<div class="split${off ? ' formonly' : ''}" id="split">
     <section class="chat" aria-label="Idea assistant">
-      <div class="chathd"><span class="spark" aria-hidden="true">✦</span>Idea assistant<span class="sp"></span><button class="linkbtn" data-act="manual">Fill out manually</button></div>
+      <div class="chathd"><span class="spark" aria-hidden="true">✦</span>Idea assistant<span class="count" id="c-count"></span><span class="sp"></span><button class="linkbtn" data-act="manual">Fill out manually</button></div>
       <div class="msgs" id="msgs" aria-live="polite"></div>
       <div class="compose"><form id="composer"><label class="vh" for="c-text">Message the assistant</label><textarea id="c-text" rows="2" placeholder="Describe the problem or idea. Rough notes are fine."></textarea><button class="btn pri" aria-label="Send">${svg('send')}</button></form>
         <div class="meta"><span id="c-turns"></span><button type="button" class="linkbtn" data-act="manual" style="font-weight:500">Skip the assistant and fill out the form</button></div></div>
@@ -690,7 +991,8 @@ function openCreateIdea() {
     <section class="formpane" aria-label="Idea form"><form id="dform" class="dbody" novalidate>
       ${off ? '<div class="notice" role="status">' + svg('info') + '<span>AI assist is unavailable, so fill in the idea here. Everything works the same.</span></div>' : '<div id="handoff"></div>'}
       ${ideaFormFields('create')}</form></section></div>`,
-    `<button class="btn pri" data-act="save-idea">Create idea</button><button class="btn" data-act="close">Cancel</button>${off ? '' : '<span class="sp"></span><button class="linkbtn" data-act="assistant" id="back-to-ai" hidden>Use the assistant</button>'}`);
+    `<span class="left" id="req-left" aria-live="polite"></span><span class="sp"></span><button class="btn" data-act="close">Cancel</button><button class="btn pri" data-act="save-idea">Create idea <span class="kbd">Ctrl ↵</span></button>${off ? '' : '<button class="linkbtn" data-act="assistant" id="back-to-ai" hidden>Use the assistant</button>'}`);
+  drawer.classList.add('creating');
   drawer.classList.add('open'); if (!off) drawer.classList.add('wide');
   wireIdeaForm(null);
   if (off) { focusHeading(); return; }
@@ -700,7 +1002,7 @@ function openCreateIdea() {
   turnsLabel();
   drawer.querySelector('#c-text').focus();
 }
-function turnsLabel() { const t = drawer.querySelector('#c-turns'); if (t) t.textContent = `${MAX_TURNS - chat.turns} replies left`; }
+function turnsLabel() { const t = drawer.querySelector('#c-turns'); if (t) t.textContent = `${MAX_TURNS - chat.turns} replies left`; const c = drawer.querySelector('#c-count'); if (c) c.textContent = `${chat.turns} / ${MAX_TURNS}`; }
 function bubble(cls, html) { const d = document.createElement('div'); d.className = 'msg ' + cls; d.innerHTML = html; chat.msgs.append(d); chat.msgs.scrollTop = chat.msgs.scrollHeight; return d; }
 function bot(text, chips = [], filled = []) {
   const d = bubble('bot', esc(text) + (filled.length ? `<span class="filled">✦ Filled in: ${filled.map((k) => LABEL[k] ?? k).join(', ')}</span>` : ''));
@@ -829,6 +1131,7 @@ function chip(btn) {
 const modal = document.getElementById('modal');
 function confirmAction(kind, id) {
   const r = findRow(id), ret = document.activeElement;
+  if (kind === 'delete-tag' || kind === 'complete-sprint') return confirmOther(kind, id, ret);
   const [title, text, label] = kind === 'delete'
     ? ['Delete this idea?', `“${esc(r.short)}” disappears from its board and every list. Restoring deleted ideas isn’t available yet.`, 'Delete idea']
     : r.archived ? ['Unarchive this board?', `“${esc(r.name)}” returns to the Boards list and to the board picker.`, 'Unarchive']
@@ -840,6 +1143,21 @@ function confirmAction(kind, id) {
   document.getElementById('c-yes').onclick = () => {
     if (kind === 'delete') { ideas.splice(ideas.indexOf(r), 1); closeDrawer(); toast('Idea deleted'); }
     else { r.archived = !r.archived; toast(r.archived ? 'Board archived' : 'Board unarchived'); if (S.drawer) openDrawer('view', r.id); }
+    modal.innerHTML = ''; render();
+  };
+  modal.querySelector('.dialog').addEventListener('keydown', (e) => { if (e.key === 'Tab') { const b = modal.querySelectorAll('button'); if (e.shiftKey && document.activeElement === b[0]) { e.preventDefault(); b[1].focus(); } else if (!e.shiftKey && document.activeElement === b[1]) { e.preventDefault(); b[0].focus(); } } if (e.key === 'Escape') { e.stopPropagation(); done(); } });
+}
+function confirmOther(kind, id, ret) {
+  const tg = kind === 'delete-tag' ? findTag(id) : null, open = issues.filter((i) => i.sprint === 'cur' && i.status !== 'Complete');
+  const [title, text, label, danger] = tg
+    ? ['Delete this tag?', `“${esc(tg.name)}” is removed from ${tagUse(tg).length} idea${tagUse(tg).length === 1 ? '' : 's'}. Anyone who types it again creates a new tag.`, 'Delete tag', true]
+    : ['Complete this sprint?', `${open.length} unfinished issue${open.length === 1 ? '' : 's'} return to the backlog. Completed issues stay with the sprint.`, 'Complete sprint', false];
+  modal.innerHTML = `<div class="scrim"><div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="c-t" aria-describedby="c-d"><h2 id="c-t">${title}</h2><p id="c-d">${text}</p><div class="row"><button class="btn" id="c-no">Cancel</button><button class="btn ${danger ? 'danger' : 'pri'}" id="c-yes">${label}</button></div></div></div>`;
+  const done = () => { modal.innerHTML = ''; ret?.isConnected && ret.focus(); };
+  document.getElementById('c-no').onclick = done; document.getElementById('c-no').focus();
+  document.getElementById('c-yes').onclick = () => {
+    if (tg) { ideas.forEach((i) => (i.tags = i.tags.filter((x) => normTag(x) !== normTag(tg.name)))); tagReg.delete(normTag(tg.name)); closeDrawer(); toast('Tag deleted'); }
+    else { open.forEach((i) => (i.sprint = null)); SPRINT.state = 'Completed'; toast(`Sprint completed · ${open.length} issue${open.length === 1 ? '' : 's'} back in the backlog`); }
     modal.innerHTML = ''; render();
   };
   modal.querySelector('.dialog').addEventListener('keydown', (e) => { if (e.key === 'Tab') { const b = modal.querySelectorAll('button'); if (e.shiftKey && document.activeElement === b[0]) { e.preventDefault(); b[1].focus(); } else if (!e.shiftKey && document.activeElement === b[1]) { e.preventDefault(); b[0].focus(); } } if (e.key === 'Escape') { e.stopPropagation(); done(); } });
@@ -876,6 +1194,9 @@ document.addEventListener('click', (e) => {
   if (t.dataset.sort) { const st = listState(key); if (st.sort === t.dataset.sort) { if (st.dir > 0) st.dir = -1; else { st.sort = null; st.dir = 1; } } else { st.sort = t.dataset.sort; st.dir = 1; } render(); document.querySelector(`[data-sort="${t.dataset.sort}"]`)?.focus(); return; }
   if (t.dataset.page) { listState(key).page = +t.dataset.page; render(); return; }
   if (t.dataset.view) { openDrawer('view', t.dataset.view, t); return; }
+  if (t.dataset.zoom) { S.zoom = t.dataset.zoom; render(); document.querySelector(`[data-zoom="${S.zoom}"]`)?.focus(); return; }
+  if (t.dataset.outcome) { openDrawer('view', t.dataset.outcome, t); return; }
+  if (t.dataset.issue) { const i = issues.find((x) => x.key === t.dataset.issue); const idea = ideas.find((x) => x.short === i.title); if (idea) openDrawer('view', idea.id, t); else toast('Sample issue: no matching idea in this prototype'); return; }
   const act = t.dataset.act; if (!act) return;
   if (act === 'close') closeDrawer();
   else if (act === 'create') { if (t.getAttribute('aria-disabled') !== 'true') openDrawer('create', null, t); }
@@ -883,6 +1204,11 @@ document.addEventListener('click', (e) => {
   else if (act === 'edit') openDrawer('edit', t.dataset.id, S.drawer ? S.returnFocus : t);
   else if (act === 'save-idea') saveIdea(t.dataset.id);
   else if (act === 'save-board') saveBoard(t.dataset.id);
+  else if (act === 'save-outcome') saveOutcome(t.dataset.id);
+  else if (act === 'save-tag') saveTag(t.dataset.id);
+  else if (act === 'delete-tag' || act === 'complete-sprint') confirmAction(act, t.dataset.id);
+  else if (act === 'plan-sprint') { if (t.getAttribute('aria-disabled') !== 'true') toast('Sprint planning isn’t drawn in this prototype'); }
+  else if (act === 'delete-outcome') { const o = outcomes.find((x) => x.id === t.dataset.id); outcomes.splice(outcomes.indexOf(o), 1); issues.forEach((i) => { if (i.outcome === o.id) i.outcome = null; }); closeDrawer(); render(); toast('Outcome deleted; its issues are ungrouped'); }
   else if (act === 'manual') toFormMode('manual');
   else if (act === 'assistant') toChatMode();
   else if (act === 'stop') chat.cancel?.();
@@ -894,6 +1220,7 @@ document.addEventListener('submit', (e) => {
   if (e.target.id === 'composer') { e.preventDefault(); const ta = drawer.querySelector('#c-text'); send(ta.value); ta.value = ''; } else e.preventDefault(); });
 document.addEventListener('keydown', (e) => {
   if (e.target.id === 'c-text' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.target.form.requestSubmit(); return; }
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && drawer.querySelector('#dform')) { e.preventDefault(); drawer.querySelector('[data-act^="save-"]')?.click(); return; }
   if (e.key === 'Escape') { if (document.querySelector('.pop')) closeMs(); else if (!modal.innerHTML) closeDrawer(); }
 });
 document.addEventListener('input', (e) => { if (e.target.id?.startsWith('q-')) { const st = listState(S.screen); st.q = e.target.value; st.page = 1; S.refocus = 'q'; render(); } });
@@ -908,7 +1235,7 @@ setTheme(THEMES.some(([k]) => k === saved) ? saved : 'terrazzo');
 pt.onchange = () => setTheme(pt.value);
 pa.onchange = () => { S.ai = pa.value; };
 function controls() {
-  ps.innerHTML = [['boards', 'Boards'], ['board', 'Board: Opportunities'], ['ideas', 'Ideas']].map(([k, l]) => `<button data-proto-screen="${k}" aria-pressed="${S.screen === k}">${l}</button>`).join('');
+  ps.innerHTML = [['boards', 'Boards'], ['board', 'Board: Opportunities'], ['ideas', 'Ideas'], ['sprint', 'Sprint board'], ['roadmap', 'Roadmap'], ['tags', 'Settings: Tags']].map(([k, l]) => `<button data-proto-screen="${k}" aria-pressed="${S.screen === k}">${l}</button>`).join('');
   pr.innerHTML = Object.entries(ROLES).map(([k, [, l]]) => `<button data-proto-role="${k}" aria-pressed="${S.role === k}">${l}</button>`).join('');
   pa.value = S.ai;
 }

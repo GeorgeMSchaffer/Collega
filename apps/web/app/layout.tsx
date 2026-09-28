@@ -19,6 +19,7 @@ const FONTS =
   '&family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700' +
   '&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700' +
   '&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700' +
+  '&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500' +
   '&family=DM+Mono:wght@400;500&display=swap'
 
 /**

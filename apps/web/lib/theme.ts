@@ -10,7 +10,7 @@ export const THEMES = [
   { value: 'portico', label: 'Portico', group: 'Light' },
   { value: 'sera', label: 'Piazza Sera', group: 'Light' },
   { value: 'lagoon', label: 'Lagoon', group: 'Light' },
-  { value: 'notte', label: 'Notte', group: 'Dark' },
+  { value: 'graphite', label: 'Graphite', group: 'Dark' },
 ] as const
 
 export type Theme = (typeof THEMES)[number]['value']
@@ -22,7 +22,11 @@ export const THEME_COOKIE = 'collega-theme'
 /** A year: the choice is a preference, not a session. */
 export const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 
+/** Graphite replaced Notte (2026-09-28); a browser that chose dark stays dark. */
+const RETIRED: Readonly<Record<string, Theme>> = { notte: 'graphite' }
+
 /** Anything else — a stale or hand-edited cookie — falls back to the default. */
 export function toTheme(value: string | undefined): Theme {
+  if (value !== undefined && Object.hasOwn(RETIRED, value)) return RETIRED[value] as Theme
   return THEMES.some((theme) => theme.value === value) ? (value as Theme) : DEFAULT_THEME
 }
