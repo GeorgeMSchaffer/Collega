@@ -506,7 +506,7 @@ for ideas). Eyebrow *Issue · {sprint name or Backlog} · {delivery status}*, th
 It reads the delivery card, `GET /ideas/{ideaId}` and `GET /ideas/{ideaId}/tasks`. Opened from a
 board it uses the card already in hand; opened from a **deep link** (`?idea={ideaId}` on a delivery
 screen) or on **`/delivery/issues/{ideaId}`**, which stays for existing links, the card comes from
-**`GET /issues/{ideaId}`** — the single-Issue read the user added on 2026-09-28 (`30-Contracts.md`),
+**`GET /ideas/{ideaId}/delivery`** — the single-Issue read the user added on 2026-09-28 (`30-Contracts.md`),
 replacing the web app's fetch of every sprint and the backlog to find one Issue.
 
 #### Roadmap (comp R)

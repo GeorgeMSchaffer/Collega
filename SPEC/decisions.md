@@ -17,11 +17,12 @@ stay, and the older one is marked.
   `Planned` sprint (earliest start) with **Start sprint** behind a confirmation, on the existing
   `POST /organizations/{orgId}/sprints/{sprintId}/start`, for the same roles as *Complete sprint*.
   Without it a completed or newly planned sprint could never become the running one from the app.
-- **`GET /issues/{ideaId}` returns one Issue's delivery card.** Same authorization as the delivery
-  lists; `404` for another organization's Issue, a Discovery idea or a deleted one. It replaces the
-  web app's fan-out over every sprint and the backlog, and serves the Issue drawer's deep link and
-  `/delivery/issues/{ideaId}`. It is the one exception to "there is no `/issues` root" in
-  `30-Contracts.md`: the path still takes the idea's id, and no new resource exists.
+- **A single-Issue read, under the existing convention:** `GET /ideas/{ideaId}/delivery` returns one
+  Issue's delivery card. Same authorization as the delivery lists; `404` for another organization's
+  Issue, a Discovery idea, a deleted one or a malformed id. It replaces the web app's fan-out over
+  every sprint and the backlog, and serves the Issue drawer's deep link and
+  `/delivery/issues/{ideaId}`. Like every delivery route it addresses the idea by its id, so there
+  is still no `/issues` root.
 - **The Roadmap's sprint rows stay** as drafted; whether they stay once Outcomes exist is decided in
   the Outcomes sprint.
 
