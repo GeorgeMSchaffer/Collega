@@ -19,6 +19,7 @@
 #   tools/boundaries        architecture test over the layer-boundary lint
 #   tools/arch              architecture tests lint cannot express
 #   tools/demo-shots        drives a running app and writes demo/screenshots
+#   tools/prompt-eval       runs the idea-assistant prompt over its evaluation corpus
 #   SPEC/mockups/_build/tw  Tailwind CLI that compiles CSS inlined into the comps
 #
 # apps/* and packages/* are globbed so a new workspace member is picked up without
@@ -29,6 +30,7 @@ packages:
   - 'tools/boundaries'
   - 'tools/arch'
   - 'tools/demo-shots'
+  - 'tools/prompt-eval'
   - 'SPEC/mockups/_build/tw'
   - 'apps/*'
   - 'packages/*'
