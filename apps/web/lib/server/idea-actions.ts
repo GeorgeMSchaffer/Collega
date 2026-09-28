@@ -93,6 +93,9 @@ function revalidateIdeaScreens(boardId: string): void {
   revalidatePath('/ideas')
   // Tag counts, and tags created inline while tagging.
   revalidatePath('/settings/tags')
+  // An Issue is an idea, and its drawer on the delivery screens votes, comments and edits too.
+  revalidatePath('/delivery/sprint')
+  revalidatePath('/delivery/backlog')
 }
 
 export async function saveIdea(input: IdeaInput): Promise<SaveIdeaResult> {

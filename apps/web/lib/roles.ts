@@ -80,3 +80,18 @@ export function mayDeleteIdeas(role: Role): boolean {
 export function mayEditIdeaContent(role: Role, userId: string, authorUserId: string | null) {
   return role === 'OrgAdmin' || (authorUserId !== null && userId === authorUserId)
 }
+
+/**
+ * Whether the reader may change an Issue's delivery status or its tasks: its author, an assignee,
+ * or an Org Admin (`20-feature-issues-and-delivery.md` "Permissions"). A Read Only account and a
+ * direct Site Admin never may.
+ */
+export function mayWorkOnIssue(
+  role: Role,
+  userId: string,
+  issue: { authorUserId: string; assignees: readonly { id: string }[] },
+): boolean {
+  if (role === 'OrgAdmin') return true
+  if (role !== 'User') return false
+  return issue.authorUserId === userId || issue.assignees.some((person) => person.id === userId)
+}

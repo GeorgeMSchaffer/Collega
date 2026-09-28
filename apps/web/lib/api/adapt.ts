@@ -23,7 +23,10 @@ import type {
   IdeaType,
   ImportOutcome,
   Issue,
+  IssueTask,
+  IssueTaskState,
   Member,
+  MemberOption,
   Organization,
   Person,
   PersonRef,
@@ -49,6 +52,8 @@ import type {
   WireIdeaListItem,
   WireIdeaTag,
   WireIdeaType,
+  WireIssueTask,
+  WireMember,
   WireOrganizationListItem,
   WireSprint,
   WireStatus,
@@ -472,6 +477,23 @@ function toSprintState(value: string): SprintState {
   return state
 }
 
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+
+/**
+ * The Sprint board's WINDOW: `10–24 SEP` within a month, `28 SEP – 5 OCT` across two. Read off the
+ * `YYYY-MM-DD` strings rather than through `Date`, for the timezone reason `SPRINT_DAY` gives, and
+ * spelled out rather than through `Intl`, whose `en-GB` short September is `Sept`.
+ */
+export function sprintWindow(startDate: string, endDate: string): string {
+  const [, startMonth = '', startDay = ''] = startDate.split('-')
+  const [, endMonth = '', endDay = ''] = endDate.split('-')
+  const start = `${Number(startDay)}`
+  const end = `${Number(endDay)} ${MONTHS[Number(endMonth) - 1] ?? ''}`
+  return startMonth === endMonth && startDate.slice(0, 4) === endDate.slice(0, 4)
+    ? `${start}–${end}`
+    : `${start} ${MONTHS[Number(startMonth) - 1] ?? ''} – ${end}`
+}
+
 /** One sprint, with its window formatted for the header that renders it. */
 export function toSprint(wire: WireSprint): Sprint {
   return {
@@ -482,6 +504,7 @@ export function toSprint(wire: WireSprint): Sprint {
     endsOn: SPRINT_DAY_YEAR.format(new Date(`${wire.endDate}T00:00:00Z`)),
     startDate: wire.startDate,
     endDate: wire.endDate,
+    window: sprintWindow(wire.startDate, wire.endDate),
     state: toSprintState(wire.state),
     issueCount: wire.issueCount,
     doneCount: wire.doneCount,
@@ -530,5 +553,40 @@ export function toIssue(wire: WireDeliveryCard): Issue {
     effort: toEffort(wire.effort),
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
     upvotesAtPromotion: wire.provenance.upvoteCountAtPromotion ?? wire.upvoteCount,
+    boardId: wire.boardId,
+    authorUserId: wire.authorUserId,
+    assignees: wire.assignees.map(toPersonRef),
+    tags: wire.tags.map(toTagRef),
+    sprint: wire.sprint
+      ? {
+          id: wire.sprint.sprintId,
+          name: wire.sprint.name,
+          window: sprintWindow(wire.sprint.startDate, wire.sprint.endDate),
+        }
+      : null,
+    upvotes: wire.upvoteCount,
+    taskSummary: wire.taskSummary,
+    promotedOn: wire.provenance.promotedAtUtc
+      ? DATE.format(new Date(wire.provenance.promotedAtUtc))
+      : null,
+    promotedBy: wire.provenance.promotedByDisplayName,
   }
+}
+
+const TASK_STATES: readonly IssueTaskState[] = ['NotStarted', 'InProgress', 'Done']
+
+export function toIssueTask(wire: WireIssueTask): IssueTask {
+  const state = TASK_STATES.find((candidate) => candidate === wire.state)
+  if (!state) throw new Error(`The API returned an unknown task state: ${wire.state}`)
+  return {
+    id: wire.taskId,
+    title: wire.title,
+    state,
+    assigneeUserId: wire.assigneeUserId,
+    assigneeName: wire.assignee?.displayName ?? null,
+  }
+}
+
+export function toMemberOption(wire: WireMember): MemberOption {
+  return { id: wire.userId, name: `${wire.firstName} ${wire.lastName}`.trim() }
 }

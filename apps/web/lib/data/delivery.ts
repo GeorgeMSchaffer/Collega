@@ -31,15 +31,25 @@
  * concerned, and now everywhere the screens are too.
  */
 
-import { toIssue, toSprint } from '../api/adapt'
+import { toIssue, toIssueTask, toMemberOption, toSprint } from '../api/adapt'
 import { apiGet, apiPath, isApiStatus } from '../api/client'
-import type { WireDeliveryCard, WireSprint } from '../api/wire'
+import type { WireDeliveryCard, WireIssueTask, WireMember, WireSprint } from '../api/wire'
 import { DELIVERY_STATUSES } from '../display'
-import type { DeliveryStatus, Issue, Outcome, Sprint } from '../types'
+import type { DeliveryStatus, Issue, IssueTask, MemberOption, Outcome, Sprint } from '../types'
 import { failIfRequested, resolve } from './latency'
 import { organizationScope } from './scope'
 
-export type { DeliveryStatus, Effort, Issue, Outcome, Sprint, SprintState } from '../types'
+export type {
+  DeliveryStatus,
+  Effort,
+  Issue,
+  IssueTask,
+  IssueTaskState,
+  MemberOption,
+  Outcome,
+  Sprint,
+  SprintState,
+} from '../types'
 
 export async function getDeliveryStatuses(): Promise<readonly DeliveryStatus[]> {
   failIfRequested('getDeliveryStatuses')
@@ -68,6 +78,27 @@ export async function getSprints(): Promise<Sprint[]> {
     apiPath`/organizations/${scope}/sprints`,
   )
   return sprints.map(toSprint)
+}
+
+/**
+ * The sprint the Sprint board shows: the running one, or — when none is running — the next
+ * `Planned` one, earliest start first and ties by name
+ * (`SPEC/20-feature-issues-and-delivery.md` "Sprint board (comp R)"). `null` when there is neither.
+ *
+ * Several `Active` sprints are allowed by the API; the board shows the first the list returns, as
+ * it always has.
+ */
+export async function getBoardSprint(): Promise<Sprint | null> {
+  failIfRequested('getBoardSprint')
+
+  const sprints = await getSprints()
+  const active = sprints.find((sprint) => sprint.state === 'Active')
+  if (active) return active
+
+  const planned = sprints
+    .filter((sprint) => sprint.state === 'Planned')
+    .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name))
+  return planned[0] ?? null
 }
 
 /**
@@ -118,45 +149,6 @@ export async function getSprint(id: string | null): Promise<Sprint | null> {
   }
 }
 
-/**
- * Every Issue in the organization — the backlog plus each sprint's.
- *
- * **That fan-out is the shape of the routes, not a missing optimisation.** `GET
- * /organizations/{id}/delivery` with no `sprintId` reads the *backlog* — Delivery items with no
- * sprint — and not everything; the controller says so in capitals, and it is the list an admin
- * pulls from. There is no "every Issue" query, so the whole set is the backlog unioned with one
- * read per sprint, which is one request per row of `getSprints`.
- *
- * Only the roadmap and the issue page need it, and both need all of it. A screen that wants one
- * sprint's cards should call `getIssuesInSprint`, not filter this.
- */
-async function everyIssue(reader: string): Promise<Issue[]> {
-  const scope = organizationScope()
-  if (scope === null) return []
-
-  const sprints = await apiGet<readonly WireSprint[]>(
-    reader,
-    apiPath`/organizations/${scope}/sprints`,
-  )
-
-  const lists = await Promise.all([
-    apiGet<readonly WireDeliveryCard[]>(reader, apiPath`/organizations/${scope}/delivery`),
-    ...sprints.map((sprint) =>
-      apiGet<readonly WireDeliveryCard[]>(
-        reader,
-        apiPath`/organizations/${scope}/delivery?sprintId=${sprint.sprintId}`,
-      ),
-    ),
-  ])
-
-  return lists.flat().map(toIssue)
-}
-
-export async function getIssues(): Promise<Issue[]> {
-  failIfRequested('getIssues')
-  return everyIssue('getIssues')
-}
-
 export async function getIssuesInSprint(sprintId: string): Promise<Issue[]> {
   failIfRequested('getIssuesInSprint')
 
@@ -192,20 +184,57 @@ export async function getBacklogIssues(): Promise<Issue[]> {
 }
 
 /**
- * One Issue, by the id `/delivery/issues/[ideaId]` was reached with.
+ * One Issue's delivery card, from `GET /ideas/{ideaId}/delivery` — the same card the lists return.
  *
- * **Found in the delivery set rather than fetched on its own, because there is no single-Issue
- * read.** `GET /ideas/{id}` exists and answers for a promoted idea, but its payload is the ideation
- * detail: no `phase`, no `effort`, no `deliveryStatus`, no sprint and no promotion snapshot. Every
- * field this screen is about lives on the delivery card, and the delivery card is only ever
- * returned by a list. That is worth a route one day; until then the cost is `everyIssue`'s fan-out.
- *
- * `null` rather than a throw for an id that is not a promoted idea in this organization — a
- * Discovery idea's id included, which is not on any delivery list and reaches `notFound()` here.
+ * `null` for anything that is not an Issue this reader can see: a Discovery idea, a deleted one,
+ * another organization's, or a malformed id, which the API answers 404 (400 is tolerated too, for
+ * the reason `getIdea` gives).
  */
 export async function getIssue(id: string): Promise<Issue | null> {
   failIfRequested('getIssue')
-  return (await everyIssue('getIssue')).find((issue) => issue.id === id) ?? null
+
+  try {
+    return toIssue(await apiGet<WireDeliveryCard>('getIssue', apiPath`/ideas/${id}/delivery`))
+  } catch (error) {
+    if (isApiStatus(error, 404) || isApiStatus(error, 400)) return null
+    throw error
+  }
+}
+
+/**
+ * An Issue's checklist, in its order. Empty for an id the reader cannot see, which `getIssue`
+ * answers `null` for beside it.
+ */
+export async function getIssueTasks(ideaId: string): Promise<IssueTask[]> {
+  failIfRequested('getIssueTasks')
+
+  try {
+    const tasks = await apiGet<readonly WireIssueTask[]>(
+      'getIssueTasks',
+      apiPath`/ideas/${ideaId}/tasks`,
+    )
+    return tasks.map(toIssueTask)
+  } catch (error) {
+    if (isApiStatus(error, 404) || isApiStatus(error, 400)) return []
+    throw error
+  }
+}
+
+/**
+ * The organization's active members, for the sprint owner and task assignee pickers. `/members`,
+ * which every member may read, not the administrators' `/users`.
+ */
+export async function getMemberOptions(): Promise<MemberOption[]> {
+  failIfRequested('getMemberOptions')
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  const members = await apiGet<readonly WireMember[]>(
+    'getMemberOptions',
+    apiPath`/organizations/${scope}/members`,
+  )
+  return members.map(toMemberOption).sort((a, b) => a.name.localeCompare(b.name))
 }
 
 /**
