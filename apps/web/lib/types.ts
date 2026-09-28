@@ -288,11 +288,17 @@ export type BoardOverview = {
   description: string | null
   ideaCount: number
   laneCount: number
+  /** ISO, for sorting; `createdOn` is the same instant as a reader sees it. */
+  createdAtUtc: string
   createdOn: string
   createdBy: string | null
   lanes: { id: string; name: string; color: string; ideaCount: number }[]
   topTags: { name: string; ideaCount: number }[]
   tagCount: number
+  /** Whether a plain User may move a card between lanes, or only an administrator. */
+  userStatusMoves: boolean
+  isArchived: boolean
+  archivedOn: string | null
 }
 
 /**

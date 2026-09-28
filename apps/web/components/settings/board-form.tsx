@@ -23,8 +23,8 @@ const IDLE: BoardFormState = { error: null }
 
 /**
  * Create and edit are the same form with different seed values, so they are the same component.
- * The one thing edit does *not* add is a delete: a board's ideas outlive the board, and no screen
- * in comp Q offers to discard them as a side effect of tidying up the columns.
+ * The one thing edit does *not* add is a delete: a board's ideas outlive the board, which is
+ * archived instead, from the Boards screen.
  *
  * `boardId` is what tells the two apart, and it decides the action rather than being a flag beside
  * one — a board with an id is saved, a board without one is created, and there is no third state
@@ -72,57 +72,14 @@ export function BoardForm({
           ) : null}
 
           <form action={submit}>
-            {boardId === null ? null : <input type="hidden" name="boardId" value={boardId} />}
-
-            <Field
-              htmlFor="board-name"
-              label="Name"
-              hint="Required. What this board is called everywhere it appears."
-            >
-              <Input id="board-name" name="name" defaultValue={defaultName} required />
-            </Field>
-
-            <Field
-              htmlFor="board-description"
-              label="Description"
-              hint="Optional, up to 500 characters. The first two lines show on the board's card."
-            >
-              <Textarea
-                id="board-description"
-                name="description"
-                defaultValue={defaultDescription}
-                maxLength={500}
-                rows={3}
-              />
-            </Field>
-
-            <div className="mb-4">
-              <span className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  id="user-moves"
-                  name="userStatusMoves"
-                  defaultChecked={userStatusMoves}
-                  className="mt-0.5"
-                />
-                <label htmlFor="user-moves" className="text-sm font-medium">
-                  Let Users move ideas between statuses on this board
-                </label>
-              </span>
-              <p className="m-0 mt-1 max-w-prose text-[0.8rem] text-muted-foreground">
-                With this off, only administrators can change an idea&rsquo;s status here. Read Only
-                accounts can never move anything, on any board.
-              </p>
-            </div>
-
-            <div className="mb-3">
-              <h2 className="m-0 text-sm font-semibold">Swimlanes</h2>
-              <p className="m-0 mt-1 max-w-prose text-[0.8rem] text-muted-foreground">
-                Pick from this organization&rsquo;s statuses. The order on the left is the
-                left-to-right order of the board&rsquo;s columns.
-              </p>
-            </div>
-            <SwimlanePicker selected={swimlaneIds} statuses={statuses} />
+            <BoardFields
+              boardId={boardId}
+              defaultName={defaultName}
+              defaultDescription={defaultDescription}
+              userStatusMoves={userStatusMoves}
+              swimlaneIds={swimlaneIds}
+              statuses={statuses}
+            />
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Button type="submit" disabled={pending}>
@@ -154,5 +111,86 @@ export function BoardForm({
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+/**
+ * The board form's fields, without the form around them: the Settings screen wraps them in a card
+ * that redirects on save, the Boards screen's drawer in a form that stays put.
+ *
+ * `sectionHeading` keeps the outline right in both: an `h2` under the Settings page's `h1`, an `h3`
+ * under the drawer's `h2`.
+ */
+export function BoardFields({
+  boardId,
+  defaultName = '',
+  defaultDescription = '',
+  userStatusMoves,
+  swimlaneIds,
+  statuses,
+  sectionHeading: SectionHeading = 'h2',
+}: {
+  boardId: string | null
+  defaultName?: string
+  defaultDescription?: string
+  userStatusMoves: boolean
+  swimlaneIds: string[]
+  statuses: Status[]
+  sectionHeading?: 'h2' | 'h3'
+}) {
+  return (
+    <>
+      {boardId === null ? null : <input type="hidden" name="boardId" value={boardId} />}
+
+      <Field
+        htmlFor="board-name"
+        label="Name"
+        hint="Required. What this board is called everywhere it appears."
+      >
+        <Input id="board-name" name="name" defaultValue={defaultName} required />
+      </Field>
+
+      <Field
+        htmlFor="board-description"
+        label="Description"
+        hint="Optional, up to 500 characters. The first two lines show on the board's card."
+      >
+        <Textarea
+          id="board-description"
+          name="description"
+          defaultValue={defaultDescription}
+          maxLength={500}
+          rows={3}
+        />
+      </Field>
+
+      <div className="mb-4">
+        <span className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            id="user-moves"
+            name="userStatusMoves"
+            defaultChecked={userStatusMoves}
+            className="mt-0.5"
+          />
+          <label htmlFor="user-moves" className="text-sm font-medium">
+            Let Users move ideas between statuses on this board
+          </label>
+        </span>
+        <p className="m-0 mt-1 max-w-prose text-[0.8rem] text-muted-foreground">
+          With this off, only administrators can change an idea&rsquo;s status here. Read Only
+          accounts can never move anything, on any board.
+        </p>
+      </div>
+
+      <div className="mb-3">
+        <SectionHeading className="m-0 text-sm font-semibold">Swimlanes</SectionHeading>
+        <p className="m-0 mt-1 max-w-prose text-[0.8rem] text-muted-foreground">
+          Pick from this organization&rsquo;s statuses. The order on the left is the left-to-right
+          order of the board&rsquo;s columns.
+        </p>
+      </div>
+      <SwimlanePicker selected={swimlaneIds} statuses={statuses} />
+    </>
   )
 }

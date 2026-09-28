@@ -69,8 +69,15 @@ export async function getBoards(): Promise<Board[]> {
  * A third projection of `GET /organizations/{id}/boards`, for the reason `getBoardAdmin` gives:
  * the lane counts, top tags and creator arrive on the list item, so the cards cost no request
  * beyond the one list, and `Board` does not grow fields only this screen reads.
+ *
+ * `includeArchived` asks for archived boards too. The Boards screen always does and filters on
+ * Active / Archived in the client, since boards are few enough to page and filter there.
  */
-export async function getBoardOverviews(): Promise<BoardOverview[]> {
+export async function getBoardOverviews({
+  includeArchived = false,
+}: {
+  includeArchived?: boolean
+} = {}): Promise<BoardOverview[]> {
   failIfRequested('getBoardOverviews')
 
   const scope = organizationScope()
@@ -78,7 +85,9 @@ export async function getBoardOverviews(): Promise<BoardOverview[]> {
 
   const boards = await apiGet<readonly WireBoardListItem[]>(
     'getBoardOverviews',
-    apiPath`/organizations/${scope}/boards`,
+    includeArchived
+      ? apiPath`/organizations/${scope}/boards?includeArchived=true`
+      : apiPath`/organizations/${scope}/boards`,
   )
   return boards.map(toBoardOverview)
 }

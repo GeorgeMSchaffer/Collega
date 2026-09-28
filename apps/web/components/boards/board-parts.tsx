@@ -1,6 +1,4 @@
-import { buttonVariants, Dot, Tag } from '@collega/design-system'
-import Link from 'next/link'
-import { GatedAction } from '@/components/common/gated-action'
+import { Badge, Dot, Tag } from '@collega/design-system'
 import type { BoardOverview } from '@/lib/types'
 
 /**
@@ -64,32 +62,41 @@ export function TopTags({ board, limit }: { board: BoardOverview; limit: number 
   )
 }
 
-/** Edit, live for an Org Admin and disabled with the reason for everyone else. */
-export function BoardEditAction({
-  board,
-  denial,
-}: {
-  board: BoardOverview
-  denial: string | null
-}) {
+/**
+ * First lane, everything between, last lane — so boards with different lanes still compare in one
+ * column. A board of two lanes has nothing in between, and says so by omitting it.
+ */
+export function LaneFigures({ board }: { board: BoardOverview }) {
+  const first = board.lanes[0]
+  const last = board.lanes.length > 1 ? board.lanes[board.lanes.length - 1] : undefined
+  const between = board.lanes.slice(1, -1).reduce((sum, lane) => sum + lane.ideaCount, 0)
+
   return (
-    <GatedAction
-      id={`why-edit-${board.id}`}
-      label="Edit"
-      deniedLabel={`Edit ${board.name}`}
-      denial={denial}
-      variant="ghost"
-      size="sm"
-    >
-      <Link
-        href={`/settings/boards/${board.id}`}
-        className={buttonVariants({ variant: 'ghost', size: 'sm' })}
-        aria-label={`Edit ${board.name}`}
-      >
-        Edit
-      </Link>
-    </GatedAction>
+    <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground tabular-nums">
+      <span>
+        <b className="font-semibold text-foreground">{board.ideaCount}</b> ideas
+      </span>
+      {first ? (
+        <span>
+          {first.ideaCount} {first.name}
+        </span>
+      ) : null}
+      {board.lanes.length > 2 ? <span>{between} in between</span> : null}
+      {last ? (
+        <span>
+          {last.ideaCount} {last.name}
+        </span>
+      ) : null}
+    </div>
   )
+}
+
+export function statusLabel(board: BoardOverview): 'Active' | 'Archived' {
+  return board.isArchived ? 'Archived' : 'Active'
+}
+
+export function BoardStatus({ board }: { board: BoardOverview }) {
+  return <Badge variant={board.isArchived ? 'outline' : 'success'}>{statusLabel(board)}</Badge>
 }
 
 export function createdLine(board: BoardOverview): string {
