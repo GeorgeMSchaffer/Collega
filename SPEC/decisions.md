@@ -9,6 +9,25 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-27 — The API sends the custom field list
+
+**Decided by the user.** The idea form no longer works out which custom fields an Idea Type shows.
+`GET /organizations/{id}/idea-types` carries each type's `effectiveFields`, for Create, and
+`GET /ideas/{id}` carries the idea's own `formFields` with raw stored values, for Edit
+(`30-Contracts.md`).
+
+- **Why:** slice 102 transcribed `resolveEffectiveFields` into `apps/web`, which cannot import the
+  domain. Review found the drift is not always loud — a field the client fails to show is cleared on
+  save — and it already bit twice: an idea whose type is archived had no fields to edit, and
+  multi-select values were rebuilt from display labels, so a label with a comma, or an option since
+  removed, was lost.
+- **Chosen over** resolved fields on the type list only (Edit would still reverse labels to ids) and
+  over a per-type endpoint (a request per type picked, same Edit problem).
+- The domain resolver stays the single source of truth; the API now exposes its result instead of
+  the browser copying it.
+
+---
+
 ## 2026-09-27 — The idea assistant is rescoped as a co-author, and ideas gain structured fields
 
 **Decided by the user**, reviewing an interactive prototype (comp R). This is the rescope

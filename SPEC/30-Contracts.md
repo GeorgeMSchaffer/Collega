@@ -1181,6 +1181,13 @@ Success response `200`:
 - `mentions`
 - `comments` array using the comment item shape from `GET /api/v1/ideas/{ideaId}/comments`, every comment on the idea in chronological order and unpaged
 - `fieldValues` array of resolved User-Defined Field values (`fieldDefinitionId`, `fieldName`, `fieldType`, `value`), per `SPEC/20-feature-user-defined-fields.md`
+- `formFields` array — the idea's own effective fields, for editing it: resolved from its Idea Type
+  even when that type is archived, in form order. Each item is the `effectiveFields` item shape
+  above plus `value`, the stored value in the form the write accepts (`true`/`false` for
+  `Boolean`, option ids — comma-separated for `MultiSelect` — for choice fields, `YYYY-MM-DD` for
+  `Date`), or `null` when unset. An option the idea stores that the field no longer offers is
+  still listed in that item's `options`, with `isArchived: true`, so an unchanged save keeps it.
+  `fieldValues` stays as the display projection (labels, `Yes`/`No`). Added 2026-09-27.
 - `upvoteCount`
 - `hasUpvoted` boolean for the current caller
 - `commentCount` integer
@@ -1675,6 +1682,19 @@ Success response `200` item shape:
 - `name` string, max 100 characters
 - `sortOrder` integer
 - `isDeleted` boolean
+- `effectiveFields` array — the custom fields an idea of this type shows, in form order, resolved by
+  the effective-field rule (`SPEC/20-feature-idea-type-fields.md` "Effective-field resolution"). An
+  archived type (returned under `includeDeleted=true`) resolves the same way. Item shape:
+  - `fieldDefinitionId` GUID string
+  - `name` string
+  - `fieldType` one of `Text`, `Number`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`, `Url`
+  - `isRequired` boolean — required for this type, not the field's global flag
+  - `options` array of `{ optionId, label }` in display order; empty for a field that is not
+    `Dropdown` or `MultiSelect`
+
+`effectiveFields` was added 2026-09-27 so the idea form stops re-deriving the rule in the browser,
+where it could drift from the validator (`SPEC/decisions.md` 2026-09-27, "The API sends the custom
+field list").
 
 ### `POST /api/v1/organizations/{organizationId}/idea-types`
 Purpose: Create an Idea Type option. Site Admin and in-scope Org Admin only.
