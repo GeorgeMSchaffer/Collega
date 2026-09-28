@@ -161,8 +161,11 @@ reported, excluded from every metric denominator below.
       either was overridden, repeats, case selection, prompt source (`default` or a file path) and
       the SHA-256 of the template, a **content hash per case** and **per fixture**, and start and end
       time. The hashes cover what drives a run, not the raw files: for a case its `fixture`, `turns`
-      and `expect`; for a fixture its rendered system prompt and response schema. Adding an optional
-      key (`assistant`, `pair`) or editing a note therefore changes no hash, and `compare` against an
+      and `expect`; for a fixture its rendered system prompt and response schema
+      (`fixtureHashes`). Each fixture also carries a **catalog hash** (`fixtureCatalogHashes`): the
+      fixture rendered through `buildSystemPrompt` with a template of only the two placeholders, plus
+      the response schema — what the fixture drives, without the template. Adding an optional key
+      (`assistant`, `pair`) or editing a note therefore changes no hash, and `compare` against an
       older baseline does not warn for it;
     - each fixture's **rendered system prompt and response schema**, once — the static dump the
       README says to compare against;
@@ -234,8 +237,9 @@ reported, excluded from every metric denominator below.
 
 34. `compare <baseline.json> <candidate.json>` prints, per metric and per case, both values and the
     delta, and applies rule 32. It **warns first when the two runs are not like with like**: a
-    different model, effort, case or fixture content hash (rule 19), repeats, or case selection.
-    Only the prompt template hash is expected to differ.
+    different model, effort, case content hash or fixture catalog hash (rule 19), repeats, or case
+    selection. Only the prompt template hash is expected to differ. The check uses the catalog hash,
+    not `fixtureHashes`, because the rendered prompt changes whenever the template does.
 35. The workflow for a prompt change: edit `SYSTEM_PROMPT_TEMPLATE` in
     `packages/application/src/ai/prompt-defaults.ts` (or write a candidate template file), run the
     candidate, `compare` against the committed baseline, attach the summary to the review, and on
@@ -268,8 +272,10 @@ reported, excluded from every metric denominator below.
     fake client exactly as `packages/infrastructure` tests it (the adapter's own comment records why:
     a billed provider call hid in the .NET test suite). The live command is a separate script,
     `eval`, which Turbo never runs because `turbo.json` names only `build`, `typecheck` and `test`.
-40. Invocation: `pnpm --filter @collega/prompt-eval eval [options]`, and
-    `… eval compare|rescore|dump-prompt …`. A live run refuses to start without `PROMPT_EVAL_ANTHROPIC_API_KEY`,
+40. Invocation: `pnpm -C tools/prompt-eval eval [options]` (or `node tools/prompt-eval/src/cli.ts
+    [options]`), and `… eval compare|rescore|dump-prompt …`, after `pnpm build`, since the runner
+    imports the application and infrastructure builds. `pnpm --filter @collega/prompt-eval eval`
+    also runs it but turns every failure into exit 1, which hides rule 30's exit 2. A live run refuses to start without `PROMPT_EVAL_ANTHROPIC_API_KEY`,
     and without `--yes` when the planned call count exceeds 100.
 41. **No CI for now.** The runner is not run on pull requests, pushes or a schedule, and there is no
     `workflow_dispatch` job. A run is local, and its summary is attached to the review of any prompt

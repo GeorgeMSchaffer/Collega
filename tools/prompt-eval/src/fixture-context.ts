@@ -20,7 +20,7 @@ export interface PreparedFixture {
   /**
    * The catalog and scope statement as `buildSystemPrompt` renders them, plus the schema - the
    * same content with the template left out, so it stays equal across a prompt change.
-   * Recorded for `compare`; see the slice 114 report on rules 19 and 34.
+   * `compare` checks like with like on this one (rules 19 and 34).
    */
   readonly catalogSha256: string
   /** The derived ids, so a saved run can name the options without the corpus. */

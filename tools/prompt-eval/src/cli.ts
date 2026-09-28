@@ -1,13 +1,11 @@
 // The prompt-eval runner (SPEC/20-feature-prompt-eval-runner.md). Invoked through the package's
-// `eval` script, which Turbo never runs:
+// `eval` script, which Turbo never runs (rule 40):
 //
-//   pnpm --filter @collega/prompt-eval eval [--dry-run] [options]
-//   pnpm --filter @collega/prompt-eval eval dump-prompt --fixture <name> [--prompt-file <path>]
+//   pnpm -C tools/prompt-eval eval [--dry-run] [options]
+//   pnpm -C tools/prompt-eval eval dump-prompt --fixture <name> [--prompt-file <path>]
 //
 // Imports the application and infrastructure from their dist/ builds, so `pnpm build` comes first.
-//
-// `pnpm --filter` reports any failing script as exit 1. Where the runner's own code matters (2 is
-// "not a valid run"), use `pnpm -C tools/prompt-eval eval` or `node tools/prompt-eval/src/cli.ts`.
+// `pnpm --filter` also works but reports any failure as exit 1, hiding exit 2 ("not a valid run").
 
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
