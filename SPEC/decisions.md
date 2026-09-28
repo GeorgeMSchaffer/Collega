@@ -9,6 +9,24 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — Starting a sprint, a single-Issue read, and the Roadmap's sprint rows
+
+**Decided by the user**, answering the three points the answers entry below left open.
+
+- **Start sprint on the Sprint board.** When no sprint is `Active`, the board shows the next
+  `Planned` sprint (earliest start) with **Start sprint** behind a confirmation, on the existing
+  `POST /organizations/{orgId}/sprints/{sprintId}/start`, for the same roles as *Complete sprint*.
+  Without it a completed or newly planned sprint could never become the running one from the app.
+- **`GET /issues/{ideaId}` returns one Issue's delivery card.** Same authorization as the delivery
+  lists; `404` for another organization's Issue, a Discovery idea or a deleted one. It replaces the
+  web app's fan-out over every sprint and the backlog, and serves the Issue drawer's deep link and
+  `/delivery/issues/{ideaId}`. It is the one exception to "there is no `/issues` root" in
+  `30-Contracts.md`: the path still takes the idea's id, and no new resource exists.
+- **The Roadmap's sprint rows stay** as drafted; whether they stay once Outcomes exist is decided in
+  the Outcomes sprint.
+
+---
+
 ## 2026-09-28 — The comp R iteration's open questions are answered
 
 **Decided by the user**, answering the ten questions left open by the adoption entry below, plus the
