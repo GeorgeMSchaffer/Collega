@@ -8,7 +8,6 @@ import {
   EffortBar,
   EmptyState,
   Meta,
-  TagChip,
 } from '@collega/design-system'
 import Link from 'next/link'
 import {
@@ -22,7 +21,7 @@ import {
 } from 'react'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
-import { People } from '@/components/ideas/idea-chips'
+import { People, TagList } from '@/components/ideas/idea-chips'
 import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
 import { ConfirmDialog, Drawer } from '@/components/list'
 import { DELIVERY_STATUSES } from '@/lib/display'
@@ -371,20 +370,7 @@ export function SprintBoard({
                           >
                             {issue.title}
                           </button>
-                          {issue.tags.length > 0 ? (
-                            <span className="flex flex-wrap gap-1">
-                              {issue.tags.slice(0, 2).map((tag) => (
-                                <TagChip key={tag.id} color={tag.color}>
-                                  {tag.name}
-                                </TagChip>
-                              ))}
-                              {issue.tags.length > 2 ? (
-                                <span className="text-xs text-muted-foreground">
-                                  +{issue.tags.length - 2}
-                                </span>
-                              ) : null}
-                            </span>
-                          ) : null}
+                          <TagList tags={issue.tags} max={2} />
                           <EffortBar effort={issue.effort} />
                         </article>
                       )

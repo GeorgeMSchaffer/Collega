@@ -1,8 +1,8 @@
 'use client'
 
-import { Button, Dot, EffortBar, Marker, Select, TagChip } from '@collega/design-system'
+import { Button, Dot, EffortBar, Marker, Select } from '@collega/design-system'
 import { type ReactNode, useId, useOptimistic, useState, useTransition } from 'react'
-import { People } from '@/components/ideas/idea-chips'
+import { People, TagList } from '@/components/ideas/idea-chips'
 import { IdeaForm } from '@/components/ideas/idea-form'
 import { IdeaView } from '@/components/ideas/idea-view'
 import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
@@ -191,13 +191,7 @@ export function IssueDrawer({
               ) : null}
             </Fact>
             <Fact label="Tags">
-              {issue.tags.length > 0
-                ? issue.tags.map((tag) => (
-                    <TagChip key={tag.id} color={tag.color}>
-                      {tag.name}
-                    </TagChip>
-                  ))
-                : '—'}
+              {issue.tags.length > 0 ? <TagList tags={issue.tags} max={10} /> : '—'}
             </Fact>
           </dl>
 
