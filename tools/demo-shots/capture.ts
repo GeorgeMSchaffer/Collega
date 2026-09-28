@@ -167,7 +167,7 @@ await shoot(admin, 'ideas-list')
 // hero idea is found through the text filter and its address read back from the drawer's URL.
 await admin.goto(`${BASE}/ideas?q=${encodeURIComponent(HERO_IDEA)}`)
 await settle(admin)
-const heroTitle = admin.getByRole('button', { name: HERO_IDEA, exact: true }).first()
+const heroTitle = admin.getByRole('button', { name: HERO_IDEA, exact: true })
 if ((await heroTitle.count()) === 0) fail(`No idea called '${HERO_IDEA}' — has the demo seed run?`)
 await heroTitle.click()
 await admin.waitForURL(/[?&]idea=/)
