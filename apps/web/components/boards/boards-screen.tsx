@@ -155,6 +155,12 @@ export function BoardsScreen({
     router.push(`${pathname}${query ? `?${query}` : ''}` as Route, { scroll: false })
   }
 
+  // A new question, or the answer "never mind", retires the last one's refusal.
+  function ask(board: BoardOverview | null) {
+    setError(null)
+    setConfirming(board)
+  }
+
   function confirmArchive() {
     const board = confirming
     if (!board) return
@@ -174,7 +180,7 @@ export function BoardsScreen({
       itemLabel={board.name}
       onView={(from) => navigate(board.id, null, from)}
       onEdit={(from) => navigate(board.id, 'edit', from)}
-      onRemove={() => setConfirming(board)}
+      onRemove={() => ask(board)}
       removeKind={board.isArchived ? 'unarchive' : 'archive'}
       canEdit={isAdmin && !board.isArchived}
       canRemove={isAdmin}
@@ -274,7 +280,7 @@ export function BoardsScreen({
         onClose={() => navigate(null, null)}
         onView={(boardId) => navigate(boardId, null)}
         onEdit={(boardId) => navigate(boardId, 'edit')}
-        onArchive={(board) => setConfirming(board)}
+        onArchive={ask}
       />
 
       <ConfirmDialog
@@ -289,7 +295,7 @@ export function BoardsScreen({
         destructive={false}
         pending={archiving}
         onConfirm={confirmArchive}
-        onCancel={() => setConfirming(null)}
+        onCancel={() => ask(null)}
       />
     </>
   )
