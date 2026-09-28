@@ -267,6 +267,13 @@ export type IdeaFormFieldOptionDto = {
   readonly isArchived?: true
 }
 
+/** A tag on an idea, with its colour so a chip needs no second request (added 2026-09-28). */
+export type IdeaTagDto = {
+  readonly tagId: string
+  readonly name: string
+  readonly color: string
+}
+
 export type IdeaListItem = {
   readonly ideaId: string
   readonly boardId: string
@@ -282,6 +289,8 @@ export type IdeaListItem = {
   readonly dueDate: string | null
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order. */
+  readonly tags: readonly IdeaTagDto[]
   readonly statusId: string
   readonly statusName: string
   readonly upvoteCount: number
@@ -312,6 +321,8 @@ export type IdeaDetail = {
   readonly statusId: string
   readonly statusName: string
   readonly tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order. */
+  readonly tags: readonly IdeaTagDto[]
   readonly mentions: readonly MentionDto[]
   readonly comments: readonly IdeaCommentDto[]
   readonly upvoteCount: number

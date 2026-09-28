@@ -1,4 +1,4 @@
-import { systemClock } from '@collega/application/common'
+import { systemClock, systemRandom } from '@collega/application/common'
 import { createPrismaClient, type PrismaClient } from '@collega/infrastructure/persistence'
 import { Inject, Injectable, Module, type OnModuleDestroy } from '@nestjs/common'
 import { CONFIG, ConfigModule } from '../config/config.module.js'
@@ -45,6 +45,7 @@ class PrismaLifecycle implements OnModuleDestroy {
     { provide: PORT_TOKENS.UnitOfWork, useExisting: AlsUnitOfWork },
     { provide: PORT_TOKENS.CurrentUserContext, useExisting: AlsCurrentUserContext },
     { provide: PORT_TOKENS.Clock, useValue: systemClock },
+    { provide: PORT_TOKENS.RandomSource, useValue: systemRandom },
     ...ADAPTER_PROVIDERS,
     PrismaLifecycle,
   ],

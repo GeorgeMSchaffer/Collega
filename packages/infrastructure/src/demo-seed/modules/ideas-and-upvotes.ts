@@ -1,9 +1,11 @@
+import { createHash } from 'node:crypto'
 import {
   DEFAULT_BUSINESS_IMPACTS,
   DEFAULT_IDEA_TYPES,
   DEFAULT_STATUSES,
 } from '@collega/application/organizations'
 import { NOT_CAPTURED_TEXT } from '@collega/domain/ideas'
+import { paletteColorAt, TAG_COLOR_PALETTE } from '@collega/domain/tags'
 import type { PrismaClient } from '../../generated/prisma/client.js'
 import type { SeedModule } from '../types.js'
 import { IDEA_DETAILS_BY_FOCUS } from './idea-details.js'
@@ -16,6 +18,13 @@ import {
 } from './scenario.js'
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'] as const
+
+/** The `tags.color` backfill's colour, computed the same way: the first byte of the MD5 digest of
+ * the normalized name, modulo 10, indexing the palette (SPEC/decisions.md 2026-09-28). */
+export function seedTagColor(normalizedName: string): string {
+  const firstByte = createHash('md5').update(normalizedName, 'utf8').digest()[0] ?? 0
+  return paletteColorAt(firstByte % TAG_COLOR_PALETTE.length)
+}
 
 /**
  * Wave B3's contribution: the organization's tags, 11 ideas per board, and their assignees,
@@ -48,20 +57,37 @@ export const ideasAndUpvotesSeed: SeedModule = {
       )
 
       const tagNames = [...new Set(scenario.boards.flatMap((board) => board.tagNames))]
+      const tagIdsByName = new Map<string, string>()
       for (const name of tagNames) {
-        const id = seedId('tag', scenario.slug, name)
-        await prisma.tags.upsert({
-          where: { id },
-          update: {},
-          create: {
-            id,
-            organization_id: organizationId,
-            name,
-            normalized_name: name.toLowerCase(),
-            created_at_utc: now,
-            updated_at_utc: now,
-          },
-        })
+        const normalizedName = name.toLowerCase()
+        const seededId = seedId('tag', scenario.slug, name)
+        // A seeded tag an admin deleted and somebody typed again exists under a random id. Adopt
+        // it, or the create below collides with ux_tags_organization_id_normalized_name.
+        const existing =
+          (await prisma.tags.findUnique({ where: { id: seededId }, select: { id: true } })) ??
+          (await prisma.tags.findUnique({
+            where: {
+              organization_id_normalized_name: {
+                organization_id: organizationId,
+                normalized_name: normalizedName,
+              },
+            },
+            select: { id: true },
+          }))
+        if (existing === null) {
+          await prisma.tags.create({
+            data: {
+              id: seededId,
+              organization_id: organizationId,
+              name,
+              normalized_name: normalizedName,
+              color: seedTagColor(normalizedName),
+              created_at_utc: now,
+              updated_at_utc: now,
+            },
+          })
+        }
+        tagIdsByName.set(name, existing?.id ?? seededId)
       }
 
       const totalIdeasInOrganization = scenario.boards.length * IDEA_SCENARIOS.length
@@ -154,7 +180,7 @@ export const ideasAndUpvotesSeed: SeedModule = {
 
           for (let offset = 0; offset < relatedCount; offset++) {
             const tagName = board.tagNames[(i + offset) % board.tagNames.length] as string
-            const tagId = seedId('tag', scenario.slug, tagName)
+            const tagId = tagIdsByName.get(tagName) as string
             await prisma.idea_tags.upsert({
               where: { idea_id_tag_id: { idea_id: ideaId, tag_id: tagId } },
               update: {},

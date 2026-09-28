@@ -87,7 +87,7 @@ export class BoardService {
     const tagsByBoard = new Map<string, BoardTagCount[]>()
     for (const row of tagCounts) {
       const tags = tagsByBoard.get(row.boardId) ?? []
-      tags.push({ name: row.tagName, ideaCount: row.ideaCount })
+      tags.push({ name: row.tagName, ideaCount: row.ideaCount, color: row.tagColor })
       tagsByBoard.set(row.boardId, tags)
     }
 

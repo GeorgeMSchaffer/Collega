@@ -32,7 +32,13 @@ import {
   updateIdeaContent,
 } from '@collega/domain/ideas'
 import { normalizeTagName } from '@collega/domain/tags'
-import type { AuditEventWriter, Clock, CurrentUserContext, UnitOfWork } from '../common/index.js'
+import type {
+  AuditEventWriter,
+  Clock,
+  CurrentUserContext,
+  RandomSource,
+  UnitOfWork,
+} from '../common/index.js'
 import {
   attributeAudit,
   ConflictError,
@@ -44,6 +50,7 @@ import {
   UnauthorizedError,
   ValidationError,
 } from '../common/index.js'
+import { randomTagColor } from '../tags/random-color.js'
 import type {
   AssignIssueToSprintCommand,
   ChangeDeliveryStatusCommand,
@@ -64,6 +71,7 @@ import type {
   IdeaListItem,
   IdeaListQuery,
   IdeaPage,
+  IdeaTagDto,
   IssueProvenance,
   MentionDto,
   OrganizationIdeaListQuery,
@@ -132,6 +140,7 @@ export class IdeaService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly random: RandomSource,
   ) {}
 
   async listByBoard(boardId: string, query: IdeaListQuery): Promise<IdeaPage<IdeaListItem>> {
@@ -1182,6 +1191,7 @@ export class IdeaService {
       dueDate: idea.dueDate,
       assignees: this.projectAssignees(idea, userLookup),
       tagNames: this.projectTagNames(idea, tagLookup),
+      tags: this.projectTags(idea, tagLookup),
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
       upvoteCount: upvoteCounts.get(idea.id) ?? 0,
@@ -1376,6 +1386,7 @@ export class IdeaService {
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
       tagNames: this.projectTagNames(idea, tagLookup),
+      tags: this.projectTags(idea, tagLookup),
       mentions,
       comments: commentDtos,
       upvoteCount,
@@ -1488,12 +1499,20 @@ export class IdeaService {
     idea: Idea,
     tagLookup: ReadonlyMap<string, TagSummary>,
   ): readonly string[] {
+    return this.projectTags(idea, tagLookup).map((tag) => tag.name)
+  }
+
+  /** `tagNames`' order, which is what the contract pins `tags` to. */
+  private projectTags(
+    idea: Idea,
+    tagLookup: ReadonlyMap<string, TagSummary>,
+  ): readonly IdeaTagDto[] {
     return idea.tagIds
       .flatMap((id) => {
         const tag = tagLookup.get(id)
-        return tag ? [tag.name] : []
+        return tag ? [{ tagId: tag.id, name: tag.name, color: tag.color }] : []
       })
-      .sort(compareIgnoreCase)
+      .sort((a, b) => compareIgnoreCase(a.name, b.name))
   }
 
   // Resolution helpers -----------------------------------------------------------------------
@@ -1581,6 +1600,7 @@ export class IdeaService {
     const tags = await this.tags.getOrCreate({
       organizationId,
       requestedNames: distinctNormalized,
+      pickNewTagColor: () => randomTagColor(this.random),
       nowUtc,
       actorUserId,
     })

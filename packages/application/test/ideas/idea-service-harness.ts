@@ -262,7 +262,7 @@ export function harness(options: {
       return []
     },
     async getOrCreate(input) {
-      return input.requestedNames.map((name) => ({ id: `tag-${name}`, name }))
+      return input.requestedNames.map((name) => ({ id: `tag-${name}`, name, color: '#E5484D' }))
     },
   }
 
@@ -401,6 +401,7 @@ export function harness(options: {
       audit,
       options.currentUser,
       fixedClock(),
+      { nextInt: () => 0 },
     ),
     saved,
     added,

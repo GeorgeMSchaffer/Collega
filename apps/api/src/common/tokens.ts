@@ -29,6 +29,7 @@
 export const PORT_TOKENS = {
   // Kernel (packages/application/src/common) ----------------------------------------------------
   Clock: 'Clock',
+  RandomSource: 'RandomSource',
   UnitOfWork: 'UnitOfWork',
   AuditEventWriter: 'AuditEventWriter',
   CurrentUserContext: 'CurrentUserContext',

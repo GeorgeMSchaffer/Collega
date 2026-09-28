@@ -21,11 +21,25 @@
 // normalized_name)`, and the batch `$transaction` would reject the whole import on
 // `ux_tags_organization_id_normalized_name`, an entirely ordinary import (the same tag used across
 // many rows) turning into an unhandled 500 for every row, not just the colliding ones.
+//
+// Settings → Tags' `add`, `save` and `delete` (2026-09-28) commit directly too, for a narrower
+// reason: each is the only write in its request, and `add`/`save` must answer a lost race on the
+// normalized name with the contract's field-keyed 400. Through the command buffer that P2002 would
+// surface from `saveChanges()`, where nothing knows it was a tag name; `constraint-errors.ts`
+// deliberately leaves this ordinary index alone, since `getOrCreate` merges on it instead.
 
 import { randomUUID } from 'node:crypto'
 import type { AiTagsPort } from '@collega/application/ai'
+import { ValidationError } from '@collega/application/common'
 import type { TagsPort as IdeasTagsPort } from '@collega/application/ideas'
-import type { GetOrCreateTagsInput, TagRepository } from '@collega/application/tags'
+import {
+  DUPLICATE_TAG_NAME_MESSAGE,
+  type GetOrCreateTagsInput,
+  type TagBoard,
+  type TagCreatorName,
+  type TagRepository,
+  type TagUsage,
+} from '@collega/application/tags'
 import type { Tag } from '@collega/domain/tags'
 import { createTag, normalizeTagName } from '@collega/domain/tags'
 import type { tags as TagRow } from '../generated/prisma/index.js'
@@ -51,12 +65,39 @@ function isNormalizedNameConflict(error: unknown): boolean {
   )
 }
 
+/** Rethrows a lost race on the normalized name as the contract's field-keyed 400. */
+function translateNameConflict(error: unknown): unknown {
+  if (!isNormalizedNameConflict(error)) {
+    return error
+  }
+  const validationError = new ValidationError('One or more fields are invalid.', {
+    name: [DUPLICATE_TAG_NAME_MESSAGE],
+  })
+  validationError.cause = error
+  return validationError
+}
+
+function toRow(tag: Tag): TagRow {
+  return {
+    id: tag.id,
+    organization_id: tag.organizationId,
+    name: tag.name,
+    normalized_name: tag.normalizedName,
+    color: tag.color,
+    created_at_utc: tag.createdAtUtc,
+    updated_at_utc: tag.updatedAtUtc,
+    created_by_user_id: tag.createdByUserId,
+    updated_by_user_id: tag.updatedByUserId,
+  }
+}
+
 function fromRow(row: TagRow): Tag {
   return {
     id: row.id,
     organizationId: row.organization_id,
     name: row.name,
     normalizedName: row.normalized_name,
+    color: row.color,
     createdAtUtc: row.created_at_utc,
     updatedAtUtc: row.updated_at_utc,
     createdByUserId: row.created_by_user_id,
@@ -116,19 +157,11 @@ export class PrismaTagRepository implements TagRepository, IdeasTagsPort, AiTags
         id: randomUUID(),
         organizationId: input.organizationId,
         name: requestedName,
+        color: input.pickNewTagColor(),
         nowUtc: input.nowUtc,
         actorUserId: input.actorUserId,
       })
-      const data = {
-        id: tag.id,
-        organization_id: tag.organizationId,
-        name: tag.name,
-        normalized_name: tag.normalizedName,
-        created_at_utc: tag.createdAtUtc,
-        updated_at_utc: tag.updatedAtUtc,
-        created_by_user_id: tag.createdByUserId,
-        updated_by_user_id: tag.updatedByUserId,
-      }
+      const data = toRow(tag)
 
       try {
         await this.prisma.tags.create({ data })
@@ -183,5 +216,92 @@ export class PrismaTagRepository implements TagRepository, IdeasTagsPort, AiTags
       select: { name: true },
     })
     return rows.map((r) => r.name)
+  }
+  async listByOrganization(organizationId: string): Promise<readonly Tag[]> {
+    const rows = await this.prisma.tags.findMany({ where: { organization_id: organizationId } })
+    return rows.map(fromRow)
+  }
+
+  async getById(tagId: string): Promise<Tag | null> {
+    const row = await this.prisma.tags.findUnique({ where: { id: tagId } })
+    return row === null ? null : fromRow(row)
+  }
+
+  async findByNormalizedName(organizationId: string, normalizedName: string): Promise<Tag | null> {
+    const row = await this.prisma.tags.findUnique({
+      where: {
+        organization_id_normalized_name: {
+          organization_id: organizationId,
+          normalized_name: normalizedName,
+        },
+      },
+    })
+    return row === null ? null : fromRow(row)
+  }
+
+  /** One grouped query for any number of tags: live ideas per (tag, board). Each idea is on one
+   * board, so a tag's idea count is the sum over its boards. */
+  async usageByTagIds(tagIds: readonly string[]): Promise<ReadonlyMap<string, TagUsage>> {
+    if (tagIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.$queryRaw<
+      { tag_id: string; board_id: string; board_name: string; idea_count: number }[]
+    >(Prisma.sql`
+      SELECT idea_tag.tag_id, board.id AS board_id, board.name AS board_name,
+        COUNT(DISTINCT idea.id)::int AS idea_count
+      FROM idea_tags AS idea_tag
+      INNER JOIN ideas AS idea ON idea.id = idea_tag.idea_id
+      INNER JOIN boards AS board ON board.id = idea.board_id
+      WHERE idea_tag.tag_id IN (${Prisma.join(tagIds.map((id) => Prisma.sql`${id}::uuid`))})
+        AND idea.is_deleted = FALSE
+      GROUP BY idea_tag.tag_id, board.id, board.name
+    `)
+
+    const usage = new Map<string, { ideaCount: number; boards: TagBoard[] }>()
+    for (const row of rows) {
+      const entry = usage.get(row.tag_id) ?? { ideaCount: 0, boards: [] }
+      entry.ideaCount += row.idea_count
+      entry.boards.push({ boardId: row.board_id, name: row.board_name })
+      usage.set(row.tag_id, entry)
+    }
+    return usage
+  }
+
+  async getCreatorNames(userIds: readonly string[]): Promise<ReadonlyMap<string, TagCreatorName>> {
+    if (userIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.users.findMany({
+      where: { id: { in: [...userIds] } },
+      select: { id: true, first_name: true, last_name: true },
+    })
+    return new Map(
+      rows.map((row) => [row.id, { firstName: row.first_name, lastName: row.last_name }]),
+    )
+  }
+
+  async add(tag: Tag): Promise<void> {
+    try {
+      await this.prisma.tags.create({ data: toRow(tag) })
+    } catch (error) {
+      throw translateNameConflict(error)
+    }
+  }
+
+  async save(tag: Tag): Promise<void> {
+    const { id, organization_id, created_at_utc, created_by_user_id, ...changes } = toRow(tag)
+    try {
+      await this.prisma.tags.update({ where: { id }, data: changes })
+    } catch (error) {
+      throw translateNameConflict(error)
+    }
+  }
+
+  async delete(tagId: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.idea_tags.deleteMany({ where: { tag_id: tagId } }),
+      this.prisma.tags.delete({ where: { id: tagId } }),
+    ])
   }
 }

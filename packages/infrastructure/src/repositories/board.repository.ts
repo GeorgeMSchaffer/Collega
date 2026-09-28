@@ -123,20 +123,21 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       return []
     }
     const rows = await this.prisma.$queryRaw<
-      { board_id: string; tag_name: string; idea_count: number }[]
+      { board_id: string; tag_name: string; tag_color: string; idea_count: number }[]
     >(Prisma.sql`
-      SELECT idea.board_id, tag.name AS tag_name, COUNT(*)::int AS idea_count
+      SELECT idea.board_id, tag.name AS tag_name, tag.color AS tag_color, COUNT(*)::int AS idea_count
       FROM idea_tags AS idea_tag
       INNER JOIN ideas AS idea ON idea.id = idea_tag.idea_id
       INNER JOIN tags AS tag ON tag.id = idea_tag.tag_id
       WHERE idea.board_id IN (${Prisma.join(boardIds.map((id) => Prisma.sql`${id}::uuid`))})
         AND idea.is_deleted = FALSE
         AND idea.phase = ${IdeaPhase.Discovery}::"IdeaPhase"
-      GROUP BY idea.board_id, tag.id, tag.name
+      GROUP BY idea.board_id, tag.id, tag.name, tag.color
     `)
     return rows.map((row) => ({
       boardId: row.board_id,
       tagName: row.tag_name,
+      tagColor: row.tag_color,
       ideaCount: row.idea_count,
     }))
   }

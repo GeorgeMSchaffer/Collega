@@ -72,6 +72,8 @@ export type BoardLaneCount = {
 export type BoardTagCount = {
   readonly name: string
   readonly ideaCount: number
+  /** The tag's `#RRGGBB` colour (added 2026-09-28). */
+  readonly color: string
 }
 
 /** A resolved swimlane on a board detail, carrying the referenced status's display fields. */

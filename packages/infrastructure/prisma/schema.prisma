@@ -449,6 +449,7 @@ model tags {
   organization_id    String        @db.Uuid
   name               String        @db.VarChar(100)
   normalized_name    String        @db.VarChar(100)
+  color              String        @db.VarChar(7)
   created_at_utc     DateTime      @db.Timestamptz(6)
   updated_at_utc     DateTime      @db.Timestamptz(6)
   created_by_user_id String?       @db.Uuid

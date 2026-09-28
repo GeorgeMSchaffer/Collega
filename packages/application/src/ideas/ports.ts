@@ -281,11 +281,14 @@ export interface UsersPort {
 export type TagSummary = {
   readonly id: string
   readonly name: string
+  readonly color: string
 }
 
 export type GetOrCreateTagsInput = {
   readonly organizationId: string
   readonly requestedNames: readonly string[]
+  /** Called once per tag actually created, for its colour (Tags rule 10). */
+  readonly pickNewTagColor: () => string
   readonly nowUtc: Date
   readonly actorUserId: string | null
 }
