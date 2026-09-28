@@ -4,7 +4,7 @@
 import { IdeaPhase, Priority, Role, UserStatus } from '@collega/domain/enums'
 import type { Idea } from '@collega/domain/ideas'
 import { createIdea, promoteIdeaToIssue } from '@collega/domain/ideas'
-import type { CurrentUserContext } from '../../src/common/index.js'
+import type { CurrentUserContext, RandomSource } from '../../src/common/index.js'
 import { IdeaService } from '../../src/ideas/idea.service.js'
 import type {
   CreateIdeaCommand,
@@ -29,6 +29,7 @@ import type {
   SprintLookupPort,
   SprintSummary,
   StatusInfo,
+  TagSummary,
   TagsPort,
   UpvoteCountsPort,
   UserSummary,
@@ -157,6 +158,8 @@ export type Harness = {
   notifications: NotificationInput[]
   boardFilters: IdeaListFilter[]
   orgFilters: OrganizationIdeaListFilter[]
+  /** Tags `getOrCreate` created, in order, with the colour the service picked for each. */
+  createdTags: TagSummary[]
 }
 
 export function harness(options: {
@@ -165,6 +168,9 @@ export function harness(options: {
   ideas?: readonly Idea[]
   users?: readonly UserSummary[]
   sprints?: readonly SprintSummary[]
+  /** Tags that already exist; `getOrCreate` reuses them by case-insensitive name. */
+  tags?: readonly TagSummary[]
+  random?: RandomSource
 }): Harness {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.boardId, b]))
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
@@ -176,6 +182,8 @@ export function harness(options: {
   const notifications: NotificationInput[] = []
   const boardFilters: IdeaListFilter[] = []
   const orgFilters: OrganizationIdeaListFilter[] = []
+  const tagsById = new Map((options.tags ?? []).map((t) => [t.id, t]))
+  const createdTags: TagSummary[] = []
 
   const ideaRepository: IdeaRepository = {
     async getById(ideaId, includeDeleted = false) {
@@ -258,11 +266,20 @@ export function harness(options: {
   }
 
   const tags: TagsPort = {
-    async listByIds() {
-      return []
+    async listByIds(ids) {
+      return ids.flatMap((id) => tagsById.get(id) ?? [])
     },
     async getOrCreate(input) {
-      return input.requestedNames.map((name) => ({ id: `tag-${name}`, name, color: '#E5484D' }))
+      return input.requestedNames.map((name) => {
+        const existing = [...tagsById.values()].find(
+          (t) => t.name.toLowerCase() === name.trim().toLowerCase(),
+        )
+        if (existing) return existing
+        const created = { id: `tag-${name}`, name, color: input.pickNewTagColor() }
+        tagsById.set(created.id, created)
+        createdTags.push(created)
+        return created
+      })
     },
   }
 
@@ -401,7 +418,7 @@ export function harness(options: {
       audit,
       options.currentUser,
       fixedClock(),
-      { nextInt: () => 0 },
+      options.random ?? { nextInt: () => 0 },
     ),
     saved,
     added,
@@ -409,6 +426,7 @@ export function harness(options: {
     notifications,
     boardFilters,
     orgFilters,
+    createdTags,
   }
 }
 
