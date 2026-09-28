@@ -18,6 +18,7 @@ import {
   Pager,
   pageRows,
   RowActions,
+  type Sort,
   sortRows,
   useListState,
   ViewSwitch,
@@ -34,6 +35,8 @@ const CONFIG: ListConfig = {
   views: ['list', 'cards'],
   sortKeys: ['name', 'ideas', 'tags', 'created', 'status'],
 }
+
+const DEFAULT_SORT: Sort = { key: 'name', dir: 'asc' }
 
 const STATUS_OPTIONS = ['Active', 'Archived']
 
@@ -172,7 +175,8 @@ export function BoardsScreen({
   }
 
   const filtered = filterRows(boards, state, textOf, (board) => statusLabel(board))
-  const sorted = sortRows(filtered, state.sort, sortValue)
+  // Unsorted still means an order: by name, as comp R lists them, so a new board lands predictably.
+  const sorted = sortRows(filtered, state.sort ?? DEFAULT_SORT, sortValue)
   const page = pageRows(sorted, state.page, state.size)
 
   const actions = (board: BoardOverview) => (
