@@ -50,7 +50,7 @@ function DaysPastEnd({ endDate }: { endDate: string }) {
     setDays(Math.round((today - Date.UTC(y, m - 1, d)) / 86_400_000))
   }, [endDate])
   if (days <= 0) return null
-  return <Badge tone="warning">{`${plural(days, 'DAY')} PAST END`}</Badge>
+  return <Badge tone="warning">{`${plural(days, 'DAY', 'DAYS')} PAST END`}</Badge>
 }
 
 function Badge({ tone, children }: { tone: 'success' | 'warning' | 'muted'; children: string }) {
