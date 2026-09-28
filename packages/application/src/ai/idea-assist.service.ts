@@ -500,8 +500,11 @@ function clampDraftText(draft: IdeaDraft): IdeaDraft {
  * Drops anything the model returned that is not a real, active option in the retrieved set, and
  * clamps free text to the domain maxima. A rejected id falls back to whatever the draft already
  * held rather than to null - a bad suggestion must not erase a good earlier one.
+ *
+ * Exported so `tools/prompt-eval` scores a draft exactly as this service returns it
+ * (SPEC/20-feature-prompt-eval-runner.md rule 9).
  */
-function sanitizeDraft(
+export function sanitizeDraft(
   proposed: IdeaDraft,
   context: IdeaAssistContext,
   current: IdeaDraft,
