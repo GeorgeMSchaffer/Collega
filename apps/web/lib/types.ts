@@ -310,6 +310,20 @@ export type BoardWithLanes = {
   /** Whether a plain User may move a card between lanes, or only an administrator. */
   allowUserStatusUpdate: boolean
   description: string | null
+  /** An archived board opens read-only (`20-feature-boards-and-statuses.md` rule 13). */
+  isArchived: boolean
+}
+
+/**
+ * A board as the idea screens refer to it: a name for a row that carries only a `boardId`, whether
+ * its ideas are read-only, and the tags it uses most (the Tags filter's starting options).
+ * Archived boards are included, because their ideas still appear on Ideas.
+ */
+export type BoardRef = {
+  id: string
+  name: string
+  isArchived: boolean
+  topTags: string[]
 }
 
 /**
@@ -335,7 +349,11 @@ export type Idea = {
   businessImpact: string
   /** The first tag, which is all a card shows. Null when an idea carries none. */
   tag: string | null
+  /** Every tag, alphabetically, for the list's Tags column. */
+  tags: string[]
   assigneeInitials: string | null
+  /** At most five, by first then last name. */
+  assignees: PersonRef[]
   upvotes: number
   /** Whether the reader is one of them, which is what fills the chip rather than outlining it. */
   hasUpvoted: boolean
@@ -358,15 +376,38 @@ export type IdeaPage = {
 }
 
 /**
- * The two catalogs authoring an idea has to choose from.
- *
- * One type rather than two loose lists because the create form needs both or neither: the API
- * requires an active Idea Type *and* an active Business Impact on every idea, so a form holding one
- * of them cannot be submitted.
+ * What the idea form offers: the Business Impact and Idea Type catalogs, and for each type the
+ * custom fields it resolves to, in order, with whether each is required for that type.
  */
-export type IdeaOptions = {
-  ideaTypes: { id: string; name: string }[]
+export type IdeaFormOptions = {
+  ideaTypes: { id: string; name: string; fields: IdeaFormField[] }[]
   businessImpacts: { id: string; name: string }[]
+}
+
+/**
+ * A custom field as the form renders it. `fieldType` is the API's own spelling (`Text`, `Url`,
+ * `Number`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`); a Dropdown or MultiSelect value is sent
+ * as option ids, comma-separated for MultiSelect.
+ */
+export type IdeaFormField = {
+  id: string
+  name: string
+  fieldType: string
+  required: boolean
+  options: { id: string; label: string }[]
+}
+
+/** The query behind a page of ideas — the list state, in the API's terms. */
+export type IdeaListQuery = {
+  search: string
+  boardIds: string[]
+  statusIds: string[]
+  priorities: string[]
+  tags: string[]
+  sortBy: string | null
+  sortDirection: 'asc' | 'desc'
+  page: number
+  pageSize: number
 }
 
 /**
@@ -379,6 +420,9 @@ export type Person = {
   name: string
   initials: string
 }
+
+/** With the id, which the edit form sends back: `PUT` replaces the assignee collection. */
+export type PersonRef = Person & { id: string }
 
 export type Comment = {
   id: string
@@ -394,7 +438,8 @@ export type Comment = {
 }
 
 /**
- * The inspector's shape: everything a card shows, plus the prose and provenance behind it.
+ * The drawer's shape: everything a card shows, plus the structured fields, the prose and the
+ * provenance behind it, and what an edit has to send back unchanged.
  *
  * **There is no `reference`.** Comp Q's `IDEA-101` eyebrow has no column behind it — a real one is a
  * per-organization sequence allocated under a row lock, which needs a schema amendment, and the
@@ -404,12 +449,23 @@ export type Comment = {
  * what it shows is what the server holds. So the field does not exist, rather than existing empty.
  *
  * `comments` is the thread as `GET /ideas/{id}` embeds it — the full list, chronological, not a
- * page. See `getIdea` for why the inspector reads it from here.
+ * page. See `getIdea` for why the drawer reads it from here.
  */
 export type IdeaDetail = Idea & {
-  description: string
+  problem: string
+  proposedSolutions: string[]
+  impactRationale: string
+  /** An optional summary since 2026-09-27. */
+  description: string | null
+  ideaTypeId: string
+  businessImpactId: string
+  dueDate: string | null
+  /** Who raised it; the author may edit the structured fields (`20-feature-ideas-and-engagement.md` rule 2a). */
+  authorUserId: string | null
   author: Person | null
   createdOn: string
+  mentionEmails: string[]
+  fieldValues: { fieldDefinitionId: string; name: string; fieldType: string; value: string }[]
   comments: Comment[]
 }
 

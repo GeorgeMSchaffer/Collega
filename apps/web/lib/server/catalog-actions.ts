@@ -39,8 +39,8 @@ import { actingOrganizationId } from './current-user'
 /**
  * What a catalog's create form renders back.
  *
- * `name` is echoed for the reason `createIdea` echoes a title: React resets an uncontrolled form
- * once its action resolves, so a refused submission would otherwise blank what was just typed.
+ * `name` is echoed because React resets an uncontrolled form once its action resolves, so a refused
+ * submission would otherwise blank what was just typed.
  */
 export type CreateCatalogItemState = { error: string | null; name: string }
 

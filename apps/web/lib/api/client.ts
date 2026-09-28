@@ -26,7 +26,7 @@ import 'server-only'
 import { failIfRequested, resolve } from '../data/latency'
 import { sessionHeader } from '../server/current-user'
 import { apiBaseUrl } from './config'
-import { fieldMessages, type ProblemDetails } from './problem'
+import { fieldErrors, fieldMessages, type ProblemDetails } from './problem'
 
 declare const API_PATH: unique symbol
 
@@ -65,6 +65,16 @@ export function apiPath(literals: TemplateStringsArray, ...values: string[]): Ap
   return String.raw({ raw: literals }, ...values.map(escapeSegment)) as ApiPath
 }
 
+/**
+ * A path with a query string built from `params`, for a query whose shape varies — repeated filter
+ * parameters, say. `URLSearchParams` encodes every value, and nothing after the `?` can re-route the
+ * request, so the path stays what `apiPath` made it.
+ */
+export function withQuery(path: ApiPath, params: URLSearchParams): ApiPath {
+  const query = params.toString()
+  return (query ? `${path}?${query}` : path) as ApiPath
+}
+
 function escapeSegment(value: string): string {
   if (value === '.' || value === '..') {
     throw new Error(`An API path cannot interpolate "${value}": it re-routes the request.`)
@@ -89,25 +99,38 @@ export class ApiError extends Error {
    * for a log line and reads as one.
    */
   readonly detail: string
+  /** A validation 400's messages keyed by field, so a form can put each beside its control. */
+  readonly errors: Readonly<Record<string, string>>
 
-  constructor(status: number, path: string, detail: string) {
+  constructor(
+    status: number,
+    path: string,
+    detail: string,
+    errors: Readonly<Record<string, string>> = {},
+  ) {
     super(`${path} answered ${status}: ${detail}`)
     this.name = 'ApiError'
     this.status = status
     this.path = path
     this.detail = detail
+    this.errors = errors
   }
 }
 
-async function describeFailure(response: Response): Promise<string> {
+async function failure(response: Response, path: string): Promise<ApiError> {
   try {
     const body: unknown = await response.json()
     const problem = body as ProblemDetails
     const detail = typeof problem.detail === 'string' ? problem.detail : null
     const title = typeof problem.title === 'string' ? problem.title : null
-    return fieldMessages(problem.errors) ?? detail ?? title ?? response.statusText
+    return new ApiError(
+      response.status,
+      path,
+      fieldMessages(problem.errors) ?? detail ?? title ?? response.statusText,
+      fieldErrors(problem.errors),
+    )
   } catch {
-    return response.statusText
+    return new ApiError(response.status, path, response.statusText)
   }
 }
 
@@ -128,7 +151,7 @@ export async function apiGet<T>(reader: string, path: ApiPath): Promise<T> {
   })
 
   if (!response.ok) {
-    throw new ApiError(response.status, path, await describeFailure(response))
+    throw await failure(response, path)
   }
 
   // Through `resolve` so `MOCK_LATENCY_MS` still holds a real response open. A local API answers
@@ -163,7 +186,7 @@ async function send(method: string, path: ApiPath, body: unknown): Promise<void>
   })
 
   if (!response.ok) {
-    throw new ApiError(response.status, path, await describeFailure(response))
+    throw await failure(response, path)
   }
 }
 
@@ -190,7 +213,7 @@ export async function apiPostReturning<T>(path: ApiPath, body: unknown = {}): Pr
   })
 
   if (!response.ok) {
-    throw new ApiError(response.status, path, await describeFailure(response))
+    throw await failure(response, path)
   }
 
   return (await response.json()) as T

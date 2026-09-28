@@ -170,6 +170,8 @@ export type WireBoardListItem = {
   /** At most three, most-used first. */
   topTags: readonly { name: string; ideaCount: number }[]
   tagCount: number
+  isArchived: boolean
+  archivedAtUtc: string | null
 }
 
 export type WireBoardLaneCount = {
@@ -188,6 +190,7 @@ export type WireBoardDetail = {
   allowUserStatusUpdate: boolean
   description: string | null
   swimlanes: readonly WireSwimlane[]
+  isArchived: boolean
 }
 
 export type WireSwimlane = {
@@ -219,7 +222,7 @@ export type WireIdeaType = {
   ideaTypeId: string
   name: string
   fieldMode: string
-  fields: readonly { fieldDefinitionId: string }[]
+  fields: readonly { fieldDefinitionId: string; displayOrder: number; isRequired: boolean }[]
 }
 
 /**
@@ -234,6 +237,8 @@ export type WireFieldDefinition = {
   name: string
   fieldType: string
   isRequired: boolean
+  displayOrder: number
+  options: readonly { optionId: string; label: string; displayOrder: number }[]
 }
 
 /**
@@ -283,11 +288,7 @@ export type WireIdeaComment = {
 }
 
 /**
- * `GET /ideas/{id}`.
- *
- * Carries its own `statusName`, so the inspector needs no status catalog to name the lane — which
- * matters, because the catalog readers are still fixture-backed and a real `statusId` matches none
- * of their ids.
+ * `GET /ideas/{id}`, which `PUT /ideas/{id}` also answers.
  *
  * There is no `reference` here and no column behind one. See `IdeaDetail` in `lib/types.ts`.
  */
@@ -295,15 +296,25 @@ export type WireIdeaDetail = {
   ideaId: string
   boardId: string
   title: string
-  description: string
+  problem: string
+  proposedSolutions: readonly string[]
+  impactRationale: string
+  description: string | null
   priority: string
+  ideaTypeId: string
   ideaTypeName: string
+  businessImpactId: string
   businessImpactName: string
+  dueDate: string | null
   assignees: readonly WireIdeaAssignee[]
   tagNames: readonly string[]
   statusId: string
   statusName: string
+  /** Sent back on every save: `PUT` replaces the mentions, so leaving them out clears them. */
+  mentions: readonly { email: string }[]
   comments: readonly WireIdeaComment[]
+  /** Dropdown and MultiSelect values arrive as option labels, not ids. */
+  fieldValues: readonly WireIdeaFieldValue[]
   upvoteCount: number
   hasUpvoted: boolean
   commentCount: number
@@ -311,6 +322,16 @@ export type WireIdeaDetail = {
   author: WireIdeaAssignee | null
   createdAtUtc: string
 }
+
+export type WireIdeaFieldValue = {
+  fieldDefinitionId: string
+  fieldName: string
+  fieldType: string
+  value: string
+}
+
+/** `POST /boards/{id}/ideas` answers more than this; the id is all the drawer needs. */
+export type WireCreatedIdea = { ideaId: string }
 
 /** `GET /boards/{id}/ideas` and `GET /organizations/{id}/ideas` items. */
 export type WireIdeaListItem = {
