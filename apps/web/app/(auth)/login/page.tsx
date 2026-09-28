@@ -36,7 +36,10 @@ export default async function LoginPage({
           'Boards, statuses and idea types you define yourself',
           <>
             Keyboard-first: press{' '}
-            <Kbd className="border-white/30 bg-white/15 text-white">Ctrl K</Kbd> anywhere
+            <Kbd className="border-primary-foreground/30 bg-primary-foreground/15 text-primary-foreground">
+              Ctrl K
+            </Kbd>{' '}
+            anywhere
           </>,
         ]}
       >
