@@ -140,6 +140,9 @@ test.describe('ideas on a board', () => {
     await expect(page).toHaveURL(/[?&]idea=[0-9a-f-]{36}/i)
     await page.reload()
     await expect(drawer).toBeVisible({ timeout: 30_000 })
+    // The server renders the drawer open; its heading takes focus once it has hydrated, in the same
+    // effect that starts listening for Escape.
+    await expect(drawer.getByRole('heading', { name: title })).toBeFocused({ timeout: 30_000 })
 
     // Escape closes it and takes the idea out of the URL, leaving the board behind it.
     await page.keyboard.press('Escape')
