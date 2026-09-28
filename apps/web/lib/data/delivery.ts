@@ -102,28 +102,6 @@ export async function getBoardSprint(): Promise<Sprint | null> {
 }
 
 /**
- * The sprint that is running, or `null` when none is.
- *
- * Filtered server-side rather than by reading every sprint and picking one, because `?state=Active`
- * is what the endpoint offers and the sprint board asks for exactly one row. At most one sprint is
- * `Active` in practice; if a deployment ever managed two, the first is the board's — a screen that
- * shows one board cannot show both, and guessing loudly is worse than guessing quietly here.
- */
-export async function getActiveSprint(): Promise<Sprint | null> {
-  failIfRequested('getActiveSprint')
-
-  const scope = organizationScope()
-  if (scope === null) return null
-
-  const sprints = await apiGet<readonly WireSprint[]>(
-    'getActiveSprint',
-    apiPath`/organizations/${scope}/sprints?state=Active`,
-  )
-  const active = sprints[0]
-  return active ? toSprint(active) : null
-}
-
-/**
  * One sprint's header.
  *
  * The response also embeds the sprint's Issues, which are deliberately dropped: the only caller is
