@@ -200,7 +200,8 @@ export function TagsScreen({
 
       {tags.length === 0 ? (
         <EmptyState heading="No tags yet">
-          A tag is created the first time anyone types it on an idea, or here with Add New Tag.
+          A tag is created the first time anyone types it on an idea
+          {denial === null ? ', or here with Add New Tag.' : '.'}
         </EmptyState>
       ) : (
         <>

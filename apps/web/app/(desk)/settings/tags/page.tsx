@@ -40,7 +40,11 @@ export default async function TagsPage({ searchParams }: { searchParams: Promise
   const openTag = tags.find((tag) => tag.id === first(search.tag))
   const organizationId = openTag?.organization?.id ?? user.organizationId
   const usage: TagUsage | null =
-    openTag && openTag.ideaCount > 0 && first(search.mode) !== 'edit' && organizationId
+    openTag &&
+    openTag.ideaCount > 0 &&
+    // Someone who can't manage sees an `edit` link as the view, so it still needs the usage.
+    !(first(search.mode) === 'edit' && denial === null) &&
+    organizationId
       ? await getTagUsage(organizationId, openTag.name)
       : null
 
