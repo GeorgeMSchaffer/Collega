@@ -105,16 +105,21 @@ test.describe('ideas on a board', () => {
 
     const title = `Demo idea ${Date.now()}`
 
-    // The form is a modal the topbar action opens, not a route.
+    // The form opens in the drawer, from the page header's Add New Idea.
     await page.getByRole('button', { name: /new idea/i }).click()
     await page.getByLabel(/title/i).fill(title)
-    await page.getByLabel(/description/i).fill('Authored by the E2E suite.')
+    await page.getByLabel(/problem/i).fill('Authored by the E2E suite.')
+    await page.getByLabel('Solution 1').fill('Try it on one board first.')
+    await page.getByLabel(/impact rationale/i).fill('Saves an hour a week.')
+    await page.getByLabel(/business impact/i).selectOption({ index: 1 })
+    await page.getByLabel(/idea type/i).selectOption({ index: 1 })
     await page
       .getByRole('button', { name: /create|add idea|save/i })
       .last()
       .click()
 
-    await expect(page.getByText(title)).toBeVisible({ timeout: 30_000 })
+    // The drawer opens on the new idea, so its heading is the proof the create went through.
+    await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 30_000 })
   })
 
   test('an idea moves a lane to the right and stays there across a reload', async ({ page }) => {
@@ -157,7 +162,7 @@ test.describe('read only', () => {
     // **The control is shown, not hidden** — and that is the product decision worth pinning. A role
     // that may not author gets the same "New idea" button carrying `aria-disabled` and pointing at
     // its reason through `aria-describedby`, rather than a hole where the topbar action was. The
-    // comment on `NewIdeaForm` argues the case: never a hole, always the reason.
+    // page header renders it through `GatedAction`: never a hole, always the reason.
     //
     // This spec originally asserted the opposite and failed, which is the test doing its job on the
     // person writing it.
