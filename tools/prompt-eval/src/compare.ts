@@ -2,10 +2,12 @@ import type { Proportion, RunMetrics } from './metrics.ts'
 import type { RunData } from './run-file.ts'
 import { proportion } from './summary.ts'
 import {
+  EXIT_INVALID,
   EXIT_PASS,
   EXIT_THRESHOLDS_FAILED,
   fmt,
   gatedMetrics,
+  judge,
   regressions,
   unlikeRuns,
 } from './verdict.ts'
@@ -18,12 +20,13 @@ export interface ComparedRun {
 
 /**
  * Rule 34: both values and the delta per metric and per case, after any like-with-like warning,
- * then rule 32. Unlike runs warn and never fail on their own.
+ * then rule 32. Unlike runs warn and never fail on their own; a run that is itself invalid under
+ * rules 30-31 makes the comparison invalid (exit 2).
  */
 export function compareRuns(
   baseline: ComparedRun,
   candidate: ComparedRun,
-): { text: string; exitCode: 0 | 1 } {
+): { text: string; exitCode: 0 | 1 | 2 } {
   const out: string[] = []
   out.push(`Baseline   ${baseline.path}`)
   out.push(`Candidate  ${candidate.path}`)
@@ -31,13 +34,17 @@ export function compareRuns(
     `Templates  ${baseline.run.header.prompt.templateSha256.slice(0, 12)} -> ${candidate.run.header.prompt.templateSha256.slice(0, 12)}`,
   )
 
-  const warnings = unlikeRuns(baseline.run, candidate.run)
-  for (const [side, run] of [
-    ['baseline', baseline.run],
-    ['candidate', candidate.run],
-  ] as const) {
-    if (run.header.status !== 'completed') warnings.push(`the ${side} run was ${run.header.status}`)
+  const invalid = (['baseline', 'candidate'] as const).flatMap((side) => {
+    const { run, metrics } = side === 'baseline' ? baseline : candidate
+    return judge(run, metrics, null).invalidReasons.map((reason) => `${side}: ${reason}`)
+  })
+  if (invalid.length > 0) {
+    out.push('')
+    out.push('Not a valid comparison: a run is not valid (rules 30-31).')
+    for (const reason of invalid) out.push(`  x ${reason}`)
   }
+
+  const warnings = unlikeRuns(baseline.run, candidate.run)
   if (warnings.length > 0) {
     out.push('')
     out.push('Warning: these runs are not like with like.')
@@ -106,6 +113,10 @@ export function compareRuns(
 
   const found = regressions(baseline.metrics, candidate.metrics)
   out.push('')
+  if (invalid.length > 0) {
+    out.push('Not judged: a run is not valid (exit 2).')
+    return { text: out.join('\n'), exitCode: EXIT_INVALID }
+  }
   if (found.length === 0) {
     out.push('No regression.')
   } else {

@@ -9,6 +9,16 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — `compare` refuses to judge an invalid run
+
+**Decided by the user** on review of slice 115. `compare` exits 2, printing the reasons, when
+either run is itself not valid under `20-feature-prompt-eval-runner.md` rules 30–31 — aborted,
+more than 10% errored trials, or an errored `refuse-*` trial — rather than comparing it. A
+regression or a clean result against a run that could not be judged on its own would be a verdict
+about nothing. Recorded in rule 30.
+
+---
+
 ## 2026-09-28 — The prompt-eval runner's fixture hash for `compare` is the catalog hash
 
 **An implementation correction, not a user decision.** Found while building slice 114:
