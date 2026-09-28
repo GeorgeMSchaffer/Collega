@@ -1187,6 +1187,7 @@ Success response `200`:
   `Boolean`, option ids — comma-separated for `MultiSelect` — for choice fields, `YYYY-MM-DD` for
   `Date`), or `null` when unset. An option the idea stores that the field no longer offers is
   still listed in that item's `options`, with `isArchived: true`, so an unchanged save keeps it.
+  Options are hard-deleted, so such an option's `label` falls back to its `optionId`.
   `fieldValues` stays as the display projection (labels, `Yes`/`No`). Added 2026-09-27.
 - `upvoteCount`
 - `hasUpvoted` boolean for the current caller
