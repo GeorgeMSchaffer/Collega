@@ -17,8 +17,9 @@ create), it binds the comp P build; the Blazor equivalent is recorded once under
 
 Primary navigation is a **fixed left sidebar** (248px) on every signed-in screen, grouped:
 **Workspace** — Home, Boards, Ideas; **Delivery** — Sprint board, Backlog, Roadmap (specified
-in `20-feature-issues-and-delivery.md`, unbuilt; the comp renders them under a *not built*
-strip); **Configure** — Settings. Above the groups sit the brand mark, the organization line
+in `20-feature-issues-and-delivery.md`; *reconciled 2026-09-28:* the Sprint board and Backlog are
+built on the Slice 1 API, and the Sprint board and Roadmap follow comp R from 2026-09-28 — see that
+spec's "Client UI"); **Configure** — Settings. Above the groups sit the brand mark, the organization line
 (the viewer's organization, or *All organizations* for a Site Admin) and the command-palette
 launcher (`Ctrl K`). Pinned to the bottom is the identity block: avatar, name and role — and
 during a View As session, the impersonated user's, not the administrator's (view-as rule 23).
@@ -40,6 +41,7 @@ Routes (unchanged):
 - `/settings` — Settings hub with My Profile and role-scoped admin links
   - `/settings/profile` — edit first and last name and change the password; email and role read-only
   - `/settings/organizations`, `/settings/organizations/{orgId}/users`, `…/statuses`, `…/idea-types`, `…/fields`, `…/boards` — organization administration (the full 23-route set is rendered in `comp-p-admin.html`)
+  - `/settings/tags` — **Settings → Tags** (added 2026-09-28): the organization's tags on the list and detail pattern, with each tag's colour (`20-feature-ideas-and-engagement.md` "Tags", rules 9–15). An Org Admin's link card on the Settings hub. Who else sees it is *(pending answer)* — drafted as Org Admin only, with a Site Admin's read-only roll-up like the other admin entities. Comp R also shows a *Tags* item in the sidebar under Configure; that is read as a prototype convenience (its Settings item is disabled), not a navigation change *(pending answer)*.
 
 Site Admin is a global account and never requires an organization membership or
 `organizationId` claim to browse platform data. Home, Boards, Ideas, Users, Statuses and
@@ -285,6 +287,61 @@ list screen (Settings entities, Delivery lists) moves to as it is touched.
   focus trapped between Cancel (focused first) and the action, Escape cancels.
 - **Lanes** are quiet full-height columns (a soft tint and hairline border per lane) with the
   status-tinted header, so a board reads as swimlanes rather than loose cards.
+- **Also on the pattern since 2026-09-28:** Settings → Tags (List only, no Cards; rules in
+  `20-feature-ideas-and-engagement.md` "Tags") and the Roadmap's outcome drawer
+  (`20-feature-issues-and-delivery.md` "Client UI"). The confirmation dialog above also serves
+  **Delete tag**, **Delete outcome** and **Complete sprint** — the last is not destructive, so its
+  action is the primary button rather than the danger one. Comp R deletes an outcome without asking;
+  this spec wins and it confirms like every other Delete.
+
+### Forms and controls (comp R — 2026-09-28)
+
+The 2026-09-28 iteration of comp R makes every form and control denser, in **every** theme, not only
+Graphite. It supersedes the *Inputs follow `DESIGN.md`* line under "Session, Profile, Controls, and
+Icons" below and the control heights slice 100 shipped (`--control-h` 36px). Values are comp R's
+"Controls and forms" block; they belong in the shared geometry tokens in `packages/design-system`
+(slice 100 put control heights and label size there), so density stays one edit.
+
+- **Buttons** 32px high, 12px side padding, 13px text; the small size 28px and 12px text. Corner
+  radius is the theme's small radius, never a pill.
+- **Fields** (input, select, textarea) at least 34px high, 7px × 10px padding, 13px text at 1.45 line
+  height, on the theme's **field ground** (`--field`: the card colour in the light themes, a darker
+  well than the card in Graphite).
+- **Labels** sit above their control, 12px, weight 500, in the secondary ink, 5px above it. A
+  required field carries `*` in the destructive text colour, hidden from assistive technology
+  (the control's own `required` carries the fact). **Hints** are 12px muted text below the control;
+  a **field error** is 12px semibold destructive text below it, with the control's border in the
+  destructive colour.
+- **Short related fields share a row.** Three to a row for short selects (the idea form's Business
+  impact · Idea type · Priority; their labels never wrap), two to a row for pairs (Status or Due
+  date; an outcome's Target start · Target end). Every row collapses to one column below 900px.
+  Long text, lists, people and tags keep a full row each.
+- **Metadata in the mono face.** Issue keys, counts, date windows and the uppercase meta labels of
+  the Delivery screens (*STATE*, *WINDOW*, *TODAY*, *OUTCOME*) are set in the theme's mono face
+  (`--font-code`) at 10.5–11px with 0.04–0.06em tracking. The idea assistant's *✦ Suggested* marker
+  and the required-fields counter in a form's footer use it too; in a three-to-a-row group the
+  marker shortens to *✦*.
+- **No new keyboard shortcuts** (the user, 2026-09-28: "no keyboard shortcuts for now"). Comp R's
+  *Ctrl ↵* save and its `esc` / `Ctrl ↵` key chips are not built. Escape still closes the drawer, as
+  the pattern above already says. *(pending answer: whether "for now" covers only the Roadmap.)*
+
+### Tag colours and the effort bar (comp R — 2026-09-28)
+
+- **Every tag has a colour** (`20-feature-ideas-and-engagement.md` "Tags"). A tag chip mixes that
+  colour with the theme — a soft tint of it for the ground, a shade of it toward the ink for the
+  text, a hairline of it for the border — so one stored colour reads in every theme. **The text must
+  clear 4.5:1 against the chip's own ground in every theme.** Comp R's mix (62% tag colour into the
+  ink) does not: measured 2026-09-28 it gives 3.4–4.4:1 for six of the ten palette colours in each
+  light theme, and passes only in Graphite. At 40% tag colour into the ink every palette colour
+  clears 5.2:1 in all five themes. The implementation sets the mix per theme, and a test asserts the
+  ratio for every palette colour in every theme. Colour never carries meaning alone — the tag's name
+  is always the chip's text.
+- **The effort bar** shows an `effort` (Low, Medium, High) as three short segments (10 × 4px, 2px
+  apart): one filled for Low, two for Medium, three for High, in the theme's **metric** colour
+  (`--metric`: the primary in the light themes, cyan in Graphite), the unfilled ones in the strong
+  hairline colour. The words always sit beside it — *Low effort*, *Medium effort*, *High effort* —
+  and the bar itself is hidden from assistive technology. It replaces the coloured effort dot the
+  delivery cards carry today. Where it appears is in `20-feature-issues-and-delivery.md` "Client UI".
 
 ### Surfaces: docked inspector, inline create, one modal
 
@@ -327,7 +384,7 @@ inspector. Behaviour and endpoints: `20-feature-ai-idea-assist.md` rules 28c–2
 - Successful required and voluntary password changes clear client authentication and return to Login with confirmation. Re-login lands on Home unless a separate normal return URL applies.
 - After 28 minutes without activity, an accessible modal dialog (`role="alertdialog"`) shows a live two-minute countdown with **Stay signed in** and **Sign out**. Staying signed in resets browser inactivity only; idle or absolute expiry returns to Login with the specific session-expired message (`20-feature-auth.md` #38–#42).
 - **Sign Out** is the wording, and it lives in the sidebar identity block's menu, not as a nav item.
-- Inputs follow `DESIGN.md`: 4px radius, 6px padding, never pill; the primary button is the one pill. Every input, select and textarea has a real `<label for>`, `aria-label` or `aria-labelledby`. Every form has a native submit control so Enter submits.
+- Inputs follow `DESIGN.md`: 4px radius, 6px padding, never pill; the primary button is the one pill. *Superseded 2026-09-28 for geometry by "Forms and controls" above (and for radius since 2026-09-27 by each theme's own radius); no control is a pill.* Every input, select and textarea has a real `<label for>`, `aria-label` or `aria-labelledby`. Every form has a native submit control so Enter submits.
 - Icons are inline SVG glyphs (the sidebar's) or none; never emoji or Unicode characters. Icon-only buttons have stable dimensions, accessible names, visible keyboard focus and correct disabled behaviour; decorative icons beside visible text are hidden from assistive technology. Comp P's paths are placeholders; the icon set is an implementation choice within these rules.
 - **Colour never carries meaning alone** (`decisions.md` 2026-08-31): every coloured dot, bar or fill has a text label in the same component.
 
@@ -383,6 +440,10 @@ which the comps A–O were re-rendered to. Whichever palette is chosen must keep
 
 ### Themes (2026-09-27)
 
+> **Superseded in part 2026-09-28** (`decisions.md`, "Graphite replaces Notte as the dark theme"):
+> the dark theme is **Graphite**, not Notte. The paragraph below is kept as decided on 2026-09-27;
+> the Graphite paragraph after it is the current rule.
+
 **Palette decided: Terrazzo** — slate blue `#3D5A80`, pistachio and blush accents, Schibsted
 Grotesk for headings and Public Sans for text. It is the default. A **theme picker** at the right
 of the top bar offers **Light:** Terrazzo, Portico, Piazza Sera, Lagoon, and **Dark:** Notte. The
@@ -395,6 +456,25 @@ its inverse: one near-white neutral ink on the dark ground. Rule 2 is now per th
 theme defines a **suggestion hue** (`--suggest`, `--suggest-tint`) distinct from its accent, for
 fields the idea assistant filled (`20-feature-ai-idea-assist-v2.md` Q5). Each theme also carries its
 own fonts (Typography above).
+
+**Graphite (2026-09-28) — the dark theme, replacing Notte.** The picker offers **Light:** Terrazzo,
+Portico, Piazza Sera, Lagoon, and **Dark:** Graphite. Graphite is a near-black neutral ground
+(`#0F1113`, cards `#16191C`, fields a darker `#0F1113` well) with near-white ink (`#E6E8EA`), an
+**amber** primary (`#F5A524`, with dark text `#16120A` on it) and **cyan** (`#5CC8E0`) as both its
+suggestion hue and its metric colour, with red, green and amber status pairs on dark tints. It sets
+IBM Plex Sans for headings and text and JetBrains Mono for its mono face, with an 8px radius (6px
+small). Token values are comp R's `graphite` block. Its text pairs were measured on 2026-09-28 and
+clear 4.5:1 (muted text on a card 6.9:1, amber on a card 8.7:1, dark text on amber 9.2:1, each
+status ink on its tint 7.4:1 or better); the rule above binds any later change to them.
+
+- Comp R adds three tokens every theme now defines, defaulting where the theme has no reason to
+  differ: **`--metric`** (the effort bar and other quantity marks; defaults to the primary),
+  **`--field`** (the input ground; defaults to the card) and **`--suggest-line`** (the border of a
+  suggested field; defaults to `--suggest`).
+- **Notte is retired.** Its self-contained `[data-theme="notte"]` block (slice 100) is replaced by a
+  `graphite` block. A browser whose `collega-theme` cookie still says `notte` is served
+  **Graphite**, so a person who chose dark stays in dark. Fonts only Notte used leave the Google
+  Fonts stylesheet unless another theme needs them.
 
 ## ERROR DISPLAY
 
