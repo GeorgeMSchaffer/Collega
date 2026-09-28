@@ -33,6 +33,7 @@ import {
   type RunFile,
   RunFileExistsError,
   type RunFixture,
+  type RunHeader,
   writeRunFile,
 } from './run-file.ts'
 import { runTrials, type Stopwatch, type TrialSpec } from './turn-loop.ts'
@@ -50,6 +51,9 @@ export interface RunnerDeps {
   /** The root `.env`, read for the key alone. */
   readonly envFile: string
   readonly runsDir: string
+  /** Holds `cases/` and `fixtures/`. */
+  readonly corpusRoot: string
+  readonly git: () => RunHeader['git']
   readonly createModel: (config: AnthropicIdeaDraftModelConfig) => IdeaDraftModel
   readonly now: () => Date
   readonly stopwatch: Stopwatch
@@ -59,6 +63,8 @@ const DEFAULT_DEPS: RunnerDeps = {
   env: process.env,
   envFile: path.join(REPO_ROOT, '.env'),
   runsDir: path.join(PACKAGE_ROOT, 'runs'),
+  corpusRoot: PACKAGE_ROOT,
+  git: () => gitState(REPO_ROOT),
   createModel: (config) => new AnthropicIdeaDraftModel(config),
   now: () => new Date(),
   stopwatch: { elapsedMs: () => performance.now() },
@@ -334,7 +340,7 @@ async function liveRun(
     schemaVersion: RUN_FILE_SCHEMA_VERSION,
     header: {
       runnerVersion: RUNNER_VERSION,
-      git: gitState(REPO_ROOT),
+      git: deps.git(),
       label: options.label ?? labelFor(prompt),
       model: options.model,
       effort: options.effort,
@@ -426,7 +432,7 @@ export async function main(
   try {
     const options = parseOptions(argv)
     const prompt = await loadPromptSource(options.promptFile)
-    const corpus = await loadCorpus(PACKAGE_ROOT, schemaPriorities())
+    const corpus = await loadCorpus(deps.corpusRoot, schemaPriorities())
     const fixtures = prepareAll(corpus, prompt)
 
     if (options.command === 'dump-prompt') {
