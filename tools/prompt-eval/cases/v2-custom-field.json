@@ -1,0 +1,18 @@
+{
+  "id": "v2-custom-field",
+  "fixture": "acme-v2",
+  "assistant": "v2",
+  "note": "Custom-field mapping (v2 Fields the assistant may fill): the message names the line and a monthly saving, which map onto the Continuous Improvement type's Line dropdown and its number field. A wrong Line is an option-mapping failure; an empty saving means stated numbers are not reaching typed fields.",
+  "turns": [
+    "On the packing line we lose about 20 hours a month re-taping boxes because the tape dispenser is set too short. Setting a longer default length would fix it."
+  ],
+  "expect": {
+    "inScope": true,
+    "ideaType": "Continuous Improvement",
+    "problemSet": true,
+    "fieldValues": {
+      "Line": "Packing",
+      "Estimated saving (hours per month)": "set"
+    }
+  }
+}

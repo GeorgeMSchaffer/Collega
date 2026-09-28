@@ -18,7 +18,9 @@ Active and next work only. The earlier rows, the completed-sprint narratives and
 Application QA pass write-up moved verbatim to [`SPEC/tracker-history.md`](tracker-history.md) on
 2026-09-28; read it for how something reached its state. Moved rows that still name open work:
 **Sprint 9 — the conversion** (Wave F: F1, F2, F4, F5), **Deployment (Vercel)** and **Branch
-inventory** (owner-side steps), **Authentication hardening** (tests owed).
+inventory** (owner-side steps), **Authentication hardening** (tests owed). **Sprint 12** (the
+prompt-eval runner, `SPEC/sprints/sprint-12-prompt-eval-runner.md`) is in progress: slices 113-115
+and 117 are merged, their rows in the history file; 116 (the v1 baseline) and 118 (QA) remain.
 
 | Area | State | Detail / authority |
 |---|---|---|

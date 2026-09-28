@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-28 | The v2 corpus format, as built | active | full below |
 | 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | full below |
 | 2026-09-28 | `compare` refuses to judge an invalid run | active | full below |
 | 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | full below |
@@ -42,7 +43,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-27 | The API sends the custom field list | active | full below |
 | 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | full below |
 | 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | full below |
-| 2026-09-27 | Terrazzo is the palette, with a theme picker | superseded in part | full below |
+| 2026-09-27 | Terrazzo is the palette, with a theme picker | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | One list and detail pattern, and a drawer instead of the docked inspector | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | The Boards screen has a card view and a list view | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | Desk screens use the full width, and the Boards screens carry the board actions | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -88,6 +89,18 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-28 — The v2 corpus format, as built
+
+**An implementation note, not a user decision.** Slice 117 builds the provisional v2 case format of
+`20-feature-prompt-eval-runner.md` rule 4, and rule 4 now records the choices it made: typed fields
+in a separate `acme-v2` fixture so no v1 fixture hash moves; `lockedFields` and `nextStep` in the v2
+contract's field names; v2 keys only on `"assistant": "v2"` cases; `suggestions` outside the overall
+mapping accuracy. Rule 19 adds a v2 case's `draft` and `lockedFields` to its content hash, since
+they drive the run; they are absent from v1 cases, so no v1 hash changes. The format follows the v2
+turn contract as specified and changes with it when v2 is built.
 
 ---
 
@@ -415,20 +428,6 @@ its own entry here — this is that entry. It is not a general licence either.
 **Golden corpus.** This changes the idea detail and list response shapes and makes `description`
 nullable, so the replay will differ there. Those differences are accepted, and slice 099 records
 them in `tools/golden/src/accepted.ts`.
-
-## 2026-09-27 — Terrazzo is the palette, with a theme picker
-
-> **Superseded in part 2026-09-28** by "Graphite replaces Notte as the dark theme": the dark theme
-> is Graphite. Everything else here stands.
-
-**Decided by the user** after comparing palettes live in comp R. Comp P left the palette open; this
-closes it. **Terrazzo** (slate blue with pistachio and blush) is the default. A theme picker at the
-right of the top bar offers Terrazzo, Portico, Piazza Sera and Lagoon as light themes and Notte as
-the dark theme. Every theme is one token set in `packages/design-system`,
-checked to 4.5:1 for text, so adding or retiring a theme never touches components. The choice is
-remembered per browser in a cookie, not on the user profile (answered the same day), and each theme
-carries a suggestion hue distinct from its accent for the idea assistant. Earlier
-candidates (Sprout, Blueprint, the bright Piazza, Mercato) were reviewed and dropped the same day.
 
 ## Earlier decisions
 

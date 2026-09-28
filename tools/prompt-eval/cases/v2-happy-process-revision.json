@@ -1,0 +1,17 @@
+{
+  "id": "v2-happy-process-revision",
+  "fixture": "acme-v2",
+  "assistant": "v2",
+  "note": "The v2 happy path for a Process Revision: a rule that no longer fits, a proposed change, and the cost of keeping it. If this drifts to Continuous Improvement the type descriptions are not carrying enough signal, as in approval-threshold.",
+  "turns": [
+    "Every outbound shipment needs a manager signature before it leaves the dock, even repeat customers under $500. That rule was written when we had two clients and it adds an hour of waiting most afternoons. We should drop the signature for repeat customers under $500."
+  ],
+  "expect": {
+    "inScope": true,
+    "ideaType": "Process Revision",
+    "titleSet": true,
+    "problemSet": true,
+    "proposedSolutions": { "min": 1 },
+    "impactRationaleSet": true
+  }
+}

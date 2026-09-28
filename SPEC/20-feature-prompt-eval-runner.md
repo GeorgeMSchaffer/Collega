@@ -70,9 +70,18 @@ idea assistant, or replacing the advisory publish probes (v1 rule 37), which sta
      n, "max": 3 } }` and the like, for brainstorm turns);
    - per case: an initial `draft` and `lockedFields`, so the locked-field rule is measurable. A
      locked field is scored twice: whether the model *proposed* a change to it (measured before the
-     server drops it) and whether any change *survived* (must be never).
-   - fixtures gain typed field definitions per idea type (number, dropdown with options, text) so
-     custom-field mapping can be scored.
+     server drops it) and whether any change *survived* (must be never). The `draft` names options,
+     tags and custom fields in prose, like `expect`; `lockedFields` uses the v2 contract's field
+     names (`problem`, `ideaTypeId`, `tagNames`, …), with a custom field as `fieldValues.<field
+     name>`, and `nextStep` does the same;
+   - fixtures gain typed field definitions (number, dropdown with options, text): a fixture-level
+     `fields` list, attached to each idea type through its `fieldNames`, with `requiredFieldNames`
+     marking the ones that type requires. They live in their own fixture (`acme-v2`), so no v1
+     fixture's hash changes;
+   - the v2 keys, `draft` and `lockedFields` are accepted only on `"assistant": "v2"` cases: a
+     `"both"` case is scored under v1 too, so it may use only what v1 can answer. `suggestions` are
+     scored per kind, and stay out of the overall mapping accuracy (rule 15): they are offers, not a
+     mapping onto the draft. Implemented in slice 117, 2026-09-28.
 5. v2 needs at least: a structured-fields happy path per idea type, a multi-turn case that fills
    Problem → Proposed solutions → Impact rationale in the interview order, a brainstorm turn, a
    locked-field case, a custom-field case, and the existing `refuse-*` and `scope-*` cases run
@@ -172,7 +181,7 @@ reported, excluded from every metric denominator below.
       either was overridden, repeats, case selection, prompt source (`default` or a file path) and
       the SHA-256 of the template, a **content hash per case** and **per fixture**, and start and end
       time. The hashes cover what drives a run, not the raw files: for a case its `fixture`, `turns`
-      and `expect`; for a fixture its rendered system prompt and response schema
+      and `expect`, and for a v2 case its `draft` and `lockedFields` when present; for a fixture its rendered system prompt and response schema
       (`fixtureHashes`). Each fixture also carries a **catalog hash** (`fixtureCatalogHashes`): the
       fixture rendered through `buildSystemPrompt` with a template of only the two placeholders, plus
       the response schema — what the fixture drives, without the template. Adding an optional key
