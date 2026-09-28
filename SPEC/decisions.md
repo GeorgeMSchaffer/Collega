@@ -9,6 +9,16 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — The prompt-eval runner's provisional limits stand for the first baseline
+
+**Decided by the user** on review of slice 115. The first v1 baseline (slice 116) is recorded and
+judged with the provisional values in `20-feature-prompt-eval-runner.md`: a run with more than 10%
+errored trials is not valid (rule 30), and a pair whose refusal rates differ by less than 0.5 is
+flagged "scope statement may be ignored" (rule 14). Both are revisited with the user against the
+real rates once that baseline exists (rule 32), not before it.
+
+---
+
 ## 2026-09-28 — `compare` refuses to judge an invalid run
 
 **Decided by the user** on review of slice 115. `compare` exits 2, printing the reasons, when
