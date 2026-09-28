@@ -61,6 +61,7 @@ export type BoardStatusIdeaCount = {
 export type BoardTagIdeaCount = {
   readonly boardId: string
   readonly tagName: string
+  readonly tagColor: string
   readonly ideaCount: number
 }
 

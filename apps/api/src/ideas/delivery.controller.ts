@@ -110,4 +110,11 @@ export class DeliveryController {
       deliveryStatus: optional(query.deliveryStatus),
     })
   }
+
+  /** One Issue's delivery card - the list's card, for the Issue drawer's deep link. A Discovery,
+   * deleted, out-of-scope or malformed id is a 404. */
+  @Get('ideas/:ideaId/delivery')
+  async getDelivery(@Param('ideaId', UuidParamPipe) ideaId: string): Promise<DeliveryCard> {
+    return this.ideas.getDelivery(ideaId)
+  }
 }

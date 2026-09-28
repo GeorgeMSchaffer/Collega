@@ -598,9 +598,32 @@ function tagHarness(options: { currentUser: CurrentUserContext }) {
       calls.push({ organizationId, prefix: normalizedPrefix, limit })
       return ['backlog', 'billing']
     },
+    async listByOrganization() {
+      return []
+    },
+    async getById() {
+      return null
+    },
+    async findByNormalizedName() {
+      return null
+    },
+    async usageByTagIds() {
+      return new Map()
+    },
+    async getCreatorNames() {
+      return new Map()
+    },
+    async add() {},
+    async save() {},
+    async delete() {},
   }
 
-  return { service: new TagService(tags, options.currentUser), calls }
+  return {
+    service: new TagService(tags, ORG_LOOKUP, recordingAudit(), options.currentUser, fixedClock(), {
+      nextInt: () => 0,
+    }),
+    calls,
+  }
 }
 
 describe('TagService', () => {

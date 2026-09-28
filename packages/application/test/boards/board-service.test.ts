@@ -474,20 +474,20 @@ describe('BoardService list card aggregates', () => {
       currentUser: member(ORG_A),
       boards: [board()],
       tagCounts: [
-        { boardId: 'board-a', tagName: 'rare', ideaCount: 1 },
+        { boardId: 'board-a', tagName: 'rare', tagColor: '#E5484D', ideaCount: 1 },
         // A case-sensitive sort would put 'Zeta' before 'alpha'; the card must not.
-        { boardId: 'board-a', tagName: 'Zeta', ideaCount: 2 },
-        { boardId: 'board-a', tagName: 'alpha', ideaCount: 2 },
-        { boardId: 'board-a', tagName: 'safety', ideaCount: 5 },
+        { boardId: 'board-a', tagName: 'Zeta', tagColor: '#E5484D', ideaCount: 2 },
+        { boardId: 'board-a', tagName: 'alpha', tagColor: '#E5484D', ideaCount: 2 },
+        { boardId: 'board-a', tagName: 'safety', tagColor: '#E5484D', ideaCount: 5 },
       ],
     })
 
     const [card] = await service.list(ORG_A)
 
     expect(card?.topTags).toEqual([
-      { name: 'safety', ideaCount: 5 },
-      { name: 'alpha', ideaCount: 2 },
-      { name: 'Zeta', ideaCount: 2 },
+      { name: 'safety', ideaCount: 5, color: '#E5484D' },
+      { name: 'alpha', ideaCount: 2, color: '#E5484D' },
+      { name: 'Zeta', ideaCount: 2, color: '#E5484D' },
     ])
   })
 
@@ -498,6 +498,7 @@ describe('BoardService list card aggregates', () => {
       tagCounts: ['a', 'b', 'c', 'd', 'e'].map((tagName) => ({
         boardId: 'board-a',
         tagName,
+        tagColor: '#E5484D',
         ideaCount: 1,
       })),
     })

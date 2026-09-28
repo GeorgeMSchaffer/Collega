@@ -410,6 +410,7 @@ describe.skipIf(!DATABASE_URL)('PrismaIdeaRepository list queries against a live
           organization_id: organizationId,
           name,
           normalized_name: name.toLowerCase(),
+          color: '#E5484D',
           ...stamps,
         },
       })

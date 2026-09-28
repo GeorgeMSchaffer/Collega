@@ -1,12 +1,31 @@
 import type { Auditable } from '../common/index.js'
-import { markCreated } from '../common/index.js'
+import { markCreated, markUpdated } from '../common/index.js'
 import { TagDomainError } from './errors.js'
 
-/** Mirrors .NET's `Tag.NameMaxLength`. Not enforced here - the .NET domain never checked it in
- * `Tag.Create` either; the 10-tags-per-idea and 100-character caps are enforced by the caller
- * (Ideas' `resolveTags`, SPEC/20-feature-ideas-and-engagement.md "Tags" #3/#8) before a name ever
- * reaches this factory. Kept as a named constant for that caller to reference. */
+/** Mirrors .NET's `Tag.NameMaxLength`. Inline creation while tagging an idea checks it first, keyed
+ * `tagNames` (Ideas' `resolveTags`); `createTag` and `updateTag` enforce it for Settings → Tags. */
 export const NAME_MAX_LENGTH = 100
+
+/**
+ * The palette a new tag's random colour is drawn from, in the order
+ * SPEC/20-feature-ideas-and-engagement.md Tags rule 9 lists it. The order is load-bearing: the
+ * `tags.color` backfill and the demo seed both index it by the first byte of the MD5 digest of the
+ * normalized name, modulo 10.
+ */
+export const TAG_COLOR_PALETTE = [
+  '#E5484D',
+  '#F5A524',
+  '#3FB86B',
+  '#2F9E8F',
+  '#5CC8E0',
+  '#6B9BF2',
+  '#B08CF5',
+  '#E879A6',
+  '#A87B2F',
+  '#94A3B8',
+] as const
+
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/
 
 /**
  * A reusable, organization-scoped tag (SPEC/20-feature-ideas-and-engagement.md "Tags"). Trimmed,
@@ -24,6 +43,8 @@ export type Tag = Auditable & {
   readonly name: string
   /** Lower-cased, trimmed form used for uniqueness and prefix matching. */
   readonly normalizedName: string
+  /** `#RRGGBB`, upper case (Tags rule 9). */
+  readonly color: string
 }
 
 export type CreateTagProps = {
@@ -32,6 +53,7 @@ export type CreateTagProps = {
   readonly id: string
   readonly organizationId: string
   readonly name: string
+  readonly color: string
   readonly nowUtc: Date
   readonly actorUserId: string | null
 }
@@ -41,21 +63,68 @@ export function normalizeTagName(name: string | null | undefined): string {
   return (name ?? '').trim().toLowerCase()
 }
 
+/** Any `#RRGGBB`, returned upper case; anything else is refused on `color`. */
+export function normalizeTagColor(color: string): string {
+  if (!HEX_COLOR.test(color)) {
+    throw new TagDomainError('color', 'Color must be a valid #RRGGBB color.')
+  }
+  return color.toUpperCase()
+}
+
+/** The trimmed display name, refused on `name` when blank or over `NAME_MAX_LENGTH`. */
+export function validateTagName(name: string | null | undefined): string {
+  const trimmed = (name ?? '').trim()
+  if (trimmed.length === 0) {
+    throw new TagDomainError('name', 'Tag name is required.')
+  }
+  if (trimmed.length > NAME_MAX_LENGTH) {
+    throw new TagDomainError('name', `Tag must be ${NAME_MAX_LENGTH} characters or fewer.`)
+  }
+  return trimmed
+}
+
+/** The palette colour at `index`, which the caller draws from its random source. */
+export function paletteColorAt(index: number): string {
+  const color = TAG_COLOR_PALETTE[index]
+  if (color === undefined) {
+    throw new RangeError(`Palette index ${index} is outside 0-${TAG_COLOR_PALETTE.length - 1}.`)
+  }
+  return color
+}
+
 export function createTag(props: CreateTagProps): Tag {
   if (!props.organizationId || props.organizationId.trim().length === 0) {
     throw new TagDomainError('organizationId', 'Organization id is required.')
   }
 
-  const normalizedName = normalizeTagName(props.name)
-  if (normalizedName.length === 0) {
-    throw new TagDomainError('name', 'Tag name is required.')
-  }
+  const name = validateTagName(props.name)
+  const color = normalizeTagColor(props.color)
 
   return {
     id: props.id,
     organizationId: props.organizationId,
-    name: props.name.trim(),
-    normalizedName,
+    name,
+    normalizedName: normalizeTagName(name),
+    color,
     ...markCreated(props.nowUtc, props.actorUserId),
   }
+}
+
+/**
+ * Renames and/or recolours a tag (Tags rule 14). `color` null keeps the stored one. Uniqueness of
+ * the new name against the organization's other tags is the Application layer's check.
+ */
+export function updateTag(
+  tag: Tag,
+  changes: { readonly name: string; readonly color: string | null },
+  nowUtc: Date,
+  actorUserId: string | null,
+): Tag {
+  const name = validateTagName(changes.name)
+  const color = changes.color === null ? tag.color : normalizeTagColor(changes.color)
+  return markUpdated(
+    { ...tag, name, normalizedName: normalizeTagName(name), color },
+    nowUtc,
+    actorUserId,
+  )
 }

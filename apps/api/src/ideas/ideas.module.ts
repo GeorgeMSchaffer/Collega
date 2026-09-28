@@ -2,6 +2,7 @@ import type {
   AuditEventWriter,
   Clock,
   CurrentUserContext,
+  RandomSource,
   UnitOfWork,
 } from '@collega/application/common'
 import type {
@@ -81,6 +82,7 @@ import { IdeasController } from './ideas.controller.js'
         auditEvents: AuditEventWriter,
         currentUser: CurrentUserContext,
         clock: Clock,
+        random: RandomSource,
       ) =>
         new IdeaService(
           ideaRepository,
@@ -98,6 +100,7 @@ import { IdeasController } from './ideas.controller.js'
           auditEvents,
           currentUser,
           clock,
+          random,
         ),
       inject: [
         PORT_TOKENS.IdeaRepository,
@@ -115,6 +118,7 @@ import { IdeasController } from './ideas.controller.js'
         PORT_TOKENS.AuditEventWriter,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.RandomSource,
       ],
     },
     {

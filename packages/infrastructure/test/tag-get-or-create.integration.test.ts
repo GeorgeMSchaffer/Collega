@@ -50,18 +50,21 @@ describe.skipIf(!DATABASE_URL)('PrismaTagRepository.getOrCreate against a live d
     const first = await tags.getOrCreate({
       organizationId,
       requestedNames: [name],
+      pickNewTagColor: () => '#E5484D',
       nowUtc: new Date(),
       actorUserId: null,
     })
     const second = await tags.getOrCreate({
       organizationId,
       requestedNames: [name],
+      pickNewTagColor: () => '#E5484D',
       nowUtc: new Date(),
       actorUserId: null,
     })
     const third = await tags.getOrCreate({
       organizationId,
       requestedNames: [name],
+      pickNewTagColor: () => '#E5484D',
       nowUtc: new Date(),
       actorUserId: null,
     })
@@ -87,6 +90,7 @@ describe.skipIf(!DATABASE_URL)('PrismaTagRepository.getOrCreate against a live d
     const input = {
       organizationId,
       requestedNames: [name],
+      pickNewTagColor: () => '#E5484D',
       nowUtc: new Date(),
       actorUserId: null,
     }
