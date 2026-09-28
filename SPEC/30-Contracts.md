@@ -1297,7 +1297,9 @@ Query behavior:
 
 Added 2026-09-11, Issues and Delivery Slice 1 (`SPEC/20-feature-issues-and-delivery.md`). **An Issue
 is not a new resource** — it is the same `ideas` row in its `Delivery` phase, so every route below
-addresses an idea by its existing `{ideaId}` and there is no `/issues` root. The Slice 2 Outcome and
+addresses an idea by its existing `{ideaId}` and there is no `/issues` root — *except one read, added
+2026-09-28 by the user's decision: `GET /api/v1/issues/{ideaId}` below, which still addresses the
+idea by its id and creates no new resource.* The Slice 2 Outcome and
 Roadmap routes are deliberately absent; nothing here carries an `outcomeId`.
 
 Two refusals are distinct on purpose and must not be collapsed:
@@ -1325,11 +1327,11 @@ task exists in somebody else's organization is the thing a prober is fishing for
   `effort`; tag chips read the card's `tags` (added above).
 - **Gap: issue keys.** Comp R labels Issues `IDE-01`; there is no key or reference field anywhere in
   this document and none is added (see `GET /api/v1/ideas/{ideaId}`, "no `reference` field").
-- **Plan next sprint** uses the existing `POST /organizations/{organizationId}/sprints`, and **the
-  Issue drawer** reads the delivery card the screen already holds, `GET /ideas/{ideaId}` and
-  `GET /ideas/{ideaId}/tasks` — nothing new. (There is still no single-Issue delivery read; a deep
-  link to an Issue's drawer needs the delivery card from a list, as `/delivery/issues/{ideaId}`
-  does today.)
+- **Plan next sprint** uses the existing `POST /organizations/{organizationId}/sprints`, and **Start
+  sprint** the existing `POST /organizations/{organizationId}/sprints/{sprintId}/start` — nothing new.
+- **The Issue drawer** reads the delivery card, `GET /ideas/{ideaId}` and `GET /ideas/{ideaId}/tasks`;
+  for a deep link, and for `/delivery/issues/{ideaId}`, the card comes from the **one addition**,
+  `GET /api/v1/issues/{ideaId}` (added 2026-09-28, below).
 - **The Roadmap in Sprint 11 needs nothing new either**: its sprint rows read
   `GET /organizations/{organizationId}/sprints`, and its empty state counts delivery cards.
 - **Gap, for a later sprint: Outcomes and the roadmap read** (answered 2026-09-28: Sprint 11 builds
@@ -1461,6 +1463,27 @@ Success response `200`: an **unpaged** array (a sprint is a bounded, human-sized
 Error responses:
 - `401` caller is not authenticated
 - `404` the organization does not exist or is outside caller scope
+
+### `GET /api/v1/issues/{ideaId}`
+Added 2026-09-28 (the user's decision; `SPEC/decisions.md` 2026-09-28). Purpose: one Issue's
+delivery card, for the Issue drawer's deep link and `/delivery/issues/{ideaId}`. Until now the only
+way to read one was to list every sprint and the backlog and search them.
+
+`{ideaId}` is the idea's id — an Issue is still the `ideas` row in its `Delivery` phase, not a new
+resource; this is the one read under an `/issues` path, named for what it answers.
+
+Authorization: the same as `GET /api/v1/organizations/{organizationId}/delivery` — every member of
+the Issue's organization, `Read Only` included; a Site Admin reads it directly.
+
+Success response `200`: exactly one item of the delivery card shape from
+`GET /api/v1/organizations/{organizationId}/delivery` (the board idea item plus `phase`, `effort`,
+`deliveryStatus`, `sprint`, `taskSummary`, `provenance`, and since 2026-09-28 `tags`), composed by
+the same code, so the card cannot differ between the list and this read.
+
+Error responses:
+- `401` caller is not authenticated
+- `404` no such idea; the idea is soft-deleted; it is in `Discovery` (not an Issue); or it belongs to
+  another organization — never `403`, as throughout this section. A malformed id is `404` too.
 
 ## Sprint Contracts
 
