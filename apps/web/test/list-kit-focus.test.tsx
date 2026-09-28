@@ -240,8 +240,7 @@ describe('ConfirmDialog', () => {
           confirmLabel="Archive board"
           onConfirm={() => {
             if (removeLater) setArchived(asking)
-            else if (removeOnConfirm)
-              setRows((current) => current.filter((row) => row !== asking))
+            else if (removeOnConfirm) setRows((current) => current.filter((row) => row !== asking))
             setAsking(null)
           }}
           onCancel={() => setAsking(null)}
