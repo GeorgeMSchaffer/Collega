@@ -11,7 +11,7 @@ export const buttonVariants = cva(
   // a `disabled` button leaves the tab order and the accessibility tree, which makes the
   // aria-describedby reason announcing *why* it is denied unreachable. Comp Q uses aria-disabled
   // exclusively - 14 occurrences, and bare `disabled` zero times.
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -25,9 +25,9 @@ export const buttonVariants = cva(
       },
       size: {
         // Heights are the shared control tokens in globals.css, so density is one edit there.
-        sm: 'h-[var(--control-h-sm)] rounded-md px-3',
-        default: 'h-[var(--control-h)] px-4 py-2',
-        lg: 'h-[var(--control-h-lg)] rounded-md px-6',
+        sm: 'h-[var(--control-h-sm)] rounded-md px-2.5 text-xs',
+        default: 'h-[var(--control-h)] px-[var(--control-px)]',
+        lg: 'h-[var(--control-h-lg)] rounded-md px-6 text-sm',
         icon: 'size-[var(--control-h)]',
       },
     },

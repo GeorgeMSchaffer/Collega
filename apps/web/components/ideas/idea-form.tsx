@@ -1,6 +1,6 @@
 'use client'
 
-import { Alert, Field, Input, Select, Textarea } from '@collega/design-system'
+import { Alert, Field, FieldRow, Input, Select, Textarea } from '@collega/design-system'
 import { type FormEvent, useEffect, useId, useState, useTransition } from 'react'
 import { Icon } from '@/components/list/icons'
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/lib/limits'
@@ -300,7 +300,7 @@ export function IdeaForm({
         />
       </Field>
 
-      <div className="grid grid-cols-1 gap-x-3 sm:grid-cols-2">
+      <FieldRow cols={3}>
         <Field htmlFor={fid('impact')} label="Business impact" error={errors.businessImpactId}>
           <Select
             id={fid('impact')}
@@ -313,21 +313,6 @@ export function IdeaForm({
             {options.businessImpacts.map((impact) => (
               <option key={impact.id} value={impact.id}>
                 {impact.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field htmlFor={fid('priority')} label="Priority" error={errors.priority}>
-          <Select
-            id={fid('priority')}
-            data-error-key="priority"
-            value={draft.priority}
-            onChange={(event) => set('priority', event.target.value)}
-            aria-invalid={errors.priority ? true : undefined}
-          >
-            {PRIORITIES.map((priority) => (
-              <option key={priority} value={priority}>
-                {priority}
               </option>
             ))}
           </Select>
@@ -359,6 +344,24 @@ export function IdeaForm({
             ) : null}
           </Select>
         </Field>
+        <Field htmlFor={fid('priority')} label="Priority" error={errors.priority}>
+          <Select
+            id={fid('priority')}
+            data-error-key="priority"
+            value={draft.priority}
+            onChange={(event) => set('priority', event.target.value)}
+            aria-invalid={errors.priority ? true : undefined}
+          >
+            {PRIORITIES.map((priority) => (
+              <option key={priority} value={priority}>
+                {priority}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </FieldRow>
+
+      <FieldRow cols={2}>
         <Field htmlFor={fid('due')} label="Due date (optional)" error={errors.dueDate}>
           <Input
             id={fid('due')}
@@ -369,7 +372,7 @@ export function IdeaForm({
             aria-invalid={errors.dueDate ? true : undefined}
           />
         </Field>
-      </div>
+      </FieldRow>
 
       <Field
         htmlFor={fid('tags')}
@@ -451,7 +454,7 @@ function SolutionsField({
       className="m-0 mb-4 flex flex-col gap-1.5 border-0 p-0"
       data-invalid={error ? '' : undefined}
     >
-      <legend className="mb-1.5 text-[length:var(--label-size)] font-medium">
+      <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
         Proposed solutions
       </legend>
       {solutions.map((solution, index) => (
@@ -493,15 +496,15 @@ function SolutionsField({
         </button>
       ) : null}
       {error ? (
-        <span id={messageId} className="block text-[0.8rem] font-medium text-destructive">
+        <span id={messageId} className="block text-xs font-semibold text-destructive">
           {error}
         </span>
       ) : locked ? (
-        <span id={messageId} className="block text-[0.8rem] text-muted-foreground">
+        <span id={messageId} className="block text-xs text-muted-foreground">
           Only the author or an Org Admin can change this.
         </span>
       ) : (
-        <span className="block text-[0.8rem] text-muted-foreground">Up to {SOLUTIONS_MAX}.</span>
+        <span className="block text-xs text-muted-foreground">Up to {SOLUTIONS_MAX}.</span>
       )}
     </fieldset>
   )
@@ -541,7 +544,9 @@ function CustomField({
         data-invalid={error ? '' : undefined}
         aria-describedby={error ? `${id}-msg` : undefined}
       >
-        <legend className="mb-1.5 text-[length:var(--label-size)] font-medium">{label}</legend>
+        <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
+          {label}
+        </legend>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {options.map((option, index) => (
             <label key={option.id} className="m-0 inline-flex items-center gap-1.5 font-normal">
@@ -563,7 +568,7 @@ function CustomField({
           ))}
         </div>
         {error ? (
-          <span id={`${id}-msg`} className="mt-1 block text-[0.8rem] font-medium text-destructive">
+          <span id={`${id}-msg`} className="mt-1 block text-xs font-semibold text-destructive">
             {error}
           </span>
         ) : null}

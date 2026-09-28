@@ -38,3 +38,24 @@ export function Avatar({
 export function Separator({ className, ...props }: HTMLAttributes<HTMLHRElement>) {
   return <hr className={cn('m-0 h-px w-full border-0 bg-border', className)} {...props} />
 }
+
+/**
+ * Metadata in the theme's mono face (comp R): counts, date windows, and — with `caps` — the
+ * uppercase meta labels of the Delivery screens (*STATE*, *WINDOW*, *TODAY*).
+ */
+export function Meta({
+  caps = false,
+  className,
+  ...props
+}: HTMLAttributes<HTMLSpanElement> & { caps?: boolean }) {
+  return (
+    <span
+      className={cn(
+        'font-mono font-medium text-muted-foreground',
+        caps ? 'text-[10.5px] uppercase tracking-[0.06em]' : 'text-[11px] tracking-[0.04em]',
+        className,
+      )}
+      {...props}
+    />
+  )
+}

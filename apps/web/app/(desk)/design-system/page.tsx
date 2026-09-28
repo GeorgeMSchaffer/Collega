@@ -6,11 +6,23 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EffortBar,
+  Field,
+  FieldRow,
+  Input,
+  Meta,
+  Select,
+  TAG_PALETTE,
+  TagChip,
+  Textarea,
+  THEME_NAMES,
+  tagChipColors,
 } from '@collega/design-system'
 import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { getBoardOverviews } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
+import { ColorPickerDemo } from './color-picker-demo'
 import { ListKitDemo } from './list-kit-demo'
 
 /**
@@ -29,7 +41,25 @@ const SWATCHES = [
   ['destructive', 'Destructive'],
   ['suggest', 'Suggested'],
   ['suggest-tint', 'Suggested tint'],
+  ['suggest-line', 'Suggested line'],
+  ['metric', 'Metric'],
+  ['field', 'Field'],
   ['border', 'Border'],
+] as const
+
+/** The colours the chip rule is held to: the palette, the RGB corners and two mid-greys. */
+const CHIP_CASES = [
+  ...TAG_PALETTE,
+  '#000000',
+  '#FFFFFF',
+  '#FF0000',
+  '#00FF00',
+  '#0000FF',
+  '#FFFF00',
+  '#00FFFF',
+  '#FF00FF',
+  '#808080',
+  '#777777',
 ] as const
 
 const CATEGORY_DOTS = [
@@ -128,22 +158,123 @@ export default async function Page() {
           <CardHeader>
             <CardTitle>Form controls</CardTitle>
             <CardDescription>
-              Styled by the base layer, so a bare{' '}
-              <code className="font-mono text-xs">&lt;input&gt;</code> already matches shadcn
-              without a wrapper component.
+              Comp R&rsquo;s density: 34px fields on the theme&rsquo;s field ground, 12px labels
+              above them. Short related fields share a row &mdash; three, or two &mdash; and stack
+              below 900px. The base layer styles a bare{' '}
+              <code className="font-mono text-xs">&lt;input&gt;</code> too.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 sm:max-w-md">
-            <input type="text" placeholder="Idea title" />
-            <textarea rows={3} placeholder="Describe the problem this solves" />
-            <select defaultValue="">
-              <option value="" disabled>
-                Business impact
-              </option>
-              <option>High</option>
-              <option>Medium</option>
-              <option>Low</option>
-            </select>
+          <CardContent className="max-w-2xl">
+            <Field htmlFor="ds-title" label="Title" required hint="Up to 200 characters.">
+              <Input id="ds-title" required placeholder="Idea title" />
+            </Field>
+            <Field htmlFor="ds-problem" label="Problem" error="Problem is required.">
+              <Textarea id="ds-problem" rows={3} aria-invalid />
+            </Field>
+            <FieldRow cols={3}>
+              <Field htmlFor="ds-impact" label="Business impact">
+                <Select id="ds-impact" defaultValue="">
+                  <option value="">Choose…</option>
+                  <option>High</option>
+                </Select>
+              </Field>
+              <Field htmlFor="ds-type" label="Idea type">
+                <Select id="ds-type" defaultValue="">
+                  <option value="">Choose…</option>
+                  <option>Improvement</option>
+                </Select>
+              </Field>
+              <Field htmlFor="ds-priority" label="Priority">
+                <Select id="ds-priority" defaultValue="Medium">
+                  <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
+                </Select>
+              </Field>
+            </FieldRow>
+            <FieldRow cols={2}>
+              <Field htmlFor="ds-start" label="Target start">
+                <Input id="ds-start" type="date" />
+              </Field>
+              <Field htmlFor="ds-end" label="Target end">
+                <Input id="ds-end" type="date" />
+              </Field>
+            </FieldRow>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Effort and metadata</CardTitle>
+            <CardDescription>
+              The effort bar in the theme&rsquo;s metric colour, always with its words; metadata in
+              the theme&rsquo;s mono face.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-6">
+              <EffortBar effort="Low" />
+              <EffortBar effort="Medium" />
+              <EffortBar effort="High" />
+            </div>
+            <div className="flex flex-wrap items-center gap-6">
+              <Meta caps>State</Meta>
+              <Meta caps>Window</Meta>
+              <Meta>12 issues</Meta>
+              <Meta>Sep 15 – Sep 28</Meta>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Tag chips and the colour picker</CardTitle>
+            <CardDescription>
+              A chip&rsquo;s text colour is computed per theme to clear 4.5:1 against its own
+              ground, for any colour. The table gives each theme&rsquo;s ratio and the share of tag
+              colour left in the text.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <div className="flex flex-wrap gap-1.5">
+              {CHIP_CASES.map((color) => (
+                <TagChip key={color} color={color}>
+                  {color}
+                </TagChip>
+              ))}
+            </div>
+            <ColorPickerDemo />
+            <div className="overflow-x-auto">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Colour</th>
+                    {THEME_NAMES.map((theme) => (
+                      <th key={theme} scope="col" className="capitalize">
+                        {theme}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {CHIP_CASES.map((color) => (
+                    <tr key={color}>
+                      <th scope="row" className="px-3 text-left font-mono text-xs font-medium">
+                        {color}
+                      </th>
+                      {THEME_NAMES.map((theme) => {
+                        const { ratio, textShare } = tagChipColors(color, theme)
+                        return (
+                          <td key={theme} className="font-mono text-xs">
+                            {ratio.toFixed(2)} · {textShare}%
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
