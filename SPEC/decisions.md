@@ -9,6 +9,18 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — The v2 corpus format, as built
+
+**An implementation note, not a user decision.** Slice 117 builds the provisional v2 case format of
+`20-feature-prompt-eval-runner.md` rule 4, and rule 4 now records the choices it made: typed fields
+in a separate `acme-v2` fixture so no v1 fixture hash moves; `lockedFields` and `nextStep` in the v2
+contract's field names; v2 keys only on `"assistant": "v2"` cases; `suggestions` outside the overall
+mapping accuracy. Rule 19 adds a v2 case's `draft` and `lockedFields` to its content hash, since
+they drive the run; they are absent from v1 cases, so no v1 hash changes. The format follows the v2
+turn contract as specified and changes with it when v2 is built.
+
+---
+
 ## 2026-09-28 — The prompt-eval runner's provisional limits stand for the first baseline
 
 **Decided by the user** on review of slice 115. The first v1 baseline (slice 116) is recorded and

@@ -1,7 +1,16 @@
 import type { IdeaDraft } from '@collega/application/ai'
 import { DEFAULT_AI_USAGE_LIMITS, estimatedCostAtRates } from '@collega/application/ai'
-import type { V1Expectations } from './corpus.ts'
-import type { RunCase, RunData, RunFixture, TrialRecord } from './run-file.ts'
+import { type CountRange, MAX_SOLUTIONS, type V2Expectations } from './corpus.ts'
+import { canonicalJson } from './hashing.ts'
+import type {
+  RunCase,
+  RunData,
+  RunFixture,
+  TrialRecord,
+  V2Draft,
+  V2TurnRecord,
+} from './run-file.ts'
+import { fieldValueOf, fromV1Draft, wireDraft, wireFieldName } from './v2-draft.ts'
 
 /**
  * The metrics of SPEC/20-feature-prompt-eval-runner.md rules 13-18, computed from a run's trials
@@ -88,6 +97,21 @@ export interface UsageMetrics {
   readonly latencyMs: { readonly p50: number; readonly p95: number; readonly max: number } | null
 }
 
+/**
+ * Rule 16, over scored trials of cases that declare `lockedFields`. A proposal is a trial whose
+ * model output touched a locked field before the server dropped it; a survival is a trial whose
+ * final draft holds a locked field changed from the case's starting draft. Survival must be zero:
+ * it is a defect in the server's enforcement, not a prompt-quality figure.
+ */
+export interface LockedFieldMetrics {
+  readonly trials: number
+  readonly proposals: number
+  readonly proposalRate: number | null
+  readonly survivals: number
+  /** `caseId #repeat: field` for each survival, so the report can name them. */
+  readonly survived: readonly string[]
+}
+
 export interface ErroredTrial {
   readonly caseId: string
   readonly repeat: number
@@ -109,12 +133,18 @@ export interface RunMetrics {
     readonly scope: ScopeGateMetrics
   }
   readonly pairs: readonly PairMetrics[]
-  /** Keyed by expectation name, in a fixed order. */
+  /**
+   * Keyed by expectation: the v1 and v2 keys in a fixed order, then `fieldValues.<field name>` and
+   * `suggestions.<kind>` in name order.
+   */
   readonly fields: Readonly<Record<string, FieldMetrics>>
-  /** Rule 15: every declared field expectation over trials of cases expecting `inScope: true`. */
+  /**
+   * Rule 15: every declared field expectation over trials of cases expecting `inScope: true`.
+   * `suggestions.*` stay out: they are brainstorm offers, not a mapping onto the draft.
+   */
   readonly overallMapping: Proportion
-  /** Rule 16. Null until a case declares `lockedFields` (v2, slice 117). */
-  readonly lockedFields: null
+  /** Rule 16. Null when no case in the run declares `lockedFields`. */
+  readonly lockedFields: LockedFieldMetrics | null
   readonly cases: readonly CaseMetrics[]
   readonly erroredTrials: readonly ErroredTrial[]
   readonly usage: UsageMetrics
@@ -124,9 +154,25 @@ export interface RunMetrics {
 export const PAIR_MARGIN = 0.5
 const Z_95 = 1.959963984540054
 
-const OPTION_FIELDS = ['ideaType', 'businessImpact', 'priority'] as const
-const PRESENCE_FIELDS = ['titleSet', 'descriptionSet'] as const
-export const FIELD_KEYS: readonly string[] = [...OPTION_FIELDS, ...PRESENCE_FIELDS]
+/** Expectation keys scored as fields, in report order; `fieldValues` and `suggestions` expand. */
+const FIELD_KEYS: readonly string[] = [
+  'ideaType',
+  'businessImpact',
+  'priority',
+  'titleSet',
+  'descriptionSet',
+  'problemSet',
+  'impactRationaleSet',
+  'proposedSolutions',
+  'tags',
+  'nextStep',
+]
+const PRESENCE_KEYS: Readonly<Record<string, keyof V2Draft>> = {
+  titleSet: 'title',
+  descriptionSet: 'description',
+  problemSet: 'problem',
+  impactRationaleSet: 'impactRationale',
+}
 
 type FieldOutcome = 'correct' | 'wrong' | 'empty' | 'refused'
 
@@ -157,7 +203,10 @@ interface ScoredTrial {
   readonly evalCase: RunCase
   readonly fixture: RunFixture
   readonly inScope: boolean
-  readonly draft: IdeaDraft
+  /** The final draft, a v1 one read as v2 so every key scores against one shape. */
+  readonly draft: V2Draft
+  /** The final turn's v2 record, when the run drove the v2 turn. */
+  readonly v2: V2TurnRecord | null
 }
 
 function scoredTrials(run: RunData): ScoredTrial[] {
@@ -167,12 +216,16 @@ function scoredTrials(run: RunData): ScoredTrial[] {
     const last = trial.turns[trial.turns.length - 1]
     const evalCase = run.cases[trial.caseId]
     if (last === undefined || last.inScope === null || evalCase === undefined) continue
+    const fixture = run.fixtures[evalCase.fixture]
+    const v2 = last.v2 ?? null
     scored.push({
       trial,
       evalCase,
-      fixture: run.fixtures[evalCase.fixture],
+      fixture,
       inScope: last.inScope,
-      draft: last.sanitizedDraft as IdeaDraft,
+      draft:
+        v2 !== null ? (v2.draft ?? v2.draftSent) : fromV1Draft(last.sanitizedDraft as IdeaDraft),
+      v2,
     })
   }
   return scored
@@ -204,7 +257,7 @@ function scopeGate(trials: readonly ScoredTrial[]): ScopeGateMetrics {
   }
 }
 
-function optionName(fixture: RunFixture, field: string, draft: IdeaDraft): string | null {
+function optionName(fixture: RunFixture, field: string, draft: V2Draft): string | null {
   switch (field) {
     case 'ideaType':
       return fixture.ideaTypes.find((o) => o.id === draft.ideaTypeId)?.name ?? null
@@ -219,23 +272,125 @@ function isPresent(value: string | null): boolean {
   return value !== null && value.trim().length > 0
 }
 
-function fieldOutcome(t: ScoredTrial, field: string, expected: unknown): FieldOutcome {
+function inRange(count: number, range: CountRange): boolean {
+  return count >= (range.min ?? 0) && count <= (range.max ?? Number.POSITIVE_INFINITY)
+}
+
+/** Rule 15's outcome for one declared expectation on one trial's final response. */
+function fieldOutcome(t: ScoredTrial, key: string, expected: unknown): FieldOutcome {
   if (!t.inScope) return 'refused'
-  if (field === 'titleSet' || field === 'descriptionSet') {
-    const present = isPresent(field === 'titleSet' ? t.draft.title : t.draft.description)
+  const presence = PRESENCE_KEYS[key]
+  if (presence !== undefined) {
+    const present = isPresent(t.draft[presence] as string | null)
     if (present === expected) return 'correct'
     return present ? 'wrong' : 'empty'
   }
-  const actual = optionName(t.fixture, field, t.draft)
+  if (key === 'proposedSolutions') {
+    const count = t.draft.proposedSolutions.length
+    if (count === 0) return 'empty'
+    const { min } = expected as { min: number }
+    return count >= min && count <= MAX_SOLUTIONS ? 'correct' : 'wrong'
+  }
+  if (key === 'tags') {
+    if (t.draft.tagNames.length === 0) return 'empty'
+    return (expected as string[]).every((tag) => t.draft.tagNames.includes(tag))
+      ? 'correct'
+      : 'wrong'
+  }
+  if (key === 'nextStep') {
+    const actual = t.v2?.nextStep ?? null
+    if (actual === null) return 'empty'
+    return actual === wireFieldName(expected as string, t.fixture) ? 'correct' : 'wrong'
+  }
+  if (key.startsWith('fieldValues.')) {
+    const field = t.fixture.fields?.find((f) => `fieldValues.${f.name}` === key)
+    const value = field === undefined ? undefined : fieldValueOf(t.draft, `fieldValues.${field.id}`)
+    if (value === undefined || value === null || (typeof value === 'string' && !isPresent(value))) {
+      return 'empty'
+    }
+    if (expected === 'set') return 'correct'
+    return field?.options?.find((o) => o.id === value)?.name === expected ? 'correct' : 'wrong'
+  }
+  if (key.startsWith('suggestions.')) {
+    const kind = key.slice('suggestions.'.length)
+    const offered = t.v2?.suggestions ?? null
+    if (kind === 'problemRewrite') {
+      const present = isPresent(offered?.problemRewrite ?? null)
+      if (present === expected) return 'correct'
+      return present ? 'wrong' : 'empty'
+    }
+    const count = (kind === 'solutions' ? offered?.solutions : offered?.rationales)?.length ?? 0
+    if (inRange(count, expected as CountRange)) return 'correct'
+    return count === 0 ? 'empty' : 'wrong'
+  }
+  const actual = optionName(t.fixture, key, t.draft)
   if (actual === null) return 'empty'
   return actual === expected ? 'correct' : 'wrong'
 }
 
-function declaredFields(expect: V1Expectations): [string, unknown][] {
-  return FIELD_KEYS.flatMap((key) => {
+/** Every declared field expectation, with `fieldValues` and `suggestions` expanded per entry. */
+function declaredFields(expect: V2Expectations): [string, unknown][] {
+  const declared: [string, unknown][] = []
+  for (const key of FIELD_KEYS) {
     const value = (expect as Record<string, unknown>)[key]
-    return value === undefined ? [] : [[key, value] as [string, unknown]]
-  })
+    if (value !== undefined) declared.push([key, value])
+  }
+  for (const [name, value] of Object.entries(expect.fieldValues ?? {}).sort()) {
+    declared.push([`fieldValues.${name}`, value])
+  }
+  for (const [kind, value] of Object.entries(expect.suggestions ?? {}).sort()) {
+    declared.push([`suggestions.${kind}`, value])
+  }
+  return declared
+}
+
+function isMapping(key: string): boolean {
+  return !key.startsWith('suggestions.')
+}
+
+/** Rule 16 over the scored trials; null when no case in the run declares locked fields. */
+function lockedFieldMetrics(
+  run: RunData,
+  scored: readonly ScoredTrial[],
+): LockedFieldMetrics | null {
+  const locking = Object.values(run.cases).some((c) => (c.lockedFields ?? []).length > 0)
+  if (!locking) return null
+  let trials = 0
+  let proposals = 0
+  const survived: string[] = []
+  for (const t of scored) {
+    const locked = t.evalCase.lockedFields ?? []
+    if (locked.length === 0) continue
+    trials++
+    const wireNames = locked.map((name) => [name, wireFieldName(name, t.fixture)] as const)
+    // A proposal is a real value that differs from what the turn was sent: a schema that makes
+    // every key required-and-nullable returns each locked field as null or unchanged every turn.
+    const touched = t.trial.turns.some((turn) => {
+      const v2 = turn.v2
+      if (v2 === undefined || v2.rawChanges === null) return false
+      return wireNames.some(([, wire]) => {
+        const raw = fieldValueOf(v2.rawChanges as Partial<V2Draft>, wire) ?? null
+        return (
+          raw !== null &&
+          canonicalJson(raw) !== canonicalJson(fieldValueOf(v2.draftSent, wire) ?? null)
+        )
+      })
+    })
+    if (touched) proposals++
+    const start = wireDraft(t.evalCase.draft, t.fixture)
+    for (const [name, wire] of wireNames) {
+      const before = canonicalJson(fieldValueOf(start, wire) ?? null)
+      const after = canonicalJson(fieldValueOf(t.draft, wire) ?? null)
+      if (before !== after) survived.push(`${t.trial.caseId} #${t.trial.repeat + 1}: ${name}`)
+    }
+  }
+  return {
+    trials,
+    proposals,
+    proposalRate: ratio(proposals, trials),
+    survivals: survived.length,
+    survived,
+  }
 }
 
 function trialPasses(t: ScoredTrial): boolean {
@@ -284,15 +439,22 @@ export function computeMetrics(run: RunData): RunMetrics {
     }
   })
 
-  const fields: Record<string, FieldMetrics> = {}
-  for (const field of FIELD_KEYS) {
-    const counts: Record<FieldOutcome, number> = { correct: 0, wrong: 0, empty: 0, refused: 0 }
-    for (const t of scored) {
-      const expected = (t.evalCase.expect as Record<string, unknown>)[field]
-      if (expected !== undefined) counts[fieldOutcome(t, field, expected)]++
+  const outcomes = new Map<string, Record<FieldOutcome, number>>()
+  for (const t of scored) {
+    for (const [key, expected] of declaredFields(t.evalCase.expect)) {
+      const counts = outcomes.get(key) ?? { correct: 0, wrong: 0, empty: 0, refused: 0 }
+      counts[fieldOutcome(t, key, expected)]++
+      outcomes.set(key, counts)
     }
+  }
+  const order = (key: string) => {
+    const fixed = FIELD_KEYS.indexOf(key)
+    return fixed >= 0 ? `0${String(fixed).padStart(2, '0')}` : `1${key}`
+  }
+  const fields: Record<string, FieldMetrics> = {}
+  for (const field of [...outcomes.keys()].sort((a, b) => order(a).localeCompare(order(b)))) {
+    const counts = outcomes.get(field) as Record<FieldOutcome, number>
     const n = counts.correct + counts.wrong + counts.empty + counts.refused
-    if (n === 0) continue
     fields[field] = {
       trials: n,
       ...counts,
@@ -308,6 +470,7 @@ export function computeMetrics(run: RunData): RunMetrics {
   for (const t of scored) {
     if (t.evalCase.expect.inScope !== true) continue
     for (const [field, expected] of declaredFields(t.evalCase.expect)) {
+      if (!isMapping(field)) continue
       mappingTotal++
       if (fieldOutcome(t, field, expected) === 'correct') mappingCorrect++
     }
@@ -360,7 +523,7 @@ export function computeMetrics(run: RunData): RunMetrics {
     pairs,
     fields,
     overallMapping: wilson(mappingCorrect, mappingTotal),
-    lockedFields: null,
+    lockedFields: lockedFieldMetrics(run, scored),
     cases,
     erroredTrials: run.trials
       .filter((t) => t.status === 'errored')
