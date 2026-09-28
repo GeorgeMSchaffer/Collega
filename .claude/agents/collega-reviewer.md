@@ -18,14 +18,15 @@ The branch (or worktree path) to review. Diff it against `dev`: `git diff dev...
 1. **Gate.** Run `pnpm check` in the branch's worktree. Red is a blocking finding; quote the output.
 2. **Spec conformance.** For every behavior the diff adds or changes, find the governing text in
    `SPEC/*.md` (`SPEC/README.MD` indexes them). API routes and payloads must match
-   `SPEC/30-Contracts.md` exactly — that file is never edited by a slice. Behavior with no spec
+   `SPEC/30-Contracts.md` exactly — through its index, the area file under `SPEC/contracts/`; none
+   of them is edited by a slice. Behavior with no spec
    backing, or contradicting one, is blocking.
 3. **Layers.** Business rules live in `packages/domain` and `packages/application` — never in
    controllers or React components. `apps/web` imports only `@collega/design-system` from the
    workspace, and talks to the API over HTTP from the server only. Only the auth folder reads a
    credential. Errors go through the shared error model, not hand-built responses.
 4. **Frozen things.** No edits to `tools/golden/**`, `packages/infrastructure/prisma/schema.prisma`,
-   `SPEC/30-Contracts.md`, or lockfile churn without a stated reason. A golden-corpus difference
+   `SPEC/30-Contracts.md`, `SPEC/contracts/**`, or lockfile churn without a stated reason. A golden-corpus difference
    is a question (fix / accept-and-record / deliberately better), not automatically a defect —
    see `SPEC/decisions.md` 2026-09-11.
 5. **Standards.** Imports (`@collega/<pkg>/<feature>`, `.js` extensions inside a package), SQL

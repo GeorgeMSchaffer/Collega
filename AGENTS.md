@@ -131,14 +131,21 @@ on. `SPEC/50-typescript-migration.md` §4 has the full mapping.
 `SPEC/README.MD` indexes the full set. If behavior is ambiguous, or **two canonical specs**
 conflict, ask before implementing.
 
+**Read the index, open only the part you need.** The three most-read files are indexes over
+detail kept one link away, and each keeps its path and its section headings, so an existing
+pointer such as "30-Contracts.md § Idea Contracts" still resolves:
+
 - `SPEC/decisions.md` — dated log of decisions that constrain later work, newest first, with enough
   of the reason that nobody reopens one by accident. Supersession is recorded, never edited away.
-  Read the top few before planning anything.
+  Read the top few before planning anything. It holds an index of every entry (status and where it
+  lives) and the newest entries in full; older entries are verbatim in `SPEC/decisions/archive-*.md`.
 - `SPEC/implementation-agent-tracker.md` — not product behavior, but the authoritative log of what
-  is built, in progress, and next. Update it as slices start and finish.
+  is built, in progress, and next. Update it as slices start and finish. It holds active and next
+  work only; finished rows and narratives move to `SPEC/tracker-history.md`.
 - `SPEC/50-typescript-migration.md` — the conversion plan: waves, slices, and what is settled.
 - `SPEC/30-Contracts.md` — canonical route/payload contracts. **Read, not edited**, by every API
-  slice; it is what the golden corpus pins.
+  slice; it is what the golden corpus pins. It holds the shared conventions and an index; each
+  contract section is in `SPEC/contracts/<area>.md`, and the rule covers the whole set.
 - `SPEC/40-test-strategy.md` — what must be covered. `SPEC/90-definition-of-done.md` — what done
   means.
 - `SPEC/95-next-sprints.md` — index for remaining pre-MVP sprint scope.
