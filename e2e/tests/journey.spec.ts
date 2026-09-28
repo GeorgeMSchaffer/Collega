@@ -288,13 +288,17 @@ test.describe
 
       await page.getByRole('button', { name: /new idea/i }).click()
       await page.getByLabel(/title/i).fill(world.idea)
-      await page.getByLabel(/description/i).fill('Authored by the journey suite.')
+      await page.getByLabel(/problem/i).fill('Authored by the journey suite.')
+      await page.getByLabel('Solution 1').fill('Try it on one board first.')
+      await page.getByLabel(/impact rationale/i).fill('Saves an hour a week.')
+      await page.getByLabel(/business impact/i).selectOption({ index: 1 })
+      await page.getByLabel(/idea type/i).selectOption({ index: 1 })
       await page
         .getByRole('button', { name: /create|add idea|save/i })
         .last()
         .click()
 
-      await expect(page.getByText(world.idea)).toBeVisible({ timeout: 30_000 })
+      await expect(page.getByRole('heading', { name: world.idea })).toBeVisible({ timeout: 30_000 })
     })
 
     test('7. the idea moves through the statuses and stays moved', async ({ page }) => {

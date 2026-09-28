@@ -122,3 +122,19 @@ export async function saveBoard(
 
   redirect('/settings/boards')
 }
+
+/**
+ * Unarchive a board from its own page's Archived banner (`20-feature-boards-and-statuses.md` rule
+ * 13). Org Admin only, which is the API's to enforce; the banner only offers it to one.
+ */
+export async function unarchiveBoard(boardId: string): Promise<BoardFormState> {
+  try {
+    await apiPost(apiPath`/boards/${boardId}/unarchive`)
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  // The board rejoins the board lists and pickers, which the layout's sidebar count reads too.
+  revalidatePath('/', 'layout')
+  return { error: null }
+}

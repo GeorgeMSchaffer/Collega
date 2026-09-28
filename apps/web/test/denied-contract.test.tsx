@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { GatedAction } from '@/components/common/gated-action'
 import { AdminAction } from '@/components/delivery/admin-action'
-import { CommentBox, UpvoteButton } from '@/components/inspector/engagement'
+import { CommentBox, UpvoteButton } from '@/components/ideas/engagement'
 import { engagementDenial, type Role, writeDenial } from '@/lib/roles'
 import { deliveryAdminDenial } from '@/lib/session'
 import { actAs } from './support/acting-role'
@@ -52,10 +52,10 @@ const ALLOWED_WRITE: Role[] = ['OrgAdmin', 'User']
 
 /**
  * "New idea" as `/ideas` and `/boards/{id}` render it: `GatedAction` when the role may not author,
- * and `NewIdeaForm` when it may.
+ * and `AddIdeaButton` (which opens the drawer's form) when it may.
  *
  * Only the refused side is rendered here, and that is a limit of the harness rather than a choice.
- * `NewIdeaForm` reaches `lib/api/client.ts`, which imports `server-only` — a module Next aliases
+ * The form reaches `lib/api/client.ts`, which imports `server-only` — a module Next aliases
  * inside its own bundler and that nothing installs, so vitest cannot resolve it. The live control
  * is asserted through the form's own behaviour in the e2e suite instead.
  */
@@ -125,7 +125,15 @@ describe('an administrator-only delivery action', () => {
 describe('upvoting', () => {
   it('is denied to SiteAdmin with its reason reachable', () => {
     actAs('SiteAdmin')
-    render(<UpvoteButton ideaId="idea-1" boardId="board-1" count={2} hasUpvoted={false} />)
+    render(
+      <UpvoteButton
+        ideaId="idea-1"
+        boardId="board-1"
+        count={2}
+        hasUpvoted={false}
+        denial={engagementDenial('SiteAdmin')}
+      />,
+    )
 
     const reason = engagementDenial('SiteAdmin')
     expect(reason).not.toBeNull()
@@ -139,7 +147,15 @@ describe('upvoting', () => {
     it(`stays a live control for ${role}`, () => {
       // Read Only is the load-bearing case: it is denied authorship and keeps its vote.
       actAs(role)
-      render(<UpvoteButton ideaId="idea-1" boardId="board-1" count={2} hasUpvoted={false} />)
+      render(
+        <UpvoteButton
+          ideaId="idea-1"
+          boardId="board-1"
+          count={2}
+          hasUpvoted={false}
+          denial={engagementDenial(role)}
+        />,
+      )
       expectAllowedControl(
         screen.getByRole('button', { name: 'Upvote this idea, currently 2 votes' }),
       )
@@ -150,7 +166,7 @@ describe('upvoting', () => {
 describe('commenting', () => {
   it('offers a Read Only account the comment form', () => {
     actAs('ReadOnly')
-    render(<CommentBox ideaId="idea-1" />)
+    render(<CommentBox ideaId="idea-1" boardId="board-1" denial={engagementDenial('ReadOnly')} />)
 
     expect(screen.getByLabelText('Add a comment')).toBeTruthy()
     expectAllowedControl(screen.getByRole('button', { name: 'Comment' }))
@@ -158,7 +174,7 @@ describe('commenting', () => {
 
   it('replaces the form with a reason for a Site Admin', () => {
     actAs('SiteAdmin')
-    render(<CommentBox ideaId="idea-1" />)
+    render(<CommentBox ideaId="idea-1" boardId="board-1" denial={engagementDenial('SiteAdmin')} />)
 
     expect(screen.queryByLabelText('Add a comment')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Comment' })).toBeNull()

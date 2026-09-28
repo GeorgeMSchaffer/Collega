@@ -64,3 +64,19 @@ export function roleLabel(role: Role): string {
   if (role === 'ReadOnly') return 'Read Only'
   return 'User'
 }
+
+/**
+ * Whether the role may delete an idea. Only an Org Admin: a direct Site Admin is refused every
+ * write and deletes through View As (`20-feature-ideas-and-engagement.md` "Permissions").
+ */
+export function mayDeleteIdeas(role: Role): boolean {
+  return role === 'OrgAdmin'
+}
+
+/**
+ * Whether the reader may change an idea's Description, Problem, Proposed solutions and Impact
+ * rationale: its author, or an Org Admin (rule 2a). Everyone else who may edit sees them read-only.
+ */
+export function mayEditIdeaContent(role: Role, userId: string, authorUserId: string | null) {
+  return role === 'OrgAdmin' || (authorUserId !== null && userId === authorUserId)
+}

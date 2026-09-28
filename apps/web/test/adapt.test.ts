@@ -111,7 +111,9 @@ describe('toIdea', () => {
       ideaType: 'Continuous Improvement',
       businessImpact: 'Critical',
       tag: null,
+      tags: [],
       assigneeInitials: null,
+      assignees: [],
       upvotes: 0,
       hasUpvoted: false,
     })

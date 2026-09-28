@@ -141,7 +141,9 @@ function buildIdeas(boardId: string): FixtureIdea[] {
         ideaType: IDEA_TYPES[index % IDEA_TYPES.length] ?? 'Process Revision',
         businessImpact: IMPACTS[index % IMPACTS.length] ?? 'Medium',
         tag: TAGS[index % TAGS.length] ?? 'automation',
+        tags: [TAGS[index % TAGS.length] ?? 'automation'],
         assigneeInitials: ASSIGNEES[index % ASSIGNEES.length] ?? null,
+        assignees: [],
         authorName: AUTHORS[index % AUTHORS.length] ?? 'Noah Contributor',
         // Fixed dates, not Date.now(): a screenshot taken tomorrow must look the same as today's.
         createdOn: `2026-08-${String(10 + (index % 18)).padStart(2, '0')}`,

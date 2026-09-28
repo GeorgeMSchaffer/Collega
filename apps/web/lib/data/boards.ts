@@ -22,12 +22,19 @@ import type {
   WirePage,
   WireStatus,
 } from '../api/wire'
-import type { Board, BoardAdmin, BoardOverview, BoardWithLanes, Status } from '../types'
+import type { Board, BoardAdmin, BoardOverview, BoardRef, BoardWithLanes, Status } from '../types'
 import { failIfRequested, resolve } from './latency'
 import { everyOrganization, organizationScope } from './scope'
 
 export { SWIMLANE_FLOOR } from '../mock'
-export type { Board, BoardAdmin, BoardOverview, BoardWithLanes, Status } from '../types'
+export type {
+  Board,
+  BoardAdmin,
+  BoardOverview,
+  BoardRef,
+  BoardWithLanes,
+  Status,
+} from '../types'
 
 /**
  * The organization's boards, each with the number of ideas on it.
@@ -94,6 +101,7 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
       name: board.name,
       allowUserStatusUpdate: board.allowUserStatusUpdate,
       description: board.description,
+      isArchived: board.isArchived,
       // Deleted statuses still hold ideas that have to go somewhere, so their lane stays on the
       // board — hiding it would silently drop cards off a screen that claims to show all of them.
       lanes: [...board.swimlanes].sort((a, b) => a.order - b.order).map(swimlaneToStatus),
@@ -212,4 +220,27 @@ export async function getNavCounts(): Promise<{ boards: number; ideas: number; b
   ])
 
   return { boards: boards.length, ideas: ideas.totalCount, backlog: backlog.length }
+}
+
+/**
+ * Every board the idea screens may name, **archived ones included** — an idea on an archived board
+ * still appears on Ideas, read-only, and its row needs the board's name and its archived state.
+ * Also the Board filter's options and the Tags filter's starting options (each board's top tags).
+ */
+export async function getBoardRefs(): Promise<BoardRef[]> {
+  failIfRequested('getBoardRefs')
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  const boards = await apiGet<readonly WireBoardListItem[]>(
+    'getBoardRefs',
+    apiPath`/organizations/${scope}/boards?includeArchived=true`,
+  )
+  return boards.map((board) => ({
+    id: board.boardId,
+    name: board.name,
+    isArchived: board.isArchived,
+    topTags: board.topTags.map((tag) => tag.name),
+  }))
 }

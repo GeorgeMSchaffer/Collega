@@ -25,6 +25,7 @@ import type {
   Member,
   Organization,
   Person,
+  PersonRef,
   Priority,
   Profile,
   Role,
@@ -298,6 +299,14 @@ function toPerson(wire: WireIdeaAssignee | null): Person | null {
   }
 }
 
+function toPersonRef(wire: WireIdeaAssignee): PersonRef {
+  return {
+    id: wire.userId,
+    name: wire.displayName,
+    initials: initialsOf(wire.firstName, wire.lastName),
+  }
+}
+
 function toComment(wire: WireIdeaComment): Comment {
   return {
     id: wire.commentId,
@@ -326,12 +335,28 @@ export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
     ideaType: wire.ideaTypeName,
     businessImpact: wire.businessImpactName,
     tag: wire.tagNames[0] ?? null,
+    tags: [...wire.tagNames],
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
+    assignees: wire.assignees.map(toPersonRef),
     upvotes: wire.upvoteCount,
     hasUpvoted: wire.hasUpvoted,
+    problem: wire.problem,
+    proposedSolutions: [...wire.proposedSolutions],
+    impactRationale: wire.impactRationale,
     description: wire.description,
+    ideaTypeId: wire.ideaTypeId,
+    businessImpactId: wire.businessImpactId,
+    dueDate: wire.dueDate,
+    authorUserId: wire.author?.userId ?? null,
     author: toPerson(wire.author),
     createdOn: DATE.format(new Date(wire.createdAtUtc)),
+    mentionEmails: wire.mentions.map((mention) => mention.email),
+    fieldValues: wire.fieldValues.map((field) => ({
+      fieldDefinitionId: field.fieldDefinitionId,
+      name: field.fieldName,
+      fieldType: field.fieldType,
+      value: field.value,
+    })),
     comments: wire.comments.map(toComment),
   }
 }
@@ -356,7 +381,9 @@ export function toIdea(wire: WireIdeaListItem): Idea {
     ideaType: wire.ideaTypeName,
     businessImpact: wire.businessImpactName,
     tag: wire.tagNames[0] ?? null,
+    tags: [...wire.tagNames],
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
+    assignees: wire.assignees.map(toPersonRef),
     upvotes: wire.upvoteCount,
     hasUpvoted: wire.hasUpvoted,
   }

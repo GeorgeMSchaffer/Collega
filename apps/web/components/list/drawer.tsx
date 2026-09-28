@@ -52,7 +52,11 @@ export function Drawer({
     heading.current?.focus()
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !event.defaultPrevented) close.current()
+      if (event.key !== 'Escape' || event.defaultPrevented) return
+      // A modal over the drawer (the confirm dialog, the command palette) owns this Escape even if
+      // its handler has not run yet — the order of listeners on `document` is not ours to choose.
+      if (document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]')) return
+      close.current()
     }
     document.addEventListener('keydown', onKeyDown)
     return () => {
