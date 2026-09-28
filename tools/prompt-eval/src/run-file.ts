@@ -1,9 +1,11 @@
 import { execFileSync } from 'node:child_process'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { AiTokenUsage, IdeaAssistTurn, IdeaDraft } from '@collega/application/ai'
 import type { AssistantVersion, V1Expectations } from './corpus.ts'
 import type { CatalogOption } from './fixture-context.ts'
+import type { RunMetrics } from './metrics.ts'
+import type { Verdict } from './verdict.ts'
 
 /**
  * The run file of SPEC/20-feature-prompt-eval-runner.md rule 19. `rescore` and `compare`
@@ -103,7 +105,8 @@ export interface RunTotals {
   readonly cacheCreationInputTokens: number
 }
 
-export interface RunFile {
+/** What a run collected. `rescore` and `compare` need no more than this. */
+export interface RunData {
   readonly schemaVersion: typeof RUN_FILE_SCHEMA_VERSION
   readonly header: RunHeader
   readonly fixtures: Readonly<Record<string, RunFixture>>
@@ -111,6 +114,48 @@ export interface RunFile {
   /** In case order, then repeat order - not completion order. */
   readonly trials: readonly TrialRecord[]
   readonly totals: RunTotals
+}
+
+export interface RunFile extends RunData {
+  /** Rules 13-18, recomputed from `trials` by `rescore`. */
+  readonly metrics: RunMetrics
+  /** Rules 30-32 against `verdict.baseline`, if one was given. */
+  readonly verdict: Verdict
+}
+
+export class RunFileReadError extends Error {
+  constructor(file: string, reason: string) {
+    super(`Cannot read run file ${file}: ${reason}`)
+    this.name = 'RunFileReadError'
+  }
+}
+
+/** A saved run, checked for the shape `rescore` and `compare` rely on. */
+export async function readRunFile(file: string): Promise<RunData> {
+  let raw: unknown
+  try {
+    raw = JSON.parse(await readFile(file, 'utf8'))
+  } catch (error) {
+    throw new RunFileReadError(file, (error as Error).message)
+  }
+  const run = raw as Partial<RunData> | null
+  const header = run?.header as Partial<RunHeader> | undefined
+  if (
+    run === null ||
+    typeof run !== 'object' ||
+    run.schemaVersion !== RUN_FILE_SCHEMA_VERSION ||
+    typeof header !== 'object' ||
+    header === null ||
+    !Array.isArray(header.cases) ||
+    typeof header.caseHashes !== 'object' ||
+    typeof header.fixtureCatalogHashes !== 'object' ||
+    !Array.isArray(run.trials) ||
+    typeof run.cases !== 'object' ||
+    typeof run.fixtures !== 'object'
+  ) {
+    throw new RunFileReadError(file, `not a schema version ${RUN_FILE_SCHEMA_VERSION} run file`)
+  }
+  return run as RunData
 }
 
 /** `20260928T101500Z` - sortable, and legal in a Windows file name. */
@@ -137,7 +182,8 @@ export class RunFileExistsError extends Error {
   }
 }
 
-export async function writeRunFile(dir: string, run: RunFile): Promise<string> {
+/** Writes the run file and its summary beside it; returns the run file's path. */
+export async function writeRunFile(dir: string, run: RunFile, summary: string): Promise<string> {
   await mkdir(dir, { recursive: true })
   const file = path.join(
     dir,
@@ -146,6 +192,7 @@ export async function writeRunFile(dir: string, run: RunFile): Promise<string> {
   try {
     // Exclusive, so a second run started in the same second cannot overwrite the first.
     await writeFile(file, `${JSON.stringify(run, null, 2)}\n`, { encoding: 'utf8', flag: 'wx' })
+    await writeFile(file.replace(/\.json$/, '.md'), summary, { encoding: 'utf8', flag: 'wx' })
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new RunFileExistsError(file)
     throw error

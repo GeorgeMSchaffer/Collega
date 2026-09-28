@@ -1,8 +1,10 @@
 // The prompt-eval runner (SPEC/20-feature-prompt-eval-runner.md). Invoked through the package's
 // `eval` script, which Turbo never runs (rule 40):
 //
-//   pnpm -C tools/prompt-eval eval [--dry-run] [options]
+//   pnpm -C tools/prompt-eval eval [--dry-run] [--baseline <file>] [options]
 //   pnpm -C tools/prompt-eval eval dump-prompt --fixture <name> [--prompt-file <path>]
+//   pnpm -C tools/prompt-eval eval rescore <run.json> [--baseline <file>]
+//   pnpm -C tools/prompt-eval eval compare <baseline.json> <candidate.json>
 //
 // Imports the application and infrastructure from their dist/ builds, so `pnpm build` comes first.
 // `pnpm --filter` also works but reports any failure as exit 1, hiding exit 2 ("not a valid run").
@@ -15,6 +17,7 @@ import type { IdeaDraftModel } from '@collega/application/ai'
 import { DEFAULT_AI_USAGE_LIMITS } from '@collega/application/ai'
 import type { AnthropicIdeaDraftModelConfig } from '@collega/infrastructure/integrations/ai'
 import { AnthropicIdeaDraftModel } from '@collega/infrastructure/integrations/ai'
+import { compareRuns } from './compare.ts'
 import { type Corpus, CorpusError, type EvalCase, loadCorpus } from './corpus.ts'
 import { KEY_VARIABLE, readEvaluationKey, redact } from './credentials.ts'
 import {
@@ -23,18 +26,23 @@ import {
   prepareFixture,
   schemaPriorities,
 } from './fixture-context.ts'
+import { computeMetrics } from './metrics.ts'
 import { loadPromptSource, PromptFileError, type PromptSource } from './prompt-source.ts'
 import {
   gitState,
   RUN_FILE_SCHEMA_VERSION,
   type RunCase,
-  type RunFile,
+  type RunData,
   RunFileExistsError,
+  RunFileReadError,
   type RunFixture,
   type RunHeader,
+  readRunFile,
   writeRunFile,
 } from './run-file.ts'
+import { renderSummary } from './summary.ts'
 import { runTrials, type Stopwatch, type TrialSpec } from './turn-loop.ts'
+import { type Baseline, EXIT_INVALID, EXIT_PASS, judge } from './verdict.ts'
 
 const RUNNER_VERSION = '0.1.0'
 const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -68,13 +76,8 @@ const DEFAULT_DEPS: RunnerDeps = {
   stopwatch: { elapsedMs: () => performance.now() },
 }
 
-const EXIT_OK = 0
-const EXIT_INVALID = 2
-
 /** Rule 40: a live run above this many planned calls needs `--yes`. */
 const CONFIRM_ABOVE_CALLS = 100
-/** Rule 30: above this share of errored trials a run is not valid. */
-const MAX_ERRORED_SHARE = 0.1
 const EFFORTS: readonly string[] = ['low', 'medium', 'high', 'max']
 /** A rough characters-per-token ratio for the dry-run estimate only. */
 const CHARS_PER_TOKEN = 4
@@ -82,7 +85,10 @@ const CHARS_PER_TOKEN = 4
 class UsageError extends Error {}
 
 interface Options {
-  readonly command: 'run' | 'dump-prompt'
+  readonly command: 'run' | 'dump-prompt' | 'rescore' | 'compare'
+  /** The run file(s) `rescore` and `compare` read. */
+  readonly files: readonly string[]
+  readonly baseline: string | undefined
   readonly dryRun: boolean
   readonly cases: readonly string[] | null
   readonly repeats: number
@@ -106,14 +112,28 @@ function parseOptions(argv: readonly string[]): Options {
   }
   const { values, positionals } = parsed
 
-  const [command = 'run', ...extra] = positionals
-  if (command === 'compare' || command === 'rescore') {
-    throw new UsageError(`"${command}" is not built yet.`)
-  }
-  if (command !== 'run' && command !== 'dump-prompt') {
+  const [command = 'run', ...files] = positionals
+  if (
+    command !== 'run' &&
+    command !== 'dump-prompt' &&
+    command !== 'rescore' &&
+    command !== 'compare'
+  ) {
     throw new UsageError(`Unknown command "${command}".`)
   }
-  if (extra.length > 0) throw new UsageError(`Unexpected argument: ${extra.join(' ')}`)
+  const expectedFiles = command === 'rescore' ? 1 : command === 'compare' ? 2 : 0
+  if (files.length !== expectedFiles) {
+    throw new UsageError(
+      command === 'rescore'
+        ? 'rescore takes one run file: rescore <run.json> [--baseline <file>].'
+        : command === 'compare'
+          ? 'compare takes two run files: compare <baseline.json> <candidate.json>.'
+          : `Unexpected argument: ${files.join(' ')}`,
+    )
+  }
+  if (values.baseline !== undefined && command !== 'run' && command !== 'rescore') {
+    throw new UsageError('--baseline applies to a live run and to rescore.')
+  }
 
   const effort = values.effort ?? DEFAULT_AI_USAGE_LIMITS.effort
   if (!EFFORTS.includes(effort)) {
@@ -129,6 +149,8 @@ function parseOptions(argv: readonly string[]): Options {
 
   return {
     command,
+    files,
+    baseline: values.baseline,
     dryRun: values['dry-run'] ?? false,
     cases: values.case && values.case.length > 0 ? values.case : null,
     repeats: positiveInteger(values.repeats, 5, '--repeats'),
@@ -162,6 +184,7 @@ function parse(argv: readonly string[]) {
       yes: { type: 'boolean' },
       label: { type: 'string' },
       fixture: { type: 'string' },
+      baseline: { type: 'string' },
     },
   })
 }
@@ -287,6 +310,9 @@ async function liveRun(
     return EXIT_INVALID
   }
 
+  // Read before anything is spent, so an unreadable baseline costs nothing.
+  const baseline = options.baseline === undefined ? null : await loadBaseline(options.baseline)
+
   const key = await readEvaluationKey(deps.env, deps.envFile)
   if (key === null) {
     console.error(
@@ -334,7 +360,7 @@ async function liveRun(
     Object.fromEntries([...keys].map((k) => [k, record.get(k) as T]))
   const usedFixtures = pick(fixtures, [...used].sort())
 
-  const run: RunFile = {
+  const data: RunData = {
     schemaVersion: RUN_FILE_SCHEMA_VERSION,
     header: {
       runnerVersion: RUNNER_VERSION,
@@ -392,27 +418,37 @@ async function liveRun(
     },
   }
 
-  const file = await writeRunFile(deps.runsDir, run)
-  const t = run.totals
+  const metrics = computeMetrics(data)
+  const verdict = judge(data, metrics, baseline)
+  const summary = renderSummary(data, metrics, verdict)
+  const file = await writeRunFile(deps.runsDir, { ...data, metrics, verdict }, summary)
+  if (data.header.abortMessage !== null) console.error(`Stopped by: ${data.header.abortMessage}`)
   console.log('')
-  console.log(`Run file   ${path.relative(REPO_ROOT, file)}`)
-  console.log(
-    `Status     ${run.header.status}${run.header.abortReason ? ` (${run.header.abortReason})` : ''}`,
-  )
-  console.log(`Trials     ${t.trials}, ${t.erroredTrials} errored, ${t.abortedTrials} aborted`)
-  console.log(
-    `Tokens     ${formatNumber(t.inputTokens)} in, ${formatNumber(t.outputTokens)} out, ` +
-      `${formatNumber(t.cacheReadInputTokens)} cache read, ` +
-      `${formatNumber(t.cacheCreationInputTokens)} cache write, over ${t.calls} calls`,
-  )
-  if (run.header.abortMessage !== null) console.error(`Stopped by: ${run.header.abortMessage}`)
+  console.log(summary)
+  console.log(`Run file: ${path.relative(REPO_ROOT, file)} (summary beside it, .md)`)
+  return verdict.exitCode
+}
 
-  if (run.header.status === 'aborted') return EXIT_INVALID
-  if (t.trials > 0 && t.erroredTrials / t.trials > MAX_ERRORED_SHARE) {
-    console.error(`More than ${MAX_ERRORED_SHARE * 100}% of trials errored; the run is not valid.`)
-    return EXIT_INVALID
-  }
-  return EXIT_OK
+async function loadBaseline(file: string): Promise<Baseline> {
+  const run = await readRunFile(file)
+  return { path: file, run, metrics: computeMetrics(run) }
+}
+
+/** Rule 29: the metrics and verdict again from a saved run, with no key and no call. */
+async function rescore(options: Options): Promise<number> {
+  const run = await readRunFile(options.files[0])
+  const baseline = options.baseline === undefined ? null : await loadBaseline(options.baseline)
+  const metrics = computeMetrics(run)
+  const verdict = judge(run, metrics, baseline)
+  console.log(renderSummary(run, metrics, verdict))
+  return verdict.exitCode
+}
+
+async function compare(options: Options): Promise<number> {
+  const [baseline, candidate] = await Promise.all(options.files.map(loadBaseline))
+  const { text, exitCode } = compareRuns(baseline, candidate)
+  console.log(text)
+  return exitCode
 }
 
 function labelFor(prompt: PromptSource): string {
@@ -429,6 +465,9 @@ export async function main(
 ): Promise<number> {
   try {
     const options = parseOptions(argv)
+    if (options.command === 'rescore') return await rescore(options)
+    if (options.command === 'compare') return await compare(options)
+
     const prompt = await loadPromptSource(options.promptFile)
     const corpus = await loadCorpus(deps.corpusRoot, schemaPriorities())
     const fixtures = prepareAll(corpus, prompt)
@@ -437,13 +476,13 @@ export async function main(
       const fixture = fixtures.get(options.fixture as string)
       if (fixture === undefined) throw new UsageError(`Unknown fixture "${options.fixture}".`)
       process.stdout.write(`${fixture.systemPrompt}\n`)
-      return EXIT_OK
+      return EXIT_PASS
     }
 
     const cases = selectCases(corpus, options.cases)
     if (options.dryRun) {
       printDryRun(options, prompt, cases, fixtures)
-      return EXIT_OK
+      return EXIT_PASS
     }
     return await liveRun(deps, options, prompt, cases, fixtures)
   } catch (error) {
@@ -451,7 +490,8 @@ export async function main(
       error instanceof UsageError ||
       error instanceof CorpusError ||
       error instanceof PromptFileError ||
-      error instanceof RunFileExistsError
+      error instanceof RunFileExistsError ||
+      error instanceof RunFileReadError
     ) {
       console.error(error.message)
       return EXIT_INVALID
