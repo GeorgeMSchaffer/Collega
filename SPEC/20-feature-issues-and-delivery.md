@@ -449,9 +449,7 @@ The page for the organization's running sprint (`/delivery/sprint`, as built).
   to 100), **Goal** (optional, up to 500), **Start** and **End** (required dates, side by side; *On
   or after the start.*) and **Owner** (optional, an active member). *Create sprint* calls the
   existing `POST /organizations/{orgId}/sprints`; the new sprint is `Planned`, the drawer closes and
-  a toast says *Sprint created*. Field errors from the API sit beside their fields. Comp R draws no
-  control for **starting** a `Planned` sprint (`POST …/sprints/{sprintId}/start`), and none is
-  added here; see the tracker's slice 105 row.
+  a toast says *Sprint created*. Field errors from the API sit beside their fields.
 - **Sprint strip** under the header, a definition list of four cells with mono uppercase terms:
   **STATE** (*ACTIVE* or *COMPLETED*, plus *{N} DAYS PAST END* in the warning colour while an
   Active sprint is past its end date, counted in the viewer's local calendar days), **WINDOW**
@@ -474,7 +472,18 @@ The page for the organization's running sprint (`/delivery/sprint`, as built).
   backlog. Completed issues stay with the sprint.* — then calls
   `POST /organizations/{orgId}/sprints/{sprintId}/complete` and reports *Sprint completed · {N}
   issues back in the backlog*.
-- **No running sprint:** the existing empty state (how many Issues wait in the backlog) is unchanged.
+- **No running sprint — Start sprint** (the user, 2026-09-28; comp R draws no Start control). When
+  no sprint is `Active`, the board shows the **next `Planned` sprint** — the one with the earliest
+  start date (ties by name) — with the same header, strip (*PLANNED*) and five lanes of the Issues
+  already assigned to it, and **Start sprint** as the primary action in place of *Complete sprint*.
+  It is an in-scope admin's, disabled with the reason for every other role exactly as *Complete
+  sprint* is. It confirms first — *Start this sprint? "{name}" becomes the running sprint, {n}
+  issues.* (Cancel focused first; the action is the primary button, not the danger one) — then calls
+  the existing `POST /organizations/{orgId}/sprints/{sprintId}/start` and reports *Sprint started*.
+  *Plan next sprint* stays beside it. Only when there is no `Active` and no `Planned` sprint does the
+  existing empty state show (how many Issues wait in the backlog, with *Plan next sprint*). If
+  several sprints are `Active` (the API allows it), the board keeps today's behaviour and shows the
+  first the sprint list returns.
 
 #### The Issue in the drawer (answered 2026-09-28)
 
@@ -494,8 +503,11 @@ for ideas). Eyebrow *Issue · {sprint name or Backlog} · {delivery status}*, th
   rationale, Summary, custom fields and the discussion.
 - **Footer:** Edit (the idea form, as for ideas) where the role may edit.
 
-It reads what already exists: the delivery card the board already holds, `GET /ideas/{ideaId}` and
-`GET /ideas/{ideaId}/tasks` — no new route. `/delivery/issues/{ideaId}` stays for existing links.
+It reads the delivery card, `GET /ideas/{ideaId}` and `GET /ideas/{ideaId}/tasks`. Opened from a
+board it uses the card already in hand; opened from a **deep link** (`?idea={ideaId}` on a delivery
+screen) or on **`/delivery/issues/{ideaId}`**, which stays for existing links, the card comes from
+**`GET /issues/{ideaId}`** — the single-Issue read the user added on 2026-09-28 (`30-Contracts.md`),
+replacing the web app's fetch of every sprint and the backlog to find one Issue.
 
 #### Roadmap (comp R)
 
@@ -524,7 +536,8 @@ built in two layers:
   delivery issues and nothing to group them by* — with the line *Outcomes, which group issues under
   what the team is working toward, arrive in a later release.* The closing line about ungrouped
   Issues is not drawn (every Issue is ungrouped).
-- Whether the Sprints rows stay once Outcomes exist is for the later sprint to decide.
+- **The Sprints rows are kept** (the user, 2026-09-28). Whether they stay once Outcomes exist is
+  decided in the Outcomes sprint.
 
 **What the Roadmap shows once Outcomes are built** (the comp R target, specified now so the later
 sprint does not reopen the design):
