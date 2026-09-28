@@ -1,24 +1,32 @@
-import { Avatar, buttonVariants, Dot, EmptyState, Marker } from '@collega/design-system'
+import { Alert, Avatar, buttonVariants, Dot, EffortBar, EmptyState } from '@collega/design-system'
+import type { Route } from 'next'
 import Link from 'next/link'
 import { PageHeader } from '@/components/common/page-header'
 import { AdminAction } from '@/components/delivery/admin-action'
+import { IssueDrawer } from '@/components/delivery/issue-drawer'
+import { loadIssueDrawer } from '@/components/delivery/load-issue-drawer'
 import { Topbar } from '@/components/nav/topbar'
 import { getBacklogIssues, getDeliveryStatuses, getOutcomes, getSprints } from '@/lib/data'
-import { EFFORT_COLORS } from '@/lib/display'
 import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Backlog · Collega' }
 
-export default async function BacklogPage() {
+export default async function BacklogPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const [rows, sprints, outcomes, statuses] = await Promise.all([
+  const [rows, sprints, outcomes, statuses, query] = await Promise.all([
     getBacklogIssues(),
     getSprints(),
     getOutcomes(),
     getDeliveryStatuses(),
+    searchParams,
   ])
+  const { drawer, editing, missing } = await loadIssueDrawer(query, rows)
   // The next sprint is a `Planned` one, not merely "not the active one": a `Completed` sprint is
   // also not active, and offering to start one that has already run is worse than offering nothing.
   const next = sprints.find((sprint) => sprint.state === 'Planned')
@@ -44,6 +52,14 @@ export default async function BacklogPage() {
             </>
           }
         />
+
+        {missing ? (
+          <Alert variant="note" role="status">
+            <span>
+              That issue could not be opened. It may have been returned to discovery or deleted.
+            </span>
+          </Alert>
+        ) : null}
 
         {rows.length === 0 ? (
           <EmptyState
@@ -88,9 +104,19 @@ export default async function BacklogPage() {
                     const outcome = outcomes.find((row) => row.id === issue.outcomeId)
                     const status = statuses.find((row) => row.id === issue.deliveryStatusId)
                     return (
-                      <tr key={issue.id} className="border-b last:border-0">
+                      <tr
+                        key={issue.id}
+                        aria-current={drawer?.issue.id === issue.id ? 'true' : undefined}
+                        className="border-b last:border-0 aria-[current]:bg-accent/50"
+                      >
                         <td className="px-4 py-2.5">
-                          <Link href={`/delivery/issues/${issue.id}`}>{issue.title}</Link>
+                          <Link
+                            href={`/delivery/backlog?idea=${encodeURIComponent(issue.id)}` as Route}
+                            scroll={false}
+                            className="font-semibold hover:underline"
+                          >
+                            {issue.title}
+                          </Link>
                         </td>
                         <td className="px-4 py-2.5">
                           {outcome ? (
@@ -103,10 +129,7 @@ export default async function BacklogPage() {
                           )}
                         </td>
                         <td className="px-4 py-2.5">
-                          <Marker>
-                            <Dot color={EFFORT_COLORS[issue.effort]} />
-                            {issue.effort}
-                          </Marker>
+                          <EffortBar effort={issue.effort} />
                         </td>
                         <td className="px-4 py-2.5 text-muted-foreground">{status?.name}</td>
                         <td className="px-4 py-2.5">
@@ -134,6 +157,7 @@ export default async function BacklogPage() {
           </div>
         )}
       </main>
+      <IssueDrawer data={drawer} editing={editing} />
     </>
   )
 }

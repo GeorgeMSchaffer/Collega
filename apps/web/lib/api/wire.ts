@@ -458,13 +458,38 @@ export type WireSprint = {
  */
 export type WireDeliveryCard = {
   ideaId: string
+  boardId: string
   title: string
+  authorUserId: string
   effort: string | null
   deliveryStatus: string | null
-  sprint: { sprintId: string } | null
+  sprint: { sprintId: string; name: string; startDate: string; endDate: string } | null
   assignees: readonly WireIdeaAssignee[]
+  tags: readonly WireIdeaTag[]
   upvoteCount: number
-  provenance: { upvoteCountAtPromotion: number | null }
+  taskSummary: { done: number; total: number }
+  provenance: {
+    promotedAtUtc: string | null
+    promotedByDisplayName: string | null
+    upvoteCountAtPromotion: number | null
+  }
+}
+
+/** `GET /ideas/{id}/tasks` items, in `sortOrder`. */
+export type WireIssueTask = {
+  taskId: string
+  title: string
+  assigneeUserId: string | null
+  assignee: WireIdeaAssignee | null
+  state: string
+}
+
+/** `GET /organizations/{id}/members` — the active members, for the owner and assignee pickers. */
+export type WireMember = {
+  userId: string
+  firstName: string
+  lastName: string
+  email: string
 }
 
 /**

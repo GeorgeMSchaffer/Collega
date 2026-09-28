@@ -538,6 +538,8 @@ export type Sprint = {
   endsOn: string
   startDate: string
   endDate: string
+  /** The Sprint board's WINDOW cell, upper case: `10–24 SEP`, or `28 SEP – 5 OCT`. */
+  window: string
   state: SprintState
   issueCount: number
   doneCount: number
@@ -567,7 +569,31 @@ export type Issue = {
   effort: Effort
   assigneeInitials: string | null
   upvotesAtPromotion: number
+  boardId: string
+  authorUserId: string
+  assignees: PersonRef[]
+  tags: TagRef[]
+  /** The sprint's name and WINDOW, or null in the backlog. */
+  sprint: { id: string; name: string; window: string } | null
+  upvotes: number
+  taskSummary: { done: number; total: number }
+  promotedOn: string | null
+  promotedBy: string | null
 }
+
+export type IssueTaskState = 'NotStarted' | 'InProgress' | 'Done'
+
+/** One step of an Issue's checklist, in its `sortOrder`. */
+export type IssueTask = {
+  id: string
+  title: string
+  state: IssueTaskState
+  assigneeUserId: string | null
+  assigneeName: string | null
+}
+
+/** An active member of the organization, for the sprint owner and task assignee pickers. */
+export type MemberOption = { id: string; name: string }
 
 /**
  * A named, dated theme that Issues are grouped under — a lens over the delivery set, not a
