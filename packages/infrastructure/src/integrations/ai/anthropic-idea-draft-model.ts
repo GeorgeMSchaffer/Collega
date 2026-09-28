@@ -20,6 +20,9 @@ import { buildIdeaDraftResponseSchema } from './idea-draft-schema.js'
  * itself is schema-constrained and small. Matches .NET's `AnthropicIdeaDraftModel.MaxTokens`. */
 const MAX_TOKENS = 8_000
 
+/** The SDK's own default, stated so `ANTHROPIC_BASE_URL` cannot redirect the key elsewhere. */
+const ANTHROPIC_API_URL = 'https://api.anthropic.com'
+
 /**
  * Configuration for {@link AnthropicIdeaDraftModel}. `apiKey` comes from apps/api's config layer
  * (the single deployment-wide `ANTHROPIC_API_KEY`, SPEC/20-feature-ai-idea-assist.md rule 29) -
@@ -74,7 +77,14 @@ export class AnthropicIdeaDraftModel implements IdeaDraftModel {
     if (client !== undefined) {
       this.client = client
     } else if (config.apiKey !== undefined && config.apiKey.trim().length > 0) {
-      this.client = new Anthropic({ apiKey: config.apiKey })
+      // The SDK falls back to ANTHROPIC_AUTH_TOKEN and ANTHROPIC_BASE_URL when these are left
+      // unset. Pinned so the configured key, sent to Anthropic, is the only credential in play
+      // (SPEC/decisions.md 2026-09-28).
+      this.client = new Anthropic({
+        apiKey: config.apiKey,
+        authToken: null,
+        baseURL: ANTHROPIC_API_URL,
+      })
     } else {
       this.client = null
     }

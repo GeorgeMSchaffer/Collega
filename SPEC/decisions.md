@@ -9,6 +9,19 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — The Anthropic client reads no credential or endpoint from the environment
+
+**Decided by the user** on review of slice 114. `AnthropicIdeaDraftModel` constructs the SDK
+client with `apiKey` from configuration, `authToken: null`, and the SDK's default API URL
+(`https://api.anthropic.com`) as an explicit `baseURL`. Left unset, the SDK falls back to
+`ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL`: a stray token would ride along on every request,
+and a stray base URL would send the configured key to another host. Pinning both means the key the
+API or the prompt-eval runner was given, sent to Anthropic, is the only credential in play. The
+API's behaviour is otherwise unchanged — the same key, the same endpoint, and no client when the key
+is blank. Recorded in `20-feature-prompt-eval-runner.md` rule 37.
+
+---
+
 ## 2026-09-28 — The prompt-eval runner's open questions are answered
 
 **Decided by the user**, answering the eleven questions slice 113 left open, each with the

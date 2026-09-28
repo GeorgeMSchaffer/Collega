@@ -253,7 +253,10 @@ reported, excluded from every metric denominator below.
     visible on its own and a runaway run cannot use up the provider-side limits production depends
     on. A live run **refuses to start** when `PROMPT_EVAL_ANTHROPIC_API_KEY` is unset or blank. The
     runner passes the key to `AnthropicIdeaDraftModel` explicitly, as its `apiKey` configuration;
-    nothing relies on the SDK finding a key in the environment.
+    nothing relies on the SDK finding a key in the environment. The adapter also pins the SDK's
+    other environment fallbacks — `authToken: null` and the SDK's default API URL as an explicit
+    `baseURL` — so neither the runner nor the API reads `ANTHROPIC_AUTH_TOKEN` or
+    `ANTHROPIC_BASE_URL` (`SPEC/decisions.md` 2026-09-28).
 38. The key is a provider credential, not a user identity: the identity chokepoint
     (`tools/arch/identity-chokepoint.test.ts`) is unaffected, and the runner lives outside the
     `apps/` and `packages/` trees it scans.
