@@ -9,6 +9,89 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — The S0.2 schema freeze is amended a fourth time, for tag colours
+
+**Decided by the user** with the adoption below ("Tags get a colour picker; by default a tag gets a
+random colour"). Under the 2026-09-11 rule — the freeze stands, and each change to `schema.prisma`
+needs its own entry here — this is that entry, and it is not a general licence.
+
+- **`tags`** gains `color VARCHAR(7) NOT NULL` — `#RRGGBB`, upper case, one of the ten palette
+  colours (`20-feature-ideas-and-engagement.md` Tags rule 9). No other column: `tags` already has
+  `created_at_utc` and `created_by_user_id`, which Settings → Tags shows.
+- **The migration backfills every existing tag** from a hash of its `normalized_name` into the
+  palette (for example the first byte of `md5(normalized_name)` modulo ten), so the result is
+  repeatable across databases and replays; then sets `NOT NULL`. The demo seed uses the same
+  mapping. Tags created afterwards take a random palette colour chosen by the application, from an
+  injected random source.
+- **Part B, pending an answer — Outcomes.** If Sprint 11 builds Issues-and-Delivery Slice 2, the
+  same amendment also covers what that spec's "Migration Strategy" lists for it: the new `outcomes`
+  table (with `color VARCHAR(7) NOT NULL`, added 2026-09-28) and `ideas.outcome_id` (nullable,
+  `ON DELETE SET NULL`). Until the user answers, Part B is **not** approved and nothing may be written
+  for it.
+- **Not covered:** an issue key or idea reference (comp R's `IDE-01`). That needs its own decision
+  and its own amendment.
+
+**Golden corpus.** Board list items gain `topTags[].color`, and idea list, detail and delivery items
+gain `tags`, so the replay will differ there. Those differences are accepted, and the backend slice
+records them in `tools/golden/src/accepted.ts`.
+
+## 2026-09-28 — Graphite replaces Notte as the dark theme
+
+> Supersedes in part 2026-09-27 "Terrazzo is the palette, with a theme picker", which named Notte as
+> the dark theme.
+
+**Decided by the user** from their design canvas: "Graphite replaces Notte as the dark theme." The
+picker offers Terrazzo (default), Portico, Piazza Sera and Lagoon as light themes and **Graphite** as
+the dark one: a near-black neutral ground, near-white ink, an amber primary and a cyan metric and
+suggestion hue, in IBM Plex Sans with JetBrains Mono (`20-feature-client-ui.md` "Themes", token
+values in comp R's `graphite` block). Notte's self-contained `[data-theme]` block, shipped in slice
+100, is replaced rather than kept as a sixth theme, and a `collega-theme` cookie that still says
+`notte` is served Graphite, so a person who chose dark stays in dark. The 4.5:1 rule is unchanged;
+Graphite's pairs were measured against it on 2026-09-28. The Terrazzo default, the per-browser
+cookie and the per-theme suggestion hue all stand.
+
+## 2026-09-28 — The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags
+
+**Decided by the user** ("go ahead with it"), reviewing the iteration of
+`SPEC/mockups/comp-r-portico-prototype.html` that folds in their design canvas. In the user's words,
+in substance: integrate the Graphite theme and the denser form and control layout; refactor the
+Roadmap structurally and functionally to match, with Weeks, Months and Quarters as its zoom levels
+and no keyboard shortcuts for now; add the effort bar to cards, the sprint lanes included; add the
+Sprint board; give tags a colour picker, a random palette colour by default, changed by an
+administrator in Settings; and add Settings → Tags on the list and detail pattern — list, view,
+edit (name and colour), delete, and add in advance of use.
+
+- **Where it is written.** Forms and controls, tag chip colours and the effort bar:
+  `20-feature-client-ui.md`. Tag colour and Settings → Tags: `20-feature-ideas-and-engagement.md`
+  "Tags" rules 9–15. Sprint board, Roadmap and the effort bar's placement:
+  `20-feature-issues-and-delivery.md` "Comp R iteration". Contracts: `30-Contracts.md`, each
+  addition dated 2026-09-28. The work is planned as Sprint 11
+  (`SPEC/sprints/sprint-11-comp-r-phase-2.md`).
+- **The denser layout applies in every theme**, not only Graphite: 32px buttons, 34px fields,
+  12px labels, short fields three or two to a row. It supersedes the control heights slice 100
+  shipped.
+- **Tag chip text is required to clear 4.5:1 in every theme.** Comp R's colour mix fails it in the
+  light themes for six of the ten palette colours; the spec keeps the rule and fixes the mix rather
+  than accepting the comp.
+- **Tags are administered by the Org Admin** (a Site Admin through View As), like the other
+  organization configuration collections. The tag rules had never named an administrator — anyone
+  who could edit an idea could create a tag, and nobody could rename, recolour or delete one — so
+  this is a reading of the existing permission model, recorded so it is not mistaken for a new
+  rule. Inline creation while tagging an idea is unchanged.
+- **Two things comp R draws have no backend, and this adoption does not invent one.** Issue keys
+  (`IDE-01`) are left out of every screen until they are decided separately; Outcomes (Slice 2)
+  stay specified and unbuilt until the user says whether Sprint 11 builds them. Both are recorded
+  as gaps in `30-Contracts.md`.
+- **Where comp R and the spec disagree, the spec wins** and the difference is written down: the
+  outcome drawer's Delete confirms (comp R deletes at once), and comp R's *Ctrl ↵* save is not built.
+- **Open at adoption** (the tracker's slice 105 row carries them): whether Sprint 11 builds Outcomes;
+  issue keys; palette-only or custom colours; who may open Settings → Tags; the effort bar on idea
+  cards; where an Issue opens from the Sprint board and Roadmap; what *Plan next sprint* does; the
+  Roadmap's visible window; and whether "no keyboard shortcuts" reaches beyond the Roadmap. The spec
+  text marks each assumption *(pending answer)*.
+
+---
+
 ## 2026-09-27 — The API sends the custom field list
 
 **Decided by the user.** The idea form no longer works out which custom fields an Idea Type shows.
@@ -80,6 +163,9 @@ nullable, so the replay will differ there. Those differences are accepted, and s
 them in `tools/golden/src/accepted.ts`.
 
 ## 2026-09-27 — Terrazzo is the palette, with a theme picker
+
+> **Superseded in part 2026-09-28** by "Graphite replaces Notte as the dark theme": the dark theme
+> is Graphite. Everything else here stands.
 
 **Decided by the user** after comparing palettes live in comp R. Comp P left the palette open; this
 closes it. **Terrazzo** (slate blue with pistachio and blush) is the default. A theme picker at the
