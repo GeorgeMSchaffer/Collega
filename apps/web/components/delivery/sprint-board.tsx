@@ -118,6 +118,7 @@ export function SprintBoard({
   const planFormId = useId()
   const [toast, showToast] = useToast()
   const [trigger, setTrigger] = useState<HTMLElement | null>(null)
+  const [openedId, setOpenedId] = useState<string | null>(null)
   const [planning, setPlanning] = useState(false)
   const [creating, setCreating] = useState(false)
   const [confirming, setConfirming] = useState<'start' | 'complete' | null>(null)
@@ -138,13 +139,15 @@ export function SprintBoard({
   const selectedId = drawer?.issue.id ?? null
 
   // A card that changed lane was re-rendered, so its old button is gone: return to the new one.
-  const returnFocusTo =
-    trigger && !trigger.isConnected && selectedId
-      ? document.querySelector<HTMLElement>(`[data-issue="${CSS.escape(selectedId)}"]`)
-      : trigger
+  const returnFocusTo = trigger?.isConnected
+    ? trigger
+    : openedId
+      ? document.querySelector<HTMLElement>(`[data-issue="${CSS.escape(openedId)}"]`)
+      : null
 
   const open = (ideaId: string, from: HTMLElement) => {
     if (!drawer) setTrigger(from)
+    setOpenedId(ideaId)
     setPlanning(false)
     openDrawer({ view: ideaId })
   }
