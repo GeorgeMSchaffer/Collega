@@ -19,6 +19,8 @@ export function ColorPicker({
   onChange,
   name,
   legend = 'Colour',
+  invalid = false,
+  errorId,
   className,
 }: {
   /** Prefix for the controls' ids. */
@@ -28,6 +30,9 @@ export function ColorPicker({
   onChange: (color: string) => void
   name?: string | undefined
   legend?: string | undefined
+  /** A caller's error on the colour (an API `400`), shown in the element `errorId` names. */
+  invalid?: boolean | undefined
+  errorId?: string | undefined
   className?: string | undefined
 }) {
   const inPalette = (color: string) => TAG_PALETTE.some((c) => c === color.toUpperCase())
@@ -53,7 +58,11 @@ export function ColorPicker({
   }
 
   return (
-    <fieldset className={cn('m-0 min-w-0 border-0 p-0', className)}>
+    <fieldset
+      className={cn('m-0 min-w-0 border-0 p-0', className)}
+      aria-describedby={errorId}
+      aria-invalid={invalid || undefined}
+    >
       <legend className="mb-[5px] p-0 text-[length:var(--label-size)] font-medium text-secondary-foreground">
         {legend}
       </legend>
@@ -87,8 +96,8 @@ export function ColorPicker({
           maxLength={7}
           pattern="#[0-9A-Fa-f]{6}"
           spellCheck={false}
-          aria-describedby={`${id}-custom-hint`}
-          aria-invalid={!isHexColor(draft) || undefined}
+          aria-describedby={[`${id}-custom-hint`, errorId].filter(Boolean).join(' ')}
+          aria-invalid={invalid || !isHexColor(draft) || undefined}
           onChange={(event) => {
             setDraft(event.target.value)
             if (isHexColor(event.target.value)) choose(event.target.value, true)

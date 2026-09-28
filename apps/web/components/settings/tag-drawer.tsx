@@ -172,9 +172,16 @@ function TagForm({
           invalid={outcome.errors.name !== undefined}
         />
       </Field>
-      <ColorPicker id="tag-color" name="color" value={color} onChange={setColor} />
+      <ColorPicker
+        id="tag-color"
+        name="color"
+        value={color}
+        onChange={setColor}
+        invalid={outcome.errors.color !== undefined}
+        errorId={outcome.errors.color ? 'tag-color-error' : undefined}
+      />
       {outcome.errors.color ? (
-        <span className="mt-1 block text-xs font-semibold text-destructive">
+        <span id="tag-color-error" className="mt-1 block text-xs font-semibold text-destructive">
           {outcome.errors.color}
         </span>
       ) : null}
