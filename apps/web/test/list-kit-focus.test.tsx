@@ -204,12 +204,26 @@ describe('ConfirmDialog', () => {
    * A list with a row whose action opens the dialog, as Boards and Ideas use it: confirming removes
    * the row in the same update that closes the dialog, the way a revalidated list does.
    */
-  function Harness({ removeOnConfirm }: { removeOnConfirm: boolean }) {
+  function Harness({
+    removeOnConfirm,
+    removeLater = false,
+  }: {
+    removeOnConfirm: boolean
+    /** The row leaves only when "Refresh" is pressed, as when the refreshed list arrives late. */
+    removeLater?: boolean
+  }) {
     const [rows, setRows] = useState(['Assembly cell', 'Paint shop'])
     const [asking, setAsking] = useState<string | null>(null)
+    const [archived, setArchived] = useState<string | null>(null)
     return (
       <main>
         <h1>Boards</h1>
+        <button
+          type="button"
+          onClick={() => setRows((current) => current.filter((row) => row !== archived))}
+        >
+          Refresh
+        </button>
         <ul>
           {rows.map((row) => (
             <li key={row}>
@@ -225,7 +239,9 @@ describe('ConfirmDialog', () => {
           description="It leaves the Boards list."
           confirmLabel="Archive board"
           onConfirm={() => {
-            if (removeOnConfirm) setRows((current) => current.filter((row) => row !== asking))
+            if (removeLater) setArchived(asking)
+            else if (removeOnConfirm)
+              setRows((current) => current.filter((row) => row !== asking))
             setAsking(null)
           }}
           onCancel={() => setAsking(null)}
@@ -269,5 +285,33 @@ describe('ConfirmDialog', () => {
     expect(opener.isConnected).toBe(false)
     expect(document.activeElement).not.toBe(document.body)
     expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1, name: 'Boards' }))
+  })
+
+  it('moves focus to the page heading when its opener leaves the list after the dialog closed', async () => {
+    render(<Harness removeOnConfirm removeLater />)
+    const opener = openFrom('Archive Assembly cell')
+    fireEvent.click(screen.getByRole('button', { name: 'Archive board' }))
+    expect(document.activeElement).toBe(opener)
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    })
+
+    expect(opener.isConnected).toBe(false)
+    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1, name: 'Boards' }))
+  })
+
+  it('leaves focus alone once it has moved on before the opener leaves', async () => {
+    render(<Harness removeOnConfirm removeLater />)
+    openFrom('Archive Assembly cell')
+    fireEvent.click(screen.getByRole('button', { name: 'Archive board' }))
+    const elsewhere = screen.getByRole('button', { name: 'Archive Paint shop' })
+    elsewhere.focus()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Refresh' }))
+    })
+
+    expect(document.activeElement).toBe(elsewhere)
   })
 })

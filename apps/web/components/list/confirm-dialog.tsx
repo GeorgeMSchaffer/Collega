@@ -10,6 +10,32 @@ import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef } from 're
  * opened it — or, when that has gone (the row it sat on was archived or deleted out of the list), to
  * the page's heading rather than dropping to `<body>`.
  */
+/** Every desk screen has exactly one `<h1>` (PageHeader), so it is always there to land on. */
+function focusHeading() {
+  const heading = document.querySelector<HTMLElement>('h1')
+  if (!heading) return
+  if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1
+  heading.focus()
+}
+
+/** Watches until focus moves off the opener by other means, or the opener leaves the page. */
+function focusHeadingIfOpenerLeaves(opener: HTMLElement) {
+  const stop = () => {
+    observer.disconnect()
+    document.removeEventListener('focusin', onFocusIn)
+  }
+  const onFocusIn = (event: FocusEvent) => {
+    if (event.target !== opener) stop()
+  }
+  const observer = new MutationObserver(() => {
+    if (opener.isConnected) return
+    stop()
+    if (document.activeElement === null || document.activeElement === document.body) focusHeading()
+  })
+  observer.observe(document.body, { childList: true, subtree: true })
+  document.addEventListener('focusin', onFocusIn)
+}
+
 export function ConfirmDialog({
   open,
   title,
@@ -48,12 +74,13 @@ export function ConfirmDialog({
     return () => {
       element.close()
       if (opener?.isConnected) opener.focus()
-      if (opener && document.activeElement === opener) return
-      // Every desk screen has exactly one `<h1>` (PageHeader), so it is always there to land on.
-      const heading = document.querySelector<HTMLElement>('h1')
-      if (!heading) return
-      if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1
-      heading.focus()
+      if (opener && document.activeElement === opener) {
+        // The refreshed list usually arrives after the dialog has closed, so the row - and the
+        // focused opener with it - can leave a render later.
+        focusHeadingIfOpenerLeaves(opener)
+      } else {
+        focusHeading()
+      }
     }
   }, [open])
 
