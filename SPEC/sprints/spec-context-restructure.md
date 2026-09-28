@@ -1,7 +1,7 @@
 ﻿# SPEC restructure for context efficiency
 
 Self-contained work plan. A fresh session can execute it without prior conversation.
-Status: approved 2026-09-28; Phase 1 awaiting review (slice 119, `feature/119-spec-context-restructure`). Documentation only; no application behaviour changes.
+Status: approved 2026-09-28; Phase 1 merged into `dev` 2026-09-28 (slice 119); Phase 2 not started. Documentation only; no application behaviour changes.
 
 ## Why
 The 2026-09-28 cost review found the most expensive sessions were spec work, with context growing
