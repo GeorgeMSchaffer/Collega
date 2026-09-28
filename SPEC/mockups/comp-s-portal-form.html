@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en" data-theme="terrazzo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comp S — Idea portal, branded shell · Collega</title>
+<!-- Throwaway comp for the Portals idea (SPEC/ideas-inbox.md). Terrazzo tokens copied from
+     packages/design-system/src/globals.css; not a reference rendering until reviewed. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap">
+<style>
+:root {
+  --font-display: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-code: "DM Mono", ui-monospace, monospace;
+  --radius: 6px;
+  --shadow-rgb: 30 39 51;
+  --background: #F5F6F8; --foreground: #1E2733; --card: #FFFFFF;
+  --primary: #3D5A80; --primary-hover: #324B6B; --primary-foreground: #FFFFFF;
+  --secondary: #EDF0F3; --secondary-foreground: #36414F;
+  --muted-foreground: #5E6978; --accent: #E4EAF2; --accent-foreground: #35507A;
+  --destructive: #963636; --success: #3F6B2E; --suggest-tint: #E6F2DF;
+  --border: #E3E6EB; --input: #CDD2DA; --ring: #3D5A80;
+
+  --ease-mass: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --hair: rgb(var(--shadow-rgb) / 0.08);
+  --shell-r: calc(var(--radius) * 3);           /* 18px — the one enlarged radius, portal-only */
+  --core-r: calc(var(--shell-r) - 6px);          /* concentric with the 6px bezel */
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: var(--font-body); color: var(--foreground); background: var(--background);
+  font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; min-height: 100dvh;
+}
+body::before {                                   /* ambient wash, fixed so it never repaints on scroll */
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(60rem 40rem at 8% -10%, rgb(61 90 128 / 0.10), transparent 60%),
+    radial-gradient(40rem 30rem at 100% 110%, rgb(63 107 46 / 0.07), transparent 60%);
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- branded shell: floating island, not a glued navbar ---------- */
+.island {
+  position: sticky; top: 1.25rem; z-index: 10; margin: 1.25rem auto 0; width: max-content; max-width: calc(100% - 2rem);
+  display: flex; align-items: center; gap: .9rem; padding: .45rem .5rem .45rem .6rem;
+  background: rgb(255 255 255 / 0.72); backdrop-filter: blur(18px) saturate(1.4);
+  border-radius: 999px; box-shadow: 0 0 0 1px var(--hair), 0 12px 32px -16px rgb(var(--shadow-rgb) / 0.25);
+}
+.logo {
+  width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center;
+  background: var(--primary); color: var(--primary-foreground); font: 700 13px var(--font-display);
+}
+.org { font: 600 14px var(--font-display); }
+.island .sep { width: 1px; height: 18px; background: var(--hair); }
+.island .where { font-size: 13px; color: var(--muted-foreground); }
+.pill-quiet {
+  font-size: 12px; font-weight: 600; color: var(--accent-foreground); background: var(--accent);
+  padding: .3rem .7rem; border-radius: 999px;
+}
+
+/* ---------- editorial split ---------- */
+main { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 6rem 2rem 8rem;
+  display: grid; grid-template-columns: 5fr 7fr; gap: 5rem; align-items: start; }
+.intro { position: sticky; top: 7rem; }
+.eyebrow {
+  display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--accent-foreground); background: var(--accent); padding: .35rem .8rem; border-radius: 999px;
+}
+.intro h1 { font-size: clamp(2.4rem, 4.4vw, 3.6rem); line-height: 1.02; margin: 1.4rem 0 1.2rem; }
+.intro h1 em { font-style: normal; color: var(--primary); }
+.lede { font-size: 17px; color: var(--secondary-foreground); max-width: 34ch; margin: 0 0 3rem; }
+.next { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.4rem; }
+.next li { display: grid; grid-template-columns: 2rem 1fr; gap: .9rem; }
+.next .n { font: 500 12px var(--font-code); color: var(--muted-foreground); padding-top: .15rem; }
+.next b { display: block; font: 600 15px var(--font-display); }
+.next span { font-size: 14px; color: var(--muted-foreground); }
+.privacy { margin-top: 3rem; font-size: 13px; color: var(--muted-foreground); max-width: 38ch; }
+
+/* ---------- double-bezel ---------- */
+.shell {
+  padding: 6px; border-radius: var(--shell-r); background: rgb(var(--shadow-rgb) / 0.035);
+  box-shadow: 0 0 0 1px var(--hair), 0 40px 80px -48px rgb(var(--shadow-rgb) / 0.35);
+}
+.core {
+  background: var(--card); border-radius: var(--core-r); padding: 2.75rem;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 0 0 1px rgb(var(--shadow-rgb) / 0.05);
+}
+
+/* ---------- form ---------- */
+.meter { display: flex; align-items: center; gap: 1rem; margin-bottom: 2.5rem; }
+.meter .track { flex: 1; height: 4px; border-radius: 999px; background: var(--secondary); overflow: hidden; }
+.meter .fill { height: 100%; width: 100%; background: var(--success); border-radius: inherit;
+  transform-origin: left; transform: scaleX(0); transition: transform .9s var(--ease-mass); }
+.meter .lbl { font-size: 12.5px; font-weight: 600; color: var(--muted-foreground); min-width: 11ch; text-align: right; }
+.meter .lbl.done { color: var(--success); }
+
+fieldset { border: 0; padding: 0; margin: 0 0 2.4rem; }
+legend { padding: 0; margin-bottom: 1.1rem; display: flex; align-items: baseline; gap: .7rem; }
+legend .step { font: 500 11px var(--font-code); color: var(--muted-foreground); }
+legend h2 { font-size: 19px; }
+.field { display: grid; gap: .45rem; margin-bottom: 1.25rem; }
+.field > label { font-weight: 600; font-size: 14px; display: flex; gap: .5rem; align-items: baseline; }
+.req { font-size: 11px; font-weight: 600; color: var(--primary); letter-spacing: .04em; }
+.opt { font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
+.hint { font-size: 13px; color: var(--muted-foreground); margin: -.1rem 0 .15rem; }
+.hint i { font-style: normal; color: var(--secondary-foreground); }
+input[type=text], input[type=email], input[type=password], textarea, select {
+  width: 100%; padding: .72rem .85rem; border-radius: var(--radius); background: #FBFBFC; border: 0;
+  box-shadow: inset 0 0 0 1px var(--input); transition: box-shadow .35s var(--ease-out), background .35s var(--ease-out);
+}
+textarea { resize: vertical; min-height: 5.5rem; }
+input:hover, textarea:hover, select:hover { box-shadow: inset 0 0 0 1px #AEB5C0; }
+input:focus, textarea:focus, select:focus { outline: none; background: #fff; box-shadow: inset 0 0 0 1px var(--ring), 0 0 0 4px rgb(61 90 128 / 0.12); }
+.count { font: 500 11px var(--font-code); color: var(--muted-foreground); justify-self: end; }
+
+.solutions { display: grid; gap: .6rem; }
+.sol { display: grid; grid-template-columns: 1.6rem 1fr auto; gap: .6rem; align-items: center;
+  animation: rise .6s var(--ease-mass) both; }
+.sol .k { font: 500 12px var(--font-code); color: var(--muted-foreground); text-align: center; }
+.icon-btn { width: 32px; height: 32px; border-radius: 999px; border: 0; background: transparent; color: var(--muted-foreground);
+  cursor: pointer; display: grid; place-items: center; transition: background .3s var(--ease-out), color .3s var(--ease-out); }
+.icon-btn:hover { background: var(--secondary); color: var(--destructive); }
+.add { justify-self: start; margin-top: .2rem; border: 0; background: none; color: var(--primary); font-weight: 600; font-size: 14px;
+  cursor: pointer; padding: .35rem 0; }
+.add:disabled { color: var(--muted-foreground); cursor: default; }
+
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chips input { position: absolute; opacity: 0; pointer-events: none; }
+.chips label { padding: .45rem .95rem; border-radius: 999px; font-size: 14px; font-weight: 500; cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--input); transition: background .35s var(--ease-out), color .35s var(--ease-out), box-shadow .35s var(--ease-out); }
+.chips label:hover { box-shadow: inset 0 0 0 1px #AEB5C0; }
+.chips input:checked + label { background: var(--accent); color: var(--accent-foreground); box-shadow: inset 0 0 0 1px var(--primary); }
+.chips input:focus-visible + label { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.divider { height: 1px; background: var(--border); margin: .4rem 0 2.2rem; }
+
+/* ---------- island CTA with nested icon ---------- */
+.actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.cta {
+  position: relative; display: inline-flex; align-items: center; gap: .9rem; border: 0; cursor: pointer;
+  padding: .55rem .55rem .55rem 1.5rem; border-radius: 999px; font: 600 15px var(--font-display);
+  background: var(--primary); color: var(--primary-foreground);
+  box-shadow: 0 1px 0 rgb(255 255 255 / .18) inset, 0 14px 28px -14px rgb(61 90 128 / .7);
+  transition: transform .5s var(--ease-mass), background .35s var(--ease-out), opacity .3s var(--ease-out);
+}
+.cta:hover { background: var(--primary-hover); }
+.cta:active { transform: scale(.98); }
+.cta .orb { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; background: rgb(255 255 255 / .16);
+  transition: transform .6s var(--ease-mass); }
+.cta:hover .orb { transform: translate(3px, -1px) scale(1.06); }
+.cta[aria-disabled=true] { opacity: .45; cursor: not-allowed; }
+.cta[aria-disabled=true] .orb { transform: none; }
+.fine { font-size: 12.5px; color: var(--muted-foreground); max-width: 32ch; margin: 0; }
+
+/* ---------- gate + success ---------- */
+.gate { max-width: 440px; margin: 0 auto; }
+.gate h2 { font-size: 26px; margin: 1rem 0 .5rem; }
+.gate p { color: var(--muted-foreground); margin: 0 0 1.8rem; }
+.err { color: var(--destructive); font-size: 13px; font-weight: 500; min-height: 1.2em; margin: .5rem 0 1.2rem; }
+.done { text-align: center; padding: 2rem 0; }
+.done .tick { width: 64px; height: 64px; margin: 0 auto 1.6rem; border-radius: 999px; background: var(--suggest-tint); color: var(--success);
+  display: grid; place-items: center; animation: pop .9s var(--ease-mass) both; }
+.done h2 { font-size: 28px; margin-bottom: .7rem; }
+.done p { color: var(--muted-foreground); max-width: 40ch; margin: 0 auto 2rem; }
+.ghost { border: 0; background: var(--secondary); color: var(--secondary-foreground); font-weight: 600; padding: .7rem 1.3rem; border-radius: 999px; cursor: pointer;
+  transition: transform .5s var(--ease-mass), background .3s var(--ease-out); }
+.ghost:hover { background: var(--accent); } .ghost:active { transform: scale(.98); }
+[hidden] { display: none !important; }
+
+/* ---------- entry choreography ---------- */
+.reveal { opacity: 0; transform: translateY(28px); filter: blur(6px);
+  transition: opacity .9s var(--ease-mass), transform .9s var(--ease-mass), filter .9s var(--ease-mass); }
+.reveal.in { opacity: 1; transform: none; filter: none; }
+.d1 { transition-delay: .08s; } .d2 { transition-delay: .16s; } .d3 { transition-delay: .24s; } .d4 { transition-delay: .32s; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+@keyframes pop { from { opacity: 0; transform: scale(.6); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; transition-delay: 0s !important; }
+  .reveal { filter: none; transform: none; }
+}
+
+/* ---------- comp notes (review aid, not product) ---------- */
+.notes { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto 4rem; padding: 0 2rem; font-size: 13px; color: var(--muted-foreground); }
+.notes details { background: var(--card); border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 0 0 1px var(--hair); }
+.notes summary { cursor: pointer; font-weight: 600; color: var(--secondary-foreground); }
+.notes li { margin: .3rem 0; }
+
+@media (max-width: 767px) {
+  main { grid-template-columns: 1fr; gap: 3rem; padding: 3.5rem 1rem 5rem; }
+  .intro { position: static; }
+  .intro h1 { font-size: 2.3rem; }
+  .lede { margin-bottom: 2rem; }
+  .core { padding: 1.6rem 1.25rem; }
+  .row2 { grid-template-columns: 1fr; }
+  .island .where, .island .sep { display: none; }
+  .actions { flex-direction: column-reverse; align-items: stretch; }
+  .cta { justify-content: space-between; }
+  .notes { padding: 0 1rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="island" aria-label="Organization">
+  <span class="logo" aria-hidden="true">N</span>
+  <span class="org">Northwind Health</span>
+  <span class="sep" aria-hidden="true"></span>
+  <span class="where">Idea portal</span>
+  <span class="pill-quiet">Process improvement</span>
+</header>
+
+<main>
+  <section class="intro">
+    <span class="eyebrow reveal">Share an idea</span>
+    <h1 class="reveal d1">Seen something we could <em>do better?</em></h1>
+    <p class="lede reveal d2">Tell the Operations team what's getting in the way and how you'd fix it. You don't need a Collega account.</p>
+    <ol class="next reveal d3">
+      <li><span class="n">01</span><div><b>You describe the problem</b><span>A few specifics beat a long essay.</span></div></li>
+      <li><span class="n">02</span><div><b>An admin reviews it</b><span>Usually within a week. They may add detail before it goes on a board.</span></div></li>
+      <li><span class="n">03</span><div><b>It joins the backlog</b><span>Accepted ideas are prioritised with everything else the team is weighing.</span></div></li>
+    </ol>
+    <p class="privacy reveal d4">Name and email are optional. If you leave them, the reviewer can reach out with questions. Only Northwind Health's admins see them.</p>
+  </section>
+
+  <div class="shell reveal d2">
+    <div class="core">
+
+      <!-- Passphrase gate (shown only when the portal has one) -->
+      <form id="gate" class="gate" novalidate>
+        <span class="eyebrow">Protected portal</span>
+        <h2>Enter the passphrase</h2>
+        <p>Your team shared a passphrase with this link. You'll only need it once per visit.</p>
+        <div class="field">
+          <label for="pass">Passphrase</label>
+          <input id="pass" type="password" autocomplete="off" placeholder="Comp: better-together">
+        </div>
+        <div class="err" id="gate-err" role="alert"></div>
+        <button class="cta" type="submit">Continue
+          <span class="orb" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+        </button>
+      </form>
+
+      <!-- Guided form -->
+      <form id="idea" hidden novalidate>
+        <div class="meter" aria-live="polite">
+          <div class="track"><div class="fill" id="fill"></div></div>
+          <span class="lbl" id="lbl">Just started</span>
+        </div>
+
+        <fieldset>
+          <legend><span class="step">01</span><h2>The idea</h2></legend>
+          <div class="field">
+            <label for="title">Give it a short title <span class="req">REQUIRED</span></label>
+            <input id="title" type="text" maxlength="150" placeholder="e.g. Let nurses reorder supplies from the ward tablet">
+            <span class="count" data-for="title">0 / 150</span>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend><span class="step">02</span><h2>The problem</h2></legend>
+          <div class="field">
+            <label for="problem">What's going wrong today? <span class="opt">Recommended</span></label>
+            <p class="hint">Who hits it, how often, and what it costs. <i>"Three times a shift we walk to the stockroom and find it empty."</i></p>
+            <textarea id="problem" maxlength="2000"></textarea>
+            <span class="count" data-for="problem">0 / 2000</span>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend><span class="step">03</span><h2>How you'd fix it</h2></legend>
+          <div class="field">
+            <label>Proposed solutions <span class="opt">Up to 5</span></label>
+            <p class="hint">One approach per line. Rough is fine; the team will refine it.</p>
+            <div class="solutions" id="solutions"></div>
+            <button type="button" class="add" id="add">+ Add another approach</button>
+          </div>
+          <div class="field">
+            <label for="impact">Why would it matter? <span class="opt">Optional</span></label>
+            <textarea id="impact" maxlength="1000" placeholder="Time saved, risk reduced, people helped…"></textarea>
+          </div>
+          <div class="field">
+            <label id="area-lbl">Which area does it affect? <span class="opt">Optional</span></label>
+            <div class="chips" role="radiogroup" aria-labelledby="area-lbl">
+              <input type="radio" name="area" id="a1" value="wards"><label for="a1">Wards</label>
+              <input type="radio" name="area" id="a2" value="pharmacy"><label for="a2">Pharmacy</label>
+              <input type="radio" name="area" id="a3" value="admin"><label for="a3">Admin &amp; scheduling</label>
+              <input type="radio" name="area" id="a4" value="facilities"><label for="a4">Facilities</label>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <fieldset>
+          <legend><span class="step">04</span><h2>About you</h2><span class="opt">Optional</span></legend>
+          <div class="row2">
+            <div class="field"><label for="name">Name</label><input id="name" type="text" autocomplete="name"></div>
+            <div class="field"><label for="email">Work email</label><input id="email" type="email" autocomplete="email" placeholder="So the reviewer can follow up"></div>
+          </div>
+        </fieldset>
+
+        <div class="err" id="form-err" role="alert"></div>
+        <div class="actions">
+          <p class="fine">Submissions go to an admin for review before anyone else sees them.</p>
+          <button class="cta" type="submit" id="submit" aria-disabled="true">Send idea
+            <span class="orb" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><path d="M4.5 11.5l7-7M6 4.5h5.5V10"/></svg></span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Success -->
+      <section id="done" class="done" hidden aria-live="polite">
+        <div class="tick" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <h2>Thanks, it's with the team</h2>
+        <p id="done-copy">An admin at Northwind Health will review your idea. If you left an email, they may get in touch with questions.</p>
+        <button class="ghost" type="button" id="again">Share another idea</button>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<aside class="notes">
+  <details>
+    <summary>Comp notes: Portals, branded-shell mode</summary>
+    <ul>
+      <li>URL: <code>/public/{orgSlug}/{slug}</code>, here <code>/public/northwind-health/process-improvement</code>.</li>
+      <li>Terrazzo tokens only. One deliberate deviation: the form card uses a larger radius (18px bezel, 12px core) than the desk's 6px, so the anonymous page reads as its own, friendlier surface.</li>
+      <li>Only the title is required, per the settled answer. The completeness meter is how the comp pushes for quality instead.</li>
+      <li>"Area" stands in for a per-portal custom field (an idea-type field with portal help text).</li>
+      <li>No receipt code, status page, email or attachments. All are on the Not Doing list.</li>
+      <li>Embed mode drops the island and the intro column and leaves only the bezel card.</li>
+    </ul>
+  </details>
+</aside>
+
+<script>
+(() => {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  const $ = id => document.getElementById(id);
+  const gate = $('gate'), form = $('idea'), done = $('done');
+  const sols = $('solutions'), MAX = 5;
+
+  const update = () => {
+    const t = $('title').value.trim(), p = $('problem').value.trim(), i = $('impact').value.trim();
+    const hasSol = [...sols.querySelectorAll('input')].some(x => x.value.trim());
+    const area = !!form.querySelector('input[name=area]:checked');
+    const score = (t ? 2 : 0) + (p.length >= 40 ? 3 : p ? 1.5 : 0) + (hasSol ? 2 : 0) + (i ? 1 : 0) + (area ? 1 : 0);
+    const pct = score / 9;
+    $('fill').style.transform = `scaleX(${pct})`;
+    const lbl = $('lbl');
+    lbl.textContent = pct === 0 ? 'Just started' : pct < .4 ? 'A good start' : pct < .8 ? 'Getting clear' : 'Ready to review';
+    lbl.classList.toggle('done', pct >= .8);
+    $('submit').setAttribute('aria-disabled', String(!t));
+    document.querySelectorAll('.count').forEach(c => { const f = $(c.dataset.for); c.textContent = `${f.value.length} / ${f.maxLength}`; });
+  };
+
+  const renumber = () => {
+    [...sols.children].forEach((r, i) => {
+      r.querySelector('.k').textContent = i + 1;
+      r.querySelector('input').setAttribute('aria-label', `Proposed solution ${i + 1}`);
+      r.querySelector('button').setAttribute('aria-label', `Remove solution ${i + 1}`);
+    });
+    $('add').disabled = sols.children.length >= MAX;
+  };
+  const addSol = (focus) => {
+    const n = sols.children.length + 1; if (n > MAX) return;
+    const row = document.createElement('div'); row.className = 'sol';
+    row.innerHTML = `<span class="k"></span><input type="text" maxlength="500" placeholder="${n === 1 ? 'e.g. A reorder button that emails the stockroom' : 'Another approach'}"><button type="button" class="icon-btn"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7"/></svg></button>`;
+    row.querySelector('button').onclick = () => { if (sols.children.length > 1) row.remove(); else row.querySelector('input').value = ''; renumber(); update(); };
+    sols.append(row); renumber(); if (focus) row.querySelector('input').focus();
+  };
+  $('add').onclick = () => addSol(true);
+  addSol(false);
+  form.addEventListener('input', update);
+  form.addEventListener('change', update);
+
+  gate.addEventListener('submit', e => {
+    e.preventDefault();
+    if ($('pass').value.trim() !== 'better-together') { $('gate-err').textContent = "That passphrase doesn't match. Check with whoever shared the link."; return; }
+    gate.hidden = true; form.hidden = false; $('title').focus(); update();
+  });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!$('title').value.trim()) { $('form-err').textContent = 'Add a short title so the reviewer knows what this is about.'; $('title').focus(); return; }
+    const email = $('email').value.trim();
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { $('form-err').textContent = "That email doesn't look right. Fix it or leave it blank."; $('email').focus(); return; }
+    $('form-err').textContent = '';
+    $('done-copy').textContent = email
+      ? 'An admin at Northwind Health will review your idea. They may email you with questions.'
+      : "An admin at Northwind Health will review your idea. You didn't leave an email, so they can't follow up, and that's fine.";
+    form.hidden = true; done.hidden = false; done.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  $('again').onclick = () => {
+    form.reset(); sols.innerHTML = ''; addSol(false);
+    done.hidden = true; form.hidden = false; update(); $('title').focus();
+  };
+})();
+</script>
+</body>
+</html>
