@@ -363,12 +363,19 @@ function lockedFieldMetrics(
     if (locked.length === 0) continue
     trials++
     const wireNames = locked.map((name) => [name, wireFieldName(name, t.fixture)] as const)
-    const touched = t.trial.turns.some((turn) =>
-      wireNames.some(
-        ([, wire]) =>
-          turn.v2?.rawChanges != null && fieldValueOf(turn.v2.rawChanges, wire) !== undefined,
-      ),
-    )
+    // A proposal is a real value that differs from what the turn was sent: a schema that makes
+    // every key required-and-nullable returns each locked field as null or unchanged every turn.
+    const touched = t.trial.turns.some((turn) => {
+      const v2 = turn.v2
+      if (v2 === undefined || v2.rawChanges === null) return false
+      return wireNames.some(([, wire]) => {
+        const raw = fieldValueOf(v2.rawChanges as Partial<V2Draft>, wire) ?? null
+        return (
+          raw !== null &&
+          canonicalJson(raw) !== canonicalJson(fieldValueOf(v2.draftSent, wire) ?? null)
+        )
+      })
+    })
     if (touched) proposals++
     const start = wireDraft(t.evalCase.draft, t.fixture)
     for (const [name, wire] of wireNames) {
