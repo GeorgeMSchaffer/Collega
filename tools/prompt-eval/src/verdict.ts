@@ -1,4 +1,4 @@
-import type { Proportion, RunMetrics } from './metrics.ts'
+import { PAIR_MARGIN, type Proportion, type RunMetrics } from './metrics.ts'
 import type { RunData } from './run-file.ts'
 
 /**
@@ -69,7 +69,7 @@ export function judge(run: RunData, metrics: RunMetrics, baseline: Baseline | nu
     .filter((p) => p.scopeStatementMayBeIgnored)
     .map(
       (p) =>
-        `pair ${p.pair}: refusal rates differ by ${fmt(p.difference)}, below 0.5 - scope statement may be ignored`,
+        `pair ${p.pair}: refusal rates differ by ${fmt(p.difference)}, below ${PAIR_MARGIN} - scope statement may be ignored`,
     )
   // With a baseline, `unlikeRuns` names overrides on either side.
   if (baseline === null && (run.header.modelOverridden || run.header.effortOverridden)) {
