@@ -13,20 +13,26 @@ const optionLabel = (option: FilterOption) => (typeof option === 'string' ? opti
  * Comp R's `.ms`: a pill button naming the filter and what it holds ("Status: Complete",
  * "Status: 2 selected"), opening a popover with type-to-find, a checkbox per value and a Clear.
  *
- * The popover is a non-modal `dialog`: Escape or a click outside closes it, and Escape returns focus
- * to the button. Each tick reports at once, so the list behind updates while the popover stays open.
+ * The popover is a non-modal `dialog`: Escape, a click outside or tabbing out of it closes it, and
+ * Escape returns focus to the button. Each tick reports at once, so the list behind updates while
+ * the popover stays open.
+ *
+ * `onFindChange` hears the type-to-find text, for a filter whose values are too many to hand over
+ * up front (Tags): the screen looks matches up and passes them back in as `options`.
  */
 export function MultiSelectFilter({
   label,
   options,
   selected,
   onChange,
+  onFindChange,
 }: {
   /** The column's name, e.g. "Status". */
   label: string
   options: readonly FilterOption[]
   selected: readonly string[]
   onChange: (next: string[]) => void
+  onFindChange?: (find: string) => void
 }) {
   const [open, setOpen] = useState(false)
   const [find, setFind] = useState('')
@@ -36,11 +42,22 @@ export function MultiSelectFilter({
 
   useEffect(() => {
     if (!open) return
+    const element = root.current
     const onPointerDown = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false)
+      if (!element?.contains(event.target as Node)) setOpen(false)
+    }
+    // Tabbing out of the popover closes it too. A `null` destination is a click on the popover's
+    // own padding, which the pointer handler judges.
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget as Node | null
+      if (next && !element?.contains(next)) setOpen(false)
     }
     document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
+    element?.addEventListener('focusout', onFocusOut)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      element?.removeEventListener('focusout', onFocusOut)
+    }
   }, [open])
 
   const close = () => {
@@ -105,7 +122,10 @@ export function MultiSelectFilter({
             // biome-ignore lint/a11y/noAutofocus: opening the popover is asking to type into it
             autoFocus
             value={find}
-            onChange={(event) => setFind(event.target.value)}
+            onChange={(event) => {
+              setFind(event.target.value)
+              onFindChange?.(event.target.value)
+            }}
             placeholder="Type to find…"
             aria-label={`Find ${label.toLowerCase()}`}
             className="h-[var(--control-h-sm)]"
