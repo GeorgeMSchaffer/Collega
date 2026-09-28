@@ -11,13 +11,29 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 > after "Issue Task Contracts" (lines 1735–1829, **copy B**). Every statement from both is kept
 > here. Where the two said the same thing, one copy is kept; where they disagree, both statements
 > stand side by side under **Conflict — needs a decision**, with what the code does today. The code
-> was not changed, and neither statement has been chosen.
+> was not changed, and neither statement has been chosen. Conflicts (7) and (8) are between text
+> both copies share and the code, found at review.
 
 Idea Type and Business Impact are dedicated organization-scoped option collections. Active labels are trimmed, case-insensitively unique within their field and organization, and returned in ascending `sortOrder`. The first active option is the default. Every organization must retain at least one active option in each collection.
 
 Site Admin may manage any target organization supplied by route context. Org Admin may manage only their own organization. User and Read Only callers receive `403 Forbidden`.
 
 For both option types, labels are trimmed before persistence and active labels are unique case-insensitively within the same organization and option type. Missing resources return `404 Not Found`; cross-organization access returns `403 Forbidden`.
+
+> **Conflict — needs a decision (7): a Site Admin acting directly.** Applies to every mutation
+> below, for both option types.
+> - Text (copy A; copy B's "Site Admin and in-scope Org Admin only" says the same): "Site Admin may manage any target organization supplied by route context."
+> - Code today: a Site Admin acting as themselves is refused with `403` on create, update,
+>   reorder and delete (`ensureNotDirectSiteAdmin`, called from `ensureAdminScope` in
+>   `IdeaTypeService` and `BusinessImpactService`); the way in is View As. Listing is unaffected.
+
+> **Conflict — needs a decision (8): an Org Admin in another organization.** Applies to every
+> mutation below, for both option types.
+> - Text (copy A): "Org Admin may manage only their own organization." and "cross-organization access returns `403 Forbidden`."
+> - Code today: an Org Admin acting on another organization's options gets `404` "Organization
+>   not found." (`ensureAdminScope`); a member reading another organization's list gets `404`
+>   too (`ensureReadScope`). User and Read Only callers in their own organization get `403`, as
+>   the text says.
 
 ### `GET /api/v1/organizations/{organizationId}/idea-types`
 

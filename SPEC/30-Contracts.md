@@ -88,19 +88,19 @@ everything. Every route is under `/api/v1`.
 
 | Section | File | Routes |
 |---|---|---|
-| Authentication Contracts | [`contracts/auth.md`](contracts/auth.md) | `/auth/login`, `/auth/me`, `/auth/change-password`, `/auth/password-reset/*`, `/users/{userId}/temporary-password`; also the session, password-rotation and rate-limiting rules |
+| Authentication Contracts | [`contracts/auth.md`](contracts/auth.md) | `/auth/login`, `/auth/me`, `/auth/change-password`, `/auth/password-reset/*`, `/users/{userId}/temporary-password`; also the session, password-rotation and rate-limiting rules. Subsections: Access Token Format and Session Revocation; Mandatory Password Rotation Gate; Rate limiting on the authentication surface |
 | View As Contracts | [`contracts/view-as.md`](contracts/view-as.md) | `/auth/view-as`, `/auth/view-as/candidates`; the effect on `/auth/me` |
 | Organization Contracts | [`contracts/organizations.md`](contracts/organizations.md) | `/organizations`, `/organizations/{organizationId}` (and `/logo`, `/invite-code/regenerate`, `/archive`, `/ai-key`) |
 | User Contracts | [`contracts/users.md`](contracts/users.md) | `/auth/register`, `/organizations/{organizationId}/users` (and `/import`), `/organizations/{organizationId}/members`, `/users/{userId}` |
 | Status Contracts | [`contracts/statuses.md`](contracts/statuses.md) | `/organizations/{organizationId}/statuses` (and `/reorder`), `/statuses/{statusId}` |
-| Idea Field Option Contracts | [`contracts/idea-field-options.md`](contracts/idea-field-options.md) | `/organizations/{organizationId}/idea-types`, `/idea-types/{ideaTypeId}`, `/organizations/{organizationId}/business-impacts`, `/business-impacts/{businessImpactId}`. **Merged from two sections of this name; its conflicts await a decision.** |
+| Idea Field Option Contracts | [`contracts/idea-field-options.md`](contracts/idea-field-options.md) | `/organizations/{organizationId}/idea-types`, `/idea-types/{ideaTypeId}`, `/organizations/{organizationId}/business-impacts`, `/business-impacts/{businessImpactId}`. **Merged from two sections of this name; its eight marked conflicts await a decision.** |
 | Idea-Type Field Contracts | [`contracts/idea-type-fields.md`](contracts/idea-type-fields.md) | `/organizations/{organizationId}/idea-types/{ideaTypeId}/fields` and `/appearance`, `/organizations/{organizationId}/ideas/{ideaId}/idea-type` |
 | Board Contracts | [`contracts/boards.md`](contracts/boards.md) | `/organizations/{organizationId}/boards`, `/boards/{boardId}` (and `/archive`, `/unarchive`, `/swimlanes/reorder`) |
 | Idea Contracts | [`contracts/ideas.md`](contracts/ideas.md) | `/boards/{boardId}/ideas` (and `/export`, `/import`, `/ai-draft`, `/ai-polish`), `/organizations/{organizationId}/ideas`, `/ideas/{ideaId}` (and `/status`) |
 | Delivery Contracts | [`contracts/delivery.md`](contracts/delivery.md) | `/ideas/{ideaId}/promote`, `/return-to-discovery`, `/delivery-status`, `/sprint`, `/delivery`; `/organizations/{organizationId}/delivery` |
 | Sprint Contracts | [`contracts/sprints.md`](contracts/sprints.md) | `/organizations/{organizationId}/sprints` (and `/{sprintId}`, `/start`, `/complete`) |
 | Issue Task Contracts | [`contracts/issue-tasks.md`](contracts/issue-tasks.md) | `/ideas/{ideaId}/tasks` (and `/{taskId}`, `/{taskId}/state`, `/order`) |
-| Tag Contracts | [`contracts/tags.md`](contracts/tags.md) | `/organizations/{organizationId}/tags` (and `/catalog`), `/tags/{tagId}` |
+| Tag Contracts | [`contracts/tags.md`](contracts/tags.md) | `/organizations/{organizationId}/tags` (and `/catalog`), `/tags/{tagId}`. Subsection: Tag colour and management |
 | Comment Contracts | [`contracts/comments.md`](contracts/comments.md) | `/ideas/{ideaId}/comments`, `/comments/{commentId}` |
 | Upvote Contracts | [`contracts/upvotes.md`](contracts/upvotes.md) | `/ideas/{ideaId}/upvote/toggle` |
 | AI Idea Assist Contracts | [`contracts/ai-assist.md`](contracts/ai-assist.md) | `/boards/{boardId}/idea-assist/turns`, `/ai-assist/*` (availability, prompt, usage), `/organizations/{organizationId}/ai-assist/*` (settings, usage) |
