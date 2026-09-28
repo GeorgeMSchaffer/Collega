@@ -236,6 +236,7 @@ function printDryRun(
   prompt: PromptSource,
   cases: readonly EvalCase[],
   fixtures: ReadonlyMap<string, PreparedFixture>,
+  v2Only: readonly EvalCase[],
 ): void {
   const calls = plannedCalls(cases, options.repeats)
   let inputTokens = 0
@@ -275,6 +276,12 @@ function printDryRun(
     )
   }
   out.push('')
+  if (v2Only.length > 0) {
+    out.push(
+      `Validated, not run (${v2Only.length} v2 cases; the v2 turn is not built): ${v2Only.map((c) => c.id).join(', ')}`,
+    )
+    out.push('')
+  }
   out.push(`Planned    ${formatNumber(calls)} calls across ${cases.length} cases`)
   out.push(
     `Estimate   ~${formatNumber(inputTokens)} input tokens (characters / ${CHARS_PER_TOKEN}; ` +
@@ -485,7 +492,8 @@ export async function main(
     if (options.dryRun) {
       // Read as a live run would, so a bad --baseline fails here rather than after the spend.
       const baseline = options.baseline === undefined ? null : await loadBaseline(options.baseline)
-      printDryRun(options, prompt, cases, fixtures)
+      const v2Only = corpus.cases.filter((c) => c.assistant === 'v2')
+      printDryRun(options, prompt, cases, fixtures, v2Only)
       if (baseline !== null) {
         console.log(`Baseline   ${baseline.path} (${baseline.run.trials.length} trials, readable)`)
       }

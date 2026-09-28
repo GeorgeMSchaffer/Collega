@@ -1,0 +1,16 @@
+{
+  "id": "v2-interview-order",
+  "fixture": "acme-v2",
+  "assistant": "v2",
+  "note": "The interview order (v2 Conversation 3): Problem, then Proposed solutions, then Impact rationale. After a problem and two proposals, and nothing about why it matters, the next question must be about the impact rationale. Asking for the idea type or the title here means the order is not being followed.",
+  "turns": [
+    "The label printers in packing jam constantly and one person spends half their day clearing them.",
+    "We could replace the two oldest printers, or move to the thermal model the shipping team already uses."
+  ],
+  "expect": {
+    "inScope": true,
+    "problemSet": true,
+    "proposedSolutions": { "min": 1 },
+    "nextStep": "impactRationale"
+  }
+}
