@@ -30,7 +30,7 @@ export type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & { inva
 export function Textarea({ className, invalid, ...props }: TextareaProps) {
   return (
     <textarea
-      className={cn(FIELD, 'min-h-20 py-2', invalid && INVALID, className)}
+      className={cn(FIELD, 'min-h-20', invalid && INVALID, className)}
       aria-invalid={invalid || undefined}
       {...props}
     />

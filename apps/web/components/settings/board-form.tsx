@@ -177,7 +177,7 @@ export function BoardFields({
             Let Users move ideas between statuses on this board
           </label>
         </span>
-        <p className="m-0 mt-1 max-w-prose text-[0.8rem] text-muted-foreground">
+        <p className="m-0 mt-1 max-w-prose text-xs text-muted-foreground">
           With this off, only administrators can change an idea&rsquo;s status here. Read Only
           accounts can never move anything, on any board.
         </p>
@@ -185,7 +185,7 @@ export function BoardFields({
 
       <div className="mb-3">
         <SectionHeading className="m-0 text-sm font-semibold">Swimlanes</SectionHeading>
-        <p className="m-0 mt-1 max-w-prose text-[0.8rem] text-muted-foreground">
+        <p className="m-0 mt-1 max-w-prose text-xs text-muted-foreground">
           Pick from this organization&rsquo;s statuses. The order on the left is the left-to-right
           order of the board&rsquo;s columns.
         </p>
