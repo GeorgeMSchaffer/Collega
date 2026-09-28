@@ -414,6 +414,7 @@ export class IdeaService {
         organizationId: idea.organizationId,
         ideaTypeId: idea.ideaTypeId,
         submitted: command.fieldValues ?? [],
+        stored: idea.fieldValues,
       })
     }
 

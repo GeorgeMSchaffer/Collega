@@ -373,11 +373,14 @@ export type ImportCellTranslation =
 export interface IdeaFieldValuesPort {
   /** Resolves the effective/required fields for `ideaTypeId` and validates + normalizes
    * `submitted` against them, throwing the kernel's `ValidationError` (field-name-keyed) on any
-   * problem. Mirrors `IdeaTypeFieldResolver.ResolveEffectiveFields` + `FieldValueValidator.Validate`. */
+   * problem. Mirrors `IdeaTypeFieldResolver.ResolveEffectiveFields` + `FieldValueValidator.Validate`.
+   * `stored` is the idea's current values on an edit, so an option it already holds may be kept
+   * after the field stops offering it; absent on create. */
   resolveAndValidate(input: {
     organizationId: string
     ideaTypeId: string
     submitted: readonly IdeaFieldValueWrite[]
+    stored?: readonly { fieldDefinitionId: string; value: string }[]
   }): Promise<readonly IdeaFieldValueInput[]>
 
   /** The field-definition ids `ideaTypeId` currently resolves to - the reconcile scope passed to

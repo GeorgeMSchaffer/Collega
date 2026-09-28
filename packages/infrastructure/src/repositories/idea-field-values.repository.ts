@@ -156,9 +156,15 @@ export class PrismaIdeaFieldValuesRepository implements IdeaFieldValuesPort, AiI
     organizationId: string
     ideaTypeId: string
     submitted: readonly { fieldDefinitionId: string; value: string | null }[]
+    stored?: readonly { fieldDefinitionId: string; value: string }[]
   }): Promise<readonly IdeaFieldValueInput[]> {
     const effectiveFields = await this.loadEffectiveFields(input.organizationId, input.ideaTypeId)
-    return validateFieldValues(effectiveFields, input.submitted as readonly FieldValueWrite[])
+    return validateFieldValues(
+      effectiveFields,
+      input.submitted as readonly FieldValueWrite[],
+      undefined,
+      input.stored,
+    )
   }
 
   async getReconcileScope(organizationId: string, ideaTypeId: string): Promise<readonly string[]> {
