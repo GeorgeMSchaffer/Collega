@@ -12,6 +12,17 @@ const WELD = '00000000-0000-4000-8000-00000000000a'
 const PAINT = '00000000-0000-4000-8000-00000000000b'
 const REMOVED = '00000000-0000-4000-8000-00000000000c'
 const UNKNOWN = '00000000-0000-4000-8000-00000000000d'
+const OTHER_FIELD_ID = '00000000-0000-4000-8000-000000000002'
+
+function failures(action: () => unknown): Readonly<Record<string, readonly string[]>> {
+  try {
+    action()
+  } catch (error) {
+    expect(error).toBeInstanceOf(ValidationError)
+    return (error as ValidationError).failures
+  }
+  throw new Error('expected a ValidationError')
+}
 
 function effective(fieldType: FieldType) {
   const field = createFieldDefinition({
@@ -59,21 +70,43 @@ describe('validateFieldValues with an option the field no longer offers', () => 
     ).toEqual([{ fieldDefinitionId: FIELD_ID, value: REMOVED }])
   })
 
-  it('refuses adding an id the idea does not already store', () => {
-    expect(() =>
-      validateFieldValues(
-        effective(FieldType.MultiSelect),
-        submit(`${WELD},${UNKNOWN}`),
-        undefined,
-        stored(WELD),
+  it('refuses adding an id the idea does not already store, keyed on the field', () => {
+    expect(
+      failures(() =>
+        validateFieldValues(
+          effective(FieldType.MultiSelect),
+          submit(`${WELD},${UNKNOWN}`),
+          undefined,
+          stored(WELD),
+        ),
       ),
-    ).toThrow(ValidationError)
+    ).toEqual({ Areas: ["Areas must contain only the field's options."] })
   })
 
   it('refuses a removed id on create, where nothing is stored', () => {
-    expect(() => validateFieldValues(effective(FieldType.Dropdown), submit(REMOVED))).toThrow(
-      ValidationError,
-    )
+    expect(
+      failures(() => validateFieldValues(effective(FieldType.Dropdown), submit(REMOVED))),
+    ).toEqual({ Areas: ["Areas must be one of the field's options."] })
+  })
+
+  it('refuses keeping an id that another field stores', () => {
+    const otherField = [{ fieldDefinitionId: OTHER_FIELD_ID, value: REMOVED }]
+    expect(
+      failures(() =>
+        validateFieldValues(effective(FieldType.Dropdown), submit(REMOVED), undefined, otherField),
+      ),
+    ).toEqual({ Areas: ["Areas must be one of the field's options."] })
+  })
+
+  it('matches a kept id regardless of case and stores it lower case', () => {
+    expect(
+      validateFieldValues(
+        effective(FieldType.Dropdown),
+        submit(REMOVED.toUpperCase()),
+        undefined,
+        stored(REMOVED),
+      ),
+    ).toEqual([{ fieldDefinitionId: FIELD_ID, value: REMOVED }])
   })
 
   it('drops it once unticked', () => {
