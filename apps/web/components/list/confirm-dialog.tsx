@@ -7,7 +7,8 @@ import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef } from 're
  * The one destructive modal (comp R): asks before Delete or Archive. `role="alertdialog"` on a
  * native modal `<dialog>`, so the page behind is inert; focus starts on **Cancel**, Tab and
  * Shift+Tab cycle between Cancel and the action only, and Escape cancels. Focus returns to whatever
- * opened it.
+ * opened it — or, when that has gone (the row it sat on was archived or deleted out of the list), to
+ * the page's heading rather than dropping to `<body>`.
  */
 export function ConfirmDialog({
   open,
@@ -47,6 +48,12 @@ export function ConfirmDialog({
     return () => {
       element.close()
       if (opener?.isConnected) opener.focus()
+      if (opener && document.activeElement === opener) return
+      // Every desk screen has exactly one `<h1>` (PageHeader), so it is always there to land on.
+      const heading = document.querySelector<HTMLElement>('h1')
+      if (!heading) return
+      if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1
+      heading.focus()
     }
   }, [open])
 
