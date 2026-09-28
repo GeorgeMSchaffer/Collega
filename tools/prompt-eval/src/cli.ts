@@ -431,7 +431,9 @@ async function liveRun(
 
 async function loadBaseline(file: string): Promise<Baseline> {
   const run = await readRunFile(file)
-  return { path: file, run, metrics: computeMetrics(run) }
+  // Relative to the repository, so a verdict names the same baseline on every machine.
+  const relative = path.relative(REPO_ROOT, path.resolve(file)).split(path.sep).join('/')
+  return { path: relative, run, metrics: computeMetrics(run) }
 }
 
 /** Rule 29: the metrics and verdict again from a saved run, with no key and no call. */
