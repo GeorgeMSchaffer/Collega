@@ -87,6 +87,11 @@ function sectionsFor(role: Role): Section[] {
         blurb: 'Extra questions attached to an idea type.',
       },
       {
+        href: '/settings/tags',
+        title: 'Tags',
+        blurb: 'Every organization’s tags and their colours, read-only.',
+      },
+      {
         href: '/settings/ai-prompt',
         title: 'AI prompt',
         blurb:
@@ -127,6 +132,12 @@ function sectionsFor(role: Role): Section[] {
       href: '/settings/fields',
       title: 'Custom fields',
       blurb: 'Extra questions attached to an idea type.',
+    },
+    {
+      href: '/settings/tags',
+      title: 'Tags',
+      blurb:
+        'Labels for ideas on every board: their colours, and adding, renaming or deleting them.',
     },
     {
       href: '/settings/ai-assist',
@@ -192,8 +203,8 @@ export default async function SettingsPage() {
           <Alert variant="note" className="max-w-prose">
             <span>
               <b>Settings is almost entirely administrative.</b> You see only your own profile here.
-              Users, boards, statuses, idea types, fields and the assistant are configured by an
-              organization administrator, so they are <b>absent rather than refused</b>.
+              Users, boards, statuses, idea types, fields, tags and the assistant are configured by
+              an organization administrator, so they are <b>absent rather than refused</b>.
             </span>
           </Alert>
         )}
