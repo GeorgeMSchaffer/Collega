@@ -2,8 +2,8 @@ import { execFileSync } from 'node:child_process'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { AiTokenUsage, IdeaAssistTurn, IdeaDraft } from '@collega/application/ai'
-import type { AssistantVersion, V1Expectations } from './corpus.ts'
-import type { CatalogOption } from './fixture-context.ts'
+import type { AssistantVersion, CaseDraft, V2Expectations } from './corpus.ts'
+import type { CatalogField, CatalogOption } from './fixture-context.ts'
 import type { RunMetrics } from './metrics.ts'
 import type { Verdict } from './verdict.ts'
 
@@ -18,6 +18,8 @@ export type AbortReason = 'max-calls' | 'max-tokens' | 'unexpected-error'
 
 export interface RunHeader {
   readonly runnerVersion: string
+  /** The turn the run drove. Absent means `v1`: only the v2 sprint's runs set `v2`. */
+  readonly assistant?: 'v1' | 'v2'
   readonly git: { readonly commit: string | null; readonly dirty: boolean | null }
   readonly label: string
   readonly model: string
@@ -50,6 +52,8 @@ export interface RunFixture {
   readonly organizationId: string
   readonly ideaTypes: readonly CatalogOption[]
   readonly businessImpacts: readonly CatalogOption[]
+  /** v2 fixtures only. */
+  readonly fields?: readonly CatalogField[]
 }
 
 export interface RunCase {
@@ -58,15 +62,57 @@ export interface RunCase {
   readonly pair: string | null
   readonly assistant: AssistantVersion
   readonly turns: readonly string[]
-  readonly expect: V1Expectations
+  readonly expect: V2Expectations
+  /** v2 cases only, and only when set. */
+  readonly draft?: CaseDraft
+  readonly lockedFields?: readonly string[]
+}
+
+/**
+ * The v2 draft on the wire (SPEC/20-feature-ai-idea-assist-v2.md "Contract changes"): options and
+ * custom fields by id, tags by name. Provisional until the v2 turn is built.
+ */
+export interface V2Draft {
+  readonly title: string | null
+  readonly problem: string | null
+  readonly proposedSolutions: readonly string[]
+  readonly impactRationale: string | null
+  readonly businessImpactId: string | null
+  readonly ideaTypeId: string | null
+  readonly priority: string | null
+  readonly tagNames: readonly string[]
+  readonly fieldValues: readonly {
+    readonly fieldDefinitionId: string
+    readonly value: string | number
+  }[]
+  readonly description: string | null
+}
+
+/**
+ * What a v2 turn adds to its record. `rawChanges` is the model's output before the server drops
+ * locked fields and unknown ids, which is what the locked-field proposal rate reads (rule 16);
+ * `draft` is the draft after the turn, which the survival count and the field scores read.
+ */
+export interface V2TurnRecord {
+  readonly draftSent: V2Draft
+  readonly lockedFields: readonly string[]
+  readonly rawChanges: Partial<V2Draft> | null
+  readonly changes: Partial<V2Draft> | null
+  readonly draft: V2Draft | null
+  readonly suggestions: {
+    readonly solutions?: readonly string[]
+    readonly problemRewrite?: string
+    readonly rationales?: readonly string[]
+  } | null
+  readonly nextStep: string | null
 }
 
 export interface TurnRecord {
   readonly index: number
   /** The transcript sent: refused user turns already dropped, `nextQuestion`s appended. */
   readonly transcript: readonly IdeaAssistTurn[]
-  /** The draft sent with it. */
-  readonly draftSent: IdeaDraft
+  /** The draft sent with it; null on a v2 turn, whose draft is in `v2`. */
+  readonly draftSent: IdeaDraft | null
   /** Null when the call errored. */
   readonly inScope: boolean | null
   readonly nextQuestion: string | null
@@ -79,6 +125,8 @@ export interface TurnRecord {
   readonly usage: AiTokenUsage | null
   readonly latencyMs: number
   readonly error: string | null
+  /** v2 turns only. */
+  readonly v2?: V2TurnRecord
 }
 
 /**
