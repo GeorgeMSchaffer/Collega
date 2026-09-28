@@ -1,5 +1,16 @@
 # Feature: User Login
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** login, session issue, seeded Site Admin's first-login password change; MFA, social login out.
+> - **Key rules:** a failure never reveals which credential was wrong (2); 5 fails in 15 min lock 15 min (3).
+> - Seeded Site Admin must change password first (4); unauthenticated → `/login`, `/register` public (6).
+> - Restore only after `GET /api/v1/auth/me` accepts the token (9); an unknown token clears the session (10),
+>   an endpoint-specific `401` does not (11).
+> - **Contracts:** contracts/auth.md
+> - **Decisions:** 2026-09-12 "A lockout refuses a wrong password, not a right one"; 2026-09-11 "The
+>   account-lockout denial of service is a known open risk; not fixed now"; 2026-09-04 "The session lives
+>   in a cookie Nest issues; the reshape takes only what introspection forces"
+
 ## Outcome
 Users can securely access Collega using organization-scoped credentials.
 

@@ -1,5 +1,16 @@
 # Feature: Idea-Type Fields (Per-Type Field Selection)
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** which custom fields (UDFs) an idea shows, by Idea Type, via direct type→field mapping (no Field
+>   Set); plus the type badge, type immutability and admin reassign. The file states no build status.
+> - **Key rules:** `AllActiveFields` (default) shows every active org field with global required-ness;
+>   `Curated` shows only mapped fields, required per type; a value outside the resolved set is `400`;
+>   Idea Type is immutable on edit (`400`), and only admin `PUT …/ideas/{ideaId}/idea-type` changes it;
+>   out-of-scope values are preserved and shown archived, never dropped.
+> - **Contracts:** contracts/idea-type-fields.md, contracts/idea-field-options.md
+> - **Decisions:** 2026-09-27 "The API sends the custom field list";
+>   2026-09-04 "The idea-type badge moves to the tag row on swimlane cards"
+
 > **Model note (2026-08-10 rewrite).** This spec previously proposed a reusable **Field Set** entity as the indirection between idea types and fields. That model was **superseded by direct type→field mapping** (interview-resolved — see Design Decisions). Fields attach straight to an `IdeaType`; there is no separate "field set" concept. This file was renamed from the earlier `20-feature-idea-type-field-sets.md`; all cross-references were updated. Where this document says "the type's fields," it means the type's directly-mapped field selection.
 
 ## Overview

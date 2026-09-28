@@ -1,5 +1,14 @@
 # Feature: OAuth (Phase 2, Post-MVP)
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** Microsoft Entra ID OAuth/OIDC sign-in, organization-scoped; Phase 2, post-MVP, not in MVP.
+> - **Key rules:** local email/password login stays (requirement 4); link by provider + `sub` first, then by
+>   verified email, case-insensitive (edge cases 1–2); auto-provision only in the initiating organization with
+>   role `User` (requirement 7, edge cases 5–7); missing claims, subject/email conflicts and ambiguous matches
+>   are denied and audited (edge cases 3, 4, 9); inactive users stay blocked (requirement 8).
+> - **Contracts:** none
+> - **Decisions:** none recorded
+
 ## Outcome
 Organizations can enable Microsoft Entra ID sign-in while preserving existing local login behavior.
 

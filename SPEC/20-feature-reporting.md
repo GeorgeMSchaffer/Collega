@@ -1,5 +1,14 @@
 # Feature: Reporting (Post-MVP)
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** organization-scoped, read-only reports and exports; post-MVP, not required for MVP.
+> - **Key rules:** four baseline reports — idea throughput, idea aging, engagement activity, administration
+>   activity; CSV export required for each, JSON optional, PDF and spreadsheet formats out; date range and
+>   organization scope are required filters; UTC at API and export boundaries; Site Admin across organizations
+>   by explicit selection, Org Admin own organization only; exports carry the same authorization as queries.
+> - **Contracts:** none
+> - **Decisions:** none recorded
+
 ## Outcome
 Authorized users can run organization-scoped operational reports for idea workflow, collaboration activity, and administration insights.
 

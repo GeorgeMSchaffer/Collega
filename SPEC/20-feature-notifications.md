@@ -1,5 +1,14 @@
 # Feature: Notifications
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** persisting `NotificationEvent` rows for four collaboration triggers (MVP); email delivery,
+>   per-user preferences and an inbox UI are a later phase.
+> - **Key rules:** triggers are idea mention, comment mention, comment added and status change; recipients
+>   per trigger as listed; self-notifications are suppressed; each event stores the link `/ideas/{ideaId}`;
+>   no SMTP, email client or outbound HTTP in the path; no read or query endpoints required in MVP.
+> - **Contracts:** contracts/notifications.md
+> - **Decisions:** none recorded
+
 ## Outcome
 Notification events are persisted for collaboration events. Email delivery is deferred to a later phase.
 

@@ -1,5 +1,16 @@
 # Feature: Prompt-eval runner — measuring the idea assistant across a corpus
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** a local developer tool scoring the idea assistant (v1, and v2's gate) over `tools/prompt-eval`;
+>   specified 2026-09-28 (slice 113), marked **Not built**, planned as Sprint 12.
+> - **Key rules:** reuses production's prompt, adapter and sanitizer, never a copy (rules 8–9); refusal is the
+>   positive class, with Wilson intervals (13); `refuse-*` recall floor 1.0 (31); exit codes 0/1/2 (30);
+>   reads only `PROMPT_EVAL_ANTHROPIC_API_KEY` (36–37); never runs in `pnpm check`, no CI (39, 41).
+> - **Contracts:** none (rule 26 saves candidates from `GET /api/v1/ai-assist/prompt`, contracts/ai-assist.md)
+> - **Decisions:** 2026-09-28 "The prompt-eval runner's open questions are answered";
+>   2026-09-28 "The prompt-eval runner's provisional limits stand for the first baseline";
+>   2026-09-28 "The Anthropic client reads no credential or endpoint from the environment"
+
 **Status:** Specified 2026-09-28 (slice 113). **Not built.** Planned as Sprint 12,
 `SPEC/sprints/sprint-12-prompt-eval-runner.md`. Its open questions were answered on 2026-09-28
 (`SPEC/decisions.md`, "The prompt-eval runner's open questions are answered").

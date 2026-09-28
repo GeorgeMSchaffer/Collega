@@ -1,5 +1,16 @@
 # TypeScript Stack Migration — Costed, Sequenced Plan
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** the .NET → Next.js + Nest.js + Prisma conversion plan — waves, slices, settled constraints;
+>   "authorized and executing" (Wave A done 2026-09-03, Wave 0 2026-09-06, F6 2026-09-13).
+> - **Key rules:** §1's settled constraints are not re-litigated — big-bang cutover (6), HTTP-only
+>   Next ↔ Nest (11), Vercel + Prisma Postgres (14). §4.1: a slice owns path globs; disjoint ones may run.
+> - §4.2: `schema.prisma` owned by S0.2 then frozen (amend via one slice); §4.3: `30-Contracts.md` read-only.
+> - **Contracts:** none by file; §4.3 treats `SPEC/30-Contracts.md` as a whole as read-only
+> - **Decisions:** 2026-09-04 ".NET development stops; the conversion starts now"; 2026-08-31 "TypeScript
+>   conversion: three constraints settled"; 2026-09-11 "The golden replay is not a gate, and never was meant
+>   to be one"; 2026-09-08 "Wave G is cut from the conversion and revisited after cutover"
+
 Status: **authorized and executing.** Written 2026-08-31; became the active sprint's plan
 2026-09-04, when Sprint 8 was cancelled and conversion ticket `08` cleared the last gate on
 Wave 0. Execution wrapper: `SPEC/sprints/sprint-09-typescript-conversion.md`.

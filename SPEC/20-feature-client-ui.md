@@ -1,3 +1,14 @@
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** the client's navigation, screens, list/detail pattern, controls, palette and themes (comp P
+>   structure, comp R list/detail, forms, tags, themes); Blazor surfaces are kept only as superseded.
+> - **Key rules:** denied shows disabled with a reason (row actions hidden); the drawer overlays, never
+>   modal; Site Admin mutates org content only via View As; tag text computed to 4.5:1 in every theme;
+>   no keyboard shortcuts; colour never alone; Terrazzo default, Graphite dark, per-browser cookie.
+> - **Contracts:** contracts/boards.md, contracts/ideas.md, contracts/tags.md, contracts/auth.md
+> - **Decisions:** 2026-09-27 "One list and detail pattern, and a drawer instead of the docked inspector";
+>   2026-09-28 "Graphite replaces Notte as the dark theme"; 2026-09-27 "Terrazzo is the palette, with a
+>   theme picker"
+
 ## SCOPE OF THIS SPEC (reconciled 2026-09-03)
 
 This spec describes the client as **comp P** specifies it — the canonical UI direction

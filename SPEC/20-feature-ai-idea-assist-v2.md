@@ -1,5 +1,15 @@
 # Feature: Idea Assistant v2 — a co-author for new ideas
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** the idea assistant as a co-author of structured idea fields; specified 2026-09-27, not
+>   built; supersedes v1 for all new work.
+> - **Key rules:** ships only after a TypeScript `tools/prompt-eval` runner reports scope-gate and mapping
+>   results; an edited field is owned, `lockedFields` output dropped server-side; skip never gated; any
+>   failed turn hands off to the form, no scripted fallback; never a write path; `ai-draft`/`ai-polish` gone.
+> - **Contracts:** contracts/ai-assist.md, contracts/ideas.md
+> - **Decisions:** 2026-09-27 "The idea assistant is rescoped as a co-author, and ideas gain structured
+>   fields"; 2026-09-13 "The AI integration is rescoped and respecified after the current batch"
+
 **Status:** Specified 2026-09-27 as the rescope `SPEC/decisions.md` 2026-09-13 scheduled. **Not
 built.** It supersedes `20-feature-ai-idea-assist.md` for all new work; that spec describes what is
 live today and stays authoritative for it until this one ships. The reference rendering is comp R,

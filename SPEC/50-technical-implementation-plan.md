@@ -1,5 +1,14 @@
 # Technical Implementation Plan
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** SUPERSEDED — MVP plan as ASP.NET Core + Blazor (slices T001–T067, built on .NET). Kept for
+>   layer design and the entity/column model, which the conversion preserves.
+> - **Key rules:** superseded by `SPEC/50-typescript-migration.md`; treat every framework, ORM and tooling
+>   statement as history.
+> - **Contracts:** none
+> - **Decisions:** 2026-09-06 "The .NET stack is frozen; its code and instructions are no longer applicable";
+>   2026-09-13 "The .NET stack is deleted; stale pointers go, inherited rationale stays"
+
 > ## ⛔ SUPERSEDED — describes the frozen .NET stack
 >
 > This plans the MVP as "a layered ASP.NET Core application with a Blazor client". That stack is

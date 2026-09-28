@@ -1,5 +1,13 @@
 # 50 — API CI/CD to Azure App Service
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** SUPERSEDED — GitHub Actions deploy of the frozen .NET API to Azure App Service; never deployed.
+> - **Key rules:** superseded by `SPEC/50-vercel-deployment.md`, canonical for deployment; nothing here is a
+>   build instruction or a gate.
+> - **Contracts:** none
+> - **Decisions:** 2026-09-04 "Sprint 8 is cancelled: the .NET stack is never deployed"; 2026-09-13 "The .NET
+>   stack is deleted; stale pointers go, inherited rationale stays"
+
 > ## ⛔ SUPERSEDED — describes the frozen .NET stack
 >
 > This document sets up `.github/workflows/deploy-api.yml`, which builds and deploys

@@ -1,5 +1,16 @@
 # Feature: User-Defined Fields (UDFs) for Ideas
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** org-level custom fields on ideas (7 types). Behaviour canonical; the .NET implementation
+>   sections are history. Build status not stated here.
+> - **Key rules:** one field schema per org, shared by all boards; only Site/Org Admin manage definitions.
+> - Required UDFs block save; per-type required-ness now comes from `20-feature-idea-type-fields.md`.
+> - Active names unique per org, case-insensitively; delete is soft — values kept but hidden.
+> - Value changes emit `IdeaFieldValueChanged`; values flow into CSV export/import and list filters.
+> - **Contracts:** contracts/ideas.md, contracts/idea-type-fields.md
+> - **Decisions:** 2026-09-27 "The API sends the custom field list"; 2026-09-06 "The .NET stack is frozen;
+>   its code and instructions are no longer applicable"
+
 > **Implementation sections below target the frozen .NET stack.** The EF Core configuration, the
 > `AddUserDefinedFields` migration and the Blazor component mapping describe how this was built in
 > `src/Collega.*`, which is frozen and deleted in slice F6 (`SPEC/decisions.md` 2026-09-06). The
