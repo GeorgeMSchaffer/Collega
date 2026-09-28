@@ -22,7 +22,7 @@ export class PromptFileError extends Error {
 }
 
 /**
- * The built-in default, or a candidate template read verbatim from a file (rule 26) - the raw
+ * The built-in default, or a candidate template read from a file (rule 26) - the raw template
  * text, as `GET /api/v1/ai-assist/prompt` returns it in `body`. The redirect strings are the
  * defaults either way: the model never sees them, so they cannot change what is measured.
  */
@@ -38,7 +38,9 @@ export async function loadPromptSource(promptFile: string | undefined): Promise<
 
   let template: string
   try {
-    template = await readFile(promptFile, 'utf8')
+    // Trimmed as publishing trims it (`publishAiPromptVersion`), so a file saved with a trailing
+    // newline renders and hashes as the version it would publish.
+    template = (await readFile(promptFile, 'utf8')).trim()
   } catch (error) {
     throw new PromptFileError(
       `Cannot read --prompt-file ${promptFile}: ${(error as Error).message}`,
