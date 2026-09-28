@@ -5,7 +5,8 @@
 //
 // Skipped unless `DATABASE_URL` is set; needs the demo seed already applied. It edits one seeded
 // board's lanes the way a save does - same statuses, same order, fresh ids - so nothing another
-// suite reads changes.
+// suite reads changes. Point `DATABASE_URL` at a scratch database: it rewrites seeded lane ids
+// permanently.
 
 import { randomUUID } from 'node:crypto'
 import { afterAll, describe, expect, it } from 'vitest'
