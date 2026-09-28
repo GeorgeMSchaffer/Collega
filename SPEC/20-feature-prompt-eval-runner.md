@@ -226,12 +226,16 @@ reported, excluded from every metric denominator below.
 
 ### Credentials
 
-36. The runner reads **`ANTHROPIC_API_KEY`** from its process environment, loading the repository
-    root `.env` when present — the name v1 rule 29 fixed, so no second name is introduced. It is a
-    single key; per-organization keys stay unimplemented (tracker rule 30, v1 rule 30).
+36. The runner reads **only `PROMPT_EVAL_ANTHROPIC_API_KEY`**, from its process environment or, when
+    absent there, from the repository root `.env`. It **never reads `ANTHROPIC_API_KEY`** — the API's
+    key (v1 rule 29) — so a developer's local API key cannot be picked up by accident. From `.env` it
+    reads that one variable rather than loading the file into the environment. It is a single key;
+    per-organization keys stay unimplemented (tracker rule 30, v1 rule 30).
 37. **A dedicated evaluation key, never the production deployment key**, so evaluation spend is
     visible on its own and a runaway run cannot use up the provider-side limits production depends
-    on. It is supplied as `ANTHROPIC_API_KEY` from the environment or the root `.env` (rule 36).
+    on. A live run **refuses to start** when `PROMPT_EVAL_ANTHROPIC_API_KEY` is unset or blank. The
+    runner passes the key to `AnthropicIdeaDraftModel` explicitly, as its `apiKey` configuration;
+    nothing relies on the SDK finding a key in the environment.
 38. The key is a provider credential, not a user identity: the identity chokepoint
     (`tools/arch/identity-chokepoint.test.ts`) is unaffected, and the runner lives outside the
     `apps/` and `packages/` trees it scans.
@@ -244,8 +248,8 @@ reported, excluded from every metric denominator below.
     a billed provider call hid in the .NET test suite). The live command is a separate script,
     `eval`, which Turbo never runs because `turbo.json` names only `build`, `typecheck` and `test`.
 40. Invocation: `pnpm --filter @collega/prompt-eval eval [options]`, and
-    `… eval compare|rescore|dump-prompt …`. A live run refuses to start without a key and without
-    `--yes` when the planned call count exceeds 100.
+    `… eval compare|rescore|dump-prompt …`. A live run refuses to start without `PROMPT_EVAL_ANTHROPIC_API_KEY`,
+    and without `--yes` when the planned call count exceeds 100.
 41. **No CI for now.** The runner is not run on pull requests, pushes or a schedule, and there is no
     `workflow_dispatch` job. A run is local, and its summary is attached to the review of any prompt
     change (rule 35).
@@ -275,6 +279,7 @@ reported, excluded from every metric denominator below.
 - [ ] A ceiling stops a run, writes it as aborted and exits 2.
 - [ ] `rescore` reproduces a saved run's metrics without a key.
 - [ ] No run file, summary or log line contains the key.
+- [ ] A live run with only `ANTHROPIC_API_KEY` set refuses to start.
 - [ ] `pnpm check` runs only the hermetic self-tests; nothing in it reaches a provider.
 - [ ] A v1 baseline is committed in `tools/prompt-eval/baselines/`.
 - [ ] The v2 case format is specified in the corpus and scored from saved runs in the self-tests; a

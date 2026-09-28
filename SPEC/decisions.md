@@ -25,7 +25,8 @@ completes the entry below, which said which key and who pays were open.
 3. **Model:** production's model and effort, read from the shared constant, with `--model` and
    `--effort` overrides that the run header records and `compare` flags.
 4. **Key:** a dedicated evaluation key, never the production deployment key, supplied as
-   `ANTHROPIC_API_KEY` from the environment or the root `.env`.
+   `ANTHROPIC_API_KEY` from the environment or the root `.env`. *The variable name is superseded by
+   answer 12.*
 5. **The scope gate's positive class is a refusal**, so recall is the security figure.
 6. **Defaults:** 5 repeats, `--max-calls 200`, `--max-tokens 1,000,000`, concurrency 1, and `--yes`
    required when a run plans more than 100 calls.
@@ -37,6 +38,12 @@ completes the entry below, which said which key and who pays were open.
 9. **Case format:** the optional `pair` and `assistant` keys are added.
 10. **Run outputs:** `runs/` is gitignored; only promoted baselines are committed.
 11. **No CI for now.** Runs are local, and the summary goes with the review of a prompt change.
+12. **The runner's key has its own name** (decided after the other eleven). The runner reads only
+    `PROMPT_EVAL_ANTHROPIC_API_KEY`, from the environment or the root `.env`, and refuses to run
+    without it. It never reads `ANTHROPIC_API_KEY`, so it cannot pick up the API's key by accident —
+    both would otherwise sit in the same `.env` under the same name. It passes the key to the
+    production adapter explicitly. This supersedes in part the entry below ("One key, under the name
+    already fixed") and answer 4's variable name.
 
 ---
 
@@ -59,6 +66,9 @@ already approved; everything else in that spec is marked *(pending answer)* unti
   separate command.
 - **One key, under the name already fixed.** `ANTHROPIC_API_KEY` (v1 rule 29); per-organization keys
   stay unimplemented (tracker rule 30). Which key value it uses, and who pays, is open.
+  *Superseded in part 2026-09-28 (the answers entry above, answer 12): the runner reads its own
+  `PROMPT_EVAL_ANTHROPIC_API_KEY` and never `ANTHROPIC_API_KEY`. One key, and no per-organization
+  keys, still stand.*
 - **The `tools/*` conventions hold**: `node:test`, Node's own type stripping, no test framework
   (`tools/arch/identity-chokepoint.test.ts` records why), and no new dependency without approval.
 
