@@ -19,6 +19,7 @@ import type {
   FieldDefinition,
   Idea,
   IdeaDetail,
+  IdeaFormField,
   IdeaType,
   ImportOutcome,
   Issue,
@@ -38,6 +39,7 @@ import type {
   WireBoardListItem,
   WireCurrentUser,
   WireDeliveryCard,
+  WireEffectiveField,
   WireFieldDefinition,
   WireIdeaAssignee,
   WireIdeaComment,
@@ -320,6 +322,21 @@ function toComment(wire: WireIdeaComment): Comment {
   }
 }
 
+/** A custom field as the API resolved it for a type or an idea, into what the form renders. */
+export function toIdeaFormField(wire: WireEffectiveField): IdeaFormField {
+  return {
+    id: wire.fieldDefinitionId,
+    name: wire.name,
+    fieldType: wire.fieldType,
+    required: wire.isRequired,
+    options: wire.options.map((option) => ({
+      id: option.optionId,
+      label: option.label,
+      archived: option.isArchived === true,
+    })),
+  }
+}
+
 /**
  * `GET /ideas/{id}` into what the inspector renders.
  *
@@ -360,6 +377,10 @@ export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
       name: field.fieldName,
       fieldType: field.fieldType,
       value: field.value,
+    })),
+    formFields: wire.formFields.map((field) => ({
+      ...toIdeaFormField(field),
+      value: field.value ?? '',
     })),
     comments: wire.comments.map(toComment),
   }
