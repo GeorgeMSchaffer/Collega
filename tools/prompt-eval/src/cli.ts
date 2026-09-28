@@ -400,6 +400,7 @@ async function liveRun(
         organizationId: f.catalog.organizationId,
         ideaTypes: f.catalog.ideaTypes,
         businessImpacts: f.catalog.businessImpacts,
+        ...(f.catalog.fields === undefined ? {} : { fields: f.catalog.fields }),
       }),
     ),
     cases: Object.fromEntries(
@@ -412,6 +413,8 @@ async function liveRun(
           assistant: c.assistant,
           turns: c.turns,
           expect: c.expect,
+          ...(c.draft === null ? {} : { draft: c.draft }),
+          ...(c.lockedFields.length === 0 ? {} : { lockedFields: c.lockedFields }),
         },
       ]),
     ),
