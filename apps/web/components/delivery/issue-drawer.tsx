@@ -52,7 +52,8 @@ export function IssueDrawer({
   const formId = useId()
   const statusId = useId()
   const [saving, setSaving] = useState(false)
-  const [statusError, setStatusError] = useState<string | null>(null)
+  // Keyed by the Issue it belongs to, so switching cards with the drawer open drops it.
+  const [statusError, setStatusError] = useState<{ id: string; message: string } | null>(null)
   const [moving, startMove] = useTransition()
 
   const issue = data?.issue ?? null
@@ -75,7 +76,7 @@ export function IssueDrawer({
     startMove(async () => {
       showStatus(next)
       const result = await setDeliveryStatus(issue.id, next)
-      setStatusError(result.error)
+      setStatusError(result.error ? { id: issue.id, message: result.error } : null)
     })
   }
 
@@ -159,9 +160,9 @@ export function IssueDrawer({
                     {status?.name}
                   </Marker>
                 )}
-                {statusError ? (
+                {statusError && statusError.id === issue.id ? (
                   <span role="alert" className="mt-1 block text-xs font-semibold text-destructive">
-                    {statusError}
+                    {statusError.message}
                   </span>
                 ) : null}
               </dd>
@@ -210,6 +211,7 @@ export function IssueDrawer({
           </section>
 
           <IssueTasks
+            key={issue.id}
             ideaId={issue.id}
             tasks={data.tasks}
             members={data.members}
