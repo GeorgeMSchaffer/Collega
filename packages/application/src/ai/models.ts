@@ -1,3 +1,4 @@
+import { estimatedCostOf } from '@collega/domain/ai'
 import type { Priority } from '@collega/domain/enums'
 
 // Prompt management (Site-Admin settings surface) -------------------------------------------
@@ -270,6 +271,19 @@ export const DEFAULT_AI_USAGE_LIMITS: AiUsageLimits = {
   rateLimitWindowSeconds: 60,
   perUserCallsPerWindow: 10,
   perOrganizationCallsPerWindow: 60,
+}
+
+/**
+ * What `usage` would cost at `limits`' rates, priced as a usage record is. For callers with no
+ * record to price - the prompt-eval runner's estimate (SPEC/20-feature-prompt-eval-runner.md
+ * rule 18).
+ */
+export function estimatedCostAtRates(usage: AiTokenUsage, limits: AiUsageLimits): number {
+  return estimatedCostOf({
+    ...usage,
+    inputRatePerMillion: limits.inputRatePerMillion,
+    outputRatePerMillion: limits.outputRatePerMillion,
+  })
 }
 
 /** Whether a ceiling is in force at all. A non-positive limit disables the gate - useful for a
