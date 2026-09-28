@@ -33,6 +33,8 @@ import type {
   Sprint,
   SprintState,
   Status,
+  TagOverview,
+  TagRef,
   ViewingAs,
 } from '../types'
 import type {
@@ -45,11 +47,13 @@ import type {
   WireIdeaComment,
   WireIdeaDetail,
   WireIdeaListItem,
+  WireIdeaTag,
   WireIdeaType,
   WireOrganizationListItem,
   WireSprint,
   WireStatus,
   WireSwimlane,
+  WireTagItem,
   WireUserImportResult,
   WireUserListItem,
   WireViewingAs,
@@ -356,11 +360,12 @@ export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
     ideaType: wire.ideaTypeName,
     businessImpact: wire.businessImpactName,
     tag: wire.tagNames[0] ?? null,
-    tags: [...wire.tagNames],
+    tags: wire.tags.map(toTagRef),
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
     assignees: wire.assignees.map(toPersonRef),
     upvotes: wire.upvoteCount,
     hasUpvoted: wire.hasUpvoted,
+    effort: null,
     problem: wire.problem,
     proposedSolutions: [...wire.proposedSolutions],
     impactRationale: wire.impactRationale,
@@ -406,11 +411,34 @@ export function toIdea(wire: WireIdeaListItem): Idea {
     ideaType: wire.ideaTypeName,
     businessImpact: wire.businessImpactName,
     tag: wire.tagNames[0] ?? null,
-    tags: [...wire.tagNames],
+    tags: wire.tags.map(toTagRef),
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
     assignees: wire.assignees.map(toPersonRef),
     upvotes: wire.upvoteCount,
     hasUpvoted: wire.hasUpvoted,
+    effort: EFFORTS.find((candidate) => candidate === wire.effort) ?? null,
+  }
+}
+
+export function toTagRef(wire: WireIdeaTag): TagRef {
+  return { id: wire.tagId, name: wire.name, color: wire.color }
+}
+
+/** A catalog item into a Settings → Tags row; `organization` only on a Site Admin's roll-up. */
+export function toTagOverview(
+  wire: WireTagItem,
+  organization: { id: string; name: string } | null = null,
+): TagOverview {
+  return {
+    id: wire.tagId,
+    name: wire.name,
+    color: wire.color,
+    ideaCount: wire.ideaCount,
+    boards: wire.boards.map((board) => ({ id: board.boardId, name: board.name })),
+    createdAtUtc: wire.createdAtUtc,
+    createdOn: DATE.format(new Date(wire.createdAtUtc)),
+    createdBy: wire.createdBy?.displayName ?? null,
+    organization,
   }
 }
 

@@ -234,7 +234,7 @@ export async function getNavCounts(): Promise<{ boards: number; ideas: number; b
 /**
  * Every board the idea screens may name, **archived ones included** — an idea on an archived board
  * still appears on Ideas, read-only, and its row needs the board's name and its archived state.
- * Also the Board filter's options and the Tags filter's starting options (each board's top tags).
+ * Also the Board filter's options.
  */
 export async function getBoardRefs(): Promise<BoardRef[]> {
   failIfRequested('getBoardRefs')
@@ -250,6 +250,5 @@ export async function getBoardRefs(): Promise<BoardRef[]> {
     id: board.boardId,
     name: board.name,
     isArchived: board.isArchived,
-    topTags: board.topTags.map((tag) => tag.name),
   }))
 }

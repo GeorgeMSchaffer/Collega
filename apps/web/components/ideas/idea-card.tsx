@@ -1,11 +1,12 @@
-import { cn } from '@collega/design-system'
+import { cn, EffortBar } from '@collega/design-system'
 import type { Idea } from '@/lib/types'
 import { CardActions } from './card-actions'
 import { People, PriorityMarker, TagList } from './idea-chips'
 
 /**
  * A card in a lane (comp R `.kcard`): the title, which opens the drawer, then priority and
- * assignees, then the first tag beside the upvote and move controls.
+ * assignees, the effort bar when the idea has an effort, then the first tag beside the upvote and
+ * move controls.
  *
  * **The title is the button, not the whole card.** A card carries its own buttons, and a button
  * inside a button is invalid HTML that browsers repair by breaking one of the two.
@@ -48,6 +49,7 @@ export function IdeaCard({
         <PriorityMarker priority={idea.priority} />
         <People people={idea.assignees} quiet />
       </div>
+      {idea.effort ? <EffortBar effort={idea.effort} /> : null}
       {/* `flex-wrap`, so a refusal from either control drops onto its own line. */}
       <div className="flex flex-wrap items-center gap-2">
         <TagList tags={idea.tags} max={1} />

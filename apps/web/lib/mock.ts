@@ -21,7 +21,7 @@
  * the tests now rather than a stand-in for an endpoint.
  */
 
-import type { Board, Effort, Idea, Member, Priority, Role, Status } from './types'
+import type { Board, Effort, Idea, Member, Priority, Role, Status, TagRef } from './types'
 
 export { engagementDenial, isAdministrator, writeDenial } from './roles'
 export type { Board, CurrentUser, Idea, Priority, Role, Status } from './types'
@@ -113,7 +113,12 @@ const TITLES = [
 ]
 
 const PRIORITIES: Priority[] = ['Low', 'Medium', 'High', 'Critical']
-const TAGS = ['automation', 'safety', 'quality', 'cycle-time']
+const TAGS: TagRef[] = [
+  { id: 'tag-automation', name: 'automation', color: '#E5484D' },
+  { id: 'tag-safety', name: 'safety', color: '#F5A524' },
+  { id: 'tag-quality', name: 'quality', color: '#3FB86B' },
+  { id: 'tag-cycle-time', name: 'cycle-time', color: '#6B9BF2' },
+]
 const ASSIGNEES = [null, 'NC', 'MC', 'OA']
 
 /** The seed's 3/2/2/1/3 spread across the five statuses, in canonical order. */
@@ -140,8 +145,14 @@ function buildIdeas(boardId: string): FixtureIdea[] {
         priority: PRIORITIES[index % PRIORITIES.length] ?? 'Medium',
         ideaType: IDEA_TYPES[index % IDEA_TYPES.length] ?? 'Process Revision',
         businessImpact: IMPACTS[index % IMPACTS.length] ?? 'Medium',
-        tag: TAGS[index % TAGS.length] ?? 'automation',
-        tags: [TAGS[index % TAGS.length] ?? 'automation'],
+        tag: TAGS[index % TAGS.length]?.name ?? 'automation',
+        tags: [
+          TAGS[index % TAGS.length] ?? {
+            id: 'tag-automation',
+            name: 'automation',
+            color: '#E5484D',
+          },
+        ],
         assigneeInitials: ASSIGNEES[index % ASSIGNEES.length] ?? null,
         assignees: [],
         authorName: AUTHORS[index % AUTHORS.length] ?? 'Noah Contributor',
@@ -149,6 +160,7 @@ function buildIdeas(boardId: string): FixtureIdea[] {
         createdOn: `2026-08-${String(10 + (index % 18)).padStart(2, '0')}`,
         upvotes: index % 3,
         hasUpvoted: index % 5 === 0,
+        effort: null,
       })
       index++
     }

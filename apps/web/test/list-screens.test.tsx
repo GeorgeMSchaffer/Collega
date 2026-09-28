@@ -22,7 +22,6 @@ vi.mock('next/navigation', () => ({
 }))
 vi.mock('@/lib/server/idea-actions', () => ({
   deleteIdea: vi.fn(),
-  findTags: vi.fn(async () => []),
   saveIdea: vi.fn(),
   addComment: vi.fn(),
   toggleUpvote: vi.fn(),
@@ -56,8 +55,8 @@ const as = (role: Role, children: ReactNode) => (
 )
 
 const BOARD_REFS: BoardRef[] = [
-  { id: 'open', name: 'Assembly', isArchived: false, topTags: [] },
-  { id: 'shut', name: 'Old plant', isArchived: true, topTags: [] },
+  { id: 'open', name: 'Assembly', isArchived: false },
+  { id: 'shut', name: 'Old plant', isArchived: true },
 ]
 
 function ideaOn(boardId: string, title: string): Idea {
@@ -76,6 +75,7 @@ function ideaOn(boardId: string, title: string): Idea {
     assignees: [],
     upvotes: 0,
     hasUpvoted: false,
+    effort: null,
   }
 }
 
@@ -88,7 +88,7 @@ function renderIdeas(role: Role) {
         total={2}
         boards={BOARD_REFS}
         statuses={[{ id: 's1', name: 'New', color: '#999' }]}
-        organizationId="org-1"
+        tags={[]}
         board={null}
         drawer={{ mode: null, idea: null, formOptions: null }}
       />,
