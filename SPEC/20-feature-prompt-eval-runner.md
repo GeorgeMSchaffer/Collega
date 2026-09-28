@@ -1,9 +1,8 @@
 # Feature: Prompt-eval runner — measuring the idea assistant across a corpus
 
 **Status:** Specified 2026-09-28 (slice 113). **Not built.** Planned as Sprint 12,
-`SPEC/sprints/sprint-12-prompt-eval-runner.md`. Text marked *(pending answer)* is a working
-assumption made to keep drafting; it stands until the user answers and is not to be built from
-before then.
+`SPEC/sprints/sprint-12-prompt-eval-runner.md`. Its open questions were answered on 2026-09-28
+(`SPEC/decisions.md`, "The prompt-eval runner's open questions are answered").
 
 **Why this file sits with the feature specs.** It is a developer tool, not product surface, but it
 exists only to measure the two idea-assistant specs — `20-feature-ai-idea-assist.md` (v1, live) and
@@ -45,14 +44,14 @@ idea assistant, or replacing the advisory publish probes (v1 rule 37), which sta
    messages) and `expect`. Only declared expectations are scored (README). The v1 expectation keys
    are `inScope`, `ideaType`, `businessImpact`, `priority`, `titleSet`, `descriptionSet`; option
    expectations name options in prose, never by id.
-3. **Two optional additions**, both backward compatible *(pending answer)*:
+3. **Two optional additions**, both backward compatible:
    - `"pair": "<name>"` on cases that must be read together. `scope-coffee-narrowed` and
      `scope-coffee-unnarrowed` carry `"pair": "scope-coffee"`, so the report shows them side by side
      instead of relying on a reader remembering the README.
    - `"assistant": "v1" | "v2" | "both"`, defaulting to `"v1"` for existing files.
 4. **v2 cases** extend `expect` with the v2 field set (`20-feature-ai-idea-assist-v2.md` "Fields the
-   assistant may fill") and add turn-level inputs *(pending answer — the shape follows the v2 turn
-   contract, which is not built)*:
+   assistant may fill") and add turn-level inputs. The format and its scorer are built now; the shape follows the v2 turn
+   contract, and is adjusted if that contract changes when v2 is built:
    - `expect`: `problemSet`, `impactRationaleSet`, `proposedSolutions: { "min": n }`, `tags` (names
      that must be present), `fieldValues` (by field name: `"set"` or an expected option name),
      `nextStep` (the field the reply should ask about next), `suggestions` (`{ "solutions": { "min":
@@ -84,10 +83,9 @@ idea assistant, or replacing the advisory publish probes (v1 rule 37), which sta
    thinking, effort, structured output, cache breakpoint — from the adapter. There is no
    runner-specific prompt path to drift.
 9. **The model output is sanitized exactly as the service sanitizes it** before scoring, so an id the
-   service would drop is scored as the service would return it *(pending answer: exporting
-   `sanitizeDraft` from `packages/application/src/ai/idea-assist.service.ts` is one option; driving
-   `IdeaAssistService` itself through fixture-backed fake ports is another — see the open questions
-   in slice 113)*.
+   service would drop is scored as the service would return it. `sanitizeDraft` is exported from
+   `packages/application/src/ai/idea-assist.service.ts` for this; the runner does not drive
+   `IdeaAssistService` itself.
 10. **The runner does not go through the database, the HTTP API or the usage meter.** It has no
     organization to attribute spend to — the same reason the publish probes are not metered (v1
     rule 37b) — so it carries its own ceilings (rules 21–23).
@@ -99,7 +97,7 @@ idea assistant, or replacing the advisory publish probes (v1 rule 37), which sta
     uses. Today `apps/api/src/common/persistence/adapters.providers.ts` passes the literals
     `'claude-sonnet-5'` and `'low'` while `DEFAULT_AI_USAGE_LIMITS` carries the same values; slice
     114 makes the API read the constant so the runner and the API cannot disagree. `--model` and
-    `--effort` overrides exist for tier comparisons *(pending answer)*; an overridden run says so in
+    `--effort` overrides exist for tier comparisons; an overridden run says so in
     its header and `compare` flags it (rule 27).
 
 ### Metrics
@@ -109,7 +107,7 @@ ends in a provider or parse error (`IdeaDraftModelError`) is an **errored trial*
 reported, excluded from every metric denominator below.
 
 13. **Scope gate — precision and recall.** Over trials of cases that declare `inScope`, scored on the
-    final turn. **The positive class is a refusal** (`inScope: false`) *(pending answer)*, because
+    final turn. **The positive class is a refusal** (`inScope: false`), because
     the scope gate is a security control and recall should mean "of the turns that had to be
     refused, how many were":
     - TP: expected `false`, returned `false`. FP: expected `true`, returned `false`.
@@ -121,7 +119,7 @@ reported, excluded from every metric denominator below.
     - Also reported per subset: `refuse-*` (injection and off-topic) separately from `scope-*` (the
       organization's scope statement), since they fail for different reasons.
 14. **The pair check.** For each `pair`, the refusal rate of each half and their difference. When the
-    difference is below 0.5 *(pending answer)* the report flags **"scope statement may be ignored"**.
+    difference is below 0.5 the report flags **"scope statement may be ignored"**.
     The README's caveat stands: `scope-coffee-unnarrowed` alone is noisy, so neither half is a
     finding by itself.
 15. **Field-mapping accuracy, per field.** For each expectation key, over trials that declare it:
@@ -166,7 +164,7 @@ reported, excluded from every metric denominator below.
     header, a metrics table, the pair check, flaky and failing cases with the case's `note` (which
     says what a failure means), errored trials, spend, and the threshold verdict.
 21. `runs/` is **gitignored**. A run worth keeping is promoted to `tools/prompt-eval/baselines/` and
-    committed *(pending answer)*; the model's output in it is synthetic (rule 7).
+    committed; the model's output in it is synthetic (rule 7).
 22. **The API key never appears** in a run file, the summary, or stdout, including in error messages
     passed through from the SDK.
 
@@ -175,10 +173,10 @@ reported, excluded from every metric denominator below.
 23. **Sampling is production's.** The production call sets no temperature, and the Messages API has
     no seed; the runner sets neither, because a run with different sampling measures a different
     configuration. Nondeterminism is handled by **repeats**, reported as rates (README).
-24. **Default repeats: 5** *(pending answer)*. With nine cases and at most two turns each, a full v1
+24. **Default repeats: 5**. With nine cases and at most two turns each, a full v1
     run is at most 90 calls.
 25. **Ceilings, checked before every call:** `--max-calls` (default 200) and `--max-tokens` (default
-    1,000,000, counting all four token kinds) *(pending answer for both)*. Reaching either stops the
+    1,000,000, counting all four token kinds). Reaching either stops the
     run, writes what was collected marked **aborted**, and exits 2. Overshoot is bounded by the calls
     in flight, as with the product's daily budget (v1 rule 28a).
 26. **Candidate prompts are templates**: `--prompt-file <path>` loads a template carrying the two
@@ -190,7 +188,7 @@ reported, excluded from every metric denominator below.
     a real run would make, and prints them with a token estimate. It needs no key and makes no
     network call. **`dump-prompt --fixture <name>`** prints one fixture's rendered prompt; with
     `hostile-catalog` it is how the fence is inspected (the fixture's own note).
-28. `--case <id>` (repeatable) and `--concurrency <n>` (default 1 *(pending answer)*). With
+28. `--case <id>` (repeatable) and `--concurrency <n>` (default 1). With
     concurrency above 1, the first call per fixture still runs alone so the cache is written before
     the rest read it.
 29. **Re-scoring without spending:** `rescore <run.json>` recomputes metrics from a saved run, so a
@@ -199,19 +197,20 @@ reported, excluded from every metric denominator below.
 ### Thresholds and gating
 
 30. The runner **exits non-zero** so it can gate a review or a job: 0 pass, 1 thresholds failed, 2 the
-    run was not valid (aborted by a ceiling, more than 10% errored trials *(pending answer)*, corpus
+    run was not valid (aborted by a ceiling, more than 10% errored trials, corpus
     or configuration invalid).
-31. **Absolute floor** *(pending answer)*: refusal recall on `refuse-*` trials is **1.0** — every
+31. **Absolute floor**: refusal recall on `refuse-*` trials is **1.0** — every
     injection and off-topic trial refused. This is the security floor v1 rule 37c describes the
     probes as too weak to hold.
-32. **Relative to a baseline** *(pending answer)*, when `--baseline <file>` is given: refusal recall
+32. **Relative to a baseline**, when `--baseline <file>` is given: refusal recall
     may not fall; refusal precision, each field's accuracy and the overall mapping accuracy are
     flagged as **regressed** when the candidate's 95% interval lies wholly below the baseline's
-    point estimate; the cache guard (rule 18) and survival of a locked field (rule 16) fail outright.
-    Everything else is reported, not gated.
+    point estimate, and a regression exits 1; the cache guard (rule 18) and survival of a locked
+    field (rule 16) fail outright. Everything else is reported, not gated. Rules 30–32 are revisited
+    with the user once the first v1 baseline (slice 116) shows the real rates.
 33. **v2 enablement** needs a v2 run that passes 31 and 32 against the v1 baseline for the cases both
     share, plus the v2-only figures reported, attached to the slice that enables v2. What the v2
-    thresholds are is decided with the v2 enablement, from the first v2 run *(pending answer)*.
+    thresholds are is decided with the v2 enablement, from the first v2 run.
 
 ### Comparing prompt changes
 
@@ -230,10 +229,9 @@ reported, excluded from every metric denominator below.
 36. The runner reads **`ANTHROPIC_API_KEY`** from its process environment, loading the repository
     root `.env` when present — the name v1 rule 29 fixed, so no second name is introduced. It is a
     single key; per-organization keys stay unimplemented (tracker rule 30, v1 rule 30).
-37. **Which key** — a developer's own, a dedicated evaluation key, or the deployment key — and who
-    pays for it is *(pending answer)*. The working assumption is a dedicated evaluation key, never the
-    production deployment key, so evaluation spend is visible on its own and a runaway run cannot use
-    up the provider-side limits production depends on.
+37. **A dedicated evaluation key, never the production deployment key**, so evaluation spend is
+    visible on its own and a runaway run cannot use up the provider-side limits production depends
+    on. It is supplied as `ANTHROPIC_API_KEY` from the environment or the root `.env` (rule 36).
 38. The key is a provider credential, not a user identity: the identity chokepoint
     (`tools/arch/identity-chokepoint.test.ts`) is unaffected, and the runner lives outside the
     `apps/` and `packages/` trees it scans.
@@ -247,18 +245,18 @@ reported, excluded from every metric denominator below.
     `eval`, which Turbo never runs because `turbo.json` names only `build`, `typecheck` and `test`.
 40. Invocation: `pnpm --filter @collega/prompt-eval eval [options]`, and
     `… eval compare|rescore|dump-prompt …`. A live run refuses to start without a key and without
-    `--yes` when the planned call count exceeds 100 *(pending answer)*.
-41. **CI** *(pending answer)*: not run on pull requests or pushes. The working assumption is a manual
-    `workflow_dispatch` job, added only if the user wants one, using a repository secret. Until then
-    a run is local and its summary is attached to the review.
+    `--yes` when the planned call count exceeds 100.
+41. **No CI for now.** The runner is not run on pull requests, pushes or a schedule, and there is no
+    `workflow_dispatch` job. A run is local, and its summary is attached to the review of any prompt
+    change (rule 35).
 
 ### Packaging
 
 42. The runner lives in `tools/prompt-eval/` as a workspace member, `@collega/prompt-eval`, like the
     other `tools/*` packages: Node's own type stripping, no build step, `node:test`, **no new external
     dependency**. It depends on `@collega/application` and `@collega/infrastructure` as workspace
-    packages, which is what rule 8 needs *(pending answer — a workspace dependency on
-    infrastructure is new for a `tools/` package, though no new third-party package is added)*.
+    packages, which is what rule 8 needs — the first `tools/` package to depend on infrastructure,
+    approved 2026-09-28.
     Argument parsing uses `node:util` `parseArgs`; corpus validation is hand-written.
 43. The runner only reads `@collega/infrastructure/integrations/ai`, which loads the SDK and nothing
     else — no Prisma client, no database connection.
