@@ -3,7 +3,7 @@ import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
 import { RoadmapTimeline } from '@/components/delivery/roadmap-timeline'
 import { Topbar } from '@/components/nav/topbar'
-import { getIssues, getSprints } from '@/lib/data'
+import { getBacklogIssues, getSprints } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -24,8 +24,9 @@ export default async function RoadmapPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const [sprints, issues] = await Promise.all([getSprints(), getIssues()])
-  const count = issues.length
+  // Sprint counts plus the backlog: two requests, where listing every sprint's issues is one each.
+  const [sprints, backlog] = await Promise.all([getSprints(), getBacklogIssues()])
+  const count = backlog.length + sprints.reduce((total, sprint) => total + sprint.issueCount, 0)
 
   return (
     <>

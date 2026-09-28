@@ -1,6 +1,6 @@
 'use client'
 
-import { cn, Meta, Skeleton } from '@collega/design-system'
+import { cn, Meta, Skeleton, SkeletonRegion } from '@collega/design-system'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useSyncExternalStore } from 'react'
@@ -122,6 +122,9 @@ function SprintRow({ sprint, range }: { sprint: Sprint; range: RoadmapWindow }) 
       <div className="flex min-w-0 items-center gap-2 px-4 text-[13px]">
         <span className="truncate" title={sprint.name}>
           {sprint.name}
+          {sprint.state === 'Active' ? null : (
+            <span className="sr-only">, {sprint.state.toLowerCase()}</span>
+          )}
         </span>
         {sprint.state === 'Active' ? (
           <Meta caps className="text-primary">
@@ -179,7 +182,9 @@ export function RoadmapTimeline({ sprints }: { sprints: readonly Sprint[] }) {
 
       <section aria-label="Timeline" className="overflow-x-auto rounded-lg border bg-card">
         {range === null || today === null ? (
-          <Skeleton className="m-4 h-24" />
+          <SkeletonRegion label="Loading timeline" className="m-4">
+            <Skeleton className="h-24" />
+          </SkeletonRegion>
         ) : (
           <div className="relative min-w-[760px] pb-6">
             {/* First, so the bars paint over it. */}
