@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto'
+import { DEFAULT_AI_USAGE_LIMITS } from '@collega/application/ai'
 import type { ImpersonationResolver } from '@collega/application/auth'
 import { TokenAuthenticationService } from '@collega/application/auth'
 import { systemClock } from '@collega/application/common'
@@ -218,9 +219,10 @@ const CONCRETE_ADAPTERS: Provider[] = [
       new AnthropicIdeaDraftModel({
         apiKey: config.ai.anthropicApiKey,
         // Decided settings (SPEC/20-feature-ai-idea-assist.md rules 28a-28e), not
-        // environment-configurable - matches .NET's `AiUsageLimits` code defaults.
-        model: 'claude-sonnet-5',
-        effort: 'low',
+        // environment-configurable. Read from the constant tools/prompt-eval also reads, so the
+        // runner measures the model and effort production calls.
+        model: DEFAULT_AI_USAGE_LIMITS.model,
+        effort: DEFAULT_AI_USAGE_LIMITS.effort,
       }),
     inject: [CONFIG],
   },

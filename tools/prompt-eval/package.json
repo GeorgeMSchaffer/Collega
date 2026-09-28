@@ -1,0 +1,20 @@
+{
+  "name": "@collega/prompt-eval",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Runs the idea-assistant prompt over the tools/prompt-eval corpus. SPEC/20-feature-prompt-eval-runner.md.",
+  "scripts": {
+    "eval": "node src/cli.ts",
+    "test": "node --test \"test/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@collega/application": "workspace:*",
+    "@collega/infrastructure": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "26.4.1",
+    "typescript": "7.0.2"
+  }
+}

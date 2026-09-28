@@ -9,6 +9,32 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — The prompt-eval runner's fixture hash for `compare` is the catalog hash
+
+**An implementation correction, not a user decision.** Found while building slice 114:
+`20-feature-prompt-eval-runner.md` rule 19 hashed each fixture's rendered system prompt, and rule 34
+said only the template hash should differ between a baseline and a candidate. A rendered prompt
+always changes with its template, so every prompt comparison would have warned on every fixture.
+Rule 19 now keeps that hash (`fixtureHashes`) and adds a catalog hash (`fixtureCatalogHashes`): the
+fixture rendered through a template of only the two placeholders, plus the response schema. Rule 34's
+like-with-like check uses the catalog hash. Rule 40 also now names `pnpm -C tools/prompt-eval eval`,
+because `pnpm --filter` reports every failure as exit 1.
+
+---
+
+## 2026-09-28 — The Anthropic client reads no credential or endpoint from the environment
+
+**Decided by the user** on review of slice 114. `AnthropicIdeaDraftModel` constructs the SDK
+client with `apiKey` from configuration, `authToken: null`, and the SDK's default API URL
+(`https://api.anthropic.com`) as an explicit `baseURL`. Left unset, the SDK falls back to
+`ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL`: a stray token would ride along on every request,
+and a stray base URL would send the configured key to another host. Pinning both means the key the
+API or the prompt-eval runner was given, sent to Anthropic, is the only credential in play. The
+API's behaviour is otherwise unchanged — the same key, the same endpoint, and no client when the key
+is blank. Recorded in `20-feature-prompt-eval-runner.md` rule 37.
+
+---
+
 ## 2026-09-28 — The prompt-eval runner's open questions are answered
 
 **Decided by the user**, answering the eleven questions slice 113 left open, each with the
