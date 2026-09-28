@@ -136,7 +136,17 @@ export function totalTokensOf(record: AiUsageRecord): number {
  * Cost in USD from the rates stored on this row. Cache reads and cache writes are priced off the
  * input rate at the provider's published multipliers - 0.1x for a read, 1.25x for a write.
  */
-export function estimatedCostOf(record: AiUsageRecord): number {
+export function estimatedCostOf(
+  record: Pick<
+    AiUsageRecord,
+    | 'inputTokens'
+    | 'outputTokens'
+    | 'cacheReadInputTokens'
+    | 'cacheCreationInputTokens'
+    | 'inputRatePerMillion'
+    | 'outputRatePerMillion'
+  >,
+): number {
   const perMillion = 1_000_000
   const input = (record.inputTokens * record.inputRatePerMillion) / perMillion
   const cacheRead = (record.cacheReadInputTokens * record.inputRatePerMillion * 0.1) / perMillion

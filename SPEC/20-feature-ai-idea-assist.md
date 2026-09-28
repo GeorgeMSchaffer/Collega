@@ -2,6 +2,10 @@
 
 **Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/sprint-07-ai-idea-assist.md`) — after the Postgres migration (Sprint 5) and View As (Sprint 6), before Azure deployment (Sprint 8). Design decisions locked 2026-08-11 by user interview; `Anthropic` NuGet package approved by the user the same day.
 
+> **Superseded for new work by `20-feature-ai-idea-assist-v2.md` (2026-09-27).** That is the
+> rescope the next paragraph scheduled. Everything below still describes what is built and live, and
+> stays authoritative for it until v2 ships; no new work starts from this file.
+>
 > **A rescope is scheduled (`SPEC/decisions.md` 2026-09-13).** What is specified below is built and
 > live, and it stays. But it covers exactly one job — draft one new idea, in a chat, from a standing
 > start — and **no further AI feature work starts on this spec**: the integration is rescoped and

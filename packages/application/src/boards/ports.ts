@@ -21,8 +21,8 @@ export interface BoardRepository {
   isStatusReferenced(statusId: string): Promise<boolean>
 
   /**
-   * Live ideas per board, keyed by board id, for the whole list in one query. Soft-deleted ideas
-   * are excluded, matching what `IdeaRepository.listByBoard` counts.
+   * Live ideas per board, keyed by board id, for the whole list in one query. Soft-deleted and
+   * Delivery-phase ideas are excluded, matching what the board's own idea list shows.
    *
    * On this port rather than a narrow lookup of its own (the `OrganizationExistenceLookup`
    * pattern) because it needs no wiring: the same adapter already serves `BoardRepository`, and a
@@ -32,6 +32,42 @@ export interface BoardRepository {
    * pass over ids it was handed.
    */
   countIdeasByBoard(boardIds: readonly string[]): Promise<ReadonlyMap<string, number>>
+
+  /**
+   * The same population as `countIdeasByBoard`, grouped by board and status, for the whole list in
+   * one query. Pairs with no ideas are absent; the caller pads each board's swimlanes with zero.
+   */
+  countIdeasByBoardAndStatus(boardIds: readonly string[]): Promise<readonly BoardStatusIdeaCount[]>
+
+  /**
+   * The same population as `countIdeasByBoard`, grouped by board and tag, for the whole list in
+   * one query. One row per tag used on at least one of the board's ideas.
+   */
+  countIdeasByBoardAndTag(boardIds: readonly string[]): Promise<readonly BoardTagIdeaCount[]>
+
+  /**
+   * First and last names for the given user ids, keyed by id; ids that resolve to no user are
+   * absent. Here rather than on a users port for the reason `countIdeasByBoard` gives.
+   */
+  getUserNames(userIds: readonly string[]): Promise<ReadonlyMap<string, UserName>>
+}
+
+export type BoardStatusIdeaCount = {
+  readonly boardId: string
+  readonly statusId: string
+  readonly ideaCount: number
+}
+
+export type BoardTagIdeaCount = {
+  readonly boardId: string
+  readonly tagName: string
+  readonly tagColor: string
+  readonly ideaCount: number
+}
+
+export type UserName = {
+  readonly firstName: string
+  readonly lastName: string
 }
 
 /**

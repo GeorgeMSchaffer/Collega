@@ -1,13 +1,18 @@
-import { buttonVariants, EmptyState } from '@collega/design-system'
+import { Alert, buttonVariants } from '@collega/design-system'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { GatedAction } from '@/components/common/gated-action'
-import { Lane } from '@/components/ideas/lane'
-import { NewIdeaForm } from '@/components/ideas/new-idea-form'
+import { PageHeader } from '@/components/common/page-header'
+import { AddIdeaButton } from '@/components/ideas/add-idea-button'
+import { ArchivedBanner } from '@/components/ideas/archived-banner'
+import { BOARD_LIST, toIdeaListQuery } from '@/components/ideas/idea-list-config'
+import { IdeaWorkspace } from '@/components/ideas/idea-workspace'
+import { loadIdeaDrawer } from '@/components/ideas/load-idea-drawer'
+import { readListState } from '@/components/list/list-state'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoard, getIdeaOptions, getIdeasForBoard } from '@/lib/data'
+import { getBoard, getBoardIdeaList, getTagRefs } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
-import { currentUser, engagementDenial, writeDenial } from '@/lib/session'
+import { boardAdminDenial, currentUser, writeDenial } from '@/lib/session'
 
 export async function generateMetadata({ params }: { params: Promise<{ boardId: string }> }) {
   const { boardId } = await params
@@ -15,42 +20,57 @@ export async function generateMetadata({ params }: { params: Promise<{ boardId: 
   return { title: `${board?.name ?? 'Board'} · Collega` }
 }
 
-export default async function BoardPage({ params }: { params: Promise<{ boardId: string }> }) {
+const ARCHIVED = 'This board is archived'
+
+/**
+ * A board's own page (comp R): Lanes by default, List beside it, both filtered and sorted in the
+ * API from the URL, with the idea drawer over them. An archived board opens read-only under its
+ * banner — no adding, moving or editing; comments, votes and reading still work.
+ */
+export default async function BoardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ boardId: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const { boardId } = await params
+  const [{ boardId }, query] = await Promise.all([params, searchParams])
 
   // Sequential, not `Promise.all`: an idea query for a board the caller cannot read answers 404
   // too, and in a `Promise.all` that rejection wins the race and lands a stranger on an error
-  // boundary instead of "not found". Establishing the board exists first is also the only order
-  // that does not query rows behind a board this account may not open.
+  // boundary instead of "not found".
   const board = await getBoard(boardId)
   if (!board) notFound()
 
-  // Two independent gates, and both have to open. The role decides whether this account writes at
-  // all; `allowUserStatusUpdate` is the board's own setting for whether a plain User may move a
-  // card between lanes, which is a board configuration rather than a role (comp Q's "User status
-  // moves" column in board settings). An Org Admin moves cards on a board that has it switched off.
-  const roleDenial = writeDenial(currentUser().role)
+  const user = currentUser()
+  const roleDenial = writeDenial(user.role)
+  const authorDenial = roleDenial ?? (board.isArchived ? ARCHIVED : null)
+
+  // Two gates: the role decides whether this account writes at all, and `allowUserStatusUpdate` is
+  // the board's own setting for whether a plain User may move a card. An archived board moves none.
   const moveDenial =
-    roleDenial ??
-    (board.allowUserStatusUpdate || currentUser().role === 'OrgAdmin'
+    authorDenial ??
+    (board.allowUserStatusUpdate || user.role === 'OrgAdmin'
       ? null
       : 'This board only lets administrators move cards')
-  const canMove = moveDenial === null
 
-  // Upvoting is engagement, not authorship, and the two part company for exactly one role: a Read
-  // Only account may vote and may not write (`UpvoteService.toggle` — "All authenticated users,
-  // including Read Only, can upvote"). Gating the chip on `roleDenial` would take that away.
-  const upvoteDenial = engagementDenial(currentUser().role)
+  const state = readListState(query, BOARD_LIST)
+  const listQuery = toIdeaListQuery(state)
 
-  // The catalogs only the create form reads, and only when there is a form to fill — two requests
-  // that would otherwise be paid on every board view by everyone who cannot author.
-  const [boardIdeas, options] = await Promise.all([
-    getIdeasForBoard(boardId),
-    roleDenial ? { ideaTypes: [], businessImpacts: [] } : getIdeaOptions(),
+  const [first, tags, drawer] = await Promise.all([
+    getBoardIdeaList(board.id, listQuery),
+    getTagRefs(),
+    loadIdeaDrawer(query, authorDenial === null),
   ])
+
+  const lastPage = Math.max(1, Math.ceil(first.totalCount / listQuery.pageSize))
+  const ideas =
+    first.ideas.length === 0 && listQuery.page > lastPage
+      ? await getBoardIdeaList(board.id, { ...listQuery, page: lastPage })
+      : first
 
   return (
     <>
@@ -62,85 +82,67 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
           </span>
         }
         actions={
-          <>
-            <Link href="/ideas" className={buttonVariants({ variant: 'outline' })}>
-              List view
+          <GatedAction
+            id="why-edit-board"
+            label="Edit board"
+            denial={boardAdminDenial(user.role) ?? (board.isArchived ? ARCHIVED : null)}
+            variant="outline"
+          >
+            <Link
+              href={`/boards?board=${encodeURIComponent(board.id)}&mode=edit`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              Edit board
             </Link>
-            {/* The board is context here, so the form asks for everything except that. A role that
-                may not author gets the same control, disabled with its reason, and none of the
-                form's client bundle. */}
-            {roleDenial ? (
-              <GatedAction id="why-new-board" label="New idea" denial={roleDenial} />
-            ) : (
-              <NewIdeaForm boardId={board.id} options={options} />
-            )}
-          </>
+          </GatedAction>
         }
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
-        <div>
-          <h1>{board.name}</h1>
-          <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">
-            {canMove ? (
-              <>
-                Move a card between lanes with the arrows on it. A move saves immediately and the
-                board re-reads itself, so what you see after it is what the server holds.
-              </>
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
+        <PageHeader
+          title={board.name}
+          description={
+            <>
+              {board.description ? `${board.description} ` : null}
+              {board.isArchived
+                ? null
+                : moveDenial === null
+                  ? 'Move a card between lanes with the arrows on it.'
+                  : `${moveDenial}, so cards here stay where they are.`}
+            </>
+          }
+          action={
+            authorDenial ? (
+              <GatedAction id="why-new-board" label="Add New Idea" denial={authorDenial} />
             ) : (
-              <>{moveDenial}. Cards open read-only, and nothing here can be moved.</>
-            )}
-          </p>
-        </div>
-
-        <div className="flex items-start gap-3 overflow-x-auto pb-3">
-          {/* The board's own lanes, in the board's own order — not the organization's status
-              catalog. A board picks a subset, so rendering the catalog would show columns this
-              board does not have. */}
-          {board.lanes.map((status, index) => (
-            <Lane
-              key={status.id}
-              status={status}
-              boardId={board.id}
-              ideas={boardIdeas.filter((i) => i.statusId === status.id)}
-              previousStatusId={board.lanes[index - 1]?.id ?? null}
-              nextStatusId={board.lanes[index + 1]?.id ?? null}
-              canMove={canMove}
-              upvoteDenial={upvoteDenial}
-            />
-          ))}
-        </div>
-
-        {/* Beneath the lanes, not instead of them: the five empty columns are what teach the
-            workflow, so an empty board still shows the shape it will fill.
-
-            The action below appears only for a role that may NOT author, which is the opposite of
-            the usual shape and is what "shown, not hidden" actually asks for here: the refusal is
-            the thing worth showing, and a second live "New idea" would mean a second dialog in the
-            document with the same heading and the same ids as the working one in the top bar. The
-            copy points at that one instead.
-
-            It is gated on `roleDenial`, not `moveDenial`: authoring is refused for ReadOnly alone
-            (`IdeaService.requireIdeaEditRole`), while `allowUserStatusUpdate` gates moves and
-            nothing else, so folding it in here refused a User with a reason that was not true. */}
-        {boardIdeas.length === 0 ? (
-          <EmptyState
-            heading="No ideas on this board yet"
-            action={
-              roleDenial ? (
-                <GatedAction id="why-new-board-empty" label="New idea" denial={roleDenial} />
-              ) : undefined
-            }
-          >
-            {roleDenial ? (
-              <>Nothing has been raised here yet.</>
-            ) : (
-              <>
-                Use &ldquo;New idea&rdquo; in the top bar to add the first one. It lands in{' '}
-                {board.lanes[0]?.name ?? 'the left-most lane'}.
-              </>
-            )}
-          </EmptyState>
+              <AddIdeaButton />
+            )
+          }
+        />
+        {board.isArchived ? (
+          <ArchivedBanner boardId={board.id} canUnarchive={user.role === 'OrgAdmin'} />
         ) : null}
+        {drawer.missing ? (
+          <Alert role="status">
+            <span>
+              That idea could not be opened. It may have been deleted, or it is not yours to see.
+            </span>
+          </Alert>
+        ) : null}
+        <IdeaWorkspace
+          rows={ideas.ideas}
+          total={ideas.totalCount}
+          boards={[{ id: board.id, name: board.name, isArchived: board.isArchived }]}
+          statuses={board.lanes}
+          tags={tags}
+          board={{
+            id: board.id,
+            name: board.name,
+            lanes: board.lanes,
+            isArchived: board.isArchived,
+            canMove: moveDenial === null,
+          }}
+          drawer={drawer}
+        />
       </main>
     </>
   )

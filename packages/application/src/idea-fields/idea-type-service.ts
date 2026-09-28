@@ -12,11 +12,13 @@
 
 import { randomUUID } from 'node:crypto'
 import { Role } from '@collega/domain/enums'
+import type { FieldDefinition } from '@collega/domain/fields'
 import {
   createIdeaType,
   type IdeaType,
   IdeaTypeDomainError,
   MINIMUM_ACTIVE_IDEA_TYPES_PER_ORGANIZATION,
+  resolveEffectiveFields,
   setIdeaTypeAppearance,
   setIdeaTypeFieldSelection,
   setIdeaTypeSortOrder,
@@ -36,6 +38,7 @@ import {
   ValidationError,
 } from '../common/index.js'
 import type { FieldDefinitionRepository } from '../fields/index.js'
+import { toEffectiveFieldItem } from './effective-field-item.js'
 import type {
   CreateIdeaTypeCommand,
   IdeaTypeFieldSelectionInput,
@@ -61,8 +64,11 @@ export class IdeaTypeService {
     this.ensureReadScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
 
-    const options = await this.ideaTypes.listByOrganization(organizationId, includeDeleted)
-    return options.map(toItem)
+    const [options, activeFields] = await Promise.all([
+      this.ideaTypes.listByOrganization(organizationId, includeDeleted),
+      this.fieldDefinitions.listByOrganization(organizationId, false),
+    ])
+    return options.map((option) => toItem(option, activeFields))
   }
 
   async create(organizationId: string, command: CreateIdeaTypeCommand): Promise<IdeaTypeItem> {
@@ -97,7 +103,7 @@ export class IdeaTypeService {
       now,
     )
 
-    return toItem(ideaType)
+    return toItem(ideaType, await this.fieldDefinitions.listByOrganization(organizationId, false))
   }
 
   async update(ideaTypeId: string, command: UpdateIdeaTypeCommand): Promise<IdeaTypeItem> {
@@ -135,7 +141,10 @@ export class IdeaTypeService {
       now,
     )
 
-    return toItem(ideaType)
+    return toItem(
+      ideaType,
+      await this.fieldDefinitions.listByOrganization(ideaType.organizationId, false),
+    )
   }
 
   /**
@@ -381,7 +390,7 @@ export class IdeaTypeService {
   }
 }
 
-function toItem(ideaType: IdeaType): IdeaTypeItem {
+function toItem(ideaType: IdeaType, activeFields: readonly FieldDefinition[]): IdeaTypeItem {
   return {
     ideaTypeId: ideaType.id,
     organizationId: ideaType.organizationId,
@@ -398,6 +407,7 @@ function toItem(ideaType: IdeaType): IdeaTypeItem {
         displayOrder: f.displayOrder,
         isRequired: f.isRequired,
       })),
+    effectiveFields: resolveEffectiveFields(ideaType, activeFields).map(toEffectiveFieldItem),
   }
 }
 

@@ -69,10 +69,7 @@ export default async function AiPromptPage() {
                   className="font-mono text-xs"
                   aria-describedby="systemPrompt-count"
                 />
-                <span
-                  id="systemPrompt-count"
-                  className="mt-1 block text-[0.8rem] text-muted-foreground"
-                >
+                <span id="systemPrompt-count" className="mt-1 block text-xs text-muted-foreground">
                   {prompt.text.length} / {SYSTEM_PROMPT_MAX.toLocaleString('en-US')}
                 </span>
               </Field>

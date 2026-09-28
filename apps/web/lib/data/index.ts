@@ -7,7 +7,7 @@
  * module directly, so wiring the API meant editing all 37.
  *
  * Converted so far: every board, idea, catalog, people and delivery reader. The idea surfaces
- * (`getIdeasForBoard`, `getIdeaOptions`, `getOrganizationIdeas`, `getIdea`), the boards
+ * (`getIdeaList`, `getBoardIdeaList`, `getIdeaFormOptions`, `getIdea`), the boards
  * (`getBoards`, `getBoard`, `getBoardAdmin`), the organization's statuses, idea types and custom
  * fields, and the accounts behind them (`getProfile`, `getOrganizations`, `getMembers`,
  * `getMembersForOrganization`, `getInviteCode`). Between them, everything `/boards`, `/ideas`,
@@ -47,4 +47,5 @@ export * from './admin'
 export * from './boards'
 export * from './delivery'
 export * from './ideas'
+export * from './tags'
 export * from './view-as'

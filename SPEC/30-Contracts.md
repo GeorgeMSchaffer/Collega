@@ -34,6 +34,7 @@ Defines the system contracts that implementations must follow.
 - Organization, user, idea, and comment list endpoints support pagination in MVP.
 - Smaller configuration collections such as statuses, boards, and tags may return full result sets unless a feature-specific contract says otherwise.
 - Paginated collections support basic filtering plus one explicit sort field and sort direction.
+- **List pattern (2026-09-27, `20-feature-client-ui.md` "List and detail pattern").** Applies to `GET /api/v1/organizations/{organizationId}/ideas` and `GET /api/v1/boards/{boardId}/ideas`; the users and organizations lists join it only when their screens move to the pattern. The list screens send `pageSize` of `10` (their default), `25`, `50` or `100`. **The API's paging is unchanged** (corrected 2026-09-27): any other value keeps its existing treatment — absent is `20`, and values are clamped to 1–100 (`packages/application/src/common/pagination.ts`) — so no caller gains a `400` and the golden corpus records no paging difference. Finite-value filters are **repeatable** (`statusId=a&statusId=b`): values of one parameter combine as any-of, different parameters as AND. `sortBy` accepts every column the list screen displays; each endpoint lists its values. Unsorted lists keep their existing default order.
 - Archived organizations are hidden from list results by default unless explicitly filtered with `isArchived=true` or an equivalent include-archived flag.
 
 ## Update Conventions
@@ -871,7 +872,42 @@ Success response `200` item shape:
 - `name`
 - `allowUserStatusUpdate` boolean
 - `swimlaneCount`
-- `ideaCount` — live ideas on the board, excluding soft-deleted ones, so it matches the `totalCount` of `GET /api/v1/boards/{boardId}/ideas`. Added 2026-09-10: the boards list renders the figure on every card, and without it a client has to issue one idea request per board. This endpoint does not page, so that fan-out is unbounded.
+- `ideaCount` — live ideas on the board, excluding soft-deleted ones, so it matches the `totalCount` of `GET /api/v1/boards/{boardId}/ideas`. Added 2026-09-10: the boards list renders the figure on every card, and without it a client has to issue one idea request per board. This endpoint does not page, so that fan-out is unbounded. Like that list it counts only `Discovery`-phase ideas (corrected 2026-09-27 — it had also counted promoted Issues, so a board with promoted items reported more ideas than it showed).
+
+Added 2026-09-27 (`SPEC/decisions.md`), for the richer board cards. Every aggregate below counts the same ideas `ideaCount` does, and all of them are computed with a fixed number of grouped queries for the whole list, never one query per board:
+- `description` string or `null`
+- `createdAtUtc` ISO 8601 UTC timestamp
+- `createdBy` — `{ userId, displayName }`, or `null` when the board records no creator or the creator no longer resolves to a user. `displayName` is `"First Last"`, as elsewhere in the API.
+- `laneCounts` — one entry per swimlane, in swimlane order, **including lanes with no ideas**:
+	- `statusId`
+	- `statusName`
+	- `statusColor`
+	- `order` integer
+	- `ideaCount` integer
+- `topTags` — at most three `{ name, ideaCount }`, the tags on the most of the board's ideas; ordered by `ideaCount` descending, then `name` ascending (case-insensitive). Empty when no idea is tagged. **Added 2026-09-28:** each item also carries `color` (`#RRGGBB`, the tag's colour — "Tag Contracts" below).
+- `tagCount` integer — distinct tags across the board's ideas
+
+Example item:
+
+```json
+{
+  "boardId": "6f0c…",
+  "organizationId": "1b2e…",
+  "name": "Ideas",
+  "allowUserStatusUpdate": true,
+  "swimlaneCount": 5,
+  "ideaCount": 6,
+  "description": "Assembly cell reliability: fewer stoppages, safer cells, shorter cycle times.",
+  "createdAtUtc": "2026-09-27T10:00:00.000Z",
+  "createdBy": { "userId": "9a41…", "displayName": "Olivia Administer" },
+  "laneCounts": [
+    { "statusId": "…", "statusName": "New", "statusColor": "#…", "order": 0, "ideaCount": 3 },
+    { "statusId": "…", "statusName": "Complete", "statusColor": "#…", "order": 4, "ideaCount": 0 }
+  ],
+  "topTags": [{ "name": "automation", "ideaCount": 4 }],
+  "tagCount": 4
+}
+```
 
 ### `POST /api/v1/organizations/{organizationId}/boards`
 Purpose: Create a board with at least two swimlanes.
@@ -879,6 +915,7 @@ Purpose: Create a board with at least two swimlanes.
 Request body:
 - `name` required string
 - `allowUserStatusUpdate` required boolean
+- `description` optional string or `null` (added 2026-09-27) — trimmed; blank or `null` stores no description; more than 500 characters returns `400` keyed `description`
 - `swimlanes` required array of
 	- `statusId` GUID string
 	- `order` integer
@@ -891,13 +928,25 @@ Success response `201`:
 ### `GET /api/v1/boards/{boardId}`
 Purpose: Return board detail including swimlanes.
 
+Success response `200`: `boardId`, `organizationId`, `name`, `description` (string or `null`, added 2026-09-27), `allowUserStatusUpdate`, and `swimlanes` — each `statusId`, `statusName`, `statusColor`, `order`, `statusIsDeleted`. `PUT /api/v1/boards/{boardId}` returns the same shape.
+
 ### `PUT /api/v1/boards/{boardId}`
 Purpose: Update board name or selected statuses.
 
 Request body:
 - `name` required string
 - `allowUserStatusUpdate` required boolean
+- `description` optional string or `null` (added 2026-09-27) — same rules as on create. **Absent leaves the stored description unchanged**; `null` or a blank string clears it.
 - `swimlanes` required array of `statusId` and `order`
+
+### `POST /api/v1/boards/{boardId}/archive` and `POST /api/v1/boards/{boardId}/unarchive`
+Purpose: Archive a board, or bring it back (added 2026-09-27; `decisions.md`). Until then boards had no delete endpoint or action; archiving replaces that absence. Org Admin of the board's organization only; a direct Site Admin is refused like every other org-content write.
+
+Archiving keeps the board, its swimlanes and every idea on it. An archived board leaves the default board list and the board pickers, accepts no new ideas, and its ideas stay reachable from `GET /api/v1/organizations/{organizationId}/ideas`. An archived board's own page opens **read-only** with an *Archived* banner (Q4, answered 2026-09-27): no new ideas, no moves, no edits; an Org Admin sees *Unarchive* there. **The board's own settings are frozen too** (added 2026-09-27): `PUT /api/v1/boards/{boardId}` (name, description, lanes) and the swimlane reorder are refused for an archived board with `409 Conflict` — unarchive it first. Creating an idea on it, and moving or editing one of its ideas, are refused the same way.
+
+Success response: `204 No Content`. Archiving an archived board, or unarchiving an active one, is also `204`.
+
+The board list gains `includeArchived` optional boolean (default `false`), and each item gains `isArchived` boolean and `archivedAtUtc` timestamp or `null`.
 
 ### `POST /api/v1/boards/{boardId}/swimlanes/reorder`
 Purpose: Persist swimlane reorder immediately after drag-and-drop.
@@ -918,12 +967,13 @@ Purpose: List ideas on a board with pagination.
 Query parameters:
 - `page`
 - `pageSize`
-- `search` optional
+- `search` optional — defined 2026-09-27: the same matching as the organization list's `search` below (case-insensitive substring over title, author and assignee names, status name, priority, tag names, Problem and Text/Url User-Defined Field values, plus the ISO-date rule for Created Date), **minus board name**, since every item is on this board
 - `statusId` optional
 - `tag` optional
 - `priority` optional `Low`, `Medium`, `High`, or `Critical`
 - `dueBefore` optional date string (`YYYY-MM-DD`)
-- `sortBy` optional `createdAt`, `updatedAt`, `upvoteCount`, `priority`, or `dueDate`
+- `sortBy` optional `createdAt`, `updatedAt`, `upvoteCount`, `priority`, or `dueDate`; **added 2026-09-27**: `title`, `status` (lane order), `assignedTo`, `tags`
+- `statusId`, `priority` and `tag` are repeatable from 2026-09-27 (any-of within a parameter)
 - `sortDirection` optional `asc` or `desc`
 
 **Phase filtering (added 2026-09-11, Issues and Delivery Slice 1).** This list is the ideation
@@ -955,17 +1005,30 @@ Success response `200` paged item shape:
 - `authorUserId`
 - `createdAtUtc`
 
+Added 2026-09-28 (comp R, `SPEC/decisions.md` 2026-09-28):
+- `tags` array — the same tags as `tagNames`, in the same order, each `{ tagId, name, color }`, so a
+  card can colour its chips without a second request. `tagNames` stays, unchanged, for every client
+  written before it.
+- `effort` string or `null`: `Low`, `Medium`, `High` — the idea's effort, for the effort bar on idea
+  cards and rows, which shows whenever it is set (answered 2026-09-28). The delivery card already
+  carried `effort`; it is the same field.
+
+Because `GET /api/v1/organizations/{organizationId}/ideas` and the delivery card
+(`GET /api/v1/organizations/{organizationId}/delivery`) reuse this item shape, both carry `tags`,
+and the organization list carries `effort`.
+
 ### `GET /api/v1/organizations/{organizationId}/ideas`
 Purpose: Cross-board, organization-scoped idea list for the global `/ideas` page (`SPEC/20-feature-client-ui-revisions.md` "Ideas Page"). Scoped to the caller's organization.
 
 Query parameters:
 - `page`
 - `pageSize`
-- `search` optional — all-column search across every column the `/ideas` list displays: the idea **Title**, **Created By** (author first/last/full name), **Assigned To** (any assignee's first/last/full name), and **Status** (status name); it also scans the values of Text/Url User-Defined Fields. When the term is a full ISO date (`YYYY-MM-DD`) it additionally matches the **Created Date** column (ideas created on that UTC calendar day). Matching is case-insensitive substring (`LIKE '%term%'`) except the date term, which matches the whole calendar day.
+- `search` optional — all-column search across every column the `/ideas` list displays: the idea **Title**, **Created By** (author first/last/full name), **Assigned To** (any assignee's first/last/full name), and **Status** (status name); it also scans the values of Text/Url User-Defined Fields. When the term is a full ISO date (`YYYY-MM-DD`) it additionally matches the **Created Date** column (ideas created on that UTC calendar day). Matching is case-insensitive substring (`LIKE '%term%'`) except the date term, which matches the whole calendar day. **Added 2026-09-27** (the list pattern's text filter): it also matches the **board name**, the **priority**, **tag names**, and the idea's **Problem**, with the same substring semantics.
 - `scope` optional `all` (default), `created` (authored by the caller), or `assigned` (assigned to the caller) — the caller's me-chips
 - `tag` optional — filter to ideas carrying a tag whose normalized name equals the given value (same normalization/semantics as the board list's `tag`)
 - `user` optional GUID — user-association search box: filter to ideas the given user **authored or is assigned to** (`SPEC/Bug Triage.md`). `Guid.Empty` is treated as absent. Composes (AND) with `scope`/`tag`/`search`/`fieldFilters` when combined.
-- `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name)
+- `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name); **added 2026-09-27** for the list pattern: `board` (board name), `priority` (Low→Critical order), `upvoteCount`, and `tags` (alphabetically-first tag)
+- `boardId`, `statusId`, `priority` optional and repeatable (added 2026-09-27); `tag` becomes repeatable with any-of semantics
 - `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first). All sorts apply a stable `ideaId` tiebreaker so ordering is deterministic across pages.
 - `fieldFilters[<fieldDefinitionId>]=<value>` optional, repeatable — filter by User-Defined Field value (T059). Semantics per field type: `Text`/`Url` contains; `Number` range `<min>:<max>` (either side omittable); `Date` range `<from>:<to>` (ISO-8601, either side omittable); `Boolean` `true`/`false`; `Dropdown` exact option id; `MultiSelect` any-of (matches when the stored option ids include the value). Unknown/invalid `fieldDefinitionId` keys and unparseable values are silently ignored.
 - `phase` optional (added 2026-09-11, Issues and Delivery Slice 1) — `All` (**default**), `Ideas` (`Discovery`-phase only), or `Issues` (`Delivery`-phase only). Unrecognised values are treated as `All`. Unlike the board list this defaults to spanning **both** phases: this is the list somebody uses to find an item they cannot see on a board, and hiding promoted ones would lose them. Omitting it therefore leaves the response exactly as it was before the parameter existed.
@@ -978,6 +1041,7 @@ Purpose: Export a board's active ideas as CSV (T059/T060).
 Success response `200`:
 - `Content-Type: text/csv` (UTF-8 with BOM), attachment `ideas.csv`
 - Columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`, `Status`, `Due Date`, `Tags`, then one column per active User-Defined Field (header = field name). Dropdown/MultiSelect values render as option labels.
+- **Added 2026-09-27:** `Problem`, `Proposed Solutions` and `Impact Rationale` (`20-feature-ideas-and-engagement.md` rule 2a). Proposed Solutions writes the ordered list joined with a newline inside the one quoted cell (1 to 5 items). `Description` may be empty, since it is now optional.
 - **`Discovery`-phase only** (added 2026-09-11), matching the board list above: the export is "this board's ideas", and a file that disagreed with the screen it was exported from would be the bug. Unchanged for any organization that has promoted nothing.
 
 Limits and escaping (added 2026-08-11, Sprint 4):
@@ -991,11 +1055,12 @@ Error responses:
 Purpose: Create-only CSV import of ideas onto a board (T059/T060). Multipart form field `csvFile`.
 
 Behavior:
-- Each data row creates a new idea. Required columns: `Title`, `Description`, `Priority`, `Idea Type`, `Business Impact`. `Status` is optional (must name a board swimlane; defaults to the left-most swimlane); `Due Date`, `Tags`, and per-UDF-field columns are optional.
+- Each data row creates a new idea. Required columns: `Title`, `Priority`, `Idea Type`, `Business Impact`; **`Description` is optional since 2026-09-27** (an optional summary). `Status` is optional (must name a board swimlane; defaults to the left-most swimlane); `Due Date`, `Tags`, and per-UDF-field columns are optional.
 - `Idea Type` and `Business Impact` are matched by name (case-insensitive) against active options; a missing or unknown value rejects that row. Dropdown/MultiSelect UDF columns are matched by option label; Boolean accepts `Yes`/`No` or `true`/`false`.
 - Invalid rows are rejected individually with a per-row message; valid rows still import.
 - **Bounded (added 2026-08-11, Sprint 4):** the request body is capped at **5 MB** and the parsed file at **5,000 data rows**. Both are checked before any per-row work, since the upload is buffered whole and re-materialised as records before the first row is processed. A file over either bound is rejected in full — no partial import. The body limit is enforced at the request pipeline and answers `413`; the row ceiling is the handler's own and answers the field-keyed `400`.
-- A leading guard apostrophe written by the export is stripped on import (see the export contract above), so re-importing an exported file is lossless.
+- **Structured fields (added 2026-09-27).** `Problem` (max 2000), `Proposed Solutions` (1 to 5 items separated by newlines within the cell, each max 500) and `Impact Rationale` (max 1000) are optional columns. A row that lacks one, or leaves it blank, gets the backfill of `20-feature-ideas-and-engagement.md` rule 2a: Problem takes the row's `Description`, or *Not captured before 2026-09-27.* when that is blank too; Proposed Solutions takes the single item *Not captured before 2026-09-27.*; Impact Rationale takes the same text. A value over its limit, or more than five solutions, rejects the row.
+- A leading guard apostrophe written by the export is stripped on import (see the export contract above). With the three structured columns in the export, re-importing an exported file is lossless.
 
 Success response `200`:
 - `createdCount` integer
@@ -1011,7 +1076,10 @@ Purpose: Create a new idea on a board.
 
 Request body:
 - `title` required string, max 150 characters
-- `description` required string, max 4000 characters
+- `problem` required string, max 2000 characters (added 2026-09-27, `20-feature-ideas-and-engagement.md` rule 2a)
+- `proposedSolutions` required array of 1 to 5 strings, each max 500 characters, order preserved (added 2026-09-27)
+- `impactRationale` required string, max 1000 characters (added 2026-09-27)
+- `description` optional string, max 4000 characters — **changed 2026-09-27 from required** to an optional summary (kept, Q2)
 - `priority` required string: `Low`, `Medium`, `High`, or `Critical`
 - `ideaTypeId` required GUID string referencing an active Idea Type in the board's organization
 - `businessImpactId` required GUID string referencing an active Business Impact in the board's organization
@@ -1032,6 +1100,8 @@ Success response `201`:
 - `dueDate`
 
 ### `POST /api/v1/boards/{boardId}/ideas/ai-draft`
+> **Withdrawn 2026-09-27** (`20-feature-ai-idea-assist-v2.md` "Contract changes"): never built, and extraction is covered by the v2 turn endpoint. Kept for history.
+
 Purpose: Turn a plain-English description into a pre-filled, unsaved idea draft for review. This endpoint never creates an idea; the client submits the reviewed result to `POST /api/v1/boards/{boardId}/ideas` as normal.
 
 Authorized for the same roles as manual idea creation: Site Admin, Org Admin, and `User`. `Read Only` is rejected with `403`.
@@ -1077,6 +1147,8 @@ Error responses:
 `409` and `503` are feature-specific extensions to the standard error responses. The client treats both as recoverable by falling back to the blank manual idea form.
 
 ### `POST /api/v1/boards/{boardId}/ideas/ai-polish`
+> **Withdrawn 2026-09-27**: never built; polishing belongs to the future refinement spec. Kept for history.
+
 Purpose: Rewrite a draft description on explicit user request. This is the opt-in "Polish with AI" action and is never invoked automatically.
 
 Authorized for the same roles as `ai-draft`.
@@ -1101,7 +1173,10 @@ Success response `200`:
 - `ideaId`
 - `boardId`
 - `title`
-- `description`
+- `problem` string (added 2026-09-27)
+- `proposedSolutions` string array (added 2026-09-27)
+- `impactRationale` string (added 2026-09-27)
+- `description` string or `null`
 - `priority`
 - `ideaTypeId`
 - `ideaTypeName`
@@ -1115,9 +1190,18 @@ Success response `200`:
 - `statusId`
 - `statusName`
 - `tagNames`
+- `tags` array of `{ tagId, name, color }`, in `tagNames` order (added 2026-09-28)
 - `mentions`
 - `comments` array using the comment item shape from `GET /api/v1/ideas/{ideaId}/comments`, every comment on the idea in chronological order and unpaged
 - `fieldValues` array of resolved User-Defined Field values (`fieldDefinitionId`, `fieldName`, `fieldType`, `value`), per `SPEC/20-feature-user-defined-fields.md`
+- `formFields` array — the idea's own effective fields, for editing it: resolved from its Idea Type
+  even when that type is archived, in form order. Each item is the `effectiveFields` item shape
+  above plus `value`, the stored value in the form the write accepts (`true`/`false` for
+  `Boolean`, option ids — comma-separated for `MultiSelect` — for choice fields, `YYYY-MM-DD` for
+  `Date`), or `null` when unset. An option the idea stores that the field no longer offers is
+  still listed in that item's `options`, with `isArchived: true`, so an unchanged save keeps it.
+  Options are hard-deleted, so such an option's `label` falls back to its `optionId`.
+  `fieldValues` stays as the display projection (labels, `Yes`/`No`). Added 2026-09-27.
 - `upvoteCount`
 - `hasUpvoted` boolean for the current caller
 - `commentCount` integer
@@ -1147,7 +1231,10 @@ Purpose: Update idea content.
 
 Request body:
 - `title` required string, max 150 characters
-- `description` required string, max 4000 characters
+- `problem` required string, max 2000 characters (added 2026-09-27, `20-feature-ideas-and-engagement.md` rule 2a)
+- `proposedSolutions` required array of 1 to 5 strings, each max 500 characters, order preserved (added 2026-09-27)
+- `impactRationale` required string, max 1000 characters (added 2026-09-27)
+- `description` optional string, max 4000 characters — **changed 2026-09-27 from required** to an optional summary (kept, Q2)
 - `priority` required string: `Low`, `Medium`, `High`, or `Critical`
 - `ideaTypeId` required GUID string referencing an active Idea Type in the idea's organization
 - `businessImpactId` required GUID string referencing an active Business Impact in the idea's organization
@@ -1228,6 +1315,34 @@ id is a field-keyed validation failure keyed `sprintId`, exactly as an unknown `
 
 Cross-organization access answers `404` throughout, never `403` — confirming that a sprint, Issue or
 task exists in somebody else's organization is the thing a prober is fishing for.
+
+**Comp R's Sprint board and Roadmap (2026-09-28) — what these contracts do and do not cover.**
+`SPEC/20-feature-issues-and-delivery.md` "Comp R iteration" is the screen spec.
+- **The Sprint board needs nothing new.** Its strip is derived from the sprint item and the delivery
+  cards (`issueCount`/`doneCount`, the window, days past end in the viewer's calendar); moving uses
+  `PUT /ideas/{ideaId}/delivery-status`; *Complete sprint* uses
+  `POST /organizations/{organizationId}/sprints/{sprintId}/complete`; the effort bar reads the card's
+  `effort`; tag chips read the card's `tags` (added above).
+- **Gap: issue keys.** Comp R labels Issues `IDE-01`; there is no key or reference field anywhere in
+  this document and none is added (see `GET /api/v1/ideas/{ideaId}`, "no `reference` field").
+- **Plan next sprint** uses the existing `POST /organizations/{organizationId}/sprints`, and **Start
+  sprint** the existing `POST /organizations/{organizationId}/sprints/{sprintId}/start` — nothing new.
+- **The Issue drawer** reads the delivery card, `GET /ideas/{ideaId}` and `GET /ideas/{ideaId}/tasks`;
+  for a deep link, and for `/delivery/issues/{ideaId}`, the card comes from the **one addition**,
+  `GET /api/v1/ideas/{ideaId}/delivery` (added 2026-09-28, below).
+- **The Roadmap in Sprint 11 needs nothing new either**: its sprint rows read
+  `GET /organizations/{organizationId}/sprints`, and its empty state counts delivery cards.
+- **Gap, for a later sprint: Outcomes and the roadmap read** (answered 2026-09-28: Sprint 11 builds
+  the screen, not the backend). The Slice 2 routes remain absent. When they are written here, the
+  Roadmap as comp R draws it needs, beyond the routes `20-feature-issues-and-delivery.md` already
+  lists: an Outcome `color` (any `#RRGGBB`, as for tags, with the bar label's contrast computed —
+  see the Outcome entity); a roadmap read that returns **every** Outcome with its window, colour,
+  derived counts, derived sprint span and grouped Issues (title, delivery status, effort, assignees)
+  in one request, with **no** `granularity` parameter (the client draws Weeks, Months or Quarters);
+  and a way for the Outcome form to set the grouping of several Issues in one save (either
+  `issueIds` on the Outcome write or one `PUT /ideas/{ideaId}/outcomes` per change — that slice
+  decides and writes it here). The `outcomes.color` column comes with that slice's own schema
+  amendment.
 
 **A Site Admin acting directly is refused every mutation here with `403`**, and reads it all with
 `200`. Promotion, delivery status, sprint management and tasks are organization content under
@@ -1346,6 +1461,27 @@ Success response `200`: an **unpaged** array (a sprint is a bounded, human-sized
 Error responses:
 - `401` caller is not authenticated
 - `404` the organization does not exist or is outside caller scope
+
+### `GET /api/v1/ideas/{ideaId}/delivery`
+Added 2026-09-28 (the user's decision; `SPEC/decisions.md` 2026-09-28). Purpose: one Issue's
+delivery card, for the Issue drawer's deep link and `/delivery/issues/{ideaId}`. Until now the only
+way to read one was to list every sprint and the backlog and search them.
+
+Like every route in this section it addresses the idea by its `{ideaId}`: an Issue is the `ideas`
+row in its `Delivery` phase, not a new resource.
+
+Authorization: the same as `GET /api/v1/organizations/{organizationId}/delivery` — every member of
+the Issue's organization, `Read Only` included; a Site Admin reads it directly.
+
+Success response `200`: exactly one item of the delivery card shape from
+`GET /api/v1/organizations/{organizationId}/delivery` (the board idea item plus `phase`, `effort`,
+`deliveryStatus`, `sprint`, `taskSummary`, `provenance`, and since 2026-09-28 `tags`), composed by
+the same code, so the card cannot differ between the list and this read.
+
+Error responses:
+- `401` caller is not authenticated
+- `404` no such idea; the idea is soft-deleted; it is in `Discovery` (not an Issue); or it is outside
+  caller scope — never `403`, as throughout this section. A malformed id is `404` too.
 
 ## Sprint Contracts
 
@@ -1609,6 +1745,19 @@ Success response `200` item shape:
 - `name` string, max 100 characters
 - `sortOrder` integer
 - `isDeleted` boolean
+- `effectiveFields` array — the custom fields an idea of this type shows, in form order, resolved by
+  the effective-field rule (`SPEC/20-feature-idea-type-fields.md` "Effective-field resolution"). An
+  archived type (returned under `includeDeleted=true`) resolves the same way. Item shape:
+  - `fieldDefinitionId` GUID string
+  - `name` string
+  - `fieldType` one of `Text`, `Number`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`, `Url`
+  - `isRequired` boolean — required for this type, not the field's global flag
+  - `options` array of `{ optionId, label }` in display order; empty for a field that is not
+    `Dropdown` or `MultiSelect`
+
+`effectiveFields` was added 2026-09-27 so the idea form stops re-deriving the rule in the browser,
+where it could drift from the validator (`SPEC/decisions.md` 2026-09-27, "The API sends the custom
+field list").
 
 ### `POST /api/v1/organizations/{organizationId}/idea-types`
 Purpose: Create an Idea Type option. Site Admin and in-scope Org Admin only.
@@ -1693,6 +1842,136 @@ Success response `200`:
 Rules:
 - matching is case-insensitive by normalized tag prefix
 - suggestions are organization-scoped
+
+### Tag colour and management (added 2026-09-28)
+
+Comp R gives every tag a colour and adds Settings → Tags (`SPEC/20-feature-ideas-and-engagement.md`
+"Tags" rules 9–15; `SPEC/decisions.md` 2026-09-28). The autocomplete above is **unchanged**: it
+still answers bare names, because the idea form's tag field only needs names.
+
+**Colour.** `color` is **any** `#RRGGBB` string (answered 2026-09-28: the palette plus a custom
+colour) — the same six-hex-digit format rule the status, business impact and idea type colours
+follow (`^#[0-9a-fA-F]{6}$`), stored and returned in upper case. Anything else is a `400` keyed
+`color`, `"Color must be a valid #RRGGBB color."` The ten palette values — `#E5484D`, `#F5A524`,
+`#3FB86B`, `#2F9E8F`, `#5CC8E0`, `#6B9BF2`, `#B08CF5`, `#E879A6`, `#A87B2F`, `#94A3B8` — are what
+the picker offers first and what random colours are drawn from; the API gives them no other
+privilege. **Every tag created without a colour gets a random palette colour** — the
+management create below when `color` is absent, and every tag created inline by
+`POST /api/v1/boards/{boardId}/ideas`, `PUT /api/v1/ideas/{ideaId}` or CSV import. The server picks
+it, from an injected random source.
+
+Tag item shape (the list, create and update below):
+- `tagId`
+- `name` — as stored (trimmed; case preserved)
+- `color`
+- `ideaCount` integer — live (not soft-deleted) ideas carrying the tag, **both phases**
+- `boards` array of `{ boardId, name }`, the boards those ideas are on, ordered by `name`
+  (case-insensitive); archived boards included
+- `createdAtUtc`
+- `createdBy` — `{ userId, displayName }`, or `null`, as on the board list item
+
+A Site Admin acting directly is refused every mutation below with `403` (the guard already lists
+tags) and reads with `200`; View As is the path. Cross-organization access answers `404`.
+
+#### `GET /api/v1/organizations/{organizationId}/tags/catalog`
+Purpose: Every tag in the organization, for Settings → Tags and for any tag filter that needs the
+full set (the Ideas screen's Tags filter has had to assemble its options from other reads — slice
+102's recorded deviation).
+
+Authorization: every member of the organization, `Read Only` included. **Kept member-readable on
+purpose (2026-09-28)**, although Settings → Tags itself is Org Admins' only: the Ideas screen's
+**Tags filter** is used by every role and needs the organization's full tag set with colours —
+today it assembles its options from the boards' top tags, the rows in view and a typeahead, so a tag
+that is on none of those cannot be picked (slice 102's recorded deviation). Scoping this read to
+admins would leave that defect in place for members. It exposes nothing a member cannot already see:
+every idea in the organization is visible to its members, and with it every tag's name, colour,
+usage and board.
+
+Success response `200`: an **unpaged** array of the tag item shape (tags are a small configuration
+collection, per "Collection Conventions"), ordered by `name` ascending (case-insensitive). The counts
+and board lists are computed with a fixed number of grouped queries for the whole list, never one
+query per tag.
+
+The drawer's *Used on* list is not a new read: it is
+`GET /api/v1/organizations/{organizationId}/ideas?tag={name}` with its existing paging.
+
+Error responses:
+- `401` caller is not authenticated
+- `404` the organization does not exist or is outside caller scope
+
+#### `POST /api/v1/organizations/{organizationId}/tags`
+Purpose: Add a tag in advance of use.
+
+Authorization: in-scope Org Admin.
+
+Request body:
+- `name` required string — trimmed; 1–100 characters
+- `color` optional — see *Colour*; absent **or `null`** means a random palette colour
+
+Success response `201`: the tag item shape (`ideaCount` `0`, `boards` empty).
+
+Error responses:
+- `400` keyed `name`: missing or blank — `"Tag name is required."`; over 100 characters — `"Tag must
+  be 100 characters or fewer."`; matches an existing tag's normalized name — `"A tag with this name
+  already exists."`. Keyed `color`: invalid — `"Color must be a valid #RRGGBB color."`
+- `401` caller is not authenticated
+- `403` caller is not an in-scope Org Admin, or is a Site Admin acting directly
+- `404` the organization does not exist or is outside caller scope
+
+A concurrent create of the same normalized name answers the same field-keyed `400` to the loser
+(the unique index `ux_tags_organization_id_normalized_name` decides), not a `500`; so does a
+concurrent `PUT` rename onto a name another request has just taken. This differs from
+inline creation while tagging an idea, which merges (ideas rule 7), because here the caller asked
+for a new tag by name and should learn it exists.
+
+#### `PUT /api/v1/tags/{tagId}`
+Purpose: Rename or recolour a tag.
+
+Authorization: in-scope Org Admin.
+
+Request body:
+- `name` required string — trimmed; 1–100 characters
+- `color` optional — absent **or `null`** leaves the stored colour alone (like the `description`
+  rule on `PUT /api/v1/boards/{boardId}`, except that `null` does not clear: a tag always has a
+  colour)
+
+Behavior:
+- a rename takes effect on every idea carrying the tag, since ideas reference the tag's id
+- renaming onto **another** tag's normalized name is refused — there is no merge; a case-only rename
+  of the same tag is allowed (its normalized name does not change)
+- when the name changes, writes one `TagRenamed` audit event (`entityType` `Tag`, `entityId` the tag
+  id; metadata `tagId`, `oldName`, `newName`, `ideaCount` — the ideas carrying it). A colour-only
+  change writes none. No per-idea event, no idea's `updatedAtUtc` changes, no notification
+  (ideas rule 15; decided by the user 2026-09-28)
+
+Success response `200`: the tag item shape.
+
+Error responses:
+- `400` as for create, keyed `name` or `color`, including the concurrent-duplicate case above
+- `401` caller is not authenticated
+- `403` caller is not an in-scope Org Admin, or is a Site Admin acting directly
+- `404` the tag does not exist or belongs to another organization
+
+#### `DELETE /api/v1/tags/{tagId}`
+Purpose: Delete a tag and remove it from every idea.
+
+Authorization: in-scope Org Admin.
+
+Behavior:
+- removes **every** `idea_tags` row for the tag — both phases, archived boards and soft-deleted
+  ideas included, since `FK_idea_tags_tags_tag_id` has no cascade and the delete would otherwise
+  fail — and deletes the tag, in one transaction. A hard delete: there is no soft-delete or
+  restore. An idea's `updatedAtUtc` is **not** touched; its content did not change, its labels did.
+- writes one `TagDeleted` audit event (`entityType` `Tag`, `entityId` the tag id; metadata `tagId`,
+  `name`, `ideaCount` — the live ideas it was removed from). No per-idea event, no notification
+  (ideas rule 15; decided by the user 2026-09-28)
+
+Success response `204 No Content`.
+
+Error responses:
+- `401` caller is not authenticated
+- `403` caller is not an in-scope Org Admin, or is a Site Admin acting directly
+- `404` the tag does not exist or belongs to another organization
 
 ## Comment Contracts
 
@@ -1781,6 +2060,8 @@ Contract-wide rules for this section:
 - suggested option ids are always active options in the caller's organization; the server rejects a model response containing any id outside the retrieved set rather than passing it to the client
 
 ### `POST /api/v1/boards/{boardId}/idea-assist/turns`
+> **Changes in v2 (specified 2026-09-27, not built):** `draft` carries the structured fields, the request adds `lockedFields` and `step`, and the response returns `changes`, `suggestions` and `nextStep` instead of `draft`. `20-feature-ai-idea-assist-v2.md` "Contract changes" is authoritative for them; the shape below is v1, live today.
+
 Purpose: Advance the idea-drafting conversation by one turn and return the updated draft.
 
 Request body:

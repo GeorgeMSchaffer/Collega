@@ -22,7 +22,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { toImportOutcome } from '../api/adapt'
-import { ApiError, apiPath, apiPost, apiPut } from '../api/client'
+import { ApiError, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
 import { apiBaseUrl } from '../api/config'
 import { fieldErrors, type ProblemDetails } from '../api/problem'
 import type { WireUserImportResult } from '../api/wire'
@@ -58,20 +58,58 @@ function refusalText(error: unknown): string {
  *
  * The API does more than insert a row: it answers with a `defaultBoardId` and a
  * `defaultStatusCount`, because creating an organization provisions its first board and its status
- * catalog. That is why this redirects to the list rather than into a setup wizard - there is
- * nothing left to set up.
+ * catalog.
+ *
+ * ## It creates the first administrator too, and that is not a convenience
+ *
+ * **An organization with no members is a dead end**, and the product had one. Rule 25 refuses a
+ * Site Admin every organization-content mutation and points them at View As; View As can only
+ * target a member of an organization; a new organization has none. So the only account that can
+ * populate it is an account that cannot exist yet. Found 2026-09-14 by somebody trying to use the
+ * product, which is the only way that kind of loop is ever found.
+ *
+ * Creating the administrator here closes it by construction: no organization is ever born empty, so
+ * the state that traps you is unreachable rather than escapable. `db:bootstrap-organization` has
+ * always worked this way from the command line - this is the same idea where somebody can reach it.
+ *
+ * **The organization is still created if the administrator fails.** They are two requests and the
+ * API offers no transaction across them, so the alternative would be discarding a good organization
+ * because an email was taken. The message says exactly that, and the organization is on the list
+ * with an Add user control ready - which is the recoverable half of the two.
  */
 export async function createOrganization(
   _previous: CreateState,
   form: FormData,
 ): Promise<CreateState> {
+  const adminEmail = String(form.get('adminEmail') ?? '').trim()
+
+  let organizationId: string
   try {
-    await apiPost(apiPath`/organizations`, {
+    const created = await apiPostReturning<{ organizationId: string }>(apiPath`/organizations`, {
       title: String(form.get('title') ?? ''),
       description: String(form.get('description') ?? ''),
     })
+    organizationId = created.organizationId
   } catch (error) {
     return { error: refusalText(error) }
+  }
+
+  if (adminEmail !== '') {
+    try {
+      await apiPost(apiPath`/organizations/${organizationId}/users`, {
+        firstName: String(form.get('adminFirstName') ?? ''),
+        lastName: String(form.get('adminLastName') ?? ''),
+        email: adminEmail,
+        role: 'OrgAdmin',
+        initialPassword: String(form.get('adminPassword') ?? ''),
+      })
+    } catch (error) {
+      return {
+        error:
+          `The organization was created, but its administrator was not: ${refusalText(error)} ` +
+          'Add them from the people screen.',
+      }
+    }
   }
 
   // The sidebar and the organization list both render above this route.

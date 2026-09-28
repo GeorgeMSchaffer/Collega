@@ -6,14 +6,14 @@
 <title>Collega — Comp Q: auth and identity</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /*! tailwindcss v4.1.11 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
 @layer theme {
   :root, :host {
-    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --color-black: #000;
     --color-white: #fff;
     --spacing: 0.25rem;
@@ -46,8 +46,8 @@
     --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     --default-transition-duration: 150ms;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    --default-font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --default-mono-font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --default-font-family: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --default-mono-font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 }
 @layer base {
@@ -366,9 +366,6 @@
   }
   .max-w-\[78\%\] {
     max-width: 78%;
-  }
-  .max-w-\[1320px\] {
-    max-width: 1320px;
   }
   .min-w-0 {
     min-width: calc(var(--spacing) * 0);
@@ -753,7 +750,7 @@
     vertical-align: middle;
   }
   .font-mono {
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .text-base {
     font-size: var(--text-base);
@@ -1119,55 +1116,55 @@
   }
 }
 :root {
-  --radius: 0.3rem;
-  --background: #F7F9FB;
-  --foreground: #243447;
+  --radius: 6px;
+  --background: #F5F6F8;
+  --foreground: #1E2733;
   --card: #FFFFFF;
-  --card-foreground: #243447;
+  --card-foreground: #1E2733;
   --popover: #FFFFFF;
-  --popover-foreground: #243447;
-  --primary: #527292;
+  --popover-foreground: #1E2733;
+  --primary: #3D5A80;
   --primary-foreground: #FFFFFF;
-  --secondary: #F1F3F6;
-  --secondary-foreground: #3E4E60;
-  --muted: #F1F3F6;
-  --muted-foreground: #5D6C7E;
-  --accent: #F0F4F7;
-  --accent-foreground: #3E566F;
-  --destructive: #B64B4B;
+  --secondary: #EDF0F3;
+  --secondary-foreground: #36414F;
+  --muted: #EDF0F3;
+  --muted-foreground: #5E6978;
+  --accent: #E4EAF2;
+  --accent-foreground: #35507A;
+  --destructive: #963636;
   --destructive-foreground: #FFFFFF;
-  --warning: #C9A65C;
-  --success: #6FAF7A;
-  --teal-brand: #5F9E93;
-  --border: #DDE1E6;
-  --input: #C5CBD3;
-  --ring: #5B7FA3;
+  --warning: #7F5A12;
+  --success: #3F6B2E;
+  --teal-brand: #3F6B2E;
+  --border: #E3E6EB;
+  --input: #CDD2DA;
+  --ring: #3D5A80;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #3E4E60;
-  --sidebar-primary: #527292;
-  --sidebar-accent: #F0F4F7;
-  --sidebar-accent-foreground: #3E566F;
-  --sidebar-border: #DDE1E6;
+  --sidebar-foreground: #36414F;
+  --sidebar-primary: #3D5A80;
+  --sidebar-accent: #E4EAF2;
+  --sidebar-accent-foreground: #1E2733;
+  --sidebar-border: #E3E6EB;
   --sky: #5B7FA3;
   --teal: #5F9E93;
   --green: #6FAF7A;
   --orange: #C9A65C;
-  --orange-deep: #8A6D2E;
+  --orange-deep: #7F5A12;
   --pink: #C97A7A;
   --purple: #9A8AC4;
   --purple-deep: #5B4F86;
   --brown: #8A6D2E;
-  --sug: #116b5e;
-  --sug-soft: #e8f3f1;
+  --sug: #3F6B2E;
+  --sug-soft: #E6F2DF;
   --ink: var(--foreground);
-  --ink-secondary: #3E4E60;
+  --ink-secondary: #36414F;
   --ink-muted: var(--muted-foreground);
-  --ink-faint: #818E9C;
+  --ink-faint: #5E6978;
   --hairline: var(--border);
   --canvas: #FFFFFF;
   --canvas-soft: var(--muted);
   --surface: var(--card);
-  --primary-active: #3E566F;
+  --primary-active: #324B6B;
   --on-primary: #FFFFFF;
   --s-xxs: 4px;
   --s-xs: 8px;
@@ -1182,8 +1179,8 @@
   --r-lg: calc(var(--radius) + 2px);
   --r-xl: calc(var(--radius) + 6px);
   --r-full: 9999px;
-  --e1: 0 1px 2px rgba(36,52,71,.06);
-  --e2: 0 8px 24px rgba(36,52,71,.14);
+  --e1: 0 1px 2px rgba(30,39,51,.06);
+  --e2: 0 8px 24px rgba(30,39,51,.14);
   --font: var(--font-sans);
 }
 @layer base {
@@ -1195,34 +1192,33 @@
   }
   body {
     background-color: var(--background);
-    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     font-size: var(--text-sm);
     line-height: var(--tw-leading, var(--text-sm--line-height));
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  h1, h2, h3 {
+    font-family: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+  }
   h1 {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
-    --tw-font-weight: var(--font-weight-semibold);
-    font-weight: var(--font-weight-semibold);
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
   h2 {
     font-size: var(--text-xl);
     line-height: var(--tw-leading, var(--text-xl--line-height));
-    --tw-font-weight: var(--font-weight-semibold);
-    font-weight: var(--font-weight-semibold);
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
   h3 {
     font-size: var(--text-lg);
     line-height: var(--tw-leading, var(--text-lg--line-height));
-    --tw-font-weight: var(--font-weight-semibold);
-    font-weight: var(--font-weight-semibold);
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
@@ -1381,7 +1377,7 @@
     background-color: var(--muted);
     padding-inline: calc(var(--spacing) * 1);
     padding-block: calc(var(--spacing) * 0.5);
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.85em;
   }
 }
@@ -1629,6 +1625,34 @@
     }
     border: 0;
     background: transparent;
+  }
+  .seg a {
+    display: inline-flex;
+    height: calc(var(--spacing) * 7);
+    align-items: center;
+    justify-content: center;
+    border-radius: calc(var(--radius) - 2px);
+    padding-inline: calc(var(--spacing) * 3);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    color: var(--muted-foreground);
+    text-decoration-line: none;
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+    &[aria-current="page"] {
+      background-color: var(--background);
+    }
+    &[aria-current="page"] {
+      color: var(--foreground);
+    }
+    &[aria-current="page"] {
+      --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
   }
   .feed li {
     display: flex;
@@ -2149,7 +2173,7 @@
     margin-bottom: calc(var(--spacing) * 4);
   }
   .authform input.mono {
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     --tw-tracking: var(--tracking-wider);
     letter-spacing: var(--tracking-wider);
   }
@@ -2261,7 +2285,7 @@
     background-color: var(--muted);
     padding-inline: calc(var(--spacing) * 2);
     padding-block: calc(var(--spacing) * 0.5);
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
     --tw-tracking: var(--tracking-wider);
@@ -2914,7 +2938,7 @@
       <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
     </aside>
     <div class="main"><div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Good afternoon, Olivia</h1></div><div class="kpis mb-6 grid grid-cols-4 gap-3"><div class="kpi rounded-xl border bg-card p-4 text-card-foreground shadow-sm" style="height:120px"></div><div class="kpi rounded-xl border bg-card p-4 text-card-foreground shadow-sm"></div><div class="kpi rounded-xl border bg-card p-4 text-card-foreground shadow-sm"></div><div class="kpi rounded-xl border bg-card p-4 text-card-foreground shadow-sm"></div></div><div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm" style="height:280px"></div></div></div>
+      <div class="work min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Good afternoon, Olivia</h1></div><div class="kpis mb-6 grid grid-cols-4 gap-3"><div class="kpi rounded-xl border bg-card p-4 text-card-foreground shadow-sm" style="height:120px"></div><div class="kpi rounded-xl border bg-card p-4 text-card-foreground shadow-sm"></div><div class="kpi rounded-xl border bg-card p-4 text-card-foreground shadow-sm"></div><div class="kpi rounded-xl border bg-card p-4 text-card-foreground shadow-sm"></div></div><div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm" style="height:280px"></div></div></div>
   </div>
   <div class="cp-back fixed inset-0 z-50 grid items-start justify-center bg-black/60 pt-[12vh]">
     <div class="gate h-fit w-[min(560px,92vw)] rounded-lg border bg-background p-6 shadow-lg" role="alertdialog" aria-modal="true" aria-labelledby="p-ex-title" aria-describedby="p-ex-body">
@@ -2960,7 +2984,7 @@
     <div class="main">
       <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span><span class="spacer flex-1"></span>
         <button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" aria-pressed="true">View as&hellip;</button><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2">New idea</button></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+      <div class="work min-w-0 flex-1 p-6">
         <div class="pgh mb-6 flex flex-wrap items-end gap-4" data-roles="SiteAdmin"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Sam</h1>
           <div class="sub">Two organizations, 41 ideas, 16 delivery issues. You are not a member of any of them &mdash; to change what they own, act as one of their administrators.</div></div></div>
         <div class="pgh mb-6 flex flex-wrap items-end gap-4" data-roles="OrgAdmin"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Olivia</h1>
@@ -3029,7 +3053,7 @@
     </aside>
     <div class="main">
       <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span><span class="spacer flex-1"></span><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="User">New idea</button></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+      <div class="work min-w-0 flex-1 p-6">
         <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Not available</h1><div class="sub">View As is not offered to members.</div></div></div>
         <div class="empty rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center">
           <h3>Acting as someone else is an administrator&rsquo;s tool</h3>
@@ -3066,7 +3090,7 @@
       <div class="banner flex items-center gap-4 border-b border-warning/60 bg-warning/15 px-6 py-2.5 text-sm" role="status" aria-live="polite" data-roles="OrgAdmin"><span><b>Viewing as Noah Contributor</b> &mdash; you&rsquo;re seeing exactly what they see. Anything you do is recorded as Olivia Administer acting as them.</span><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">Exit view-as</button></div>
       <div class="banner flex items-center gap-4 border-b border-warning/60 bg-warning/15 px-6 py-2.5 text-sm" role="status" aria-live="polite" data-roles="SiteAdmin"><span><b>Viewing as Noah Contributor</b> &mdash; you&rsquo;re seeing exactly what they see. Anything you do is recorded as Sam Aldridge acting as them.</span><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">Exit view-as</button></div>
       <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span><span class="spacer flex-1"></span><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2">New idea</button></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+      <div class="work min-w-0 flex-1 p-6">
         <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Noah</h1>
           <div class="sub">Here&rsquo;s what needs you today. Acme Robotics has 22 ideas across 2 boards and 16 delivery issues in flight &mdash; press <span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">Ctrl K</span> to jump straight to any of them.</div></div></div>
         <div class="kpis mb-6 grid grid-cols-4 gap-3">
@@ -3103,7 +3127,7 @@
     </aside>
     <div class="main">
       <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><b>Home</b></span><span class="spacer flex-1"></span><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="User">New idea</button></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+      <div class="work min-w-0 flex-1 p-6">
         <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Not available</h1><div class="sub">View As is not offered to members.</div></div></div>
         <div class="empty rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center">
           <h3>Acting as someone else is an administrator&rsquo;s tool</h3>

@@ -176,6 +176,24 @@ export function optionalGuid(value: unknown): string | null {
   return text === null ? null : guidOrEmpty(text)
 }
 
+/**
+ * A REPEATABLE query parameter (`?statusId=a&statusId=b`, SPEC/30-Contracts.md's list pattern):
+ * every non-blank value, whether the key came once (a string) or repeated (an array). Absent is
+ * an empty list, which every list filter reads as "no filter".
+ */
+export function queryList(value: unknown): readonly string[] {
+  const values = Array.isArray(value) ? value : [value]
+  return values.flatMap((item) => optional(item) ?? [])
+}
+
+/**
+ * `queryList` for a GUID parameter. A value that is not a GUID becomes `EMPTY_GUID`, for the reason
+ * `optionalGuid` gives: it matches nothing rather than being ignored or reaching a `uuid` column.
+ */
+export function guidQueryList(value: unknown): readonly string[] {
+  return queryList(value).map(guidOrEmpty)
+}
+
 /** Whether a value is a canonical GUID - for the callers that must SKIP one rather than blank it. */
 export function isGuid(value: unknown): value is string {
   return typeof value === 'string' && UUID.test(value.trim())

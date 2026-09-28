@@ -9,6 +9,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 - `10-requirements.md` — requirement set
 - `30-Contracts.md` — **canonical API route and payload contracts**; authoritative for endpoint and payload details
 - `Specs Overview.md` — **derived, non-canonical** single-document summary; useful for orientation only. Last reconciled 2026-08-06. **Do not implement from it**, and where it disagrees with a canonical spec, the canonical spec simply wins — that is precedence, not a conflict to escalate.
+- `05-product-definition.md` — **derived, non-canonical** consolidated product definition: what Collega is, the four roles and their boundaries, the domain model, **~80 epic-level user stories with acceptance criteria**, the completion criteria, and each capability's delivery state. Generated 2026-09-14 from `70e349e`. Same precedence rule as `Specs Overview.md`. Read it to onboard or to see the whole product at once; read the canonical spec before changing anything. Its appendix lists spec discrepancies found during reconciliation — **reported, not fixed**; slice F5 owns them.
 
 ### Feature specs — `20-feature-*.md`
 
@@ -26,6 +27,8 @@ Canonical product and delivery specifications. This file is the index; the numbe
 | `20-feature-idea-type-fields.md` | Idea types and per-type fields | In MVP scope |
 | `20-feature-view-as.md` | View As (act-as impersonation) | Post-MVP, **scheduled Sprint 6** |
 | `20-feature-ai-idea-assist.md` | AI-assisted idea drafting (brainstorm chat → Idea fields) | Post-MVP, **scheduled Sprint 7** |
+| `20-feature-ai-idea-assist-v2.md` | Idea assistant v2 — co-author beside the create form, structured idea fields (supersedes v1 once shipped) | Specified 2026-09-27; **phase 3** of comp R |
+| `20-feature-prompt-eval-runner.md` | Prompt-eval runner — measures the idea assistant over `tools/prompt-eval` (developer tool; gates v2) | Specified 2026-09-28; **Sprint 12** |
 | `20-feature-issues-and-delivery.md` | Idea → execution handoff | Post-MVP |
 | `20-feature-oauth.md` | OAuth/SSO | **Deferred** |
 | `20-feature-saml.md` | SAML | **Deferred** |

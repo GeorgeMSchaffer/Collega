@@ -38,6 +38,8 @@ const WIRE_IDEA: WireIdeaListItem = {
   businessImpactName: 'Critical',
   assignees: [],
   tagNames: [],
+  tags: [],
+  effort: null,
   statusId: '3f7b0a3c-1d9e-4a2b-8c55-2f0f9c1d7e41',
   statusName: 'New / Pending',
   upvoteCount: 0,
@@ -111,9 +113,12 @@ describe('toIdea', () => {
       ideaType: 'Continuous Improvement',
       businessImpact: 'Critical',
       tag: null,
+      tags: [],
       assigneeInitials: null,
+      assignees: [],
       upvotes: 0,
       hasUpvoted: false,
+      effort: null,
     })
   })
 

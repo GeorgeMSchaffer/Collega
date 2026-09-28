@@ -23,6 +23,18 @@ export function writeDenial(role: Role): string | null {
 }
 
 /**
+ * Whether the role may create or configure boards. Not `writeDenial`: that answers whether a role
+ * may author an idea, and a board is an administrator's write. A Site Admin is sent to View As as
+ * an administrator, not a member: acting as a member (view-as rule 11 gives the target's role)
+ * would still be refused.
+ */
+export function boardAdminDenial(role: Role): string | null {
+  if (role === 'OrgAdmin') return null
+  if (role === 'SiteAdmin') return 'Act as an organization administrator'
+  return 'Administrators only'
+}
+
+/**
  * Whether the role may engage - vote and comment - which is a different question from whether it
  * may edit. A Read Only account deliberately keeps engagement; a Site Admin has neither, being
  * outside the organization entirely.
@@ -51,4 +63,35 @@ export function roleLabel(role: Role): string {
   if (role === 'OrgAdmin') return 'Org Admin'
   if (role === 'ReadOnly') return 'Read Only'
   return 'User'
+}
+
+/**
+ * Whether the role may delete an idea. Only an Org Admin: a direct Site Admin is refused every
+ * write and deletes through View As (`20-feature-ideas-and-engagement.md` "Permissions").
+ */
+export function mayDeleteIdeas(role: Role): boolean {
+  return role === 'OrgAdmin'
+}
+
+/**
+ * Whether the reader may change an idea's Description, Problem, Proposed solutions and Impact
+ * rationale: its author, or an Org Admin (rule 2a). Everyone else who may edit sees them read-only.
+ */
+export function mayEditIdeaContent(role: Role, userId: string, authorUserId: string | null) {
+  return role === 'OrgAdmin' || (authorUserId !== null && userId === authorUserId)
+}
+
+/**
+ * Whether the reader may change an Issue's delivery status or its tasks: its author, an assignee,
+ * or an Org Admin (`20-feature-issues-and-delivery.md` "Permissions"). A Read Only account and a
+ * direct Site Admin never may.
+ */
+export function mayWorkOnIssue(
+  role: Role,
+  userId: string,
+  issue: { authorUserId: string; assignees: readonly { id: string }[] },
+): boolean {
+  if (role === 'OrgAdmin') return true
+  if (role !== 'User') return false
+  return issue.authorUserId === userId || issue.assignees.some((person) => person.id === userId)
 }

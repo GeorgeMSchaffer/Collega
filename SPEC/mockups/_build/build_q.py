@@ -56,7 +56,7 @@ REG = {
     "crumb":   ("Breadcrumb", "text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"),
     "spacer":  ("—", "flex-1"),
     "grow":    ("—", "min-w-0 flex-1"),
-    "work":    ("SidebarInset main", "max-w-[1320px] min-w-0 flex-1 p-6"),
+    "work":    ("SidebarInset main", "min-w-0 flex-1 p-6"),
     "pgh":     ("page header", "mb-6 flex flex-wrap items-end gap-4"),
     "filters": ("toolbar", "mb-4 flex flex-wrap items-end gap-3"),
     "fw":      ("—", "min-w-40"),
@@ -248,12 +248,13 @@ for c in COMPS:
 COMPS[0]["explore"] = (
     "Comp P&rsquo;s locked structure, IA and copy on <b>Tailwind CSS v4 + shadcn/ui</b>, the "
     "framework the conversion will use. Radius, type scale, control heights and colour "
-    "roles are the framework&rsquo;s defaults on a theme carrying the 2026-08-31 palette "
-    "and Geist. Compare any screen against its comp P twin.")
+    "roles are the framework&rsquo;s defaults on the Terrazzo theme (Schibsted Grotesk "
+    "and Public Sans). Compare any screen against its comp P twin.")
 
 P.BRAND = "Comp Q"
-P.FONT_LINK = ('<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700'
-               '&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">')
+P.FONT_LINK = ('<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700'
+               '&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" '
+               'rel="stylesheet">')
 P.POST = post
 P.CSS = "/*@@QCSS@@*/"
 P.COMPS = COMPS

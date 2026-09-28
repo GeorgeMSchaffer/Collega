@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
-import { currentUser, isAdministrator } from '@/lib/session'
 import { AdminOnly, SiteAdminOnly } from './admin-only'
 
 /**
@@ -28,12 +28,6 @@ export function SettingsPage({
   siteAdminOnly?: boolean
   children: ReactNode
 }) {
-  // The action lives in the topbar, which sits outside AdminOnly - so it needs the same check, or a
-  // member reads "Add status" above a page telling them the route is closed to them.
-  const canAct = siteAdminOnly
-    ? currentUser().role === 'SiteAdmin'
-    : isAdministrator(currentUser().role)
-
   return (
     <>
       <Topbar
@@ -43,14 +37,12 @@ export function SettingsPage({
             <b className="font-medium text-foreground">{title}</b>
           </span>
         }
-        actions={canAct ? actions : undefined}
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <Gate siteAdminOnly={siteAdminOnly} what={gate}>
-          <div>
-            <h1>{title}</h1>
-            <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">{lead}</p>
-          </div>
+          {/* The action sits inside the gate with the heading, so a role the route refuses never
+              reads "Add New Status" above a panel telling them the page is closed to them. */}
+          <PageHeader title={title} description={lead} action={actions} />
           {children}
         </Gate>
       </main>

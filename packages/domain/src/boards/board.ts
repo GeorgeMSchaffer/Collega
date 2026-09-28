@@ -10,6 +10,7 @@
 import { type Auditable, markCreated, markUpdated } from '../common/index.js'
 
 export const BOARD_NAME_MAX_LENGTH = 150
+export const BOARD_DESCRIPTION_MAX_LENGTH = 500
 export const MIN_SWIMLANES = 2
 
 /**
@@ -28,6 +29,19 @@ export class BoardInvariantError extends Error {
   }
 }
 
+/**
+ * An archived board refuses edits to its own settings - name, description, lanes and their order -
+ * until it is unarchived (SPEC/20-feature-boards-and-statuses.md rule 13). The contract answers
+ * `409`, so this is a sibling of `BoardInvariantError` rather than a subclass: every catch site of
+ * that one answers a field-keyed `400`.
+ */
+export class BoardArchivedError extends Error {
+  constructor() {
+    super('This board is archived. Unarchive it first.')
+    this.name = 'BoardArchivedError'
+  }
+}
+
 export type BoardSwimlane = {
   readonly statusId: string
   readonly displayOrder: number
@@ -37,9 +51,14 @@ export type Board = Auditable & {
   readonly id: string
   readonly organizationId: string
   readonly name: string
+  /** Trimmed; `null` when the board has none - a blank description is stored as none. */
+  readonly description: string | null
   /** Controls whether the User role can move ideas on this board. */
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly BoardSwimlane[]
+  /** Archived in place of deletion (rule 13): kept with its lanes and ideas, but read-only. */
+  readonly isArchived: boolean
+  readonly archivedAtUtc: Date | null
 }
 
 /**
@@ -58,6 +77,20 @@ function requireName(name: string): string {
     throw new BoardInvariantError(
       'name',
       `Name must be ${BOARD_NAME_MAX_LENGTH} characters or fewer.`,
+    )
+  }
+  return trimmed
+}
+
+function normalizeDescription(description: string | null): string | null {
+  const trimmed = description?.trim() ?? ''
+  if (trimmed.length === 0) {
+    return null
+  }
+  if (trimmed.length > BOARD_DESCRIPTION_MAX_LENGTH) {
+    throw new BoardInvariantError(
+      'description',
+      `Description must be ${BOARD_DESCRIPTION_MAX_LENGTH} characters or fewer.`,
     )
   }
   return trimmed
@@ -85,6 +118,7 @@ export function createBoard(params: {
   readonly id: string
   readonly organizationId: string
   readonly name: string
+  readonly description?: string | null | undefined
   readonly allowUserStatusUpdate: boolean
   readonly orderedStatusIds: readonly string[]
   readonly nowUtc: Date
@@ -94,14 +128,18 @@ export function createBoard(params: {
     throw new BoardInvariantError('organizationId', 'Organization id is required.')
   }
   const name = requireName(params.name)
+  const description = normalizeDescription(params.description ?? null)
   const swimlanes = toSwimlanes(params.orderedStatusIds)
 
   return {
     id: params.id,
     organizationId: params.organizationId,
     name,
+    description,
     allowUserStatusUpdate: params.allowUserStatusUpdate,
     swimlanes,
+    isArchived: false,
+    archivedAtUtc: null,
     ...markCreated(params.nowUtc, params.actorUserId),
   }
 }
@@ -111,23 +149,28 @@ export function createBoard(params: {
  * (SPEC/30-Contracts.md `PUT /boards/{id}`). `orderedStatusIds` may add or remove statuses
  * relative to the current swimlanes but must keep at least `MIN_SWIMLANES` distinct statuses
  * (rule #3) and may only draw from the organization's statuses (subset support, validated by the
- * Application layer).
+ * Application layer). An `undefined` description leaves the current one in place; `null` or blank
+ * clears it.
  */
 export function updateBoard(
   board: Board,
   params: {
     readonly name: string
+    readonly description?: string | null | undefined
     readonly allowUserStatusUpdate: boolean
     readonly orderedStatusIds: readonly string[]
   },
   nowUtc: Date,
   actorUserId: string | null,
 ): Board {
+  requireNotArchived(board)
   const name = requireName(params.name)
+  const description =
+    params.description === undefined ? board.description : normalizeDescription(params.description)
   const swimlanes = toSwimlanes(params.orderedStatusIds)
 
   return markUpdated(
-    { ...board, name, allowUserStatusUpdate: params.allowUserStatusUpdate, swimlanes },
+    { ...board, name, description, allowUserStatusUpdate: params.allowUserStatusUpdate, swimlanes },
     nowUtc,
     actorUserId,
   )
@@ -144,6 +187,7 @@ export function reorderBoardSwimlanes(
   nowUtc: Date,
   actorUserId: string | null,
 ): Board {
+  requireNotArchived(board)
   const swimlanes = toSwimlanes(orderedStatusIds)
 
   const current = new Set(board.swimlanes.map((swimlane) => swimlane.statusId))
@@ -158,4 +202,29 @@ export function reorderBoardSwimlanes(
   }
 
   return markUpdated({ ...board, swimlanes }, nowUtc, actorUserId)
+}
+
+function requireNotArchived(board: Board): void {
+  if (board.isArchived) {
+    throw new BoardArchivedError()
+  }
+}
+
+/**
+ * Archives the board (rule 13). Idempotent: an archived board comes back unchanged, keeping the
+ * time it was first archived, so the caller can tell nothing happened.
+ */
+export function archiveBoard(board: Board, nowUtc: Date, actorUserId: string | null): Board {
+  if (board.isArchived) {
+    return board
+  }
+  return markUpdated({ ...board, isArchived: true, archivedAtUtc: nowUtc }, nowUtc, actorUserId)
+}
+
+/** Brings an archived board back unchanged apart from the flag. Idempotent, like `archiveBoard`. */
+export function unarchiveBoard(board: Board, nowUtc: Date, actorUserId: string | null): Board {
+  if (!board.isArchived) {
+    return board
+  }
+  return markUpdated({ ...board, isArchived: false, archivedAtUtc: null }, nowUtc, actorUserId)
 }

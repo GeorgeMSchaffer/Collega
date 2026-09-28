@@ -6,14 +6,14 @@
 <title>Collega — Comp Q: delivery and roadmap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /*! tailwindcss v4.1.11 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
 @layer theme {
   :root, :host {
-    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --color-black: #000;
     --color-white: #fff;
     --spacing: 0.25rem;
@@ -46,8 +46,8 @@
     --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     --default-transition-duration: 150ms;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    --default-font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --default-mono-font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --default-font-family: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --default-mono-font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 }
 @layer base {
@@ -366,9 +366,6 @@
   }
   .max-w-\[78\%\] {
     max-width: 78%;
-  }
-  .max-w-\[1320px\] {
-    max-width: 1320px;
   }
   .min-w-0 {
     min-width: calc(var(--spacing) * 0);
@@ -753,7 +750,7 @@
     vertical-align: middle;
   }
   .font-mono {
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .text-base {
     font-size: var(--text-base);
@@ -1119,55 +1116,55 @@
   }
 }
 :root {
-  --radius: 0.3rem;
-  --background: #F7F9FB;
-  --foreground: #243447;
+  --radius: 6px;
+  --background: #F5F6F8;
+  --foreground: #1E2733;
   --card: #FFFFFF;
-  --card-foreground: #243447;
+  --card-foreground: #1E2733;
   --popover: #FFFFFF;
-  --popover-foreground: #243447;
-  --primary: #527292;
+  --popover-foreground: #1E2733;
+  --primary: #3D5A80;
   --primary-foreground: #FFFFFF;
-  --secondary: #F1F3F6;
-  --secondary-foreground: #3E4E60;
-  --muted: #F1F3F6;
-  --muted-foreground: #5D6C7E;
-  --accent: #F0F4F7;
-  --accent-foreground: #3E566F;
-  --destructive: #B64B4B;
+  --secondary: #EDF0F3;
+  --secondary-foreground: #36414F;
+  --muted: #EDF0F3;
+  --muted-foreground: #5E6978;
+  --accent: #E4EAF2;
+  --accent-foreground: #35507A;
+  --destructive: #963636;
   --destructive-foreground: #FFFFFF;
-  --warning: #C9A65C;
-  --success: #6FAF7A;
-  --teal-brand: #5F9E93;
-  --border: #DDE1E6;
-  --input: #C5CBD3;
-  --ring: #5B7FA3;
+  --warning: #7F5A12;
+  --success: #3F6B2E;
+  --teal-brand: #3F6B2E;
+  --border: #E3E6EB;
+  --input: #CDD2DA;
+  --ring: #3D5A80;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #3E4E60;
-  --sidebar-primary: #527292;
-  --sidebar-accent: #F0F4F7;
-  --sidebar-accent-foreground: #3E566F;
-  --sidebar-border: #DDE1E6;
+  --sidebar-foreground: #36414F;
+  --sidebar-primary: #3D5A80;
+  --sidebar-accent: #E4EAF2;
+  --sidebar-accent-foreground: #1E2733;
+  --sidebar-border: #E3E6EB;
   --sky: #5B7FA3;
   --teal: #5F9E93;
   --green: #6FAF7A;
   --orange: #C9A65C;
-  --orange-deep: #8A6D2E;
+  --orange-deep: #7F5A12;
   --pink: #C97A7A;
   --purple: #9A8AC4;
   --purple-deep: #5B4F86;
   --brown: #8A6D2E;
-  --sug: #116b5e;
-  --sug-soft: #e8f3f1;
+  --sug: #3F6B2E;
+  --sug-soft: #E6F2DF;
   --ink: var(--foreground);
-  --ink-secondary: #3E4E60;
+  --ink-secondary: #36414F;
   --ink-muted: var(--muted-foreground);
-  --ink-faint: #818E9C;
+  --ink-faint: #5E6978;
   --hairline: var(--border);
   --canvas: #FFFFFF;
   --canvas-soft: var(--muted);
   --surface: var(--card);
-  --primary-active: #3E566F;
+  --primary-active: #324B6B;
   --on-primary: #FFFFFF;
   --s-xxs: 4px;
   --s-xs: 8px;
@@ -1182,8 +1179,8 @@
   --r-lg: calc(var(--radius) + 2px);
   --r-xl: calc(var(--radius) + 6px);
   --r-full: 9999px;
-  --e1: 0 1px 2px rgba(36,52,71,.06);
-  --e2: 0 8px 24px rgba(36,52,71,.14);
+  --e1: 0 1px 2px rgba(30,39,51,.06);
+  --e2: 0 8px 24px rgba(30,39,51,.14);
   --font: var(--font-sans);
 }
 @layer base {
@@ -1195,34 +1192,33 @@
   }
   body {
     background-color: var(--background);
-    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     font-size: var(--text-sm);
     line-height: var(--tw-leading, var(--text-sm--line-height));
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  h1, h2, h3 {
+    font-family: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+  }
   h1 {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
-    --tw-font-weight: var(--font-weight-semibold);
-    font-weight: var(--font-weight-semibold);
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
   h2 {
     font-size: var(--text-xl);
     line-height: var(--tw-leading, var(--text-xl--line-height));
-    --tw-font-weight: var(--font-weight-semibold);
-    font-weight: var(--font-weight-semibold);
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
   h3 {
     font-size: var(--text-lg);
     line-height: var(--tw-leading, var(--text-lg--line-height));
-    --tw-font-weight: var(--font-weight-semibold);
-    font-weight: var(--font-weight-semibold);
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
@@ -1381,7 +1377,7 @@
     background-color: var(--muted);
     padding-inline: calc(var(--spacing) * 1);
     padding-block: calc(var(--spacing) * 0.5);
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.85em;
   }
 }
@@ -1629,6 +1625,34 @@
     }
     border: 0;
     background: transparent;
+  }
+  .seg a {
+    display: inline-flex;
+    height: calc(var(--spacing) * 7);
+    align-items: center;
+    justify-content: center;
+    border-radius: calc(var(--radius) - 2px);
+    padding-inline: calc(var(--spacing) * 3);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    color: var(--muted-foreground);
+    text-decoration-line: none;
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+    &[aria-current="page"] {
+      background-color: var(--background);
+    }
+    &[aria-current="page"] {
+      color: var(--foreground);
+    }
+    &[aria-current="page"] {
+      --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
   }
   .feed li {
     display: flex;
@@ -2149,7 +2173,7 @@
     margin-bottom: calc(var(--spacing) * 4);
   }
   .authform input.mono {
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     --tw-tracking: var(--tracking-wider);
     letter-spacing: var(--tracking-wider);
   }
@@ -2261,7 +2285,7 @@
     background-color: var(--muted);
     padding-inline: calc(var(--spacing) * 2);
     padding-block: calc(var(--spacing) * 0.5);
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
     --tw-tracking: var(--tracking-wider);
@@ -2727,7 +2751,7 @@
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly" data-when="normal">
         <button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-sp-m">Complete sprint</button>
         <span class="denied text-xs italic text-muted-foreground" id="p-why-sp-m">Administrators only</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Sprint board</h1>
         <div class="sub">Issues committed to the running sprint, in five fixed delivery statuses. Move a card with drag, or change its status from the issue. Only the person who raised it, an assignee, or an administrator can move it.</div></div></div>
 
@@ -2838,7 +2862,7 @@
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly" data-when="normal">
         <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-bl-m">Start Sprint 13</button>
         <span class="denied text-xs italic text-muted-foreground" id="p-why-bl-m">Administrators only</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Backlog</h1>
         <div class="sub">Issues that are committed but not yet in a sprint. Most upvoted first, so the list reads as the organization&rsquo;s own priority order. Assigning a sprint here moves the row; it is still the same idea, still carrying its history.</div></div></div>
 
@@ -2949,7 +2973,7 @@
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly" data-when="normal empty">
         <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-is-m">Save</button>
         <span class="denied text-xs italic text-muted-foreground" id="p-why-is-m">Only the person who raised it, an assignee, or an administrator</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1">
         <div class="chipbar flex flex-wrap items-center gap-2" style="margin-bottom:var(--s-sm)"><span class="key inline-block rounded-sm border bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium tabular-nums">CLG-114</span>
           <span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--sky)"></span>Delivery</span>
@@ -3075,7 +3099,7 @@
       <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
     </aside>
     <div class="main"><div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#">Boards</a> / <b>Ideas</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Ideas</h1></div><div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm" style="height:300px"></div></div></div>
+      <div class="work min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Ideas</h1></div><div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm" style="height:300px"></div></div></div>
     <aside class="inspector flex w-[400px] shrink-0 flex-col border-l bg-background" aria-hidden="true"><div class="insp-head space-y-1 border-b px-6 py-4"><div class="eyebrow text-xs font-medium uppercase tracking-wide text-muted-foreground">Ideas board &middot; #IDEA-118</div><h2>Standardize the intake checklist</h2></div></aside>
   </div>
   <div class="cp-back fixed inset-0 z-50 grid items-start justify-center bg-black/60 pt-[12vh]">
@@ -3164,7 +3188,7 @@
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly" data-when="normal">
         <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-rm-m">Add outcome</button>
         <span class="denied text-xs italic text-muted-foreground" id="p-why-rm-m">Administrators only</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Roadmap</h1>
         <div class="sub">What the quarter is for. Each outcome groups the issues that serve it; an issue sits under one outcome, so every count here is a plain count and the rows add up to the delivery set.</div></div></div>
 
@@ -3251,7 +3275,7 @@
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly">
         <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-oc-m">Group an issue</button>
         <span class="denied text-xs italic text-muted-foreground" id="p-why-oc-m">Administrators only</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1">
         <div class="chipbar flex flex-wrap items-center gap-2" style="margin-bottom:var(--s-sm)"><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--sky)"></span>Outcome</span><span class="cap faint num text-xs text-muted-foreground/70 tabular-nums">Q3 2026 &middot; target 1 Jul &ndash; 30 Sep</span></div>
         <h1>Cut reporting effort</h1>
@@ -3313,7 +3337,7 @@
     </aside>
   <div class="main">
     <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground">Delivery / <a href="#" data-go="s-sprint">Sprint 12</a> / <b>CLG-114</b></span><span class="spacer flex-1"></span><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" data-go="s-issue">Back to issue</button></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1">
         <div class="chipbar flex flex-wrap items-center gap-2" style="margin-bottom:var(--s-sm)"><span class="key inline-block rounded-sm border bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium tabular-nums">CLG-114</span>
           <span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--sky)"></span>Delivery</span>

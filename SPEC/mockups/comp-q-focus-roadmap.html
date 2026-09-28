@@ -6,14 +6,14 @@
 <title>Collega — Comp Q: core workspace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /*! tailwindcss v4.1.11 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
 @layer theme {
   :root, :host {
-    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     --color-black: #000;
     --color-white: #fff;
     --spacing: 0.25rem;
@@ -46,8 +46,8 @@
     --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     --default-transition-duration: 150ms;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    --default-font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    --default-mono-font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --default-font-family: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --default-mono-font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 }
 @layer base {
@@ -366,9 +366,6 @@
   }
   .max-w-\[78\%\] {
     max-width: 78%;
-  }
-  .max-w-\[1320px\] {
-    max-width: 1320px;
   }
   .min-w-0 {
     min-width: calc(var(--spacing) * 0);
@@ -753,7 +750,7 @@
     vertical-align: middle;
   }
   .font-mono {
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .text-base {
     font-size: var(--text-base);
@@ -1119,55 +1116,55 @@
   }
 }
 :root {
-  --radius: 0.3rem;
-  --background: #F7F9FB;
-  --foreground: #243447;
+  --radius: 6px;
+  --background: #F5F6F8;
+  --foreground: #1E2733;
   --card: #FFFFFF;
-  --card-foreground: #243447;
+  --card-foreground: #1E2733;
   --popover: #FFFFFF;
-  --popover-foreground: #243447;
-  --primary: #527292;
+  --popover-foreground: #1E2733;
+  --primary: #3D5A80;
   --primary-foreground: #FFFFFF;
-  --secondary: #F1F3F6;
-  --secondary-foreground: #3E4E60;
-  --muted: #F1F3F6;
-  --muted-foreground: #5D6C7E;
-  --accent: #F0F4F7;
-  --accent-foreground: #3E566F;
-  --destructive: #B64B4B;
+  --secondary: #EDF0F3;
+  --secondary-foreground: #36414F;
+  --muted: #EDF0F3;
+  --muted-foreground: #5E6978;
+  --accent: #E4EAF2;
+  --accent-foreground: #35507A;
+  --destructive: #963636;
   --destructive-foreground: #FFFFFF;
-  --warning: #C9A65C;
-  --success: #6FAF7A;
-  --teal-brand: #5F9E93;
-  --border: #DDE1E6;
-  --input: #C5CBD3;
-  --ring: #5B7FA3;
+  --warning: #7F5A12;
+  --success: #3F6B2E;
+  --teal-brand: #3F6B2E;
+  --border: #E3E6EB;
+  --input: #CDD2DA;
+  --ring: #3D5A80;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #3E4E60;
-  --sidebar-primary: #527292;
-  --sidebar-accent: #F0F4F7;
-  --sidebar-accent-foreground: #3E566F;
-  --sidebar-border: #DDE1E6;
+  --sidebar-foreground: #36414F;
+  --sidebar-primary: #3D5A80;
+  --sidebar-accent: #E4EAF2;
+  --sidebar-accent-foreground: #1E2733;
+  --sidebar-border: #E3E6EB;
   --sky: #5B7FA3;
   --teal: #5F9E93;
   --green: #6FAF7A;
   --orange: #C9A65C;
-  --orange-deep: #8A6D2E;
+  --orange-deep: #7F5A12;
   --pink: #C97A7A;
   --purple: #9A8AC4;
   --purple-deep: #5B4F86;
   --brown: #8A6D2E;
-  --sug: #116b5e;
-  --sug-soft: #e8f3f1;
+  --sug: #3F6B2E;
+  --sug-soft: #E6F2DF;
   --ink: var(--foreground);
-  --ink-secondary: #3E4E60;
+  --ink-secondary: #36414F;
   --ink-muted: var(--muted-foreground);
-  --ink-faint: #818E9C;
+  --ink-faint: #5E6978;
   --hairline: var(--border);
   --canvas: #FFFFFF;
   --canvas-soft: var(--muted);
   --surface: var(--card);
-  --primary-active: #3E566F;
+  --primary-active: #324B6B;
   --on-primary: #FFFFFF;
   --s-xxs: 4px;
   --s-xs: 8px;
@@ -1182,8 +1179,8 @@
   --r-lg: calc(var(--radius) + 2px);
   --r-xl: calc(var(--radius) + 6px);
   --r-full: 9999px;
-  --e1: 0 1px 2px rgba(36,52,71,.06);
-  --e2: 0 8px 24px rgba(36,52,71,.14);
+  --e1: 0 1px 2px rgba(30,39,51,.06);
+  --e2: 0 8px 24px rgba(30,39,51,.14);
   --font: var(--font-sans);
 }
 @layer base {
@@ -1195,34 +1192,33 @@
   }
   body {
     background-color: var(--background);
-    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     font-size: var(--text-sm);
     line-height: var(--tw-leading, var(--text-sm--line-height));
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  h1, h2, h3 {
+    font-family: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+  }
   h1 {
     font-size: var(--text-2xl);
     line-height: var(--tw-leading, var(--text-2xl--line-height));
-    --tw-font-weight: var(--font-weight-semibold);
-    font-weight: var(--font-weight-semibold);
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
   h2 {
     font-size: var(--text-xl);
     line-height: var(--tw-leading, var(--text-xl--line-height));
-    --tw-font-weight: var(--font-weight-semibold);
-    font-weight: var(--font-weight-semibold);
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
   h3 {
     font-size: var(--text-lg);
     line-height: var(--tw-leading, var(--text-lg--line-height));
-    --tw-font-weight: var(--font-weight-semibold);
-    font-weight: var(--font-weight-semibold);
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
   }
@@ -1381,7 +1377,7 @@
     background-color: var(--muted);
     padding-inline: calc(var(--spacing) * 1);
     padding-block: calc(var(--spacing) * 0.5);
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.85em;
   }
 }
@@ -1629,6 +1625,34 @@
     }
     border: 0;
     background: transparent;
+  }
+  .seg a {
+    display: inline-flex;
+    height: calc(var(--spacing) * 7);
+    align-items: center;
+    justify-content: center;
+    border-radius: calc(var(--radius) - 2px);
+    padding-inline: calc(var(--spacing) * 3);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    color: var(--muted-foreground);
+    text-decoration-line: none;
+    transition-property: all;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+    &[aria-current="page"] {
+      background-color: var(--background);
+    }
+    &[aria-current="page"] {
+      color: var(--foreground);
+    }
+    &[aria-current="page"] {
+      --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
   }
   .feed li {
     display: flex;
@@ -2149,7 +2173,7 @@
     margin-bottom: calc(var(--spacing) * 4);
   }
   .authform input.mono {
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     --tw-tracking: var(--tracking-wider);
     letter-spacing: var(--tracking-wider);
   }
@@ -2261,7 +2285,7 @@
     background-color: var(--muted);
     padding-inline: calc(var(--spacing) * 2);
     padding-block: calc(var(--spacing) * 0.5);
-    font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
     --tw-tracking: var(--tracking-wider);
@@ -2685,7 +2709,7 @@
     <button type="button" data-state-set="error" aria-pressed="false">error</button>
   </span>
 </div>
-<div class="explore"><b>How to read this</b><span>Comp P&rsquo;s locked structure, IA and copy on <b>Tailwind CSS v4 + shadcn/ui</b>, the framework the conversion will use. Radius, type scale, control heights and colour roles are the framework&rsquo;s defaults on a theme carrying the 2026-08-31 palette and Geist. Compare any screen against its comp P twin.
+<div class="explore"><b>How to read this</b><span>Comp P&rsquo;s locked structure, IA and copy on <b>Tailwind CSS v4 + shadcn/ui</b>, the framework the conversion will use. Radius, type scale, control heights and colour roles are the framework&rsquo;s defaults on the Terrazzo theme (Schibsted Grotesk and Public Sans). Compare any screen against its comp P twin.
   <span class="how">
     <span>&bull; The tab bar above switches screens; <b>Other areas</b> jumps to another file.</span>
     <span>&bull; <b>View as role</b> and <b>State</b> re-render the current screen &mdash; they are live, not labels.</span>
@@ -2725,7 +2749,7 @@
       <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-hn-sa">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-hn-sa">Act as a member of an organization to add ideas</span></span>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="ReadOnly"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-hn-ro">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-hn-ro">Read-only accounts can&rsquo;t create ideas</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4" data-roles="OrgAdmin"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Olivia</h1>
         <div class="sub">Here&rsquo;s what needs you today. Acme Robotics has 22 ideas across 2 boards and 16 delivery issues in flight &mdash; press <span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">Ctrl K</span> to jump straight to any of them.</div></div></div>
       <div class="pgh mb-6 flex flex-wrap items-end gap-4" data-roles="User"><div class="grow min-w-0 flex-1"><h1>Good afternoon, Umar</h1>
@@ -2868,8 +2892,13 @@
     </aside>
   <div class="main">
     <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-home">Home</a> / <b>Boards</b></span><span class="spacer flex-1"></span>
-      <a class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Manage boards</a></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+      <a class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Manage boards</a>
+      <a class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" href="#" data-go="comp-p-admin.html#s-board-new" data-roles="OrgAdmin">New board</a>
+      <span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly"><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-mb-mem">Manage boards</button><span class="denied text-xs italic text-muted-foreground" id="p-why-mb-mem">Administrators only</span></span>
+      <span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-nb-mem">New board</button><span class="denied text-xs italic text-muted-foreground" id="p-why-nb-mem">Administrators only</span></span>
+      <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-mb-sa">Manage boards</button><span class="denied text-xs italic text-muted-foreground" id="p-why-mb-sa">Act as an organization administrator</span></span>
+      <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-nb-sa">New board</button><span class="denied text-xs italic text-muted-foreground" id="p-why-nb-sa">Act as an organization administrator</span></span></div>
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Boards</h1>
         <div class="sub" data-roles="OrgAdmin User ReadOnly">Boards you can access. Selecting a board opens its swim lanes.</div>
         <div class="sub" data-roles="SiteAdmin">Every board in every organization. Selecting a board opens its swim lanes, read-only.</div></div></div>
@@ -2883,19 +2912,41 @@
         <a class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" href="#" data-go="comp-p-admin.html#s-boards-admin" data-roles="OrgAdmin">Create a board</a>
       </div>
 
-      <div data-when="normal" class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
+      <div data-when="normal" style="display:flex;justify-content:flex-end;margin-bottom:var(--s-md)">
+        <nav class="seg inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground" aria-label="Boards view"><a href="#" aria-current="page">Cards</a><a href="#">List</a></nav>
+      </div>
+
+      <div data-when="normal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:var(--s-md)">
+          <div class="card rounded-xl border bg-card p-6 text-card-foreground shadow-sm" style="display:flex;flex-direction:column;gap:var(--s-sm)">
+            <div style="display:flex;justify-content:space-between;align-items:start;gap:var(--s-xs)"><a class="t font-medium" href="#" data-go="s-board" style="font-size:16px;font-weight:600">Opportunities</a><a class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" href="#" data-go="comp-p-admin.html#s-board-edit" data-roles="OrgAdmin" aria-label="Edit Opportunities">Edit</a><span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly SiteAdmin"><button class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" aria-disabled="true" aria-describedby="p-why-be-opp" aria-label="Edit Opportunities">Edit</button><span class="denied text-xs italic text-muted-foreground" id="p-why-be-opp"><span data-roles="User ReadOnly">Administrators only</span><span data-roles="SiteAdmin">Act as an organization administrator</span></span></span></div>
+            <div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Field service and diagnostics improvements raised by technicians and customers.</div>
+            <div aria-hidden="true" style="display:flex;gap:2px;height:8px;border-radius:999px;overflow:hidden;background:var(--canvas-soft)"><span style="flex:3;background:#64748B"></span><span style="flex:2;background:#D97706"></span><span style="flex:2;background:#2563EB"></span><span style="flex:1;background:#7C3AED"></span><span style="flex:3;background:#16A34A"></span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px"><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#64748B"></span>3 New / Pending</span><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#D97706"></span>2 In Review</span><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#2563EB"></span>2 In Progress</span><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#7C3AED"></span>1 Client Review</span><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#16A34A"></span>3 Complete</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px"><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">customer-impact</span><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">diagnostics</span><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">parts</span><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground" style="border:1px dashed var(--hairline);background:transparent">+1</span></div>
+            <div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground" style="border-top:1px solid var(--hairline);padding-top:var(--s-xs);display:flex;justify-content:space-between;flex-wrap:wrap"><span>Created by Olivia Administer &middot; Sep 14, 2026</span><span>11 ideas &middot; 5 lanes</span></div>
+          </div>
+          <div class="card rounded-xl border bg-card p-6 text-card-foreground shadow-sm" style="display:flex;flex-direction:column;gap:var(--s-sm)">
+            <div style="display:flex;justify-content:space-between;align-items:start;gap:var(--s-xs)"><a class="t font-medium" href="#" data-go="s-board" style="font-size:16px;font-weight:600">Ideas</a><a class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" href="#" data-go="comp-p-admin.html#s-board-edit" data-roles="OrgAdmin" aria-label="Edit Ideas">Edit</a><span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly SiteAdmin"><button class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" aria-disabled="true" aria-describedby="p-why-be-ide" aria-label="Edit Ideas">Edit</button><span class="denied text-xs italic text-muted-foreground" id="p-why-be-ide"><span data-roles="User ReadOnly">Administrators only</span><span data-roles="SiteAdmin">Act as an organization administrator</span></span></span></div>
+            <div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Assembly cell reliability: fewer stoppages, safer cells, shorter cycle times.</div>
+            <div aria-hidden="true" style="display:flex;gap:2px;height:8px;border-radius:999px;overflow:hidden;background:var(--canvas-soft)"><span style="flex:2;background:#2563EB"></span><span style="flex:1;background:#7C3AED"></span><span style="flex:3;background:#16A34A"></span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px"><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground" style="opacity:.6"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#64748B"></span>0 New / Pending</span><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground" style="opacity:.6"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#D97706"></span>0 In Review</span><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#2563EB"></span>2 In Progress</span><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#7C3AED"></span>1 Client Review</span><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:#16A34A"></span>3 Complete</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px"><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">quality</span><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">safety</span><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">automation</span><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground" style="border:1px dashed var(--hairline);background:transparent">+1</span></div>
+            <div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground" style="border-top:1px solid var(--hairline);padding-top:var(--s-xs);display:flex;justify-content:space-between;flex-wrap:wrap"><span>Created by Olivia Administer &middot; Sep 14, 2026</span><span>6 ideas &middot; 5 lanes</span></div>
+          </div>
+      </div>
+
+      <div data-when="normal" class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm" style="margin-top:var(--s-lg)">
+        <div class="sysnote rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">List view (<code>/boards?view=list</code>) &mdash; the same boards as rows.</div>
         <table class="wrap1">
-          <thead><tr><th>Board</th><th style="width:190px" data-roles="SiteAdmin">Organization</th><th style="width:120px">Swimlanes</th><th style="width:190px">User status moves</th><th style="width:96px"><span class="vh sr-only">Open</span></th></tr></thead>
+          <thead><tr><th>Board</th><th style="width:26%">Ideas by lane</th><th style="width:18%">Top tags</th><th style="width:14%">Created</th><th style="width:176px"><span class="vh sr-only">Actions</span></th></tr></thead>
           <tbody>
-            <tr><td><a class="t font-medium" href="#" data-go="s-board">Ideas</a><div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">Process ideas for the whole organization</div></td><td data-roles="SiteAdmin">Acme Robotics</td><td class="num tabular-nums">5</td><td><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--green)"></span>Allowed</span></td><td><a class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" href="#" data-go="s-board">Open</a></td></tr>
-            <tr><td><a class="t font-medium" href="#">Opportunities</a><div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">Commercial and partnership leads</div></td><td data-roles="SiteAdmin">Acme Robotics</td><td class="num tabular-nums">4</td><td><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground"></span>Admins only</span></td><td><a class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" href="#">Open</a></td></tr>
-            <tr data-roles="SiteAdmin"><td><a class="t font-medium" href="#">Product ideas</a><div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">Feature requests from the field</div></td><td>Globex Industrial</td><td class="num tabular-nums">5</td><td><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--green)"></span>Allowed</span></td><td><a class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" href="#">Open</a></td></tr>
-            <tr data-roles="SiteAdmin"><td><a class="t font-medium" href="#">Ops improvements</a><div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">Plant-floor process changes</div></td><td>Globex Industrial</td><td class="num tabular-nums">3</td><td><span class="marker inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="dot inline-block size-2 shrink-0 rounded-full bg-muted-foreground"></span>Admins only</span></td><td><a class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" href="#">Open</a></td></tr>
+            <tr><td><a class="t font-medium" href="#" data-go="s-board">Opportunities</a><div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">Field service and diagnostics improvements raised by technicians and customers.</div></td><td><div aria-hidden="true" style="display:flex;gap:2px;height:8px;border-radius:999px;overflow:hidden;background:var(--canvas-soft)"><span style="flex:3;background:#64748B"></span><span style="flex:2;background:#D97706"></span><span style="flex:2;background:#2563EB"></span><span style="flex:1;background:#7C3AED"></span><span style="flex:3;background:#16A34A"></span></div><div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><b>11</b>&nbsp;ideas &middot; 3 New / Pending &middot; 5 in between &middot; 3 Complete</div></td><td><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">customer-impact</span> <span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">diagnostics</span> <span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground" style="border:1px dashed var(--hairline);background:transparent">+2</span></td><td class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">Olivia Administer<br>Sep 14, 2026</td><td><a class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" href="#" data-go="comp-p-admin.html#s-board-edit" data-roles="OrgAdmin" aria-label="Edit Opportunities">Edit</a><span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly SiteAdmin"><button class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" aria-disabled="true" aria-describedby="p-why-be-opp-l" aria-label="Edit Opportunities">Edit</button><span class="denied text-xs italic text-muted-foreground" id="p-why-be-opp-l"><span data-roles="User ReadOnly">Administrators only</span><span data-roles="SiteAdmin">Act as an organization administrator</span></span></span></td></tr>
+            <tr><td><a class="t font-medium" href="#" data-go="s-board">Ideas</a><div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">Assembly cell reliability: fewer stoppages, safer cells, shorter cycle times.</div></td><td><div aria-hidden="true" style="display:flex;gap:2px;height:8px;border-radius:999px;overflow:hidden;background:var(--canvas-soft)"><span style="flex:2;background:#2563EB"></span><span style="flex:1;background:#7C3AED"></span><span style="flex:3;background:#16A34A"></span></div><div class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"><b>6</b>&nbsp;ideas &middot; 0 New / Pending &middot; 3 in between &middot; 3 Complete</div></td><td><span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">quality</span> <span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground">safety</span> <span class="tag inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium text-muted-foreground" style="border:1px dashed var(--hairline);background:transparent">+2</span></td><td class="bd mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">Olivia Administer<br>Sep 14, 2026</td><td><a class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" href="#" data-go="comp-p-admin.html#s-board-edit" data-roles="OrgAdmin" aria-label="Edit Ideas">Edit</a><span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly SiteAdmin"><button class="btn sm2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs" aria-disabled="true" aria-describedby="p-why-be-ide-l" aria-label="Edit Ideas">Edit</button><span class="denied text-xs italic text-muted-foreground" id="p-why-be-ide-l"><span data-roles="User ReadOnly">Administrators only</span><span data-roles="SiteAdmin">Act as an organization administrator</span></span></span></td></tr>
           </tbody>
         </table>
       </div>
 
-      <div class="note mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"><b>A list, not a command center.</b> Boards are created and configured under Settings, so this page has no create action; it exists so a member can find a board by name and see, before opening it, whether members may move cards on it. &ldquo;User status moves&rdquo; is the board&rsquo;s <code>AllowUserStatusUpdate</code> flag written as a marker with a label, never a bare colour. A Site Admin sees the same table with an Organization column and every organization&rsquo;s boards in it.</div>
+      <div class="note mt-4 rounded-lg border border-l-4 border-l-primary bg-card px-4 py-3 text-sm text-muted-foreground"><b>A chooser that also leads to board settings.</b> Boards are created and configured under Settings; since 2026-09-27 (<code>SPEC/decisions.md</code>) this page carries the way there &mdash; Manage boards and New board &mdash; live for an Org Admin and disabled with the reason for everyone else. Each board shows its description, where its ideas sit across its own lanes (live Discovery ideas only, the same set the board shows), its most-used tags and who created it. Cards are the default; <b>List</b> (<code>?view=list</code>) shows the same facts as rows for comparing many boards. Decided 2026-09-27.</div>
     </div>
   </div>
 </div></section>
@@ -2930,7 +2981,7 @@
       <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-in-sa">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-in-sa">Act as a member of an organization to add ideas</span></span>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="ReadOnly"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-in-ro">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-in-ro">Read-only accounts can&rsquo;t create ideas</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Ideas</h1>
         <div class="sub" data-roles="OrgAdmin User ReadOnly">Every idea in Acme Robotics, across all boards.</div>
         <div class="sub" data-roles="SiteAdmin">Every idea in every organization, read-only from here. Act as a member to change one.</div></div></div>
@@ -3078,12 +3129,15 @@
       <div class="seg inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground" role="group" aria-label="View"><button aria-pressed="false" data-go="s-ideas">List</button><button aria-pressed="true">Lanes</button></div>
       <label for="p-boardpick" class="vh sr-only">Board</label><select id="p-boardpick" style="width:auto"><option selected>Ideas</option><option>Opportunities</option></select>
       <button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">Export CSV</button>
+      <a class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" href="#" data-go="comp-p-admin.html#s-board-edit" data-roles="OrgAdmin">Edit board</a>
+      <span class="deniedwrap inline-flex items-center gap-2" data-roles="User ReadOnly"><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-eb-mem">Edit board</button><span class="denied text-xs italic text-muted-foreground" id="p-why-eb-mem">Administrators only</span></span>
+      <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-eb-sa">Edit board</button><span class="denied text-xs italic text-muted-foreground" id="p-why-eb-sa">Act as an organization administrator</span></span>
       <button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" data-roles="OrgAdmin User" aria-expanded="true">Hide import</button>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-bi-sa">Import CSV</button><span class="denied text-xs italic text-muted-foreground" id="p-why-bi-sa">Through View As</span></span>
       <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="SiteAdmin"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-bn-sa">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-bn-sa">Act as a member</span></span>
       <span class="deniedwrap inline-flex items-center gap-2" data-roles="ReadOnly"><button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" aria-disabled="true" aria-describedby="p-why-bn-ro">New idea</button><span class="denied text-xs italic text-muted-foreground" id="p-why-bn-ro">Read-only account</span></span></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Ideas</h1>
         <div class="sub" data-roles="OrgAdmin User">Move a card with drag, or focus it and press <span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">&larr;</span> <span class="kbd rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">&rarr;</span>. Both paths do the same thing. Members may move cards on this board; an administrator can turn that off per board.</div>
         <div class="sub" data-roles="SiteAdmin ReadOnly">Cards open read-only for your role, and nothing here can be moved. Export is still yours &mdash; the CSV is a read.</div></div></div>
@@ -3203,7 +3257,7 @@
   <div class="main">
     <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-home">Home</a> / <b>Ideas</b></span><span class="spacer flex-1"></span>
       <button class="btn pri inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-transparent bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2" data-roles="OrgAdmin User" data-go="s-brainstorm">New idea</button></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Ideas</h1>
         <div class="sub">The list stays live and scrollable while the inspector is open.</div></div></div>
       <div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
@@ -3327,7 +3381,7 @@
   <div class="main">
     <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span><span class="spacer flex-1"></span>
       <div class="seg inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground" role="group" aria-label="View"><button aria-pressed="false" data-go="s-ideas">List</button><button aria-pressed="true">Lanes</button></div></div>
-    <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+    <div class="work min-w-0 flex-1 p-6">
       <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Ideas</h1>
         <div class="sub">The board stays where it is while the idea is written on the right. When it is saved, the card appears in New / Pending and the column closes.</div></div></div>
       <div class="lanes flex items-start gap-3 overflow-x-auto pb-3" aria-hidden="true">
@@ -3449,7 +3503,7 @@
     </aside>
     <div class="main">
       <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+      <div class="work min-w-0 flex-1 p-6">
         <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Not available</h1><div class="sub">Creating an idea is a member&rsquo;s action.</div></div></div>
         <div class="empty rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center">
           <h3 data-roles="SiteAdmin">A Site Admin does not raise ideas directly</h3>
@@ -3490,7 +3544,7 @@
       <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
     </aside>
     <div class="main"><div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground">Boards / <b>Ideas</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Ideas</h1></div><div class="lanes flex items-start gap-3 overflow-x-auto pb-3"><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div></div></div></div>
+      <div class="work min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Ideas</h1></div><div class="lanes flex items-start gap-3 overflow-x-auto pb-3"><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div><div class="lane w-72 shrink-0 rounded-lg border bg-muted/50 p-2" style="height:320px"></div></div></div></div>
   </div>
   <div class="cp-back fixed inset-0 z-50 grid items-start justify-center bg-black/60 pt-[12vh]">
     <div class="chatm flex max-h-[86vh] w-[min(720px,92vw)] flex-col overflow-hidden rounded-lg border bg-background shadow-lg" role="dialog" aria-modal="true" aria-labelledby="p-bs-title">
@@ -3558,7 +3612,7 @@
     </aside>
     <div class="main">
       <div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground"><a href="#" data-go="s-boards">Boards</a> / <b>Ideas</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6">
+      <div class="work min-w-0 flex-1 p-6">
         <div class="pgh mb-6 flex flex-wrap items-end gap-4"><div class="grow min-w-0 flex-1"><h1>Not available</h1><div class="sub">The idea assistant opens from New idea, which is a member&rsquo;s action.</div></div></div>
         <div class="empty rounded-lg border border-dashed bg-muted/30 px-6 py-10 text-center">
           <h3>Nothing to brainstorm for this role</h3>
@@ -3597,7 +3651,7 @@
       <div class="me flex items-center gap-2 border-t px-2 py-2.5 text-sm" data-roles="ReadOnly"><span class="av flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground">RV</span><div><div style="font-size:14px;font-weight:600;line-height:1.43">Rae Vance</div><div class="cap faint text-xs text-muted-foreground/70">Read Only</div></div></div>
     </aside>
     <div class="main"><div class="topbar flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-6 py-2"><span class="crumb text-sm text-muted-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_b]:font-medium [&_b]:text-foreground">Home / <b>Roadmap</b></span></div>
-      <div class="work max-w-[1320px] min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Roadmap</h1></div><div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm" style="height:300px"></div></div></div>
+      <div class="work min-w-0 flex-1 p-6"><div class="pgh mb-6 flex flex-wrap items-end gap-4"><h1>Roadmap</h1></div><div class="panel overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm" style="height:300px"></div></div></div>
   </div>
   <div class="cp-back fixed inset-0 z-50 grid items-start justify-center bg-black/60 pt-[12vh]">
     <div class="cp h-fit w-[min(620px,92vw)] overflow-hidden rounded-lg border bg-popover text-popover-foreground shadow-lg" role="dialog" aria-modal="true" aria-label="Command palette">

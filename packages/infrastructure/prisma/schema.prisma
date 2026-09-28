@@ -79,7 +79,10 @@ model boards {
   id                       String            @id(map: "PK_boards") @db.Uuid
   organization_id          String            @db.Uuid
   name                     String            @db.VarChar(150)
+  description              String?           @db.VarChar(500)
   allow_user_status_update Boolean
+  is_archived              Boolean           @default(false)
+  archived_at_utc          DateTime?         @db.Timestamptz(6)
   created_at_utc           DateTime          @db.Timestamptz(6)
   updated_at_utc           DateTime          @db.Timestamptz(6)
   created_by_user_id       String?           @db.Uuid
@@ -271,7 +274,10 @@ model ideas {
   board_id                  String              @db.Uuid
   status_id                 String              @db.Uuid
   title                     String              @db.VarChar(150)
-  description               String              @db.VarChar(4000)
+  description               String?             @db.VarChar(4000)
+  problem                   String              @db.VarChar(2000)
+  proposed_solutions        String[]
+  impact_rationale          String              @db.VarChar(1000)
   priority                  Priority
   idea_type_id              String              @db.Uuid
   business_impact_id        String              @db.Uuid
@@ -443,6 +449,7 @@ model tags {
   organization_id    String        @db.Uuid
   name               String        @db.VarChar(100)
   normalized_name    String        @db.VarChar(100)
+  color              String        @db.VarChar(7)
   created_at_utc     DateTime      @db.Timestamptz(6)
   updated_at_utc     DateTime      @db.Timestamptz(6)
   created_by_user_id String?       @db.Uuid

@@ -9,7 +9,12 @@ import {
   IdeaService,
 } from '@collega/application/ideas'
 import { UpvoteService, type UpvoteToggleResult } from '@collega/application/upvotes'
-import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@collega/domain/ideas'
+import {
+  DESCRIPTION_MAX_LENGTH,
+  IMPACT_RATIONALE_MAX_LENGTH,
+  PROBLEM_MAX_LENGTH,
+  TITLE_MAX_LENGTH,
+} from '@collega/domain/ideas'
 import { parseIdeaImportCsv } from '@collega/infrastructure/integrations/csv'
 import {
   Body,
@@ -34,10 +39,12 @@ import { writeCsv } from '../common/csv/write-csv.js'
 import { type FieldRules, validateFields } from '../common/errors/request-validation.error.js'
 import {
   guidOrEmpty,
+  guidQueryList,
   isGuid,
   optional,
   optionalGuid,
   optionalInt,
+  queryList,
   stringList,
 } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
@@ -53,7 +60,10 @@ type IdeaFieldValueBody = { fieldDefinitionId?: unknown; value?: unknown }
 /** `POST /boards/{boardId}/ideas` - `CreateIdeaRequest`. */
 type CreateIdeaBody = {
   title?: string
-  description?: string
+  description?: string | null
+  problem?: string
+  proposedSolutions?: unknown
+  impactRationale?: string
   priority?: string
   ideaTypeId?: unknown
   businessImpactId?: unknown
@@ -105,7 +115,24 @@ function fieldValues(value: unknown): readonly IdeaFieldValueWrite[] | null {
 function ideaBodyRules(body: CreateIdeaBody): Record<string, FieldRules> {
   return {
     title: { value: body.title, required: true, maxLength: TITLE_MAX_LENGTH },
-    description: { value: body.description, required: true, maxLength: DESCRIPTION_MAX_LENGTH },
+    // Optional since 2026-09-27 (an optional summary); the three structured fields below are
+    // required instead. `proposedSolutions` is a list, so its 1-to-5 and per-item limits are the
+    // domain's (a field-keyed 400 all the same).
+    description: { value: body.description, maxLength: DESCRIPTION_MAX_LENGTH },
+    problem: { value: body.problem, required: true, maxLength: PROBLEM_MAX_LENGTH },
+    // Present here only so a missing list is a 400 before authorization: without it, a non-author's
+    // `[]` reads as a change to structured content and answers 403 instead.
+    proposedSolutions: {
+      value: Array.isArray(body.proposedSolutions)
+        ? body.proposedSolutions.filter((entry) => typeof entry === 'string').join('')
+        : '',
+      required: true,
+    },
+    impactRationale: {
+      value: body.impactRationale,
+      required: true,
+      maxLength: IMPACT_RATIONALE_MAX_LENGTH,
+    },
     priority: { value: body.priority, required: true },
   }
 }
@@ -180,9 +207,9 @@ export class IdeasController {
       page: optionalInt(query.page),
       pageSize: optionalInt(query.pageSize),
       search: optional(query.search),
-      statusId: optionalGuid(query.statusId),
-      tag: optional(query.tag),
-      priority: optional(query.priority),
+      statusIds: guidQueryList(query.statusId),
+      tags: queryList(query.tag),
+      priorities: queryList(query.priority),
       dueBefore: optional(query.dueBefore),
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
@@ -203,7 +230,10 @@ export class IdeasController {
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
       fieldFilters: parseFieldFilters(query),
-      tag: optional(query.tag),
+      boardIds: guidQueryList(query.boardId),
+      statusIds: guidQueryList(query.statusId),
+      priorities: queryList(query.priority),
+      tags: queryList(query.tag),
       phase: optional(query.phase),
       user: optionalGuid(query.user),
     })
@@ -219,7 +249,10 @@ export class IdeasController {
 
     return this.ideas.create(boardId, {
       title: body.title ?? '',
-      description: body.description ?? '',
+      description: optional(body.description),
+      problem: body.problem ?? '',
+      proposedSolutions: stringList('proposedSolutions', body.proposedSolutions) ?? [],
+      impactRationale: body.impactRationale ?? '',
       priority: body.priority ?? '',
       ideaTypeId: guidOrEmpty(body.ideaTypeId),
       businessImpactId: guidOrEmpty(body.businessImpactId),
@@ -248,7 +281,10 @@ export class IdeasController {
 
     return this.ideas.update(ideaId, {
       title: body.title ?? '',
-      description: body.description ?? '',
+      description: optional(body.description),
+      problem: body.problem ?? '',
+      proposedSolutions: stringList('proposedSolutions', body.proposedSolutions) ?? [],
+      impactRationale: body.impactRationale ?? '',
       priority: body.priority ?? '',
       ideaTypeId: guidOrEmpty(body.ideaTypeId),
       businessImpactId: guidOrEmpty(body.businessImpactId),

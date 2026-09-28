@@ -1,41 +1,32 @@
-import { Dot, EmptyState } from '@collega/design-system'
-import Link from 'next/link'
-import { AdminAction } from '@/components/delivery/admin-action'
+import { EmptyState, Meta } from '@collega/design-system'
+import { GatedAction } from '@/components/common/gated-action'
+import { PageHeader } from '@/components/common/page-header'
+import { RoadmapTimeline } from '@/components/delivery/roadmap-timeline'
 import { Topbar } from '@/components/nav/topbar'
-import { getDeliveryStatuses, getIssues, getIssuesForOutcome, getOutcomes } from '@/lib/data'
+import { getBacklogIssues, getSprints } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Roadmap · Collega' }
 
+/** Every role sees the same reason: no role can add one yet. */
+const NO_OUTCOMES_YET = 'Outcomes arrive in a later release'
+
 /**
- * Outcomes, and the issues serving each.
+ * The Roadmap as Sprint 11 builds it: the comp R screen, drawn from the data that exists
+ * (`SPEC/20-feature-issues-and-delivery.md`, "Roadmap (comp R)" — "What Sprint 11 shows").
  *
- * Every figure here is a **plain count**, and that is only true because an issue sits under at most
- * one outcome. Under the rejected multi-parent design each row would be a cover rather than a count
- * and the rows would not add up — which is why the ungrouped row exists: an outcome is optional, so
- * without it the totals would silently fail to close.
- *
- * **This screen renders its empty state, and will until Slice 2 lands.** The issues are real;
- * Outcomes have no table, service or route, so `getOutcomes` answers empty rather than handing back
- * invented themes to group live work under — `lib/data/delivery.ts` argues that at length. The
- * empty state below is the whole screen today, and it says the true thing: N delivery issues, and
- * nothing to group them by.
+ * The timeline carries the organization's sprints. Outcomes have no backend yet, so where their
+ * rows and cards will go is the empty state, and the outcome readers in `lib/data/delivery.ts` stay
+ * empty on purpose.
  */
 export default async function RoadmapPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const [outcomes, issues, statuses] = await Promise.all([
-    getOutcomes(),
-    getIssues(),
-    getDeliveryStatuses(),
-  ])
-  const grouped = await Promise.all(
-    outcomes.map(async (outcome) => ({ outcome, items: await getIssuesForOutcome(outcome.id) })),
-  )
-  const ungrouped = issues.filter((issue) => issue.outcomeId === null)
-  const accountedFor = grouped.reduce((n, g) => n + g.items.length, 0) + ungrouped.length
+  // Sprint counts plus the backlog: two requests, where listing every sprint's issues is one each.
+  const [sprints, backlog] = await Promise.all([getSprints(), getBacklogIssues()])
+  const count = backlog.length + sprints.reduce((total, sprint) => total + sprint.issueCount, 0)
 
   return (
     <>
@@ -43,83 +34,35 @@ export default async function RoadmapPage() {
         title={
           <span className="text-sm font-normal text-muted-foreground">
             Delivery / <b className="font-medium text-foreground">Roadmap</b>
+            <Meta caps className="ml-2.5">
+              {count} {count === 1 ? 'issue' : 'issues'}
+            </Meta>
           </span>
         }
-        actions={<AdminAction id="why-outcome" label="Add outcome" />}
       />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
-        <div>
-          <h1>Roadmap</h1>
-          <p className="m-0 mt-1 max-w-3xl text-sm text-muted-foreground">
-            What the quarter is for. Each outcome groups the issues that serve it; an issue sits
-            under one outcome, so every count here is a plain count and the rows add up to the
-            delivery set.
-          </p>
-        </div>
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
+        <PageHeader
+          title="Roadmap"
+          description="The outcomes the team is working toward, when, and the issues under each."
+          action={<GatedAction id="why-outcome" label="Add New Outcome" denial={NO_OUTCOMES_YET} />}
+        />
 
-        {outcomes.length === 0 ? (
-          <EmptyState
-            heading="No outcomes yet"
-            action={<AdminAction id="why-outcome-empty" label="Add the first outcome" />}
-          >
-            An outcome is a named, dated theme &mdash; &ldquo;cut reporting effort&rdquo; &mdash;
-            that issues are grouped under. {currentUser().organizationName ?? 'This deployment'} has{' '}
-            {issues.length} delivery {issues.length === 1 ? 'issue' : 'issues'} and nothing to group
-            them by.
-          </EmptyState>
-        ) : (
-          <>
-            <div className="flex flex-col gap-3">
-              {grouped.map(({ outcome, items }) => (
-                <div key={outcome.id} className="rounded-lg border bg-card">
-                  <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3">
-                    <Dot color={outcome.color} />
-                    <span className="font-semibold">{outcome.name}</span>
-                    <span className="rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
-                      {outcome.quarter}
-                    </span>
-                    <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-                      {items.length} {items.length === 1 ? 'issue' : 'issues'}
-                    </span>
-                  </div>
-                  <ul className="m-0 flex list-none flex-col p-0">
-                    {items.map((issue) => (
-                      <li
-                        key={issue.id}
-                        className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-5 py-2.5 text-sm last:border-0"
-                      >
-                        <Link href={`/delivery/issues/${issue.id}`}>{issue.title}</Link>
-                        <span className="ml-auto text-xs text-muted-foreground">
-                          {statuses.find((row) => row.id === issue.deliveryStatusId)?.name}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+        <RoadmapTimeline sprints={sprints} />
 
-              {ungrouped.length > 0 ? (
-                <div className="rounded-lg border border-dashed bg-card px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium text-muted-foreground">Not yet grouped</span>
-                    <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-                      {ungrouped.length} issues
-                    </span>
-                  </div>
-                  <p className="m-0 mt-1 text-xs text-muted-foreground">
-                    An outcome is optional, so these are counted here rather than left out &mdash;
-                    the total below would not otherwise close.
-                  </p>
-                </div>
-              ) : null}
-            </div>
-
-            <p className="m-0 text-xs text-muted-foreground">
-              {accountedFor} of {issues.length} issues accounted for across {outcomes.length}{' '}
-              outcomes.
-            </p>
-          </>
-        )}
+        <EmptyState
+          heading="No outcomes yet"
+          action={
+            <GatedAction
+              id="why-outcome-empty"
+              label="Add the first outcome"
+              denial={NO_OUTCOMES_YET}
+            />
+          }
+        >
+          {currentUser().organizationName ?? 'This deployment'} has {count} delivery{' '}
+          {count === 1 ? 'issue' : 'issues'} and nothing to group them by. Outcomes, which group
+          issues under what the team is working toward, arrive in a later release.
+        </EmptyState>
       </main>
     </>
   )

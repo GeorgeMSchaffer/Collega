@@ -355,6 +355,7 @@ Existing `CreateIdeaAsync` and `UpdateIdeaAsync` are extended to accept `IReadOn
 | `Dropdown` | value must be a GUID matching one option in the field's `Options` list |
 | `MultiSelect` | each comma-separated segment must be a valid option GUID; no duplicates |
 | `Dropdown` / `MultiSelect` | at least one option must exist on the field definition at create time |
+| `Dropdown` / `MultiSelect` | on an edit, an option id the idea already stores for that field is accepted even if the field no longer offers it (options are hard-deleted), so an unchanged save keeps it; an edit may not add such an id. Added 2026-09-27 |
 
 **Audit Emission**
 

@@ -29,7 +29,8 @@
  * - organizations titled `Journey Co <timestamp>` or `Playwright Industries <timestamp>`
  * - users at `@journey.test`, or named `rotates.*` / `new.person.*` in a seeded organization
  * - boards called `Journey Board <timestamp>` or `Demo Board <timestamp>`
- * - ideas titled `Journey idea <timestamp>`
+ * - ideas titled `Journey idea <timestamp>` or `Demo idea <timestamp>`
+ * - **any idea sitting on a board that is going**, whatever it is called
  *
  * **A trailing timestamp is required**, which is what keeps this from matching a real board somebody
  * happened to call "Demo Board". Everything owned by a matched organization goes with it.
@@ -48,7 +49,7 @@ const STAMPED = (prefix: string) => new RegExp(`^${prefix} \\d{13}$`)
 
 const TEST_ORGANIZATION = [STAMPED('Journey Co'), STAMPED('Playwright Industries')]
 const TEST_BOARD = [STAMPED('Journey Board'), STAMPED('Demo Board')]
-const TEST_IDEA = [STAMPED('Journey idea')]
+const TEST_IDEA = [STAMPED('Journey idea'), STAMPED('Demo idea')]
 const TEST_EMAIL = /^(journey\.\w+\.\d{13}@journey\.test|rotates\.\d{13}@|new\.person\.\d{13}@)/
 
 const commit = process.argv.includes('--commit')
@@ -102,9 +103,25 @@ async function main(): Promise<void> {
     ).filter((b) => matches(b.name, TEST_BOARD) || organizationIds.includes(b.organization_id))
     const boardIds = boards.map((b) => b.id)
 
+    // **An idea on a board that is going must go too, whatever it is called.** `ideas.board_id`
+    // carries an index and no foreign key - the one reference in this schema that does not - so
+    // deleting a board does not fail when ideas still point at it. It orphans them silently, and
+    // the board page then renders nothing for a row that still exists.
+    //
+    // This ran without that clause once (2026-09-14) and left five `Demo idea` rows pointing at a
+    // deleted `Demo Board`, because the title patterns covered `Journey idea` and not the other
+    // spec's. Matching on the board rather than on the title is what stops that being a list of
+    // names somebody has to keep current.
     const ideas = (
-      await prisma.ideas.findMany({ select: { id: true, title: true, organization_id: true } })
-    ).filter((i) => matches(i.title, TEST_IDEA) || organizationIds.includes(i.organization_id))
+      await prisma.ideas.findMany({
+        select: { id: true, title: true, organization_id: true, board_id: true },
+      })
+    ).filter(
+      (i) =>
+        matches(i.title, TEST_IDEA) ||
+        organizationIds.includes(i.organization_id) ||
+        boardIds.includes(i.board_id),
+    )
     const ideaIds = ideas.map((i) => i.id)
 
     console.log('Test data found:')

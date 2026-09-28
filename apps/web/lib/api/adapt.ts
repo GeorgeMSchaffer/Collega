@@ -12,39 +12,53 @@
 import { DELIVERY_STATUSES } from '../display'
 import { roleLabel } from '../roles'
 import type {
+  BoardOverview,
   Comment,
   CurrentUser,
   Effort,
   FieldDefinition,
   Idea,
   IdeaDetail,
+  IdeaFormField,
   IdeaType,
   ImportOutcome,
   Issue,
+  IssueTask,
+  IssueTaskState,
   Member,
+  MemberOption,
   Organization,
   Person,
+  PersonRef,
   Priority,
   Profile,
   Role,
   Sprint,
   SprintState,
   Status,
+  TagOverview,
+  TagRef,
   ViewingAs,
 } from '../types'
 import type {
+  WireBoardListItem,
   WireCurrentUser,
   WireDeliveryCard,
+  WireEffectiveField,
   WireFieldDefinition,
   WireIdeaAssignee,
   WireIdeaComment,
   WireIdeaDetail,
   WireIdeaListItem,
+  WireIdeaTag,
   WireIdeaType,
+  WireIssueTask,
+  WireMember,
   WireOrganizationListItem,
   WireSprint,
   WireStatus,
   WireSwimlane,
+  WireTagItem,
   WireUserImportResult,
   WireUserListItem,
   WireViewingAs,
@@ -265,9 +279,44 @@ const DATE = new Intl.DateTimeFormat('en-US', {
   timeZone: 'UTC',
 })
 
+/** `GET /organizations/{id}/boards` into a card or row on the workspace Boards screen. */
+export function toBoardOverview(wire: WireBoardListItem): BoardOverview {
+  return {
+    id: wire.boardId,
+    name: wire.name,
+    description: wire.description,
+    ideaCount: wire.ideaCount,
+    laneCount: wire.swimlaneCount,
+    createdAtUtc: wire.createdAtUtc,
+    createdOn: DATE.format(new Date(wire.createdAtUtc)),
+    createdBy: wire.createdBy?.displayName ?? null,
+    lanes: [...wire.laneCounts]
+      .sort((a, b) => a.order - b.order)
+      .map((lane) => ({
+        id: lane.statusId,
+        name: lane.statusName,
+        color: lane.statusColor,
+        ideaCount: lane.ideaCount,
+      })),
+    topTags: [...wire.topTags],
+    tagCount: wire.tagCount,
+    userStatusMoves: wire.allowUserStatusUpdate,
+    isArchived: wire.isArchived,
+    archivedOn: wire.archivedAtUtc ? DATE.format(new Date(wire.archivedAtUtc)) : null,
+  }
+}
+
 function toPerson(wire: WireIdeaAssignee | null): Person | null {
   if (!wire) return null
   return {
+    name: wire.displayName,
+    initials: initialsOf(wire.firstName, wire.lastName),
+  }
+}
+
+function toPersonRef(wire: WireIdeaAssignee): PersonRef {
+  return {
+    id: wire.userId,
     name: wire.displayName,
     initials: initialsOf(wire.firstName, wire.lastName),
   }
@@ -279,6 +328,21 @@ function toComment(wire: WireIdeaComment): Comment {
     author: toPerson(wire.author),
     postedOn: DATE.format(new Date(wire.createdAtUtc)),
     body: wire.body,
+  }
+}
+
+/** A custom field as the API resolved it for a type or an idea, into what the form renders. */
+export function toIdeaFormField(wire: WireEffectiveField): IdeaFormField {
+  return {
+    id: wire.fieldDefinitionId,
+    name: wire.name,
+    fieldType: wire.fieldType,
+    required: wire.isRequired,
+    options: wire.options.map((option) => ({
+      id: option.optionId,
+      label: option.label,
+      archived: option.isArchived === true,
+    })),
   }
 }
 
@@ -301,12 +365,33 @@ export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
     ideaType: wire.ideaTypeName,
     businessImpact: wire.businessImpactName,
     tag: wire.tagNames[0] ?? null,
+    tags: wire.tags.map(toTagRef),
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
+    assignees: wire.assignees.map(toPersonRef),
     upvotes: wire.upvoteCount,
     hasUpvoted: wire.hasUpvoted,
+    effort: null,
+    problem: wire.problem,
+    proposedSolutions: [...wire.proposedSolutions],
+    impactRationale: wire.impactRationale,
     description: wire.description,
+    ideaTypeId: wire.ideaTypeId,
+    businessImpactId: wire.businessImpactId,
+    dueDate: wire.dueDate,
+    authorUserId: wire.author?.userId ?? null,
     author: toPerson(wire.author),
     createdOn: DATE.format(new Date(wire.createdAtUtc)),
+    mentionEmails: wire.mentions.map((mention) => mention.email),
+    fieldValues: wire.fieldValues.map((field) => ({
+      fieldDefinitionId: field.fieldDefinitionId,
+      name: field.fieldName,
+      fieldType: field.fieldType,
+      value: field.value,
+    })),
+    formFields: wire.formFields.map((field) => ({
+      ...toIdeaFormField(field),
+      value: field.value ?? '',
+    })),
     comments: wire.comments.map(toComment),
   }
 }
@@ -331,9 +416,34 @@ export function toIdea(wire: WireIdeaListItem): Idea {
     ideaType: wire.ideaTypeName,
     businessImpact: wire.businessImpactName,
     tag: wire.tagNames[0] ?? null,
+    tags: wire.tags.map(toTagRef),
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
+    assignees: wire.assignees.map(toPersonRef),
     upvotes: wire.upvoteCount,
     hasUpvoted: wire.hasUpvoted,
+    effort: EFFORTS.find((candidate) => candidate === wire.effort) ?? null,
+  }
+}
+
+export function toTagRef(wire: WireIdeaTag): TagRef {
+  return { id: wire.tagId, name: wire.name, color: wire.color }
+}
+
+/** A catalog item into a Settings → Tags row; `organization` only on a Site Admin's roll-up. */
+export function toTagOverview(
+  wire: WireTagItem,
+  organization: { id: string; name: string } | null = null,
+): TagOverview {
+  return {
+    id: wire.tagId,
+    name: wire.name,
+    color: wire.color,
+    ideaCount: wire.ideaCount,
+    boards: wire.boards.map((board) => ({ id: board.boardId, name: board.name })),
+    createdAtUtc: wire.createdAtUtc,
+    createdOn: DATE.format(new Date(wire.createdAtUtc)),
+    createdBy: wire.createdBy?.displayName ?? null,
+    organization,
   }
 }
 
@@ -367,6 +477,23 @@ function toSprintState(value: string): SprintState {
   return state
 }
 
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+
+/**
+ * The Sprint board's WINDOW: `10–24 SEP` within a month, `28 SEP – 5 OCT` across two. Read off the
+ * `YYYY-MM-DD` strings rather than through `Date`, for the timezone reason `SPRINT_DAY` gives, and
+ * spelled out rather than through `Intl`, whose `en-GB` short September is `Sept`.
+ */
+export function sprintWindow(startDate: string, endDate: string): string {
+  const [, startMonth = '', startDay = ''] = startDate.split('-')
+  const [, endMonth = '', endDay = ''] = endDate.split('-')
+  const start = `${Number(startDay)}`
+  const end = `${Number(endDay)} ${MONTHS[Number(endMonth) - 1] ?? ''}`
+  return startMonth === endMonth && startDate.slice(0, 4) === endDate.slice(0, 4)
+    ? `${start}–${end}`
+    : `${start} ${MONTHS[Number(startMonth) - 1] ?? ''} – ${end}`
+}
+
 /** One sprint, with its window formatted for the header that renders it. */
 export function toSprint(wire: WireSprint): Sprint {
   return {
@@ -375,7 +502,12 @@ export function toSprint(wire: WireSprint): Sprint {
     goal: wire.goal,
     startsOn: SPRINT_DAY.format(new Date(`${wire.startDate}T00:00:00Z`)),
     endsOn: SPRINT_DAY_YEAR.format(new Date(`${wire.endDate}T00:00:00Z`)),
+    startDate: wire.startDate,
+    endDate: wire.endDate,
+    window: sprintWindow(wire.startDate, wire.endDate),
     state: toSprintState(wire.state),
+    issueCount: wire.issueCount,
+    doneCount: wire.doneCount,
   }
 }
 
@@ -421,5 +553,40 @@ export function toIssue(wire: WireDeliveryCard): Issue {
     effort: toEffort(wire.effort),
     assigneeInitials: assignee ? initialsOf(assignee.firstName, assignee.lastName) : null,
     upvotesAtPromotion: wire.provenance.upvoteCountAtPromotion ?? wire.upvoteCount,
+    boardId: wire.boardId,
+    authorUserId: wire.authorUserId,
+    assignees: wire.assignees.map(toPersonRef),
+    tags: wire.tags.map(toTagRef),
+    sprint: wire.sprint
+      ? {
+          id: wire.sprint.sprintId,
+          name: wire.sprint.name,
+          window: sprintWindow(wire.sprint.startDate, wire.sprint.endDate),
+        }
+      : null,
+    upvotes: wire.upvoteCount,
+    taskSummary: wire.taskSummary,
+    promotedOn: wire.provenance.promotedAtUtc
+      ? DATE.format(new Date(wire.provenance.promotedAtUtc))
+      : null,
+    promotedBy: wire.provenance.promotedByDisplayName,
   }
+}
+
+const TASK_STATES: readonly IssueTaskState[] = ['NotStarted', 'InProgress', 'Done']
+
+export function toIssueTask(wire: WireIssueTask): IssueTask {
+  const state = TASK_STATES.find((candidate) => candidate === wire.state)
+  if (!state) throw new Error(`The API returned an unknown task state: ${wire.state}`)
+  return {
+    id: wire.taskId,
+    title: wire.title,
+    state,
+    assigneeUserId: wire.assigneeUserId,
+    assigneeName: wire.assignee?.displayName ?? null,
+  }
+}
+
+export function toMemberOption(wire: WireMember): MemberOption {
+  return { id: wire.userId, name: `${wire.firstName} ${wire.lastName}`.trim() }
 }

@@ -12,7 +12,7 @@ Users can create, discuss, organize, and support ideas within their organization
 | Existing idea migration | Existing ideas are assigned `Continuous Improvement` and `Medium`. |
 | Option lifecycle | Options are soft-deleted. Existing ideas retain archived values, archived values cannot be newly selected, and the last active option cannot be deleted. |
 | Option appearance | Business Impact options have an admin-editable color used by chips. Idea Type options have a label and sort order only. |
-| Description authorization | The idea author, an in-scope Org Admin, or Site Admin may edit the description. |
+| Description authorization | The idea author, an in-scope Org Admin, or Site Admin may edit the description. **The same rule covers Problem, Proposed solutions and Impact rationale** (added 2026-09-27, user decision). |
 | Idea deletion | Only an in-scope Org Admin or Site Admin may soft-delete an idea after confirmation. Restore is deferred. |
 | Card movement | Desktop cards use a dedicated drag handle. Keyboard and touch users move ideas with the status selector in Idea Detail. |
 | Comment shortcut | The card comment action opens Idea Detail, scrolls comments into view, and focuses the comment composer. If commenting is unavailable, focus moves to the comments heading. |
@@ -26,7 +26,10 @@ Users can create, discuss, organize, and support ideas within their organization
 1. A board can contain zero or more ideas.
 2. Each idea must include:
    - Title (required, max 150 characters)
-   - Description (required, max 4000 characters)
+   - Problem (required, max 2000 characters) — what is going wrong, for whom, and how often. Added 2026-09-27.
+   - Proposed solutions (required, 1 to 5 items, each max 500 characters) — an ordered list. Added 2026-09-27.
+   - Impact rationale (required, max 1000 characters) — why it matters to the business, ideally quantified. Added 2026-09-27.
+   - Description (max 4000 characters) — **changed 2026-09-27 to an optional one-or-two-line summary** shown in the detail view and in exports; cards and list rows do not show it. The structured fields above carry the substance. Kept, answered 2026-09-27 (Q2).
    - Priority (required): `Low`, `Medium`, `High`, or `Critical`
    - Idea Type (required): one active organization-configured Idea Type
    - Business Impact (required): one active organization-configured Business Impact
@@ -37,6 +40,18 @@ Users can create, discuss, organize, and support ideas within their organization
    - Mentions
    - Comments
    - Number of Upvotes
+2a. **Structured fields (2026-09-27, `decisions.md`).** Problem, Proposed solutions and Impact rationale are
+   dedicated fields, not sections of Description, so they can be required, searched and filled by the idea
+   assistant (`20-feature-ai-idea-assist-v2.md`). Custom fields attached through the Idea Type
+   (`20-feature-idea-type-fields.md`) are unaffected and appear after the core fields. **Existing ideas
+   (Q1, answered 2026-09-27): the three fields are required on every create and every save, and the
+   migration backfills ideas created before the change** — Problem takes the idea's Description (or
+   *Not captured before 2026-09-27.* when it is empty), Proposed solutions takes a single item
+   *Not captured before 2026-09-27.*, and Impact rationale takes the same text. Description is kept as
+   the summary. The demo seed writes real values for all three. **Who may edit them (answered
+   2026-09-27):** the same rule as Description — only the idea's author, an in-scope Org Admin, or
+   Site Admin (through the existing rules and View As semantics); other editors of the idea see them
+   read-only. CSV import applies the same backfill to a row that lacks them (CSV Import rule 3).
 3. Board cards must remain compact and display:
    - Title
    - Priority
@@ -59,10 +74,10 @@ Users can create, discuss, organize, and support ideas within their organization
 14. Existing non-null singular assignments are migrated to one idea-assignee relationship each before the legacy singular assignment column and foreign key are removed.
 15. `Assigned to me` matches an idea when the current user belongs to its assignee collection.
 16. The global Ideas list (`GET /api/v1/organizations/{organizationId}/ideas`, backing the `/ideas` page) filters and sorts **server-side**:
-    - **All-column search** covers every column the list displays — Title, Created By (author name), Assigned To (assignee names), Status (status name), and Created Date — plus the values of Text/Url User-Defined Fields. Text columns match as a case-insensitive substring; the Created Date column matches when the search term is a full ISO `YYYY-MM-DD` date (ideas created on that UTC calendar day).
+    - **All-column search** covers every column the list displays — Title, Created By (author name), Assigned To (assignee names), Status (status name), and Created Date — plus the values of Text/Url User-Defined Fields. Text columns match as a case-insensitive substring; the Created Date column matches when the search term is a full ISO `YYYY-MM-DD` date (ideas created on that UTC calendar day). **Added 2026-09-27:** it also matches board name, priority, tag names and Problem (`30-Contracts.md`).
     - **Tag filter** narrows to ideas carrying a tag with the given (normalized) name.
     - **User-association filter** narrows to ideas a specific chosen user either authored or is assigned to (the user search box in `SPEC/Bug Triage.md`), distinct from the caller-scoped `All`/`Created by me`/`Assigned to me` chips.
-    - **Column sort** is supported on Title, Created By, Assigned To (alphabetically-first assignee), Status, and Created Date, ascending or descending, with a stable idea-id tiebreaker so paging is deterministic.
+    - **Column sort** is supported on Title, Created By, Assigned To (alphabetically-first assignee), Status, and Created Date (since 2026-09-27 also Board, Priority, Votes and Tags; `30-Contracts.md` lists the `sortBy` values), ascending or descending, with a stable idea-id tiebreaker so paging is deterministic.
 
 ## Organization-Managed Idea Fields
 1. Site Admin and Org Admin can create, rename, reorder, and soft-delete Idea Type and Business Impact options within their authorized organization scope.
@@ -89,10 +104,11 @@ Users can create, discuss, organize, and support ideas within their organization
 - Site Admin, Org Admin, and User can create and edit ideas.
 - Site Admin and Org Admin can soft-delete ideas within their authorized scope; soft-deleted ideas are excluded from board views and list queries.
 - The Delete action is visible in Idea Detail only to an authorized Site Admin or Org Admin, requires confirmation, returns to the board after success, and removes the card from the board immediately.
-- Only the creating author, an in-scope Org Admin, or Site Admin can edit an idea description or change its assignee collection. Other editable fields retain the general idea-edit permission unless a narrower rule is specified.
+- Only the creating author, an in-scope Org Admin, or Site Admin can edit an idea description, its Problem, Proposed solutions or Impact rationale (added 2026-09-27), or change its assignee collection. Other editable fields retain the general idea-edit permission unless a narrower rule is specified.
 - To support assignee selection and mention lookup, any authenticated caller scoped to an organization (User and Read Only included, not only admins) can read a minimal list of its active members — id, name, and email only — via `GET /organizations/{organizationId}/members`. This is deliberately narrower than the admin user listing (`GET /organizations/{organizationId}/users`), which exposes roles, status filters, and full user administration and remains Org-Admin+. Callers outside the organization receive a 404.
 - Idea deletion generates an audit event.
 - Read Only cannot edit or delete idea content.
+- Adding a tag in advance, and renaming, recolouring or deleting a tag, is an in-scope Org Admin's (Site Admin through View As) — Tags, "Who administers tags" (added 2026-09-28).
 - User can update idea status for any idea on a board if allowed by board configuration.
 
 ## Site Admin Organization Context
@@ -109,6 +125,63 @@ Users can create, discuss, organize, and support ideas within their organization
 6. Tags are trimmed, compared case-insensitively, and must be unique within an organization.
 7. If concurrent saves attempt to create the same normalized tag, the system merges them into a single tag.
 8. An idea can have no more than 10 distinct tags. Duplicate normalized names in one request are treated as one tag.
+
+**Colour and administration (added 2026-09-28, comp R; `decisions.md` 2026-09-28).**
+
+9. **Every tag has a colour**, stored on the tag as `#RRGGBB`. The picker offers a palette of ten —
+   `#E5484D`, `#F5A524`, `#3FB86B`, `#2F9E8F`, `#5CC8E0`, `#6B9BF2`, `#B08CF5`, `#E879A6`,
+   `#A87B2F`, `#94A3B8` — **and a Custom input for any `#RRGGBB`** (answered 2026-09-28). Any valid
+   six-digit colour is accepted, because the chip computes its text colour per theme to clear 4.5:1
+   whatever the colour is (`20-feature-client-ui.md` "Tag colours and the effort bar").
+10. **A new tag gets a random palette colour**, whether it was created inline while tagging an idea
+    (rule 5) or in Settings → Tags without choosing one. The random source is injected, so tests fix
+    it. Tags that existed before 2026-09-28 are given a colour by the migration: the palette colour
+    at index `get_byte(decode(md5(normalized_name), 'hex'), 0) % 10`, counting rule 9's palette in
+    its listed order from 0. The backfill is therefore repeatable, and the demo seed computes the
+    same index in `node:crypto` (first byte of the MD5 digest of the normalized name, modulo 10).
+11. **Settings → Tags** (`/settings/tags`) manages the organization's tags on the list and detail
+    pattern (`20-feature-client-ui.md`): a List view only, with columns **Tag** (the coloured chip,
+    which opens the drawer), **Ideas** (how many live ideas carry it, both phases), **Boards** (the
+    boards those ideas are on) and **Created** (date and who); a text filter over the name and a
+    **Usage** filter (*Used*, *Unused*); every column sorts; paging per the pattern, in the client,
+    since tags are a small configuration collection. Page header: *Tags*, *Labels for ideas on every
+    board. A new tag gets a colour from the palette at random; an admin can change it here, or add
+    tags before anyone uses them.*, and **Add New Tag**. Row actions **View**, **Edit**, **Delete**.
+12. **The tag drawer.** *View*: the chip at a larger size; facts Ideas, Colour (swatch and hex),
+    Created, By; and **Used on**, the ideas carrying it (title, which opens that idea, and its
+    board), or *Not used yet. It will be offered when anyone tags an idea.* Footer: Edit, Delete.
+    *Create and edit*: **Tag** (required, up to 100 characters, hint *Up to 100 characters. Tags are
+    matched without regard to case.*), **Colour** (the palette as a radio group of swatches, each
+    named by its hex for assistive technology; on create one is preselected at random, rule 10),
+    then a labelled **Custom** colour input — choosing it clears the swatch selection, choosing a
+    swatch sets it — and a live **Preview** chip in the current theme. Footer: Cancel and *Create
+    tag* / *Save changes*.
+13. **Adding a tag in advance** creates it unused; it is offered by autocomplete like any other
+    (rule 4). Its name follows rules 3 and 6; a name that matches an existing tag
+    case-insensitively is refused on the field — *A tag with this name already exists.*
+14. **Editing** changes the name, the colour or both. A rename applies on every idea that carries
+    the tag at once, since ideas reference the tag, not its text. Renaming onto another tag's
+    normalized name is refused as in rule 13; there is no merge. A case-only rename of the same tag
+    is allowed.
+15. **Deleting** a tag asks for confirmation — *Delete this tag? "{name}" is removed from N ideas.
+    Anyone who types it again creates a new tag.* — then removes it from every idea that carries
+    it, in either phase and on archived boards too, and deletes the tag. It cannot be undone.
+    **A rename and a delete each write one audit event** (decided by the user, 2026-09-28):
+    `TagRenamed` and `TagDeleted`, recording the tag's id, its old and new name (a delete records
+    the name it had) and how many ideas it was on. The ideas themselves are not touched — no
+    per-idea event, and no idea's `updatedAtUtc` changes. A colour-only edit and adding a tag in
+    advance write no event. No tag change sends a notification.
+
+**Who administers tags (added 2026-09-28).** The rules above never named an administrator: rule 2
+lets anyone who can edit ideas *create* tags, and nothing let anyone rename, recolour or delete one.
+Adding Settings → Tags follows the other organization configuration screens (statuses, idea types,
+custom fields): **an in-scope Org Admin** adds in advance, edits and deletes; a **Site Admin** does
+so only through View As (tags are organization content, `20-feature-view-as.md` rules 25–25b; the
+contract's Site Admin guard already lists tags) and otherwise reads. Creating a tag inline while
+tagging an idea (rule 2) is unchanged and open to every role that may edit the idea. **Settings →
+Tags is Org Admins' only** (answered 2026-09-28): a Site Admin sees it read-only, and Users and Read
+Only accounts do not see it — the Settings hub shows a member only Profile. Members still read every
+tag's name and colour where tags appear (chips, the Ideas Tags filter).
 
 ## Mentions
 1. Users can mention other users in their organization using the `@` trigger and an email-based lookup.
@@ -145,7 +218,10 @@ Users can create, discuss, organize, and support ideas within their organization
    | Column       | Required | Constraints                                                                |
    |--------------|----------|----------------------------------------------------------------------------|
    | `Title`      | Yes      | max 150 characters                                                         |
-   | `Description`| Yes      | max 4000 characters                                                        |
+   | `Description`| No       | max 4000 characters — **optional since 2026-09-27** (an optional summary, rule 2) |
+   | `Problem`    | No       | max 2000 characters (added 2026-09-27); omitted or blank gets the rule 2a backfill |
+   | `ProposedSolutions` | No | 1 to 5 items, each max 500 characters, joined with a newline inside the quoted cell (added 2026-09-27); omitted or blank gets the rule 2a backfill |
+   | `ImpactRationale` | No  | max 1000 characters (added 2026-09-27); omitted or blank gets the rule 2a backfill |
    | `Priority`   | Yes      | must be `Low`, `Medium`, `High`, or `Critical`                             |
    | `IdeaType`   | No       | active organization-configured option name; defaults to the first active Idea Type |
    | `BusinessImpact` | No   | active organization-configured option name; defaults to the first active Business Impact |
@@ -154,6 +230,12 @@ Users can create, discuss, organize, and support ideas within their organization
    | `AssignedTo` | No       | pipe-delimited (`\|`) email addresses of zero to five distinct active users in the same organization |
    | `Tags`       | No       | pipe-delimited (`\|`) list of up to 10 distinct tag values; max 100 characters per tag |
 
+3a. **Structured fields on import (added 2026-09-27).** `Problem`, `ProposedSolutions` and
+   `ImpactRationale` are optional columns so files written before them still import. A row that lacks
+   one, or leaves it blank, gets the rule 2a backfill for that field: Problem takes the row's
+   `Description`, or *Not captured before 2026-09-27.* when that is blank too; Proposed solutions
+   takes the single item *Not captured before 2026-09-27.*; Impact rationale takes the same text. The
+   export writes all three (`30-Contracts.md`), so export → re-import is lossless.
 4. Validation runs against the entire file before any ideas are created. If any row fails validation, the entire upload is rejected and all errors are returned. No partial imports occur.
 5. A single upload is limited to 500 data rows. Files exceeding this limit are rejected.
 6. If two or more rows within the same CSV share the same `Title` (case-insensitive), the second and any subsequent duplicate rows are validation errors.
@@ -169,9 +251,10 @@ Users can create, discuss, organize, and support ideas within their organization
 - [ ] CSV files exceeding 500 data rows are rejected before processing
 - [ ] Validation covers all rows before any ideas are created
 - [ ] A file with any invalid row is rejected entirely and all errors are reported
-- [ ] `Title`, `Description`, and `Priority` are required per row; missing or blank values are validation errors
+- [ ] `Title` and `Priority` are required per row; missing or blank values are validation errors. `Description` is optional since 2026-09-27
 - [ ] `Title` is validated to max 150 characters per row
-- [ ] `Description` is validated to max 4000 characters per row
+- [ ] `Description` is validated to max 4000 characters per row when provided
+- [ ] `Problem` (max 2000), `ProposedSolutions` (1 to 5 newline-separated items, each max 500) and `ImpactRationale` (max 1000) are validated when provided; a row that omits or blanks one gets the rule 2a backfill for it
 - [ ] `Priority` must be one of `Low`, `Medium`, `High`, or `Critical`; unrecognized values are validation errors
 - [ ] `DueDate` must be a valid `YYYY-MM-DD` date when provided; invalid formats are validation errors
 - [ ] `Status` is a name string matched case-insensitively against the organization's configured statuses; a value that does not match any org status is a validation error
@@ -185,6 +268,10 @@ Users can create, discuss, organize, and support ideas within their organization
 - [ ] One individual audit event is generated per idea created, matching the manual idea-creation audit event type
 
 ## AI-Assisted Idea Creation (Interview-Resolved 2026-08-07)
+
+> **Superseded 2026-09-27** by `20-feature-ai-idea-assist-v2.md` (`decisions.md`). This section
+> describes the `ai-draft` flow, which was specified and never built and is now withdrawn. Kept for
+> history; do not implement from it.
 
 ### Outcome
 Users can start a new idea by describing it in plain English instead of filling every field by hand. The system extracts as many fields as it can confidently determine, asks a single batched round of clarifying questions only for fields it cannot confidently determine, and always presents the result on the same idea form used for manual entry for review before the idea is created.
@@ -313,7 +400,7 @@ When this feature is implemented it must address:
 - [ ] A successful status change immediately moves the card to the corresponding swimlane without closing Idea Detail
 - [ ] Desktop drag-and-drop uses a dedicated handle and reverts the card on API failure
 - [ ] Keyboard and touch users can move an idea through the Idea Detail status selector
-- [ ] Only the idea author or an in-scope admin can edit the description
+- [ ] Only the idea author or an in-scope admin can edit the description, Problem, Proposed solutions and Impact rationale
 - [ ] Only an in-scope Org Admin or Site Admin sees and can confirm the Idea Detail soft-delete action
 - [ ] Soft-deleted ideas are excluded from normal queries and cannot be restored in this release
 - [ ] Read Only can comment and upvote

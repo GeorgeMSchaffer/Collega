@@ -8,6 +8,22 @@ export type IdeaTypeFieldItem = {
   readonly isRequired: boolean
 }
 
+/** One selectable option of a `Dropdown` or `MultiSelect` field, in display order. */
+export type EffectiveFieldOptionItem = {
+  readonly optionId: string
+  readonly label: string
+}
+
+/** A custom field an idea of a given type shows, as `resolveEffectiveFields` decided it.
+ * `isRequired` is the field's required-ness for that type, not its global flag. */
+export type EffectiveFieldItem = {
+  readonly fieldDefinitionId: string
+  readonly name: string
+  readonly fieldType: string
+  readonly isRequired: boolean
+  readonly options: readonly EffectiveFieldOptionItem[]
+}
+
 /** An Idea Type as returned by the admin surface. `fieldMode` is `AllActiveFields` or `Curated`;
  * `fields` carries the curated selection (empty for an `AllActiveFields` type). `colorHex`/`icon`
  * drive the type badge. */
@@ -21,6 +37,7 @@ export type IdeaTypeItem = {
   readonly icon: string | null
   readonly fieldMode: string
   readonly fields: readonly IdeaTypeFieldItem[]
+  readonly effectiveFields: readonly EffectiveFieldItem[]
 }
 
 /** One entry in a replace-the-selection request. */

@@ -44,7 +44,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ userI
             </span>
           }
         />
-        <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-4 p-6">
+        <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
           <RefusalPanel heading="A Site Admin account cannot be edited here">
             Saving requires a role, and <code>SiteAdmin</code> is not one this route accepts — a
             platform account belongs to no organization, so it cannot be assigned to one by anybody.

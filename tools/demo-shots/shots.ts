@@ -83,7 +83,7 @@ export const SHOTS: readonly Shot[] = [
     file: '07-idea-inspector.png',
     title: 'Open an idea without losing the list',
     caption:
-      'The inspector opens beside the list rather than over it, and its URL is addressable — a link to an idea opens the list with that idea already open. Classification, votes, tags and assignee all read from the same record.',
+      'The drawer slides over the right of the list without resizing it, and its URL is addressable — a link to an idea opens the list with that idea already open. Problem, proposed solutions, impact rationale, votes and discussion all read from the same record.',
     route: '/ideas/:ideaId',
     as: 'Org Admin',
   },

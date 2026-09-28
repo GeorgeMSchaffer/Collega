@@ -6,6 +6,18 @@ import { IdeaDomainError, IdeaPhaseConflictError } from './errors.js'
 
 export const TITLE_MAX_LENGTH = 150
 export const DESCRIPTION_MAX_LENGTH = 4000
+export const PROBLEM_MAX_LENGTH = 2000
+export const MIN_PROPOSED_SOLUTIONS = 1
+export const MAX_PROPOSED_SOLUTIONS = 5
+export const PROPOSED_SOLUTION_MAX_LENGTH = 500
+export const IMPACT_RATIONALE_MAX_LENGTH = 1000
+
+/**
+ * What rule 2a of SPEC/20-feature-ideas-and-engagement.md writes into a structured field an idea
+ * never had: the migration's backfill for ideas created before 2026-09-27, and CSV import's for a
+ * row that lacks the column. Problem takes the Description instead when there is one.
+ */
+export const NOT_CAPTURED_TEXT = 'Not captured before 2026-09-27.'
 export const MAX_ASSIGNEES = 5
 export const MAX_TAGS = 10
 
@@ -53,7 +65,12 @@ export type Idea = Auditable & {
    */
   readonly statusId: string
   readonly title: string
-  readonly description: string
+  /** An optional one-or-two-line summary since 2026-09-27; `null` when there is none. */
+  readonly description: string | null
+  /** Rule 2a's structured fields: required, trimmed, and 1 to 5 non-blank solutions in order. */
+  readonly problem: string
+  readonly proposedSolutions: readonly string[]
+  readonly impactRationale: string
   readonly priority: Priority
   readonly ideaTypeId: string
   readonly businessImpactId: string
@@ -86,7 +103,10 @@ export type CreateIdeaProps = {
   readonly boardId: string
   readonly statusId: string
   readonly title: string
-  readonly description: string
+  readonly description: string | null
+  readonly problem: string
+  readonly proposedSolutions: readonly string[]
+  readonly impactRationale: string
   readonly priority: Priority
   readonly ideaTypeId: string
   readonly businessImpactId: string
@@ -118,10 +138,11 @@ function normalizeTitle(title: string): string {
   return trimmed
 }
 
-function normalizeDescription(description: string): string {
+/** Optional since 2026-09-27: blank stores no description. */
+function normalizeDescription(description: string | null): string | null {
   const trimmed = (description ?? '').trim()
   if (trimmed.length === 0) {
-    throw new IdeaDomainError('description', 'Description is required.')
+    return null
   }
   if (trimmed.length > DESCRIPTION_MAX_LENGTH) {
     throw new IdeaDomainError(
@@ -130,6 +151,63 @@ function normalizeDescription(description: string): string {
     )
   }
   return trimmed
+}
+
+function requireText(field: string, label: string, value: string, maxLength: number): string {
+  const trimmed = (value ?? '').trim()
+  if (trimmed.length === 0) {
+    throw new IdeaDomainError(field, `${label} is required.`)
+  }
+  if (trimmed.length > maxLength) {
+    throw new IdeaDomainError(field, `${label} must be ${maxLength} characters or fewer.`)
+  }
+  return trimmed
+}
+
+/** Each solution trimmed and blank ones dropped, order kept; then 1 to 5 must remain. */
+function normalizeProposedSolutions(solutions: readonly string[]): string[] {
+  const kept = (solutions ?? []).flatMap((solution) => {
+    const trimmed = (solution ?? '').trim()
+    return trimmed.length > 0 ? [trimmed] : []
+  })
+  if (kept.length < MIN_PROPOSED_SOLUTIONS) {
+    throw new IdeaDomainError('proposedSolutions', 'At least one proposed solution is required.')
+  }
+  if (kept.length > MAX_PROPOSED_SOLUTIONS) {
+    throw new IdeaDomainError(
+      'proposedSolutions',
+      `An idea can have at most ${MAX_PROPOSED_SOLUTIONS} proposed solutions.`,
+    )
+  }
+  // CSV export writes one solution per line of a cell, so a line break inside one would not survive
+  // the round trip.
+  if (kept.some((solution) => /[\r\n]/.test(solution))) {
+    throw new IdeaDomainError('proposedSolutions', 'A proposed solution must fit on one line.')
+  }
+  if (kept.some((solution) => solution.length > PROPOSED_SOLUTION_MAX_LENGTH)) {
+    throw new IdeaDomainError(
+      'proposedSolutions',
+      `Each proposed solution must be ${PROPOSED_SOLUTION_MAX_LENGTH} characters or fewer.`,
+    )
+  }
+  return kept
+}
+
+function normalizeStructuredFields(input: {
+  readonly problem: string
+  readonly proposedSolutions: readonly string[]
+  readonly impactRationale: string
+}): Pick<Idea, 'problem' | 'proposedSolutions' | 'impactRationale'> {
+  return {
+    problem: requireText('problem', 'Problem', input.problem, PROBLEM_MAX_LENGTH),
+    proposedSolutions: normalizeProposedSolutions(input.proposedSolutions),
+    impactRationale: requireText(
+      'impactRationale',
+      'Impact Rationale',
+      input.impactRationale,
+      IMPACT_RATIONALE_MAX_LENGTH,
+    ),
+  }
 }
 
 function distinctIds(ids: readonly string[] | null | undefined): string[] {
@@ -195,6 +273,7 @@ export function createIdea(props: CreateIdeaProps): Idea {
     statusId,
     title: normalizeTitle(props.title),
     description: normalizeDescription(props.description),
+    ...normalizeStructuredFields(props),
     priority: props.priority,
     ideaTypeId,
     businessImpactId,
@@ -227,7 +306,10 @@ export function updateIdeaContent(
   idea: Idea,
   input: {
     readonly title: string
-    readonly description: string
+    readonly description: string | null
+    readonly problem: string
+    readonly proposedSolutions: readonly string[]
+    readonly impactRationale: string
     readonly priority: Priority
     readonly businessImpactId: string
     readonly dueDate: string | null
@@ -240,6 +322,7 @@ export function updateIdeaContent(
       ...idea,
       title: normalizeTitle(input.title),
       description: normalizeDescription(input.description),
+      ...normalizeStructuredFields(input),
       priority: input.priority,
       businessImpactId: assertRequiredId(
         'businessImpactId',

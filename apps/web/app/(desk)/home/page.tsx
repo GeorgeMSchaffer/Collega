@@ -9,6 +9,7 @@ import {
 } from '@collega/design-system'
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
+import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { getBoards, getNavCounts } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -86,17 +87,19 @@ export default async function HomePage() {
 
   return (
     <>
-      <Topbar title="Home" />
+      <Topbar title={<b>Home</b>} />
       <main className="flex flex-col gap-6 p-6">
-        <div>
-          <h2 className="mb-1">Good to see you, {currentUser().displayName.split(' ')[0]}.</h2>
-          <p className="m-0 max-w-2xl text-muted-foreground">
-            {currentUser().organizationName ?? 'This deployment'} has {navCounts.ideas} ideas across{' '}
-            {navCounts.boards} boards. Your identity, those counts and the boards below come from
-            the API; the delivery and settings surfaces are still reading{' '}
-            <code className="font-mono text-xs">lib/mock.ts</code>.
-          </p>
-        </div>
+        <PageHeader
+          title={<>Good to see you, {currentUser().displayName.split(' ')[0]}.</>}
+          description={
+            <>
+              {currentUser().organizationName ?? 'This deployment'} has {navCounts.ideas} ideas
+              across {navCounts.boards} boards. Your identity, those counts and the boards below
+              come from the API; the delivery and settings surfaces are still reading{' '}
+              <code className="font-mono text-xs">lib/mock.ts</code>.
+            </>
+          }
+        />
 
         {boards.length === 0 ? <NoBoards /> : null}
 

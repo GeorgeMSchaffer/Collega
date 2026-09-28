@@ -1,3 +1,41 @@
+# apps/web
+
+The Next.js client (App Router). **HTTP only** — it may import `@collega/design-system` and nothing
+else from the workspace. An import of `@collega/application`, `@collega/domain` or
+`@collega/infrastructure` is a lint error, and that is deliberate
+(`SPEC/50-typescript-migration.md` §4.3): the browser tier reaches `apps/api` over the wire.
+
+## Layout
+
+| Path | Holds |
+|---|---|
+| `app/(auth)/`, `app/(desk)/` | The route groups — login/register/change-password, and the signed-in surfaces |
+| `app/(desk)/design-system/` | The primitive gallery; check a design-system change here first |
+| `app/globals.css` | Tailwind entry point only — the theme lives in `@collega/design-system` |
+| `components/` | Screen components, grouped by surface |
+| `lib/data/` | **The data seam** — every reader the screens call |
+| `lib/api/` | `fetch` client, wire types, Problem Details handling |
+| `lib/server/` | Server actions (`*-actions.ts`) |
+| `lib/mock.ts` | Fixtures for the surfaces not yet pointed at the API |
+| `test/` | Vitest |
+
+Use the `@/…` alias (`@/lib`, `@/components`, `@/app`) rather than relative paths.
+
+## Conventions
+
+- **Screens call `lib/data/`, never `lib/api/` or `lib/mock.ts` directly.** Each reader there is
+  either a real `fetch` or still a fixture, and the call site cannot tell — converting a reader
+  replaces a body, never a signature. Read that file's header before adding one.
+- **Fixtures live only in `lib/mock.ts`**, and mirror the demo seed exactly. No screen invents its
+  own.
+- **No business rules here.** Validation that decides an outcome belongs in
+  `packages/application`; the client validates for feedback, not for authority.
+- Build from `@collega/design-system` primitives; don't restyle shadcn per screen or reach for raw
+  colours.
+- `'use client'` only where interaction needs it. A client file that reaches a server-only module
+  through a barrel typechecks and then fails `next build`, which is why the build is part of
+  `pnpm check`.
+
 ## A deploy can be cancelled by the ignore step, and that is not a failure
 
 `vercel.json`'s `ignoreCommand` asks Turbo whether `@collega/web` was affected since the previous
@@ -12,9 +50,39 @@ new value needs a new build, and the commit that would carry it usually changes 
 build that should have picked the value up cancelled itself while production carried on serving the
 old one.
 
-If a deploy must happen and the diff does not justify it, redeploy from Vercel — but redeploy **this**
-project and its **latest** deployment. Redeploying `collega-api`, or an older commit, rebuilds
-something nobody asked about and cancels for the same reason.
+**A redeploy does not work. Corrected 2026-09-14, from the build log of two that did not.** This
+file used to say "redeploy from Vercel" here, and that advice cannot succeed: the ignore step asks
+what changed since `VERCEL_GIT_PREVIOUS_SHA`, and on a redeploy of a commit the previous SHA *is*
+that commit — so the honest answer is "nothing affected" and the build stops. Twice, on
+`collega-api` production, while a newly added `COLLEGA_ALLOW_DEMO_SEED` went on being invisible to
+the running function:
+
+```
+Running "turbo query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @collega/api --exit-code"
+{ "affectedPackages": { "items": [], "length": 0 } }
+The deployment was canceled because the Ignored Build Step command returned exit code 0.
+```
+
+**Ship a commit that touches the app instead.** For production that means moving `main` — a
+promotion whose range includes a change under `apps/api` or `apps/web` gives the ignore step a real
+answer. There is no dashboard button that substitutes for it, which is the part worth remembering:
+the setting is applied instantly and reaches nothing until something rebuilds.
+
+**The change does not have to be code, only a path.** `turbo query affected` is path-based, not
+content-aware, so any file under the app's directory counts — a comment, a README, this file.
+Demonstrated by the commit that added the paragraph above: it edited `SPEC/50-vercel-deployment.md`
+and `apps/web/AGENTS.md`, nothing else, and `collega` built **READY** while `collega-api` cancelled.
+
+So the lever for each project is a path, and they are not the same one:
+
+| To rebuild | Touch something under |
+|---|---|
+| `collega` (web) | `apps/web/` — including its markdown |
+| `collega-api` | `apps/api/` — its own markdown will do |
+
+Editing a file under `apps/web/` will not rebuild the API, which is exactly the trap that left
+`COLLEGA_ALLOW_DEMO_SEED` inert: the variable is read by `apps/api`, and every commit since it was
+set had touched only the web app or `SPEC/`.
 
 The exact behaviour, since `|| exit 1` reads backwards at a glance:
 

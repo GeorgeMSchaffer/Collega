@@ -45,6 +45,8 @@ const ALLOWLIST = [
   'apps/api/src/common/request-context/request-context.middleware.ts',
   'apps/api/src/common/request-context/run-as.ts',
   'apps/web/lib/server/current-user.ts',
+  // Not identity: the root layout's theme cookie. It needs `next/headers` and reads nothing else.
+  'apps/web/lib/server/theme.ts',
   'packages/infrastructure/src/security/jwt-access-token.service.ts',
 ]
 
@@ -89,6 +91,26 @@ describe('identity chokepoint', () => {
         'file genuinely belongs here, add it to ALLOWLIST in this test - deliberately, in a ' +
         'diff a reviewer sees.',
     )
+  })
+
+  it('keeps theme.ts to the theme cookie', () => {
+    // The allowlist above grants the whole file `next/headers`, so an edit that read the session
+    // cookie there would still pass it. This pins the file to its one legitimate read.
+    const source = readFileSync(resolve(REPO_ROOT, 'apps/web/lib/server/theme.ts'), 'utf8')
+    assert.match(source, /\.get\(THEME_COOKIE\)/, 'theme.ts no longer reads the theme cookie.')
+    for (const forbidden of [
+      /\bheaders\(/,
+      /\.getAll\(/,
+      /\.set\(/,
+      /\.get\((?!THEME_COOKIE\))/,
+      /session/i,
+    ]) {
+      assert.doesNotMatch(
+        source.replace(/\/\*\*[\s\S]*?\*\//g, ''),
+        forbidden,
+        `theme.ts reads more than the theme cookie (${forbidden}). It is allowlisted for that one cookie only.`,
+      )
+    }
   })
 
   it('finds the chokepoint itself, so the regex has not silently stopped matching', () => {

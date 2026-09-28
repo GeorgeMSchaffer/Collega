@@ -18,6 +18,8 @@ import {
   IdeaPhaseConflictError,
   MAX_ASSIGNEES,
   MAX_TAGS,
+  NOT_CAPTURED_TEXT,
+  PROBLEM_MAX_LENGTH,
   promoteIdeaToIssue,
   reassignIdeaType as reassignIdeaTypeOf,
   replaceIdeaAssignees,
@@ -29,7 +31,14 @@ import {
   softDeleteIdea,
   updateIdeaContent,
 } from '@collega/domain/ideas'
-import type { AuditEventWriter, Clock, CurrentUserContext, UnitOfWork } from '../common/index.js'
+import { normalizeTagName } from '@collega/domain/tags'
+import type {
+  AuditEventWriter,
+  Clock,
+  CurrentUserContext,
+  RandomSource,
+  UnitOfWork,
+} from '../common/index.js'
 import {
   attributeAudit,
   ConflictError,
@@ -41,6 +50,7 @@ import {
   UnauthorizedError,
   ValidationError,
 } from '../common/index.js'
+import { randomTagColor } from '../tags/random-color.js'
 import type {
   AssignIssueToSprintCommand,
   ChangeDeliveryStatusCommand,
@@ -61,6 +71,7 @@ import type {
   IdeaListItem,
   IdeaListQuery,
   IdeaPage,
+  IdeaTagDto,
   IssueProvenance,
   MentionDto,
   OrganizationIdeaListQuery,
@@ -129,6 +140,7 @@ export class IdeaService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly random: RandomSource,
   ) {}
 
   async listByBoard(boardId: string, query: IdeaListQuery): Promise<IdeaPage<IdeaListItem>> {
@@ -140,14 +152,26 @@ export class IdeaService {
     }
     this.ensureOrganizationScope(board.organizationId)
 
+    const search = trimOrNull(query.search)
+    const searchTextFieldIds = search
+      ? (
+          await this.fieldValues.translateListFilters({
+            organizationId: board.organizationId,
+            raw: null,
+          })
+        ).searchTextFieldIds
+      : []
+
     const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
     const ideasPage = await this.ideaRepository.listByBoard({
       boardId,
       page,
-      search: trimOrNull(query.search),
-      statusId: query.statusId,
-      tag: trimOrNull(query.tag),
-      priority: parseOptionalPriority(query.priority),
+      search,
+      searchTextFieldIds,
+      searchCreatedOnDate: search && isValidIsoDate(search) ? search : null,
+      statusIds: distinctNonEmpty(query.statusIds),
+      tags: normalizeTagFilters(query.tags),
+      priorities: parsePriorityFilters(query.priorities),
       dueBefore: parseOptionalDate(query.dueBefore),
       // The ideation board is Discovery, always: a promoted item leaves it (no data loss - the row
       // and its ideation status are retained, and it reappears here if it is returned to
@@ -197,7 +221,10 @@ export class IdeaService {
       sortDirection: normalizeSortDirection(query.sortDirection),
       fieldFilters,
       searchTextFieldIds,
-      tag: trimOrNull(query.tag),
+      boardIds: distinctNonEmpty(query.boardIds),
+      statusIds: distinctNonEmpty(query.statusIds),
+      priorities: parsePriorityFilters(query.priorities),
+      tags: normalizeTagFilters(query.tags),
       associatedUserId: trimOrNull(query.user),
       searchCreatedOnDate,
       // Defaults to both phases, unlike the board: this list is where somebody looks for an item
@@ -219,6 +246,7 @@ export class IdeaService {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
+    ensureBoardNotArchived(board)
 
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
@@ -264,7 +292,10 @@ export class IdeaService {
       boardId,
       statusId,
       title: command.title ?? '',
-      description: command.description ?? '',
+      description: command.description,
+      problem: command.problem ?? '',
+      proposedSolutions: command.proposedSolutions ?? [],
+      impactRationale: command.impactRationale ?? '',
       priority,
       ideaTypeId: command.ideaTypeId,
       businessImpactId: command.businessImpactId,
@@ -329,6 +360,7 @@ export class IdeaService {
       throw new NotFoundError('Idea not found.')
     }
     this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -338,15 +370,15 @@ export class IdeaService {
     const existingAssignees = [...idea.assigneeUserIds]
     const existingMentions = new Set(idea.mentionedUserIds)
     const requestedAssignees = distinctNonEmpty(command.assigneeUserIds)
-    const descriptionChanged = (command.description ?? '').trim() !== idea.description
+    const contentChanged = structuredContentChanged(idea, command)
     const assigneesChanged = !setsEqual(new Set(existingAssignees), new Set(requestedAssignees))
 
-    // Description and assignee changes are restricted to the author or an in-scope admin
-    // (SPEC/20-feature-ideas-and-engagement.md "Permissions"); other fields use the general
-    // idea-edit permission already checked above.
-    if ((descriptionChanged || assigneesChanged) && !this.canAdministerIdeaContent(idea, actorId)) {
+    // Description, Problem, Proposed solutions, Impact rationale and assignee changes are
+    // restricted to the author or an in-scope admin (SPEC/20-feature-ideas-and-engagement.md
+    // "Permissions", rule 2a); other fields use the general idea-edit permission checked above.
+    if ((contentChanged || assigneesChanged) && !this.canAdministerIdeaContent(idea, actorId)) {
       throw new ForbiddenError(
-        "You are not allowed to change this idea's description or assignees.",
+        "You are not allowed to change this idea's description, problem, proposed solutions, impact rationale or assignees.",
       )
     }
 
@@ -391,6 +423,7 @@ export class IdeaService {
         organizationId: idea.organizationId,
         ideaTypeId: idea.ideaTypeId,
         submitted: command.fieldValues ?? [],
+        stored: idea.fieldValues,
       })
     }
 
@@ -399,7 +432,10 @@ export class IdeaService {
       idea,
       {
         title: command.title ?? '',
-        description: command.description ?? '',
+        description: command.description,
+        problem: command.problem ?? '',
+        proposedSolutions: command.proposedSolutions ?? [],
+        impactRationale: command.impactRationale ?? '',
         priority,
         businessImpactId: command.businessImpactId,
         dueDate,
@@ -459,6 +495,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError("You are not allowed to reassign an idea's type.")
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     // 400 when the target type is unknown or archived in the organization.
     await this.getActiveIdeaType(idea.organizationId, ideaTypeId)
@@ -508,6 +545,7 @@ export class IdeaService {
     }
 
     this.ensureCanMoveIdea(board)
+    ensureBoardNotArchived(board)
 
     if (idea.statusId === command.statusId) {
       return
@@ -566,6 +604,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, actorId)) {
       throw new ForbiddenError('You are not allowed to promote this idea.')
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const effort = parseEffort(command.effort)
     const sprintId = await this.resolveAssignableSprint(idea.organizationId, command.sprintId)
@@ -614,6 +653,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to return an issue to discovery.')
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -741,6 +781,30 @@ export class IdeaService {
     return this.projectDeliveryCards(organizationId, ideas)
   }
 
+  /**
+   * One Issue's delivery card, composed by `projectDeliveryCards` like the list's, so the two
+   * cannot differ. Readable as the list is. A missing, soft-deleted, Discovery-phase or
+   * out-of-scope idea is a 404 - never 403, as throughout delivery.
+   */
+  async getDelivery(ideaId: string): Promise<DeliveryCard> {
+    this.requireAuthenticatedRole()
+
+    const idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+    if (idea.phase !== IdeaPhase.Delivery) {
+      throw new NotFoundError('Idea not found.')
+    }
+
+    const [card] = await this.projectDeliveryCards(idea.organizationId, [idea])
+    if (!card) {
+      throw new NotFoundError('Idea not found.')
+    }
+    return card
+  }
+
   async delete(ideaId: string): Promise<void> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
     ensureNotDirectSiteAdmin(this.currentUser)
@@ -757,6 +821,7 @@ export class IdeaService {
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to delete ideas.')
     }
+    await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -790,9 +855,11 @@ export class IdeaService {
         boardId,
         page: { page: pageNumber, pageSize: MAX_PAGE_SIZE },
         search: null,
-        statusId: null,
-        tag: null,
-        priority: null,
+        searchTextFieldIds: [],
+        searchCreatedOnDate: null,
+        statusIds: [],
+        tags: [],
+        priorities: [],
         dueBefore: null,
         // Same Discovery filter as the board itself: the export is "this board's ideas", and a
         // file that disagreed with the screen it was exported from would be the bug.
@@ -843,7 +910,11 @@ export class IdeaService {
     for (const idea of ideas) {
       const cells: string[] = [
         idea.title,
-        idea.description,
+        idea.description ?? '',
+        idea.problem,
+        // One quoted cell, one solution per line (SPEC/30-Contracts.md export).
+        idea.proposedSolutions.join('\n'),
+        idea.impactRationale,
         idea.priority,
         this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
         this.businessImpactName(businessImpactLookup, idea.businessImpactId),
@@ -881,6 +952,7 @@ export class IdeaService {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
+    ensureBoardNotArchived(board)
 
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
@@ -923,6 +995,17 @@ export class IdeaService {
 
       const title = cell(IdeaCsvColumns.title)
       const description = cell(IdeaCsvColumns.description)
+      // Rule 2a's backfill for a row that lacks a structured field or leaves it blank (CSV Import
+      // rule 3a): the same text the migration wrote into ideas created before the fields existed.
+      // A Description longer than Problem allows is cut to fit, as the migration did, so a file
+      // written before these columns existed still imports.
+      const problem =
+        cell(IdeaCsvColumns.problem) ??
+        description?.slice(0, PROBLEM_MAX_LENGTH).trimEnd() ??
+        NOT_CAPTURED_TEXT
+      const solutionsCell = cell(IdeaCsvColumns.proposedSolutions)
+      const proposedSolutions = solutionsCell ? solutionsCell.split(/\r?\n/) : [NOT_CAPTURED_TEXT]
+      const impactRationale = cell(IdeaCsvColumns.impactRationale) ?? NOT_CAPTURED_TEXT
       const priorityRaw = cell(IdeaCsvColumns.priority)
       const typeName = cell(IdeaCsvColumns.ideaType)
       const impactName = cell(IdeaCsvColumns.businessImpact)
@@ -937,10 +1020,6 @@ export class IdeaService {
 
       if (!title) {
         reject('Title is required.')
-        continue
-      }
-      if (!description) {
-        reject('Description is required.')
         continue
       }
 
@@ -1051,6 +1130,9 @@ export class IdeaService {
           statusId,
           title,
           description,
+          problem,
+          proposedSolutions,
+          impactRationale,
           priority,
           ideaTypeId: ideaType.id,
           businessImpactId,
@@ -1133,6 +1215,8 @@ export class IdeaService {
       dueDate: idea.dueDate,
       assignees: this.projectAssignees(idea, userLookup),
       tagNames: this.projectTagNames(idea, tagLookup),
+      tags: this.projectTags(idea, tagLookup),
+      effort: idea.effort,
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
       upvoteCount: upvoteCounts.get(idea.id) ?? 0,
@@ -1183,7 +1267,6 @@ export class IdeaService {
         {
           ...card,
           phase: idea.phase,
-          effort: idea.effort,
           deliveryStatus: idea.deliveryStatus,
           sprint: sprint
             ? {
@@ -1271,6 +1354,11 @@ export class IdeaService {
       ideaTypeId: idea.ideaTypeId,
       stored: idea.fieldValues,
     })
+    const formFields = await this.fieldValues.describeFormFields({
+      organizationId: idea.organizationId,
+      ideaTypeId: idea.ideaTypeId,
+      stored: idea.fieldValues,
+    })
 
     const mentions: readonly MentionDto[] = mentionUserIds.flatMap((id) => {
       const user = userLookup.get(id)
@@ -1305,6 +1393,9 @@ export class IdeaService {
       ideaId: idea.id,
       boardId: idea.boardId,
       title: idea.title,
+      problem: idea.problem,
+      proposedSolutions: idea.proposedSolutions,
+      impactRationale: idea.impactRationale,
       description: idea.description,
       priority: idea.priority,
       ideaTypeId: idea.ideaTypeId,
@@ -1319,12 +1410,14 @@ export class IdeaService {
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
       tagNames: this.projectTagNames(idea, tagLookup),
+      tags: this.projectTags(idea, tagLookup),
       mentions,
       comments: commentDtos,
       upvoteCount,
       hasUpvoted: upvoted.has(idea.id),
       commentCount,
       fieldValues,
+      formFields,
       author: this.projectAuthor(idea, userLookup),
       createdAtUtc: idea.createdAtUtc,
     }
@@ -1430,12 +1523,20 @@ export class IdeaService {
     idea: Idea,
     tagLookup: ReadonlyMap<string, TagSummary>,
   ): readonly string[] {
+    return this.projectTags(idea, tagLookup).map((tag) => tag.name)
+  }
+
+  /** `tagNames`' order, which is what the contract pins `tags` to. */
+  private projectTags(
+    idea: Idea,
+    tagLookup: ReadonlyMap<string, TagSummary>,
+  ): readonly IdeaTagDto[] {
     return idea.tagIds
       .flatMap((id) => {
         const tag = tagLookup.get(id)
-        return tag ? [tag.name] : []
+        return tag ? [{ tagId: tag.id, name: tag.name, color: tag.color }] : []
       })
-      .sort(compareIgnoreCase)
+      .sort((a, b) => compareIgnoreCase(a.name, b.name))
   }
 
   // Resolution helpers -----------------------------------------------------------------------
@@ -1523,6 +1624,7 @@ export class IdeaService {
     const tags = await this.tags.getOrCreate({
       organizationId,
       requestedNames: distinctNormalized,
+      pickNewTagColor: () => randomTagColor(this.random),
       nowUtc,
       actorUserId,
     })
@@ -1635,6 +1737,14 @@ export class IdeaService {
     }
     if (this.currentUser.organizationId !== organizationId) {
       throw new NotFoundError('Idea not found.')
+    }
+  }
+
+  /** `ensureBoardNotArchived` for an idea already loaded, whose board context is not. */
+  private async ensureIdeaBoardNotArchived(idea: Idea): Promise<void> {
+    const board = await this.boards.getBoardContext(idea.boardId)
+    if (board) {
+      ensureBoardNotArchived(board)
     }
   }
 
@@ -1803,6 +1913,17 @@ export class IdeaService {
 
 // Module-level helpers ---------------------------------------------------------------------------
 
+/**
+ * An archived board is read-only (SPEC/20-feature-boards-and-statuses.md rule 13): no new ideas,
+ * and no moving, editing or deleting the ones on it - `409`, unarchive it first. Comments and
+ * upvotes are separate features and stay open.
+ */
+function ensureBoardNotArchived(board: BoardContext): void {
+  if (board.isArchived) {
+    throw new ConflictError('This board is archived. Unarchive it before changing its ideas.')
+  }
+}
+
 /** One user as the idea payloads carry a person - assignees and the detail's author alike. */
 function toPersonDto(user: UserSummary): IdeaAssigneeDto {
   return {
@@ -1855,6 +1976,26 @@ function distinctNonEmpty(ids: readonly string[] | null | undefined): string[] {
   return result
 }
 
+/**
+ * Whether an update touches the author-or-admin fields: Description, and since 2026-09-27 Problem,
+ * Proposed solutions and Impact rationale. Compared the way the domain normalizes them (trimmed,
+ * blank description as none, blank solutions dropped), so resubmitting the stored values unchanged
+ * is not an edit.
+ */
+function structuredContentChanged(idea: Idea, command: UpdateIdeaCommand): boolean {
+  const solutions = (command.proposedSolutions ?? []).flatMap((s) => {
+    const trimmed = s?.trim()
+    return trimmed ? [trimmed] : []
+  })
+  return (
+    trimOrNull(command.description) !== idea.description ||
+    (command.problem ?? '').trim() !== idea.problem ||
+    (command.impactRationale ?? '').trim() !== idea.impactRationale ||
+    solutions.length !== idea.proposedSolutions.length ||
+    solutions.some((solution, index) => solution !== idea.proposedSolutions[index])
+  )
+}
+
 function setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
   if (a.size !== b.size) {
     return false
@@ -1898,6 +2039,16 @@ function parsePriority(value: string | null): Priority {
     })
   }
   return parsed
+}
+
+/** A repeatable `priority` filter: unrecognised values are dropped, as a single one always was. */
+function parsePriorityFilters(values: readonly string[]): Priority[] {
+  return [...new Set(values.flatMap((value) => parseOptionalPriority(value) ?? []))]
+}
+
+/** A repeatable `tag` filter, matched against the tag's normalized (trimmed, lowercased) name. */
+function normalizeTagFilters(values: readonly string[]): string[] {
+  return [...new Set(values.map(normalizeTagName).filter((name) => name !== ''))]
 }
 
 function parseOptionalPriority(value: string | null | undefined): Priority | null {

@@ -5,11 +5,14 @@
 
 import { randomUUID } from 'node:crypto'
 import {
+  archiveBoard,
   type Board,
+  BoardArchivedError,
   BoardInvariantError,
   createBoard,
   MIN_SWIMLANES,
   reorderBoardSwimlanes,
+  unarchiveBoard,
   updateBoard,
 } from '@collega/domain/boards'
 import { Role } from '@collega/domain/enums'
@@ -18,6 +21,7 @@ import {
   type AuditEventWriter,
   attributeAudit,
   type Clock,
+  ConflictError,
   type CurrentUserContext,
   ensureNotDirectSiteAdmin,
   ForbiddenError,
@@ -30,6 +34,8 @@ import type { StatusRepository } from '../statuses/index.js'
 import type {
   BoardDetail,
   BoardListItem,
+  BoardListQuery,
+  BoardTagCount,
   CreateBoardCommand,
   CreateBoardResult,
   ReorderSwimlanesCommand,
@@ -50,24 +56,74 @@ export class BoardService {
     private readonly clock: Clock,
   ) {}
 
-  async list(organizationId: string): Promise<readonly BoardListItem[]> {
+  async list(
+    organizationId: string,
+    query: BoardListQuery = { includeArchived: false },
+  ): Promise<readonly BoardListItem[]> {
     this.ensureReadScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
 
-    const boards = await this.boards.listByOrganization(organizationId)
+    const boards = (await this.boards.listByOrganization(organizationId)).filter(
+      (board) => query.includeArchived || !board.isArchived,
+    )
     // One query for every board's idea count. The client used to ask each board's idea endpoint
     // for a single row and read `totalCount` off the envelope, which is one round trip per board
     // from one render - fine at four boards, two hundred concurrent requests at two hundred.
-    const ideaCounts = await this.boards.countIdeasByBoard(boards.map((board) => board.id))
+    // The card aggregates follow the same rule: a fixed number of grouped reads for the whole
+    // list, never one per board.
+    const boardIds = boards.map((board) => board.id)
+    const creatorIds = [...new Set(boards.flatMap((board) => board.createdByUserId ?? []))]
+    const [ideaCounts, statusCounts, tagCounts, creatorNames, statusLookup] = await Promise.all([
+      this.boards.countIdeasByBoard(boardIds),
+      this.boards.countIdeasByBoardAndStatus(boardIds),
+      this.boards.countIdeasByBoardAndTag(boardIds),
+      this.boards.getUserNames(creatorIds),
+      this.loadStatusLookup(organizationId),
+    ])
 
-    return [...boards].sort(compareBoardsForListing).map((board) => ({
-      boardId: board.id,
-      organizationId: board.organizationId,
-      name: board.name,
-      allowUserStatusUpdate: board.allowUserStatusUpdate,
-      swimlaneCount: board.swimlanes.length,
-      ideaCount: ideaCounts.get(board.id) ?? 0,
-    }))
+    const laneIdeaCounts = new Map(
+      statusCounts.map((row) => [laneKey(row.boardId, row.statusId), row.ideaCount]),
+    )
+    const tagsByBoard = new Map<string, BoardTagCount[]>()
+    for (const row of tagCounts) {
+      const tags = tagsByBoard.get(row.boardId) ?? []
+      tags.push({ name: row.tagName, ideaCount: row.ideaCount, color: row.tagColor })
+      tagsByBoard.set(row.boardId, tags)
+    }
+
+    return [...boards].sort(compareBoardsForListing).map((board) => {
+      const tags = tagsByBoard.get(board.id) ?? []
+      const creatorName =
+        board.createdByUserId === null ? undefined : creatorNames.get(board.createdByUserId)
+      return {
+        boardId: board.id,
+        organizationId: board.organizationId,
+        name: board.name,
+        allowUserStatusUpdate: board.allowUserStatusUpdate,
+        swimlaneCount: board.swimlanes.length,
+        ideaCount: ideaCounts.get(board.id) ?? 0,
+        description: board.description,
+        createdAtUtc: board.createdAtUtc,
+        createdBy:
+          board.createdByUserId === null || creatorName === undefined
+            ? null
+            : {
+                userId: board.createdByUserId,
+                displayName: `${creatorName.firstName} ${creatorName.lastName}`.trim(),
+              },
+        laneCounts: buildSwimlaneDetails(board, statusLookup).map((lane) => ({
+          statusId: lane.statusId,
+          statusName: lane.statusName,
+          statusColor: lane.statusColor,
+          order: lane.order,
+          ideaCount: laneIdeaCounts.get(laneKey(board.id, lane.statusId)) ?? 0,
+        })),
+        topTags: [...tags].sort(compareTagsForCard).slice(0, TOP_TAG_LIMIT),
+        tagCount: tags.length,
+        isArchived: board.isArchived,
+        archivedAtUtc: board.archivedAtUtc,
+      }
+    })
   }
 
   async create(organizationId: string, command: CreateBoardCommand): Promise<CreateBoardResult> {
@@ -82,6 +138,7 @@ export class BoardService {
       id: randomUUID(),
       organizationId,
       name: command.name,
+      description: command.description ?? null,
       allowUserStatusUpdate: command.allowUserStatusUpdate,
       orderedStatusIds,
       nowUtc: now,
@@ -135,6 +192,7 @@ export class BoardService {
       existing,
       {
         name: command.name,
+        description: command.description,
         allowUserStatusUpdate: command.allowUserStatusUpdate,
         orderedStatusIds,
       },
@@ -198,6 +256,51 @@ export class BoardService {
       board.organizationId,
       board.id,
       `Board '${board.name}' swimlanes reordered.`,
+      now,
+      null,
+    )
+  }
+
+  /**
+   * Archives a board in place of deleting it (SPEC/20-feature-boards-and-statuses.md rule 13):
+   * Org Admin of its organization only, and a direct Site Admin is refused like every other
+   * org-content write. Archiving an archived board succeeds and changes nothing.
+   */
+  async archive(boardId: string): Promise<void> {
+    await this.setArchived(boardId, archiveBoard, 'BoardArchived', 'archived')
+  }
+
+  /** Brings an archived board back unchanged. Unarchiving an active board changes nothing. */
+  async unarchive(boardId: string): Promise<void> {
+    await this.setArchived(boardId, unarchiveBoard, 'BoardUnarchived', 'unarchived')
+  }
+
+  private async setArchived(
+    boardId: string,
+    transition: (board: Board, nowUtc: Date, actorUserId: string | null) => Board,
+    eventType: string,
+    verb: string,
+  ): Promise<void> {
+    const existing = await this.boards.getById(boardId)
+    if (existing === null) {
+      throw new NotFoundError('Board not found.')
+    }
+
+    this.ensureAdminScope(existing.organizationId)
+
+    const now = this.clock.now()
+    const board = transition(existing, now, this.currentUser.userId)
+    if (board === existing) {
+      return
+    }
+    await this.boards.save(board)
+    await this.unitOfWork.saveChanges()
+
+    await this.audit(
+      eventType,
+      board.organizationId,
+      board.id,
+      `Board '${board.name}' ${verb}.`,
       now,
       null,
     )
@@ -336,6 +439,9 @@ function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T,
         [error.field]: [error.message],
       })
     }
+    if (error instanceof BoardArchivedError) {
+      throw new ConflictError(error.message)
+    }
     throw error
   }
 }
@@ -345,9 +451,27 @@ function toDetail(board: Board, statusLookup: ReadonlyMap<string, Status>): Boar
     boardId: board.id,
     organizationId: board.organizationId,
     name: board.name,
+    description: board.description,
     allowUserStatusUpdate: board.allowUserStatusUpdate,
     swimlanes: buildSwimlaneDetails(board, statusLookup),
+    isArchived: board.isArchived,
+    archivedAtUtc: board.archivedAtUtc,
   }
+}
+
+const TOP_TAG_LIMIT = 3
+
+function laneKey(boardId: string, statusId: string): string {
+  return `${boardId}:${statusId}`
+}
+
+/** Most-used first; a count tie reads alphabetically, ignoring case, then by exact spelling. */
+function compareTagsForCard(a: BoardTagCount, b: BoardTagCount): number {
+  return (
+    b.ideaCount - a.ideaCount ||
+    compareStrings(a.name.toLowerCase(), b.name.toLowerCase()) ||
+    compareStrings(a.name, b.name)
+  )
 }
 
 function buildSwimlaneDetails(

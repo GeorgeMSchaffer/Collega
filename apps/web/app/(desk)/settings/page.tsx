@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@collega/design-system'
 import Link from 'next/link'
+import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, isAdministrator, type Role } from '@/lib/session'
@@ -53,6 +54,13 @@ function sectionsFor(role: Role): Section[] {
         badge: 'Site Admin',
       },
       {
+        href: '/settings/demo-data',
+        title: 'Demo data',
+        blurb:
+          'Fill this deployment with the demo organizations, or reset them. A fresh deployment has nobody to view as until you do.',
+        badge: 'Site Admin',
+      },
+      {
         href: '/settings/users',
         title: 'Users',
         blurb: 'Every account on the deployment. Open an organization to change its membership.',
@@ -77,6 +85,11 @@ function sectionsFor(role: Role): Section[] {
         href: '/settings/fields',
         title: 'Custom fields',
         blurb: 'Extra questions attached to an idea type.',
+      },
+      {
+        href: '/settings/tags',
+        title: 'Tags',
+        blurb: 'Every organization’s tags and their colours, read-only.',
       },
       {
         href: '/settings/ai-prompt',
@@ -121,6 +134,12 @@ function sectionsFor(role: Role): Section[] {
       blurb: 'Extra questions attached to an idea type.',
     },
     {
+      href: '/settings/tags',
+      title: 'Tags',
+      blurb:
+        'Labels for ideas on every board: their colours, and adding, renaming or deleting them.',
+    },
+    {
       href: '/settings/ai-assist',
       title: 'AI assist',
       blurb: 'What the assistant should treat as on-topic for this organization.',
@@ -151,18 +170,18 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <Topbar title="Settings" />
-      <main className="flex max-w-[1320px] min-w-0 flex-1 flex-col gap-6 p-6">
-        <div>
-          <h1>Settings</h1>
-          <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">
-            {currentUser().role === 'SiteAdmin'
+      <Topbar title={<b>Settings</b>} />
+      <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
+        <PageHeader
+          title="Settings"
+          description={
+            currentUser().role === 'SiteAdmin'
               ? 'Deployment-wide configuration. Open an organization to change what belongs to it.'
               : admin
                 ? `Configuration for ${currentUser().organizationName}.`
-                : 'Your own account. Everything else here belongs to an organization administrator.'}
-          </p>
-        </div>
+                : 'Your own account. Everything else here belongs to an organization administrator.'
+          }
+        />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sections.map((section) => (
@@ -184,8 +203,8 @@ export default async function SettingsPage() {
           <Alert variant="note" className="max-w-prose">
             <span>
               <b>Settings is almost entirely administrative.</b> You see only your own profile here.
-              Users, boards, statuses, idea types, fields and the assistant are configured by an
-              organization administrator, so they are <b>absent rather than refused</b>.
+              Users, boards, statuses, idea types, fields, tags and the assistant are configured by
+              an organization administrator, so they are <b>absent rather than refused</b>.
             </span>
           </Alert>
         )}

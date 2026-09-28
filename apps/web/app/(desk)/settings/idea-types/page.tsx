@@ -76,7 +76,7 @@ export default async function IdeaTypesPage() {
       actions={
         siteAdmin ? undefined : (
           <a href="#add-idea-type" className={buttonVariants()}>
-            Add idea type
+            Add New Idea Type
           </a>
         )
       }

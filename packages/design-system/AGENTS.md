@@ -1,0 +1,42 @@
+# packages/design-system
+
+Comp P's tokens and primitives, on Tailwind CSS v4 + shadcn/ui. Imports nothing else from the
+workspace, and **nothing but `apps/web` imports it** — an import from `apps/api` or any
+`packages/*` layer is a lint error.
+
+## Layout
+
+| Path | Holds |
+|---|---|
+| `src/globals.css` | **The theme** — the `@theme` block, the token values, the base layer |
+| `src/components/` | The primitives: `button`, `card`, `field`, `input`, `badge`, `alert`, `meter`, `marker`, `skeleton`, `states`, `denied`, … |
+| `src/lib/cn.ts` | The class-merge helper |
+| `test/` | Vitest + Testing Library |
+
+Consumed as `@collega/design-system` and `@collega/design-system/globals.css`.
+`apps/web/app/globals.css` imports that stylesheet and adds only the app's Tailwind `@source`
+roots — the theme itself is not duplicated there.
+
+## Conventions
+
+- **Comp P's structure is locked; the palette is five themes** (`SPEC/decisions.md` 2026-09-27,
+  2026-09-28): Terrazzo (the default and the bare `:root`), Portico, Piazza Sera, Lagoon and
+  Graphite (which replaced Notte), each one
+  self-contained `[data-theme]` block in `src/globals.css` — colours, fonts, radius, suggestion hue.
+  Comp R (`SPEC/mockups/comp-r-portico-prototype.html`) holds the values; comp Q
+  (`SPEC/mockups/comp-q-*.html`) is rendered in Terrazzo from `SPEC/mockups/_build/q.css`. Change a
+  token here and in the comps together, or the comps stop being a reference.
+- **Control geometry is tokens** (`--control-h`, `--control-h-sm`, `--control-h-lg`,
+  `--control-px`, `--field-h`, `--label-size` in `src/globals.css`), read by `Button`, `Label` and
+  the base layer's inputs. Change density there, not per component.
+- **Tag chip colours are computed** by `src/lib/tag-colors.ts`, whose `CHIP_THEMES` mirrors each
+  theme's `--card` and `--foreground`. Change a theme's card or ink there too, or a chip's text is
+  no longer guaranteed to clear 4.5:1.
+- **Component classes from the comps (`.btn`, `.panel`, `.marker`, …) are deliberately not carried
+  into CSS.** Each one is a real component in `src/components/` instead. Don't reintroduce them as
+  global classes.
+- Use shadcn/ui as intended rather than re-skinning it: a primitive here should be recognisable to
+  anyone who knows shadcn.
+- Semantic tokens only in component code — no raw hex, no one-off Tailwind colour utilities.
+- `apps/web/app/(desk)/design-system` renders the primitives; check a change there before wiring
+  it into a screen.

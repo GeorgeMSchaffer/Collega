@@ -45,6 +45,8 @@ Organizations can manage idea boards using configurable status swimlanes.
 9. User-facing copy uses `Board` or `Boards`, never `Workflow` or `Workflows`.
 10. The canonical client routes are `/boards` for the board list and `/board/{boardId}` for board detail. `/board`, `/workflow`, `/workflows`, and `/workflow/{boardId}` redirect to the corresponding canonical route.
 11. Internal application service and namespace names may retain `Workflow` where they are not user-visible.
+12. A board may carry an optional description of at most 500 characters. It is trimmed; a blank description is stored as none. Site Admin and Org Admin set it when creating or editing the board (added 2026-09-27, `SPEC/decisions.md`).
+13. A board is **archived, not deleted** (added 2026-09-27, `decisions.md`; until then boards had no delete endpoint or action). Only an Org Admin of its organization archives or unarchives it, after confirmation. An archived board keeps its swimlanes and ideas, leaves the default board list and every board picker, and accepts no new ideas; its ideas stay reachable from the Ideas list. Unarchiving restores it unchanged. Its own page opens **read-only** with an *Archived* banner (Q4, answered 2026-09-27): lanes and list still show; adding, moving and editing are unavailable; an Org Admin sees *Unarchive* in the banner. The board's own settings (name, description, lanes and their order) cannot be edited while it is archived either; unarchive it first.
 
 ## Approval Workflow Decisions (Post-MVP — Deferred)
 The following decisions apply to a future post-MVP approval workflow for board status transitions. **None of these behaviors are implemented in MVP.**

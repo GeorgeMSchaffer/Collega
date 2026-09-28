@@ -277,6 +277,31 @@ export type Board = {
 }
 
 /**
+ * A board as the workspace Boards screen shows it, card or row.
+ *
+ * Its own type rather than more fields on `Board`, which the ideas table and the new-idea form
+ * also take: they would carry a description, a creator and a tag tally they never render.
+ */
+export type BoardOverview = {
+  id: string
+  name: string
+  description: string | null
+  ideaCount: number
+  laneCount: number
+  /** ISO, for sorting; `createdOn` is the same instant as a reader sees it. */
+  createdAtUtc: string
+  createdOn: string
+  createdBy: string | null
+  lanes: { id: string; name: string; color: string; ideaCount: number }[]
+  topTags: { name: string; ideaCount: number; color: string }[]
+  tagCount: number
+  /** Whether a plain User may move a card between lanes, or only an administrator. */
+  userStatusMoves: boolean
+  isArchived: boolean
+  archivedOn: string | null
+}
+
+/**
  * A board opened, rather than listed.
  *
  * The lanes belong to the board and not to the organization: a board picks a subset of the status
@@ -290,6 +315,38 @@ export type BoardWithLanes = {
   lanes: Status[]
   /** Whether a plain User may move a card between lanes, or only an administrator. */
   allowUserStatusUpdate: boolean
+  description: string | null
+  /** An archived board opens read-only (`20-feature-boards-and-statuses.md` rule 13). */
+  isArchived: boolean
+}
+
+/**
+ * A board as the idea screens refer to it: a name for a row that carries only a `boardId`, and
+ * whether its ideas are read-only. Archived boards are included, because their ideas still appear
+ * on Ideas.
+ */
+export type BoardRef = {
+  id: string
+  name: string
+  isArchived: boolean
+}
+
+/** A tag where it labels something: its name, which is always the chip's text, and its colour. */
+export type TagRef = { id: string; name: string; color: string }
+
+/**
+ * A tag in Settings → Tags (`20-feature-ideas-and-engagement.md` rules 11–12): the catalog item.
+ * `organization` is set only on a Site Admin's cross-organization roll-up.
+ */
+export type TagOverview = TagRef & {
+  ideaCount: number
+  /** The boards its ideas are on, by name. */
+  boards: { id: string; name: string }[]
+  /** ISO, for sorting; `createdOn` is the same instant as a reader sees it. */
+  createdAtUtc: string
+  createdOn: string
+  createdBy: string | null
+  organization: { id: string; name: string } | null
 }
 
 /**
@@ -313,12 +370,18 @@ export type Idea = {
   priority: Priority
   ideaType: string
   businessImpact: string
-  /** The first tag, which is all a card shows. Null when an idea carries none. */
+  /** The first tag's name. Null when an idea carries none. */
   tag: string | null
+  /** Every tag, alphabetically, with its colour. */
+  tags: TagRef[]
   assigneeInitials: string | null
+  /** At most five, by first then last name. */
+  assignees: PersonRef[]
   upvotes: number
   /** Whether the reader is one of them, which is what fills the chip rather than outlining it. */
   hasUpvoted: boolean
+  /** Optional in Discovery. The idea detail does not carry it, so a detail's is always null. */
+  effort: Effort | null
 }
 
 /**
@@ -338,15 +401,41 @@ export type IdeaPage = {
 }
 
 /**
- * The two catalogs authoring an idea has to choose from.
- *
- * One type rather than two loose lists because the create form needs both or neither: the API
- * requires an active Idea Type *and* an active Business Impact on every idea, so a form holding one
- * of them cannot be submitted.
+ * What the idea form offers: the Business Impact and Idea Type catalogs, and for each type the
+ * custom fields it resolves to, in order, with whether each is required for that type.
  */
-export type IdeaOptions = {
-  ideaTypes: { id: string; name: string }[]
+export type IdeaFormOptions = {
+  ideaTypes: { id: string; name: string; fields: IdeaFormField[] }[]
   businessImpacts: { id: string; name: string }[]
+}
+
+/**
+ * A custom field as the form renders it. `fieldType` is the API's own spelling (`Text`, `Url`,
+ * `Number`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`); a Dropdown or MultiSelect value is sent
+ * as option ids, comma-separated for MultiSelect.
+ *
+ * An `archived` option is one the field no longer offers but the idea being edited still holds; the
+ * form shows it only while it is selected.
+ */
+export type IdeaFormField = {
+  id: string
+  name: string
+  fieldType: string
+  required: boolean
+  options: { id: string; label: string; archived: boolean }[]
+}
+
+/** The query behind a page of ideas — the list state, in the API's terms. */
+export type IdeaListQuery = {
+  search: string
+  boardIds: string[]
+  statusIds: string[]
+  priorities: string[]
+  tags: string[]
+  sortBy: string | null
+  sortDirection: 'asc' | 'desc'
+  page: number
+  pageSize: number
 }
 
 /**
@@ -359,6 +448,9 @@ export type Person = {
   name: string
   initials: string
 }
+
+/** With the id, which the edit form sends back: `PUT` replaces the assignee collection. */
+export type PersonRef = Person & { id: string }
 
 export type Comment = {
   id: string
@@ -374,7 +466,8 @@ export type Comment = {
 }
 
 /**
- * The inspector's shape: everything a card shows, plus the prose and provenance behind it.
+ * The drawer's shape: everything a card shows, plus the structured fields, the prose and the
+ * provenance behind it, and what an edit has to send back unchanged.
  *
  * **There is no `reference`.** Comp Q's `IDEA-101` eyebrow has no column behind it — a real one is a
  * per-organization sequence allocated under a row lock, which needs a schema amendment, and the
@@ -384,12 +477,25 @@ export type Comment = {
  * what it shows is what the server holds. So the field does not exist, rather than existing empty.
  *
  * `comments` is the thread as `GET /ideas/{id}` embeds it — the full list, chronological, not a
- * page. See `getIdea` for why the inspector reads it from here.
+ * page. See `getIdea` for why the drawer reads it from here.
  */
 export type IdeaDetail = Idea & {
-  description: string
+  problem: string
+  proposedSolutions: string[]
+  impactRationale: string
+  /** An optional summary since 2026-09-27. */
+  description: string | null
+  ideaTypeId: string
+  businessImpactId: string
+  dueDate: string | null
+  /** Who raised it; the author may edit the structured fields (`20-feature-ideas-and-engagement.md` rule 2a). */
+  authorUserId: string | null
   author: Person | null
   createdOn: string
+  mentionEmails: string[]
+  fieldValues: { fieldDefinitionId: string; name: string; fieldType: string; value: string }[]
+  /** The idea's own custom fields for the edit form, each with its stored value in write form. */
+  formFields: (IdeaFormField & { value: string })[]
   comments: Comment[]
 }
 
@@ -420,6 +526,9 @@ export type SprintState = 'Planned' | 'Active' | 'Completed'
  * off-by-one-day that follows in any timezone west of Greenwich.
  *
  * `goal` is nullable — a sprint may be planned before anybody has written down what it is for.
+ *
+ * `startDate`/`endDate` keep the wire's `YYYY-MM-DD` days for the Roadmap, which places them on a
+ * calendar rather than printing them. `issueCount`/`doneCount` are the API's, derived per read.
  */
 export type Sprint = {
   id: string
@@ -427,7 +536,13 @@ export type Sprint = {
   goal: string | null
   startsOn: string
   endsOn: string
+  startDate: string
+  endDate: string
+  /** The Sprint board's WINDOW cell, upper case: `10–24 SEP`, or `28 SEP – 5 OCT`. */
+  window: string
   state: SprintState
+  issueCount: number
+  doneCount: number
 }
 
 /**
@@ -454,7 +569,31 @@ export type Issue = {
   effort: Effort
   assigneeInitials: string | null
   upvotesAtPromotion: number
+  boardId: string
+  authorUserId: string
+  assignees: PersonRef[]
+  tags: TagRef[]
+  /** The sprint's name and WINDOW, or null in the backlog. */
+  sprint: { id: string; name: string; window: string } | null
+  upvotes: number
+  taskSummary: { done: number; total: number }
+  promotedOn: string | null
+  promotedBy: string | null
 }
+
+export type IssueTaskState = 'NotStarted' | 'InProgress' | 'Done'
+
+/** One step of an Issue's checklist, in its `sortOrder`. */
+export type IssueTask = {
+  id: string
+  title: string
+  state: IssueTaskState
+  assigneeUserId: string | null
+  assigneeName: string | null
+}
+
+/** An active member of the organization, for the sprint owner and task assignee pickers. */
+export type MemberOption = { id: string; name: string }
 
 /**
  * A named, dated theme that Issues are grouped under — a lens over the delivery set, not a

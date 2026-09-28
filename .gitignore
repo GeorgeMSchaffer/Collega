@@ -41,6 +41,7 @@ _tmp_*
 
 # Transient Claude Code agent worktrees (embedded git repos, never committed)
 .claude/worktrees/
+.claude/settings.local.json
 
 # graphify derived artifacts (regenerate with `graphify update .`)
 graphify-out/

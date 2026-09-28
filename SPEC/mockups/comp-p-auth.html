@@ -6,7 +6,7 @@
 <title>Collega — Comp P: auth and identity</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    DESIGN.md — "Notion Analysis" — applied verbatim.
@@ -297,7 +297,7 @@ tbody td:first-child,.road .bar{white-space:nowrap}
 
 /* ===== Focus-desk layer (comp D idiom) rendered in DESIGN.md tokens ===== */
 .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"lnum" 1}
-.work{padding:var(--s-lg);flex:1;min-width:0;max-width:1320px}
+.work{padding:var(--s-lg);flex:1;min-width:0}
 .pgh{display:flex;align-items:flex-end;gap:var(--s-md);margin-bottom:var(--s-lg);flex-wrap:wrap}
 .pgh .sub{font-size:15px;line-height:1.33;color:var(--ink-muted);margin-top:6px}
 
@@ -887,6 +887,24 @@ input[type=file]{font-family:inherit;font-size:14px}
    flex line: it grows, wraps, and keeps each tag whole */
 .wrap1 .bd{height:auto;flex-wrap:wrap;margin-top:4px;line-height:1.43}
 .wrap1 .bd .tag{white-space:nowrap}
+
+.seg a{border-radius:6px;padding:var(--s-xxs) var(--s-sm);color:var(--ink-muted);text-decoration:none}
+.seg a[aria-current="page"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--e1)}
+
+/* ===== Terrazzo (SPEC/decisions.md 2026-09-27) =====
+   tokens.css stays DESIGN.md verbatim because comp O shares it; comp P
+   takes the decided palette and faces from this override, last so it
+   wins. --secondary is comp P's dark pitch band, so it maps to
+   Terrazzo's dark bar rather than to a soft grey. */
+:root{
+  --primary:#3D5A80; --primary-active:#324B6B; --secondary:#1E2733; --on-primary:#ffffff;
+  --canvas:#ffffff; --canvas-soft:#F5F6F8; --surface:#ffffff;
+  --ink:#1E2733; --ink-secondary:#36414F; --ink-muted:#5E6978; --ink-faint:#5E6978;
+  --hairline:#E3E6EB;
+  --sug:#3F6B2E; --sug-soft:#E6F2DF;
+  --font:"Public Sans",-apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif;
+}
+h1,h2,h3,.title{font-family:"Schibsted Grotesk",var(--font)}
 
 </style>
 </head>

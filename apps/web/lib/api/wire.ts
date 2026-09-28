@@ -161,6 +161,25 @@ export type WireBoardListItem = {
   allowUserStatusUpdate: boolean
   swimlaneCount: number
   ideaCount: number
+  description: string | null
+  createdAtUtc: string
+  /** Null when the board predates creator tracking or its creator no longer resolves. */
+  createdBy: { userId: string; displayName: string } | null
+  /** One per swimlane, in swimlane order, zero-count lanes included. */
+  laneCounts: readonly WireBoardLaneCount[]
+  /** At most three, most-used first. */
+  topTags: readonly { name: string; ideaCount: number; color: string }[]
+  tagCount: number
+  isArchived: boolean
+  archivedAtUtc: string | null
+}
+
+export type WireBoardLaneCount = {
+  statusId: string
+  statusName: string
+  statusColor: string
+  order: number
+  ideaCount: number
 }
 
 /** `GET /boards/{id}` — the lanes, in the order the board defines. */
@@ -169,7 +188,9 @@ export type WireBoardDetail = {
   organizationId: string
   name: string
   allowUserStatusUpdate: boolean
+  description: string | null
   swimlanes: readonly WireSwimlane[]
+  isArchived: boolean
 }
 
 export type WireSwimlane = {
@@ -196,13 +217,33 @@ export type WireStatus = {
  * `fieldMode` is `AllActiveFields` or `Curated` (`SPEC/30-Contracts.md` "Idea-Type Field
  * Contracts"), and `fields` carries the curated selection — empty for an `AllActiveFields` type,
  * which shows every active field in the organization instead of a chosen subset.
+ *
+ * `effectiveFields` is what the mode resolves to — the fields an idea of this type shows, in form
+ * order, with this type's required flags — as the API's own rule decides it.
  */
 export type WireIdeaType = {
   ideaTypeId: string
   name: string
   fieldMode: string
-  fields: readonly { fieldDefinitionId: string }[]
+  fields: readonly { fieldDefinitionId: string; displayOrder: number; isRequired: boolean }[]
+  effectiveFields: readonly WireEffectiveField[]
 }
+
+/** One of a type's effective fields. `options` is empty unless it is a Dropdown or MultiSelect. */
+export type WireEffectiveField = {
+  fieldDefinitionId: string
+  name: string
+  fieldType: string
+  isRequired: boolean
+  options: readonly { optionId: string; label: string; isArchived?: true }[]
+}
+
+/**
+ * One of an idea's own fields on its detail: the effective field plus `value` in the form the write
+ * takes (`true`/`false`, option ids, `YYYY-MM-DD`), or `null` when unset. An option the idea still
+ * stores but the field no longer offers is listed with `isArchived`.
+ */
+export type WireIdeaFormField = WireEffectiveField & { value: string | null }
 
 /**
  * `GET /organizations/{id}/field-definitions`.
@@ -216,6 +257,8 @@ export type WireFieldDefinition = {
   name: string
   fieldType: string
   isRequired: boolean
+  displayOrder: number
+  options: readonly { optionId: string; label: string; displayOrder: number }[]
 }
 
 /**
@@ -265,11 +308,7 @@ export type WireIdeaComment = {
 }
 
 /**
- * `GET /ideas/{id}`.
- *
- * Carries its own `statusName`, so the inspector needs no status catalog to name the lane — which
- * matters, because the catalog readers are still fixture-backed and a real `statusId` matches none
- * of their ids.
+ * `GET /ideas/{id}`, which `PUT /ideas/{id}` also answers.
  *
  * There is no `reference` here and no column behind one. See `IdeaDetail` in `lib/types.ts`.
  */
@@ -277,15 +316,29 @@ export type WireIdeaDetail = {
   ideaId: string
   boardId: string
   title: string
-  description: string
+  problem: string
+  proposedSolutions: readonly string[]
+  impactRationale: string
+  description: string | null
   priority: string
+  ideaTypeId: string
   ideaTypeName: string
+  businessImpactId: string
   businessImpactName: string
+  dueDate: string | null
   assignees: readonly WireIdeaAssignee[]
   tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order, with their colours. */
+  tags: readonly WireIdeaTag[]
   statusId: string
   statusName: string
+  /** Sent back on every save: `PUT` replaces the mentions, so leaving them out clears them. */
+  mentions: readonly { email: string }[]
   comments: readonly WireIdeaComment[]
+  /** Dropdown and MultiSelect values arrive as option labels, not ids. */
+  fieldValues: readonly WireIdeaFieldValue[]
+  /** The same fields for editing, resolved from the idea's type even when it is archived. */
+  formFields: readonly WireIdeaFormField[]
   upvoteCount: number
   hasUpvoted: boolean
   commentCount: number
@@ -293,6 +346,35 @@ export type WireIdeaDetail = {
   author: WireIdeaAssignee | null
   createdAtUtc: string
 }
+
+export type WireIdeaFieldValue = {
+  fieldDefinitionId: string
+  fieldName: string
+  fieldType: string
+  value: string
+}
+
+/** A tag as an idea carries it. */
+export type WireIdeaTag = { tagId: string; name: string; color: string }
+
+/**
+ * `GET /organizations/{id}/tags/catalog` items, and what `POST …/tags` and `PUT /tags/{id}` answer.
+ * `color` is upper-case `#RRGGBB`.
+ */
+export type WireTagItem = {
+  tagId: string
+  name: string
+  color: string
+  /** Live ideas carrying it, both phases. */
+  ideaCount: number
+  /** The boards those ideas are on, by name; archived ones included. */
+  boards: readonly { boardId: string; name: string }[]
+  createdAtUtc: string
+  createdBy: { userId: string; displayName: string } | null
+}
+
+/** `POST /boards/{id}/ideas` answers more than this; the id is all the drawer needs. */
+export type WireCreatedIdea = { ideaId: string }
 
 /** `GET /boards/{id}/ideas` and `GET /organizations/{id}/ideas` items. */
 export type WireIdeaListItem = {
@@ -304,6 +386,10 @@ export type WireIdeaListItem = {
   businessImpactName: string
   assignees: readonly WireIdeaAssignee[]
   tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order, with their colours. */
+  tags: readonly WireIdeaTag[]
+  /** `Low`, `Medium` or `High`; optional in Discovery, so often null. */
+  effort: string | null
   statusId: string
   statusName: string
   upvoteCount: number
@@ -372,13 +458,38 @@ export type WireSprint = {
  */
 export type WireDeliveryCard = {
   ideaId: string
+  boardId: string
   title: string
+  authorUserId: string
   effort: string | null
   deliveryStatus: string | null
-  sprint: { sprintId: string } | null
+  sprint: { sprintId: string; name: string; startDate: string; endDate: string } | null
   assignees: readonly WireIdeaAssignee[]
+  tags: readonly WireIdeaTag[]
   upvoteCount: number
-  provenance: { upvoteCountAtPromotion: number | null }
+  taskSummary: { done: number; total: number }
+  provenance: {
+    promotedAtUtc: string | null
+    promotedByDisplayName: string | null
+    upvoteCountAtPromotion: number | null
+  }
+}
+
+/** `GET /ideas/{id}/tasks` items, in `sortOrder`. */
+export type WireIssueTask = {
+  taskId: string
+  title: string
+  assigneeUserId: string | null
+  assignee: WireIdeaAssignee | null
+  state: string
+}
+
+/** `GET /organizations/{id}/members` — the active members, for the owner and assignee pickers. */
+export type WireMember = {
+  userId: string
+  firstName: string
+  lastName: string
+  email: string
 }
 
 /**

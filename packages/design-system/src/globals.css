@@ -41,6 +41,11 @@
   --color-warning: var(--warning);
   --color-success: var(--success);
   --color-teal: var(--teal-brand);
+  --color-suggest: var(--suggest);
+  --color-suggest-tint: var(--suggest-tint);
+  --color-suggest-line: var(--suggest-line);
+  --color-metric: var(--metric);
+  --color-field: var(--field);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -54,100 +59,339 @@
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 6px);
-  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-display);
+  --font-mono: var(--font-code);
 }
 
-/* The theme. shadcn's own dial: --radius is the one knob for corner
-   rounding (0.3rem is its "small" preset — the closest supported value
-   to the "minimize rounded corners" feedback), and every semantic
-   colour is a variable. The values are the business-professional
-   palette chosen 2026-08-31; the palette is still open, and changing it
-   means changing this block only. */
-:root {
-  --radius: 0.3rem;
-  --background: #F7F9FB;
-  --foreground: #243447;
-  --card: #FFFFFF;
-  --card-foreground: #243447;
-  --popover: #FFFFFF;
-  --popover-foreground: #243447;
-  --primary: #527292;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F1F3F6;
-  --secondary-foreground: #3E4E60;
-  --muted: #F1F3F6;
-  --muted-foreground: #5D6C7E;
-  --accent: #F0F4F7;
-  --accent-foreground: #3E566F;
-  --destructive: #B64B4B;
-  --destructive-foreground: #FFFFFF;
-  --warning: #C9A65C;
-  --success: #6FAF7A;
-  --teal-brand: #5F9E93;
-  --border: #DDE1E6;
-  --input: #C5CBD3;
-  --ring: #5B7FA3;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #3E4E60;
-  --sidebar-primary: #527292;
-  --sidebar-accent: #F0F4F7;
-  --sidebar-accent-foreground: #3E566F;
-  --sidebar-border: #DDE1E6;
+/* ------------------------------------------------------------
+   Themes (SPEC/20-feature-client-ui.md "Themes", decided 2026-09-27).
 
-  /* Category dots. The fragments name them by comp P's sticker names;
-     here each is a value from the same palette, so the mapping is the
-     only thing that changes when the palette does. */
+   Each theme is ONE self-contained block: every colour, the fonts,
+   the corner radius, the shadow tint and the suggestion hue. Nothing
+   outside a block names a colour, so replacing a theme is replacing
+   its block — no component changes. Values are comp R's
+   (SPEC/mockups/comp-r-portico-prototype.html), mapped onto the
+   shadcn roles the components already use; every text pair clears
+   4.5:1. `data-theme` sits on <html>; Terrazzo is also the bare
+   default, so a document with no attribute is Terrazzo.
+
+   Fonts come from the one Google Fonts stylesheet in
+   apps/web/app/layout.tsx; a new face must be added there too.
+   ------------------------------------------------------------ */
+:root,
+:root[data-theme="terrazzo"] {
+  color-scheme: light;
+  --font-display: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 700;
+  --radius: 6px;
+  --shadow-rgb: 30 39 51;
+  --background: #F5F6F8;
+  --foreground: #1E2733;
+  --card: #FFFFFF;
+  --card-foreground: #1E2733;
+  --popover: #FFFFFF;
+  --popover-foreground: #1E2733;
+  --primary: #3D5A80;
+  --primary-hover: #324B6B;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EDF0F3;
+  --secondary-foreground: #36414F;
+  --muted: #EDF0F3;
+  --muted-foreground: #5E6978;
+  --accent: #E4EAF2;
+  --accent-foreground: #35507A;
+  --destructive: #963636;
+  --destructive-foreground: #FFFFFF;
+  --warning: #7F5A12;
+  --warning-foreground: #7F5A12;
+  --success: #3F6B2E;
+  --suggest: #3F6B2E;
+  --suggest-tint: #E6F2DF;
+  /* Comp R's three: quantity marks, the input ground, a suggested field's border. */
+  --metric: var(--primary);
+  --field: var(--card);
+  --suggest-line: var(--suggest);
+  --border: #E3E6EB;
+  --input: #CDD2DA;
+  --ring: #3D5A80;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #36414F;
+  --sidebar-primary: #3D5A80;
+  --sidebar-accent: #E4EAF2;
+  --sidebar-accent-foreground: #1E2733;
+  --sidebar-border: #E3E6EB;
+}
+
+:root[data-theme="portico"] {
+  color-scheme: light;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 600;
+  --radius: 10px;
+  --shadow-rgb: 22 41 46;
+  --background: #F1F5F5;
+  --foreground: #16292E;
+  --card: #FFFFFF;
+  --card-foreground: #16292E;
+  --popover: #FFFFFF;
+  --popover-foreground: #16292E;
+  --primary: #1F6A80;
+  --primary-hover: #185769;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E8EFF0;
+  --secondary-foreground: #2C4247;
+  --muted: #E8EFF0;
+  --muted-foreground: #56696D;
+  --accent: #E1EEF1;
+  --accent-foreground: #1B5F73;
+  --destructive: #963B28;
+  --destructive-foreground: #FFFFFF;
+  --warning: #8E4A1F;
+  --warning-foreground: #8E4A1F;
+  --success: #3B6E51;
+  --suggest: #3B6E51;
+  --suggest-tint: #E3EEE7;
+  /* Comp R's three: quantity marks, the input ground, a suggested field's border. */
+  --metric: var(--primary);
+  --field: var(--card);
+  --suggest-line: var(--suggest);
+  --border: #DDE6E7;
+  --input: #C6D3D5;
+  --ring: #1F6A80;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #2C4247;
+  --sidebar-primary: #1F6A80;
+  --sidebar-accent: #E1EEF1;
+  --sidebar-accent-foreground: #16292E;
+  --sidebar-border: #DDE6E7;
+}
+
+:root[data-theme="sera"] {
+  color-scheme: light;
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 700;
+  --radius: 10px;
+  --shadow-rgb: 28 34 54;
+  --background: #F3F4F7;
+  --foreground: #1C2236;
+  --card: #FFFFFF;
+  --card-foreground: #1C2236;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C2236;
+  --primary: #3450A8;
+  --primary-hover: #2A4290;
+  --primary-foreground: #FFFFFF;
+  --secondary: #ECEEF3;
+  --secondary-foreground: #343B52;
+  --muted: #ECEEF3;
+  --muted-foreground: #5C6378;
+  --accent: #E6EAF6;
+  --accent-foreground: #2E4799;
+  --destructive: #94402D;
+  --destructive-foreground: #FFFFFF;
+  --warning: #83590C;
+  --warning-foreground: #83590C;
+  --success: #2E6E4C;
+  --suggest: #2E6E4C;
+  --suggest-tint: #E1EFE7;
+  /* Comp R's three: quantity marks, the input ground, a suggested field's border. */
+  --metric: var(--primary);
+  --field: var(--card);
+  --suggest-line: var(--suggest);
+  --border: #E2E4EC;
+  --input: #CCD0DC;
+  --ring: #3450A8;
+  /* Piazza Sera's sidebar is the one dark rail among the light themes. */
+  --sidebar: #1F2540;
+  --sidebar-foreground: #CDD1E3;
+  --sidebar-primary: #3450A8;
+  --sidebar-accent: #2E3760;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2D3454;
+}
+
+:root[data-theme="lagoon"] {
+  color-scheme: light;
+  --font-display: "Lexend", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Nunito Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 600;
+  --radius: 12px;
+  --shadow-rgb: 19 48 43;
+  --background: #F3F4EF;
+  --foreground: #13302B;
+  --card: #FFFFFF;
+  --card-foreground: #13302B;
+  --popover: #FFFFFF;
+  --popover-foreground: #13302B;
+  --primary: #0E6B5C;
+  --primary-hover: #0A5649;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EAEFEA;
+  --secondary-foreground: #2A4640;
+  --muted: #EAEFEA;
+  --muted-foreground: #5A6B66;
+  --accent: #DCEFEA;
+  --accent-foreground: #0C6154;
+  --destructive: #9E3322;
+  --destructive-foreground: #FFFFFF;
+  --warning: #7A5410;
+  --warning-foreground: #7A5410;
+  --success: #2F6B3F;
+  /* Lagoon's accent is green, so its suggestion hue is blue rather than the others' green. */
+  --suggest: #2F5F9E;
+  --suggest-tint: #E3ECF8;
+  /* Comp R's three: quantity marks, the input ground, a suggested field's border. */
+  --metric: var(--primary);
+  --field: var(--card);
+  --suggest-line: var(--suggest);
+  --border: #E1E5DF;
+  --input: #CBD3CB;
+  --ring: #0E6B5C;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #2A4640;
+  --sidebar-primary: #0E6B5C;
+  --sidebar-accent: #DCEFEA;
+  --sidebar-accent-foreground: #13302B;
+  --sidebar-border: #E1E5DF;
+}
+
+:root[data-theme="graphite"] {
+  color-scheme: dark;
+  --font-display: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 600;
+  --radius: 6px;
+  --shadow-rgb: 0 0 0;
+  --background: #0F1113;
+  --foreground: #E6E8EA;
+  --card: #16191C;
+  --card-foreground: #E6E8EA;
+  --popover: #16191C;
+  --popover-foreground: #E6E8EA;
+  --primary: #F5A524;
+  --primary-hover: #FFC35C;
+  --primary-foreground: #16120A;
+  --secondary: #1C2024;
+  --secondary-foreground: #C4CAD0;
+  --muted: #1C2024;
+  --muted-foreground: #9BA3AB;
+  --accent: #2A2418;
+  --accent-foreground: #F5A524;
+  /* A dark theme inverts the pair: light fill, dark text on it. */
+  --destructive: #FF8A8E;
+  --destructive-foreground: #0F1113;
+  --warning: #F5B456;
+  --warning-foreground: #F5B456;
+  --success: #58C781;
+  /* Cyan is both the suggestion hue and the metric colour: the amber primary is the page's own. */
+  --suggest: #5CC8E0;
+  --suggest-tint: #0F1D21;
+  --suggest-line: #2E6A78;
+  --metric: #5CC8E0;
+  /* Fields sit in a well darker than the card. */
+  --field: #0F1113;
+  --border: #22272C;
+  --input: #2C3238;
+  --ring: #F5A524;
+  --sidebar: #121518;
+  --sidebar-foreground: #AEB5BC;
+  --sidebar-primary: #F5A524;
+  --sidebar-accent: #1C2024;
+  --sidebar-accent-foreground: #E6E8EA;
+  --sidebar-border: #22272C;
+}
+
+/* ------------------------------------------------------------
+   Shared, theme-independent tokens. Everything here is either a
+   size or an alias onto a themed role above.
+
+   Control geometry is here, in one place, rather than in each
+   primitive: Button, Input/Select/Textarea (via the base layer) and
+   Label read these, so density is one edit. A theme block may
+   override any of them.
+   ------------------------------------------------------------ */
+:root {
+  /* Comp R's density (2026-09-28): 32/28px buttons, 34px fields, 12px labels. */
+  --control-h: 2rem;
+  --control-h-sm: 1.75rem;
+  --control-h-lg: 2.25rem;
+  --control-px: 0.75rem;
+  --field-h: 2.125rem;
+  --label-size: 0.75rem;
+
+  --drawer: clamp(380px, 28vw, 520px);
+  --drawer-wide: clamp(720px, 62vw, 1100px);
+
+  /* Category dots. The fragments name them by comp P's sticker names.
+     Mid-tone fills, never text, and always beside a label — readable
+     on the light and the dark grounds alike. */
   --sky: #5B7FA3;
   --teal: #5F9E93;
   --green: #6FAF7A;
   --orange: #C9A65C;
-  --orange-deep: #8A6D2E;
   --pink: #C97A7A;
   --purple: #9A8AC4;
   --purple-deep: #5B4F86;
   --brown: #8A6D2E;
-  --sug: #116b5e;
-  --sug-soft: #e8f3f1;
+  --orange-deep: var(--warning-foreground);
+  --teal-brand: var(--suggest);
+  --sug: var(--suggest);
+  --sug-soft: var(--suggest-tint);
 
   /* Aliases the fragments reach for in inline styles. */
   --ink: var(--foreground);
-  --ink-secondary: #3E4E60;
+  --ink-secondary: var(--secondary-foreground);
   --ink-muted: var(--muted-foreground);
-  --ink-faint: #818E9C;
+  --ink-faint: var(--muted-foreground);
   --hairline: var(--border);
-  --canvas: #FFFFFF;
+  --canvas: var(--card);
   --canvas-soft: var(--muted);
   --surface: var(--card);
-  --primary-active: #3E566F;
-  --on-primary: #FFFFFF;
+  --primary-active: var(--primary-hover);
+  --on-primary: var(--primary-foreground);
   --s-xxs: 4px; --s-xs: 8px; --s-sm: 12px; --s-md: 16px; --s-lg: 24px; --s-xl: 28px; --s-xxl: 32px;
   --r-xs: calc(var(--radius) - 2px); --r-sm: var(--radius); --r-md: var(--radius);
   --r-lg: calc(var(--radius) + 2px); --r-xl: calc(var(--radius) + 6px); --r-full: 9999px;
-  --e1: 0 1px 2px rgba(36,52,71,.06);
-  --e2: 0 8px 24px rgba(36,52,71,.14);
-  --font: var(--font-sans);
+  --e1: 0 1px 2px rgb(var(--shadow-rgb) / .06);
+  --e2: 0 8px 24px rgb(var(--shadow-rgb) / .14);
+  --font: var(--font-body);
+}
+
+@media (max-width: 900px) {
+  :root { --drawer: 100vw; --drawer-wide: 100vw; }
 }
 
 @layer base {
   * { border-color: var(--border); }
   html, body { margin: 0; }
   body { @apply bg-background text-foreground font-sans text-sm antialiased; }
-  h1 { @apply text-2xl font-semibold tracking-tight; }
-  h2 { @apply text-xl font-semibold tracking-tight; }
-  h3 { @apply text-lg font-semibold tracking-tight; }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: var(--heading-weight); }
+  h1 { @apply text-2xl tracking-tight; }
+  h2 { @apply text-xl tracking-tight; }
+  h3 { @apply text-lg tracking-tight; }
   p { @apply m-0 mb-4; }
   a { @apply text-primary no-underline hover:underline; }
   /* shadcn Input / Textarea / Select (native) */
-  input[type=text], input[type=password], input[type=search], input[type=file], textarea, select {
-    @apply flex h-9 w-full rounded-md border border-input bg-card px-3 py-1 text-sm shadow-xs
+  input[type=text], input[type=password], input[type=search], input[type=email], input[type=url],
+  input[type=tel], input[type=number], input[type=date], input[type=file], textarea, select {
+    @apply flex h-[var(--field-h)] w-full rounded-md border border-input bg-field px-2.5 py-[7px] text-[13px] leading-[1.45] shadow-xs
            placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1
            focus-visible:ring-ring;
   }
-  textarea { @apply h-auto min-h-16 py-2 resize-y; }
+  textarea { @apply h-auto min-h-16 resize-y; }
+  :is(input, textarea, select)[aria-invalid=true] { @apply border-destructive focus-visible:ring-destructive; }
   input[type=file] { @apply py-1.5 file:mr-3 file:rounded-sm file:border-0 file:bg-secondary file:px-2 file:py-0.5 file:text-xs file:font-medium; }
   input[type=checkbox], input[type=radio] { @apply size-4 accent-primary; }
   /* shadcn Label */
+  /* Neutral: the field-label style (12px, secondary ink) is the Label component's. */
   label { @apply mb-1.5 block text-sm font-medium leading-none; }
   table { @apply w-full caption-bottom text-sm border-collapse; }
   thead th { @apply h-10 border-b bg-muted/40 px-3 text-left align-middle text-xs font-medium text-muted-foreground; }
@@ -158,4 +402,3 @@
   button { font-family: inherit; }
   code { @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]; }
 }
-

@@ -10,7 +10,8 @@ with it (conversion slice F6). The data outlived the tool because it is the expe
 half: each case pins a behaviour the prompt has to keep, and the reasoning below is what
 took the measuring to arrive at.
 
-Until a replacement exists, the only way to exercise a prompt change is
+A TypeScript replacement is specified in `SPEC/20-feature-prompt-eval-runner.md` (Sprint 12).
+Until it is built, the only way to exercise a prompt change is
 `tools/prompt-lab.html`, one message at a time. That answers "what does this wording do to
 this message?" and cannot answer "is this prompt better than that one, across the corpus?"
 

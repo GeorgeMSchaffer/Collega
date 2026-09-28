@@ -14,7 +14,11 @@ export type IdeaFieldValueWrite = {
 
 export type CreateIdeaCommand = {
   readonly title: string
-  readonly description: string
+  /** Optional summary since 2026-09-27; blank or `null` stores none. */
+  readonly description: string | null
+  readonly problem: string
+  readonly proposedSolutions: readonly string[]
+  readonly impactRationale: string
   readonly priority: string
   readonly ideaTypeId: string
   readonly businessImpactId: string
@@ -29,7 +33,10 @@ export type CreateIdeaCommand = {
 
 export type UpdateIdeaCommand = {
   readonly title: string
-  readonly description: string
+  readonly description: string | null
+  readonly problem: string
+  readonly proposedSolutions: readonly string[]
+  readonly impactRationale: string
   readonly priority: string
   readonly ideaTypeId: string
   readonly businessImpactId: string
@@ -116,20 +123,24 @@ export type IssueProvenance = {
  * sprint board can reuse the board card as the spec requires. */
 export type DeliveryCard = IdeaListItem & {
   readonly phase: IdeaPhase
-  readonly effort: EffortLevel | null
   readonly deliveryStatus: DeliveryStatus | null
   readonly sprint: IssueSprintSummary | null
   readonly taskSummary: IssueTaskSummary
   readonly provenance: IssueProvenance
 }
 
+/**
+ * `statusIds`, `tags` and `priorities` are the repeatable filters of the list pattern
+ * (SPEC/30-Contracts.md, 2026-09-27): values of one parameter combine as any-of, different
+ * parameters as AND. An empty list is no filter.
+ */
 export type IdeaListQuery = {
   readonly page: number | null
   readonly pageSize: number | null
   readonly search: string | null
-  readonly statusId: string | null
-  readonly tag: string | null
-  readonly priority: string | null
+  readonly statusIds: readonly string[]
+  readonly tags: readonly string[]
+  readonly priorities: readonly string[]
   readonly dueBefore: string | null
   readonly sortBy: string | null
   readonly sortDirection: string | null
@@ -166,7 +177,11 @@ export type OrganizationIdeaListQuery = {
   readonly sortBy: string | null
   readonly sortDirection: string | null
   readonly fieldFilters: ReadonlyMap<string, string> | null
-  readonly tag: string | null
+  /** Repeatable, any-of within each, AND across them and the rest (2026-09-27). */
+  readonly boardIds: readonly string[]
+  readonly statusIds: readonly string[]
+  readonly priorities: readonly string[]
+  readonly tags: readonly string[]
   readonly user: string | null
   /**
    * `All` (default) / `Ideas` (Discovery only) / `Issues` (Delivery only), so search and
@@ -233,6 +248,31 @@ export type IdeaFieldValueDto = {
   readonly value: string
 }
 
+/** One of the idea's own custom fields as the edit form needs it: the `effectiveFields` item shape
+ * plus `value`, the stored value in the form the write accepts, or `null` when unset. An option the
+ * idea stores that the field no longer offers is listed with `isArchived: true`. */
+export type IdeaFormFieldDto = {
+  readonly fieldDefinitionId: string
+  readonly name: string
+  readonly fieldType: string
+  readonly isRequired: boolean
+  readonly options: readonly IdeaFormFieldOptionDto[]
+  readonly value: string | null
+}
+
+export type IdeaFormFieldOptionDto = {
+  readonly optionId: string
+  readonly label: string
+  readonly isArchived?: true
+}
+
+/** A tag on an idea, with its colour so a chip needs no second request (added 2026-09-28). */
+export type IdeaTagDto = {
+  readonly tagId: string
+  readonly name: string
+  readonly color: string
+}
+
 export type IdeaListItem = {
   readonly ideaId: string
   readonly boardId: string
@@ -248,6 +288,9 @@ export type IdeaListItem = {
   readonly dueDate: string | null
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order. */
+  readonly tags: readonly IdeaTagDto[]
+  readonly effort: EffortLevel | null
   readonly statusId: string
   readonly statusName: string
   readonly upvoteCount: number
@@ -261,7 +304,10 @@ export type IdeaDetail = {
   readonly ideaId: string
   readonly boardId: string
   readonly title: string
-  readonly description: string
+  readonly problem: string
+  readonly proposedSolutions: readonly string[]
+  readonly impactRationale: string
+  readonly description: string | null
   readonly priority: string
   readonly ideaTypeId: string
   readonly ideaTypeName: string
@@ -275,12 +321,15 @@ export type IdeaDetail = {
   readonly statusId: string
   readonly statusName: string
   readonly tagNames: readonly string[]
+  /** The same tags as `tagNames`, in the same order. */
+  readonly tags: readonly IdeaTagDto[]
   readonly mentions: readonly MentionDto[]
   readonly comments: readonly IdeaCommentDto[]
   readonly upvoteCount: number
   readonly hasUpvoted: boolean
   readonly commentCount: number
   readonly fieldValues: readonly IdeaFieldValueDto[]
+  readonly formFields: readonly IdeaFormFieldDto[]
   /**
    * Who raised it, as the full persona rather than the bare `authorUserId` the list item carries:
    * the detail header renders a name, and an id there would cost a second request per idea opened.
@@ -366,6 +415,9 @@ export type IdeaCsvExport = {
 export const IdeaCsvColumns = {
   title: 'title',
   description: 'description',
+  problem: 'problem',
+  proposedSolutions: 'proposed solutions',
+  impactRationale: 'impact rationale',
   priority: 'priority',
   ideaType: 'idea type',
   businessImpact: 'business impact',
@@ -374,10 +426,23 @@ export const IdeaCsvColumns = {
   tags: 'tags',
 } as const
 
+/**
+ * The unspaced spellings SPEC/20-feature-ideas-and-engagement.md's CSV Import table uses
+ * (`ProposedSolutions`, `ImpactRationale`), accepted on import alongside the spaced headers the
+ * export writes (`SPEC/30-Contracts.md`), so a file written to either document imports.
+ */
+export const IDEA_CSV_IMPORT_ALIASES: Readonly<Record<string, string>> = {
+  proposedsolutions: IdeaCsvColumns.proposedSolutions,
+  impactrationale: IdeaCsvColumns.impactRationale,
+}
+
 /** Core columns in export order: (lowercased key, display header). */
 export const IDEA_CSV_CORE_COLUMNS: readonly { readonly key: string; readonly header: string }[] = [
   { key: IdeaCsvColumns.title, header: 'Title' },
   { key: IdeaCsvColumns.description, header: 'Description' },
+  { key: IdeaCsvColumns.problem, header: 'Problem' },
+  { key: IdeaCsvColumns.proposedSolutions, header: 'Proposed Solutions' },
+  { key: IdeaCsvColumns.impactRationale, header: 'Impact Rationale' },
   { key: IdeaCsvColumns.priority, header: 'Priority' },
   { key: IdeaCsvColumns.ideaType, header: 'Idea Type' },
   { key: IdeaCsvColumns.businessImpact, header: 'Business Impact' },
@@ -386,10 +451,9 @@ export const IDEA_CSV_CORE_COLUMNS: readonly { readonly key: string; readonly he
   { key: IdeaCsvColumns.tags, header: 'Tags' },
 ]
 
-/** Columns a valid import file must contain. */
+/** Columns a valid import file must contain. `Description` left this list on 2026-09-27. */
 export const IDEA_CSV_REQUIRED_KEYS: readonly string[] = [
   IdeaCsvColumns.title,
-  IdeaCsvColumns.description,
   IdeaCsvColumns.priority,
   IdeaCsvColumns.ideaType,
   IdeaCsvColumns.businessImpact,

@@ -8,17 +8,30 @@ import type {
 } from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
 import type { PageRequest, SortDirection } from '../common/index.js'
-import type { IdeaFieldValueFilter, IdeaFieldValueWrite, IdeaPage } from './models.js'
+import type {
+  IdeaFieldValueFilter,
+  IdeaFieldValueWrite,
+  IdeaFormFieldDto,
+  IdeaPage,
+} from './models.js'
 
 // Persistence --------------------------------------------------------------------------------
 
 export type IdeaListFilter = {
   readonly boardId: string
   readonly page: PageRequest
+  /**
+   * The organization list's search minus board name (SPEC/30-Contracts.md 2026-09-27): title,
+   * author and assignee names, status name, priority, tag names, Problem, the Text/Url field
+   * values in `searchTextFieldIds`, and ideas created on `searchCreatedOnDate`.
+   */
   readonly search: string | null
-  readonly statusId: string | null
-  readonly tag: string | null
-  readonly priority: Priority | null
+  readonly searchTextFieldIds: readonly string[]
+  readonly searchCreatedOnDate: string | null
+  /** Any-of within each list, AND across them; an empty list is no filter. Tags are normalized. */
+  readonly statusIds: readonly string[]
+  readonly tags: readonly string[]
+  readonly priorities: readonly Priority[]
   readonly dueBefore: string | null
   /**
    * `Discovery` for every ideation-board read (spec "Board & idea-list phase filtering"): a
@@ -32,7 +45,10 @@ export type IdeaListFilter = {
    * across a fresh seed, so under paging the tie-break silently decided what was on a page.
    *
    * The repository implementation (Wave C) MUST tie-break the requested `sortBy` on
-   * `createdAtUtc` then `title` (both ascending). NEVER tie-break on id.
+   * `createdAtUtc` then `title` (both ascending). NEVER tie-break on id alone. Since 2026-09-27
+   * the id follows them as the last key, so two ideas created in the same instant with the same
+   * title still page deterministically (SPEC/30-Contracts.md's "stable `ideaId` tiebreaker");
+   * it can only decide between ideas the two keys before it leave tied.
    */
   readonly sortBy: string | null
   readonly sortDirection: SortDirection
@@ -48,7 +64,11 @@ export type OrganizationIdeaListFilter = {
   readonly sortDirection: SortDirection
   readonly fieldFilters: readonly IdeaFieldValueFilter[]
   readonly searchTextFieldIds: readonly string[]
-  readonly tag: string | null
+  /** Any-of within each list, AND across them; an empty list is no filter. Tags are normalized. */
+  readonly boardIds: readonly string[]
+  readonly statusIds: readonly string[]
+  readonly priorities: readonly Priority[]
+  readonly tags: readonly string[]
   readonly associatedUserId: string | null
   /** Set only when `search` parses as an ISO `yyyy-MM-dd` date: additionally matches ideas
    * created on that (UTC) calendar day. */
@@ -202,6 +222,8 @@ export type BoardContext = {
   readonly organizationId: string
   readonly name: string
   readonly allowUserStatusUpdate: boolean
+  /** An archived board takes no new ideas, moves or edits (boards rule 13); reads stay open. */
+  readonly isArchived: boolean
   readonly swimlanes: readonly SwimlaneInfo[]
 }
 
@@ -259,11 +281,14 @@ export interface UsersPort {
 export type TagSummary = {
   readonly id: string
   readonly name: string
+  readonly color: string
 }
 
 export type GetOrCreateTagsInput = {
   readonly organizationId: string
   readonly requestedNames: readonly string[]
+  /** Called once per tag actually created, for its colour (Tags rule 10). */
+  readonly pickNewTagColor: () => string
   readonly nowUtc: Date
   readonly actorUserId: string | null
 }
@@ -351,11 +376,14 @@ export type ImportCellTranslation =
 export interface IdeaFieldValuesPort {
   /** Resolves the effective/required fields for `ideaTypeId` and validates + normalizes
    * `submitted` against them, throwing the kernel's `ValidationError` (field-name-keyed) on any
-   * problem. Mirrors `IdeaTypeFieldResolver.ResolveEffectiveFields` + `FieldValueValidator.Validate`. */
+   * problem. Mirrors `IdeaTypeFieldResolver.ResolveEffectiveFields` + `FieldValueValidator.Validate`.
+   * `stored` is the idea's current values on an edit, so an option it already holds may be kept
+   * after the field stops offering it; absent on create. */
   resolveAndValidate(input: {
     organizationId: string
     ideaTypeId: string
     submitted: readonly IdeaFieldValueWrite[]
+    stored?: readonly { fieldDefinitionId: string; value: string }[]
   }): Promise<readonly IdeaFieldValueInput[]>
 
   /** The field-definition ids `ideaTypeId` currently resolves to - the reconcile scope passed to
@@ -378,6 +406,14 @@ export interface IdeaFieldValuesPort {
     ideaTypeId: string
     stored: readonly { fieldDefinitionId: string; value: string }[]
   }): Promise<readonly IdeaFieldValueView[]>
+
+  /** The idea's effective fields for the edit form, resolved from its type even when that type is
+   * archived, each carrying its stored value in write format (SPEC/30-Contracts.md `formFields`). */
+  describeFormFields(input: {
+    organizationId: string
+    ideaTypeId: string
+    stored: readonly { fieldDefinitionId: string; value: string }[]
+  }): Promise<readonly IdeaFormFieldDto[]>
 
   /** Translates the raw `fieldFilters[<id>]=<value>` map into typed predicates per each field's
    * type (T059), silently dropping unknown ids, blank values, and values that don't parse for

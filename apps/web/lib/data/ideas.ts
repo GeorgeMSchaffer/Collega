@@ -1,19 +1,17 @@
 /**
- * Ideas, the comments on them, and the board lanes they sit in.
+ * Ideas, the comments on them, and what the idea form chooses from.
  *
  * A board's ideas and the organization's ideas are separate readers rather than one list the caller
  * filters, because they are separate requests: the API scopes by board server-side, and pulling
  * every idea to drop most of them is the shape that quietly stops scaling.
  *
- * **Every reader in this module is real.** The lane cards, the organization-wide table, the
- * catalogs the create form picks from, and now the idea detail behind the inspector. `GET
- * /ideas/{id}` gained an `author` and a `createdAtUtc`, plus an `author` on each embedded comment,
- * which were the fields the byline and the thread had no source for and the reason this one stayed
- * on the fixture as long as it did.
+ * **Every reader in this module is real**, and both lists filter, sort and page in the API (the list
+ * pattern in `SPEC/30-Contracts.md`). Filtering one page in the client would report "3 results" from
+ * the ten rows that happened to arrive.
  */
 
-import { toIdea, toIdeaDetail } from '../api/adapt'
-import { apiGet, apiPath, isApiStatus } from '../api/client'
+import { toIdea, toIdeaDetail, toIdeaFormField } from '../api/adapt'
+import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type {
   WireBusinessImpact,
   WireIdeaDetail,
@@ -21,96 +19,39 @@ import type {
   WireIdeaType,
   WirePage,
 } from '../api/wire'
-import { API_DEFAULT_PAGE_SIZE, API_MAX_PAGE_SIZE } from '../limits'
-import type { Idea, IdeaDetail, IdeaOptions, IdeaPage } from '../types'
+import type { IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
 
-export type { Comment, Idea, IdeaDetail, IdeaOptions, IdeaPage, Priority } from '../types'
+export type {
+  Comment,
+  Idea,
+  IdeaDetail,
+  IdeaFormField,
+  IdeaFormOptions,
+  IdeaListQuery,
+  IdeaPage,
+  Priority,
+} from '../types'
 
-/** Rows per page of the organization-wide list. See `getOrganizationIdeas` for why it is paged. */
-const PAGE_SIZE = API_DEFAULT_PAGE_SIZE
-
-/**
- * Every idea on one board, in the order the API returns them.
- *
- * `pageSize=100` is the API's own maximum and one request covers any board a person can read
- * through at a glance. Paging the board is a real feature, not something to fake by silently
- * truncating: when a board outgrows one page it needs lane-level paging, which is a design
- * question, not a query-string change.
- */
-export async function getIdeasForBoard(boardId: string): Promise<Idea[]> {
-  failIfRequested('getIdeasForBoard')
-
-  const page = await apiGet<WirePage<WireIdeaListItem>>(
-    'getIdeasForBoard',
-    apiPath`/boards/${boardId}/ideas?pageSize=${String(API_MAX_PAGE_SIZE)}`,
-  )
-  return page.items.map(toIdea)
-}
-
-/**
- * What the create form offers for Idea Type and Business Impact.
- *
- * Both are required on `POST /boards/{id}/ideas` and both are per-organization catalogs, so the
- * form cannot invent them and the ids have to come from the same organization the board is in —
- * which is the acting user's, since that is the only one they can open a board in.
- *
- * Two requests in parallel rather than one reader each, for the reason `getNavCounts` gives: the
- * form needs both together, and a caller awaiting them separately pays two round trips in series.
- */
-export async function getIdeaOptions(): Promise<IdeaOptions> {
-  failIfRequested('getIdeaOptions')
-
-  const scope = organizationScope()
-  if (scope === null) return { ideaTypes: [], businessImpacts: [] }
-
-  const [ideaTypes, businessImpacts] = await Promise.all([
-    apiGet<readonly WireIdeaType[]>('getIdeaOptions', apiPath`/organizations/${scope}/idea-types`),
-    apiGet<readonly WireBusinessImpact[]>(
-      'getIdeaOptions',
-      apiPath`/organizations/${scope}/business-impacts`,
-    ),
-  ])
-
-  return {
-    ideaTypes: ideaTypes.map((type) => ({ id: type.ideaTypeId, name: type.name })),
-    businessImpacts: businessImpacts.map((impact) => ({
-      id: impact.businessImpactId,
-      name: impact.name,
-    })),
+function listParams(query: IdeaListQuery): URLSearchParams {
+  const params = new URLSearchParams({
+    page: String(query.page),
+    pageSize: String(query.pageSize),
+  })
+  if (query.search.trim()) params.set('search', query.search.trim())
+  for (const id of query.boardIds) params.append('boardId', id)
+  for (const id of query.statusIds) params.append('statusId', id)
+  for (const priority of query.priorities) params.append('priority', priority)
+  for (const tag of query.tags) params.append('tag', tag)
+  if (query.sortBy) {
+    params.set('sortBy', query.sortBy)
+    params.set('sortDirection', query.sortDirection)
   }
+  return params
 }
 
-/**
- * One page of every idea in the organization, newest first.
- *
- * **Paged, not bounded.** `getIdeasForBoard` can ask for one page of 100 and be right, because a
- * board is a bounded thing a person reads at a glance. This list is every board at once and has no
- * such ceiling, so a single large page would be a silent truncation the day an organization
- * outgrows it — the screen would look complete and be wrong. `PAGE_SIZE` is the API's own default
- * (`packages/application` `DEFAULT_PAGE_SIZE`), which keeps the second page reachable in the demo
- * data rather than theoretical.
- *
- * **Newest first**, where the API's default is oldest first. That is the order the screen is opened
- * to answer: an idea raised a minute ago is the first row rather than the last row of the last
- * page, which is exactly what someone checks after creating one.
- *
- * No search, no filter and no sort control — the screen has none to offer. When it grows them they
- * belong in this query string, not in a `.filter()` over the rows below: filtering one page in the
- * client would report "3 results" from the twenty rows that happened to arrive.
- */
-export async function getOrganizationIdeas(page: number): Promise<IdeaPage> {
-  failIfRequested('getOrganizationIdeas')
-
-  const scope = organizationScope()
-  if (scope === null) return { ideas: [], page: 1, pageSize: PAGE_SIZE, totalCount: 0 }
-
-  const result = await apiGet<WirePage<WireIdeaListItem>>(
-    'getOrganizationIdeas',
-    apiPath`/organizations/${scope}/ideas?page=${String(page)}&pageSize=${String(PAGE_SIZE)}&sortBy=createdAt&sortDirection=desc`,
-  )
-
+function toPage(result: WirePage<WireIdeaListItem>): IdeaPage {
   return {
     ideas: result.items.map(toIdea),
     page: result.page,
@@ -120,20 +61,92 @@ export async function getOrganizationIdeas(page: number): Promise<IdeaPage> {
 }
 
 /**
- * One idea, with its prose, its provenance and its whole comment thread.
+ * One page of every idea in the organization, across every board, archived ones included.
  *
- * **The thread comes from here, not from `GET /ideas/{id}/comments`.** Both are real and both now
- * carry author names, so the choice is about which one tells the truth about *this* screen. The
- * detail embeds every comment, chronologically and unpaged (`CommentsPort.listByIdea`), while the
- * comments endpoint is paged and would show the first twenty of a longer thread under a heading
- * counting all of them. Reading the embedded copy is also one round trip rather than two, and its
- * `commentCount` is computed in the same request as the comments themselves — so the count beside
- * "Discussion" cannot disagree with the number of comments under it, which two requests racing each
- * other could arrange.
+ * **Newest first when unsorted**, where the API's default is oldest first: an idea raised a minute
+ * ago is the first row rather than the last row of the last page, which is exactly what someone
+ * checks after creating one.
+ */
+export async function getIdeaList(query: IdeaListQuery): Promise<IdeaPage> {
+  failIfRequested('getIdeaList')
+
+  const scope = organizationScope()
+  if (scope === null) return { ideas: [], page: 1, pageSize: query.pageSize, totalCount: 0 }
+
+  const params = listParams(query)
+  if (!query.sortBy) {
+    params.set('sortBy', 'createdAt')
+    params.set('sortDirection', 'desc')
+  }
+
+  return toPage(
+    await apiGet<WirePage<WireIdeaListItem>>(
+      'getIdeaList',
+      withQuery(apiPath`/organizations/${scope}/ideas`, params),
+    ),
+  )
+}
+
+/**
+ * One page of one board's ideas. The lanes view asks for a single page of 100 — the API's maximum —
+ * and says so when a board holds more; paging lanes is a design question, not a query string.
+ * `boardIds` is ignored: every item is on this board.
+ */
+export async function getBoardIdeaList(boardId: string, query: IdeaListQuery): Promise<IdeaPage> {
+  failIfRequested('getBoardIdeaList')
+
+  return toPage(
+    await apiGet<WirePage<WireIdeaListItem>>(
+      'getBoardIdeaList',
+      withQuery(apiPath`/boards/${boardId}/ideas`, listParams({ ...query, boardIds: [] })),
+    ),
+  )
+}
+
+/**
+ * What the idea form offers: Business Impact, Idea Type, and each type's custom fields as the API
+ * resolves them (`effectiveFields`), in form order with that type's required flags.
+ */
+export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
+  failIfRequested('getIdeaFormOptions')
+
+  const scope = organizationScope()
+  if (scope === null) return { ideaTypes: [], businessImpacts: [] }
+
+  const [ideaTypes, businessImpacts] = await Promise.all([
+    apiGet<readonly WireIdeaType[]>(
+      'getIdeaFormOptions',
+      apiPath`/organizations/${scope}/idea-types`,
+    ),
+    apiGet<readonly WireBusinessImpact[]>(
+      'getIdeaFormOptions',
+      apiPath`/organizations/${scope}/business-impacts`,
+    ),
+  ])
+
+  return {
+    ideaTypes: ideaTypes.map((type) => ({
+      id: type.ideaTypeId,
+      name: type.name,
+      fields: type.effectiveFields.map(toIdeaFormField),
+    })),
+    businessImpacts: businessImpacts.map((impact) => ({
+      id: impact.businessImpactId,
+      name: impact.name,
+    })),
+  }
+}
+
+/**
+ * One idea, with its structured fields, its custom field values and its whole comment thread.
+ *
+ * **The thread comes from here, not from `GET /ideas/{id}/comments`**, which is paged and would show
+ * the first twenty of a longer thread under a heading counting all of them. The detail embeds every
+ * comment, and its `commentCount` is computed in the same request, so the two cannot disagree.
  *
  * `null` for a missing idea rather than a throw, and that covers the cross-organization case too:
- * `IdeaService.getById` answers 404 for an idea in another organization rather than 403, declining
- * to confirm it exists, and so does this — the caller reaches `notFound()` either way.
+ * the API answers 404 for an idea in another organization rather than 403. A 400 is an id that is
+ * not a UUID at all — a hand-edited `?idea=` — and is not found either.
  */
 export async function getIdea(id: string): Promise<IdeaDetail | null> {
   failIfRequested('getIdea')
@@ -141,7 +154,7 @@ export async function getIdea(id: string): Promise<IdeaDetail | null> {
   try {
     return toIdeaDetail(await apiGet<WireIdeaDetail>('getIdea', apiPath`/ideas/${id}`))
   } catch (error) {
-    if (isApiStatus(error, 404)) return null
+    if (isApiStatus(error, 404) || isApiStatus(error, 400)) return null
     throw error
   }
 }

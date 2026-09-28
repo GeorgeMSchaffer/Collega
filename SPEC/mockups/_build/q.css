@@ -48,46 +48,45 @@
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 6px);
-  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* The theme. shadcn's own dial: --radius is the one knob for corner
-   rounding (0.3rem is its "small" preset — the closest supported value
-   to the "minimize rounded corners" feedback), and every semantic
-   colour is a variable. The values are the business-professional
-   palette chosen 2026-08-31; the palette is still open, and changing it
-   means changing this block only. */
+/* The theme: Terrazzo (SPEC/decisions.md 2026-09-27), the default of the
+   five themes in packages/design-system/src/globals.css. The comps render
+   the default only; the other four are the same token set with other
+   values, shown live in comp R. --radius is shadcn's one corner knob. */
 :root {
-  --radius: 0.3rem;
-  --background: #F7F9FB;
-  --foreground: #243447;
+  --radius: 6px;
+  --background: #F5F6F8;
+  --foreground: #1E2733;
   --card: #FFFFFF;
-  --card-foreground: #243447;
+  --card-foreground: #1E2733;
   --popover: #FFFFFF;
-  --popover-foreground: #243447;
-  --primary: #527292;
+  --popover-foreground: #1E2733;
+  --primary: #3D5A80;
   --primary-foreground: #FFFFFF;
-  --secondary: #F1F3F6;
-  --secondary-foreground: #3E4E60;
-  --muted: #F1F3F6;
-  --muted-foreground: #5D6C7E;
-  --accent: #F0F4F7;
-  --accent-foreground: #3E566F;
-  --destructive: #B64B4B;
+  --secondary: #EDF0F3;
+  --secondary-foreground: #36414F;
+  --muted: #EDF0F3;
+  --muted-foreground: #5E6978;
+  --accent: #E4EAF2;
+  --accent-foreground: #35507A;
+  --destructive: #963636;
   --destructive-foreground: #FFFFFF;
-  --warning: #C9A65C;
-  --success: #6FAF7A;
-  --teal-brand: #5F9E93;
-  --border: #DDE1E6;
-  --input: #C5CBD3;
-  --ring: #5B7FA3;
+  --warning: #7F5A12;
+  --success: #3F6B2E;
+  --teal-brand: #3F6B2E;
+  --border: #E3E6EB;
+  --input: #CDD2DA;
+  --ring: #3D5A80;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #3E4E60;
-  --sidebar-primary: #527292;
-  --sidebar-accent: #F0F4F7;
-  --sidebar-accent-foreground: #3E566F;
-  --sidebar-border: #DDE1E6;
+  --sidebar-foreground: #36414F;
+  --sidebar-primary: #3D5A80;
+  --sidebar-accent: #E4EAF2;
+  --sidebar-accent-foreground: #1E2733;
+  --sidebar-border: #E3E6EB;
 
   /* Category dots. The fragments name them by comp P's sticker names;
      here each is a value from the same palette, so the mapping is the
@@ -96,30 +95,30 @@
   --teal: #5F9E93;
   --green: #6FAF7A;
   --orange: #C9A65C;
-  --orange-deep: #8A6D2E;
+  --orange-deep: #7F5A12;
   --pink: #C97A7A;
   --purple: #9A8AC4;
   --purple-deep: #5B4F86;
   --brown: #8A6D2E;
-  --sug: #116b5e;
-  --sug-soft: #e8f3f1;
+  --sug: #3F6B2E;
+  --sug-soft: #E6F2DF;
 
   /* Aliases the fragments reach for in inline styles. */
   --ink: var(--foreground);
-  --ink-secondary: #3E4E60;
+  --ink-secondary: #36414F;
   --ink-muted: var(--muted-foreground);
-  --ink-faint: #818E9C;
+  --ink-faint: #5E6978;
   --hairline: var(--border);
   --canvas: #FFFFFF;
   --canvas-soft: var(--muted);
   --surface: var(--card);
-  --primary-active: #3E566F;
+  --primary-active: #324B6B;
   --on-primary: #FFFFFF;
   --s-xxs: 4px; --s-xs: 8px; --s-sm: 12px; --s-md: 16px; --s-lg: 24px; --s-xl: 28px; --s-xxl: 32px;
   --r-xs: calc(var(--radius) - 2px); --r-sm: var(--radius); --r-md: var(--radius);
   --r-lg: calc(var(--radius) + 2px); --r-xl: calc(var(--radius) + 6px); --r-full: 9999px;
-  --e1: 0 1px 2px rgba(36,52,71,.06);
-  --e2: 0 8px 24px rgba(36,52,71,.14);
+  --e1: 0 1px 2px rgba(30,39,51,.06);
+  --e2: 0 8px 24px rgba(30,39,51,.14);
   --font: var(--font-sans);
 }
 
@@ -127,9 +126,10 @@
   * { border-color: var(--border); }
   html, body { margin: 0; }
   body { @apply bg-background text-foreground font-sans text-sm antialiased; }
-  h1 { @apply text-2xl font-semibold tracking-tight; }
-  h2 { @apply text-xl font-semibold tracking-tight; }
-  h3 { @apply text-lg font-semibold tracking-tight; }
+  h1, h2, h3 { @apply font-heading font-bold; }
+  h1 { @apply text-2xl tracking-tight; }
+  h2 { @apply text-xl tracking-tight; }
+  h3 { @apply text-lg tracking-tight; }
   p { @apply m-0 mb-4; }
   a { @apply text-primary no-underline hover:underline; }
   /* shadcn Input / Textarea / Select (native) */
@@ -203,6 +203,8 @@
 
   /* segmented control (shadcn Tabs list) */
   .seg button { @apply inline-flex h-7 items-center justify-center whitespace-nowrap rounded-sm px-3 text-sm font-medium text-muted-foreground transition-all aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-xs; border: 0; background: transparent; }
+  /* the same control when each option is a URL (the Boards view toggle) */
+  .seg a { @apply inline-flex h-7 items-center justify-center whitespace-nowrap rounded-sm px-3 text-sm font-medium text-muted-foreground no-underline transition-all aria-[current=page]:bg-background aria-[current=page]:text-foreground aria-[current=page]:shadow-xs; }
 
   /* feed, comments, discussion */
   .feed li { @apply flex items-center gap-2 px-5 py-3 text-sm; }

@@ -16,6 +16,12 @@ These mockups are static SVG artifacts based on the current Collega specs and sh
 - `11-idea-detail-editorial-variant.svg`: alternate editorial visual direction for idea collaboration and activity rail
 - `12-idea-card-and-overlay.svg`: dedicated compact card plus detail overlay interaction mockup
 
+## Comp R — list and detail pattern, themes, idea assistant v2 (2026-09-27)
+
+`comp-r-portico-prototype.html` is an **interactive** prototype, not a generated static set: open it in a browser and use the dark bar at the top to switch screen (Boards, Board: Opportunities, Ideas, Sprint board, Roadmap, Settings: Tags — the last three added in the 2026-09-28 iteration), role (Org Admin, User, Read Only) and the assistant's health (Healthy, Fails next turn, Unavailable). The theme picker sits in the product's own top bar. Seeded Acme Robotics ideas are inlined; edits live only in the page.
+
+It is the reference for `SPEC/20-feature-client-ui.md` "List and detail pattern", "Themes" and "Forms and controls", for `SPEC/20-feature-ai-idea-assist-v2.md`, and since 2026-09-28 for the Sprint board, the Roadmap and the effort bar (`SPEC/20-feature-issues-and-delivery.md` "Client UI") and Settings → Tags (`SPEC/20-feature-ideas-and-engagement.md` "Tags"). The 2026-09-28 iteration replaced the Notte dark theme with Graphite. Its sprint, outcome, issue-key and tag-colour data are samples; issue keys such as `IDE-01` have no column behind them (`SPEC/decisions.md` 2026-09-28). It supersedes comp P/Q's docked inspector and create column for Boards, boards and Ideas; comp P/Q remain the reference for every screen comp R does not draw. Structure is otherwise unchanged from comp P. The file is hand-written, not built by `_build/`.
+
 ## Full-App Comps (2026-07-30)
 
 Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with Fluent UI Blazor components.
