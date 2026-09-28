@@ -1010,8 +1010,8 @@ Added 2026-09-28 (comp R, `SPEC/decisions.md` 2026-09-28):
   card can colour its chips without a second request. `tagNames` stays, unchanged, for every client
   written before it.
 - `effort` string or `null`: `Low`, `Medium`, `High` — the idea's effort, for the effort bar on idea
-  cards and rows. *(pending answer: whether idea cards show the effort bar at all; if not, this
-  field is not added.)* The delivery card already carries `effort`.
+  cards and rows, which shows whenever it is set (answered 2026-09-28). The delivery card already
+  carried `effort`; it is the same field.
 
 Because `GET /api/v1/organizations/{organizationId}/ideas` and the delivery card
 (`GET /api/v1/organizations/{organizationId}/delivery`) reuse this item shape, both carry `tags`,
@@ -1325,14 +1325,24 @@ task exists in somebody else's organization is the thing a prober is fishing for
   `effort`; tag chips read the card's `tags` (added above).
 - **Gap: issue keys.** Comp R labels Issues `IDE-01`; there is no key or reference field anywhere in
   this document and none is added (see `GET /api/v1/ideas/{ideaId}`, "no `reference` field").
-- **Gap: Outcomes and the Roadmap.** The Slice 2 routes remain absent. Before they are written here,
-  the Roadmap as comp R draws it needs, beyond the routes `20-feature-issues-and-delivery.md` already
-  lists: an Outcome `color`; a roadmap read that returns **every** Outcome with its window, colour,
+- **Plan next sprint** uses the existing `POST /organizations/{organizationId}/sprints`, and **the
+  Issue drawer** reads the delivery card the screen already holds, `GET /ideas/{ideaId}` and
+  `GET /ideas/{ideaId}/tasks` — nothing new. (There is still no single-Issue delivery read; a deep
+  link to an Issue's drawer needs the delivery card from a list, as `/delivery/issues/{ideaId}`
+  does today.)
+- **The Roadmap in Sprint 11 needs nothing new either**: its sprint rows read
+  `GET /organizations/{organizationId}/sprints`, and its empty state counts delivery cards.
+- **Gap, for a later sprint: Outcomes and the roadmap read** (answered 2026-09-28: Sprint 11 builds
+  the screen, not the backend). The Slice 2 routes remain absent. When they are written here, the
+  Roadmap as comp R draws it needs, beyond the routes `20-feature-issues-and-delivery.md` already
+  lists: an Outcome `color` (any `#RRGGBB`, as for tags, with the bar label's contrast computed —
+  see the Outcome entity); a roadmap read that returns **every** Outcome with its window, colour,
   derived counts, derived sprint span and grouped Issues (title, delivery status, effort, assignees)
   in one request, with **no** `granularity` parameter (the client draws Weeks, Months or Quarters);
   and a way for the Outcome form to set the grouping of several Issues in one save (either
-  `issueIds` on the Outcome write or one `PUT /ideas/{ideaId}/outcomes` per change — the backend
-  slice decides and writes it here). Whether that slice is in Sprint 11 is *(pending answer)*.
+  `issueIds` on the Outcome write or one `PUT /ideas/{ideaId}/outcomes` per change — that slice
+  decides and writes it here). The `outcomes.color` column comes with that slice's own schema
+  amendment.
 
 **A Site Admin acting directly is refused every mutation here with `403`**, and reads it all with
 `200`. Promotion, delivery status, sprint management and tasks are organization content under
@@ -1818,11 +1828,13 @@ Comp R gives every tag a colour and adds Settings → Tags (`SPEC/20-feature-ide
 "Tags" rules 9–15; `SPEC/decisions.md` 2026-09-28). The autocomplete above is **unchanged**: it
 still answers bare names, because the idea form's tag field only needs names.
 
-**Colour.** `color` is a `#RRGGBB` string, one of the ten palette values `#E5484D`, `#F5A524`,
-`#3FB86B`, `#2F9E8F`, `#5CC8E0`, `#6B9BF2`, `#B08CF5`, `#E879A6`, `#A87B2F`, `#94A3B8`, compared
-case-insensitively and returned in upper case. *(pending answer: whether any `#RRGGBB` is also
-accepted.)* A value outside the set is a `400` keyed `color`, `"Color must be one of: #E5484D, …"`
-listing all ten. **Every tag created without a colour gets a random palette colour** — the
+**Colour.** `color` is **any** `#RRGGBB` string (answered 2026-09-28: the palette plus a custom
+colour) — the same six-hex-digit format rule the status, business impact and idea type colours
+follow (`^#[0-9a-fA-F]{6}$`), stored and returned in upper case. Anything else is a `400` keyed
+`color`, `"Color must be a valid #RRGGBB color."` The ten palette values — `#E5484D`, `#F5A524`,
+`#3FB86B`, `#2F9E8F`, `#5CC8E0`, `#6B9BF2`, `#B08CF5`, `#E879A6`, `#A87B2F`, `#94A3B8` — are what
+the picker offers first and what random colours are drawn from; the API gives them no other
+privilege. **Every tag created without a colour gets a random palette colour** — the
 management create below when `color` is absent, and every tag created inline by
 `POST /api/v1/boards/{boardId}/ideas`, `PUT /api/v1/ideas/{ideaId}` or CSV import. The server picks
 it, from an injected random source.
@@ -1845,8 +1857,14 @@ Purpose: Every tag in the organization, for Settings → Tags and for any tag fi
 full set (the Ideas screen's Tags filter has had to assemble its options from other reads — slice
 102's recorded deviation).
 
-Authorization: every member of the organization, `Read Only` included; nothing here is more than a
-member already sees on ideas. Who may **open** Settings → Tags is a screen rule, not this one.
+Authorization: every member of the organization, `Read Only` included. **Kept member-readable on
+purpose (2026-09-28)**, although Settings → Tags itself is Org Admins' only: the Ideas screen's
+**Tags filter** is used by every role and needs the organization's full tag set with colours —
+today it assembles its options from the boards' top tags, the rows in view and a typeahead, so a tag
+that is on none of those cannot be picked (slice 102's recorded deviation). Scoping this read to
+admins would leave that defect in place for members. It exposes nothing a member cannot already see:
+every idea in the organization is visible to its members, and with it every tag's name, colour,
+usage and board.
 
 Success response `200`: an **unpaged** array of the tag item shape (tags are a small configuration
 collection, per "Collection Conventions"), ordered by `name` ascending (case-insensitive). The counts
