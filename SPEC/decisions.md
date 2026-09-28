@@ -9,6 +9,149 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events
+
+**Decided by the user**, answering the three points the answers entry below left open, and on review of this slice, the audit of tag changes.
+
+- **Start sprint on the Sprint board.** When no sprint is `Active`, the board shows the next
+  `Planned` sprint (earliest start) with **Start sprint** behind a confirmation, on the existing
+  `POST /organizations/{orgId}/sprints/{sprintId}/start`, for the same roles as *Complete sprint*.
+  Without it a completed or newly planned sprint could never become the running one from the app.
+- **A single-Issue read, under the existing convention:** `GET /ideas/{ideaId}/delivery` returns one
+  Issue's delivery card. Same authorization as the delivery lists; `404` for another organization's
+  Issue, a Discovery idea, a deleted one or a malformed id. It replaces the web app's fan-out over
+  every sprint and the backlog, and serves the Issue drawer's deep link and
+  `/delivery/issues/{ideaId}`. Like every delivery route it addresses the idea by its id, so there
+  is still no `/issues` root.
+- **The Roadmap's sprint rows stay** as drafted; whether they stay once Outcomes exist is decided in
+  the Outcomes sprint.
+- **A tag rename and a tag delete each write one audit event** — `TagRenamed` and `TagDeleted`,
+  with the tag's id, its old and new name and the number of ideas affected. The ideas are not
+  touched: no per-idea events, and their `updatedAtUtc` stays. This replaces the adoption draft's
+  "no audit event" for tags (`20-feature-ideas-and-engagement.md` rule 15, `30-Contracts.md`).
+
+---
+
+## 2026-09-28 — The comp R iteration's open questions are answered
+
+**Decided by the user**, answering the ten questions left open by the adoption entry below, plus the
+order of work. Each answer is written into the spec where it applies, and the *(pending answer)*
+markers are gone.
+
+1. **Outcomes: the screen now, the backend later.** Sprint 11 restructures the Roadmap against the
+   data that exists — the Weeks / Months / Quarters axis, the TODAY rule, the organization's sprints
+   as rows, and an empty state where outcomes will go, with *Add New Outcome* disabled and its
+   reason given. Slice 2's backend (the `outcomes` table with its colour, `ideas.outcome_id`, the
+   routes and the roadmap read) is a gap for a later sprint, with its own schema amendment; the
+   fourth amendment covers `tags.color` only. Chosen over building Slice 2 now and over deferring
+   the whole Roadmap.
+2. **Bug Triage exception granted for Sprint 11, on one condition:** slice 106 also fixes the
+   `db:seed` `P2002` on `board_swimlanes` item, since it changes the seed anyway. The other four
+   `TODO` items stay queued.
+3. **Issue keys are left out of every screen for now**, and decided separately.
+4. **Colours are the palette plus a custom colour.** The picker offers ten swatches and a Custom
+   input; the API accepts any `#RRGGBB`. Because a custom colour can be anything, a chip's text
+   colour is computed per theme to clear 4.5:1 rather than fixed (`20-feature-client-ui.md` "Tag
+   colours and the effort bar"), and a test proves it over the palette and the extreme colours.
+   Outcome colours follow when Outcomes are built, with their bar label's contrast computed too.
+5. **Settings → Tags is Org Admins' only**, read-only for a Site Admin; members do not see it. The
+   tag catalog read stays open to members, because the Ideas Tags filter every role uses needs the
+   full set (`30-Contracts.md` says why).
+6. **The effort bar is on idea cards and rows too**, whenever an effort is set; idea list items carry
+   `effort`.
+7. **An Issue opens in the drawer** from the Sprint board, the Backlog and the Roadmap, with its
+   delivery facts — status selector, effort, sprint, outcome, provenance and tasks.
+8. **Plan next sprint opens an Add New Sprint form in the drawer** (name, goal, dates, owner) on the
+   existing `POST /organizations/{orgId}/sprints`.
+9. **The Roadmap's window is fixed and anchored on today:** Weeks shows 16 weeks from two weeks back,
+   Months 7 months from this month, Quarters 4 quarters from this quarter; no panning.
+10. **No keyboard shortcuts anywhere:** no *Ctrl ↵* save, no zoom keys, no key-hint chips. Escape
+    still closes the drawer and the dialogs.
+11. **Order of work:** Sprint 11 first, then the prompt-eval runner, then idea assistant v2.
+
+---
+
+## 2026-09-28 — The S0.2 schema freeze is amended a fourth time, for tag colours
+
+**Decided by the user** with the adoption below ("Tags get a colour picker; by default a tag gets a
+random colour"). Under the 2026-09-11 rule — the freeze stands, and each change to `schema.prisma`
+needs its own entry here — this is that entry, and it is not a general licence.
+
+- **`tags`** gains `color VARCHAR(7) NOT NULL` — any `#RRGGBB`, stored upper case
+  (`20-feature-ideas-and-engagement.md` Tags rule 9). No other column: `tags` already has
+  `created_at_utc` and `created_by_user_id`, which Settings → Tags shows.
+- **The migration backfills every existing tag** with the palette colour at index
+  `get_byte(decode(md5(normalized_name), 'hex'), 0) % 10`, indexing Tags rule 9's palette in its
+  listed order (`#E5484D` is 0, `#94A3B8` is 9), so the result is repeatable across databases and
+  replays; then sets `NOT NULL`. The demo seed computes the same index in `node:crypto` (the first
+  byte of the MD5 digest of the normalized name, modulo 10). Tags created afterwards take a random palette colour chosen by the application, from an
+  injected random source.
+- **Not covered: Outcomes.** Sprint 11 builds the Roadmap screen, not its backend (the answers
+  entry above), so the `outcomes` table — with its `color VARCHAR(7) NOT NULL`, added to the spec
+  2026-09-28 — and `ideas.outcome_id` wait for the later sprint that builds Slice 2, under an
+  amendment of their own.
+- **Not covered:** an issue key or idea reference (comp R's `IDE-01`). That needs its own decision
+  and its own amendment.
+
+**Golden corpus.** Board list items gain `topTags[].color`; idea list, detail and delivery items
+gain `tags`; and idea list items (the board list and the organization list) gain `effort` — so the
+replay will differ there. Those differences are accepted, and the backend slice
+records them in `tools/golden/src/accepted.ts`.
+
+## 2026-09-28 — Graphite replaces Notte as the dark theme
+
+> Supersedes in part 2026-09-27 "Terrazzo is the palette, with a theme picker", which named Notte as
+> the dark theme.
+
+**Decided by the user** from their design canvas: "Graphite replaces Notte as the dark theme." The
+picker offers Terrazzo (default), Portico, Piazza Sera and Lagoon as light themes and **Graphite** as
+the dark one: a near-black neutral ground, near-white ink, an amber primary and a cyan metric and
+suggestion hue, in IBM Plex Sans with JetBrains Mono (`20-feature-client-ui.md` "Themes", token
+values in comp R's `graphite` block). Notte's self-contained `[data-theme]` block, shipped in slice
+100, is replaced rather than kept as a sixth theme, and a `collega-theme` cookie that still says
+`notte` is served Graphite, so a person who chose dark stays in dark. The 4.5:1 rule is unchanged;
+Graphite's pairs were measured against it on 2026-09-28. The Terrazzo default, the per-browser
+cookie and the per-theme suggestion hue all stand.
+
+## 2026-09-28 — The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags
+
+**Decided by the user** ("go ahead with it"), reviewing the iteration of
+`SPEC/mockups/comp-r-portico-prototype.html` that folds in their design canvas. In the user's words,
+in substance: integrate the Graphite theme and the denser form and control layout; refactor the
+Roadmap structurally and functionally to match, with Weeks, Months and Quarters as its zoom levels
+and no keyboard shortcuts for now; add the effort bar to cards, the sprint lanes included; add the
+Sprint board; give tags a colour picker, a random palette colour by default, changed by an
+administrator in Settings; and add Settings → Tags on the list and detail pattern — list, view,
+edit (name and colour), delete, and add in advance of use.
+
+- **Where it is written.** Forms and controls, tag chip colours and the effort bar:
+  `20-feature-client-ui.md`. Tag colour and Settings → Tags: `20-feature-ideas-and-engagement.md`
+  "Tags" rules 9–15. Sprint board, Roadmap and the effort bar's placement:
+  `20-feature-issues-and-delivery.md` "Comp R iteration". Contracts: `30-Contracts.md`, each
+  addition dated 2026-09-28. The work is planned as Sprint 11
+  (`SPEC/sprints/sprint-11-comp-r-iteration.md`).
+- **The denser layout applies in every theme**, not only Graphite: 32px buttons, 34px fields,
+  12px labels, short fields three or two to a row. It supersedes the control heights slice 100
+  shipped.
+- **Tag chip text is required to clear 4.5:1 in every theme.** Comp R's colour mix fails it in the
+  light themes for seven of the ten palette colours; the spec keeps the rule and fixes the mix rather
+  than accepting the comp.
+- **Tags are administered by the Org Admin** (a Site Admin through View As), like the other
+  organization configuration collections. The tag rules had never named an administrator — anyone
+  who could edit an idea could create a tag, and nobody could rename, recolour or delete one — so
+  this is a reading of the existing permission model, recorded so it is not mistaken for a new
+  rule. Inline creation while tagging an idea is unchanged.
+- **Two things comp R draws have no backend, and this adoption does not invent one.** Issue keys
+  (`IDE-01`) are left out of every screen until they are decided separately; Outcomes (Slice 2)
+  stay specified and unbuilt — Sprint 11 builds the Roadmap screen without them (answered the same
+  day). Both are recorded as gaps in `30-Contracts.md`.
+- **Where comp R and the spec disagree, the spec wins** and the difference is written down: the
+  outcome drawer's Delete confirms (comp R deletes at once), and comp R's *Ctrl ↵* save is not built.
+- **Open at adoption, answered the same day** — see "The comp R iteration's open questions are
+  answered" above.
+
+---
+
 ## 2026-09-27 — The API sends the custom field list
 
 **Decided by the user.** The idea form no longer works out which custom fields an Idea Type shows.
@@ -81,6 +224,9 @@ them in `tools/golden/src/accepted.ts`.
 
 ## 2026-09-27 — Terrazzo is the palette, with a theme picker
 
+> **Superseded in part 2026-09-28** by "Graphite replaces Notte as the dark theme": the dark theme
+> is Graphite. Everything else here stands.
+
 **Decided by the user** after comparing palettes live in comp R. Comp P left the palette open; this
 closes it. **Terrazzo** (slate blue with pistachio and blush) is the default. A theme picker at the
 right of the top bar offers Terrazzo, Portico, Piazza Sera and Lagoon as light themes and Notte as
@@ -114,6 +260,11 @@ candidates (Sprout, Blueprint, the bright Piazza, Mercato) were reviewed and dro
 - **Order of work:** phase 1 is themes, this pattern on Boards, a board and Ideas, the structured
   idea fields with their backfill, board archive and the heading fix; phase 2 the prompt-eval
   runner; phase 3 idea assistant v2. Settings and Delivery lists move to the pattern afterwards.
+  > **Superseded in part 2026-09-28** ("The comp R iteration's open questions are answered", item
+  > 11): Sprint 11, the comp R iteration, goes first after phase 1; the prompt-eval runner and idea
+  > assistant v2 keep their order after it. Settings → Tags and the Delivery screens (Sprint board,
+  > Backlog's Issue drawer, Roadmap) move to the pattern in Sprint 11; the other Settings entities
+  > still move afterwards.
 
 ---
 

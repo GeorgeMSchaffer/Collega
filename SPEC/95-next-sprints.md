@@ -47,6 +47,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 8 | ~~Azure deployment (provision + first deploy + CI/CD)~~ | `SPEC/sprints/sprint-08-azure-deployment.md` | **CANCELLED 2026-09-04** — never started. The .NET stack is never deployed; both apps and the database go to Vercel at the end of the conversion (`SPEC/decisions.md`). Its one product item, the rule 32c flash, moves to Wave E. | — |
 | 9 | TypeScript conversion — **the active sprint** | `SPEC/sprints/sprint-09-typescript-conversion.md` | **In Progress (2026-09-04)** — Wave A complete; Wave 0 is the frontier | Large |
 | 10 | Comp R, phase 1 — themes, the list and detail pattern on Boards, a board and Ideas, structured idea fields, board archive | `SPEC/sprints/sprint-10-comp-r-phase-1.md` | Not started (planned 2026-09-27) | Large |
+| 11 | Comp R iteration — Graphite and the denser controls, tag colours and Settings → Tags, the effort bar, the Sprint board and the Roadmap | `SPEC/sprints/sprint-11-comp-r-iteration.md` | Not started (planned 2026-09-28; questions answered the same day) | Large |
 
 **Comp R work (added 2026-09-27, `SPEC/decisions.md` "One list and detail pattern").** Three phases, in
 order: **phase 1** — themes, the list and detail pattern on Boards, a board and Ideas, the structured
@@ -54,6 +55,16 @@ idea fields with their backfill, board archive and the two-`h1` fix — is **Spr
 `SPEC/sprints/sprint-10-comp-r-phase-1.md` (Not started); **phase 2** is the TypeScript prompt-eval
 runner; **phase 3** is idea assistant v2 (`20-feature-ai-idea-assist-v2.md`). Settings and Delivery
 lists move to the pattern afterwards. The Bug Triage exception for this work is recorded in the same
-decision.
+decision. *Superseded in part 2026-09-28 (`SPEC/decisions.md`, "The comp R iteration's open questions
+are answered"): Sprint 11, the comp R iteration, goes first after phase 1; phases 2 and 3 keep their
+order after it; Settings → Tags and the Delivery screens move to the pattern in Sprint 11.*
+
+**Comp R's 2026-09-28 iteration** (`SPEC/decisions.md` 2026-09-28) is **Sprint 11**,
+`SPEC/sprints/sprint-11-comp-r-iteration.md`: Graphite replacing Notte, the denser form and control
+layout, tag colours with Settings → Tags, the effort bar, and the Sprint board and Roadmap on comp R.
+It runs first, then the prompt-eval runner, then idea assistant v2 (answered 2026-09-28). The
+Roadmap is built without its Outcomes backend, which is a later sprint's. Settings → Tags is the
+first Settings entity on the pattern. The Bug Triage exception for it is conditional on slice 106
+fixing the `db:seed` `P2002` swimlane item.
 
 Update the Status column here whenever a sprint file's own `Status:` line changes (Not started → In Progress → Complete), and move the file to `SPEC/sprints/archive/` once Complete.
