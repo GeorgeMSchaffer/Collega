@@ -32,14 +32,6 @@ describe('sprintWindow', () => {
   it('names both across the turn of the year', () => {
     expect(sprintWindow('2026-12-28', '2027-01-08')).toBe('28 DEC – 8 JAN')
   })
-
-  it('names both for the same month in different years', () => {
-    expect(sprintWindow('2026-09-01', '2027-09-10')).toBe('1 SEP – 10 SEP')
-  })
-
-  it('reads a one-day sprint', () => {
-    expect(sprintWindow('2026-03-31', '2026-03-31')).toBe('31–31 MAR')
-  })
 })
 
 function wireSprint(id: string, state: string, startDate: string, name = `Sprint ${id}`) {

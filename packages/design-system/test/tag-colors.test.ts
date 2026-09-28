@@ -105,7 +105,8 @@ describe('mixSrgb', () => {
 })
 
 /**
- * `CHIP_THEMES` and `THEME_NAMES` are copies of values that live elsewhere; the contrast guarantee
+ * `CHIP_THEMES` is a copy of values that live in `globals.css` (`THEME_NAMES` is checked against the
+ * web app's picker in `apps/web/test/theme-names.test.ts`); the contrast guarantee
  * above only holds while they match their sources.
  */
 describe('the chip themes match their sources', () => {
@@ -125,12 +126,5 @@ describe('the chip themes match their sources', () => {
 
   it('the bare :root is Terrazzo, which is the chip’s base colour set', () => {
     expect(css).toMatch(/:root,\s*:root\[data-theme="terrazzo"\]\s*\{/)
-  })
-
-  it('names exactly the themes the web app’s picker offers, in the same order', () => {
-    const source = readFileSync(new URL('../../../apps/web/lib/theme.ts', import.meta.url), 'utf8')
-    const themes = source.slice(source.indexOf('export const THEMES'), source.indexOf('] as const'))
-    const values = [...themes.matchAll(/value:\s*'([a-z]+)'/g)].map((match) => match[1])
-    expect(values).toEqual([...THEME_NAMES])
   })
 })

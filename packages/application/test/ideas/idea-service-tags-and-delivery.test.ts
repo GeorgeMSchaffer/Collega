@@ -79,22 +79,24 @@ describe('IdeaService inline tag creation takes a random palette colour', () => 
   it('on CSV import, for each new tag in the row', async () => {
     const random = drawing(9)
     const h = harness({ currentUser: member(ORG_A, AUTHOR), tags: [EXISTING], random })
-    const row: IdeaImportRow = {
-      rowNumber: 1,
+    // One tag per row, so the test holds whatever the Tags cell's delimiter turns out to be (the
+    // spec says a pipe; the parser splits on commas - an open follow-up).
+    const rows: IdeaImportRow[] = ['Alpha', 'Existing', 'Beta'].map((tags, index) => ({
+      rowNumber: index + 1,
       cells: new Map(
         Object.entries({
-          title: 'Imported',
+          title: `Imported ${index + 1}`,
           priority: 'Medium',
           'idea type': 'Improvement',
           'business impact': 'Medium',
-          tags: 'Alpha, Existing, Beta',
+          tags,
         }),
       ),
-    }
+    }))
 
-    const result = await h.service.importBoardIdeas(BOARD_A, [row])
+    const result = await h.service.importBoardIdeas(BOARD_A, rows)
 
-    expect(result.createdCount).toBe(1)
+    expect(result.createdCount).toBe(3)
     expect(h.createdTags.map((t) => [t.name, t.color])).toEqual([
       ['Alpha', '#94A3B8'],
       ['Beta', '#94A3B8'],
