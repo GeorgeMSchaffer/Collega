@@ -30,6 +30,8 @@ const OPTIONS: IdeaFormOptions = {
   businessImpacts: [{ id: 'impact-med', name: 'Medium' }],
 }
 
+const TYPE_FIELDS = OPTIONS.ideaTypes[0]?.fields ?? []
+
 function idea(overrides: Partial<IdeaDetail> = {}): IdeaDetail {
   return {
     id: 'idea-1',
@@ -58,6 +60,7 @@ function idea(overrides: Partial<IdeaDetail> = {}): IdeaDetail {
     createdOn: '27 Sep 2026',
     mentionEmails: [],
     fieldValues: [],
+    formFields: TYPE_FIELDS.map((field) => ({ ...field, value: '' })),
     comments: [],
     ...overrides,
   }
@@ -90,21 +93,13 @@ beforeEach(() => {
 })
 
 describe('IdeaForm Boolean custom field', () => {
-  it.each([
-    ['Yes', 'true'],
-    ['No', 'false'],
-    ['', ''],
-  ])('reads a stored %j as the option %j and sends it back as such', async (stored, value) => {
+  it.each(['true', 'false', ''])('reads a stored %j and sends it back unchanged', async (value) => {
     const { form } = renderForm(
       idea({
-        fieldValues: [
-          {
-            fieldDefinitionId: 'f-safety',
-            name: 'Safety critical',
-            fieldType: 'Boolean',
-            value: stored,
-          },
-        ],
+        formFields: TYPE_FIELDS.map((field) => ({
+          ...field,
+          value: field.id === 'f-safety' ? value : '',
+        })),
       }),
     )
     const select = screen.getByLabelText('Safety critical (optional)') as HTMLSelectElement
@@ -132,30 +127,71 @@ describe('IdeaForm with an archived Idea Type', () => {
     idea({
       ideaTypeId: 'type-gone',
       ideaType: 'Kaizen',
-      fieldValues: [
-        { fieldDefinitionId: 'f-old', name: 'Old field', fieldType: 'Text', value: 'kept' },
+      formFields: [
+        {
+          id: 'f-old',
+          name: 'Old field',
+          fieldType: 'Text',
+          required: false,
+          options: [],
+          value: 'kept',
+        },
       ],
     })
 
-  it('explains that the custom fields cannot be edited and will be left as they are', () => {
+  it("shows the idea's own fields, editable, although the catalog no longer lists the type", () => {
     renderForm(archived())
-    expect(screen.getByText(/This idea type is archived/)).toBeTruthy()
     expect(screen.getByText('Kaizen fields')).toBeTruthy()
+    const input = screen.getByLabelText('Old field (optional)') as HTMLInputElement
+    expect(input.value).toBe('kept')
+    expect(input.readOnly).toBe(false)
   })
 
-  it('sends fieldValues null so the stored values are untouched', async () => {
+  it('sends its fields back, edited', async () => {
     const { form } = renderForm(archived())
+    fireEvent.change(screen.getByLabelText('Old field (optional)'), { target: { value: 'moved' } })
     submit(form)
     await waitFor(() => expect(saveIdea).toHaveBeenCalled())
-    expect(sent().fieldValues).toBeNull()
+    expect(sent().fieldValues).toEqual([{ fieldDefinitionId: 'f-old', value: 'moved' }])
     expect(sent().ideaTypeId).toBe('type-gone')
   })
+})
 
-  it('still sends the custom fields for an active type', async () => {
-    const { form } = renderForm(idea())
+describe('IdeaForm choice fields', () => {
+  const withChoices = () =>
+    idea({
+      formFields: [
+        {
+          id: 'f-areas',
+          name: 'Areas',
+          fieldType: 'MultiSelect',
+          required: false,
+          options: [
+            { id: 'o-weld', label: 'Welding, cutting', archived: false },
+            { id: 'o-paint', label: 'Paint', archived: false },
+            { id: 'o-gone', label: 'o-gone', archived: true },
+          ],
+          value: 'o-weld,o-gone',
+        },
+      ],
+    })
+
+  it('sends stored option ids back unchanged, a label with a comma included', async () => {
+    const { form } = renderForm(withChoices())
+    expect((screen.getByLabelText('Welding, cutting') as HTMLInputElement).checked).toBe(true)
     submit(form)
     await waitFor(() => expect(saveIdea).toHaveBeenCalled())
-    expect(Array.isArray(sent().fieldValues)).toBe(true)
+    expect(sent().fieldValues).toEqual([{ fieldDefinitionId: 'f-areas', value: 'o-weld,o-gone' }])
+  })
+
+  it('shows an archived option only while it is selected', () => {
+    renderForm(withChoices())
+    const archivedOption = screen.getByLabelText('o-gone (archived)') as HTMLInputElement
+    expect(archivedOption.checked).toBe(true)
+
+    fireEvent.click(archivedOption)
+    expect(screen.queryByLabelText('o-gone (archived)')).toBeNull()
+    expect(screen.getByLabelText('Paint')).toBeTruthy()
   })
 })
 

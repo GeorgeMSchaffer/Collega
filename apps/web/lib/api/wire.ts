@@ -217,13 +217,33 @@ export type WireStatus = {
  * `fieldMode` is `AllActiveFields` or `Curated` (`SPEC/30-Contracts.md` "Idea-Type Field
  * Contracts"), and `fields` carries the curated selection — empty for an `AllActiveFields` type,
  * which shows every active field in the organization instead of a chosen subset.
+ *
+ * `effectiveFields` is what the mode resolves to — the fields an idea of this type shows, in form
+ * order, with this type's required flags — as the API's own rule decides it.
  */
 export type WireIdeaType = {
   ideaTypeId: string
   name: string
   fieldMode: string
   fields: readonly { fieldDefinitionId: string; displayOrder: number; isRequired: boolean }[]
+  effectiveFields: readonly WireEffectiveField[]
 }
+
+/** One of a type's effective fields. `options` is empty unless it is a Dropdown or MultiSelect. */
+export type WireEffectiveField = {
+  fieldDefinitionId: string
+  name: string
+  fieldType: string
+  isRequired: boolean
+  options: readonly { optionId: string; label: string; isArchived?: true }[]
+}
+
+/**
+ * One of an idea's own fields on its detail: the effective field plus `value` in the form the write
+ * takes (`true`/`false`, option ids, `YYYY-MM-DD`), or `null` when unset. An option the idea still
+ * stores but the field no longer offers is listed with `isArchived`.
+ */
+export type WireIdeaFormField = WireEffectiveField & { value: string | null }
 
 /**
  * `GET /organizations/{id}/field-definitions`.
@@ -315,6 +335,8 @@ export type WireIdeaDetail = {
   comments: readonly WireIdeaComment[]
   /** Dropdown and MultiSelect values arrive as option labels, not ids. */
   fieldValues: readonly WireIdeaFieldValue[]
+  /** The same fields for editing, resolved from the idea's type even when it is archived. */
+  formFields: readonly WireIdeaFormField[]
   upvoteCount: number
   hasUpvoted: boolean
   commentCount: number

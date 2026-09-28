@@ -10,17 +10,16 @@
  * the ten rows that happened to arrive.
  */
 
-import { toIdea, toIdeaDetail } from '../api/adapt'
+import { toIdea, toIdeaDetail, toIdeaFormField } from '../api/adapt'
 import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type {
   WireBusinessImpact,
-  WireFieldDefinition,
   WireIdeaDetail,
   WireIdeaListItem,
   WireIdeaType,
   WirePage,
 } from '../api/wire'
-import type { IdeaDetail, IdeaFormField, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
+import type { IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
 
@@ -105,13 +104,8 @@ export async function getBoardIdeaList(boardId: string, query: IdeaListQuery): P
 }
 
 /**
- * What the idea form offers: Business Impact, Idea Type, and each type's custom fields.
- *
- * Which fields a type shows is `resolveEffectiveFields` in `packages/domain`, transcribed because
- * `apps/web` cannot import it: an `AllActiveFields` type shows every active field in display order
- * with the field's own required flag; a `Curated` type shows its selection in its own order with its
- * own required flags. The API validates the submission against the same rule, so a drift here shows
- * up as a field-keyed 400, not as a wrong write.
+ * What the idea form offers: Business Impact, Idea Type, and each type's custom fields as the API
+ * resolves them (`effectiveFields`), in form order with that type's required flags.
  */
 export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
   failIfRequested('getIdeaFormOptions')
@@ -119,7 +113,7 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
   const scope = organizationScope()
   if (scope === null) return { ideaTypes: [], businessImpacts: [] }
 
-  const [ideaTypes, businessImpacts, fields] = await Promise.all([
+  const [ideaTypes, businessImpacts] = await Promise.all([
     apiGet<readonly WireIdeaType[]>(
       'getIdeaFormOptions',
       apiPath`/organizations/${scope}/idea-types`,
@@ -128,41 +122,13 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
       'getIdeaFormOptions',
       apiPath`/organizations/${scope}/business-impacts`,
     ),
-    apiGet<readonly WireFieldDefinition[]>(
-      'getIdeaFormOptions',
-      apiPath`/organizations/${scope}/field-definitions`,
-    ),
   ])
-
-  const byName = (a: WireFieldDefinition, b: WireFieldDefinition) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-  const toField = (field: WireFieldDefinition, required: boolean): IdeaFormField => ({
-    id: field.fieldDefinitionId,
-    name: field.name,
-    fieldType: field.fieldType,
-    required,
-    options: [...field.options]
-      .sort((a, b) => a.displayOrder - b.displayOrder)
-      .map((option) => ({ id: option.optionId, label: option.label })),
-  })
-  const fieldsById = new Map(fields.map((field) => [field.fieldDefinitionId, field]))
 
   return {
     ideaTypes: ideaTypes.map((type) => ({
       id: type.ideaTypeId,
       name: type.name,
-      fields:
-        type.fieldMode === 'Curated'
-          ? [...type.fields]
-              .flatMap((link) => {
-                const field = fieldsById.get(link.fieldDefinitionId)
-                return field ? [{ link, field }] : []
-              })
-              .sort((a, b) => a.link.displayOrder - b.link.displayOrder || byName(a.field, b.field))
-              .map(({ link, field }) => toField(field, link.isRequired))
-          : [...fields]
-              .sort((a, b) => a.displayOrder - b.displayOrder || byName(a, b))
-              .map((field) => toField(field, field.isRequired)),
+      fields: type.effectiveFields.map(toIdeaFormField),
     })),
     businessImpacts: businessImpacts.map((impact) => ({
       id: impact.businessImpactId,

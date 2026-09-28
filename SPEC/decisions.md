@@ -25,6 +25,11 @@ stay, and the older one is marked.
   over a per-type endpoint (a request per type picked, same Edit problem).
 - The domain resolver stays the single source of truth; the API now exposes its result instead of
   the browser copying it.
+- **A removed option is kept until unticked.** Options are hard-deleted, so an idea can store an
+  option id its field no longer offers. An edit may keep such an id (the save validates against the
+  idea's stored values as well as the current options) but may not add one; the form shows it,
+  labelled by its id, only while it is selected. Chosen over soft-deleting options, which needs a
+  schema amendment, and over silently dropping the value on the next save.
 
 ---
 

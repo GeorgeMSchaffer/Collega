@@ -34,27 +34,7 @@ type Draft = {
   fields: Record<string, string>
 }
 
-/**
- * The detail answers a value as a reader would say it — a Boolean as Yes or No, a Dropdown or
- * MultiSelect as option labels — and the write takes `true`/`false` and option ids.
- */
-function storedToInput(field: IdeaFormField, value: string): string {
-  if (field.fieldType === 'Boolean') return value === 'Yes' ? 'true' : value === 'No' ? 'false' : ''
-  if (field.fieldType !== 'Dropdown' && field.fieldType !== 'MultiSelect') return value
-  const ids = value
-    .split(', ')
-    .map((label) => field.options.find((option) => option.label === label)?.id)
-    .filter((id): id is string => id !== undefined)
-  return ids.join(',')
-}
-
-function initialDraft(
-  idea: IdeaDetail | null,
-  boardId: string | null,
-  options: IdeaFormOptions,
-): Draft {
-  const type = options.ideaTypes.find((t) => t.id === idea?.ideaTypeId)
-  const stored = new Map(idea?.fieldValues.map((f) => [f.fieldDefinitionId, f.value]) ?? [])
+function initialDraft(idea: IdeaDetail | null, boardId: string | null): Draft {
   return {
     boardId: idea?.boardId ?? boardId ?? '',
     title: idea?.title ?? '',
@@ -67,12 +47,7 @@ function initialDraft(
     businessImpactId: idea?.businessImpactId ?? '',
     dueDate: idea?.dueDate ?? '',
     tags: idea?.tags.join(', ') ?? '',
-    fields: Object.fromEntries(
-      (type?.fields ?? []).map((field) => [
-        field.id,
-        storedToInput(field, stored.get(field.id) ?? ''),
-      ]),
-    ),
+    fields: Object.fromEntries(idea?.formFields.map((field) => [field.id, field.value]) ?? []),
   }
 }
 
@@ -118,7 +93,7 @@ export function IdeaForm({
   onPendingChange: (pending: boolean) => void
 }) {
   const id = useId()
-  const [draft, setDraft] = useState(() => initialDraft(idea, boardId, options))
+  const [draft, setDraft] = useState(() => initialDraft(idea, boardId))
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -127,10 +102,9 @@ export function IdeaForm({
 
   const editing = idea !== null
   const type = options.ideaTypes.find((t) => t.id === draft.ideaTypeId)
-  const customFields = type?.fields ?? []
-  // An idea whose type has since been archived: the catalog lists active types only, so its fields
-  // are unknown here, and the save leaves their values untouched rather than clearing them.
-  const archivedType = editing && !type
+  // The type is fixed once created, so an edit shows the idea's own fields, which the detail
+  // resolves even when the type has since been archived and left the catalog.
+  const customFields = idea ? idea.formFields : (type?.fields ?? [])
   const openBoards = boards?.filter((board) => !board.isArchived) ?? null
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
@@ -194,12 +168,10 @@ export function IdeaForm({
           .filter(Boolean),
         assigneeUserIds: idea?.assignees.map((person) => person.id) ?? [],
         mentionEmails: idea?.mentionEmails ?? [],
-        fieldValues: archivedType
-          ? null
-          : customFields.map((field) => ({
-              fieldDefinitionId: field.id,
-              value: draft.fields[field.id] ?? '',
-            })),
+        fieldValues: customFields.map((field) => ({
+          fieldDefinitionId: field.id,
+          value: draft.fields[field.id] ?? '',
+        })),
       })
       if (result.ok) {
         onSaved(result.ideaId)
@@ -434,18 +406,9 @@ export function IdeaForm({
 
       <fieldset className="m-0 flex flex-col border-0 border-t p-0 pt-3">
         <legend className="float-left mb-3 w-full text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {type
-            ? `${type.name} fields`
-            : archivedType
-              ? `${idea?.ideaType} fields`
-              : 'Custom fields'}
+          {idea ? `${idea.ideaType} fields` : type ? `${type.name} fields` : 'Custom fields'}
         </legend>
-        {archivedType ? (
-          <p className="m-0 mb-4 text-xs text-muted-foreground">
-            This idea type is archived, so its custom fields can’t be edited here. Saving leaves
-            their values as they are.
-          </p>
-        ) : !type ? (
+        {!idea && !type ? (
           <p className="m-0 mb-4 text-xs text-muted-foreground">
             Pick an Idea Type to see its custom fields.
           </p>
@@ -544,7 +507,10 @@ function SolutionsField({
   )
 }
 
-/** One custom field, as its type asks to be entered. */
+const optionLabel = (option: IdeaFormField['options'][number]) =>
+  option.archived ? `${option.label} (archived)` : option.label
+
+/** One custom field, as its type asks to be entered. Archived options show only while chosen. */
 function CustomField({
   id,
   field,
@@ -565,8 +531,10 @@ function CustomField({
     'aria-invalid': error ? true : undefined,
   }
 
+  const chosen = value ? value.split(',') : []
+  const options = field.options.filter((option) => !option.archived || chosen.includes(option.id))
+
   if (field.fieldType === 'MultiSelect') {
-    const chosen = value ? value.split(',') : []
     return (
       <fieldset
         className="m-0 mb-4 border-0 p-0"
@@ -575,7 +543,7 @@ function CustomField({
       >
         <legend className="mb-1.5 text-[length:var(--label-size)] font-medium">{label}</legend>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
-          {field.options.map((option, index) => (
+          {options.map((option, index) => (
             <label key={option.id} className="m-0 inline-flex items-center gap-1.5 font-normal">
               <input
                 type="checkbox"
@@ -590,7 +558,7 @@ function CustomField({
                   )
                 }
               />
-              {option.label}
+              {optionLabel(option)}
             </label>
           ))}
         </div>
@@ -614,9 +582,9 @@ function CustomField({
               <option value="false">No</option>
             </>
           ) : (
-            field.options.map((option) => (
+            options.map((option) => (
               <option key={option.id} value={option.id}>
-                {option.label}
+                {optionLabel(option)}
               </option>
             ))
           )}

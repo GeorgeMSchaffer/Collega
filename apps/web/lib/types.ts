@@ -394,13 +394,16 @@ export type IdeaFormOptions = {
  * A custom field as the form renders it. `fieldType` is the API's own spelling (`Text`, `Url`,
  * `Number`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`); a Dropdown or MultiSelect value is sent
  * as option ids, comma-separated for MultiSelect.
+ *
+ * An `archived` option is one the field no longer offers but the idea being edited still holds; the
+ * form shows it only while it is selected.
  */
 export type IdeaFormField = {
   id: string
   name: string
   fieldType: string
   required: boolean
-  options: { id: string; label: string }[]
+  options: { id: string; label: string; archived: boolean }[]
 }
 
 /** The query behind a page of ideas — the list state, in the API's terms. */
@@ -472,6 +475,8 @@ export type IdeaDetail = Idea & {
   createdOn: string
   mentionEmails: string[]
   fieldValues: { fieldDefinitionId: string; name: string; fieldType: string; value: string }[]
+  /** The idea's own custom fields for the edit form, each with its stored value in write form. */
+  formFields: (IdeaFormField & { value: string })[]
   comments: Comment[]
 }
 

@@ -414,6 +414,7 @@ export class IdeaService {
         organizationId: idea.organizationId,
         ideaTypeId: idea.ideaTypeId,
         submitted: command.fieldValues ?? [],
+        stored: idea.fieldValues,
       })
     }
 
@@ -1319,6 +1320,11 @@ export class IdeaService {
       ideaTypeId: idea.ideaTypeId,
       stored: idea.fieldValues,
     })
+    const formFields = await this.fieldValues.describeFormFields({
+      organizationId: idea.organizationId,
+      ideaTypeId: idea.ideaTypeId,
+      stored: idea.fieldValues,
+    })
 
     const mentions: readonly MentionDto[] = mentionUserIds.flatMap((id) => {
       const user = userLookup.get(id)
@@ -1376,6 +1382,7 @@ export class IdeaService {
       hasUpvoted: upvoted.has(idea.id),
       commentCount,
       fieldValues,
+      formFields,
       author: this.projectAuthor(idea, userLookup),
       createdAtUtc: idea.createdAtUtc,
     }
