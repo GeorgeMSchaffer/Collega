@@ -24,6 +24,14 @@ const DATABASE_URL = e2eDatabaseUrl()
 const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_PATH
 
 /**
+ * The two ports, 3000 and 3001 unless overridden - so the suite can run beside a `pnpm dev` (or
+ * another checkout's run) that already holds them. `reuseExistingServer` would otherwise quietly
+ * drive whatever app answers there, against whatever database it has.
+ */
+const WEB_PORT = process.env.COLLEGA_E2E_WEB_PORT?.trim() || '3000'
+const API_PORT = process.env.COLLEGA_E2E_API_PORT?.trim() || '3001'
+
+/**
  * Collega browser E2E. Drives the whole application - `apps/web` on :3000 against `apps/api` on
  * :3001 - both started by Playwright, so `pnpm test:e2e` needs nothing running beforehand.
  *
@@ -56,7 +64,7 @@ export default defineConfig({
   // declaration order; an ordinary run keeps just the list.
   reporter: process.env.COLLEGA_E2E_VIDEO === 'on' ? [['list'], ['json']] : [['list']],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: `http://localhost:${WEB_PORT}`,
     headless: true,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -113,13 +121,13 @@ export default defineConfig({
       cwd: '..',
       // Health depends on nothing, so it answers the moment the host is listening - which is what
       // makes it the right readiness probe rather than a route that needs the database.
-      url: 'http://localhost:3001/api/v1/health',
+      url: `http://localhost:${API_PORT}/api/v1/health`,
       timeout: 120_000,
       reuseExistingServer: !process.env.CI,
       stdout: 'ignore',
       stderr: 'pipe',
       env: {
-        PORT: '3001',
+        PORT: API_PORT,
         DATABASE_URL,
         NODE_ENV: 'test',
         // Deterministic across runs, and never a real key: the token this signs lives for the
@@ -139,17 +147,28 @@ export default defineConfig({
       //
       // `dev` rather than `build && start`: a cold production build costs more than it buys, and
       // the screens render the same either way.
-      command: 'pnpm exec turbo run dev --filter=@collega/web',
+      //
+      // On other ports the app is started the way `tools/local/start.ts` starts it: turbo's strict
+      // environment would drop the COLLEGA_API_URL below, and the web app would then quietly call
+      // whatever API holds :3001.
+      command:
+        WEB_PORT === '3000' && API_PORT === '3001'
+          ? 'pnpm exec turbo run dev --filter=@collega/web'
+          : `pnpm exec turbo run build --filter=@collega/design-system && pnpm --filter @collega/web exec next dev --port ${WEB_PORT}`,
       cwd: '..',
-      url: 'http://localhost:3000/login',
+      url: `http://localhost:${WEB_PORT}/login`,
       timeout: 120_000,
       reuseExistingServer: !process.env.CI,
       stdout: 'ignore',
       stderr: 'pipe',
-      // No COLLEGA_API_URL: `apps/web/lib/api/config.ts` defaults to this exact address, and setting
-      // it here would hide the day that default stops being right. `tools/local/start.ts` makes the
-      // same choice for the same reason.
-      env: { PORT: '3000', NODE_ENV: 'test' },
+      // No COLLEGA_API_URL on the default ports: `apps/web/lib/api/config.ts` defaults to this exact
+      // address, and setting it here would hide the day that default stops being right.
+      // `tools/local/start.ts` makes the same choice for the same reason.
+      env: {
+        PORT: WEB_PORT,
+        NODE_ENV: 'test',
+        ...(API_PORT === '3001' ? {} : { COLLEGA_API_URL: `http://127.0.0.1:${API_PORT}/api/v1` }),
+      },
     },
   ],
 })
