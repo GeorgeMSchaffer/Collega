@@ -63,11 +63,8 @@ export function BoardDrawer({
     async (_previous: Outcome, data: FormData): Promise<Outcome> => {
       const boardId = form?.boardId ?? null
       const save = boardId === null ? createBoardInPlace : saveBoardInPlace
-      const result = await save({ error: null, saved: false }, data)
-      if (result.saved) {
-        if (boardId) onView(boardId)
-        else onClose()
-      }
+      const result = await save({ error: null, savedId: null }, data)
+      if (result.savedId) onView(result.savedId)
       return { error: result.error, formKey }
     },
     IDLE,

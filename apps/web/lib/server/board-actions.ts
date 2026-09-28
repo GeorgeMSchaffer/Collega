@@ -22,7 +22,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { ApiError, apiPath, apiPost, apiPut } from '../api/client'
+import { ApiError, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
 import { actingOrganizationId } from './current-user'
 
 /**
@@ -34,8 +34,8 @@ import { actingOrganizationId } from './current-user'
  */
 export type BoardFormState = { error: string | null }
 
-/** The drawer's form. `saved` is its cue to move on, since nothing redirects it. */
-export type BoardDrawerState = { error: string | null; saved: boolean }
+/** The drawer's form. `savedId` is the board written, its cue to move on: nothing redirects it. */
+export type BoardDrawerState = { error: string | null; savedId: string | null }
 
 function refusal(error: unknown): string {
   if (error instanceof ApiError) {
@@ -80,26 +80,34 @@ function boardBody(form: FormData): {
   }
 }
 
-/** Creates the board, answering the refusal to show or `null` once it is written. */
-async function create(form: FormData): Promise<string | null> {
+/** Creates the board, answering its id, or the refusal to show. */
+async function create(form: FormData): Promise<{ boardId: string } | { error: string }> {
   const organizationId = await actingOrganizationId()
   if (organizationId === null) {
-    return (
-      'A Site Admin belongs to no organization, so there is no organization to create a board ' +
-      'in. Use View As to act as an administrator of one.'
-    )
+    return {
+      error:
+        'A Site Admin belongs to no organization, so there is no organization to create a board ' +
+        'in. Use View As to act as an administrator of one.',
+    }
   }
 
+  let boardId: string
   try {
-    await apiPost(apiPath`/organizations/${organizationId}/boards`, boardBody(form))
+    // The exception `apiPostReturning` exists for: the drawer opens the new board next, and its id
+    // exists nowhere until this answers.
+    const created = await apiPostReturning<{ boardId: string }>(
+      apiPath`/organizations/${organizationId}/boards`,
+      boardBody(form),
+    )
+    boardId = created.boardId
   } catch (error) {
-    return refusal(error)
+    return { error: refusal(error) }
   }
 
   // The sidebar's board count and the workspace list both change, and both are rendered above this
   // route rather than by it, so the page alone is not enough.
   revalidatePath('/', 'layout')
-  return null
+  return { boardId }
 }
 
 /** Saves the board, answering the refusal to show or `null` once it is written. */
@@ -124,13 +132,10 @@ export async function createBoard(
   _previous: BoardFormState,
   form: FormData,
 ): Promise<BoardFormState> {
-  const error = await create(form)
-  if (error !== null) return { error }
+  const result = await create(form)
+  if ('error' in result) return result
 
   // `redirect` signals by throwing, so it must be the last thing and must not sit inside a `try`.
-  // Back to the list rather than into the new board: `apiPost` discards the response, so the id it
-  // answered with is not in hand, and re-reading it to navigate would be a request for a number
-  // the list is about to show anyway.
   redirect('/settings/boards')
 }
 
@@ -147,8 +152,10 @@ export async function createBoardInPlace(
   _previous: BoardDrawerState,
   form: FormData,
 ): Promise<BoardDrawerState> {
-  const error = await create(form)
-  return { error, saved: error === null }
+  const result = await create(form)
+  return 'error' in result
+    ? { error: result.error, savedId: null }
+    : { error: null, savedId: result.boardId }
 }
 
 export async function saveBoardInPlace(
@@ -156,7 +163,7 @@ export async function saveBoardInPlace(
   form: FormData,
 ): Promise<BoardDrawerState> {
   const error = await save(form)
-  return { error, saved: error === null }
+  return { error, savedId: error === null ? String(form.get('boardId') ?? '') : null }
 }
 
 /**
