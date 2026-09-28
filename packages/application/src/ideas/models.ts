@@ -123,7 +123,6 @@ export type IssueProvenance = {
  * sprint board can reuse the board card as the spec requires. */
 export type DeliveryCard = IdeaListItem & {
   readonly phase: IdeaPhase
-  readonly effort: EffortLevel | null
   readonly deliveryStatus: DeliveryStatus | null
   readonly sprint: IssueSprintSummary | null
   readonly taskSummary: IssueTaskSummary
@@ -291,6 +290,7 @@ export type IdeaListItem = {
   readonly tagNames: readonly string[]
   /** The same tags as `tagNames`, in the same order. */
   readonly tags: readonly IdeaTagDto[]
+  readonly effort: EffortLevel | null
   readonly statusId: string
   readonly statusName: string
   readonly upvoteCount: number

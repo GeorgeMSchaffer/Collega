@@ -781,6 +781,30 @@ export class IdeaService {
     return this.projectDeliveryCards(organizationId, ideas)
   }
 
+  /**
+   * One Issue's delivery card, composed by `projectDeliveryCards` like the list's, so the two
+   * cannot differ. Readable as the list is. A missing, soft-deleted, Discovery-phase or
+   * out-of-scope idea is a 404 - never 403, as throughout delivery.
+   */
+  async getDelivery(ideaId: string): Promise<DeliveryCard> {
+    this.requireAuthenticatedRole()
+
+    const idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+    if (idea.phase !== IdeaPhase.Delivery) {
+      throw new NotFoundError('Idea not found.')
+    }
+
+    const [card] = await this.projectDeliveryCards(idea.organizationId, [idea])
+    if (!card) {
+      throw new NotFoundError('Idea not found.')
+    }
+    return card
+  }
+
   async delete(ideaId: string): Promise<void> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
     ensureNotDirectSiteAdmin(this.currentUser)
@@ -1192,6 +1216,7 @@ export class IdeaService {
       assignees: this.projectAssignees(idea, userLookup),
       tagNames: this.projectTagNames(idea, tagLookup),
       tags: this.projectTags(idea, tagLookup),
+      effort: idea.effort,
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
       upvoteCount: upvoteCounts.get(idea.id) ?? 0,
@@ -1242,7 +1267,6 @@ export class IdeaService {
         {
           ...card,
           phase: idea.phase,
-          effort: idea.effort,
           deliveryStatus: idea.deliveryStatus,
           sprint: sprint
             ? {
