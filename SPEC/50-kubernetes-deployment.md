@@ -1,5 +1,15 @@
 # Collega Kubernetes deployment plan
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** SUPERSEDED — Helm/Kubernetes plan for the frozen .NET stack; never built, never deployed.
+>   Kept for its cost model, topology and database/secret reasoning.
+> - **Key rules:** superseded by `SPEC/50-vercel-deployment.md` (Vercel + Prisma Postgres, ticket `02`);
+>   nothing here is a build instruction.
+> - **Contracts:** none
+> - **Decisions:** 2026-09-03 "The conversion's remaining gates: net-new scope, the test suite, and where it
+>   deploys"; 2026-09-04 "Sprint 8 is cancelled: the .NET stack is never deployed"; 2026-09-06 "The .NET
+>   stack is frozen; its code and instructions are no longer applicable"
+
 > ## ⛔ SUPERSEDED — describes the frozen .NET stack
 >
 > This document plans the deployment of `src/Collega.*`, which is **frozen and never deployed**:

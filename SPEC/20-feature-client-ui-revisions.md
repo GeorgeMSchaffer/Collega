@@ -1,5 +1,15 @@
 # Feature: Client UI Revisions (Bugs and Tweaks)
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** a 2026-07/08 batch of client bug fixes and layout revisions for the Blazor client; its rail,
+>   drawers and Boards page are superseded (D6, 2026-09-27); `20-feature-client-ui.md` is authoritative.
+> - **Key rules:** logout is route-based via `/logout` (D2); the unauthenticated shell shows only Login and
+>   Register (D3); Admin is renamed Settings, `/admin` returns 404; Home is D4's richer dashboard (D1
+>   superseded); list pages search and paginate server-side, 25/50/100/250, default 25.
+> - **Contracts:** contracts/auth.md
+> - **Decisions:** 2026-09-03 "Comp P is the canonical comp; the client is built on Tailwind CSS + shadcn/ui";
+>   2026-09-27 "Desk screens use the full width, and the Boards screens carry the board actions"
+
 ## Purpose
 
 Defines a batch of client UI bug fixes and structural revisions covering layout, navigation, the Settings (formerly Admin) area, list-page conventions, and removal of template placeholder code. Decisions were captured via QA interviews on 2026-07-30 and 2026-07-31.

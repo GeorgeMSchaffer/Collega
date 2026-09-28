@@ -1,5 +1,16 @@
 # Collega — Product Definition (DERIVED — NOT CANONICAL)
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** derived, not canonical: what the product is, its personas, user stories and delivery state,
+>   generated 2026-09-14; do not implement from it; the canonical spec wins where they differ.
+> - **Key rules:** Site Admin mutates org content only through View As, bootstrap admin stays direct
+>   (§2.2); statuses keep ≥2 active, Idea Type / Business Impact ≥1 (§3); an Issue is the same row as its
+>   Idea (Epic 10); §7 delivery counts are pinned to `a2bbbc3`, the tracker outranks it.
+> - **Contracts:** none of its own (derived; it cites `30-Contracts.md`)
+> - **Decisions:** 2026-09-11 "The golden replay is not a gate, and never was meant to be one";
+>   2026-09-02 "Outcome ↔ Issue cardinality: single-parent"; 2026-09-08 "Wave G is cut from the conversion
+>   and revisited after cutover"
+
 > ⚠️ **This file is a derived, consolidated view. It is not a source of truth and it is not maintained in lockstep with the canonical specs.**
 >
 > - **Do not implement from this file.** Read the canonical spec for the area you are changing (`SPEC/README.MD` indexes them; `SPEC/30-Contracts.md` is authoritative for endpoints and payloads).

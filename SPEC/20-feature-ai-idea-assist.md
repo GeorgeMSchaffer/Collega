@@ -1,5 +1,15 @@
 # Feature: AI-Assisted Idea Drafting (Idea Brainstorm Chat)
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** v1 brainstorm chat, built and live; authoritative for it until v2 ships, superseded for new
+>   work by `20-feature-ai-idea-assist-v2.md`.
+> - **Key rules:** only from New Idea (1); 20 transcript entries (5, 5a); off-topic turns dropped, three
+>   close the chat (8, 10); per-request schema enums of the org's ids (15-17); never a write path (23);
+>   `429` not `503` for rate limits (26d); daily budget (28a); one deployment key, no per-org keys (29-30).
+> - **Contracts:** contracts/ai-assist.md
+> - **Decisions:** 2026-09-13 "The AI integration is rescoped and respecified after the current batch";
+>   2026-09-27 "The idea assistant is rescoped as a co-author, and ideas gain structured fields"
+
 **Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/sprint-07-ai-idea-assist.md`) — after the Postgres migration (Sprint 5) and View As (Sprint 6), before Azure deployment (Sprint 8). Design decisions locked 2026-08-11 by user interview; `Anthropic` NuGet package approved by the user the same day.
 
 > **Superseded for new work by `20-feature-ai-idea-assist-v2.md` (2026-09-27).** That is the

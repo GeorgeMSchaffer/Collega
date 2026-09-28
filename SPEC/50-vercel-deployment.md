@@ -1,5 +1,16 @@
 # 50 — Vercel Deployment
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** canonical deployment spec for the TypeScript stack — two Vercel projects, Prisma Postgres.
+>   Repo config committed and exercised locally; the Vercel side is stated as unverified (§11).
+> - **Key rules:** web and api are two projects; the browser never calls the API, so never add CORS (§1, §4).
+> - The API build runs `prisma migrate deploy`, then `db:bootstrap-admin`; migrations stay additive (§5, §10).
+> - Scope Preview `DATABASE_URL` to staging only; never set it in CI; keep `turbo query affected` (§2, §6, §12).
+> - **Contracts:** contracts/auth.md
+> - **Decisions:** 2026-09-10 "How the two Vercel projects are configured, and how production gets its first
+>   administrator"; 2026-09-03 "The conversion's remaining gates: net-new scope, the test suite, and where it
+>   deploys"; 2026-09-09 "The drifted database is rebuilt, not migrated"
+
 Canonical deployment spec for the TypeScript stack. It covers the two Vercel projects, what each
 one builds, where migrations run, the environment matrix, how the first administrator comes to
 exist, the preview topology, and the rollback posture.

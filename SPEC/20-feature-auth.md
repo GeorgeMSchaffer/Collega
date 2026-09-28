@@ -1,5 +1,16 @@
 # Feature: Authentication
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** email/password login, seeded Site Admin, admin-issued resets, sessions; OAuth/SAML/MFA out
+>   of MVP; self-service reset by email link is post-MVP (reqs 22-30).
+> - **Key rules:** 5 failed logins in 15 min lock for 15 min (6); `MustChangePassword` enforced at the API,
+>   only `/auth/me` and `/auth/change-password` allowed (31, 32a); temp passwords expire in 24 h (13, 32b);
+>   `SecurityStamp` regeneration revokes all sessions (35-36); 480-min absolute, 30-min idle (37-38).
+> - **Contracts:** contracts/auth.md
+> - **Decisions:** 2026-09-04 "The session lives in a cookie Nest issues; the reshape takes only what
+>   introspection forces"; 2026-09-12 "A lockout refuses a wrong password, not a right one";
+>   2026-09-11 "Registration answers `409` again; hiding the status did not close the enumeration oracle"
+
 ## Outcome
 Users can securely access the application using organization-scoped accounts.
 

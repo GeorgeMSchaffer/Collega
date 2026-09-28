@@ -1,5 +1,16 @@
 # Scope: Migrate Database Technology — MS SQL Server → PostgreSQL
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** SQL Server → PostgreSQL move of the .NET stack; COMPLETE, merged to `dev` 2026-08-12
+>   (`7c5a78b`). Read for why it went as it did; current state is in the tracker.
+> - **Key rules:** the risk sat wherever behaviour silently leaned on SQL Server semantics (collation, raw
+>   `HasFilter` SQL), invisible to an InMemory suite.
+> - Case-insensitive uniqueness lives in a normalized column (`NormalizedEmail`, `Tag.NormalizedName`,
+>   `FieldDefinition.NormalizedName`), not in a collation.
+> - **Contracts:** none
+> - **Decisions:** 2026-09-06 "The .NET stack is frozen; its code and instructions are no longer applicable";
+>   2026-09-13 "The .NET stack is deleted; stale pointers go, inherited rationale stays"
+
 ## Status — COMPLETE, MERGED TO `dev` (2026-08-12, `7c5a78b`)
 
 **Decided (2026-08-11): Collega's application database moves from SQL Server 2022 to PostgreSQL.** This document was the implementation scope for that decision; the work is done.

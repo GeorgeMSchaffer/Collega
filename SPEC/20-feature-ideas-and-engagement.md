@@ -1,5 +1,16 @@
 # Feature: Ideas and Engagement
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** ideas, idea fields, tags, mentions, comments, upvotes and CSV idea import; the AI-Assisted Idea
+>   Creation section is superseded (2026-09-27) and the Approval Workflow is deferred post-MVP.
+> - **Key rules:** Problem, Proposed solutions (1–5), Impact rationale required (Idea Rules 2, 2a); 0–5 active
+>   same-org assignees, replaced atomically (12–13); Idea Type immutable bar admin reassign (Fields 11); ≤10
+>   coloured tags, administered by an in-scope Org Admin (Tags 8–15); CSV import all-or-nothing (CSV 4, 11).
+> - **Contracts:** contracts/ideas.md, contracts/tags.md, contracts/comments.md, contracts/upvotes.md,
+>   contracts/idea-field-options.md
+> - **Decisions:** 2026-09-27 "The idea assistant is rescoped as a co-author, and ideas gain structured fields";
+>   2026-09-28 "Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events"
+
 ## Outcome
 Users can create, discuss, organize, and support ideas within their organization.
 

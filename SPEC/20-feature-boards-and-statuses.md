@@ -1,5 +1,16 @@
 # Feature: Boards and Statuses
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** org-level statuses and boards with status swimlanes; the approval workflow is post-MVP,
+>   deferred and not implemented.
+> - **Key rules:** statuses soft-delete only, not while a swimlane on an active board (Status 5-6); an org
+>   keeps at least 2 active statuses (Status 7); a board needs at least 2 swimlanes (Board 3); boards are
+>   archived, not deleted, by an Org Admin, and open read-only (Board 13); `/boards`, `/board/{boardId}` (10).
+> - **Contracts:** contracts/boards.md, contracts/statuses.md
+> - **Decisions:** 2026-09-27 "Boards gain a description, and the board list carries what a card needs";
+>   2026-09-27 "The S0.2 schema freeze is amended a third time, for structured ideas and board archive";
+>   2026-09-02 "The board is a scrolling rail of fixed-width columns"
+
 ## Outcome
 Organizations can manage idea boards using configurable status swimlanes.
 

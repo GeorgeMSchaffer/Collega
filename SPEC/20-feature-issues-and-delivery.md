@@ -1,5 +1,16 @@
 # Feature: Issues and Delivery (Idea → Execution)
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** Slice 1 (P0) promotion, Sprints, Tasks; Slice 2 (P1) Outcomes/Roadmap, backend unbuilt.
+> - **Key rules:** an Issue is the same row as its Idea, in Delivery phase; promotion is an explicit gate
+>   with `Effort` required, re-promote `409`; delivery statuses fixed, Pending→Complete; completing a sprint
+>   returns unfinished Issues to the backlog; Tasks are a checklist, never block Complete, are not audited;
+>   an Issue sits under at most one Outcome; a Site Admin mutates only through View As.
+> - **Contracts:** contracts/delivery.md, contracts/sprints.md, contracts/issue-tasks.md
+> - **Decisions:** 2026-09-02 "Outcome ↔ Issue cardinality: single-parent";
+>   2026-09-28 "Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events";
+>   2026-09-11 "The S0.2 schema freeze is amended once, for Issues-and-Delivery Slice 1"
+
 ## Overview
 
 Today Collega ends where most idea tools end: an idea gets proposed, debated, upvoted, tagged, and eventually reaches a terminal ideation status (`Complete`). What happens next — *actually building the thing* — happens somewhere else (a spreadsheet, Jira, nothing). That handoff is where every competitor loses the story: the moment an idea becomes committed work, its provenance (who proposed it, who upvoted it, the debate, the business case) is retyped away.

@@ -1,5 +1,15 @@
 # Feature: View As (act-as impersonation)
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** View As, act-as impersonation — full act-as with dual attribution (decisions locked 2026-08-11).
+> - **Key rules:** a server-side session, never a token claim; one per real actor, non-nestable (1–7).
+> - Site Admin may act as any active org-scoped user; Org Admin only in own org; never as a Site Admin (8–12).
+> - Audit actor is the real admin, entity authorship the target (14, 15); 30 min idle, 2 h absolute (17).
+> - Site Admin may not mutate org content directly — `403`, in Application (25, 25a); organization and user
+>   administration (incl. user CSV import, invite codes) stays direct (26).
+> - **Contracts:** contracts/view-as.md
+> - **Decisions:** none recorded
+
 ## Outcome
 A privileged user can temporarily act in Collega **as** another user — same role, same organization scope, same visible data — to reproduce issues, verify permissions, and support users.
 

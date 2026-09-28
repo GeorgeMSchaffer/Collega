@@ -1,5 +1,16 @@
 # Feature: Organizations and Users
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** organizations, invite codes, three ways users join, roles, org AI credentials; status unstated.
+> - **Key rules:** only Site Admin creates organizations (Org Rule 2); archive, never hard-delete (8); email
+>   globally unique (User Rule 6); Site Admin belongs to no organization (7); the last Org Admin cannot demote
+>   or deactivate themselves (8); an org AI key is write-only and encrypted, used before the deployment key.
+> - **Contracts:** contracts/organizations.md, contracts/users.md, contracts/auth.md
+> - **Decisions:**
+>   2026-09-11 "Registration answers `409` again; hiding the status did not close the enumeration oracle";
+>   2026-09-10 "The organization's title rides on `/auth/me`, not on a second call to an admin endpoint";
+>   2026-09-13 "The AI integration is rescoped and respecified after the current batch"
+
 ## Outcome
 Administrators can manage organizations and users with clear role boundaries within a dedicated Admin section of the application. Organization creation and user registration are kept deliberately simple: an organization needs only a title, description, and optional logo address, and users can join an organization by self-registering with that organization's invite code, by being added directly by an authorized admin, or via admin CSV import.
 
