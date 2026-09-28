@@ -1,7 +1,7 @@
 ﻿# SPEC restructure for context efficiency
 
 Self-contained work plan. A fresh session can execute it without prior conversation.
-Status: approved 2026-09-28, not started. Documentation only; no application behaviour changes.
+Status: approved 2026-09-28; Phase 1 awaiting review (slice 119, `feature/119-spec-context-restructure`). Documentation only; no application behaviour changes.
 
 ## Why
 The 2026-09-28 cost review found the most expensive sessions were spec work, with context growing
@@ -101,7 +101,9 @@ Goal: a new session loads only what it needs, and no fact is lost.
      with a link to it.
    - Keep a one-line "why" for each rule.
 
-9. **Tracker Current Status.** Rewrite as terse status lines.
+9. **Tracker Current Status.** Rewrite as terse status lines. Also give `SPEC/tracker-history.md`
+   (about 83 KB after Phase 1) a rotation rule like `decisions.md`'s, so it splits into dated
+   files of at most 40,000 bytes rather than growing without bound.
 
 10. **decisions.md.** Entries stay verbatim (confirmed by the user). The log is the record, and
     AGENTS.md requires "enough of the reason". Condense only the index lines.
