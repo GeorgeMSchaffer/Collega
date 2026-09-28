@@ -9,6 +9,30 @@ stay, and the older one is marked.
 
 ---
 
+## 2026-09-28 — The prompt-eval runner: what existing decisions already settle
+
+**Recorded, not newly decided.** Slice 113 specifies the runner (`20-feature-prompt-eval-runner.md`)
+as the phase the order of work below puts next. Each point here follows from text the user has
+already approved; everything else in that spec is marked *(pending answer)* until answered.
+
+- **It is TypeScript, and it gates v2.** v2 is not enabled until the runner reports, at minimum,
+  scope-gate precision/recall and field-mapping accuracy against the corpus extended with v2 cases
+  (2026-09-27 "Measurement comes first"; `20-feature-ai-idea-assist-v2.md` "Prerequisite:
+  measurement").
+- **The corpus is `tools/prompt-eval` as it stands, with its methodology**: repeats reported as
+  rates, only declared expectations scored, refused turns dropped mid-case, the coffee pair read
+  together, compare like with like (`tools/prompt-eval/README.md`, carried over by the 2026-09-13
+  F6 entry).
+- **It never runs in the hermetic gate.** Tests make no network call (`AGENTS.md`) and the provider
+  is never called from the test suite (`40-test-strategy.md` "AI Idea Assist"). A live run is a
+  separate command.
+- **One key, under the name already fixed.** `ANTHROPIC_API_KEY` (v1 rule 29); per-organization keys
+  stay unimplemented (tracker rule 30). Which key value it uses, and who pays, is open.
+- **The `tools/*` conventions hold**: `node:test`, Node's own type stripping, no test framework
+  (`tools/arch/identity-chokepoint.test.ts` records why), and no new dependency without approval.
+
+---
+
 ## 2026-09-28 — Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events
 
 **Decided by the user**, answering the three points the answers entry below left open, and on review of this slice, the audit of tag changes.
