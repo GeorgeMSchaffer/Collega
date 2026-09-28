@@ -130,13 +130,26 @@ export function slugLabel(label: string): string {
   )
 }
 
+export class RunFileExistsError extends Error {
+  constructor(file: string) {
+    super(`${file} already exists; not overwriting it. Re-run, or pass a different --label.`)
+    this.name = 'RunFileExistsError'
+  }
+}
+
 export async function writeRunFile(dir: string, run: RunFile): Promise<string> {
   await mkdir(dir, { recursive: true })
   const file = path.join(
     dir,
     `${fileTimestamp(new Date(run.header.startedAt))}-${slugLabel(run.header.label)}.json`,
   )
-  await writeFile(file, `${JSON.stringify(run, null, 2)}\n`, 'utf8')
+  try {
+    // Exclusive, so a second run started in the same second cannot overwrite the first.
+    await writeFile(file, `${JSON.stringify(run, null, 2)}\n`, { encoding: 'utf8', flag: 'wx' })
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new RunFileExistsError(file)
+    throw error
+  }
   return file
 }
 

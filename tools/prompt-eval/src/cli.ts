@@ -31,6 +31,7 @@ import {
   RUN_FILE_SCHEMA_VERSION,
   type RunCase,
   type RunFile,
+  RunFileExistsError,
   type RunFixture,
   writeRunFile,
 } from './run-file.ts'
@@ -445,7 +446,8 @@ export async function main(
     if (
       error instanceof UsageError ||
       error instanceof CorpusError ||
-      error instanceof PromptFileError
+      error instanceof PromptFileError ||
+      error instanceof RunFileExistsError
     ) {
       console.error(error.message)
       return EXIT_INVALID
