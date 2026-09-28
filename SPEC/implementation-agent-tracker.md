@@ -1,7 +1,7 @@
 # Collega Implementation Agent Tracker
 
 ## Purpose
-Track what's true right now: current implementation status and what's next. **This file is kept short and current-only on purpose** — full narrative history (per-slice build write-ups, judgment calls, UI comp sign-off history, the original T001-T052 backlog) lives in `SPEC/archive/implementation-agent-tracker-archive.md`. Read this file for "what's true right now"; read the archive for "how did we get here" or "what did slice X actually build."
+Track what's true right now: current implementation status and what's next. **This file is kept short and current-only on purpose** — full narrative history (per-slice build write-ups, judgment calls, UI comp sign-off history, the original T001-T052 backlog) lives in `SPEC/archive/implementation-agent-tracker-archive.md` up to 2026-09-28, and that file is no longer added to; from 2026-09-28, finished rows, finished narratives and recorded reversals go to `SPEC/tracker-history.md`. Read this file for "what's true right now"; read those two for "how did we get here" or "what did slice X actually build."
 
 ## Ground-Truth Verification — read this before trusting anything below
 Before making any status, planning, or scope claim about this project — in this session or any future one — re-read the Current Status section below AND run `git log --oneline -10` fresh in that same turn. Never answer from recollection, even within the same conversation. This file was split from a 291-line narrative log on 2026-08-10 specifically because an agent answered a planning question from stale in-context memory while ~2 weeks of real parallel-agent work had landed without that memory being refreshed. A large date jump, an unfamiliar recent commit, or "it's been a while since I checked" are signals to verify more, not less. See also `CLAUDE.md`'s "Ground-Truth Verification" section.
@@ -16,11 +16,17 @@ Before making any status, planning, or scope claim about this project — in thi
 
 Active and next work only. The earlier rows, the completed-sprint narratives and the 2026-09-12
 Application QA pass write-up moved verbatim to [`SPEC/tracker-history.md`](tracker-history.md) on
-2026-09-28; read it for how something reached its state. Moved rows that still name open work:
-**Sprint 9 — the conversion** (Wave F: F1, F2, F4, F5), **Deployment (Vercel)** and **Branch
-inventory** (owner-side steps), **Authentication hardening** (tests owed). **Sprint 12** (the
-prompt-eval runner, `SPEC/sprints/sprint-12-prompt-eval-runner.md`) is in progress: slices 113-115
-and 117 are merged, their rows in the history file; 116 (the v1 baseline) and 118 (QA) remain.
+2026-09-28; read it for how something reached its state. Rows moved that day which still carry
+open work (the rows are in that file; each stays listed here until it closes):
+
+- **Sprint 9 — the conversion:** Wave F — F1, F2, F4 and F5 open.
+- **Deployment (Vercel)** and **Branch inventory:** owner-side steps still owed.
+- **Authentication hardening:** tests owed.
+- **Issues & Delivery:** Slice 2 (Outcomes, Roadmap) has no backend.
+- **Schema drift:** awaiting someone with access to run the three rebuild commands.
+- **Slice 117:** its carry-over of rule 33's shared-case comparison.
+- **Sprint 12** (the prompt-eval runner, `SPEC/sprints/sprint-12-prompt-eval-runner.md`): slices
+  113-115 and 117 are merged; 116 (the v1 baseline) and 118 (QA) remain.
 
 | Area | State | Detail / authority |
 |---|---|---|
@@ -94,6 +100,7 @@ database holding the real Site Admin, confirmed from a build log rather than inf
 Both are on the anonymous auth surface, both were confirmed against running code, and both are in `SPEC/decisions.md` 2026-09-11 with the reasoning. Named here so a planning pass meets them.
 - **Account-lockout denial of service.** Five failed sign-ins lock an account for 15 minutes, and five is below any per-IP rate limit that lets real people sign in — so five anonymous requests deny sign-in to any user whose email is known, repeatably. Fixing it needs a per-IP failure counter, which needs state outliving a request: either a schema change (frozen at S0.2) or a shared store. **Schedule it with the Redis/Vercel KV work the rate limiter already needs** to be a real ceiling rather than a per-warm-instance speed bump — one dependency, two problems. Not fixed now; no production users yet, and the first real tenant is what changes that.
 - **Registration is a cross-tenant account-enumeration oracle.** A valid invite code plus `201`-vs-`409` tells an anonymous caller whether any address has an account, in any organization, because `users.normalized_email` is globally unique. Hiding the status was tried on 2026-09-10 and reverted — it changed nothing, because the fork is the oracle. The real fix is asynchronous verify-by-email registration. The per-IP rate limit is the only bound today.
+- **Idea Field Option contracts await a decision** (2026-09-28, slice 119). `SPEC/contracts/idea-field-options.md` merges the two sections that shared the heading "Idea Field Option Contracts" and marks eight differences, not chosen: (1) list returns archived options or only active unless `includeDeleted=true`; (2) Idea Type item shape with or without `effectiveFields`; (3) `sortOrder` on create and (4) on update, absent or required; (5) reorder `POST` or `PUT`; (6) reorder lists archived options or active only; and, text against code, (7) a direct Site Admin is refused on mutations though the text lets Site Admin manage any organization; (8) a cross-organization Org Admin gets `404` though the text says `403`. The user decides; the code is unchanged.
 
 ### Out of sprint scope — leave intact
 User-owned, landed on `dev`: the `e2e/` Playwright suite (`7a92dda`). The AI-brainstorm WIP that used to sit here shipped in Sprint 7 and is no longer out of scope.
@@ -121,11 +128,12 @@ This file answers **"what is true right now"** and nothing else. When updating i
    `apps/api/src/app.modules.generated.ts` lists every feature module the host has actually registered.
 
 
-1. **Edit state in place; do not append history.** Change the table cell or decision line. Anything that reads "earlier the same day", "previously", or "was X, now Y" belongs in `SPEC/archive/implementation-agent-tracker-archive.md`.
-2. **Delete reversed decisions — never strike them through.** A struck-through decision leaves both the old and new readings in context, and that is how agents answer wrong. Record the reversal in the archive; leave only the live decision here.
+1. **Edit state in place; do not append history.** Change the table cell or decision line. Anything that reads "earlier the same day", "previously", or "was X, now Y" belongs in `SPEC/tracker-history.md`.
+2. **Delete reversed decisions — never strike them through.** A struck-through decision leaves both the old and new readings in context, and that is how agents answer wrong. Record the reversal in `SPEC/tracker-history.md`; leave only the live decision here.
 3. **Update the `Verified <date> against <commit>` line** whenever this section changes, and re-derive the state you are asserting rather than editing around it.
 4. **Point, don't restate.** If detail lives in a sprint file, `Bug Triage.md`, or a canonical spec, link it in one clause instead of summarizing it here. Duplicated summaries go stale independently of their source, which produces exactly the contradictions this file exists to prevent.
-5. **Budget: keep Current Status under ~450 words** (it was 427 at the 2026-08-11 compaction, down from ~1,300). It is re-read on every turn by the Ground-Truth Verification rule, so length here is paid continuously. Crossing the budget is the signal to move detail to the archive — not to raise the budget.
+5. **Budget: keep Current Status under ~450 words** (it was 427 at the 2026-08-11 compaction, down from ~1,300). It is re-read on every turn by the Ground-Truth Verification rule, so length here is paid continuously. Crossing the budget is the signal to move detail to `SPEC/tracker-history.md` — not to raise the budget.
 6. **Finished items move to `SPEC/tracker-history.md`, verbatim.** When a row's work is merged and
    nothing on it is still open, move the row to the end of that file's table; a finished narrative
-   section moves under its "Narratives" heading. Only active and next work stays here.
+   section moves under its "Narratives" heading. Only active and next work stays here. Rows moved
+   on 2026-09-28 that still carry open work stay listed in the Current Status intro until they close.
