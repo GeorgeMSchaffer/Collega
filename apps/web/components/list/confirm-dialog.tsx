@@ -3,11 +3,42 @@
 import { buttonVariants } from '@collega/design-system'
 import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef } from 'react'
 
+/** Every desk screen has exactly one `<h1>` (PageHeader), so it is always there to land on. */
+function focusHeading() {
+  const heading = document.querySelector<HTMLElement>('h1')
+  if (!heading) return
+  if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1
+  heading.focus()
+}
+
+/**
+ * Watches until focus moves off the opener by other means, or the opener leaves the page. Answers
+ * `stop`, so an unmount or the next open can end the watch early.
+ */
+function focusHeadingIfOpenerLeaves(opener: HTMLElement): () => void {
+  const stop = () => {
+    observer.disconnect()
+    document.removeEventListener('focusin', onFocusIn)
+  }
+  const onFocusIn = (event: FocusEvent) => {
+    if (event.target !== opener) stop()
+  }
+  const observer = new MutationObserver(() => {
+    if (opener.isConnected) return
+    stop()
+    if (document.activeElement === null || document.activeElement === document.body) focusHeading()
+  })
+  observer.observe(document.body, { childList: true, subtree: true })
+  document.addEventListener('focusin', onFocusIn)
+  return stop
+}
+
 /**
  * The one destructive modal (comp R): asks before Delete or Archive. `role="alertdialog"` on a
  * native modal `<dialog>`, so the page behind is inert; focus starts on **Cancel**, Tab and
  * Shift+Tab cycle between Cancel and the action only, and Escape cancels. Focus returns to whatever
- * opened it.
+ * opened it — or, when that has gone (the row it sat on was archived or deleted out of the list), to
+ * the page's heading rather than dropping to `<body>`.
  */
 export function ConfirmDialog({
   open,
@@ -37,18 +68,32 @@ export function ConfirmDialog({
   const confirm = useRef<HTMLButtonElement>(null)
   const titleId = useId()
   const descriptionId = useId()
+  const stopWatching = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     const element = dialog.current
     if (!element || !open) return
+    stopWatching.current?.()
+    stopWatching.current = null
     const opener = document.activeElement as HTMLElement | null
     element.showModal()
     cancel.current?.focus()
     return () => {
       element.close()
       if (opener?.isConnected) opener.focus()
+      if (opener && document.activeElement === opener) {
+        // The refreshed list usually arrives after the dialog has closed, so the row - and the
+        // focused opener with it - can leave a render later.
+        stopWatching.current = focusHeadingIfOpenerLeaves(opener)
+      } else {
+        focusHeading()
+      }
     }
   }, [open])
+
+  // Declared after the effect above so its cleanup runs last on unmount. A navigation removes the
+  // opener without moving focus, and must not pull focus onto the next page's heading.
+  useEffect(() => () => stopWatching.current?.(), [])
 
   const onKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
     if (event.key === 'Escape') {

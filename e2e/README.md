@@ -51,7 +51,7 @@ here**, and before F2 they failed at render however carefully a spec was written
 | Boards list | `/boards` |
 | Board detail | `/boards/[boardId]` |
 | Ideas list | `/ideas` |
-| Idea detail, inspector included | `/ideas/[ideaId]` |
+| Idea detail — redirects to the Ideas list with its drawer open | `/ideas/[ideaId]` |
 
 They render because the API is here. Note what that means for a failure: if one of these screens
 fails to render at all, suspect the API server rather than the assertion — its output is on stderr,
