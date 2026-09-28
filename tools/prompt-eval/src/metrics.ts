@@ -137,7 +137,15 @@ export function wilson(k: number, n: number): Proportion {
   const denominator = 1 + z2 / n
   const centre = (p + z2 / (2 * n)) / denominator
   const half = (Z_95 * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n))) / denominator
-  return { k, n, rate: p, low: Math.max(0, centre - half), high: Math.min(1, centre + half) }
+  // Pinned at the extremes: floating point puts the upper bound of k = n a hair below 1, which
+  // would make a perfect run regress against itself.
+  return {
+    k,
+    n,
+    rate: p,
+    low: k === 0 ? 0 : Math.max(0, centre - half),
+    high: k === n ? 1 : Math.min(1, centre + half),
+  }
 }
 
 function ratio(k: number, n: number): number | null {
