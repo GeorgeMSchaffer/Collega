@@ -18,8 +18,6 @@ export type AbortReason = 'max-calls' | 'max-tokens' | 'unexpected-error'
 
 export interface RunHeader {
   readonly runnerVersion: string
-  /** The turn the run drove. Absent means `v1`: only the v2 sprint's runs set `v2`. */
-  readonly assistant?: 'v1' | 'v2'
   readonly git: { readonly commit: string | null; readonly dirty: boolean | null }
   readonly label: string
   readonly model: string
