@@ -88,7 +88,7 @@ export default async function BoardPage({
             variant="outline"
           >
             <Link
-              href={`/settings/boards/${board.id}`}
+              href={`/boards?board=${encodeURIComponent(board.id)}&mode=edit`}
               className={buttonVariants({ variant: 'outline' })}
             >
               Edit board

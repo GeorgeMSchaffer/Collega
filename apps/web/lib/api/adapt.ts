@@ -276,6 +276,7 @@ export function toBoardOverview(wire: WireBoardListItem): BoardOverview {
     description: wire.description,
     ideaCount: wire.ideaCount,
     laneCount: wire.swimlaneCount,
+    createdAtUtc: wire.createdAtUtc,
     createdOn: DATE.format(new Date(wire.createdAtUtc)),
     createdBy: wire.createdBy?.displayName ?? null,
     lanes: [...wire.laneCounts]
@@ -288,6 +289,9 @@ export function toBoardOverview(wire: WireBoardListItem): BoardOverview {
       })),
     topTags: [...wire.topTags],
     tagCount: wire.tagCount,
+    userStatusMoves: wire.allowUserStatusUpdate,
+    isArchived: wire.isArchived,
+    archivedOn: wire.archivedAtUtc ? DATE.format(new Date(wire.archivedAtUtc)) : null,
   }
 }
 
