@@ -8,7 +8,12 @@ import type {
 } from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
 import type { PageRequest, SortDirection } from '../common/index.js'
-import type { IdeaFieldValueFilter, IdeaFieldValueWrite, IdeaPage } from './models.js'
+import type {
+  IdeaFieldValueFilter,
+  IdeaFieldValueWrite,
+  IdeaFormFieldDto,
+  IdeaPage,
+} from './models.js'
 
 // Persistence --------------------------------------------------------------------------------
 
@@ -395,6 +400,14 @@ export interface IdeaFieldValuesPort {
     ideaTypeId: string
     stored: readonly { fieldDefinitionId: string; value: string }[]
   }): Promise<readonly IdeaFieldValueView[]>
+
+  /** The idea's effective fields for the edit form, resolved from its type even when that type is
+   * archived, each carrying its stored value in write format (SPEC/30-Contracts.md `formFields`). */
+  describeFormFields(input: {
+    organizationId: string
+    ideaTypeId: string
+    stored: readonly { fieldDefinitionId: string; value: string }[]
+  }): Promise<readonly IdeaFormFieldDto[]>
 
   /** Translates the raw `fieldFilters[<id>]=<value>` map into typed predicates per each field's
    * type (T059), silently dropping unknown ids, blank values, and values that don't parse for

@@ -13,10 +13,12 @@ import type { AiIdeaTypesPort } from '@collega/application/ai'
 import { ValidationError } from '@collega/application/common'
 import type { FieldValueWrite } from '@collega/application/fields'
 import { validateFieldValues } from '@collega/application/fields'
+import { toEffectiveFieldItem } from '@collega/application/idea-fields'
 import type {
   IdeaFieldValueFilter,
   IdeaFieldValuesPort,
   IdeaFieldValueView,
+  IdeaFormFieldDto,
   ImportCellTranslation,
 } from '@collega/application/ideas'
 import { isReservedColumn } from '@collega/application/ideas'
@@ -226,6 +228,31 @@ export class PrismaIdeaFieldValuesRepository implements IdeaFieldValuesPort, AiI
     }
 
     return views
+  }
+
+  async describeFormFields(input: {
+    organizationId: string
+    ideaTypeId: string
+    stored: readonly { fieldDefinitionId: string; value: string }[]
+  }): Promise<readonly IdeaFormFieldDto[]> {
+    const effectiveFields = await this.loadEffectiveFields(input.organizationId, input.ideaTypeId)
+    const storedByField = new Map(input.stored.map((s) => [s.fieldDefinitionId, s.value] as const))
+
+    return effectiveFields.map((effective) => {
+      const item = toEffectiveFieldItem(effective)
+      const value = storedByField.get(effective.field.id) ?? null
+      if (value === null || item.options.length === 0) {
+        return { ...item, value }
+      }
+      // Options are hard-deleted, so a stored id the field no longer offers has no label left;
+      // it is listed under its id, the same fallback the display projection uses.
+      const offered = new Set(item.options.map((o) => o.optionId.toLowerCase()))
+      const archived = value
+        .split(',')
+        .filter((id) => id.length > 0 && !offered.has(id.toLowerCase()))
+        .map((id) => ({ optionId: id, label: id, isArchived: true as const }))
+      return { ...item, options: [...item.options, ...archived], value }
+    })
   }
 
   async translateListFilters(input: {

@@ -519,6 +519,56 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
   },
   {
     cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.formFields',
+    decided: '2026-09-27',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-09-27, "The API sends the custom ' +
+      'field list"). The detail carries the idea\'s own custom fields with their stored values in ' +
+      'write format, so the edit form stops reversing display labels to option ids and can edit an ' +
+      'idea whose type is archived. `PUT /ideas/{ideaId}` answers the same detail, hence the ' +
+      'update cases. `fieldValues` is unchanged and still compared. Accepted as the field ' +
+      'appearing, and only that - an array, so no `shape` could pin it.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.types',
+      'ideas.types2',
+      'ideatypes.list.orgadmin',
+      'ideatypes.list.readonly',
+      'ideatypes.list.siteadmin',
+      'ideatypes.list.user',
+      'ideatypes.relist',
+    ],
+    path: 'body[].effectiveFields',
+    decided: '2026-09-27',
+    reason:
+      'The same change as `body.formFields` above: every Idea Type item carries the custom fields ' +
+      'an idea of that type shows, resolved by the domain rule, so the create form stops ' +
+      're-deriving it in the browser. The two `ideas.*` cases list the types as a setup step. The ' +
+      'accepted difference is the appearance of the field and only that, which is what `kind` ' +
+      'says: every recorded field of every element and the array length are still compared.',
+    kind: 'extra',
+  },
+  {
+    cases: ['ideatypes.create.orgadmin', 'ideatypes.update.orgadmin'],
+    path: 'body.effectiveFields',
+    decided: '2026-09-27',
+    reason:
+      'The same field as `body[].effectiveFields` above, on the single Idea Type item create and ' +
+      'update answer - SPEC/30-Contracts.md gives both the list item shape. Listed separately ' +
+      'because an entry names one path. The other role cases are 401/403s and are unaffected.',
+    kind: 'extra',
+  },
+  {
+    cases: [
       'comments.list.orgadmin',
       'comments.list.readonly',
       'comments.list.siteadmin',

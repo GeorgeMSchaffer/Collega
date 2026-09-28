@@ -329,6 +329,9 @@ export function harness(options: {
     async describeForDetail() {
       return []
     },
+    async describeFormFields() {
+      return []
+    },
     async translateListFilters() {
       return { filters: [], searchTextFieldIds: [] }
     },
