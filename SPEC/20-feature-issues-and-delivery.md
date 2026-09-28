@@ -461,8 +461,10 @@ The page for the organization's running sprint (`/delivery/sprint`, as built).
   delivery-status colour tinting the header and the count beside the name; lanes follow the board's
   lane style. An empty lane says *No issues*. Below 900px the lanes scroll sideways.
 - **Card:** the Issue key *(gap — omitted, above)* and the assignees' avatars on the first line (a
-  dashed *—* placeholder named *Unassigned* when there are none), the title, then the effort bar
-  with its words. Cards in `Complete` are dimmed but stay readable (4.5:1 still applies).
+  dashed *—* placeholder named *Unassigned* when there are none), the title, up to two coloured
+  tag chips with *+N* for the rest (added 2026-09-28 to match `30-Contracts.md`'s Sprint board
+  bullet; comp R draws none), then the effort bar with its words. Cards in `Complete` are dimmed
+  but stay readable (4.5:1 still applies).
 - **Moving an Issue** keeps this section's existing rule: drag between lanes (optimistic, revert on
   failure) by the author, an assignee or an in-scope admin, through
   `PUT /ideas/{ideaId}/delivery-status`; keyboard and touch use the status selector in the Issue's
