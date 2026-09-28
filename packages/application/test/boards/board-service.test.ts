@@ -4,7 +4,7 @@
 // of the organization, managing is admin-only AND closed to a direct Site Admin (rule 25), so a
 // Site Admin can look at every board in the platform and change none of them.
 
-import { type Board, createBoard } from '@collega/domain/boards'
+import { archiveBoard, type Board, createBoard } from '@collega/domain/boards'
 import { Role } from '@collega/domain/enums'
 import { createStatus, type Status, softDeleteStatus } from '@collega/domain/statuses'
 import { describe, expect, it } from 'vitest'
@@ -18,7 +18,12 @@ import type {
   UserName,
 } from '../../src/boards/ports.js'
 import type { CurrentUserContext } from '../../src/common/index.js'
-import { ForbiddenError, NotFoundError, ValidationError } from '../../src/common/index.js'
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../src/common/index.js'
 import type { StatusRepository } from '../../src/statuses/ports.js'
 import {
   countingUnitOfWork,
@@ -633,5 +638,100 @@ describe('BoardService description', () => {
     expect(error).toBeInstanceOf(ValidationError)
     expect(Object.keys((error as ValidationError).failures)).toEqual(['description'])
     expect(saved).toHaveLength(0)
+  })
+})
+
+describe('BoardService archive (rule 13)', () => {
+  const archived = archiveBoard(board(), NOW, 'seed')
+  const REORDER = {
+    swimlanes: [
+      { statusId: STATUS_2, order: 0 },
+      { statusId: STATUS_1, order: 1 },
+    ],
+  }
+
+  it('lets an Org Admin archive a board, saving it once and auditing it', async () => {
+    const { service, saved, audit } = harness({ currentUser: orgAdmin(ORG_A) })
+
+    await service.archive('board-a')
+
+    expect(saved).toHaveLength(1)
+    expect(saved[0]).toMatchObject({ isArchived: true, archivedAtUtc: NOW })
+    expect(audit.events.map((e) => e.eventType)).toEqual(['BoardArchived'])
+  })
+
+  it('treats archiving an archived board, or unarchiving an active one, as a no-op', async () => {
+    const onArchived = harness({ currentUser: orgAdmin(ORG_A), boards: [archived] })
+    await onArchived.service.archive('board-a')
+
+    const onActive = harness({ currentUser: orgAdmin(ORG_A) })
+    await onActive.service.unarchive('board-a')
+
+    expect(onArchived.saved).toHaveLength(0)
+    expect(onArchived.audit.events).toHaveLength(0)
+    expect(onActive.saved).toHaveLength(0)
+    expect(onActive.audit.events).toHaveLength(0)
+  })
+
+  it('unarchives an archived board', async () => {
+    const { service, saved, audit } = harness({ currentUser: orgAdmin(ORG_A), boards: [archived] })
+
+    await service.unarchive('board-a')
+
+    expect(saved[0]).toMatchObject({ isArchived: false, archivedAtUtc: null })
+    expect(audit.events.map((e) => e.eventType)).toEqual(['BoardUnarchived'])
+  })
+
+  it.each([
+    ['a direct Site Admin', siteAdmin()],
+    ['a User', member(ORG_A)],
+    ['Read Only', readOnly(ORG_A)],
+  ])('refuses %s archiving or unarchiving', async (_label, currentUser) => {
+    const { service, saved } = harness({ currentUser, boards: [archived] })
+
+    await expect(service.archive('board-a')).rejects.toThrow(ForbiddenError)
+    await expect(service.unarchive('board-a')).rejects.toThrow(ForbiddenError)
+    expect(saved).toHaveLength(0)
+  })
+
+  it('refuses an Org Admin of another organization as not-found', async () => {
+    const { service } = harness({ currentUser: orgAdmin(ORG_B) })
+
+    await expect(service.archive('board-a')).rejects.toThrow(NotFoundError)
+  })
+
+  it('refuses an archived board’s own update and lane reorder with 409', async () => {
+    const { service, saved } = harness({ currentUser: orgAdmin(ORG_A), boards: [archived] })
+
+    await expect(service.update('board-a', UPDATE)).rejects.toThrow(ConflictError)
+    await expect(service.reorderSwimlanes('board-a', REORDER)).rejects.toThrow(ConflictError)
+    expect(saved).toHaveLength(0)
+  })
+
+  it('answers a role refusal on an archived board with 403, not 409', async () => {
+    const { service } = harness({ currentUser: member(ORG_A), boards: [archived] })
+
+    await expect(service.update('board-a', UPDATE)).rejects.toThrow(ForbiddenError)
+    await expect(service.reorderSwimlanes('board-a', REORDER)).rejects.toThrow(ForbiddenError)
+  })
+
+  it('leaves an archived board out of the list unless includeArchived is set', async () => {
+    const active = board({ id: 'board-b', name: 'Active Board' })
+    const { service } = harness({ currentUser: member(ORG_A), boards: [archived, active] })
+
+    const defaultList = await service.list(ORG_A)
+    const everything = await service.list(ORG_A, { includeArchived: true })
+
+    expect(defaultList.map((b) => b.boardId)).toEqual(['board-b'])
+    expect(everything.map((b) => [b.boardId, b.isArchived])).toEqual([
+      ['board-a', true],
+      ['board-b', false],
+    ])
+  })
+
+  it('still reads an archived board’s detail, flagged as archived', async () => {
+    const { service } = harness({ currentUser: readOnly(ORG_A), boards: [archived] })
+
+    await expect(service.getById('board-a')).resolves.toMatchObject({ isArchived: true })
   })
 })
