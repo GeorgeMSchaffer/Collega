@@ -152,7 +152,7 @@ await shoot(admin, 'board-kanban-right')
 // 05 — the create form, over the board it creates into.
 await admin.goto(boardUrl)
 await settle(admin)
-await admin.getByRole('button', { name: /^new idea$/i }).click()
+await admin.getByRole('button', { name: 'Add New Idea' }).click()
 await admin.getByLabel('Title').waitFor()
 await admin.waitForTimeout(400)
 await shoot(admin, 'new-idea')
@@ -163,15 +163,18 @@ await admin.goto(`${BASE}/ideas`)
 await settle(admin)
 await shoot(admin, 'ideas-list')
 
-const ideaHref = await admin
-  .locator('a[href^="/ideas/"]')
-  .filter({ hasText: HERO_IDEA })
-  .first()
-  .getAttribute('href')
-if (ideaHref === null) fail(`No idea called '${HERO_IDEA}' — has the demo seed run?`)
-const ideaUrl = `${BASE}${ideaHref}`
+// An idea's title is a button that opens its drawer, not a link, and the list pages at ten - so the
+// hero idea is found through the text filter and its address read back from the drawer's URL.
+await admin.goto(`${BASE}/ideas?q=${encodeURIComponent(HERO_IDEA)}`)
+await settle(admin)
+const heroTitle = admin.getByRole('button', { name: HERO_IDEA, exact: true }).first()
+if ((await heroTitle.count()) === 0) fail(`No idea called '${HERO_IDEA}' — has the demo seed run?`)
+await heroTitle.click()
+await admin.waitForURL(/[?&]idea=/)
+const ideaId = new URL(admin.url()).searchParams.get('idea')
+const ideaUrl = `${BASE}/ideas?idea=${ideaId}`
 
-// 07 — the inspector, beside the list rather than over it.
+// 07 — the idea drawer, over the right of the list without resizing it.
 await admin.goto(ideaUrl)
 await settle(admin)
 await shoot(admin, 'idea-inspector')
@@ -199,7 +202,7 @@ if (alreadyCommented === 0) {
   await user.getByText(HERO_COMMENT, { exact: false }).waitFor({ timeout: 20_000 })
   await user.waitForTimeout(600)
 }
-// The thread is the point of this shot, and it sits at the bottom of a scrolling inspector.
+// The thread is the point of this shot, and it sits at the bottom of the drawer, which scrolls.
 await user.getByText(HERO_COMMENT, { exact: false }).scrollIntoViewIfNeeded()
 await user.waitForTimeout(400)
 await shoot(user, 'discussion')
