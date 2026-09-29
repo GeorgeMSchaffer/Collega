@@ -194,7 +194,7 @@ State legend: **Built** · **Partial** · **Unbuilt** · **Deferred**
 **US-AUTH-06 · User · Built** — *a forced password change enforced everywhere, so it cannot be bypassed by calling the API directly.*
 - `User.MustChangePassword` is the **persisted source of truth**, read from live state per request.
 - **Enforced at the API, not only the client**: while true, **every authenticated endpoint except `GET /auth/me` and `POST /auth/change-password` returns `403`**. The allowlist is **opt-in, so an endpoint added later stays closed by default**.
-- Completing the rotation lifts the restriction on the next request, with no new token.
+- Completing the rotation lifts the restriction and **ends the session** — it regenerates `SecurityStamp` — so the user signs in again with the new password. *Corrected 2026-09-29 (slice 124): this said completing the rotation lifts the restriction on the next request without a new token; the password change also regenerates `SecurityStamp`, which revokes that token.*
 - The standalone `/change-password` route is reachable only by accounts marked `MustChangePassword`; others are redirected to `/settings/profile`.
 
 **US-AUTH-07 · User · Built** — *my session ends after inactivity with fair warning, so an unattended browser does not stay signed in.*
@@ -702,7 +702,7 @@ Alongside it, five navigation and session scenarios:
 - **Active-session authentication** — a protected-request `401` signs the user out **only when `/auth/me` also rejects the session cookie**; an incorrect-current-password `401` preserves a session that `/auth/me` accepts.
 
 *Corrected 2026-09-29 (`decisions.md` "Spec contradictions resolved"): these two said a stored token.*
-- **Password-change authentication** — a successful required change stays authenticated across a browser reload.
+- **Password-change authentication** — a successful required change **ends the session**: the client clears the cookie and returns to `/login?passwordChanged=1`, and the rotated `SecurityStamp` rejects the old token. *Corrected 2026-09-29 (slice 124): this said a successful required change stays authenticated across a browser reload.*
 - **Board navigation** — `/boards` lists, `/board/{boardId}` opens detail, legacy routes redirect, and **no user-facing "Workflow" terminology remains**.
 
 ### 6.3 Manual client acceptance

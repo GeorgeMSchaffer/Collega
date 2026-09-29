@@ -34,7 +34,16 @@ type Draft = {
   fields: Record<string, string>
 }
 
-function initialDraft(idea: IdeaDetail | null, boardId: string | null): Draft {
+/**
+ * A new idea preselects the first active Idea Type and Business Impact — the options arrive
+ * active-only in sort order — and the API stores no default (`20-feature-ideas-and-engagement.md`
+ * Defaults). An edit keeps the idea's own values.
+ */
+function initialDraft(
+  idea: IdeaDetail | null,
+  boardId: string | null,
+  options: IdeaFormOptions,
+): Draft {
   return {
     boardId: idea?.boardId ?? boardId ?? '',
     title: idea?.title ?? '',
@@ -43,8 +52,8 @@ function initialDraft(idea: IdeaDetail | null, boardId: string | null): Draft {
     impactRationale: idea?.impactRationale ?? '',
     description: idea?.description ?? '',
     priority: idea?.priority ?? 'Medium',
-    ideaTypeId: idea?.ideaTypeId ?? '',
-    businessImpactId: idea?.businessImpactId ?? '',
+    ideaTypeId: idea ? idea.ideaTypeId : (options.ideaTypes[0]?.id ?? ''),
+    businessImpactId: idea ? idea.businessImpactId : (options.businessImpacts[0]?.id ?? ''),
     dueDate: idea?.dueDate ?? '',
     tags: idea?.tags.map((tag) => tag.name).join(', ') ?? '',
     fields: Object.fromEntries(idea?.formFields.map((field) => [field.id, field.value]) ?? []),
@@ -93,7 +102,7 @@ export function IdeaForm({
   onPendingChange: (pending: boolean) => void
 }) {
   const id = useId()
-  const [draft, setDraft] = useState(() => initialDraft(idea, boardId))
+  const [draft, setDraft] = useState(() => initialDraft(idea, boardId, options))
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()

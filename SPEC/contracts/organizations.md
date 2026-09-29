@@ -15,8 +15,8 @@ List organizations for Site Admin with pagination.
   - `pageSize`
   - `search` optional
   - `isArchived` optional boolean
-  - `sortBy` optional `companyName` or `createdAt`
-  - `sortDirection` optional `asc` or `desc`
+  - `sortBy` optional — `createdAt` sorts by creation time; anything else, absent included, sorts by the organization's `title` (the company name). Matched trimmed and case-insensitively, so `companyName` and `title` both sort by `title`. *Reconciled 2026-09-29 from the code (slice 124, `SPEC/decisions.md` 2026-09-29 "Contracts and wording written from the code"): this listed `companyName` or `createdAt` beside an item that has no `companyName` field.*
+  - `sortDirection` optional `asc` or `desc`; anything other than `desc` (trimmed, any casing) is `asc`
 - **Response:** `200` paged item shape:
   - `organizationId`
   - `title`
@@ -32,6 +32,7 @@ List organizations for Site Admin with pagination.
   - `403` caller is authenticated but not allowed to list organizations
 - **Rules:**
   - Default list behavior: archived organizations are excluded unless explicitly filtered in
+  - The page's `sortBy` echoes the **requested** value, `null` when none was sent, not the sort applied (`organizations.list.siteadmin` records `null`); `sortDirection` is the applied one. Ties break on the other column: `title` then creation time, or creation time then `title`. *Added 2026-09-29 from the code (slice 124).*
 
 ### `POST /api/v1/organizations`
 Create an organization, generate its invite code, and provision default statuses plus one default board.

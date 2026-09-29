@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-29 | Contracts and wording written from the code | active | full below |
 | 2026-09-29 | Removing a lane moves its ideas | active | full below |
 | 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
 | 2026-09-29 | Spec contradictions resolved | active | full below |
@@ -41,8 +42,8 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | full below |
 | 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | full below |
 | 2026-09-28 | The comp R iteration's open questions are answered | active | full below |
-| 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | full below |
-| 2026-09-28 | Graphite replaces Notte as the dark theme | active | full below |
+| 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-28 | Graphite replaces Notte as the dark theme | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-27 | The API sends the custom field list | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
@@ -93,6 +94,41 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-29 — Contracts and wording written from the code
+
+**An implementation record, not a user decision** (slice 124). Slice 121 listed routes the code
+serves and no contract describes, and spec lines the code contradicts. They were written from the
+code as it stands, with no code change, and checked against the golden corpus wherever it records
+the route. Nothing here changes behaviour; a reader who wants different behaviour needs a decision,
+not an edit to these contracts.
+
+- **New contracts:** the six `/organizations/{organizationId}/field-definitions` routes, in a new
+  `contracts/field-definitions.md` — reorder is `PUT …/reorder`, with no coverage check, unlike the
+  other catalogs' reorders; reads are open to any member of the organization, writes to an
+  in-scope Org Admin, and a direct Site Admin is refused. `PUT`/`DELETE /auth/me/portrait` in
+  `contracts/auth.md`. The `GET /users/{userId}` success shape, roles and errors in
+  `contracts/users.md`.
+- **Filled in:** the statuses list item carries `color` and `sortOrder`, the list takes
+  `includeDeleted`, and `PUT /statuses/{statusId}` answers the item. The organizations `sortBy`
+  sorts by `title` for any value but `createdAt` — so `companyName`, the contract's old spelling,
+  and `title`, the item's field, behave the same.
+- **Every fixture agrees** except in one field already known: the `profile.portrait.*` fixtures,
+  like `auth.me.*`, predate `organizationTitle`.
+- **Not written:** `GET /organizations/{organizationId}/users/import-template` appears only in the
+  derived `Specs Overview.md`. No code serves it and the corpus does not record it, so there is
+  nothing to describe.
+- **Decided by the user: the idea form preselects the first active Idea Type too.** The Defaults
+  row of `20-feature-ideas-and-engagement.md` and `contracts/idea-field-options.md` already said so,
+  but the form preselected neither. It now preselects both on a new idea, so the first type's custom
+  fields show at once. An edit keeps the idea's stored values, and "Choose…" stays in each select.
+- **Wording:** a required password change ends the session it was made in. The change regenerates
+  the user's `SecurityStamp`, and the web client deletes its cookie and returns to
+  `/login?passwordChanged=1`. `40-test-strategy.md`, `05-product-definition.md`,
+  `20-feature-auth.md` rule 32a and `contracts/auth.md` said the session carried on; each keeps
+  a dated note of what it said.
 
 ---
 
@@ -434,50 +470,6 @@ markers are gone.
 10. **No keyboard shortcuts anywhere:** no *Ctrl ↵* save, no zoom keys, no key-hint chips. Escape
     still closes the drawer and the dialogs.
 11. **Order of work:** Sprint 11 first, then the prompt-eval runner, then idea assistant v2.
-
----
-
-## 2026-09-28 — The S0.2 schema freeze is amended a fourth time, for tag colours
-
-**Decided by the user** with the adoption below ("Tags get a colour picker; by default a tag gets a
-random colour"). Under the 2026-09-11 rule — the freeze stands, and each change to `schema.prisma`
-needs its own entry here — this is that entry, and it is not a general licence.
-
-- **`tags`** gains `color VARCHAR(7) NOT NULL` — any `#RRGGBB`, stored upper case
-  (`20-feature-ideas-and-engagement.md` Tags rule 9). No other column: `tags` already has
-  `created_at_utc` and `created_by_user_id`, which Settings → Tags shows.
-- **The migration backfills every existing tag** with the palette colour at index
-  `get_byte(decode(md5(normalized_name), 'hex'), 0) % 10`, indexing Tags rule 9's palette in its
-  listed order (`#E5484D` is 0, `#94A3B8` is 9), so the result is repeatable across databases and
-  replays; then sets `NOT NULL`. The demo seed computes the same index in `node:crypto` (the first
-  byte of the MD5 digest of the normalized name, modulo 10). Tags created afterwards take a random palette colour chosen by the application, from an
-  injected random source.
-- **Not covered: Outcomes.** Sprint 11 builds the Roadmap screen, not its backend (the answers
-  entry above), so the `outcomes` table — with its `color VARCHAR(7) NOT NULL`, added to the spec
-  2026-09-28 — and `ideas.outcome_id` wait for the later sprint that builds Slice 2, under an
-  amendment of their own.
-- **Not covered:** an issue key or idea reference (comp R's `IDE-01`). That needs its own decision
-  and its own amendment.
-
-**Golden corpus.** Board list items gain `topTags[].color`; idea list, detail and delivery items
-gain `tags`; and idea list items (the board list and the organization list) gain `effort` — so the
-replay will differ there. Those differences are accepted, and the backend slice
-records them in `tools/golden/src/accepted.ts`.
-
-## 2026-09-28 — Graphite replaces Notte as the dark theme
-
-> Supersedes in part 2026-09-27 "Terrazzo is the palette, with a theme picker", which named Notte as
-> the dark theme.
-
-**Decided by the user** from their design canvas: "Graphite replaces Notte as the dark theme." The
-picker offers Terrazzo (default), Portico, Piazza Sera and Lagoon as light themes and **Graphite** as
-the dark one: a near-black neutral ground, near-white ink, an amber primary and a cyan metric and
-suggestion hue, in IBM Plex Sans with JetBrains Mono (`20-feature-client-ui.md` "Themes", token
-values in comp R's `graphite` block). Notte's self-contained `[data-theme]` block, shipped in slice
-100, is replaced rather than kept as a sixth theme, and a `collega-theme` cookie that still says
-`notte` is served Graphite, so a person who chose dark stays in dark. The 4.5:1 rule is unchanged;
-Graphite's pairs were measured against it on 2026-09-28. The Terrazzo default, the per-browser
-cookie and the per-theme suggestion hue all stand.
 
 ## Earlier decisions
 
