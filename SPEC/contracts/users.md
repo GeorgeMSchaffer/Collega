@@ -141,14 +141,31 @@ Bulk-create users in an organization from an uploaded CSV file.
 ### `GET /api/v1/users/{userId}`
 Return user detail.
 
-- **Roles:** — (not stated; the `403` is under Errors).
+*Roles, response and error details written 2026-09-29 from the code (slice 124, `SPEC/decisions.md`
+2026-09-29 "Contracts and wording written from the code"): `UserService.getById`. It agrees with
+every `tools/golden/fixtures/users.get.*` fixture.*
+
+- **Roles:** a Site Admin, for any user; an Org Admin, for users of their own organization. User and
+  Read Only are refused.
 - **Request:** —
-- **Response:** —
+- **Response:** `200`:
+  - `userId`
+  - `organizationId` — `null` for a user who belongs to no organization (a Site Admin)
+  - `firstName`
+  - `lastName`
+  - `email`
+  - `role`
+  - `status`
+  - `mustChangePassword` boolean
+  - `createdAtUtc` timestamp
+  - `updatedAtUtc` timestamp
 - **Errors:**
   - `401` caller is not authenticated
-  - `403` caller is authenticated but not allowed to view this user
-  - `404` user does not exist or is outside caller scope
-- **Rules:** —
+  - `403` `"You are not allowed to manage this user."` for a User or Read Only caller, when the user
+    exists
+  - `404` `"User not found."` when the user does not exist, or, for an Org Admin, belongs to
+    another organization; also for an id that is not a GUID
+- **Rules:** The same shape is the `200` of `PUT /api/v1/users/{userId}`.
 
 ### `PUT /api/v1/users/{userId}`
 Update user profile, role, or status within the caller's authorized scope.
