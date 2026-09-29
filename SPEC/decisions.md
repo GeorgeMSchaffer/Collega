@@ -79,7 +79,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-04 | .NET development stops; the conversion starts now | active | [2026-09-04 to 2026-09-10](decisions/archive-2026-09-04-to-2026-09-10.md) |
 | 2026-09-04 | Sprint 8 is cancelled: the .NET stack is never deployed | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-04 | The idea-type badge moves to the tag row on swimlane cards | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
-| 2026-09-04 | The session lives in a cookie Nest issues; the reshape takes only what introspection forces | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+| 2026-09-04 | The session lives in a cookie Nest issues; the reshape takes only what introspection forces | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-03 | The conversion's remaining gates: net-new scope, the test suite, and where it deploys | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-03 | Comp P is the canonical comp; the client is built on Tailwind CSS + shadcn/ui | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Outcome ↔ Issue cardinality: single-parent | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
@@ -105,7 +105,11 @@ Where a spec keeps history the old text stays, marked superseded; elsewhere it w
    holds a bearer token. `contracts/auth.md` "Access Token Format and Session Revocation" and the
    rotation gate, `20-feature-auth.md` requirements 33–35 and `20-feature-user-login.md` scenarios
    9–11 now describe that. The browser idle deadline (auth requirements 38–42) is not built in
-   `apps/web`, and the contract says so.
+   `apps/web`, and the contract says so. This supersedes 2026-09-04 decision `08` in part, on two
+   points where the code differs: Nest sets the cookie on login only — View As start and exit do
+   not touch it — and `apps/web` does hold it, re-issuing it on its own origin and deleting it on
+   sign-out; `08` said Nest sets and clears it on login and View As start/exit and Next holds no
+   session of its own.
 2. **A Site Admin changes organization content only while acting through View As**; organization
    and user administration stay direct. This is the locked 2026-08-11 decision and what
    `ensureNotDirectSiteAdmin` enforces from every service's `ensureAdminScope`. The boards and
@@ -127,7 +131,8 @@ Where a spec keeps history the old text stays, marked superseded; elsewhere it w
 7. **A status colour is `#RRGGBB`**, as the API enforces (`20-feature-boards-and-statuses.md`
    rule 9 said any hex/CSS colour).
 8. **Columns reorder with `POST /boards/{boardId}/swimlanes/reorder`**, not the nonexistent
-   `PUT /boards/{boardId}/statuses/{statusId}` that `20-feature-client-ui.md` named.
+   `PUT /boards/{boardId}/statuses/{statusId}` that `20-feature-client-ui.md` named. `apps/web`
+   does not call the reorder route yet: column drag is unbuilt.
 9. **An idea's details open in the drawer at `/ideas?idea={id}`**, not a `/ideas/{id}/edit` route
    (`20-feature-client-ui-revisions.md`).
 10. **Idea Type options carry a colour and icon** (Fields rule 9); the ideas spec's decision-table
@@ -143,9 +148,10 @@ Where a spec keeps history the old text stays, marked superseded; elsewhere it w
 
 **Why record them together.** Each was a place where two canonical documents disagreed, which
 AGENTS.md says to ask about rather than pick. They were asked together and answered together, and
-none changes code: where a spec and the code differed, the answer was the code. Two gaps remain where
-the specs now say more than the code does: the idea form preselects neither option yet (item 3), and
-the browser idle deadline is unbuilt (item 1).
+none changes code: where a spec and the code differed, the answer was the code. Three gaps remain where
+the specs now say more than the code does: the idea form preselects neither option yet (item 3),
+the browser idle deadline is unbuilt (item 1), and no client calls the swimlane reorder route
+(item 8).
 
 ---
 
