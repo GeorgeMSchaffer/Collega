@@ -9,6 +9,10 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 ### Access Token Format and Session Revocation (Resolved 2026-08-07)
 Rewritten 2026-09-29 (`SPEC/decisions.md`, "Spec contradictions resolved"): the session is the
 httpOnly cookie Nest issues (decision 2026-09-04, `08`), not a bearer token the client stores.
+This section said "`accessToken` is a signed JWT"; named the .NET lifetime setting
+`Auth:AccessTokenLifetimeMinutes` (`Auth__AccessTokenLifetimeMinutes`); said the browser enforces
+the idle deadline, without saying it is unbuilt in `apps/web`; and sent expiry to
+`/login?sessionExpired=true`.
 - The session is an **httpOnly cookie named `collega_session`**, set by the API on a successful `POST /api/v1/auth/login` (`Secure`, `SameSite=Lax`, `Path=/`). Its value is a signed JWT (HS256) carrying the user id (`sub`); no response body carries it, no client script reads it, and no client sends an `Authorization` header. The API reads identity from this cookie and nothing else.
 - Every `User` has a server-side `SecurityStamp`: a random value regenerated whenever sessions must be invalidated. Each issued JWT embeds the `SecurityStamp` current at issuance as a claim (`sstamp`).
 - `GET /api/v1/auth/me` and every authenticated request revalidate the embedded `SecurityStamp` claim against the User's current `SecurityStamp` in the database. A mismatch is an invalid/expired session (`401`), exactly like an expired JWT.
