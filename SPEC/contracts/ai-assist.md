@@ -6,7 +6,7 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 
 ## AI Idea Assist Contracts
 
-Behavior spec: `SPEC/20-feature-ai-idea-assist.md`. Sprint 7 (`SPEC/sprints/archive/sprint-07-ai-idea-assist.md`). **Built 2026-08-16**, except the per-org `ai-key` endpoints below, which stay deliberately unimplemented (rule 30).
+Behavior spec: `SPEC/20-feature-ai-idea-assist.md`. Sprint 7 (`SPEC/sprints/archive/sprint-07-ai-idea-assist.md`). **Built 2026-08-16**, except the per-org `ai-key` endpoints in [`contracts/organizations.md`](organizations.md), which stay deliberately unimplemented (rule 30).
 
 Contract-wide rules for this section:
 - the caller's organization is resolved from the access token, never from the request body

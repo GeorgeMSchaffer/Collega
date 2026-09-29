@@ -228,7 +228,7 @@ Return full idea detail.
   - `fieldValues` array of resolved User-Defined Field values (`fieldDefinitionId`, `fieldName`, `fieldType`, `value`), per `SPEC/20-feature-user-defined-fields.md`
   - `formFields` array — the idea's own effective fields, for editing it: resolved from its Idea Type
     even when that type is archived, in form order. Each item is the `effectiveFields` item shape
-    above plus `value`, the stored value in the form the write accepts (`true`/`false` for
+    of `GET /api/v1/organizations/{organizationId}/idea-types` ([`contracts/idea-field-options.md`](idea-field-options.md)) plus `value`, the stored value in the form the write accepts (`true`/`false` for
     `Boolean`, option ids — comma-separated for `MultiSelect` — for choice fields, `YYYY-MM-DD` for
     `Date`), or `null` when unset. An option the idea stores that the field no longer offers is
     still listed in that item's `options`, with `isArchived: true`, so an unchanged save keeps it.

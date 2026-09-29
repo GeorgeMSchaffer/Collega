@@ -30,7 +30,7 @@ List boards for an organization.
     - `statusColor`
     - `order` integer
     - `ideaCount` integer
-  - `topTags` — at most three `{ name, ideaCount }`, the tags on the most of the board's ideas; ordered by `ideaCount` descending, then `name` ascending (case-insensitive). Empty when no idea is tagged. **Added 2026-09-28:** each item also carries `color` (`#RRGGBB`, the tag's colour — "Tag Contracts" below).
+  - `topTags` — at most three `{ name, ideaCount }`, the tags on the most of the board's ideas; ordered by `ideaCount` descending, then `name` ascending (case-insensitive). Empty when no idea is tagged. **Added 2026-09-28:** each item also carries `color` (`#RRGGBB`, the tag's colour — "Tag Contracts" in [`contracts/tags.md`](tags.md)).
   - `tagCount` integer — distinct tags across the board's ideas
 - **Errors:** —
 - **Rules:**

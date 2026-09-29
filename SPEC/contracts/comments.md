@@ -40,7 +40,7 @@ Add a comment to an idea.
 - **Response:** `201`
   - `commentId`
   - `ideaId`
-- **Errors:** **an unresolved address is rejected with 400**, keyed on `mentionEmails`, using the canonical mention-resolution message in "Validation Message Conventions" above.
+- **Errors:** **an unresolved address is rejected with 400**, keyed on `mentionEmails`, using the canonical mention-resolution message in "Validation Message Conventions" in [`SPEC/30-Contracts.md`](../30-Contracts.md).
 - **Rules:**
   - **Corrected 2026-09-06** — the `mentionEmails` line previously read "unresolved addresses are ignored", which described behaviour the implementation never had: ideas and comments share one `IMentionResolver`, and it has always thrown. See `SPEC/decisions.md`.
   - UX: clients should show a live character counter and inline overflow validation.
