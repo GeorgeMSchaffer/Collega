@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
 | 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | full below |
 | 2026-09-28 | `compare` refuses to judge an invalid run | active | full below |
@@ -89,6 +90,34 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-28 — The Idea Field Option contract follows the code
+
+**Decided by the user.** Slice 119 merged the two sections of `30-Contracts.md` headed "Idea Field
+Option Contracts" into `SPEC/contracts/idea-field-options.md` and marked eight places where the two
+copies, or the text and the code, disagreed. All eight are resolved so the contract says what the
+code does today, with no code change — the code has shipped, and a contract the golden corpus pins
+should not describe an API that does not exist. For both Idea Types and Business Impacts:
+
+1. **The list** returns active options only unless `includeDeleted=true`, which any caller who may
+   read the list may pass (every member of the organization, and a Site Admin); ordered by
+   `sortOrder`, then `name`.
+2. **The Idea Type item** is the typed shape, including `effectiveFields`.
+3. **`sortOrder` on create** is optional: absent, the option goes at the end (the highest existing
+   `sortOrder` plus 10). There is no negative check.
+4. **`sortOrder` on update** is optional: absent, the option keeps its current value. Updating an
+   archived option answers `404`.
+5. **Reorder** is `POST …/reorder`, answering `204`.
+6. **Reorder must list every active option exactly once** ("The reorder must list every active
+   option exactly once."), and archived options are not listed. It sets no default: idea create
+   requires an active `ideaTypeId`.
+7. **A direct Site Admin is refused** on every mutation with `403` (`ensureNotDirectSiteAdmin`); View
+   As is the way in. Listing is unaffected.
+8. **Cross-organization access answers `404` "Organization not found."** — an Org Admin mutating
+   another organization's options (`ensureAdminScope`), a member reading another organization's list
+   (`ensureReadScope`). User and Read Only callers in their own organization still get `403`.
 
 ---
 
