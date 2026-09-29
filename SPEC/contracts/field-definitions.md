@@ -53,8 +53,9 @@ Shared by every route below:
   - The request shape, checked after sign-in but before the role check or any lookup, keyed by field, with no
     `traceId`: `"Name is required."`, `"Name must be 100 characters or fewer."`, `"Description must
     be 500 characters or fewer."`, `"Field Type is required."`, and for option `n`,
-    `options[n].label` `"Label is required."` / `"Label must be 200 characters or fewer."` and
-    `options[n].optionId` `"Option Id must be a valid GUID."` (every malformed id is reported).
+    `options[n].label` `"Label is required."` / `"Label must be 200 characters or fewer."`.
+    Only when all of those pass, a second shape check keys `options[n].optionId` `"Option Id must
+    be a valid GUID."` for every malformed option id, in the same envelope.
   - The service's, with a `traceId`:
     - `fieldType` `"Field type must be one of: Text, Number, Date, Boolean, Dropdown,
       MultiSelect, Url."`
