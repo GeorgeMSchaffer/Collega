@@ -196,7 +196,7 @@ Combinable with filter chips.
 5. Board `allowUserStatusUpdate` and role restrictions are enforced server-side (403 → revert + permission message).
 
 ### Drag-and-Drop: Reordering Columns
-1. SiteAdmin and OrgAdmin users can drag column headers to reorder columns.
+1. An Org Admin — and a Site Admin only while acting through View As — can drag column headers to reorder columns. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said SiteAdmin and OrgAdmin users.*
 2. Optimistic reorder applied immediately.
 3. Calls `POST /api/v1/boards/{boardId}/swimlanes/reorder` once, naming every swimlane on the board with its new `order` (`contracts/boards.md`). Saves immediately on drop — no additional confirmation. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said one `PUT /api/v1/boards/{boardId}/statuses/{statusId}` per moved column, a route that does not exist.*
 4. On failure: revert all columns, show error toast.
