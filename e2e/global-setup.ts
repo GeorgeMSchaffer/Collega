@@ -75,13 +75,11 @@ export default function globalSetup(): void {
   const databaseUrl = e2eDatabaseUrl()
   refuseIfNotDisposable(databaseUrl)
 
-  // The API runs as built output, not under a watcher — the same shape `tools/local/start.ts` uses,
-  // and for the same reason: nothing in a test run edits it. Building it builds the packages
-  // beneath it, which is also what the seed imports. Turbo caches, so this is seconds after the
-  // first run.
-  run('pnpm', ['exec', 'turbo', 'run', 'build', '--filter=@collega/api'], {
-    DATABASE_URL: databaseUrl,
-  })
+  // Nothing is built here. This runs after both servers are up (see the order in
+  // `playwright.config.ts`), and the API's own `webServer` command has already built it and the
+  // packages beneath it, which are also what the seed imports. Rebuilding while the API runs is not
+  // just redundant: on Windows a rebuild that rewrites `packages/infrastructure/dist/generated`
+  // under the running API failed with the Prisma client "used by another process" (2026-09-29).
 
   // Dropped and rebuilt rather than migrated forward: the point is a known state, not an
   // incremental one. A spec that moves a card leaves the board changed, and the next run must not
@@ -123,8 +121,4 @@ export default function globalSetup(): void {
     DATABASE_URL: databaseUrl,
     NODE_ENV: 'test',
   })
-
-  // Read back by playwright.config.ts, so the API server starts against the same schema this just
-  // rebuilt rather than re-deriving it and risking a different answer.
-  process.env.COLLEGA_E2E_DATABASE_URL = databaseUrl
 }
