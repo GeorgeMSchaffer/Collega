@@ -164,7 +164,9 @@ every `tools/golden/fixtures/users.get.*` fixture.*
   - `403` `"You are not allowed to manage this user."` for a User or Read Only caller, when the user
     exists
   - `404` `"User not found."` when the user does not exist, or, for an Org Admin, belongs to
-    another organization; also for an id that is not a GUID
+    another organization
+  - `404` with no message of its own for an id that is not a GUID — the route refuses it before
+    any lookup
 - **Rules:** The same shape is the `200` of `PUT /api/v1/users/{userId}`.
 
 ### `PUT /api/v1/users/{userId}`
