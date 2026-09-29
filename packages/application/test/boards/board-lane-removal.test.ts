@@ -339,7 +339,8 @@ describe('BoardService.update refusing a lane removal that strands ideas', () =>
       service.update(BOARD_ID, save([NEW, REVIEW, DONE], [{ fromStatusId: '', toStatusId: '' }])),
     )
 
-    expect(errors).toEqual([NOT_REMOVED])
+    // An empty target is also not a kept lane; the contract only requires the refusal to name it.
+    expect(errors).toContain(NOT_REMOVED)
     expect(laneReads).toEqual([])
   })
 

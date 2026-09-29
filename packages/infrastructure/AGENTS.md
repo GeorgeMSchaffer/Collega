@@ -31,6 +31,9 @@ A full `dropdb` → migrate → seed cycle takes about four seconds, which is wh
 longer something cutover has to preserve (`SPEC/decisions.md` 2026-09-09). Treat it as disposable:
 if a change needs different data, change the seed module, don't patch rows.
 
+The migration integration tests (`test/*-migration.integration.test.ts`) create a throwaway
+database per run, so the role in `DATABASE_URL` needs `CREATEDB`. The local Docker role has it.
+
 ## Conventions
 
 - **The schema is frozen at S0.2.** A migration that reshapes it is a spec question, not a slice
