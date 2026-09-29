@@ -179,6 +179,32 @@ export async function saveBoardInPlace(
 }
 
 /**
+ * Save a board's lane order from its own page: one `POST …/swimlanes/reorder` naming every lane, in
+ * the order given, with a dense `order` from zero as `boardBody` sends it
+ * (`SPEC/20-feature-client-ui.md` "Reordering Columns"). The API refuses a list that is not
+ * exactly the board's lanes, so a page stale by a lane edit elsewhere gets that refusal to show.
+ */
+export async function reorderLanes(
+  boardId: string,
+  statusIds: string[],
+): Promise<{ error: string | null }> {
+  try {
+    await apiPost(apiPath`/boards/${boardId}/swimlanes/reorder`, {
+      swimlanes: statusIds.map((statusId, order) => ({ statusId, order })),
+    })
+  } catch (error) {
+    // A 400's title is generic; the reason is in the field message.
+    const detail = error instanceof ApiError ? error.errors.swimlanes : undefined
+    return { error: detail ?? refusal(error) }
+  }
+
+  revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
+  // The Boards list draws its lane mix in lane order.
+  revalidatePath('/', 'layout')
+  return { error: null }
+}
+
+/**
  * Archive or unarchive, once the screen has asked for confirmation. Both answer 204 whether or not
  * anything changed, so a second click from a stale page is harmless.
  */
