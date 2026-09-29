@@ -26,9 +26,9 @@ has stopped being a harness check and belongs in a spec of its own.
 ## What the tests can and cannot see
 
 **The suite drives the whole application.** `playwright.config.ts` starts `apps/api` on :3001 and
-`apps/web` on :3000, and `global-setup.ts` drops and rebuilds a schema of its own before either
-starts — so a run begins from the seeded demo data rather than from whatever the last run left.
-Nothing needs to be running beforehand.
+`apps/web` on :3000, each building what it runs first, and once both answer `global-setup.ts`
+drops and rebuilds a schema of its own before any test runs — so a run begins from the seeded demo
+data rather than from whatever the last run left. Nothing needs to be running or built beforehand.
 
 **The database is a schema, not a second database.** `collega_e2e` inside whatever `DATABASE_URL`
 names, so `public` — where `pnpm dev` keeps your demo data — is untouched, and no CREATE DATABASE
@@ -55,8 +55,8 @@ here**, and before F2 they failed at render however carefully a spec was written
 
 They render because the API is here. Note what that means for a failure: if one of these screens
 fails to render at all, suspect the API server rather than the assertion — its output is on stderr,
-and `global-setup.ts`'s migrate and seed run before either server starts, so a database problem
-surfaces there rather than in a test.
+and `global-setup.ts`'s migrate and seed run before any test, so a database problem surfaces there
+rather than in a test.
 
 `apps/web/lib/data/index.ts` is the seam and names exactly which readers have been converted; check
 it before assuming a screen is fixture-backed. **The AI-assist admin screens are the exception that

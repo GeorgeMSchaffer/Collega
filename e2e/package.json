@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Playwright browser E2E tests for Collega (drives apps/web at :3000, which Playwright starts itself).",
+  "description": "Playwright browser E2E tests for Collega (drives apps/web against apps/api, both of which Playwright builds and starts itself).",
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",

@@ -35,6 +35,4 @@ Keep entries short. A symptom, where it happens, and — if you know it — the 
 
 ## TODO
 
-- **`pnpm test:e2e` fails on a fresh checkout because the API isn't built yet.** Found 2026-09-29 in slice 127's QA run. `e2e/playwright.config.ts:120` starts the API with `node apps/api/dist/bootstrap.js`, but the API is only built in `global-setup.ts:82`, which Playwright runs after its `webServer` entries are up; `collega-e2e` has no workspace dependencies, so turbo's `^build` builds nothing. The comments at `playwright.config.ts:46` and `:114-115` describe the opposite order. Global setup's `DROP SCHEMA` also runs after the API is already listening. Proposed fix: build before starting the API, as the web entry already does (`pnpm exec turbo run build --filter=@collega/api && node apps/api/dist/bootstrap.js`), and correct the comments; pairs with the stale `e2e/AGENTS.md` follow-up from slice 122. Workaround: `pnpm exec turbo run build --filter=@collega/api` first.
-
 All ten previously open items were promoted into `SPEC/sprints/sprint-07.5-accessibility-and-bug-paydown.md` on 2026-08-25 and deleted from here per the "Promote and delete" rule above — that sprint file is now their only home. They came from a live UI/UX pass against `dev` at `875b223` on 2026-08-16.
