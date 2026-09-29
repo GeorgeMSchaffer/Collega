@@ -1,6 +1,6 @@
 # 50 — API CI/CD to Azure App Service
 
-> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** SUPERSEDED — GitHub Actions deploy of the frozen .NET API to Azure App Service; never deployed.
 > - **Key rules:** superseded by `SPEC/50-vercel-deployment.md`, canonical for deployment; nothing here is a
 >   build instruction or a gate.
@@ -10,13 +10,13 @@
 
 > ## ⛔ SUPERSEDED — describes the frozen .NET stack
 >
-> This document sets up `.github/workflows/deploy-api.yml`, which builds and deploys
-> `src/Collega.API` — **frozen and never deployed**: Sprint 8 was cancelled on 2026-09-04, and the
-> .NET code is deleted in slice F6 (`SPEC/decisions.md`). The shipping stack deploys to **Vercel
-> with Prisma Postgres**: see `SPEC/50-vercel-deployment.md`, which is canonical for deployment.
->
-> Kept as the record of what that pipeline was. **Nothing here is a build instruction**, and the
-> workflow it describes is not a gate on anything.
+> - This document sets up `.github/workflows/deploy-api.yml`, which builds and deploys `src/Collega.API` — **frozen and
+>   never deployed**: Sprint 8 was cancelled on 2026-09-04, and the .NET code is deleted in slice F6
+>   (`SPEC/decisions.md`).
+> - The shipping stack deploys to **Vercel with Prisma Postgres**: see `SPEC/50-vercel-deployment.md`, which
+>   is canonical for deployment.
+> - Kept as the record of what that pipeline was. **Nothing here is a build instruction**, and the
+>   workflow it describes is not a gate on anything.
 
 Setup for `.github/workflows/deploy-api.yml`, which builds and deploys `Collega.API` to the App
 Service from `SPEC/50-azure-deployment.md`. On every push to `main` (or a manual run from the
@@ -48,10 +48,9 @@ That's it — push to `main` and it deploys.
 
 ---
 
-**App settings are not in this pipeline.** The runtime config the API needs
-(`ConnectionStrings__DefaultConnection`, `SiteAdmin__Email`, `SiteAdmin__Password`,
-`Cors__AllowedOrigins__0`, `Auth__TokenSigningKey`) lives on the App Service itself — see §3 of
-`SPEC/50-azure-deployment.md`. The workflow ships code only; it never sees those secrets.
-
-**Rotating the credential:** if the publish profile leaks, reset it in the portal (App Service →
-Deployment Center → Manage publish profile → Reset), then paste the new XML into the secret.
+- **App settings are not in this pipeline.** The runtime config the API needs
+  (`ConnectionStrings__DefaultConnection`, `SiteAdmin__Email`, `SiteAdmin__Password`,
+  `Cors__AllowedOrigins__0`, `Auth__TokenSigningKey`) lives on the App Service itself — see §3 of
+  `SPEC/50-azure-deployment.md`. The workflow ships code only; it never sees those secrets.
+- **Rotating the credential:** if the publish profile leaks, reset it in the portal (App Service →
+  Deployment Center → Manage publish profile → Reset), then paste the new XML into the secret.
