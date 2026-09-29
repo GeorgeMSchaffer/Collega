@@ -3,7 +3,7 @@
 > ⚠️ **This file is a derived summary, not a source of truth, and it is not maintained in lockstep with the canonical specs.**
 > Its content was last reconciled **2026-08-06**; the canonical `SPEC/*.md` files have moved since.
 >
-> - **Do not implement from this file.** Read the canonical spec for the area you are changing (`SPEC/README.MD` indexes them; `SPEC/30-Contracts.md` is authoritative for endpoints and payloads).
+> - **Do not implement from this file.** Read the canonical spec for the area you are changing (`SPEC/README.MD` indexes them; `SPEC/30-Contracts.md` is authoritative for endpoints and payloads — its index points to each area's file in `SPEC/contracts/`).
 > - **Where this file disagrees with a canonical spec, the canonical spec wins.** That is a precedence rule, not a conflict — resolve it and move on. It is *not* the "specs conflict, ask the user" case in `CLAUDE.md`, which covers disagreement between two **canonical** specs.
 > - **Do not edit behavior here.** Update the canonical spec first; this summary is regenerated from it.
 >
@@ -117,7 +117,7 @@ Key rule: all tenant-owned data is organization-scoped; Site Admin is global and
 - Audit events are required for auth, admin, and idea lifecycle actions.
 
 ## API Contract Summary Matrix
-Route and payload authority: `SPEC/30-Contracts.md`.
+Route and payload authority: `SPEC/30-Contracts.md` (conventions and index) and the area files in `SPEC/contracts/`.
 
 | Endpoint | Primary Actors | Request Summary | Success Summary | Key Errors |
 |---|---|---|---|---|
@@ -197,7 +197,7 @@ Route and payload authority: `SPEC/30-Contracts.md`.
 ### Contract
 - Response and request semantics aligned with `SPEC/30-Contracts.md`
 - Problem-details envelope on all non-2xx responses
-- Authentication, organization, user, board, status, idea contract alignment with `SPEC/30-Contracts.md`
+- Authentication, organization, user, board, status, idea contract alignment with `SPEC/30-Contracts.md` and `SPEC/contracts/*.md`
 
 ### Startup Safety
 - Demo seed runs only in Development
@@ -235,20 +235,20 @@ Update canonical `SPEC/*.md` first, then align this overview, implementation, an
 ## Traceability Matrix
 | Behavior Rule | Canonical Source(s) | Verification Target(s) |
 |---|---|---|
-| Global email uniqueness for login and users | `SPEC/10-requirements.md`, `SPEC/20-feature-auth.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/30-Contracts.md` | Unit: auth and user uniqueness rules. Integration: login and user CRUD scope checks. |
-| Organization user CSV template and atomic import | `SPEC/10-requirements.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/30-Contracts.md` | Unit: CSV parsing, limits, defaults, role restrictions, and duplicate detection. Integration/Contract: template response and import success, authorization, row errors, and no partial persistence. |
-| Lockout after 5 failed attempts in 15 minutes with 15-minute lockout | `SPEC/20-feature-auth.md`, `SPEC/20-feature-user-login.md`, `SPEC/30-Contracts.md` | Unit: lockout threshold/expiry. Integration: `/api/v1/auth/login` lockout branch. |
+| Global email uniqueness for login and users | `SPEC/10-requirements.md`, `SPEC/20-feature-auth.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/contracts/auth.md`, `SPEC/contracts/users.md` | Unit: auth and user uniqueness rules. Integration: login and user CRUD scope checks. |
+| Organization user CSV template and atomic import | `SPEC/10-requirements.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/contracts/users.md` | Unit: CSV parsing, limits, defaults, role restrictions, and duplicate detection. Integration/Contract: template response and import success, authorization, row errors, and no partial persistence. |
+| Lockout after 5 failed attempts in 15 minutes with 15-minute lockout | `SPEC/20-feature-auth.md`, `SPEC/20-feature-user-login.md`, `SPEC/contracts/auth.md` | Unit: lockout threshold/expiry. Integration: `/api/v1/auth/login` lockout branch. |
 | Seeded Site Admin must change password on first login | `SPEC/20-feature-auth.md`, `SPEC/20-feature-user-login.md` | Unit: first-login flag behavior. Integration: first-login password-change gating. |
 | Development-only demo seed and non-Development suppression | `SPEC/10-requirements.md`, `SPEC/20-feature-auth.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/40-test-strategy.md` | Unit: idempotent seed graph creation. Integration/Startup Safety: Development-only seeding and suppression outside Development. |
-| Organization archive behavior and default hidden archived records | `SPEC/20-feature-organizations-and-users.md`, `SPEC/30-Contracts.md` | Integration: organization list/archive behavior and role boundaries. |
-| New organization bootstrap provisions default statuses and one default board | `SPEC/20-feature-organizations-and-users.md`, `SPEC/20-feature-boards-and-statuses.md`, `SPEC/30-Contracts.md` | Integration: organization create bootstrap assertions. |
-| Status soft-delete with historical name visibility | `SPEC/20-feature-boards-and-statuses.md`, `SPEC/30-Contracts.md` | Unit: status lifecycle logic. Integration: status delete/history behavior. |
-| Board must have at least two swimlanes and reorder persists immediately | `SPEC/20-feature-boards-and-statuses.md`, `SPEC/30-Contracts.md` | Unit: board validation. Integration: create reject path and reorder persistence. |
-| Idea and collaboration field constraints (title/description/comment/tag) | `SPEC/20-feature-ideas-and-engagement.md`, `SPEC/30-Contracts.md` | Unit: validation rules and normalization behavior. Contract: schema alignment checks. |
+| Organization archive behavior and default hidden archived records | `SPEC/20-feature-organizations-and-users.md`, `SPEC/contracts/organizations.md` | Integration: organization list/archive behavior and role boundaries. |
+| New organization bootstrap provisions default statuses and one default board | `SPEC/20-feature-organizations-and-users.md`, `SPEC/20-feature-boards-and-statuses.md`, `SPEC/contracts/organizations.md` | Integration: organization create bootstrap assertions. |
+| Status soft-delete with historical name visibility | `SPEC/20-feature-boards-and-statuses.md`, `SPEC/contracts/statuses.md` | Unit: status lifecycle logic. Integration: status delete/history behavior. |
+| Board must have at least two swimlanes and reorder persists immediately | `SPEC/20-feature-boards-and-statuses.md`, `SPEC/contracts/boards.md` | Unit: board validation. Integration: create reject path and reorder persistence. |
+| Idea and collaboration field constraints (title/description/comment/tag) | `SPEC/20-feature-ideas-and-engagement.md`, `SPEC/contracts/ideas.md`, `SPEC/contracts/comments.md`, `SPEC/contracts/tags.md` | Unit: validation rules and normalization behavior. Contract: schema alignment checks. |
 | Mention resolution is same-organization only and unresolved mentions block save | `SPEC/20-feature-ideas-and-engagement.md`, `SPEC/60-spec-q-and-a-backlog.md` | Unit: mention resolution/validation logic. Integration: idea/comment save behavior with mentions. |
-| Upvote toggle, one active upvote per user per idea, owner-only removal | `SPEC/20-feature-ideas-and-engagement.md`, `SPEC/30-Contracts.md` | Unit: upvote ownership/toggle behavior. Integration: upvote endpoint role behavior. |
+| Upvote toggle, one active upvote per user per idea, owner-only removal | `SPEC/20-feature-ideas-and-engagement.md`, `SPEC/contracts/upvotes.md` | Unit: upvote ownership/toggle behavior. Integration: upvote endpoint role behavior. |
 | Problem-details envelope on all non-2xx responses | `SPEC/30-Contracts.md`, `SPEC/40-test-strategy.md` | Contract: error-envelope assertions. Integration: protected and validation failure response checks. |
-| Notification events persisted in MVP while outbound email remains deferred | `SPEC/20-feature-notifications.md`, `SPEC/30-Contracts.md`, `SPEC/50-technical-implementation-plan.md` | Unit/Integration: event emission and persistence checks. Release hardening: deferred outbound delivery remains out of scope. |
+| Notification events persisted in MVP while outbound email remains deferred | `SPEC/20-feature-notifications.md`, `SPEC/contracts/notifications.md`, `SPEC/50-technical-implementation-plan.md` | Unit/Integration: event emission and persistence checks. Release hardening: deferred outbound delivery remains out of scope. |
 | Audit events required for auth, admin, and idea lifecycle actions | `SPEC/20-feature-auth.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/20-feature-ideas-and-engagement.md`, `SPEC/50-technical-implementation-plan.md` | Unit/Integration: audit generation for required workflows. |
 
 ## Source Index
@@ -263,6 +263,7 @@ Update canonical `SPEC/*.md` first, then align this overview, implementation, an
 - `SPEC/20-feature-ideas-and-engagement.md`
 - `SPEC/20-feature-notifications.md`
 - `SPEC/30-Contracts.md`
+- `SPEC/contracts/*.md` (one file per contract area, indexed by `SPEC/30-Contracts.md`)
 - `SPEC/40-test-strategy.md`
 - `SPEC/50-technical-implementation-plan.md`
 - `SPEC/60-spec-q-and-a-backlog.md`

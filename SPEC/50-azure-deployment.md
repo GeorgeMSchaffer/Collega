@@ -1,8 +1,19 @@
 # 50 — Azure Deployment Guide
 
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
+> - **Scope:** SUPERSEDED — Azure PaaS plan (Static Web Apps, App Service, PostgreSQL Flexible Server) for the
+>   frozen .NET stack; never deployed. Kept for its cost model, topology and database/secret reasoning.
+> - **Key rules:** superseded by `SPEC/50-vercel-deployment.md` (Vercel + Prisma Postgres, ticket `02`);
+>   nothing here is a build instruction.
+> - **Contracts:** none
+> - **Decisions:** 2026-09-03 "The conversion's remaining gates: net-new scope, the test suite, and where it
+>   deploys"; 2026-09-04 "Sprint 8 is cancelled: the .NET stack is never deployed"; 2026-09-06 "The .NET
+>   stack is frozen; its code and instructions are no longer applicable"
+
 > ## ⛔ SUPERSEDED — describes the frozen .NET stack
 >
-> This document plans the deployment of `src/Collega.*`, which is **frozen and never deployed**:
+> This document plans the deployment of the .NET solution, which was **never deployed** and was
+> deleted in slice F6 (2026-09-13); paths into it were removed 2026-09-29:
 > Sprint 8 was cancelled on 2026-09-04, and the .NET code is deleted in slice F6
 > (`SPEC/decisions.md` 2026-09-06, `SPEC/50-typescript-migration.md`). The product ships to
 > **Vercel with Prisma Postgres** (ticket `02`, decided 2026-09-03).
@@ -10,19 +21,20 @@
 > Kept for the cost model, the topology reasoning, and the database/secret-handling decisions,
 > which survive the change of host. **Nothing here is a build instruction.**
 
-How to provision and deploy Collega's three tiers to Azure at low cost. This is the
-cost-optimized PaaS target that pairs with `SPEC/50-kubernetes-deployment.md` (the heavier,
-self-hosted alternative). It reflects the **actual** wiring in the codebase as of this
-document: the API reads three required settings and fails fast without them, migrations run
-automatically on startup, and the client is Blazor **WebAssembly** (static files).
+How to provision and deploy Collega's three tiers to Azure at low cost — the cost-optimized PaaS
+target that pairs with `SPEC/50-kubernetes-deployment.md` (the heavier, self-hosted alternative). It
+reflects the **actual** wiring in the codebase as of this document:
+- the API reads three required settings and fails fast without them;
+- migrations run automatically on startup;
+- the client is Blazor **WebAssembly** (static files).
 
 ---
 
 ## 1. Architecture and cost
 
-The client (`src/Collega.Client`) is Blazor WebAssembly — it compiles to static
-html/wasm/js and calls the API as a **separate origin**. So the frontend is nearly free to
-host, and the only real cost drivers are the API compute and the database.
+The client (`Collega.Client`) was Blazor WebAssembly — static html/wasm/js calling the API as a
+**separate origin** — so the frontend is nearly free to host; the only real cost drivers are the API
+compute and the database.
 
 | Tier | Azure service | Why | Approx. monthly (USD) |
 |---|---|---|---|
@@ -30,13 +42,12 @@ host, and the only real cost drivers are the API compute and the database.
 | Backend (`Collega.API`) | **App Service** — Linux, B1 | Runs the ASP.NET Core 8 host; simplest managed compute for .NET | ~$13 (or **F1 Free** for dev) |
 | Database | **Azure Database for PostgreSQL — Flexible Server**, **Burstable B1ms** | Cheapest managed Postgres tier; managed backups + PITR; can be **manually stopped** when idle to save compute | ~$13–20 depending on usage |
 
-**Total: ~$26–33/mo** for a small always-available deployment, less if you use the App
-Service Free tier and stop the database when idle.
+**Total: ~$26–33/mo** for a small always-available deployment; less with the App Service Free tier and
+the database stopped when idle.
 
-> **No auto-pause.** Unlike Azure SQL Serverless, PostgreSQL Flexible Server does **not**
-> auto-pause on idle. You can **manually stop** the server (it stays stopped up to 7 days, then
-> auto-starts) to avoid compute charges on a dev box — see §9. For always-on, Burstable B1ms is
-> the floor.
+> **No auto-pause.** Unlike Azure SQL Serverless, PostgreSQL Flexible Server does **not** auto-pause
+> on idle. You can **manually stop** the server (it stays stopped up to 7 days, then auto-starts) to
+> avoid compute charges on a dev box — see §9. For always-on, Burstable B1ms is the floor.
 
 ```
  Browser ──HTTPS──> Static Web Apps (WASM bundle, CDN)
@@ -44,16 +55,16 @@ Service Free tier and stop the database when idle.
     └──HTTPS (CORS, bearer token)──> App Service (Collega.API) ──TLS/5432──> Azure Database for PostgreSQL
 ```
 
-> **Region:** put all three in the **same Azure region** (examples below use `eastus`) to
-> avoid cross-region latency and egress. Static Web Apps Free picks its own edge region; that
-> is fine — only App Service ↔ database locality matters for latency.
+> **Region:** all three in the **same Azure region** (examples use `eastus`) to avoid cross-region
+> latency and egress. Static Web Apps Free picks its own edge region; that is fine — only App Service ↔
+> database locality matters for latency.
 
 ---
 
 ## 2. Prerequisites
 
 - An Azure subscription and the **Azure CLI** (`az`) signed in: `az login`.
-- The **.NET 8 SDK** locally (matches `global.json` → `8.0.118`, `latestFeature` roll-forward).
+- The **.NET 8 SDK** locally (the solution pinned `8.0.118`, `latestFeature` roll-forward).
 - A GitHub repository for the code (Static Web Apps Free deploys via a GitHub Actions workflow it generates for you).
 - Choose values now and reuse them throughout:
 
@@ -77,9 +88,9 @@ export SITEADMIN_PASSWORD='<a-strong-initial-password>'   # forced to change on 
 
 ## 3. Configuration reference (what the app actually requires)
 
-The API validates configuration in one pass at startup and **exits with a non-zero code and a
-banner** if any of the three required settings are missing (`StartupConfigurationValidator`).
-On App Service, provide these as **Application settings** using the double-underscore form.
+The API validates configuration in one pass at startup and **exits with a non-zero code and a banner**
+if any of the three required settings are missing (`StartupConfigurationValidator`). On App Service,
+provide them as **Application settings** in the double-underscore form.
 
 ### Required — the app will not start without these
 
@@ -108,12 +119,11 @@ On App Service, provide these as **Application settings** using the double-under
 | `Ai__Pricing__InputPerMillion` / `Ai__Pricing__OutputPerMillion` | `Ai:Pricing:*` | `3.00` / `15.00` — display only, for the usage page's cost estimate |
 
 > **Migrations are automatic.** On startup the API runs `Database.MigrateAsync()` against the
-> relational provider, so the schema is created/upgraded on first boot — no separate migration
-> step in the pipeline. The consequence: the Postgres role in the connection string must be able
-> to **create and alter schema** (the `collegaadmin` admin role below satisfies this; if you
-> later switch to a least-privilege app role, grant it ownership of — or `CREATE` on — the
-> `public` schema plus table-level `SELECT`/`INSERT`/`UPDATE`/`DELETE`, or run migrations
-> out-of-band).
+> relational provider, so the schema is created/upgraded on first boot — no separate migration step.
+> Consequence: the Postgres role in the connection string must be able to **create and alter schema**.
+> The `collegaadmin` admin role below satisfies this; if you later switch to a least-privilege app role,
+> grant it ownership of — or `CREATE` on — the `public` schema plus table-level
+> `SELECT`/`INSERT`/`UPDATE`/`DELETE`, or run migrations out-of-band.
 
 ---
 
@@ -137,15 +147,15 @@ az postgres flexible-server db create \
   --resource-group $RG --server-name $PG_SERVER --database-name $PG_DB
 ```
 
-> **Firewall note:** `--public-access 0.0.0.0` means "allow other Azure services" (App Service),
-> not the public internet. To add or adjust rules later use
+> **Firewall note:** `--public-access 0.0.0.0` means "allow other Azure services" (App Service), not
+> the public internet. Adjust rules later with
 > `az postgres flexible-server firewall-rule create --resource-group $RG --name $PG_SERVER ...`.
 > For tighter security use **Private Access (VNet integration)** at create time instead — see §8.
 
-> **No auto-pause / cold start.** Flexible Server does not auto-pause, so there is no wake-up
-> latency, but it also bills compute whenever it is running. Burstable B1ms is the cheapest
-> always-on option; to save money on a dev box, **stop the server** when idle (§9). SSL/TLS is
-> required by default (`Ssl Mode=Require` in the connection string below).
+> **No auto-pause / cold start.** Flexible Server does not auto-pause, so there is no wake-up latency,
+> but it also bills compute whenever it is running.
+> Burstable B1ms is the cheapest always-on option; on a dev box, **stop the server** when idle (§9).
+> SSL/TLS is required by default (`Ssl Mode=Require` in the connection string below).
 
 Build the connection string (Npgsql format — used as an App Service setting next):
 
@@ -153,9 +163,9 @@ Build the connection string (Npgsql format — used as an App Service setting ne
 export CONN="Host=$PG_SERVER.postgres.database.azure.com;Port=5432;Database=$PG_DB;Username=$PG_ADMIN;Password=$PG_PASSWORD;Ssl Mode=Require;Trust Server Certificate=true"
 ```
 
-> **On `Trust Server Certificate=true`:** it encrypts the connection but skips CA validation —
-> fine to get running. For stronger security use `Ssl Mode=VerifyFull` with the Azure PostgreSQL
-> root CA bundled/trusted on the host instead.
+> **On `Trust Server Certificate=true`:** it encrypts the connection but skips CA validation — fine to
+> get running. For stronger security use `Ssl Mode=VerifyFull` with the Azure PostgreSQL root CA
+> bundled/trusted on the host instead.
 
 ---
 
@@ -179,8 +189,8 @@ az webapp update --name $API_APP --resource-group $RG --https-only true
 
 ### 5.2 Apply configuration
 
-Set the frontend origin **after** you know the Static Web App host (Section 6); you can rerun
-this command to add it, or set a placeholder now and update it later.
+Set the frontend origin **after** you know the Static Web App host (Section 6): rerun this command
+then, or set a placeholder now and update it later.
 
 ```bash
 az webapp config appsettings set --name $API_APP --resource-group $RG --settings \
@@ -195,7 +205,8 @@ az webapp config appsettings set --name $API_APP --resource-group $RG --settings
 ### 5.3 Publish the code
 
 ```bash
-dotnet publish src/Collega.API/Collega.API.csproj -c Release -o ./publish
+# <api-project>: the Collega.API project file, deleted in F6
+dotnet publish <api-project> -c Release -o ./publish
 (cd publish && zip -r ../collega-api.zip .)
 
 az webapp deploy \
@@ -212,21 +223,21 @@ curl -i https://$API_APP.azurewebsites.net/api/v1/organizations
 az webapp log tail --name $API_APP --resource-group $RG
 ```
 
-> Swagger is intentionally **off** in Production, so there is no `/swagger` to hit — that is
-> expected, not a failure.
+> Swagger is intentionally **off** in Production, so there is no `/swagger` to hit — that is expected,
+> not a failure.
 
 ---
 
 ## 6. Provision and deploy the frontend (Static Web Apps)
 
-The WASM client reads its API base URL **at runtime** from a static file in `wwwroot`, so you
-point it at the deployed API by adding a Production settings file — no rebuild logic required.
+The WASM client reads its API base URL **at runtime** from a static file in `wwwroot`, so you point it
+at the deployed API by adding a Production settings file — no rebuild logic required.
 
 ### 6.1 Set the production API URL
 
-`src/Collega.Client/wwwroot/appsettings.Production.json` **already exists in the repo** with a
+The client's production settings file (`appsettings.Production.json`) **already existed in the repo** with a
 placeholder host — edit it, don't create it. (The WASM host loads `appsettings.json` then
-`appsettings.{Environment}.json`, and a published app runs as `Production`.)
+`appsettings.{Environment}.json`; a published app runs as `Production`.)
 
 ```json
 {
@@ -245,16 +256,16 @@ frontend that calls a nonexistent host over plain HTTP — every request fails o
 
 ### 6.1a SPA routing fallback (already in the repo)
 
-`src/Collega.Client/wwwroot/staticwebapp.config.json` gives Static Web Apps a navigation fallback
-to `/index.html`. Blazor WASM routes on the client, so **without it every deep link and every
-browser refresh returns 404** — Blazor's publish does not generate this file. It needs no editing;
-it is listed here so it is not mistaken for stray config and deleted.
+The client's `staticwebapp.config.json` gives Static Web Apps a navigation fallback to
+`/index.html`. Blazor WASM routes on the client, so **without it every deep link and every browser
+refresh returns 404** — Blazor's publish does not generate this file. It needs no editing; listed so it
+is not mistaken for stray config and deleted.
 
 ### 6.2 Create the Static Web App
 
-The repo already has a hand-written deploy workflow — `.github/workflows/deploy-client.yml` —
-so create the SWA **without** `--source`. Passing `--source`/`--login-with-github` makes Azure
-generate its *own* workflow, and you would end up with two pipelines deploying the same app:
+The repo had a hand-written deploy workflow — `deploy-client.yml`, deleted 2026-09-10 — so
+create the SWA **without** `--source`. Passing `--source`/`--login-with-github` makes Azure generate
+its *own* workflow, and you would end up with two pipelines deploying the same app:
 
 ```bash
 az staticwebapp create \
@@ -273,18 +284,19 @@ az staticwebapp secrets list --name $SWA_NAME --resource-group $RG \
 |---|---|
 | `AZURE_STATIC_WEB_APPS_API_TOKEN` | the `apiKey` printed above |
 
-That is the only secret the frontend pipeline needs — the API host is runtime config
-(§6.1), not a build input. Pushes to `main` that touch `src/Collega.Client/**` now deploy
-automatically; you can also trigger a run by hand from the **Actions** tab.
+That is the only secret the frontend pipeline needs — the API host is runtime config (§6.1), not a
+build input. Pushes to `main` that touched the client project deployed automatically; you can also
+trigger a run by hand from the **Actions** tab.
 
-> **Why the workflow builds the app itself.** It runs `dotnet publish` and hands Static Web Apps
-> the finished output (`skip_app_build: true`). The alternative — letting SWA's Oryx builder
-> compile the project — uses an SDK Oryx chooses, which does not honour `global.json`'s `8.0.118`
-> pin. Building in the workflow keeps CI and local builds on the same SDK.
+> **Why the workflow builds the app itself.** It runs `dotnet publish` and hands Static Web Apps the
+> finished output (`skip_app_build: true`). The alternative — letting SWA's Oryx builder
+> compile the project — uses an SDK Oryx chooses, which does not honour the solution's `8.0.118` SDK pin.
+> Building in the workflow keeps CI and local builds on the same SDK.
 
 > **First deploy, or no GitHub:** you can push the same output straight from a workstation:
 > ```bash
-> dotnet publish src/Collega.Client/Collega.Client.csproj -c Release -o ./client-publish
+> # <client-project>: the Collega.Client project file, deleted in F6
+> dotnet publish <client-project> -c Release -o ./client-publish
 > npx @azure/static-web-apps-cli deploy ./client-publish/wwwroot \
 >   --deployment-token "$(az staticwebapp secrets list --name $SWA_NAME --resource-group $RG --query properties.apiKey -o tsv)"
 > ```
@@ -300,8 +312,8 @@ az webapp config appsettings set --name $API_APP --resource-group $RG --settings
   Cors__AllowedOrigins__0="https://$SWA_HOST"
 ```
 
-Setting an app setting restarts the API automatically. After this, browse to
-`https://$SWA_HOST`, sign in as the Site Admin, and complete the forced password change.
+Setting an app setting restarts the API automatically. After this, browse to `https://$SWA_HOST`, sign in
+as the Site Admin, and complete the forced password change.
 
 ---
 
@@ -355,5 +367,4 @@ az group delete --name $RG --yes --no-wait
 ```
 
 Deletes every resource above in one shot. (The GitHub Actions workflow that SWA added to your
-repo is not removed by this — delete `.github/workflows/azure-static-web-apps-*.yml` manually if
-you want it gone.)
+repo is not removed by this — delete `.github/workflows/azure-static-web-apps-*.yml` manually if you want it gone.)

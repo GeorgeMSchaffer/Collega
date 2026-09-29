@@ -8,6 +8,7 @@ import {
   fmt,
   gatedMetrics,
   judge,
+  lockedFieldFailures,
   regressions,
   unlikeRuns,
 } from './verdict.ts'
@@ -111,7 +112,19 @@ export function compareRuns(
     )
   }
 
-  const found = regressions(baseline.metrics, candidate.metrics)
+  const lockedA = baseline.metrics.lockedFields
+  const lockedB = candidate.metrics.lockedFields
+  if (lockedA !== null || lockedB !== null) {
+    const show = (l: typeof lockedA) =>
+      l === null ? '-' : `${l.proposals}/${l.trials} proposed, ${l.survivals} survived`
+    out.push('')
+    out.push(`${'Locked fields'.padEnd(30)}${show(lockedA).padEnd(30)}${show(lockedB)}`)
+  }
+
+  const found = [
+    ...regressions(baseline.metrics, candidate.metrics),
+    ...lockedFieldFailures(candidate.metrics),
+  ]
   out.push('')
   if (invalid.length > 0) {
     out.push('Not judged: a run is not valid (exit 2).')

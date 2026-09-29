@@ -1,0 +1,38 @@
+{
+  "name": "acme-v2",
+
+  "//": "The acme catalog with typed custom fields, for the v2 cases (SPEC/20-feature-prompt-eval-runner.md rule 4). Kept apart from acme so adding field types changes no v1 fixture hash. Line is required for a Continuous Improvement and Who is affected for a Process Revision, so the interview has a required custom field to ask for.",
+
+  "organizationName": "Acme Robotics",
+  "scopeStatement": null,
+  "fields": [
+    { "name": "Current state", "type": "text" },
+    { "name": "Proposed state", "type": "text" },
+    { "name": "Estimated saving (hours per month)", "type": "number" },
+    { "name": "Line", "type": "dropdown", "options": ["Assembly", "Packing", "Shipping"] },
+    { "name": "Existing policy", "type": "text" },
+    { "name": "Proposed change", "type": "text" },
+    { "name": "Who is affected", "type": "text" }
+  ],
+  "ideaTypes": [
+    {
+      "name": "Continuous Improvement",
+      "fieldNames": ["Current state", "Proposed state", "Estimated saving (hours per month)", "Line"],
+      "requiredFieldNames": ["Line"]
+    },
+    {
+      "name": "Process Revision",
+      "fieldNames": ["Existing policy", "Proposed change", "Who is affected"],
+      "requiredFieldNames": ["Who is affected"]
+    }
+  ],
+  "businessImpacts": [
+    { "name": "Critical" },
+    { "name": "High" },
+    { "name": "Medium" },
+    { "name": "Low" }
+  ],
+  "statuses": ["New / Pending", "In Progress", "In Review", "Client Review", "Complete"],
+  "tags": ["assembly", "safety", "tooling", "quality", "logistics"],
+  "memberNames": ["Dana Whitfield", "Marcus Oyelaran", "Priya Raghunathan"]
+}

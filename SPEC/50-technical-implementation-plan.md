@@ -1,5 +1,14 @@
 # Technical Implementation Plan
 
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
+> - **Scope:** SUPERSEDED — MVP plan as ASP.NET Core + Blazor (slices T001–T067, built on .NET). Kept for
+>   layer design and the entity/column model, which the conversion preserves.
+> - **Key rules:** superseded by `SPEC/50-typescript-migration.md`; treat every framework, ORM and tooling
+>   statement as history.
+> - **Contracts:** none
+> - **Decisions:** 2026-09-06 "The .NET stack is frozen; its code and instructions are no longer applicable";
+>   2026-09-13 "The .NET stack is deleted; stale pointers go, inherited rationale stays"
+
 > ## ⛔ SUPERSEDED — describes the frozen .NET stack
 >
 > This plans the MVP as "a layered ASP.NET Core application with a Blazor client". That stack is
@@ -338,7 +347,7 @@ Dependencies: BE-1 through BE-4.
 3. Add API integration and OpenAPI contract tests for option CRUD/reorder/delete, expanded projections, idea delete, and `400`/`403`/`404` behavior.
 4. Add Client/component tests for route redirects, terminology, drag rollback, Idea Detail status movement, upvote rollback, comment focus, and role-aware editing/deletion.
 5. Add Playwright coverage for the desktop critical path and verify mobile uses the status selector rather than touch drag.
-6. Run `scripts/spec_drift_gate.ps1`, solution build, affected test projects, and browser tests before completion.
+6. Run the spec drift gate, solution build, affected test projects, and browser tests before completion. (The gate was a PowerShell script that no longer exists; `pnpm check` is the gate now.)
 7. Add migration and Application/API tests proving valid singular assignments are preserved, invalid assignee collections are rejected, assignment authorization is enforced, notifications deduplicate recipients, CSV supports pipe-delimited assignees, and tag limits are enforced.
 8. Add Client/browser accessibility and visual-regression tests for primary-nav active styling, Board reference fidelity, tag/persona overflow, full-name exposure, and deterministic local-day age.
 
@@ -436,6 +445,9 @@ Validation gate:
 - protocol validation and audit coverage meet feature acceptance criteria
 
 Validation gate:
+
+*Note (2026-09-29): this second gate directly follows the SAML phase's own, with no heading between them, and has since the plan was written. Its checks are release-wide, so it most likely closed a phase whose heading was lost; it is left as found rather than guessed at.*
+
 - contracts and OpenAPI remain synchronized
 - acceptance criteria are traceable to executable tests
 - deferred scope does not leak into the release
@@ -530,7 +542,7 @@ Validation gate:
 - `organization_id` uuid foreign key
 - `board_id` uuid foreign key
 - `author_user_id` uuid foreign key
-- `assignee_user_id` uuid nullable foreign key
+- ~~`assignee_user_id` uuid nullable foreign key~~ — removed by Phase BE-1 step 7: assignments moved to the `idea_assignees` join table (zero to five per idea). *Marked 2026-09-29, `SPEC/decisions.md` "Spec contradictions resolved".*
 - `status_id` uuid foreign key
 - `title` character varying(150)
 - `description` character varying(4000)
@@ -737,12 +749,12 @@ Validation gate:
 - use `SPEC/archive/70-delivery-backlog.md` as the execution tracker derived from this plan
 
 ## Implementation Notes
-- Put business rules in Domain and Application layers; keep controllers and components thin.
-- Apply organization filtering centrally so the client cannot bypass it.
-- Model notifications as events early, even if delivery is introduced in a later phase.
-- Use admin-issued temporary password reset instead of self-service email reset in the current scope.
-- Defer OAuth and SAML implementation until their post-MVP phases begin; defer reporting, guaranteed email delivery, event query endpoints, and remember-this-device outside MVP.
-- Treat the original `SPEC` documents as the authoritative source and the Spec Kit port as an execution aid when there is any mismatch.
+- Business rules in Domain and Application; controllers and components thin.
+- Organization filtering applied centrally so the client cannot bypass it.
+- Notifications modelled as events early, even if delivery comes later.
+- Admin-issued temporary password reset, not self-service email reset, in the current scope.
+- OAuth and SAML wait for their post-MVP phases; reporting, guaranteed email delivery, event query endpoints and remember-this-device stay outside MVP.
+- On any mismatch, the original `SPEC` documents are authoritative; the Spec Kit port is an execution aid.
 
 ---
 
@@ -752,7 +764,7 @@ Validation gate:
 
 ### Feature Summary
 
-Organization admins can define custom fields (UDFs) on ideas. Field definitions are org-scoped and shared across all boards. All organization members can fill in UDF values on idea forms. UDF values participate in filtering, search, audit, and CSV export/import.
+Organization admins define custom fields (UDFs) on ideas: org-scoped, shared across all boards. Every organization member can fill values on idea forms; values take part in filtering, search, audit, and CSV export/import.
 
 ### Domain Model Changes
 
@@ -852,15 +864,8 @@ Existing `IdeaService` extended:
 
 ### Data Model Outline Addition
 
-Add to the existing Data Model Outline:
-- `FieldDefinition`
-- `FieldDefinitionOption`
-- `IdeaFieldValue`
-
-Add to the Persistence Design / Core Tables:
-- `field_definitions`
-- `field_definition_options`
-- `idea_field_values`
+- Data Model Outline gains `FieldDefinition`, `FieldDefinitionOption`, `IdeaFieldValue`.
+- Persistence Design / Core Tables gains `field_definitions`, `field_definition_options`, `idea_field_values`.
 
 ### Client Components
 
@@ -881,8 +886,7 @@ New client service: `IFieldDefinitionApiClient` + `FieldDefinitionCacheService` 
 
 ### Migration Strategy
 
-- Single EF Core migration `AddUserDefinedFields` creates the three new tables with no backfill
-- Existing ideas receive null/empty UDF values; this is the correct post-migration state and requires no data migration
+- One EF Core migration, `AddUserDefinedFields`: the three new tables, no backfill — existing ideas correctly have null/empty UDF values, so no data migration.
 
 ### Effort Sizing
 

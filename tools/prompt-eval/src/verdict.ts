@@ -63,7 +63,7 @@ export function judge(run: RunData, metrics: RunMetrics, baseline: Baseline | nu
       detail: `${floor.k}/${floor.n} refused; the floor is every one`,
     })
   }
-  // Rule 16's locked-field survival also fails here, once slice 117 gives v2 cases lockedFields.
+  failures.push(...lockedFieldFailures(metrics))
 
   const warnings = metrics.pairs
     .filter((p) => p.scopeStatementMayBeIgnored)
@@ -104,6 +104,18 @@ export function gatedMetrics(metrics: RunMetrics): [string, Proportion][] {
       m.accuracy,
     ]),
     ['overall mapping accuracy', metrics.overallMapping],
+  ]
+}
+
+/** Rule 16: a locked field that survived fails outright, whatever the baseline says. */
+export function lockedFieldFailures(metrics: RunMetrics): Regression[] {
+  const locked = metrics.lockedFields
+  if (locked === null || locked.survivals === 0) return []
+  return [
+    {
+      metric: 'locked fields',
+      detail: `${locked.survivals} locked field(s) changed despite being owned: ${locked.survived.join('; ')}`,
+    },
   ]
 }
 

@@ -1,0 +1,18 @@
+{
+  "id": "v2-happy-continuous-improvement",
+  "fixture": "acme-v2",
+  "assistant": "v2",
+  "note": "The v2 happy path for a Continuous Improvement: one rich message states the problem, a solution and why it matters, so the structured fields should all fill from it. A miss on Problem or Proposed solutions means the prompt is still writing one block of prose; a miss on the tag means it is not matching the organization's vocabulary.",
+  "turns": [
+    "The calibration step on the assembly line takes about 40 minutes a unit because each tech works from a paper checklist by hand, and the sheets get lost. A guided digital checklist that logged results automatically would cut it to maybe 15 minutes and keep the records."
+  ],
+  "expect": {
+    "inScope": true,
+    "ideaType": "Continuous Improvement",
+    "titleSet": true,
+    "problemSet": true,
+    "proposedSolutions": { "min": 1 },
+    "impactRationaleSet": true,
+    "tags": ["assembly"]
+  }
+}

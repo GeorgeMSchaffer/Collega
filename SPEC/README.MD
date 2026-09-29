@@ -4,10 +4,10 @@ Canonical product and delivery specifications. This file is the index; the numbe
 
 ## Product Behavior (canonical)
 
-- `decisions.md` — **dated log of decisions that constrain later work.** Read before reopening a settled question; supersessions are recorded rather than edited away.
+- `decisions.md` — **dated log of decisions that constrain later work.** Read before reopening a settled question; supersessions are recorded rather than edited away. Read its index, then only the entries you need: the newest are in full in the file, older ones verbatim in `decisions/archive-*.md`.
 - `00-project-brief.md` — product model, stack, solution structure, architecture rules
 - `10-requirements.md` — requirement set
-- `30-Contracts.md` — **canonical API route and payload contracts**; authoritative for endpoint and payload details
+- `30-Contracts.md` — **canonical API route and payload contracts**; authoritative for endpoint and payload details. It holds the shared conventions and an index; each contract section lives in `contracts/<area>.md` under its original heading. Read the conventions and only the area file you need. The read-not-edited rule covers the whole set.
 - `Specs Overview.md` — **derived, non-canonical** single-document summary; useful for orientation only. Last reconciled 2026-08-06. **Do not implement from it**, and where it disagrees with a canonical spec, the canonical spec simply wins — that is precedence, not a conflict to escalate.
 - `05-product-definition.md` — **derived, non-canonical** consolidated product definition: what Collega is, the four roles and their boundaries, the domain model, **~80 epic-level user stories with acceptance criteria**, the completion criteria, and each capability's delivery state. Generated 2026-09-14 from `70e349e`. Same precedence rule as `Specs Overview.md`. Read it to onboard or to see the whole product at once; read the canonical spec before changing anything. Its appendix lists spec discrepancies found during reconciliation — **reported, not fixed**; slice F5 owns them.
 
@@ -38,7 +38,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 
 Exactly two files answer "where does work stand" and "what is next". Everything else in this section is supporting detail.
 
-- `implementation-agent-tracker.md` — **authoritative "what's built right now."** Read its Current Status section fresh before any status or planning claim (see its Ground-Truth Verification section).
+- `implementation-agent-tracker.md` — **authoritative "what's built right now."** Read its Current Status section fresh before any status or planning claim (see its Ground-Truth Verification section). It holds active and next work only; finished rows and the completed-sprint narratives are in `tracker-history.md`.
 - `95-next-sprints.md` — **authoritative "what's next."** Index of remaining sprint scope; per-sprint plans live in `sprints/`, completed sprints move to `sprints/archive/`.
 - `Bug Triage.md` — **authoritative pre-feature bug/tweak queue**, kept short on purpose. Unresolved `TODO` items take priority over new feature work unless the user explicitly approves an exception. Fixed items move to `archive/bug-triage-completed.md`; promoted items are **deleted** once a spec or sprint file owns them. Never leave an item in two places.
 - `ideas-inbox.md` — unrefined feature ideas. Nothing there is scheduled or approved, and **nothing there gates a sprint**; items are picked up only when the user asks.

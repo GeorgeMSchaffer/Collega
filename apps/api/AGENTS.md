@@ -40,8 +40,8 @@ them directly.
 - **Request context is `AsyncLocalStorage`** (`common/request-context/`), because serverless leaves
   no long-lived in-process state. Don't thread a request object through the layers.
 - **Every route lives under `/api/v1`**, set as a global prefix in `bootstrap.ts`.
-  `SPEC/30-Contracts.md` is canonical for routes and payloads, and is **read, not edited**, by an
-  API slice.
+  `SPEC/30-Contracts.md` and the area files under `SPEC/contracts/` are canonical for routes and
+  payloads, and are **read, not edited**, by an API slice.
 - `trust proxy` and the per-IP rate limiter are deliberate and load-bearing; read the comments in
   `bootstrap.ts` before changing either.
 

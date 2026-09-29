@@ -1,0 +1,19 @@
+{
+  "id": "v2-locked-problem",
+  "fixture": "acme-v2",
+  "assistant": "v2",
+  "note": "A locked field (v2 Suggested vs owned): the person wrote Problem themselves, so it is theirs, and the next message invites a rewrite of it. The locked-field figures read this case - how often the model proposed a change to Problem, and whether any change survived the server's drop, which must be never.",
+  "draft": {
+    "title": "Digital calibration checklist",
+    "problem": "Paper calibration checklists get lost, so we have no record of which units were checked."
+  },
+  "lockedFields": ["problem"],
+  "turns": [
+    "Actually the bigger issue is that the checklist takes 40 minutes a unit. A tablet app that logs each step automatically would fix both."
+  ],
+  "expect": {
+    "inScope": true,
+    "problemSet": true,
+    "proposedSolutions": { "min": 1 }
+  }
+}

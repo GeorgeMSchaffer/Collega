@@ -1,16 +1,26 @@
 # Feature: Idea-Type Fields (Per-Type Field Selection)
 
-> **Model note (2026-08-10 rewrite).** This spec previously proposed a reusable **Field Set** entity as the indirection between idea types and fields. That model was **superseded by direct type→field mapping** (interview-resolved — see Design Decisions). Fields attach straight to an `IdeaType`; there is no separate "field set" concept. This file was renamed from the earlier `20-feature-idea-type-field-sets.md`; all cross-references were updated. Where this document says "the type's fields," it means the type's directly-mapped field selection.
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
+> - **Scope:** which custom fields (UDFs) an idea shows, by Idea Type, via direct type→field mapping (no Field
+>   Set); plus the type badge, type immutability and admin reassign. The file states no build status.
+> - **Key rules:** `AllActiveFields` (default) shows every active org field with global required-ness;
+>   `Curated` shows only mapped fields, required per type; a value outside the resolved set is `400`;
+>   Idea Type is immutable on edit (`400`), and only admin `PUT …/ideas/{ideaId}/idea-type` changes it;
+>   out-of-scope values are preserved and shown archived, never dropped.
+> - **Contracts:** contracts/idea-type-fields.md, contracts/idea-field-options.md
+> - **Decisions:** 2026-09-27 "The API sends the custom field list";
+>   2026-09-04 "The idea-type badge moves to the tag row on swimlane cards"
+
+> **Model note (2026-08-10 rewrite).** The reusable **Field Set** entity this spec once proposed as the indirection between idea types and fields was **superseded by direct type→field mapping** (interview-resolved — see Design Decisions): fields attach straight to an `IdeaType`, with no separate "field set" concept. Renamed from `20-feature-idea-type-field-sets.md`; all cross-references were updated. Where this document says "the type's fields," it means the type's directly-mapped field selection.
 
 ## Overview
 
-Today every idea in an organization shows the *same* set of User-Defined Fields (UDFs) — the schema is org-wide and shared across all boards (`SPEC/20-feature-user-defined-fields.md`). This feature lets an organization control **which UDFs appear on an idea based on its Idea Type**, so a *Continuous Improvement* idea can show a different, tighter set of fields than a *Process Revision* one.
+Today every idea in an organization shows the *same* set of User-Defined Fields (UDFs) — the schema is org-wide and shared across all boards (`SPEC/20-feature-user-defined-fields.md`). This feature lets an organization control **which UDFs appear on an idea based on its Idea Type**, so a *Continuous Improvement* idea can show a tighter set of fields than a *Process Revision* one.
 
-The mechanism is **direct mapping**: an `IdeaType` owns an ordered selection of the org's existing UDFs, each marked required-or-optional *for that type*. The org's field pool stays single and shared — a field can be mapped onto several types and still reports as one field — but each type curates its own subset. An idea's type is chosen at creation and (for regular users) never changes, so the field list resolves once and never has to reconcile.
-
-This is the realization of the UDF spec's *"Template Integration — Forward Compatibility"* note, with a deliberate reinterpretation: a "template" here is a **field-visibility selection**, not a default-value/scaffolding injector.
-
-**Idea Types already exist.** `IdeaType` is a shipped, org-scoped entity (`Collega.Domain.IdeaFields.IdeaType`), `Idea.IdeaTypeId` is required and backfilled (`AddIdeaClassification`), and there is an `IdeaTypesController`. This feature adds the field mapping, the type badge (color + icon), immutability, and the admin reassign hatch — it does **not** invent the type concept.
+- **Direct mapping:** an `IdeaType` owns an ordered selection of the org's existing UDFs, each required-or-optional *for that type*. The field pool stays single and shared — a field mapped onto several types still reports as one field — but each type curates its own subset.
+- **Resolve once:** an idea's type is chosen at creation and (for regular users) never changes, so its field list never has to reconcile.
+- **Reinterprets "template":** this realizes the UDF spec's *"Template Integration — Forward Compatibility"* note, but a "template" here is a **field-visibility selection**, not a default-value/scaffolding injector.
+- **Idea Types already exist:** `IdeaType` is a shipped, org-scoped entity (`Collega.Domain.IdeaFields.IdeaType`), `Idea.IdeaTypeId` is required and backfilled (`AddIdeaClassification`), and there is an `IdeaTypesController`. This feature adds the field mapping, the type badge (color + icon), immutability, and the admin reassign hatch — it does **not** invent the type concept.
 
 ---
 
@@ -33,7 +43,9 @@ This is the realization of the UDF spec's *"Template Integration — Forward Com
 
 ## Problem Statement
 
-Idea forms show every organization UDF regardless of the kind of idea being filed, so people filling out a *Continuous Improvement* idea wade past fields that only make sense for other work, and admins have no way to tailor the form. The cost is friction and dirty data: irrelevant fields get skipped, guessed at, or filled with noise. As organizations add more UDFs, the single shared form gets worse for everyone.
+- Idea forms show every organization UDF whatever the kind of idea, so a *Continuous Improvement* author wades past fields meant for other work, and admins cannot tailor the form.
+- Cost: friction and dirty data — irrelevant fields get skipped, guessed at, or filled with noise.
+- As organizations add more UDFs, the single shared form gets worse for everyone.
 
 ---
 
@@ -133,13 +145,13 @@ public sealed class IdeaTypeField : EntityBase
 
 ### Reuse of the existing archived-value mechanism
 
-`Idea.ReplaceFieldValues(values, reconciledFieldDefinitionIds, …)` already clears only the values for definitions *in scope*, preserving the rest. Resolving to a type's mapped fields is the same shape: the reconcile scope becomes "the fields resolved for this idea's type." No new reconciliation primitive is needed — including for admin reassignment, where the new type's resolved fields become the scope and everything else is preserved as archived.
+`Idea.ReplaceFieldValues(values, reconciledFieldDefinitionIds, …)` already clears only the values for definitions *in scope* and preserves the rest. The reconcile scope becomes "the fields resolved for this idea's type." — no new reconciliation primitive, including for admin reassignment, where the new type's resolved fields are the scope and everything else is preserved as archived.
 
 ---
 
 ## Effective-field resolution (the core algorithm)
 
-One function — `ResolveEffectiveFields(ideaType) → IReadOnlyList<(FieldDefinition field, bool required)>` — is the single source of truth consumed by the idea form, the validator, and the detail projection. Given an idea's `IdeaType` (resolve its set even if the *type* is soft-deleted — archival of the type doesn't change an existing idea's schema):
+One function — `ResolveEffectiveFields(ideaType) → IReadOnlyList<(FieldDefinition field, bool required)>` — is the single source of truth for the idea form, the validator, and the detail projection. It resolves an idea's `IdeaType` even if the *type* is soft-deleted (archiving the type doesn't change an existing idea's schema):
 
 1. **`FieldMode == AllActiveFields`** → effective fields = **all active** org `FieldDefinition`s, ordered by global `DisplayOrder` then `Name`, `required = FieldDefinition.IsRequired`.
 2. **`FieldMode == Curated`** → effective fields = the type's `IdeaTypeField` links **whose `FieldDefinition` is active**, ordered by `IdeaTypeField.DisplayOrder` then the field's `Name`, `required = IdeaTypeField.IsRequired`.
@@ -153,9 +165,12 @@ One function — `ResolveEffectiveFields(ideaType) → IReadOnlyList<(FieldDefin
 | `Curated`, field mapped | type's active links | `IdeaTypeField.IsRequired` (per-type override) |
 | `Curated`, field *not* mapped | — (hidden for this type) | n/a — value submission for it is rejected `400` |
 
-**Value scoping (write path):** a submitted value is accepted only if its `fieldDefinitionId` is in the resolved set for the idea's type; otherwise `400`. Required fields in the resolved set that are empty block the save. Because the write path reconciles against exactly the resolved ids (passed as `ReplaceFieldValues`' `reconciledFieldDefinitionIds`), values for fields outside the current resolution — e.g. a field later removed from the type, or archived on reassignment — are **preserved untouched**, never dropped.
+**Value scoping (write path):**
+- A submitted value is accepted only if its `fieldDefinitionId` is in the resolved set for the idea's type; otherwise `400`.
+- Empty required fields in the resolved set block the save.
+- The write path reconciles against exactly the resolved ids (`ReplaceFieldValues`' `reconciledFieldDefinitionIds`), so values outside the current resolution — e.g. a field later removed from the type, or archived on reassignment — are **preserved untouched**, never dropped.
 
-**New-field propagation:** adding a new org `FieldDefinition` auto-appears on every `AllActiveFields` type immediately (backward-compatible), and appears on `Curated` types only when an admin adds it there. This is intentional per-type control; surfaced in the admin UI so it isn't a silent surprise (see Open Questions).
+**New-field propagation:** a new org `FieldDefinition` auto-appears on every `AllActiveFields` type immediately (backward-compatible), and on `Curated` types only when an admin adds it there — intentional per-type control, surfaced in the admin UI so it isn't a silent surprise (see Open Questions).
 
 ---
 
@@ -176,7 +191,7 @@ Validation rules:
 - Every `fieldDefinitionId` in a selection must be an **active** field definition in the same org (else `400`).
 - No duplicate field in a type's selection.
 - `ColorHex` must be `#RRGGBB` if present; contrast is advisory (mirror the status picker's warning), not blocking.
-- Reassign target must be an active idea type in the same org (else `400`); actor must be OrgAdmin (own org) or SiteAdmin.
+- Reassign target must be an active idea type in the same org (else `400`); actor must be OrgAdmin (own org), or a SiteAdmin acting through View As (a direct SiteAdmin is refused with `403`; corrected 2026-09-29, `SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved").
 
 ### `IdeaService` changes
 
@@ -209,7 +224,9 @@ All under `/api/v1`, org-scoped, admin-only for management (mirroring `field-def
 
 ### Idea payloads
 
-`CreateIdeaRequest` already includes required `ideaTypeId` (unchanged). Embedded `fieldValues` shape unchanged. `IdeaDetailModel` already returns `fieldValues`, now ordered/filtered by the resolved set, plus the type's `colorHex`/`icon` for the badge. The idea **update** contract must not change `ideaTypeId`.
+- Create: `CreateIdeaRequest` already includes required `ideaTypeId` (unchanged); the embedded `fieldValues` shape is unchanged.
+- Detail: `IdeaDetailModel` returns `fieldValues` ordered/filtered by the resolved set, plus the type's `colorHex`/`icon` for the badge.
+- The idea **update** contract must not change `ideaTypeId`.
 
 ---
 
@@ -224,7 +241,7 @@ Design locked in `SPEC/mockups/comp-c-review-09-idea-type-fields.html` (built on
 
 ### Idea form
 
-- The **Idea Type** selector is required and appears near the top of the create form (it drives everything below). Switching it reflows the Custom Fields section live.
+- The **Idea Type** selector is required and appears near the top of the create form (it drives everything below); switching it reflows the Custom Fields section live.
 - The Custom Fields section renders the **resolved** fields for the selected type, in order, with per-type required markers.
 
 ### Idea detail / edit
@@ -232,9 +249,9 @@ Design locked in `SPEC/mockups/comp-c-review-09-idea-type-fields.html` (built on
 - Type shown **read-only** as a badge (immutable). An admin-only **"Reassign type…"** control opens an inline confirm that names which current values would be archived; the change is logged.
 - Historical out-of-type values render muted with an "archived" tag, consistent with soft-deleted UDFs.
 
-### Type badge placement (open)
+### Type badge placement (decided 2026-09-04)
 
-On swimlane/list cards the badge shares space with the priority chip and status dot — placement TBD to avoid chip overload (see Open Questions #10).
+On swimlane/list cards the badge shared space with the priority chip and status dot. Decided 2026-09-04 (`SPEC/decisions.md`, "The idea-type badge moves to the tag row on swimlane cards"): the badge always renders its name, and on swimlane and List cards it sits in the tag row, capped at 92px with an ellipsis and the full name on the tooltip.
 
 ---
 
@@ -242,10 +259,12 @@ On swimlane/list cards the badge shares space with the priority chip and status 
 
 | Role | Manage type fields / appearance | Reassign idea type | Pick type + fill fields | View idea fields |
 |---|---|---|---|---|
-| `SiteAdmin` | ✅ | ✅ | ✅ | ✅ |
+| `SiteAdmin` | through View As only | through View As only | through View As only | ✅ |
 | `OrgAdmin` | ✅ (own org) | ✅ (own org) | ✅ | ✅ |
 | `User` | ❌ | ❌ | ✅ | ✅ |
 | `ReadOnly` | ❌ | ❌ | ❌ | ✅ |
+
+The `SiteAdmin` row said ✅ for the three write columns until 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): a Site Admin changes organization content only while acting through View As, and the API refuses the direct path (`ensureNotDirectSiteAdmin`).
 
 ---
 
@@ -253,7 +272,7 @@ On swimlane/list cards the badge shares space with the priority chip and status 
 
 ### Must-Have (P0)
 
-- **[P0] Idea type immutability.** `Idea.IdeaTypeId` already exists/required; make it immutable after creation — remove type from the edit path (or reject a differing `ideaTypeId` on update with `400`). `BusinessImpactId` unchanged.
+- **[P0] Idea type immutability.** `Idea.IdeaTypeId` already exists/required; it becomes immutable after creation — removed from the edit path (or a differing `ideaTypeId` on update rejected with `400`). `BusinessImpactId` unchanged.
 - **[P0] `IdeaTypeField` mapping.** Admins map a subset of active org UDFs onto a type, each with per-type order and required flag. Field appears at most once per type; every referenced field is active and in-org (`400` otherwise).
 - **[P0] Field mode.** `AllActiveFields` (default) vs `Curated`. Adding a field selection sets `Curated`; clearing returns to `AllActiveFields`.
 - **[P0] Effective-field resolution.** Forms, validator, and detail all use the resolution algorithm and required-ness table above.
@@ -284,7 +303,7 @@ On swimlane/list cards the badge shares space with the priority chip and status 
 - `idea_types` gains `color_hex` (nullable), `icon` (nullable), `field_mode` (int, default `0 = AllActiveFields`).
 - **No `ideas` change** — `idea_type_id` already exists and is backfilled.
 - **Backward-compat backfill:** existing types default to `field_mode = AllActiveFields`, so every idea resolves to "all active fields" — identical to current behavior. No `idea_type_fields` rows are seeded; admins opt into curation per type.
-- Touches only new/changed tables, so it should merge cleanly against `CollegaDbContextModelSnapshot` provided no other in-flight slice adds a migration concurrently.
+- Touches only new/changed tables, so it should merge cleanly against `CollegaDbContextModelSnapshot` unless another in-flight slice adds a migration concurrently.
 
 ---
 
@@ -302,7 +321,7 @@ Per repo working rules, make these canonical edits **before implementation**:
 
 - **[Product]** New-field propagation to `Curated` types is manual by design. Confirm the admin UI surfaces "N types don't include this new field" prominently enough. — non-blocking.
 - **[Product]** Admin reassign is P1. Confirm it isn't needed for MVP launch (immutability alone ships as P0). — non-blocking.
-- **[Design]** Type badge placement on cards vs the priority chip + status dot (chip overload). — resolve in the card comp before Client work.
+- ~~**[Design]** Type badge placement on cards vs the priority chip + status dot (chip overload).~~ — decided 2026-09-04: the badge moves to the tag row (see "Type badge placement").
 - **[Eng]** Should the global `FieldDefinition.IsRequired` be dropped eventually or kept as the `AllActiveFields` default? (P2 decides; v1 keeps it.) — non-blocking.
 
 ---

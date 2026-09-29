@@ -1,5 +1,13 @@
 # Feature: SAML (Post-OAuth Phase)
 
+> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> - **Scope:** SAML 2.0 single sign-on, organization-scoped, SP-initiated; after Phase 2 OAuth, not in MVP.
+> - **Key rules:** sequenced after OAuth completion (requirement 1); reuses OAuth's external identity linking
+>   model, identity first then email (4, 6); auto-provision in the initiating organization with role `User`
+>   (7); local login stays during rollout (5); inactive users blocked and outcomes audited (8–9).
+> - **Contracts:** none
+> - **Decisions:** none recorded
+
 ## Outcome
 Organizations can use SAML 2.0 single sign-on after OAuth stabilization.
 

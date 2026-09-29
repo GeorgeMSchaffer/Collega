@@ -155,6 +155,36 @@ Grouped by one thesis: *each is about the board still making sense to someone wh
 
 **The share link is the one proposal with a genuine security surface**, and the comp says so itself: an unauthenticated tokenized URL is a new way for organization-scoped data to leave the organization, and *the role model has no concept of "not a member."* It is deliberately **not** the Read Only role — Read Only is a member with an account; a share link is for someone who will never have one. Four choices in it are unconfirmed by design: token-only credential unless a passphrase is set, the 30-day default, people/comments defaulting off, and Org-Admin-only creation. This one needs a security decision before a spec, not after.
 
+## Portals — seatless employee submissions via public links
+
+*Refined 2026-09-28 in an ideation session. Comp: `mockups/comp-s-portal-form.html` (branded-shell mode, Terrazzo).*
+
+**How might we** let employees without a Collega seat submit ideas that arrive structured enough to triage without chasing the submitter, from a shareable or embeddable link, without turning an anonymous write endpoint into an abuse channel?
+
+For **employees without seats** (an internal suggestion box), not customers or the public. Success is **quality, not volume**: submissions a triager can act on without a follow-up conversation.
+
+- **Portal.** An Org Admin creates one with a title, a slug, a target **idea type**, which of that type's fields to show (each visible/required, with portal-specific help text), an optional passphrase, and a display mode. The "form" is portal configuration over an existing idea type, not a new form-builder concept.
+- **URL: `/public/{orgSlug}/{slug}`.** The fixed `/public` prefix stays clear of app routes. Portal slugs are unique **per organization**. This needs a new `organizations.slug`, globally unique, derived from the title and editable at creation, then **immutable**, because every shared link depends on it.
+- **Display modes.** A **branded shell** (org name + `logo_url`, no desk navigation, since an unauthenticated visitor can't use it) or **embed** (form only, iframe-friendly).
+- **Guided form.** It follows the structured-idea shape (problem → proposed solutions → impact) with inline examples and a completeness meter. **Only the title is always required**; everything else is per-portal configuration. The meter, not validation, pushes for quality.
+- **Optional name and email**, so a triager can follow up. No account is created.
+- **Triage queue, not a board.** Submissions appear as a **tab or filter on the Ideas list**. **Org Admins only** accept or reject. Accepting means filling in what the submitter couldn't know (board, status, business impact, priority and any missing required fields); the accepter becomes the idea's author, and the submitter's name and email stay on the submission record and show on the idea. The queue is what makes this fit: `ideas` requires an author, board, status and impact, and keeping submissions separate until accepted avoids a nullable-author or placeholder-user hack.
+- **Passphrase** is a speed bump against casual outsiders, not access control. Entered once per browser session.
+
+**Settled in the session:** Org-Admin-only triage; queue on the Ideas list; title-only minimum; rejected submissions **soft-deleted and kept indefinitely**; **any site may embed**; a disabled portal keeps its slug (only deleting frees it); **no attachments** in the MVP.
+
+**MVP scope:** portal CRUD in Settings; per-portal field overrides; passphrase; both display modes; a rate-limited anonymous submit endpoint; queue accept/reject; enable/disable. A schema amendment (`organizations.slug`, `portals`, `portal_fields`, `portal_submissions`) recorded in `SPEC/decisions.md`, and contracts in `SPEC/30-Contracts.md`.
+
+**Not doing:** a reusable form builder (idea type + overrides covers it); AI-assisted intake (cost and prompt-injection surface on an anonymous endpoint, and the scope gate is currently unmeasurable); the full desk frame; email receipts or status notifications (outbound email is deferred); a submitter status page or receipt codes (closing the loop isn't the goal yet); captcha, SSO or domain-verified email; "similar ideas" suggestions while typing (would leak internal ideas to anonymous visitors); merging with read-only board share links above (same primitive family, separate scope).
+
+**Assumptions to validate:** guided prompts beat free text (run ~10 real ideas through the comp); Org Admins will actually work the queue (watch queue age); links stay internal, so a passphrase is enough; enough submitters leave an email to make follow-up real; one idea type per portal covers real use.
+
+**The anonymous write surface is the real risk, and it is new.** Every anonymous endpoint today is auth; this is the first that writes organization data. Its only bound is the auth rate limiter's design, which is per warm instance on serverless — the same limitation `SPEC/30-Contracts.md` already records. A spam run lands in a queue an admin must clear by hand. It belongs with the shared-store work the lockout and rate-limit items already wait on.
+
+**Three settled answers carry costs worth re-reading before a spec:**
+- **Indefinite retention of rejected submissions keeps personal data (name, email) with no purge.** Fine with no tenants; a first real tenant may need a retention period or an erase path.
+- **Any site may embed** means a hostile page can frame the form. The blast radius is small (it only accepts submissions, and no session exists to hijack), but it rules out `frame-ancestors` as a defense later without a migration of existing embeds.
+- **A title-only minimum** works against the quality goal. The meter is the bet; if accepted submissions still need chasing, the fix is per-portal required fields, which the configuration already allows.
 ## Comps D / E / F — alternate shells, not adopted
 
 *Recorded 2026-08-27. **Comp C "Fluent Editorial" remains locked** — these are not implementation targets.*

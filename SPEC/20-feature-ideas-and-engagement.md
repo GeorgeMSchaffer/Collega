@@ -1,26 +1,37 @@
 # Feature: Ideas and Engagement
 
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
+> - **Scope:** ideas, idea fields, tags, mentions, comments, upvotes and CSV idea import; the AI-Assisted Idea
+>   Creation section is superseded (2026-09-27) and the Approval Workflow is deferred post-MVP.
+> - **Key rules:** Problem, Proposed solutions (1–5), Impact rationale required (Idea Rules 2, 2a); 0–5 active
+>   same-org assignees, replaced atomically (12–13); Idea Type immutable bar admin reassign (Fields 11); ≤10
+>   coloured tags, administered by an in-scope Org Admin (Tags 8–15); CSV import all-or-nothing (CSV 4, 11).
+> - **Contracts:** contracts/ideas.md, contracts/tags.md, contracts/comments.md, contracts/upvotes.md,
+>   contracts/idea-field-options.md
+> - **Decisions:** 2026-09-27 "The idea assistant is rescoped as a co-author, and ideas gain structured fields";
+>   2026-09-28 "Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events"
+
 ## Outcome
 Users can create, discuss, organize, and support ideas within their organization.
 
 ## Board Enhancement Decisions (Interview-Resolved 2026-08-04)
 | Decision | Resolution |
 |---|---|
-| Field model | `Priority` remains unchanged. `Idea Type` and `Business Impact` are dedicated, required, organization-scoped configurable fields. |
-| Initial values | Idea Type: `Continuous Improvement`, `Process Revision`. Business Impact, in seeded sort order (**changed 2026-08-17, user decision — most severe first**): `Critical` (`#DC2626`), `High` (`#D97706`), `Medium` (`#2563EB`), `Low` (`#16A34A`). |
-| Defaults | Idea Type defaults to the first active option by admin-controlled sort order. **Business Impact does not** — it defaults to `Medium` where that option exists, falling back to the first active option where it does not. Decoupled 2026-08-17 when the seeded order was reversed: with `Critical` listed first, first-active would have pre-marked every new idea Critical and inflated reported severity through a default nobody chose. This mirrors `Priority`, which already hard-defaults to `Medium` rather than to first-in-list. Existing ideas retain their assigned values when options are reordered. |
-| Existing idea migration | Existing ideas are assigned `Continuous Improvement` and `Medium`. |
-| Option lifecycle | Options are soft-deleted. Existing ideas retain archived values, archived values cannot be newly selected, and the last active option cannot be deleted. |
-| Option appearance | Business Impact options have an admin-editable color used by chips. Idea Type options have a label and sort order only. |
+| Field model | `Priority` unchanged. `Idea Type` and `Business Impact` are dedicated, required, organization-scoped configurable fields. |
+| Initial values | Idea Type: `Continuous Improvement`, `Process Revision`. Business Impact, seeded most severe first (**changed 2026-08-17, user decision**): `Critical` (`#DC2626`), `High` (`#D97706`), `Medium` (`#2563EB`), `Low` (`#16A34A`). |
+| Defaults | Idea Type **and Business Impact** default to the organization's first active option by admin-controlled sort order: the idea form preselects it, and the API stores no default (`contracts/idea-field-options.md`). Reordering options does not change existing ideas' values. *Superseded 2026-09-29 — see `SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved": Business Impact defaulted to `Medium` where that option exists, else the first active option (decoupled 2026-08-17, so a most-severe-first order would not pre-mark every new idea `Critical`).* |
+| Existing idea migration | Existing ideas get `Continuous Improvement` and `Medium`. |
+| Option lifecycle | Soft-deleted. Existing ideas keep archived values; archived values cannot be newly selected; the last active option cannot be deleted. |
+| Option appearance | Business Impact options have an admin-editable chip color. ~~Idea Type options have a label and sort order only.~~ *Superseded 2026-09-29 for Idea Type — see `SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved": Idea Type options carry an editable color and icon (Organization-Managed Idea Fields rule 9).* |
 | Description authorization | The idea author, an in-scope Org Admin, or Site Admin may edit the description. **The same rule covers Problem, Proposed solutions and Impact rationale** (added 2026-09-27, user decision). |
-| Idea deletion | Only an in-scope Org Admin or Site Admin may soft-delete an idea after confirmation. Restore is deferred. |
-| Card movement | Desktop cards use a dedicated drag handle. Keyboard and touch users move ideas with the status selector in Idea Detail. |
-| Comment shortcut | The card comment action opens Idea Detail, scrolls comments into view, and focuses the comment composer. If commenting is unavailable, focus moves to the comments heading. |
-| Assignment cardinality | Assignment is optional. An idea can have zero to five distinct assignees. Existing valid singular assignments migrate into the new collection. |
-| Assignment scope and authorization | Assignees must be active users in the idea's organization when selected. The idea author, an in-scope Org Admin, or Site Admin can change assignments. Inactive historical assignees remain visible but cannot be newly selected. |
-| Tag entry and limits | Anyone authorized to edit the idea can select or create reusable organization-scoped tags. An idea can have up to 10 tags. |
-| Card metadata overflow | Cards show the first three tags alphabetically plus `+N`, and the first three assignees by first name then last name plus `+N`. Complete values remain available in Idea Detail and accessible labels or tooltips. |
-| Submission age | Cards show viewer-local calendar-day age: `0 days ago`, `1 day ago`, or `{N} days ago`. Future timestamps are clamped to zero. |
+| Idea deletion | Only an in-scope Org Admin or Site Admin may soft-delete an idea, after confirmation. Restore is deferred. |
+| Card movement | Desktop cards use a dedicated drag handle; keyboard and touch users use the status selector in Idea Detail. |
+| Comment shortcut | The card comment action opens Idea Detail, scrolls comments into view and focuses the composer; if commenting is unavailable, focus moves to the comments heading. |
+| Assignment cardinality | Optional; zero to five distinct assignees. Existing valid singular assignments migrate into the new collection. |
+| Assignment scope and authorization | Assignees must be active users in the idea's organization when selected. The idea author, an in-scope Org Admin, or Site Admin can change assignments. Inactive historical assignees stay visible but cannot be newly selected. |
+| Tag entry and limits | Anyone authorized to edit the idea can select or create reusable organization-scoped tags; up to 10 per idea. |
+| Card metadata overflow | Cards show the first three tags alphabetically plus `+N`, and the first three assignees by first name then last name plus `+N`; complete values stay in Idea Detail and accessible labels or tooltips. |
+| Submission age | Cards show viewer-local calendar-day age: `0 days ago`, `1 day ago`, or `{N} days ago`; future timestamps clamp to zero. |
 
 ## Idea Rules
 1. A board can contain zero or more ideas.
@@ -29,7 +40,7 @@ Users can create, discuss, organize, and support ideas within their organization
    - Problem (required, max 2000 characters) — what is going wrong, for whom, and how often. Added 2026-09-27.
    - Proposed solutions (required, 1 to 5 items, each max 500 characters) — an ordered list. Added 2026-09-27.
    - Impact rationale (required, max 1000 characters) — why it matters to the business, ideally quantified. Added 2026-09-27.
-   - Description (max 4000 characters) — **changed 2026-09-27 to an optional one-or-two-line summary** shown in the detail view and in exports; cards and list rows do not show it. The structured fields above carry the substance. Kept, answered 2026-09-27 (Q2).
+   - Description (max 4000 characters) — **changed 2026-09-27 to an optional one-or-two-line summary** shown in the detail view and in exports, not on cards or list rows; the structured fields carry the substance. Kept, answered 2026-09-27 (Q2).
    - Priority (required): `Low`, `Medium`, `High`, or `Critical`
    - Idea Type (required): one active organization-configured Idea Type
    - Business Impact (required): one active organization-configured Business Impact
@@ -42,16 +53,15 @@ Users can create, discuss, organize, and support ideas within their organization
    - Number of Upvotes
 2a. **Structured fields (2026-09-27, `decisions.md`).** Problem, Proposed solutions and Impact rationale are
    dedicated fields, not sections of Description, so they can be required, searched and filled by the idea
-   assistant (`20-feature-ai-idea-assist-v2.md`). Custom fields attached through the Idea Type
-   (`20-feature-idea-type-fields.md`) are unaffected and appear after the core fields. **Existing ideas
-   (Q1, answered 2026-09-27): the three fields are required on every create and every save, and the
-   migration backfills ideas created before the change** — Problem takes the idea's Description (or
-   *Not captured before 2026-09-27.* when it is empty), Proposed solutions takes a single item
-   *Not captured before 2026-09-27.*, and Impact rationale takes the same text. Description is kept as
-   the summary. The demo seed writes real values for all three. **Who may edit them (answered
-   2026-09-27):** the same rule as Description — only the idea's author, an in-scope Org Admin, or
-   Site Admin (through the existing rules and View As semantics); other editors of the idea see them
-   read-only. CSV import applies the same backfill to a row that lacks them (CSV Import rule 3).
+   assistant (`20-feature-ai-idea-assist-v2.md`). Custom fields from the Idea Type
+   (`20-feature-idea-type-fields.md`) are unaffected and appear after the core fields.
+   - **Existing ideas (Q1, answered 2026-09-27):** the three are required on every create and every save; the
+     migration backfills older ideas — Problem takes the Description (or *Not captured before 2026-09-27.* when
+     empty), Proposed solutions takes the single item *Not captured before 2026-09-27.*, Impact rationale takes
+     the same text. Description stays as the summary. The demo seed writes real values for all three.
+   - **Who may edit them (answered 2026-09-27):** as Description — only the author, an in-scope Org Admin, or
+     Site Admin (existing rules and View As semantics); other editors see them read-only.
+   - CSV import applies the same backfill to a row that lacks them (CSV Import rule 3).
 3. Board cards must remain compact and display:
    - Title
    - Priority
@@ -61,60 +71,61 @@ Users can create, discuss, organize, and support ideas within their organization
    - Submission age in viewer-local calendar days
    - Upvote icon button and count
    - Add Comment icon button and comment count
-4. Clicking the idea title from a board card opens the Idea Detail drawer (right slide-in overlay) for full idea review and editing (URL gains `?idea={ideaId}`; addressable as `/ideas/{ideaId}`; see `SPEC/20-feature-client-ui.md` Idea Detail Surface). This is the same drawer reached from the Ideas list, not a separate surface.
-5. Idea Detail must support all editable idea fields and collaboration fields, including tags, mentions, due date, assignment, comments, and upvote state.
-6. Ideas in the `Complete` status remain editable and continue to allow comments, mentions, and upvotes.
+4. Clicking the idea title on a board card opens the Idea Detail drawer (right slide-in overlay) for full review and editing (URL gains `?idea={ideaId}`; addressable as `/ideas/{ideaId}`; see `SPEC/20-feature-client-ui.md` Idea Detail Surface) — the same drawer as from the Ideas list, not a separate surface.
+5. Idea Detail must support all editable idea and collaboration fields: tags, mentions, due date, assignment, comments, upvote state.
+6. Ideas in `Complete` status stay editable and still allow comments, mentions, and upvotes.
 7. When a `statusId` is provided on idea create or status update, it must correspond to an active swimlane on the idea's target board; providing a status that is not on the board is a validation error.
 8. Idea creation, edits, status changes, comments, upvote toggles, and deletions must generate audit events.
-9. In Development, seeded demo boards include example ideas whose description fields contain sample spec-style detail text.
-10. Moving an idea by drag-and-drop or by the Idea Detail status selector updates the card immediately to the swimlane mapped to the selected status. A failed API update restores the prior swimlane and shows an error.
-11. Soft-deleted ideas are excluded from normal board, list, and detail queries. The row and deletion audit metadata are retained; restoring deleted ideas is out of scope for this release.
-12. An idea may have zero to five distinct assignees. Every newly selected assignee must be an active user in the idea's organization. Inactive users already assigned to an idea remain visible for historical accuracy but cannot be newly selected.
+9. In Development, seeded demo boards include example ideas whose description fields hold sample spec-style detail text.
+10. Moving an idea (drag-and-drop or the Idea Detail status selector) updates the card immediately to the selected status's swimlane; a failed API update restores the prior swimlane and shows an error.
+11. Soft-deleted ideas are excluded from normal board, list, and detail queries; the row and deletion audit metadata are retained. Restoring is out of scope for this release.
+12. An idea may have zero to five distinct assignees; every newly selected assignee must be an active user in the idea's organization. Inactive users already assigned stay visible for historical accuracy but cannot be newly selected.
 13. Assignment changes replace the complete assignee collection atomically. Duplicate user IDs, more than five IDs, inactive users, or users from another organization are validation errors.
-14. Existing non-null singular assignments are migrated to one idea-assignee relationship each before the legacy singular assignment column and foreign key are removed.
-15. `Assigned to me` matches an idea when the current user belongs to its assignee collection.
+14. Existing non-null singular assignments migrate to one idea-assignee relationship each before the legacy singular assignment column and foreign key are removed.
+15. `Assigned to me` matches when the current user is in the idea's assignee collection.
 16. The global Ideas list (`GET /api/v1/organizations/{organizationId}/ideas`, backing the `/ideas` page) filters and sorts **server-side**:
-    - **All-column search** covers every column the list displays — Title, Created By (author name), Assigned To (assignee names), Status (status name), and Created Date — plus the values of Text/Url User-Defined Fields. Text columns match as a case-insensitive substring; the Created Date column matches when the search term is a full ISO `YYYY-MM-DD` date (ideas created on that UTC calendar day). **Added 2026-09-27:** it also matches board name, priority, tag names and Problem (`30-Contracts.md`).
+    - **All-column search** covers every displayed column — Title, Created By (author name), Assigned To (assignee names), Status (status name), Created Date — plus Text/Url User-Defined Field values. Text columns match as a case-insensitive substring; Created Date matches when the term is a full ISO `YYYY-MM-DD` date (ideas created that UTC calendar day). **Added 2026-09-27:** also board name, priority, tag names and Problem (`30-Contracts.md`).
     - **Tag filter** narrows to ideas carrying a tag with the given (normalized) name.
-    - **User-association filter** narrows to ideas a specific chosen user either authored or is assigned to (the user search box in `SPEC/Bug Triage.md`), distinct from the caller-scoped `All`/`Created by me`/`Assigned to me` chips.
-    - **Column sort** is supported on Title, Created By, Assigned To (alphabetically-first assignee), Status, and Created Date (since 2026-09-27 also Board, Priority, Votes and Tags; `30-Contracts.md` lists the `sortBy` values), ascending or descending, with a stable idea-id tiebreaker so paging is deterministic.
+    - **User-association filter** narrows to ideas a chosen user authored or is assigned to (the user search box in `SPEC/Bug Triage.md`), distinct from the caller-scoped `All`/`Created by me`/`Assigned to me` chips.
+    - **Column sort** on Title, Created By, Assigned To (alphabetically-first assignee), Status, and Created Date (since 2026-09-27 also Board, Priority, Votes and Tags; `30-Contracts.md` lists the `sortBy` values), ascending or descending, with a stable idea-id tiebreaker so paging is deterministic.
 
 ## Organization-Managed Idea Fields
-1. Site Admin and Org Admin can create, rename, reorder, and soft-delete Idea Type and Business Impact options within their authorized organization scope.
-2. The dedicated management surface is **Settings > Idea Fields** at `/settings/organizations/{organizationId}/idea-fields`.
-3. Site Admin selects the target organization. Org Admin can manage only their own organization.
+1. An in-scope Org Admin can create, rename, reorder, and soft-delete Idea Type and Business Impact options; a Site Admin does so only while acting through View As (corrected 2026-09-29, `SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved").
+2. The management surface is **Settings > Idea Fields** at `/settings/organizations/{organizationId}/idea-fields`.
+3. Org Admin manages only their own organization's options. A Site Admin reads any organization's options, and changes them only by acting through View As as a user of that organization (corrected 2026-09-29; it said the Site Admin selects the target organization).
 4. Option labels are trimmed, compared case-insensitively, and unique among active options of the same field and organization.
 5. Sort order is admin-controlled. The first active option in sort order is the default.
-6. Each field must always have at least one active option. Deleting the last active option is rejected.
-7. Deleting an option performs a soft delete even when ideas reference it. Existing references continue to display the prior label with an archived indicator.
+6. Each field must always have at least one active option; deleting the last active option is rejected.
+7. Deleting an option soft-deletes it even when ideas reference it; existing references keep the prior label with an archived indicator.
 8. Archived options cannot be assigned to new ideas or selected during an edit.
-9. Business Impact options include an editable color used by the board-card and detail chips. **Idea Type options carry an editable color and icon, rendered as a badge** on cards, the ideas list, and idea detail (`SPEC/20-feature-idea-type-fields.md`). *(Supersedes the earlier "Idea Type options do not include a color" rule.)*
-10. New organizations receive the initial option sets listed in the decision table.
-11. **Idea Type is immutable after an idea is created** — it is chosen at creation and cannot be changed on the normal edit path (`SPEC/20-feature-idea-type-fields.md`). An update that supplies a differing Idea Type is rejected with `400`. The sole exception is an **admin-only reassignment** action (`PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type`), which re-resolves the idea's fields and archives out-of-scope values. (Business Impact mutability is unchanged.)
-12. **Idea Type directly maps an ordered selection of the organization's User-Defined Fields** — each marked required-or-optional for that type — that scopes which UDFs appear on ideas of that type. A type in `AllActiveFields` mode (the default) shows all active org UDFs; a `Curated` type shows only its mapped fields. Full behavior in `SPEC/20-feature-idea-type-fields.md`.
+9. Business Impact options have an editable color used by the board-card and detail chips. **Idea Type options carry an editable color and icon, rendered as a badge** on cards, the ideas list, and idea detail (`SPEC/20-feature-idea-type-fields.md`). *(Supersedes the earlier "Idea Type options do not include a color" rule.)*
+10. New organizations receive the initial option sets in the decision table.
+11. **Idea Type is immutable after an idea is created** — chosen at creation, not changeable on the normal edit path (`SPEC/20-feature-idea-type-fields.md`); an update with a differing Idea Type is rejected with `400`. Sole exception: the **admin-only reassignment** action (`PUT /organizations/{organizationId}/ideas/{ideaId}/idea-type`), which re-resolves the idea's fields and archives out-of-scope values. (Business Impact mutability is unchanged.)
+12. **Idea Type directly maps an ordered selection of the organization's User-Defined Fields**, each required or optional for that type, scoping which UDFs appear on its ideas. `AllActiveFields` mode (the default) shows all active org UDFs; a `Curated` type shows only its mapped fields. Full behavior in `SPEC/20-feature-idea-type-fields.md`.
 
 ## Rich Content and Attachments Direction (Resolved)
-1. MVP idea descriptions and comment bodies remain plain text only.
+1. MVP idea descriptions and comment bodies are plain text only.
 2. Rich text formatting (HTML, Markdown rendering, WYSIWYG controls) is out of MVP scope.
 3. File attachments and embedded media are out of MVP scope.
-4. URLs may appear as plain text content but are not treated as trusted embedded content.
-5. Rich-content and attachment support is deferred to a future post-MVP phase and requires explicit security and storage contracts before implementation.
+4. URLs may appear as plain text but are not treated as trusted embedded content.
+5. Rich content and attachments are deferred post-MVP and need explicit security and storage contracts first.
 
 ## Permissions
-- Site Admin, Org Admin, and User can create and edit ideas.
-- Site Admin and Org Admin can soft-delete ideas within their authorized scope; soft-deleted ideas are excluded from board views and list queries.
-- The Delete action is visible in Idea Detail only to an authorized Site Admin or Org Admin, requires confirmation, returns to the board after success, and removes the card from the board immediately.
-- Only the creating author, an in-scope Org Admin, or Site Admin can edit an idea description, its Problem, Proposed solutions or Impact rationale (added 2026-09-27), or change its assignee collection. Other editable fields retain the general idea-edit permission unless a narrower rule is specified.
-- To support assignee selection and mention lookup, any authenticated caller scoped to an organization (User and Read Only included, not only admins) can read a minimal list of its active members — id, name, and email only — via `GET /organizations/{organizationId}/members`. This is deliberately narrower than the admin user listing (`GET /organizations/{organizationId}/users`), which exposes roles, status filters, and full user administration and remains Org-Admin+. Callers outside the organization receive a 404.
+- **A Site Admin changes organization content only while acting through View As** (`20-feature-view-as.md` rules 25–25c); acting as themselves they read, and the API refuses every idea, comment, upvote, tag and option write with `403` (`ensureNotDirectSiteAdmin`). Organization and user administration stays direct. Wherever this spec names a Site Admin beside an Org Admin for a change to organization content — the decision table above, Comments, CSV Import — read it as a Site Admin acting through View As. Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved").
+- Org Admin and User can create and edit ideas; a Site Admin through View As.
+- An in-scope Org Admin can soft-delete ideas (a Site Admin through View As); soft-deleted ideas are excluded from board views and list queries.
+- The Delete action shows in Idea Detail only to an authorized Org Admin (or a Site Admin acting as one through View As), requires confirmation, returns to the board on success, and removes the card immediately.
+- Only the creating author, an in-scope Org Admin, or a Site Admin through View As can edit an idea's description, its Problem, Proposed solutions or Impact rationale (added 2026-09-27), or change its assignee collection. Other editable fields keep the general idea-edit permission unless a narrower rule says otherwise.
+- For assignee selection and mention lookup, any authenticated caller scoped to an organization (User and Read Only included, not only admins) can read a minimal list of its active members — id, name, and email only — via `GET /organizations/{organizationId}/members`. Deliberately narrower than the admin listing (`GET /organizations/{organizationId}/users`), which exposes roles, status filters and full user administration and stays Org-Admin+. Callers outside the organization receive a 404.
 - Idea deletion generates an audit event.
 - Read Only cannot edit or delete idea content.
 - Adding a tag in advance, and renaming, recolouring or deleting a tag, is an in-scope Org Admin's (Site Admin through View As) — Tags, "Who administers tags" (added 2026-09-28).
-- User can update idea status for any idea on a board if allowed by board configuration.
+- User can update idea status for any idea on a board if board configuration allows it.
 
 ## Site Admin Organization Context
-- Site Admin operates in the context of the specific resource being accessed or modified; org-scoped operations (board, idea, status, tag management) use the organization that owns the resource.
-- When creating org-scoped resources (e.g., creating a new board), Site Admin must specify the target `organizationId`.
-- Site Admin has no organization affiliation and therefore cannot be @mentioned and will not appear in mention lookup results.
+- Site Admin reads in the context of the specific resource accessed; org-scoped reads (boards, ideas, statuses, tags) use the organization that owns the resource.
+- Changing organization content — board, idea, status, tag and option management — happens only while acting through View As, in the impersonated user's organization (`20-feature-view-as.md` rules 25–25b). Organization and user administration stays direct, and there the Site Admin names the target `organizationId` in the route. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved"): this said a Site Admin creates org-scoped resources such as a board directly by specifying the target `organizationId`.*
+- Site Admin has no organization affiliation, so cannot be @mentioned and does not appear in mention lookup results.
 
 ## Tags
 1. Tags are scoped to the organization.
@@ -123,8 +134,8 @@ Users can create, discuss, organize, and support ideas within their organization
 4. Tag autocomplete begins after 2 entered characters.
 5. If no match exists, the new tag is created when the idea is saved.
 6. Tags are trimmed, compared case-insensitively, and must be unique within an organization.
-7. If concurrent saves attempt to create the same normalized tag, the system merges them into a single tag.
-8. An idea can have no more than 10 distinct tags. Duplicate normalized names in one request are treated as one tag.
+7. Concurrent saves creating the same normalized tag merge into a single tag.
+8. An idea can have no more than 10 distinct tags; duplicate normalized names in one request count as one tag.
 
 **Colour and administration (added 2026-09-28, comp R; `decisions.md` 2026-09-28).**
 
@@ -133,86 +144,87 @@ Users can create, discuss, organize, and support ideas within their organization
    `#A87B2F`, `#94A3B8` — **and a Custom input for any `#RRGGBB`** (answered 2026-09-28). Any valid
    six-digit colour is accepted, because the chip computes its text colour per theme to clear 4.5:1
    whatever the colour is (`20-feature-client-ui.md` "Tag colours and the effort bar").
-10. **A new tag gets a random palette colour**, whether it was created inline while tagging an idea
-    (rule 5) or in Settings → Tags without choosing one. The random source is injected, so tests fix
-    it. Tags that existed before 2026-09-28 are given a colour by the migration: the palette colour
-    at index `get_byte(decode(md5(normalized_name), 'hex'), 0) % 10`, counting rule 9's palette in
-    its listed order from 0. The backfill is therefore repeatable, and the demo seed computes the
-    same index in `node:crypto` (first byte of the MD5 digest of the normalized name, modulo 10).
+10. **A new tag gets a random palette colour**, whether created inline while tagging (rule 5) or in
+    Settings → Tags without choosing one. The random source is injected, so tests fix it. Tags that
+    existed before 2026-09-28 get their colour from the migration: palette index
+    `get_byte(decode(md5(normalized_name), 'hex'), 0) % 10`, counting rule 9's palette from 0 in listed
+    order — so the backfill is repeatable; the demo seed computes the same index in `node:crypto` (first
+    byte of the MD5 digest of the normalized name, modulo 10).
 11. **Settings → Tags** (`/settings/tags`) manages the organization's tags on the list and detail
-    pattern (`20-feature-client-ui.md`): a List view only, with columns **Tag** (the coloured chip,
-    which opens the drawer), **Ideas** (how many live ideas carry it, both phases), **Boards** (the
-    boards those ideas are on) and **Created** (date and who); a text filter over the name and a
-    **Usage** filter (*Used*, *Unused*); every column sorts; paging per the pattern, in the client,
-    since tags are a small configuration collection. Page header: *Tags*, *Labels for ideas on every
-    board. A new tag gets a colour from the palette at random; an admin can change it here, or add
-    tags before anyone uses them.*, and **Add New Tag**. Row actions **View**, **Edit**, **Delete**.
-12. **The tag drawer.** *View*: the chip at a larger size; facts Ideas, Colour (swatch and hex),
-    Created, By; and **Used on**, the ideas carrying it (title, which opens that idea, and its
-    board), or *Not used yet. It will be offered when anyone tags an idea.* Footer: Edit, Delete.
-    *Create and edit*: **Tag** (required, up to 100 characters, hint *Up to 100 characters. Tags are
-    matched without regard to case.*), **Colour** (the palette as a radio group of swatches, each
-    named by its hex for assistive technology; on create one is preselected at random, rule 10),
-    then a labelled **Custom** colour input — choosing it clears the swatch selection, choosing a
-    swatch sets it — and a live **Preview** chip in the current theme. Footer: Cancel and *Create
-    tag* / *Save changes*.
-13. **Adding a tag in advance** creates it unused; it is offered by autocomplete like any other
-    (rule 4). Its name follows rules 3 and 6; a name that matches an existing tag
-    case-insensitively is refused on the field — *A tag with this name already exists.*
-14. **Editing** changes the name, the colour or both. A rename applies on every idea that carries
-    the tag at once, since ideas reference the tag, not its text. Renaming onto another tag's
-    normalized name is refused as in rule 13; there is no merge. A case-only rename of the same tag
-    is allowed.
+    pattern (`20-feature-client-ui.md`):
+    - List view only; columns **Tag** (the coloured chip, opens the drawer), **Ideas** (live ideas carrying
+      it, both phases), **Boards** (the boards those ideas are on), **Created** (date and who).
+    - A text filter over the name and a **Usage** filter (*Used*, *Unused*); every column sorts; paging per
+      the pattern, in the client, since tags are a small configuration collection.
+    - Page header: *Tags*, *Labels for ideas on every board. A new tag gets a colour from the palette at
+      random; an admin can change it here, or add tags before anyone uses them.*, and **Add New Tag**.
+    - Row actions **View**, **Edit**, **Delete**.
+12. **The tag drawer.**
+    - *View*: the chip at a larger size; facts Ideas, Colour (swatch and hex), Created, By; **Used on** — the
+      ideas carrying it (title, which opens that idea, and its board), or *Not used yet. It will be offered
+      when anyone tags an idea.* Footer: Edit, Delete.
+    - *Create and edit*: **Tag** (required, up to 100 characters, hint *Up to 100 characters. Tags are
+      matched without regard to case.*); **Colour** — the palette as a radio group of swatches, each named by
+      its hex for assistive technology (on create one is preselected at random, rule 10), then a labelled
+      **Custom** colour input (choosing it clears the swatch selection; choosing a swatch sets it); a live
+      **Preview** chip in the current theme. Footer: Cancel and *Create tag* / *Save changes*.
+13. **Adding a tag in advance** creates it unused; autocomplete offers it like any other (rule 4). Its name
+    follows rules 3 and 6; a name matching an existing tag case-insensitively is refused on the field —
+    *A tag with this name already exists.*
+14. **Editing** changes the name, the colour or both. A rename applies on every idea carrying the tag at
+    once, since ideas reference the tag, not its text. Renaming onto another tag's normalized name is refused
+    as in rule 13; there is no merge. A case-only rename of the same tag is allowed.
 15. **Deleting** a tag asks for confirmation — *Delete this tag? "{name}" is removed from N ideas.
-    Anyone who types it again creates a new tag.* — then removes it from every idea that carries
-    it, in either phase and on archived boards too, and deletes the tag. It cannot be undone.
-    **A rename and a delete each write one audit event** (decided by the user, 2026-09-28):
-    `TagRenamed` and `TagDeleted`, recording the tag's id, its old and new name (a delete records
-    the name it had) and how many ideas it was on. The ideas themselves are not touched — no
-    per-idea event, and no idea's `updatedAtUtc` changes. A colour-only edit and adding a tag in
-    advance write no event. No tag change sends a notification.
+    Anyone who types it again creates a new tag.* — then removes it from every idea carrying it, in either
+    phase and on archived boards too, and deletes the tag. It cannot be undone.
+    - **A rename and a delete each write one audit event** (decided by the user, 2026-09-28): `TagRenamed`
+      and `TagDeleted`, recording the tag's id, its old and new name (a delete records the name it had) and
+      how many ideas it was on. The ideas are not touched — no per-idea event, and no idea's `updatedAtUtc`
+      changes.
+    - A colour-only edit and adding a tag in advance write no event. No tag change sends a notification.
 
-**Who administers tags (added 2026-09-28).** The rules above never named an administrator: rule 2
+**Who administers tags (added 2026-09-28).** Why: the rules above never named an administrator — rule 2
 lets anyone who can edit ideas *create* tags, and nothing let anyone rename, recolour or delete one.
-Adding Settings → Tags follows the other organization configuration screens (statuses, idea types,
-custom fields): **an in-scope Org Admin** adds in advance, edits and deletes; a **Site Admin** does
-so only through View As (tags are organization content, `20-feature-view-as.md` rules 25–25b; the
-contract's Site Admin guard already lists tags) and otherwise reads. Creating a tag inline while
-tagging an idea (rule 2) is unchanged and open to every role that may edit the idea. **Settings →
-Tags is Org Admins' only** (answered 2026-09-28): a Site Admin sees it read-only, and Users and Read
-Only accounts do not see it — the Settings hub shows a member only Profile. Members still read every
-tag's name and colour where tags appear (chips, the Ideas Tags filter).
+- Settings → Tags follows the other organization configuration screens (statuses, idea types, custom
+  fields): **an in-scope Org Admin** adds in advance, edits and deletes.
+- A **Site Admin** does so only through View As (tags are organization content, `20-feature-view-as.md`
+  rules 25–25b; the contract's Site Admin guard already lists tags) and otherwise reads.
+- Creating a tag inline while tagging an idea (rule 2) is unchanged and open to every role that may edit
+  the idea.
+- **Settings → Tags is Org Admins' only** (answered 2026-09-28): a Site Admin sees it read-only; Users and
+  Read Only accounts do not see it — the Settings hub shows a member only Profile. Members still read every
+  tag's name and colour where tags appear (chips, the Ideas Tags filter).
 
 ## Mentions
-1. Users can mention other users in their organization using the `@` trigger and an email-based lookup.
+1. Users can mention other users in their organization with the `@` trigger and an email-based lookup.
 2. Mention suggestions are limited to users in the same organization.
-3. Mentions are resolved to the matching user when the idea or comment is saved.
-4. If a typed mention does not resolve to a same-organization user, the UI must show inline validation and block save until the unresolved mention is removed or corrected.
+3. Mentions resolve to the matching user when the idea or comment is saved.
+4. A typed mention that does not resolve to a same-organization user, the UI must show inline validation and block save until removed or corrected.
 
 ## Comments
 1. All authenticated users of the idea's organization, including Read Only, can comment on ideas. **A Site Admin acting as themselves cannot** — see Upvotes #1 for the same reasoning and `20-feature-view-as.md` rules 25/25c.
-2. Comments are displayed chronologically.
+2. Comments display chronologically.
 3. Comment authors can edit and delete their own comments.
 4. Site Admin and Org Admin can delete any comment within their authorized scope.
 5. Comments support the same email-based mention behavior as ideas.
 6. Comment bodies are plain text, may include line breaks, and are limited to 2000 characters.
-7. Comment entry shows a live character counter and inline validation when the maximum length is exceeded.
-8. Development startup seed includes example comments on seeded ideas for collaboration walkthroughs.
+7. Comment entry shows a live character counter and inline validation when the maximum is exceeded.
+8. The Development startup seed includes example comments on seeded ideas for collaboration walkthroughs.
 
 ## Upvotes
 1. All authenticated users of the idea's organization, including Read Only, can upvote ideas. **A Site Admin acting as themselves cannot** — they are not a member of that organization, and a vote expresses a member's position; they upvote through View As instead (`20-feature-view-as.md` rules 25/25c, decided 2026-08-14).
 2. Upvoting is a toggle.
 3. A user can have at most one active upvote per idea.
-4, Upvotes are counted per Idea and displayed next to the upvote icon.
+4. Upvotes are counted per Idea and shown next to the upvote icon.
 5. Only the user who cast an upvote can remove it.
-6. Board cards use a thumbs-up icon button. The icon is unfilled when the current user has not upvoted and filled when the current user has an active upvote.
-7. Toggling from a board card updates the icon and count immediately. On failure, the prior state and count are restored and an error is shown.
+6. Board cards use a thumbs-up icon button: unfilled when the current user has not upvoted, filled when they have an active upvote.
+7. Toggling from a board card updates icon and count immediately; on failure the prior state and count are restored and an error is shown.
 
 ## CSV Import
 
 ### Rules
 1. Only Site Admin and Org Admin can upload ideas via CSV to a board. **The Site Admin's path is View As**, not a direct upload — bulk create is still create, and guarding single-idea create while leaving import open would defeat rule 25 at scale (`20-feature-view-as.md` rules 25/25c).
-2. The CSV file must use UTF-8 encoding with a header row.
+2. The CSV file must be UTF-8 with a header row.
 3. Supported columns:
 
    | Column       | Required | Constraints                                                                |
@@ -233,18 +245,18 @@ tag's name and colour where tags appear (chips, the Ideas Tags filter).
 3a. **Structured fields on import (added 2026-09-27).** `Problem`, `ProposedSolutions` and
    `ImpactRationale` are optional columns so files written before them still import. A row that lacks
    one, or leaves it blank, gets the rule 2a backfill for that field: Problem takes the row's
-   `Description`, or *Not captured before 2026-09-27.* when that is blank too; Proposed solutions
-   takes the single item *Not captured before 2026-09-27.*; Impact rationale takes the same text. The
-   export writes all three (`30-Contracts.md`), so export → re-import is lossless.
-4. Validation runs against the entire file before any ideas are created. If any row fails validation, the entire upload is rejected and all errors are returned. No partial imports occur.
-5. A single upload is limited to 500 data rows. Files exceeding this limit are rejected.
-6. If two or more rows within the same CSV share the same `Title` (case-insensitive), the second and any subsequent duplicate rows are validation errors.
-7. If a row's `Title` (case-insensitive) already exists as an idea on the target board, that row is silently skipped without error.
-8. Each `AssignedTo` email must resolve to a distinct active user in the same organization. An unresolved, duplicate, cross-organization, or more-than-five assignment is a validation error.
-9. The `Status` column value is a **status name string**. The validator performs a case-insensitive name lookup against the organization's configured statuses. If a match is found, the idea is assigned that status. If no org status with that name exists, it is a validation error.
-10. New `Tags` values that do not yet exist in the organization are created automatically using the same normalization rules as manual tag creation (trimmed, case-insensitive deduplication).
-11. The creation phase (after validation passes) runs inside a single database transaction. If any row fails to persist, all created ideas are rolled back.
-12. A successful import generates one bulk-import audit event for the upload action, plus one individual audit event per idea created (same event type as manual idea creation). The bulk-import audit event fires even when all rows were skipped (`importedCount: 0`).
+   `Description`, or *Not captured before 2026-09-27.* when that is blank too; Proposed solutions takes the
+   single item *Not captured before 2026-09-27.*; Impact rationale takes the same text. The export writes
+   all three (`30-Contracts.md`), so export → re-import is lossless.
+4. Validation runs against the entire file before any idea is created. If any row fails, the whole upload is rejected and all errors are returned — no partial imports.
+5. One upload is limited to 500 data rows; larger files are rejected.
+6. Two or more rows in the same CSV sharing a `Title` (case-insensitive): the second and later duplicates are validation errors.
+7. A row whose `Title` (case-insensitive) already exists as an idea on the target board is silently skipped without error.
+8. Each `AssignedTo` email must resolve to a distinct active user in the same organization; an unresolved, duplicate, cross-organization, or more-than-five assignment is a validation error.
+9. The `Status` column value is a **status name string**, looked up case-insensitively against the organization's configured statuses; a match assigns that status, no match is a validation error.
+10. New `Tags` values that do not yet exist in the organization are created automatically with the same normalization as manual tag creation (trimmed, case-insensitive deduplication).
+11. The creation phase (after validation passes) runs in a single database transaction; if any row fails to persist, all created ideas roll back.
+12. A successful import writes one bulk-import audit event for the upload, plus one audit event per idea created (same event type as manual idea creation). The bulk-import event fires even when all rows were skipped (`importedCount: 0`).
 
 ### Acceptance Criteria
 - [ ] Only Site Admin and Org Admin can access the CSV upload action for a board
@@ -274,50 +286,50 @@ tag's name and colour where tags appear (chips, the Ideas Tags filter).
 > history; do not implement from it.
 
 ### Outcome
-Users can start a new idea by describing it in plain English instead of filling every field by hand. The system extracts as many fields as it can confidently determine, asks a single batched round of clarifying questions only for fields it cannot confidently determine, and always presents the result on the same idea form used for manual entry for review before the idea is created.
+Users start a new idea by describing it in plain English. The system extracts the fields it can confidently determine, asks one batched round of clarifying questions only for the rest, and always shows the result on the manual idea form for review before the idea is created.
 
 ### Decisions
 | Decision | Resolution |
 |---|---|
-| Entry point | The board's New Idea action opens a plain-English prompt box by default. A visible link/toggle lets the user skip directly to the blank manual field-by-field form instead. |
-| Board context | This flow is launched from within a specific board, the same entry point as the existing manual New Idea action. The board is always known from context and is never inferred or asked about. |
-| Trust model | The extracted result always populates the standard idea form as a pre-filled, fully editable, unsaved draft. No idea is created directly from the prompt; the user must review and submit Create. |
-| Scope of one submission | One prompt submission produces exactly one idea. Detecting and splitting multiple candidate ideas out of a single input (e.g., a pasted meeting-notes dump covering several topics) is out of MVP scope. |
-| Title and Description | Always synthesized/derived; neither is ever blocked on or triggers a clarifying question. Description defaults to a lightly cleaned version of the user's raw input with no generative rewrite, so the mandatory extraction call stays cheap. An explicit opt-in "Polish with AI" action may rewrite the description on request. |
-| Priority, Idea Type, Business Impact | Required fields. Always inferred when the input gives any reasonable signal, and shown on the review form as visually distinguished "inferred, unconfirmed" until the user interacts with the field. A clarifying question is triggered only when there is no usable signal at all for a given field. |
-| Due Date, Assignees, Tags | Optional; only surfaced when mentioned in the input. An ambiguous mention (e.g., a name matching more than one active org user) triggers a disambiguation question; an unmentioned optional field is simply left blank/default. |
-| Clarifying questions | Batched into a single round after the initial extraction pass, not serial back-and-forth. Enum fields (Priority, Idea Type, Business Impact) are presented as multiple-choice sourced from the org's current active options. MVP supports at most one clarification round; any field still unresolved afterward is left blank/default on the review form for manual correction. |
-| Entity resolution | The extraction step never receives the org's full user or tag lists. It returns raw plain-text mentions (person names, tag-like keywords, date phrases); resolving those mentions against actual org users, tags, and dates happens in deterministic backend logic (fuzzy match, date parsing), not inside the model prompt. This keeps prompt size independent of org size and keeps resolution grounded in real data rather than model recall. |
-| Model tier | MVP uses a single fixed, low-cost model tier appropriate to a classification/short-synthesis task. The mandatory extraction call uses Claude Haiku 4.5. The opt-in "Polish with AI" action uses Claude Sonnet 5, because rewriting is a generation task rather than a classification one. No multi-model escalation/cascade in MVP. |
-| Provider naming | **API contract fields** are deliberately vendor-neutral (`aiApiKey`, `aiKeyConfigured`) rather than naming a provider, so changing providers is a spec-and-adapter change instead of a breaking contract change. **Server-side configuration is not** — the deployment key is `ANTHROPIC_API_KEY` (user decision, 2026-08-25), matching the name the vendor's own tooling and SDKs already export rather than making every developer keep a second copy of the same secret under a neutral name. Canonical: `20-feature-ai-idea-assist.md` rules 29 and 29a. |
-| Credential source | Extraction and polish calls authenticate with the organization's own AI API key when one is configured, and otherwise with the deployment-wide default key. Key management, precedence, and failure behavior are specified in `SPEC/20-feature-organizations-and-users.md` ("Organization AI Credentials"). |
-| Input guardrails | The client enforces a minimum input length before allowing submission, to avoid wasted calls on trivially empty input. The API enforces a maximum input length aligned to the Description field limit, since multi-idea handling is out of scope. |
-| Relationship to Approval Workflow | Consistent with the deferred Approval Workflow decision that AI-generated content is untrusted until reviewed by a human (below): the always-review-before-create trust model already satisfies that principle for this feature, independent of whether the approval workflow itself is ever built. |
+| Entry point | The board's New Idea action opens a plain-English prompt box by default; a visible link/toggle skips to the blank manual form. |
+| Board context | Launched from a specific board, like manual New Idea; the board is always known from context, never inferred or asked. |
+| Trust model | The extracted result always populates the standard idea form as a pre-filled, fully editable, unsaved draft. No idea is created from the prompt directly; the user must review and submit Create. |
+| Scope of one submission | One prompt makes exactly one idea. Splitting several candidate ideas out of one input (e.g., a pasted meeting-notes dump) is out of MVP scope. |
+| Title and Description | Always synthesized/derived; never blocked on or asked about. Description defaults to a lightly cleaned copy of the raw input with no generative rewrite, so the mandatory extraction call stays cheap. An opt-in "Polish with AI" action may rewrite it on request. |
+| Priority, Idea Type, Business Impact | Required. Always inferred when the input gives any reasonable signal, and shown on the review form as visually distinguished "inferred, unconfirmed" until the user interacts with the field. A clarifying question only when a field has no usable signal at all. |
+| Due Date, Assignees, Tags | Optional; surfaced only when mentioned. An ambiguous mention (e.g., a name matching more than one active org user) triggers a disambiguation question; an unmentioned optional field stays blank/default. |
+| Clarifying questions | One batched round after extraction, not serial back-and-forth. Enum fields (Priority, Idea Type, Business Impact) are multiple-choice from the org's active options. At most one round in MVP; anything still unresolved stays blank/default on the review form for manual correction. |
+| Entity resolution | Extraction never receives the org's full user or tag lists. It returns raw plain-text mentions (names, tag-like keywords, date phrases); deterministic backend logic (fuzzy match, date parsing), not inside the model prompt, resolves them against real org users, tags and dates. Why: prompt size stays independent of org size and resolution stays grounded in real data, not model recall. |
+| Model tier | MVP uses a single fixed, low-cost model tier appropriate to a classification/short-synthesis task. The mandatory extraction call uses Claude Haiku 4.5. The opt-in "Polish with AI" action uses Claude Sonnet 5, because rewriting is generation, not classification. No multi-model escalation/cascade in MVP. |
+| Provider naming | **API contract fields** are deliberately vendor-neutral (`aiApiKey`, `aiKeyConfigured`), so changing providers is a spec-and-adapter change, not a breaking contract change. **Server-side configuration is not** — the deployment key is `ANTHROPIC_API_KEY` (user decision, 2026-08-25), the name the vendor's tooling and SDKs already export, rather than a second copy of the secret under a neutral name. Canonical: `20-feature-ai-idea-assist.md` rules 29 and 29a. |
+| Credential source | Extraction and polish calls use the organization's own AI API key when configured, else the deployment-wide default key. Key management, precedence and failure behavior: `SPEC/20-feature-organizations-and-users.md` ("Organization AI Credentials"). |
+| Input guardrails | The client enforces a minimum input length before submission, to avoid wasted calls on trivially empty input. The API enforces a maximum input length aligned to the Description field limit, since multi-idea handling is out of scope. |
+| Relationship to Approval Workflow | The deferred Approval Workflow treats AI-generated content as untrusted until a human reviews it (below); always-review-before-create already satisfies that here, whether or not the approval workflow is ever built. |
 
 ### Flow
-1. From within a board, the user opens New Idea, which opens a prompt box with a link to skip to the manual form.
+1. From a board, the user opens New Idea: a prompt box with a link to skip to the manual form.
 2. The user describes the idea in their own words and submits.
-3. The extraction step runs once against the input, constrained to the target org's active Idea Type options and active Business Impact options, and returns: a synthesized title; Priority, Idea Type, and Business Impact each either confidently classified or marked as no-signal; and any raw mentions of people, dates, or tag-like terms found in the text. The extraction response does not carry a description — because the description is a lightly cleaned copy of the user's own input rather than generated prose, backend code produces it deterministically (trim, collapse whitespace runs, normalize line endings, enforce the 4000-character limit). This preserves the specified behavior exactly while removing the single largest output-token cost in the call.
-4. Backend logic resolves raw mentions against the org's active users, tags, and a date parser. Ambiguous or unresolved mentions are queued for the clarifying round; unambiguous matches are pre-filled directly.
-5. If any required field has no signal, or any mention is ambiguous, the user is shown one batched round of clarifying questions (multiple-choice for enum fields, a short picker for name/tag disambiguation). If nothing needs clarifying, this step is skipped.
-6. The standard idea form opens pre-filled with everything extracted and resolved. Inferred-but-unconfirmed fields are visually distinguished from user-confirmed or user-edited fields.
-7. The user reviews, edits any field, and submits Create through the existing idea-creation path, generating the same audit event as manual creation (see Idea Rules).
+3. Extraction runs once, constrained to the org's active Idea Type and Business Impact options, and returns: a synthesized title; Priority, Idea Type and Business Impact each confidently classified or marked no-signal; any raw mentions of people, dates or tag-like terms. It returns no description — the description is a lightly cleaned copy of the user's input, so backend code produces it deterministically (trim, collapse whitespace runs, normalize line endings, enforce the 4000-character limit). Why: same behavior, minus the call's largest output-token cost.
+4. Backend logic resolves raw mentions against the org's active users, tags, and a date parser. Ambiguous or unresolved mentions queue for the clarifying round; unambiguous matches are pre-filled.
+5. If any required field has no signal or any mention is ambiguous, the user gets one batched round of clarifying questions (multiple-choice for enum fields, a short picker for name/tag disambiguation); otherwise this step is skipped.
+6. The standard idea form opens pre-filled with everything extracted and resolved; inferred-but-unconfirmed fields look different from user-confirmed or user-edited ones.
+7. The user reviews, edits any field, and submits Create through the existing idea-creation path, which writes the same audit event as manual creation (see Idea Rules).
 
 ### Cost Architecture Principles
-1. The model never receives the org's full user or tag list; it only extracts raw mentions, which deterministic backend code resolves. This bounds prompt size independent of org size.
-2. Output is schema/tool-constrained with per-field token limits aligned to existing field length limits (Title 150 characters, Description 4000 characters), not open-ended generation.
-3. Description defaults to cleaned raw input rather than a generated rewrite, and that cleaning is performed in backend code rather than by the model, so the mandatory call never spends output tokens echoing the user's own text back. Generative rewriting is opt-in and separate from the mandatory extraction call.
-4. A single fixed low-cost model is used for MVP. Multi-model escalation, self-hosted model infrastructure, and per-organization usage quotas are deferred until real usage data justifies the added engineering cost (see Out of Scope below).
+1. The model never receives the org's full user or tag list; it only extracts raw mentions that deterministic backend code resolves, bounding prompt size independent of org size.
+2. Output is schema/tool-constrained with per-field token limits aligned to field length limits (Title 150 characters, Description 4000 characters), not open-ended generation.
+3. Description defaults to cleaned raw input, cleaned in backend code rather than by the model, so the mandatory call never spends output tokens echoing the user's text. Generative rewriting is opt-in and separate from the mandatory extraction call.
+4. One fixed low-cost model for MVP. Multi-model escalation, self-hosted model infrastructure and per-organization usage quotas are deferred until real usage data justifies the engineering cost (see Out of Scope below).
 5. Prompt caching is not applicable at this prompt size and is therefore deferred at no cost: the extraction system prompt is well under the minimum cacheable prefix length for the chosen model tier, so a cache entry would never be created even if caching were configured. Revisit only if the system prompt grows substantially.
-6. Because organizations may supply their own API key, per-call cost can fall on either the deployment's account or the organization's own account. Neither the extraction prompt nor the polish prompt changes based on which key is in use — key selection is purely a credential concern and must not alter model behavior or output shape.
+6. Organizations may supply their own API key, so per-call cost can fall on either the deployment's or the organization's account. Neither the extraction nor the polish prompt changes with the key in use — key selection is purely a credential concern and must not alter model behavior or output shape.
 
 ### Out of Scope (MVP)
 - Detecting or splitting multiple candidate ideas from one input.
 - A global (not board-scoped) entry point, and any board inference/selection question.
 - Multi-model escalation/cascade based on confidence or validation failure.
 - Prompt caching infrastructure and self-hosted model infrastructure.
-- Per-organization AI usage quotas, spend caps, and usage reporting. Organization-supplied API keys (see `SPEC/20-feature-organizations-and-users.md`) shift *who pays* but deliberately do not introduce any usage ceiling, per-user rate limit, or consumption dashboard in MVP.
-- Per-organization provider selection. One provider is configured deployment-wide; an organization supplies its own key for that provider, not a key for a different one.
+- Per-organization AI usage quotas, spend caps, and usage reporting. Organization-supplied API keys (see `SPEC/20-feature-organizations-and-users.md`) shift *who pays* but deliberately add no usage ceiling, per-user rate limit, or consumption dashboard in MVP.
+- Per-organization provider selection. One provider is configured deployment-wide; an organization supplies its own key for that provider, not for a different one.
 - Ambient capture (e.g., email- or Slack-forwarded idea creation).
 
 ### Permissions
@@ -343,16 +355,16 @@ Same as manual idea creation: Site Admin, Org Admin, and User can use AI-assiste
 - [ ] AI-assisted idea creation is unavailable, with a clear message and a direct path to the manual form, when neither an organization key nor a deployment default key is configured
 
 ## Approval Workflow Decisions (Post-MVP — Deferred)
-The following decisions are captured for a future post-MVP approval workflow feature. **None of these behaviors are implemented in MVP.** No API contracts, data model fields, background scheduler, or acceptance criteria for approval are required for the MVP release.
+Captured for a future post-MVP approval workflow. **None of these behaviors are implemented in MVP.** MVP needs no API contracts, data model fields, background scheduler, or acceptance criteria for approval.
 
-When this feature is implemented it must address:
-- Approval modeled as a workflow state transition, not as a separate entity.
+When built, it must address:
+- Approval is a workflow state transition, not a separate entity.
 - Only Org Admins and the idea author can initiate or resolve approval actions.
 - Site Admin can always initiate or resolve approval actions within any org.
 - A pending approval request expires after 24 hours and automatically returns to the previous state if no action is taken (requires a background scheduler).
 - Rejection returns the idea to the last non-terminal state; rejection reason and prior state must be persisted.
-- Concurrent edit concurrency during a pending approval requires an explicit decision (optimistic concurrency token recommended).
-- AI-generated or AI-assisted content is treated as untrusted until reviewed by a human; the system must not auto-approve AI-generated submissions.
+- Concurrent edits during a pending approval need an explicit decision (optimistic concurrency token recommended).
+- AI-generated or AI-assisted content is untrusted until a human reviews it; the system must not auto-approve AI-generated submissions.
 
 ## Acceptance Criteria
 - [ ] Required idea fields are enforced
@@ -410,4 +422,4 @@ When this feature is implemented it must address:
 - [ ] Development startup seed provides example ideas with description-based spec content
 - [ ] Development startup seed provides example comments on seeded ideas
 - [ ] MVP idea and comment content remains plain text only
-- [ ] Rich text, embedded media, and file attachments are excluded from MVP implementation`
+- [ ] Rich text, embedded media, and file attachments are excluded from MVP implementation
