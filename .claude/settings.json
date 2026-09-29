@@ -76,7 +76,23 @@
       "Bash(pnpm test)",
       "Bash(pnpm --filter * test*)",
       "Bash(pnpm --filter * typecheck)",
-      "Bash(pnpm --filter @collega/infrastructure db:*)"
+      "Bash(pnpm --filter @collega/infrastructure db:*)",
+      "mcp__plugin_vercel_vercel__list_deployments",
+      "mcp__plugin_vercel_vercel__get_deployment",
+      "mcp__plugin_vercel_vercel__get_deployment_build_logs",
+      "mcp__plugin_vercel_vercel__get_runtime_errors",
+      "mcp__plugin_vercel_vercel__get_runtime_logs",
+      "mcp__plugin_vercel_vercel__search_vercel_documentation",
+      "mcp__plugin_vercel_vercel__list_teams",
+      "mcp__Claude_Browser__read_page",
+      "mcp__Claude_Browser__get_page_text",
+      "mcp__Claude_Browser__find",
+      "mcp__Claude_Browser__read_console_messages",
+      "mcp__Claude_Browser__read_network_requests",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_screenshot",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_snapshot",
+      "mcp__plugin_context7_context7__query-docs"
     ],
     "deny": [
       "Bash(git branch -D *)"

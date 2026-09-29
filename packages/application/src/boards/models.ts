@@ -20,6 +20,15 @@ export type UpdateBoardCommand = {
   readonly description?: string | null | undefined
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly SwimlaneInput[]
+  /** Where the ideas in each removed lane go. Absent is none; required per removed lane that
+   * still holds live ideas (SPEC/contracts/boards.md `PUT /boards/{boardId}`). */
+  readonly ideaMoves?: readonly IdeaMoveInput[] | undefined
+}
+
+/** One removed lane's ideas, and the lane that stays on the board they move to. */
+export type IdeaMoveInput = {
+  readonly fromStatusId: string
+  readonly toStatusId: string
 }
 
 export type ReorderSwimlanesCommand = {

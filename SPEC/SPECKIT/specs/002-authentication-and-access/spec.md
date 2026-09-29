@@ -9,7 +9,7 @@
 	- `SPEC/30-Contracts.md`
 	- `SPEC/contracts/auth.md` (the authentication contracts, split out of `SPEC/30-Contracts.md` on 2026-09-28)
 	- `SPEC/40-test-strategy.md`
-- Last Canonical Sync Date: 2026-08-08
+- Last Canonical Sync Date: 2026-09-29 for the session and required-change lines (they described a stored bearer token until then); 2026-08-08 for the rest
 
 ## Summary
 Implement authentication with globally unique email credentials, seeded global Site Admin bootstrap, password rules, inactive-account denial, and account lockout behavior.
@@ -25,8 +25,9 @@ Implement authentication with globally unique email credentials, seeded global S
 - Admin-issued temporary password reset is an MVP/P1 capability and uses one-time display temporary passwords that expire after 24 hours and force password change on first use.
 - `User.MustChangePassword` gates the standalone required-change route for seeded Site Admin and admin-provided initial or temporary credentials. Authenticated users without the flag use My Profile for voluntary password changes.
 - Unauthenticated protected client routes redirect to `/login`; authenticated users without a required password change land on the Dashboard at `/`; `/logout` clears the session and returns to `/login`.
-- Persisted client authentication data is a cached session candidate. The client restores an authenticated principal only after `GET /api/v1/auth/me` accepts the stored bearer token and returns the current user.
-- An expired or API-unknown stored or active bearer token clears the persisted and in-memory client session and redirects to `/login`. Endpoint-specific `401` responses do not clear a token that `GET /api/v1/auth/me` still accepts.
+- The session is the httpOnly `collega_session` cookie the API sets on login; no client script can read it, and the client holds no token of its own. A holder of the cookie is not treated as signed in until `GET /api/v1/auth/me` accepts it and returns the current user (`SPEC/20-feature-auth.md` requirement 33).
+- When the API rejects the session cookie (expired, revoked, or unknown), the client drops the cookie and redirects to `/login`. An endpoint's own `401` refusal, such as a wrong current password, does not end a session that `GET /api/v1/auth/me` still accepts (requirement 34).
+- `MustChangePassword` is enforced at the API: while it is true, every authenticated endpoint except `GET /api/v1/auth/me` and `POST /api/v1/auth/change-password` answers `403`. Completing the change regenerates the user's `SecurityStamp`, which ends that session; the user signs in again with the new password (requirement 32a).
 - JWTs expire absolutely after 480 minutes. Browser inactivity expires after 30 minutes, warns at minute 28, synchronizes activity/logout across tabs, and never extends the absolute JWT deadline.
 - Idle or absolute expiry returns to Login with a specific session-expired message. Explicit logout and successful required or voluntary password changes return to Login without that message.
 - Post-MVP self-service reset sends active local-password users a private, single-use bearer-token link that expires after 24 hours and is invalidated by a newer request.

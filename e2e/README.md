@@ -180,7 +180,9 @@ its status in the name.
 carry a hash in the middle and give every file the same name. Video is off by default; an ordinary
 `pnpm test:e2e` still keeps it only for failures.
 
-**Known: a full run is not repeatable within the hour.** It signs in 27 times against an hourly
-per-IP limit of 100, so roughly the fourth consecutive run starts failing on the login screen for a
-reason that has nothing to do with the product. Recorded in `SPEC/Bug Triage.md`. Until it is fixed,
-a spec that fails in a full run is worth re-running on its own before believing it.
+**Sign-ins and the rate limiter.** A full run signs in fourteen times (measured 2026-09-29):
+`tests/auth.setup.ts` signs each seeded role in once and the specs reuse the saved cookie, and only
+the specs about signing in and the accounts specs create themselves sign in for real. That sits
+under login's twenty a minute, and an API Playwright starts itself begins with empty buckets.
+A spec that adds real sign-ins should use a stored session instead unless signing in is what it
+tests; `tests/sign-in.ts` names a rate-limited refusal as one if the count creeps back up.

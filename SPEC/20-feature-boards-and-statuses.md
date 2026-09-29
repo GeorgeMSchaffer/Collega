@@ -5,9 +5,11 @@
 >   deferred and not implemented.
 > - **Key rules:** statuses soft-delete only, not while a swimlane on an active board (Status 5-6); an org
 >   keeps at least 2 active statuses (Status 7); a board needs at least 2 swimlanes (Board 3); boards are
->   archived, not deleted, by an Org Admin, and open read-only (Board 13); `/boards`, `/board/{boardId}` (10).
+>   archived, not deleted, by an Org Admin, and open read-only (Board 13); removing a lane moves its
+>   ideas to a lane the admin picks (Board 14); `/boards`, `/board/{boardId}` (10).
 > - **Contracts:** contracts/boards.md, contracts/statuses.md
 > - **Decisions:** 2026-09-27 "Boards gain a description, and the board list carries what a card needs";
+>   2026-09-29 "Removing a lane moves its ideas";
 >   2026-09-27 "The S0.2 schema freeze is amended a third time, for structured ideas and board archive";
 >   2026-09-02 "The board is a scrolling rail of fixed-width columns"
 
@@ -66,6 +68,11 @@ Organizations can manage idea boards using configurable status swimlanes.
     - Unarchiving restores it unchanged.
     - Its own page opens **read-only** with an *Archived* banner (Q4, answered 2026-09-27): lanes and list still show; adding, moving and editing are unavailable; an Org Admin sees *Unarchive* in the banner.
     - Its settings (name, description, lanes and their order) cannot be edited while archived; unarchive it first.
+14. **Removing a lane moves its ideas** (added 2026-09-29, `SPEC/decisions.md` "Removing a lane moves its ideas"). A board save that removes a lane still holding live ideas must say where they go, or it is refused; it never leaves ideas in a status that is no longer a column.
+    - The admin chooses the target in a confirm step before the save: one lane per removed lane, defaulting to the board's first remaining lane — e.g. *3 ideas are in In Review. Move them to: [New / Pending ▾]*. Removing an empty lane asks nothing.
+    - The target is a lane the saved board keeps. The moves and the lane change are one transaction.
+    - Only live Discovery ideas move; soft-deleted ideas and promoted Issues keep their status.
+    - Each moved idea records a status-change audit entry, as a move on the board does.
 
 ## Approval Workflow Decisions (Post-MVP — Deferred)
 For a future post-MVP approval workflow on board status transitions. **None of these behaviors are implemented in MVP.** When implemented:
@@ -87,6 +94,7 @@ For a future post-MVP approval workflow on board status transitions. **None of t
 - [ ] A new organization receives one default board
 - [ ] Boards can select a subset of org statuses
 - [ ] Swimlane order can be changed and is saved immediately
+- [ ] Removing a lane that still holds live ideas asks where they go (default: the first remaining lane), moves them there with a status-change audit entry each, and is refused without a valid target; removing an empty lane asks nothing
 - [ ] Board screens provide guided empty states with a primary action and short explanatory text when no ideas exist
 - [ ] Development startup seed includes exactly two example boards per demo organization
 - [ ] Each seeded example board contains 11 ideas distributed `3/2/2/1/3` in canonical status order

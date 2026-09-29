@@ -18,6 +18,7 @@
 #   tools/golden            capture and replay harness - the conversion's only oracle
 #   tools/boundaries        architecture test over the layer-boundary lint
 #   tools/arch              architecture tests lint cannot express
+#   tools/local             pnpm dev's launcher, with tests of its .env rules
 #   tools/demo-shots        drives a running app and writes demo/screenshots
 #   tools/prompt-eval       runs the idea-assistant prompt over its evaluation corpus
 #   SPEC/mockups/_build/tw  Tailwind CLI that compiles CSS inlined into the comps
@@ -29,6 +30,7 @@ packages:
   - 'tools/golden'
   - 'tools/boundaries'
   - 'tools/arch'
+  - 'tools/local'
   - 'tools/demo-shots'
   - 'tools/prompt-eval'
   - 'SPEC/mockups/_build/tw'

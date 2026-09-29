@@ -38,12 +38,13 @@ import type {
   BoardTagCount,
   CreateBoardCommand,
   CreateBoardResult,
+  IdeaMoveInput,
   ReorderSwimlanesCommand,
   SwimlaneDetail,
   SwimlaneInput,
   UpdateBoardCommand,
 } from './models.js'
-import type { BoardRepository, OrganizationExistenceLookup } from './ports.js'
+import type { BoardRepository, LaneIdea, OrganizationExistenceLookup } from './ports.js'
 
 export class BoardService {
   constructor(
@@ -199,7 +200,19 @@ export class BoardService {
       now,
       this.currentUser.userId,
     )
+    const moves = await this.planIdeaMoves(existing, board, command.ideaMoves ?? [], statusLookup)
+
     await this.boards.save(board)
+    for (const move of moves) {
+      await this.boards.moveIdeas(
+        board.id,
+        move.ideas.map((idea) => idea.ideaId),
+        move.fromStatusId,
+        move.toStatusId,
+        now,
+        this.currentUser.userId,
+      )
+    }
     await this.unitOfWork.saveChanges()
 
     await this.audit(
@@ -208,10 +221,104 @@ export class BoardService {
       board.id,
       `Board '${board.name}' updated.`,
       now,
-      { name: board.name, swimlaneCount: board.swimlanes.length },
+      {
+        name: board.name,
+        swimlaneCount: board.swimlanes.length,
+        ...(moves.length === 0
+          ? {}
+          : {
+              ideaMoves: moves.map((move) => ({
+                fromStatusId: move.fromStatusId,
+                toStatusId: move.toStatusId,
+                ideaCount: move.ideas.length,
+              })),
+            }),
+      },
     )
+    // One entry per moved idea, in the shape a move on the board writes, so an idea's history
+    // reads the same however it changed lanes.
+    for (const move of moves) {
+      for (const idea of move.ideas) {
+        await this.auditIdeaMove(board.organizationId, idea, move.toStatusId, now)
+      }
+    }
 
     return toDetail(board, statusLookup)
+  }
+
+  /**
+   * A save that removes a lane still holding live ideas must say where they go
+   * (SPEC/20-feature-boards-and-statuses.md rule 14): otherwise they would keep a status that is
+   * no longer a column and drop off the board. Each move names a lane this save removes and a lane
+   * the saved board keeps; a removed lane with ideas and no move is refused, and so is a move that
+   * could not apply. A move from a removed lane that turns out to be empty is harmless and ignored.
+   */
+  private async planIdeaMoves(
+    existing: Board,
+    updated: Board,
+    requested: readonly IdeaMoveInput[],
+    statusLookup: ReadonlyMap<string, Status>,
+  ): Promise<readonly PlannedIdeaMove[]> {
+    const kept = new Set(updated.swimlanes.map((swimlane) => swimlane.statusId))
+    const removed = existing.swimlanes
+      .map((swimlane) => swimlane.statusId)
+      .filter((statusId) => !kept.has(statusId))
+
+    // Every problem is reported at once, deduplicated, rather than the first alone. A lane named by
+    // any entry, valid or not, is not reported again as unplaced: its entry's message says why.
+    const problems = new Set<string>()
+    const named = new Set<string>()
+    const targets = new Map<string, string>()
+    for (const move of requested) {
+      if (!removed.includes(move.fromStatusId)) {
+        problems.add('A move must come from a lane this save removes.')
+        continue
+      }
+      if (named.has(move.fromStatusId)) {
+        problems.add('A removed lane can move its ideas to one lane only.')
+        continue
+      }
+      named.add(move.fromStatusId)
+      if (!kept.has(move.toStatusId)) {
+        problems.add('Ideas can only move to a lane that stays on the board.')
+        continue
+      }
+      targets.set(move.fromStatusId, move.toStatusId)
+    }
+
+    if (removed.length === 0) {
+      if (problems.size > 0) {
+        throw invalidIdeaMoves([...problems])
+      }
+      return []
+    }
+
+    const ideas = await this.boards.listLaneIdeas(existing.id, removed)
+    const planned: PlannedIdeaMove[] = []
+    for (const fromStatusId of removed) {
+      const laneIdeas = ideas.filter((idea) => idea.statusId === fromStatusId)
+      if (laneIdeas.length === 0) {
+        continue
+      }
+      const toStatusId = targets.get(fromStatusId)
+      if (toStatusId === undefined) {
+        if (named.has(fromStatusId)) {
+          continue
+        }
+        const name = statusLookup.get(fromStatusId)?.name ?? 'A removed lane'
+        const [count, them] =
+          laneIdeas.length === 1 ? ['1 idea', 'it'] : [`${laneIdeas.length} ideas`, 'them']
+        problems.add(
+          `'${name}' still holds ${count}. Choose a lane that stays on the board to move ${them} to.`,
+        )
+        continue
+      }
+      planned.push({ fromStatusId, toStatusId, ideas: laneIdeas })
+    }
+    if (problems.size > 0) {
+      throw invalidIdeaMoves([...problems])
+    }
+    return planned
   }
 
   async reorderSwimlanes(boardId: string, command: ReorderSwimlanesCommand): Promise<void> {
@@ -357,6 +464,25 @@ export class BoardService {
     return this.currentUser.role
   }
 
+  /** The `IdeaStatusChanged` entry `IdeaService.changeStatus` writes, attributed the same way. */
+  private async auditIdeaMove(
+    organizationId: string,
+    idea: LaneIdea,
+    toStatusId: string,
+    occurredAtUtc: Date,
+  ): Promise<void> {
+    await this.auditEvents.write({
+      eventType: 'IdeaStatusChanged',
+      entityType: 'Idea',
+      message: `Idea '${idea.title}' moved to a new status.`,
+      occurredAtUtc,
+      organizationId,
+      attribution: attributeAudit(this.currentUser, this.currentUser.userId),
+      entityId: idea.ideaId,
+      metadataJson: JSON.stringify({ fromStatusId: idea.statusId, toStatusId }),
+    })
+  }
+
   private async audit(
     eventType: string,
     organizationId: string,
@@ -379,6 +505,16 @@ export class BoardService {
       metadataJson: metadata === null ? null : JSON.stringify(metadata),
     })
   }
+}
+
+type PlannedIdeaMove = {
+  readonly fromStatusId: string
+  readonly toStatusId: string
+  readonly ideas: readonly LaneIdea[]
+}
+
+function invalidIdeaMoves(messages: readonly string[]): ValidationError {
+  return new ValidationError('One or more fields are invalid.', { ideaMoves: [...messages] })
 }
 
 function orderSwimlaneInputs(swimlanes: readonly SwimlaneInput[]): readonly string[] {

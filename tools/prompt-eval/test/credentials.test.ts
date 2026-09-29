@@ -66,3 +66,57 @@ test('redact removes anything shaped like an Anthropic key, even with no key giv
     'x-api-key: [redacted] was rejected',
   )
 })
+
+/**
+ * `.env.local` and `.env` side by side, as `pnpm env:pull` leaves them, in the order the runner
+ * reads them. A file given as `undefined` is not written.
+ */
+async function envFilePair(local: string | undefined, env: string | undefined): Promise<string[]> {
+  const dir = await scratchDir()
+  const files = [path.join(dir, '.env.local'), path.join(dir, '.env')]
+  for (const [file, text] of [
+    [files[0], local],
+    [files[1], env],
+  ] as const) {
+    if (text !== undefined) await writeFile(file as string, text, 'utf8')
+  }
+  return files
+}
+
+test('.env.local is read before .env', async () => {
+  const files = await envFilePair(`${KEY_VARIABLE}=from-local\n`, `${KEY_VARIABLE}=from-env-file\n`)
+  assert.equal(await readEvaluationKey({}, files), 'from-local')
+})
+
+test('a blank key in .env.local falls through to .env', async () => {
+  const files = await envFilePair(`${KEY_VARIABLE}=   \n`, `${KEY_VARIABLE}=from-env-file\n`)
+  assert.equal(await readEvaluationKey({}, files), 'from-env-file')
+})
+
+test('a .env.local without the key falls through to .env', async () => {
+  const files = await envFilePair('OTHER_VARIABLE=x\n', `${KEY_VARIABLE}=from-env-file\n`)
+  assert.equal(await readEvaluationKey({}, files), 'from-env-file')
+})
+
+test('a missing .env.local falls through to .env', async () => {
+  const files = await envFilePair(undefined, `${KEY_VARIABLE}=from-env-file\n`)
+  assert.equal(await readEvaluationKey({}, files), 'from-env-file')
+})
+
+test('the environment beats both files', async () => {
+  const files = await envFilePair(`${KEY_VARIABLE}=from-local\n`, `${KEY_VARIABLE}=from-env-file\n`)
+  assert.equal(await readEvaluationKey({ [KEY_VARIABLE]: 'from-env' }, files), 'from-env')
+})
+
+test('ANTHROPIC_API_KEY in either file, or the environment, is never read', async () => {
+  const files = await envFilePair(
+    'ANTHROPIC_API_KEY=sk-ant-api-local\n',
+    'ANTHROPIC_API_KEY=sk-ant-api-env-file\n',
+  )
+  assert.equal(await readEvaluationKey({ ANTHROPIC_API_KEY: 'sk-ant-api-shell' }, files), null)
+})
+
+test('neither file present is no key, not an error', async () => {
+  const files = await envFilePair(undefined, undefined)
+  assert.equal(await readEvaluationKey({}, files), null)
+})

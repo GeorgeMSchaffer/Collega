@@ -103,6 +103,12 @@ is always raised against a board.
 - Filters, sorting and paging follow the pattern; boards are few enough to page in the client.
 - Boards are **archived, not deleted** (`30-Contracts.md` archive endpoints): an archived board
   leaves the list unless the Status filter includes *Archived*, and its ideas stay in Ideas.
+- **Removing a lane that holds ideas asks first** (2026-09-29, `20-feature-boards-and-statuses.md`
+  rule 14). Saving the board form — the drawer here, or Settings → Boards → Edit — with a lane removed
+  that still holds live ideas opens the confirm dialog: a line per such lane with its count (*3 ideas
+  are in In Review. Move them to:*) and a lane picker defaulting to the board's first remaining lane,
+  then *Move ideas and save*. Cancel returns to the form unsaved. Removing only empty lanes saves
+  without asking.
 
 **Views.** A **List / Cards** control switches two views of the same facts: **List** (default since
 2026-09-27; it was Cards), one table row per board, for comparing many; **Cards**, a responsive grid.

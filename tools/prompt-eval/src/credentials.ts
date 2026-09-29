@@ -8,23 +8,28 @@ import { parseEnv } from 'node:util'
 export const KEY_VARIABLE = 'PROMPT_EVAL_ANTHROPIC_API_KEY'
 
 /**
- * The key from the environment, else that one variable from `envFile`, parsed with `util.parseEnv`
- * so the file is never loaded into the environment. Blank counts as unset (rule 37).
+ * The key from the environment, else that one variable from the first of `envFiles` that holds it
+ * (`.env.local`, which `pnpm env:pull` writes from Vercel, then `.env`), each parsed with
+ * `util.parseEnv` so no file is loaded into the environment. Blank counts as unset (rule 37).
  */
 export async function readEvaluationKey(
   env: NodeJS.ProcessEnv,
-  envFile: string,
+  envFiles: string | readonly string[],
 ): Promise<string | null> {
   const fromEnvironment = env[KEY_VARIABLE]?.trim()
   if (fromEnvironment) return fromEnvironment
 
-  let text: string
-  try {
-    text = await readFile(envFile, 'utf8')
-  } catch {
-    return null
+  for (const envFile of typeof envFiles === 'string' ? [envFiles] : envFiles) {
+    let text: string
+    try {
+      text = await readFile(envFile, 'utf8')
+    } catch {
+      continue
+    }
+    const fromFile = parseEnv(text)[KEY_VARIABLE]?.trim()
+    if (fromFile) return fromFile
   }
-  return parseEnv(text)[KEY_VARIABLE]?.trim() || null
+  return null
 }
 
 /**
