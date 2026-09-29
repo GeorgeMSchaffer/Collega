@@ -698,8 +698,10 @@ The critical-path check is **sign in → create a board → create an idea**. It
 
 Alongside it, five navigation and session scenarios:
 - **Authentication navigation** — protected anonymous routes redirect to `/login`; ordinary login lands on `/`; required change is gated by `MustChangePassword`; `/logout` clears the session first.
-- **Authentication restoration** — a valid stored token is confirmed through `/auth/me`; an expired or unknown token clears **all** client auth state.
-- **Active-session authentication** — a protected-request `401` signs the user out **only when `/auth/me` also rejects the token**; an incorrect-current-password `401` preserves a token that `/auth/me` accepts.
+- **Authentication restoration** — a valid session cookie is confirmed through `/auth/me`; an expired or unknown cookie is dropped and the reader returns to `/login`.
+- **Active-session authentication** — a protected-request `401` signs the user out **only when `/auth/me` also rejects the session cookie**; an incorrect-current-password `401` preserves a session that `/auth/me` accepts.
+
+*Corrected 2026-09-29 (`decisions.md` "Spec contradictions resolved"): these two said a stored token.*
 - **Password-change authentication** — a successful required change stays authenticated across a browser reload.
 - **Board navigation** — `/boards` lists, `/board/{boardId}` opens detail, legacy routes redirect, and **no user-facing "Workflow" terminology remains**.
 
