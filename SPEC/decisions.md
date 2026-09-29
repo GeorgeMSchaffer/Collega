@@ -121,7 +121,9 @@ collision with the golden replay is deferred, knowingly"). Slice 122 applied it.
   real. Fifteen sign-ins a run become fourteen, nine of them as created accounts.
 - **Verified 2026-09-29, limits intact, scratch databases:** the full Playwright suite passed
   (38/38). The replay ran all fifteen scenarios to completion on a fresh seed: 360/447 match, 52
-  accepted, 35 unexplained, 69 stale accepted entries. The same corpus replayed with the old per-scenario re-sign, paced under the limits (a 25-second pause after each scenario), produced a byte-identical report, so reusing sessions changes no result.
+  accepted, 35 unexplained, 69 stale accepted entries. The same corpus replayed with the old
+  per-scenario re-sign, paced under the limits (a 25-second pause after each scenario), produced
+  a byte-identical report, so reusing sessions changes no result.
 
 ---
 
