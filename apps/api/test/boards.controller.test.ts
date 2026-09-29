@@ -80,6 +80,8 @@ function controller(): { controller: BoardsController; persisted: Board[] } {
     countIdeasByBoardAndStatus: async () => [],
     countIdeasByBoardAndTag: async () => [],
     getUserNames: async () => new Map(),
+    listLaneIdeas: async () => [],
+    moveIdeas: async () => {},
   }
   const statusRepository: StatusRepository = {
     add: async () => {},

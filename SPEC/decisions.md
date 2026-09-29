@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-29 | Removing a lane moves its ideas | active | full below |
 | 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
 | 2026-09-29 | Spec contradictions resolved | active | full below |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
@@ -42,10 +43,10 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The comp R iteration's open questions are answered | active | full below |
 | 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | full below |
 | 2026-09-28 | Graphite replaces Notte as the dark theme | active | full below |
-| 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | full below |
-| 2026-09-27 | The API sends the custom field list | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
-| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
-| 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
+| 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-27 | The API sends the custom field list | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-27 | Terrazzo is the palette, with a theme picker | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | One list and detail pattern, and a drawer instead of the docked inspector | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | The Boards screen has a card view and a list view | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -92,6 +93,40 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-29 — Removing a lane moves its ideas
+
+**Decided by the user.** A board save that removes a lane still holding live ideas moves those ideas
+to another lane of the board. The admin picks the target in a confirm step, defaulting to the
+board's first remaining lane (*3 ideas are in In Review. Move them to: [New / Pending ▾]*). The API
+takes the targets in the save request, refuses a save that removes an occupied lane without one, and
+writes a status-change audit entry per moved idea. Archived boards still refuse the save (`409`).
+The moves send **no notification** (decided by the user the same day): they reconfigure a board
+rather than decide anything about one idea, so `20-feature-notifications.md` trigger 4 carries the
+exception.
+Applied in slice 123: `20-feature-boards-and-statuses.md` Board rule 14, `contracts/boards.md`
+`PUT /boards/{boardId}`, and the Boards header notes in `20-feature-client-ui.md`.
+
+**Why.** Until now the save was accepted and the ideas kept a status that was no longer a column, so
+they vanished from the board while still counting in its `ideaCount` (Bug Triage, found in the
+review of slice 097). The three answers were to refuse the save, move the ideas, or show them
+somewhere; refusing makes the admin move every card by hand first, and a "no column" bucket keeps
+the inconsistency and only labels it. Moving them is one decision the admin is already making.
+
+**Settled with it, by the slice** (the lane and status model decides each; none is a new product
+choice):
+
+- **Which ideas:** the lane's live `Discovery` ideas — what `ideaCount` and `laneCounts` count and
+  the board shows. A promoted Issue keeps its ideation status, which is frozen at promotion for
+  provenance; a soft-deleted idea keeps its, since restore is deferred and its row is a retained
+  record.
+- **Request shape:** `ideaMoves: [{ fromStatusId, toStatusId }]`, one target per removed lane rather
+  than one for the whole save, because the confirm step asks per lane and one-for-all is the
+  special case of it. The target may be a lane added in the same save.
+- **Audit:** `IdeaStatusChanged` in the shape a move on the board writes, and the `BoardUpdated`
+  entry records the moves with their counts.
 
 ---
 
@@ -443,45 +478,6 @@ values in comp R's `graphite` block). Notte's self-contained `[data-theme]` bloc
 `notte` is served Graphite, so a person who chose dark stays in dark. The 4.5:1 rule is unchanged;
 Graphite's pairs were measured against it on 2026-09-28. The Terrazzo default, the per-browser
 cookie and the per-theme suggestion hue all stand.
-
-## 2026-09-28 — The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags
-
-**Decided by the user** ("go ahead with it"), reviewing the iteration of
-`SPEC/mockups/comp-r-portico-prototype.html` that folds in their design canvas. In the user's words,
-in substance: integrate the Graphite theme and the denser form and control layout; refactor the
-Roadmap structurally and functionally to match, with Weeks, Months and Quarters as its zoom levels
-and no keyboard shortcuts for now; add the effort bar to cards, the sprint lanes included; add the
-Sprint board; give tags a colour picker, a random palette colour by default, changed by an
-administrator in Settings; and add Settings → Tags on the list and detail pattern — list, view,
-edit (name and colour), delete, and add in advance of use.
-
-- **Where it is written.** Forms and controls, tag chip colours and the effort bar:
-  `20-feature-client-ui.md`. Tag colour and Settings → Tags: `20-feature-ideas-and-engagement.md`
-  "Tags" rules 9–15. Sprint board, Roadmap and the effort bar's placement:
-  `20-feature-issues-and-delivery.md` "Comp R iteration". Contracts: `30-Contracts.md`, each
-  addition dated 2026-09-28. The work is planned as Sprint 11
-  (`SPEC/sprints/sprint-11-comp-r-iteration.md`).
-- **The denser layout applies in every theme**, not only Graphite: 32px buttons, 34px fields,
-  12px labels, short fields three or two to a row. It supersedes the control heights slice 100
-  shipped.
-- **Tag chip text is required to clear 4.5:1 in every theme.** Comp R's colour mix fails it in the
-  light themes for seven of the ten palette colours; the spec keeps the rule and fixes the mix rather
-  than accepting the comp.
-- **Tags are administered by the Org Admin** (a Site Admin through View As), like the other
-  organization configuration collections. The tag rules had never named an administrator — anyone
-  who could edit an idea could create a tag, and nobody could rename, recolour or delete one — so
-  this is a reading of the existing permission model, recorded so it is not mistaken for a new
-  rule. Inline creation while tagging an idea is unchanged.
-- **Two things comp R draws have no backend, and this adoption does not invent one.** Issue keys
-  (`IDE-01`) are left out of every screen until they are decided separately; Outcomes (Slice 2)
-  stay specified and unbuilt — Sprint 11 builds the Roadmap screen without them (answered the same
-  day). Both are recorded as gaps in `30-Contracts.md`.
-- **Where comp R and the spec disagree, the spec wins** and the difference is written down: the
-  outcome drawer's Delete confirms (comp R deletes at once), and comp R's *Ctrl ↵* save is not built.
-- **Open at adoption, answered the same day** — see "The comp R iteration's open questions are
-  answered" above.
-
----
 
 ## Earlier decisions
 

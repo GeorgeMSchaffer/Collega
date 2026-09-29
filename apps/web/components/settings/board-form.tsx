@@ -13,7 +13,8 @@ import {
   Textarea,
 } from '@collega/design-system'
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
+import { IdeaMovesGuard } from '@/components/settings/idea-moves-guard'
 import { SwimlanePicker } from '@/components/settings/swimlane-picker'
 import type { BoardFormState } from '@/lib/server/board-actions'
 import { createBoard, saveBoard } from '@/lib/server/board-actions'
@@ -44,6 +45,7 @@ export function BoardForm({
   defaultDescription = '',
   userStatusMoves,
   swimlaneIds,
+  laneIdeaCounts,
   statuses,
   submitLabel,
   explainerHeading,
@@ -54,6 +56,8 @@ export function BoardForm({
   defaultDescription?: string
   userStatusMoves: boolean
   swimlaneIds: string[]
+  /** Live ideas per lane of the board being edited, keyed by status id. */
+  laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   /** Drilled to `SwimlanePicker`, which is a client component and cannot read them itself. */
   statuses: Status[]
   submitLabel: string
@@ -78,6 +82,7 @@ export function BoardForm({
               defaultDescription={defaultDescription}
               userStatusMoves={userStatusMoves}
               swimlaneIds={swimlaneIds}
+              laneIdeaCounts={laneIdeaCounts}
               statuses={statuses}
             />
 
@@ -105,8 +110,7 @@ export function BoardForm({
           </p>
           <p className="m-0">
             Removing a swimlane does not delete the status, and does not delete the ideas sitting in
-            it. Those ideas keep their status; they simply stop appearing on this board until the
-            lane comes back.
+            it. Before saving, you choose which remaining lane those ideas move to.
           </p>
         </CardContent>
       </Card>
@@ -127,6 +131,7 @@ export function BoardFields({
   defaultDescription = '',
   userStatusMoves,
   swimlaneIds,
+  laneIdeaCounts = {},
   statuses,
   sectionHeading: SectionHeading = 'h2',
 }: {
@@ -135,9 +140,21 @@ export function BoardFields({
   defaultDescription?: string
   userStatusMoves: boolean
   swimlaneIds: string[]
+  /** Live ideas per lane of the board being edited; absent on create, where nothing is removed. */
+  laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   statuses: Status[]
   sectionHeading?: 'h2' | 'h3'
 }) {
+  const [ids, setIds] = useState(swimlaneIds)
+  // The board's lanes this save would drop that still hold ideas: each needs a lane to move them to.
+  const removed = swimlaneIds.flatMap((id) => {
+    const ideaCount = laneIdeaCounts[id] ?? 0
+    if (ids.includes(id) || ideaCount === 0) return []
+    const status = statuses.find((candidate) => candidate.id === id)
+    return [{ id, name: status?.name ?? 'A removed lane', ideaCount }]
+  })
+  const remaining = ids.flatMap((id) => statuses.find((status) => status.id === id) ?? [])
+
   return (
     <>
       {boardId === null ? null : <input type="hidden" name="boardId" value={boardId} />}
@@ -190,7 +207,8 @@ export function BoardFields({
           order of the board&rsquo;s columns.
         </p>
       </div>
-      <SwimlanePicker selected={swimlaneIds} statuses={statuses} />
+      <SwimlanePicker ids={ids} onChange={setIds} statuses={statuses} />
+      <IdeaMovesGuard removed={removed} remaining={remaining} />
     </>
   )
 }

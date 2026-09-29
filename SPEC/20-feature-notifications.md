@@ -21,7 +21,7 @@ A notification event is created when:
 1. A user is @mentioned in an idea body
 2. A user is @mentioned in a comment
 3. A comment is added to an idea (notify idea author and assignee)
-4. An idea's status changes (notify idea author and assignee)
+4. An idea's status changes (notify idea author and assignee). **Except** when the move is a board save removing the idea's lane (`20-feature-boards-and-statuses.md` rule 14): those moves notify no one (decided by the user 2026-09-29, `SPEC/decisions.md` "Removing a lane moves its ideas").
 
 Self-notifications are suppressed: no event is written when the actor and the recipient are the same user.
 

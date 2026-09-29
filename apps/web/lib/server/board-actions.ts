@@ -80,6 +80,18 @@ function boardBody(form: FormData): {
   }
 }
 
+/**
+ * Where a save sends the ideas of each lane it removes, as `PUT`'s `ideaMoves`. The board form's
+ * confirm step posts one `moveFrom`/`moveTo` pair per removed lane that holds ideas, in step.
+ */
+function ideaMoves(form: FormData): { fromStatusId: string; toStatusId: string }[] {
+  const to = form.getAll('moveTo')
+  return form.getAll('moveFrom').map((fromStatusId, index) => ({
+    fromStatusId: String(fromStatusId),
+    toStatusId: String(to[index] ?? ''),
+  }))
+}
+
 /** Creates the board, answering its id, or the refusal to show. */
 async function create(form: FormData): Promise<{ boardId: string } | { error: string }> {
   const organizationId = await actingOrganizationId()
@@ -115,7 +127,7 @@ async function save(form: FormData): Promise<string | null> {
   const boardId = String(form.get('boardId') ?? '')
 
   try {
-    await apiPut(apiPath`/boards/${boardId}`, boardBody(form))
+    await apiPut(apiPath`/boards/${boardId}`, { ...boardBody(form), ideaMoves: ideaMoves(form) })
   } catch (error) {
     return refusal(error)
   }

@@ -35,6 +35,4 @@ Keep entries short. A symptom, where it happens, and — if you know it — the 
 
 ## TODO
 
-- **A board can drop a lane that still holds ideas, and those ideas then sit in no column.** Found 2026-09-27 in the review of slice 097. Saving a board with fewer swimlanes is not refused when a removed lane still has live ideas in it (the only lane-membership check is on CSV import, `idea.service.ts`), so those ideas stop appearing on the board and, since 095, count in the board list's `ideaCount` but in none of its `laneCounts`. Each count is correct by the contract; the gap is upstream. Needs a spec decision first: refuse the save, move the ideas, or show them somewhere.
-
 All ten previously open items were promoted into `SPEC/sprints/sprint-07.5-accessibility-and-bug-paydown.md` on 2026-08-25 and deleted from here per the "Promote and delete" rule above — that sprint file is now their only home. They came from a live UI/UX pass against `dev` at `875b223` on 2026-08-16.
